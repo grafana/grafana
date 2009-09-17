@@ -10,6 +10,7 @@ use (
 	./apps/alerting/notifications
 	./apps/alerting/rules
 	./apps/correlations
+	./apps/annotations
 	./apps/dashboard
 	./apps/folder
 	./apps/iam
