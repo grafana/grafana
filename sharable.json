@@ -1,0 +1,59 @@
+{
+   "title":"Monkey Showdown",
+   "rows":{
+      "row2":{
+         "height":"270px",
+         "panels":{
+            "Hamlet vs macbeth":{
+               "type":"stackedquery",
+               "span":8,
+               "queries":[
+                  "play_name:Hamlet",
+                  "play_name:macbeth"
+               ],
+               "show": [ "lines", "fill" ]
+            },
+            "Hamlet vs Macbeth":{
+               "type":"piequery",
+               "span":4,
+               "donut":true,
+               "queries":[
+                  "play_name:Hamlet",
+                  "play_name:macbeth"
+               ],
+               "colors":[
+                  "#B07737",
+                  "#85004B",
+                  "#7BA4AF"
+               ],
+               "field":"@message"
+            }
+         }
+      },
+      "row3":{
+         "height":"130px",
+         "panels":{
+            "Hamlet's Lines":{
+               "type":"histogram",
+               "span":8,
+               "show":[
+                  "bars"
+               ],
+               "label":"lines",
+               "query":"speaker:HAMLET",
+               "color":"#4A8737"
+            },
+            "Speakers":{
+               "type":"pieterms",
+               "donut":false,
+               "tilt":false,
+               "legend":true,
+               "field":"speaker",
+               "span":4,
+               "size":6,
+               "query":"play_name:Hamlet OR play_name:macbeth"
+            }
+         }
+      }
+   }
+}

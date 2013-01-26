@@ -1,0 +1,14 @@
+
+<div class="row-fluid" style="margin-top:50px">
+  <div class="row-fluid">
+    <div class="span8"><h2>{{dashboards.title}} <small>Last {{timespan}}</small></h2></div>
+    <div class="span4"><div><input type="file" id="upload" upload /></div></div>
+  </div>
+  <div class="row-fluid" ng-repeat="(row_name, row) in dashboards.rows" style="height:{{row.height}}">
+    <div ng-repeat="(panel_name, panel) in row.panels">
+      <div class="span{{panel.span}}" style="padding: 10px;height={{row.height}}" panel="{{panel.type}}" >
+        <h4>{{panel_name}}</h4>
+      </div>
+    </div>
+  </div>
+</div>
