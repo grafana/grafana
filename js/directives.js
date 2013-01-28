@@ -2,7 +2,7 @@
 /*global angular:true */
 'use strict';
 
-angular.module('kibana-dash.directives', [])
+angular.module('kibana.directives', [])
 .directive('panel', function($compile) {
   return {
     restrict: 'A',
@@ -12,7 +12,7 @@ angular.module('kibana-dash.directives', [])
           return (attrs.panel && scope.index) ? true : false;
         }, function (ready) {
           if (ready) {
-            $compile("<div "+attrs.panel+" params={{panel}} style='height:{{row.height}}'></div>")(scope).appendTo(element);
+            $compile("<div "+attrs.panel+" params={{panel}} style='height:{{row.height}}'></div>")(scope).replaceAll(element);
           }
         });
       }

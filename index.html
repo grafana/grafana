@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7 ng-app:kibana-dash" lang="en" id="ng-app"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8 ng-app:kibana-dash" lang="en" id="ng-app"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9" lang="en" ng-app="kibana-dash"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" ng-app="kibana-dash"> <!--<![endif]-->
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7 ng-app:kibana" lang="en" id="ng-app"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8 ng-app:kibana" lang="en" id="ng-app"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang="en" ng-app="kibana"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" ng-app="kibana"> <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -17,29 +17,31 @@
   <link rel="stylesheet" href="/common/css/bootstrap-responsive.min.css">
   <link rel="stylesheet" href="/common/css/elasticjs.css">
   <link rel="stylesheet" href="/common/css/datepicker.css">
-
+  <link rel="stylesheet" href="/common/css/jquery-jvectormap.css">
 
 
   <!-- project dependency libs -->
-  <script src="/common/lib/jquery-1.8.0.min.js"></script>
-  <script src="/common/lib/modernizr-2.6.1.min.js"></script>
-  <script src="/common/lib/underscore.min.js"></script>
-  <script src="/common/lib/angular.min.js"></script>
-  <script src="/common/lib/elastic.min.js"></script>
-  <script src="/common/lib/elastic-angular-client.min.js"></script>
-  <script src="/common/lib/dateformat.js"></script>
-  <script src="/common/lib/jquery.flot.js"></script>
-  <script src="/common/lib/jquery.flot.time.js"></script>
-  <script src="/common/lib/jquery.flot.stack.js"></script>
-  <script src="/common/lib/jquery.flot.pie.js"></script>
-  <script src="/common/lib/date.js"></script>
-  <script src="/common/lib/datepicker.js"></script>
+  <script src="common/lib/jquery-1.8.0.min.js"></script>
+  <script src="common/lib/modernizr-2.6.1.min.js"></script>
+  <script src="common/lib/underscore.min.js"></script>
+  <script src="common/lib/angular.min.js"></script>
+  <script src="common/lib/elastic.min.js"></script>
+  <script src="common/lib/elastic-angular-client.min.js"></script>
+  <script src="common/lib/dateformat.js"></script>
+  <script src="common/lib/jquery.flot.js"></script>
+  <script src="common/lib/jquery.flot.time.js"></script>
+  <script src="common/lib/jquery.flot.stack.js"></script>
+  <script src="common/lib/jquery.flot.pie.js"></script>
+  <script src="common/lib/jquery.jvectormap.min.js"></script>
+  <script src="common/lib/jquery-jvectormap-world-mill-en.js"></script>
+  <script src="common/lib/date.js"></script>
+  <script src="common/lib/datepicker.js"></script>
 
 
-  <script src="/common/lib/settings.js"></script>
-  <script src="/config.js"></script>
-  <script src="/common/lib/shared.js"></script>
-  <script src="/dashboards.js"></script>
+  <script src="common/lib/settings.js"></script>
+  <script src="config.js"></script>
+  <script src="common/lib/shared.js"></script>
+  <script src="dashboards.js"></script>
 
     
   <!-- project specific files -->
@@ -52,7 +54,7 @@
 
 </head>
 
-<body ng-controller="SearchCtrl">
+<body ng-controller="DashCtrl">
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container-fluid">

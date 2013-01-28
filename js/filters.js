@@ -2,7 +2,7 @@
 /*global angular:true */
 'use strict';
 
-angular.module('kibana-dash.filters', [])
+angular.module('kibana.filters', [])
   .filter('dateformat', ['dateformat', function(date) {
     return function(date) {
       console.log(date)

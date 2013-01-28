@@ -16,7 +16,8 @@ var Settings = function (s) {
     indexpattern  : 'logstash-%Y.%m.%d',
     indexlimit    : 150,
     indexdefault  : 'logstash-*',
-    primaryfield  : '_all'
+    primaryfield  : '_all',
+    modules       : []
   }
 
   // This initializes a new hash on purpose, to avoid adding parameters to 

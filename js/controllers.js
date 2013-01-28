@@ -2,8 +2,8 @@
 /*global angular:true */
 'use strict';
 
-angular.module('kibana-dash.controllers', [])
-.controller('SearchCtrl', function($scope, $location, $http, $timeout, ejsResource) {
+angular.module('kibana.controllers', [])
+.controller('DashCtrl', function($scope, $location, $http, $timeout, ejsResource) {
 
 
   $scope.config = config;

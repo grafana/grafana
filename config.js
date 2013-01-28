@@ -23,12 +23,14 @@ PLEASE SEE js/
 var config = new Settings(
 {
     timespan:       '15m',
-    refresh:        30000,
+    refresh:        10000,
     elasticsearch:  'http://localhost:9200',
     timeformat:     'mm/dd HH:MM:ss',
     timefield:      '@timestamp', 
-    indexpattern:  '"logstash-"yyyy.mm.dd',
-    //indexpattern:   '"shakespeare"', 
+    //indexpattern:  '"logstash-"yyyy.mm.dd',
+    indexpattern:   '"shakespeare"', 
+    modules:        ['histogram','piequery','pieterms','stackedquery','map'], 
+
 
     defaultfields:  ['line_text'],
     perpage:        50,

@@ -24,27 +24,28 @@ var dashboards =
       }
     },
     row2: {
-      height: "250px",
+      height: "300px",
       panels: {
         "Royal Decrees": {
           type    : "stackedquery",
-          span    : 4,
+          span    : 3,
           donut   : true,
           queries : ['king','queen','duke'],
         },
-        "Person: Thy vs Thou": {
-          type    : "piequery",
-          span    : 4,
-          donut   : true,
-          queries : ['thy','thou'],
+        "Remote Monkey Activity": {
+          type    : "map",
+          span    : 6,
+          size    : 20,
+          field   : 'country',
+          query   : '',
           colors  : ['#B07737','#85004B','#7BA4AF'],
         },
         "Main Characters": {
           type    : "pieterms",
           donut   : true,
           legend  : true,
-          field   : "speaker",
-          span    : 4,
+          field   : "country",
+          span    : 3,
           size    : 5,
           query   : "*",
         }
