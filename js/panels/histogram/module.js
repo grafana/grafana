@@ -1,5 +1,5 @@
-labjs = labjs.script("common/lib/jquery.flot.js")
-  .script("common/lib/jquery.flot.time.js")
+labjs = labjs.script("common/lib/panels/jquery.flot.js")
+  .script("common/lib/panels/jquery.flot.time.js")
 
 angular.module('kibana.histogram', [])
 .directive('histogram', function() {

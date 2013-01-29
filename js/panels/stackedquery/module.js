@@ -1,6 +1,6 @@
-labjs = labjs.script("common/lib/jquery.flot.js")
-  .script("common/lib/jquery.flot.time.js")
-  .script("common/lib/jquery.flot.stack.js")
+labjs = labjs.script("common/lib/panels/jquery.flot.js")
+  .script("common/lib/panels/jquery.flot.time.js")
+  .script("common/lib/panels/jquery.flot.stack.js")
 
 angular.module('kibana.stackedquery', [])
 .directive('stackedquery', function() {

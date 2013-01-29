@@ -1,5 +1,4 @@
-labjs = labjs.script("common/lib/jquery.jvectormap.min.js")
-  .script("common/lib/jquery-jvectormap-world-mill-en.js")
+labjs = labjs.script("common/lib/panels/jquery.jvectormap.min.js");
 
 angular.module('kibana.map', [])
 .directive('map', function() {
@@ -10,6 +9,7 @@ angular.module('kibana.map', [])
       // Specify defaults for ALL directives
       var _d = {
         queries : ["*"],
+        map     : "world",
         interval: secondsToHms(calculate_interval(scope.from,scope.to,40,0)/1000),
         colors  : ["#BF3030","#1D7373","#86B32D","#A98A21","#411F73"],
         show    : ['bars'],
@@ -68,7 +68,7 @@ angular.module('kibana.map', [])
 
         // Then the insert into facet and make the request
         var results = request
-          .facet(ejs.TermsFacet('worldmap')
+          .facet(ejs.TermsFacet('map')
             .field(params.field)
             .size(params['size'])
             .exclude(params.exclude)
@@ -80,7 +80,7 @@ angular.module('kibana.map', [])
         results.then(function(results) {
           scope.hits = results.hits.total;
           scope.data = {};
-          _.each(results.facets.worldmap.terms, function(v) {
+          _.each(results.facets.map.terms, function(v) {
             scope.data[v.term.toUpperCase()] = v.count;
           });
         });
@@ -91,22 +91,29 @@ angular.module('kibana.map', [])
         // Parse our params object
         var params = scope.params;
 
-        // Populate element
-        $('.jvectormap-label,.jvectormap-zoomin,.jvectormap-zoomout').remove();
         elem.text('');
-        elem.vectorMap({  
-          map: 'world_mill_en',
-          regionStyle: {initial: {fill: '#ddd'}},
-          zoomOnScroll: false,
-          backgroundColor: '#fff',
-          series: {
-            regions: [{
-              values: scope.data,
-              scale: ['#C8EEFF', '#0071A4'],
-              normalizeFunction: 'polynomial'
-            }]
-          }
-        });
+        $('.jvectormap-label,.jvectormap-zoomin,.jvectormap-zoomout').remove();
+
+        elem.append("<div class='jvectormap-label'>Loading Map</div>");
+
+        loadmap = $LAB.script("common/lib/panels/map."+params.map+".js")
+
+        // Populate element. Note that jvectormap appends, does not replace.
+        loadmap.wait(function(){
+          elem.vectorMap({  
+            map: params.map,
+            regionStyle: {initial: {fill: '#ddd'}},
+            zoomOnScroll: false,
+            backgroundColor: '#fff',
+            series: {
+              regions: [{
+                values: scope.data,
+                scale: ['#C8EEFF', '#0071A4'],
+                normalizeFunction: 'polynomial'
+              }]
+            }
+          });
+        })
         //elem.show();
       }
     }

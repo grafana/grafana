@@ -1,5 +1,5 @@
-labjs = labjs.script("common/lib/jquery.flot.js")
-  .script("common/lib/jquery.flot.pie.js")
+labjs = labjs.script("common/lib/panels/jquery.flot.js")
+  .script("common/lib/panels/jquery.flot.pie.js")
 
 angular.module('kibana.pieterms', [])
 .directive('pieterms', function() {
