@@ -8,6 +8,9 @@ refresh:        Milliseconds between auto refresh.
 timeformat:     Format for time in histograms (might go away)
 timefield:      Field to use for ISO8601 timestamps (might go away)
 indexpattern:   Timestamping pattern for time based indices, 
+modules:        Panel modules to load. In the future these will be inferred 
+                from your initial dashboard, though if you share dashboards you
+                will probably need to list them all here 
 
 NOTE: No timezone support yet, everything is in UTC at the moment.
 
@@ -16,8 +19,6 @@ If you need to configure the default dashboard, please see dashboard.js
 shared.json contains an example sharable dashboard. Note the subtle differences
 between dashboard.js and shared.json. Once is a javascript object, the other is
 json.
-
-PLEASE SEE js/
 
 */
 var config = new Settings(
@@ -29,8 +30,7 @@ var config = new Settings(
     timefield:      '@timestamp', 
     //indexpattern:  '"logstash-"yyyy.mm.dd',
     indexpattern:   '"shakespeare"', 
-    modules:        ['histogram','piequery','pieterms','stackedquery','map'], 
-
+    modules:        ['histogram','pieterms','piequery','stackedquery','map'], 
 
     defaultfields:  ['line_text'],
     perpage:        50,

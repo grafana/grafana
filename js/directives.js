@@ -12,7 +12,7 @@ angular.module('kibana.directives', [])
           return (attrs.panel && scope.index) ? true : false;
         }, function (ready) {
           if (ready) {
-            $compile("<div "+attrs.panel+" params={{panel}} style='height:{{row.height}}'></div>")(scope).replaceAll(element);
+            element.html($compile("<div "+attrs.panel+" params={{panel}} style='height:{{row.height}}'></div>")(scope))
           }
         });
       }
@@ -23,7 +23,6 @@ angular.module('kibana.directives', [])
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
-      console.log(elem);
       function file_selected(evt) {
         var files = evt.target.files; // FileList object
 
