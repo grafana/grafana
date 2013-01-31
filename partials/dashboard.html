@@ -5,10 +5,8 @@
     <div class="span4"><div><input type="file" id="upload" upload /></div></div>
   </div>
   <div class="row-fluid" ng-repeat="(row_name, row) in dashboards.rows" style="height:{{row.height}}">
-    <div ng-repeat="(panel_name, panel) in row.panels">
-      <div class="span{{panel.span}}" style="padding: 10px;height={{row.height}}">
-        <h4>{{panel_name}}</h4>
-        <div panel="{{panel.type}}"></div>
+    <div ng-repeat="(name, panel) in row.panels">
+      <div class="span{{panel.span}}" style="padding: 10px;height={{row.height}}" ng-include="'panels/'+panel.type+'/module.html'">
       </div>
     </div>
   </div>

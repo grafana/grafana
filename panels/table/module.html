@@ -1,0 +1,13 @@
+<div ng-controller='table'>
+  <h4>{{panel.title}}</h4>
+  <div style="height:{{row.height}};overflow-y:auto;overflow-x:hidden"> 
+    <table class="table table-condensed table-striped">
+      <thead>
+        <th ng-repeat="field in panel.fields">{{field}}</th>
+      </thead>
+      <tr ng-repeat="row in data">
+        <td ng-repeat="field in panel.fields">{{row['_source'][field]}}</td>
+      </tr>
+    </table>
+  </div>
+</div>         

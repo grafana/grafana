@@ -35,8 +35,6 @@ angular.module('kibana.controllers', [])
   }
   var mytimeout = $timeout($scope.play,config.refresh);
 
-
-
   // If from/to to change, update index list
   $scope.$watch(function() { 
     return angular.toJson([$scope.from, $scope.to]) 

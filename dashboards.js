@@ -1,55 +1,59 @@
 var dashboards = 
 {
   title: "Infinite Monkey Dashboard",
-  rows: {
-    row1: {
-      height: "200px",
-      panels: {
-        "Monkey Productivity": {
+  rows: [
+    {
+      height: "300px",
+      panels: [
+        {
+          title   : "Monkey Shakespeare Lines",
           type    : "histogram",
-          span    : 8,
-          show    : ['lines','points'],
-          query   : "*",
-          label   : "Monkey lines of shakespeare",
+          span    : 6,
+          show    : ['lines','stack'],
+          fill    : 1,
+          query   : [
+            { label : "US", query : "country:US", color: '#86B32D' },
+            { label : "CN", query : "country:CN", color: '#BF3030' },
+            { label : "IN", query : "country:IN", color: '#1D7373' }
+          ],
           color   : "#7BA4AF"
         },
-        "Works of Shakespeare": {
-          type    : "pieterms",
-          legend  : true,
-          field   : "play_name",
-          span    : 4,
-          size    : 10,
+        {
+          title   : "World Monkeys",
+          type    : "map",
+          map     : 'world',
+          field   : "country",
+          span    : 6,
+          size    : 500,
           query   : "*"
         }
-      }
+      ]
     },
-    row2: {
+    {
       height: "300px",
-      panels: {
-        "Royal Decrees": {
-          type    : "stackedquery",
-          span    : 3,
+      panels: [
+        {
+          title   : "Hamlet vs Macbeth",
+          type    : "pie",
+          span    : 4,
+          size    : 8,
           donut   : true,
-          queries : ['king','queen','duke'],
-        },
-        "Remote Monkey Activity": {
-          type    : "map",
-          span    : 6,
-          size    : 20,
+          colors  : ['#BF3030','#1D7373','#86B32D','#A60000','#006363','#679B00'],
           field   : 'country',
-          query   : '',
-          colors  : ['#B07737','#85004B','#7BA4AF'],
+          //query   : { query: "*", field: "country"}
+          query   : [
+            { label : "Hamlet", query : "play_name:Hamlet", color: '#86B32D' },
+            { label : "Macbeth", query : "play_name:macbeth", color: '#BF3030' },
+          ]
         },
-        "Main Characters": {
-          type    : "pieterms",
-          donut   : true,
-          legend  : true,
-          field   : "country",
-          span    : 3,
-          size    : 5,
+        {
+          title   : "Newest Lines",
+          type    : "table",
+          span    : 8,
           query   : "*",
+          fields  : ['@timestamp','speaker','text_entry']
         }
-      }
+      ]
     }
-  }
+  ]
 };

@@ -33,7 +33,7 @@ var labjs = $LAB
   .script("dashboards.js");
 
 _.each(config.modules, function(v) {
-  labjs = labjs.script('js/panels/'+v+'/module.js').wait()
+  labjs = labjs.script('panels/'+v+'/module.js').wait()
   modules.push('kibana.'+v)
 })
 
