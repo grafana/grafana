@@ -14,6 +14,14 @@ angular.module('kibana.map', [])
       ? _d[k] : $scope.panel[k];
   });
 
+
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+  }
+
   $scope.get_data = function() {
     var request = $scope.ejs.Request().indices($scope.index);
 

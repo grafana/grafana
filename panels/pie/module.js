@@ -18,6 +18,13 @@ angular.module('kibana.pie', [])
       ? _d[k] : $scope.panel[k];
   });
 
+  if (!(_.isUndefined($scope.panel.group)) && !(_.isArray($scope.panel.query))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query.query = query;
+      $scope.get_data();
+    });
+  }
+
   $scope.get_data = function() {
     var request = $scope.ejs.Request().indices($scope.index);
 

@@ -30,7 +30,7 @@ var config = new Settings(
     timefield:      '@timestamp', 
     //indexpattern:  '"logstash-"yyyy.mm.dd',
     indexpattern:   '"shakespeare"', 
-    modules:        ['histogram','map','pie','table'], 
+    modules:        ['histogram','map','pie','table','stringquery'], 
 
     defaultfields:  ['line_text'],
     perpage:        50,

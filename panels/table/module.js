@@ -12,6 +12,13 @@ angular.module('kibana.table', [])
       ? _d[k] : $scope.panel[k];
   });
 
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+  }
+
   $scope.get_data = function() {
     var request = $scope.ejs.Request().indices($scope.index);
 
@@ -30,7 +37,6 @@ angular.module('kibana.table', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      console.log(results)
       $scope.hits = results.hits.total;
       $scope.data = results.hits.hits;
       /*
