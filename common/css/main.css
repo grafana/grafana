@@ -13,3 +13,14 @@
 [ng\:cloak], [ng-cloak], .ng-cloak {
   display: none !important;
 }
+
+.panel-error {
+  opacity: 0.9;
+  position:absolute;
+  top:10px;
+  z-index: 99999;
+}
+
+.pointer {
+  cursor: pointer;
+}

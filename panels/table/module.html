@@ -3,7 +3,10 @@
   <div style="height:{{row.height}};overflow-y:auto;overflow-x:hidden"> 
     <table class="table table-condensed table-striped">
       <thead>
-        <th ng-repeat="field in panel.fields">{{field}}</th>
+        <th ng-repeat="field in panel.fields" class="pointer" ng-click="panel.sort[0] = field">
+          {{field}} 
+          <i ng-show='field == panel.sort[0]' ng-click="toggle_sort()" class="pointer" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+        </th>
       </thead>
       <tr ng-repeat="row in data">
         <td ng-repeat="field in panel.fields">{{row['_source'][field]}}</td>

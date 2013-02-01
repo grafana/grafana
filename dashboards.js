@@ -3,12 +3,17 @@ var dashboards =
   title: "Infinite Monkey Dashboard",
   rows: [
     {
-      height: "30px",
+      height: "20px",
       panels: [
         {
           type    : "stringquery",
-          span    : 12,
-          group   : "mainsearch"
+          span    : 9,
+          group   : "main"
+        },
+        {
+          type    : "sort",
+          span    : 3,
+          group   : "main"
         }
       ]
     },
@@ -22,17 +27,17 @@ var dashboards =
           show    : ['lines','stack'],
           fill    : 1,
           query   : [{ label : "lines", query : "*", color: '#86B32D' } ],
-          group   : "mainsearch"
+          group   : "main"
         },
         {
-          title   : "World Monkeys",
+          title   : "Monkey Typists Worldwide",
           type    : "map",
           map     : 'world',
           field   : "country",
           span    : 6,
           size    : 500,
           query   : "*",
-          group   : "mainsearch"
+          group   : "main"
 
         }
       ]
@@ -50,7 +55,7 @@ var dashboards =
           field   : 'country',
           //query   : { query: "*", field: "country"}
           query   : { field : "play_name", query : "*" },
-          group   : "mainsearch"
+          group   : "main"
         },
         {
           title   : "Newest Lines",
@@ -58,7 +63,7 @@ var dashboards =
           span    : 8,
           query   : "*",
           fields  : ['@timestamp','speaker','text_entry'],
-          group   : "mainsearch"
+          group   : "main"
         }
       ]
     }

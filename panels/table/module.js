@@ -1,5 +1,5 @@
 angular.module('kibana.table', [])
-.controller('table', function($scope, $location) {
+.controller('table', function($scope, $rootScope, $location) {
 
   // Set and populate defaults
   var _d = {
@@ -12,11 +12,17 @@ angular.module('kibana.table', [])
       ? _d[k] : $scope.panel[k];
   });
 
+  // Events which this panel receives and sends
   if (!(_.isUndefined($scope.panel.group))) {
+    // Receives these events
     $scope.$on($scope.panel.group+"-query", function(event, query) {
       $scope.panel.query = query;
       $scope.get_data();
     });
+  }
+
+  $scope.toggle_sort = function() {
+    $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
   }
 
   $scope.get_data = function() {
@@ -37,26 +43,28 @@ angular.module('kibana.table', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+      if(_.isUndefined(results)) {
+        $scope.panel.error = 'Your query was unsuccessful';
+        return;
+      }
+      $scope.panel.error =  false;
       $scope.hits = results.hits.total;
       $scope.data = results.hits.hits;
-      /*
-      _.each(results.facets.pie.terms, function(v) {
-        var slice = { label : v.term, data : v.count }; 
-        $scope.data.push();
-        if(!(_.isUndefined($scope.panel.colors)) 
-          && _.isArray($scope.panel.colors)
-          && $scope.panel.colors.length > 0) {
-          slice.color = $scope.panel.colors[k%$scope.panel.colors.length];
-        } 
-        $scope.data.push(slice)
-        k = k + 1;
-      });
-*/
+
+      // Broadcast a list of all fields. Note that receivers of field array 
+      // events should be able to receive from multiple sources, merge, dedupe 
+      // and sort on the fly.
+      if (!(_.isUndefined($scope.panel.group)))
+        $rootScope.$broadcast(
+          $scope.panel.group+"-fields", {
+            all   : get_all_fields(results),
+            sort  : $scope.panel.sort
+          });  
     });
   }
 
   $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to]) 
+    return angular.toJson([$scope.from, $scope.to, $scope.panel.sort]) 
   }, function(){
     $scope.get_data();
   });
