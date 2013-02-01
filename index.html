@@ -31,12 +31,14 @@
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container-fluid">
-        <span class="brand">Kibana Dashboard</span>
-        <span class="brand"><small>Real time metrics</small></span>
+        <span class="brand">{{dashboards.title}}</span>
+        <span class="brand"><small><small>Kibana Preview</small></small></span>
+        <div class='pull-right' style="padding-top: 5px; padding-left: 10px"><input type="file" id="upload" upload /></div>
         <div  class="btn-group pull-right">
           <button class="btn" ng-click="pause()"><i ng-class="{'icon-pause': playing,'icon-play': !playing}"></i></button>
           <button class="btn" ng-repeat='timespan in time_options' ng-click="set_timespan(timespan)">{{timespan}}</button>
         </div>
+        
       </div>
     </div>
   </div>

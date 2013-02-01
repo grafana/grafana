@@ -63,9 +63,12 @@ angular.module('kibana.map', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      // Re-rending panel if data changes
-      scope.$watch('data', function() {
-        render_panel(scope,elem,attrs);
+      // If the data or row state changes, re-render
+      scope.$watch(function () {
+        return angular.toJson([scope.data, scope.row]) 
+      }, function() {
+        if(!(_.isUndefined(scope.data)))
+          render_panel(scope,elem,attrs);
       });
 
       // Or if the window is resized

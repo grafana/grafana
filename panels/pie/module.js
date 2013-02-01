@@ -112,13 +112,15 @@ angular.module('kibana.pie', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      // Re-rending the panel if it is resized,
-      scope.$watch('data', function() {
+      // Watch if data or row state changes
+      scope.$watch(function () {
+        return angular.toJson([scope.data, scope.row]) 
+      }, function() {
         if(!(_.isUndefined(scope.data)))
           render_panel(scope,elem,attrs);
       });
 
-      // Or if the model changes
+      // Or if the window is resized
       angular.element(window).bind('resize', function(){
           render_panel(scope,elem,attrs);
       });
@@ -152,7 +154,9 @@ angular.module('kibana.pie', [])
         };
 
         // Populate element
-        $.plot(elem, scope.data, pie);
+        if(elem.is(":visible")){
+          $.plot(elem, scope.data, pie);
+        }
         //elem.show();
       }
     }

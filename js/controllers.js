@@ -47,6 +47,11 @@ angular.module('kibana.controllers', [])
   // point to your ElasticSearch server
   var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
 
+  $scope.toggle_row = function(row) {
+    $scope.$broadcast('toggle_row',row)
+    row.collapse = row.collapse ? false : true;
+  }
+
   $scope.set_timespan = function(timespan) {
     $scope.timespan = timespan;
     $scope.from = time_ago($scope.timespan);

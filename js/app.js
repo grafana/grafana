@@ -19,6 +19,7 @@ var labjs = $LAB
   .script("common/lib/modernizr-2.6.1.min.js")
   .script("common/lib/underscore.min.js")
   .script("common/lib/angular.min.js")
+  .script("common/lib/angular-strap.min.js")
   .script("common/lib/elastic.min.js")
   .script("common/lib/elastic-angular-client.min.js")
   .script("common/lib/dateformat.js")

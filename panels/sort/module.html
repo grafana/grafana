@@ -1,5 +1,5 @@
-<div ng-controller='sort'>
-  <h4 ng-hide="_.isUndefined(panel.title)">{{panel.title}}</h4>
-  <select ng-model="panel.sort[0]" ng-options="f for f in fields"></select>
+<div ng-controller='sort' style="white-space: nowrap;">
+  <h4 ng-class="{'ng-cloak': !panel.title}">{{panel.title}}</h4>
   <i ng-click="toggle_sort()" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+  <select ng-model="panel.sort[0]" ng-options="f for f in fields"></select>
 </div>

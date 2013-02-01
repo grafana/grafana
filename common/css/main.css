@@ -17,7 +17,6 @@
 .panel-error {
   opacity: 0.9;
   position:absolute;
-  top:10px;
   z-index: 99999;
 }
 

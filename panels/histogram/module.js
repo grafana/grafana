@@ -87,12 +87,15 @@ angular.module('kibana.histogram', [])
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
 
-      scope.$watch('data', function() {
+      // If the data or row state changes, re-render
+      scope.$watch(function () {
+        return angular.toJson([scope.data, scope.row]) 
+      }, function() {
         if(!(_.isUndefined(scope.data)))
           render_panel(scope,elem,attrs);
       });
 
-      // Re-render if the window is
+      // Re-render if the window is resized
       angular.element(window).bind('resize', function(){
           render_panel(scope,elem,attrs);
       });

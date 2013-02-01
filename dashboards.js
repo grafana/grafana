@@ -3,7 +3,8 @@ var dashboards =
   title: "Infinite Monkey Dashboard",
   rows: [
     {
-      height: "20px",
+      title:  "Query Control",  
+      height: "30px",
       panels: [
         {
           type    : "stringquery",
@@ -18,15 +19,21 @@ var dashboards =
       ]
     },
     {
+      title:  "Monkey Monitoring",
+      collapse: false,
       height: "300px",
       panels: [
         {
           title   : "Monkey Shakespeare Lines",
           type    : "histogram",
           span    : 6,
-          show    : ['lines','stack'],
-          fill    : 1,
-          query   : [{ label : "lines", query : "*", color: '#86B32D' } ],
+          show    : ['lines','points'],
+          fill    : 0,
+          query   : [
+            { label : "Query", query : "*", color: '#86B32D' },
+            { label : "Hamlet", query : "play_name:Hamlet" },
+            { label : "Macbeth", query : "play_name:macbeth" },
+          ],
           group   : "main"
         },
         {
@@ -43,6 +50,7 @@ var dashboards =
       ]
     },
     {
+      title:  "Lines of Plays",
       height: "300px",
       panels: [
         {
