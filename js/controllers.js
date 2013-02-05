@@ -9,17 +9,20 @@ angular.module('kibana.controllers', [])
   $scope.config = config;
   $scope.dashboards = dashboards
   $scope.timespan = config.timespan
-  $scope.from = time_ago($scope.timespan);
-  $scope.to = new Date();
+  $scope.time = {
+    from : time_ago($scope.timespan),
+    to   : new Date()
+  }
 
-  $scope.time_options = ['5m','15m','1h','6h','12h','24h','2d','7d','30d'];
-
+  // I'm leaving in all this refresh stuff until I figure out how index
+  // list caching should work. Maybe it should be handled by each time panel?
+  // That would require dashboard to contain a time panel. Hmm.
   $scope.counter = 0;
   $scope.playing = true;
   $scope.play = function(){
     $scope.counter++;
-    $scope.to = new Date();
-    $scope.from = time_ago($scope.timespan);
+    $scope.time.to = new Date();
+    $scope.time.from = time_ago($scope.timespan);
     $scope.$root.$eval() 
     mytimeout = $timeout($scope.play,config.refresh);
   }
@@ -37,9 +40,9 @@ angular.module('kibana.controllers', [])
 
   // If from/to to change, update index list
   $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to]) 
+    return angular.toJson([$scope.time.from, $scope.time.to]) 
   }, function(){
-    indices($scope.from,$scope.to).then(function (p) {
+    indices($scope.time.from,$scope.time.to).then(function (p) {
       $scope.index = p.join();
     });
   });
@@ -54,7 +57,7 @@ angular.module('kibana.controllers', [])
 
   $scope.set_timespan = function(timespan) {
     $scope.timespan = timespan;
-    $scope.from = time_ago($scope.timespan);
+    $scope.time.from = time_ago($scope.timespan);
   }
 
   // returns a promise containing an array of all indices matching the index

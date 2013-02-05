@@ -12,28 +12,23 @@ angular.module('kibana.table', [])
       ? _d[k] : $scope.panel[k];
   });
 
-  // Events which this panel receives and sends
-  if (!(_.isUndefined($scope.panel.group))) {
-    // Receives these events
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query = query;
-      $scope.get_data();
-    });
-  }
-
   $scope.toggle_sort = function() {
     $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
   }
 
   $scope.get_data = function() {
+    // Make sure we have everything for the request to complete
+    if(_.isUndefined($scope.panel.time))
+      return
+    
     var request = $scope.ejs.Request().indices($scope.index);
 
     var results = request
       .query(ejs.FilteredQuery(
         ejs.QueryStringQuery($scope.panel.query || '*'),
         ejs.RangeFilter(config.timefield)
-          .from($scope.from)
-          .to($scope.to)
+          .from($scope.panel.time.from)
+          .to($scope.panel.time.to)
           .cache(false)
         )
       )
@@ -63,10 +58,22 @@ angular.module('kibana.table', [])
     });
   }
 
-  $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to, $scope.panel.sort]) 
-  }, function(){
-    $scope.get_data();
-  });
+  $scope.$watch(function() {
+    return angular.toJson($scope.panel.sort)
+  }, function(){$scope.get_data()});
+
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+    $scope.$on($scope.panel.group+"-time", function(event, time) {
+      $scope.panel.time = time;
+      $scope.get_data();
+    });
+  }
+
+  // Now that we're all setup, request the time from our group
+  $rootScope.$broadcast($scope.panel.group+"-get_time")
 
 })

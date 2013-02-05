@@ -1,5 +1,5 @@
 angular.module('kibana.map', [])
-.controller('map', function($scope, $location) {
+.controller('map', function($scope, $rootScope) {
 
   // Set and populate defaults
   var _d = {
@@ -14,15 +14,11 @@ angular.module('kibana.map', [])
       ? _d[k] : $scope.panel[k];
   });
 
-
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query = query;
-      $scope.get_data();
-    });
-  }
-
   $scope.get_data = function() {
+    // Make sure we have everything for the request to complete
+    if(_.isUndefined($scope.panel.time))
+      return
+
     var request = $scope.ejs.Request().indices($scope.index);
 
     // Then the insert into facet and make the request
@@ -35,8 +31,8 @@ angular.module('kibana.map', [])
           ejs.FilteredQuery(
             ejs.QueryStringQuery($scope.panel.query || '*'),
             ejs.RangeFilter(config.timefield)
-              .from($scope.from)
-              .to($scope.to)
+              .from($scope.panel.time.from)
+              .to($scope.panel.time.to)
               .cache(false)
             )))).size(0)
       .doSearch();
@@ -51,11 +47,19 @@ angular.module('kibana.map', [])
     });
   }
 
-  $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to]) 
-  }, function(){
-    $scope.get_data();
-  });
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+    $scope.$on($scope.panel.group+"-time", function(event, time) {
+      $scope.panel.time = time;
+      $scope.get_data();
+    });
+  }
+
+  // Now that we're all setup, request the time from our group
+  $rootScope.$broadcast($scope.panel.group+"-get_time")
 
 })
 .directive('map', function() {

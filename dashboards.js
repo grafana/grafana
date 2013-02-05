@@ -2,18 +2,38 @@ var dashboards =
 {
   title: "Infinite Monkey Dashboard",
   rows: [
-    {
+      {
       title:  "Query Control",  
       height: "30px",
       panels: [
         {
           type    : "stringquery",
-          span    : 9,
+          span    : 12,
+          group   : "main",
+          query   : "wine"
+        }
+      ]
+    },
+    {
+      title:  "Options",
+      collapse: true,  
+      height: "30px",
+      panels: [
+        {
+          type    : "timepicker",
+          span    : 5,
+          mode    : 'relative',
+          refresh : {
+            enable  : false,
+            interval: 30,
+            min     : 10
+          },
+          timespan: '1h',
           group   : "main"
         },
         {
           type    : "sort",
-          span    : 3,
+          span    : 4,
           group   : "main"
         }
       ]
@@ -51,7 +71,7 @@ var dashboards =
     },
     {
       title:  "Lines of Plays",
-      height: "300px",
+      height: "250px",
       panels: [
         {
           title   : "Plays",
@@ -70,7 +90,7 @@ var dashboards =
           type    : "table",
           span    : 8,
           query   : "*",
-          fields  : ['@timestamp','speaker','text_entry'],
+          fields  : ['@timestamp','play_name','speaker','text_entry'],
           group   : "main"
         }
       ]

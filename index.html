@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7 ng-app:kibana" lang="en" id="ng-app"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8 ng-app:kibana" lang="en" id="ng-app"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9" lang="en" ng-app="kibana"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" ng-app="kibana"> <!--<![endif]-->
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en" id="ng-app"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang="en" id="ng-app"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="/common/css/bootstrap.min.css">
   <link rel="stylesheet" href="/common/css/bootstrap-responsive.min.css">
   <link rel="stylesheet" href="/common/css/elasticjs.css">
-  <link rel="stylesheet" href="/common/css/datepicker.css">
+  <link rel="stylesheet" href="/common/css/timepicker.css">
 
   <!-- project dependency libs -->
   <script src="/common/lib/LAB.min.js"></script>
@@ -34,11 +34,6 @@
         <span class="brand">{{dashboards.title}}</span>
         <span class="brand"><small><small>Kibana Preview</small></small></span>
         <div class='pull-right' style="padding-top: 5px; padding-left: 10px"><input type="file" id="upload" upload /></div>
-        <div  class="btn-group pull-right">
-          <button class="btn" ng-click="pause()"><i ng-class="{'icon-pause': playing,'icon-play': !playing}"></i></button>
-          <button class="btn" ng-repeat='timespan in time_options' ng-click="set_timespan(timespan)">{{timespan}}</button>
-        </div>
-        
       </div>
     </div>
   </div>

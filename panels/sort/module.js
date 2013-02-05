@@ -3,6 +3,7 @@ angular.module('kibana.sort', [])
 
   // Set and populate defaults
   var _d = {
+    label   : "Sort",
     query   : "*",
     size    : 100,
     sort    : [config.timefield,'desc'],

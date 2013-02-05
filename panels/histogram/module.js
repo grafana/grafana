@@ -1,5 +1,5 @@
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, $location) {
+.controller('histogram', function($scope, $rootScope) {
 
   // Set and populate defaults
   var _d = {
@@ -14,14 +14,11 @@ angular.module('kibana.histogram', [])
       ? _d[k] : $scope.panel[k];
   });
 
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query[0].query = query;
-      $scope.get_data();
-    });
-  }
-
   $scope.get_data = function() {
+    // Make sure we have everything for the request to complete
+    if(_.isUndefined($scope.panel.time))
+      return
+
     var request = $scope.ejs.Request().indices($scope.index);
     
     // Build the question part of the query
@@ -30,8 +27,8 @@ angular.module('kibana.histogram', [])
       queries.push($scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(v.query || '*'),
         ejs.RangeFilter(config.timefield)
-          .from($scope.from)
-          .to($scope.to)
+          .from($scope.panel.time.from)
+          .to($scope.panel.time.to)
           .cache(false))
       )
     });
@@ -53,15 +50,14 @@ angular.module('kibana.histogram', [])
     results.then(function(results) {
       $scope.hits = results.hits.total;
       // Null values at each end of the time range make sure we see entire range
-
       $scope.data = [];
       _.each(results.facets, function(v, k) {
         var series = {};
-        var data = [[$scope.from.getTime(), null]];
+        var data = [[$scope.panel.time.from.getTime(), null]];
         _.each(v.entries, function(v, k) {
           data.push([v['time'],v['count']])
         });
-        data.push([$scope.to.getTime(), null])
+        data.push([$scope.panel.time.to.getTime(), null])
         series.data = {
           label: $scope.panel.query[k].label, 
           data: data, 
@@ -73,13 +69,22 @@ angular.module('kibana.histogram', [])
     });
   }
 
-  $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to]) 
-  }, function(){
-    $scope.panel.interval = secondsToHms(
-      calculate_interval($scope.from,$scope.to,50,0)/1000),
-    $scope.get_data();
-  });
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query[0].query = query;
+      $scope.get_data();
+    });
+    $scope.$on($scope.panel.group+"-time", function(event, time) {
+      $scope.panel.time = time;
+      $scope.panel.interval = secondsToHms(
+        calculate_interval(time.from,time.to,50,0)/1000),
+      $scope.get_data();
+    });
+  }
+
+  // Now that we're all setup, request the time from our group
+  $rootScope.$broadcast($scope.panel.group+"-get_time")
+
 
 })
 .directive('histogram', function() {

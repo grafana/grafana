@@ -2,7 +2,7 @@ labjs = labjs.script("common/lib/panels/jquery.flot.js")
   .script("common/lib/panels/jquery.flot.pie.js")
 
 angular.module('kibana.pie', [])
-.controller('pie', function($scope, $location) {
+.controller('pie', function($scope, $rootScope) {
 
   // Set and populate defaults
   var _d = {
@@ -26,6 +26,9 @@ angular.module('kibana.pie', [])
   }
 
   $scope.get_data = function() {
+    if(_.isUndefined($scope.panel.time))
+      return
+    
     var request = $scope.ejs.Request().indices($scope.index);
 
     // If we have an array, use query facet
@@ -36,8 +39,8 @@ angular.module('kibana.pie', [])
         queries.push(ejs.FilteredQuery(
           ejs.QueryStringQuery(v.query || '*'),
           ejs.RangeFilter(config.timefield)
-            .from($scope.from)
-            .to($scope.to)
+            .from($scope.panel.time.from)
+            .to($scope.panel.time.to)
             .cache(false))
         )
       });
@@ -74,8 +77,8 @@ angular.module('kibana.pie', [])
             ejs.FilteredQuery(
               ejs.QueryStringQuery($scope.panel.query.query || '*'),
               ejs.RangeFilter(config.timefield)
-                .from($scope.from)
-                .to($scope.to)
+                .from($scope.panel.time.from)
+                .to($scope.panel.time.to)
                 .cache(false)
               )))).size(0)
         .doSearch();
@@ -100,11 +103,19 @@ angular.module('kibana.pie', [])
     }
   }
 
-  $scope.$watch(function() { 
-    return angular.toJson([$scope.from, $scope.to]) 
-  }, function(){
-    $scope.get_data();
-  });
+  if (!(_.isUndefined($scope.panel.group))) {
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query.query = query;
+      $scope.get_data();
+    });
+    $scope.$on($scope.panel.group+"-time", function(event, time) {
+      $scope.panel.time = time;
+      $scope.get_data();
+    });
+  }
+
+  // Now that we're all setup, request the time from our group
+  $rootScope.$broadcast($scope.panel.group+"-get_time")
 
 })
 .directive('pie', function() {

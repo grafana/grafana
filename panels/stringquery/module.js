@@ -3,6 +3,7 @@ angular.module('kibana.stringquery', [])
 
   // Set and populate defaults
   var _d = {
+    label   : "Search",
     query   : "*",
     size    : 100,
     sort    : [config.timefield,'desc'],
