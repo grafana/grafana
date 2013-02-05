@@ -1,16 +1,30 @@
 angular.module('kibana.table', [])
 .controller('table', function($scope, $rootScope, $location) {
 
+  var _id = _.uniqueId();
+
   // Set and populate defaults
   var _d = {
     query   : "*",
     size    : 100,
-    sort    : [config.timefield,'desc'],
+    sort    : ['@timestamp','desc'],
+    group   : "default",
   }
-  _.each(_d, function(v, k) {
-    $scope.panel[k] = _.isUndefined($scope.panel[k]) 
-      ? _d[k] : $scope.panel[k];
-  });
+  _.defaults($scope.panel,_d)
+
+  $scope.init = function () {
+    $scope.$on(_id+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+    $scope.$watch(function() {
+      return angular.toJson($scope.panel.sort)
+    }, function(){$scope.get_data()});
+    // Now that we're all setup, request the time from our group
+    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
+  }
 
   $scope.toggle_sort = function() {
     $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
@@ -18,10 +32,10 @@ angular.module('kibana.table', [])
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
       return
-    
-    var request = $scope.ejs.Request().indices($scope.index);
+
+    var request = $scope.ejs.Request().indices($scope.panel.index);
 
     var results = request
       .query(ejs.FilteredQuery(
@@ -58,22 +72,12 @@ angular.module('kibana.table', [])
     });
   }
 
-  $scope.$watch(function() {
-    return angular.toJson($scope.panel.sort)
-  }, function(){$scope.get_data()});
-
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query = query;
-      $scope.get_data();
-    });
-    $scope.$on($scope.panel.group+"-time", function(event, time) {
-      $scope.panel.time = time;
-      $scope.get_data();
-    });
+  function set_time(time) {
+    $scope.panel.time = time;
+    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.get_data();
   }
 
-  // Now that we're all setup, request the time from our group
-  $rootScope.$broadcast($scope.panel.group+"-get_time")
+  $scope.init();
 
 })

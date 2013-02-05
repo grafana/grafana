@@ -8,6 +8,8 @@ angular.module('kibana.controllers', [])
 
   $scope.config = config;
   $scope.dashboards = dashboards
+
+  /*
   $scope.timespan = config.timespan
   $scope.time = {
     from : time_ago($scope.timespan),
@@ -46,6 +48,7 @@ angular.module('kibana.controllers', [])
       $scope.index = p.join();
     });
   });
+  */
 
   // point to your ElasticSearch server
   var ejs = $scope.ejs = ejsResource(config.elasticsearch);  

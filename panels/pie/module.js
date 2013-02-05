@@ -4,6 +4,8 @@ labjs = labjs.script("common/lib/panels/jquery.flot.js")
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, $rootScope) {
 
+  var _id = _.uniqueId();
+
   // Set and populate defaults
   var _d = {
     query   : "*",
@@ -12,24 +14,29 @@ angular.module('kibana.pie', [])
     donut   : false,
     tilt    : false,
     legend  : true,
+    group   : "default"
   }
-  _.each(_d, function(v, k) {
-    $scope.panel[k] = _.isUndefined($scope.panel[k]) 
-      ? _d[k] : $scope.panel[k];
-  });
+  _.defaults($scope.panel,_d)
 
-  if (!(_.isUndefined($scope.panel.group)) && !(_.isArray($scope.panel.query))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query.query = query;
-      $scope.get_data();
-    });
+  $scope.init = function() {
+    $scope.$on(_id+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
+    if(!(_.isArray($scope.panel.query))) {
+      $scope.$on($scope.panel.group+"-query", function(event, query) {
+        $scope.panel.query.query = query;
+        $scope.get_data();
+      });
+    }
+    // Now that we're all setup, request the time from our group
+    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
   }
 
   $scope.get_data = function() {
-    if(_.isUndefined($scope.panel.time))
+    // Make sure we have everything for the request to complete
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
       return
-    
-    var request = $scope.ejs.Request().indices($scope.index);
+
+    var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // If we have an array, use query facet
     if(_.isArray($scope.panel.query)) {
@@ -103,19 +110,14 @@ angular.module('kibana.pie', [])
     }
   }
 
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query.query = query;
-      $scope.get_data();
-    });
-    $scope.$on($scope.panel.group+"-time", function(event, time) {
-      $scope.panel.time = time;
-      $scope.get_data();
-    });
+  function set_time(time) {
+    $scope.panel.time = time;
+    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.get_data();
   }
 
-  // Now that we're all setup, request the time from our group
-  $rootScope.$broadcast($scope.panel.group+"-get_time")
+  // Ready, init
+  $scope.init()
 
 })
 .directive('pie', function() {

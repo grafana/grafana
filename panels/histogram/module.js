@@ -1,6 +1,8 @@
 angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, $rootScope) {
 
+  var _id = _.uniqueId();
+
   // Set and populate defaults
   var _d = {
     query   : "*",
@@ -8,25 +10,34 @@ angular.module('kibana.histogram', [])
     color   : "#27508C",
     show    : ['bars'],
     fill    : false,
+    group   : "default",
   }
-  _.each(_d, function(v, k) {
-    $scope.panel[k] = _.isUndefined($scope.panel[k]) 
-      ? _d[k] : $scope.panel[k];
-  });
+  _.defaults($scope.panel,_d)
+
+  $scope.init = function() {
+    $scope.$on(_id+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query[0].query = query;
+      $scope.get_data();
+    });
+    // Now that we're all setup, request the time from our group
+    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
+  }
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
       return
 
-    var request = $scope.ejs.Request().indices($scope.index);
+    var request = $scope.ejs.Request().indices($scope.panel.index);
     
     // Build the question part of the query
     var queries = [];
     _.each($scope.panel.query, function(v) {
       queries.push($scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(v.query || '*'),
-        ejs.RangeFilter(config.timefield)
+        ejs.RangeFilter($scope.panel.time.field)
           .from($scope.panel.time.from)
           .to($scope.panel.time.to)
           .cache(false))
@@ -37,7 +48,7 @@ angular.module('kibana.histogram', [])
     _.each(queries, function(v) {
       request = request
         .facet($scope.ejs.DateHistogramFacet(_.indexOf(queries,v))
-          .field(config.timefield)
+          .field($scope.panel.time.field)
           .interval($scope.panel.interval)
           .facetFilter($scope.ejs.QueryFilter(v))
         ).size(0)
@@ -49,19 +60,20 @@ angular.module('kibana.histogram', [])
     // Populate scope when we have results
     results.then(function(results) {
       $scope.hits = results.hits.total;
-      // Null values at each end of the time range make sure we see entire range
       $scope.data = [];
       _.each(results.facets, function(v, k) {
-        var series = {};
+        // Null values at each end of the time range ensure we see entire range
         var data = [[$scope.panel.time.from.getTime(), null]];
         _.each(v.entries, function(v, k) {
           data.push([v['time'],v['count']])
         });
         data.push([$scope.panel.time.to.getTime(), null])
-        series.data = {
+        
+        var series = { data: {
           label: $scope.panel.query[k].label, 
-          data: data, 
-        };
+          data: data,
+        }};
+
         if (!(_.isUndefined($scope.panel.query[k].color)))
           series.data.color = $scope.panel.query[k].color;
         $scope.data.push(series.data)
@@ -69,22 +81,16 @@ angular.module('kibana.histogram', [])
     });
   }
 
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query[0].query = query;
-      $scope.get_data();
-    });
-    $scope.$on($scope.panel.group+"-time", function(event, time) {
-      $scope.panel.time = time;
-      $scope.panel.interval = secondsToHms(
-        calculate_interval(time.from,time.to,50,0)/1000),
-      $scope.get_data();
-    });
+  function set_time(time) {
+    $scope.panel.time = time;
+    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.panel.interval = secondsToHms(
+      calculate_interval(time.from,time.to,50,0)/1000),
+    $scope.get_data();
   }
 
-  // Now that we're all setup, request the time from our group
-  $rootScope.$broadcast($scope.panel.group+"-get_time")
-
+  // Ready, init
+  $scope.init();
 
 })
 .directive('histogram', function() {

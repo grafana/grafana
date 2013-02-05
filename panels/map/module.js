@@ -1,25 +1,36 @@
 angular.module('kibana.map', [])
 .controller('map', function($scope, $rootScope) {
 
+  var _id = _.uniqueId();
+
   // Set and populate defaults
   var _d = {
     query   : "*",
     map     : "world",
     colors  : ['#C8EEFF', '#0071A4'],
     size    : 100,
-    exclude : []
+    exclude : [],
+    group   : "default",
   }
-  _.each(_d, function(v, k) {
-    $scope.panel[k] = _.isUndefined($scope.panel[k]) 
-      ? _d[k] : $scope.panel[k];
-  });
+  _.defaults($scope.panel,_d)
+
+  $scope.init = function() {
+    $scope.$on(_id+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
+    $scope.$on($scope.panel.group+"-query", function(event, query) {
+      $scope.panel.query = query;
+      $scope.get_data();
+    });
+    // Now that we're all setup, request the time from our group
+    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
+  }
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
       return
 
-    var request = $scope.ejs.Request().indices($scope.index);
+    var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // Then the insert into facet and make the request
     var results = request
@@ -47,19 +58,13 @@ angular.module('kibana.map', [])
     });
   }
 
-  if (!(_.isUndefined($scope.panel.group))) {
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
-      $scope.panel.query = query;
-      $scope.get_data();
-    });
-    $scope.$on($scope.panel.group+"-time", function(event, time) {
-      $scope.panel.time = time;
-      $scope.get_data();
-    });
+  function set_time(time) {
+    $scope.panel.time = time;
+    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.get_data();
   }
 
-  // Now that we're all setup, request the time from our group
-  $rootScope.$broadcast($scope.panel.group+"-get_time")
+  $scope.init()
 
 })
 .directive('map', function() {
@@ -81,7 +86,6 @@ angular.module('kibana.map', [])
       });
 
       function render_panel(scope,elem,attrs) {
-
         // Using LABjs, wait until all scripts are loaded before rendering panel
         var scripts = $LAB.script("common/lib/panels/jquery.jvectormap.min.js")
           .script("common/lib/panels/map."+scope.panel.map+".js")

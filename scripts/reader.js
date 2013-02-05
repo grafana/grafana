@@ -21,7 +21,7 @@ fs.readFile('shakespeare.json', 'utf8', function (err,data) {
   }
 
   function print_obj(o) {
-    var randomnumber=Math.floor(Math.random()*28800000)
+    var randomnumber=Math.floor(Math.random()*57600000)
     var command = {index:{_index: "shakespeare", _type: "line", _id: i}};
     o['@timestamp'] = new Date((new Date()).getTime() -9000000 + randomnumber);
     o.geo = [getRandomInRange(-90, 90, 3),getRandomInRange(-180, 180, 3)]

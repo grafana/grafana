@@ -9,8 +9,6 @@ var dashboards =
         {
           type    : "stringquery",
           span    : 12,
-          group   : "main",
-          query   : "wine"
         }
       ]
     },
@@ -23,18 +21,18 @@ var dashboards =
           type    : "timepicker",
           span    : 5,
           mode    : 'relative',
+          index   : "\"shakespeare\"",
           refresh : {
             enable  : false,
             interval: 30,
             min     : 10
           },
-          timespan: '1h',
-          group   : "main"
+          timespan : '1h',
+          timefield: '@timestamp',
         },
         {
           type    : "sort",
           span    : 4,
-          group   : "main"
         }
       ]
     },
@@ -47,14 +45,13 @@ var dashboards =
           title   : "Monkey Shakespeare Lines",
           type    : "histogram",
           span    : 6,
-          show    : ['lines','points'],
-          fill    : 0,
+          show    : ['lines'],
+          fill    : 0.3,
           query   : [
             { label : "Query", query : "*", color: '#86B32D' },
             { label : "Hamlet", query : "play_name:Hamlet" },
             { label : "Macbeth", query : "play_name:macbeth" },
           ],
-          group   : "main"
         },
         {
           title   : "Monkey Typists Worldwide",
@@ -64,8 +61,6 @@ var dashboards =
           span    : 6,
           size    : 500,
           query   : "*",
-          group   : "main"
-
         }
       ]
     },
@@ -83,7 +78,6 @@ var dashboards =
           field   : 'country',
           //query   : { query: "*", field: "country"}
           query   : { field : "play_name", query : "*" },
-          group   : "main"
         },
         {
           title   : "Newest Lines",
@@ -91,7 +85,6 @@ var dashboards =
           span    : 8,
           query   : "*",
           fields  : ['@timestamp','play_name','speaker','text_entry'],
-          group   : "main"
         }
       ]
     }

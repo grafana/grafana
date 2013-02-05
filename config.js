@@ -28,7 +28,6 @@ var config = new Settings(
     elasticsearch:  'http://localhost:9200',
     timeformat:     'mm/dd HH:MM:ss',
     timefield:      '@timestamp', 
-    //indexpattern:  '"logstash-"yyyy.mm.dd',
     indexpattern:   '"shakespeare"', 
     modules:        ['histogram','map','pie','table','stringquery','sort',
                     'timepicker'], 
