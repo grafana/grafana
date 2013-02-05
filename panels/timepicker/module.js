@@ -43,6 +43,9 @@ angular.module('kibana.timepicker', [])
   }
   _.defaults($scope.panel,_d)
 
+  var _groups = _.isArray($scope.panel.group) ? 
+    $scope.panel.group : [$scope.panel.group];
+
   $scope.init = function() {
     // Private refresh interval that we can use for view display without causing
     // unnecessary refreshes during changes
@@ -74,11 +77,13 @@ angular.module('kibana.timepicker', [])
 
     // In the case that a panel is not ready to receive a time event, it may
     // request one be sent by broadcasting a 'get_time' with its _id to its group
-    $scope.$on($scope.panel.group+"-get_time", function(event,id) {
-      console.log('time request: '+id)
-      $rootScope.$broadcast(id+"-time", $scope.time)
+    // This panel can handle multiple groups
+    _.each(_groups,function(group){
+      $scope.$on(group+"-get_time", function(event,id) {
+        $rootScope.$broadcast(id+"-time", $scope.time)
+      });
     });
-        
+
     $scope.$watch('panel.refresh.enable', function() {$scope.refresh()});
     $scope.$watch('panel.refresh.interval', function() {
       $timeout(function(){
@@ -170,7 +175,9 @@ angular.module('kibana.timepicker', [])
     indices($scope.time.from,$scope.time.to).then(function (p) {
       $scope.time.index = p.join();
       // Broadcast time
-      $rootScope.$broadcast($scope.panel.group+"-time", $scope.time)
+      _.each(_groups,function(group){
+        $rootScope.$broadcast(group+"-time", $scope.time)
+      });
     });
 
     // Update panel's string representation of the time object

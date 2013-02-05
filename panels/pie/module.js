@@ -14,6 +14,7 @@ angular.module('kibana.pie', [])
     donut   : false,
     tilt    : false,
     legend  : true,
+    labels  : true,
     group   : "default"
   }
   _.defaults($scope.panel,_d)
@@ -152,7 +153,7 @@ angular.module('kibana.pie', [])
                 label: 'The Rest'
               },
               label: { 
-                show: true,
+                show: scope.panel.labels,
                 radius: 2/3,
                 formatter: function(label, series){
                   return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
@@ -163,6 +164,7 @@ angular.module('kibana.pie', [])
             }
           },
           //grid: { hoverable: true, clickable: true },
+          grid:   { hoverable: true, clickable: true },
           legend: { show: scope.panel.legend }
         };
 
@@ -170,7 +172,31 @@ angular.module('kibana.pie', [])
         if(elem.is(":visible")){
           $.plot(elem, scope.data, pie);
         }
-        //elem.show();
+        
+        function piett(x, y, contents) {
+          var tooltip = $('#pie-tooltip').length ? 
+            $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+          //var tooltip = $('#pie-tooltip')
+          tooltip.text(contents).css({
+            position: 'absolute',
+            top     : y + 5,
+            left    : x + 5,
+            color   : "#FFF",
+            border  : '1px solid #FFF',
+            padding : '2px',
+            'font-size': '8pt',
+            'background-color': '#000',
+          }).appendTo("body");
+        }
+
+        elem.bind("plothover", function (event, pos, item) {
+          if (item) {
+            var percent = parseFloat(item.series.percent).toFixed(2) + "%";
+            piett(pos.pageX, pos.pageY, percent + " " + item.series.label);
+          } else {
+            $("#pie-tooltip").remove();
+          }
+        });
       }
     }
   };

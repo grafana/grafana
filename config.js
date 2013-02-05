@@ -30,7 +30,7 @@ var config = new Settings(
     timefield:      '@timestamp', 
     indexpattern:   '"shakespeare"', 
     modules:        ['histogram','map','pie','table','stringquery','sort',
-                    'timepicker'], 
+                    'timepicker','text'], 
 
     defaultfields:  ['line_text'],
     perpage:        50,
