@@ -191,7 +191,7 @@ angular.module('kibana.pie', [])
 
         elem.bind("plothover", function (event, pos, item) {
           if (item) {
-            var percent = parseFloat(item.series.percent).toFixed(2) + "%";
+            var percent = parseFloat(item.series.percent).toFixed(1) + "%";
             piett(pos.pageX, pos.pageY, percent + " " + item.series.label);
           } else {
             $("#pie-tooltip").remove();

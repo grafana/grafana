@@ -164,6 +164,33 @@ angular.module('kibana.histogram', [])
             }
           })
         })
+
+        function tt(x, y, contents) {
+          var tooltip = $('#pie-tooltip').length ? 
+            $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+          //var tooltip = $('#pie-tooltip')
+          tooltip.text(contents).css({
+            position: 'absolute',
+            top     : y + 5,
+            left    : x + 5,
+            color   : "#FFF",
+            border  : '1px solid #FFF',
+            padding : '2px',
+            'font-size': '8pt',
+            'background-color': '#000',
+          }).appendTo("body");
+        }
+
+        elem.bind("plothover", function (event, pos, item) {
+          if (item) {
+            var percent = parseFloat(item.series.percent).toFixed(1) + "%";
+            tt(pos.pageX, pos.pageY,
+              item.datapoint[1].toFixed(1) + " @ " + 
+              new Date(item.datapoint[0]).format(config.timeformat));
+          } else {
+            $("#pie-tooltip").remove();
+          }
+        });
       }
     }
   };

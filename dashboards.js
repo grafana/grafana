@@ -41,7 +41,8 @@ var dashboards =
           span: 3,
           content : "Panels can send events to other panels. In the case of" +
             " the sort panel, it also receives a field event that it uses" +
-            " to populate its list of fields from the table panel"
+            " to populate its list of fields from the table panel. The time " +
+            " selector is a member of two groups."
         },
       ]
     },
@@ -55,10 +56,11 @@ var dashboards =
           title   : "About",
           fontsize : "85%",
           span: 2,
-          content : "These pies demonstrate configurable binding. They are" +
+          content : "These donut charts demonstrate configurable binding." + 
+            " They exist in a different group from the other panels and are" +
             " bound only to the time selector, not to the query input. Thus" +
             " they will change when you select a new time range, but not if" +
-            " you enter a search. Try hovering over a pie slice.",
+            " you enter a search.",
         },
         {
           title   : "Hamlet",
@@ -175,8 +177,8 @@ var dashboards =
           title   : "Monkey Shakespeare Lines",
           type    : "histogram",
           span    : 5,
-          show    : ['lines','stack'],
-          fill    : 0.3,
+          show    : ['bars','stack'],
+          fill    : 1,
           query   : [
             { label : "Query Hits", query : "*", color: '#86B32D' },
             { label : "Hamlet", query : "play_name:Hamlet" },
