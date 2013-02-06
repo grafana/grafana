@@ -39,8 +39,7 @@ angular.module('kibana.histogram', [])
         ejs.QueryStringQuery(v.query || '*'),
         ejs.RangeFilter($scope.panel.time.field)
           .from($scope.panel.time.from)
-          .to($scope.panel.time.to)
-          .cache(false))
+          .to($scope.panel.time.to))
       )
     });
 

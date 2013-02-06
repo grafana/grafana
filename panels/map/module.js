@@ -44,7 +44,6 @@ angular.module('kibana.map', [])
             ejs.RangeFilter(config.timefield)
               .from($scope.panel.time.from)
               .to($scope.panel.time.to)
-              .cache(false)
             )))).size(0)
       .doSearch();
 

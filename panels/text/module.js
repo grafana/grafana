@@ -7,7 +7,7 @@ angular.module('kibana.text', [])
   var _d = {
     group   : "default",
     content : "",
-    'fontsize': "100%"
+    style: {},
   }
   _.defaults($scope.panel,_d);
 

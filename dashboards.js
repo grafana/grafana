@@ -9,17 +9,18 @@ var dashboards =
         {
           type    : "stringquery",
           span    : 12,
+          group   : ['default','counter','histogram']
         }
       ]
     },
     {
-      title:  "Options",
-      collapse: true,  
-      height: "30px",
+      title:  "Status",
+      collapse: false,  
+      height: "100px",
       panels: [
         {
           type    : "timepicker",
-          span    : 5,
+          span    : 4,
           mode    : 'relative',
           index   : "\"shakespeare\"",
           refresh : {
@@ -33,28 +34,73 @@ var dashboards =
         },
         {
           type    : "sort",
-          span    : 4,
+          span    : 3,
+        },
+        {
+          title   : "Histogram Timer",
+          type    : "timepicker",
+          span    : 0,
+          mode    : 'relative',
+          timespan : '5m',
+          index   : "\"shakespeare\"",
+          refresh : {
+            enable  : true,
+            interval: 30,
+            min     : 10
+          },
+          timefield: '@timestamp',
+          group: 'histogram',
+        },
+        {
+          type    : "histogram",
+          span    : 3,
+          show    : ['lines'],
+          fill    : 0.3,
+          group   : "histogram",
+          query   : [
+            { label : "Event Rate", query : "*", color: '#FF7400' }
+          ],
+        },
+        {
+          title   : "Counter Timer",
+          type    : "timepicker",
+          span    : 0,
+          mode    : 'relative',
+          timespan : '30d',
+          index   : "\"shakespeare\"",
+          refresh : {
+            enable  : true,
+            interval: 30,
+            min     : 10
+          },
+          timefield: '@timestamp',
+          group: 'counter',
+        },
+        {
+          type    : "hits",
+          title   : "Lines Completed",
+          span    : 2,
+          group   : 'counter',
         },
         {
           type    : "text",
-          fontsize : "85%",
-          span: 3,
-          content : "Panels can send events to other panels. In the case of" +
-            " the sort panel, it also receives a field event that it uses" +
-            " to populate its list of fields from the table panel. The time " +
-            " selector is a member of two groups."
+          style   : {"font-size":"85%"},
+          span: 0,
+          content : "Rows are collapsable, and input panels can send event to" +
+            " multiple groups. The Search panel is part of one group, while" +
+            " the time panel is part of two"
         },
       ]
     },
     {
       title:  "Top 3 Characters",
-      collapse: false,
-      height: "160px",
+      collapse: true,
+      height: "150px",
       panels: [
         {
           type    : "text",
           title   : "About",
-          fontsize : "85%",
+          style   : {"font-size":"85%"},
           span: 2,
           content : "These donut charts demonstrate configurable binding." + 
             " They exist in a different group from the other panels and are" +
@@ -136,14 +182,15 @@ var dashboards =
     },
     {
       title:  "Lines of Plays",
-      height: "250px",
-      collapse: true,
+      height: "210px",
+      collapse: false,
       panels: [
         {
           title   : "Plays",
           type    : "pie",
           span    : 4,
           size    : 8,
+          labels  : false,
           colors  : ['#BF3030','#1D7373','#86B32D','#A60000','#006363','#679B00'],
           field   : 'country',
           //query   : { query: "*", field: "country"}
@@ -152,10 +199,10 @@ var dashboards =
         {
           type    : "text",
           title   : "About",
-          fontsize : "85%",
-          span: 2,
+          style   : {"font-size":"85%"},
+          span:   0,
           content : "The table panel can be sorted via a sort panel, or by" +
-            " clicking the table header. Unlike the pie charts above, this" +
+            " clicking the table header. Unlike the donut charts above, this" +
             " pie is bound to the query input. Try searching for a speaker" +
             " (eg, FALSTAFF) to see a break down of the plays they appear in.", 
         },
@@ -164,14 +211,20 @@ var dashboards =
           type    : "table",
           span    : 6,
           query   : "*",
+          style   : {"font-size":"85%"},
           fields  : ['@timestamp','play_name','speaker','text_entry'],
-        }
+        },
+        {
+          type    : "fields",
+          title   : "Fields",
+          span    : 2,
+        },
       ]
     },
     {
       title:  "Monkey Monitoring",
       collapse: false,
-      height: "275px",
+      height: "225px",
       panels: [
         {
           title   : "Monkey Shakespeare Lines",
@@ -197,7 +250,7 @@ var dashboards =
         {
           type    : "text",
           title   : "About",
-          fontsize : "85%",
+          style   : {"font-size":"85%"},
           span: 2,
           content : "Histograms can show multiple queries. In the case that a" +
             " multi-query histogram is bound to a query input, only the first" +

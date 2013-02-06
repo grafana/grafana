@@ -48,8 +48,7 @@ angular.module('kibana.pie', [])
           ejs.QueryStringQuery(v.query || '*'),
           ejs.RangeFilter(config.timefield)
             .from($scope.panel.time.from)
-            .to($scope.panel.time.to)
-            .cache(false))
+            .to($scope.panel.time.to))
         )
       });
 
@@ -176,11 +175,10 @@ angular.module('kibana.pie', [])
         function piett(x, y, contents) {
           var tooltip = $('#pie-tooltip').length ? 
             $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-          //var tooltip = $('#pie-tooltip')
           tooltip.text(contents).css({
             position: 'absolute',
-            top     : y + 5,
-            left    : x + 5,
+            top     : y + 10,
+            left    : x + 10,
             color   : "#FFF",
             border  : '1px solid #FFF',
             padding : '2px',
