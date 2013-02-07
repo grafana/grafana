@@ -1,5 +1,5 @@
 <div ng-controller='table'>
-  <h4>{{panel.title}}</h4>
+  <h4>{{panel.title}}  <small class="pointer" bs-modal="'panels/table/editor.html'" ng-hide="!panel.editable"><i class="icon-edit"></i></small></h4>
   <div style="height:{{row.height}};overflow-y:auto;overflow-x:auto"> 
     <table class="table table-condensed table-striped" ng-style="panel.style">
       <thead>

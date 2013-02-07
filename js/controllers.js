@@ -3,7 +3,7 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, ejsResource) {
+.controller('DashCtrl', function($scope, $rootScope, ejsResource) {
 
   $scope.config = config;
   $scope.dashboards = dashboards
@@ -14,7 +14,7 @@ angular.module('kibana.controllers', [])
     $scope.$broadcast('toggle_row',row)
     row.collapse = row.collapse ? false : true;
   }
-  
+
 });
 
 

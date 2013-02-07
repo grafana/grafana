@@ -52,3 +52,10 @@
 .tiny {
   font-size: 50%;
 }
+
+.remove:hover {
+  color: #A60000;
+  text-decoration: line-through;
+}
+
+.typeahead { z-index: 1051; }

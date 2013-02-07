@@ -1,5 +1,5 @@
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, $rootScope) {
+.controller('histogram', function($scope, eventBus) {
 
   var _id = _.uniqueId();
 
@@ -15,14 +15,13 @@ angular.module('kibana.histogram', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    $scope.$on(_id+"-time", function(event,time){set_time(time)});
-    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
-    $scope.$on($scope.panel.group+"-query", function(event, query) {
+    eventBus.register($scope,'time', function(event,time){set_time(time)});
+    eventBus.register($scope,'query', function(event, query) {
       $scope.panel.query[0].query = query;
       $scope.get_data();
     });
     // Now that we're all setup, request the time from our group
-    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
+    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
 
   $scope.get_data = function() {

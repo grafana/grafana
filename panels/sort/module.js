@@ -1,5 +1,5 @@
 angular.module('kibana.sort', [])
-.controller('sort', function($scope, $rootScope) {
+.controller('sort', function($scope, eventBus) {
 
   var _id = _.uniqueId();
 
@@ -15,19 +15,21 @@ angular.module('kibana.sort', [])
 
   $scope.init = function() {
     $scope.fields = [];
-    $scope.$on($scope.panel.group+"-fields", function(event, fields) {
+    eventBus.register($scope,'fields',function(event, fields) {
       $scope.panel.sort = _.clone(fields.sort);
       $scope.fields     = _.union(fields.all,$scope.fields);
     });
   }
 
   $scope.set_sort = function() {
-    $rootScope.$broadcast($scope.panel.group+"-sort",$scope.panel.sort)
+    console.log($scope)
+    eventBus.broadcast($scope.$id,$scope.panel.group,"sort",$scope.panel.sort)
   }
 
   $scope.toggle_sort = function() {
     $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
-    $rootScope.$broadcast($scope.panel.group+"-sort",$scope.panel.sort)
+    $scope.set_sort();
   }
+
   $scope.init();
 })

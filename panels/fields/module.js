@@ -1,5 +1,5 @@
 angular.module('kibana.fields', [])
-.controller('fields', function($scope, $rootScope) {
+.controller('fields', function($scope, eventBus) {
 
   var _id = _.uniqueId();
 
@@ -12,7 +12,7 @@ angular.module('kibana.fields', [])
 
   $scope.init = function() {
     $scope.fields = [];
-    $scope.$on($scope.panel.group+"-fields", function(event, fields) {
+    eventBus.register($scope,'fields', function(event, fields) {
       $scope.panel.sort = _.clone(fields.sort);
       $scope.fields     = _.union(fields.all,$scope.fields);
       $scope.active     = _.clone(fields.active);
@@ -28,7 +28,8 @@ angular.module('kibana.fields', [])
       $scope.active = _.without($scope.active,field)
     else
       $scope.active.push(field)
-    $rootScope.$broadcast($scope.panel.group+"-selected_fields",$scope.active)
+    
+    eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
   }
 
   $scope.is_active = function(field) {

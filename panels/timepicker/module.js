@@ -24,7 +24,7 @@ a pattern
 
 */
 angular.module('kibana.timepicker', [])
-.controller('timepicker', function($scope, $rootScope, $timeout, $http) {
+.controller('timepicker', function($scope, eventBus, $timeout, $http) {
 
   var _id = _.uniqueId();
 
@@ -78,10 +78,8 @@ angular.module('kibana.timepicker', [])
     // In the case that a panel is not ready to receive a time event, it may
     // request one be sent by broadcasting a 'get_time' with its _id to its group
     // This panel can handle multiple groups
-    _.each(_groups,function(group){
-      $scope.$on(group+"-get_time", function(event,id) {
-        $rootScope.$broadcast(id+"-time", $scope.time)
-      });
+    eventBus.register($scope,"get_time", function(event,id) {
+      eventBus.broadcast($scope.$id,id,'time',$scope.time)
     });
 
     $scope.$watch('panel.refresh.enable', function() {$scope.refresh()});
@@ -175,9 +173,7 @@ angular.module('kibana.timepicker', [])
     indices($scope.time.from,$scope.time.to).then(function (p) {
       $scope.time.index = p.join();
       // Broadcast time
-      _.each(_groups,function(group){
-        $rootScope.$broadcast(group+"-time", $scope.time)
-      });
+      eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
     });
 
     // Update panel's string representation of the time object

@@ -12,12 +12,34 @@ angular.module('kibana.directives', [])
           return (attrs.panel && scope.index) ? true : false;
         }, function (ready) {
           if (ready) {
-            element.html($compile("<div "+attrs.panel+" params={{panel}} style='height:{{row.height}}'></div>")(scope))
+            element.html($compile("<div "+attrs.panel+" params={{panel}} "+
+              "style='height:{{row.height}}'></div>")(scope))
           }
         });
       }
     }
   }
+})
+.directive('arrayJoin', function() {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function(scope, element, attr, ngModel) {
+
+      function split_array(text) {
+        return (text || '').split(',');
+      }
+
+      function join_array(text) {
+        if(_.isArray(text))  
+          return (text || '').join(',');
+        else
+          return text
+      }
+      ngModel.$parsers.push(split_array);
+      ngModel.$formatters.push(join_array);
+    }
+  };
 })
 .directive('upload', function(){
   return {

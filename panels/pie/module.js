@@ -2,7 +2,7 @@ labjs = labjs.script("common/lib/panels/jquery.flot.js")
   .script("common/lib/panels/jquery.flot.pie.js")
 
 angular.module('kibana.pie', [])
-.controller('pie', function($scope, $rootScope) {
+.controller('pie', function($scope, eventBus) {
 
   var _id = _.uniqueId();
 
@@ -20,16 +20,15 @@ angular.module('kibana.pie', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    $scope.$on(_id+"-time", function(event,time){set_time(time)});
-    $scope.$on($scope.panel.group+"-time", function(event,time){set_time(time)});
+    eventBus.register($scope,'time', function(event,time){set_time(time)});
     if(!(_.isArray($scope.panel.query))) {
-      $scope.$on($scope.panel.group+"-query", function(event, query) {
+      eventBus.register($scope,'query', function(event, query) {
         $scope.panel.query.query = query;
         $scope.get_data();
       });
     }
     // Now that we're all setup, request the time from our group
-    $rootScope.$broadcast($scope.panel.group+"-get_time",_id)
+    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
 
   $scope.get_data = function() {

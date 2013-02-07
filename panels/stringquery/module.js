@@ -1,5 +1,5 @@
 angular.module('kibana.stringquery', [])
-.controller('stringquery', function($scope, $rootScope) {
+.controller('stringquery', function($scope, eventBus) {
 
   var _id = _.uniqueId();
 
@@ -18,9 +18,7 @@ angular.module('kibana.stringquery', [])
 
   $scope.init = function() {
     $scope.send_query = function(query) {
-      _.each(_groups,function(group) {
-          $rootScope.$broadcast(group+"-query", query)
-      });
+      eventBus.broadcast($scope.$id,$scope.panel.group,'query',query)
     }    
   }
   $scope.init();

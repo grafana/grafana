@@ -45,7 +45,7 @@ var dashboards =
           index   : "\"shakespeare\"",
           refresh : {
             enable  : true,
-            interval: 30,
+            interval: 3,
             min     : 10
           },
           timefield: '@timestamp',
@@ -70,7 +70,7 @@ var dashboards =
           index   : "\"shakespeare\"",
           refresh : {
             enable  : true,
-            interval: 30,
+            interval: 3,
             min     : 10
           },
           timefield: '@timestamp',
@@ -208,6 +208,7 @@ var dashboards =
         },
         {
           title   : "Newest Lines",
+          editable: true,
           type    : "table",
           span    : 6,
           query   : "*",
@@ -221,6 +222,7 @@ var dashboards =
         },
       ]
     },
+    
     {
       title:  "Monkey Monitoring",
       collapse: false,
@@ -260,5 +262,6 @@ var dashboards =
         },
       ]
     }
+    
   ]
 };

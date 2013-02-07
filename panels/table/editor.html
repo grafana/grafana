@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+  <h3>{{panel.title}}</h3>
+</div>
+<div class="modal-body">
+  <h4>Panel Settings</h4>
+  <form class="form-inline">
+    <label>Span</label> <input type="number" class="input-mini" ng-model="panel.span"><br>
+    <label class="checkbox"> Editable <input type="checkbox" ng-model="panel.editable" ng-checked="panel.editable"></label>
+  </form>
+  <label>Group(s)</label><input array-join type="text" class="input-large" ng-model='panel.group'></input> <small>Comma seperated</small>
+  <div class="row-fluid">
+    
+    <div class="span4">
+      <form class="input-append">
+        <h4>Add field</h4>
+        <input bs-typeahead="all_fields" type="text" class="input-small" ng-model='newfield'>
+        <button class="btn" ng-click="toggle_field(newfield);newfield=''"><i class="icon-plus"></i></button>
+      </form>
+    </div>
+    <div class="span8">
+      <h4>Selected fields <small>Click to a field to remove it</small></h4>
+      <span ng-click="toggle_field(field)" ng-repeat="field in panel.fields" class="remove pointer">{{field}} </span>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn" ng-click="dismiss()">Close</button>
+  <button class="btn btn-primary" ng-click="dismiss()">Save changes</button>
+</div>
