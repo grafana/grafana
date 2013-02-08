@@ -33,6 +33,14 @@ angular.module('kibana.pie', [])
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
 
+
+  $scope.remove_query = function(q) {
+    if($scope.panel.mode !== 'query') 
+      return false;
+    $scope.panel.query = _.without($scope.panel.query,q);
+    $scope.get_data();
+  }
+
   $scope.add_query = function(label,query) {
     if($scope.panel.mode !== 'query') 
       return false;

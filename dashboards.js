@@ -193,8 +193,8 @@ var dashboards =
           labels  : false,
           colors  : ['#BF3030','#1D7373','#86B32D','#A60000','#006363','#679B00'],
           field   : 'country',
-          mode    : "query",
-          query   : { query:"falstaff" }
+          mode    : "terms",
+          query   : { query:"*", field:"play_name" }
         },
         {
           type    : "text",

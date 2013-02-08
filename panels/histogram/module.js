@@ -25,6 +25,7 @@ angular.module('kibana.histogram', [])
 
   $scope.remove_query = function(q) {
     $scope.panel.query = _.without($scope.panel.query,q);
+    $scope.get_data();
   }
 
   $scope.add_query = function(label,query) {

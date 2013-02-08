@@ -31,8 +31,6 @@
   </div>
   <div ng-switch-when="query">
     <div class="row-fluid">    
-      <div class="span1">
-      </div>
       <div class="span3">
         <form style="margin-bottom: 0px">
           <h6>Label</h6>
@@ -46,12 +44,11 @@
           <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery=''"><i class="icon-plus"></i></button>
         </form>
       </div>
+      <div class="span1">
+      </div>  
     </div>
     <div class="row-fluid" ng-repeat="q in panel.query">
-      <div class="span1">
-        <i class="icon-remove" ng-click="remove_query(q)"></i>
-      </div>    
-      <div class="span4">
+      <div class="span3">
         <form style="margin-bottom: 0px">
           <input type="text" style="width:70%" ng-model="q.label">
         </form>
@@ -62,6 +59,9 @@
           <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
         </form>
       </div>
+      <div class="span1">
+        <i class="icon-remove pointer" ng-click="remove_query(q)"></i>
+      </div>    
     </div>
   </div>
 </div>
