@@ -3,22 +3,26 @@
 'use strict';
 
 angular.module('kibana.directives', [])
-.directive('panel', function($compile) {
+.directive('kibanaPanel', function($compile) {
   return {
-    restrict: 'A',
-    compile: function(element, attrs) {
-      return function(scope, element, attrs) {
-        scope.$watch(function () {
-          return (attrs.panel && scope.index) ? true : false;
-        }, function (ready) {
-          if (ready) {
-            element.html($compile("<div "+attrs.panel+" params={{panel}} "+
-              "style='height:{{row.height}}'></div>")(scope))
-          }
-        });
-      }
+    restrict: 'E',
+    link: function(scope, elem, attrs) {
+      var template = '<span class="pointer editlink" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
+        '<i class="icon-edit"></i></span><h4>{{panel.title}}</h4>';
+      elem.prepend($compile(angular.element(template))(scope));
     }
-  }
+  };
+})
+.directive('panelEdit', function(){
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {
+          'panel': '=panel'
+        },
+        templateUrl: 'panels/table/editor.html',
+        //controller: 'ChildElement'
+    }
 })
 .directive('arrayJoin', function() {
   return {
@@ -72,46 +76,5 @@ angular.module('kibana.directives', [])
       }
     }
   }
-})
-.directive('datepicker', function(){
-  return {
-    restrict: 'A',
-    require: 'ngModel', 
-    link: function(scope, elem, attrs) {
-      elem.datepicker({
-        noDefault: false, // set this to true if you don't want the current date inserted if the value-attribute is empty
-        format: 'mm/dd/yyyy hh:ii:ss'
-      });
-    }
-  };
-})
-.directive('date', function(dateFilter) {
-  return {
-    require: 'ngModel',
-    link: function(scope, elm, attrs, ctrl) {
-
-      var dateFormat = attrs['date'] || 'yyyy-MM-dd HH:mm:ss';
-      var minDate = Date.parse(attrs['min']) || 0;
-      var maxDate = Date.parse(attrs['max']) || 9007199254740992;
-
-      ctrl.$parsers.unshift(function(viewValue) {
-        var parsedDateMilissec = Date.parse(viewValue);
-        if (parsedDateMilissec > 0) {
-          if (parsedDateMilissec >= minDate && parsedDateMilissec <= maxDate) {
-              ctrl.$setValidity('date', true);
-              return new Date(parsedDateMilissec);
-          }
-        }
-
-        // in all other cases it is invalid, return undefined (no model update)
-        ctrl.$setValidity('date', false);
-        return undefined;
-      });
-
-      ctrl.$formatters.unshift(function(modelValue) {
-        return dateFilter(modelValue, dateFormat);
-      });
-    }
-  };
 });
 

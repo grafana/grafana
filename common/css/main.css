@@ -17,7 +17,24 @@
 .panel-error {
   opacity: 0.9;
   position:absolute;
-  z-index: 99999;
+  z-index: 2000;
+}
+
+span.editlink {
+  position: absolute;
+  right: 5px;
+  z-index: 800;
+  display: none;
+}
+
+.panel:hover span.editlink {
+  display: block;
+  opacity: 0.3;
+}
+
+.panel span.editlink:hover {
+  display: block;
+  opacity: 1;
 }
 
 .pointer {
@@ -54,8 +71,7 @@
 }
 
 .remove:hover {
-  color: #A60000;
-  text-decoration: line-through;
+  background-color: #A60000;
 }
 
 .typeahead { z-index: 1051; }

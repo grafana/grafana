@@ -1,64 +1,63 @@
-<div ng-controller='timepicker' style="white-space: nowrap;">
-  <h4 ng-class="{'ng-cloak': !panel.title}">{{panel.title}}</h4>
-    <div class="row-fluid" ng-switch="panel.mode">
-      <div ng-switch-when="absolute">
-        <div class="span5">
-          <form class="nomargin">
-            <label><small>From</small></label>
-            <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
-            <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
-          </form>
-        </div>
-        <div class="span5" style="margin-left:10px">
-          <form class="nomargin">
-            <label style="margin-left:5px"><small>To (<a ng-click="to_now()">now</a>)</small></label>
-            <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.to.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
-            <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.to.time" bs-timepicker>
+<kibana-panel ng-controller='timepicker' style="white-space: nowrap;">
+  <div class="row-fluid" ng-switch="panel.mode">
+    <div ng-switch-when="absolute">
+      <div class="span5">
+        <form class="nomargin">
+          <label><small>From</small></label>
+          <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
+          <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
         </form>
-        </div>
-        <div class="span1">
-          <form class="nomargin">
-            <label><small><br></small></label>
-            <button class="btn" ng-click="time_apply()" ><i class="icon-check"></i></button>
-          </form>
-        </div>
       </div>
-      <div ng-switch-when="since">
-        <div class="span5">
-          <form class="nomargin">
-            <label><small>Since</small></label>
-            <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
-            <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
-          </form>
-        </div>
-        <div class="span1" style="margin-left:10px">
-          <form class="nomargin">
-            <label><small><br></small></label>
-            <button class="btn" ng-click="time_apply()" ><i class="icon-check"></i></button>
-          </form>
-        </div>
+      <div class="span5" style="margin-left:10px">
+        <form class="nomargin">
+          <label style="margin-left:5px"><small>To (<a ng-click="to_now()">now</a>)</small></label>
+          <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.to.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
+          <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.to.time" bs-timepicker>
+      </form>
       </div>
-      <div ng-switch-when="relative">
-        <div class="span11">
-          <form class="nomargin input-append">
-            <label><small>The last</small></label>
-            <button class="btn btn" ng-repeat='timespan in panel.time_options' ng-class="{'btn-success': (panel.timespan == timespan)}" ng-click="set_timespan(timespan)">{{timespan}}</button>
-            <!--<select ng-model="panel.sort[0]" ng-options="f for f in fields"></select>-->
-          </form>
-        </div>
+      <div class="span1">
+        <form class="nomargin">
+          <label><small><br></small></label>
+          <button class="btn" ng-click="time_apply()" ><i class="icon-check"></i></button>
+        </form>
       </div>
     </div>
-    <div class="row-fluid nomargin">
-      <div class="span12 small">
-        <a ng-click="set_mode('relative')" ng-class="{'strong': (panel.mode == 'relative')}">Relative</a> | 
-        <a ng-click="set_mode('absolute')" ng-class="{'strong': (panel.mode == 'absolute')}">Absolute</a> | 
-        <a ng-click="set_mode('since')"    ng-class="{'strong': (panel.mode == 'since')}">Since</a>
-        <span ng-hide="panel.mode == 'absolute'"> | 
-          <input type="checkbox" ng-model="panel.refresh.enable"> Auto-refresh 
-          <span ng-class="{'ng-cloak': !panel.refresh.enable}">
-            every <a data-title="<small>Auto-refresh Settings</small>" data-placement="bottom" bs-popover="'panels/timepicker/refreshctrl.html'">{{panel.refresh.interval}}s</a>.
-          </span>
+    <div ng-switch-when="since">
+      <div class="span5">
+        <form class="nomargin">
+          <label><small>Since</small></label>
+          <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>  
+          <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
+        </form>
+      </div>
+      <div class="span1" style="margin-left:10px">
+        <form class="nomargin">
+          <label><small><br></small></label>
+          <button class="btn" ng-click="time_apply()" ><i class="icon-check"></i></button>
+        </form>
+      </div>
+    </div>
+    <div ng-switch-when="relative">
+      <div class="span11">
+        <form class="nomargin input-append">
+          <label><small>The last</small></label>
+          <button class="btn btn" ng-repeat='timespan in panel.time_options' ng-class="{'btn-success': (panel.timespan == timespan)}" ng-click="set_timespan(timespan)">{{timespan}}</button>
+          <!--<select ng-model="panel.sort[0]" ng-options="f for f in fields"></select>-->
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="row-fluid nomargin">
+    <div class="span12 small">
+      <a ng-click="set_mode('relative')" ng-class="{'strong': (panel.mode == 'relative')}">Relative</a> | 
+      <a ng-click="set_mode('absolute')" ng-class="{'strong': (panel.mode == 'absolute')}">Absolute</a> | 
+      <a ng-click="set_mode('since')"    ng-class="{'strong': (panel.mode == 'since')}">Since</a>
+      <span ng-hide="panel.mode == 'absolute'"> | 
+        <input type="checkbox" ng-model="panel.refresh.enable"> Auto-refresh 
+        <span ng-class="{'ng-cloak': !panel.refresh.enable}">
+          every <a data-title="<small>Auto-refresh Settings</small>" data-placement="bottom" bs-popover="'panels/timepicker/refreshctrl.html'">{{panel.refresh.interval}}s</a>.
         </span>
-      </div>
+      </span>
     </div>
-</div>
+  </div>
+</kibana-panel>

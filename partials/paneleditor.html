@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+  <h3>{{panel.title}} <small>editor</small></h3>
+</div>
+<div class="modal-body">
+
+
+  <h4>General</h4>
+  <div class="row-fluid">
+    <div class="span4">
+      <label class="small">Title</label><input type="text" class="input-medium" ng-model='panel.title'></input>
+    </div>
+    <div class="span4">
+      <label class="small">Group(s) (comma seperated)</label><input array-join type="text" class="input-medium" ng-model='panel.group'></input>
+    </div>
+    <div class="span2">
+      <label class="small">Span</label> <select class="input-mini" ng-model="panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+    </div>
+    <div class="span1"> 
+      <label class="small"> Editable </label><input type="checkbox" ng-model="panel.editable" ng-checked="panel.editable">
+    </div>
+  </div>
+  
+  <h4 style="text-transform: capitalize;">{{panel.type}} <small> panel settings</small></h4>
+  <div ng-include src="'panels/'+panel.type+'/editor.html'">No additional settings are available for this type of panel.</div>
+  
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-success" ng-click="dismiss()">Close</button>
+</div>

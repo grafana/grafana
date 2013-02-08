@@ -1,8 +1,7 @@
-<div ng-controller='stringquery'>
-  <h4 ng-class="{'ng-cloak': !panel.title}">{{panel.title}}</h4>
+<kibana-panel ng-controller='stringquery'>
   <form class="input-append" style="margin-bottom:0px; white-space:nowrap;">
     <label><small>{{panel.label}}</small></label>
     <input type="text" ng-model="panel.query" style="width:90%">
     <button type="submit" class="btn" ng-click="send_query(panel.query)"><i class="icon-search"></i></button>
   </form>
-</div>
+</kibana-panel>
