@@ -8,27 +8,39 @@ angular.module('kibana.pie', [])
 
   // Set and populate defaults
   var _d = {
-    query   : "*",
+    query   : { field:"_all", query:"*" }, 
     size    : 100,
     exclude : [],
     donut   : false,
     tilt    : false,
     legend  : true,
     labels  : true,
-    group   : "default"
+    mode    : "terms",
+    group   : "default",
+    default_field : '_all'
   }
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){set_time(time)});
-    if(!(_.isArray($scope.panel.query))) {
-      eventBus.register($scope,'query', function(event, query) {
+    eventBus.register($scope,'query', function(event, query) {
+      if($scope.panel.mode === 'terms') {
         $scope.panel.query.query = query;
         $scope.get_data();
-      });
-    }
+      }
+    });
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+  }
+
+  $scope.add_query = function(label,query) {
+    if($scope.panel.mode !== 'query') 
+      return false;
+    $scope.panel.query.unshift({
+      query: query,
+      label: label, 
+    });
+    $scope.get_data();
   }
 
   $scope.get_data = function() {
@@ -39,7 +51,9 @@ angular.module('kibana.pie', [])
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // If we have an array, use query facet
-    if(_.isArray($scope.panel.query)) {
+    if($scope.panel.mode == "query") {
+      if(!(_.isArray($scope.panel.query)))
+        $scope.panel.query = [$scope.panel.query];
       var queries = [];
       // Build the question part of the query
       _.each($scope.panel.query, function(v) {
@@ -66,7 +80,9 @@ angular.module('kibana.pie', [])
         $scope.data = [];
         _.each(results.facets, function(v, k) {
           var series = {};
-          var slice = { label : $scope.panel.query[k].label, data : v.count }; 
+          var label = _.isUndefined($scope.panel.query[k].label) ? 
+            $scope.panel.query[k].query : $scope.panel.query[k].label 
+          var slice = { label : label, data : v.count }; 
           if (!(_.isUndefined($scope.panel.query[k].color)))
             slice.color = $scope.panel.query[k].color;
           $scope.data.push(slice)
@@ -76,7 +92,7 @@ angular.module('kibana.pie', [])
     } else {
       var results = request
         .facet(ejs.TermsFacet('pie')
-          .field($scope.panel.query.field)
+          .field($scope.panel.query.field || $scope.panel.default_field)
           .size($scope.panel['size'])
           .exclude($scope.panel.exclude)
           .facetFilter(ejs.QueryFilter(

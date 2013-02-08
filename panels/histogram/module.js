@@ -5,9 +5,8 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
-    query   : "*",
+    query   : { query: "*" },
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
-    color   : "#27508C",
     show    : ['bars'],
     fill    : false,
     group   : "default",
@@ -22,6 +21,18 @@ angular.module('kibana.histogram', [])
     });
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+  }
+
+  $scope.remove_query = function(q) {
+    $scope.panel.query = _.without($scope.panel.query,q);
+  }
+
+  $scope.add_query = function(label,query) {
+    $scope.panel.query.unshift({
+      query: query,
+      label: label, 
+    });
+    $scope.get_data();
   }
 
   $scope.get_data = function() {
@@ -68,7 +79,7 @@ angular.module('kibana.histogram', [])
         data.push([$scope.panel.time.to.getTime(), null])
         
         var series = { data: {
-          label: $scope.panel.query[k].label, 
+          label: $scope.panel.query[k].label || k, 
           data: data,
         }};
 
