@@ -17,9 +17,6 @@ angular.module('kibana.table', [])
   $scope.init = function () {
 
     $scope.set_listeners($scope.panel.group)
-    $scope.$watch(function() {
-      return angular.toJson($scope.panel.sort)
-    }, function(){$scope.get_data()});
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,"get_time")
   }
@@ -34,6 +31,7 @@ angular.module('kibana.table', [])
     });
     eventBus.register($scope,'sort', function(event,sort){
       $scope.panel.sort = _.clone(sort);
+      $scope.get_data();
     });
     eventBus.register($scope,'selected_fields', function(event, fields) {
       $scope.panel.fields = _.clone(fields)
@@ -45,6 +43,7 @@ angular.module('kibana.table', [])
       $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
     else
       $scope.panel.sort[0] = field;
+    $scope.get_data();
   }
 
   $scope.toggle_field = function(field) {
@@ -87,10 +86,6 @@ angular.module('kibana.table', [])
 
       broadcast_fields();
     });
-  }
-
-  $scope.move_field = function(field,dir) {
-    console.log(field,dir)
   }
 
   // Broadcast a list of all fields. Note that receivers of field array 

@@ -19,8 +19,10 @@ angular.module('kibana.histogram', [])
       $scope.panel.query[0].query = query;
       $scope.get_data();
     });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    // Now that we're all setup, request the time from our group if we don't 
+    // have it yet
+    if(_.isUndefined($scope.time))
+      eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
 
   $scope.remove_query = function(q) {
@@ -88,6 +90,7 @@ angular.module('kibana.histogram', [])
           series.data.color = $scope.panel.query[k].color;
         $scope.data.push(series.data)
       });
+      $scope.$emit('render')
     });
   }
 
@@ -109,20 +112,17 @@ angular.module('kibana.histogram', [])
     link: function(scope, elem, attrs, ctrl) {
 
       // If the data or row state changes, re-render
-      scope.$watch(function () {
-        return angular.toJson([scope.data, scope.row]) 
-      }, function() {
-        if(!(_.isUndefined(scope.data)))
-          render_panel(scope,elem,attrs);
+      scope.$on('render',function(){
+        render_panel();
       });
-
+  
       // Re-render if the window is resized
       angular.element(window).bind('resize', function(){
-          render_panel(scope,elem,attrs);
+        render_panel();
       });
 
       // Function for rendering panel
-      function render_panel(scope,elem,attrs) {
+      function render_panel() {
         // Determine format
         var show = _.isUndefined(scope.panel.show) ? {
             bars: true, lines: false, points: false
@@ -142,7 +142,7 @@ angular.module('kibana.histogram', [])
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
-        // Populate element
+          // Populate element
           $.plot(elem, scope.data, {
             legend: { 
               position: "nw", 

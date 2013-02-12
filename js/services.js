@@ -9,6 +9,7 @@ angular.module('kibana.services', [])
     if(_.isUndefined(data))
       var data = from
 
+    //console.log('Sent: '+type + ' to ' + to + ' from ' + from + ': ' + angular.toJson(data))
     $rootScope.$broadcast(type,{
       from: from,
       to: to,
@@ -31,6 +32,7 @@ angular.module('kibana.services', [])
         scope.panel.group = [scope.panel.group];
       
       if(_.intersection(_to,scope.panel.group).length > 0 || _.indexOf(_to,_id) > -1) {
+        //console.log('Got: '+type + ' from ' + _from + ' to ' + _to + ': ' + angular.toJson(packet.data))
         fn(event,packet.data);
       }
     });

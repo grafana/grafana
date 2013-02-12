@@ -102,11 +102,11 @@ angular.module('kibana.timepicker', [])
 
   $scope.refresh = function() {
     if ($scope.panel.refresh.enable) {
-      $scope.time_apply();
       timer.cancel($scope.refresh_timer)
-      $scope.refresh_timer = timer.register($timeout(
-        $scope.refresh,
-        $scope.panel.refresh.interval*1000
+      $scope.refresh_timer = timer.register($timeout(function() {
+        $scope.refresh();
+        $scope.time_apply();
+        },$scope.panel.refresh.interval*1000
       ));
     } else {
       timer.cancel($scope.refresh_timer)

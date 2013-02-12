@@ -32,10 +32,11 @@
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container-fluid">
-        <span class="brand"><small><small>Kibana Preview</small></small></span>
+        <span class="brand"><small>Kibana Preview</small></span>
         <span class="brand">{{dashboards.title}}</span>
         <div class="brand"><i class='icon-download pointer' ng-click="export()" bs-tooltip="'Export this dashboard'" data-placement="bottom"></i></div>
         <div class="brand"><i class='icon-bookmark pointer' ng-click="default()" bs-tooltip="'Set as default dashboard'" data-placement="bottom"></i></div>
+        <div class="brand"><i class='icon-ban-circle pointer' ng-click="purge()" bs-tooltip="'Clear default dashboard settings'" data-placement="bottom"></i></div>
         <div class='pull-right' style="padding-top: 5px; padding-left: 10px"><input type="file" id="upload" upload /></div>
         
       </div>

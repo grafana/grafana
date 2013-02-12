@@ -1,0 +1,23 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+  <h3>{{row.title}} <small>editor</small></h3>
+</div>
+<div class="modal-body">
+
+
+  <h4>General</h4>
+  <div class="row-fluid">
+    <div class="span4">
+      <label class="small">Title</label><input type="text" class="input-medium" ng-model='row.title'></input>
+    </div>
+    <div class="span2">
+      <label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
+    </div>
+    <div class="span1"> 
+      <label class="small"> Editable </label><input type="checkbox" ng-model="panel.editable" ng-checked="row.editable">
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-success" ng-click="dismiss()">Close</button>
+</div>

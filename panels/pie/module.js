@@ -92,6 +92,7 @@ angular.module('kibana.pie', [])
             slice.color = $scope.panel.query[k].color;
           $scope.data.push(slice)
         });
+        $scope.$emit('render');
       });
     // If we don't have an array, assume its a term facet.
     } else {
@@ -126,6 +127,7 @@ angular.module('kibana.pie', [])
           $scope.data.push(slice)
           k = k + 1;
         });
+        $scope.$emit('render');
       });
     }
   }
@@ -145,21 +147,18 @@ angular.module('kibana.pie', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      // Watch if data or row state changes
-      scope.$watch(function () {
-        return angular.toJson([scope.data, scope.row]) 
-      }, function() {
-        if(!(_.isUndefined(scope.data)))
-          render_panel(scope,elem,attrs);
+      // Receive render events
+      scope.$on('render',function(){
+        render_panel();
       });
 
       // Or if the window is resized
       angular.element(window).bind('resize', function(){
-          render_panel(scope,elem,attrs);
+        render_panel();
       });
 
       // Function for rendering panel
-      function render_panel(scope,elem,attrs) {
+      function render_panel() {
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
                         .script("common/lib/panels/jquery.flot.pie.js")

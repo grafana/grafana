@@ -53,6 +53,7 @@ angular.module('kibana.map', [])
       _.each(results.facets.map.terms, function(v) {
         $scope.data[v.term.toUpperCase()] = v.count;
       });
+      $scope.$emit('render')
     });
   }
 
@@ -70,20 +71,17 @@ angular.module('kibana.map', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      // If the data or row state changes, re-render
-      scope.$watch(function () {
-        return angular.toJson([scope.data, scope.row]) 
-      }, function() {
-        if(!(_.isUndefined(scope.data)))
-          render_panel(scope,elem,attrs);
+      // Receive render events
+      scope.$on('render',function(){
+        render_panel();
       });
 
       // Or if the window is resized
       angular.element(window).bind('resize', function(){
-          render_panel(scope,elem,attrs);
+        render_panel();
       });
 
-      function render_panel(scope,elem,attrs) {
+      function render_panel() {
         // Using LABjs, wait until all scripts are loaded before rendering panel
         var scripts = $LAB.script("panels/map/lib/jquery.jvectormap.min.js")
           .script("panels/map/lib/map."+scope.panel.map+".js")

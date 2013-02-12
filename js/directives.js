@@ -7,22 +7,11 @@ angular.module('kibana.directives', [])
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var template = '<span class="pointer editlink" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
-        '<i class="icon-edit"></i></span><h4>{{panel.title}}</h4>';
+      var template = '<i class="icon-edit pointer editlink" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false"></i>'+
+                    '<h4>{{panel.title}}</h4>';
       elem.prepend($compile(angular.element(template))(scope));
     }
   };
-})
-.directive('panelEdit', function(){
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {
-          'panel': '=panel'
-        },
-        templateUrl: 'panels/table/editor.html',
-        //controller: 'ChildElement'
-    }
 })
 .directive('arrayJoin', function() {
   return {

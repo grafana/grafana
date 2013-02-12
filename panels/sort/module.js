@@ -22,7 +22,6 @@ angular.module('kibana.sort', [])
   }
 
   $scope.set_sort = function() {
-    console.log($scope)
     eventBus.broadcast($scope.$id,$scope.panel.group,"sort",$scope.panel.sort)
   }
 

@@ -20,20 +20,32 @@
   z-index: 2000;
 }
 
-span.editlink {
+.panel i.editlink {
   position: absolute;
   right: 5px;
   z-index: 800;
   display: none;
 }
 
-.panel:hover span.editlink {
+.panel:hover i.editlink {
   display: block;
   opacity: 0.3;
 }
 
-.panel span.editlink:hover {
-  display: block;
+.panel i.editlink:hover {
+  opacity: 1;
+}
+
+.row-header i.editlink {
+  display: none;
+}
+
+.row-header:hover i.editlink {
+  display: inline-block;
+  opacity: 0.3;
+}
+
+.row-header i.editlink:hover {
   opacity: 1;
 }
 
