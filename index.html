@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="common/css/normalize.min.css">
   <link rel="stylesheet" href="common/css/bootstrap.min.css">
   <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
+  <link rel="stylesheet" href="common/css/font-awesome.min.css">
   <link rel="stylesheet" href="common/css/main.css">
   <link rel="stylesheet" href="common/css/elasticjs.css">
   <link rel="stylesheet" href="common/css/timepicker.css">
@@ -31,9 +32,12 @@
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container-fluid">
-        <span class="brand">{{dashboards.title}}</span>
         <span class="brand"><small><small>Kibana Preview</small></small></span>
+        <span class="brand">{{dashboards.title}}</span>
+        <div class="brand"><i class='icon-download pointer' ng-click="export()" bs-tooltip="'Export this dashboard'" data-placement="bottom"></i></div>
+        <div class="brand"><i class='icon-bookmark pointer' ng-click="default()" bs-tooltip="'Set as default dashboard'" data-placement="bottom"></i></div>
         <div class='pull-right' style="padding-top: 5px; padding-left: 10px"><input type="file" id="upload" upload /></div>
+        
       </div>
     </div>
   </div>

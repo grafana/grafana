@@ -85,8 +85,8 @@ angular.module('kibana.map', [])
 
       function render_panel(scope,elem,attrs) {
         // Using LABjs, wait until all scripts are loaded before rendering panel
-        var scripts = $LAB.script("common/lib/panels/jquery.jvectormap.min.js")
-          .script("common/lib/panels/map."+scope.panel.map+".js")
+        var scripts = $LAB.script("panels/map/lib/jquery.jvectormap.min.js")
+          .script("panels/map/lib/map."+scope.panel.map+".js")
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){

@@ -45,7 +45,7 @@ angular.module('kibana.directives', [])
     }
   };
 })
-.directive('upload', function(){
+.directive('upload', function(timer){
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -60,6 +60,7 @@ angular.module('kibana.directives', [])
             return function(e) {
               // Render thumbnail.
               scope.dashboards = JSON.parse(e.target.result)
+              timer.cancel_all();
               scope.$apply();
             };
           })(f);

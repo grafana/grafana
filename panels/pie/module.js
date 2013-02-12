@@ -1,6 +1,3 @@
-labjs = labjs.script("common/lib/panels/jquery.flot.js")
-  .script("common/lib/panels/jquery.flot.pie.js")
-
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, eventBus) {
 
@@ -163,6 +160,10 @@ angular.module('kibana.pie', [])
 
       // Function for rendering panel
       function render_panel(scope,elem,attrs) {
+
+        var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
+                        .script("common/lib/panels/jquery.flot.pie.js")
+
         var pie = {
           series: {
             pie: {
@@ -192,7 +193,9 @@ angular.module('kibana.pie', [])
 
         // Populate element
         if(elem.is(":visible")){
-          $.plot(elem, scope.data, pie);
+          scripts.wait(function(){
+            $.plot(elem, scope.data, pie);
+          });
         }
         
         function piett(x, y, contents) {
