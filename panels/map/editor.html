@@ -1,11 +1,19 @@
-  <div class="row-fluid">    
-    <div class="span9">
+  <div class="row-fluid" ng-controller="map">    
+    <div class="span6">
       <form class="input-append">
         <h6>Query</h6>
-        <input type="text" style="width:85%" ng-model="panel.query">
+        <input type="text" ng-model="panel.query">
         <button class="btn" ng-click="get_data();"><i class="icon-search"></i></button>
       </form>
     </div>
-    <div class="span3"><h6>Map</h6> 
-      <select class="input-small" ng-model="panel.map" ng-options="f for f in ['world','europe','usa']"></select></span>
+    <div class="span4">
+     <form class="input-append">
+        <h6>Field</h6>
+        <input type="text" class="input-small" ng-model="panel.field">
+        <button class="btn" ng-click="get_data();"><i class="icon-search"></i></button>
+      </form>
+    </div>
+    <div class="span1"><h6>Map</h6> 
+      <select ng-change="$emit('render')" class="input-small" ng-model="panel.map" ng-options="f for f in ['world','europe','usa']"></select>
+    </div>
   </div>

@@ -1,4 +1,4 @@
-<div class="row-fluid">  
+<div class="row-fluid" ng-controller="histogram">  
   <div class="span3">
     <form style="margin-bottom: 0px">
       <h6>Label</h6>
@@ -18,7 +18,7 @@
 <div class="row-fluid" ng-repeat="q in panel.query">        
   <div class="span3">
     <form style="margin-bottom: 0px">
-      <input type="text" style="width:70%" ng-model="q.label" ng-change="render_panel()">
+      <input type="text" style="width:70%" ng-model="q.label">
     </form>
   </div>
   <div class="span8">
@@ -34,10 +34,10 @@
 <div class="row-fluid">    
   <div class="span3">
     <label class="small">Effect Options</label> 
-    <select multiple style="width:95%" ng-model="panel.show" ng-options="f for f in ['bars','points','stack','lines']"></select>
+    <select ng-change="$emit('render')" multiple style="width:95%" ng-model="panel.show" ng-options="f for f in ['bars','points','stack','lines']"></select>
   </div>
   <div class="span2">
     <label class="small">Fill (0.0 - 1.0)</label> 
-    <input type="number" class="input-mini" ng-model="panel.fill">
+    <input ng-change="$emit('render')" type="number" class="input-mini" ng-model="panel.fill">
   </div>
 </div>

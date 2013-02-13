@@ -9,6 +9,7 @@ angular.module('kibana.controllers', [])
   $scope._ = _;
 
 
+  // The global dashboards object should be moved to an $http request for json
   if (Modernizr.localstorage && 
     !(_.isUndefined(localStorage['dashboard'])) &&
     localStorage['dashboard'] !== ''
@@ -46,6 +47,10 @@ angular.module('kibana.controllers', [])
 })
 .controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource, timer) {
 
+  $scope.init = function(){
+    $scope.reset_panel();
+  }
+
   $scope.toggle_row = function(row) {
     row.collapse = row.collapse ? false : true;
     if (!row.collapse) {
@@ -54,6 +59,21 @@ angular.module('kibana.controllers', [])
       });
     }
   }
+
+  $scope.add_panel = function(row,panel) {
+    console.log(panel)
+    $scope.row.panels.push(panel);
+  }
+
+  $scope.reset_panel = function() {
+    $scope.panel = {
+      span: 1,
+      editable: true,
+      groups: ['default'],
+    };
+  };
+
+  $scope.init();
 
 });
 

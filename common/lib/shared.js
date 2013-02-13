@@ -438,3 +438,18 @@ function htmlEntities(str) {
       />/g, '&gt;').replace(
       /"/g, '&quot;');
 }
+
+
+_.mixin({
+    move: function (array, fromIndex, toIndex) {
+      array.splice(toIndex, 0, array.splice(fromIndex, 1)[0] );
+      return array;
+    } 
+});
+
+_.mixin({
+    remove: function (array, index) {
+      array.splice(index, 1);
+      return array;
+    } 
+});

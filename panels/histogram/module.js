@@ -5,7 +5,7 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
-    query   : { query: "*" },
+    query   : [ {query: "*", label:"Query"} ],
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
     show    : ['bars'],
     fill    : false,
@@ -31,6 +31,8 @@ angular.module('kibana.histogram', [])
   }
 
   $scope.add_query = function(label,query) {
+    if(!(_.isArray($scope.panel.query)))
+      $scope.panel.query = new Array();
     $scope.panel.query.unshift({
       query: query,
       label: label, 
@@ -111,7 +113,7 @@ angular.module('kibana.histogram', [])
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
 
-      // If the data or row state changes, re-render
+      // Receive render events
       scope.$on('render',function(){
         render_panel();
       });
