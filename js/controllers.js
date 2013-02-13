@@ -5,21 +5,24 @@
 angular.module('kibana.controllers', [])
 .controller('DashCtrl', function($scope, $rootScope, ejsResource, timer) {
 
-  $scope.config = config;
-  $scope._ = _;
 
+  $scope.init = function() {
+    $scope.config = config;
+    $scope._ = _;
+    $scope.reset_row();
 
-  // The global dashboards object should be moved to an $http request for json
-  if (Modernizr.localstorage && 
-    !(_.isUndefined(localStorage['dashboard'])) &&
-    localStorage['dashboard'] !== ''
-  ) {
-    $scope.dashboards = JSON.parse(localStorage['dashboard']);
-  } else {
-    $scope.dashboards = dashboards;
+    // The global dashboards object should be moved to an $http request for json
+    if (Modernizr.localstorage && 
+      !(_.isUndefined(localStorage['dashboard'])) &&
+      localStorage['dashboard'] !== ''
+    ) {
+      $scope.dashboards = JSON.parse(localStorage['dashboard']);
+    } else {
+      $scope.dashboards = dashboards;
+    }
+
+    var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
   }
-
-  var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
 
   $scope.export = function() {
     var blob = new Blob([angular.toJson($scope.dashboards)], {type: "application/json;charset=utf-8"});
@@ -44,8 +47,33 @@ angular.module('kibana.controllers', [])
     }  
   }
 
+  $scope.add_row = function(dashboards,row) {
+    $scope.dashboards.rows.push(row);
+  }
+
+  $scope.reset_row = function() {
+    $scope.row = {
+      title: '',
+      height: '150px',
+      editable: true,
+    };
+  };
+
+  $scope.init();
+
+
 })
 .controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource, timer) {
+
+  var _d = {
+    title: "Row",
+    height: "150px",
+    collapse: false,
+    editable: true,
+    panels: [],
+  }
+  _.defaults($scope.row,_d)
+
 
   $scope.init = function(){
     $scope.reset_panel();

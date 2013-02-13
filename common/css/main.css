@@ -27,6 +27,10 @@
   display: none;
 }
 
+.pointer:hover {
+  color: #0088CC;
+}
+
 .panel:hover i.editlink {
   display: block;
   opacity: 0.3;
@@ -36,18 +40,19 @@
   opacity: 1;
 }
 
+/*
 .row-header i.editlink {
-  display: none;
+  opacity: 0;
 }
 
 .row-header:hover i.editlink {
-  display: inline-block;
   opacity: 0.3;
 }
 
 .row-header i.editlink:hover {
   opacity: 1;
 }
+*/
 
 .pointer {
   cursor: pointer;

@@ -12,7 +12,7 @@
       <label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
     </div>
     <div class="span1"> 
-      <label class="small"> Editable </label><input type="checkbox" ng-model="panel.editable" ng-checked="row.editable" />
+      <label class="small"> Editable </label><input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
     </div>
   </div>
   <div class="row-fluid">
@@ -28,9 +28,9 @@
         <tr ng-repeat="panel in row.panels">
           <td>{{panel.title}}</td>
           <td>{{panel.type}}</td>
-          <td><i ng-click="row.panels = _.without(row.panels,panel)" class="icon-remove"></i></td>
-          <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="icon-arrow-up"></i></td>
-          <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="icon-arrow-down"></i></td>
+          <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
+          <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+          <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
         </tr>
       </table>
     </div>

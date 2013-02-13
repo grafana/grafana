@@ -1,5 +1,5 @@
 <kibana-panel ng-controller='sort' style="white-space: nowrap;">
   <label><small>{{panel.label}}</small></label>
   <select style="width:85%" ng-model="panel.sort[0]" ng-change="set_sort()" ng-options="f for f in fields"></select>
-  <i ng-click="toggle_sort()" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+  <i ng-click="toggle_sort()" class="pointer" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
 </kibana-panel>
