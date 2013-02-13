@@ -42,7 +42,7 @@ angular.module('kibana.histogram', [])
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
     var request = $scope.ejs.Request().indices($scope.panel.index);
@@ -52,9 +52,9 @@ angular.module('kibana.histogram', [])
     _.each($scope.panel.query, function(v) {
       queries.push($scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(v.query || '*'),
-        ejs.RangeFilter($scope.panel.time.field)
-          .from($scope.panel.time.from)
-          .to($scope.panel.time.to))
+        ejs.RangeFilter($scope.time.field)
+          .from($scope.time.from)
+          .to($scope.time.to))
       )
     });
 
@@ -62,7 +62,7 @@ angular.module('kibana.histogram', [])
     _.each(queries, function(v) {
       request = request
         .facet($scope.ejs.DateHistogramFacet(_.indexOf(queries,v))
-          .field($scope.panel.time.field)
+          .field($scope.time.field)
           .interval($scope.panel.interval)
           .facetFilter($scope.ejs.QueryFilter(v))
         ).size(0)
@@ -77,11 +77,11 @@ angular.module('kibana.histogram', [])
       $scope.data = [];
       _.each(results.facets, function(v, k) {
         // Null values at each end of the time range ensure we see entire range
-        var data = [[$scope.panel.time.from.getTime(), null]];
+        var data = [[$scope.time.from.getTime(), null]];
         _.each(v.entries, function(v, k) {
           data.push([v['time'],v['count']])
         });
-        data.push([$scope.panel.time.to.getTime(), null])
+        data.push([$scope.time.to.getTime(), null])
         
         var series = { data: {
           label: $scope.panel.query[k].label || k, 
@@ -97,7 +97,7 @@ angular.module('kibana.histogram', [])
   }
 
   function set_time(time) {
-    $scope.panel.time = time;
+    $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.panel.interval = secondsToHms(
       calculate_interval(time.from,time.to,50,0)/1000),

@@ -56,7 +56,7 @@ angular.module('kibana.table', [])
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
     var request = $scope.ejs.Request().indices($scope.panel.index);
@@ -65,8 +65,8 @@ angular.module('kibana.table', [])
       .query(ejs.FilteredQuery(
         ejs.QueryStringQuery($scope.panel.query || '*'),
         ejs.RangeFilter(config.timefield)
-          .from($scope.panel.time.from)
-          .to($scope.panel.time.to)
+          .from($scope.time.from)
+          .to($scope.time.to)
         )
       )
       .size($scope.panel.size)
@@ -100,7 +100,7 @@ angular.module('kibana.table', [])
   }
 
   function set_time(time) {
-    $scope.panel.time = time;
+    $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.get_data();
   }

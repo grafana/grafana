@@ -50,7 +50,7 @@ angular.module('kibana.pie', [])
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.panel.time))
+    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
     var request = $scope.ejs.Request().indices($scope.panel.index);
@@ -65,8 +65,8 @@ angular.module('kibana.pie', [])
         queries.push(ejs.FilteredQuery(
           ejs.QueryStringQuery(v.query || '*'),
           ejs.RangeFilter(config.timefield)
-            .from($scope.panel.time.from)
-            .to($scope.panel.time.to))
+            .from($scope.time.from)
+            .to($scope.time.to))
         )
       });
 
@@ -105,8 +105,8 @@ angular.module('kibana.pie', [])
             ejs.FilteredQuery(
               ejs.QueryStringQuery($scope.panel.query.query || '*'),
               ejs.RangeFilter(config.timefield)
-                .from($scope.panel.time.from)
-                .to($scope.panel.time.to)
+                .from($scope.time.from)
+                .to($scope.time.to)
                 .cache(false)
               )))).size(0)
         .doSearch();
@@ -133,7 +133,7 @@ angular.module('kibana.pie', [])
   }
 
   function set_time(time) {
-    $scope.panel.time = time;
+    $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.get_data();
   }

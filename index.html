@@ -34,7 +34,7 @@
       <div class="container-fluid">
         <span class="brand"><small>Kibana Preview</small></span>
         <span class="brand">{{dashboards.title}}</span>
-        <div class="brand"><i class='icon-edit pointer' bs-modal="'partials/dasheditor.html'" bs-tooltip="'Edit Dashboard'" data-placement="bottom"></i></div>
+        <div class="brand"><i class='icon-edit pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
         <div class="brand"><i class='icon-download pointer' ng-click="export()" bs-tooltip="'Export this dashboard'" data-placement="bottom"></i></div>
         <div class="brand"><i class='icon-bookmark pointer' ng-click="default()" bs-tooltip="'Set as default dashboard'" data-placement="bottom"></i></div>
         <div class="brand"><i class='icon-ban-circle pointer' ng-click="purge()" bs-tooltip="'Clear default dashboard settings'" data-placement="bottom"></i></div>

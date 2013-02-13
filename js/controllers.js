@@ -3,8 +3,13 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, ejsResource, timer) {
+.controller('DashCtrl', function($scope, $rootScope, $http, ejsResource, timer) {
 
+  var _d = {
+    title: "",
+    editable: true,
+    rows: [],
+  }
 
   $scope.init = function() {
     $scope.config = config;
@@ -18,14 +23,17 @@ angular.module('kibana.controllers', [])
     ) {
       $scope.dashboards = JSON.parse(localStorage['dashboard']);
     } else {
-      $scope.dashboards = dashboards;
+      $scope.dashboards = dashboards
     }
+    _.defaults($scope.dashboards,_d)
+
 
     var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
   }
 
+
   $scope.export = function() {
-    var blob = new Blob([angular.toJson($scope.dashboards)], {type: "application/json;charset=utf-8"});
+    var blob = new Blob([angular.toJson($scope.dashboards,true)], {type: "application/json;charset=utf-8"});
     saveAs(blob, $scope.dashboards.title+"-"+new Date().getTime());
   }
 
