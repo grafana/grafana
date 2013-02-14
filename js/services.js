@@ -21,6 +21,7 @@ angular.module('kibana.services', [])
   // addressed to the scope in question and runs the registered function if it
   // is.
   this.register = function(scope,type,fn) {
+    console.log('registered:' + type + " for " + scope.panel.title + " " + scope.$id)
     scope.$on(type,function(event,packet){
       var _id     = scope.$id;
       var _to     = packet.to;

@@ -96,6 +96,10 @@ angular.module('kibana.controllers', [])
     }
   }
 
+  $scope.send_render = function() {
+    $scope.$broadcast('render');
+  }
+
   $scope.add_panel = function(row,panel) {
     console.log(panel)
     $scope.row.panels.push(panel);
