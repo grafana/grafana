@@ -33,8 +33,8 @@
 </div>
 <div class="row-fluid">    
   <div class="span3">
-    <label class="small">Effect Options</label> 
-    <select ng-change="$emit('render')" multiple style="width:95%" ng-model="panel.show" ng-options="f for f in ['bars','points','stack','lines']"></select>
+    <label class="small">Chart Options</label> 
+    <select ng-change="$emit('render')" multiple style="width:95%" ng-model="panel.show" ng-options="f for f in ['bars','points','stack','lines','legend','x-axis','y-axis']"></select>
   </div>
   <div class="span2">
     <label class="small">Fill (0.0 - 1.0)</label> 

@@ -16,32 +16,37 @@
     </div>
   </div>
   <div class="row-fluid">
+    <h4>New Panel</h4>
+    <select class="input-medium" ng-model="panel.type" ng-options="f for f in config.modules"></select>
+    <small>Select Type</small>
+    <div ng-show="!(_.isUndefined(panel.type))">
+      <div ng-include src="'partials/panelgeneral.html'"></div>
+
+      <!--<div ng-include src="'panels/'+panel.type+'/editor.html'"></div>-->
+      <button ng-click="add_panel(row,panel); reset_panel();" class="btn btn-primary">Create Panel</button><br>
+    </div>
+  </div>
+  <div class="row-fluid">
     <div class="span12">
       <h4>Panels</h4>
       <table class="table table-condensed table-striped">
         <thead>
           <th>Title</th>
           <th>Type</th>
+          <th>Span</th>
           <th>Delete</th>
           <th>Move</th>
         </thead>
         <tr ng-repeat="panel in row.panels">
           <td>{{panel.title}}</td>
           <td>{{panel.type}}</td>
+          <td><select class="input-mini" ng-model="panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select></td>
           <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
         </tr>
       </table>
     </div>
-  </div>
-  <h4>New Panel</h4>
-  <select class="input-medium" ng-model="panel.type" ng-options="f for f in config.modules"></select>
-  <small>Select Type</small>
-  <div ng-show="!(_.isUndefined(panel.type))">
-    <div ng-include src="'partials/panelgeneral.html'"></div>
-    <div ng-include src="'panels/'+panel.type+'/editor.html'"></div>
-    <button ng-click="add_panel(row,panel); reset_panel();" class="btn btn-primary">Create Panel</button><br>
   </div>
 </div>
 <div class="modal-footer">

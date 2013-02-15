@@ -60,7 +60,7 @@ angular.module('elasticjs.service', [])
       },
       del: function (path, data, successcb, errorcb) {
         path = url + path;
-        return promiseThen($http.delee(path, data), successcb, errorcb);
+        return promiseThen($http.delete(path, data), successcb, errorcb);
       },
       head: function (path, data, successcb, errorcb) {
         path = url + path;

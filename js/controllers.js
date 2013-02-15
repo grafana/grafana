@@ -3,7 +3,7 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, ejsResource, timer) {
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus) {
 
   var _d = {
     title: "",
@@ -15,6 +15,7 @@ angular.module('kibana.controllers', [])
     $scope.config = config;
     $scope._ = _;
     $scope.reset_row();
+    $scope.clear_all_alerts();
 
     // The global dashboards object should be moved to an $http request for json
     if (Modernizr.localstorage && 
@@ -22,37 +23,26 @@ angular.module('kibana.controllers', [])
       localStorage['dashboard'] !== ''
     ) {
       $scope.dashboards = JSON.parse(localStorage['dashboard']);
+      _.defaults($scope.dashboards,_d);
     } else {
-      $scope.dashboards = dashboards
+      $http({
+        url: "default.json",
+        method: "GET",
+      }).success(function(data, status, headers, config) {
+        $scope.dashboards = data
+         _.defaults($scope.dashboards,_d);
+      }).error(function(data, status, headers, config) {
+        $scope.alert('Default dashboard missing!','Could not locate default.json','error')
+      });
     }
-    _.defaults($scope.dashboards,_d)
 
+    eventBus.register($scope,'dashboard', function(event,dashboard){
+      console.log('got broadcast')
+      $scope.dashboards = dashboard;
+      _.defaults($scope.dashboards,_d)
+    })
 
     var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
-  }
-
-
-  $scope.export = function() {
-    var blob = new Blob([angular.toJson($scope.dashboards,true)], {type: "application/json;charset=utf-8"});
-    saveAs(blob, $scope.dashboards.title+"-"+new Date().getTime());
-  }
-
-  $scope.default = function() {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = angular.toJson($scope.dashboards);
-      alert($scope.dashboards.title + " has been set as your default dashboard")
-    } else {
-      alert("Sorry, your browser is too old for this functionality");
-    }  
-  }
-
-  $scope.purge = function() {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = '';
-      alert('Default dashboard cleared')
-    } else {
-      alert("Sorry, your browser is too old for this functionality");
-    }  
   }
 
   $scope.add_row = function(dashboards,row) {
@@ -67,11 +57,32 @@ angular.module('kibana.controllers', [])
     };
   };
 
+  $scope.alert = function(title,text,severity,timeout) {
+    var alert = {
+      title: title,
+      text: text,
+      severity: severity || 'info',
+    };
+    $scope.global_alert.push(alert);
+    if (timeout > 0)
+      $timeout(function() {
+        $scope.global_alert = _.without($scope.global_alert,alert)
+        console.log($scope.global_alert)
+      }, timeout);
+  }
+
+  $scope.clear_alert = function(alert) {
+    $scope.global_alert = _.without($scope.global_alert,alert);
+  }
+
+  $scope.clear_all_alerts = function() {
+    $scope.global_alert = []
+  }  
+
   $scope.init();
 
-
 })
-.controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource, timer) {
+.controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource) {
 
   var _d = {
     title: "Row",
@@ -107,9 +118,9 @@ angular.module('kibana.controllers', [])
 
   $scope.reset_panel = function() {
     $scope.panel = {
-      span: 1,
+      span: 3,
       editable: true,
-      groups: ['default'],
+      group: ['default'],
     };
   };
 

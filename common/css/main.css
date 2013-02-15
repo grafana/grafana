@@ -40,6 +40,10 @@
   opacity: 1;
 }
 
+.popover {
+  max-width: 500px;
+}
+
 /*
 .row-header i.editlink {
   opacity: 0;

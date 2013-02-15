@@ -7,7 +7,7 @@ angular.module('kibana.histogram', [])
   var _d = {
     query   : [ {query: "*", label:"Query"} ],
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
-    show    : ['bars'],
+    show    : ['bars','y-axis','x-axis','legend'],
     fill    : false,
     group   : "default",
   }
@@ -133,6 +133,9 @@ angular.module('kibana.histogram', [])
             bars:   _.indexOf(scope.panel.show,'bars')    < 0 ? false : true,
             points: _.indexOf(scope.panel.show,'points')  < 0 ? false : true,
             stack:  _.indexOf(scope.panel.show,'stack')   < 0 ? null  : true,
+            legend: _.indexOf(scope.panel.show,'legend')  < 0 ? false : true,
+            'x-axis': _.indexOf(scope.panel.show,'x-axis') < 0 ? false : true,
+            'y-axis': _.indexOf(scope.panel.show,'y-axis') < 0 ? false : true,
           }
 
         // Set barwidth based on specified interval
@@ -147,6 +150,7 @@ angular.module('kibana.histogram', [])
           // Populate element
           $.plot(elem, scope.data, {
             legend: { 
+              show: show.legend,
               position: "nw", 
               labelFormatter: function(label, series) {
                 return '<span class="legend">' + label + ' / ' + 
@@ -160,8 +164,9 @@ angular.module('kibana.histogram', [])
               points: { show: show.points },
               shadowSize: 1
             },
-            yaxis: { min: 0, color: "#000" },
+            yaxis: { show: show['y-axis'], min: 0, color: "#000" },
             xaxis: {
+              show: show['x-axis'],
               mode: "time",
               timeformat: "%H:%M:%S<br>%m-%d",
               label: "Datetime",

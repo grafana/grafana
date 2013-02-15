@@ -29,21 +29,19 @@
 </head>
 
 <body ng-controller="DashCtrl" ng-cloak>
+  <div ng-repeat='alert in global_alert' class="alert alert-{{alert.severity}} span12" style="position: fixed;top:2px;opacity:0.9;z-index:8000">
+    <button type="button" class="close" ng-click="clear_alert(alert)">&times;</button>
+    <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div class='pull-right small'> {{$index + 1}} alert(s) </div>
+  </div>
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container-fluid">
         <span class="brand"><small>Kibana Preview</small></span>
         <span class="brand">{{dashboards.title}}</span>
         <div class="brand"><i class='icon-edit pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
-        <div class="brand"><i class='icon-download pointer' ng-click="export()" bs-tooltip="'Export this dashboard'" data-placement="bottom"></i></div>
-        <div class="brand"><i class='icon-bookmark pointer' ng-click="default()" bs-tooltip="'Set as default dashboard'" data-placement="bottom"></i></div>
-        <div class="brand"><i class='icon-ban-circle pointer' ng-click="purge()" bs-tooltip="'Clear default dashboard settings'" data-placement="bottom"></i></div>
-        <div class='pull-right' style="padding-top: 5px; padding-left: 10px"><input type="file" id="upload" upload /></div>
-        
       </div>
     </div>
   </div>
-
   <div class="container-fluid">
     <div class="row-fluid">
       <div ng-view></div>

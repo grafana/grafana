@@ -1,0 +1,28 @@
+<div>
+
+  <div ng-show="panel.save.default || panel.save.local">
+    <h5>Locally</h5>
+    <form>
+      <ul class="nav nav-list">
+        <li><a ng-show="panel.save.local" ng-click="export()"><i class="icon-download"></i> Export to File</a></li>
+        <li><a ng-show="panel.save.default" ng-click="default()"><i class="icon-bookmark"></i> Set as Default</a></li>
+        <li><a ng-show="panel.save.default" ng-click="purge()"><i class="icon-ban-circle"></i> Clear Default</a></li>    
+      </ul>
+    </form>
+  </div>
+  <div ng-show="panel.save.gist">
+    <h5>Gist</h5>
+    <form class="input-append">
+      <input class='input-medium' placeholder='Title' type="text" ng-model="gist.title"/>
+      <button class="btn" ng-click="save_gist()"><i class="icon-github-alt"></i></button>
+    </form><br>
+    <small ng-show="gist.last">Last gist: <a target="_blank" href="{{gist.last}}">{{gist.last}}</a></small>
+  </div>
+  <div ng-show="panel.save.elasticsearch">
+    <h5>Elasticsearch</h5>
+    <form class="input-append">
+      <input class='input-medium' placeholder='Title' type="text" ng-model="elasticsearch.title"/>
+      <button class="btn" ng-click="save_elasticsearch()"><i class="icon-save"></i></button>
+    </form>
+  </div>
+</div>

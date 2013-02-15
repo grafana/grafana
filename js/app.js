@@ -31,7 +31,6 @@ var labjs = $LAB
   .script("common/lib/datepicker.js")
   .script("common/lib/shared.js")
   .script("common/lib/filesaver.js")
-  .script("dashboards.js")
   .script("js/services.js")
   .script("js/controllers.js")
   .script("js/filters.js")
