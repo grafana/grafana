@@ -35,6 +35,7 @@ angular.module('kibana.timepicker', [])
     timespan      : '15m',
     timefield     : '@timestamp',
     index         : '"logstash-"yyyy.mm.dd',
+    defaultindex  : "NOINDEX",
     group         : "default",
     refresh       : {
       enable  : false, 
@@ -195,7 +196,9 @@ angular.module('kibana.timepicker', [])
     });
 
     return all_indices().then(function(p) {
-      return _.intersection(p,possible);
+      var indices = _.intersection(p,possible);
+      console.log(indices)
+      return indices.length == 0 ? [$scope.panel.defaultindex] : indices;
     })
   };
 
