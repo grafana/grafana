@@ -197,7 +197,6 @@ angular.module('kibana.timepicker', [])
 
     return all_indices().then(function(p) {
       var indices = _.intersection(p,possible);
-      console.log(indices)
       return indices.length == 0 ? [$scope.panel.defaultindex] : indices;
     })
   };
