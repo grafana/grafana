@@ -37,7 +37,6 @@ angular.module('kibana.controllers', [])
     }
 
     eventBus.register($scope,'dashboard', function(event,dashboard){
-      console.log('got broadcast')
       $scope.dashboards = dashboard;
       _.defaults($scope.dashboards,_d)
     })
@@ -67,7 +66,6 @@ angular.module('kibana.controllers', [])
     if (timeout > 0)
       $timeout(function() {
         $scope.global_alert = _.without($scope.global_alert,alert)
-        console.log($scope.global_alert)
       }, timeout);
   }
 
@@ -112,7 +110,6 @@ angular.module('kibana.controllers', [])
   }
 
   $scope.add_panel = function(row,panel) {
-    console.log(panel)
     $scope.row.panels.push(panel);
   }
 
