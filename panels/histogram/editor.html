@@ -36,8 +36,12 @@
     <label class="small">Chart Options</label> 
     <select ng-change="$emit('render')" multiple style="width:95%" ng-model="panel.show" ng-options="f for f in ['bars','points','stack','lines','legend','x-axis','y-axis']"></select>
   </div>
-  <div class="span2">
-    <label class="small">Fill (0.0 - 1.0)</label> 
+  <div class="span3">
+    <label class="small">Line Fill (1 - 10)</label> 
     <input ng-change="$emit('render')" type="number" class="input-mini" ng-model="panel.fill">
+  </div>
+  <div class="span3">
+    <label class="small">Time correction</label> 
+    <select ng-change="$emit('render')" ng-model="panel.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
   </div>
 </div>

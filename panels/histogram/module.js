@@ -8,7 +8,8 @@ angular.module('kibana.histogram', [])
     query   : [ {query: "*", label:"Query"} ],
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
     show    : ['bars','y-axis','x-axis','legend'],
-    fill    : false,
+    fill    : 3,
+    timezone: 'browser', // browser, utc or a standard timezone
     group   : "default",
   }
   _.defaults($scope.panel,_d)
@@ -144,6 +145,7 @@ angular.module('kibana.histogram', [])
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
           .script("common/lib/panels/jquery.flot.time.js")
           .script("common/lib/panels/jquery.flot.stack.js")
+          .script("common/lib/panels/timezone.js")
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
@@ -159,13 +161,14 @@ angular.module('kibana.histogram', [])
             },
             series: {
               stack:  show.stack,
-              lines:  { show: show.lines, fill: scope.panel.fill },
+              lines:  { show: show.lines, fill: scope.panel.fill/10 },
               bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
               points: { show: show.points },
               shadowSize: 1
             },
             yaxis: { show: show['y-axis'], min: 0, color: "#000" },
             xaxis: {
+              timezone: scope.panel.timezone,
               show: show['x-axis'],
               mode: "time",
               timeformat: "%H:%M:%S<br>%m-%d",

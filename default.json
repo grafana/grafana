@@ -14,7 +14,7 @@
           ],
           "type": "text",
           "title": "Welcome",
-          "content": "Welcome to Kibana Dashboard, a technology preview of what's to come for Kibana, Logstash and Elasticsearch \n\nKibana dashboard is the easy way to share, build, use and extend interactive, real time dashboards and data analysis interfaces. \n\nReady to get started? \n\nLogstash users, click the 'Load' button to the right, paste this URL:  https://gist.github.com/anonymous/e99d94a426956c45a288 into the 'Gist' loader, click 'Get' and select the 'Logstash Dashboard' link that appears",
+          "content": "Welcome to Kibana Dashboard, a technology preview of what's to come for Kibana, Logstash and Elasticsearch \n\nKibana dashboard is the easy way to share, build, use and extend interactive, real time dashboards and data analysis interfaces. \n\nReady to get started? \n\nLogstash users, click the 'Load' button to the right, paste this URL:  https://gist.github.com/88a4b1f22e3212e45cf3 into the 'Gist' loader, click 'Get' and select the 'Logstash Dashboard' link that appears",
           "style": {
             "font-size": "14pt"
           }

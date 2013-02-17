@@ -17,7 +17,7 @@
 .panel-error {
   opacity: 0.9;
   position:absolute;
-  z-index: 2000;
+  z-index: 1000;
 }
 
 .panel i.editlink {
@@ -43,20 +43,6 @@
 .popover {
   max-width: 500px;
 }
-
-/*
-.row-header i.editlink {
-  opacity: 0;
-}
-
-.row-header:hover i.editlink {
-  opacity: 0.3;
-}
-
-.row-header i.editlink:hover {
-  opacity: 1;
-}
-*/
 
 .pointer {
   cursor: pointer;
