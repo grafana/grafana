@@ -18,6 +18,7 @@ angular.module('kibana.dashcontrol', [])
       local: true,
     },
     elasticsearch_size: 20,
+    elasticsearch_saveto: 'kibana-int'
   }
   _.defaults($scope.panel,_d);
 
@@ -61,7 +62,7 @@ angular.module('kibana.dashcontrol', [])
   $scope.save_elasticsearch = function() {
     var save = _.clone($scope.dashboards)
     save.title = $scope.elasticsearch.title;
-    var result = $scope.ejs.Document('kibana-int','dashboard',save.title).source({
+    var result = $scope.ejs.Document($scope.panel.elasticsearch_saveto,'dashboard',save.title).source({
       user: 'guest',
       group: 'guest',
       title: save.title,
@@ -75,7 +76,7 @@ angular.module('kibana.dashcontrol', [])
   }
 
   $scope.delete_elasticsearch = function(dashboard) {
-    var result = $scope.ejs.Document('kibana-int','dashboard',dashboard._id).doDelete();
+    var result = $scope.ejs.Document($scope.panel.elasticsearch_saveto,'dashboard',dashboard._id).doDelete();
     result.then(function(result) {
       $scope.alert('Dashboard Deleted','','success',5000)
       $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,dashboard)
@@ -84,7 +85,7 @@ angular.module('kibana.dashcontrol', [])
 
   $scope.elasticsearch_dblist = function(query) {
     if($scope.panel.load.elasticsearch) {
-      var request = $scope.ejs.Request().indices('kibana-int').types('dashboard');
+      var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types('dashboard');
       var results = request.query(
         $scope.ejs.QueryStringQuery(query || '*')
         ).size($scope.panel.elasticsearch_size).doSearch();

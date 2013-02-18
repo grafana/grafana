@@ -13,6 +13,7 @@
         <i ng-click="panel.offset = (panel.offset + panel.size);get_data();" ng-show="hits > (panel.offset + data.length)" class='icon-arrow-right pointer'></i>
       </div>
     </div>
+    <div class="small" ng-show="panel.fields.length == 0">No columns configured. You may want to add a <strong>fields panel</strong>, or click the edit button in the top right of this panel to add some columns</div>
     <table class="table table-condensed table-striped" ng-style="panel.style">
       <thead>
         <th style="white-space:nowrap" ng-repeat="field in panel.fields">
