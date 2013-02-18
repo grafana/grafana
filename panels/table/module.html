@@ -1,5 +1,18 @@
 <kibana-panel ng-controller='table'>
-  <div style="height:{{row.height}};overflow-y:auto;overflow-x:auto"> 
+  <div style="height:{{row.height}};overflow-y:auto;overflow-x:auto">
+    <div class="row-fluid">
+      <div class="span1 offset3" style="text-align:right">
+        <i ng-click="panel.offset = 0;get_data();" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
+        <i ng-click="panel.offset = (panel.offset - panel.size);get_data();" ng-show="panel.offset > 0" class='icon-arrow-left pointer'></i>
+      </div>
+      <div class="span4" style="text-align:center">
+        <strong>{{panel.offset}}</strong> to <strong>{{panel.offset + data.length}}</strong>
+        <small> of &#8805 {{hits}} hits</small>
+      </div>
+      <div class="span1" style="text-align:left">
+        <i ng-click="panel.offset = (panel.offset + panel.size);get_data();" ng-show="hits > (panel.offset + data.length)" class='icon-arrow-right pointer'></i>
+      </div>
+    </div>
     <table class="table table-condensed table-striped" ng-style="panel.style">
       <thead>
         <th style="white-space:nowrap" ng-repeat="field in panel.fields">
@@ -13,5 +26,18 @@
         <td ng-repeat="field in panel.fields">{{row['_source'][field]}}</td>
       </tr>
     </table>
+    <div class="row-fluid">
+      <div class="span1 offset3" style="text-align:right">
+        <i ng-click="panel.offset = 0;get_data();" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
+        <i ng-click="panel.offset = (panel.offset - panel.size);get_data();" ng-show="panel.offset > 0" class='icon-arrow-left pointer'></i>
+      </div>
+      <div class="span4" style="text-align:center">
+        <strong>{{panel.offset}}</strong> to <strong>{{panel.offset + data.length}}</strong>
+        <small> of &#8805 {{hits}} hits</small>
+      </div>
+      <div class="span1" style="text-align:left">
+        <i ng-click="panel.offset = (panel.offset + panel.size);get_data();" ng-show="hits > (panel.offset + data.length)" class='icon-arrow-right pointer'></i>
+      </div>
+    </div>
   </div>
 </kibana-panel>         

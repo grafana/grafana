@@ -6,7 +6,7 @@ angular.module('kibana.pie', [])
   // Set and populate defaults
   var _d = {
     query   : { field:"_all", query:"*", goal: 1}, 
-    size    : 100,
+    size    : 10,
     exclude : [],
     donut   : false,
     tilt    : false,

@@ -7,6 +7,7 @@ angular.module('kibana.table', [])
   var _d = {
     query   : "*",
     size    : 100,
+    offset  : 0,
     sort    : ['@timestamp','desc'],
     group   : "default",
     style   : {},
@@ -54,6 +55,11 @@ angular.module('kibana.table', [])
     broadcast_fields();
   }
 
+  $scope.page = function(page) {
+    $scope.panel.offset = page*$scope.panel.size
+    $scope.get_data();
+  }
+
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
@@ -70,6 +76,7 @@ angular.module('kibana.table', [])
         )
       )
       .size($scope.panel.size)
+      .from($scope.panel.offset)
       .sort($scope.panel.sort[0],$scope.panel.sort[1])
       .doSearch();
 
