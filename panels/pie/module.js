@@ -5,7 +5,7 @@ angular.module('kibana.pie', [])
 
   // Set and populate defaults
   var _d = {
-    query   : { field:"_all", query:"*" }, 
+    query   : { field:"_all", query:"*", goal: 1}, 
     size    : 100,
     exclude : [],
     donut   : false,
@@ -21,7 +21,7 @@ angular.module('kibana.pie', [])
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){set_time(time)});
     eventBus.register($scope,'query', function(event, query) {
-      if($scope.panel.mode === 'terms') {
+      if($scope.panel.mode !== 'query') {
         $scope.panel.query.query = query;
         $scope.get_data();
       }
@@ -95,7 +95,7 @@ angular.module('kibana.pie', [])
         $scope.$emit('render');
       });
     // If we don't have an array, assume its a term facet.
-    } else {
+    } else if ($scope.panel.mode == "terms") {
       var results = request
         .facet(ejs.TermsFacet('pie')
           .field($scope.panel.query.field || $scope.panel.default_field)
@@ -129,6 +129,24 @@ angular.module('kibana.pie', [])
         });
         $scope.$emit('render');
       });
+    } else {
+      console.log('goal')
+      var results = request
+        .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
+        .filter(ejs.RangeFilter(config.timefield)
+          .from($scope.time.from)
+          .to($scope.time.to)
+          .cache(false))
+        .size(0)
+        .doSearch();
+      results.then(function(results) {
+        var complete  = results.hits.total;
+        var remaining = $scope.panel.query.goal - complete;
+        $scope.data = [
+          { label : 'Complete', data : complete, color: '#51A351' },
+          { data : remaining, color: '#EEE'}]
+        $scope.$emit('render');
+      });
     }
   }
 
@@ -159,9 +177,32 @@ angular.module('kibana.pie', [])
 
       // Function for rendering panel
       function render_panel() {
-
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
                         .script("common/lib/panels/jquery.flot.pie.js")
+
+        if(scope.panel.mode === 'goal')
+          var label = { 
+            show: scope.panel.labels,
+            radius: 0,
+            formatter: function(label, series){
+              var font = parseInt(scope.row.height.replace('px',''))/10 + String('px')
+              if(!(_.isUndefined(label)))
+                return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:black;">'+
+                Math.round(series.percent)+'%</div>';
+              else
+                return ''
+            },
+          }
+        else 
+          var label = { 
+            show: scope.panel.labels,
+            radius: 2/3,
+            formatter: function(label, series){
+              return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
+                label+'<br/>'+Math.round(series.percent)+'%</div>';
+            },
+            threshold: 0.1 
+          }
 
         var pie = {
           series: {
@@ -174,15 +215,7 @@ angular.module('kibana.pie', [])
                 color: '#999',
                 label: 'The Rest'
               },
-              label: { 
-                show: scope.panel.labels,
-                radius: 2/3,
-                formatter: function(label, series){
-                  return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
-                    label+'<br/>'+Math.round(series.percent)+'%</div>';
-                },
-                threshold: 0.1 
-              }
+              label: label
             }
           },
           //grid: { hoverable: true, clickable: true },
@@ -215,7 +248,7 @@ angular.module('kibana.pie', [])
         elem.bind("plothover", function (event, pos, item) {
           if (item) {
             var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-            piett(pos.pageX, pos.pageY, percent + " " + item.series.label);
+            piett(pos.pageX, pos.pageY, percent + " " + (item.series.label||""));
           } else {
             $("#pie-tooltip").remove();
           }

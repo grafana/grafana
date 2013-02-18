@@ -29,6 +29,23 @@
       </div>
     </div>
   </div>
+  <div ng-switch-when="goal">
+    <div class="row-fluid">    
+      <div class="span2">
+        <form style="margin-bottom: 0px">
+          <h6>Goal</h6>
+          <input type="number" style="width:90%" ng-model="panel.query.goal">
+        </form>
+      </div>
+      <div class="span9">
+        <form class="input-append" style="margin-bottom: 0px">
+          <h6>Query</h6>
+          <input type="text" style="width:80%" ng-model="panel.query.query">
+          <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
   <div ng-switch-when="query">
     <div class="row-fluid">    
       <div class="span3">
@@ -80,6 +97,6 @@
   </div>
   <div class="span2">
     <label class="small">Mode</label> 
-    <select class="input-small" ng-model="panel.mode" ng-options="f for f in ['query','terms']"></select>
+    <select class="input-small" ng-model="panel.mode" ng-options="f for f in ['query','terms','goal']"></select>
   </div>
 </div>
