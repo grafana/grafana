@@ -13,8 +13,12 @@ curl -XPUT http://localhost:9200/_template/shakespeare -d '
     "play_name" : {"type": "string", "index" : "not_analyzed" },
     "line_id" : { "type" : "integer", "index": "not_analyzed" },
     "speech_number" : { "type" : "integer", "index": "not_analyzed" },
-    "state" : {"type": "string", "index" : "not_analyzed" },
-    "country" : {"type": "string", "index" : "not_analyzed" }
+    "geo" : {
+      "properties": {
+        "state" : {"type": "string", "index" : "not_analyzed" },
+        "country" : {"type": "string", "index" : "not_analyzed" }
+      }
+    }
    }
   }
  }

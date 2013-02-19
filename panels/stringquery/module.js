@@ -17,6 +17,10 @@ angular.module('kibana.stringquery', [])
     $scope.panel.group : [$scope.panel.group];
 
   $scope.init = function() {
+    eventBus.register($scope,'query',function(event,query) {
+      $scope.panel.query = query;
+    });
+
     $scope.send_query = function(query) {
       eventBus.broadcast($scope.$id,$scope.panel.group,'query',query)
     }    

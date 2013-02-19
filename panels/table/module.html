@@ -14,7 +14,7 @@
       </div>
     </div>
     <div class="small" ng-show="panel.fields.length == 0">No columns configured. You may want to add a <strong>fields panel</strong>, or click the edit button in the top right of this panel to add some columns</div>
-    <table class="table table-condensed table-striped" ng-style="panel.style">
+    <table class="table-hover table table-condensed" ng-style="panel.style">
       <thead>
         <th style="white-space:nowrap" ng-repeat="field in panel.fields">
           <span  class="pointer" ng-click="set_sort(field)">
@@ -23,9 +23,30 @@
           </span>
         </th>
       </thead>
-      <tr ng-repeat="row in data">
-        <td ng-repeat="field in panel.fields">{{row['_source'][field]}}</td>
-      </tr>
+      <tbody ng-repeat="row in data" ng-class-odd="'odd'">
+        <tr ng-click="toggle_details(row)">
+          <td ng-repeat="field in panel.fields">{{row[field]}}</td>
+        </tr>
+        <tr ng-show="row.kibana.details">
+          <td colspan=1000>
+            <table class='table table-bordered table-condensed'>
+              <thead>
+                <th>Field</th>
+                <th>Action</th>
+                <th>Value</th>
+              </thead>
+              <tr ng-repeat="(key,value) in row.kibana.details">
+                <td>{{key}}</td>
+                <td>
+                  <i class='icon-search pointer' ng-click="build_search(key,value)"></i> 
+                  <i class='icon-ban-circle pointer' ng-click="build_search('NOT '+key,value)"></i>
+                </td>
+                <td>{{value}}</td>
+              </tr> 
+            </table>
+          </td>
+        </tr>
+      </tbody>
     </table>
     <div class="row-fluid">
       <div class="span1 offset3" style="text-align:right">

@@ -33,9 +33,10 @@ angular.module('kibana.services', [])
       if(!(_.isArray(_group)))
         _group = [_group];
       
-      if(_.intersection(_to,_group).length > 0 || 
+      if((_.intersection(_to,_group).length > 0 || 
         _.indexOf(_to,_id) > -1 ||
-        _.indexOf(_to,'ALL') > -1
+        _.indexOf(_to,'ALL') > -1) &&
+        _from !== _id
         ) {
         //console.log('Got: '+type + ' from ' + _from + ' to ' + _to + ': ' + angular.toJson(packet.data))
         fn(event,packet.data);

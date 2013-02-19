@@ -10,8 +10,16 @@
   display: inline-block;
 }
 
+.odd {
+  background-color: #f9f9f9;
+}
+
 [ng\:cloak], [ng-cloak], .ng-cloak {
   display: none !important;
+}
+
+.table tbody + tbody{
+  border-top: 0px;
 }
 
 .panel-error {

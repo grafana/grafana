@@ -24,10 +24,12 @@ fs.readFile('shakespeare.json', 'utf8', function (err,data) {
     var randomnumber=Math.floor(Math.random()*57600000)
     var command = {index:{_index: "shakespeare", _type: "line", _id: i}};
     o['@timestamp'] = new Date((new Date()).getTime() -9000000 + randomnumber);
-    o.geo = [getRandomInRange(-90, 90, 3),getRandomInRange(-180, 180, 3)]
-    o.country = get_country();
-    if(o.country == 'US')
-      o.state = get_state()
+    o.geo = {
+      geojson : [getRandomInRange(-90, 90, 3),getRandomInRange(-180, 180, 3)],
+      country : get_country()
+    }
+    if(o.geo.country == 'US')
+      o.geo.state = get_state();
     console.log(JSON.stringify(command))
     console.log(JSON.stringify(o));
     var percent = Math.floor((i/lines)*100)

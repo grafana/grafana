@@ -24,9 +24,11 @@ angular.module('kibana.table', [])
 
   $scope.set_listeners = function(group) {
     eventBus.register($scope,'time',function(event,time) {
+      $scope.panel.offset = 0;
       set_time(time)
     });
     eventBus.register($scope,'query',function(event,query) {
+      $scope.panel.offset = 0;
       $scope.panel.query = query;
       $scope.get_data();
     });
@@ -55,9 +57,23 @@ angular.module('kibana.table', [])
     broadcast_fields();
   }
 
+  $scope.toggle_details = function(row) {
+    row.kibana = row.kibana || {};
+    row.kibana.details = !row.kibana.details ? $scope.without_kibana(row) : false;
+  }
+
   $scope.page = function(page) {
     $scope.panel.offset = page*$scope.panel.size
     $scope.get_data();
+  }
+
+  $scope.build_search = function(field, value) {
+    var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
+    var glue = $scope.panel.query != "" ? " AND " : "";
+    $scope.panel.query = $scope.panel.query + glue + query;
+    $scope.panel.offset = 0;
+    $scope.get_data();
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
   }
 
   $scope.get_data = function() {
@@ -88,12 +104,21 @@ angular.module('kibana.table', [])
       }
       $scope.panel.error =  false;
       $scope.hits = results.hits.total;
-      $scope.data = results.hits.hits;
+      $scope.data = []
+      _.each(results.hits.hits, function(v,k) {
+        $scope.data.push(flatten_json(v['_source']))
+      })
       $scope.all_fields = get_all_fields(results);
 
       broadcast_fields();
     });
   }
+
+  $scope.without_kibana = function (row) {
+    row = _.clone(row)
+    delete row.kibana
+    return row
+  } 
 
   // Broadcast a list of all fields. Note that receivers of field array 
   // events should be able to receive from multiple sources, merge, dedupe 
