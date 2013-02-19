@@ -110,7 +110,7 @@ angular.module('kibana.table', [])
       })
       $scope.all_fields = get_all_fields(results);
 
-      broadcast_fields();
+      broadcast_results();
     });
   }
 
@@ -123,12 +123,14 @@ angular.module('kibana.table', [])
   // Broadcast a list of all fields. Note that receivers of field array 
   // events should be able to receive from multiple sources, merge, dedupe 
   // and sort on the fly if needed.
-  function broadcast_fields() {
+  function broadcast_results() {
     eventBus.broadcast($scope.$id,$scope.panel.group,"fields", {
       all   : $scope.all_fields,
       sort  : $scope.panel.sort,
       active: $scope.panel.fields      
     });
+    eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
+      $scope.data);
   }
 
   function set_time(time) {

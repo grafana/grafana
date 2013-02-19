@@ -130,7 +130,6 @@ angular.module('kibana.pie', [])
         $scope.$emit('render');
       });
     } else {
-      console.log('goal')
       var results = request
         .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
         .filter(ejs.RangeFilter(config.timefield)

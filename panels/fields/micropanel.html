@@ -1,0 +1,13 @@
+<a class="close" ng-click="dismiss()" href="">×</a>
+<h4>Micro Analysis of {{micropanel.field}}</h4>
+<table style="width:500px" class='table table-bordered table-striped table-condensed'>
+  <thead>
+    <th>{{micropanel.field}}</th>
+    <th>On Page</th>
+  </thead>
+  <tbody>
+    <tr ng-repeat='field in micropanel.values'>
+      <td>{{field[0]}}</td><td>{{field[1]}}</td>
+    </tr>
+  </tbody>
+</table>

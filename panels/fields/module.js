@@ -6,7 +6,7 @@ angular.module('kibana.fields', [])
   // Set and populate defaults
   var _d = {
     group   : "default",
-    style   : {"font-size":"85%","line-height":"15px"},
+    style   : {},
   }
   _.defaults($scope.panel,_d);
 
@@ -17,6 +17,16 @@ angular.module('kibana.fields', [])
       $scope.fields     = _.union(fields.all,$scope.fields);
       $scope.active     = _.clone(fields.active);
     });
+    eventBus.register($scope,'table_documents', function(event, docs) {
+      $scope.docs = docs;
+    });
+  }
+
+  $scope.toggle_micropanel = function(field) {
+    $scope.micropanel = {
+      field: field,
+      values : top_field_values($scope.docs,field,10)
+    }
   }
 
   $scope.toggle_sort = function() {
@@ -33,7 +43,7 @@ angular.module('kibana.fields', [])
   }
 
   $scope.is_active = function(field) {
-    return _.indexOf($scope.active,field) > -1 ? 'active' : '';    
+    return _.indexOf($scope.active,field) > -1 ? ['label','label-info'] : '';    
   }
 
   $scope.init();

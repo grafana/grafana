@@ -57,14 +57,14 @@ angular.module('kibana.timepicker', [])
     switch($scope.panel.mode) {
       case 'absolute':
         $scope.time = {
-          from : Date.parse($scope.panel.time.from),
-          to   : Date.parse($scope.panel.time.to)
+          from : Date.parse($scope.panel.time.from) || time_ago($scope.panel.timespan),
+          to   : Date.parse($scope.panel.time.to) || new Date()
         }
         break;
       case 'since':
         $scope.time = {
-          from : Date.parse($scope.panel.time.from),
-          to   : new Date()
+          from : Date.parse($scope.panel.time.from) || time_ago($scope.panel.timespan),
+          to   : new Date() || new Date()
         }
         break;
       case 'relative':
@@ -138,10 +138,17 @@ angular.module('kibana.timepicker', [])
   }
 
   $scope.time_check = function(){
-    var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
-      Date.parse($scope.timepicker.from.date + " " + $scope.timepicker.from.time)
-    var to = $scope.panel.mode !== 'absolute' ? new Date() :
-      Date.parse($scope.timepicker.to.date + " " + $scope.timepicker.to.time)
+    if(!(_.isUndefined($scope.timepicker))) {
+      var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
+        Date.parse($scope.timepicker.from.date + " " + $scope.timepicker.from.time)
+      var to = $scope.panel.mode !== 'absolute' ? new Date() :
+        Date.parse($scope.timepicker.to.date + " " + $scope.timepicker.to.time)
+    } else {
+      var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
+        $scope.time.from;
+      var to = $scope.panel.mode !== 'absolute' ? new Date() :
+        $scope.time.to;
+    }
 
     if (from.getTime() >= to.getTime())
       from = new Date(to.getTime() - 1000)
@@ -197,6 +204,7 @@ angular.module('kibana.timepicker', [])
 
     return all_indices().then(function(p) {
       var indices = _.intersection(p,possible);
+      indices.reverse();
       return indices.length == 0 ? [$scope.panel.defaultindex] : indices;
     })
   };

@@ -100,6 +100,7 @@ function recurse_field_dots(object,field) {
   return value;
 }
 
+// Probably useless now
 function get_field_value(object,field,opt) {
   var value = recurse_field_dots(object['_source'],field);
 
@@ -129,53 +130,23 @@ function get_field_value(object,field,opt) {
   return (value != null) ? value.toString() : '';
 }
 
-
-
 // Returns a big flat array of all values for a field
-function get_all_values_for_field(json,field) {
+function get_all_values_for_field(docs,field) {
   var field_array = [];
-  for (hit in json.hits.hits) {
-    var value = get_field_value(json.hits.hits[hit],field,'raw')
+  _.each(docs, function(doc,k) {
+    var value = doc[field]
     if(typeof value === 'object' && value != null) {
       field_array.push.apply(field_array,value);
     } else {
       field_array.push(value);
     }
-  }
+  })    
   return field_array;
 }
 
-// Takes a flat array of values and returns an array of arrays
-// reverse sorted with counts
-function count_values_in_array(array) {
-  var count = {};
-  _.each(array, function(){
-    var num = this; // Get number
-    count[num] = count[num]+1 || 1; // Increment counter for each value
-  });
-
-  var tuples = [];
-  for (var key in count) tuples.push([key, count[key]]);
-  tuples.sort(function(a, b) {
-    a = a[1];
-    b = b[1];
-    return a < b ? -1 : (a > b ? 1 : 0);
-  });
-
-  tuples.reverse();
-
-  var count_array = [];
-  for (var i = 0; i < tuples.length; i++) {
-    var key = tuples[i][0];
-    var value = tuples[i][1];
-    count_array.push([key,value])
-  }
-  return count_array;
-}
-
-function top_field_values(json,field,count) {
-  var result = count_values_in_array(get_all_values_for_field(json,field));
-  return result.slice(0,count)
+function top_field_values(docs,field,count) {
+  var counts = _.countBy(get_all_values_for_field(docs,field),function(field){return field;});
+  return _.pairs(counts).sort(function(a, b) {return a[1] - b[1]}).reverse().slice(0,count)
 }
 
  /**
