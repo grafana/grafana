@@ -134,7 +134,7 @@ function get_field_value(object,field,opt) {
 function get_all_values_for_field(docs,field) {
   var field_array = [];
   _.each(docs, function(doc,k) {
-    var value = doc[field]
+    var value = doc[field] || ""
     if(typeof value === 'object' && value != null) {
       field_array.push.apply(field_array,value);
     } else {
@@ -149,6 +149,14 @@ function top_field_values(docs,field,count) {
   return _.pairs(counts).sort(function(a, b) {return a[1] - b[1]}).reverse().slice(0,count)
 }
 
+function add_to_query(original,field,value) {
+  if(value !== '')
+    var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
+  else
+    var query = "_missing_:" + field;
+  var glue = original != "" ? " AND " : "";
+  return original + glue + query;
+}
  /**
    * Calculate a graph interval
    *

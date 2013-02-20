@@ -68,9 +68,7 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field, value) {
-    var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
-    var glue = $scope.panel.query != "" ? " AND " : "";
-    $scope.panel.query = $scope.panel.query + glue + query;
+    $scope.panel.query = add_to_query($scope.panel.query,field,value)
     $scope.panel.offset = 0;
     $scope.get_data();
     eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
