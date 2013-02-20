@@ -58,8 +58,8 @@ angular.module('kibana.fields', [])
     eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
   }
 
-  $scope.build_search = function(field, value) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value)
+  $scope.build_search = function(field, value,negate) {
+    $scope.panel.query = add_to_query($scope.panel.query,field,value,negate)
     eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
   }
 

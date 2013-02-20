@@ -127,13 +127,14 @@ function top_field_values(docs,field,count) {
   }).reverse().slice(0,count)
 }
 
-function add_to_query(original,field,value) {
+function add_to_query(original,field,value,negate) {
+  var not = negate ? "NOT " : "";
   if(value !== '')
     var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
   else
     var query = "_missing_:" + field;
   var glue = original != "" ? " AND " : "";
-  return original + glue + query;
+  return original + glue + not + query;
 }
  /**
    * Calculate a graph interval

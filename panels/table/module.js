@@ -67,8 +67,8 @@ angular.module('kibana.table', [])
     $scope.get_data();
   }
 
-  $scope.build_search = function(field, value) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value)
+  $scope.build_search = function(field, value,negate) {
+    $scope.panel.query = add_to_query($scope.panel.query,field,value,negate)
     $scope.panel.offset = 0;
     $scope.get_data();
     eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
