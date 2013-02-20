@@ -18,11 +18,13 @@ angular.module('kibana.fields', [])
       $scope.active     = _.clone(fields.active);
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
-      $scope.docs = docs;
+      $scope.panel.query = docs.query;
+      $scope.docs = docs.docs;
     });
   }
 
   $scope.toggle_micropanel = function(field) {
+    //console.log(top_field_values($scope.docs,field,10))
     $scope.micropanel = {
       field: field,
       values : top_field_values($scope.docs,field,10)
@@ -40,6 +42,13 @@ angular.module('kibana.fields', [])
       $scope.active.push(field)
     
     eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
+  }
+
+  $scope.build_search = function(field, value) {
+    var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
+    var glue = $scope.panel.query != "" ? " AND " : "";
+    $scope.panel.query = $scope.panel.query + glue + query;
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
   }
 
   $scope.is_active = function(field) {

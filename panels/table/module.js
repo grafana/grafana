@@ -130,7 +130,7 @@ angular.module('kibana.table', [])
       active: $scope.panel.fields      
     });
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
-      $scope.data);
+      {query:$scope.panel.query,docs:$scope.data});
   }
 
   function set_time(time) {
