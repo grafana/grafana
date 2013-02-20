@@ -1,7 +1,9 @@
 <kibana-panel ng-controller='stringquery'>
   <form class="input-append" style="margin-bottom:0px; width:100%; white-space:nowrap;">
     <label><small>{{panel.label}}</small></label>
-    <input type="text" ng-model="panel.query" style="width:90%">
-    <button type="submit" class="btn" ng-click="send_query(panel.query)"><i class="icon-search"></i></button>
+    <input type="text" ng-model="panel.query" style="width:85%">
+    <button type="submit" class="btn btn-info" ng-click="send_query(panel.query)"><i class="icon-search"></i></button>
+    <button type="submit" class="btn btn-danger" ng-click="panel.query='';send_query(panel.query)"><i class="icon-ban-circle"></i></button>
+
   </form>
 </kibana-panel>

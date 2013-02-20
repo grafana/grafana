@@ -1,5 +1,5 @@
 angular.module('kibana.fields', [])
-.controller('fields', function($scope, eventBus) {
+.controller('fields', function($scope, eventBus, $timeout) {
 
   var _id = _.uniqueId();
 
@@ -7,14 +7,17 @@ angular.module('kibana.fields', [])
   var _d = {
     group   : "default",
     style   : {},
+    arrange : 'vertical',
+    micropanel_position : 'right', 
   }
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
+    $scope.Math = Math;
     $scope.fields = [];
     eventBus.register($scope,'fields', function(event, fields) {
       $scope.panel.sort = _.clone(fields.sort);
-      $scope.fields     = _.union(fields.all,$scope.fields);
+      $scope.fields     = fields.all,
       $scope.active     = _.clone(fields.active);
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
@@ -23,10 +26,22 @@ angular.module('kibana.fields', [])
     });
   }
 
+  $scope.reload_list = function () {
+    var temp = _.clone($scope.fields);
+    $scope.fields = []    
+    $timeout(function(){
+      $scope.fields = temp;
+    },10)
+    
+  }
+
   $scope.toggle_micropanel = function(field) {
     $scope.micropanel = {
       field: field,
-      values : top_field_values($scope.docs,field,10)
+      values : top_field_values($scope.docs,field,10),
+      related : get_related_fields($scope.docs,field),
+      count: _.countBy($scope.docs,function(doc){
+        return _.contains(_.keys(doc),field)})['true'],
     }
   }
 

@@ -30,18 +30,6 @@ function has_field(obj,field) {
   }
 }
 
-// Retuns a sorted array with duplicates removed
-function array_unique(arr) {
-  var sorted_arr = arr.sort();
-  var results = [];
-  for (var i = 0; i <= arr.length - 1; i++) {
-    if (sorted_arr[i + 1] != sorted_arr[i]) {
-        results.push(sorted_arr[i]);
-    }
-  }
-  return results
-}
-
 function get_objids_with_field(json,field) {
   var objid_array = [];
   for (hit in json.hits.hits) {
@@ -75,15 +63,14 @@ function get_objids_with_field_value(json,field,value) {
   return objid_array;
 }
 
-function get_related_fields(json,field) {
+function get_related_fields(docs,field) {
   var field_array = []
-  for (hit in json.hits.hits) {
-    var obj_fields = get_object_fields(json.hits.hits[hit])
-    if (_.inArray(obj_fields,field) >= 0) {
-      field_array.push.apply(field_array,obj_fields);
-    }
-  }
-  var counts = count_values_in_array(field_array);
+  _.each(docs, function(doc) {
+    var keys = _.keys(doc)
+    if(_.contains(keys,field))
+      field_array = field_array.concat(keys)
+  })
+  var counts = _.countBy(_.without(field_array,field),function(field){return field;});
   return counts;
 }
 
@@ -100,7 +87,8 @@ function recurse_field_dots(object,field) {
   return value;
 }
 
-// Probably useless now
+// Probably useless now, leaving for cases where you might not want
+// a flat dot notated data structure
 function get_field_value(object,field,opt) {
   var value = recurse_field_dots(object['_source'],field);
 
@@ -130,23 +118,13 @@ function get_field_value(object,field,opt) {
   return (value != null) ? value.toString() : '';
 }
 
-// Returns a big flat array of all values for a field
-function get_all_values_for_field(docs,field) {
-  var field_array = [];
-  _.each(docs, function(doc,k) {
-    var value = doc[field] || ""
-    if(typeof value === 'object' && value != null) {
-      field_array.push.apply(field_array,value);
-    } else {
-      field_array.push(value);
-    }
-  })    
-  return field_array;
-}
-
 function top_field_values(docs,field,count) {
-  var counts = _.countBy(get_all_values_for_field(docs,field),function(field){return field;});
-  return _.pairs(counts).sort(function(a, b) {return a[1] - b[1]}).reverse().slice(0,count)
+  var counts = _.countBy(_.pluck(docs,field),function(field){
+    return _.isUndefined(field) ? '' : field;
+  });
+  return _.pairs(counts).sort(function(a, b) {
+    return a[1] - b[1]
+  }).reverse().slice(0,count)
 }
 
 function add_to_query(original,field,value) {

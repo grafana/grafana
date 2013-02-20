@@ -102,10 +102,9 @@ angular.module('kibana.table', [])
       }
       $scope.panel.error =  false;
       $scope.hits = results.hits.total;
-      $scope.data = []
-      _.each(results.hits.hits, function(v,k) {
-        $scope.data.push(flatten_json(v['_source']))
-      })
+      $scope.data = _.map(results.hits.hits, function(hit) {
+        return flatten_json(hit['_source']);
+      });
       $scope.all_fields = get_all_fields(results);
 
       broadcast_results();

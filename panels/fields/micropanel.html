@@ -1,9 +1,9 @@
 <a class="close" ng-click="dismiss()" href="">×</a>
 <h4>
-  Micro Analysis of {{micropanel.field}}
+  Micro Analysis of {{micropanel.field}} 
   <i class="pointer icon-search" ng-click="build_search('_exists_',micropanel.field);dismiss();"></i>
   <i class="pointer icon-ban-circle" ng-click="build_search('_missing_',micropanel.field);dismiss();"></i>
-
+  <br><small>{{micropanel.count}} events on this page</small>
 </h4>
 <table style="width:500px" class='table table-bordered table-striped table-condensed'>
   <thead>
@@ -22,3 +22,4 @@
     </tr>
   </tbody>
 </table>
+<span ng-repeat='(field,count) in micropanel.related'><a ng-click="toggle_field(field)">{{field}}</a> ({{Math.round((count / micropanel.count) * 100)}}%),</span>
