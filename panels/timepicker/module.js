@@ -26,8 +26,6 @@ a pattern
 angular.module('kibana.timepicker', [])
 .controller('timepicker', function($scope, eventBus, $timeout, timer, $http) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     mode          : "relative",

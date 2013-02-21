@@ -1,0 +1,9 @@
+<div class="row-fluid">    
+  <div class="span3">
+    <label class="small">Allow Mulitple</label><input type="checkbox" ng-model="panel.multi" ng-checked="panel.multi">
+  </div>
+  <div class="span4" ng-show="panel.multi">
+    <label class="small">Multiquery Arrangement</label> 
+    <select class="input-medium" ng-model="panel.multi_arrange" ng-options="f for f in ['vertical','horizontal']"></select>
+  </div>
+</div>

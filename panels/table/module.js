@@ -1,8 +1,6 @@
 angular.module('kibana.table', [])
 .controller('table', function($scope, eventBus) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     query   : "*",
@@ -29,7 +27,7 @@ angular.module('kibana.table', [])
     });
     eventBus.register($scope,'query',function(event,query) {
       $scope.panel.offset = 0;
-      $scope.panel.query = query;
+      $scope.panel.query = _.isArray(query) ? query[0] : query;
       $scope.get_data();
     });
     eventBus.register($scope,'sort', function(event,sort){

@@ -1,8 +1,6 @@
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, eventBus) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     query   : { field:"_all", query:"*", goal: 1}, 
@@ -23,8 +21,16 @@ angular.module('kibana.pie', [])
     eventBus.register($scope,'query', function(event, query) {
       if($scope.panel.mode !== 'query') {
         $scope.panel.query.query = query;
+        $scope.panel.query.query = _.isArray(query) ? query[0] : query;
         $scope.get_data();
+      } else {
+        if(_.isArray(query))
+          $scope.panel.query = _.map(query,function(q) {
+            return {query: q, label: q}}) 
+        else
+          $scope.panel.query[0] = {query: query, label: query}
       }
+      $scope.get_data();
     });
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')

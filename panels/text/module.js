@@ -1,8 +1,6 @@
 angular.module('kibana.text', [])
 .controller('text', function($scope, $rootScope) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     group   : "default",

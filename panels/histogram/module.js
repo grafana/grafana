@@ -1,8 +1,6 @@
 angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, eventBus) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     query   : [ {query: "*", label:"Query"} ],
@@ -17,7 +15,13 @@ angular.module('kibana.histogram', [])
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){set_time(time)});
     eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query[0].query = query;
+      if(_.isArray(query)) {
+        $scope.panel.query = _.map(query,function(q) {
+          return {query: q, label: q};
+        })
+      } else {
+        $scope.panel.query[0] = {query: query, label: query}
+      }
       $scope.get_data();
     });
     // Now that we're all setup, request the time from our group if we don't 

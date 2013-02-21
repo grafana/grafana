@@ -1,8 +1,6 @@
 angular.module('kibana.map', [])
 .controller('map', function($scope, eventBus) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     query   : "*",
@@ -17,7 +15,7 @@ angular.module('kibana.map', [])
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){set_time(time)});
     eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = query;
+      $scope.panel.query = _.isArray(query) ? query[0] : query;
       $scope.get_data();
     });
     // Now that we're all setup, request the time from our group

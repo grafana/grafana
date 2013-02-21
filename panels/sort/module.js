@@ -1,13 +1,9 @@
 angular.module('kibana.sort', [])
 .controller('sort', function($scope, eventBus) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     label   : "Sort",
-    query   : "*",
-    size    : 100,
     sort    : [config.timefield,'desc'],
     group   : "default"
   }

@@ -1,8 +1,6 @@
 angular.module('kibana.dashcontrol', [])
 .controller('dashcontrol', function($scope, $http, eventBus, timer) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     group   : "default",

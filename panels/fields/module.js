@@ -1,8 +1,6 @@
 angular.module('kibana.fields', [])
 .controller('fields', function($scope, eventBus, $timeout) {
 
-  var _id = _.uniqueId();
-
   // Set and populate defaults
   var _d = {
     group   : "default",
