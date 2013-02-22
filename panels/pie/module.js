@@ -54,6 +54,21 @@ angular.module('kibana.pie', [])
     $scope.get_data();
   }
 
+  $scope.set_mode = function(mode) {
+    switch(mode)
+    {
+    case 'terms':
+      $scope.panel.query = {query:"*",field:"_all"};
+      break;
+    case 'query':
+      $scope.panel.query = [{query:"*",label:"*"}];
+      break;
+    case 'goal':
+      $scope.panel.query = {query:"*",goal:100};
+      break;
+    }
+  }
+
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))

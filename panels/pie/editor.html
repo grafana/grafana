@@ -97,6 +97,6 @@
   </div>
   <div class="span2">
     <label class="small">Mode</label> 
-    <select class="input-small" ng-model="panel.mode" ng-options="f for f in ['query','terms','goal']"></select>
+    <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['query','terms','goal']"></select>
   </div>
 </div>
