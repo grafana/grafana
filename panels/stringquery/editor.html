@@ -1,6 +1,6 @@
 <div class="row-fluid">    
   <div class="span3">
-    <label class="small">Allow Mulitple</label><input type="checkbox" ng-model="panel.multi" ng-checked="panel.multi">
+    <label class="small">Mulit Query</label><input type="checkbox" ng-change="set_multi(panel.multi) "ng-model="panel.multi" ng-checked="panel.multi">
   </div>
   <div class="span4" ng-show="panel.multi">
     <label class="small">Multiquery Arrangement</label> 

@@ -35,8 +35,14 @@ angular.module('kibana.stringquery', [])
     }
   } 
 
+  $scope.set_multi = function(multi) {
+    $scope.panel.query = multi ? 
+      new Array($scope.panel.query) : $scope.panel.query[0];
+  }
+
   $scope.remove_query = function(index) {
     $scope.panel.query.splice(index,1);
+    console.log($scope.panel.query)
   }
 
   $scope.init();
