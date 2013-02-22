@@ -4,7 +4,7 @@ angular.module('kibana.sort', [])
   // Set and populate defaults
   var _d = {
     label   : "Sort",
-    sort    : [config.timefield,'desc'],
+    sort    : ['_score','desc'],
     group   : "default"
   }
   _.defaults($scope.panel,_d);

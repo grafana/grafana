@@ -70,7 +70,7 @@ angular.module('kibana.pie', [])
       _.each($scope.panel.query, function(v) {
         queries.push(ejs.FilteredQuery(
           ejs.QueryStringQuery(v.query || '*'),
-          ejs.RangeFilter(config.timefield)
+          ejs.RangeFilter($scope.time.field)
             .from($scope.time.from)
             .to($scope.time.to))
         )
@@ -110,7 +110,7 @@ angular.module('kibana.pie', [])
           .facetFilter(ejs.QueryFilter(
             ejs.FilteredQuery(
               ejs.QueryStringQuery($scope.panel.query.query || '*'),
-              ejs.RangeFilter(config.timefield)
+              ejs.RangeFilter($scope.time.field)
                 .from($scope.time.from)
                 .to($scope.time.to)
                 .cache(false)
@@ -138,7 +138,7 @@ angular.module('kibana.pie', [])
     } else {
       var results = request
         .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
-        .filter(ejs.RangeFilter(config.timefield)
+        .filter(ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
           .to($scope.time.to)
           .cache(false))

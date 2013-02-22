@@ -38,7 +38,7 @@ angular.module('kibana.map', [])
         .facetFilter(ejs.QueryFilter(
           ejs.FilteredQuery(
             ejs.QueryStringQuery($scope.panel.query || '*'),
-            ejs.RangeFilter(config.timefield)
+            ejs.RangeFilter($scope.time.field)
               .from($scope.time.from)
               .to($scope.time.to)
             )))).size(0)

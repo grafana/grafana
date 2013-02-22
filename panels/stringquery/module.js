@@ -6,7 +6,7 @@ angular.module('kibana.stringquery', [])
     label   : "Search",
     query   : "*",
     size    : 100,
-    sort    : [config.timefield,'desc'],
+    sort    : ['_score','desc'],
     group   : "default",
     multi   : false,
     multi_arrange: 'horizontal',
