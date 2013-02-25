@@ -1,24 +1,46 @@
 <kibana-panel ng-controller='stringquery'>
   <div ng-show="!panel.multi">
-    <form class="input-append" style="margin-bottom:0px; width:100%;z-index:1000;overflow:auto">
-      <label><small>{{panel.label}}</small></label>
-      <input type="text" ng-model="panel.query" style="width:85%">
-      <button type="submit" class="btn btn-info" ng-click="send_query(panel.query)"><i class="icon-search"></i></button>
-      <button type="submit" class="btn btn-danger" ng-click="panel.query='';send_query(panel.query)"><i class="icon-ban-circle"></i></button>
-      <button ng-show="panel.multi" type="submit" class="btn" ng-click="add_query()"><i class="icon-plus"></i></button>
-    </form>
+    <table class="form-horizontal">
+      <tr><td><label><small>{{panel.label}}</small></label></td></tr>
+      <tr>
+        <td width="97%" style="padding-right:20px">
+          <input type="text" style="width:100%" ng-model="panel.query">
+        </td>
+        <td style="margin-left:20px" width="1%">
+          <button style="margin-top:0px" type="submit" class="btn btn-info" ng-click="send_query(panel.query)"><i class="icon-search"></i></button>
+        </td>
+        <td width="1%">
+          <button style="margin-top:0px"  type="submit" class="btn btn-danger" ng-click="panel.query='';send_query(panel.query)"><i class="icon-ban-circle"></i></button>
+        </td>
+        <td width="1%">
+          <button style="margin-top:0px"  ng-show="panel.multi" type="submit" class="btn" ng-click="add_query()"><i class="icon-plus"></i></button>
+        </td>
+      <tr>
+    </table>
   </div>
-  <div ng-show="panel.multi">
+  <div class='row-fluid' ng-show="panel.multi && panel.multi_arrange == 'horizontal'">
       <form ng-class="{'form-inline': panel.multi_arrange == 'horizontal'}" style="width:100%;" >        
         <span ng-repeat="q in panel.query">
           <span class="input-append" style="margin-bottom:0px;margin-right:5px">
-            <button class="btn btn-danger" type="submit" style="width:50px;margin-left:-50px;visibility:hidden"></button>
+            <button class="btn btn-danger" type="submit" style="width:50px;margin-left:-50px;visibility:hidden" ng-click="send_query(panel.query)"></button>
             <input style="margin-bottom:5px;" type="text"  ng-model="panel.query[$index]" ng-model-onblur style="width:90%">
             <button class="btn btn-danger" ng-show="panel.query.length > 1" ng-click="remove_query($index);send_query(panel.query)"><i class="icon-minus"></i></button><br>
-          </span><br style:"height:0px" ng-show="panel.multi_arrange == 'vertical'">
+          </span>
         </span>
       </form>
       <button type="submit" class="btn btn-info" ng-click="send_query(panel.query)"><i class="icon-search"></i> Search</button>
       <button type="submit" class="btn" ng-click="send_query(panel.query);add_query();"><i class="icon-plus"></i> Add Query</button>
   </div>
+  <div ng-show="panel.multi && panel.multi_arrange == 'vertical'">
+    <form>
+      <table class="form-horizontal">        
+        <tr ng-repeat="q in panel.query" style="margin-bottom:10px">
+          <td width="99%"><input type="text"  ng-model="panel.query[$index]" ng-model-onblur style="width:100%"></td>
+          <td width="1%" style="visibility:hidden"><button class="btn btn-info" type="submit"></button></td>
+          <td width="1%"><button class="btn btn-danger" ng-show="panel.query.length > 1" ng-click="remove_query($index);send_query(panel.query)"><i class="icon-minus"></i></button></td>
+        </tr>
+      </table>
+      <button type="submit" class="btn btn-info" ng-click="send_query(panel.query)"><i class="icon-search"></i> Search</button>
+      <button type="submit" class="btn" ng-click="send_query(panel.query);add_query();"><i class="icon-plus"></i> Add Query</button>
+  </form>
 </kibana-panel>

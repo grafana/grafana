@@ -1,15 +1,23 @@
-<div class="row-fluid">    
-  <div class="span3">
-    <label class="small">Mulit Query</label><input type="checkbox" ng-change="set_multi(panel.multi) "ng-model="panel.multi" ng-checked="panel.multi">
+<div>
+  <div class="row-fluid">    
+    <div class="span3">
+      <label class="small">Mulit Query</label><input type="checkbox" ng-change="set_multi(panel.multi) "ng-model="panel.multi" ng-checked="panel.multi">
+    </div>
+    <div class="span4" ng-show="panel.multi">
+      <label class="small">Multiquery Arrangement</label> 
+      <select class="input-medium" ng-model="panel.multi_arrange" ng-options="f for f in ['vertical','horizontal']"></select>
+    </div>
+    <div class="span4" style="white-space:nowrap">
+      <label class="small">Sort</label>
+      <input ng-show="all_fields.length<=0 || !all_fields"style="width:85%" ng-model="panel.sort[0]" type="text"></input>
+      <select ng-show="all_fields.length>0"style="width:85%" ng-model="panel.sort[0]" ng-options="f for f in all_fields"></select>
+      <i ng-click="set_sort(panel.sort[0])" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+    </div>
   </div>
-  <div class="span4" ng-show="panel.multi">
-    <label class="small">Multiquery Arrangement</label> 
-    <select class="input-medium" ng-model="panel.multi_arrange" ng-options="f for f in ['vertical','horizontal']"></select>
-  </div>
-  <div class="span4" style="white-space:nowrap">
-    <label class="small">Sort</label>
-    <input ng-show="all_fields.length<=0 || !all_fields"style="width:85%" ng-model="panel.sort[0]" type="text"></input>
-    <select ng-show="all_fields.length>0"style="width:85%" ng-model="panel.sort[0]" ng-options="f for f in all_fields"></select>
-    <i ng-click="set_sort(panel.sort[0])" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+  <div class="row-fluid" ng-show="panel.multi">    
+    <div class="span12">
+      <h5>A note on multi query panels</h5>
+      <p>You turned on multi panel support: <i>cool</i>. Be aware that not all panels support display of multiple queries. Panels that don't support receiving several queries at one time will (should) display the results of the <strong>first query in the list</strong>. Further, some panels might not support receiving multiple queries in all modes. For example, the <strong>pie panel</strong> supports multiple queries only in <strong>query mode</strong>. In its other modes it will display the results of the first query in the list</p>
+    </div>
   </div>
 </div>

@@ -17,7 +17,14 @@ angular.module('kibana.stringquery', [])
     $scope.panel.group : [$scope.panel.group];
 
   $scope.init = function() {
+
+    // I don't like this compromise. I'm not totally sure what this panel
+    // Should do if its in multi query mode and receives a query. For now, just
+    // replace the first one, though I feel like that isn't right.
     eventBus.register($scope,'query',function(event,query) {
+      if (_.isArray($scope.panel.query))
+        $scope.panel.query[0] = query
+      else
       $scope.panel.query = query;
     });   
   }
@@ -38,6 +45,13 @@ angular.module('kibana.stringquery', [])
   $scope.set_multi = function(multi) {
     $scope.panel.query = multi ? 
       new Array($scope.panel.query) : $scope.panel.query[0];
+  }
+
+  $scope.set_sort = function(field) {
+    if($scope.panel.sort[0] === field)
+      $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
+    else
+      $scope.panel.sort[0] = field;
   }
 
   $scope.remove_query = function(index) {

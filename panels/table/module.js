@@ -52,7 +52,7 @@ angular.module('kibana.table', [])
       $scope.panel.fields = _.without($scope.panel.fields,field)
     else
       $scope.panel.fields.push(field)
-    broadcast_fields();
+    broadcast_results();
   }
 
   $scope.toggle_details = function(row) {
