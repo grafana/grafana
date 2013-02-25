@@ -56,7 +56,6 @@ angular.module('kibana.stringquery', [])
 
   $scope.remove_query = function(index) {
     $scope.panel.query.splice(index,1);
-    console.log($scope.panel.query)
   }
 
   $scope.init();
