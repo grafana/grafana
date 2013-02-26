@@ -13,7 +13,7 @@ If you need to configure the default dashboard, please see dashboard.js
 */
 var config = new Settings(
 {
-    elasticsearch:  'http://localhost:9201',
+    elasticsearch:  'http://localhost:9200',
     timeformat:     'mm/dd HH:MM:ss',
     modules:        ['histogram','map','pie','table','stringquery','sort',
                     'timepicker','text','fields','hits','dashcontrol'], 

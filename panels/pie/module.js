@@ -22,7 +22,6 @@ angular.module('kibana.pie', [])
       if($scope.panel.mode !== 'query') {
         $scope.panel.query.query = query;
         $scope.panel.query.query = _.isArray(query) ? query[0] : query;
-        $scope.get_data();
       } else {
         if(_.isArray(query))
           $scope.panel.query = _.map(query,function(q) {
