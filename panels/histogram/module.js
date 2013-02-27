@@ -89,7 +89,7 @@ angular.module('kibana.histogram', [])
       _.each(results.facets, function(v, k) {
         // Null values at each end of the time range ensure we see entire range
         if(_.isUndefined($scope.data[k]) || _segment == 0) {
-          var data = [[$scope.time.to.getTime(), null]];
+          var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
         } else {
           var data = $scope.data[k].data
         }
@@ -99,11 +99,8 @@ angular.module('kibana.histogram', [])
           segment_data.push([v['time'],v['count']])
         });
 
-        data = segment_data.concat(data)
+        data.splice.apply(data,[1,0].concat(segment_data))
 
-        if(_segment == $scope.panel.index.length-1)
-          data.unshift([$scope.time.from.getTime(), null])
-        
         var series = { 
           data: {
             label: $scope.panel.query[k].label || k, 
