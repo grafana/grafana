@@ -53,7 +53,7 @@
       <a ng-click="set_mode('absolute')" ng-class="{'strong': (panel.mode == 'absolute')}">Absolute</a> | 
       <a ng-click="set_mode('since')"    ng-class="{'strong': (panel.mode == 'since')}">Since</a>
       <span ng-hide="panel.mode == 'absolute'"> | 
-        <input type="checkbox" ng-model="panel.refresh.enable"> Auto-refresh 
+        <input type="checkbox" ng-model="panel.refresh.enable" ng-change='refresh();'> Auto-refresh 
         <span ng-class="{'ng-cloak': !panel.refresh.enable}">
           every <a data-title="<small>Auto-refresh Settings</small>" data-placement="bottom" bs-popover="'panels/timepicker/refreshctrl.html'">{{panel.refresh.interval}}s</a>.
         </span>

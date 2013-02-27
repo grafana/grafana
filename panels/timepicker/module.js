@@ -83,23 +83,21 @@ angular.module('kibana.timepicker', [])
     eventBus.register($scope,"get_time", function(event,id) {
       eventBus.broadcast($scope.$id,id,'time',$scope.time)
     });
+  }
 
-    $scope.$watch('panel.refresh.enable', function() {$scope.refresh()});
-    $scope.$watch('panel.refresh.interval', function() {
-      $timeout(function(){
-        if(_.isNumber($scope.panel.refresh.interval)) {
-          if($scope.panel.refresh.interval < $scope.panel.refresh.min) {
-            $scope.panel.refresh.interval = $scope.panel.refresh.min        
-            timer.cancel($scope.refresh_timer)
-            return;
-          }
-          timer.cancel($scope.refresh_timer)
-          $scope.refresh()
-        } else {
-          timer.cancel($scope.refresh_timer)
-        }
-      });
-    });
+  $scope.set_interval = function (refresh_interval) {
+    $scope.panel.refresh.interval = refresh_interval
+    if(_.isNumber($scope.panel.refresh.interval)) {
+      if($scope.panel.refresh.interval < $scope.panel.refresh.min) {
+        $scope.panel.refresh.interval = $scope.panel.refresh.min        
+        timer.cancel($scope.refresh_timer)
+        return;
+      }
+      timer.cancel($scope.refresh_timer)
+      $scope.refresh()
+    } else {
+      timer.cancel($scope.refresh_timer)
+    }
   }
 
   $scope.refresh = function() {
