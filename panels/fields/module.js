@@ -52,7 +52,6 @@ angular.module('kibana.fields', [])
       $scope.active = _.without($scope.active,field)
     else
       $scope.active.push(field)
-    
     eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
   }
 

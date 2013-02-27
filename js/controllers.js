@@ -100,7 +100,7 @@ angular.module('kibana.controllers', [])
     row.collapse = row.collapse ? false : true;
     if (!row.collapse) {
       $timeout(function() {
-        $scope.$broadcast('render')
+        $scope.send_render();
       });
     }
   }
@@ -115,6 +115,8 @@ angular.module('kibana.controllers', [])
 
   $scope.reset_panel = function() {
     $scope.panel = {
+      loading: false,
+      error: false,
       span: 3,
       editable: true,
       group: ['default'],

@@ -34,6 +34,8 @@ angular.module('kibana.timepicker', [])
     timefield     : '@timestamp',
     index         : '"logstash-"yyyy.mm.dd',
     defaultindex  : "NOINDEX",
+    index_interval: "day",
+    timed_indices : true,
     group         : "default",
     refresh       : {
       enable  : false, 
@@ -178,11 +180,15 @@ angular.module('kibana.timepicker', [])
 
     // Get indices for the time period, then broadcast time range and index list
     // in a single object. Not sure if I like this.
-    indices($scope.time.from,$scope.time.to).then(function (p) {
-      $scope.time.index = p.join();
-      // Broadcast time
+    if($scope.panel.timed_indices) {
+      indices($scope.time.from,$scope.time.to).then(function (p) {
+        $scope.time.index = p.join();
+        eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
+      });
+    } else {
+      $scope.time.index = $scope.panel.index;
       eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
-    });
+    }
 
     // Update panel's string representation of the time object
     $scope.panel.time = { 
@@ -196,7 +202,7 @@ angular.module('kibana.timepicker', [])
   // pattern that exist in a given range
   function indices(from,to) {
     var possible = [];
-    _.each(date_range(from,to.add_days(1)),function(d){
+    _.each(expand_range(fake_utc(from),fake_utc(to),$scope.panel.index_interval),function(d){
       possible.push(d.format($scope.panel.index));
     });
 
@@ -224,6 +230,46 @@ angular.module('kibana.timepicker', [])
       });
       return indices;
     });
+  }
+
+  // this is stupid, but there is otherwise no good way to ensure that when
+  // I extract the date from an object that I'm get the UTC date. Stupid js.
+  // I die a little inside every time I call this function.
+  function fake_utc(date) {
+    return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  }
+
+  // Create an array of date objects by a given interval
+  function expand_range(start, end, interval) {
+    if(_.contains(['hour','day','week','month','year'],interval)) {
+      var range;
+      start = start.clone();
+      range = [];
+      while (start.isBefore(end)) {
+        range.push(start.clone());
+        switch (interval) {
+        case 'hour':
+          start.addHours(1)
+          break
+        case 'day':
+          start.addDays(1)
+          break
+        case 'week':
+          start.addWeeks(1)
+          break
+        case 'month':
+          start.addMonths(1)
+          break
+        case 'year':
+          start.addYears(1)
+          break
+        }
+      }
+      range.push(end.clone());
+      return range;
+    } else {
+      return false;
+    }
   }
 
   // Great, every function is ready, init.

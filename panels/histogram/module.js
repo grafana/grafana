@@ -50,6 +50,7 @@ angular.module('kibana.histogram', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
+    $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index);
     
     // Build the question part of the query
@@ -78,6 +79,7 @@ angular.module('kibana.histogram', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+      $scope.panel.loading = false;
       $scope.hits = results.hits.total;
       $scope.data = [];
       _.each(results.facets, function(v, k) {

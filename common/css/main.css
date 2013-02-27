@@ -24,6 +24,11 @@
   z-index: 1000;
 }
 
+.panel-loading {
+  position:absolute;
+  z-index: 800;
+}
+
 .panel i.editlink {
   position: absolute;
   right: 5px;

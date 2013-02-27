@@ -7,7 +7,7 @@ angular.module('kibana.directives', [])
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var template = '<i class="icon-edit pointer editlink" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false"></i>'+
+      var template = '<img src="common/img/load.gif" class="panel-loading" ng-show="panel.loading == true"> <i class="icon-edit pointer editlink" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false"></i>'+
                     '<h4>{{panel.title}}</h4>';
       elem.prepend($compile(angular.element(template))(scope));
     }

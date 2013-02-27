@@ -73,6 +73,7 @@ angular.module('kibana.pie', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
+    $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // If we have an array, use query facet
@@ -101,6 +102,7 @@ angular.module('kibana.pie', [])
 
       // Populate scope when we have results
       results.then(function(results) {
+        $scope.panel.loading = false;
         $scope.hits = results.hits.total;
         $scope.data = [];
         _.each(results.facets, function(v, k) {
@@ -133,6 +135,7 @@ angular.module('kibana.pie', [])
 
       // Populate scope when we have results
       results.then(function(results) {
+        $scope.panel.loading = false;
         $scope.hits = results.hits.total;
         $scope.data = [];
         var k = 0;
@@ -159,6 +162,7 @@ angular.module('kibana.pie', [])
         .size(0)
         .doSearch();
       results.then(function(results) {
+        $scope.panel.loading = false;
         var complete  = results.hits.total;
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [

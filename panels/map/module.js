@@ -27,6 +27,7 @@ angular.module('kibana.map', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
+    $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // Then the insert into facet and make the request
@@ -46,6 +47,7 @@ angular.module('kibana.map', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+      $scope.panel.loading = false;
       $scope.hits = results.hits.total;
       $scope.data = {};
       _.each(results.facets.map.terms, function(v) {

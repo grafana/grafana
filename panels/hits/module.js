@@ -24,6 +24,7 @@ angular.module('kibana.hits', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
+    $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
     var results = request
@@ -39,6 +40,7 @@ angular.module('kibana.hits', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+      $scope.panel.loading = false;
       if(_.isUndefined(results)) {
         $scope.panel.error = 'Your query was unsuccessful';
         return;
