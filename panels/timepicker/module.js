@@ -185,7 +185,7 @@ angular.module('kibana.timepicker', [])
         eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
       });
     } else {
-      $scope.time.index = $scope.panel.index;
+      $scope.time.index = [$scope.panel.index];
       eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
     }
 
