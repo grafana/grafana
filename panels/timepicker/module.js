@@ -182,7 +182,7 @@ angular.module('kibana.timepicker', [])
     // in a single object. Not sure if I like this.
     if($scope.panel.timed_indices) {
       indices($scope.time.from,$scope.time.to).then(function (p) {
-        $scope.time.index = p.join();
+        $scope.time.index = p;
         eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
       });
     } else {
@@ -207,7 +207,7 @@ angular.module('kibana.timepicker', [])
     });
 
     return all_indices().then(function(p) {
-      var indices = _.intersection(p,possible);
+      var indices = _.intersection(possible,p);
       indices.reverse();
       return indices.length == 0 ? [$scope.panel.defaultindex] : indices;
     })

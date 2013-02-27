@@ -45,13 +45,15 @@ angular.module('kibana.histogram', [])
     $scope.get_data();
   }
 
-  $scope.get_data = function() {
+  $scope.get_data = function(segment) {
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
+    _segment = _.isUndefined(segment) ? 0 : segment
+
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.panel.index);
+    var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
     
     // Build the question part of the query
     var queries = [];
@@ -81,25 +83,37 @@ angular.module('kibana.histogram', [])
     results.then(function(results) {
       $scope.panel.loading = false;
       $scope.hits = results.hits.total;
-      $scope.data = [];
+      if(_segment == 0)
+        $scope.data = [];
+      
       _.each(results.facets, function(v, k) {
         // Null values at each end of the time range ensure we see entire range
-        var data = [[$scope.time.from.getTime(), null]];
+        if(_.isUndefined($scope.data[k]) || _segment == 0) {
+          var data = [[$scope.time.from.getTime(), null]];
+        } else {
+          var data = $scope.data[k].data
+        }
+
         _.each(v.entries, function(v, k) {
           data.push([v['time'],v['count']])
         });
         data.push([$scope.time.to.getTime(), null])
         
-        var series = { data: {
-          label: $scope.panel.query[k].label || k, 
-          data: data,
-        }};
+        var series = { 
+          data: {
+            label: $scope.panel.query[k].label || k, 
+            data: data,
+          }
+        };
 
         if (!(_.isUndefined($scope.panel.query[k].color)))
           series.data.color = $scope.panel.query[k].color;
-        $scope.data.push(series.data)
+        
+        $scope.data[k] = series.data
       });
       $scope.$emit('render')
+      if(_segment < $scope.panel.index.length-1) 
+        $scope.get_data(_segment+1)
     });
   }
 
