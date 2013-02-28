@@ -48,6 +48,7 @@ angular.module('kibana.dashcontrol', [])
         ) {
           var dashboard = JSON.parse(localStorage['dashboard']);
           _.defaults(dashboard,_dash);
+          $scope.dash_load(JSON.stringify(dashboard))
         // No? Ok, grab default.json, its all we have now
         } else {
           $http({
@@ -56,12 +57,12 @@ angular.module('kibana.dashcontrol', [])
           }).success(function(data, status, headers, config) {
             var dashboard = data
              _.defaults(dashboard,_dash);
+             $scope.dash_load(JSON.stringify(dashboard))
           }).error(function(data, status, headers, config) {
             $scope.alert('Default dashboard missing!','Could not locate default.json','error')
           });
         }
-        // Load whatever we have
-        $scope.dash_load(dashboard)
+        
       }
     }
 

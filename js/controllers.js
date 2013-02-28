@@ -20,7 +20,6 @@ angular.module('kibana.controllers', [])
 
     // Load dashboard by event 
     eventBus.register($scope,'dashboard', function(event,dashboard){
-      console.log(dashboard)
       $scope.dashboards = dashboard;
       _.defaults($scope.dashboards,_d)
     })
