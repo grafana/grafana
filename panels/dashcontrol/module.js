@@ -89,6 +89,15 @@ angular.module('kibana.dashcontrol', [])
     }  
   }
 
+  $scope.share_link = function(title,type,id) {
+    $scope.share = {
+      location  : location.href.replace(location.hash,""),
+      type      : type,
+      id        : id,
+      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id
+    };
+  }
+
   $scope.purge = function() {
     if (Modernizr.localstorage) {
       localStorage['dashboard'] = '';
