@@ -12,34 +12,23 @@ angular.module('kibana.controllers', [])
   }
 
   $scope.init = function() {
+
     $scope.config = config;
     $scope._ = _;
     $scope.reset_row();
     $scope.clear_all_alerts();
 
-    // The global dashboards object should be moved to an $http request for json
-    if (Modernizr.localstorage && 
-      !(_.isUndefined(localStorage['dashboard'])) &&
-      localStorage['dashboard'] !== ''
-    ) {
-      $scope.dashboards = JSON.parse(localStorage['dashboard']);
-      _.defaults($scope.dashboards,_d);
-    } else {
-      $http({
-        url: "default.json",
-        method: "GET",
-      }).success(function(data, status, headers, config) {
-        $scope.dashboards = data
-         _.defaults($scope.dashboards,_d);
-      }).error(function(data, status, headers, config) {
-        $scope.alert('Default dashboard missing!','Could not locate default.json','error')
-      });
-    }
-
+    // Load dashboard by event 
     eventBus.register($scope,'dashboard', function(event,dashboard){
+      console.log(dashboard)
       $scope.dashboards = dashboard;
       _.defaults($scope.dashboards,_d)
     })
+
+    // If the route changes, clear the existing dashboard
+    $rootScope.$on( "$routeChangeStart", function(event, next, current) {
+      delete $scope.dashboards
+    });
 
     var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
   }

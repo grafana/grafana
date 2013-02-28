@@ -1,6 +1,6 @@
 angular.module('kibana.dashcontrol', [])
-.controller('dashcontrol', function($scope, $http, eventBus, timer) {
-
+.controller('dashcontrol', function($scope, $routeParams, $http, eventBus, timer) {
+  $scope.panel = $scope.panel || {};
   // Set and populate defaults
   var _d = {
     group   : "default",
@@ -16,11 +16,55 @@ angular.module('kibana.dashcontrol', [])
       local: true,
     },
     elasticsearch_size: 20,
-    elasticsearch_saveto: 'kibana-int'
+    elasticsearch_saveto: $scope.config.kibana_index,
   }
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
+    // A hash of defaults for the dashboard object
+    var _dash = {
+      title: "",
+      editable: true,
+      rows: [],
+    }
+
+    // Long ugly if statement for figuring out which dashboard to load on init
+    // If there is no dashboard defined, find one
+    if(_.isUndefined($scope.dashboards)) {
+      // First check the URL for a path to a dashboard
+      if(!(_.isUndefined($routeParams.type)) && !(_.isUndefined($routeParams.id))) {
+        var _type = $routeParams.type;
+        var _id = $routeParams.id;
+        
+        if(_type === 'elasticsearch') {
+          $scope.elasticsearch_load(_id)
+        }
+      // No dashboard in the URL
+      } else {
+        // Check if browser supports localstorage, and if there's a dashboard 
+        if (Modernizr.localstorage && 
+          !(_.isUndefined(localStorage['dashboard'])) &&
+          localStorage['dashboard'] !== ''
+        ) {
+          var dashboard = JSON.parse(localStorage['dashboard']);
+          _.defaults(dashboard,_dash);
+        // No? Ok, grab default.json, its all we have now
+        } else {
+          $http({
+            url: "default.json",
+            method: "GET",
+          }).success(function(data, status, headers, config) {
+            var dashboard = data
+             _.defaults(dashboard,_dash);
+          }).error(function(data, status, headers, config) {
+            $scope.alert('Default dashboard missing!','Could not locate default.json','error')
+          });
+        }
+        // Load whatever we have
+        $scope.dash_load(dashboard)
+      }
+    }
+
     $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
     $scope.gist = {};
     $scope.elasticsearch = {};
@@ -79,6 +123,21 @@ angular.module('kibana.dashcontrol', [])
       $scope.alert('Dashboard Deleted','','success',5000)
       $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,dashboard)
     })
+  }
+
+  $scope.elasticsearch_load = function(id) {
+    var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types('dashboard');
+    var results = request.query(
+        $scope.ejs.IdsQuery(id)
+        ).size($scope.panel.elasticsearch_size).doSearch();
+    results.then(function(results) {
+      if(_.isUndefined(results)) {
+        $scope.panel.error = 'Your query was unsuccessful';
+        return;
+      }
+      $scope.panel.error =  false;
+      $scope.dash_load(results.hits.hits[0]['_source']['dashboard'])
+    });
   }
 
   $scope.elasticsearch_dblist = function(query) {

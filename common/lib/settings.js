@@ -5,6 +5,7 @@ var Settings = function (s) {
     elasticsearch : 'localhost:9200',
     timeformat    : 'mm/dd HH:MM:ss',
     modules       : [],
+    kibana_index  : 'kibana-int'
   }
 
   // This initializes a new hash on purpose, to avoid adding parameters to 

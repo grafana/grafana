@@ -49,6 +49,9 @@ labjs.wait(function(){
         .when('/dashboard', {
           templateUrl: 'partials/dashboard.html' 
         })
+        .when('/dashboard/:type/:id', {
+          templateUrl: 'partials/dashboard.html'
+        })
         .otherwise({
           redirectTo: 'dashboard'
         });
