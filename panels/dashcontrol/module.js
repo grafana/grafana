@@ -116,7 +116,6 @@ angular.module('kibana.dashcontrol', [])
   }
 
   $scope.elasticsearch_save = function(type) {
-    console.log(type)
     // Clone object so we can modify it without influencing the existing obejct
     var save = _.clone($scope.dashboards)
     

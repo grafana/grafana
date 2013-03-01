@@ -105,7 +105,8 @@ angular.module('kibana.histogram', [])
           data: {
             label: $scope.panel.query[k].label || k, 
             data: data,
-          }
+          },
+
         };
 
         if (!(_.isUndefined($scope.panel.query[k].color)))
