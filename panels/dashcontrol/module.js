@@ -5,7 +5,7 @@ angular.module('kibana.dashcontrol', [])
   var _d = {
     group   : "default",
     save : {
-      gist: true,
+      gist: false,
       elasticsearch: true,
       local: true,
       'default': true
@@ -209,12 +209,10 @@ angular.module('kibana.dashcontrol', [])
   }
 
   $scope.gist_dblist = function(id) {
-    $http({
-    url: "https://api.github.com/gists/"+id,
-    method: "GET"
-    }).success(function(data, status, headers, config) {
+    $http.jsonp("https://api.github.com/gists/"+id+"?callback=JSON_CALLBACK"
+    ).success(function(response) {
       $scope.gist.files = []
-      _.each(data.files,function(v,k) {
+      _.each(response.data.files,function(v,k) {
         try {
           var file = JSON.parse(v.content)
           $scope.gist.files.push(file)
