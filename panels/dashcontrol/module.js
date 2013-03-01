@@ -17,6 +17,7 @@ angular.module('kibana.dashcontrol', [])
     },
     elasticsearch_size: 20,
     elasticsearch_saveto: $scope.config.kibana_index,
+    temp_ttl: '30d',
   }
   _.defaults($scope.panel,_d);
 
@@ -36,9 +37,11 @@ angular.module('kibana.dashcontrol', [])
         var _type = $routeParams.type;
         var _id = $routeParams.id;
         
-        if(_type === 'elasticsearch') {
-          $scope.elasticsearch_load(_id)
-        }
+        if(_type === 'elasticsearch')
+          $scope.elasticsearch_load('dashboard',_id)
+        if(_type === 'temp')
+          $scope.elasticsearch_load('temp',_id)
+          
       // No dashboard in the URL
       } else {
         // Check if browser supports localstorage, and if there's a dashboard 
@@ -94,7 +97,8 @@ angular.module('kibana.dashcontrol', [])
       location  : location.href.replace(location.hash,""),
       type      : type,
       id        : id,
-      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id
+      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id,
+      title     : title,
     };
   }
 
@@ -111,23 +115,37 @@ angular.module('kibana.dashcontrol', [])
     }  
   }
 
-  $scope.save_elasticsearch = function() {
+  $scope.elasticsearch_save = function(type) {
+    console.log(type)
+    // Clone object so we can modify it without influencing the existing obejct
     var save = _.clone($scope.dashboards)
-    save.title = $scope.elasticsearch.title;
-    var result = $scope.ejs.Document($scope.panel.elasticsearch_saveto,'dashboard',save.title).source({
+    
+    // Change title on object clone
+    if(type === 'dashboard')
+      var id = save.title = $scope.elasticsearch.title;
+
+    // Create request with id as title. Rethink this.
+    var request = $scope.ejs.Document($scope.panel.elasticsearch_saveto,type,id).source({
       user: 'guest',
       group: 'guest',
       title: save.title,
       dashboard: angular.toJson(save)
-    }).doIndex();
-    result.then(function(result) {
+    })
+    
+    if(type === 'temp')
+      request = request.ttl($scope.panel.temp_ttl)
+
+    var result = request.doIndex();
+    var id = result.then(function(result) {
       $scope.alert('Dashboard Saved','This dashboard has been saved to Elasticsearch','success',5000)
       $scope.elasticsearch_dblist($scope.elasticsearch.query);
       $scope.elasticsearch.title = '';
+      if(type === 'temp')
+        $scope.share_link($scope.dashboards.title,'temp',result._id)
     })
   }
 
-  $scope.delete_elasticsearch = function(dashboard) {
+  $scope.elasticsearch_delete = function(dashboard) {
     var result = $scope.ejs.Document($scope.panel.elasticsearch_saveto,'dashboard',dashboard._id).doDelete();
     result.then(function(result) {
       $scope.alert('Dashboard Deleted','','success',5000)
@@ -135,8 +153,8 @@ angular.module('kibana.dashcontrol', [])
     })
   }
 
-  $scope.elasticsearch_load = function(id) {
-    var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types('dashboard');
+  $scope.elasticsearch_load = function(type,id) {
+    var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types(type);
     var results = request.query(
         $scope.ejs.IdsQuery(id)
         ).size($scope.panel.elasticsearch_size).doSearch();
