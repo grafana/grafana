@@ -10,6 +10,7 @@ angular.module('kibana.text', [])
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
+    $scope.ready = false;
   }
 
 }).directive('markdown', function() {
@@ -23,6 +24,7 @@ angular.module('kibana.text', [])
       function render_panel() {
         var scripts = $LAB.script("panels/text/lib/showdown.js")
         scripts.wait(function(){
+          scope.ready = true;
           var converter = new Showdown.converter();
           var text = scope.panel.content.replace(/&/g, '&amp;')
             .replace(/>/g, '&gt;')

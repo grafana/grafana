@@ -1,6 +1,6 @@
 <kibana-panel ng-controller='text' ng-init="init()">
   <!--<p ng-style="panel.style" ng-bind-html-unsafe="panel.content | striphtml | newlines"></p>-->
-  <markdown>
+  <markdown ng-show="ready">
     {{panel.content}}
   </markdown>
 </kibana-panel>
