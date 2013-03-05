@@ -1,3 +1,3 @@
-<kibana-panel ng-controller='histogram' ng-init="init()" style="height:{{row.height}}">
-  <div histogram params="{{panel}}" style="height:{{panel.height}};position:relative"></div>
+<kibana-panel ng-controller='histogram' ng-init="init()" style="height:{{panel.height || row.height}}">
+  <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

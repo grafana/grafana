@@ -1,3 +1,3 @@
 <kibana-panel ng-controller='map' ng-init="init()">
-  <div map params="{{panel}}" style="height:{{panel.height}}"></div>
+  <div map params="{{panel}}" style="height:{{panel.height || row.height}}"></div>
 </kibana-panel>

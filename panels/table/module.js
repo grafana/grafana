@@ -6,7 +6,6 @@ angular.module('kibana.table', [])
     query   : "*",
     size    : 100,
     offset  : 0,
-    height  : $scope.panel.height || $scope.row.height,
     sort    : ['@timestamp','desc'],
     group   : "default",
     style   : {},

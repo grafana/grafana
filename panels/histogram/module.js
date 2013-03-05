@@ -7,7 +7,6 @@ angular.module('kibana.histogram', [])
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
     show    : ['bars','y-axis','x-axis','legend'],
     fill    : 3,
-    height  : $scope.panel.height || $scope.row.height,
     timezone: 'browser', // browser, utc or a standard timezone
     group   : "default",
   }

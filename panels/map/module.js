@@ -8,7 +8,6 @@ angular.module('kibana.map', [])
     colors  : ['#C8EEFF', '#0071A4'],
     size    : 100,
     exclude : [],
-    height  : $scope.panel.height || $scope.row.height,
     group   : "default",
   }
   _.defaults($scope.panel,_d)

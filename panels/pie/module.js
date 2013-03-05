@@ -4,7 +4,6 @@ angular.module('kibana.pie', [])
   // Set and populate defaults
   var _d = {
     query   : { field:"_all", query:"*", goal: 1}, 
-    height  : $scope.panel.height || $scope.row.height,
     size    : 10,
     exclude : [],
     donut   : false,

@@ -12,13 +12,16 @@
     <h5>Index Settings</h5>
     <div ng-show="panel.timed_indices" class="row-fluid"> 
        <div class="span12">
-        <p>
-          Time stamped indices use a dated index pattern instead of pointing directly 
-          to one specific index. For example, to match the default logstash index pattern
-          you might use <code>"logstash-"yyyy.mm.dd</code>. The quotes around "logstash-"
-          are important as they instruct Kibana not to treat those letters as a pattern.
+        <p class="small">
+          Time stamped indices use your selected time range to create a list of 
+          indices that match a specified timestamp pattern. This can be very 
+          efficient for some data sets (eg, logs) For example, to match the 
+          default logstash index pattern you might use 
+          <code>"logstash-"yyyy.mm.dd</code>. The quotes around "logstash-" are 
+          important as they instruct Kibana not to treat those letters as a 
+          pattern.
         </p>
-        <p>
+        <p class="small">
           See <a href="http://blog.stevenlevithan.com/archives/date-time-format">http://blog.stevenlevithan.com/archives/date-time-format</a>
           for documentation on date formatting.
         </p>
