@@ -35,7 +35,8 @@
   </div>
   <div ng-show="panel.multi && panel.multi_arrange == 'vertical'">
     <form>
-      <table class="form-horizontal">        
+      <table class="form-horizontal">
+        <tr><td class="small">Queries</td></tr>      
         <tr ng-repeat="q in panel.query" style="margin-bottom:10px">
           <td width="99%"><input type="text"  ng-model="panel.query[$index]" ng-model-onblur style="width:100%"></td>
           <td width="1%" style="visibility:hidden"><button class="btn btn-info" type="submit"></button></td>

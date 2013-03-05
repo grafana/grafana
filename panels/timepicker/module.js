@@ -83,6 +83,9 @@ angular.module('kibana.timepicker', [])
     eventBus.register($scope,"get_time", function(event,id) {
       eventBus.broadcast($scope.$id,id,'time',$scope.time)
     });
+    $scope.$on('render', function (){
+      $scope.time_apply();
+    });
   }
 
   $scope.set_interval = function (refresh_interval) {

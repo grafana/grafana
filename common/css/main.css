@@ -38,6 +38,10 @@
   display: none;
 }
 
+.panel i.editlink span {
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
 .pointer:hover {
   color: #0088CC;
 }

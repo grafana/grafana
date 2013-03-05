@@ -17,6 +17,7 @@ angular.module('kibana.dashcontrol', [])
     },
     elasticsearch_size: 20,
     elasticsearch_saveto: $scope.config.kibana_index,
+    temp: true,
     temp_ttl: '30d',
   }
   _.defaults($scope.panel,_d);

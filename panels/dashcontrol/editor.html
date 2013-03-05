@@ -32,4 +32,13 @@
       <label class="small">ES store index</label><input class="input-small" type="text" ng-model="panel.elasticsearch_saveto">
     </div>
   </div>
+  <h5>Sharing</h5>
+  <div class="row-fluid">    
+    <div class="span3" >
+      <label class="small">Allow Sharing</label><input type="checkbox" ng-model="panel.temp" ng-checked="panel.temp">
+    </div>
+    <div class="span8" ng-show="panel.temp">
+      <label class="small">Shared Link TTL (examples: 1m,1d,1w,30d)</label><input class="input-small" type="text" ng-model="panel.temp_ttl">
+    </div>
+  </div>
 </div>
