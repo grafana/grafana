@@ -10,13 +10,33 @@
   </div>
   <div class="row-fluid">    
     <h5>Index Settings</h5>
-    <div class="span5">
-      <h6>Index pattern <small>Absolutes in double quotes</small></h6>
-      <input type="text" class="input-medium" ng-model="panel.index">
+    <div ng-show="panel.timed_indices" class="row-fluid"> 
+       <div class="span12">
+        <p>
+          Time stamped indices use a dated index pattern instead of pointing directly 
+          to one specific index. For example, to match the default logstash index pattern
+          you might use <code>"logstash-"yyyy.mm.dd</code>. The quotes around "logstash-"
+          are important as they instruct Kibana not to treat those letters as a pattern.
+        </p>
+        <p>
+          See <a href="http://blog.stevenlevithan.com/archives/date-time-format">http://blog.stevenlevithan.com/archives/date-time-format</a>
+          for documentation on date formatting.
+        </p>
+
+       </div>
     </div>
-    <div class="span5">
-      <h6>Failover Index <small>If none match the pattern</small></h6>
-      <input type="text" class="input-medium" ng-model="panel.defaultindex">
+    <div class="row-fluid"> 
+      <div class="span2">
+        <h6>Timestamped</h6><input type="checkbox" ng-model="panel.timed_indices" ng-checked="panel.timed_indices">
+      </div>
+      <div class="span5">
+        <h6>Index <span ng-show="panel.timed_indices">pattern</span> <small ng-show="panel.timed_indices">Absolutes in double quotes</small></h6>
+        <input type="text" class="input-medium" ng-model="panel.index">
+      </div>
+      <div class="span4">
+        <h6>Failover Index <small>If index not found</small></h6>
+        <input type="text" class="input-medium" ng-model="panel.defaultindex">
+      </div>
     </div>
   </div>
   <div class="row-fluid">

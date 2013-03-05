@@ -32,6 +32,7 @@ angular.module('kibana.dashcontrol', [])
     // Long ugly if statement for figuring out which dashboard to load on init
     // If there is no dashboard defined, find one
     if(_.isUndefined($scope.dashboards)) {
+      console.log('ok, defining')
       // First check the URL for a path to a dashboard
       if(!(_.isUndefined($routeParams.type)) && !(_.isUndefined($routeParams.id))) {
         var _type = $routeParams.type;
