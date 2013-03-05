@@ -65,6 +65,11 @@ angular.module('kibana.controllers', [])
     $scope.global_alert = []
   }  
 
+  $scope.edit_path = function(type) {
+    if(type)
+      return 'panels/'+type+'/editor.html';
+  }
+
   $scope.init();
 
 })

@@ -8,6 +8,7 @@ angular.module('kibana.map', [])
     colors  : ['#C8EEFF', '#0071A4'],
     size    : 100,
     exclude : [],
+    height  : $scope.panel.height || $scope.row.height,
     group   : "default",
   }
   _.defaults($scope.panel,_d)
@@ -62,8 +63,6 @@ angular.module('kibana.map', [])
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.get_data();
   }
-
-  $scope.init()
 
 })
 .directive('map', function() {

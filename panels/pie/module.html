@@ -1,3 +1,3 @@
-<kibana-panel ng-controller='pie'>
-  <div pie params="{{panel}}" style="height:{{row.height}};position:relative"></div>
+<kibana-panel ng-controller='pie' ng-init="init()">
+  <div pie params="{{panel}}" style="height:{{panel.height}};position:relative"></div>
 </kibana-panel>         

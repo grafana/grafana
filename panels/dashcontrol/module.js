@@ -245,9 +245,6 @@ angular.module('kibana.dashcontrol', [])
       return false
   }
 
-  $scope.init();
-
-
 })
 .directive('dashUpload', function(timer, eventBus){
   return {

@@ -11,7 +11,7 @@ angular.module('kibana.text', [])
 
   $scope.init = function() {
   }
-  $scope.init();
+
 })
 .filter('newlines', function(){
   return function (input) {

@@ -9,9 +9,9 @@
 
   
   <h4 style="text-transform: capitalize;">{{panel.type}} <small> panel settings</small></h4>
-  <div ng-include src="'panels/'+panel.type+'/editor.html'">No additional settings are available for this type of panel.</div>
+  <div ng-include src="edit_path(panel.type)">No additional settings are available for this type of panel.</div>
   
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-success" ng-click="dismiss();$broadcast('render')">Close</button>
+  <button type="button" class="btn btn-success" ng-click="dismiss();send_render()">Close</button>
 </div>

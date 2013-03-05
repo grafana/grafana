@@ -1,21 +1,20 @@
-  <div class="row-fluid">
+  <div class="row-fluid" ng-controller="map">
     <div class="span11">
     The map panel uses 2 letter country or US state codes to plot concentrations on a map. Darker terroritories mean more records matched that area. If multiple queries are sent from a single panel the <strong>first query will be displayed</strong>
     </div>
   </div>
 
   <div class="row-fluid">    
+    <div class="span3">
+      <form>
+        <h6>Field</h6>
+        <input type="text" class="input-small" ng-model="panel.field">
+      </form>
+    </div>
     <div class="span6">
       <form class="input-append">
         <h6>Query</h6>
         <input type="text" ng-model="panel.query">
-        <button class="btn" ng-click="get_data();"><i class="icon-search"></i></button>
-      </form>
-    </div>
-    <div class="span4">
-     <form class="input-append">
-        <h6>Field</h6>
-        <input type="text" class="input-small" ng-model="panel.field">
         <button class="btn" ng-click="get_data();"><i class="icon-search"></i></button>
       </form>
     </div>

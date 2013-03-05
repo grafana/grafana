@@ -7,6 +7,7 @@ angular.module('kibana.histogram', [])
     interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
     show    : ['bars','y-axis','x-axis','legend'],
     fill    : 3,
+    height  : $scope.panel.height || $scope.row.height,
     timezone: 'browser', // browser, utc or a standard timezone
     group   : "default",
   }
@@ -128,9 +129,6 @@ angular.module('kibana.histogram', [])
     $scope.get_data();
   }
 
-  // Ready, init
-  $scope.init();
-
 })
 .directive('histogram', function() {
   return {
@@ -173,7 +171,7 @@ angular.module('kibana.histogram', [])
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
           // Populate element
-          $.plot(elem, scope.data, {
+          try { $.plot(elem, scope.data, {
             legend: { 
               show: show.legend,
               position: "nw", 
@@ -206,6 +204,9 @@ angular.module('kibana.histogram', [])
               hoverable: true,
             }
           })
+          } catch(e) {
+            console.log(e)
+          }
         })
 
         function tt(x, y, contents) {

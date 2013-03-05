@@ -58,5 +58,4 @@ angular.module('kibana.stringquery', [])
     $scope.panel.query.splice(index,1);
   }
 
-  $scope.init();
 });

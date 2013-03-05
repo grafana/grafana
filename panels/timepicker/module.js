@@ -271,7 +271,4 @@ angular.module('kibana.timepicker', [])
     }
   }
 
-  // Great, every function is ready, init.
-  $scope.init();
-
 })

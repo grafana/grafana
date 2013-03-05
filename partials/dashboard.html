@@ -1,7 +1,7 @@
 
 <div class="row-fluid container" style="margin-top:50px">
   <!-- Rows -->
-  <div ng-controller="dashcontrol"></div>
+  <div ng-controller="dashcontrol" ng-init="init()"></div>
   <div class="row-fluid" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboards.rows">
     <div class="span12">
       <div class="row-fluid row-header" style="padding:0px;margin:0px;height:0px">

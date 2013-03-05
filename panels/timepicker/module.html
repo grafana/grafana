@@ -1,4 +1,4 @@
-<kibana-panel ng-controller='timepicker' style="white-space: nowrap;">
+<kibana-panel ng-controller='timepicker' ng-init="init()" style="white-space: nowrap;">
   <div class="row-fluid" ng-switch="panel.mode">
     <div ng-switch-when="absolute">
       <div class="span5">

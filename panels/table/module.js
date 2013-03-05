@@ -6,6 +6,7 @@ angular.module('kibana.table', [])
     query   : "*",
     size    : 100,
     offset  : 0,
+    height  : $scope.panel.height || $scope.row.height,
     sort    : ['@timestamp','desc'],
     group   : "default",
     style   : {},
@@ -136,7 +137,5 @@ angular.module('kibana.table', [])
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.get_data();
   }
-
-  $scope.init();
 
 });

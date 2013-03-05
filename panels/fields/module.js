@@ -64,5 +64,4 @@ angular.module('kibana.fields', [])
     return _.indexOf($scope.active,field) > -1 ? ['label','label-info'] : '';    
   }
 
-  $scope.init();
 })

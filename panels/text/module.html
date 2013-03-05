@@ -1,3 +1,3 @@
-<kibana-panel ng-controller='text'>
+<kibana-panel ng-controller='text' ng-init="init()">
   <p ng-show='!panel.allowhtml' ng-style="panel.style" ng-bind-html-unsafe="panel.content | striphtml | newlines"></p>
 </kibana-panel>

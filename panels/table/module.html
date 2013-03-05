@@ -1,5 +1,5 @@
-<kibana-panel ng-controller='table'>
-  <div style="height:{{row.height}};overflow-y:auto;overflow-x:auto">
+<kibana-panel ng-controller='table' ng-init='init()'>
+  <div style="height:{{panel.height}};overflow-y:auto;overflow-x:auto">
     <div class="row-fluid">
       <div class="span1 offset3" style="text-align:right">
         <i ng-click="panel.offset = 0;get_data();" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>

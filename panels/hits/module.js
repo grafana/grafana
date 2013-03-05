@@ -56,6 +56,4 @@ angular.module('kibana.hits', [])
     $scope.get_data();
   }
 
-  $scope.init();
-
 })

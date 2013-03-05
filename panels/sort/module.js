@@ -25,6 +25,4 @@ angular.module('kibana.sort', [])
     $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
     $scope.set_sort();
   }
-
-  $scope.init();
 })

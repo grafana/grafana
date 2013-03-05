@@ -4,6 +4,7 @@ angular.module('kibana.pie', [])
   // Set and populate defaults
   var _d = {
     query   : { field:"_all", query:"*", goal: 1}, 
+    height  : $scope.panel.height || $scope.row.height,
     size    : 10,
     exclude : [],
     donut   : false,
@@ -178,10 +179,7 @@ angular.module('kibana.pie', [])
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.get_data();
   }
-
-  // Ready, init
-  $scope.init()
-
+  
 })
 .directive('pie', function() {
   return {
