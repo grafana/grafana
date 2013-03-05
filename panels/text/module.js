@@ -24,7 +24,10 @@ angular.module('kibana.text', [])
         var scripts = $LAB.script("panels/text/lib/showdown.js")
         scripts.wait(function(){
           var converter = new Showdown.converter();
-          var htmlText = converter.makeHtml(scope.panel.content);
+          var text = scope.panel.content.replace(/&/g, '&amp;')
+            .replace(/>/g, '&gt;')
+            .replace(/</g, '&lt;');
+          var htmlText = converter.makeHtml(text);
           element.html(htmlText);
         });
       }
