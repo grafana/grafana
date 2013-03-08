@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Generating bulk indexable shakespeare lines with timestamp 3 hours in the past and 10 hours into the future"
+echo "Generating bulk indexable shakespeare lines with timestamp 6 hours in the past and 24ish hours into the future"
 node reader.js > indexme.json
 echo "Setting mapping for shakespeare index"
 curl -XPUT http://localhost:9200/_template/shakespeare -d '

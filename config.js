@@ -8,18 +8,18 @@ modules:        Panel modules to load. In the future these will be inferred
                 from your initial dashboard, though if you share dashboards you
                 will probably need to list them all here 
 
-NOTE: No timezone support yet, everything is in UTC at the moment.
+NOTE:   No timezone support yet, everything is in UTC at the moment.
 
-If you need to configure the default dashboard, please see dashboard.js
+If you need to configure the default dashboard, please see default.json
 
 */
 var config = new Settings(
 {
-    elasticsearch:  'http://localhost:9200',
-    kibana_index:   "kibana-int", 
-    timeformat:     'mm/dd HH:MM:ss',
-    modules:        ['histogram','map','pie','table','stringquery','sort',
-                    'timepicker','text','fields','hits','dashcontrol',
-                    'column'], 
+  elasticsearch:  'http://localhost:9200',
+  kibana_index:   "kibana-int", 
+  timeformat:     'mm/dd HH:MM:ss',
+  modules:        ['histogram','map','pie','table','stringquery','sort',
+                  'timepicker','text','fields','hits','dashcontrol',
+                  'column'], 
   }
 );

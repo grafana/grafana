@@ -32,7 +32,7 @@
     <table class="table table-condensed table-striped">
       <tr ng-repeat="dashboard in elasticsearch.dashboards">
         <td><a ng-click="elasticsearch_delete(dashboard)"><i class="icon-remove"></i></a></td>
-        <td><a ng-click="dash_load(dashboard['_source']['dashboard'])">{{dashboard._id}}</a></td>
+        <td><a href="#/dashboard/elasticsearch/{{dashboard._id}}">{{dashboard._id}}</a></td>
         <td><a><i class="icon-share" ng-click="share_link(dashboard._id,'elasticsearch',dashboard._id)" bs-modal="'panels/dashcontrol/share.html'"></i></a></td>
       </tr>
     </table>

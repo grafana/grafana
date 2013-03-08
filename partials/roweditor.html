@@ -14,6 +14,9 @@
     <div class="span1"> 
       <label class="small"> Editable </label><input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
     </div>
+    <div class="span1"> 
+      <label class="small"> Collapsable </label><input type="checkbox" ng-model="row.collapsable" ng-checked="row.collapsable" />
+    </div>
   </div>
   <div class="row-fluid">
     <h4>New Panel</h4>
@@ -36,6 +39,8 @@
           <th>Span</th>
           <th>Delete</th>
           <th>Move</th>
+          <th></th>
+          <th>Hide</th>
         </thead>
         <tr ng-repeat="panel in row.panels">
           <td>{{panel.title}}</td>
@@ -44,6 +49,7 @@
           <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+          <td><input type="checkbox" ng-model="panel.hide" ng-checked="panel.hide"></td>
         </tr>
       </table>
     </div>

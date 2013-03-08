@@ -9,7 +9,7 @@
   <meta name="description" content="Search based application built using ElasticSearch, elastic.js, and Angular.js">
   <meta name="viewport" content="width=device-width">
 
-  <title>Kibana Dashboard</title>
+  <title>Kibana 3</title>
 
   <link rel="stylesheet" href="common/css/normalize.min.css">
   <link rel="stylesheet" href="common/css/bootstrap.min.css">
@@ -33,10 +33,10 @@
     <button type="button" class="close" ng-click="clear_alert(alert)">&times;</button>
     <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div class='pull-right small'> {{$index + 1}} alert(s) </div>
   </div>
-  <div class="navbar navbar-fixed-top">
+  <div class="navbar navbar-static-top">
     <div class="navbar-inner">
       <div class="container-fluid">
-        <span class="brand"><small>Kibana 3 Preview</small></span>
+        <p class="navbar-text pull-right"><small>Kibana 3 Preview</small></p>
         <span class="brand">{{dashboards.title}}</span>
         <div class="brand"><i class='icon-edit pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
       </div>

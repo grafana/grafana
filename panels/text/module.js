@@ -4,6 +4,7 @@ angular.module('kibana.text', [])
   // Set and populate defaults
   var _d = {
     group   : "default",
+    mode    : "markdown",
     content : "",
     style: {},
   }
@@ -12,7 +13,7 @@ angular.module('kibana.text', [])
   $scope.init = function() {
     $scope.ready = false;
   }
-
+  
 }).directive('markdown', function() {
   return {
     restrict: 'E',
@@ -31,6 +32,9 @@ angular.module('kibana.text', [])
             .replace(/</g, '&lt;');
           var htmlText = converter.makeHtml(text);
           element.html(htmlText);
+          // For whatever reason, this fixes chrome. I don't like it, I think
+          // it makes things slow?
+          scope.$apply()
         });
       }
 

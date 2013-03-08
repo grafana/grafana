@@ -15,6 +15,7 @@ angular.module('kibana.dashcontrol', [])
       elasticsearch: true,
       local: true,
     },
+    hide_control: false,
     elasticsearch_size: 20,
     elasticsearch_saveto: $scope.config.kibana_index,
     temp: true,
@@ -118,8 +119,13 @@ angular.module('kibana.dashcontrol', [])
 
   $scope.elasticsearch_save = function(type) {
     // Clone object so we can modify it without influencing the existing obejct
-    var save = _.clone($scope.dashboards)
-    
+    if($scope.panel.hide_control) {
+      $scope.panel.hide = true;
+      var save = _.clone($scope.dashboards)
+    } else {
+      var save = _.clone($scope.dashboards)
+    }
+
     // Change title on object clone
     if(type === 'dashboard')
       var id = save.title = $scope.elasticsearch.title;
@@ -143,6 +149,8 @@ angular.module('kibana.dashcontrol', [])
       if(type === 'temp')
         $scope.share_link($scope.dashboards.title,'temp',result._id)
     })
+
+    $scope.panel.hide = false;
   }
 
   $scope.elasticsearch_delete = function(dashboard) {

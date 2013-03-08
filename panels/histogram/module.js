@@ -134,6 +134,9 @@ angular.module('kibana.histogram', [])
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
 
+
+      elem.html('<center><img src="common/img/load_big.gif"></center>')
+
       // Receive render events
       scope.$on('render',function(){
         render_panel();
@@ -201,7 +204,8 @@ angular.module('kibana.histogram', [])
               borderColor: '#eee',
               color: "#eee",
               hoverable: true,
-            }
+            },
+            colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
           })
           } catch(e) {
             console.log(e)

@@ -1,7 +1,7 @@
 
 <kibana-panel ng-controller="column" ng-init="init();">
   <!-- Panels -->
-  <div ng-repeat="(name, panel) in panel.panels" ng-hide="panel.height == '0px'" class="row-fluid panel" style="min-height:{{panel.height}}; position:relative">
+  <div ng-repeat="(name, panel) in panel.panels" ng-hide="panel.height == '0px' || panel.hide" class="row-fluid panel" style="min-height:{{panel.height}}; position:relative">
     <!-- Error Panel -->
     <div class="row-fluid">
       <div class="span12 alert alert-error panel-error" ng-hide="!panel.error">

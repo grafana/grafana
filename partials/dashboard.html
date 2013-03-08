@@ -1,5 +1,5 @@
 
-<div class="row-fluid container" style="margin-top:50px">
+<div class="row-fluid container">
   <!-- Rows -->
   <div ng-controller="dashcontrol" ng-init="init()"></div>
   <div class="row-fluid" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboards.rows">
@@ -7,12 +7,13 @@
       <div class="row-fluid row-header" style="padding:0px;margin:0px;height:0px">
         <div class="span12" style="min-height:5px;vertical-align:bottom">
           <i ng-show="row.editable" class="icon-edit pointer editlink" bs-modal="'partials/roweditor.html'"></i>
-          <span ng-click="toggle_row(row)" class="pointer"><i class="pointer" ng-class="{'icon-caret-down': !row.collapse,'icon-caret-right': row.collapse}"></i> <small>{{row.title}}</small></span> 
+          <span ng-show="row.collapsable" ng-click="toggle_row(row)" class="pointer"><i class="pointer" ng-class="{'icon-caret-down': !row.collapse,'icon-caret-right': row.collapse}"></i> <small>{{row.title}}</small></span>
+          <small ng-hide="row.collapsable">{{row.title}}</small>
         </div>
       </div>
       <div class="row-fluid" style="padding-top:10px" ng-hide="row.collapse">
         <!-- Panels -->
-        <div ng-repeat="(name, panel) in row.panels" ng-hide="panel.span == 0" class="span{{panel.span}} panel" style="min-height:{{row.height}}; position:relative">
+        <div ng-repeat="(name, panel) in row.panels" ng-hide="panel.span == 0 || panel.hide" class="span{{panel.span}} panel" style="min-height:{{row.height}}; position:relative">
           <!-- Error Panel -->
           <div class="row-fluid">
             <div class="span12 alert alert-error panel-error" ng-hide="!panel.error">

@@ -79,6 +79,7 @@ angular.module('kibana.controllers', [])
     title: "Row",
     height: "150px",
     collapse: false,
+    collapsable: true,
     editable: true,
     panels: [],
   }

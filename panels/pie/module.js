@@ -185,6 +185,8 @@ angular.module('kibana.pie', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
+      elem.html('<center><img src="common/img/load_big.gif"></center>')
+
       // Receive render events
       scope.$on('render',function(){
         render_panel();
@@ -240,7 +242,8 @@ angular.module('kibana.pie', [])
           },
           //grid: { hoverable: true, clickable: true },
           grid:   { hoverable: true, clickable: true },
-          legend: { show: scope.panel.legend }
+          legend: { show: scope.panel.legend },
+          colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
         };
 
         // Populate element
