@@ -1,46 +1,324 @@
 {
-  "title": "Introduction",
-  "rows": [
-    {
-      "title": "Status",
-      "collapse": false,
-      "height": "50px",
-      "panels": [
-        {
-          "span": 6,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "text",
-          "title": "Welcome",
-          "content": "Welcome to Kibana Dashboard, a technology preview of what's to come for Kibana, Logstash and Elasticsearch \n\nKibana dashboard is the easy way to share, build, use and extend interactive, real time dashboards and data analysis interfaces. \n\nReady to get started? \n\nLogstash users, click the 'Load' button to the right, paste this URL:  https://gist.github.com/a84f6b8a31d1c4f0ef85 into the 'Gist' loader, click 'Get' and select the 'Logstash Dashboard' link that appears",
-          "style": {
-            "font-size": "14pt"
-          }
-        },
-        {
-          "title": "Dashboard Loader",
-          "type": "dashcontrol",
-          "span": 3,
-          "group": "default",
-          "save": {
-            "gist": true,
-            "elasticsearch": true,
-            "local": true,
-            "default": true
-          },
-          "load": {
-            "gist": true,
-            "elasticsearch": true,
-            "local": true
-          },
-          "elasticsearch_size": 20,
-          "error": false
-        }
-      ],
-      "editable": true
-    }
-  ],
-  "editable": true
+   "title":"See It",
+   "rows":[
+      {
+         "title":"",
+         "height":"100px",
+         "editable":false,
+         "collapse":false,
+         "panels":[
+            {
+               "loading":false,
+               "error":false,
+               "span":9,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"![kibana 3](http://kibana.org/images/kibana3.png)\n\nKibana 3 is the even easier way to **search, analyze and visualize** all of your machine (or people!) generated data. Its easy to get started with Kibana 3 with pre-built interfaces for [Logstash](http://logstash.net). But it works great with any timestamped data you have in [Elasticsearch](http://elasticsearch.org) and point-and-click composition lets you easily design custom dashboards and analytics tools to suit your team's needs.\n\nOk, there's the pitch. Lets see it in action.",
+               "style":{
+                  "font-size":"8pt"
+               }
+            },
+            {
+               "loading":false,
+               "error":false,
+               "span":3,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"column",
+               "panels":[
+                  {
+                     "loading":false,
+                     "error":false,
+                     "sizeable":false,
+                     "span":12,
+                     "height":"10px",
+                     "editable":true,
+                     "group":[
+                        "default"
+                     ],
+                     "type":"dashcontrol",
+                     "save":{
+                        "gist":false,
+                        "elasticsearch":true,
+                        "local":true,
+                        "default":true
+                     },
+                     "load":{
+                        "gist":true,
+                        "elasticsearch":true,
+                        "local":true
+                     },
+                     "elasticsearch_size":20,
+                     "elasticsearch_saveto":"kibana-int",
+                     "temp":true,
+                     "temp_ttl":"30d",
+                     "hide_control":true,
+                     "hide":false
+                  },
+                  {
+                     "loading":false,
+                     "error":false,
+                     "sizeable":false,
+                     "span":12,
+                     "height":"100px",
+                     "editable":false,
+                     "group":[
+                        "default"
+                     ],
+                     "type":"text",
+                     "content":"![Kibana Logo](http://kibana.org/images/g3962.png)",
+                     "style":{
+
+                     }
+                  }
+               ]
+            }
+         ],
+         "collapsable":false
+      },
+      {
+         "title":"",
+         "height":"10px",
+         "editable":false,
+         "collapse":false,
+         "collapsable":false,
+         "panels":[
+            {
+               "loading":false,
+               "error":false,
+               "span":12,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"***\n# See It",
+               "style":{
+
+               }
+            }
+         ]
+      },
+      {
+         "title":"",
+         "height":"450px",
+         "editable":false,
+         "collapse":false,
+         "panels":[
+            {
+               "loading":false,
+               "error":false,
+               "span":4,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"column",
+               "panels":[
+                  {
+                     "loading":false,
+                     "error":false,
+                     "sizeable":false,
+                     "span":12,
+                     "height":"50px",
+                     "editable":false,
+                     "group":[
+                        "default"
+                     ],
+                     "type":"text",
+                     "content":"Kibana can help you **find trends in your data.** Link multiple queries to charts to make comparisons. Here we're looking for occurrences of character names across all of Shakespeare's plays, then stacking them on a date histogram.",
+                     "style":{
+
+                     }
+                  },
+                  {
+                     "loading":false,
+                     "error":false,
+                     "sizeable":false,
+                     "span":12,
+                     "height":"50px",
+                     "editable":false,
+                     "group":[
+                        "trending"
+                     ],
+                     "type":"timepicker",
+                     "mode":"relative",
+                     "time_options":[
+                        "5m",
+                        "15m",
+                        "1h",
+                        "6h",
+                        "12h",
+                        "24h"
+                     ],
+                     "timespan":"6h",
+                     "timefield":"@timestamp",
+                     "index":"twitter",
+                     "defaultindex":"NOINDEX",
+                     "index_interval":"day",
+                     "timed_indices":false,
+                     "refresh":{
+                        "enable":false,
+                        "interval":30,
+                        "min":3
+                     },
+                     "time":{
+                        "from":"03/07/2013 15:56:13",
+                        "to":"03/07/2013 21:56:13",
+                        "index":[
+                           "twitter"
+                        ]
+                     }
+                  },
+                  {
+                     "loading":false,
+                     "error":false,
+                     "sizeable":false,
+                     "span":12,
+                     "height":"50px",
+                     "editable":false,
+                     "group":[
+                        "trending"
+                     ],
+                     "type":"stringquery",
+                     "label":"Search",
+                     "query":[
+                        "Bieber",
+                        "Swift",
+                        "Rihanna"
+                     ],
+                     "size":100,
+                     "sort":[
+                        "_score",
+                        "desc"
+                     ],
+                     "multi":true,
+                     "multi_arrange":"vertical"
+                  }
+               ],
+               "title":"Identify Trends"
+            },
+            {
+               "loading":false,
+               "error":false,
+               "span":7,
+               "editable":false,
+               "group":[
+                  "trending"
+               ],
+               "type":"histogram",
+               "query":[
+                  {
+                     "query":"juliet",
+                     "label":"juliet"
+                  },
+                  {
+                     "query":"romeo",
+                     "label":"romeo"
+                  },
+                  {
+                     "query":"hamlet",
+                     "label":"hamlet"
+                  }
+               ],
+               "interval":"5m",
+               "show":[
+                  "stack",
+                  "lines",
+                  "legend",
+                  "x-axis",
+                  "y-axis"
+               ],
+               "fill":10,
+               "timezone":"browser",
+               "index":[
+                  "twitter"
+               ]
+            },
+            {
+               "loading":false,
+               "error":false,
+               "span":1,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"[![Back](http://kibana.org/images/more2.png)](http://localhost:8000/index.html#dashboard/elasticsearch/Search It)",
+               "style":{
+
+               }
+            }
+         ],
+         "collapsable":false
+      },
+      {
+         "title":"",
+         "height":"10px",
+         "editable":false,
+         "collapse":false,
+         "collapsable":false,
+         "panels":[
+            {
+               "loading":false,
+               "error":false,
+               "span":12,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"*****\n# No Code? No way. Yes way!",
+               "style":{
+
+               }
+            }
+         ]
+      },
+      {
+         "title":"",
+         "height":"150px",
+         "editable":false,
+         "collapse":false,
+         "collapsable":false,
+         "panels":[
+            {
+               "loading":false,
+               "error":false,
+               "span":8,
+               "editable":true,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"No code. No comma counting or brace matching long JSON or XML documents. You can do the JSON thing too if you want, I mean, if that's your thing. Weido.\n\n**Kibana 3 dashboards are built in your browser.** Each control is a 'panel'. Panels can be edited by clicking on the edit icon in the panel's top-right corner that appears when you mouse over the panel. Editing can be disabled too, like it has been on most of this page. You've probably figured out by now that this page was entirely built with Kibana 3.\n\n**If you'd like to try editing a panel, this one has been left editable.** Try it out by mousing over this text and clicking the icon in the top right when it appears.",
+               "style":{
+
+               },
+               "title":"Seriously."
+            },
+            {
+               "loading":false,
+               "error":false,
+               "span":3,
+               "editable":false,
+               "group":[
+                  "default"
+               ],
+               "type":"text",
+               "content":"There's **no server side component** required either. No configuring mod\\_this or mod\\_that. You've setup Elasticsearch, and that was easy, so lets just keep this easy train chugging along. \n\nAdd your elasticsearch server URL (http://some.elasticsearch.here:9200) to config.js, upload everything to your favorite webserver and start making something **awesome**",
+               "style":{
+
+               },
+               "title":"And its all HTML+JS"
+            }
+         ]
+      }
+   ],
+   "editable":false
 }
