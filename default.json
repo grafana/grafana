@@ -58,7 +58,7 @@
                      "temp":true,
                      "temp_ttl":"30d",
                      "hide_control":true,
-                     "hide":false
+                     "hide":true
                   },
                   {
                      "loading":false,
