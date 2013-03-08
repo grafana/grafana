@@ -214,16 +214,16 @@
                "type":"histogram",
                "query":[
                   {
-                     "query":"juliet",
-                     "label":"juliet"
+                     "query":"Bieber",
+                     "label":"Bieber"
                   },
                   {
-                     "query":"romeo",
-                     "label":"romeo"
+                     "query":"Swift",
+                     "label":"Swift"
                   },
                   {
-                     "query":"hamlet",
-                     "label":"hamlet"
+                     "query":"Rihanna",
+                     "label":"Rihanna"
                   }
                ],
                "interval":"5m",
