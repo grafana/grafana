@@ -157,7 +157,7 @@
                         "24h"
                      ],
                      "timespan":"6h",
-                     "timefield":"@timestamp",
+                     "timefield":"created_at",
                      "index":"twitter",
                      "defaultindex":"NOINDEX",
                      "index_interval":"day",
