@@ -31,28 +31,23 @@
   z-index: 800;
 }
 
-.panel i.editlink {
+.panel span.panelextra {
   position: absolute;
-  right: 5px;
   z-index: 800;
   display: none;
 }
 
-.panel i.editlink span {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-}
-
-.pointer:hover {
-  color: #0088CC;
-}
-
-.panel:hover i.editlink {
+.panel:hover span.panelextra {
   display: block;
   opacity: 0.3;
 }
 
-.panel i.editlink:hover {
+.panel span.panelextra:hover {
   opacity: 1;
+}
+
+.pointer:hover {
+  color: #0088CC;
 }
 
 .popover {

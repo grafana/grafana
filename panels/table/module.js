@@ -78,9 +78,8 @@ angular.module('kibana.table', [])
       return
     
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.panel.index);
 
-    var results = request
+    var request = $scope.ejs.Request().indices($scope.panel.index)
       .query(ejs.FilteredQuery(
         ejs.QueryStringQuery($scope.panel.query || '*'),
         ejs.RangeFilter($scope.time.field)
@@ -90,8 +89,11 @@ angular.module('kibana.table', [])
       )
       .size($scope.panel.size)
       .from($scope.panel.offset)
-      .sort($scope.panel.sort[0],$scope.panel.sort[1])
-      .doSearch();
+      .sort($scope.panel.sort[0],$scope.panel.sort[1]);
+
+    $scope.populate_modal(request)
+
+    var results = request.doSearch();
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -110,6 +112,16 @@ angular.module('kibana.table', [])
 
       broadcast_results();
     });
+  }
+
+  $scope.populate_modal = function(request) {
+    $scope.modal = {
+      title: "Table Inspector",
+      body : "<h5>Last Elasticsearch Query</h5><pre>"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          angular.toJson(JSON.parse(request.toString()),true)+
+        "'</pre>", 
+    } 
   }
 
   $scope.without_kibana = function (row) {

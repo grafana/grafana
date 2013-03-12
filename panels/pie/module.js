@@ -98,6 +98,7 @@ angular.module('kibana.pie', [])
           .facetFilter(ejs.QueryFilter(v))
         )
       })
+      $scope.populate_modal(request);
       var results = request.doSearch();
 
       // Populate scope when we have results
@@ -118,7 +119,7 @@ angular.module('kibana.pie', [])
       });
     // If we don't have an array, assume its a term facet.
     } else if ($scope.panel.mode == "terms") {
-      var results = request
+      request = request
         .facet(ejs.TermsFacet('pie')
           .field($scope.panel.query.field || $scope.panel.default_field)
           .size($scope.panel['size'])
@@ -131,7 +132,10 @@ angular.module('kibana.pie', [])
                 .to($scope.time.to)
                 .cache(false)
               )))).size(0)
-        .doSearch();
+
+      $scope.populate_modal(request);
+
+      var results = request.doSearch();
 
       // Populate scope when we have results
       results.then(function(results) {
@@ -153,7 +157,7 @@ angular.module('kibana.pie', [])
         $scope.$emit('render');
       });
     } else {
-      var results = request
+      request = request
         .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
         .filter(ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
@@ -161,6 +165,11 @@ angular.module('kibana.pie', [])
           .cache(false))
         .size(0)
         .doSearch();
+      
+      $scope.populate_modal(request);
+
+      var results = request.doSearch();
+
       results.then(function(results) {
         $scope.panel.loading = false;
         var complete  = results.hits.total;
@@ -171,6 +180,16 @@ angular.module('kibana.pie', [])
         $scope.$emit('render');
       });
     }
+  }
+
+  $scope.populate_modal = function(request) {
+    $scope.modal = {
+      title: "Pie Inspector",
+      body : "<h5>Last Elasticsearch Query</h5><pre>"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          angular.toJson(JSON.parse(request.toString()),true)+
+        "'</pre>", 
+    } 
   }
 
   function set_time(time) {

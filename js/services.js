@@ -5,9 +5,23 @@
 angular.module('kibana.services', [])
 .service('eventBus', function($rootScope) {
 
+  // An array of registed types
+  var _types = []
+
   this.broadcast = function(from,to,type,data) {
     if(_.isUndefined(data))
       var data = from
+
+    var packet = {
+      time: new Date(),
+      type: type,
+      from: from,
+      to: to,
+      data: data
+    }
+
+    if(_.contains(_types,'$kibana_debug'))
+      $rootScope.$broadcast('$kibana_debug',packet);
 
     //console.log('Sent: '+type + ' to ' + to + ' from ' + from + ': ' + angular.toJson(data))
     $rootScope.$broadcast(type,{
@@ -21,10 +35,15 @@ angular.module('kibana.services', [])
   // addressed to the scope in question and runs the registered function if it
   // is.
   this.register = function(scope,type,fn) {
+
+    _types = _.union(_types,[type])
+
     scope.$on(type,function(event,packet){
       var _id     = scope.$id;
       var _to     = packet.to;
       var _from   = packet.from;
+      var _type   = packet.type
+      var _time   = packet.time
       var _group  = (!(_.isUndefined(scope.panel))) ? scope.panel.group : ["NONE"] 
 
       //console.log('registered:' + type + " for " + scope.panel.title + " " + scope.$id)
@@ -33,13 +52,17 @@ angular.module('kibana.services', [])
       if(!(_.isArray(_group)))
         _group = [_group];
       
+      // Transmit even only if the send is not the receiver AND one of the following:
+      // 1) Receiver has group in _to 2) Receiver's $id is in _to
+      // 3) Event is addressed to ALL 4) Receiver is in ALL group 
       if((_.intersection(_to,_group).length > 0 || 
         _.indexOf(_to,_id) > -1 ||
+        _.indexOf(_group,'ALL') > -1 ||
         _.indexOf(_to,'ALL') > -1) &&
         _from !== _id
-        ) {
+      ) {
         //console.log('Got: '+type + ' from ' + _from + ' to ' + _to + ': ' + angular.toJson(packet.data))
-        fn(event,packet.data);
+        fn(event,packet.data,{time:_time,to:_to,from:_from,type:_type});
       }
     });
   }

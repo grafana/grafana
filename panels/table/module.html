@@ -1,4 +1,9 @@
 <kibana-panel ng-controller='table' ng-init='init()'>
+
+  <span style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+
   <div style="height:{{panel.height || row.height}};overflow-y:auto;overflow-x:auto">
     <div class="row-fluid">
       <div class="span1 offset3" style="text-align:right">
@@ -62,4 +67,4 @@
       </div>
     </div>
   </div>
-</kibana-panel>         
+</kibana-panel>

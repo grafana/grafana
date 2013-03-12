@@ -1,3 +1,7 @@
 <kibana-panel ng-controller='pie' ng-init="init()">
+  <span style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+  
   <div pie params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         
