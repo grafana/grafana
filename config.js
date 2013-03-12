@@ -15,7 +15,7 @@ If you need to configure the default dashboard, please see default.json
 */
 var config = new Settings(
 {
-  elasticsearch:  'http://demo.kibana.org',
+  elasticsearch:  'http://localhost:9200',
   kibana_index:   "kibana-int", 
   timeformat:     'mm/dd HH:MM:ss',
   modules:        ['histogram','map','pie','table','stringquery','sort',

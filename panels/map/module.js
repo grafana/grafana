@@ -31,7 +31,7 @@ angular.module('kibana.map', [])
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
     // Then the insert into facet and make the request
-    var results = request
+    var request = request
       .facet(ejs.TermsFacet('map')
         .field($scope.panel.field)
         .size($scope.panel['size'])
@@ -42,8 +42,11 @@ angular.module('kibana.map', [])
             ejs.RangeFilter($scope.time.field)
               .from($scope.time.from)
               .to($scope.time.to)
-            )))).size(0)
-      .doSearch();
+            )))).size(0);
+
+    $scope.populate_modal(request);
+
+    var results = request.doSearch();
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -55,6 +58,17 @@ angular.module('kibana.map', [])
       });
       $scope.$emit('render')
     });
+  }
+
+  // I really don't like this function, too much dom manip. Break out into directive?
+  $scope.populate_modal = function(request) {
+    $scope.modal = {
+      title: "Inspector",
+      body : "<h5>Last Elasticsearch Query</h5><pre>"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          angular.toJson(JSON.parse(request.toString()),true)+
+        "'</pre>", 
+    } 
   }
 
   function set_time(time) {

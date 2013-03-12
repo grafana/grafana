@@ -12,7 +12,8 @@ angular.module('kibana.pie', [])
     labels  : true,
     mode    : "terms",
     group   : "default",
-    default_field : '_all'
+    default_field : '_all',
+    spyable : true,
   }
   _.defaults($scope.panel,_d)
 
@@ -182,9 +183,10 @@ angular.module('kibana.pie', [])
     }
   }
 
+  // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
     $scope.modal = {
-      title: "Pie Inspector",
+      title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
           'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+

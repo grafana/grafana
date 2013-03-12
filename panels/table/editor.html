@@ -33,4 +33,17 @@
     </div>
     <div class="span3"><h6>Font Size</h6> 
       <select class="input-small" ng-model="panel.style['font-size']" ng-options="f for f in ['6pt','7pt','8pt','10pt','12pt','14pt','16pt','18pt','20pt','24pt','28pt','32pt','36pt','42pt','48pt','52pt','60pt','72pt']"></select></span>
+    </div>
   </div>
+  <h5>Panel Spy</h5>
+  <div class="row-fluid">
+    <div class="span2"> 
+      <label class="small"> Spyable </label><input type="checkbox" ng-model="panel.spyable" ng-checked="panel.spyable">
+    </div>
+    <div class="span9 small">
+      The panel spy shows 'behind the scenes' information about a panel. It can
+      be accessed by clicking the <i class='icon-eye-open'></i> in the top right
+      of the panel.
+    </div>
+  </div>
+

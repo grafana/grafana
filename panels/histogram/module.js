@@ -76,6 +76,8 @@ angular.module('kibana.histogram', [])
         ).size(0)
     })
 
+    $scope.populate_modal(request);
+
     // Then run it
     var results = request.doSearch();
 
@@ -118,6 +120,17 @@ angular.module('kibana.histogram', [])
       if(_segment < $scope.panel.index.length-1) 
         $scope.get_data(_segment+1)
     });
+  }
+
+  // I really don't like this function, too much dom manip. Break out into directive?
+  $scope.populate_modal = function(request) {
+    $scope.modal = {
+      title: "Inspector",
+      body : "<h5>Last Elasticsearch Query</h5><pre>"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          angular.toJson(JSON.parse(request.toString()),true)+
+        "'</pre>", 
+    } 
   }
 
   function set_time(time) {

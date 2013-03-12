@@ -1,3 +1,6 @@
 <kibana-panel ng-controller='histogram' ng-init="init()" style="height:{{panel.height || row.height}}">
+  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
   <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         
