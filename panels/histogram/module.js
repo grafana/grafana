@@ -13,7 +13,7 @@ angular.module('kibana.histogram', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
+    eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
     eventBus.register($scope,'query', function(event, query) {
       if(_.isArray(query)) {
         $scope.panel.query = _.map(query,function(q) {
@@ -133,7 +133,7 @@ angular.module('kibana.histogram', [])
     } 
   }
 
-  function set_time(time) {
+  $scope.set_time = function(time) {
     $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.panel.interval = secondsToHms(
@@ -142,7 +142,7 @@ angular.module('kibana.histogram', [])
   }
 
 })
-.directive('histogram', function() {
+.directive('histogram', function(eventBus) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -181,6 +181,7 @@ angular.module('kibana.histogram', [])
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
           .script("common/lib/panels/jquery.flot.time.js")
           .script("common/lib/panels/jquery.flot.stack.js")
+          .script("common/lib/panels/jquery.flot.selection.js")
           .script("common/lib/panels/timezone.js")
                     
         // Populate element. Note that jvectormap appends, does not replace.
@@ -211,6 +212,9 @@ angular.module('kibana.histogram', [])
               label: "Datetime",
               color: "#000",
             },
+            selection: {
+              mode: "x"
+            },
             grid: {
               backgroundColor: '#fff',
               borderWidth: 0,
@@ -224,34 +228,41 @@ angular.module('kibana.histogram', [])
             console.log(e)
           }
         })
-
-        function tt(x, y, contents) {
-          var tooltip = $('#pie-tooltip').length ? 
-            $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-          //var tooltip = $('#pie-tooltip')
-          tooltip.text(contents).css({
-            position: 'absolute',
-            top     : y + 5,
-            left    : x + 5,
-            color   : "#FFF",
-            border  : '1px solid #FFF',
-            padding : '2px',
-            'font-size': '8pt',
-            'background-color': '#000',
-          }).appendTo("body");
-        }
-
-        elem.bind("plothover", function (event, pos, item) {
-          if (item) {
-            var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-            tt(pos.pageX, pos.pageY,
-              item.datapoint[1].toFixed(1) + " @ " + 
-              new Date(item.datapoint[0]).format(config.timeformat));
-          } else {
-            $("#pie-tooltip").remove();
-          }
-        });
       }
+
+      function tt(x, y, contents) {
+        var tooltip = $('#pie-tooltip').length ? 
+          $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+        //var tooltip = $('#pie-tooltip')
+        tooltip.text(contents).css({
+          position: 'absolute',
+          top     : y + 5,
+          left    : x + 5,
+          color   : "#FFF",
+          border  : '1px solid #FFF',
+          padding : '2px',
+          'font-size': '8pt',
+          'background-color': '#000',
+        }).appendTo("body");
+      }
+
+      elem.bind("plothover", function (event, pos, item) {
+        if (item) {
+          var percent = parseFloat(item.series.percent).toFixed(1) + "%";
+          tt(pos.pageX, pos.pageY,
+            item.datapoint[1].toFixed(1) + " @ " + 
+            new Date(item.datapoint[0]).format(config.timeformat));
+        } else {
+          $("#pie-tooltip").remove();
+        }
+      });
+
+      elem.bind("plotselected", function (event, ranges) {
+        scope.time.from = new Date(ranges.xaxis.from);
+        scope.time.to   = new Date(ranges.xaxis.to)
+        scope.set_time(scope.time);
+        eventBus.broadcast(scope.$id,scope.panel.group,'time',scope.time)
+      });
     }
   };
 })

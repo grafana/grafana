@@ -77,6 +77,12 @@ angular.module('kibana.map', [])
     $scope.get_data();
   }
 
+  $scope.build_search = function(field,value) {
+    $scope.panel.query = add_to_query($scope.panel.query,field,value,false)
+    $scope.get_data();
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
+  }
+
 })
 .directive('map', function() {
   return {
@@ -131,6 +137,9 @@ angular.module('kibana.map', [])
               $('.jvectormap-label').text(label.text() + ": " + count);
             },
             onRegionOut: function(event, code) {
+            },
+            onRegionClick: function(event, code) {
+              scope.build_search(scope.panel.field,code)
             }
           });
         })

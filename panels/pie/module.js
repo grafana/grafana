@@ -194,6 +194,12 @@ angular.module('kibana.pie', [])
     } 
   }
 
+  $scope.build_search = function(field,value) {
+    $scope.panel.query.query = add_to_query($scope.panel.query.query,field,value,false)
+    $scope.get_data();
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query.query);
+  }
+
   function set_time(time) {
     $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
@@ -273,31 +279,40 @@ angular.module('kibana.pie', [])
             $.plot(elem, scope.data, pie);
           });
         }
-        
-        function piett(x, y, contents) {
-          var tooltip = $('#pie-tooltip').length ? 
-            $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-          tooltip.text(contents).css({
-            position: 'absolute',
-            top     : y + 10,
-            left    : x + 10,
-            color   : "#FFF",
-            border  : '1px solid #FFF',
-            padding : '2px',
-            'font-size': '8pt',
-            'background-color': '#000',
-          }).appendTo("body");
-        }
-
-        elem.bind("plothover", function (event, pos, item) {
-          if (item) {
-            var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-            piett(pos.pageX, pos.pageY, percent + " " + (item.series.label||""));
-          } else {
-            $("#pie-tooltip").remove();
-          }
-        });
       }
+
+      function piett(x, y, contents) {
+        var tooltip = $('#pie-tooltip').length ? 
+          $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+        tooltip.text(contents).css({
+          position: 'absolute',
+          top     : y + 10,
+          left    : x + 10,
+          color   : "#FFF",
+          border  : '1px solid #FFF',
+          padding : '2px',
+          'font-size': '8pt',
+          'background-color': '#000',
+        }).appendTo("body");
+      }
+
+      elem.bind("plotclick", function (event, pos, object) {
+        if (!object)
+          return;
+        if(scope.panel.mode === 'terms')
+          scope.build_search(scope.panel.query.field,object.series.label);
+      });
+
+      elem.bind("plothover", function (event, pos, item) {
+        if (item) {
+          var percent = parseFloat(item.series.percent).toFixed(1) + "%";
+          piett(pos.pageX, pos.pageY, percent + " " + (item.series.label||""));
+        } else {
+          $("#pie-tooltip").remove();
+        }
+      });
+
+
     }
   };
 })
