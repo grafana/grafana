@@ -140,11 +140,13 @@ angular.module('kibana.timepicker', [])
 
   $scope.time_check = function(){
 
+    // If time picker is defined (on initialization)
     if(!(_.isUndefined($scope.timepicker))) {
       var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
         new Date(Date.parse($scope.timepicker.from.date + " " + $scope.timepicker.from.time))
       var to = $scope.panel.mode !== 'absolute' ? new Date() :
         new Date(Date.parse($scope.timepicker.to.date + " " + $scope.timepicker.to.time))
+    // Otherwise 
     } else {
       var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
         $scope.time.from;

@@ -159,18 +159,39 @@ function get_bar_count(from,to,interval) {
 
 function round_interval (interval) {
   switch (true) {
-    case (interval <= 500):       return 100;
-    case (interval <= 5000):      return 1000;
-    case (interval <= 7500):      return 5000;
-    case (interval <= 15000):     return 10000;
-    case (interval <= 45000):     return 30000;
-    case (interval <= 180000):    return 60000;
-    case (interval <= 450000):    return 300000;
-    case (interval <= 1200000):   return 600000;
-    case (interval <= 2700000):   return 1800000;
-    case (interval <= 7200000):   return 3600000;
-    case (interval <= 21600000):  return 10800000;
-    default:                      return 43200000;
+    // 0.5s
+    case (interval <= 500):         return 100;       // 0.1s
+    // 5s
+    case (interval <= 5000):        return 1000;      // 1s
+    // 7.5s
+    case (interval <= 7500):        return 5000;      // 5s
+    // 15s
+    case (interval <= 15000):       return 10000;     // 10s
+    // 45s
+    case (interval <= 45000):       return 30000;     // 30s
+    // 3m
+    case (interval <= 180000):      return 60000;     // 1m
+    // 9m
+    case (interval <= 450000):      return 300000;    // 5m
+    // 20m
+    case (interval <= 1200000):     return 600000;    // 10m
+    // 45m
+    case (interval <= 2700000):     return 1800000;   // 30m
+    // 2h
+    case (interval <= 7200000):     return 3600000;   // 1h
+    // 6h
+    case (interval <= 21600000):    return 10800000;  // 3h
+    // 24h
+    case (interval <= 86400000):    return 43200000;  // 12h
+    // 48h
+    case (interval <= 172800000):   return 86400000;  // 24h
+    // 1w
+    case (interval <= 604800000):   return 86400000;  // 24h
+    // 3w
+    case (interval <= 1814400000):  return 604800000; // 1w
+    // 2y
+    case (interval < 3628800000): return 2592000000; // 30d
+    default:                        return 31536000000; // 1y
   }
 }
 
@@ -261,8 +282,9 @@ function is_int(value) {
 }
 
 function interval_to_seconds(string) {
-  var matches = string.match(/(\d+)([Mwdhms])/);
+  var matches = string.match(/(\d+)([Mwdhmsy])/);
   switch (matches[2]) {
+    case 'y': return matches[1]*31536000;;
     case 'M': return matches[1]*2592000;;
     case 'w': return matches[1]*604800;;
     case 'd': return matches[1]*86400;;
