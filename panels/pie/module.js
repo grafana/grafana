@@ -184,7 +184,6 @@ angular.module('kibana.pie', [])
 
   // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
-    console.log(request)
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
