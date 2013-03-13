@@ -8,6 +8,7 @@ angular.module('kibana.histogram', [])
     show    : ['bars','y-axis','x-axis','legend'],
     fill    : 3,
     timezone: 'browser', // browser, utc or a standard timezone
+    spyable : true,
     group   : "default",
   }
   _.defaults($scope.panel,_d)

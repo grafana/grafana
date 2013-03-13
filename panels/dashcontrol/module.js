@@ -23,14 +23,14 @@ angular.module('kibana.dashcontrol', [])
   }
   _.defaults($scope.panel,_d);
 
-  $scope.init = function() {
-    // A hash of defaults for the dashboard object
-    var _dash = {
-      title: "",
-      editable: true,
-      rows: [],
-    }
+  // A hash of defaults for the dashboard object
+  var _dash = {
+    title: "",
+    editable: true,
+    rows: [],
+  }
 
+  $scope.init = function() {
     // Long ugly if statement for figuring out which dashboard to load on init
     // If there is no dashboard defined, find one
     if(_.isUndefined($scope.dashboards)) {
@@ -43,7 +43,9 @@ angular.module('kibana.dashcontrol', [])
           $scope.elasticsearch_load('dashboard',_id)
         if(_type === 'temp')
           $scope.elasticsearch_load('temp',_id)
-          
+        if(_type === 'file')
+          $scope.file_load(_id)
+
       // No dashboard in the URL
       } else {
         // Check if browser supports localstorage, and if there's a dashboard 
@@ -56,16 +58,7 @@ angular.module('kibana.dashcontrol', [])
           $scope.dash_load(JSON.stringify(dashboard))
         // No? Ok, grab default.json, its all we have now
         } else {
-          $http({
-            url: "default.json",
-            method: "GET",
-          }).success(function(data, status, headers, config) {
-            var dashboard = data
-             _.defaults(dashboard,_dash);
-             $scope.dash_load(JSON.stringify(dashboard))
-          }).error(function(data, status, headers, config) {
-            $scope.alert('Default dashboard missing!','Could not locate default.json','error')
-          });
+          $scope.file_load('default')
         }
         
       }
@@ -115,6 +108,19 @@ angular.module('kibana.dashcontrol', [])
         "Your browser is too old for this functionality",
         'error',5000);
     }  
+  }
+
+  $scope.file_load = function(file) {
+    $http({
+      url: "dashboards/default",
+      method: "GET",
+    }).success(function(data, status, headers, config) {
+      var dashboard = data
+       _.defaults(dashboard,_dash);
+       $scope.dash_load(JSON.stringify(dashboard))
+    }).error(function(data, status, headers, config) {
+      $scope.alert('Default dashboard missing!','Could not locate dashboards/'+file,'error')
+    });
   }
 
   $scope.elasticsearch_save = function(type) {

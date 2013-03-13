@@ -10,6 +10,7 @@ angular.module('kibana.table', [])
     group   : "default",
     style   : {},
     fields  : [],
+    spyable: true,
   }
   _.defaults($scope.panel,_d)
 
