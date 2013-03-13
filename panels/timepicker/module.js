@@ -83,6 +83,14 @@ angular.module('kibana.timepicker', [])
     eventBus.register($scope,"get_time", function(event,id) {
       eventBus.broadcast($scope.$id,id,'time',$scope.time)
     });
+
+    // In case some other panel broadcasts a time, set us to an absolute range
+    eventBus.register($scope,"set_time", function(event,time) {
+      $scope.panel.mode = 'absolute';
+      set_timepicker(time.from,time.to)
+      $scope.time_apply()
+    });
+    
     $scope.$on('render', function (){
       $scope.time_apply();
     });
@@ -157,18 +165,8 @@ angular.module('kibana.timepicker', [])
     if (from.getTime() >= to.getTime())
       from = new Date(to.getTime() - 1000)
 
-    // Janky 0s timeout to get around $scope queue processing view issue
     $timeout(function(){
-      $scope.timepicker = {
-        from : {
-          time : from.format("HH:MM:ss"),
-          date : from.format("mm/dd/yyyy")
-        },
-        to : {
-          time : to.format("HH:MM:ss"),
-          date : to.format("mm/dd/yyyy")
-        } 
-      }
+      set_timepicker(from,to)
     });
 
     return {
@@ -201,6 +199,20 @@ angular.module('kibana.timepicker', [])
       index : $scope.time.index,
     };
   };
+
+  function set_timepicker(from,to) {
+    // Janky 0s timeout to get around $scope queue processing view issue
+    $scope.timepicker = {
+      from : {
+        time : from.format("HH:MM:ss"),
+        date : from.format("mm/dd/yyyy")
+      },
+      to : {
+        time : to.format("HH:MM:ss"),
+        date : to.format("mm/dd/yyyy")
+      } 
+    }
+  }
 
   // returns a promise containing an array of all indices matching the index
   // pattern that exist in a given range

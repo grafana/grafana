@@ -261,7 +261,7 @@ angular.module('kibana.histogram', [])
         scope.time.from = new Date(ranges.xaxis.from);
         scope.time.to   = new Date(ranges.xaxis.to)
         scope.set_time(scope.time);
-        eventBus.broadcast(scope.$id,scope.panel.group,'time',scope.time)
+        eventBus.broadcast(scope.$id,scope.panel.group,'set_time',scope.time)
       });
     }
   };
