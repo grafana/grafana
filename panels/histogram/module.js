@@ -209,7 +209,7 @@ angular.module('kibana.histogram', [])
               timezone: scope.panel.timezone,
               show: show['x-axis'],
               mode: "time",
-              timeformat: "%H:%M:%S<br>%m-%d",
+              timeformat: time_format(scope.panel.interval),
               label: "Datetime",
               color: "#000",
             },
@@ -229,6 +229,18 @@ angular.module('kibana.histogram', [])
             console.log(e)
           }
         })
+      }
+
+      function time_format(interval) {
+        var _int = interval_to_seconds(interval)
+        if(_int >= 2628000)
+          return "%m/%y"
+        if(_int >= 86400)
+          return "%m/%d/%y"
+        if(_int >= 60)
+          return "%H:%M<br>%m/%d"
+        else
+          return "%H:%M:%S"
       }
 
       function tt(x, y, contents) {
@@ -252,7 +264,7 @@ angular.module('kibana.histogram', [])
           var percent = parseFloat(item.series.percent).toFixed(1) + "%";
           tt(pos.pageX, pos.pageY,
             item.datapoint[1].toFixed(1) + " @ " + 
-            new Date(item.datapoint[0]).format(config.timeformat));
+            new Date(item.datapoint[0]).format('mm/dd HH:MM:ss'));
         } else {
           $("#pie-tooltip").remove();
         }
