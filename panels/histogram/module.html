@@ -2,5 +2,9 @@
   <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
+  <center ng-show='panel.zoomlinks && data'>
+    <a class='small' ng-click='zoom(0.5)'><i class='icon-zoom-in'></i> Zoom In</a>
+    <a class='small' ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a>
+  </center>
   <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

@@ -3,13 +3,14 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
-    query   : [ {query: "*", label:"Query"} ],
-    interval: secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
-    show    : ['bars','y-axis','x-axis','legend'],
-    fill    : 3,
-    timezone: 'browser', // browser, utc or a standard timezone
-    spyable : true,
-    group   : "default",
+    query     : [ {query: "*", label:"Query"} ],
+    interval  : secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
+    show      : ['bars','y-axis','x-axis','legend'],
+    fill      : 3,
+    timezone  : 'browser', // browser, utc or a standard timezone
+    spyable   : true,
+    zoomlinks : true,
+    group     : "default",
   }
   _.defaults($scope.panel,_d)
 
@@ -121,6 +122,12 @@ angular.module('kibana.histogram', [])
       if(_segment < $scope.panel.index.length-1) 
         $scope.get_data(_segment+1)
     });
+  }
+
+  // function $scope.zoom
+  // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
+  $scope.zoom = function(factor) {
+    eventBus.broadcast($scope.$id,$scope.panel.group,'zoom',factor)
   }
 
   // I really don't like this function, too much dom manip. Break out into directive?

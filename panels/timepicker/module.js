@@ -91,6 +91,23 @@ angular.module('kibana.timepicker', [])
       $scope.time_apply()
     });
     
+    eventBus.register($scope,"zoom", function(event,factor) {
+      var _timespan = ($scope.time.to.getTime() - $scope.time.from.getTime());
+      try {
+        if($scope.panel.mode != 'absolute') {
+          $scope.panel.mode = 'since'
+          set_timepicker(new Date($scope.time.to.getTime() - _timespan*factor),$scope.time.to)
+        } else {
+          var _center = $scope.time.to - _timespan/2
+          set_timepicker(new Date(_center - (_timespan*factor)/2),
+                         new Date(_center + (_timespan*factor)/2))        
+        }
+      } catch (e) {
+        console.log(e)
+      }     
+      $scope.time_apply();
+    });
+    
     $scope.$on('render', function (){
       $scope.time_apply();
     });
