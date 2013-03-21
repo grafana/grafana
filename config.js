@@ -7,7 +7,7 @@ modules:        Panel modules to load. In the future these will be inferred
                 from your initial dashboard, though if you share dashboards you
                 will probably need to list them all here 
 
-If you need to configure the default dashboard, please see default.json
+If you need to configure the default dashboard, please see dashboards/default
 
 */
 var config = new Settings(

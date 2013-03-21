@@ -22,10 +22,11 @@
     <table class="table-hover table table-condensed" ng-style="panel.style">
       <thead>
         <th style="white-space:nowrap" ng-repeat="field in panel.fields">
-          <span  class="pointer" ng-click="set_sort(field)">
+          <span  class="pointer" ng-click="set_sort(field)" ng-show='panel.sortable'>
             {{field}} 
             <i ng-show='field == panel.sort[0]' class="pointer" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
           </span>
+          <span ng-show='!panel.sortable'>{{field}}</span>
         </th>
       </thead>
       <tbody ng-repeat="row in data" ng-class-odd="'odd'">

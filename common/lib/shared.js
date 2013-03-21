@@ -419,6 +419,16 @@ function htmlEntities(str) {
       /"/g, '&quot;');
 }
 
+function bucket_round(start,num,dir) {
+  var resto = start%num;
+  if (resto <= (num/2) || dir === 'down') {
+    // Down
+    return start-resto;
+  } else {
+    // Up
+    return start+num-resto;
+  }
+}
 
 _.mixin({
     move: function (array, fromIndex, toIndex) {

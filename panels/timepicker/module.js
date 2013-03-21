@@ -10,7 +10,9 @@ a pattern
 * time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
 * timespan :: The default options selected for the relative view. Default: '15m'
 * timefield :: The field in which time is stored in the document.
-* index :: Index pattern to match. Literals should be double quoted. Default: '"logstash-"yyyy.mm.dd'
+* index :: Index pattern to match. Literals should be double quoted. Default: '_all'
+* timed_indices :: Should kibana generate a list of indices to try based on selected time range?
+* defaultindex :: Index to failover to if index not found
 * refresh: Object containing refresh parameters
   * enable :: true/false, enable auto refresh by default. Default: false
   * interval :: Seconds between auto refresh. Default: 30
@@ -32,10 +34,10 @@ angular.module('kibana.timepicker', [])
     time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
     timespan      : '15m',
     timefield     : '@timestamp',
-    index         : '"logstash-"yyyy.mm.dd',
-    defaultindex  : "NOINDEX",
+    index         : '_all',
+    defaultindex  : "_all",
     index_interval: "day",
-    timed_indices : true,
+    timed_indices : false,
     group         : "default",
     refresh       : {
       enable  : false, 
@@ -76,6 +78,10 @@ angular.module('kibana.timepicker', [])
     }
     $scope.time.field = $scope.panel.timefield;
     $scope.time_apply();
+
+    // Start refresh timer if enabled
+    if ($scope.panel.refresh.enable)
+      $scope.set_interval($scope.panel.refresh.interval);
 
     // In the case that a panel is not ready to receive a time event, it may
     // request one be sent by broadcasting a 'get_time' with its _id to its group

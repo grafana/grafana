@@ -174,7 +174,6 @@ angular.module('kibana.dashcontrol', [])
         ).size($scope.panel.elasticsearch_size).doSearch();
     results.then(function(results) {
       if(_.isUndefined(results)) {
-        $scope.panel.error = 'Your query was unsuccessful';
         return;
       }
       $scope.panel.error =  false;
@@ -190,7 +189,6 @@ angular.module('kibana.dashcontrol', [])
         ).size($scope.panel.elasticsearch_size).doSearch();
       results.then(function(results) {
         if(_.isUndefined(results)) {
-          $scope.panel.error = 'Your query was unsuccessful';
           return;
         }
         $scope.panel.error =  false;
