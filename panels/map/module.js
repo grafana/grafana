@@ -140,7 +140,9 @@ angular.module('kibana.map', [])
             onRegionOut: function(event, code) {
             },
             onRegionClick: function(event, code) {
-              scope.build_search(scope.panel.field,code)
+              var count = _.isUndefined(scope.data[code]) ? 0 : scope.data[code];
+              if (count != 0) 
+                scope.build_search(scope.panel.field,code)
             }
           });
         })
