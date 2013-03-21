@@ -6,7 +6,7 @@ Kibana Dashboard Preview
 This is very much a preview, many things will change. While it is functional and
 useful, please view it as a proof-of-concept. A play ground for ideas :-)
 
-Configuration is in config.js, the default dashboard is in default.json. The
+Configuration is in config.js, the default dashboard is in dashboards/default The
 format of both of these is likely to change. Documentation for panel types 
 coming soon.
 
