@@ -246,7 +246,7 @@ angular.module('kibana.pie', [])
             show: scope.panel.labels,
             radius: 2/3,
             formatter: function(label, series){
-              return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
+              return '<div ng-click="build_search(panel.query.field,\''+label+'\') "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
                 label+'<br/>'+Math.round(series.percent)+'%</div>';
             },
             threshold: 0.1 
@@ -310,7 +310,6 @@ angular.module('kibana.pie', [])
           $("#pie-tooltip").remove();
         }
       });
-
 
     }
   };
