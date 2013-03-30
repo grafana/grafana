@@ -21,7 +21,6 @@
     <div class="small" ng-show="panel.fields.length == 0">No columns configured. You may want to add a <strong>fields panel</strong>, or click the edit button in the top right of this panel to add some columns</div>
     <table class="table-hover table table-condensed" ng-style="panel.style">
       <thead>
-        <th></th>
         <th style="white-space:nowrap" ng-repeat="field in panel.fields">
           <span  class="pointer" ng-click="set_sort(field)" ng-show='panel.sortable'>
             {{field}} 
@@ -32,7 +31,7 @@
       </thead>
       <tbody ng-repeat="row in data.slice(panel.offset,panel.offset+panel.size)" ng-class-odd="'odd'">
         <tr ng-click="toggle_details(row)">
-          <td>{{$index}}</td><td ng-repeat="field in panel.fields">{{row[field]}}</td>
+          <td ng-repeat="field in panel.fields">{{row[field]}}</td>
         </tr>
         <tr ng-show="row.kibana.details">
           <td colspan=1000>
