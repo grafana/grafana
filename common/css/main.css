@@ -62,6 +62,10 @@
   font-size: 85%;
 }
 
+.large {
+  font-size: 120%;
+}
+
 .nomargin {
   margin: 0px;
 }

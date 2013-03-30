@@ -52,7 +52,7 @@ angular.module('kibana.histogram', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
-    _segment = _.isUndefined(segment) ? 0 : segment
+    var _segment = _.isUndefined(segment) ? 0 : segment
 
     $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
