@@ -128,7 +128,7 @@ angular.module('kibana.table', [])
         $scope.data = _.sortBy($scope.data, function(v){
           return v[$scope.panel.sort[0]]
         });
-
+        
         // Reverse if needed
         if($scope.panel.sort[1] == 'desc')
           $scope.data.reverse();

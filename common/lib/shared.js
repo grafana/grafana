@@ -270,10 +270,15 @@ function flatten_json(object,root,array) {
     var obj = object[index]
     var rootname = root.length == 0 ? index : root + '.' + index;
     if(typeof obj == 'object' ) {
-      if(_.isArray(obj))
-        array[rootname] = typeof obj === 'undefined' ? null : obj.join(',');
-      else
+      if(_.isArray(obj)) {
+        if(obj.length === 1 && _.isNumber(obj[0])) {
+          array[rootname] = parseFloat(obj[0]);
+        } else {
+          array[rootname] = typeof obj === 'undefined' ? null : obj.join(',');
+        }
+      } else {
         flatten_json(obj,rootname,array)
+      }
     } else {
       array[rootname] = typeof obj === 'undefined' ? null : obj;
     }

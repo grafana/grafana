@@ -10,6 +10,7 @@ angular.module('kibana.map', [])
     exclude : [],
     spyable : true,
     group   : "default",
+    index_limit : 0
   }
   _.defaults($scope.panel,_d)
 
