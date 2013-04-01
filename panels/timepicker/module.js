@@ -11,7 +11,6 @@ a pattern
 * timespan :: The default options selected for the relative view. Default: '15m'
 * timefield :: The field in which time is stored in the document.
 * index :: Index pattern to match. Literals should be double quoted. Default: '_all'
-* timed_indices :: Should kibana generate a list of indices to try based on selected time range?
 * defaultindex :: Index to failover to if index not found
 * refresh: Object containing refresh parameters
   * enable :: true/false, enable auto refresh by default. Default: false
@@ -37,7 +36,6 @@ angular.module('kibana.timepicker', [])
     index         : '_all',
     defaultindex  : "_all",
     index_interval: "day",
-    timed_indices : false,
     group         : "default",
     refresh       : {
       enable  : false, 
@@ -205,7 +203,7 @@ angular.module('kibana.timepicker', [])
 
     // Get indices for the time period, then broadcast time range and index list
     // in a single object. Not sure if I like this.
-    if($scope.panel.timed_indices) {
+    if($scope.panel.index_interval !== 'none') {
       indices($scope.time.from,$scope.time.to).then(function (p) {
         $scope.time.index = p;
         eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)

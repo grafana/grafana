@@ -7,18 +7,14 @@ function get_object_fields(obj) {
   return field_array.sort();
 }
 
-function get_all_fields(json) {
-  var field_array = [];
-  var obj_fields;
-  for (hit in json.hits.hits) {
-    obj_fields = get_object_fields(json.hits.hits[hit]);
-    for (index in obj_fields) {
-      if (_.indexOf(field_array,obj_fields[index]) < 0) {
-        field_array.push(obj_fields[index]);
-      }
-    }
-  }
-  return field_array.sort();
+function get_all_fields(data) {
+  var fields = [];
+  _.each(data,function(hit) {
+    fields = _.uniq(fields.concat(_.keys(hit)))
+  })
+  // Remove stupid angular key
+  fields = _.without(fields,'$$hashKey')
+  return fields;
 }
 
 function has_field(obj,field) {
@@ -28,39 +24,6 @@ function has_field(obj,field) {
   } else {
     return true;
   }
-}
-
-function get_objids_with_field(json,field) {
-  var objid_array = [];
-  for (hit in json.hits.hits) {
-    if(has_field(json.hits.hits[hit],field)) {
-      objid_array.push(hit);
-    }
-  }
-  return objid_array;
-}
-
-function get_objids_with_field_value(json,field,value) {
-  var objid_array = [];
-  for (hit in json.hits.hits) {
-    var hit_obj = json.hits.hits[hit];
-    if(has_field(hit_obj,field)) {
-      var field_val = get_field_value(hit_obj,field,'raw')
-      if(_.isArray(field_val)) {
-        if(_.inArray(field_val,field) >= 0) {
-          objid_array.push(hit);
-        }
-      } else {
-        if(field_val == value) {
-          objid_array.push(hit);
-        }
-      }
-    } else {
-      if ( value == '')
-        objid_array.push(hit);
-    }
-  }
-  return objid_array;
 }
 
 function get_related_fields(docs,field) {

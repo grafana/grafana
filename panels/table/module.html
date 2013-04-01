@@ -6,11 +6,11 @@
 
   <div style="height:{{panel.height || row.height}};overflow-y:auto;overflow-x:auto">
     <div class="row-fluid">
-      <div class="span1 offset3" style="text-align:right">
+      <div class="span1 offset1" style="text-align:right">
         <i ng-click="panel.offset = 0" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
         <i ng-click="panel.offset = (panel.offset - panel.size)" ng-show="panel.offset > 0" class='icon-arrow-left pointer'></i>
       </div>
-      <div class="span4" style="text-align:center">
+      <div class="span8" style="text-align:center">
         <strong>{{panel.offset}}</strong> to <strong>{{panel.offset + data.slice(panel.offset,panel.offset+panel.size).length}}</strong>
         <small> of {{data.length}} available for paging</small>
       </div>
@@ -41,7 +41,7 @@
                 <th>Action</th>
                 <th>Value</th>
               </thead>
-              <tr ng-repeat="(key,value) in row.kibana.details">
+              <tr ng-repeat="(key,value) in row.kibana.details" ng-class-odd="'odd'">
                 <td>{{key}}</td>
                 <td>
                   <i class='icon-search pointer' ng-click="build_search(key,value)"></i> 

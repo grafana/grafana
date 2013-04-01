@@ -83,6 +83,7 @@ angular.module('kibana.table', [])
     $scope.panel.loading = true;
 
     var _segment = _.isUndefined(segment) ? 0 : segment
+    $scope.segment = _segment;
 
     var request = $scope.ejs.Request().indices($scope.panel.index[_segment])
       .query(ejs.FilteredQuery(
@@ -139,8 +140,8 @@ angular.module('kibana.table', [])
       }
       
       // This breaks, use $scope.data for this
-      $scope.all_fields = get_all_fields(results);
-   
+      $scope.all_fields = get_all_fields($scope.data);
+
       broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for

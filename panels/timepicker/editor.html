@@ -10,7 +10,7 @@
   </div>
   <div class="row-fluid">    
     <h5>Index Settings</h5>
-    <div ng-show="panel.timed_indices" class="row-fluid"> 
+    <div ng-show="panel.index_interval != 'none'" class="row-fluid"> 
        <div class="span12">
         <p class="small">
           Time stamped indices use your selected time range to create a list of 
@@ -30,10 +30,10 @@
     </div>
     <div class="row-fluid"> 
       <div class="span2">
-        <h6>Timestamped</h6><input type="checkbox" ng-model="panel.timed_indices" ng-checked="panel.timed_indices">
+        <h6>Timestamp</h6><select class="input-mini" ng-model="panel.index_interval" ng-options='f for f in ["none","hour","day","week","month","year"]'></select>
       </div>
       <div class="span5">
-        <h6>Index <span ng-show="panel.timed_indices">pattern</span> <small ng-show="panel.timed_indices">Absolutes in double quotes</small></h6>
+        <h6>Index <span ng-show="panel.index_interval != 'none'">pattern <small>Absolutes in double quotes</small></span></h6>
         <input type="text" class="input-medium" ng-model="panel.index">
       </div>
       <div class="span4">
