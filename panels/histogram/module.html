@@ -6,5 +6,11 @@
     <a class='small' ng-click='zoom(0.5)'><i class='icon-zoom-in'></i> Zoom In</a>
     <a class='small' ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a>
   </center>
+  <div>
+  <span ng-repeat='series in legend' style='display:inline-block;padding-right:5px'>
+    <div style="display:inline-block;background:{{series.color}};height:10px;width:10px"></div>
+    <div class='small' style='display:inline-block'>{{series.label}} / {{panel.interval}}</div>
+  </span>
+  </div>
   <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

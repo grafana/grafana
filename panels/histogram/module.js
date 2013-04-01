@@ -47,7 +47,7 @@ angular.module('kibana.histogram', [])
     $scope.get_data();
   }
 
-  $scope.get_data = function(segment) {
+  $scope.get_data = function(segment,query_id) {
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
@@ -87,40 +87,47 @@ angular.module('kibana.histogram', [])
     results.then(function(results) {
       $scope.panel.loading = false;
       $scope.hits = results.hits.total;
-      if(_segment == 0)
+      if(_segment == 0) {
         $scope.data = [];
+        query_id = $scope.query_id = new Date().getTime();
+      }
       
-      _.each(results.facets, function(v, k) {
-        // Null values at each end of the time range ensure we see entire range
-        if(_.isUndefined($scope.data[k]) || _segment == 0) {
-          var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
-        } else {
-          var data = $scope.data[k].data
-        }
+      if($scope.query_id === query_id) {
+        _.each(results.facets, function(v, k) {
+          // Null values at each end of the time range ensure we see entire range
+          if(_.isUndefined($scope.data[k]) || _segment == 0) {
+            var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
+          } else {
+            var data = $scope.data[k].data
+          }
 
-        var segment_data = [];
-        _.each(v.entries, function(v, k) {
-          segment_data.push([v['time'],v['count']])
+          var segment_data = [];
+          _.each(v.entries, function(v, k) {
+            segment_data.push([v['time'],v['count']])
+          });
+
+          data.splice.apply(data,[1,0].concat(segment_data))
+
+          var series = { 
+            data: {
+              label: $scope.panel.query[k].label || k, 
+              data: data,
+            },
+
+          };
+
+          if (!(_.isUndefined($scope.panel.query[k].color)))
+            series.data.color = $scope.panel.query[k].color;
+          
+          $scope.data[k] = series.data
         });
 
-        data.splice.apply(data,[1,0].concat(segment_data))
-
-        var series = { 
-          data: {
-            label: $scope.panel.query[k].label || k, 
-            data: data,
-          },
-
-        };
-
-        if (!(_.isUndefined($scope.panel.query[k].color)))
-          series.data.color = $scope.panel.query[k].color;
-        
-        $scope.data[k] = series.data
-      });
-      $scope.$emit('render')
-      if(_segment < $scope.panel.index.length-1) 
-        $scope.get_data(_segment+1)
+        $scope.$emit('render')
+        if(_segment < $scope.panel.index.length-1) {
+          $scope.get_data(_segment+1,query_id)
+        }
+      
+      }
     });
   }
 
@@ -155,8 +162,13 @@ angular.module('kibana.histogram', [])
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
 
+      var height = scope.panel.height || scope.row.height;
 
-      elem.html('<center><img src="common/img/load_big.gif"></center>')
+      elem.html(
+        '<div class="legend_container"></div>'+
+        '<div class="chart" style="height:'+height+'">'+
+         '<center><img src="common/img/load_big.gif"></center>'+
+        '</div>')
 
       // Receive render events
       scope.$on('render',function(){
@@ -195,45 +207,46 @@ angular.module('kibana.histogram', [])
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
           // Populate element
-          try { $.plot(elem, scope.data, {
-            legend: { 
-              show: show.legend,
-              position: "nw", 
-              labelFormatter: function(label, series) {
-                return '<span class="legend">' + label + ' / ' + 
-                  scope.panel.interval + '</span>';
-              }
-            },
-            series: {
-              stack:  show.stack,
-              lines:  { show: show.lines, fill: scope.panel.fill/10 },
-              bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
-              points: { show: show.points },
-              shadowSize: 1
-            },
-            yaxis: { show: show['y-axis'], min: 0, color: "#000" },
-            xaxis: {
-              timezone: scope.panel.timezone,
-              show: show['x-axis'],
-              mode: "time",
-              timeformat: time_format(scope.panel.interval),
-              label: "Datetime",
-              color: "#000",
-            },
-            selection: {
-              mode: "x"
-            },
-            grid: {
-              backgroundColor: '#fff',
-              borderWidth: 0,
-              borderColor: '#eee',
-              color: "#eee",
-              hoverable: true,
-            },
-            colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
-          })
+          try { 
+            var plot = $.plot($('.chart',elem), scope.data, {
+              legend: { 
+                show: false,
+              },
+              series: {
+                stack:  show.stack,
+                lines:  { show: show.lines, fill: scope.panel.fill/10 },
+                bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
+                points: { show: show.points, fill: 1, fillColor: false},
+                shadowSize: 1
+              },
+              yaxis: { show: show['y-axis'], min: 0, color: "#000" },
+              xaxis: {
+                timezone: scope.panel.timezone,
+                show: show['x-axis'],
+                mode: "time",
+                timeformat: time_format(scope.panel.interval),
+                label: "Datetime",
+                color: "#000",
+              },
+              selection: {
+                mode: "x"
+              },
+              grid: {
+                backgroundColor: '#fff',
+                borderWidth: 0,
+                borderColor: '#eee',
+                color: "#eee",
+                hoverable: true,
+              },
+              colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
+            })
+
+            scope.legend = [];
+            _.each(plot.getData(),function(series) {
+              scope.legend.push(_.pick(series,'label','color'))
+            })
           } catch(e) {
-            console.log(e)
+            elem.text(e)
           }
         })
       }

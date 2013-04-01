@@ -105,6 +105,7 @@ angular.module('kibana.table', [])
       $scope.panel.loading = false;
 
       if(_segment === 0) {
+        $scope.hits = 0;
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime()
       }
@@ -114,8 +115,6 @@ angular.module('kibana.table', [])
         return;
       }
       $scope.panel.error =  false;
-      $scope.hits = results.hits.total;
-
 
       // Check that we're still on the same query, if not stop
       if($scope.query_id === query_id) {
@@ -123,6 +122,8 @@ angular.module('kibana.table', [])
           return flatten_json(hit['_source']);
         }));
         
+        $scope.hits += results.hits.total;
+
         // Sort the data
         $scope.data = _.sortBy($scope.data, function(v){
           return v[$scope.panel.sort[0]]
