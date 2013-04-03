@@ -86,13 +86,15 @@ angular.module('kibana.histogram', [])
     // Populate scope when we have results
     results.then(function(results) {
       $scope.panel.loading = false;
-      $scope.hits = results.hits.total;
       if(_segment == 0) {
+        $scope.hits = 0;
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime();
       }
       
       if($scope.query_id === query_id) {
+        $scope.hits += results.hits.total;
+
         _.each(results.facets, function(v, k) {
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[k]) || _segment == 0) {
@@ -122,6 +124,7 @@ angular.module('kibana.histogram', [])
           $scope.data[k] = series.data
         });
 
+        eventBus.broadcast($scope.$id,$scope.panel.group,'hits',$scope.hits)
         $scope.$emit('render')
         if(_segment < $scope.panel.index.length-1) {
           $scope.get_data(_segment+1,query_id)

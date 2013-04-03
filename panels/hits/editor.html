@@ -1,11 +1,17 @@
   <div class="row-fluid" ng-controller="hits">
-    <div class="span11">
-    The hits panel shows a simple count of how many records match your filtered query. If multiple queries are sent from a single panel the <strong>first query will be displayed</strong>
+    <div class="span2"> 
+      <label class="small">Run Query</label><input type="checkbox" ng-model="panel.run_query" ng-checked="panel.run_query">
+    </div>
+    <div class="span9" ng-show='!panel.run_query'>
+      With query running disabled, this panel receives its hit count from a histogram panel. If multiple queries are running this <strong>will show the total of all queries</strong>.
+    </div>
+    <div class="span9" ng-show='panel.run_query'>
+      This shows a simple count of how many records match your filtered query. If multiple queries are sent from a single panel the <strong>first query will be displayed</strong>
     </div>
   </div>
 
   <div class="row-fluid">    
-    <div class="span9">
+    <div class="span9" ng-show='panel.run_query'>
       <form class="input-append">
         <h6>Query</h6>
         <input type="text" style="width:85%" ng-model="panel.query">

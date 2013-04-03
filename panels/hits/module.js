@@ -6,15 +6,24 @@ angular.module('kibana.hits', [])
     query   : "*",
     group   : "default",
     style   : { "font-size": '36pt', "font-weight": "bold" },
+    run_query : false
   }
   _.defaults($scope.panel,_d)
 
   $scope.init = function () {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
+    $scope.hits = 0;
+    eventBus.register($scope,'time', function(event,time){
+      if($scope.panel.run_query)
+        set_time(time)
+    });
     eventBus.register($scope,'query', function(event, query) {
       $scope.panel.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
+      if($scope.panel.run_query)
+        $scope.get_data();
     });
+    eventBus.register($scope,'hits', function(event, hits) {
+      $scope.hits = hits;
+    })
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
