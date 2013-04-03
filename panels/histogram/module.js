@@ -152,7 +152,7 @@ angular.module('kibana.histogram', [])
     $scope.time = time;
     $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
     $scope.panel.interval = secondsToHms(
-      calculate_interval(time.from,time.to,50,0)/1000),
+      calculate_interval(time.from,time.to,50,0)/1000);
     $scope.get_data();
   }
 
@@ -293,7 +293,6 @@ angular.module('kibana.histogram', [])
       elem.bind("plotselected", function (event, ranges) {
         scope.time.from = new Date(ranges.xaxis.from);
         scope.time.to   = new Date(ranges.xaxis.to)
-        scope.set_time(scope.time);
         eventBus.broadcast(scope.$id,scope.panel.group,'set_time',scope.time)
       });
     }
