@@ -1,31 +1,87 @@
 {
-  "title": "Introduction",
+  "title": "Logstash Search",
   "rows": [
     {
-      "title": "Status",
-      "collapse": false,
+      "title": "Options",
       "height": "50px",
+      "editable": true,
+      "collapse": true,
+      "collapsable": true,
       "panels": [
         {
-          "span": 6,
+          "loading": false,
+          "error": false,
+          "span": 5,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "text",
-          "title": "Welcome",
-          "content": "Welcome to Kibana Dashboard, a technology preview of what's to come for Kibana, Logstash and Elasticsearch \n\nKibana dashboard is the easy way to share, build, use and extend interactive, real time dashboards and data analysis interfaces. \n\nReady to get started? \n\nLogstash users, click the 'Load' button to the right, paste this URL: https://gist.github.com/36ae0b37025c31dbf344 into the 'Gist' loader, click 'Get' and select the 'Logstash Dashboard' link that appears",
-          "style": {
-            "font-size": "14pt"
+          "type": "timepicker",
+          "mode": "relative",
+          "time_options": [
+            "5m",
+            "15m",
+            "1h",
+            "6h",
+            "12h",
+            "24h",
+            "2d",
+            "5d"
+          ],
+          "timespan": "15m",
+          "timefield": "@timestamp",
+          "index": "\"logstash-\"yyyy.mm.dd",
+          "defaultindex": "NOINDEX",
+          "index_interval": "day",
+          "refresh": {
+            "enable": false,
+            "interval": 30,
+            "min": 3
+          },
+          "time": {
+            "from": "04/03/2013 08:58:07",
+            "to": "04/03/2013 09:13:07"
           }
+        }
+      ]
+    },
+    {
+      "title": "Query Control",
+      "height": "50px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "loading": false,
+          "error": false,
+          "span": 7,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "stringquery",
+          "label": "Search",
+          "query": "",
+          "size": 100,
+          "sort": [
+            "_score",
+            "desc"
+          ],
+          "multi": false,
+          "multi_arrange": "horizontal"
         },
         {
-          "title": "Dashboard Loader",
-          "type": "dashcontrol",
+          "loading": false,
+          "error": false,
           "span": 3,
-          "group": "default",
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "dashcontrol",
           "save": {
-            "gist": true,
+            "gist": false,
             "elasticsearch": true,
             "local": true,
             "default": true
@@ -35,11 +91,137 @@
             "elasticsearch": true,
             "local": true
           },
+          "hide_control": false,
           "elasticsearch_size": 20,
-          "error": false
+          "elasticsearch_saveto": "kibana-int",
+          "temp": true,
+          "temp_ttl": "30d"
+        },
+        {
+          "loading": false,
+          "error": false,
+          "span": 2,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "hits",
+          "query": "*",
+          "style": {
+            "font-size": "24pt",
+            "font-weight": "bold"
+          },
+          "run_query": false,
+          "title": "Hits"
         }
-      ],
-      "editable": true
+      ]
+    },
+    {
+      "title": "Graph",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "loading": false,
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "histogram",
+          "query": [
+            {
+              "query": "",
+              "label": ""
+            }
+          ],
+          "interval": "30s",
+          "show": [
+            "points",
+            "lines",
+            "legend",
+            "x-axis",
+            "y-axis"
+          ],
+          "timezone": "browser",
+          "spyable": true,
+          "zoomlinks": true,
+          "index": [
+            "logstash-2013.04.03"
+          ],
+          "fill": 1
+        }
+      ]
+    },
+    {
+      "title": "Events",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "loading": false,
+          "error": false,
+          "span": 2,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "fields",
+          "style": {},
+          "arrange": "vertical",
+          "micropanel_position": "right",
+          "sort": [
+            "@timestamp",
+            "desc"
+          ],
+          "query": ""
+        },
+        {
+          "loading": false,
+          "error": false,
+          "span": 10,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "table",
+          "query": "",
+          "interval": "1y",
+          "show": [
+            "bars",
+            "y-axis",
+            "x-axis",
+            "legend"
+          ],
+          "fill": 3,
+          "timezone": "browser",
+          "spyable": true,
+          "zoomlinks": true,
+          "size": 100,
+          "pages": 5,
+          "offset": 0,
+          "sort": [
+            "@timestamp",
+            "desc"
+          ],
+          "style": {
+            "font-size": "9pt"
+          },
+          "fields": [
+            "@timestamp",
+            "@message"
+          ],
+          "sortable": true,
+          "index": [
+            "logstash-2013.04.03"
+          ]
+        }
+      ]
     }
   ],
   "editable": true
