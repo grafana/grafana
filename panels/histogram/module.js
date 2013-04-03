@@ -75,7 +75,7 @@ angular.module('kibana.histogram', [])
           .field($scope.time.field)
           .interval($scope.panel.interval)
           .facetFilter($scope.ejs.QueryFilter(v))
-        ).size(0)
+        ).query(v).size(0)
     })
 
     $scope.populate_modal(request);
