@@ -112,7 +112,7 @@ angular.module('kibana.histogram', [])
 
           var series = { 
             data: {
-              label: $scope.panel.query[k].label || k, 
+              label: $scope.panel.query[k].label || (parseInt(k)+1), 
               data: data,
             },
 
@@ -167,11 +167,7 @@ angular.module('kibana.histogram', [])
 
       var height = scope.panel.height || scope.row.height;
 
-      elem.html(
-        '<div class="legend_container"></div>'+
-        '<div class="chart" style="height:'+height+'">'+
-         '<center><img src="common/img/load_big.gif"></center>'+
-        '</div>')
+      elem.html('<center><img src="common/img/load_big.gif"></center>')
 
       // Receive render events
       scope.$on('render',function(){
@@ -211,7 +207,7 @@ angular.module('kibana.histogram', [])
         scripts.wait(function(){
           // Populate element
           try { 
-            var plot = $.plot($('.chart',elem), scope.data, {
+            var plot = $.plot(elem, scope.data, {
               legend: { 
                 show: false,
               },
@@ -248,6 +244,7 @@ angular.module('kibana.histogram', [])
             _.each(plot.getData(),function(series) {
               scope.legend.push(_.pick(series,'label','color'))
             })
+            scope.$apply()
           } catch(e) {
             elem.text(e)
           }
