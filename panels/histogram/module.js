@@ -71,11 +71,13 @@ angular.module('kibana.histogram', [])
     // Build the facet part
     _.each(queries, function(v) {
       request = request
-        .facet($scope.ejs.DateHistogramFacet(_.indexOf(queries,v))
+        .facet($scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
           .field($scope.time.field)
           .interval($scope.panel.interval)
           .facetFilter($scope.ejs.QueryFilter(v))
-        ).query(v).size(0)
+        )
+        .facet($scope.ejs.QueryFacet("query"+_.indexOf(queries,v)).query(v)
+        ).size(0)
     })
 
     $scope.populate_modal(request);
@@ -93,16 +95,24 @@ angular.module('kibana.histogram', [])
       }
       
       if($scope.query_id === query_id) {
-        $scope.hits += results.hits.total;
 
+        var i = 0;
         _.each(results.facets, function(v, k) {
-          // Null values at each end of the time range ensure we see entire range
-          if(_.isUndefined($scope.data[k]) || _segment == 0) {
-            var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
-          } else {
-            var data = $scope.data[k].data
+          // If this isn't a date histogram it must be a QueryFacet, get the
+          // count and return
+          if(v._type !== 'date_histogram') {
+            $scope.hits += v.count;
+            return
           }
 
+          // Null values at each end of the time range ensure we see entire range
+          if(_.isUndefined($scope.data[i]) || _segment == 0) {
+            var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
+          } else {
+            var data = $scope.data[i].data
+          }
+
+          // Assemble segments
           var segment_data = [];
           _.each(v.entries, function(v, k) {
             segment_data.push([v['time'],v['count']])
@@ -110,18 +120,20 @@ angular.module('kibana.histogram', [])
 
           data.splice.apply(data,[1,0].concat(segment_data))
 
+          // Create the flot series
           var series = { 
             data: {
-              label: $scope.panel.query[k].label || (parseInt(k)+1), 
+              label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
               data: data,
             },
-
           };
 
-          if (!(_.isUndefined($scope.panel.query[k].color)))
-            series.data.color = $scope.panel.query[k].color;
+          if (!(_.isUndefined($scope.panel.query[i].color)))
+            series.data.color = $scope.panel.query[i].color;
           
-          $scope.data[k] = series.data
+          $scope.data[i] = series.data
+
+          i++;
         });
 
         eventBus.broadcast($scope.$id,$scope.panel.group,'hits',$scope.hits)
@@ -205,6 +217,7 @@ angular.module('kibana.histogram', [])
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
+
           // Populate element
           try { 
             var plot = $.plot(elem, scope.data, {
@@ -244,7 +257,11 @@ angular.module('kibana.histogram', [])
             _.each(plot.getData(),function(series) {
               scope.legend.push(_.pick(series,'label','color'))
             })
-            scope.$apply()
+            
+            // Work around for missing legend at initialization
+            if(!scope.$$phase)
+              scope.$apply()
+
           } catch(e) {
             elem.text(e)
           }

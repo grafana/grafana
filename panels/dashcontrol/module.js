@@ -13,13 +13,13 @@ angular.module('kibana.dashcontrol', [])
     load : {
       gist: true,
       elasticsearch: true,
-      local: true,
+      local: true
     },
     hide_control: false,
     elasticsearch_size: 20,
     elasticsearch_saveto: $scope.config.kibana_index,
     temp: true,
-    temp_ttl: '30d',
+    temp_ttl: '30d'
   }
   _.defaults($scope.panel,_d);
 
@@ -27,7 +27,7 @@ angular.module('kibana.dashcontrol', [])
   var _dash = {
     title: "",
     editable: true,
-    rows: [],
+    rows: []
   }
 
   $scope.init = function() {
@@ -69,7 +69,7 @@ angular.module('kibana.dashcontrol', [])
     $scope.elasticsearch = {};
   }
 
-  $scope.export = function() {
+  $scope.to_file = function() {
     var blob = new Blob([angular.toJson($scope.dashboards,true)], {type: "application/json;charset=utf-8"});
     saveAs(blob, $scope.dashboards.title+"-"+new Date().getTime());
   }
@@ -93,7 +93,7 @@ angular.module('kibana.dashcontrol', [])
       type      : type,
       id        : id,
       link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id,
-      title     : title,
+      title     : title
     };
   }
 
