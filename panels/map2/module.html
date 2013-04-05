@@ -1,0 +1,30 @@
+<kibana-panel ng-controller='map2' ng-init="init()">
+    <style>
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .land {
+            fill: #D1D1D1;
+        }
+
+        .boundary {
+            fill: none;
+            stroke: #fff;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+
+        .hexagon {
+            fill: none;
+            stroke: #000;
+            stroke-width: .5px;
+        }
+
+    </style>
+  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+    <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+  <div map2 params="{{panel}}" style="height:{{panel.height || row.height}}"></div>
+</kibana-panel>
