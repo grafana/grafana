@@ -14,7 +14,9 @@ angular.module('kibana.map2', [])
             display: {
                 geopoints: {
                     enabled: true,
-                    enabledText: "Enabled"
+                    enabledText: "Enabled",
+                    pointSize: 1,
+                    pointAlpha: 0.6
                 },
                 binning: {
 
@@ -221,6 +223,8 @@ angular.module('kibana.map2', [])
                                 return projection([decoded.longitude, decoded.latitude]);
                             });
 
+
+
                             var color = d3.scale.linear()
                                 .domain([0, 20])
                                 .range(["white", "steelblue"])
@@ -245,27 +249,22 @@ angular.module('kibana.map2', [])
                                 })
                                 .attr("opacity", 1);
 
-                            /*
+                            /* raw geopoints */
 
-                             raw, ugly points
-                             */
+                            if (scope.panel.display.geopoints.enabled) {
 
-                            var points = _.map(scope.data, function (k, v) {
-                                var decoded = geohash.decode(v);
-                                return {
-                                    lat: decoded.latitude,
-                                    lon: decoded.longitude
-                                };
-                            });
 
-                            g.selectAll("circles.points")
-                                .data(points)
-                                .enter()
-                                .append("circle")
-                                .attr("r", 1)
-                                .attr("transform", function (d) {
-                                    return "translate(" + projection([d.lon, d.lat]) + ")";
-                                });
+                                g.selectAll("circles.points")
+                                    .data(points)
+                                    .enter()
+                                    .append("circle")
+                                    .attr("r", scope.panel.display.geopoints.pointSize)
+                                    .attr("opacity", scope.panel.display.geopoints.pointAlpha)
+                                    .attr("transform", function (d) {
+                                        return "translate(" + d[0] + "," + d[1] + ")";
+                                    });
+                            }
+
 
                         });
 
