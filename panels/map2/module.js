@@ -6,12 +6,15 @@ angular.module('kibana.map2', [])
             query: "*",
             map: "world",
             colors: ['#C8EEFF', '#0071A4'],
-            size: 1000,
+            size: 100,
             exclude: [],
             spyable: true,
             group: "default",
             index_limit: 0,
             display: {
+                data: {
+                  samples: 1000
+                },
                 geopoints: {
                     enabled: true,
                     enabledText: "Enabled",
@@ -19,10 +22,13 @@ angular.module('kibana.map2', [])
                     pointAlpha: 0.6
                 },
                 binning: {
+                    enabled: true,
+                    hexagonSize: 10,
+                    hexagonAlpha: 1.0
 
                 }
             },
-            displayTabs: ["Geopoints", "Binning"],
+            displayTabs: ["Geopoints", "Binning", "Data"],
             activeDisplayTab:"Geopoints"
         };
 
@@ -59,7 +65,7 @@ angular.module('kibana.map2', [])
 
             var facet = $scope.ejs.TermsFacet('map')
                 .field($scope.panel.field)
-                .size(1000)
+                .size($scope.panel.display.data.samples)
                 .exclude($scope.panel.exclude)
                 .facetFilter(ejs.QueryFilter(
                     ejs.FilteredQuery(
@@ -218,42 +224,45 @@ angular.module('kibana.map2', [])
                                 .attr("class", "boundary")
                                 .attr("d", path);
 
+
+                            //Geocoded points are decoded into lat/lon, then projected onto x/y
                             var points = _.map(scope.data, function (k, v) {
                                 var decoded = geohash.decode(v);
                                 return projection([decoded.longitude, decoded.latitude]);
                             });
 
 
+                            //hexagonal binning
+                            if (scope.panel.display.binning.enabled) {
 
-                            var color = d3.scale.linear()
-                                .domain([0, 20])
-                                .range(["white", "steelblue"])
-                                .interpolate(d3.interpolateLab);
+                                var color = d3.scale.linear()
+                                    .domain([0, 20])
+                                    .range(["white", "steelblue"])
+                                    .interpolate(d3.interpolateLab);
 
-                            var hexbin = d3.hexbin()
-                                .size([width, height])
-                                .radius(10);
+                                var hexbin = d3.hexbin()
+                                    .size([width, height])
+                                    .radius(scope.panel.display.binning.hexagonSize);
 
-                            g.selectAll(".hexagon")
-                                .data(hexbin(points))
-                                .enter().append("path")
-                                .attr("d", function (d) {
-                                    return hexbin.hexagon();
-                                })
-                                .attr("class", "hexagon")
-                                .attr("transform", function (d) {
-                                    return "translate(" + d.x + "," + d.y + ")";
-                                })
-                                .style("fill", function (d) {
-                                    return color(d.length);
-                                })
-                                .attr("opacity", 1);
+                                g.selectAll(".hexagon")
+                                    .data(hexbin(points))
+                                    .enter().append("path")
+                                    .attr("d", function (d) {
+                                        return hexbin.hexagon();
+                                    })
+                                    .attr("class", "hexagon")
+                                    .attr("transform", function (d) {
+                                        return "translate(" + d.x + "," + d.y + ")";
+                                    })
+                                    .style("fill", function (d) {
+                                        return color(d.length);
+                                    })
+                                    .attr("opacity", scope.panel.display.binning.hexagonAlpha);
+                            }
 
-                            /* raw geopoints */
 
+                            //Raw geopoints
                             if (scope.panel.display.geopoints.enabled) {
-
-
                                 g.selectAll("circles.points")
                                     .data(points)
                                     .enter()

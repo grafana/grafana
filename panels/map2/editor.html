@@ -54,54 +54,112 @@
     </div>
 </div>
 
-<div class="row-fluid">
-    <div class="span8 offset1 tabDetails">
-        <div ng-show="isActive('geopoints')">
-            <table>
-                <tbody  >
-                <tr>
-                    <td>Geopoints</td>
-                    <td>
-                        <button type="button" class="btn" bs-button
+<div class="row-fluid tabDetails" ng-show="isActive('geopoints')">
+    <div class="span8 offset1">
+        <table>
+            <tbody  >
+            <tr>
+                <td>Geopoints</td>
+                <td>
+                    <button type="button" class="btn" bs-button
+                        ng-change="$emit('render')"
+                        ng-class="{'btn-success': panel.display.geopoints.enabled}"
+                        ng-model="panel.display.geopoints.enabled">{{panel.display.geopoints.enabled|enabledText}}</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Point size</td>
+                <td>
+                    <input type="text" style="width:100px"
+                        ng-change="$emit('render')"
+                        data-placement="right"
+                        bs-tooltip="'Controls the size of the geopoints on the map'"
+                        ng-model="panel.display.geopoints.pointSize"
+                        value="{{panel.display.geopoints.pointSize}}" />
+                </td>
+            </tr>
+            <tr>
+                <td>Point Transparency</td>
+                <td>
+                    <input type="text" style="width:100px"
+                           ng-change="$emit('render')"
+                           data-placement="right"
+                           bs-tooltip="'Controls the transparency of geopoints. Valid numbers are between 0.0 and 1.0'"
+                           ng-model="panel.display.geopoints.pointAlpha"
+                           value="{{panel.display.geopoints.pointAlpha}}" />
+                </td>
+            </tr>
+            <tr>
+                <td>Autosizing</td>
+                <td>
+                    <input type="checkbox"
+                           ng-change="$emit('render')"
+                           data-placement="right"
+                           bs-tooltip="'Allows point sizes to scale as you zoom in and out of the map.'" />
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row-fluid tabDetails" ng-show="isActive('binning')">
+    <div class="span8 offset1">
+        <table>
+            <tbody  >
+            <tr>
+                <td>Binning</td>
+                <td>
+                    <button type="button" class="btn" bs-button
                             ng-change="$emit('render')"
-                            ng-class="{'btn-success': panel.display.geopoints.enabled}"
-                            ng-model="panel.display.geopoints.enabled">{{panel.display.geopoints.enabled|enabledText}}</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Point size</td>
-                    <td>
-                        <input type="text" style="width:100px"
-                            ng-change="$emit('render')"
-                            data-placement="right"
-                            bs-tooltip="'Controls the size of the geopoints on the map'"
-                            ng-model="panel.display.geopoints.pointSize"
-                            value="{{panel.display.geopoints.pointSize}}" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>Point Transparency</td>
-                    <td>
-                        <input type="text" style="width:100px"
-                               ng-change="$emit('render')"
-                               data-placement="right"
-                               bs-tooltip="'Controls the transparency of geopoints. Valid numbers are between 0.0 and 1.0'"
-                               ng-model="panel.display.geopoints.pointAlpha"
-                               value="{{panel.display.geopoints.pointAlpha}}" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>Autosizing</td>
-                    <td>
-                        <input type="checkbox"
-                               ng-change="$emit('render')"
-                               data-placement="right"
-                               bs-tooltip="'Allows point sizes to scale as you zoom in and out of the map.'" />
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+                            ng-class="{'btn-success': panel.display.binning.enabled}"
+                            ng-model="panel.display.binning.enabled">{{panel.display.binning.enabled|enabledText}}</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Hexagon size</td>
+                <td>
+                    <input type="text" style="width:100px"
+                           ng-change="$emit('render')"
+                           data-placement="right"
+                           bs-tooltip="'Controls the size of the hexagonal binning'"
+                           ng-model="panel.display.binning.hexagonSize"
+                           value="{{panel.display.binning.hexagonSize}}" />
+                </td>
+            </tr>
+            <tr>
+                <td>Hexagon Transparency</td>
+                <td>
+                    <input type="text" style="width:100px"
+                           ng-change="$emit('render')"
+                           data-placement="right"
+                           bs-tooltip="'Controls the transparency of hexagonal bins. Valid numbers are between 0.0 and 1.0'"
+                           ng-model="panel.display.binning.hexagonAlpha"
+                           value="{{panel.display.binning.hexagonAlpha}}" />
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row-fluid tabDetails" ng-show="isActive('data')">
+    <div class="span8 offset1">
+        <table>
+            <tbody  >
+            <tr>
+                <td>Data Points</td>
+                <td>
+                    <input type="text" style="width:100px"
+                           ng-change="get_data()"
+                           data-placement="right"
+                           bs-tooltip="'Controls the number of samples used in the map. Be careful with this value!'"
+                           ng-model="panel.display.data.samples"
+                           value="{{panel.display.data.samples}}" />
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
