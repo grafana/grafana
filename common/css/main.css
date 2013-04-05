@@ -96,3 +96,8 @@
 }
 
 .typeahead { z-index: 1051; }
+
+.navbar-inner {
+  padding-left: 0px;
+  padding-right: 0px;
+}
