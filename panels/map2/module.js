@@ -12,18 +12,20 @@ angular.module('kibana.map2', [])
             group: "default",
             index_limit: 0,
             display: {
+                translate:[0, 0],
+                scale:-1,
                 data: {
                   samples: 1000
                 },
                 geopoints: {
                     enabled: true,
                     enabledText: "Enabled",
-                    pointSize: 1,
+                    pointSize: 0.3,
                     pointAlpha: 0.6
                 },
                 binning: {
                     enabled: true,
-                    hexagonSize: 10,
+                    hexagonSize: 2,
                     hexagonAlpha: 1.0,
                     areaEncoding: true,
                     areaEncodingField: "primary",
@@ -218,11 +220,11 @@ angular.module('kibana.map2', [])
 
                         console.log("draw map", width, height);
 
-                        //Scale the map by whichever dimension is the smallest, helps to make sure the whole map is shown
+
                         var scale = (width > height) ? (height / 2 / Math.PI) : (width / 2 / Math.PI);
 
                         var projection = d3.geo.mercator()
-                            .translate([0, 0])
+                            .translate([0,0])
                             .scale(scale);
 
                         var zoom = d3.behavior.zoom()
@@ -272,32 +274,30 @@ angular.module('kibana.map2', [])
                             });
 
 
-                            var binPoints = [];
-
-                            //primary field is just binning raw counts
-                            //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
-                            //so we cheat a little and just add more points to compensate.
-                            //However, we don't want to add a million points, so normalize against the largest value
-                            if (scope.panel.display.binning.areaEncodingField === 'secondary') {
-                                var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
-                                    scale = 10/max;
-
-                                _.map(scope.data, function (k, v) {
-                                    var decoded = geohash.decode(v);
-                                    return _.map(_.range(0, k*scale), function(a,b) {
-                                        binPoints.push(projection([decoded.longitude, decoded.latitude]));
-                                    })
-                                });
-
-                            } else {
-                                binPoints = points;
-                            }
-
-
-
-
                             //hexagonal binning
                             if (scope.panel.display.binning.enabled) {
+
+                                var binPoints = [];
+
+                                //primary field is just binning raw counts
+                                //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
+                                //so we cheat a little and just add more points to compensate.
+                                //However, we don't want to add a million points, so normalize against the largest value
+                                if (scope.panel.display.binning.areaEncodingField === 'secondary') {
+                                    var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
+                                        scale = 10/max;
+
+                                    _.map(scope.data, function (k, v) {
+                                        var decoded = geohash.decode(v);
+                                        return _.map(_.range(0, k*scale), function(a,b) {
+                                            binPoints.push(projection([decoded.longitude, decoded.latitude]));
+                                        })
+                                    });
+
+                                } else {
+                                    binPoints = points;
+                                }
+
 
                                 var hexbin = d3.hexbin()
                                     .size([width, height])
@@ -305,7 +305,7 @@ angular.module('kibana.map2', [])
 
                                 //bin and sort the points, so we can set the various ranges appropriately
                                 var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
-console.log(binnedPoints);
+console.log("binnedpoints",binnedPoints);
                                 //clean up some memory
                                 binPoints = [];
 
@@ -359,6 +359,14 @@ console.log(binnedPoints);
                             }
 
 
+                            console.log("initial", scope.panel.display.scale, scope.panel.display.translate);
+
+                            if (scope.panel.display.scale != -1) {
+                                zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
+                                g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
+                                //svg.redraw();
+                            }
+
                         });
 
                         function move() {
@@ -367,7 +375,12 @@ console.log(binnedPoints);
                             t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
                             t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
                             zoom.translate(t);
+
+                            scope.panel.display.translate = t;
+                            scope.panel.display.scale = s;
                             g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+
+                            console.log("move", scope.panel.display.scale, scope.panel.display.translate);
                         }
 
                     })
