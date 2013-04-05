@@ -138,6 +138,16 @@
                            value="{{panel.display.binning.hexagonAlpha}}" />
                 </td>
             </tr>
+            <tr>
+                <td>Encoding</td>
+                <td>
+                    <div class="btn-group" ng-model="panel.display.binning.encoding" bs-buttons-radio ng-change="$emit('render')">
+                        <button type="button" class="btn" value="areacolor" >Area + Color</button>
+                        <button type="button" class="btn" value="area">Area</button>
+                        <button type="button" class="btn" value="color">Color</button>
+                    </div>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

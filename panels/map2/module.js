@@ -24,8 +24,8 @@ angular.module('kibana.map2', [])
                 binning: {
                     enabled: true,
                     hexagonSize: 10,
-                    hexagonAlpha: 1.0
-
+                    hexagonAlpha: 1.0,
+                    encoding: "color"
                 }
             },
             displayTabs: ["Geopoints", "Binning", "Data"],
@@ -235,27 +235,44 @@ angular.module('kibana.map2', [])
                             //hexagonal binning
                             if (scope.panel.display.binning.enabled) {
 
-                                var color = d3.scale.linear()
-                                    .domain([0, 20])
-                                    .range(["white", "steelblue"])
-                                    .interpolate(d3.interpolateLab);
-
                                 var hexbin = d3.hexbin()
                                     .size([width, height])
                                     .radius(scope.panel.display.binning.hexagonSize);
 
+                                var binnedPoints = hexbin(points).sort(function(a, b) { return b.length - a.length; });
+                                console.log(binnedPoints);
+
+
+                                var radius = d3.scale.sqrt()
+                                    .domain([0, binnedPoints[0].length])
+                                    .range([0, scope.panel.display.binning.hexagonSize]);
+
+                                
+                                var color = d3.scale.linear()
+                                    .domain([0,binnedPoints[0].length])
+                                    .range(["white", "steelblue"])
+                                    .interpolate(d3.interpolateLab);
+
                                 g.selectAll(".hexagon")
-                                    .data(hexbin(points))
+                                    .data(binnedPoints)
                                     .enter().append("path")
                                     .attr("d", function (d) {
-                                        return hexbin.hexagon();
+                                        if (scope.panel.display.binning.encoding === 'color') {
+                                            return hexbin.hexagon();
+                                        } else {
+                                            return hexbin.hexagon(radius(d.length));
+                                        }
                                     })
                                     .attr("class", "hexagon")
                                     .attr("transform", function (d) {
                                         return "translate(" + d.x + "," + d.y + ")";
                                     })
                                     .style("fill", function (d) {
-                                        return color(d.length);
+                                        if (scope.panel.display.binning.encoding === 'area') {
+                                            return color(10);
+                                        } else {
+                                            return color(d.length);
+                                        }
                                     })
                                     .attr("opacity", scope.panel.display.binning.hexagonAlpha);
                             }
