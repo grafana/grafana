@@ -11,7 +11,7 @@
     <div class="span4">
       <form class="input-append">
         <h6>Add field</h6>
-        <input bs-typeahead="all_fields" type="text" class="input-small" ng-model='newfield'>
+        <input bs-typeahead="fields.list" type="text" class="input-small" ng-model='newfield'>
         <button class="btn" ng-click="toggle_field(newfield);newfield=''"><i class="icon-plus"></i></button>
       </form>
     </div>
