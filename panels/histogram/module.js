@@ -75,8 +75,6 @@ angular.module('kibana.histogram', [])
           .field($scope.time.field)
           .interval($scope.panel.interval)
           .facetFilter($scope.ejs.QueryFilter(v))
-        )
-        .facet($scope.ejs.QueryFacet("query"+_.indexOf(queries,v)).query(v)
         ).size(0)
     })
 
@@ -101,30 +99,36 @@ angular.module('kibana.histogram', [])
           // If this isn't a date histogram it must be a QueryFacet, get the
           // count and return
           if(v._type !== 'date_histogram') {
-            $scope.hits += v.count;
+            //$scope.hits += v.count;
             return
           }
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
             var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
+            var hits = 0;
           } else {
             var data = $scope.data[i].data
+            var hits = $scope.data[i].hits
           }
 
           // Assemble segments
           var segment_data = [];
           _.each(v.entries, function(v, k) {
             segment_data.push([v['time'],v['count']])
+            hits += v['count'];
+            $scope.hits += v['count'];
           });
 
           data.splice.apply(data,[1,0].concat(segment_data))
+
 
           // Create the flot series
           var series = { 
             data: {
               label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
               data: data,
+              hits: hits
             },
           };
 
@@ -255,7 +259,7 @@ angular.module('kibana.histogram', [])
 
             scope.legend = [];
             _.each(plot.getData(),function(series) {
-              scope.legend.push(_.pick(series,'label','color'))
+              scope.legend.push(_.pick(series,'label','color','hits'))
             })
             
             // Work around for missing legend at initialization
