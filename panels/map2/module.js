@@ -239,15 +239,14 @@ angular.module('kibana.map2', [])
                                     .size([width, height])
                                     .radius(scope.panel.display.binning.hexagonSize);
 
+                                //bin and sort the points, so we can set the various ranges appropriately
                                 var binnedPoints = hexbin(points).sort(function(a, b) { return b.length - a.length; });
-                                console.log(binnedPoints);
-
 
                                 var radius = d3.scale.sqrt()
                                     .domain([0, binnedPoints[0].length])
                                     .range([0, scope.panel.display.binning.hexagonSize]);
 
-                                
+
                                 var color = d3.scale.linear()
                                     .domain([0,binnedPoints[0].length])
                                     .range(["white", "steelblue"])

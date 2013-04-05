@@ -17,25 +17,35 @@
     </div>
 </div>
 
+
 <div class="row-fluid">
-    <div class="span3">
-        <form>
-            <h6>Field</h6>
-            <input type="text" class="input-small" ng-model="panel.field">
+    <div class="span10">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label" for="panelfield">Primary Field</label>
+                <div class="controls">
+                    <input type="text" id="panelfield" class="input" ng-model="panel.field">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="panelsecondaryfield">Secondary Field</label>
+                <div class="controls">
+                    <input type="text" id="panelsecondaryfield" class="input"
+                           ng-model="panel.secondaryfield"
+                           data-placement="right"
+                           placeholder="Optional"
+                           bs-tooltip="'Allows aggregating on Primary field, while counting stats on a secondary (e.g. Group By user_id, Sum(purchase_price)).'" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="panelquery">Query</label>
+                <div class="controls">
+                    <input type="text" id="panelquery" class="input" ng-model="panel.query">
+                </div>
+            </div>
         </form>
-    </div>
-
-    <div class="span6">
-        <form class="input-append">
-            <h6>Query</h6><input type="text" ng-model="panel.query">
-        </form>
-    </div>
-
-    <div class="span1">
-        <h6>Map</h6>
     </div>
 </div>
-
 <div class="row-fluid">
     <div class="span11">
         <h4>Display Options</h4>
