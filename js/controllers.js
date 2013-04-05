@@ -74,6 +74,11 @@ angular.module('kibana.controllers', [])
       return 'panels/'+type+'/editor.html';
   }
 
+  // This is whoafully incomplete, but will do for now 
+  $scope.parse_error = function(data) {
+    return data.match("nested: (.*?);")[1]
+  }
+
   $scope.init();
 
 })

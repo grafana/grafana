@@ -1,4 +1,4 @@
-/*! elastic.js - v1.0.0 - 2013-01-15
+/*! elastic.js - v1.0.0 - 2013-04-04
 * https://github.com/fullscale/elastic.js
 * Copyright (c) 2013 FullScale Labs, LLC; Licensed MIT */
 
@@ -47,6 +47,8 @@
     isShape, // checks valid ejs Shape object
     isSort, // checks valid ejs Sort object
     isHighlight, // checks valid ejs Highlight object
+    isSuggest, // checks valid ejs Suggest object
+    isGenerator, // checks valid ejs Generator object
     
     // create ejs object
     ejs;
@@ -179,6 +181,14 @@
     return (isEJSObject(obj) && obj._type() === 'highlight');
   };
   
+  isSuggest = function (obj) {
+    return (isEJSObject(obj) && obj._type() === 'suggest');
+  };
+  
+  isGenerator = function (obj) {
+    return (isEJSObject(obj) && obj._type() === 'generator');
+  };
+  
   /**
     @class
     <p>The DateHistogram facet works with time-based values by building a histogram across time
@@ -290,13 +300,14 @@
       },
 
       /**
-            By default, time values are stored in UTC format. This method allows users
-            to set a time zone value that is then used to compute intervals 
-            before rounding on the interval value.  Equalivent to 
-            <coe>preZone</code>.  Use <code>preZone</code> if possible.  The 
-            value is an offset from UTC.
+            <p>By default, time values are stored in UTC format.<p> 
+
+            <p>This method allows users to set a time zone value that is then used 
+            to compute intervals before rounding on the interval value. Equalivent to 
+            <coe>preZone</code>.  Use <code>preZone</code> if possible. The 
+            value is an offset from UTC.<p>
             
-            For example, to use EST you would set the value to <code>-5</code>.
+            <p>For example, to use EST you would set the value to <code>-5</code>.</p>
 
             @member ejs.DateHistogramFacet
             @param {Integer} tz An offset value from UTC.
@@ -312,12 +323,13 @@
       },
 
       /**
-            By default, time values are stored in UTC format. This method allows users
-            to set a time zone value that is then used to compute intervals 
-            before rounding on the interval value.  The value is an offset
-            from UTC.
+            <p>By default, time values are stored in UTC format.<p> 
+
+            <p>This method allows users to set a time zone value that is then used to 
+            compute intervals before rounding on the interval value.  The value is an 
+            offset from UTC.<p>
             
-            For example, to use EST you would set the value to <code>-5</code>.
+            <p>For example, to use EST you would set the value to <code>-5</code>.</p>
 
             @member ejs.DateHistogramFacet
             @param {Integer} tz An offset value from UTC.
@@ -333,9 +345,10 @@
       },
       
       /**
-            Enables large date interval conversions (day and up).  Set to 
-            true to enable and then set the <code>interval</code> to an 
-            interval greater than a day.
+            <p>Enables large date interval conversions (day and up).</p>  
+
+            <p>Set to true to enable and then set the <code>interval</code> to an 
+            interval greater than a day.</p>
             
             @member ejs.DateHistogramFacet
             @param {Boolean} trueFalse A valid boolean value.
@@ -351,13 +364,13 @@
       },
       
       /**
-            By default, time values are stored in UTC format. This method allows users
-            to set a time zone value that is then used to compute intervals 
-            after rounding on the interval value.  The value is an offset
-            from UTC.  The tz offset value is simply added to the resulting 
-            bucket's date value.
+            <p>By default, time values are stored in UTC format.<p> 
+
+            <p>This method allows users to set a time zone value that is then used to compute 
+            intervals after rounding on the interval value.  The value is an offset from UTC.  
+            The tz offset value is simply added to the resulting bucket's date value.<p>
             
-            For example, to use EST you would set the value to <code>-5</code>.
+            <p>For example, to use EST you would set the value to <code>-5</code>.</p>
 
             @member ejs.DateHistogramFacet
             @param {Integer} tz An offset value from UTC.
@@ -405,14 +418,16 @@
       },
       
       /**
-            The date histogram works on numeric values (since time is stored 
-            in milliseconds since the epoch in UTC). But, sometimes, systems 
-            will store a different resolution (like seconds since UTC) in a 
-            numeric field. The factor parameter can be used to change the 
-            value in the field to milliseconds to actual do the relevant 
-            rounding, and then be applied again to get to the original unit. 
-            For example, when storing in a numeric field seconds resolution, 
-            the factor can be set to 1000.
+            <p>The date histogram works on numeric values (since time is stored 
+            in milliseconds since the epoch in UTC).<p> 
+
+            <p>But, sometimes, systems will store a different resolution (like seconds since UTC) 
+            in a numeric field. The factor parameter can be used to change the value in the field 
+            to milliseconds to actual do the relevant rounding, and then be applied again to get to 
+            the original unit.</p>
+
+            <p>For example, when storing in a numeric field seconds resolution, 
+            the factor can be set to 1000.<p>
 
             @member ejs.DateHistogramFacet
             @param {Integer} f The conversion factor.
@@ -445,12 +460,14 @@
       },
 
       /**
-            Sets the type of ordering that will be performed on the date
-            buckets.  Valid values are:
+            <p>Sets the type of ordering that will be performed on the date
+            buckets.  Valid values are:<p>
             
-            time - the default, sort by the buckets start time in milliseconds.
-            count - sort by the number of items in the bucket
-            total - sort by the sum/total of the items in the bucket
+            <dl>
+                <dd><code>time</code> - the default, sort by the buckets start time in milliseconds.</dd>
+                <dd><code>count</code> - sort by the number of items in the bucket</dd>
+                <dd><code>total</code> - sort by the sum/total of the items in the bucket</dd>
+            <dl>
             
             @member ejs.DateHistogramFacet
             @param {String} o The ordering method: time, count, or total.
@@ -539,20 +556,41 @@
         facet[name].global = trueFalse;
         return this;
       },
+
+      /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.DateHistogramFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
       
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+            
       /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.DateHistogramFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -720,18 +758,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.FilterFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.FilterFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -1121,18 +1180,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.GeoDistanceFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.GeoDistanceFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -1498,18 +1578,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.HistogramFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.HistogramFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -1677,18 +1778,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.QueryFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.QueryFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -2017,18 +2139,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.RangeFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.RangeFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -2265,18 +2408,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.StatisticalFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.StatisticalFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -2338,6 +2502,361 @@
                internal API functions so use with caution.</p>
 
             @member ejs.StatisticalFacet
+            @returns {String} returns this object's internal <code>facet</code> property.
+            */
+      _self: function () {
+        return facet;
+      }
+    };
+  };
+
+  /**
+    @class
+    <p>A termsStatsFacet allows you to compute statistics over an aggregate key (term). Essentially this
+    facet provides the functionality of what is often refered to as a <em>pivot table</em>.</p>
+
+    <p>Facets are similar to SQL <code>GROUP BY</code> statements but perform much
+       better. You can also construct several <em>"groups"</em> at once by simply
+       specifying multiple facets.</p>
+
+    <div class="alert-message block-message info">
+        <p>
+            <strong>Tip: </strong>
+            For more information on faceted navigation, see
+            <a href="http://en.wikipedia.org/wiki/Faceted_classification">this</a>
+            Wikipedia article on Faceted Classification.
+        </p>
+    </div>
+
+    @name ejs.TermStatsFacet
+
+    @desc
+    <p>A facet which computes statistical data based on an aggregate key.</p>
+
+    @param {String} name The name which be used to refer to this facet. For instance,
+        the facet itself might utilize a field named <code>doc_authors</code>. Setting
+        <code>name</code> to <code>Authors</code> would allow you to refer to the
+        facet by that name, possibly simplifying some of the display logic.
+
+    */
+  ejs.TermStatsFacet = function (name) {
+
+    /**
+        The internal facet object.
+        @member ejs.TermStatsFacet
+        @property {Object} facet
+        */
+    var facet = {};
+
+    facet[name] = {
+      terms_stats: {}
+    };
+
+    return {
+
+      /**
+            Sets the field for which statistical information will be generated.
+
+            @member ejs.TermStatsFacet
+            @param {String} fieldName The field name whose data will be used to construct the facet.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      valueField: function (fieldName) {
+        if (fieldName == null) {
+          return facet[name].terms_stats.value_field;
+        }
+      
+        facet[name].terms_stats.value_field = fieldName;
+        return this;
+      },
+
+      /**
+            Sets the field which will be used to pivot on (group-by).
+
+            @member ejs.TermStatsFacet
+            @param {String} fieldName The field name whose data will be used to construct the facet.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      keyField: function (fieldName) {
+        if (fieldName == null) {
+          return facet[name].terms_stats.key_field;
+        }
+      
+        facet[name].terms_stats.key_field = fieldName;
+        return this;
+      },
+
+      /**
+            Sets a script that will provide the terms for a given document.
+
+            @member ejs.TermStatsFacet
+            @param {String} script The script code.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      scriptField: function (script) {
+        if (script == null) {
+          return facet[name].terms_stats.script_field;
+        }
+      
+        facet[name].terms_stats.script_field = script;
+        return this;
+      },
+      
+      /**
+            Define a script to evaluate of which the result will be used to generate
+            the statistical information.
+
+            @member ejs.TermStatsFacet
+            @param {String} code The script code to execute.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      valueScript: function (code) {
+        if (code == null) {
+          return facet[name].terms_stats.value_script;
+        }
+      
+        facet[name].terms_stats.value_script = code;
+        return this;
+      },
+
+      /**
+            <p>Allows you to return all terms, even if the frequency count is 0. This should not be
+               used on fields that contain a large number of unique terms because it could cause
+               <em>out-of-memory</em> errors.</p>
+
+            @member ejs.TermStatsFacet
+            @param {String} trueFalse <code>true</code> or <code>false</code>
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      allTerms: function (trueFalse) {
+        if (trueFalse == null) {
+          return facet[name].terms_stats.all_terms;
+        }
+      
+        facet[name].terms_stats.all_terms = trueFalse;
+        return this;
+      },
+      
+      /**
+            The script language being used. Currently supported values are
+            <code>javascript</code>, <code>groovy</code>, and <code>mvel</code>.
+
+            @member ejs.TermStatsFacet
+            @param {String} language The language of the script.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      lang: function (language) {
+        if (language == null) {
+          return facet[name].terms_stats.lang;
+        }
+      
+        facet[name].terms_stats.lang = language;
+        return this;
+      },
+
+      /**
+            Allows you to set script parameters to be used during the execution of the script.
+
+            @member ejs.TermStatsFacet
+            @param {Object} oParams An object containing key/value pairs representing param name/value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      params: function (oParams) {
+        if (oParams == null) {
+          return facet[name].terms_stats.params;
+        }
+      
+        facet[name].terms_stats.params = oParams;
+        return this;
+      },
+
+      /**
+            Sets the number of facet entries that will be returned for this facet. For instance, you
+            might ask for only the top 5 aggregate keys although there might be hundreds of
+            unique keys. <strong>Higher settings could cause memory strain</strong>.
+
+            @member ejs.TermStatsFacet
+            @param {Integer} facetSize The numer of facet entries to be returned.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      size: function (facetSize) {
+        if (facetSize == null) {
+          return facet[name].terms_stats.size;
+        }
+      
+        facet[name].terms_stats.size = facetSize;
+        return this;
+      },
+
+      /**
+            Sets the type of ordering that will be performed on the date
+            buckets.  Valid values are:
+            
+            count - default, sort by the number of items in the bucket
+            term - sort by term value.
+            reverse_count - reverse sort of the number of items in the bucket
+            reverse_term - reverse sort of the term value.
+            total - sorts by the total value of the bucket contents
+            reverse_total - reverse sort of the total value of bucket contents
+            min - the minimum value in the bucket
+            reverse_min - the reverse sort of the minimum value
+            max - the maximum value in the bucket
+            reverse_max - the reverse sort of the maximum value
+            mean - the mean value of the bucket contents
+            reverse_mean - the reverse sort of the mean value of bucket contents.
+            
+            @member ejs.TermStatsFacet
+            @param {String} o The ordering method
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      order: function (o) {
+        if (o == null) {
+          return facet[name].terms_stats.order;
+        }
+      
+        o = o.toLowerCase();
+        if (o === 'count' || o === 'term' || o === 'reverse_count' || 
+          o === 'reverse_term' || o === 'total' || o === 'reverse_total' || 
+          o === 'min' || o === 'reverse_min' || o === 'max' || 
+          o === 'reverse_max' || o === 'mean' || o === 'reverse_mean') {
+          
+          facet[name].terms_stats.order = o;
+        }
+        
+        return this;
+      },
+
+      /**
+            <p>Allows you to reduce the documents used for computing facet results.</p>
+
+            @member ejs.TermStatsFacet
+            @param {Object} oFilter A valid <code>Filter</code> object.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      facetFilter: function (oFilter) {
+        if (oFilter == null) {
+          return facet[name].facet_filter;
+        }
+      
+        if (!isFilter(oFilter)) {
+          throw new TypeError('Argument must be a Filter');
+        }
+        
+        facet[name].facet_filter = oFilter._self();
+        return this;
+      },
+
+      /**
+            <p>Computes values across the entire index</p>
+
+            @member ejs.TermStatsFacet
+            @param {Boolean} trueFalse Calculate facet counts globally or not.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      global: function (trueFalse) {
+        if (trueFalse == null) {
+          return facet[name].global;
+        }
+        
+        facet[name].global = trueFalse;
+        return this;
+      },
+      
+      /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.TermStatsFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
+            <p>Computes values across the the specified scope</p>
+
+            @deprecated since elasticsearch 0.90
+            @member ejs.TermStatsFacet
+            @param {String} scope The scope name to calculate facet counts with.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      scope: function (scope) {
+        return this;
+      },
+      
+      /**
+            <p>Enables caching of the <code>facetFilter</code></p>
+
+            @member ejs.TermStatsFacet
+            @param {Boolean} trueFalse If the facetFilter should be cached or not
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      cacheFilter: function (trueFalse) {
+        if (trueFalse == null) {
+          return facet[name].cache_filter;
+        }
+        
+        facet[name].cache_filter = trueFalse;
+        return this;
+      },
+      
+      /**
+            <p>Sets the path to the nested document if faceting against a
+            nested field.</p>
+
+            @member ejs.TermStatsFacet
+            @param {String} path The nested path
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      nested: function (path) {
+        if (path == null) {
+          return facet[name].nested;
+        }
+        
+        facet[name].nested = path;
+        return this;
+      },
+      
+      /**
+            <p>Allows you to serialize this object into a JSON encoded string.</p>
+
+            @member ejs.TermStatsFacet
+            @returns {String} returns this object as a serialized JSON string.
+            */
+      toString: function () {
+        return JSON.stringify(facet);
+      },
+
+      /**
+            The type of ejs object.  For internal use only.
+            
+            @member ejs.TermStatsFacet
+            @returns {String} the type of object
+            */
+      _type: function () {
+        return 'facet';
+      },
+      
+      /**
+            <p>Retrieves the internal <code>facet</code> object. This is typically used by
+               internal API functions so use with caution.</p>
+
+            @member ejs.TermStatsFacet
             @returns {String} returns this object's internal <code>facet</code> property.
             */
       _self: function () {
@@ -2674,18 +3193,39 @@
       },
       
       /**
+            <p>Sets the mode the facet will use.<p>
+            
+            <dl>
+                <dd><code>collector</code></dd>
+                <dd><code>post</code></dd>
+            <dl>
+            
+            @member ejs.TermsFacet
+            @param {String} m The mode: collector or post.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return facet[name].mode;
+        }
+      
+        m = m.toLowerCase();
+        if (m === 'collector' || m === 'post') {
+          facet[name].mode = m;
+        }
+        
+        return this;
+      },
+      
+      /**
             <p>Computes values across the the specified scope</p>
 
+            @deprecated since elasticsearch 0.90
             @member ejs.TermsFacet
             @param {String} scope The scope name to calculate facet counts with.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
         return this;
       },
       
@@ -2747,340 +3287,6 @@
                internal API functions so use with caution.</p>
 
             @member ejs.TermsFacet
-            @returns {String} returns this object's internal <code>facet</code> property.
-            */
-      _self: function () {
-        return facet;
-      }
-    };
-  };
-
-  /**
-    @class
-    <p>A termsStatsFacet allows you to compute statistics over an aggregate key (term). Essentially this
-    facet provides the functionality of what is often refered to as a <em>pivot table</em>.</p>
-
-    <p>Facets are similar to SQL <code>GROUP BY</code> statements but perform much
-       better. You can also construct several <em>"groups"</em> at once by simply
-       specifying multiple facets.</p>
-
-    <div class="alert-message block-message info">
-        <p>
-            <strong>Tip: </strong>
-            For more information on faceted navigation, see
-            <a href="http://en.wikipedia.org/wiki/Faceted_classification">this</a>
-            Wikipedia article on Faceted Classification.
-        </p>
-    </div>
-
-    @name ejs.TermStatsFacet
-
-    @desc
-    <p>A facet which computes statistical data based on an aggregate key.</p>
-
-    @param {String} name The name which be used to refer to this facet. For instance,
-        the facet itself might utilize a field named <code>doc_authors</code>. Setting
-        <code>name</code> to <code>Authors</code> would allow you to refer to the
-        facet by that name, possibly simplifying some of the display logic.
-
-    */
-  ejs.TermStatsFacet = function (name) {
-
-    /**
-        The internal facet object.
-        @member ejs.TermStatsFacet
-        @property {Object} facet
-        */
-    var facet = {};
-
-    facet[name] = {
-      terms_stats: {}
-    };
-
-    return {
-
-      /**
-            Sets the field for which statistical information will be generated.
-
-            @member ejs.TermStatsFacet
-            @param {String} fieldName The field name whose data will be used to construct the facet.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      valueField: function (fieldName) {
-        if (fieldName == null) {
-          return facet[name].terms_stats.value_field;
-        }
-      
-        facet[name].terms_stats.value_field = fieldName;
-        return this;
-      },
-
-      /**
-            Sets the field which will be used to pivot on (group-by).
-
-            @member ejs.TermStatsFacet
-            @param {String} fieldName The field name whose data will be used to construct the facet.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      keyField: function (fieldName) {
-        if (fieldName == null) {
-          return facet[name].terms_stats.key_field;
-        }
-      
-        facet[name].terms_stats.key_field = fieldName;
-        return this;
-      },
-
-      /**
-            Sets a script that will provide the terms for a given document.
-
-            @member ejs.TermStatsFacet
-            @param {String} script The script code.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      scriptField: function (script) {
-        if (script == null) {
-          return facet[name].terms_stats.script_field;
-        }
-      
-        facet[name].terms_stats.script_field = script;
-        return this;
-      },
-      
-      /**
-            Define a script to evaluate of which the result will be used to generate
-            the statistical information.
-
-            @member ejs.TermStatsFacet
-            @param {String} code The script code to execute.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      valueScript: function (code) {
-        if (code == null) {
-          return facet[name].terms_stats.value_script;
-        }
-      
-        facet[name].terms_stats.value_script = code;
-        return this;
-      },
-
-      /**
-            <p>Allows you to return all terms, even if the frequency count is 0. This should not be
-               used on fields that contain a large number of unique terms because it could cause
-               <em>out-of-memory</em> errors.</p>
-
-            @member ejs.TermStatsFacet
-            @param {String} trueFalse <code>true</code> or <code>false</code>
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      allTerms: function (trueFalse) {
-        if (trueFalse == null) {
-          return facet[name].terms_stats.all_terms;
-        }
-      
-        facet[name].terms_stats.all_terms = trueFalse;
-        return this;
-      },
-      
-      /**
-            The script language being used. Currently supported values are
-            <code>javascript</code>, <code>groovy</code>, and <code>mvel</code>.
-
-            @member ejs.TermStatsFacet
-            @param {String} language The language of the script.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      lang: function (language) {
-        if (language == null) {
-          return facet[name].terms_stats.lang;
-        }
-      
-        facet[name].terms_stats.lang = language;
-        return this;
-      },
-
-      /**
-            Allows you to set script parameters to be used during the execution of the script.
-
-            @member ejs.TermStatsFacet
-            @param {Object} oParams An object containing key/value pairs representing param name/value.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      params: function (oParams) {
-        if (oParams == null) {
-          return facet[name].terms_stats.params;
-        }
-      
-        facet[name].terms_stats.params = oParams;
-        return this;
-      },
-
-      /**
-            Sets the number of facet entries that will be returned for this facet. For instance, you
-            might ask for only the top 5 aggregate keys although there might be hundreds of
-            unique keys. <strong>Higher settings could cause memory strain</strong>.
-
-            @member ejs.TermStatsFacet
-            @param {Integer} facetSize The numer of facet entries to be returned.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      size: function (facetSize) {
-        if (facetSize == null) {
-          return facet[name].terms_stats.size;
-        }
-      
-        facet[name].terms_stats.size = facetSize;
-        return this;
-      },
-
-      /**
-            Sets the type of ordering that will be performed on the date
-            buckets.  Valid values are:
-            
-            count - default, sort by the number of items in the bucket
-            term - sort by term value.
-            reverse_count - reverse sort of the number of items in the bucket
-            reverse_term - reverse sort of the term value.
-            total - sorts by the total value of the bucket contents
-            reverse_total - reverse sort of the total value of bucket contents
-            min - the minimum value in the bucket
-            reverse_min - the reverse sort of the minimum value
-            max - the maximum value in the bucket
-            reverse_max - the reverse sort of the maximum value
-            mean - the mean value of the bucket contents
-            reverse_mean - the reverse sort of the mean value of bucket contents.
-            
-            @member ejs.TermStatsFacet
-            @param {String} o The ordering method
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      order: function (o) {
-        if (o == null) {
-          return facet[name].terms_stats.order;
-        }
-      
-        o = o.toLowerCase();
-        if (o === 'count' || o === 'term' || o === 'reverse_count' || 
-          o === 'reverse_term' || o === 'total' || o === 'reverse_total' || 
-          o === 'min' || o === 'reverse_min' || o === 'max' || 
-          o === 'reverse_max' || o === 'mean' || o === 'reverse_mean') {
-          
-          facet[name].terms_stats.order = o;
-        }
-        
-        return this;
-      },
-
-      /**
-            <p>Allows you to reduce the documents used for computing facet results.</p>
-
-            @member ejs.TermStatsFacet
-            @param {Object} oFilter A valid <code>Filter</code> object.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      facetFilter: function (oFilter) {
-        if (oFilter == null) {
-          return facet[name].facet_filter;
-        }
-      
-        if (!isFilter(oFilter)) {
-          throw new TypeError('Argument must be a Filter');
-        }
-        
-        facet[name].facet_filter = oFilter._self();
-        return this;
-      },
-
-      /**
-            <p>Computes values across the entire index</p>
-
-            @member ejs.TermStatsFacet
-            @param {Boolean} trueFalse Calculate facet counts globally or not.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      global: function (trueFalse) {
-        if (trueFalse == null) {
-          return facet[name].global;
-        }
-        
-        facet[name].global = trueFalse;
-        return this;
-      },
-      
-      /**
-            <p>Computes values across the the specified scope</p>
-
-            @member ejs.TermStatsFacet
-            @param {String} scope The scope name to calculate facet counts with.
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      scope: function (scope) {
-        if (scope == null) {
-          return facet[name].scope;
-        }
-        
-        facet[name].scope = scope;
-        return this;
-      },
-      
-      /**
-            <p>Enables caching of the <code>facetFilter</code></p>
-
-            @member ejs.TermStatsFacet
-            @param {Boolean} trueFalse If the facetFilter should be cached or not
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      cacheFilter: function (trueFalse) {
-        if (trueFalse == null) {
-          return facet[name].cache_filter;
-        }
-        
-        facet[name].cache_filter = trueFalse;
-        return this;
-      },
-      
-      /**
-            <p>Sets the path to the nested document if faceting against a
-            nested field.</p>
-
-            @member ejs.TermStatsFacet
-            @param {String} path The nested path
-            @returns {Object} returns <code>this</code> so that calls can be chained.
-            */
-      nested: function (path) {
-        if (path == null) {
-          return facet[name].nested;
-        }
-        
-        facet[name].nested = path;
-        return this;
-      },
-      
-      /**
-            <p>Allows you to serialize this object into a JSON encoded string.</p>
-
-            @member ejs.TermStatsFacet
-            @returns {String} returns this object as a serialized JSON string.
-            */
-      toString: function () {
-        return JSON.stringify(facet);
-      },
-
-      /**
-            The type of ejs object.  For internal use only.
-            
-            @member ejs.TermStatsFacet
-            @returns {String} the type of object
-            */
-      _type: function () {
-        return 'facet';
-      },
-      
-      /**
-            <p>Retrieves the internal <code>facet</code> object. This is typically used by
-               internal API functions so use with caution.</p>
-
-            @member ejs.TermStatsFacet
             @returns {String} returns this object's internal <code>facet</code> property.
             */
       _self: function () {
@@ -4740,7 +4946,40 @@
     
         return this;
       },
-          
+
+      /**
+            <p>Sets the spatial strategy.</p>  
+            <p>Valid values are:</p>
+            
+            <dl>
+                <dd><code>recursive</code> - default, recursively traverse nodes in
+                  the spatial prefix tree.  This strategy has support for 
+                  searching non-point shapes.</dd>
+                <dd><code>term</code> - uses a large TermsFilter on each node
+                  in the spatial prefix tree.  It only supports the search of 
+                  indexed Point shapes.</dd>
+            </dl>
+
+            <p>This is an advanced setting, use with care.</p>
+            
+            @since elasticsearch 0.90
+            @member ejs.GeoShapeFilter
+            @param {String} strategy The strategy as a string.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      strategy: function (strategy) {
+        if (strategy == null) {
+          return filter.geo_shape[field].strategy;
+        }
+
+        strategy = strategy.toLowerCase();
+        if (strategy === 'recursive' || strategy === 'term') {
+          filter.geo_shape[field].strategy = strategy;
+        }
+        
+        return this;
+      },
+        
       /**
             Sets the filter name.
 
@@ -4876,6 +5115,27 @@
       },
 
       /**
+            Sets the filter
+
+            @since elasticsearch 0.90
+            @member ejs.HasChildFilter
+            @param {Query} f A valid Filter object
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      filter: function (f) {
+        if (f == null) {
+          return filter.has_child.filter;
+        }
+  
+        if (!isFilter(f)) {
+          throw new TypeError('Argument must be a Filter object');
+        }
+        
+        filter.has_child.filter = f._self();
+        return this;
+      },
+
+      /**
             Sets the child document type to search against
 
             @member ejs.HasChildFilter
@@ -4895,16 +5155,12 @@
             Sets the scope of the filter.  A scope allows to run facets on the 
             same scope name that will work against the child documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.HasChildFilter
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return filter.has_child._scope;
-        }
-  
-        filter.has_child._scope = s;
         return this;
       },
 
@@ -5009,6 +5265,27 @@
         filter.has_parent.query = q._self();
         return this;
       },
+      
+      /**
+            Sets the filter
+
+            @since elasticsearch 0.90
+            @member ejs.HasParentFilter
+            @param {Object} f A valid Filter object
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      filter: function (f) {
+        if (f == null) {
+          return filter.has_parent.filter;
+        }
+
+        if (!isFilter(f)) {
+          throw new TypeError('Argument must be a Filter object');
+        }
+        
+        filter.has_parent.filter = f._self();
+        return this;
+      },
 
       /**
             Sets the child document type to search against
@@ -5030,16 +5307,12 @@
             Sets the scope of the filter.  A scope allows to run facets on the 
             same scope name that will work against the parent documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.HasParentFilter
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return filter.has_parent._scope;
-        }
-
-        filter.has_parent._scope = s;
         return this;
       },
     
@@ -5743,22 +6016,35 @@
       },
     
       /**
+            If the nested query should be "joined" with the parent document.
+            Defaults to false.
+
+            @member ejs.NestedFilter
+            @param {Boolean} trueFalse If the query should be joined or not.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      join: function (trueFalse) {
+        if (trueFalse == null) {
+          return filter.nested.join;
+        }
+
+        filter.nested.join = trueFalse;
+        return this;
+      },
+    
+      /**
             Sets the scope of the filter.  A scope allows to run facets on the 
             same scope name that will work against the nested documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.NestedFilter
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return filter.nested._scope;
-        }
-
-        filter.nested._scope = s;
         return this;
       },
-    
+      
       /**
             Sets the filter name.
 
@@ -7494,6 +7780,20 @@
          */
     var filter = {
       terms: {}
+    },
+    
+    // make sure we are setup for a list of terms
+    setupTerms = function () {
+      if (!isArray(filter.terms[field])) {
+        filter.terms[field] = [];
+      }
+    },
+    
+    // make sure we are setup for a terms lookup
+    setupLookup = function () {
+      if (isArray(filter.terms[field])) {
+        filter.terms[field] = {};
+      }
     };
    
     if (isArray(terms)) {
@@ -7535,10 +7835,11 @@
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       terms: function (t) {
+        setupTerms();
         if (t == null) {
           return filter.terms[field];
         }
-
+        
         if (isArray(t)) {
           filter.terms[field] = t;
         } else {
@@ -7548,6 +7849,84 @@
         return this;
       },
 
+      /**
+            Sets the index the document containing the terms is in when 
+            performing a terms lookup.  Defaults to the index currently 
+            being searched.
+
+            @since elasticsearch 0.90
+            @member ejs.TermsFilter
+            @param {String} idx A valid index name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      index: function (idx) {
+        setupLookup();
+        if (idx == null) {
+          return filter.terms[field].index;
+        }
+        
+        filter.terms[field].index = idx;
+        return this;
+      },
+
+      /**
+            Sets the type the document containing the terms when performing a 
+            terms lookup.
+
+            @since elasticsearch 0.90
+            @member ejs.TermsFilter
+            @param {String} type A valid type name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      type: function (type) {
+        setupLookup();
+        if (type == null) {
+          return filter.terms[field].type;
+        }
+        
+        filter.terms[field].type = type;
+        return this;
+      },
+
+
+      /**
+            Sets the document id of the document containing the terms to use
+            when performing a terms lookup.
+
+            @since elasticsearch 0.90
+            @member ejs.TermsFilter
+            @param {String} id A valid index name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      id: function (id) {
+        setupLookup();
+        if (id == null) {
+          return filter.terms[field].id;
+        }
+        
+        filter.terms[field].id = id;
+        return this;
+      },
+      
+      /**
+            Sets the path/field name where the terms in the source document
+            are located when performing a terms lookup.
+
+            @since elasticsearch 0.90
+            @member ejs.TermsFilter
+            @param {String} path A valid index name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      path: function (path) {
+        setupLookup();
+        if (path == null) {
+          return filter.terms[field].path;
+        }
+        
+        filter.terms[field].path = path;
+        return this;
+      },
+      
       /**
             Sets the way terms filter executes is by iterating over the terms 
             provided and finding matches docs (loading into a bitset) and 
@@ -7855,13 +8234,14 @@
       },
       
       /**
-             Sets the routing value. By default, the shard the document is
-             placed on is controlled by using a hash of the document’s id 
-             value. For more explicit control, this routing value will be fed 
-             into the hash function used by the router.
+             <p>Sets the routing value.<p> 
+
+             <p>By default, the shard the document is placed on is controlled by using a 
+             hash of the document’s id value. For more explicit control, this routing value 
+             will be fed into the hash function used by the router.</p>
              
-             This option is valid during the following operations:
-             index, delete, get, and update.
+             <p>This option is valid during the following operations:
+                <code>index, delete, get, and update</code></p>
 
              @member ejs.Document
              @param {String} route The routing value
@@ -7877,13 +8257,14 @@
       },
       
       /**
-             Sets parent value for a child document.  When indexing a child 
-             document, the routing value is automatically set to be the same 
-             as it’s parent, unless the routing value is explicitly specified 
-             using the routing parameter.
+             <p>Sets parent value for a child document.</p>  
+
+             <p>When indexing a child document, the routing value is automatically set to be 
+             the same as it’s parent, unless the routing value is explicitly specified 
+             using the routing parameter.</p>
              
-             This option is valid during the following operations:
-             index, delete, get, and update.
+             <p>This option is valid during the following operations:
+                 <code>index, delete, get, and update.</code></p>
 
              @member ejs.Document
              @param {String} parent The parent value
@@ -7899,11 +8280,12 @@
       },
       
       /**
-             Sets timestamp of the document.  By default the timestamp will
-             be set to the time the docuement was indexed.
+             <p>Sets timestamp of the document.</p>  
+
+             <p>By default the timestamp will be set to the time the docuement was indexed.</p>
              
-             This option is valid during the following operations:
-             index and update
+             <p>This option is valid during the following operations:
+                <code>index</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} parent The parent value
@@ -7919,15 +8301,17 @@
       },
       
       /**
-             Sets the documents time to live (ttl).  The expiration date that 
-             will be set for a document with a provided ttl is relative to the 
-             timestamp of the document, meaning it can be based on the time of 
-             indexing or on any time provided. The provided ttl must be 
-             strictly positive and can be a number (in milliseconds) or any 
-             valid time value such as "1d", "2h", "5m", etc.
+             </p>Sets the documents time to live (ttl).</p>  
+
+             The expiration date that will be set for a document with a provided ttl is relative 
+             to the timestamp of the document, meaning it can be based on the time of indexing or 
+             on any time provided.</p> 
+
+             <p>The provided ttl must be strictly positive and can be a number (in milliseconds) 
+             or any valid time value such as <code>"1d", "2h", "5m",</code> etc.</p>
              
-             This option is valid during the following operations:
-             index and update
+             <p>This option is valid during the following operations:
+                <code>index</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} length The amount of time after which the document
@@ -7944,14 +8328,15 @@
       },
       
       /**
-             Set's a timeout for the given operation.  If the primary shard
-             has not completed the operation before this value, an error will
-             occur.  The default timeout is 1 minute. The provided timeout 
-             must be strictly positive and can be a number (in milliseconds) or 
-             any valid time value such as "1d", "2h", "5m", etc.
+             <p>Set's a timeout for the given operation.</p>  
+
+             If the primary shard has not completed the operation before this value, an error will
+             occur.  The default timeout is 1 minute. The provided timeout must be strictly positive 
+             and can be a number (in milliseconds) or any valid time value such as 
+             <code>"1d", "2h", "5m",</code> etc.</p>
              
-             This option is valid during the following operations:
-             index, delete, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} length The amount of time after which the operation
@@ -7968,12 +8353,12 @@
       },
       
       /**
-             Enables the index to be refreshed immediately after the operation
-             occurs.  This is an advanced setting and can lead to performance
-             issues.
+             <p>Enables the index to be refreshed immediately after the operation
+             occurs. This is an advanced setting and can lead to performance
+             issues.</p>
              
-             This option is valid during the following operations:
-             index, delete, get, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete, get,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {Boolean} trueFalse If the index should be refreshed or not.
@@ -7989,15 +8374,17 @@
       },
       
       /**
-             Sets the document version.  Used for optimistic concurrency 
-             control when set.  If the version of the currently indexed
-             document is less-than or equal to the version specified, an
-             error is produced, otherwise the operation is permitted.
-             By default, internal versioning is used that starts at 1 and 
-             increments with each update. 
+             <p>Sets the document version.</p>  
+
+             Used for optimistic concurrency control when set.  If the version of the currently 
+             indexed document is less-than or equal to the version specified, an error is produced, 
+             otherwise the operation is permitted.</p>
+
+             <p>By default, internal versioning is used that starts at <code>1</code> and 
+             increments with each update.</p>
              
-             This option is valid during the following operations:
-             index, delete, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {Long} version A positive long value
@@ -8013,13 +8400,17 @@
       },
       
       /**
-             Sets the version type.  Possible values are:
+             <p>Sets the version type.</p>  
+
+             </p>Possible values are:</p>
              
-             internal - the default
-             external - to use your own version (ie. version number from a database)
+             <dl>
+                <dd><code>internal</code> - the default</dd>
+                <dd><code>external</code> - to use your own version (ie. version number from a database)</dd>
+             </dl>
              
-             This option is valid during the following operations:
-             index, delete, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} vt A version type (internal or external)
@@ -8040,12 +8431,13 @@
       },
       
       /**
-             Perform percolation at index time.  Set to * to run document 
-             against all registered queries.  It is also possible to set this
-             value to a string in query string format, ie. "color:green".
+             <p>Perform percolation at index time.</p>  
+
+             <p>Set to * to run document against all registered queries.  It is also possible 
+             to set this value to a string in query string format, ie. <code>"color:green"</code>.</p>
              
-             This option is valid during the following operations:
-             index and update
+             <p>This option is valid during the following operations:
+                <code>index</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} qry A percolation query string
@@ -8061,13 +8453,17 @@
       },
       
       /**
-             Sets the indexing operation type.  Valid values are:
+             <p>Sets the indexing operation type.</p>  
+
+             <p>Valid values are:</p>
              
-             index - the default, create or replace
-             create - create only
+             <dl>
+                <dd><code>index</code> - the default, create or replace</dd>
+                <dd><code>create</code> - create only</dd>
+             </dl>
              
-             This option is valid during the following operations:
-             index
+             <p>This option is valid during the following operations:
+                <code>index</code></p>
 
              @member ejs.Document
              @param {String} op The operation type (index or create)
@@ -8087,14 +8483,18 @@
       },
       
       /**
-             Sets the replication mode.  Valid values are:
+             <p>Sets the replication mode.</p>  
+
+             <p>Valid values are:</p>
              
-             async - asynchronous replication to slaves
-             sync - synchronous replication to the slaves
-             default - the currently configured system default. 
+             <dl>
+                <dd><code>async</code> - asynchronous replication to slaves</dd>
+                <dd><code>sync</code> - synchronous replication to the slaves</dd>
+                <dd><code>default</code> - the currently configured system default.</dd> 
+             </dl>
              
-             This option is valid during the following operations:
-             index, delete, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} r The replication mode (async, sync, or default)
@@ -8114,15 +8514,19 @@
       },
       
       /**
-             Sets the write consistency.  Valid values are:
+             <p>Sets the write consistency.</p>  
+
+             <p>Valid values are:</p>
              
-             one - only requires write to one shard
-             quorum - requires writes to quorum (N/2 + 1)
-             all - requires write to succeed on all shards
-             default - the currently configured system default
+             <dl>
+                <dd><code>one - only requires write to one shard</dd>
+                <dd><code>quorum - requires writes to quorum <code>(N/2 + 1)</code></dd>
+                <dd><code>all - requires write to succeed on all shards</dd>
+                <dd><code>default - the currently configured system default</dd>
+             </dl>
              
-             This option is valid during the following operations:
-             index, delete, and update
+             <p>This option is valid during the following operations:
+                <code>index, delete,</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String} c The write consistency (one, quorum, all, or default)
@@ -8142,16 +8546,20 @@
       },
       
       /**
-             Sets the preference of which shard replicas to execute the get 
-             request on. By default, the operation is randomized between the 
-             shard replicas.  This value can be:
+             <p>Sets the preference of which shard replicas to execute the get 
+             request on.</p> 
+
+             <p>By default, the operation is randomized between the shard replicas.  
+             This value can be:</p>
              
-             _primary - execute only on the primary shard
-             _local - the local shard if possible
-             any string value - to guarentee the same shards will always be used
+             <dl>
+                <dd><code>_primary</code> - execute only on the primary shard</dd>
+                <dd><code>_local</code> - the local shard if possible</dd>
+                <dd><code>any string value</code> - to guarentee the same shards will always be used</dd>
+             </dl>
              
-             This option is valid during the following operations:
-             get
+             <p>This option is valid during the following operations:
+                <code>get</code></p>
 
              @member ejs.Document
              @param {String} p The preference value as a string
@@ -8167,11 +8575,11 @@
       },
       
       /**
-             Sets if the get request is performed in realtime or waits for
-             the indexing operations to complete.  By default it is realtime.
+             <p>Sets if the get request is performed in realtime or waits for
+             the indexing operations to complete.  By default it is realtime.</p>
              
-             This option is valid during the following operations:
-             get
+             <p>This option is valid during the following operations:
+                <code>get</code></p>
 
              @member ejs.Document
              @param {Boolean} trueFalse If realtime get is used or not.
@@ -8187,14 +8595,15 @@
       },
       
       /**
-             Sets the fields of the document to return.  By default the 
-             _source field is returned.  Pass a single value to append to the
-             current list of fields, pass an array to overwrite the current
-             list of fields.  The returned fields will either be loaded if 
-             they are stored, or fetched from the _source
+             <p>Sets the fields of the document to return.</p>  
+
+             <p>By default the <code>_source</code> field is returned.  Pass a single value 
+             to append to the current list of fields, pass an array to overwrite the current
+             list of fields.  The returned fields will either be loaded if they are stored, 
+             or fetched from the <code>_source</code></p>
              
-             This option is valid during the following operations:
-             get and update
+             <p>This option is valid during the following operations:
+                <code>get</code> and <code>update</code></p>
 
              @member ejs.Document
              @param {String || Array} fields a single field name or array of field names.
@@ -8221,10 +8630,10 @@
       },
       
       /**
-             Sets the update script.
+             <p>Sets the update script.</p>
              
-             This option is valid during the following operations:
-             update
+             <p>This option is valid during the following operations:
+                <code>update</code></p>
 
              @member ejs.Document
              @param {String} script a script to use for docuement updates
@@ -8240,10 +8649,10 @@
       },
       
       /**
-             Sets the update script lanauge.  Defaults to mvel.
+             <p>Sets the update script lanauge.  Defaults to <code>mvel</code></p>.
              
-             This option is valid during the following operations:
-             update
+             <p>This option is valid during the following operations:
+                <code>update</code></p>
 
              @member ejs.Document
              @param {String} lang a valid script lanauge type such as mvel.
@@ -8259,12 +8668,13 @@
       },
       
       /**
-             Sets the parameters sent to the update script.  The params must
-             be an object where the key is the parameter name and the value is
-             the parameter value to use in the script.  
+             <p>Sets the parameters sent to the update script.</p>  
+
+             <p>The params must be an object where the key is the parameter name and 
+             the value is the parameter value to use in the script.</p>
              
-             This option is valid during the following operations:
-             update
+             <p>This option is valid during the following operations:
+                <code>update</code></p>
 
              @member ejs.Document
              @param {Object} p a object with script parameters.
@@ -8285,12 +8695,13 @@
       },
       
        /**
-               Sets how many times to retry if there is a version conflict 
-               between getting the document and indexing / deleting it. 
-               Defaults to 0.
+               <p>Sets how many times to retry if there is a version conflict 
+               between getting the document and indexing / deleting it.</p>
 
-               This option is valid during the following operations:
-               update
+               <p>Defaults to <code>0</code>.<p>
+
+               <p>This option is valid during the following operations:
+                <code>update</code></p>
 
                @member ejs.Document
                @param {Integer} num the number of times to retry operation.
@@ -8306,12 +8717,13 @@
       },
       
       /**
-               Sets the upsert document.  The upsert document is used during
-               updates when the specified document you are attempting to 
-               update does not exist.
+               <p>Sets the upsert document.</p>  
+        
+               <p>The upsert document is used during updates when the specified document 
+               you are attempting to update does not exist.</p>
 
-               This option is valid during the following operations:
-               update
+               <p>This option is valid during the following operations:
+                    <code>update</code></p>
 
                @member ejs.Document
                @param {Object} doc the upset document.
@@ -8331,11 +8743,12 @@
       },
       
       /**
-               Sets the source document.  When set during an update operation,
-               it is used as the partial update document.  
+               <p>Sets the source document.</p>  
 
-               This option is valid during the following operations:
-               index and update
+               <p>When set during an update operation, it is used as the partial update document.</p>
+
+               <p>This option is valid during the following operations:
+                    <code>index</code> and <code>update</code></p>
 
                @member ejs.Document
                @param {Object} doc the source document.
@@ -8365,7 +8778,7 @@
       },
       
       /**
-            The type of ejs object.  For internal use only.
+            <p>The type of ejs object.  For internal use only.</p>
             
             @member ejs.Document
             @returns {String} the type of object
@@ -8389,10 +8802,11 @@
             <p>Retrieves a document from the given index and type.</p>
 
             @member ejs.Document
-            @param {Function} fnCallBack A callback function that handles the response.
+            @param {Function} successcb A callback function that handles the response.
+            @param {Function} errorcb A callback function that handles errors.
             @returns {Object} The return value is dependent on client implementation.
             */
-      doGet: function (fnCallBack) {
+      doGet: function (successcb, errorcb) {
         // make sure the user has set a client
         if (ejs.client == null) {
           throw new Error("No Client Set");
@@ -8407,7 +8821,7 @@
         // params as the data
         var url = '/' + index + '/' + type + '/' + id;
         
-        return ejs.client.get(url, genClientParams(), fnCallBack);
+        return ejs.client.get(url, genClientParams(), successcb, errorcb);
       },
 
       /**
@@ -8415,10 +8829,11 @@
             is set, one is created during indexing.</p>
 
             @member ejs.Document
-            @param {Function} fnCallBack A callback function that handles the response.
+            @param {Function} successcb A callback function that handles the response.
+            @param {Function} errorcb A callback function that handles errors.
             @returns {Object} The return value is dependent on client implementation.
             */
-      doIndex: function (fnCallBack) {
+      doIndex: function (successcb, errorcb) {
         // make sure the user has set a client
         if (ejs.client == null) {
           throw new Error("No Client Set");
@@ -8447,27 +8862,30 @@
         
         // do post if id not set so one is created
         if (id == null) {
-          response = ejs.client.post(url, data, fnCallBack);
+          response = ejs.client.post(url, data, successcb, errorcb);
         } else {
           // put when id is specified
-          response = ejs.client.put(url, data, fnCallBack);
+          response = ejs.client.put(url, data, successcb, errorcb);
         }
         
         return response;
       },
 
       /**
-            <p>Updates a document in the given index and type.  If the 
-            document is not found in the index, the "upsert" value is used
-            if set.  The document is updated via an update script or partial
-            document.  To use a script, set the script option, to use a 
+            <p>Updates a document in the given index and type.</p>  
+
+            <p>If the document is not found in the index, the "upsert" value is used
+            if set.  The document is updated via an update script or partial document.</p>
+
+            <p>To use a script, set the script option, to use a 
             partial document, set the source with the partial document.</p>
 
             @member ejs.Document
-            @param {Function} fnCallBack A callback function that handles the response.
+            @param {Function} successcb A callback function that handles the response.
+            @param {Function} errorcb A callback function that handles errors.
             @returns {Object} The return value is dependent on client implementation.
             */
-      doUpdate: function (fnCallBack) {
+      doUpdate: function (successcb, errorcb) {
         // make sure the user has set a client
         if (ejs.client == null) {
           throw new Error("No Client Set");
@@ -8509,7 +8927,7 @@
           data.doc = params.source;
         }
         
-        return ejs.client.post(url, JSON.stringify(data), fnCallBack);
+        return ejs.client.post(url, JSON.stringify(data), successcb, errorcb);
       },
 
       /**
@@ -8517,10 +8935,11 @@
             speciifed id.</p>
 
             @member ejs.Document
-            @param {Function} fnCallBack A callback function that handles the response.
+            @param {Function} successcb A callback function that handles the response.
+            @param {Function} errorcb A callback function that handles errors.
             @returns {void} Returns the value of the callback when executing on the server.
             */
-      doDelete: function (fnCallBack) {
+      doDelete: function (successcb, errorcb) {
         // make sure the user has set a client
         if (ejs.client == null) {
           throw new Error("No Client Set");
@@ -8538,7 +8957,7 @@
           url = url + '?' + paramStr;
         }
         
-        return ejs.client.del(url, data, fnCallBack);
+        return ejs.client.del(url, data, successcb, errorcb);
       }
 
     };
@@ -8713,15 +9132,15 @@
       },
 
       /**
-            Sets the number of optional clauses that must match.
+            <p>Sets the number of optional clauses that must match.</p>
       
-            By default no optional clauses are necessary for a match
+            <p>By default no optional clauses are necessary for a match
             (unless there are no required clauses).  If this method is used,
-            then the specified number of clauses is required..
+            then the specified number of clauses is required.</p>
 
-            Use of this method is totally independent of specifying that
+            <p>Use of this method is totally independent of specifying that
             any specific clauses are required (or prohibited).  This number will
-            only be compared against the number of matching optional clauses.
+            only be compared against the number of matching optional clauses.</p>
    
             @member ejs.BoolQuery
             @param {Integer} minMatch A positive <code>integer</code> value.
@@ -8909,6 +9328,251 @@
             
             @member ejs.BoostingQuery
             @returns {Object} Returns the object's <em>query</em> property.
+            */
+      _self: function () {
+        return query;
+      }
+    };
+  };
+
+  /**
+    @class
+    <p>A query that executes high-frequency terms in a optional sub-query to 
+    prevent slow queries due to "common" terms like stopwords.</p>
+  
+    <p>This query basically builds two queries out of the terms in the query 
+    string where low-frequency terms are added to a required boolean clause and 
+    high-frequency terms are added to an optional boolean clause. The optional 
+    clause is only executed if the required "low-frequency' clause matches.</p>
+  
+    <p><code>CommonTermsQuery</code> has several advantages over stopword 
+    filtering at index or query time since a term can be "classified" based on 
+    the actual document frequency in the index and can prevent slow queries even 
+    across domains without specialized stopword files.</p>
+  
+    @name ejs.CommonTermsQuery
+    @since elasticsearch 0.90
+  
+    @desc
+    A query that executes high-frequency terms in a optional sub-query.
+
+    @param {String} field the document field/key to query against
+    @param {String} qstr the query string
+    */
+  ejs.CommonTermsQuery = function (field, qstr) {
+
+    /**
+         The internal query object. <code>Use get()</code>
+         @member ejs.CommonTermsQuery
+         @property {Object} query
+         */
+    var query = {
+      common: {}
+    };
+  
+    // support for full Builder functionality where no constructor is used
+    // use dummy field until one is set
+    if (field == null) {
+      field = 'no_field_set';
+    }
+  
+    query.common[field] = {};
+  
+    // only set the query is one is passed in
+    if (qstr != null) {
+      query.common[field].query = qstr;
+    }
+  
+    return {
+
+      /**
+            Sets the field to query against.
+
+            @member ejs.CommonTermsQuery
+            @param {String} f A valid field name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      field: function (f) {
+        var oldValue = query.common[field];
+    
+        if (f == null) {
+          return field;
+        }
+
+        delete query.common[field];
+        field = f;
+        query.common[f] = oldValue;
+    
+        return this;
+      },
+  
+      /**
+            Sets the query string.
+
+            @member ejs.CommonTermsQuery
+            @param {String} qstr The query string.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      query: function (qstr) {
+        if (qstr == null) {
+          return query.common[field].query;
+        }
+
+        query.common[field].query = qstr;
+        return this;
+      },
+
+      /**
+            Sets the analyzer name used to analyze the <code>Query</code> object.
+
+            @member ejs.CommonTermsQuery
+            @param {String} analyzer A valid analyzer name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      analyzer: function (analyzer) {
+        if (analyzer == null) {
+          return query.common[field].analyzer;
+        }
+
+        query.common[field].analyzer = analyzer;
+        return this;
+      },
+    
+      /**
+            Enables or disables similarity coordinate scoring of documents
+            commoning the <code>Query</code>. Default: false.
+
+            @member ejs.CommonTermsQuery
+            @param {String} trueFalse A <code>true/false</code value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      disableCoords: function (trueFalse) {
+        if (trueFalse == null) {
+          return query.common[field].disable_coords;
+        }
+
+        query.common[field].disable_coords = trueFalse;
+        return this;
+      },
+          
+      /**
+            Sets the maximum threshold/frequency to be considered a low 
+            frequency term.  Set to a value between 0 and 1.
+
+            @member ejs.CommonTermsQuery
+            @param {Number} freq A positive <code>double</code> value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      cutoffFrequency: function (freq) {
+        if (freq == null) {
+          return query.common[field].cutoff_frequency;
+        }
+
+        query.common[field].cutoff_frequency = freq;
+        return this;
+      },
+
+      /**
+            Sets the boolean operator to be used for high frequency terms.
+            Default: AND
+
+            @member ejs.CommonTermsQuery
+            @param {String} op Any of "and" or "or", no quote characters.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      highFreqOperator: function (op) {
+        if (op == null) {
+          return query.common[field].high_freq_operator;
+        }
+
+        op = op.toLowerCase();
+        if (op === 'and' || op === 'or') {
+          query.common[field].high_freq_operator = op;
+        }
+
+        return this;
+      },
+    
+      /**
+            Sets the boolean operator to be used for low frequency terms.
+            Default: AND
+          
+            @member ejs.CommonTermsQuery
+            @param {String} op Any of "and" or "or", no quote characters.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      lowFreqOperator: function (op) {
+        if (op == null) {
+          return query.common[field].low_freq_operator;
+        }
+
+        op = op.toLowerCase();
+        if (op === 'and' || op === 'or') {
+          query.common[field].low_freq_operator = op;
+        }
+
+        return this;
+      },
+    
+      /**
+            Sets the minimum number of common that need to common in a document
+            before that document is returned in the results.
+
+            @member ejs.CommonTermsQuery
+            @param {Integer} min A positive integer.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      minimumShouldMatch: function (min) {
+        if (min == null) {
+          return query.common[field].minimum_should_match;
+        }
+    
+        query.common[field].minimum_should_match = min;
+        return this;
+      },
+
+      /**
+            Sets the boost value for documents commoning the <code>Query</code>.
+
+            @member ejs.CommonTermsQuery
+            @param {Number} boost A positive <code>double</code> value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      boost: function (boost) {
+        if (boost == null) {
+          return query.common[field].boost;
+        }
+
+        query.common[field].boost = boost;
+        return this;
+      },
+    
+      /**
+            Allows you to serialize this object into a JSON encoded string.
+
+            @member ejs.CommonTermsQuery
+            @returns {String} returns this object as a serialized JSON string.
+            */
+      toString: function () {
+        return JSON.stringify(query);
+      },
+
+      /**
+            The type of ejs object.  For internal use only.
+          
+            @member ejs.CommonTermsQuery
+            @returns {String} the type of object
+            */
+      _type: function () {
+        return 'query';
+      },
+    
+      /**
+            Retrieves the internal <code>query</code> object. This is typically used by
+            internal API functions so use with caution.
+
+            @member ejs.CommonTermsQuery
+            @returns {String} returns this object's internal <code>query</code> property.
             */
       _self: function () {
         return query;
@@ -9277,11 +9941,12 @@
       },
 
       /**
-            Sets the filters and their related boost or script scoring method.
-            Takes an array of objects where each object has a 'filter' property
+            <p>Sets the filters and their related boost or script scoring method.</p>
+
+            <p>Takes an array of objects where each object has a 'filter' property
             and either a 'boost' or 'script' property.  Pass a single object to
             add to the current list of filters or pass a list of objects to
-            overwrite all existing filters.
+            overwrite all existing filters.</p>
           
             <code>
             {filter: someFilter, boost: 2.1}
@@ -9312,12 +9977,13 @@
       },
     
       /**
-            A score_mode can be defined to control how multiple matching 
-            filters control the score. By default, it is set to first which 
-            means the first matching filter will control the score of the 
-            result. It can also be set to min/max/total/avg/multiply which 
-            will aggregate the result from all matching filters based on the 
-            aggregation type.
+            <p>A score_mode can be defined to control how multiple matching 
+            filters control the score.<p> 
+
+            <p>By default, it is set to first which means the first matching filter 
+            will control the score of the result. It can also be set to 
+            <code>min/max/total/avg/multiply</code> which will aggregate the result from all 
+            matching filters based on the aggregation type.<p>
 
             @member ejs.CustomFiltersScoreQuery
             @param {String} s The scoring type as a string. 
@@ -9671,11 +10337,14 @@
 
 
       /**
-            The tie breaker value.  The tie breaker capability allows results
-            that include the same term in multiple fields to be judged better than
-            results that include this term in only the best of those multiple
-            fields, without confusing this with the better case of two different
-            terms in the multiple fields.  Default: 0.0.
+            <p>The tie breaker value.</p>  
+
+            <p>The tie breaker capability allows results that include the same term in multiple 
+            fields to be judged better than results that include this term in only the best of those 
+            multiple fields, without confusing this with the better case of two different terms in 
+            the multiple fields.</p>  
+
+            <p>Default: 0.0.</p>
 
             @member ejs.DisMaxQuery
             @param {Double} tieBreaker A positive <code>double</code> value.
@@ -9723,6 +10392,7 @@
     };
   };
   
+
   /**
     @class
     <p>Wrapper to allow SpanQuery objects participate in composite single-field 
@@ -9897,7 +10567,7 @@
       },
       
       /**
-             Sets the query string.
+             <p>Sets the query string.</p>
 
              @member ejs.FieldQuery
              @param {String} q The lucene query string.
@@ -9913,10 +10583,11 @@
       },
       
       /**
-            Set the default <em>Boolean</em> operator. This operator is used 
-            to join individual query terms when no operator is explicity used 
-            in the query string (i.e., <code>this AND that</code>).
-            Defaults to <code>OR</code> (<em>same as Google</em>).
+            <p>Set the default <code>Boolean</code> operator.</p> 
+
+            <p>This operator is used to join individual query terms when no operator is 
+            explicity used in the query string (i.e., <code>this AND that</code>).
+            Defaults to <code>OR</code> (<em>same as Google</em>).</p>
 
             @member ejs.FieldQuery
             @param {String} op The operator, AND or OR.
@@ -9936,7 +10607,7 @@
       },
 
       /**
-            Sets the analyzer name used to analyze the <code>Query</code> object.
+            <p>Sets the analyzer name used to analyze the <code>Query</code> object.</p>
 
             @member ejs.FieldQuery
             @param {String} analyzer A valid analyzer name.
@@ -9952,8 +10623,8 @@
       },
 
       /**
-            Sets the quote analyzer name used to analyze the <code>query</code>
-            when in quoted text.
+            <p>Sets the quote analyzer name used to analyze the <code>query</code>
+            when in quoted text.</p>
 
             @member ejs.FieldQuery
             @param {String} analyzer A valid analyzer name.
@@ -9969,8 +10640,8 @@
       },
       
       /**
-            Sets whether or not we should auto generate phrase queries *if* the
-            analyzer returns more than one term. Default: false.
+            <p>Sets whether or not we should auto generate phrase queries *if* the
+            analyzer returns more than one term. Default: false.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -9986,8 +10657,10 @@
       },
 
       /**
-            Sets whether or not wildcard characters (* and ?) are allowed as the
-            first character of the <code>Query</code>.  Default: true.
+            <p>Sets whether or not wildcard characters (* and ?) are allowed as the
+            first character of the <code>Query</code>.</p>  
+
+            <p>Default: <code>true</code>.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -10003,9 +10676,11 @@
       },
 
       /**
-            Sets whether or not terms from wildcard, prefix, fuzzy, and
-            range queries should automatically be lowercased in the <code>Query</code>
-            since they are not analyzed.  Default: true.
+            <p>Sets whether or not terms from <code>wildcard, prefix, fuzzy,</code> and
+            <code>range</code> queries should automatically be lowercased in the <code>Query</code>
+            since they are not analyzed.</p>  
+
+            <p>Default: <code>true</code>.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -10021,8 +10696,10 @@
       },
 
       /**
-            Sets whether or not position increments will be used in the
-            <code>Query</code>. Default: true.
+            <p>Sets whether or not position increments will be used in the
+            <code>Query</code>.</p> 
+
+            <p>Default: <code>true</code>.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -10038,7 +10715,9 @@
       },
 
       /**
-            Set the minimum similarity for fuzzy queries.  Default: 0.5.
+            <p>Set the minimum similarity for fuzzy queries.</p>  
+
+            <p>Default: <code>0.5</code>.</p>
 
             @member ejs.FieldQuery
             @param {Double} minSim A <code>double</code> value between 0 and 1.
@@ -10054,7 +10733,9 @@
       },
 
       /**
-            Sets the boost value of the <code>Query</code>.  Default: 1.0.
+            <p>Sets the boost value of the <code>Query</code>.</p>  
+
+            <p>Default: <code>1.0</code>.</p>
 
             @member ejs.FieldQuery
             @param {Double} boost A positive <code>double</code> value.
@@ -10070,7 +10751,9 @@
       },
 
       /**
-            Sets the prefix length for fuzzy queries.  Default: 0.
+            <p>Sets the prefix length for fuzzy queries.</p>  
+    
+            <p>Default: <code>0</code>.</p>
 
             @member ejs.FieldQuery
             @param {Integer} fuzzLen A positive <code>integer</code> value.
@@ -10086,7 +10769,7 @@
       },
 
       /**
-            Sets the max number of term expansions for fuzzy queries.  
+            <p>Sets the max number of term expansions for fuzzy queries.</p>
 
             @member ejs.FieldQuery
             @param {Integer} max A positive <code>integer</code> value.
@@ -10102,31 +10785,35 @@
       },
 
       /**
-            Sets fuzzy rewrite method.  Valid values are: 
-            
-            constant_score_auto - tries to pick the best constant-score rewrite 
-              method based on term and document counts from the query
-              
-            scoring_boolean - translates each term into boolean should and 
-              keeps the scores as computed by the query
-              
-            constant_score_boolean - same as scoring_boolean, expect no scores
-              are computed.
-              
-            constant_score_filter - first creates a private Filter, by visiting 
-              each term in sequence and marking all docs for that term
-              
-            top_terms_boost_N - first translates each term into boolean should
-              and scores are only computed as the boost using the top N
-              scoring terms.  Replace N with an integer value.
-              
-            top_terms_N -   first translates each term into boolean should
-                and keeps the scores as computed by the query. Only the top N
-                scoring terms are used.  Replace N with an integer value.
-            
-            Default is constant_score_auto.
+            <p>Sets fuzzy rewrite method.<p>  
 
-            This is an advanced option, use with care.
+            <p>Valid values are:</p>
+            
+            <dl>
+                <dd><code>constant_score_auto</code> - tries to pick the best constant-score rewrite 
+                 method based on term and document counts from the query</dd>
+              
+                <dd><code>scoring_boolean</code> - translates each term into boolean should and 
+                 keeps the scores as computed by the query</dd>
+              
+                <dd><code>constant_score_boolean</code> - same as scoring_boolean, expect no scores
+                 are computed.</dd>
+              
+                <dd><code>constant_score_filter</code> - first creates a private Filter, by visiting 
+                 each term in sequence and marking all docs for that term</dd>
+              
+                <dd><code>top_terms_boost_N</code> - first translates each term into boolean should
+                 and scores are only computed as the boost using the top <code>N</code>
+                 scoring terms.  Replace <code>N</code> with an integer value.</dd>
+              
+                <dd><code>top_terms_N</code> - first translates each term into boolean should
+                 and keeps the scores as computed by the query. Only the top <code>N</code>
+                 scoring terms are used.  Replace <code>N</code> with an integer value.</dd>
+            </dl>
+            
+            <p>Default is <code>constant_score_auto</code>.</p>
+
+            <p>This is an advanced option, use with care.</p>
             
             @member ejs.FieldQuery
             @param {String} m The rewrite method as a string.
@@ -10150,29 +10837,33 @@
       },
 
       /**
-            Sets rewrite method.  Valid values are: 
+            <p>Sets rewrite method.</p>  
+
+            <p>Valid values are:</p>
             
-            constant_score_auto - tries to pick the best constant-score rewrite 
-              method based on term and document counts from the query
+            <dl>
+                <dd><code>constant_score_auto</code> - tries to pick the best constant-score rewrite 
+                 method based on term and document counts from the query</dd>
               
-            scoring_boolean - translates each term into boolean should and 
-              keeps the scores as computed by the query
+                <dd><code>scoring_boolean</code> - translates each term into boolean should and 
+                 keeps the scores as computed by the query</dd>
               
-            constant_score_boolean - same as scoring_boolean, expect no scores
-              are computed.
+                <dd><code>constant_score_boolean</code> - same as scoring_boolean, expect no scores
+                 are computed.</p>
               
-            constant_score_filter - first creates a private Filter, by visiting 
-              each term in sequence and marking all docs for that term
+                <dd><code>constant_score_filter</code> - first creates a private Filter, by visiting 
+                 each term in sequence and marking all docs for that term</dd>
               
-            top_terms_boost_N - first translates each term into boolean should
-              and scores are only computed as the boost using the top N
-              scoring terms.  Replace N with an integer value.
+                <dd><code>top_terms_boost_N</code> - first translates each term into boolean should
+                 and scores are only computed as the boost using the top <code>N</code>
+                 scoring terms.  Replace <code>N</code> with an integer value.</dd>
               
-            top_terms_N -   first translates each term into boolean should
-                and keeps the scores as computed by the query. Only the top N
-                scoring terms are used.  Replace N with an integer value.
+                <dd><code>top_terms_N</code> - first translates each term into boolean should
+                 and keeps the scores as computed by the query. Only the top <code>N</code>
+                 scoring terms are used.  Replace <code>N</code> with an integer value.</dd>
+            </dl>
             
-            Default is constant_score_auto.
+            <p>Default is <code>constant_score_auto</code>.</p>
 
             This is an advanced option, use with care.
 
@@ -10198,8 +10889,8 @@
       },
 
       /**
-            Sets the suffix to automatically add to the field name when 
-            performing a quoted search.
+            <p>Sets the suffix to automatically add to the field name when 
+            performing a quoted search.</p>
 
             @member ejs.FieldQuery
             @param {String} s The suffix as a string.
@@ -10215,8 +10906,10 @@
       },
                         
       /**
-            Sets the default slop for phrases. If zero, then exact phrase matches
-            are required.  Default: 0.
+            <p>Sets the default slop for phrases. If zero, then exact phrase matches
+            are required.</p>  
+
+            <p>Default: <code>0</code>.</p>
 
             @member ejs.FieldQuery
             @param {Integer} slop A positive <code>integer</code> value.
@@ -10232,9 +10925,12 @@
       },
 
       /**
-            Sets whether or not we should attempt to analyzed wilcard terms in the
-            <code>Query</code>. By default, wildcard terms are not analyzed.
-            Analysis of wildcard characters is not perfect.  Default: false.
+            <p>Sets whether or not we should attempt to analyzed wilcard terms in the
+            <code>Query</code>.</p> 
+
+            <p>By default, wildcard terms are not analyzed. Analysis of wildcard characters is not perfect.</p>  
+
+            <p>Default: <code>false</code>.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -10250,7 +10946,7 @@
       },
 
       /**
-            If they query string should be escaped or not.
+            <p>If the query string should be escaped or not.</p>
 
             @member ejs.FieldQuery
             @param {Boolean} trueFalse A <code>true/false</code> value.
@@ -10266,8 +10962,8 @@
       },
       
       /**
-            Sets a percent value controlling how many "should" clauses in the
-            resulting <code>Query</code> should match.
+            <p>Sets a percent value controlling how many <code>should</code> clauses in the
+            resulting <code>Query</code> should match.</p>
 
             @member ejs.FieldQuery
             @param {Integer} minMatch An <code>integer</code> between 0 and 100.
@@ -10283,7 +10979,7 @@
       },
 
       /**
-            Allows you to serialize this object into a JSON encoded string.
+            <p>Allows you to serialize this object into a JSON encoded string.</p>
 
             @member ejs.FieldQuery
             @returns {String} returns this object as a serialized JSON string.
@@ -10293,7 +10989,7 @@
       },
 
       /**
-            The type of ejs object.  For internal use only.
+            <p>The type of ejs object.  For internal use only.</p>
             
             @member ejs.FieldQuery
             @returns {String} the type of object
@@ -10303,8 +10999,8 @@
       },
       
       /**
-            Retrieves the internal <code>query</code> object. This is typically used by
-            internal API functions so use with caution.
+            <p>Retrieves the internal <code>query</code> object. This is typically used by
+            internal API functions so use with caution.</p>
 
             @member ejs.FieldQuery
             @returns {String} returns this object's internal <code>query</code> property.
@@ -10361,7 +11057,7 @@
     return {
 
       /**
-             Adds the query to apply a constant score to.
+             <p>Adds the query to apply a constant score to.</p>
 
              @member ejs.FilteredQuery
              @param {Object} oQuery A valid <code>Query</code> object
@@ -10381,7 +11077,7 @@
       },
 
       /**
-             Adds the filter to apply a constant score to.
+             <p>Adds the filter to apply a constant score to.</p>
 
              @member ejs.FilteredQuery
              @param {Object} oFilter A valid <code>Filter</code> object
@@ -10401,17 +11097,21 @@
       },
 
       /**
-            Sets the filter strategy.  The strategy defines how the filter is
-            applied during document collection.  Valid values are:
-            
-            query_filter - advance query scorer first then filter
-            random_access_random - random access filter
-            leap_frog - query scorer and filter "leap-frog", query goes first
-            leap_frog_filter_first - same as leap_frog, but filter goes first
-            random_access_N - replace N with integer, same as random access 
-              except you can specify a custom threshold
+            <p>Sets the filter strategy.</p>  
 
-            This is an advanced setting, use with care.
+            <p>The strategy defines how the filter is applied during document collection.  
+            Valid values are:</p>
+            
+            <dl>
+                <dd><code>query_first</code> - advance query scorer first then filter</dd>
+                <dd><code>random_access_random</code> - random access filter</dd>
+                <dd><code>leap_frog</code> - query scorer and filter "leap-frog", query goes first</dd>
+                <dd><code>leap_frog_filter_first</code> - same as <code>leap_frog</code>, but filter goes first</dd>
+                <dd><code>random_access_N</code> - replace <code>N</code> with integer, same as random access 
+                 except you can specify a custom threshold</dd>
+            </dl>
+
+            <p>This is an advanced setting, use with care.</p>
             
             @member ejs.FilteredQuery
             @param {String} strategy The strategy as a string.
@@ -10423,7 +11123,7 @@
         }
 
         strategy = strategy.toLowerCase();
-        if (strategy === 'query_filter' || strategy === 'random_access_random' ||
+        if (strategy === 'query_first' || strategy === 'random_access_always' ||
           strategy === 'leap_frog' || strategy === 'leap_frog_filter_first' ||
           strategy.indexOf('random_access_') === 0) {
             
@@ -10434,7 +11134,7 @@
       },
       
       /**
-            Enables caching of the filter.
+            <p>Enables caching of the filter.</p>
 
             @member ejs.FilteredQuery
             @param {Boolean} trueFalse A boolean value.
@@ -10450,7 +11150,7 @@
       },
       
       /**
-            Set the cache key.
+            <p>Set the cache key.</p>
 
             @member ejs.FilteredQuery
             @param {String} k A string cache key.
@@ -10466,7 +11166,7 @@
       },
       
       /**
-            Sets the boost value of the <code>Query</code>.
+            <p>Sets the boost value of the <code>Query</code>.</p>
 
             @member ejs.FilteredQuery
             @param {Double} boost A positive <code>double</code> value.
@@ -10482,7 +11182,8 @@
       },
       
       /**
-             Converts this object to a json string
+             <p>Converts this object to a json string</p>
+
              @member ejs.FilteredQuery
              @returns {Object} string
              */
@@ -10491,7 +11192,7 @@
       },
 
       /**
-            The type of ejs object.  For internal use only.
+            <p>The type of ejs object.  For internal use only.</p>
             
             @member ejs.FilteredQuery
             @returns {String} the type of object
@@ -10501,7 +11202,8 @@
       },
       
       /**
-             returns the query object.
+             <p>returns the query object.</p>
+
              @member ejs.FilteredQuery
              @returns {Object} query object
              */
@@ -10981,7 +11683,7 @@
     return {
 
       /**
-             The field to run the query against.
+             <p>The field to run the query against.</p>
 
              @member ejs.FuzzyQuery
              @param {String} f A single field name.
@@ -11002,7 +11704,7 @@
       },
 
       /**
-            The query text to fuzzify.
+            <p>The query text to fuzzify.</p>
 
             @member ejs.FuzzyQuery
             @param {String} s A text string.
@@ -11018,7 +11720,7 @@
       },
 
       /**
-            Set to false to use classic Levenshtein edit distance.
+            <p>Set to false to use classic Levenshtein edit distance.</p>
 
             @member ejs.FuzzyQuery
             @param {Boolean} trueFalse A boolean value
@@ -11034,8 +11736,8 @@
       },
 
       /**
-            The maximum number of query terms that will be included in any 
-            generated query. Defaults to 50.
+            <p>The maximum number of query terms that will be included in any 
+            generated query. Defaults to <code>50</code>.<p>
 
             @member ejs.FuzzyQuery
             @param {Integer} max A positive integer value.
@@ -11051,7 +11753,7 @@
       },
 
       /**
-            The minimum similarity of the term variants. Defaults to 0.5.
+            <p>The minimum similarity of the term variants. Defaults to <code>0.5</code>.</p>
 
             @member ejs.FuzzyQuery
             @param {Double} min A positive double value.
@@ -11067,7 +11769,7 @@
       },
 
       /**
-            Length of required common prefix on variant terms. Defaults to 0..
+            <p>Length of required common prefix on variant terms. Defaults to <code>0</code>.</p>
 
             @member ejs.FuzzyQuery
             @param {Integer} len A positive integer value.
@@ -11083,31 +11785,33 @@
       },
       
       /**
-            Sets rewrite method.  Valid values are: 
+            <p>Sets rewrite method.  Valid values are:</p> 
             
-            constant_score_auto - tries to pick the best constant-score rewrite 
-              method based on term and document counts from the query
+            <dl>
+                <dd><code>constant_score_auto</code> - tries to pick the best constant-score rewrite 
+                 method based on term and document counts from the query</dd>
               
-            scoring_boolean - translates each term into boolean should and 
-              keeps the scores as computed by the query
+                <dd><code>scoring_boolean</code> - translates each term into boolean should and 
+                 keeps the scores as computed by the query</dd>
               
-            constant_score_boolean - same as scoring_boolean, expect no scores
-              are computed.
+                <dd><code>constant_score_boolean</code> - same as scoring_boolean, expect no scores
+                 are computed.</dd>
               
-            constant_score_filter - first creates a private Filter, by visiting 
-              each term in sequence and marking all docs for that term
+                <dd><code>constant_score_filter</code> - first creates a private Filter, by visiting 
+                 each term in sequence and marking all docs for that term</dd>
               
-            top_terms_boost_N - first translates each term into boolean should
-              and scores are only computed as the boost using the top N
-              scoring terms.  Replace N with an integer value.
+                <dd><code>top_terms_boost_N</code> - first translates each term into boolean should
+                 and scores are only computed as the boost using the top <code>N</code>
+                 scoring terms.  Replace <code>N</code> with an integer value.</dd>
               
-            top_terms_N -   first translates each term into boolean should
-                and keeps the scores as computed by the query. Only the top N
-                scoring terms are used.  Replace N with an integer value.
+                <dd><code>top_terms_N</code> - first translates each term into boolean should
+                 and keeps the scores as computed by the query. Only the top <code>N</code>
+                 scoring terms are used.  Replace <code>N</code> with an integer value.</dd>
+            </dl>
             
-            Default is constant_score_auto.
+            <p>Default is <code>constant_score_auto</code>.</p>
 
-            This is an advanced option, use with care.
+            <p>This is an advanced option, use with care.</p>
 
             @member ejs.FuzzyQuery
             @param {String} m The rewrite method as a string.
@@ -11132,7 +11836,7 @@
       
                     
       /**
-            Sets the boost value of the <code>Query</code>.
+            <p>Sets the boost value of the <code>Query</code>.</p>
 
             @member ejs.FuzzyQuery
             @param {Double} boost A positive <code>double</code> value.
@@ -11148,7 +11852,8 @@
       },
 
       /**
-             Serializes the internal <em>query</em> object as a JSON string.
+             <p>Serializes the internal <code>query</code> object as a JSON string.</p>
+
              @member ejs.FuzzyQuery
              @returns {String} Returns a JSON representation of the Query object.
              */
@@ -11157,7 +11862,7 @@
       },
 
       /**
-            The type of ejs object.  For internal use only.
+            <p>The type of ejs object.  For internal use only.</p>
             
             @member ejs.FuzzyQuery
             @returns {String} the type of object
@@ -11167,8 +11872,9 @@
       },
       
       /**
-            This method is used to retrieve the raw query object. It's designed
-            for internal use when composing and serializing queries.
+            <p>This method is used to retrieve the raw query object. It's designed
+            for internal use when composing and serializing queries.</p>
+
             @member ejs.FuzzyQuery
             @returns {Object} Returns the object's <em>query</em> property.
             */
@@ -11294,7 +12000,40 @@
       
         return this;
       },
+
+      /**
+            <p>Sets the spatial strategy.</p>  
+            <p>Valid values are:</p>
             
+            <dl>
+                <dd><code>recursive</code> - default, recursively traverse nodes in
+                  the spatial prefix tree.  This strategy has support for 
+                  searching non-point shapes.</dd>
+                <dd><code>term</code> - uses a large TermsFilter on each node
+                  in the spatial prefix tree.  It only supports the search of 
+                  indexed Point shapes.</dd>
+            </dl>
+
+            <p>This is an advanced setting, use with care.</p>
+            
+            @since elasticsearch 0.90
+            @member ejs.GeoShapeQuery
+            @param {String} strategy The strategy as a string.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      strategy: function (strategy) {
+        if (strategy == null) {
+          return query.geo_shape[field].strategy;
+        }
+
+        strategy = strategy.toLowerCase();
+        if (strategy === 'recursive' || strategy === 'term') {
+          query.geo_shape[field].strategy = strategy;
+        }
+        
+        return this;
+      },
+             
       /**
             Sets the boost value for documents matching the <code>Query</code>.
 
@@ -11418,16 +12157,12 @@
             Sets the scope of the query.  A scope allows to run facets on the 
             same scope name that will work against the child documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.HasChildQuery
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return query.has_child._scope;
-        }
-    
-        query.has_child._scope = s;
         return this;
       },
 
@@ -11579,16 +12314,12 @@
             Sets the scope of the query.  A scope allows to run facets on the 
             same scope name that will work against the parent documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.HasParentQuery
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return query.has_parent._scope;
-        }
-  
-        query.has_parent._scope = s;
         return this;
       },
 
@@ -12141,6 +12872,24 @@
       },
 
       /**
+            Sets the maximum threshold/frequency to be considered a low 
+            frequency term in a <code>CommonTermsQuery</code>.  
+            Set to a value between 0 and 1.
+
+            @member ejs.MatchQuery
+            @param {Number} freq A positive <code>double</code> value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      cutoffFrequency: function (freq) {
+        if (freq == null) {
+          return query.match[field].cutoff_frequency;
+        }
+
+        query.match[field].cutoff_frequency = freq;
+        return this;
+      },
+      
+      /**
             Sets the prefix length for a fuzzy prefix <code>MatchQuery</code>.
 
             @member ejs.MatchQuery
@@ -12376,7 +13125,7 @@
             "all" or "none".  
 
             @member ejs.MatchQuery
-            @param {String} q A valid analyzer name.
+            @param {String} q A no match action, "all" or "none".
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       zeroTermsQuery: function (q) {
@@ -13121,6 +13870,24 @@
       },
 
       /**
+            Sets the maximum threshold/frequency to be considered a low 
+            frequency term in a <code>CommonTermsQuery</code>.  
+            Set to a value between 0 and 1.
+
+            @member ejs.MultiMatchQuery
+            @param {Number} freq A positive <code>double</code> value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      cutoffFrequency: function (freq) {
+        if (freq == null) {
+          return query.multi_match.cutoff_frequency;
+        }
+
+        query.multi_match.cutoff_frequency = freq;
+        return this;
+      },
+      
+      /**
             Sets a percent value controlling how many "should" clauses in the
             resulting <code>Query</code> should match.
 
@@ -13404,6 +14171,27 @@
       },
 
       /**
+            Sets what happens when no terms match.  Valid values are
+            "all" or "none".  
+
+            @member ejs.MultiMatchQuery
+            @param {String} q A no match action, "all" or "none".
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      zeroTermsQuery: function (q) {
+        if (q == null) {
+          return query.multi_match.zero_terms_query;
+        }
+
+        q = q.toLowerCase();
+        if (q === 'all' || q === 'none') {
+          query.multi_match.zero_terms_query = q;
+        }
+        
+        return this;
+      },
+      
+      /**
             Allows you to serialize this object into a JSON encoded string.
 
             @member ejs.MultiMatchQuery
@@ -13555,16 +14343,12 @@
             Sets the scope of the query.  A scope allows to run facets on the 
             same scope name that will work against the nested documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.NestedQuery
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return query.nested._scope;
-        }
-
-        query.nested._scope = s;
         return this;
       },
       
@@ -15801,16 +16585,12 @@
             Sets the scope of the query.  A scope allows to run facets on the 
             same scope name that will work against the child documents. 
 
+            @deprecated since elasticsearch 0.90
             @member ejs.TopChildrenQuery
             @param {String} s The scope name as a string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       scope: function (s) {
-        if (s == null) {
-          return query.top_children._scope;
-        }
-  
-        query.top_children._scope = s;
         return this;
       },
 
@@ -16820,7 +17600,44 @@
     */
   ejs.Request = function (conf) {
 
-    var query, indices, types, routing;
+    var query, indices, types, params = {},
+    
+      // gernerates the correct url to the specified REST endpoint
+      getRestPath = function (endpoint) {
+        var searchUrl = '', 
+          parts = [];
+        
+        // join any indices
+        if (indices.length > 0) {
+          searchUrl = searchUrl + '/' + indices.join();
+        }
+
+        // join any types
+        if (types.length > 0) {
+          searchUrl = searchUrl + '/' + types.join();
+        }
+        
+        // add the endpoint
+        if (endpoint.length > 0 && endpoint[0] !== '/') {
+          searchUrl = searchUrl + '/';
+        }
+        
+        searchUrl = searchUrl + endpoint;
+        
+        for (var p in params) {
+          if (!has(params, p) || params[p] === '') {
+            continue;
+          }
+          
+          parts.push(p + '=' + encodeURIComponent(params[p]));
+        }
+        
+        if (parts.length > 0) {
+          searchUrl = searchUrl + '?' + parts.join('&');
+        }
+        
+        return searchUrl;
+      };
 
     /**
         The internal query object.
@@ -16855,29 +17672,28 @@
     }
 
     if (conf.routing != null) {
-      routing = conf.routing;
-    } else {
-      routing = '';
+      params.routing = conf.routing;
     }
     
     return {
 
       /**
-            Sets the sorting for the query.  This accepts many input formats.
+            <p>Sets the sorting for the query.  This accepts many input formats.</p>
             
-            sort() - The current sorting values are returned.
-            sort(fieldName) - Adds the field to the current list of sorting values.
-            sort(fieldName, order) - Adds the field to the current list of
-              sorting with the specified order.  Order must be asc or desc.
-            sort(ejs.Sort) - Adds the Sort value to the current list of sorting values. 
-            sort(array) - Replaces all current sorting values with values
-              from the array.  The array must contain only strings and Sort
-              objects.
+            <dl>
+                <dd><code>sort()</code> - The current sorting values are returned.</dd>
+                <dd><code>sort(fieldName)</code> - Adds the field to the current list of sorting values.</dd>
+                <dd><code>sort(fieldName, order)</code> - Adds the field to the current list of
+                    sorting with the specified order.  Order must be asc or desc.</dd>
+                <dd><code>sort(ejs.Sort)</code> - Adds the Sort value to the current list of sorting values.</dd>
+                <dd><code>sort(array)</code> - Replaces all current sorting values with values
+                    from the array.  The array must contain only strings and Sort objects.</dd>
+            </dl>
 
-            Multi-level sorting is supported so the order in which sort fields 
-            are added to the query requests is relevant.
+            <p>Multi-level sorting is supported so the order in which sort fields 
+            are added to the query requests is relevant.</p>
             
-            It is recommended to use <code>Sort</code> objects when possible.
+            <p>It is recommended to use <code>Sort</code> objects when possible.</p>
             
             @member ejs.Request
             @param {String} fieldName The field to be sorted by.
@@ -16974,20 +17790,22 @@
       },
 
       /**
-            A search timeout, bounding the search request to be executed 
-            within the specified time value and bail with the hits accumulated 
-            up to that point when expired. Defaults to no timeout.
+            A timeout, bounding the request to be executed within the 
+            specified time value and bail when expired. Defaults to no timeout.
 
+            <p>This option is valid during the following operations:
+                <code>search</code> and <code>delete by query</code></p>
+    
             @member ejs.Request
             @param {Long} t The timeout value in milliseconds.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       timeout: function (t) {
         if (t == null) {
-          return query.timeout;
+          return params.timeout;
         }
       
-        query.timeout = t;
+        params.timeout = t;
         return this;
       },
                   
@@ -16996,19 +17814,129 @@
             values will be searched.  Set to an empty string to disable routing.
             Disabled by default.
 
+            <p>This option is valid during the following operations:
+                <code>search, count</code> and <code>delete by query</code></p>
+    
             @member ejs.Request
             @param {String} route The routing values as a comma-separated string.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       routing: function (route) {
         if (route == null) {
-          return routing;
+          return params.routing;
         }
       
-        routing = route;
+        params.routing = route;
         return this;
       },
 
+      /**
+             <p>Sets the replication mode.</p>  
+
+             <p>Valid values are:</p>
+             
+             <dl>
+                <dd><code>async</code> - asynchronous replication to slaves</dd>
+                <dd><code>sync</code> - synchronous replication to the slaves</dd>
+                <dd><code>default</code> - the currently configured system default.</dd> 
+             </dl>
+             
+             <p>This option is valid during the following operations:
+                <code>delete by query</code></p>
+
+             @member ejs.Request
+             @param {String} r The replication mode (async, sync, or default)
+             @returns {Object} returns <code>this</code> so that calls can be chained.
+             */
+      replication: function (r) {
+        if (r == null) {
+          return params.replication;
+        }
+        
+        r = r.toLowerCase();
+        if (r === 'async' || r === 'sync' || r === 'default') {
+          params.replication = r;
+        }
+        
+        return this;
+      },
+      
+      /**
+             <p>Sets the write consistency.</p>  
+
+             <p>Valid values are:</p>
+             
+             <dl>
+                <dd><code>one</code> - only requires write to one shard</dd>
+                <dd><code>quorum</code> - requires writes to quorum <code>(N/2 + 1)</code></dd>
+                <dd><code>all</code> - requires write to succeed on all shards</dd>
+                <dd><code>default</code> - the currently configured system default</dd>
+             </dl>
+             
+             <p>This option is valid during the following operations:
+                <code>delete by query</code></p>
+
+             @member ejs.Request
+             @param {String} c The write consistency (one, quorum, all, or default)
+             @returns {Object} returns <code>this</code> so that calls can be chained.
+             */
+      consistency: function (c) {
+        if (c == null) {
+          return params.consistency;
+        }
+        
+        c = c.toLowerCase();
+        if (c === 'default' || c === 'one' || c === 'quorum' || c === 'all') {
+          params.consistency = c;
+        }
+        
+        return this;
+      },
+      
+      /**
+             <p>Sets the search execution type for the request.</p>  
+
+             <p>Valid values are:</p>
+             
+             <dl>
+                <dd><code>dfs_query_then_fetch</code> - same as query_then_fetch, 
+                  except distributed term frequencies are calculated first.</dd>
+                <dd><code>dfs_query_and_fetch</code> - same as query_and_fetch,
+                  except distributed term frequencies are calculated first.</dd>
+                <dd><code>query_then_fetch</code> - executed against all 
+                  shards, but only enough information is returned.  When ready,
+                  only the relevant shards are asked for the actual document 
+                  content</dd>
+                <dd><code>query_and_fetch</code> - execute the query on all 
+                  relevant shards and return the results, including content.</dd>
+                <dd><code>scan</code> - efficiently scroll a large result set</dd>
+                <dd><code>count</code> -  special search type that returns the 
+                  count that matched the search request without any docs </dd>
+             </dl>
+             
+             <p>This option is valid during the following operations:
+                <code>search</code></p>
+
+             @member ejs.Request
+             @param {String} t The search execution type
+             @returns {Object} returns <code>this</code> so that calls can be chained.
+             */
+      searchType: function (t) {
+        if (t == null) {
+          return params.search_type;
+        }
+        
+        t = t.toLowerCase();
+        if (t === 'dfs_query_then_fetch' || t === 'dfs_query_and_fetch' || 
+          t === 'query_then_fetch' || t === 'query_and_fetch' || 
+          t === 'scan' || t === 'count') {
+            
+          params.search_type = t;
+        }
+        
+        return this;
+      },
+      
       /**
             By default, searches return full documents, meaning every property or field.
             This method allows you to specify which fields you want returned.
@@ -17205,6 +18133,39 @@
       },
 
       /**
+            Allows you to set the specified suggester on this request object. 
+            Multiple suggesters can be set, all of which will be returned when 
+            the search is executed.  Global suggestion text can be set by 
+            passing in a string vs. a <code>Suggest</code> object.
+
+            @since elasticsearch 0.90
+            
+            @member ejs.Request
+            @param {String || Suggest} s A valid Suggest object or a String to 
+              set as the global suggest text.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      suggest: function (s) {
+        if (s == null) {
+          return query.suggest;
+        }
+      
+        if (query.suggest == null) {
+          query.suggest = {};
+        }
+      
+        if (isString(s)) {
+          query.suggest.text = s;
+        } else if (isSuggest(s)) {
+          extend(query.suggest, s._self());
+        } else {
+          throw new TypeError('Argument must be a string or Suggest object');
+        }
+
+        return this;
+      },
+      
+      /**
             Computes a document property dynamically based on the supplied <code>ScriptField</code>.
 
             @member ejs.Request
@@ -17229,28 +18190,63 @@
       },
 
       /**
-            Controls a preference of which shard replicas to execute the search request on.
+            <p>Controls the preference of which shard replicas to execute the search request on.
             By default, the operation is randomized between the each shard replicas.  The
-            preference can be one of the following:
+            preference can be one of the following:</p>
 
-            _primary - the operation will only be executed on primary shards
-            _local - the operation will prefer to be executed on local shards
-            _only_node:$nodeid - the search will only be executed on node with id $nodeid
-            custom - any string, will guarentee searches always happen on same node.
+            <dl>
+                <dd><code>_primary</code> - the operation will only be executed on primary shards</dd>
+                <dd><code>_local</code> - the operation will prefer to be executed on local shards</dd>
+                <dd><code>_only_node:$nodeid</code> - the search will only be executed on node with id $nodeid</dd>
+                <dd><code>custom</code> - any string, will guarentee searches always happen on same node.</dd>
+            </dl>
 
+            <p>This option is valid during the following operations:
+                <code>search</code> and <code>count</code></p>
+                
             @member ejs.Request
-            @param {String} perf the preference, any of _primary, _local, _only_:$nodeid, or a custom string value.
+            @param {String} perf the preference, any of <code>_primary</code>, <code>_local</code>, 
+                <code>_only_:$nodeid</code>, or a custom string value.
             @returns {Object} returns <code>this</code> so that calls can be chained.
             */
       preference: function (perf) {
         if (perf == null) {
-          return query.preference;
+          return params.preference;
         }
       
-        query.preference = perf;
+        params.preference = perf;
         return this;
       },
 
+      /**
+            <p>Determines what type of indices to exclude from a request.  The
+            value can be one of the following:</p>
+
+            <dl>
+                <dd><code>none</code> - No indices / aliases will be excluded from a request</dd>
+                <dd><code>missing</code> - Indices / aliases that are missing will be excluded from a request</dd>
+            </dl>
+
+            <p>This option is valid during the following operations:
+                <code>search, count</code> and <code>delete by query</code></p>
+                
+            @member ejs.Request
+            @param {String} ignoreType the type of ignore (none or missing).
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      ignoreIndices: function (ignoreType) {
+        if (ignoreType == null) {
+          return params.ignore_indices;
+        }
+      
+        ignoreType = ignoreType.toLowerCase();
+        if (ignoreType === 'none' || ignoreType === 'missing') {
+          params.ignore_indices = ignoreType;
+        }
+        
+        return this;
+      },
+      
       /**
             Boosts hits in the specified index by the given boost value.
 
@@ -17350,41 +18346,62 @@
       _self: function () {
         return query;
       },
-      
-      /**
-            Executes the search. This call runs synchronously when used on the server side.
-            The callback is still executed and the function returns the return value of the callback.
 
+      /**
+            Executes a delete by query request using the current query.
+            
             @member ejs.Request
-            @param {Function} fnCallBack A callback function that handles the search response.
-            @returns {void} Returns the value of the callback when executing on the server.
+            @param {Function} successcb A callback function that handles the response.
+            @param {Function} errorcb A callback function that handles errors.
+            @returns {Object} Returns a client specific object.
             */
-      doSearch: function (fnCallBack) {
-        var 
-          queryData = JSON.stringify(query),
-          searchUrl = '';
+      doDeleteByQuery: function (successcb, errorcb) {
+        var queryData = JSON.stringify(query.query);
       
         // make sure the user has set a client
         if (ejs.client == null) {
           throw new Error("No Client Set");
         }
-          
-        // generate the search url
-        if (indices.length > 0) {
-          searchUrl = searchUrl + '/' + indices.join();
-        }
+        
+        return ejs.client.del(getRestPath('_query'), queryData, successcb, errorcb);
+      },
 
-        if (types.length > 0) {
-          searchUrl = searchUrl + '/' + types.join();
+      /**
+            Executes a count request using the current query.
+            
+            @member ejs.Request
+            @param {Function} successcb A callback function that handles the count response.
+            @param {Function} errorcb A callback function that handles errors.
+            @returns {Object} Returns a client specific object.
+            */
+      doCount: function (successcb, errorcb) {
+        var queryData = JSON.stringify(query.query);
+      
+        // make sure the user has set a client
+        if (ejs.client == null) {
+          throw new Error("No Client Set");
         }
         
-        searchUrl = searchUrl + '/_search';
-        
-        if (routing !== '') {
-          searchUrl = searchUrl + '?routing=' + encodeURIComponent(routing);
-        }
+        return ejs.client.post(getRestPath('_count'), queryData, successcb, errorcb);
+      },
+            
+      /**
+            Executes the search. 
 
-        return ejs.client.post(searchUrl, queryData, fnCallBack);
+            @member ejs.Request
+            @param {Function} successcb A callback function that handles the search response.
+            @param {Function} errorcb A callback function that handles errors.
+            @returns {Object} Returns a client specific object.
+            */
+      doSearch: function (successcb, errorcb) {
+        var queryData = JSON.stringify(query);
+      
+        // make sure the user has set a client
+        if (ejs.client == null) {
+          throw new Error("No Client Set");
+        }
+        
+        return ejs.client.post(getRestPath('_search'), queryData, successcb, errorcb);
       }
     };
   };
@@ -17461,6 +18478,23 @@
         return this;
       },
 
+      /**
+            If execeptions thrown from the script should be ignored or not.
+            Default: false
+
+            @member ejs.ScriptField
+            @param {Boolean} trueFalse if execptions should be ignored
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      ignoreFailure: function (trueFalse) {
+        if (trueFalse == null) {
+          return script[fieldName].ignore_failure;
+        }
+        
+        script[fieldName].ignore_failure = trueFalse;
+        return this;
+      },
+      
       /**
             Allows you to serialize this object into a JSON encoded string.
 
@@ -17926,8 +18960,10 @@
       /**
             Sets the script sort type.  Valid values are:
           
-            string - script return value is sorted as a string
-            number - script return value is sorted as a number
+            <dl>
+                <dd><code>string</code> - script return value is sorted as a string</dd>
+                <dd><code>number</code> - script return value is sorted as a number</dd>
+            <dl>
 
             Valid during sort types:  script
           
@@ -17947,7 +18983,78 @@
       
         return this;
       },
-    
+
+      /**
+            Sets the sort mode.  Valid values are:
+          
+            <dl>
+                <dd><code>min</code> - sort by lowest value</dd>
+                <dd><code>max</code> - sort by highest value</dd>
+                <dd><code>sum</code> - sort by the sum of all values</dd>
+                <dd><code>avg</code> - sort by the average of all values</dd>
+            <dl>
+            
+            Valid during sort types:  field
+          
+            @since elasticsearch 0.90
+            @member ejs.Sort
+            @param {String} m The sort mode.  Either min, max, sum, or avg.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      mode: function (m) {
+        if (m == null) {
+          return sort[key].mode;
+        }
+
+        m = m.toLowerCase();
+        if (m === 'min' || m === 'max' || m === 'sum' || m === 'avg') {
+          sort[key].mode = m;
+        }
+      
+        return this;
+      },
+      
+      /**
+            Sets the path of the nested object.
+
+            Valid during sort types:  field
+          
+            @since elasticsearch 0.90
+            @member ejs.Sort
+            @param {String} path The nested path value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      nestedPath: function (path) {
+        if (path == null) {
+          return sort[key].nested_path;
+        }
+
+        sort[key].nested_path = path;
+        return this;
+      },
+      
+      /**
+            <p>Allows you to set a filter that nested objects must match
+            in order to be considered during sorting.</p>
+
+            @since elasticsearch 0.90
+            @member ejs.Sort
+            @param {Object} oFilter A valid <code>Filter</code> object.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      nestedFilter: function (oFilter) {
+        if (oFilter == null) {
+          return sort[key].nested_filter;
+        }
+      
+        if (!isFilter(oFilter)) {
+          throw new TypeError('Argument must be a Filter');
+        }
+        
+        sort[key].nested_filter = oFilter._self();
+        return this;
+      },
+          
       /**
             Allows you to serialize this object into a JSON encoded string.
 
@@ -17979,6 +19086,902 @@
         return sort;
       }
     };
+  };
+
+  /**
+    @class
+    <p>DirectGenerator is a candidate generator for <code>PhraseSuggester</code>.
+    It generates terms based on edit distance and operators much like the
+    <code>TermSuggester</code>.</p>
+
+    @name ejs.DirectGenerator
+
+    @since elasticsearch 0.90
+  
+    @desc
+    <p>A candidate generator that generates terms based on edit distance.</p>
+
+    @borrows ejs.DirectSettingsMixin.accuracy as accuracy
+    @borrows ejs.DirectSettingsMixin.suggestMode as suggestMode
+    @borrows ejs.DirectSettingsMixin.sort as sort
+    @borrows ejs.DirectSettingsMixin.stringDistance as stringDistance
+    @borrows ejs.DirectSettingsMixin.maxEdits as maxEdits
+    @borrows ejs.DirectSettingsMixin.maxInspections as maxInspections
+    @borrows ejs.DirectSettingsMixin.maxTermFreq as maxTermFreq
+    @borrows ejs.DirectSettingsMixin.prefixLength as prefixLength
+    @borrows ejs.DirectSettingsMixin.minWordLen as minWordLen
+    @borrows ejs.DirectSettingsMixin.minDocFreq as minDocFreq
+    */
+  ejs.DirectGenerator = function () {
+
+  
+    var
+
+    // common suggester options used in this generator
+    _common = ejs.DirectSettingsMixin(),
+  
+    /**
+        The internal generator object.
+        @member ejs.DirectGenerator
+        @property {Object} suggest
+        */
+    generator = _common._self();
+
+    return extend(_common, {
+
+      /**
+            <p>Sets an analyzer that is applied to each of the tokens passed to 
+            this generator.  The analyzer is applied to the original tokens,
+            not the generated tokens.</p>
+
+            @member ejs.DirectGenerator
+            @param {String} analyzer A valid analyzer name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      preFilter: function (analyzer) {
+        if (analyzer == null) {
+          return generator.pre_filter;
+        }
+  
+        generator.pre_filter = analyzer;
+        return this;
+      },
+    
+      /**
+            <p>Sets an analyzer that is applied to each of the generated tokens 
+            before they are passed to the actual phrase scorer.</p>
+
+            @member ejs.DirectGenerator
+            @param {String} analyzer A valid analyzer name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      postFilter: function (analyzer) {
+        if (analyzer == null) {
+          return generator.post_filter;
+        }
+  
+        generator.post_filter = analyzer;
+        return this;
+      },
+    
+      /**
+            <p>Sets the field used to generate suggestions from.</p>
+
+            @member ejs.DirectGenerator
+            @param {String} field A valid field name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      field: function (field) {
+        if (field == null) {
+          return generator.field;
+        }
+  
+        generator.field = field;
+        return this;
+      },
+    
+      /**
+            <p>Sets the number of suggestions returned for each token.</p>
+
+            @member ejs.DirectGenerator
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      size: function (s) {
+        if (s == null) {
+          return generator.size;
+        }
+  
+        generator.size = s;
+        return this;
+      },
+    
+      /**
+            <p>Allows you to serialize this object into a JSON encoded string.</p>
+
+            @member ejs.DirectGenerator
+            @returns {String} returns this object as a serialized JSON string.
+            */
+      toString: function () {
+        return JSON.stringify(generator);
+      },
+
+      /**
+            The type of ejs object.  For internal use only.
+        
+            @member ejs.DirectGenerator
+            @returns {String} the type of object
+            */
+      _type: function () {
+        return 'generator';
+      },
+  
+      /**
+            <p>Retrieves the internal <code>generator</code> object. This is typically used by
+               internal API functions so use with caution.</p>
+
+            @member ejs.DirectGenerator
+            @returns {String} returns this object's internal <code>generator</code> property.
+            */
+      _self: function () {
+        return generator;
+      }
+    });
+  };
+
+  /**
+    @mixin
+    <p>The DirectSettingsMixin provides support for common options used across 
+    various <code>Suggester</code> implementations.  This object should not be 
+    used directly.</p>
+
+    @name ejs.DirectSettingsMixin
+    */
+  ejs.DirectSettingsMixin = function () {
+
+    /**
+        The internal settings object.
+        @member ejs.DirectSettingsMixin
+        @property {Object} settings
+        */
+    var settings = {};
+
+    return {
+        
+      /**
+            <p>Sets the accuracy.  How similar the suggested terms at least 
+            need to be compared to the original suggest text.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Double} a A positive double value between 0 and 1.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      accuracy: function (a) {
+        if (a == null) {
+          return settings.accuracy;
+        }
+  
+        settings.accuracy = a;
+        return this;
+      },
+    
+      /**
+            <p>Sets the suggest mode.  Valid values are:</p>
+
+            <dl>
+              <dd><code>missing</code> - Only suggest terms in the suggest text that aren't in the index</dd>
+              <dd><code>popular</code> - Only suggest suggestions that occur in more docs then the original suggest text term</dd>
+              <dd><code>always</code> - Suggest any matching suggestions based on terms in the suggest text</dd> 
+            </dl>
+
+            @member ejs.DirectSettingsMixin
+            @param {String} m The mode of missing, popular, or always.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      suggestMode: function (m) {
+        if (m == null) {
+          return settings.suggest_mode;
+        }
+  
+        m = m.toLowerCase();
+        if (m === 'missing' || m === 'popular' || m === 'always') {
+          settings.suggest_mode = m;
+        }
+      
+        return this;
+      },
+    
+      /**
+            <p>Sets the sort mode.  Valid values are:</p>
+
+            <dl>
+              <dd><code>score</code> - Sort by score first, then document frequency, and then the term itself</dd>
+              <dd><code>frequency</code> - Sort by document frequency first, then simlarity score and then the term itself</dd>
+            </dl>
+
+            @member ejs.DirectSettingsMixin
+            @param {String} s The score type of score or frequency.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      sort: function (s) {
+        if (s == null) {
+          return settings.sort;
+        }
+  
+        s = s.toLowerCase();
+        if (s === 'score' || s === 'frequency') {
+          settings.sort = s;
+        }
+      
+        return this;
+      },
+    
+      /**
+            <p>Sets what string distance implementation to use for comparing 
+            how similar suggested terms are.  Valid values are:</p>
+
+            <dl>
+              <dd><code>internal</code> - based on damerau_levenshtein but but highly optimized for comparing string distance for terms inside the index</dd>
+              <dd><code>damerau_levenshtein</code> - String distance algorithm based on Damerau-Levenshtein algorithm</dd>
+              <dd><code>levenstein</code> - String distance algorithm based on Levenstein edit distance algorithm</dd>
+              <dd><code>jarowinkler</code> - String distance algorithm based on Jaro-Winkler algorithm</dd>
+              <dd><code>ngram</code> - String distance algorithm based on character n-grams</dd>
+            </dl>
+
+            @member ejs.DirectSettingsMixin
+            @param {String} s The string distance algorithm name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      stringDistance: function (s) {
+        if (s == null) {
+          return settings.string_distance;
+        }
+  
+        s = s.toLowerCase();
+        if (s === 'internal' || s === 'damerau_levenshtein' || 
+            s === 'levenstein' || s === 'jarowinkler' || s === 'ngram') {
+          settings.string_distance = s;
+        }
+      
+        return this;
+      },
+    
+      /**
+            <p>Sets the maximum edit distance candidate suggestions can have 
+            in order to be considered as a suggestion.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Integer} max An integer value greater than 0.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      maxEdits: function (max) {
+        if (max == null) {
+          return settings.max_edits;
+        }
+  
+        settings.max_edits = max;
+        return this;
+      },
+    
+      /**
+            <p>The factor that is used to multiply with the size in order 
+            to inspect more candidate suggestions.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Integer} max A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      maxInspections: function (max) {
+        if (max == null) {
+          return settings.max_inspections;
+        }
+  
+        settings.max_inspections = max;
+        return this;
+      },
+    
+      /**
+            <p>Sets a maximum threshold in number of documents a suggest text 
+            token can exist in order to be corrected.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Double} max A positive double value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      maxTermFreq: function (max) {
+        if (max == null) {
+          return settings.max_term_freq;
+        }
+  
+        settings.max_term_freq = max;
+        return this;
+      },
+    
+      /**
+            <p>Sets the number of minimal prefix characters that must match in 
+            order be a candidate suggestion.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Integer} len A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      prefixLength: function (len) {
+        if (len == null) {
+          return settings.prefix_length;
+        }
+  
+        settings.prefix_length = len;
+        return this;
+      },
+    
+      /**
+            <p>Sets the minimum length a suggest text term must have in order 
+            to be corrected.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Integer} len A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      minWordLen: function (len) {
+        if (len == null) {
+          return settings.min_word_len;
+        }
+  
+        settings.min_word_len = len;
+        return this;
+      },
+    
+      /**
+            <p>Sets a minimal threshold of the number of documents a suggested 
+            term should appear in.</p>
+
+            @member ejs.DirectSettingsMixin
+            @param {Double} min A positive double value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      minDocFreq: function (min) {
+        if (min == null) {
+          return settings.min_doc_freq;
+        }
+  
+        settings.min_doc_freq = min;
+        return this;
+      },
+  
+      /**
+            <p>Retrieves the internal <code>settings</code> object. This is typically used by
+               internal API functions so use with caution.</p>
+
+            @member ejs.DirectSettingsMixin
+            @returns {String} returns this object's internal <code>settings</code> property.
+            */
+      _self: function () {
+        return settings;
+      }
+    };
+  };
+
+  /**
+    @class
+    <p>PhraseSuggester extends the <code>PhraseSuggester</code> and suggests
+    entire corrected phrases instead of individual tokens.  The individual
+    phrase suggestions are weighted based on ngram-langugage models. In practice 
+    it will be able to make better decision about which tokens to pick based on 
+    co-occurence and frequencies.</p>
+
+    @name ejs.PhraseSuggester
+
+    @since elasticsearch 0.90
+    
+    @desc
+    <p>A suggester that suggests entire corrected phrases.</p>
+
+    @param {String} name The name which be used to refer to this suggester.
+    */
+  ejs.PhraseSuggester = function (name) {
+
+    /**
+        The internal suggest object.
+        @member ejs.PhraseSuggester
+        @property {Object} suggest
+        */
+    var suggest = {};
+    suggest[name] = {phrase: {}};
+
+    return {
+
+      /**
+            <p>Sets the text to get suggestions for.  If not set, the global
+            suggestion text will be used.</p>
+
+            @member ejs.PhraseSuggester
+            @param {String} txt A string to get suggestions for.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      text: function (txt) {
+        if (txt == null) {
+          return suggest[name].text;
+        }
+    
+        suggest[name].text = txt;
+        return this;
+      },
+
+      /**
+            <p>Sets analyzer used to analyze the suggest text.</p>
+
+            @member ejs.PhraseSuggester
+            @param {String} analyzer A valid analyzer name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      analyzer: function (analyzer) {
+        if (analyzer == null) {
+          return suggest[name].phrase.analyzer;
+        }
+    
+        suggest[name].phrase.analyzer = analyzer;
+        return this;
+      },
+      
+      /**
+            <p>Sets the field used to generate suggestions from.</p>
+
+            @member ejs.PhraseSuggester
+            @param {String} field A valid field name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      field: function (field) {
+        if (field == null) {
+          return suggest[name].phrase.field;
+        }
+    
+        suggest[name].phrase.field = field;
+        return this;
+      },
+      
+      /**
+            <p>Sets the number of suggestions returned for each token.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      size: function (s) {
+        if (s == null) {
+          return suggest[name].phrase.size;
+        }
+    
+        suggest[name].phrase.size = s;
+        return this;
+      },
+      
+      /**
+            <p>Sets the maximum number of suggestions to be retrieved from 
+            each individual shard.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      shardSize: function (s) {
+        if (s == null) {
+          return suggest[name].phrase.shard_size;
+        }
+    
+        suggest[name].phrase.shard_size = s;
+        return this;
+      },
+      
+      /**
+            <p>Sets the likelihood of a term being a misspelled even if the 
+            term exists in the dictionary. The default it 0.95 corresponding 
+            to 5% or the real words are misspelled.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} l A positive double value greater than 0.0.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      realWorldErrorLikelihood: function (l) {
+        if (l == null) {
+          return suggest[name].phrase.real_world_error_likelihood;
+        }
+    
+        suggest[name].phrase.real_world_error_likelihood = l;
+        return this;
+      },
+      
+      /**
+            <p>Sets the confidence level defines a factor applied to the input 
+            phrases score which is used as a threshold for other suggest 
+            candidates. Only candidates that score higher than the threshold 
+            will be included in the result.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} c A positive double value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      confidence: function (c) {
+        if (c == null) {
+          return suggest[name].phrase.confidence;
+        }
+    
+        suggest[name].phrase.confidence = c;
+        return this;
+      },
+      
+      /**
+            <p>Sets the separator that is used to separate terms in the bigram 
+            field. If not set the whitespce character is used as a 
+            separator.</p>
+
+            @member ejs.PhraseSuggester
+            @param {String} sep A string separator.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      separator: function (sep) {
+        if (sep == null) {
+          return suggest[name].phrase.separator;
+        }
+    
+        suggest[name].phrase.separator = sep;
+        return this;
+      },
+      
+      /**
+            <p>Sets the maximum percentage of the terms that at most 
+            considered to be misspellings in order to form a correction.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} c A positive double value greater between 0 and 1.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      maxErrors: function (max) {
+        if (max == null) {
+          return suggest[name].phrase.max_errors;
+        }
+    
+        suggest[name].phrase.max_errors = max;
+        return this;
+      },
+      
+      /**
+            <p>Sets the max size of the n-grams (shingles) in the field. If 
+            the field doesn't contain n-grams (shingles) this should be 
+            omitted or set to 1.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      gramSize: function (s) {
+        if (s == null) {
+          return suggest[name].phrase.gram_size;
+        }
+    
+        suggest[name].phrase.gram_size = s;
+        return this;
+      },
+      
+      /**
+            <p>Forces the use of unigrams.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Boolean} trueFalse True to force unigrams, false otherwise.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      forceUnigrams: function (trueFalse) {
+        if (trueFalse == null) {
+          return suggest[name].phrase.force_unigrams;
+        }
+    
+        suggest[name].phrase.force_unigrams = trueFalse;
+        return this;
+      },
+      
+      /**
+            <p>A smoothing model that takes the weighted mean of the unigrams, 
+            bigrams and trigrams based on user supplied weights (lambdas). The
+            sum of tl, bl, and ul must equal 1.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} tl A positive double value used for trigram weight.
+            @param {Double} bl A positive double value used for bigram weight.
+            @param {Double} ul A positive double value used for unigram weight.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      linearSmoothing: function (tl, bl, ul) {
+        if (arguments.length === 0) {
+          return suggest[name].phrase.smoothing;
+        }
+    
+        suggest[name].phrase.smoothing = {
+          linear: {
+            trigram_lambda: tl,
+            bigram_lambda: bl,
+            unigram_lambda: ul
+          }
+        };
+        
+        return this;
+      },
+      
+      /**
+            <p>A smoothing model that uses an additive smoothing model where a 
+            constant (typically 1.0 or smaller) is added to all counts to 
+            balance weights, The default alpha is 0.5.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} alpha A double value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      laplaceSmoothing: function (alpha) {
+        if (alpha == null) {
+          return suggest[name].phrase.smoothing;
+        }
+    
+        suggest[name].phrase.smoothing = {
+          laplace: {
+            alpha: alpha
+          }
+        };
+        
+        return this;
+      },
+      
+      /**
+            <p>A simple backoff model that backs off to lower order n-gram 
+            models if the higher order count is 0 and discounts the lower 
+            order n-gram model by a constant factor. The default discount is 
+            0.4.</p>
+
+            @member ejs.PhraseSuggester
+            @param {Double} discount A double value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      stupidBackoffSmoothing: function (discount) {
+        if (discount == null) {
+          return suggest[name].phrase.smoothing;
+        }
+    
+        suggest[name].phrase.smoothing = {
+          stupid_backoff: {
+            discount: discount
+          }
+        };
+        
+        return this;
+      },
+      
+      /**
+            Adds a direct generator. If passed a single <code>Generator</code>
+            it is added to the list of existing generators.  If passed an 
+            array of Generators, they replace all existing generators.
+
+            @member ejs.PhraseSuggester
+            @param {Generator || Array} oGenerator A valid Generator or 
+              array of Generator objects.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      directGenerator: function (oGenerator) {
+        var i, len;
+
+        if (suggest[name].phrase.direct_generator == null) {
+          suggest[name].phrase.direct_generator = [];
+        }
+
+        if (oGenerator == null) {
+          return suggest[name].phrase.direct_generator;
+        }
+
+        if (isGenerator(oGenerator)) {
+          suggest[name].phrase.direct_generator.push(oGenerator._self());
+        } else if (isArray(oGenerator)) {
+          suggest[name].phrase.direct_generator = [];
+          for (i = 0, len = oGenerator.length; i < len; i++) {
+            if (!isGenerator(oGenerator[i])) {
+              throw new TypeError('Argument must be an array of Generators');
+            }
+
+            suggest[name].phrase.direct_generator.push(oGenerator[i]._self());
+          }
+        } else {
+          throw new TypeError('Argument must be a Generator or array of Generators');
+        }
+
+        return this;
+      },
+        
+      /**
+            <p>Allows you to serialize this object into a JSON encoded string.</p>
+
+            @member ejs.PhraseSuggester
+            @returns {String} returns this object as a serialized JSON string.
+            */
+      toString: function () {
+        return JSON.stringify(suggest);
+      },
+
+      /**
+            The type of ejs object.  For internal use only.
+          
+            @member ejs.PhraseSuggester
+            @returns {String} the type of object
+            */
+      _type: function () {
+        return 'suggest';
+      },
+    
+      /**
+            <p>Retrieves the internal <code>suggest</code> object. This is typically used by
+               internal API functions so use with caution.</p>
+
+            @member ejs.PhraseSuggester
+            @returns {String} returns this object's internal <code>suggest</code> property.
+            */
+      _self: function () {
+        return suggest;
+      }
+    };
+  };
+
+  /**
+    @class
+    <p>TermSuggester suggests terms based on edit distance. The provided suggest 
+    text is analyzed before terms are suggested. The suggested terms are 
+    provided per analyzed suggest text token.  This leaves the suggest-selection 
+    to the API consumer.  For a higher level suggester, please use the 
+    <code>PhraseSuggester</code>.</p>
+
+    @name ejs.TermSuggester
+
+    @since elasticsearch 0.90
+    
+    @desc
+    <p>A suggester that suggests terms based on edit distance.</p>
+
+    @borrows ejs.DirectSettingsMixin.accuracy as accuracy
+    @borrows ejs.DirectSettingsMixin.suggestMode as suggestMode
+    @borrows ejs.DirectSettingsMixin.sort as sort
+    @borrows ejs.DirectSettingsMixin.stringDistance as stringDistance
+    @borrows ejs.DirectSettingsMixin.maxEdits as maxEdits
+    @borrows ejs.DirectSettingsMixin.maxInspections as maxInspections
+    @borrows ejs.DirectSettingsMixin.maxTermFreq as maxTermFreq
+    @borrows ejs.DirectSettingsMixin.prefixLength as prefixLength
+    @borrows ejs.DirectSettingsMixin.minWordLen as minWordLen
+    @borrows ejs.DirectSettingsMixin.minDocFreq as minDocFreq
+
+    @param {String} name The name which be used to refer to this suggester.
+    */
+  ejs.TermSuggester = function (name) {
+
+    /**
+        The internal suggest object.
+        @member ejs.TermSuggester
+        @property {Object} suggest
+        */
+    var suggest = {},
+  
+    // common suggester options
+    _common = ejs.DirectSettingsMixin();
+    
+    // setup correct term suggestor format
+    suggest[name] = {term: _common._self()};
+
+    return extend(_common, {
+
+      /**
+            <p>Sets the text to get suggestions for.  If not set, the global
+            suggestion text will be used.</p>
+
+            @member ejs.TermSuggester
+            @param {String} txt A string to get suggestions for.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      text: function (txt) {
+        if (txt == null) {
+          return suggest[name].text;
+        }
+    
+        suggest[name].text = txt;
+        return this;
+      },
+    
+      /**
+            <p>Sets analyzer used to analyze the suggest text.</p>
+
+            @member ejs.TermSuggester
+            @param {String} analyzer A valid analyzer name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      analyzer: function (analyzer) {
+        if (analyzer == null) {
+          return suggest[name].term.analyzer;
+        }
+    
+        suggest[name].term.analyzer = analyzer;
+        return this;
+      },
+      
+      /**
+            <p>Sets the field used to generate suggestions from.</p>
+
+            @member ejs.TermSuggester
+            @param {String} field A valid field name.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      field: function (field) {
+        if (field == null) {
+          return suggest[name].term.field;
+        }
+    
+        suggest[name].term.field = field;
+        return this;
+      },
+      
+      /**
+            <p>Sets the number of suggestions returned for each token.</p>
+
+            @member ejs.TermSuggester
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      size: function (s) {
+        if (s == null) {
+          return suggest[name].term.size;
+        }
+    
+        suggest[name].term.size = s;
+        return this;
+      },
+      
+      /**
+            <p>Sets the maximum number of suggestions to be retrieved from 
+            each individual shard.</p>
+
+            @member ejs.TermSuggester
+            @param {Integer} s A positive integer value.
+            @returns {Object} returns <code>this</code> so that calls can be chained.
+            */
+      shardSize: function (s) {
+        if (s == null) {
+          return suggest[name].term.shard_size;
+        }
+    
+        suggest[name].term.shard_size = s;
+        return this;
+      },
+      
+      /**
+            <p>Allows you to serialize this object into a JSON encoded string.</p>
+
+            @member ejs.TermSuggester
+            @returns {String} returns this object as a serialized JSON string.
+            */
+      toString: function () {
+        return JSON.stringify(suggest);
+      },
+
+      /**
+            The type of ejs object.  For internal use only.
+          
+            @member ejs.TermSuggester
+            @returns {String} the type of object
+            */
+      _type: function () {
+        return 'suggest';
+      },
+    
+      /**
+            <p>Retrieves the internal <code>suggest</code> object. This is typically used by
+               internal API functions so use with caution.</p>
+
+            @member ejs.TermSuggester
+            @returns {String} returns this object's internal <code>suggest</code> property.
+            */
+      _self: function () {
+        return suggest;
+      }
+    });
   };
 
   // run in noConflict mode

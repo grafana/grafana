@@ -98,7 +98,7 @@ angular.module('kibana.table', [])
 
     $scope.populate_modal(request)
 
-    var results = request.doSearch();
+    var results = request.doSearch()
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -110,8 +110,8 @@ angular.module('kibana.table', [])
         query_id = $scope.query_id = new Date().getTime()
       }
 
-      if(_.isUndefined(results)) {
-        $scope.panel.error = 'Your query was unsuccessful';
+      if(!(_.isUndefined(results.error))) {
+        $scope.panel.error = $scope.parse_error(results.error);
         return;
       }
       $scope.panel.error =  false;
