@@ -68,6 +68,21 @@ angular.module('kibana.services', [])
   }
 
 })
+/* Service: fields
+   Provides a global list of all seen fields for use in editor panels
+*/
+.factory('fields', function($rootScope) {
+  var fields = {
+    list : []
+  }
+
+  $rootScope.$on('fields', function(event,f) {
+    fields.list = _.union(f.data.all,fields.list)
+  })
+
+  return fields;
+
+})
 .service('timer', function($timeout) {
   // This service really just tracks a list of $timeout promises to give us a
   // method for cancelling them all when we need to

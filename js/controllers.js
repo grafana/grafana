@@ -3,7 +3,7 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus) {
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus, fields) {
 
   var _d = {
     title: "",
@@ -14,7 +14,11 @@ angular.module('kibana.controllers', [])
   $scope.init = function() {
 
     $scope.config = config;
+    // Make underscore.js available to views
     $scope._ = _;
+
+    // Provide a global list of all see fields
+    $scope.fields = fields
     $scope.reset_row();
     $scope.clear_all_alerts();
 

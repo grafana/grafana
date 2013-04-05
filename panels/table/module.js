@@ -1,5 +1,5 @@
 angular.module('kibana.table', [])
-.controller('table', function($scope, eventBus) {
+.controller('table', function($scope, eventBus, fields) {
 
   // Set and populate defaults
   var _d = {
@@ -142,7 +142,6 @@ angular.module('kibana.table', [])
       
       // This breaks, use $scope.data for this
       $scope.all_fields = get_all_fields($scope.data);
-
       broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for
