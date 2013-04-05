@@ -48,6 +48,7 @@ angular.module('kibana.histogram', [])
   }
 
   $scope.get_data = function(segment,query_id) {
+    delete $scope.panel.error
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
@@ -92,6 +93,13 @@ angular.module('kibana.histogram', [])
         query_id = $scope.query_id = new Date().getTime();
       }
       
+      // Check for error and abort if found
+      if(!(_.isUndefined(results.error))) {
+        $scope.panel.error = $scope.parse_error(results.error);
+        return;
+      }
+
+
       if($scope.query_id === query_id) {
 
         var i = 0;
@@ -182,8 +190,6 @@ angular.module('kibana.histogram', [])
     link: function(scope, elem, attrs, ctrl) {
 
       var height = scope.panel.height || scope.row.height;
-
-      elem.html('<center><img src="common/img/load_big.gif"></center>')
 
       // Receive render events
       scope.$on('render',function(){

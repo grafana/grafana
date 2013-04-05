@@ -76,7 +76,8 @@ angular.module('kibana.controllers', [])
 
   // This is whoafully incomplete, but will do for now 
   $scope.parse_error = function(data) {
-    return data.match("nested: (.*?);")[1]
+    var _error = data.match("nested: (.*?);")
+    return _.isNull(_error) ? data : _error[1];
   }
 
   $scope.init();

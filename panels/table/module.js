@@ -76,6 +76,8 @@ angular.module('kibana.table', [])
   }
 
   $scope.get_data = function(segment,query_id) {
+    $scope.panel.error =  false;
+
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
@@ -110,11 +112,11 @@ angular.module('kibana.table', [])
         query_id = $scope.query_id = new Date().getTime()
       }
 
+      // Check for error and abort if found
       if(!(_.isUndefined(results.error))) {
         $scope.panel.error = $scope.parse_error(results.error);
         return;
       }
-      $scope.panel.error =  false;
 
       // Check that we're still on the same query, if not stop
       if($scope.query_id === query_id) {

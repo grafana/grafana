@@ -12,5 +12,6 @@
     <div class='small' style='display:inline-block'>{{series.label}} ({{series.hits}})</div>
   </span><span class="small"> per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> total)</span>
   </div>
+  <center><img ng-show='panel.loading && _.isUndefined(data)' src="common/img/load_big.gif"></center>
   <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         
