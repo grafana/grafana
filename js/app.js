@@ -27,7 +27,7 @@ var labjs = $LAB
   .script("common/lib/angular-strap.min.js")
   .script("common/lib/angular-sanitize.min.js")
   .script("common/lib/elastic.min.js")
-  .script("common/lib/elastic-angular-client.min.js")
+  .script("common/lib/elastic-angular-client.js")
   .script("common/lib/dateformat.js")
   .script("common/lib/date.js")
   .script("common/lib/datepicker.js")
