@@ -24,7 +24,9 @@
             <div class="control-group">
                 <label class="control-label" for="panelfield">Primary Field</label>
                 <div class="controls">
-                    <input type="text" id="panelfield" class="input" ng-model="panel.field">
+                    <input type="text" id="panelfield" class="input"
+                           ng-model="panel.field"
+                           ng-change="get_data()" />
                 </div>
             </div>
             <div class="control-group">
@@ -32,6 +34,7 @@
                 <div class="controls">
                     <input type="text" id="panelsecondaryfield" class="input"
                            ng-model="panel.secondaryfield"
+                           ng-change="get_data()"
                            data-placement="right"
                            placeholder="Optional"
                            bs-tooltip="'Allows aggregating on Primary field, while counting stats on a secondary (e.g. Group By user_id, Sum(purchase_price)).'" />
@@ -149,12 +152,30 @@
                 </td>
             </tr>
             <tr>
-                <td>Encoding</td>
                 <td>
-                    <div class="btn-group" ng-model="panel.display.binning.encoding" bs-buttons-radio ng-change="$emit('render')">
-                        <button type="button" class="btn" value="areacolor" >Area + Color</button>
-                        <button type="button" class="btn" value="area">Area</button>
-                        <button type="button" class="btn" value="color">Color</button>
+                    <button type="button" class="btn" bs-button
+                            ng-change="$emit('render')"
+                            ng-class="{'btn-success': panel.display.binning.areaEncoding}"
+                            ng-model="panel.display.binning.areaEncoding">Area</button>
+                </td>
+                <td>
+                    <div class="btn-group" ng-model="panel.display.binning.areaEncodingField" bs-buttons-radio ng-change="$emit('render')">
+                        <button type="button" class="btn" value="primary">Primary Field</button>
+                        <button type="button" class="btn" value="secondary">Secondary Field</button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button type="button" class="btn" bs-button
+                            ng-change="$emit('render')"
+                            ng-class="{'btn-success': panel.display.binning.colorEncoding}"
+                            ng-model="panel.display.binning.colorEncoding">Color</button>
+                </td>
+                <td>
+                    <div class="btn-group" ng-model="panel.display.binning.colorEncodingField" bs-buttons-radio ng-change="$emit('render')">
+                        <button type="button" class="btn" value="primary">Primary Field</button>
+                        <button type="button" class="btn" value="secondary">Secondary Field</button>
                     </div>
                 </td>
             </tr>

@@ -25,7 +25,10 @@ angular.module('kibana.map2', [])
                     enabled: true,
                     hexagonSize: 10,
                     hexagonAlpha: 1.0,
-                    encoding: "color"
+                    areaEncoding: true,
+                    areaEncodingField: "primary",
+                    colorEncoding: true,
+                    colorEncodingField: "primary"
                 }
             },
             displayTabs: ["Geopoints", "Binning", "Data"],
@@ -63,16 +66,39 @@ angular.module('kibana.map2', [])
             var request = $scope.ejs.Request().indices($scope.panel.index);
 
 
-            var facet = $scope.ejs.TermsFacet('map')
-                .field($scope.panel.field)
-                .size($scope.panel.display.data.samples)
-                .exclude($scope.panel.exclude)
-                .facetFilter(ejs.QueryFilter(
-                    ejs.FilteredQuery(
-                        ejs.QueryStringQuery($scope.panel.query || '*'),
-                        ejs.RangeFilter($scope.time.field)
-                            .from($scope.time.from)
-                            .to($scope.time.to))));
+            console.log("fields", $scope.panel.field, $scope.panel.secondaryfield);
+
+            //Use a regular term facet if there is no secondary field
+            if (typeof $scope.panel.secondaryfield === "undefined") {
+                var facet = $scope.ejs.TermsFacet('map')
+                    .field($scope.panel.field)
+                    .size($scope.panel.display.data.samples)
+                    .exclude($scope.panel.exclude)
+                    .facetFilter(ejs.QueryFilter(
+                        ejs.FilteredQuery(
+                            ejs.QueryStringQuery($scope.panel.query || '*'),
+                            ejs.RangeFilter($scope.time.field)
+                                .from($scope.time.from)
+                                .to($scope.time.to))));
+            } else {
+                //otherwise, use term stats
+                //NOTE: this will break if valueField is a geo_point
+                //      need to put in checks for that
+                var facet = $scope.ejs.TermStatsFacet('map')
+                    .keyField($scope.panel.field)
+                    .valueField($scope.panel.secondaryfield)
+                    .size($scope.panel.display.data.samples)
+                    .facetFilter(ejs.QueryFilter(
+                        ejs.FilteredQuery(
+                            ejs.QueryStringQuery($scope.panel.query || '*'),
+                            ejs.RangeFilter($scope.time.field)
+                                .from($scope.time.from)
+                                .to($scope.time.to))));
+            }
+
+
+
+
 
             // Then the insert into facet and make the request
             var request = request.facet(facet).size(0);
@@ -81,19 +107,31 @@ angular.module('kibana.map2', [])
 
             var results = request.doSearch();
 
+
             // Populate scope when we have results
             results.then(function (results) {
                 $scope.panel.loading = false;
                 $scope.hits = results.hits.total;
                 $scope.data = {};
 
+
                 _.each(results.facets.map.terms, function (v) {
+
+                    var metric = 'count';
+
+                    //If it is a Term facet, use count, otherwise use Total
+                    //May retool this to allow users to pick mean/median/etc
+                    if (typeof $scope.panel.secondaryfield === "undefined") {
+                        metric = 'count';
+                    } else {
+                        metric = 'total';
+                    }
 
                     //FIX THIS
                     if (!$scope.isNumber(v.term)) {
-                        $scope.data[v.term.toUpperCase()] = v.count;
+                        $scope.data[v.term.toUpperCase()] = v[metric];
                     } else {
-                        $scope.data[v.term] = v.count;
+                        $scope.data[v.term] = v[metric];
                     }
                 });
 
@@ -133,7 +171,6 @@ angular.module('kibana.map2', [])
     })
     .filter('enabledText', function() {
         return function (value) {
-            console.log(value);
             if (value === true) {
                 return "Enabled";
             } else {
@@ -161,9 +198,9 @@ angular.module('kibana.map2', [])
                 });
 
                 function render_panel() {
-                    console.log("render_panel");
-                    console.log(scope.panel);
-                    console.log(elem);
+                    //console.log("render_panel");
+                    //console.log(scope.panel);
+                    //console.log(elem);
 
                     // Using LABjs, wait until all scripts are loaded before rendering panel
                     var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js")
@@ -225,11 +262,38 @@ angular.module('kibana.map2', [])
                                 .attr("d", path);
 
 
+
+
+
                             //Geocoded points are decoded into lat/lon, then projected onto x/y
-                            var points = _.map(scope.data, function (k, v) {
+                            points = _.map(scope.data, function (k, v) {
                                 var decoded = geohash.decode(v);
                                 return projection([decoded.longitude, decoded.latitude]);
                             });
+
+
+                            var binPoints = [];
+
+                            //primary field is just binning raw counts
+                            //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
+                            //so we cheat a little and just add more points to compensate.
+                            //However, we don't want to add a million points, so normalize against the largest value
+                            if (scope.panel.display.binning.areaEncodingField === 'secondary') {
+                                var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
+                                    scale = 10/max;
+
+                                _.map(scope.data, function (k, v) {
+                                    var decoded = geohash.decode(v);
+                                    return _.map(_.range(0, k*scale), function(a,b) {
+                                        binPoints.push(projection([decoded.longitude, decoded.latitude]));
+                                    })
+                                });
+
+                            } else {
+                                binPoints = points;
+                            }
+
+
 
 
                             //hexagonal binning
@@ -240,7 +304,11 @@ angular.module('kibana.map2', [])
                                     .radius(scope.panel.display.binning.hexagonSize);
 
                                 //bin and sort the points, so we can set the various ranges appropriately
-                                var binnedPoints = hexbin(points).sort(function(a, b) { return b.length - a.length; });
+                                var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
+console.log(binnedPoints);
+                                //clean up some memory
+                                binPoints = [];
+
 
                                 var radius = d3.scale.sqrt()
                                     .domain([0, binnedPoints[0].length])
@@ -256,7 +324,7 @@ angular.module('kibana.map2', [])
                                     .data(binnedPoints)
                                     .enter().append("path")
                                     .attr("d", function (d) {
-                                        if (scope.panel.display.binning.encoding === 'color') {
+                                        if (scope.panel.display.binning.areaEncoding === false) {
                                             return hexbin.hexagon();
                                         } else {
                                             return hexbin.hexagon(radius(d.length));
@@ -267,8 +335,8 @@ angular.module('kibana.map2', [])
                                         return "translate(" + d.x + "," + d.y + ")";
                                     })
                                     .style("fill", function (d) {
-                                        if (scope.panel.display.binning.encoding === 'area') {
-                                            return color(10);
+                                        if (scope.panel.display.binning.colorEncoding === false) {
+                                            return color(binnedPoints[0].length / 2);
                                         } else {
                                             return color(d.length);
                                         }
