@@ -6,6 +6,46 @@
   color: #000;
 }
 
+.kibana-row {
+  margin-left: 15px;
+  margin-bottom: 15px;
+}
+
+.navbar .brand {
+  color: #eee;
+}
+
+.row-close {
+  color: #bbb;  
+  position: absolute;
+  font-size: 9pt;
+  font-weight: 200;
+  padding-left: 35px;
+  padding-top:0px;
+}
+
+.row-open {
+  text-align: right;
+  color: #bbb;  
+  margin-top:30px;
+  position: absolute;
+  font-size: 13pt;
+  font-weight: 200;
+  -moz-transform-origin: 40px;
+  -ms-transform-origin: 40px;
+  -o-transform-origin: 40px;
+  -webkit-transform-origin: 40px;
+  transform-origin: 40px;
+  transform: rotate(-90deg);
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+  -webkit-transform: rotate(-90deg); 
+  -moz-transform: rotate(-90deg); 
+}
+
+.row-open i {
+  font-size: 10pt;
+}
+
 .odd {
   background-color: #f9f9f9;
 }

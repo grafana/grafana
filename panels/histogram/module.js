@@ -7,6 +7,7 @@ angular.module('kibana.histogram', [])
     interval  : secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
     show      : ['bars','y-axis','x-axis','legend'],
     fill      : 3,
+    linewidth : 3,
     timezone  : 'browser', // browser, utc or a standard timezone
     spyable   : true,
     zoomlinks : true,
@@ -148,7 +149,6 @@ angular.module('kibana.histogram', [])
           i++;
         });
 
-        eventBus.broadcast($scope.$id,$scope.panel.group,'hits',$scope.hits)
         $scope.$emit('render')
         if(_segment < $scope.panel.index.length-1) {
           $scope.get_data(_segment+1,query_id)
@@ -184,7 +184,7 @@ angular.module('kibana.histogram', [])
   }
 
 })
-.directive('histogram', function(eventBus) {
+.directive('histogramChart', function(eventBus) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -236,7 +236,12 @@ angular.module('kibana.histogram', [])
               },
               series: {
                 stack:  show.stack,
-                lines:  { show: show.lines, fill: scope.panel.fill/10 },
+                lines:  { 
+                  show: show.lines, 
+                  fill: scope.panel.fill/10, 
+                  lineWidth: scope.panel.linewidth,
+                  steps: true
+                },
                 bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
                 points: { show: show.points, fill: 1, fillColor: false},
                 shadowSize: 1
@@ -251,7 +256,8 @@ angular.module('kibana.histogram', [])
                 color: "#000",
               },
               selection: {
-                mode: "x"
+                mode: "x",
+                color: '#666'
               },
               grid: {
                 backgroundColor: '#fff',
@@ -294,23 +300,25 @@ angular.module('kibana.histogram', [])
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
         //var tooltip = $('#pie-tooltip')
-        tooltip.text(contents).css({
+        tooltip.html(contents).css({
           position: 'absolute',
           top     : y + 5,
           left    : x + 5,
-          color   : "#FFF",
-          border  : '1px solid #FFF',
-          padding : '2px',
-          'font-size': '8pt',
-          'background-color': '#000',
+          color   : "#000",
+          border  : '3px solid #000',
+          padding : '10px',
+          'font-size': '11pt',
+          'font-weight' : 'bold',
+          'background-color': '#FFF',
+          'border-radius': '10px',
         }).appendTo("body");
       }
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
-          var percent = parseFloat(item.series.percent).toFixed(1) + "%";
           tt(pos.pageX, pos.pageY,
-            item.datapoint[1].toFixed(1) + " @ " + 
+            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:20px;width:20px'></div> "+
+            item.datapoint[1].toFixed(0) + " @ " + 
             new Date(item.datapoint[0]).format('mm/dd HH:MM:ss'));
         } else {
           $("#pie-tooltip").remove();
