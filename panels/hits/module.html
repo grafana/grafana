@@ -1,3 +1,11 @@
 <kibana-panel ng-controller='hits' ng-init="init()">
-  <p ng-style="panel.style">&#8805 {{hits}}</p>
+  <p ng-style="panel.style" ng-show="panel.aggregate">{{hits}}</p>
+  <table ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'vertical'">  
+    <tr style="line-height:{{panel.style['font-size']}}" ng-repeat="query in data">
+      <td style="padding-right:10px">{{query.label}}</td><td>{{query.hits}}</td>
+    </tr>
+  </table>
+  <div ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'horizontal'" ng-repeat="query in data" style="float:left; padding-left: 10px">
+    {{query.label}} {{query.hits}} <span ng-show="!$last">|</span>
+  </div>
 </kibana-panel>         
