@@ -2,16 +2,16 @@
   <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
-  <center ng-show='panel.zoomlinks && data'>
+  <div>
+  <span ng-show='panel.zoomlinks && data'>
     <a class='small' ng-click='zoom(0.5)'><i class='icon-zoom-in'></i> Zoom In</a>
     <a class='small' ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a>
-  </center>
-  <div>
+  </span> | 
   <span ng-repeat='series in legend' style='display:inline-block;padding-right:5px'>
     <div style="display:inline-block;background:{{series.color}};height:10px;width:10px"></div>
     <div class='small' style='display:inline-block'>{{series.label}} ({{series.hits}})</div>
   </span><span class="small"> per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> total)</span>
   </div>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="common/img/load_big.gif"></center>
-  <div histogram params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+  <div histogram-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

@@ -184,7 +184,7 @@ angular.module('kibana.histogram', [])
   }
 
 })
-.directive('histogram', function(eventBus) {
+.directive('histogramChart', function(eventBus) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -256,7 +256,8 @@ angular.module('kibana.histogram', [])
                 color: "#000",
               },
               selection: {
-                mode: "x"
+                mode: "x",
+                color: '#666'
               },
               grid: {
                 backgroundColor: '#fff',

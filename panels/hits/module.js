@@ -5,9 +5,12 @@ angular.module('kibana.hits', [])
   var _d = {
     query   : "*",
     group   : "default",
-    style   : { "font-size": '36pt'},
+    style   : { "font-size": '10pt'},
     aggregate   : true,
-    arrangement : 'vertical'
+    arrangement : 'vertical',
+    chart   : true,
+    counters: true,
+    count_pos: 'above'
   }
   _.defaults($scope.panel,_d)
 
@@ -87,15 +90,17 @@ angular.module('kibana.hits', [])
           // Create series
           $scope.data[i] = { 
             label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
-            hits: hits
+            hits: hits,
+            data: [[i,hits]]
           };
 
           i++;
         });
 
+        $scope.$emit('render');
         if(_segment < $scope.panel.index.length-1) 
           $scope.get_data(_segment+1,query_id)
-      
+        
       }
     });
   }
@@ -119,4 +124,95 @@ angular.module('kibana.hits', [])
     $scope.get_data();
   }
 
+}).directive('hitsChart', function(eventBus) {
+  return {
+    restrict: 'A',
+    link: function(scope, elem, attrs, ctrl) {
+
+      // Receive render events
+      scope.$on('render',function(){
+        render_panel();
+      });
+  
+      // Re-render if the window is resized
+      angular.element(window).bind('resize', function(){
+        render_panel();
+      });
+
+      // Function for rendering panel
+      function render_panel() {
+
+        var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
+                    
+        // Populate element. Note that jvectormap appends, does not replace.
+        scripts.wait(function(){
+          console.log(scope.data)
+
+          // Populate element
+          try { 
+            var plot = $.plot(elem, scope.data, {
+              legend: { show: false },
+              series: {
+                lines:  { show: false, },
+                bars:   { show: true,  fill: 1, barWidth: 0.8, horizontal: false },
+                shadowSize: 1
+              },
+              yaxis: { show: true, min: 0, color: "#000" },
+              xaxis: { show: false },
+              grid: {
+                backgroundColor: '#fff',
+                borderWidth: 0,
+                borderColor: '#eee',
+                color: "#eee",
+                hoverable: true,
+              },
+              colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
+            })
+
+            var i = 0;
+            _.each(plot.getData(),function(series) {
+              scope.data[i].color = series.color;
+              i++;
+            })
+            
+            // Work around for missing legend at initialization
+            if(!scope.$$phase)
+              scope.$apply()
+
+          } catch(e) {
+            elem.text(e)
+          }
+        })
+      }
+
+      function tt(x, y, contents) {
+        var tooltip = $('#pie-tooltip').length ? 
+          $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+        //var tooltip = $('#pie-tooltip')
+        tooltip.html(contents).css({
+          position: 'absolute',
+          top     : y + 5,
+          left    : x + 5,
+          color   : "#000",
+          border  : '3px solid #000',
+          padding : '10px',
+          'font-size': '11pt',
+          'font-weight' : 'bold',
+          'background-color': '#FFF',
+          'border-radius': '10px',
+        }).appendTo("body");
+      }
+
+      elem.bind("plothover", function (event, pos, item) {
+        if (item) {
+          tt(pos.pageX, pos.pageY,
+            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:20px;width:20px'></div> "+
+            item.datapoint[1].toFixed(0))
+        } else {
+          $("#pie-tooltip").remove();
+        }
+      });
+
+    }
+  };
 })
