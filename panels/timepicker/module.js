@@ -167,6 +167,10 @@ angular.module('kibana.timepicker', [])
     $scope.time_apply();
   }
 
+  $scope.close_modal = function() {
+    $scope.$broadcast('render');
+  }
+
   $scope.time_check = function(){
 
     // If time picker is defined (on initialization)
