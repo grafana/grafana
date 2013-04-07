@@ -3,15 +3,21 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
+    group     : "default",
     query     : [ {query: "*", label:"Query"} ],
     interval  : secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
-    show      : ['bars','y-axis','x-axis','legend'],
     fill      : 3,
     linewidth : 3,
     timezone  : 'browser', // browser, utc or a standard timezone
     spyable   : true,
     zoomlinks : true,
-    group     : "default",
+    bars      : true,
+    stack     : true,
+    points    : false,
+    lines     : false,
+    legend    : true,
+    'x-axis'  : true,
+    'y-axis'  : true,
   }
   _.defaults($scope.panel,_d)
 
@@ -204,17 +210,6 @@ angular.module('kibana.histogram', [])
       // Function for rendering panel
       function render_panel() {
         // Determine format
-        var show = _.isUndefined(scope.panel.show) ? {
-            bars: true, lines: false, points: false
-          } : {
-            lines:  _.indexOf(scope.panel.show,'lines')   < 0 ? false : true,
-            bars:   _.indexOf(scope.panel.show,'bars')    < 0 ? false : true,
-            points: _.indexOf(scope.panel.show,'points')  < 0 ? false : true,
-            stack:  _.indexOf(scope.panel.show,'stack')   < 0 ? null  : true,
-            legend: _.indexOf(scope.panel.show,'legend')  < 0 ? false : true,
-            'x-axis': _.indexOf(scope.panel.show,'x-axis') < 0 ? false : true,
-            'y-axis': _.indexOf(scope.panel.show,'y-axis') < 0 ? false : true,
-          }
 
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
@@ -227,6 +222,7 @@ angular.module('kibana.histogram', [])
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
+          var stack = scope.panel.stack ? true : null;
 
           // Populate element
           try { 
@@ -235,21 +231,21 @@ angular.module('kibana.histogram', [])
                 show: false,
               },
               series: {
-                stack:  show.stack,
+                stack:  stack,
                 lines:  { 
-                  show: show.lines, 
+                  show: scope.panel.lines, 
                   fill: scope.panel.fill/10, 
                   lineWidth: scope.panel.linewidth,
-                  steps: true
+                  steps: false
                 },
-                bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
-                points: { show: show.points, fill: 1, fillColor: false},
+                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8 },
+                points: { show: scope.panel.points, fill: 1, fillColor: false},
                 shadowSize: 1
               },
-              yaxis: { show: show['y-axis'], min: 0, color: "#000" },
+              yaxis: { show: scope.panel['y-axis'], min: 0, color: "#000" },
               xaxis: {
                 timezone: scope.panel.timezone,
-                show: show['x-axis'],
+                show: scope.panel['x-axis'],
                 mode: "time",
                 timeformat: time_format(scope.panel.interval),
                 label: "Datetime",

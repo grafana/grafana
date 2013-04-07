@@ -111,10 +111,6 @@ angular.module('kibana.timepicker', [])
       }     
       $scope.time_apply();
     });
-    
-    $scope.$on('render', function (){
-      $scope.time_apply();
-    });
   }
 
   $scope.set_interval = function (refresh_interval) {
@@ -167,8 +163,8 @@ angular.module('kibana.timepicker', [])
     $scope.time_apply();
   }
 
-  $scope.close_modal = function() {
-    $scope.$broadcast('render');
+  $scope.close_edit = function() {
+    $scope.time_apply();
   }
 
   $scope.time_check = function(){

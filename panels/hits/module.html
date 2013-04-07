@@ -10,5 +10,5 @@
      <span ng-show='panel.chart'><div style="display:inline-block;background:{{query.color}};height:{{panel.style['font-size']}};width:{{panel.style['font-size']}}"></div></span> {{query.label}} ({{query.hits}}) <span ng-show="!$last">|</span>
     </div><br>
   </div><div style="clear:both"></div>
-  <div ng-show='panel.chart && panel.query.length > 1' hits-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+  <div ng-show='panel.chart && !panel.aggregate ' hits-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

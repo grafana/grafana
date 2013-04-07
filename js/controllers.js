@@ -109,9 +109,9 @@ angular.module('kibana.controllers', [])
     }
   }
 
-  $scope.close_modal = function() {
-    // Dummy function, available for overriding in child scopes. For example
-    // a panel might want to broadcast an event when a modal is closed
+  // This can be overridden by individual panel
+  $scope.close_edit = function() {
+    $scope.$broadcast('render')
   }
 
   $scope.add_panel = function(row,panel) {
