@@ -146,8 +146,6 @@ angular.module('kibana.hits', [])
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
-          console.log(scope.data)
-
           // Populate element
           try { 
             var plot = $.plot(elem, scope.data, {

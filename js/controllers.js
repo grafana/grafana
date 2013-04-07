@@ -109,8 +109,9 @@ angular.module('kibana.controllers', [])
     }
   }
 
-  $scope.send_render = function() {
-    $scope.$broadcast('render');
+  // This can be overridden by individual panel
+  $scope.close_edit = function() {
+    $scope.$broadcast('render')
   }
 
   $scope.add_panel = function(row,panel) {
