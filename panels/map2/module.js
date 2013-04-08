@@ -31,9 +31,12 @@ angular.module('kibana.map2', [])
                     areaEncodingField: "primary",
                     colorEncoding: true,
                     colorEncodingField: "primary"
+                },
+                choropleth: {
+                    enabled: false
                 }
             },
-            displayTabs: ["Geopoints", "Binning", "Data"],
+            displayTabs: ["Geopoints", "Binning", "Choropleth", "Data"],
             activeDisplayTab:"Geopoints"
         };
 
@@ -187,6 +190,9 @@ angular.module('kibana.map2', [])
 
                 elem.html('<center><img src="common/img/load_big.gif"></center>')
 
+                var worldData = null,
+                    worldNames = null;
+
                 // Receive render events
                 scope.$on('render', function () {
                     console.log("render");
@@ -200,191 +206,254 @@ angular.module('kibana.map2', [])
                 });
 
                 function render_panel() {
-                    //console.log("render_panel");
-                    //console.log(scope.panel);
-                    //console.log(elem);
+ 
 
                     // Using LABjs, wait until all scripts are loaded before rendering panel
                     var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js")
-                        .script("panels/map2/lib/topojson.v0.min.js")
+                        .script("panels/map2/lib/topojson.v1.min.js")
                         .script("panels/map2/lib/node-geohash.js")
-                        .script("panels/map2/lib/d3.hexbin.v0.min.js");
+                        .script("panels/map2/lib/d3.hexbin.v0.min.js")
+                        .script("panels/map2/lib/queue.v1.min.js");
 
                     // Populate element. Note that jvectormap appends, does not replace.
                     scripts.wait(function () {
                         elem.text('');
 
-                        //Better way to get these values?  Seems kludgy to use jQuery on the div...
-                        var width = $(elem[0]).width(),
-                            height = $(elem[0]).height();
-
-                        console.log("draw map", width, height);
-
-
-                        var scale = (width > height) ? (height / 2 / Math.PI) : (width / 2 / Math.PI);
-
-                        var projection = d3.geo.mercator()
-                            .translate([0,0])
-                            .scale(scale);
-
-                        var zoom = d3.behavior.zoom()
-                            .scaleExtent([1, 8])
-                            .on("zoom", move);
-
-                        var path = d3.geo.path()
-                            .projection(projection);
-
-                        var svg = d3.select(elem[0]).append("svg")
-                            .attr("width", width)
-                            .attr("height", height)
-                            .append("g")
-                            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-                            .call(zoom);
-
-                        var g = svg.append("g");
-
-                        svg.append("rect")
-                            .attr("class", "overlay")
-                            .attr("x", -width / 2)
-                            .attr("y", -height / 2)
-                            .attr("width", width)
-                            .attr("height", height);
-
-                        d3.json("panels/map2/lib/world-50m.json", function (error, world) {
-                            g.append("path")
-                                .datum(topojson.object(world, world.objects.countries))
-                                .attr("class", "land")
-                                .attr("d", path);
-
-                            g.append("path")
-                                .datum(topojson.mesh(world, world.objects.countries, function (a, b) {
-                                    return a !== b;
-                                }))
-                                .attr("class", "boundary")
-                                .attr("d", path);
-
-
-
-
-
-                            //Geocoded points are decoded into lat/lon, then projected onto x/y
-                            points = _.map(scope.data, function (k, v) {
-                                var decoded = geohash.decode(v);
-                                return projection([decoded.longitude, decoded.latitude]);
-                            });
-
-
-                            //hexagonal binning
-                            if (scope.panel.display.binning.enabled) {
-
-                                var binPoints = [];
-
-                                //primary field is just binning raw counts
-                                //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
-                                //so we cheat a little and just add more points to compensate.
-                                //However, we don't want to add a million points, so normalize against the largest value
-                                if (scope.panel.display.binning.areaEncodingField === 'secondary') {
-                                    var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
-                                        scale = 10/max;
-
-                                    _.map(scope.data, function (k, v) {
-                                        var decoded = geohash.decode(v);
-                                        return _.map(_.range(0, k*scale), function(a,b) {
-                                            binPoints.push(projection([decoded.longitude, decoded.latitude]));
-                                        })
-                                    });
-
-                                } else {
-                                    binPoints = points;
-                                }
-
-
-                                var hexbin = d3.hexbin()
-                                    .size([width, height])
-                                    .radius(scope.panel.display.binning.hexagonSize);
-
-                                //bin and sort the points, so we can set the various ranges appropriately
-                                var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
-console.log("binnedpoints",binnedPoints);
-                                //clean up some memory
-                                binPoints = [];
-
-
-                                var radius = d3.scale.sqrt()
-                                    .domain([0, binnedPoints[0].length])
-                                    .range([0, scope.panel.display.binning.hexagonSize]);
-
-
-                                var color = d3.scale.linear()
-                                    .domain([0,binnedPoints[0].length])
-                                    .range(["white", "steelblue"])
-                                    .interpolate(d3.interpolateLab);
-
-                                g.selectAll(".hexagon")
-                                    .data(binnedPoints)
-                                    .enter().append("path")
-                                    .attr("d", function (d) {
-                                        if (scope.panel.display.binning.areaEncoding === false) {
-                                            return hexbin.hexagon();
-                                        } else {
-                                            return hexbin.hexagon(radius(d.length));
-                                        }
-                                    })
-                                    .attr("class", "hexagon")
-                                    .attr("transform", function (d) {
-                                        return "translate(" + d.x + "," + d.y + ")";
-                                    })
-                                    .style("fill", function (d) {
-                                        if (scope.panel.display.binning.colorEncoding === false) {
-                                            return color(binnedPoints[0].length / 2);
-                                        } else {
-                                            return color(d.length);
-                                        }
-                                    })
-                                    .attr("opacity", scope.panel.display.binning.hexagonAlpha);
-                            }
-
-
-                            //Raw geopoints
-                            if (scope.panel.display.geopoints.enabled) {
-                                g.selectAll("circles.points")
-                                    .data(points)
-                                    .enter()
-                                    .append("circle")
-                                    .attr("r", scope.panel.display.geopoints.pointSize)
-                                    .attr("opacity", scope.panel.display.geopoints.pointAlpha)
-                                    .attr("transform", function (d) {
-                                        return "translate(" + d[0] + "," + d[1] + ")";
-                                    });
-                            }
-
-
-                            console.log("initial", scope.panel.display.scale, scope.panel.display.translate);
-
-                            if (scope.panel.display.scale != -1) {
-                                zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
-                                g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
-                                //svg.redraw();
-                            }
-
-                        });
-
-                        function move() {
-                            var t = d3.event.translate,
-                                s = d3.event.scale;
-                            t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
-                            t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
-                            zoom.translate(t);
-
-                            scope.panel.display.translate = t;
-                            scope.panel.display.scale = s;
-                            g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
-
-                            console.log("move", scope.panel.display.scale, scope.panel.display.translate);
+                        if (worldData === null || worldNames === null) {
+                            queue()
+                                .defer(d3.json, "panels/map2/lib/world-110m.json")
+                                .defer(d3.tsv, "panels/map2/lib/world-country-names.tsv")
+                                .await(function(error, world, names) {
+                                    worldData = world;
+                                    worldNames = names;
+                                    ready();
+                                });
+                        } else {
+                            ready();
                         }
 
-                    })
+
+                    });
                 }
+
+                function ready() {
+
+                    var world = worldData,
+                        names = worldNames;
+
+                    //Better way to get these values?  Seems kludgy to use jQuery on the div...
+                    var width = $(elem[0]).width(),
+                        height = $(elem[0]).height();
+
+                    console.log("draw map", width, height);
+
+
+                    var scale = (width > height) ? (height / 2 / Math.PI) : (width / 2 / Math.PI);
+
+                    var projection = d3.geo.mercator()
+                        .translate([0,0])
+                        .scale(scale);
+
+                    var zoom = d3.behavior.zoom()
+                        .scaleExtent([1, 8])
+                        .on("zoom", move);
+
+                    var path = d3.geo.path()
+                        .projection(projection);
+
+                    var svg = d3.select(elem[0]).append("svg")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .append("g")
+                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+                        .call(zoom);
+
+                    var g = svg.append("g");
+
+                    svg.append("rect")
+                        .attr("class", "overlay")
+                        .attr("x", -width / 2)
+                        .attr("y", -height / 2)
+                        .attr("width", width)
+                        .attr("height", height);
+
+                    /*
+                    d3.json("panels/map2/lib/world-50m.json", function (error, world) {
+                        g.append("path")
+                            .datum(topojson.object(world, world.objects.countries))
+                            .attr("class", "land")
+                            .attr("d", path);
+
+                     g.append("path")
+                     .datum(topojson.mesh(world, world.objects.countries, function (a, b) {
+                     return a !== b;
+                     }))
+                     .attr("class", "boundary")
+                     .attr("d", path);
+                    */
+
+
+                    console.log(world);
+                    console.log("feature", topojson.feature(world, world.objects.countries));
+
+                    var countries = topojson.feature(world, world.objects.countries).features;
+
+                    countries = countries.filter(function(d) {
+                        return names.some(function(n) {
+                            if (d.id == n.id) {
+                                d.name = n.name;
+                                return d.short = n.short;
+                            }
+                        });
+                    }).sort(function(a, b) {
+                        return a.name.localeCompare(b.name);
+                    });
+
+
+                    var quantize = d3.scale.quantize()
+                        .domain([0, 1000])
+                        .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
+
+
+                    g.selectAll("path")
+                        .data(countries)
+                        .enter().append("path")
+                        .attr("class", function(d) {
+                            if (scope.panel.display.choropleth.enabled) {
+                                return 'land ' + quantize(scope.data[d.short]);
+                            } else {
+                                return 'land';
+                            }
+                        })
+                        .attr("d", path);
+
+                    g.append("path")
+                        .datum(topojson.mesh(world, world.objects.land, function(a, b) { return a !== b; }))
+                        .attr("class", "land boundary")
+                        .attr("d", path);
+
+
+
+                    //Geocoded points are decoded into lat/lon, then projected onto x/y
+                    points = _.map(scope.data, function (k, v) {
+                        var decoded = geohash.decode(v);
+                        return projection([decoded.longitude, decoded.latitude]);
+                    });
+
+
+                    //hexagonal binning
+                    if (scope.panel.display.binning.enabled) {
+
+                        var binPoints = [];
+
+                        //primary field is just binning raw counts
+                        //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
+                        //so we cheat a little and just add more points to compensate.
+                        //However, we don't want to add a million points, so normalize against the largest value
+                        if (scope.panel.display.binning.areaEncodingField === 'secondary') {
+                            var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
+                                scale = 10/max;
+
+                            _.map(scope.data, function (k, v) {
+                                var decoded = geohash.decode(v);
+                                return _.map(_.range(0, k*scale), function(a,b) {
+                                    binPoints.push(projection([decoded.longitude, decoded.latitude]));
+                                })
+                            });
+
+                        } else {
+                            binPoints = points;
+                        }
+
+
+                        var hexbin = d3.hexbin()
+                            .size([width, height])
+                            .radius(scope.panel.display.binning.hexagonSize);
+
+                        //bin and sort the points, so we can set the various ranges appropriately
+                        var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
+console.log("binnedpoints",binnedPoints);
+                        //clean up some memory
+                        binPoints = [];
+
+
+                        var radius = d3.scale.sqrt()
+                            .domain([0, binnedPoints[0].length])
+                            .range([0, scope.panel.display.binning.hexagonSize]);
+
+
+                        var color = d3.scale.linear()
+                            .domain([0,binnedPoints[0].length])
+                            .range(["white", "steelblue"])
+                            .interpolate(d3.interpolateLab);
+
+                        g.selectAll(".hexagon")
+                            .data(binnedPoints)
+                            .enter().append("path")
+                            .attr("d", function (d) {
+                                if (scope.panel.display.binning.areaEncoding === false) {
+                                    return hexbin.hexagon();
+                                } else {
+                                    return hexbin.hexagon(radius(d.length));
+                                }
+                            })
+                            .attr("class", "hexagon")
+                            .attr("transform", function (d) {
+                                return "translate(" + d.x + "," + d.y + ")";
+                            })
+                            .style("fill", function (d) {
+                                if (scope.panel.display.binning.colorEncoding === false) {
+                                    return color(binnedPoints[0].length / 2);
+                                } else {
+                                    return color(d.length);
+                                }
+                            })
+                            .attr("opacity", scope.panel.display.binning.hexagonAlpha);
+                    }
+
+
+                    //Raw geopoints
+                    if (scope.panel.display.geopoints.enabled) {
+                        g.selectAll("circles.points")
+                            .data(points)
+                            .enter()
+                            .append("circle")
+                            .attr("r", scope.panel.display.geopoints.pointSize)
+                            .attr("opacity", scope.panel.display.geopoints.pointAlpha)
+                            .attr("transform", function (d) {
+                                return "translate(" + d[0] + "," + d[1] + ")";
+                            });
+                    }
+
+
+                    console.log("initial", scope.panel.display.scale, scope.panel.display.translate);
+
+                    if (scope.panel.display.scale != -1) {
+                        zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
+                        g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
+                        //svg.redraw();
+                    }
+
+                    function move() {
+                        var t = d3.event.translate,
+                            s = d3.event.scale;
+                        t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
+                        t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
+                        zoom.translate(t);
+
+                        scope.panel.display.translate = t;
+                        scope.panel.display.scale = s;
+                        g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+
+                        //console.log("move", scope.panel.display.scale, scope.panel.display.translate);
+                    }
+
+                        }
+
+
+
+
+
 
             }
         };

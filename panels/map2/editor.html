@@ -184,6 +184,24 @@
     </div>
 </div>
 
+<div class="row-fluid tabDetails" ng-show="isActive('choropleth')">
+    <div class="span8 offset1">
+        <table>
+            <tbody  >
+            <tr>
+                <td>Choropleth</td>
+                <td>
+                    <button type="button" class="btn" bs-button
+                            ng-change="$emit('render')"
+                            ng-class="{'btn-success': panel.display.choropleth.enabled}"
+                            ng-model="panel.display.choropleth.enabled">{{panel.display.choropleth.enabled|enabledText}}</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="row-fluid tabDetails" ng-show="isActive('data')">
     <div class="span8 offset1">
         <table>
