@@ -1,5 +1,5 @@
-function displayGeopoints() {
-    g.selectAll("circles.points")
+function displayGeopoints(scope) {
+    scope.g.selectAll("circles.points")
         .data(points)
         .enter()
         .append("circle")

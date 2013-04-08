@@ -34,9 +34,12 @@ angular.module('kibana.map2', [])
                 },
                 choropleth: {
                     enabled: false
+                },
+                bullseye: {
+                    enabled: false
                 }
             },
-            displayTabs: ["Geopoints", "Binning", "Choropleth", "Data"],
+            displayTabs: ["Geopoints", "Binning", "Choropleth", "Bullseye", "Data"],
             activeDisplayTab:"Geopoints"
         };
 
@@ -138,7 +141,7 @@ angular.module('kibana.map2', [])
         $scope.populate_modal = function (request) {
             $scope.modal = {
                 title: "Inspector",
-                body: "<h5>Last Elasticsearch Query</h5><pre>" + 'curl -XGET ' + config.elasticsearch + '/' + $scope.panel.index + "/_search?pretty -d'\n" + angular.toJson(JSON.parse(request.toString()), true) + "'</pre>",
+                body: "<h5>Last Elasticsearch Query</h5><pre>" + 'curl -XGET ' + config.elasticsearch + '/' + $scope.panel.index + "/_search?pretty -d'\n" + angular.toJson(JSON.parse(request.toString()), true) + "'</pre>"
             }
         };
 
@@ -179,8 +182,10 @@ angular.module('kibana.map2', [])
 
                 elem.html('<center><img src="common/img/load_big.gif"></center>')
 
-                var worldData = null,
-                    worldNames = null;
+                scope.worldData = null;
+                scope.worldNames = null;
+                scope.svg = null;
+                scope.g = null;
 
                 // Receive render events
                 scope.$on('render', function () {
@@ -209,13 +214,13 @@ angular.module('kibana.map2', [])
 
                         //these files can take a bit of time to process, so save them in a variable
                         //and use those on redraw
-                        if (worldData === null || worldNames === null) {
+                        if (scope.worldData === null || scope.worldNames === null) {
                             queue()
                                 .defer(d3.json, "panels/map2/lib/world-110m.json")
                                 .defer(d3.tsv, "panels/map2/lib/world-country-names.tsv")
                                 .await(function(error, world, names) {
-                                    worldData = world;
-                                    worldNames = names;
+                                    scope.worldData = world;
+                                    scope.worldNames = names;
                                     ready();
                                 });
                         } else {
@@ -229,8 +234,10 @@ angular.module('kibana.map2', [])
                  */
                 function ready() {
 
-                    var world = worldData,
-                        names = worldNames;
+
+
+                    var world = scope.worldData,
+                        names = scope.worldNames;
 
                     //Better way to get these values?  Seems kludgy to use jQuery on the div...
                     var width = $(elem[0]).width(),
@@ -287,18 +294,21 @@ angular.module('kibana.map2', [])
                      * D3 SVG Setup
                      */
 
-                    var svg = d3.select(elem[0]).append("svg")
+                    //remove our old svg...is there a better way to update than remove/append?
+                    d3.select(elem[0]).select("svg").remove();
+
+                    //create the new svg
+                    scope.svg = d3.select(elem[0]).append("svg")
                         .attr("width", width)
                         .attr("height", height)
-                        .append("g")
                         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
                         .call(zoom);
 
-                    var g = svg.append("g");
+                    scope.g = scope.svg.append("g");
 
                     //Overlay is used so that the entire map is draggable, not just the locations
                     //where countries are
-                    svg.append("rect")
+                    scope.svg.append("rect")
                         .attr("class", "overlay")
                         .attr("x", -width / 2)
                         .attr("y", -height / 2)
@@ -306,7 +316,7 @@ angular.module('kibana.map2', [])
                         .attr("height", height);
 
                     //Draw the countries, if this is a choropleth, draw with fancy colors
-                    g.selectAll("path")
+                    scope.g.selectAll("path")
                         .data(countries)
                         .enter().append("path")
                         .attr("class", function(d) {
@@ -319,7 +329,7 @@ angular.module('kibana.map2', [])
                         .attr("d", path);
 
                     //draw boundaries
-                    g.append("path")
+                    scope.g.selectAll("land").append("path")
                         .datum(topojson.mesh(world, world.objects.land, function(a, b) { return a !== b; }))
                         .attr("class", "land boundary")
                         .attr("d", path);
@@ -332,12 +342,13 @@ angular.module('kibana.map2', [])
 
                     //Hexagonal Binning
                     if (scope.panel.display.binning.enabled) {
-                        displayBinning();
+                        var dimensions = [width, height];
+                        displayBinning(scope, dimensions, projection);
                     }
 
                     //Raw geopoints
                     if (scope.panel.display.geopoints.enabled) {
-                        displayGeopoints();
+                        displayGeopoints(scope);
                     }
 
 
@@ -346,7 +357,7 @@ angular.module('kibana.map2', [])
                      */
                     if (scope.panel.display.scale != -1) {
                         zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
-                        g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
+                        scope.g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
 
                     }
 
@@ -359,7 +370,7 @@ angular.module('kibana.map2', [])
 
                         scope.panel.display.translate = t;
                         scope.panel.display.scale = s;
-                        g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+                        scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
                     }
 
                 }

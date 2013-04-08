@@ -1,10 +1,10 @@
 
-function displayBinning() {
+function displayBinning(scope, dimensions, projection) {
     /**
      * Hexbin-specific setup
      */
     var hexbin = d3.hexbin()
-        .size([width, height])
+        .size(dimensions)
         .radius(scope.panel.display.binning.hexagonSize);
 
 
@@ -16,7 +16,7 @@ function displayBinning() {
     //However, we don't want to add a million points, so normalize against the largest value
     if (scope.panel.display.binning.areaEncodingField === 'secondary') {
         var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
-            scale = 10/max;
+            scale = 50/max;
 
         _.map(scope.data, function (k, v) {
             var decoded = geohash.decode(v);
@@ -50,7 +50,7 @@ function displayBinning() {
      */
 
 
-    g.selectAll(".hexagon")
+    scope.g.selectAll(".hexagon")
         .data(binnedPoints)
         .enter().append("path")
         .attr("d", function (d) {
