@@ -301,10 +301,10 @@ angular.module('kibana.histogram', [])
           top     : y + 5,
           left    : x + 5,
           color   : "#000",
-          border  : '3px solid #000',
+          border  : '2px solid #000',
           padding : '10px',
           'font-size': '11pt',
-          'font-weight' : 'bold',
+          'font-weight' : 200,
           'background-color': '#FFF',
           'border-radius': '10px',
         }).appendTo("body");
@@ -313,7 +313,7 @@ angular.module('kibana.histogram', [])
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           tt(pos.pageX, pos.pageY,
-            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:20px;width:20px'></div> "+
+            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
             item.datapoint[1].toFixed(0) + " @ " + 
             new Date(item.datapoint[0]).format('mm/dd HH:MM:ss'));
         } else {
