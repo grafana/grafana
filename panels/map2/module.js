@@ -43,7 +43,6 @@ angular.module('kibana.map2', [])
         _.defaults($scope.panel, _d)
 
         $scope.init = function () {
-            console.log("init");
             eventBus.register($scope, 'time', function (event, time) {
                 set_time(time)
             });
@@ -61,17 +60,13 @@ angular.module('kibana.map2', [])
 
         $scope.get_data = function () {
 
-            console.log("get_data");
             // Make sure we have everything for the request to complete
             if (_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
                 return
 
-
             $scope.panel.loading = true;
             var request = $scope.ejs.Request().indices($scope.panel.index);
 
-
-            console.log("fields", $scope.panel.field, $scope.panel.secondaryfield);
 
             //Use a regular term facet if there is no secondary field
             if (typeof $scope.panel.secondaryfield === "undefined") {
@@ -102,9 +97,6 @@ angular.module('kibana.map2', [])
             }
 
 
-
-
-
             // Then the insert into facet and make the request
             var request = request.facet(facet).size(0);
 
@@ -112,13 +104,11 @@ angular.module('kibana.map2', [])
 
             var results = request.doSearch();
 
-
             // Populate scope when we have results
             results.then(function (results) {
                 $scope.panel.loading = false;
                 $scope.hits = results.hits.total;
                 $scope.data = {};
-
 
                 _.each(results.facets.map.terms, function (v) {
 
@@ -140,7 +130,6 @@ angular.module('kibana.map2', [])
                     }
                 });
 
-                console.log("emit render");
                 $scope.$emit('render')
             });
         };
@@ -195,30 +184,31 @@ angular.module('kibana.map2', [])
 
                 // Receive render events
                 scope.$on('render', function () {
-                    console.log("render");
                     render_panel();
                 });
 
                 // Or if the window is resized
                 angular.element(window).bind('resize', function () {
-                    console.log("resize");
                     render_panel();
                 });
 
                 function render_panel() {
- 
 
                     // Using LABjs, wait until all scripts are loaded before rendering panel
                     var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js")
                         .script("panels/map2/lib/topojson.v1.min.js")
                         .script("panels/map2/lib/node-geohash.js")
                         .script("panels/map2/lib/d3.hexbin.v0.min.js")
-                        .script("panels/map2/lib/queue.v1.min.js");
+                        .script("panels/map2/lib/queue.v1.min.js")
+                        .script("panels/map2/display/binning.js")
+                        .script("panels/map2/display/geopoints.js");
 
                     // Populate element. Note that jvectormap appends, does not replace.
                     scripts.wait(function () {
                         elem.text('');
 
+                        //these files can take a bit of time to process, so save them in a variable
+                        //and use those on redraw
                         if (worldData === null || worldNames === null) {
                             queue()
                                 .defer(d3.json, "panels/map2/lib/world-110m.json")
@@ -231,11 +221,12 @@ angular.module('kibana.map2', [])
                         } else {
                             ready();
                         }
-
-
                     });
                 }
 
+                /**
+                 * All map data has been loaded, go ahead and draw the map/data
+                 */
                 function ready() {
 
                     var world = worldData,
@@ -245,11 +236,13 @@ angular.module('kibana.map2', [])
                     var width = $(elem[0]).width(),
                         height = $(elem[0]).height();
 
-                    console.log("draw map", width, height);
-
-
+                    //scale to whichever dimension is smaller, helps to ensure the whole map is displayed
                     var scale = (width > height) ? (height / 2 / Math.PI) : (width / 2 / Math.PI);
 
+
+                    /**
+                     * D3 and general config section
+                     */
                     var projection = d3.geo.mercator()
                         .translate([0,0])
                         .scale(scale);
@@ -261,41 +254,13 @@ angular.module('kibana.map2', [])
                     var path = d3.geo.path()
                         .projection(projection);
 
-                    var svg = d3.select(elem[0]).append("svg")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .append("g")
-                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-                        .call(zoom);
-
-                    var g = svg.append("g");
-
-                    svg.append("rect")
-                        .attr("class", "overlay")
-                        .attr("x", -width / 2)
-                        .attr("y", -height / 2)
-                        .attr("width", width)
-                        .attr("height", height);
-
-                    /*
-                    d3.json("panels/map2/lib/world-50m.json", function (error, world) {
-                        g.append("path")
-                            .datum(topojson.object(world, world.objects.countries))
-                            .attr("class", "land")
-                            .attr("d", path);
-
-                     g.append("path")
-                     .datum(topojson.mesh(world, world.objects.countries, function (a, b) {
-                     return a !== b;
-                     }))
-                     .attr("class", "boundary")
-                     .attr("d", path);
-                    */
+                    //used by choropleth
+                    var quantize = d3.scale.quantize()
+                        .domain([0, 1000])
+                        .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
 
 
-                    console.log(world);
-                    console.log("feature", topojson.feature(world, world.objects.countries));
-
+                    //Extract name and two-letter codes for our countries
                     var countries = topojson.feature(world, world.objects.countries).features;
 
                     countries = countries.filter(function(d) {
@@ -309,12 +274,38 @@ angular.module('kibana.map2', [])
                         return a.name.localeCompare(b.name);
                     });
 
+                    //Geocoded points are decoded into lat/lon, then projected onto x/y
+                    points = _.map(scope.data, function (k, v) {
+                        var decoded = geohash.decode(v);
+                        return projection([decoded.longitude, decoded.latitude]);
+                    });
 
-                    var quantize = d3.scale.quantize()
-                        .domain([0, 1000])
-                        .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
 
 
+
+                    /**
+                     * D3 SVG Setup
+                     */
+
+                    var svg = d3.select(elem[0]).append("svg")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .append("g")
+                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+                        .call(zoom);
+
+                    var g = svg.append("g");
+
+                    //Overlay is used so that the entire map is draggable, not just the locations
+                    //where countries are
+                    svg.append("rect")
+                        .attr("class", "overlay")
+                        .attr("x", -width / 2)
+                        .attr("y", -height / 2)
+                        .attr("width", width)
+                        .attr("height", height);
+
+                    //Draw the countries, if this is a choropleth, draw with fancy colors
                     g.selectAll("path")
                         .data(countries)
                         .enter().append("path")
@@ -327,6 +318,7 @@ angular.module('kibana.map2', [])
                         })
                         .attr("d", path);
 
+                    //draw boundaries
                     g.append("path")
                         .datum(topojson.mesh(world, world.objects.land, function(a, b) { return a !== b; }))
                         .attr("class", "land boundary")
@@ -334,104 +326,28 @@ angular.module('kibana.map2', [])
 
 
 
-                    //Geocoded points are decoded into lat/lon, then projected onto x/y
-                    points = _.map(scope.data, function (k, v) {
-                        var decoded = geohash.decode(v);
-                        return projection([decoded.longitude, decoded.latitude]);
-                    });
+                    /**
+                     * Display Options
+                     */
 
-
-                    //hexagonal binning
+                    //Hexagonal Binning
                     if (scope.panel.display.binning.enabled) {
-
-                        var binPoints = [];
-
-                        //primary field is just binning raw counts
-                        //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
-                        //so we cheat a little and just add more points to compensate.
-                        //However, we don't want to add a million points, so normalize against the largest value
-                        if (scope.panel.display.binning.areaEncodingField === 'secondary') {
-                            var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
-                                scale = 10/max;
-
-                            _.map(scope.data, function (k, v) {
-                                var decoded = geohash.decode(v);
-                                return _.map(_.range(0, k*scale), function(a,b) {
-                                    binPoints.push(projection([decoded.longitude, decoded.latitude]));
-                                })
-                            });
-
-                        } else {
-                            binPoints = points;
-                        }
-
-
-                        var hexbin = d3.hexbin()
-                            .size([width, height])
-                            .radius(scope.panel.display.binning.hexagonSize);
-
-                        //bin and sort the points, so we can set the various ranges appropriately
-                        var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
-console.log("binnedpoints",binnedPoints);
-                        //clean up some memory
-                        binPoints = [];
-
-
-                        var radius = d3.scale.sqrt()
-                            .domain([0, binnedPoints[0].length])
-                            .range([0, scope.panel.display.binning.hexagonSize]);
-
-
-                        var color = d3.scale.linear()
-                            .domain([0,binnedPoints[0].length])
-                            .range(["white", "steelblue"])
-                            .interpolate(d3.interpolateLab);
-
-                        g.selectAll(".hexagon")
-                            .data(binnedPoints)
-                            .enter().append("path")
-                            .attr("d", function (d) {
-                                if (scope.panel.display.binning.areaEncoding === false) {
-                                    return hexbin.hexagon();
-                                } else {
-                                    return hexbin.hexagon(radius(d.length));
-                                }
-                            })
-                            .attr("class", "hexagon")
-                            .attr("transform", function (d) {
-                                return "translate(" + d.x + "," + d.y + ")";
-                            })
-                            .style("fill", function (d) {
-                                if (scope.panel.display.binning.colorEncoding === false) {
-                                    return color(binnedPoints[0].length / 2);
-                                } else {
-                                    return color(d.length);
-                                }
-                            })
-                            .attr("opacity", scope.panel.display.binning.hexagonAlpha);
+                        displayBinning();
                     }
-
 
                     //Raw geopoints
                     if (scope.panel.display.geopoints.enabled) {
-                        g.selectAll("circles.points")
-                            .data(points)
-                            .enter()
-                            .append("circle")
-                            .attr("r", scope.panel.display.geopoints.pointSize)
-                            .attr("opacity", scope.panel.display.geopoints.pointAlpha)
-                            .attr("transform", function (d) {
-                                return "translate(" + d[0] + "," + d[1] + ")";
-                            });
+                        displayGeopoints();
                     }
 
 
-                    console.log("initial", scope.panel.display.scale, scope.panel.display.translate);
-
+                    /**
+                     * Zoom Functionality
+                     */
                     if (scope.panel.display.scale != -1) {
                         zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
                         g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
-                        //svg.redraw();
+
                     }
 
                     function move() {
@@ -444,17 +360,9 @@ console.log("binnedpoints",binnedPoints);
                         scope.panel.display.translate = t;
                         scope.panel.display.scale = s;
                         g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
-
-                        //console.log("move", scope.panel.display.scale, scope.panel.display.translate);
                     }
 
-                        }
-
-
-
-
-
-
+                }
             }
         };
     });
