@@ -33,14 +33,14 @@
     </div>
   </div>
   <h5>Chart Options</h5>
-  <div class="row-fluid">
+  <div class="row-fluid" style="margin-bottom:10px;">
     <div class="span1"> <label class="small">Bars</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>
     <div class="span1"> <label class="small">Lines</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.lines" ng-checked="panel.lines"></div>
     <div class="span1"> <label class="small">Points</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.points" ng-checked="panel.points"></div>
     <div class="span1"> <label class="small">Stack</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.stack" ng-checked="panel.stack"></div>
     <div class="span1"> <label class="small">Legend</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.legend" ng-checked="panel.legend"></div>
-    <div class="span1"> <label class="small">x-Axis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
-    <div class="span1"> <label class="small">y-Axis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>
+    <div class="span1"> <label class="small">xAxis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
+    <div class="span1"> <label class="small">yAxis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>
     <div class="span2" ng-show="panel.lines">
       <label class="small">Line Fill</label> 
       <select ng-change="$emit('render')" class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>

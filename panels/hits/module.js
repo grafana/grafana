@@ -147,8 +147,9 @@ angular.module('kibana.hits', [])
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
           // Populate element
-          try { 
-            var plot = $.plot(elem, scope.data, {
+          try {
+            // Add plot to scope so we can build out own legend 
+            scope.plot = $.plot(elem, scope.data, {
               legend: { show: false },
               series: {
                 lines:  { show: false, },
@@ -165,12 +166,6 @@ angular.module('kibana.hits', [])
                 hoverable: true,
               },
               colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
-            })
-
-            var i = 0;
-            _.each(plot.getData(),function(series) {
-              scope.data[i].color = series.color;
-              i++;
             })
             
             // Work around for missing legend at initialization

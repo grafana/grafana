@@ -2,11 +2,11 @@
   <div ng-show="panel.counters">
     <p ng-style="panel.style" ng-show="panel.aggregate">{{hits}}</p>
     <table ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'vertical'">  
-      <tr style="line-height:{{panel.style['font-size']}}" ng-repeat="query in data">
+      <tr style="line-height:{{panel.style['font-size']}}" ng-repeat="query in plot.getData()">
         <td ng-show="panel.chart" style="background:{{query.color}};width:{{panel.style['font-size']}}"></td> <td style="padding-right:10px;padding-left:10px;">{{query.label}}</td><td>{{query.hits}}</td>
       </tr>
     </table>
-    <div ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'horizontal'" ng-repeat="query in data" style="float:left;padding-left: 10px;">
+    <div ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'horizontal'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
      <span ng-show='panel.chart'><div style="display:inline-block;border-radius:{{panel.style['font-size']}};background:{{query.color}};height:{{panel.style['font-size']}};width:{{panel.style['font-size']}}"></div></span> {{query.label}} ({{query.hits}}) <span ng-show="!$last">|</span>
     </div><br>
   </div><div style="clear:both"></div>
