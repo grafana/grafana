@@ -36,7 +36,12 @@ angular.module('kibana.map2', [])
                     enabled: false
                 },
                 bullseye: {
-                    enabled: false
+                    enabled: false,
+                    coord: {
+                        lat: 0,
+                        lon: 0
+                    },
+
                 }
             },
             displayTabs: ["Geopoints", "Binning", "Choropleth", "Bullseye", "Data"],
@@ -206,7 +211,8 @@ angular.module('kibana.map2', [])
                         .script("panels/map2/lib/d3.hexbin.v0.min.js")
                         .script("panels/map2/lib/queue.v1.min.js")
                         .script("panels/map2/display/binning.js")
-                        .script("panels/map2/display/geopoints.js");
+                        .script("panels/map2/display/geopoints.js")
+                        .script("panels/map2/display/bullseye.js");
 
                     // Populate element. Note that jvectormap appends, does not replace.
                     scripts.wait(function () {
@@ -243,15 +249,16 @@ angular.module('kibana.map2', [])
                     var width = $(elem[0]).width(),
                         height = $(elem[0]).height();
 
+
                     //scale to whichever dimension is smaller, helps to ensure the whole map is displayed
-                    var scale = (width > height) ? (height / 2 / Math.PI) : (width / 2 / Math.PI);
+                    var scale = (width > height) ? (height/5) : (width/5);
 
 
                     /**
                      * D3 and general config section
                      */
                     var projection = d3.geo.mercator()
-                        .translate([0,0])
+                        .translate([width/2, height/2])
                         .scale(scale);
 
                     var zoom = d3.behavior.zoom()
@@ -310,10 +317,9 @@ angular.module('kibana.map2', [])
                     //where countries are
                     scope.svg.append("rect")
                         .attr("class", "overlay")
-                        .attr("x", -width / 2)
-                        .attr("y", -height / 2)
                         .attr("width", width)
-                        .attr("height", height);
+                        .attr("height", height)
+                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
                     //Draw the countries, if this is a choropleth, draw with fancy colors
                     scope.g.selectAll("path")
@@ -342,6 +348,7 @@ angular.module('kibana.map2', [])
 
                     //Hexagonal Binning
                     if (scope.panel.display.binning.enabled) {
+                        //@todo fix this
                         var dimensions = [width, height];
                         displayBinning(scope, dimensions, projection);
                     }
@@ -349,6 +356,10 @@ angular.module('kibana.map2', [])
                     //Raw geopoints
                     if (scope.panel.display.geopoints.enabled) {
                         displayGeopoints(scope);
+                    }
+
+                    if (scope.panel.display.bullseye.enabled) {
+                        displayBullseye(scope, projection, path);
                     }
 
 
@@ -372,6 +383,7 @@ angular.module('kibana.map2', [])
                         scope.panel.display.scale = s;
                         scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
                     }
+
 
                 }
             }
