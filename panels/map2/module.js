@@ -270,11 +270,6 @@ angular.module('kibana.map2', [])
 
                     var projection;
 
-                    if (typeof scope.panel.display.map === 'undefined') {
-                        scope.panel.display.map = {type: 'orthographic'};
-                    }
-
-
                     if (scope.panel.display.map.type === 'mercator') {
                         projection = d3.geo.mercator()
                             .translate([width/2, height/2])
