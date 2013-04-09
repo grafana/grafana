@@ -13,8 +13,6 @@ function displayBullseye(scope, projection, path) {
         .data(data)
         .enter().append("path")
         .datum(function(d) {
-            console.log(d);
-
             return circle.origin([d.lon, d.lat]).angle(1000 / 6371 * degrees)();
         })
         .attr("d", path)

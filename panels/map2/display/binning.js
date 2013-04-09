@@ -1,5 +1,6 @@
 
-function displayBinning(scope, dimensions, projection) {
+function displayBinning(scope, dimensions, projection, path) {
+
     /**
      * Hexbin-specific setup
      */
@@ -26,7 +27,11 @@ function displayBinning(scope, dimensions, projection) {
         });
 
     } else {
-        binPoints = points;
+
+        binPoints = _.map(scope.data, function (k, v) {
+            var decoded = geohash.decode(v);
+            return projection([decoded.longitude, decoded.latitude]);
+        });
     }
 
     //bin and sort the points, so we can set the various ranges appropriately
@@ -50,7 +55,7 @@ function displayBinning(scope, dimensions, projection) {
      */
 
 
-    scope.g.selectAll(".hexagon")
+    scope.g.selectAll("hexagon")
         .data(binnedPoints)
         .enter().append("path")
         .attr("d", function (d) {

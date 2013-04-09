@@ -61,7 +61,10 @@ angular.module('kibana.map2', [])
                 $scope.get_data();
             });
             // Now that we're all setup, request the time from our group
-            eventBus.broadcast($scope.$id, $scope.panel.group, 'get_time')
+            eventBus.broadcast($scope.$id, $scope.panel.group, 'get_time');
+
+
+
         };
 
         $scope.isNumber = function (n) {
@@ -193,6 +196,8 @@ angular.module('kibana.map2', [])
                 scope.worldNames = null;
                 scope.svg = null;
                 scope.g = null;
+                scope.ctrlKey = false;
+
 
                 // Receive render events
                 scope.$on('render', function () {
@@ -220,6 +225,8 @@ angular.module('kibana.map2', [])
                     scripts.wait(function () {
                         elem.text('');
 
+
+
                         //these files can take a bit of time to process, so save them in a variable
                         //and use those on redraw
                         if (scope.worldData === null || scope.worldNames === null) {
@@ -241,6 +248,7 @@ angular.module('kibana.map2', [])
                  * All map data has been loaded, go ahead and draw the map/data
                  */
                 function ready() {
+
 
 
 
@@ -315,7 +323,7 @@ angular.module('kibana.map2', [])
                     //Geocoded points are decoded into lat/lon, then projected onto x/y
                     points = _.map(scope.data, function (k, v) {
                         var decoded = geohash.decode(v);
-                        return projection([decoded.longitude, decoded.latitude]);
+                        return [decoded.longitude, decoded.latitude];
                     });
 
 
@@ -325,14 +333,14 @@ angular.module('kibana.map2', [])
                      * D3 SVG Setup
                      */
 
-                    var ctrlKey = false;
-                    //set up listener for ctrl key
-                    d3.select("body")
+                    //set up some key listeners for our sphere dragging
+                    window.focus();
+                    d3.select(window)
                         .on("keydown", function() {
-                            ctrlKey = d3.event.ctrlKey;
+                            scope.ctrlKey = d3.event.ctrlKey;
                         })
                         .on("keyup", function() {
-                            ctrlKey = d3.event.ctrlKey;
+                            scope.ctrlKey = d3.event.ctrlKey;
                         });
 
                     //remove our old svg...is there a better way to update than remove/append?
@@ -345,6 +353,7 @@ angular.module('kibana.map2', [])
                         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
                         .call(zoom);
 
+
                     scope.g = scope.svg.append("g");
 
                     //Overlay is used so that the entire map is draggable, not just the locations
@@ -354,6 +363,11 @@ angular.module('kibana.map2', [])
                         .attr("width", width)
                         .attr("height", height)
                         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+                    //set up listener for ctrl key
+                    //scope.svg
+
 
                     //Draw the countries, if this is a choropleth, draw with fancy colors
                     scope.g.selectAll("path")
@@ -381,9 +395,10 @@ angular.module('kibana.map2', [])
                             .call(d3.behavior.drag()
                                 .origin(function() { var rotate = projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
                                 .on("drag", function() {
-                                    if (ctrlKey) {
+                                    if ( scope.ctrlKey) {
                                         projection.rotate([d3.event.x / 2, -d3.event.y / 2, projection.rotate()[2]]);
                                         scope.svg.selectAll("path").attr("d", path);
+                                        //displayBinning(scope, dimensions, projection, path);
                                     }
                                 }));
                     }
@@ -396,12 +411,12 @@ angular.module('kibana.map2', [])
                     if (scope.panel.display.binning.enabled) {
                         //@todo fix this
                         var dimensions = [width, height];
-                        displayBinning(scope, dimensions, projection);
+                        displayBinning(scope, dimensions, projection, path);
                     }
 
                     //Raw geopoints
                     if (scope.panel.display.geopoints.enabled) {
-                        displayGeopoints(scope);
+                        displayGeopoints(scope, path);
                     }
 
                     if (scope.panel.display.bullseye.enabled) {
@@ -420,7 +435,7 @@ angular.module('kibana.map2', [])
 
                     function move() {
 
-                        if (!ctrlKey) {
+                        if (! scope.ctrlKey) {
                             var t = d3.event.translate,
                                 s = d3.event.scale;
                             t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
