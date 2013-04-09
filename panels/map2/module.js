@@ -40,8 +40,10 @@ angular.module('kibana.map2', [])
                     coord: {
                         lat: 0,
                         lon: 0
-                    },
-
+                    }
+                },
+                map: {
+                    type: "mercator"
                 }
             },
             displayTabs: ["Geopoints", "Binning", "Choropleth", "Bullseye", "Data"],
@@ -257,9 +259,31 @@ angular.module('kibana.map2', [])
                     /**
                      * D3 and general config section
                      */
-                    var projection = d3.geo.mercator()
-                        .translate([width/2, height/2])
-                        .scale(scale);
+
+                    var projection;
+
+                    if (typeof scope.panel.display.map === 'undefined') {
+                        scope.panel.display.map = {type: 'orthographic'};
+                    }
+
+
+                    if (scope.panel.display.map.type === 'mercator') {
+                        projection = d3.geo.mercator()
+                            .translate([width/2, height/2])
+                            .scale(scale);
+                    } else if (scope.panel.display.map.type === 'orthographic') {
+                        projection = d3.geo.orthographic()
+                            .scale(248)
+                            .clipAngle(90);
+
+                        var λ = d3.scale.linear()
+                            .domain([0, width])
+                            .range([-180, 180]);
+
+                        var φ = d3.scale.linear()
+                            .domain([0, height])
+                            .range([90, -90]);
+                    }
 
                     var zoom = d3.behavior.zoom()
                         .scaleExtent([1, 8])
@@ -300,6 +324,16 @@ angular.module('kibana.map2', [])
                     /**
                      * D3 SVG Setup
                      */
+
+                    var ctrlKey = false;
+                    //set up listener for ctrl key
+                    d3.select("body")
+                        .on("keydown", function() {
+                            ctrlKey = d3.event.ctrlKey;
+                        })
+                        .on("keyup", function() {
+                            ctrlKey = d3.event.ctrlKey;
+                        });
 
                     //remove our old svg...is there a better way to update than remove/append?
                     d3.select(elem[0]).select("svg").remove();
@@ -342,6 +376,18 @@ angular.module('kibana.map2', [])
 
 
 
+                    if (scope.panel.display.map.type === 'orthographic') {
+                        scope.svg.style("cursor", "move")
+                            .call(d3.behavior.drag()
+                                .origin(function() { var rotate = projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
+                                .on("drag", function() {
+                                    if (ctrlKey) {
+                                        projection.rotate([d3.event.x / 2, -d3.event.y / 2, projection.rotate()[2]]);
+                                        scope.svg.selectAll("path").attr("d", path);
+                                    }
+                                }));
+                    }
+
                     /**
                      * Display Options
                      */
@@ -373,15 +419,18 @@ angular.module('kibana.map2', [])
                     }
 
                     function move() {
-                        var t = d3.event.translate,
-                            s = d3.event.scale;
-                        t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
-                        t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
-                        zoom.translate(t);
 
-                        scope.panel.display.translate = t;
-                        scope.panel.display.scale = s;
-                        scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ")scale(" + s + ")");
+                        if (!ctrlKey) {
+                            var t = d3.event.translate,
+                                s = d3.event.scale;
+                            t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
+                            t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
+                            zoom.translate(t);
+
+                            scope.panel.display.translate = t;
+                            scope.panel.display.scale = s;
+                            scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ") scale(" + s + ")");
+                        }
                     }
 
 

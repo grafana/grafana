@@ -1,12 +1,6 @@
 function displayBullseye(scope, projection, path) {
 
-    var arc = d3.svg.arc()
-        .innerRadius(5)
-        .outerRadius(10)
-        .startAngle(0) //converting from degs to radians
-        .endAngle(2*Math.PI) //just radians
-
-    var coords = projection([parseFloat(scope.panel.display.bullseye.coord.lon), parseFloat(scope.panel.display.bullseye.coord.lat)]);
+    var degrees = 180 / Math.PI
 
 
     var circle = d3.geo.circle();
@@ -21,7 +15,7 @@ function displayBullseye(scope, projection, path) {
         .datum(function(d) {
             console.log(d);
 
-            return circle.origin([d.lon, d.lat]).angle(1)();
+            return circle.origin([d.lon, d.lat]).angle(1000 / 6371 * degrees)();
         })
         .attr("d", path)
         .attr("class", "arc");
