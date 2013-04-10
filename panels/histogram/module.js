@@ -23,6 +23,8 @@ angular.module('kibana.histogram', [])
 
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
+    
+    // Consider eliminating the check for array, this should always be an array
     eventBus.register($scope,'query', function(event, query) {
       if(_.isArray(query)) {
         $scope.panel.query = _.map(query,function(q) {
@@ -33,6 +35,7 @@ angular.module('kibana.histogram', [])
       }
       $scope.get_data();
     });
+
     // Now that we're all setup, request the time from our group if we don't 
     // have it yet
     if(_.isUndefined($scope.time))
@@ -60,9 +63,8 @@ angular.module('kibana.histogram', [])
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
-    var _segment = _.isUndefined(segment) ? 0 : segment
-
     $scope.panel.loading = true;
+    var _segment = _.isUndefined(segment) ? 0 : segment
     var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
     
     // Build the question part of the query
@@ -76,7 +78,7 @@ angular.module('kibana.histogram', [])
       )
     });
 
-    // Build the facet part
+    // Build the facet part, injecting the query in as a facet filter
     _.each(queries, function(v) {
       request = request
         .facet($scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
@@ -86,6 +88,7 @@ angular.module('kibana.histogram', [])
         ).size(0)
     })
 
+    // Populate the inspector panel
     $scope.populate_modal(request);
 
     // Then run it
@@ -106,17 +109,11 @@ angular.module('kibana.histogram', [])
         return;
       }
 
-
+      // Make sure we're still on the same query
       if($scope.query_id === query_id) {
 
         var i = 0;
         _.each(results.facets, function(v, k) {
-          // If this isn't a date histogram it must be a QueryFacet, get the
-          // count and return
-          if(v._type !== 'date_histogram') {
-            //$scope.hits += v.count;
-            return
-          }
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
@@ -131,14 +128,14 @@ angular.module('kibana.histogram', [])
           var segment_data = [];
           _.each(v.entries, function(v, k) {
             segment_data.push([v['time'],v['count']])
-            hits += v['count'];
-            $scope.hits += v['count'];
+            hits += v['count']; // The series level hits counter
+            $scope.hits += v['count']; // Entire dataset level hits counter
           });
 
-          data.splice.apply(data,[1,0].concat(segment_data))
+          data.splice.apply(data,[1,0].concat(segment_data)) // Join histogram data
 
 
-          // Create the flot series
+          // Create the flot series object
           var series = { 
             data: {
               label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
@@ -155,7 +152,10 @@ angular.module('kibana.histogram', [])
           i++;
         });
 
+        // Tell the histogram directive to render.
         $scope.$emit('render')
+
+        // If we still have segments left, get them
         if(_segment < $scope.panel.index.length-1) {
           $scope.get_data(_segment+1,query_id)
         }
@@ -209,8 +209,6 @@ angular.module('kibana.histogram', [])
 
       // Function for rendering panel
       function render_panel() {
-        // Determine format
-
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 
@@ -226,10 +224,8 @@ angular.module('kibana.histogram', [])
 
           // Populate element
           try { 
-            var plot = $.plot(elem, scope.data, {
-              legend: { 
-                show: false,
-              },
+            scope.plot = $.plot(elem, scope.data, {
+              legend: { show: false },
               series: {
                 stack:  stack,
                 lines:  { 
@@ -263,11 +259,6 @@ angular.module('kibana.histogram', [])
                 hoverable: true,
               },
               colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
-            })
-
-            scope.legend = [];
-            _.each(plot.getData(),function(series) {
-              scope.legend.push(_.pick(series,'label','color','hits'))
             })
             
             // Work around for missing legend at initialization

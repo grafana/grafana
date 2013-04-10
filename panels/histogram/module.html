@@ -7,7 +7,7 @@
     <a class='small' ng-click='zoom(0.5)'><i class='icon-zoom-in'></i> Zoom In</a>
     <a class='small' ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a>
   </span> | 
-  <span ng-show="panel.legend" ng-repeat='series in legend' style='display:inline-block;padding-right:5px'>
+  <span ng-show="panel.legend" ng-repeat='series in plot.getData()' style='display:inline-block;padding-right:5px'>
     <div style="display:inline-block;background:{{series.color}};height:10px;width:10px;border-radius:5px;"></div>
     <div class='small' style='display:inline-block'>{{series.label}} ({{series.hits}})</div>
   </span><span class="small"> per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> total)</span>
