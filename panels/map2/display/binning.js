@@ -1,6 +1,7 @@
 
 function displayBinning(scope, dimensions, projection, path) {
 
+
     /**
      * Hexbin-specific setup
      */
@@ -9,40 +10,51 @@ function displayBinning(scope, dimensions, projection, path) {
         .radius(scope.panel.display.binning.hexagonSize);
 
 
-    var binPoints = [];
+    var binPoints = [],
+        binnedPoints = [],
+        binRange = 0;
 
-    //primary field is just binning raw counts
-    //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
-    //so we cheat a little and just add more points to compensate.
-    //However, we don't want to add a million points, so normalize against the largest value
-    if (scope.panel.display.binning.areaEncodingField === 'secondary') {
-        var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
-            scale = 50/max;
 
-        _.map(scope.data, function (k, v) {
-            var decoded = geohash.decode(v);
-            return _.map(_.range(0, k*scale), function(a,b) {
-                binPoints.push(projection([decoded.longitude, decoded.latitude]));
-            })
-        });
+    if (scope.panel.display.binning.enabled) {
+        //primary field is just binning raw counts
+        //secondary field is binning some metric like mean/median/total.  Hexbins doesn't support that,
+        //so we cheat a little and just add more points to compensate.
+        //However, we don't want to add a million points, so normalize against the largest value
+        if (scope.panel.display.binning.areaEncodingField === 'secondary') {
+            var max = Math.max.apply(Math, _.map(scope.data, function(k,v){return k;})),
+                scale = 50/max;
 
+            _.map(scope.data, function (k, v) {
+                var decoded = geohash.decode(v);
+                return _.map(_.range(0, k*scale), function(a,b) {
+                    binPoints.push(projection([decoded.longitude, decoded.latitude]));
+                })
+            });
+
+        } else {
+
+            binPoints = scope.projectedPoints;
+        }
+
+        //bin and sort the points, so we can set the various ranges appropriately
+        binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });
+        binRange = binnedPoints[0].length;
+
+        //clean up some memory
+        binPoints = [];
     } else {
-
-        binPoints = scope.projectedPoints;
+        binnedPoints = [];
+        binRange = 0;
     }
 
-    //bin and sort the points, so we can set the various ranges appropriately
-    var binnedPoints = hexbin(binPoints).sort(function(a, b) { return b.length - a.length; });;
 
-    //clean up some memory
-    binPoints = [];
 
     var radius = d3.scale.sqrt()
-        .domain([0, binnedPoints[0].length])
+        .domain([0, binRange])
         .range([0, scope.panel.display.binning.hexagonSize]);
 
     var color = d3.scale.linear()
-        .domain([0,binnedPoints[0].length])
+        .domain([0,binRange])
         .range(["white", "steelblue"])
         .interpolate(d3.interpolateLab);
 
@@ -51,10 +63,10 @@ function displayBinning(scope, dimensions, projection, path) {
      * D3 Drawing
      */
 
+    var hex = scope.g.selectAll(".hexagon")
+        .data(binnedPoints);
 
-    scope.g.selectAll("hexagon")
-        .data(binnedPoints)
-        .enter().append("path")
+    hex.enter().append("path")
         .attr("d", function (d) {
             if (scope.panel.display.binning.areaEncoding === false) {
                 return hexbin.hexagon();
@@ -74,4 +86,6 @@ function displayBinning(scope, dimensions, projection, path) {
             }
         })
         .attr("opacity", scope.panel.display.binning.hexagonAlpha);
+
+    hex.exit().remove();
 }

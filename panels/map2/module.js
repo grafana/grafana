@@ -122,6 +122,7 @@ angular.module('kibana.map2', [])
 
                 _.each(results.facets.map.terms, function (v) {
 
+
                     var metric = 'count';
 
                     //If it is a Term facet, use count, otherwise use Total
@@ -190,7 +191,7 @@ angular.module('kibana.map2', [])
 
 
                 //elem.html('')
-
+                scope.initializing = false;
                 scope.worldData = null;
                 scope.worldNames = null;
 
@@ -228,39 +229,38 @@ angular.module('kibana.map2', [])
 
 
 
+                scope.init_or_render = function() {
+                    if (typeof scope.svg === 'undefined') {
+                        console.log("init");
+
+                        //prevent duplicate initialization steps, if render is called again
+                        //before the svg is setup
+                        if (!scope.initializing) {
+                            init_panel();
+                        }
+                    } else {
+                        console.log("render");
+                        render_panel();
+                    }
+                };
 
 
                 // Receive render events
                 scope.$on('render', function () {
                     console.log("$on render");
-
-                    if (typeof scope.svg === 'undefined') {
-                        console.log("init");
-                        init_panel();
-                    } else {
-                        console.log("render");
-                        render_panel();
-                    }
+                    scope.init_or_render();
                 });
 
                 // Or if the window is resized
                 angular.element(window).bind('resize', function () {
                     console.log("resize render");
-
-                    if (typeof scope.svg === 'undefined') {
-                        console.log("init");
-                        init_panel();
-                    } else {
-                        console.log("render");
-                        render_panel();
-                    }
-
-
+                    scope.init_or_render();
                 });
 
 
                 function init_panel() {
 
+                    scope.initializing = true;
                     // Using LABjs, wait until all scripts are loaded before rendering panel
                     var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js?rand="+Math.floor(Math.random()*10000))
                         .script("panels/map2/lib/topojson.v1.min.js?rand="+Math.floor(Math.random()*10000))
@@ -334,16 +334,11 @@ angular.module('kibana.map2', [])
 
                                 scope.g = scope.svg.append("g");
 
-                                //Overlay is used so that the entire map is draggable, not just the locations
-                                //where countries are
-                                scope.svg.append("rect")
-                                    .attr("class", "overlay")
-                                    .attr("width", width)
-                                    .attr("height", height)
-                                    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
 
 
                                 console.log("finished initing");
+                                scope.initializing = false;
                                 render_panel();
                             });
 
@@ -399,9 +394,11 @@ angular.module('kibana.map2', [])
                         var decoded = geohash.decode(v);
                         return [decoded.longitude, decoded.latitude];
                     });
-                    scope.projectedPoints = _.map(scope.points, function (k, v) {
-                        return scope.projection(v);
+                    scope.projectedPoints = _.map(scope.points, function (coords) {
+                        return scope.projection(coords);
                     });
+
+
 
 
 
@@ -413,11 +410,24 @@ angular.module('kibana.map2', [])
                     //set up listener for ctrl key
                     //scope.svg
 
+                    //Overlay is used so that the entire map is draggable, not just the locations
+                    //where countries are
+
+                    scope.svg.select(".overlay").remove();
+
+                    scope.svg.append("rect")
+                        .attr("class", "overlay")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
                     //Draw the countries, if this is a choropleth, draw with fancy colors
-                    scope.g.selectAll("countries")
-                        .data(scope.countries)
-                        .enter().append("path")
+                    var countryPath = scope.g.selectAll(".land")
+                        .data(scope.countries);
+
+
+
+                    countryPath.enter().append("path")
                         .attr("class", function(d) {
                             if (scope.panel.display.choropleth.enabled) {
                                 return 'land ' + scope.quantize(scope.data[d.short]);
@@ -427,11 +437,16 @@ angular.module('kibana.map2', [])
                         })
                         .attr("d", path);
 
+                    countryPath.exit().remove();
+
+
+                    /*
                     //draw boundaries
                     scope.g.selectAll("land").append("path")
                         .datum(topojson.mesh(scope.worldData, scope.worldData.objects.land, function(a, b) { return a !== b; }))
                         .attr("class", "land boundary")
                         .attr("d", path);
+                    */
 
 
 
@@ -465,20 +480,13 @@ angular.module('kibana.map2', [])
                      */
 
                     //Hexagonal Binning
-                    if (scope.panel.display.binning.enabled) {
-                        //@todo fix this
-                        var dimensions = [width, height];
-                        displayBinning(scope, dimensions, scope.projection, path);
-                    }
 
-                    //Raw geopoints
-                    //if (scope.panel.display.geopoints.enabled) {
-                        displayGeopoints(scope, path);
-                    //}
+                    //@todo fix this
+                    var dimensions = [width, height];
+                    displayBinning(scope, dimensions, scope.projection, path);
+                    displayGeopoints(scope, path);
+                    displayBullseye(scope, scope.projection, path);
 
-                    //if (scope.panel.display.bullseye.enabled) {
-                        displayBullseye(scope, scope.projection, path);
-                    //}
 
                     //d3.select(elem[0]).select(".loading").remove();
 

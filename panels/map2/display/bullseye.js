@@ -5,30 +5,27 @@ function displayBullseye(scope, projection, path) {
 
     var circle = d3.geo.circle();
 
-    var data = [
-        {lat: parseFloat(scope.panel.display.bullseye.coord.lat), lon: parseFloat(scope.panel.display.bullseye.coord.lon)}
-    ];
+    var data = [];
 
-    scope.g.selectAll("arc")
-        .data(data)
-        .enter().append("path")
+    if (scope.panel.display.bullseye.enabled) {
+        data =  [
+            {lat: parseFloat(scope.panel.display.bullseye.coord.lat), lon: parseFloat(scope.panel.display.bullseye.coord.lon)}
+        ];
+    }
+
+
+    var arcs = scope.g.selectAll(".arc")
+        .data(data);
+
+
+    arcs.enter().append("path")
         .datum(function(d) {
             return circle.origin([d.lon, d.lat]).angle(1000 / 6371 * degrees)();
         })
         .attr("d", path)
         .attr("class", "arc");
 
+    arcs.exit().remove();
 
-    /*
-    scope.g.append("path")
-        .attr("d", arc)
-        .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")");
-
-    scope.g
-        .append("circle")
-        .attr("r", 1)
-        .attr("opacity", 1)
-        .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")");
-*/
 
 }
