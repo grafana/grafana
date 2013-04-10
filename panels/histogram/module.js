@@ -235,7 +235,7 @@ angular.module('kibana.histogram', [])
                   steps: false
                 },
                 bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8 },
-                points: { show: scope.panel.points, fill: 1, fillColor: false},
+                points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
               yaxis: { show: scope.panel['y-axis'], min: 0, color: "#000" },
@@ -258,7 +258,13 @@ angular.module('kibana.histogram', [])
                 color: "#eee",
                 hoverable: true,
               },
-              colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
+              colors: ['#86B22D',
+                      '#BF6730',
+                      '#1D7373',
+                      '#BFB930',
+                      '#BF3030',
+                      '#77207D'
+                      ]
             })
             
             // Work around for missing legend at initialization

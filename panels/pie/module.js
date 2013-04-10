@@ -269,7 +269,7 @@ angular.module('kibana.pie', [])
           //grid: { hoverable: true, clickable: true },
           grid:   { hoverable: true, clickable: true },
           legend: { show: false },
-          colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
+          colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
         };
 
         // Populate element
