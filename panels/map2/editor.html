@@ -61,7 +61,7 @@
 
         <div class="span11">
             <ul class="nav nav-tabs" ng-cloak="">
-                <li ng-repeat="tab in panel.displayTabs" ng-class="{active:isActive(tab)}">
+                <li ng-repeat="tab in ['Geopoints', 'Binning', 'Choropleth', 'Bullseye', 'Data']" ng-class="{active:isActive(tab)}">
                     <a ng-click="tabClick(tab)">{{tab}}</a>
                 </li>
             </ul>
@@ -87,7 +87,7 @@
                         <input type="text" style="width:100px"
                             ng-change="$emit('render')"
                             data-placement="right"
-                            bs-tooltip="'Controls the size of the geopoints on the map'"
+                            bs-tooltip="'Controls the size of the geopoints on the map. Units in kilometers (km)'"
                             ng-model="panel.display.geopoints.pointSize"
                             value="{{panel.display.geopoints.pointSize}}" />
                     </td>
@@ -216,7 +216,7 @@
                         <button type="button" class="btn" bs-button
                                 ng-change="$emit('render')"
                                 ng-class="{'btn-success': panel.display.bullseye.enabled}"
-                                ng-model="panel.display.bullseye.enabled">{{panel.display.choropleth.enabled|enabledText}}</button>
+                                ng-model="panel.display.bullseye.enabled">{{panel.display.bullseye.enabled|enabledText}}</button>
                     </td>
                 </tr>
                 <tr>
@@ -257,6 +257,12 @@
                                bs-tooltip="'Controls the number of samples used in the map. Be careful with this value!'"
                                ng-model="panel.display.data.samples"
                                value="{{panel.display.data.samples}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Map Projection</td>
+                    <td>
+                        <select ng-model="panel.display.data.type" ng-options="option.id as option.text for option in options.data.dropdown"></select>
                     </td>
                 </tr>
                 </tbody>

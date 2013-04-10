@@ -28,10 +28,7 @@ function displayBinning(scope, dimensions, projection, path) {
 
     } else {
 
-        binPoints = _.map(scope.data, function (k, v) {
-            var decoded = geohash.decode(v);
-            return projection([decoded.longitude, decoded.latitude]);
-        });
+        binPoints = scope.projectedPoints;
     }
 
     //bin and sort the points, so we can set the various ranges appropriately

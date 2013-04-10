@@ -15,16 +15,17 @@ angular.module('kibana.map2', [])
                 translate:[0, 0],
                 scale:-1,
                 data: {
-                  samples: 1000
+                    samples: 1000,
+                    type: "mercator"
                 },
                 geopoints: {
-                    enabled: true,
+                    enabled: false,
                     enabledText: "Enabled",
                     pointSize: 0.3,
                     pointAlpha: 0.6
                 },
                 binning: {
-                    enabled: true,
+                    enabled: false,
                     hexagonSize: 2,
                     hexagonAlpha: 1.0,
                     areaEncoding: true,
@@ -41,12 +42,8 @@ angular.module('kibana.map2', [])
                         lat: 0,
                         lon: 0
                     }
-                },
-                map: {
-                    type: "mercator"
                 }
             },
-            displayTabs: ["Geopoints", "Binning", "Choropleth", "Bullseye", "Data"],
             activeDisplayTab:"Geopoints"
         };
 
@@ -188,95 +185,200 @@ angular.module('kibana.map2', [])
     .directive('map2', function () {
         return {
             restrict: 'A',
+            template: '<div class="loading"><center><img src="common/img/load_big.gif" style="display:none"></center></div><div id="{{uuid}}"></div>',
             link: function (scope, elem, attrs) {
 
-                elem.html('<center><img src="common/img/load_big.gif"></center>')
+
+                //elem.html('')
 
                 scope.worldData = null;
                 scope.worldNames = null;
-                scope.svg = null;
-                scope.g = null;
+
                 scope.ctrlKey = false;
+
+                //These are various options that should not be cached in scope.panel
+                scope.options = {
+
+                    data: {
+                        dropdown:[
+                            {
+                                "text": "Mercator (Flat)",
+                                id: "mercator"
+                            },
+                            {
+                                text: "Orthographic (Sphere)",
+                                id: "orthographic"
+                            }
+                        ]
+                    }
+                };
+
+
+                //These should be moved to utility classes
+                var s4 = function() {
+                    return Math.floor((1 + Math.random()) * 0x10000)
+                        .toString(16)
+                        .substring(1);
+                };
+
+
+                scope.uuid =  s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                        s4() + '-' + s4() + s4() + s4();
+
+
+
+
 
 
                 // Receive render events
                 scope.$on('render', function () {
-                    render_panel();
+                    console.log("$on render");
+
+                    if (typeof scope.svg === 'undefined') {
+                        console.log("init");
+                        init_panel();
+                    } else {
+                        console.log("render");
+                        render_panel();
+                    }
                 });
 
                 // Or if the window is resized
                 angular.element(window).bind('resize', function () {
-                    render_panel();
+                    console.log("resize render");
+
+                    if (typeof scope.svg === 'undefined') {
+                        console.log("init");
+                        init_panel();
+                    } else {
+                        console.log("render");
+                        render_panel();
+                    }
+
+
                 });
 
-                function render_panel() {
+
+                function init_panel() {
 
                     // Using LABjs, wait until all scripts are loaded before rendering panel
-                    var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js")
-                        .script("panels/map2/lib/topojson.v1.min.js")
-                        .script("panels/map2/lib/node-geohash.js")
-                        .script("panels/map2/lib/d3.hexbin.v0.min.js")
-                        .script("panels/map2/lib/queue.v1.min.js")
-                        .script("panels/map2/display/binning.js")
-                        .script("panels/map2/display/geopoints.js")
-                        .script("panels/map2/display/bullseye.js");
+                    var scripts = $LAB.script("panels/map2/lib/d3.v3.min.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/lib/topojson.v1.min.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/lib/node-geohash.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/lib/d3.hexbin.v0.min.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/lib/queue.v1.min.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/display/binning.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/display/geopoints.js?rand="+Math.floor(Math.random()*10000))
+                        .script("panels/map2/display/bullseye.js?rand="+Math.floor(Math.random()*10000));
 
                     // Populate element. Note that jvectormap appends, does not replace.
                     scripts.wait(function () {
-                        elem.text('');
+
+                        queue()
+                            .defer(d3.json, "panels/map2/lib/world-110m.json")
+                            .defer(d3.tsv, "panels/map2/lib/world-country-names.tsv")
+                            .await(function(error, world, names) {
+                                scope.worldData = world;
+                                scope.worldNames = names;
+
+                                console.log('initializing svg');
 
 
 
-                        //these files can take a bit of time to process, so save them in a variable
-                        //and use those on redraw
-                        if (scope.worldData === null || scope.worldNames === null) {
-                            queue()
-                                .defer(d3.json, "panels/map2/lib/world-110m.json")
-                                .defer(d3.tsv, "panels/map2/lib/world-country-names.tsv")
-                                .await(function(error, world, names) {
-                                    scope.worldData = world;
-                                    scope.worldNames = names;
-                                    ready();
-                                });
-                        } else {
-                            ready();
-                        }
+                                //Better way to get these values?  Seems kludgy to use jQuery on the div...
+                                var width = $(elem[0]).width(),
+                                    height = $(elem[0]).height();
+
+
+                                //scale to whichever dimension is smaller, helps to ensure the whole map is displayed
+                                scope.scale = (width > height) ? (height/5) : (width/5);
+
+
+                                scope.zoom = d3.behavior.zoom()
+                                    .scaleExtent([1, 8])
+                                    .on("zoom", translate_map);
+
+                                //used by choropleth
+                                scope.quantize = d3.scale.quantize()
+                                    .domain([0, 1000])
+                                    .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
+
+
+                                //Extract name and two-letter codes for our countries
+                                scope.countries = topojson.feature(scope.worldData, scope.worldData.objects.countries).features;
+
+                                scope.countries = scope.countries.filter(function(d) {
+                                    return scope.worldNames.some(function(n) {
+                                        if (d.id == n.id) {
+                                            d.name = n.name;
+                                            return d.short = n.short;
+                                        }
+                                    });
+                                }).sort(function(a, b) {
+                                        return a.name.localeCompare(b.name);
+                                    });
+
+
+
+
+                                //remove our old svg...is there a better way to update than remove/append?
+                                //d3.select("#" + scope.uuid).select("svg").remove();
+
+                                //create the new svg
+                                scope.svg = d3.select(elem[0]).append("svg")
+                                    .attr("width", width)
+                                    .attr("height", height)
+                                    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+                                    .call(scope.zoom);
+
+
+                                scope.g = scope.svg.append("g");
+
+                                //Overlay is used so that the entire map is draggable, not just the locations
+                                //where countries are
+                                scope.svg.append("rect")
+                                    .attr("class", "overlay")
+                                    .attr("width", width)
+                                    .attr("height", height)
+                                    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+                                console.log("finished initing");
+                                render_panel();
+                            });
+
                     });
+
                 }
 
-                /**
-                 * All map data has been loaded, go ahead and draw the map/data
-                 */
-                function ready() {
+
+
+                function render_panel() {
 
 
 
+                    console.log("render_panel scope.svg", scope.svg);
 
-                    var world = scope.worldData,
-                        names = scope.worldNames;
 
-                    //Better way to get these values?  Seems kludgy to use jQuery on the div...
                     var width = $(elem[0]).width(),
                         height = $(elem[0]).height();
-
-
-                    //scale to whichever dimension is smaller, helps to ensure the whole map is displayed
-                    var scale = (width > height) ? (height/5) : (width/5);
 
 
                     /**
                      * D3 and general config section
                      */
 
-                    var projection;
 
-                    if (scope.panel.display.map.type === 'mercator') {
-                        projection = d3.geo.mercator()
+                    scope.projection;
+
+                    if (scope.panel.display.data.type === 'mercator') {
+                        scope.projection = d3.geo.mercator()
                             .translate([width/2, height/2])
-                            .scale(scale);
-                    } else if (scope.panel.display.map.type === 'orthographic') {
-                        projection = d3.geo.orthographic()
-                            .scale(248)
+                            .scale(scope.scale);
+                    } else if (scope.panel.display.data.type === 'orthographic') {
+                        scope.projection = d3.geo.orthographic()
+                            .translate([width/2, height/2])
+                            .scale(100)
                             .clipAngle(90);
 
                         var λ = d3.scale.linear()
@@ -288,76 +390,24 @@ angular.module('kibana.map2', [])
                             .range([90, -90]);
                     }
 
-                    var zoom = d3.behavior.zoom()
-                        .scaleExtent([1, 8])
-                        .on("zoom", move);
-
                     var path = d3.geo.path()
-                        .projection(projection);
+                        .projection(scope.projection);
 
-                    //used by choropleth
-                    var quantize = d3.scale.quantize()
-                        .domain([0, 1000])
-                        .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
-
-
-                    //Extract name and two-letter codes for our countries
-                    var countries = topojson.feature(world, world.objects.countries).features;
-
-                    countries = countries.filter(function(d) {
-                        return names.some(function(n) {
-                            if (d.id == n.id) {
-                                d.name = n.name;
-                                return d.short = n.short;
-                            }
-                        });
-                    }).sort(function(a, b) {
-                        return a.name.localeCompare(b.name);
-                    });
 
                     //Geocoded points are decoded into lat/lon, then projected onto x/y
-                    points = _.map(scope.data, function (k, v) {
+                    scope.points = _.map(scope.data, function (k, v) {
                         var decoded = geohash.decode(v);
                         return [decoded.longitude, decoded.latitude];
                     });
+                    scope.projectedPoints = _.map(scope.points, function (k, v) {
+                        return scope.projection(v);
+                    });
 
 
 
 
-                    /**
-                     * D3 SVG Setup
-                     */
-
-                    //set up some key listeners for our sphere dragging
-                    window.focus();
-                    d3.select(window)
-                        .on("keydown", function() {
-                            scope.ctrlKey = d3.event.ctrlKey;
-                        })
-                        .on("keyup", function() {
-                            scope.ctrlKey = d3.event.ctrlKey;
-                        });
-
-                    //remove our old svg...is there a better way to update than remove/append?
-                    d3.select(elem[0]).select("svg").remove();
-
-                    //create the new svg
-                    scope.svg = d3.select(elem[0]).append("svg")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-                        .call(zoom);
 
 
-                    scope.g = scope.svg.append("g");
-
-                    //Overlay is used so that the entire map is draggable, not just the locations
-                    //where countries are
-                    scope.svg.append("rect")
-                        .attr("class", "overlay")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 
                     //set up listener for ctrl key
@@ -365,12 +415,12 @@ angular.module('kibana.map2', [])
 
 
                     //Draw the countries, if this is a choropleth, draw with fancy colors
-                    scope.g.selectAll("path")
-                        .data(countries)
+                    scope.g.selectAll("countries")
+                        .data(scope.countries)
                         .enter().append("path")
                         .attr("class", function(d) {
                             if (scope.panel.display.choropleth.enabled) {
-                                return 'land ' + quantize(scope.data[d.short]);
+                                return 'land ' + scope.quantize(scope.data[d.short]);
                             } else {
                                 return 'land';
                             }
@@ -379,13 +429,25 @@ angular.module('kibana.map2', [])
 
                     //draw boundaries
                     scope.g.selectAll("land").append("path")
-                        .datum(topojson.mesh(world, world.objects.land, function(a, b) { return a !== b; }))
+                        .datum(topojson.mesh(scope.worldData, scope.worldData.objects.land, function(a, b) { return a !== b; }))
                         .attr("class", "land boundary")
                         .attr("d", path);
 
 
 
-                    if (scope.panel.display.map.type === 'orthographic') {
+                    if (scope.panel.display.data.type === 'orthographic') {
+
+                        //set up some key listeners for our sphere dragging
+                        window.focus();
+                        d3.select(window)
+                            .on("keydown", function() {
+                                scope.ctrlKey = d3.event.ctrlKey;
+                            })
+                            .on("keyup", function() {
+                                scope.ctrlKey = d3.event.ctrlKey;
+                            });
+
+
                         scope.svg.style("cursor", "move")
                             .call(d3.behavior.drag()
                                 .origin(function() { var rotate = projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
@@ -406,44 +468,48 @@ angular.module('kibana.map2', [])
                     if (scope.panel.display.binning.enabled) {
                         //@todo fix this
                         var dimensions = [width, height];
-                        displayBinning(scope, dimensions, projection, path);
+                        displayBinning(scope, dimensions, scope.projection, path);
                     }
 
                     //Raw geopoints
-                    if (scope.panel.display.geopoints.enabled) {
+                    //if (scope.panel.display.geopoints.enabled) {
                         displayGeopoints(scope, path);
-                    }
+                    //}
 
-                    if (scope.panel.display.bullseye.enabled) {
-                        displayBullseye(scope, projection, path);
-                    }
+                    //if (scope.panel.display.bullseye.enabled) {
+                        displayBullseye(scope, scope.projection, path);
+                    //}
+
+                    //d3.select(elem[0]).select(".loading").remove();
 
 
                     /**
                      * Zoom Functionality
                      */
                     if (scope.panel.display.scale != -1) {
-                        zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
+                        scope.zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
                         scope.g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
 
                     }
 
-                    function move() {
+                }
 
-                        if (! scope.ctrlKey) {
-                            var t = d3.event.translate,
-                                s = d3.event.scale;
-                            t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
-                            t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
-                            zoom.translate(t);
+                function translate_map() {
 
-                            scope.panel.display.translate = t;
-                            scope.panel.display.scale = s;
-                            scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ") scale(" + s + ")");
-                        }
+                    var width = $(elem[0]).width(),
+                        height = $(elem[0]).height();
+
+                    if (! scope.ctrlKey) {
+                        var t = d3.event.translate,
+                            s = d3.event.scale;
+                        t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
+                        t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
+                        scope.zoom.translate(t);
+
+                        scope.panel.display.translate = t;
+                        scope.panel.display.scale = s;
+                        scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ") scale(" + s + ")");
                     }
-
-
                 }
             }
         };
