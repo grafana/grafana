@@ -2,7 +2,7 @@
 <div class="row-fluid container" style="margin-top:10px">
   <!-- Rows -->
   <div ng-controller="dashcontrol" ng-init="init()"></div>
-  <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboards.rows" style="min-height:{{row.height}};">
+  <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboards.rows" ng-style="row_style(row)">
     <div class="row-control">
       <div class="row-fluid row-header" style="padding:0px;margin:0px;height:0px">
         <div style="vertical-align:bottom">

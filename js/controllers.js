@@ -48,6 +48,10 @@ angular.module('kibana.controllers', [])
     };
   };
 
+  $scope.row_style = function(row) {
+    return { 'min-height': row.collapse ? '5px' : row.height }
+  }
+
   $scope.alert = function(title,text,severity,timeout) {
     var alert = {
       title: title,
@@ -96,7 +100,7 @@ angular.module('kibana.controllers', [])
   _.defaults($scope.row,_d)
 
 
-  $scope.init = function(){
+  $scope.init = function() {
     $scope.reset_panel();
   }
 
@@ -104,7 +108,7 @@ angular.module('kibana.controllers', [])
     row.collapse = row.collapse ? false : true;
     if (!row.collapse) {
       $timeout(function() {
-        $scope.send_render();
+        $scope.$broadcast('render')
       });
     }
   }
@@ -120,11 +124,11 @@ angular.module('kibana.controllers', [])
 
   $scope.reset_panel = function() {
     $scope.panel = {
-      loading: false,
-      error: false,
-      span: 3,
+      loading : false,
+      error   : false,
+      span    : 3,
       editable: true,
-      group: ['default'],
+      group   : ['default'],
     };
   };
 
