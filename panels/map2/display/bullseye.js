@@ -1,10 +1,11 @@
-function displayBullseye(scope, projection, path) {
+/**
+ * Renders bullseyes as geo-json poly gon entities
+ * Allows for them to clip on spheres correctly
+ */
+function displayBullseye(scope, path) {
 
     var degrees = 180 / Math.PI
-
-
     var circle = d3.geo.circle();
-
     var data = [];
 
     if (scope.panel.display.bullseye.enabled) {
@@ -13,10 +14,8 @@ function displayBullseye(scope, projection, path) {
         ];
     }
 
-
     var arcs = scope.g.selectAll(".arc")
         .data(data);
-
 
     arcs.enter().append("path")
         .datum(function(d) {

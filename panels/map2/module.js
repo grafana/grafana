@@ -186,7 +186,6 @@ angular.module('kibana.map2', [])
     .directive('map2', function () {
         return {
             restrict: 'A',
-            template: '<div class="loading"><center><img src="common/img/load_big.gif" style="display:none"></center></div><div id="{{uuid}}"></div>',
             link: function (scope, elem, attrs) {
 
 
@@ -215,20 +214,9 @@ angular.module('kibana.map2', [])
                 };
 
 
-                //These should be moved to utility classes
-                var s4 = function() {
-                    return Math.floor((1 + Math.random()) * 0x10000)
-                        .toString(16)
-                        .substring(1);
-                };
-
-
-                scope.uuid =  s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-                        s4() + '-' + s4() + s4() + s4();
-
-
-
-
+                /**
+                 * Initialize the panels if new, or render existing panels
+                 */
                 scope.init_or_render = function() {
                     if (typeof scope.svg === 'undefined') {
                         console.log("init");
@@ -245,19 +233,25 @@ angular.module('kibana.map2', [])
                 };
 
 
-                // Receive render events
+                /**
+                 * Receive render events
+                 */
                 scope.$on('render', function () {
-                    console.log("$on render");
                     scope.init_or_render();
                 });
 
-                // Or if the window is resized
+                /**
+                 * On window resize, re-render the panel
+                 */
                 angular.element(window).bind('resize', function () {
-                    console.log("resize render");
                     scope.init_or_render();
                 });
 
 
+                /**
+                 * Load the various panel-specific scripts, map data, then initialize
+                 * the svg and set appropriate D3 settings
+                 */
                 function init_panel() {
 
                     scope.initializing = true;
@@ -281,9 +275,6 @@ angular.module('kibana.map2', [])
                                 scope.worldData = world;
                                 scope.worldNames = names;
 
-                                console.log('initializing svg');
-
-
 
                                 //Better way to get these values?  Seems kludgy to use jQuery on the div...
                                 var width = $(elem[0]).width(),
@@ -299,6 +290,7 @@ angular.module('kibana.map2', [])
                                     .on("zoom", translate_map);
 
                                 //used by choropleth
+                                //@todo change domain so that it reflects the domain of the data
                                 scope.quantize = d3.scale.quantize()
                                     .domain([0, 1000])
                                     .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
@@ -319,99 +311,67 @@ angular.module('kibana.map2', [])
                                     });
 
 
-
-
-                                //remove our old svg...is there a better way to update than remove/append?
-                                //d3.select("#" + scope.uuid).select("svg").remove();
-
                                 //create the new svg
                                 scope.svg = d3.select(elem[0]).append("svg")
                                     .attr("width", width)
                                     .attr("height", height)
                                     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
                                     .call(scope.zoom);
-
-
                                 scope.g = scope.svg.append("g");
 
 
-
-
-                                console.log("finished initing");
                                 scope.initializing = false;
                                 render_panel();
                             });
-
                     });
 
                 }
 
 
-
+                /**
+                 * Render updates to the SVG. Typically happens when the data changes (time, query)
+                 * or when new options are selected
+                 */
                 function render_panel() {
-
-
-
-                    console.log("render_panel scope.svg", scope.svg);
-
 
                     var width = $(elem[0]).width(),
                         height = $(elem[0]).height();
 
 
-                    /**
-                     * D3 and general config section
-                     */
-
-
-                    scope.projection;
-
+                    //Projection is dependant on the map-type
                     if (scope.panel.display.data.type === 'mercator') {
                         scope.projection = d3.geo.mercator()
                             .translate([width/2, height/2])
                             .scale(scope.scale);
+
                     } else if (scope.panel.display.data.type === 'orthographic') {
                         scope.projection = d3.geo.orthographic()
                             .translate([width/2, height/2])
                             .scale(100)
                             .clipAngle(90);
 
-                        var λ = d3.scale.linear()
-                            .domain([0, width])
-                            .range([-180, 180]);
+                        //recenters the sphere more towards the US...not really necessary
+                        scope.projection.rotate([100 / 2, 20 / 2, scope.projection.rotate()[2]]);
 
-                        var φ = d3.scale.linear()
-                            .domain([0, height])
-                            .range([90, -90]);
                     }
 
                     var path = d3.geo.path()
                         .projection(scope.projection);
 
 
-                    //Geocoded points are decoded into lat/lon, then projected onto x/y
+                    //Geocoded points are decoded into lonlat
                     scope.points = _.map(scope.data, function (k, v) {
                         var decoded = geohash.decode(v);
                         return [decoded.longitude, decoded.latitude];
                     });
+
+                    //And also projected projected to x/y.  Both sets of points are used
+                    //by different functions
                     scope.projectedPoints = _.map(scope.points, function (coords) {
                         return scope.projection(coords);
                     });
 
 
-
-
-
-
-
-
-
-
-                    //set up listener for ctrl key
-                    //scope.svg
-
-                    //Overlay is used so that the entire map is draggable, not just the locations
-                    //where countries are
 
                     scope.svg.select(".overlay").remove();
 
@@ -421,11 +381,10 @@ angular.module('kibana.map2', [])
                         .attr("height", height)
                         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
+
                     //Draw the countries, if this is a choropleth, draw with fancy colors
                     var countryPath = scope.g.selectAll(".land")
                         .data(scope.countries);
-
-
 
                     countryPath.enter().append("path")
                         .attr("class", function(d) {
@@ -450,9 +409,10 @@ angular.module('kibana.map2', [])
 
 
 
+                    //If this is a sphere, set up drag and keypress listeners
+                    //@todo implement a global "keypress service", since this fails if there are >1 spheres
                     if (scope.panel.display.data.type === 'orthographic') {
 
-                        //set up some key listeners for our sphere dragging
                         window.focus();
                         d3.select(window)
                             .on("keydown", function() {
@@ -465,35 +425,32 @@ angular.module('kibana.map2', [])
 
                         scope.svg.style("cursor", "move")
                             .call(d3.behavior.drag()
-                                .origin(function() { var rotate = projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
+                                .origin(function() { var rotate = scope.projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
                                 .on("drag", function() {
                                     if ( scope.ctrlKey) {
-                                        projection.rotate([d3.event.x / 2, -d3.event.y / 2, projection.rotate()[2]]);
+                                        scope.projection.rotate([d3.event.x / 2, -d3.event.y / 2, scope.projection.rotate()[2]]);
                                         scope.svg.selectAll("path").attr("d", path);
-                                        //displayBinning(scope, dimensions, projection, path);
                                     }
                                 }));
                     }
 
-                    /**
-                     * Display Options
-                     */
 
-                    //Hexagonal Binning
+                    /**
+                     * Display option rendering
+                     * Order is important to render order here!
+                     */
 
                     //@todo fix this
                     var dimensions = [width, height];
-                    displayBinning(scope, dimensions, scope.projection, path);
+                    displayBinning(scope, dimensions);
                     displayGeopoints(scope, path);
-                    displayBullseye(scope, scope.projection, path);
+                    displayBullseye(scope, path);
 
 
-                    //d3.select(elem[0]).select(".loading").remove();
 
 
-                    /**
-                     * Zoom Functionality
-                     */
+                    //If the panel scale is not default (e.g. the user has moved the maps around)
+                    //set the scale and position to the last saved config
                     if (scope.panel.display.scale != -1) {
                         scope.zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
                         scope.g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
@@ -502,6 +459,12 @@ angular.module('kibana.map2', [])
 
                 }
 
+
+                /**
+                 * On D3 zoom events, pan/zoom the map
+                 * Only applies if the ctrl-key is not pressed, so it doesn't clobber
+                 * sphere dragging
+                 */
                 function translate_map() {
 
                     var width = $(elem[0]).width(),
