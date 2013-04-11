@@ -2,6 +2,11 @@
   <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
-  
+  <span ng-show="panel.legend" ng-repeat='series in legend' style='padding-right:5px'>
+    <div style='white-space:nowrap;display:table-cell'>
+      <div style="display:inline-block;background:{{series.color}};height:10px;width:10px;border-radius:5px;"></div>
+      <div class='small' style='display:inline-block'>{{series.label}} ({{series.percent}}%)</div>
+    </div>
+  </span>  
   <div pie params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 </kibana-panel>         

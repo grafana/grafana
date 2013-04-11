@@ -187,8 +187,9 @@ angular.module('kibana.dashcontrol', [])
       var results = request.query(
         $scope.ejs.QueryStringQuery(query || '*')
         ).size($scope.panel.elasticsearch_size).doSearch();
+      
       results.then(function(results) {
-        if(_.isUndefined(results)) {
+        if(_.isUndefined(results.hits)) {
           return;
         }
         $scope.panel.error =  false;

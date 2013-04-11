@@ -3,19 +3,28 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
+    group     : "default",
     query     : [ {query: "*", label:"Query"} ],
     interval  : secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
-    show      : ['bars','y-axis','x-axis','legend'],
     fill      : 3,
+    linewidth : 3,
     timezone  : 'browser', // browser, utc or a standard timezone
     spyable   : true,
     zoomlinks : true,
-    group     : "default",
+    bars      : true,
+    stack     : true,
+    points    : false,
+    lines     : false,
+    legend    : true,
+    'x-axis'  : true,
+    'y-axis'  : true,
   }
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
+    
+    // Consider eliminating the check for array, this should always be an array
     eventBus.register($scope,'query', function(event, query) {
       if(_.isArray(query)) {
         $scope.panel.query = _.map(query,function(q) {
@@ -26,6 +35,7 @@ angular.module('kibana.histogram', [])
       }
       $scope.get_data();
     });
+
     // Now that we're all setup, request the time from our group if we don't 
     // have it yet
     if(_.isUndefined($scope.time))
@@ -48,13 +58,13 @@ angular.module('kibana.histogram', [])
   }
 
   $scope.get_data = function(segment,query_id) {
+    delete $scope.panel.error
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
 
-    var _segment = _.isUndefined(segment) ? 0 : segment
-
     $scope.panel.loading = true;
+    var _segment = _.isUndefined(segment) ? 0 : segment
     var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
     
     // Build the question part of the query
@@ -68,7 +78,7 @@ angular.module('kibana.histogram', [])
       )
     });
 
-    // Build the facet part
+    // Build the facet part, injecting the query in as a facet filter
     _.each(queries, function(v) {
       request = request
         .facet($scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
@@ -78,6 +88,7 @@ angular.module('kibana.histogram', [])
         ).size(0)
     })
 
+    // Populate the inspector panel
     $scope.populate_modal(request);
 
     // Then run it
@@ -92,16 +103,17 @@ angular.module('kibana.histogram', [])
         query_id = $scope.query_id = new Date().getTime();
       }
       
+      // Check for error and abort if found
+      if(!(_.isUndefined(results.error))) {
+        $scope.panel.error = $scope.parse_error(results.error);
+        return;
+      }
+
+      // Make sure we're still on the same query
       if($scope.query_id === query_id) {
 
         var i = 0;
         _.each(results.facets, function(v, k) {
-          // If this isn't a date histogram it must be a QueryFacet, get the
-          // count and return
-          if(v._type !== 'date_histogram') {
-            //$scope.hits += v.count;
-            return
-          }
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
@@ -116,14 +128,14 @@ angular.module('kibana.histogram', [])
           var segment_data = [];
           _.each(v.entries, function(v, k) {
             segment_data.push([v['time'],v['count']])
-            hits += v['count'];
-            $scope.hits += v['count'];
+            hits += v['count']; // The series level hits counter
+            $scope.hits += v['count']; // Entire dataset level hits counter
           });
 
-          data.splice.apply(data,[1,0].concat(segment_data))
+          data.splice.apply(data,[1,0].concat(segment_data)) // Join histogram data
 
 
-          // Create the flot series
+          // Create the flot series object
           var series = { 
             data: {
               label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
@@ -140,8 +152,10 @@ angular.module('kibana.histogram', [])
           i++;
         });
 
-        eventBus.broadcast($scope.$id,$scope.panel.group,'hits',$scope.hits)
+        // Tell the histogram directive to render.
         $scope.$emit('render')
+
+        // If we still have segments left, get them
         if(_segment < $scope.panel.index.length-1) {
           $scope.get_data(_segment+1,query_id)
         }
@@ -176,14 +190,12 @@ angular.module('kibana.histogram', [])
   }
 
 })
-.directive('histogram', function(eventBus) {
+.directive('histogramChart', function(eventBus) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
 
       var height = scope.panel.height || scope.row.height;
-
-      elem.html('<center><img src="common/img/load_big.gif"></center>')
 
       // Receive render events
       scope.$on('render',function(){
@@ -197,19 +209,6 @@ angular.module('kibana.histogram', [])
 
       // Function for rendering panel
       function render_panel() {
-        // Determine format
-        var show = _.isUndefined(scope.panel.show) ? {
-            bars: true, lines: false, points: false
-          } : {
-            lines:  _.indexOf(scope.panel.show,'lines')   < 0 ? false : true,
-            bars:   _.indexOf(scope.panel.show,'bars')    < 0 ? false : true,
-            points: _.indexOf(scope.panel.show,'points')  < 0 ? false : true,
-            stack:  _.indexOf(scope.panel.show,'stack')   < 0 ? null  : true,
-            legend: _.indexOf(scope.panel.show,'legend')  < 0 ? false : true,
-            'x-axis': _.indexOf(scope.panel.show,'x-axis') < 0 ? false : true,
-            'y-axis': _.indexOf(scope.panel.show,'y-axis') < 0 ? false : true,
-          }
-
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 
@@ -221,31 +220,36 @@ angular.module('kibana.histogram', [])
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
+          var stack = scope.panel.stack ? true : null;
 
           // Populate element
           try { 
-            var plot = $.plot(elem, scope.data, {
-              legend: { 
-                show: false,
-              },
+            scope.plot = $.plot(elem, scope.data, {
+              legend: { show: false },
               series: {
-                stack:  show.stack,
-                lines:  { show: show.lines, fill: scope.panel.fill/10 },
-                bars:   { show: show.bars,  fill: 1, barWidth: barwidth/1.8 },
-                points: { show: show.points, fill: 1, fillColor: false},
+                stack:  stack,
+                lines:  { 
+                  show: scope.panel.lines, 
+                  fill: scope.panel.fill/10, 
+                  lineWidth: scope.panel.linewidth,
+                  steps: false
+                },
+                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8 },
+                points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
-              yaxis: { show: show['y-axis'], min: 0, color: "#000" },
+              yaxis: { show: scope.panel['y-axis'], min: 0, color: "#000" },
               xaxis: {
                 timezone: scope.panel.timezone,
-                show: show['x-axis'],
+                show: scope.panel['x-axis'],
                 mode: "time",
                 timeformat: time_format(scope.panel.interval),
                 label: "Datetime",
                 color: "#000",
               },
               selection: {
-                mode: "x"
+                mode: "x",
+                color: '#666'
               },
               grid: {
                 backgroundColor: '#fff',
@@ -254,12 +258,13 @@ angular.module('kibana.histogram', [])
                 color: "#eee",
                 hoverable: true,
               },
-              colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
-            })
-
-            scope.legend = [];
-            _.each(plot.getData(),function(series) {
-              scope.legend.push(_.pick(series,'label','color','hits'))
+              colors: ['#86B22D',
+                      '#BF6730',
+                      '#1D7373',
+                      '#BFB930',
+                      '#BF3030',
+                      '#77207D'
+                      ]
             })
             
             // Work around for missing legend at initialization
@@ -288,23 +293,25 @@ angular.module('kibana.histogram', [])
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
         //var tooltip = $('#pie-tooltip')
-        tooltip.text(contents).css({
+        tooltip.html(contents).css({
           position: 'absolute',
           top     : y + 5,
           left    : x + 5,
-          color   : "#FFF",
-          border  : '1px solid #FFF',
-          padding : '2px',
-          'font-size': '8pt',
-          'background-color': '#000',
+          color   : "#000",
+          border  : '2px solid #000',
+          padding : '10px',
+          'font-size': '11pt',
+          'font-weight' : 200,
+          'background-color': '#FFF',
+          'border-radius': '10px',
         }).appendTo("body");
       }
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
-          var percent = parseFloat(item.series.percent).toFixed(1) + "%";
           tt(pos.pageX, pos.pageY,
-            item.datapoint[1].toFixed(1) + " @ " + 
+            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
+            item.datapoint[1].toFixed(0) + " @ " + 
             new Date(item.datapoint[0]).format('mm/dd HH:MM:ss'));
         } else {
           $("#pie-tooltip").remove();

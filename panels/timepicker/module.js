@@ -111,10 +111,6 @@ angular.module('kibana.timepicker', [])
       }     
       $scope.time_apply();
     });
-    
-    $scope.$on('render', function (){
-      $scope.time_apply();
-    });
   }
 
   $scope.set_interval = function (refresh_interval) {
@@ -164,6 +160,10 @@ angular.module('kibana.timepicker', [])
       time : time_ago(timespan).format("HH:MM:ss"),
       date : time_ago(timespan).format("mm/dd/yyyy")
     }
+    $scope.time_apply();
+  }
+
+  $scope.close_edit = function() {
     $scope.time_apply();
   }
 

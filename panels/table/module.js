@@ -1,5 +1,5 @@
 angular.module('kibana.table', [])
-.controller('table', function($scope, eventBus) {
+.controller('table', function($scope, eventBus, fields) {
 
   // Set and populate defaults
   var _d = {
@@ -76,6 +76,8 @@ angular.module('kibana.table', [])
   }
 
   $scope.get_data = function(segment,query_id) {
+    $scope.panel.error =  false;
+
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
@@ -98,7 +100,7 @@ angular.module('kibana.table', [])
 
     $scope.populate_modal(request)
 
-    var results = request.doSearch();
+    var results = request.doSearch()
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -110,11 +112,11 @@ angular.module('kibana.table', [])
         query_id = $scope.query_id = new Date().getTime()
       }
 
-      if(_.isUndefined(results)) {
-        $scope.panel.error = 'Your query was unsuccessful';
+      // Check for error and abort if found
+      if(!(_.isUndefined(results.error))) {
+        $scope.panel.error = $scope.parse_error(results.error);
         return;
       }
-      $scope.panel.error =  false;
 
       // Check that we're still on the same query, if not stop
       if($scope.query_id === query_id) {
@@ -142,7 +144,6 @@ angular.module('kibana.table', [])
       
       // This breaks, use $scope.data for this
       $scope.all_fields = get_all_fields($scope.data);
-
       broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for

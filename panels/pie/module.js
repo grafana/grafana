@@ -268,14 +268,21 @@ angular.module('kibana.pie', [])
           },
           //grid: { hoverable: true, clickable: true },
           grid:   { hoverable: true, clickable: true },
-          legend: { show: scope.panel.legend },
-          colors: ['#EB6841','#00A0B0','#6A4A3C','#EDC951','#CC333F']
+          legend: { show: false },
+          colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
         };
 
         // Populate element
         if(elem.is(":visible")){
           scripts.wait(function(){
-            $.plot(elem, scope.data, pie);
+            var plot = $.plot(elem, scope.data, pie);
+            scope.legend = [];
+            _.each(plot.getData(),function(series) {
+              var item = _.pick(series,'label','color','percent')
+              item.percent = parseFloat(item.percent).toFixed(1)
+              scope.legend.push(item)
+            })
+            console.log(scope.legend)
           });
         }
       }
@@ -283,15 +290,16 @@ angular.module('kibana.pie', [])
       function piett(x, y, contents) {
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-        tooltip.text(contents).css({
+        tooltip.html(contents).css({
           position: 'absolute',
           top     : y + 10,
           left    : x + 10,
-          color   : "#FFF",
-          border  : '1px solid #FFF',
-          padding : '2px',
-          'font-size': '8pt',
-          'background-color': '#000',
+          color   : "#000",
+          'font-weight': 200,
+          'border-radius': '5px',
+          border  : '2px solid #000',
+          padding : '10px',
+          'background-color': '#FFF',
         }).appendTo("body");
       }
 
@@ -305,7 +313,8 @@ angular.module('kibana.pie', [])
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-          piett(pos.pageX, pos.pageY, percent + " " + (item.series.label||""));
+          piett(pos.pageX, pos.pageY, "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> " + 
+            (item.series.label||"")+ " " + percent);
         } else {
           $("#pie-tooltip").remove();
         }

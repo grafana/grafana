@@ -3,7 +3,7 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus) {
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus, fields) {
 
   var _d = {
     title: "",
@@ -14,7 +14,11 @@ angular.module('kibana.controllers', [])
   $scope.init = function() {
 
     $scope.config = config;
+    // Make underscore.js available to views
     $scope._ = _;
+
+    // Provide a global list of all see fields
+    $scope.fields = fields
     $scope.reset_row();
     $scope.clear_all_alerts();
 
@@ -44,6 +48,10 @@ angular.module('kibana.controllers', [])
     };
   };
 
+  $scope.row_style = function(row) {
+    return { 'min-height': row.collapse ? '5px' : row.height }
+  }
+
   $scope.alert = function(title,text,severity,timeout) {
     var alert = {
       title: title,
@@ -70,6 +78,12 @@ angular.module('kibana.controllers', [])
       return 'panels/'+type+'/editor.html';
   }
 
+  // This is whoafully incomplete, but will do for now 
+  $scope.parse_error = function(data) {
+    var _error = data.match("nested: (.*?);")
+    return _.isNull(_error) ? data : _error[1];
+  }
+
   $scope.init();
 
 })
@@ -86,7 +100,7 @@ angular.module('kibana.controllers', [])
   _.defaults($scope.row,_d)
 
 
-  $scope.init = function(){
+  $scope.init = function() {
     $scope.reset_panel();
   }
 
@@ -94,13 +108,14 @@ angular.module('kibana.controllers', [])
     row.collapse = row.collapse ? false : true;
     if (!row.collapse) {
       $timeout(function() {
-        $scope.send_render();
+        $scope.$broadcast('render')
       });
     }
   }
 
-  $scope.send_render = function() {
-    $scope.$broadcast('render');
+  // This can be overridden by individual panel
+  $scope.close_edit = function() {
+    $scope.$broadcast('render')
   }
 
   $scope.add_panel = function(row,panel) {
@@ -109,11 +124,11 @@ angular.module('kibana.controllers', [])
 
   $scope.reset_panel = function() {
     $scope.panel = {
-      loading: false,
-      error: false,
-      span: 3,
+      loading : false,
+      error   : false,
+      span    : 3,
       editable: true,
-      group: ['default'],
+      group   : ['default'],
     };
   };
 
