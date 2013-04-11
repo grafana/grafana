@@ -6,10 +6,6 @@
   color: #000;
 }
 
-.main {
-  box-shadow:0 3px 5px rgba(0, 0, 0, 0.4) inset, 0 -3px 5px rgba(0, 0, 0, 0.4) inset;
-}
-
 .kibana-row {
   margin-left: 15px;
   margin-bottom: 15px;
