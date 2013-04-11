@@ -5,7 +5,7 @@
       "title": "Options",
       "height": "50px",
       "editable": true,
-      "collapse": true,
+      "collapse": false,
       "collapsable": true,
       "panels": [
         {
@@ -28,7 +28,7 @@
             "2d",
             "5d"
           ],
-          "timespan": "15m",
+          "timespan": "6h",
           "timefield": "@timestamp",
           "index": "\"logstash-\"yyyy.mm.dd",
           "defaultindex": "NOINDEX",
@@ -37,39 +37,7 @@
             "enable": false,
             "interval": 30,
             "min": 3
-          },
-          "time": {
-            "from": "04/03/2013 08:58:07",
-            "to": "04/03/2013 09:13:07"
           }
-        }
-      ]
-    },
-    {
-      "title": "Query Control",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "loading": false,
-          "error": false,
-          "span": 7,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "stringquery",
-          "label": "Search",
-          "query": "",
-          "size": 100,
-          "sort": [
-            "_score",
-            "desc"
-          ],
-          "multi": false,
-          "multi_arrange": "horizontal"
         },
         {
           "loading": false,
@@ -96,29 +64,12 @@
           "elasticsearch_saveto": "kibana-int",
           "temp": true,
           "temp_ttl": "30d"
-        },
-        {
-          "loading": false,
-          "error": false,
-          "span": 2,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "hits",
-          "query": "*",
-          "style": {
-            "font-size": "24pt",
-            "font-weight": "bold"
-          },
-          "run_query": false,
-          "title": "Hits"
         }
       ]
     },
     {
-      "title": "Graph",
-      "height": "150px",
+      "title": "Query",
+      "height": "50px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
@@ -131,14 +82,41 @@
           "group": [
             "default"
           ],
+          "type": "stringquery",
+          "label": "Search",
+          "query": "*",
+          "size": 100,
+          "sort": [
+            "_score",
+            "desc"
+          ],
+          "multi": false,
+          "multi_arrange": "horizontal"
+        }
+      ]
+    },
+    {
+      "title": "Graph",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "loading": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
           "type": "histogram",
           "query": [
             {
-              "query": "",
-              "label": ""
+              "query": "*",
+              "label": "*"
             }
           ],
-          "interval": "30s",
+          "interval": "5m",
           "show": [
             "points",
             "lines",
@@ -150,9 +128,43 @@
           "spyable": true,
           "zoomlinks": true,
           "index": [
-            "logstash-2013.04.03"
+            "logstash-2013.04.11"
           ],
-          "fill": 1
+          "fill": 0,
+          "linewidth": 2,
+          "bars": true,
+          "stack": true,
+          "points": false,
+          "lines": false,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true
+        },
+        {
+          "loading": false,
+          "span": 0,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "hits",
+          "query": [
+            {
+              "query": "*",
+              "label": "*"
+            }
+          ],
+          "style": {
+            "font-size": "9pt"
+          },
+          "aggregate": false,
+          "arrangement": "horizontal",
+          "chart": true,
+          "counters": true,
+          "count_pos": "above",
+          "index": [
+            "logstash-2013.04.11"
+          ]
         }
       ]
     },
@@ -179,7 +191,7 @@
             "@timestamp",
             "desc"
           ],
-          "query": ""
+          "query": "*"
         },
         {
           "loading": false,
@@ -190,7 +202,7 @@
             "default"
           ],
           "type": "table",
-          "query": "",
+          "query": "*",
           "interval": "1y",
           "show": [
             "bars",
@@ -218,7 +230,7 @@
           ],
           "sortable": true,
           "index": [
-            "logstash-2013.04.03"
+            "logstash-2013.04.11"
           ]
         }
       ]
