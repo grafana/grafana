@@ -313,8 +313,9 @@ angular.module('kibana.map2', [])
 
                                 //create the new svg
                                 scope.svg = d3.select(elem[0]).append("svg")
-                                    .attr("width", width)
-                                    .attr("height", height)
+                                    .attr("width", "100%")
+                                    .attr("height", "100%")
+                                    .attr("viewBox", "0 0 " + width + " " + height)
                                     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
                                     .call(scope.zoom);
                                 scope.g = scope.svg.append("g");
