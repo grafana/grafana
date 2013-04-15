@@ -78,6 +78,8 @@ angular.module('kibana.map2', [])
             var request = $scope.ejs.Request().indices($scope.panel.index);
 
 
+            var metric = 'count';
+
             //Use a regular term facet if there is no secondary field
             if (typeof $scope.panel.secondaryfield === "undefined") {
                 var facet = $scope.ejs.TermsFacet('map')
@@ -90,6 +92,8 @@ angular.module('kibana.map2', [])
                             ejs.RangeFilter($scope.time.field)
                                 .from($scope.time.from)
                                 .to($scope.time.to))));
+
+                metric = 'count';
             } else {
                 //otherwise, use term stats
                 //NOTE: this will break if valueField is a geo_point
@@ -104,6 +108,8 @@ angular.module('kibana.map2', [])
                             ejs.RangeFilter($scope.time.field)
                                 .from($scope.time.from)
                                 .to($scope.time.to))));
+
+                metric = 'total';
             }
 
 
@@ -121,17 +127,6 @@ angular.module('kibana.map2', [])
                 $scope.data = {};
 
                 _.each(results.facets.map.terms, function (v) {
-
-
-                    var metric = 'count';
-
-                    //If it is a Term facet, use count, otherwise use Total
-                    //May retool this to allow users to pick mean/median/etc
-                    if (typeof $scope.panel.secondaryfield === "undefined") {
-                        metric = 'count';
-                    } else {
-                        metric = 'total';
-                    }
 
                     //FIX THIS
                     if (!$scope.isNumber(v.term)) {
@@ -359,9 +354,11 @@ angular.module('kibana.map2', [])
                     var path = d3.geo.path()
                         .projection(scope.projection);
 
+                    console.log(scope.data);
 
                     //Geocoded points are decoded into lonlat
                     scope.points = _.map(scope.data, function (k, v) {
+                        //console.log(k,v);
                         var decoded = geohash.decode(v);
                         return [decoded.longitude, decoded.latitude];
                     });
