@@ -20,16 +20,7 @@ angular.module('kibana.pie', [])
   $scope.init = function() {
     eventBus.register($scope,'time', function(event,time){set_time(time)});
     eventBus.register($scope,'query', function(event, query) {
-      if($scope.panel.mode !== 'query') {
-        $scope.panel.query.query = query;
-        $scope.panel.query.query = _.isArray(query) ? query[0] : query;
-      } else {
-        if(_.isArray(query))
-          $scope.panel.query = _.map(query,function(q) {
-            return {query: q, label: q}}) 
-        else
-          $scope.panel.query[0] = {query: query, label: query}
-      }
+      $scope.panel.query.query = _.isArray(query) ? query[0] : query;
       $scope.get_data();
     });
     // Now that we're all setup, request the time from our group
@@ -60,9 +51,6 @@ angular.module('kibana.pie', [])
     case 'terms':
       $scope.panel.query = {query:"*",field:"_all"};
       break;
-    case 'query':
-      $scope.panel.query = [{query:"*",label:"*"}];
-      break;
     case 'goal':
       $scope.panel.query = {query:"*",goal:100};
       break;
@@ -77,49 +65,8 @@ angular.module('kibana.pie', [])
     $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices($scope.panel.index);
 
-    // If we have an array, use query facet
-    if($scope.panel.mode == "query") {
-      if(!(_.isArray($scope.panel.query)))
-        $scope.panel.query = [$scope.panel.query];
-      var queries = [];
-      // Build the question part of the query
-      _.each($scope.panel.query, function(v) {
-        queries.push(ejs.FilteredQuery(
-          ejs.QueryStringQuery(v.query || '*'),
-          ejs.RangeFilter($scope.time.field)
-            .from($scope.time.from)
-            .to($scope.time.to))
-        )
-      });
-
-      // Then the insert into facet and make the request
-      _.each(queries, function(v) {
-        request = request.facet(ejs.QueryFacet(_.indexOf(queries,v))
-          .query(v)
-          .facetFilter(ejs.QueryFilter(v))
-        )
-      })
-      $scope.populate_modal(request);
-      var results = request.doSearch();
-
-      // Populate scope when we have results
-      results.then(function(results) {
-        $scope.panel.loading = false;
-        $scope.hits = results.hits.total;
-        $scope.data = [];
-        _.each(results.facets, function(v, k) {
-          var series = {};
-          var label = _.isUndefined($scope.panel.query[k].label) ? 
-            $scope.panel.query[k].query : $scope.panel.query[k].label 
-          var slice = { label : label, data : v.count }; 
-          if (!(_.isUndefined($scope.panel.query[k].color)))
-            slice.color = $scope.panel.query[k].color;
-          $scope.data.push(slice)
-        });
-        $scope.$emit('render');
-      });
-    // If we don't have an array, assume its a term facet.
-    } else if ($scope.panel.mode == "terms") {
+    // Terms mode
+    if ($scope.panel.mode == "terms") {
       request = request
         .facet(ejs.TermsFacet('pie')
           .field($scope.panel.query.field || $scope.panel.default_field)
@@ -131,7 +78,6 @@ angular.module('kibana.pie', [])
               ejs.RangeFilter($scope.time.field)
                 .from($scope.time.from)
                 .to($scope.time.to)
-                .cache(false)
               )))).size(0)
 
       $scope.populate_modal(request);
@@ -157,6 +103,7 @@ angular.module('kibana.pie', [])
         });
         $scope.$emit('render');
       });
+    // Goal mode
     } else {
       request = request
         .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
@@ -196,7 +143,7 @@ angular.module('kibana.pie', [])
   $scope.build_search = function(field,value) {
     $scope.panel.query.query = add_to_query($scope.panel.query.query,field,value,false)
     $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query.query);
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query.query]);
   }
 
   function set_time(time) {
@@ -275,14 +222,7 @@ angular.module('kibana.pie', [])
         // Populate element
         if(elem.is(":visible")){
           scripts.wait(function(){
-            var plot = $.plot(elem, scope.data, pie);
-            scope.legend = [];
-            _.each(plot.getData(),function(series) {
-              var item = _.pick(series,'label','color','percent')
-              item.percent = parseFloat(item.percent).toFixed(1)
-              scope.legend.push(item)
-            })
-            console.log(scope.legend)
+            scope.plot = $.plot(elem, scope.data, pie);
           });
         }
       }
