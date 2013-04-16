@@ -1,0 +1,60 @@
+<style>
+    svg {
+        font-size: 14px;
+    }
+
+    .foreground path {
+        fill: none;
+        stroke-opacity: .5;
+        stroke-width: 1.5px;
+    }
+
+    .foreground path.fade {
+        stroke: #000;
+        stroke-opacity: .05;
+    }
+
+    .legend {
+        font-size: 18px;
+        font-style: oblique;
+    }
+
+    .legend line {
+        stroke-width: 2px;
+    }
+
+    .setosa {
+        stroke: #800;
+    }
+
+    .versicolor {
+        stroke: #080;
+    }
+
+    .virginica {
+        stroke: #008;
+    }
+
+    .brush .extent {
+        fill-opacity: .3;
+        stroke: #fff;
+        shape-rendering: crispEdges;
+    }
+
+    .axis line, .axis path {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        text-shadow: 0 1px 0 #fff;
+        cursor: move;
+    }
+</style>
+<kibana-panel ng-controller='parallelcoordinates' ng-init="init()">
+  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+    <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+    <div parallelcoordinates params="{{panel}}" style="height:{{panel.height || row.height}}"></div>
+</kibana-panel>
