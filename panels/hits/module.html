@@ -1,42 +1,42 @@
 <kibana-panel ng-controller='hits' ng-init="init()">
 
-  <div ng-show="panel.counters && panel.counter_pos == 'above'">
-    <!-- no chart, aggregated numbers -->    
-    <p ng-style="panel.style" ng-show="panel.aggregate">{{hits}}</p>
-
+  <div ng-show="panel.counter_pos == 'above' && (panel.chart == 'bar' || panel.chart == 'pie')" id='{{$id}}-legend'>
     <!-- vertical legend -->
-    <table ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'vertical'">  
-      <tr style="line-height:{{panel.style['font-size']}}" ng-repeat="query in plot.getData()">
-        <td style="background:{{query.color}};width:{{panel.style['font-size']}}"></td> <td style="padding-right:10px;padding-left:10px;">{{query.label}}</td><td>{{query.data[0][1]}}</td>
+    <table class="small" ng-show="panel.arrangement == 'vertical'">  
+      <tr ng-repeat="query in plot.getData()">
+        <td><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></td> <td style="padding-right:10px;padding-left:10px;">{{query.label}}</td><td>{{query.data[0][1]}}</td>
       </tr>
     </table>
 
     <!-- horizontal legend -->
-    <div ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'horizontal'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
-     <span><div style="display:inline-block;border-radius:{{panel.style['font-size']}};background:{{query.color}};height:{{panel.style['font-size']}};width:{{panel.style['font-size']}}"></div></span> {{query.label}} ({{query.data[0][1]}}) </span>
+    <div class="small" ng-show="panel.arrangement == 'horizontal'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
+     <span><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span> {{query.label}} ({{query.data[0][1]}}) </span>
     </div><br>
 
   </div>
+
   <div style="clear:both"></div>
-  <div ng-show='panel.chart != "none" && !panel.aggregate ' hits-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
 
-  <div ng-show="panel.counters && panel.counter_pos == 'below'">
-    <!-- no chart, aggregated numbers -->    
-    <p ng-style="panel.style" ng-show="panel.aggregate">{{hits}}</p>
+  <div ng-show="panel.chart == 'pie' || panel.chart == 'bar'" hits-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+
+  <div ng-show="panel.counter_pos == 'below' && (panel.chart == 'bar' || panel.chart == 'pie')" id='{{$id}}-legend'>
 
     <!-- vertical legend -->
-    <table ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'vertical'">  
-      <tr style="line-height:{{panel.style['font-size']}}" ng-repeat="query in plot.getData()">
-        <tdstyle="background:{{query.color}};width:{{panel.style['font-size']}}"></td> <td style="padding-right:10px;padding-left:10px;">{{query.label}}</td><td>{{query.data[0][1]}}</td>
+    <table class="small" ng-show="panel.arrangement == 'vertical'">  
+      <tr ng-repeat="query in plot.getData()">
+        <td><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></td> <td style="padding-right:10px;padding-left:10px;">{{query.label}}</td><td>{{query.data[0][1]}}</td>
       </tr>
     </table>
 
     <!-- horizontal legend -->
-    <div ng-style="panel.style" ng-show="!panel.aggregate && panel.arrangement == 'horizontal'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
-     <span><div style="display:inline-block;border-radius:{{panel.style['font-size']}};background:{{query.color}};height:{{panel.style['font-size']}};width:{{panel.style['font-size']}}"></div></span> {{query.label}} ({{query.data[0][1]}}) </span>
+    <div class="small" ng-show="panel.arrangement == 'horizontal'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
+     <span><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span> {{query.label}} ({{query.data[0][1]}}) </span>
     </div><br>
 
   </div>
 
+  <div ng-show="panel.chart == 'total'"><div ng-style="panel.style" style="line-height:{{panel.style['font-size']}}">{{hits}}</div></div>
+
+  <span ng-show="panel.chart == 'list'"><span ng-style="panel.style" style="line-height:{{panel.style['font-size']}}" ng-repeat="query in data">{{query.label}} ({{query.hits}})<span></span><br ng-show="panel.arrangement == 'vertical' && panel.chart == 'list'">
 
 </kibana-panel>         
