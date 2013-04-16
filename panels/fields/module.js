@@ -22,6 +22,10 @@ angular.module('kibana.fields', [])
       $scope.panel.query = docs.query;
       $scope.docs = docs.docs;
     });
+    eventBus.register($scope,"get_fields", function(event,id) {
+        console.log("field.get_fields");
+      eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active);
+    });
   }
 
   $scope.reload_list = function () {
