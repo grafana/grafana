@@ -34,7 +34,7 @@ angular.module('kibana.stringquery', [])
       $scope.panel.query = new Array($scope.panel.query)
       $scope.panel.query.push("")
     }
-  } 
+  }
 
   $scope.set_multi = function(multi) {
     $scope.panel.query = multi ? 

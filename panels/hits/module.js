@@ -98,7 +98,6 @@ angular.module('kibana.hits', [])
 
           i++;
         });
-
         $scope.$emit('render');
         if(_segment < $scope.panel.index.length-1) 
           $scope.get_data(_segment+1,query_id)
@@ -199,6 +198,10 @@ angular.module('kibana.hits', [])
                 grid:   { hoverable: true, clickable: true },
                 colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
               });
+
+            // Compensate for the height of the  legend. Gross
+            elem.height(
+              (scope.panel.height || scope.row.height).replace('px','') - $("#"+scope.$id+"-legend").height())
 
             // Work around for missing legend at initialization
             if(!scope.$$phase)

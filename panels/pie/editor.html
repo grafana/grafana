@@ -1,28 +1,32 @@
 <div class="row-fluid" ng-switch="panel.mode" ng-controller="pie">
   <div ng-switch-when="terms">
-    <div class="row-fluid">    
-      <div class="span4">
+    <div class="row-fluid">
+      <div class="span3">
+        <label class="small">Mode</label> 
+        <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['terms','goal']"></select>
+      </div> 
+      <div class="span3">
         <form style="margin-bottom: 0px">
-          <h6> Field</h6>
+          <label class="small">Field</label>
           <input type="text" style="width:90%" bs-typeahead="fields.list" ng-model="panel.query.field">
         </form>
       </div>
-      <div class="span8">
+      <div class="span5">
         <form class="input-append" style="margin-bottom: 0px">
-          <h6>Query</h6>
+          <label class="small">Query</label>
           <input type="text" style="width:80%" ng-model="panel.query.query">
           <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
         </form>
       </div>
     </div>  
     <div class="row-fluid">
-      <div class="span1">
-        <h6>Length</h6>
+      <div class="span3">
+        <label class="small">Length</label>
         <input type="number" style="width:80%" ng-model="panel.size" ng-change="get_data()">
       </div>
-      <div class="span11">
+      <div class="span8">
         <form class="input-append" style="margin-bottom: 0px">
-          <h6>Exclude Terms(s) (comma seperated)</h6>
+          <label class="small">Exclude Terms(s) (comma seperated)</label>
           <input array-join type="text" style="width:90%"  ng-model='panel.exclude'></input>
           <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
         </form>
@@ -30,16 +34,20 @@
     </div>
   </div>
   <div ng-switch-when="goal">
-    <div class="row-fluid">    
+    <div class="row-fluid">
+      <div class="span3">
+        <label class="small">Mode</label> 
+        <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['terms','goal']"></select>
+      </div>   
       <div class="span2">
         <form style="margin-bottom: 0px">
-          <h6>Goal</h6>
+          <label class="small">Goal</label>
           <input type="number" style="width:90%" ng-model="panel.query.goal">
         </form>
       </div>
-      <div class="span9">
+      <div class="span5">
         <form class="input-append" style="margin-bottom: 0px">
-          <h6>Query</h6>
+          <label class="small">Query</label>
           <input type="text" style="width:80%" ng-model="panel.query.query">
           <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
         </form>
@@ -55,14 +63,11 @@
     <label class="small"> Tilt </label><input type="checkbox" ng-model="panel.tilt" ng-checked="panel.tilt">
   </div>
   <div class="span1">
-    <label class="small"> Legend </label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend">
-  </div>
-  <div class="span1">
     <label class="small"> Labels </label><input type="checkbox" ng-model="panel.labels" ng-checked="panel.labels">
   </div>
-  <div class="span2">
-    <label class="small">Mode</label> 
-    <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['terms','goal']"></select>
+  <div class="span3"> 
+    <label class="small">Legend</label> 
+    <select class="input-small" ng-model="panel.legend" ng-options="f for f in ['above','below','none']"></select></span>
   </div>
 </div>
 <h5>Panel Spy</h5>

@@ -106,6 +106,10 @@
   font-size: 85%;
 }
 
+.input-append label {
+  font-size: inherit !important;
+}
+
 .large {
   font-size: 120%;
 }
