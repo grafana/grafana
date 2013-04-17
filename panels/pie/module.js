@@ -12,7 +12,7 @@ angular.module('kibana.pie', [])
     labels  : true,
     mode    : "terms",
     group   : "default",
-    default_field : '_all',
+    default_field : 'DEFAULT',
     spyable : true,
   }
   _.defaults($scope.panel,_d)
@@ -122,7 +122,7 @@ angular.module('kibana.pie', [])
         var complete  = results.hits.total;
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [
-          { label : 'Complete', data : complete, color: '#51A351' },
+          { label : 'Complete', data : complete, color: '#86B22D' },
           { data : remaining, color: '#EEE'}]
         $scope.$emit('render');
       });
