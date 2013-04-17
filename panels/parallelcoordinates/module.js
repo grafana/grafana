@@ -15,7 +15,7 @@ angular.module('kibana.parallelcoordinates', [])
             style   : {'font-size': '9pt'},
             fields  : [],
             sortable: true,
-            spyable: true,
+            spyable: true
         }
 
         _.defaults($scope.panel, _d)
@@ -47,6 +47,7 @@ angular.module('kibana.parallelcoordinates', [])
             eventBus.register($scope,'selected_fields', function(event, fields) {
                 console.log("selected_fields", fields);
                 $scope.panel.fields = _.clone(fields)
+                $scope.$emit('render');
             });
         };
 
@@ -194,14 +195,6 @@ angular.module('kibana.parallelcoordinates', [])
 
 
 
-                var species = ["setosa", "versicolor", "virginica"],
-                    traits = ["sepal length", "petal length", "sepal width", "petal width"];
-
-                var m = [80, 160, 200, 160],
-                    w = 1280 - m[1] - m[3],
-                    h = 800 - m[0] - m[2];
-
-                var x, y,line,axis,foreground,svg;
 
 
 
@@ -211,95 +204,43 @@ angular.module('kibana.parallelcoordinates', [])
                  */
                 function init_panel() {
 
+                    scope.m = [80, 160, 200, 160];
+                    scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3],
+                    scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
+
+
                     console.log("init");
                     console.log("fields", scope.panel.fields);
 
                     scope.initializing = true;
                     // Using LABjs, wait until all scripts are loaded before rendering panel
-                    var scripts = $LAB.script("common/lib/d3.v3.min.js?rand="+Math.floor(Math.random()*10000))
-                        .script("panels/parallelcoordinates/lib/d3.csv.js?rand="+Math.floor(Math.random()*10000));
+                    var scripts = $LAB.script("common/lib/d3.v3.min.js?rand="+Math.floor(Math.random()*10000));
 
                     scripts.wait(function () {
 
 
-                        console.log("scripts loaded");
+                        scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
+                        scope.y = {};
 
-                        x = d3.scale.ordinal().domain(traits).rangePoints([0, w]);
-                        y = {};
+                        scope.line = d3.svg.line().interpolate('cardinal');
+                        scope.axis = d3.svg.axis().orient("left");
 
-                        line = d3.svg.line();
-                        axis = d3.svg.axis().orient("left");
-
-
-                        svg = d3.select(elem[0]).append("svg")
+                        scope.svg = d3.select(elem[0]).append("svg")
                             .attr("width", "100%")
                             .attr("height", "100%")
-                            .attr("viewbox", "0 0 " + (w + m[1] + m[3]) + " " + (h + m[0] + m[2]))
+                            .attr("viewbox", "0 0 " + (scope.w + scope.m[1] + scope.m[3]) + " " + (scope.h + scope.m[0] + scope.m[2]))
                             .append("svg:g")
-                            .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+                            .attr("transform", "translate(" + scope.m[3] + "," + scope.m[0] + ")");
 
+                        // Add foreground lines.
+                        scope.foreground = scope.svg.append("svg:g")
+                            .attr("class", "foreground");
 
-
-                            console.log("loaded");
-
-                            //console.log(flowers);
-                            // Create a scale and brush for each trait.
-                        scope.panel.fields.forEach(function(d) {
-                            console.log("extent", d3.extent(scope.data, function(p) { return +p[d]; }));
-                                y[d] = d3.scale.linear()
-                                    .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
-                                    .range([h, 0]);
-
-                                y[d].brush = d3.svg.brush()
-                                    .y(y[d])
-                                    .on("brush", brush);
-                            });
-                        console.log("y", y);
-
-
-                            // Add foreground lines.
-                            foreground = svg.append("svg:g")
-                                .attr("class", "foreground")
-                                .selectAll("path")
-                                .data(scope.data)
-                                .enter().append("svg:path")
-                                .attr("d", path)
-                                .attr("class", 'setosa');
-
-                            // Add a group element for each trait.
-                        scope.g = svg.selectAll(".trait")
-                                .data(scope.panel.fields)
-                                .enter().append("svg:g")
-                                .attr("class", "trait")
-                                .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-                                .call(d3.behavior.drag()
-                                    .origin(function(d) { return {x: x(d)}; })
-                                    .on("dragstart", dragstart)
-                                    .on("drag", drag)
-                                    .on("dragend", dragend));
-
-
-                        // Add a brush for each axis.
-                        scope.g.append("svg:g")
-                            .attr("class", "brush")
-                            .each(function(d) { d3.select(this).call(y[d].brush); })
-                            .selectAll("rect")
-                            .attr("x", -8)
-                            .attr("width", 16);
-
-
-                            // Add an axis and title.
-                        scope.g.append("svg:g")
-                                .attr("class", "axis")
-                                .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
-                                .append("svg:text")
-                                .attr("text-anchor", "middle")
-                                .attr("y", -9)
-                                .text(String);
 
 
 
                         scope.initializing = false;
+                        console.log("init done");
                         render_panel();
                     });
 
@@ -308,16 +249,16 @@ angular.module('kibana.parallelcoordinates', [])
 
                 // Returns the path for a given data point.
                 function path(d) {
-                    return line(scope.panel.fields.map(function(p) { return [x(p), y[p](d[p])]; }));
+                    return scope.line(scope.panel.fields.map(function(p) { return [scope.x(p), scope.y[p](d[p])]; }));
                 }
 
 // Handles a brush event, toggling the display of foreground lines.
                 function brush() {
-                    var actives = scope.panel.fields.filter(function(p) { return !y[p].brush.empty(); }),
-                        extents = actives.map(function(p) { return y[p].brush.extent(); });
+                    var actives = scope.panel.fields.filter(function(p) { return !scope.y[p].brush.empty(); }),
+                        extents = actives.map(function(p) { return scope.y[p].brush.extent(); });
 
 
-                    foreground.classed("fade", function(d) {
+                    scope.foregroundLines.classed("fade", function(d) {
                         return !actives.every(function(p, i) {
                             return extents[i][0] <= d[p] && d[p] <= extents[i][1];
                         });
@@ -325,21 +266,29 @@ angular.module('kibana.parallelcoordinates', [])
                 }
 
                 function dragstart(d) {
-                    i = scope.panel.fields.indexOf(d);
+                    scope.i = scope.panel.fields.indexOf(d);
+                    console.log("dragstart", d, scope.i)
                 }
 
                 function drag(d) {
-                    x.range()[i] = d3.event.x;
-                    scope.panel.fields.sort(function(a, b) { return x(a) - x(b); });
-                    scope.g.attr("transform", function(d) { return "translate(" + x(d) + ")"; });
-                    foreground.attr("d", path);
+                    console.log("drag", d, scope.i)
+                    scope.x.range()[scope.i] = d3.event.x;
+                    scope.panel.fields.sort(function(a, b) { return scope.x(a) - scope.x(b); });
+                    scope.foregroundLines.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    scope.traits.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    scope.brushes.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    scope.axisLines.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    scope.foregroundLines.attr("d", path);
                 }
 
                 function dragend(d) {
-                    x.domain(scope.panel.fields).rangePoints([0, w]);
+                    console.log("dragend", d)
+                    scope.x.domain(scope.panel.fields).rangePoints([0, scope.w]);
                     var t = d3.transition().duration(500);
-                    t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
-                    t.selectAll(".foreground path").attr("d", path);
+                    t.selectAll(".trait").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    t.selectAll(".axis").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    t.selectAll(".brush").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    t.selectAll(".foregroundlines").attr("d", path);
                 }
 
 
@@ -351,8 +300,195 @@ angular.module('kibana.parallelcoordinates', [])
                  */
                 function render_panel() {
 
-                    var width = $(elem[0]).width(),
-                        height = $(elem[0]).height();
+                    console.log("render_panel");
+
+
+                    scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
+                    scope.y = {};
+
+                    scope.line = d3.svg.line().interpolate('cardinal');
+                    scope.axis = d3.svg.axis().orient("left");
+
+
+                    var colorExtent = d3.extent(scope.data, function(p) { return +p['phpmemory']; });
+
+                    scope.colors = d3.scale.linear()
+                        .domain([colorExtent[0],colorExtent[1]])
+                        .range(["#4580FF", "#FF9245"]);
+
+
+                    scope.panel.fields.forEach(function(d) {
+                        scope.y[d] = d3.scale.linear()
+                            .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
+                            .range([scope.h, 0]);
+
+                        scope.y[d].brush = d3.svg.brush()
+                            .y(scope.y[d])
+                            .on("brush", brush);
+                    });
+
+                    console.log("render y", scope.y);
+
+
+
+                    var activeData = _.map(scope.data, function(d) {
+                        var t = {};
+                        _.each(scope.panel.fields, function(f) {
+                            t[f] = d[f];
+                        });
+                        return t;
+                    });
+
+
+                    scope.foregroundLines = scope.foreground
+                        .selectAll(".foregroundlines")
+                        .data(activeData, function(d, i){
+                            var id = "";
+                            _.each(d, function(v) {
+                               id += i + "_" + v;
+                            });
+                            return id;
+                        });
+
+                    scope.foregroundLines
+                        .enter().append("svg:path")
+                        .attr("d", path)
+                        .attr("class", "foregroundlines")
+                        .attr("style", function(d) {
+                            return "stroke:" + scope.colors(d.phpmemory) + ";";
+                        });
+
+                    scope.foregroundLines.exit().remove();
+
+                    console.log("Render Fields",scope.panel.fields);
+
+
+
+
+
+
+                    scope.traits = scope.svg.selectAll(".trait")
+                        .data(scope.panel.fields, String);
+
+                    scope.traits
+                        .enter().append("svg:g")
+                        .attr("class", "trait")
+                        .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+
+
+
+
+
+
+                    scope.brushes = scope.svg.selectAll(".brush")
+                        .data(scope.panel.fields, String);
+
+                    scope.brushes
+                        .enter()
+                        .append("svg:g")
+                        .attr("class", "brush")
+                        .each(function(d) {
+                            d3.select(this)
+                                .call(scope.y[d].brush)
+                                .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                        })
+                        .selectAll("rect")
+                        .attr("x", -8)
+                        .attr("width", 16);
+
+                    scope.brushes
+                        .each(function(d) {
+                            d3.select(this)
+                                .call(scope.y[d].brush)
+                                .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                        });
+
+                   scope.axisLines =  scope.svg.selectAll(".axis")
+                        .data(scope.panel.fields, String);
+
+                   scope.axisLines
+                        .enter()
+                        .append("svg:g")
+                        .attr("class", "axis")
+                        .each(function(d) {
+                            console.log("axis",d)
+                                d3.select(this)
+                                    .call(scope.axis.scale(scope.y[d]))
+                                    .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                        }).call(d3.behavior.drag()
+                           .origin(function(d) { return {x: scope.x(d)}; })
+                           .on("dragstart", dragstart)
+                           .on("drag", drag)
+                           .on("dragend", dragend))
+
+                        .append("svg:text")
+                        .attr("text-anchor", "middle")
+                        .attr("y", -9)
+                        .text(String);
+
+
+
+                    scope.brushes
+                        .exit().remove();
+
+                    scope.axisLines
+                        .exit().remove();
+
+                    scope.traits
+                        .exit().remove();
+
+
+                    dragend();
+
+
+                    /*
+
+
+                    // Add a brush for each axis.
+                    scope.brushes = scope.g.append("svg:g")
+                        .attr("class", "brush");
+
+                    scope.axisLines = scope.g.append("svg:g")
+                        .attr("class", "axis");
+
+
+
+                    //Draw the brushes
+                    //If the field is no longer in the list of actives,
+                    //remove the element.  Sorta like a poor-man's enter() / exit()
+                    scope.brushes
+                        .each(function(d) {
+                            if (typeof scope.y[d] !== 'undefined') {
+                                console.log("brushes.each", d);
+                                d3.select(this).attr("style", "display").call(scope.y[d].brush);
+                            } else {
+                                console.log("none");
+                               d3.select(this).attr("style", "display:none");
+                            }
+                        })
+                        .selectAll("rect")
+                        .attr("x", -8)
+                        .attr("width", 16);
+
+
+                    //Draw the axis lines
+                    //If the field is no longer in the list of actives,
+                    //remove the element.  Sorta like a poor-man's enter() / exit()
+                    scope.axisLines
+                        .each(function(d) {
+                            if (typeof scope.y[d] !== 'undefined') {
+                                d3.select(this).attr("style", "display").call(scope.axis.scale(scope.y[d]));
+                            } else {
+                                d3.select(this).attr("style", "display:none");
+                            }
+                        })
+                        .append("svg:text")
+                        .attr("text-anchor", "middle")
+                        .attr("y", -9)
+                        .text(String)
+                        .call(dragend); //call dragend so that the axis reshuffle.
+
+                    */
 
                 }
 
