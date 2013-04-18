@@ -3,6 +3,7 @@ angular.module('kibana.parallelcoordinates', [])
 
         console.log("controller");
 
+        $scope.activeDocs = [];
 
         // Set and populate defaults
         var _d = {
@@ -127,7 +128,6 @@ angular.module('kibana.parallelcoordinates', [])
 
 
 
-
         };
 
         // I really don't like this function, too much dom manip. Break out into directive?
@@ -145,6 +145,11 @@ angular.module('kibana.parallelcoordinates', [])
         }
 
 
+        $scope.$watch('activeDocs', function(v) {
+            //console.log("Watch", $scope.activeDocs);
+            eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents",
+                {query:$scope.panel.query,docs:$scope.activeDocs});
+        });
 
     })
     .directive('parallelcoordinates', function () {
@@ -153,8 +158,7 @@ angular.module('kibana.parallelcoordinates', [])
             link: function (scope, elem, attrs) {
 
                 console.log("directive");
-
-                //elem.html('')
+              
                 scope.initializing = false;
 
 
@@ -257,11 +261,24 @@ angular.module('kibana.parallelcoordinates', [])
                     var actives = scope.panel.fields.filter(function(p) { return !scope.y[p].brush.empty(); }),
                         extents = actives.map(function(p) { return scope.y[p].brush.extent(); });
 
-
                     scope.foregroundLines.classed("fade", function(d) {
                         return !actives.every(function(p, i) {
-                            return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+                            var inside = extents[i][0] <= d[p] && d[p] <= extents[i][1];
+                            return inside;
                         });
+                    });
+
+                    var activeDocs = _.filter(scope.data, function(v) {
+                        return actives.every(function(p,i) {
+                            var inside = extents[i][0] <= v[p] && v[p] <= extents[i][1];
+                            return inside;
+                        });
+                    })
+
+
+
+                    scope.$apply(function() {
+                       scope.activeDocs = activeDocs;
                     });
                 }
 
@@ -441,54 +458,7 @@ angular.module('kibana.parallelcoordinates', [])
                     dragend();
 
 
-                    /*
 
-
-                    // Add a brush for each axis.
-                    scope.brushes = scope.g.append("svg:g")
-                        .attr("class", "brush");
-
-                    scope.axisLines = scope.g.append("svg:g")
-                        .attr("class", "axis");
-
-
-
-                    //Draw the brushes
-                    //If the field is no longer in the list of actives,
-                    //remove the element.  Sorta like a poor-man's enter() / exit()
-                    scope.brushes
-                        .each(function(d) {
-                            if (typeof scope.y[d] !== 'undefined') {
-                                console.log("brushes.each", d);
-                                d3.select(this).attr("style", "display").call(scope.y[d].brush);
-                            } else {
-                                console.log("none");
-                               d3.select(this).attr("style", "display:none");
-                            }
-                        })
-                        .selectAll("rect")
-                        .attr("x", -8)
-                        .attr("width", 16);
-
-
-                    //Draw the axis lines
-                    //If the field is no longer in the list of actives,
-                    //remove the element.  Sorta like a poor-man's enter() / exit()
-                    scope.axisLines
-                        .each(function(d) {
-                            if (typeof scope.y[d] !== 'undefined') {
-                                d3.select(this).attr("style", "display").call(scope.axis.scale(scope.y[d]));
-                            } else {
-                                d3.select(this).attr("style", "display:none");
-                            }
-                        })
-                        .append("svg:text")
-                        .attr("text-anchor", "middle")
-                        .attr("y", -9)
-                        .text(String)
-                        .call(dragend); //call dragend so that the axis reshuffle.
-
-                    */
 
                 }
 
