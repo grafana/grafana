@@ -60,7 +60,7 @@ angular.module('kibana.map2', [])
       // Now that we're all setup, request the time from our group
       eventBus.broadcast($scope.$id, $scope.panel.group, 'get_time');
 
-
+      $scope.keylistener = keylistener;
 
     };
 
@@ -276,7 +276,7 @@ angular.module('kibana.map2', [])
 
 
                 scope.zoom = d3.behavior.zoom()
-                  .scaleExtent([1, 8])
+                  .scaleExtent([1, 20])
                   .on("zoom", translate_map);
 
                 //used by choropleth
@@ -410,7 +410,6 @@ angular.module('kibana.map2', [])
 
 
           //If this is a sphere, set up drag and keypress listeners
-          //@todo implement a global "keypress service", since this fails if there are >1 spheres
           if (scope.panel.display.data.type === 'orthographic') {
 
             //scope.svg.focus();
@@ -429,7 +428,7 @@ angular.module('kibana.map2', [])
               .call(d3.behavior.drag()
                 .origin(function() { var rotate = scope.projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
                 .on("drag", function() {
-                  if ( scope.ctrlKey) {
+                  if (scope.keylistener.keyActive(17)) {
                     scope.projection.rotate([d3.event.x / 2, -d3.event.y / 2, scope.projection.rotate()[2]]);
                     scope.svg.selectAll("path").attr("d", path);
                   }
@@ -472,7 +471,7 @@ angular.module('kibana.map2', [])
           var width = $(elem[0]).width(),
             height = $(elem[0]).height();
 
-          if (! scope.ctrlKey) {
+          if (! scope.keylistener.keyActive(17)) {
             var t = d3.event.translate,
               s = d3.event.scale;
             t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));

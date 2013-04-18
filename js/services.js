@@ -108,15 +108,16 @@ angular.module('kibana.services', [])
 
 })
 .service('keylistener', function($rootScope) {
-        var keys = [];
-        $(document).keydown(function (e) {
-            console.log("keydown", e.which);
-            keys[e.which] = true;
-        });
-
-        $(document).keyup(function (e) {
-            console.log("keyup", e.which);
-            delete keys[e.which];
-        });
-
+    var keys = [];
+    $(document).keydown(function (e) {
+      keys[e.which] = true;
     });
+
+    $(document).keyup(function (e) {
+      delete keys[e.which];
+    });
+
+    this.keyActive = function(key) {
+      return keys[key] == true;
+    }
+});
