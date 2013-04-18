@@ -305,7 +305,7 @@ angular.module('kibana.parallelcoordinates', [])
                     scope.axis = d3.svg.axis().orient("left");
 
 
-                    var colorExtent = d3.extent(scope.data, function(p) { return +p['phpmemory']; });
+                    var colorExtent = d3.extent(scope.data, function(p) { return +p[scope.panel.fields[0]]; });
 
                     scope.colors = d3.scale.linear()
                         .domain([colorExtent[0],colorExtent[1]])
@@ -363,7 +363,7 @@ angular.module('kibana.parallelcoordinates', [])
                         .attr("d", path)
                         .attr("class", "foregroundlines")
                         .attr("style", function(d) {
-                            return "stroke:" + scope.colors(d.phpmemory) + ";";
+                            return "stroke:" + scope.colors(d[scope.panel.fields[0]]) + ";";
                         });
                     scope.foregroundLines.exit().remove();
 
