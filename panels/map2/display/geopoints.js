@@ -2,19 +2,19 @@
  * Renders geopoints as geo-json poly gon entities
  * Allows for them to clip on spheres correctly
  */
-function displayGeopoints(scope, path) {
+function displayGeopoints(scope, dr, path) {
 
     var points = [];
     var circle = d3.geo.circle();
     var degrees = 180 / Math.PI
 
     if (scope.panel.display.geopoints.enabled) {
-        points = scope.points;
+        points = dr.points;
     }
 
 
 
-    var geopoints = scope.g.selectAll(".geopoint")
+    var geopoints = dr.g.selectAll(".geopoint")
         .data(points);
 
     geopoints.enter().append("path")

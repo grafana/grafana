@@ -4,7 +4,7 @@
  * clip on spheres appropriately.  To fix this, we would need to translate
  * the svg path into a geo-path
  */
-function displayBinning(scope, dimensions) {
+function displayBinning(scope, dr, dimensions) {
 
     var hexbin = d3.hexbin()
         .size(dimensions)
@@ -31,12 +31,12 @@ function displayBinning(scope, dimensions) {
             _.map(scope.data, function (k, v) {
                 var decoded = geohash.decode(v);
                 return _.map(_.range(0, k*scale), function(a,b) {
-                    binPoints.push(scope.projection([decoded.longitude, decoded.latitude]));
+                    binPoints.push(dr.projection([decoded.longitude, decoded.latitude]));
                 })
             });
 
         } else {
-            binPoints = scope.projectedPoints;
+            binPoints = dr.projectedPoints;
         }
 
         //bin and sort the points, so we can set the various ranges appropriately
@@ -64,7 +64,7 @@ function displayBinning(scope, dimensions) {
         .interpolate(d3.interpolateLab);
 
 
-    var hex = scope.g.selectAll(".hexagon")
+    var hex = dr.g.selectAll(".hexagon")
         .data(binnedPoints);
 
     hex.enter().append("path")

@@ -2,7 +2,7 @@
  * Renders bullseyes as geo-json poly gon entities
  * Allows for them to clip on spheres correctly
  */
-function displayBullseye(scope, path) {
+function displayBullseye(scope, dr, path) {
 
     var degrees = 180 / Math.PI
     var circle = d3.geo.circle();
@@ -14,7 +14,7 @@ function displayBullseye(scope, path) {
         ];
     }
 
-    var arcs = scope.g.selectAll(".arc")
+    var arcs = dr.g.selectAll(".arc")
         .data(data);
 
     arcs.enter().append("path")

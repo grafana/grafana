@@ -178,16 +178,17 @@ angular.module('kibana.map2', [])
       restrict: 'A',
       link: function (scope, elem, attrs) {
 
+        //directive level variables related to d3
+        var dr = {};
 
-        //elem.html('')
         scope.initializing = false;
-        scope.worldData = null;
-        scope.worldNames = null;
 
-        scope.ctrlKey = false;
+
+        dr.worldData = null;
+        dr.worldNames = null;
 
         //These are various options that should not be cached in scope.panel
-        scope.options = {
+        dr.options = {
 
           data: {
             dropdown:[
@@ -208,7 +209,7 @@ angular.module('kibana.map2', [])
          * Initialize the panels if new, or render existing panels
          */
         scope.init_or_render = function() {
-          if (typeof scope.svg === 'undefined') {
+          if (typeof dr.svg === 'undefined') {
             console.log("init");
 
             //prevent duplicate initialization steps, if render is called again
@@ -262,35 +263,31 @@ angular.module('kibana.map2', [])
               .defer(d3.json, "panels/map2/lib/world-110m.json")
               .defer(d3.tsv, "panels/map2/lib/world-country-names.tsv")
               .await(function(error, world, names) {
-                scope.worldData = world;
-                scope.worldNames = names;
-
+                dr.worldData = world;
+                dr.worldNames = names;
 
                 //Better way to get these values?  Seems kludgy to use jQuery on the div...
                 var width = $(elem[0]).width(),
                   height = $(elem[0]).height();
 
-
                 //scale to whichever dimension is smaller, helps to ensure the whole map is displayed
-                scope.scale = (width > height) ? (height/5) : (width/5);
+                dr.scale = (width > height) ? (height/5) : (width/5);
 
-
-                scope.zoom = d3.behavior.zoom()
+                dr.zoom = d3.behavior.zoom()
                   .scaleExtent([1, 20])
                   .on("zoom", translate_map);
 
                 //used by choropleth
                 //@todo change domain so that it reflects the domain of the data
-                scope.quantize = d3.scale.quantize()
+                dr.quantize = d3.scale.quantize()
                   .domain([0, 1000])
                   .range(d3.range(9).map(function(i) { return "q" + (i+1); }));
 
-
                 //Extract name and two-letter codes for our countries
-                scope.countries = topojson.feature(scope.worldData, scope.worldData.objects.countries).features;
+                dr.countries = topojson.feature(dr.worldData, dr.worldData.objects.countries).features;
 
-                scope.countries = scope.countries.filter(function(d) {
-                  return scope.worldNames.some(function(n) {
+                dr.countries = dr.countries.filter(function(d) {
+                  return dr.worldNames.some(function(n) {
                     if (d.id == n.id) {
                       d.name = n.name;
                       return d.short = n.short;
@@ -300,22 +297,19 @@ angular.module('kibana.map2', [])
                     return a.name.localeCompare(b.name);
                   });
 
-
                 //create the new svg
-                scope.svg = d3.select(elem[0]).append("svg")
+                dr.svg = d3.select(elem[0]).append("svg")
                   .attr("width", "100%")
                   .attr("height", "100%")
                   .attr("viewBox", "0 0 " + width + " " + height)
                   .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-                  .call(scope.zoom);
-                scope.g = scope.svg.append("g");
-
+                  .call(dr.zoom);
+                dr.g = dr.svg.append("g");
 
                 scope.initializing = false;
                 render_panel();
               });
           });
-
         }
 
 
@@ -328,38 +322,37 @@ angular.module('kibana.map2', [])
           var width = $(elem[0]).width(),
             height = $(elem[0]).height();
 
-
           //Projection is dependant on the map-type
           if (scope.panel.display.data.type === 'mercator') {
-            scope.projection = d3.geo.mercator()
+            dr.projection = d3.geo.mercator()
               .translate([width/2, height/2])
-              .scale(scope.scale);
+              .scale(dr.scale);
 
           } else if (scope.panel.display.data.type === 'orthographic') {
-            scope.projection = d3.geo.orthographic()
+            dr.projection = d3.geo.orthographic()
               .translate([width/2, height/2])
               .scale(100)
               .clipAngle(90);
 
             //recenters the sphere more towards the US...not really necessary
-            scope.projection.rotate([100 / 2, 20 / 2, scope.projection.rotate()[2]]);
+            dr.projection.rotate([100 / 2, 20 / 2, dr.projection.rotate()[2]]);
 
           }
 
           var path = d3.geo.path()
-            .projection(scope.projection);
+            .projection(dr.projection);
 
 
           //Special fix for when the user changes from mercator -> orthographic
           //The globe won't redraw automatically, we need to force it
           if (scope.panel.display.data.type === 'orthographic') {
-            scope.svg.selectAll("path").attr("d", path);
+            dr.svg.selectAll("path").attr("d", path);
           }
 
           console.log(scope.data);
 
           //Geocoded points are decoded into lonlat
-          scope.points = _.map(scope.data, function (k, v) {
+          dr.points = _.map(scope.data, function (k, v) {
             //console.log(k,v);
             var decoded = geohash.decode(v);
             return [decoded.longitude, decoded.latitude];
@@ -367,15 +360,15 @@ angular.module('kibana.map2', [])
 
           //And also projected projected to x/y.  Both sets of points are used
           //by different functions
-          scope.projectedPoints = _.map(scope.points, function (coords) {
-            return scope.projection(coords);
+          dr.projectedPoints = _.map(dr.points, function (coords) {
+            return dr.projection(coords);
           });
 
 
 
-          scope.svg.select(".overlay").remove();
+          dr.svg.select(".overlay").remove();
 
-          scope.svg.append("rect")
+          dr.svg.append("rect")
             .attr("class", "overlay")
             .attr("width", width)
             .attr("height", height)
@@ -383,13 +376,13 @@ angular.module('kibana.map2', [])
 
 
           //Draw the countries, if this is a choropleth, draw with fancy colors
-          var countryPath = scope.g.selectAll(".land")
-            .data(scope.countries);
+          var countryPath = dr.g.selectAll(".land")
+            .data(dr.countries);
 
           countryPath.enter().append("path")
             .attr("class", function(d) {
               if (scope.panel.display.choropleth.enabled) {
-                return 'land ' + scope.quantize(scope.data[d.short]);
+                return 'land ' + dr.quantize(scope.data[d.short]);
               } else {
                 return 'land';
               }
@@ -398,39 +391,15 @@ angular.module('kibana.map2', [])
 
           countryPath.exit().remove();
 
-
-          /*
-           //draw boundaries
-           scope.g.selectAll("land").append("path")
-           .datum(topojson.mesh(scope.worldData, scope.worldData.objects.land, function(a, b) { return a !== b; }))
-           .attr("class", "land boundary")
-           .attr("d", path);
-           */
-
-
-
           //If this is a sphere, set up drag and keypress listeners
           if (scope.panel.display.data.type === 'orthographic') {
-
-            //scope.svg.focus();
-            /*
-             scope.svg.selectAll(".overlay")
-             .on("keydown", function() {
-             scope.ctrlKey = d3.event.ctrlKey;
-             })
-             .on("keyup", function() {
-             scope.ctrlKey = d3.event.ctrlKey;
-             });
-             */
-
-
-            scope.svg.style("cursor", "move")
+            dr.svg.style("cursor", "move")
               .call(d3.behavior.drag()
-                .origin(function() { var rotate = scope.projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
+                .origin(function() { var rotate = dr.projection.rotate(); return {x: 2 * rotate[0], y: -2 * rotate[1]}; })
                 .on("drag", function() {
                   if (scope.keylistener.keyActive(17)) {
-                    scope.projection.rotate([d3.event.x / 2, -d3.event.y / 2, scope.projection.rotate()[2]]);
-                    scope.svg.selectAll("path").attr("d", path);
+                    dr.projection.rotate([d3.event.x / 2, -d3.event.y / 2, dr.projection.rotate()[2]]);
+                    dr.svg.selectAll("path").attr("d", path);
                   }
                 }));
           }
@@ -443,9 +412,9 @@ angular.module('kibana.map2', [])
 
           //@todo fix this
           var dimensions = [width, height];
-          displayBinning(scope, dimensions);
-          displayGeopoints(scope, path);
-          displayBullseye(scope, path);
+          displayBinning(scope, dr, dimensions);
+          displayGeopoints(scope, dr, path);
+          displayBullseye(scope, dr, path);
 
 
 
@@ -453,8 +422,8 @@ angular.module('kibana.map2', [])
           //If the panel scale is not default (e.g. the user has moved the maps around)
           //set the scale and position to the last saved config
           if (scope.panel.display.scale != -1) {
-            scope.zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
-            scope.g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
+            dr.zoom.scale(scope.panel.display.scale).translate(scope.panel.display.translate);
+            dr.g.style("stroke-width", 1 / scope.panel.display.scale).attr("transform", "translate(" + scope.panel.display.translate + ") scale(" + scope.panel.display.scale + ")");
 
           }
 
@@ -476,11 +445,11 @@ angular.module('kibana.map2', [])
               s = d3.event.scale;
             t[0] = Math.min(width / 2 * (s - 1), Math.max(width / 2 * (1 - s), t[0]));
             t[1] = Math.min(height / 2 * (s - 1) + 230 * s, Math.max(height / 2 * (1 - s) - 230 * s, t[1]));
-            scope.zoom.translate(t);
+            dr.zoom.translate(t);
 
             scope.panel.display.translate = t;
             scope.panel.display.scale = s;
-            scope.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ") scale(" + s + ")");
+            dr.g.style("stroke-width", 1 / s).attr("transform", "translate(" + t + ") scale(" + s + ")");
           }
         }
       }
