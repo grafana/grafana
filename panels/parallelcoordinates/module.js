@@ -1,7 +1,6 @@
 angular.module('kibana.parallelcoordinates', [])
     .controller('parallelcoordinates', function ($scope, eventBus) {
 
-        console.log("controller");
 
         $scope.activeDocs = [];
 
@@ -149,8 +148,6 @@ angular.module('kibana.parallelcoordinates', [])
             restrict: 'A',
             link: function (scope, elem, attrs) {
 
-                console.log("directive");
-              
                 scope.initializing = false;
 
 
@@ -159,7 +156,6 @@ angular.module('kibana.parallelcoordinates', [])
                  */
                 scope.init_or_render = function() {
                     if (typeof scope.svg === 'undefined') {
-                        console.log("init");
 
                         //prevent duplicate initialization steps, if render is called again
                         //before the svg is setup
@@ -167,7 +163,6 @@ angular.module('kibana.parallelcoordinates', [])
                             init_panel();
                         }
                     } else {
-                        console.log("render");
                         render_panel();
                     }
                 };
@@ -177,7 +172,6 @@ angular.module('kibana.parallelcoordinates', [])
                  * Receive render events
                  */
                 scope.$on('render', function () {
-                    console.log("on render");
                     scope.init_or_render();
                 });
 
@@ -185,13 +179,8 @@ angular.module('kibana.parallelcoordinates', [])
                  * On window resize, re-render the panel
                  */
                 angular.element(window).bind('resize', function () {
-                    console.log("on resize");
                     scope.init_or_render();
                 });
-
-
-
-
 
 
                 /**
@@ -204,9 +193,6 @@ angular.module('kibana.parallelcoordinates', [])
                     scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3],
                     scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
 
-
-                    console.log("init");
-                    console.log("fields", scope.panel.fields);
 
                     scope.initializing = true;
                     // Using LABjs, wait until all scripts are loaded before rendering panel
@@ -232,11 +218,7 @@ angular.module('kibana.parallelcoordinates', [])
                         scope.foreground = scope.svg.append("svg:g")
                             .attr("class", "foreground");
 
-
-
-
                         scope.initializing = false;
-                        console.log("init done");
                         render_panel();
                     });
 
@@ -248,11 +230,12 @@ angular.module('kibana.parallelcoordinates', [])
                     return scope.line(scope.panel.fields.map(function(p) { return [scope.x(p), scope.y[p](d[p])]; }));
                 }
 
-// Handles a brush event, toggling the display of foreground lines.
+                // Handles a brush event, toggling the display of foreground lines.
                 function brush() {
                     var actives = scope.panel.fields.filter(function(p) { return !scope.y[p].brush.empty(); }),
                         extents = actives.map(function(p) { return scope.y[p].brush.extent(); });
 
+                    //.fade class hides the "inactive" lines, helps speed up rendering significantly
                     scope.foregroundLines.classed("fade", function(d) {
                         return !actives.every(function(p, i) {
                             var inside = extents[i][0] <= d[p] && d[p] <= extents[i][1];
@@ -260,6 +243,8 @@ angular.module('kibana.parallelcoordinates', [])
                         });
                     });
 
+                    //activeDocs contains the actual doc records for selected lines.
+                    //will be broadcast out to the table
                     var activeDocs = _.filter(scope.data, function(v) {
                         return actives.every(function(p,i) {
                             var inside = extents[i][0] <= v[p] && v[p] <= extents[i][1];
@@ -267,20 +252,18 @@ angular.module('kibana.parallelcoordinates', [])
                         });
                     })
 
-
-
                     scope.$apply(function() {
                        scope.activeDocs = activeDocs;
                     });
                 }
 
+
+                //Drag functions are used for dragging the axis aroud
                 function dragstart(d) {
                     scope.i = scope.panel.fields.indexOf(d);
-                    console.log("dragstart", d, scope.i)
                 }
 
                 function drag(d) {
-                    console.log("drag", d, scope.i)
                     scope.x.range()[scope.i] = d3.event.x;
                     scope.panel.fields.sort(function(a, b) { return scope.x(a) - scope.x(b); });
                     scope.foregroundLines.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
@@ -291,7 +274,6 @@ angular.module('kibana.parallelcoordinates', [])
                 }
 
                 function dragend(d) {
-                    console.log("dragend", d)
                     scope.x.domain(scope.panel.fields).rangePoints([0, scope.w]);
                     var t = d3.transition().duration(500);
                     t.selectAll(".trait").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
@@ -309,9 +291,6 @@ angular.module('kibana.parallelcoordinates', [])
                  */
                 function render_panel() {
 
-                    console.log("render_panel");
-
-
                     scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
                     scope.y = {};
 
@@ -328,14 +307,12 @@ angular.module('kibana.parallelcoordinates', [])
 
                     scope.panel.fields.forEach(function(d) {
 
+                        //If it is a string, setup an ordinal scale.
+                        //Otherwise, use a linear scale for numbers
                         if (_.isString(scope.data[0][d])) {
 
-                            var value = function(v) {
-                                return v[d];
-                            };
-
+                            var value = function(v) { return v[d]; };
                             var values = _.map(_.uniq(scope.data, value),value);
-
 
                             scope.y[d] = d3.scale.ordinal()
                                 .domain(values)
@@ -354,7 +331,7 @@ angular.module('kibana.parallelcoordinates', [])
                     });
 
 
-
+                    //pull out the actively selected columns for rendering the axis/lines
                     var activeData = _.map(scope.data, function(d) {
                         var t = {};
                         _.each(scope.panel.fields, function(f) {
@@ -364,6 +341,7 @@ angular.module('kibana.parallelcoordinates', [])
                     });
 
 
+                    //Lines
                     scope.foregroundLines = scope.foreground
                         .selectAll(".foregroundlines")
                         .data(activeData, function(d, i){
@@ -373,7 +351,6 @@ angular.module('kibana.parallelcoordinates', [])
                             });
                             return id;
                         });
-
                     scope.foregroundLines
                         .enter().append("svg:path")
                         .attr("d", path)
@@ -381,28 +358,24 @@ angular.module('kibana.parallelcoordinates', [])
                         .attr("style", function(d) {
                             return "stroke:" + scope.colors(d.phpmemory) + ";";
                         });
-
                     scope.foregroundLines.exit().remove();
 
 
 
-
+                    //Axis group
                     scope.traits = scope.svg.selectAll(".trait")
                         .data(scope.panel.fields, String);
-
                     scope.traits
                         .enter().append("svg:g")
                         .attr("class", "trait")
                         .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                    scope.traits
+                        .exit().remove();
 
 
-
-
-
-
+                    //brushes used to select lines
                     scope.brushes = scope.svg.selectAll(".brush")
                         .data(scope.panel.fields, String);
-
                     scope.brushes
                         .enter()
                         .append("svg:g")
@@ -416,16 +389,22 @@ angular.module('kibana.parallelcoordinates', [])
                         .attr("x", -8)
                         .attr("width", 16);
 
+                    //this section is repeated because enter() only works on "new" data, but we always need to
+                    //update the brushes if things change.  This just calls the brushing function, so it doesn't
+                    //affect currently active rects
                     scope.brushes
                         .each(function(d) {
                             d3.select(this)
                                 .call(scope.y[d].brush)
                                 .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
                         });
+                    scope.brushes
+                        .exit().remove();
 
+
+                    //vertical axis and labels
                    scope.axisLines =  scope.svg.selectAll(".axis")
                         .data(scope.panel.fields, String);
-
                    scope.axisLines
                         .enter()
                         .append("svg:g")
@@ -444,23 +423,11 @@ angular.module('kibana.parallelcoordinates', [])
                         .attr("text-anchor", "middle")
                         .attr("y", -9)
                         .text(String);
-
-
-
-                    scope.brushes
-                        .exit().remove();
-
                     scope.axisLines
                         .exit().remove();
 
-                    scope.traits
-                        .exit().remove();
-
-
+                    //Simulate a dragend in case there is new data and we need to rearrange
                     dragend();
-
-
-
 
                 }
 
