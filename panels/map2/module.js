@@ -339,15 +339,8 @@ angular.module('kibana.map2', [])
 
           }
 
-          var path = d3.geo.path()
-            .projection(dr.projection);
-
-
-          //Special fix for when the user changes from mercator -> orthographic
-          //The globe won't redraw automatically, we need to force it
-          if (scope.panel.display.data.type === 'orthographic') {
-            dr.svg.selectAll("path").attr("d", path);
-          }
+          dr.path = d3.geo.path()
+            .projection(dr.projection).pointRadius(0.2);
 
           console.log(scope.data);
 
@@ -363,8 +356,6 @@ angular.module('kibana.map2', [])
           dr.projectedPoints = _.map(dr.points, function (coords) {
             return dr.projection(coords);
           });
-
-
 
           dr.svg.select(".overlay").remove();
 
@@ -387,7 +378,7 @@ angular.module('kibana.map2', [])
                 return 'land';
               }
             })
-            .attr("d", path);
+            .attr("d", dr.path);
 
           countryPath.exit().remove();
 
@@ -399,9 +390,20 @@ angular.module('kibana.map2', [])
                 .on("drag", function() {
                   if (scope.keylistener.keyActive(17)) {
                     dr.projection.rotate([d3.event.x / 2, -d3.event.y / 2, dr.projection.rotate()[2]]);
-                    dr.svg.selectAll("path").attr("d", path);
+
+                    //dr.svg.selectAll("path").attr("d", dr.path);
+                    dr.g.selectAll("path").attr("d", dr.path);
+
                   }
-                }));
+                   }));
+
+
+          }
+
+          //Special fix for when the user changes from mercator -> orthographic
+          //The globe won't redraw automatically, we need to force it
+          if (scope.panel.display.data.type === 'orthographic') {
+            //dr.svg.selectAll("path").attr("d", dr.path);
           }
 
 
@@ -413,8 +415,8 @@ angular.module('kibana.map2', [])
           //@todo fix this
           var dimensions = [width, height];
           displayBinning(scope, dr, dimensions);
-          displayGeopoints(scope, dr, path);
-          displayBullseye(scope, dr, path);
+          displayGeopoints(scope, dr);
+          displayBullseye(scope, dr);
 
 
 
