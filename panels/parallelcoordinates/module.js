@@ -189,8 +189,8 @@ angular.module('kibana.parallelcoordinates', [])
                  */
                 function init_panel() {
 
-                    scope.m = [80, 160, 200, 160];
-                    scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3],
+                    scope.m = [80, 100, 80, 100];
+                    scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3];
                     scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
 
 
@@ -290,6 +290,13 @@ angular.module('kibana.parallelcoordinates', [])
                  * or when new options are selected
                  */
                 function render_panel() {
+
+
+                    //update the svg if the size has changed
+                    scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3];
+                    scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
+                    scope.svg.attr("viewbox", "0 0 " + (scope.w + scope.m[1] + scope.m[3]) + " " + (scope.h + scope.m[0] + scope.m[2]));
+
 
                     scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
                     scope.y = {};
