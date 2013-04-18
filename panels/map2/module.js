@@ -64,10 +64,6 @@ angular.module('kibana.map2', [])
 
         };
 
-        $scope.isNumber = function (n) {
-            return !isNaN(parseFloat(n)) && isFinite(n);
-        };
-
         $scope.get_data = function () {
 
             // Make sure we have everything for the request to complete
@@ -128,8 +124,7 @@ angular.module('kibana.map2', [])
 
                 _.each(results.facets.map.terms, function (v) {
 
-                    //FIX THIS
-                    if (!$scope.isNumber(v.term)) {
+                    if (!_.isNumber(v.term)) {
                         $scope.data[v.term.toUpperCase()] = v[metric];
                     } else {
                         $scope.data[v.term] = v[metric];
