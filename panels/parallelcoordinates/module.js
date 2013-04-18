@@ -148,6 +148,9 @@ angular.module('kibana.parallelcoordinates', [])
       restrict: 'A',
       link: function (scope, elem, attrs) {
 
+        //used to store a variety of directive-level variables
+        var directive = {};
+
         scope.initializing = false;
 
 
@@ -155,7 +158,7 @@ angular.module('kibana.parallelcoordinates', [])
          * Initialize the panels if new, or render existing panels
          */
         scope.init_or_render = function() {
-          if (typeof scope.svg === 'undefined') {
+          if (typeof directive.svg === 'undefined') {
 
             //prevent duplicate initialization steps, if render is called again
             //before the svg is setup
@@ -189,9 +192,9 @@ angular.module('kibana.parallelcoordinates', [])
          */
         function init_panel() {
 
-          scope.m = [80, 100, 80, 100];
-          scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3];
-          scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
+          directive.m = [80, 100, 80, 100];
+          directive.w = $(elem[0]).width() - directive.m[1] - directive.m[3];
+          directive.h = $(elem[0]).height() - directive.m[0] - directive.m[2];
 
 
           scope.initializing = true;
@@ -200,22 +203,22 @@ angular.module('kibana.parallelcoordinates', [])
 
           scripts.wait(function () {
 
+            directive.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, directive.w]);
+            directive.y = {};
 
-            scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
-            scope.y = {};
+            directive.line = d3.svg.line().interpolate('cardinal');
+            directive.axis = d3.svg.axis().orient("left");
 
-            scope.line = d3.svg.line().interpolate('cardinal');
-            scope.axis = d3.svg.axis().orient("left");
-
-            scope.svg = d3.select(elem[0]).append("svg")
+            var viewbox = "0 0 " + (directive.w + directive.m[1] + directive.m[3]) + " " + (directive.h + directive.m[0] + directive.m[2]);
+            directive.svg = d3.select(elem[0]).append("svg")
               .attr("width", "100%")
               .attr("height", "100%")
-              .attr("viewbox", "0 0 " + (scope.w + scope.m[1] + scope.m[3]) + " " + (scope.h + scope.m[0] + scope.m[2]))
+              .attr("viewbox", viewbox)
               .append("svg:g")
-              .attr("transform", "translate(" + scope.m[3] + "," + scope.m[0] + ")");
+              .attr("transform", "translate(" + directive.m[3] + "," + directive.m[0] + ")");
 
             // Add foreground lines.
-            scope.foreground = scope.svg.append("svg:g")
+            directive.foreground = directive.svg.append("svg:g")
               .attr("class", "foreground");
 
             scope.initializing = false;
@@ -227,16 +230,16 @@ angular.module('kibana.parallelcoordinates', [])
 
         // Returns the path for a given data point.
         function path(d) {
-          return scope.line(scope.panel.fields.map(function(p) { return [scope.x(p), scope.y[p](d[p])]; }));
+          return directive.line(scope.panel.fields.map(function(p) { return [directive.x(p), directive.y[p](d[p])]; }));
         }
 
         // Handles a brush event, toggling the display of foreground lines.
         function brush() {
-          var actives = scope.panel.fields.filter(function(p) { return !scope.y[p].brush.empty(); }),
-            extents = actives.map(function(p) { return scope.y[p].brush.extent(); });
+          var actives = scope.panel.fields.filter(function(p) { return !directive.y[p].brush.empty(); }),
+            extents = actives.map(function(p) { return directive.y[p].brush.extent(); });
 
           //.fade class hides the "inactive" lines, helps speed up rendering significantly
-          scope.foregroundLines.classed("fade", function(d) {
+          directive.foregroundLines.classed("fade", function(d) {
             return !actives.every(function(p, i) {
               var inside = extents[i][0] <= d[p] && d[p] <= extents[i][1];
               return inside;
@@ -260,25 +263,25 @@ angular.module('kibana.parallelcoordinates', [])
 
         //Drag functions are used for dragging the axis aroud
         function dragstart(d) {
-          scope.i = scope.panel.fields.indexOf(d);
+          directive.i = scope.panel.fields.indexOf(d);
         }
 
         function drag(d) {
-          scope.x.range()[scope.i] = d3.event.x;
-          scope.panel.fields.sort(function(a, b) { return scope.x(a) - scope.x(b); });
-          scope.foregroundLines.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          scope.traits.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          scope.brushes.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          scope.axisLines.attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          scope.foregroundLines.attr("d", path);
+          directive.x.range()[directive.i] = d3.event.x;
+          scope.panel.fields.sort(function(a, b) { return directive.x(a) - directive.x(b); });
+          directive.foregroundLines.attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          directive.traits.attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          directive.brushes.attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          directive.axisLines.attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          directive.foregroundLines.attr("d", path);
         }
 
         function dragend(d) {
-          scope.x.domain(scope.panel.fields).rangePoints([0, scope.w]);
+          directive.x.domain(scope.panel.fields).rangePoints([0, directive.w]);
           var t = d3.transition().duration(500);
-          t.selectAll(".trait").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          t.selectAll(".axis").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          t.selectAll(".brush").attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+          t.selectAll(".trait").attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          t.selectAll(".axis").attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          t.selectAll(".brush").attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
           t.selectAll(".foregroundlines").attr("d", path);
         }
 
@@ -293,21 +296,21 @@ angular.module('kibana.parallelcoordinates', [])
 
 
           //update the svg if the size has changed
-          scope.w = $(elem[0]).width() - scope.m[1] - scope.m[3];
-          scope.h = $(elem[0]).height() - scope.m[0] - scope.m[2];
-          scope.svg.attr("viewbox", "0 0 " + (scope.w + scope.m[1] + scope.m[3]) + " " + (scope.h + scope.m[0] + scope.m[2]));
+          directive.w = $(elem[0]).width() - directive.m[1] - directive.m[3];
+          directive.h = $(elem[0]).height() - directive.m[0] - directive.m[2];
+          directive.svg.attr("viewbox", "0 0 " + (directive.w + directive.m[1] + directive.m[3]) + " " + (directive.h + directive.m[0] + directive.m[2]));
 
 
-          scope.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, scope.w]);
-          scope.y = {};
+          directive.x = d3.scale.ordinal().domain(scope.panel.fields).rangePoints([0, directive.w]);
+          directive.y = {};
 
-          scope.line = d3.svg.line().interpolate('cardinal');
-          scope.axis = d3.svg.axis().orient("left");
+          directive.line = d3.svg.line().interpolate('cardinal');
+          directive.axis = d3.svg.axis().orient("left");
 
 
           var colorExtent = d3.extent(scope.data, function(p) { return +p[scope.panel.fields[0]]; });
 
-          scope.colors = d3.scale.linear()
+          directive.colors = d3.scale.linear()
             .domain([colorExtent[0],colorExtent[1]])
             .range(["#4580FF", "#FF9245"]);
 
@@ -321,19 +324,17 @@ angular.module('kibana.parallelcoordinates', [])
               var value = function(v) { return v[d]; };
               var values = _.map(_.uniq(scope.data, value),value);
 
-              scope.y[d] = d3.scale.ordinal()
+              directive.y[d] = d3.scale.ordinal()
                 .domain(values)
-                .rangeBands([scope.h, 0]);
+                .rangeBands([directive.h, 0]);
             } else if (_.isNumber(scope.data[0][d])) {
-              scope.y[d] = d3.scale.linear()
+              directive.y[d] = d3.scale.linear()
                 .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
-                .range([scope.h, 0]);
+                .range([directive.h, 0]);
             }
 
-
-
-            scope.y[d].brush = d3.svg.brush()
-              .y(scope.y[d])
+            directive.y[d].brush = d3.svg.brush()
+              .y(directive.y[d])
               .on("brush", brush);
           });
 
@@ -349,7 +350,7 @@ angular.module('kibana.parallelcoordinates', [])
 
 
           //Lines
-          scope.foregroundLines = scope.foreground
+          directive.foregroundLines = directive.foreground
             .selectAll(".foregroundlines")
             .data(activeData, function(d, i){
               var id = "";
@@ -358,39 +359,39 @@ angular.module('kibana.parallelcoordinates', [])
               });
               return id;
             });
-          scope.foregroundLines
+          directive.foregroundLines
             .enter().append("svg:path")
             .attr("d", path)
             .attr("class", "foregroundlines")
             .attr("style", function(d) {
-              return "stroke:" + scope.colors(d[scope.panel.fields[0]]) + ";";
+              return "stroke:" + directive.colors(d[scope.panel.fields[0]]) + ";";
             });
-          scope.foregroundLines.exit().remove();
+          directive.foregroundLines.exit().remove();
 
 
 
           //Axis group
-          scope.traits = scope.svg.selectAll(".trait")
+          directive.traits = directive.svg.selectAll(".trait")
             .data(scope.panel.fields, String);
-          scope.traits
+          directive.traits
             .enter().append("svg:g")
             .attr("class", "trait")
-            .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
-          scope.traits
+            .attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
+          directive.traits
             .exit().remove();
 
 
           //brushes used to select lines
-          scope.brushes = scope.svg.selectAll(".brush")
+          directive.brushes = directive.svg.selectAll(".brush")
             .data(scope.panel.fields, String);
-          scope.brushes
+          directive.brushes
             .enter()
             .append("svg:g")
             .attr("class", "brush")
             .each(function(d) {
               d3.select(this)
-                .call(scope.y[d].brush)
-                .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                .call(directive.y[d].brush)
+                .attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
             })
             .selectAll("rect")
             .attr("x", -8)
@@ -399,29 +400,29 @@ angular.module('kibana.parallelcoordinates', [])
           //this section is repeated because enter() only works on "new" data, but we always need to
           //update the brushes if things change.  This just calls the brushing function, so it doesn't
           //affect currently active rects
-          scope.brushes
+          directive.brushes
             .each(function(d) {
               d3.select(this)
-                .call(scope.y[d].brush)
-                .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                .call(directive.y[d].brush)
+                .attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
             });
-          scope.brushes
+          directive.brushes
             .exit().remove();
 
 
           //vertical axis and labels
-          scope.axisLines =  scope.svg.selectAll(".axis")
+          directive.axisLines =  directive.svg.selectAll(".axis")
             .data(scope.panel.fields, String);
-          scope.axisLines
+          directive.axisLines
             .enter()
             .append("svg:g")
             .attr("class", "axis")
             .each(function(d) {
               d3.select(this)
-                .call(scope.axis.scale(scope.y[d]))
-                .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
+                .call(directive.axis.scale(directive.y[d]))
+                .attr("transform", function(d) { return "translate(" + directive.x(d) + ")"; });
             }).call(d3.behavior.drag()
-              .origin(function(d) { return {x: scope.x(d)}; })
+              .origin(function(d) { return {x: directive.x(d)}; })
               .on("dragstart", dragstart)
               .on("drag", drag)
               .on("dragend", dragend))
@@ -430,7 +431,7 @@ angular.module('kibana.parallelcoordinates', [])
             .attr("text-anchor", "middle")
             .attr("y", -9)
             .text(String);
-          scope.axisLines
+          directive.axisLines
             .exit().remove();
 
           //Simulate a dragend in case there is new data and we need to rearrange
