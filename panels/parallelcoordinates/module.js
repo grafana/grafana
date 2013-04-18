@@ -46,7 +46,6 @@ angular.module('kibana.parallelcoordinates', [])
                 $scope.get_data();
             });
             eventBus.register($scope,'selected_fields', function(event, fields) {
-                console.log("selected_fields", fields);
                 $scope.panel.fields = _.clone(fields)
                 $scope.$emit('render');
             });
@@ -54,8 +53,6 @@ angular.module('kibana.parallelcoordinates', [])
 
 
         $scope.get_data = function (segment,query_id) {
-
-            console.log("get_data");
 
             // Make sure we have everything for the request to complete
             if (_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
@@ -119,10 +116,6 @@ angular.module('kibana.parallelcoordinates', [])
                 } else {
                     return;
                 }
-                console.log("emit render");
-
-
-                console.log("data",$scope.data);
                 $scope.$emit('render')
             });
 
@@ -146,7 +139,6 @@ angular.module('kibana.parallelcoordinates', [])
 
 
         $scope.$watch('activeDocs', function(v) {
-            //console.log("Watch", $scope.activeDocs);
             eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents",
                 {query:$scope.panel.query,docs:$scope.activeDocs});
         });
@@ -335,16 +327,31 @@ angular.module('kibana.parallelcoordinates', [])
 
 
                     scope.panel.fields.forEach(function(d) {
-                        scope.y[d] = d3.scale.linear()
-                            .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
-                            .range([scope.h, 0]);
+
+                        if (_.isString(scope.data[0][d])) {
+
+                            var value = function(v) {
+                                return v[d];
+                            };
+
+                            var values = _.map(_.uniq(scope.data, value),value);
+
+
+                            scope.y[d] = d3.scale.ordinal()
+                                .domain(values)
+                                .rangeBands([scope.h, 0]);
+                        } else if (_.isNumber(scope.data[0][d])) {
+                            scope.y[d] = d3.scale.linear()
+                                .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
+                                .range([scope.h, 0]);
+                        }
+
+
 
                         scope.y[d].brush = d3.svg.brush()
                             .y(scope.y[d])
                             .on("brush", brush);
                     });
-
-                    console.log("render y", scope.y);
 
 
 
@@ -376,10 +383,6 @@ angular.module('kibana.parallelcoordinates', [])
                         });
 
                     scope.foregroundLines.exit().remove();
-
-                    console.log("Render Fields",scope.panel.fields);
-
-
 
 
 
@@ -428,7 +431,6 @@ angular.module('kibana.parallelcoordinates', [])
                         .append("svg:g")
                         .attr("class", "axis")
                         .each(function(d) {
-                            console.log("axis",d)
                                 d3.select(this)
                                     .call(scope.axis.scale(scope.y[d]))
                                     .attr("transform", function(d) { return "translate(" + scope.x(d) + ")"; });
