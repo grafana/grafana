@@ -1,5 +1,5 @@
 angular.module('kibana.map2', [])
-    .controller('map2', function ($scope, eventBus) {
+    .controller('map2', function ($scope, eventBus, keylistener) {
 
         // Set and populate defaults
         var _d = {
@@ -413,14 +413,16 @@ angular.module('kibana.map2', [])
                     //@todo implement a global "keypress service", since this fails if there are >1 spheres
                     if (scope.panel.display.data.type === 'orthographic') {
 
-                        window.focus();
-                        d3.select(window)
+                        //scope.svg.focus();
+                        /*
+                        scope.svg.selectAll(".overlay")
                             .on("keydown", function() {
                                 scope.ctrlKey = d3.event.ctrlKey;
                             })
                             .on("keyup", function() {
                                 scope.ctrlKey = d3.event.ctrlKey;
                             });
+*/
 
 
                         scope.svg.style("cursor", "move")

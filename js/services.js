@@ -106,4 +106,17 @@ angular.module('kibana.services', [])
     timers = new Array();
   }
 
-});
+})
+.service('keylistener', function($rootScope) {
+        var keys = [];
+        $(document).keydown(function (e) {
+            console.log("keydown", e.which);
+            keys[e.which] = true;
+        });
+
+        $(document).keyup(function (e) {
+            console.log("keyup", e.which);
+            delete keys[e.which];
+        });
+
+    });
