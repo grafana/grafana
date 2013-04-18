@@ -82,7 +82,7 @@ angular.module('kibana.map', [])
   $scope.build_search = function(field,value) {
     $scope.panel.query = add_to_query($scope.panel.query,field,value,false)
     $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
   }
 
 })
