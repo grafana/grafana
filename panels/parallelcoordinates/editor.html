@@ -7,19 +7,6 @@
         </form>
     </div>
 </div>
-<div class="row-fluid">
-    <div class="span4">
-        <form class="input-append">
-            <h6>Add field</h6>
-            <input bs-typeahead="fields.list" type="text" class="input-small" ng-model='newfield'>
-            <button class="btn" ng-click="toggle_field(newfield);newfield=''"><i class="icon-plus"></i></button>
-        </form>
-    </div>
-    <div class="span8">
-        <h6>Selected fields <small>Click to remove</small></h6>
-        <span style="margin-left:3px" ng-click="toggle_field(field)" ng-repeat="field in $parent.panel.fields" class="label remove pointer">{{field}} </span>
-    </div>
-</div>
 <h5>Panel Spy</h5>
 <div class="row-fluid">
     <div class="span2">
