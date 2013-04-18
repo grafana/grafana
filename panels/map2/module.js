@@ -349,6 +349,13 @@ angular.module('kibana.map2', [])
                     var path = d3.geo.path()
                         .projection(scope.projection);
 
+
+                    //Special fix for when the user changes from mercator -> orthographic
+                    //The globe won't redraw automatically, we need to force it
+                    if (scope.panel.display.data.type === 'orthographic') {
+                        scope.svg.selectAll("path").attr("d", path);
+                    }
+
                     console.log(scope.data);
 
                     //Geocoded points are decoded into lonlat
