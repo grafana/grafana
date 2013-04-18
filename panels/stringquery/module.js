@@ -13,24 +13,18 @@ angular.module('kibana.stringquery', [])
   }
   _.defaults($scope.panel,_d);
 
-  var _groups = _.isArray($scope.panel.group) ? 
-    $scope.panel.group : [$scope.panel.group];
-
   $scope.init = function() {
 
-    // I don't like this compromise. I'm not totally sure what this panel
-    // Should do if its in multi query mode and receives a query. For now, just
-    // replace the first one, though I feel like that isn't right.
+    // If we're in multi query mode, they all get wiped out if we receive a 
+    // query. Query events must be exchanged as arrays.
     eventBus.register($scope,'query',function(event,query) {
-      if (_.isArray($scope.panel.query))
-        $scope.panel.query[0] = query
-      else
       $scope.panel.query = query;
     });   
   }
 
   $scope.send_query = function(query) {
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',query)
+    var _query = _.isArray(query) ? query : [query]
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',_query)
   }
 
   $scope.add_query = function() {
@@ -40,7 +34,7 @@ angular.module('kibana.stringquery', [])
       $scope.panel.query = new Array($scope.panel.query)
       $scope.panel.query.push("")
     }
-  } 
+  }
 
   $scope.set_multi = function(multi) {
     $scope.panel.query = multi ? 

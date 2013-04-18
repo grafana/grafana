@@ -8,9 +8,11 @@ angular.module('kibana.hits', [])
     style   : { "font-size": '10pt'},
     aggregate   : true,
     arrangement : 'vertical',
-    chart   : true,
-    counters: true,
-    count_pos: 'above'
+    chart       : 'none',
+    counter_pos : 'above',
+    donut   : false,
+    tilt    : false,
+    labels  : true
   }
   _.defaults($scope.panel,_d)
 
@@ -96,7 +98,6 @@ angular.module('kibana.hits', [])
 
           i++;
         });
-
         $scope.$emit('render');
         if(_segment < $scope.panel.index.length-1) 
           $scope.get_data(_segment+1,query_id)
@@ -143,31 +144,65 @@ angular.module('kibana.hits', [])
       function render_panel() {
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
-                    
-        // Populate element. Note that jvectormap appends, does not replace.
+                          .script("common/lib/panels/jquery.flot.pie.js")
+
+        // Populate element.
         scripts.wait(function(){
           // Populate element
           try {
             // Add plot to scope so we can build out own legend 
-            scope.plot = $.plot(elem, scope.data, {
-              legend: { show: false },
-              series: {
-                lines:  { show: false, },
-                bars:   { show: true,  fill: 1, barWidth: 0.8, horizontal: false },
-                shadowSize: 1
-              },
-              yaxis: { show: true, min: 0, color: "#000" },
-              xaxis: { show: false },
-              grid: {
-                backgroundColor: '#fff',
-                borderWidth: 0,
-                borderColor: '#eee',
-                color: "#eee",
-                hoverable: true,
-              },
-              colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
-            })
-            
+            if(scope.panel.chart === 'bar')
+              scope.plot = $.plot(elem, scope.data, {
+                legend: { show: false },
+                series: {
+                  lines:  { show: false, },
+                  bars:   { show: true,  fill: 1, barWidth: 0.8, horizontal: false },
+                  shadowSize: 1
+                },
+                yaxis: { show: true, min: 0, color: "#000" },
+                xaxis: { show: false },
+                grid: {
+                  backgroundColor: '#fff',
+                  borderWidth: 0,
+                  borderColor: '#eee',
+                  color: "#eee",
+                  hoverable: true,
+                },
+                colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+              })
+            if(scope.panel.chart === 'pie')
+              scope.plot = $.plot(elem, scope.data, {
+                legend: { show: false },
+                series: {
+                  pie: {
+                    innerRadius: scope.panel.donut ? 0.4 : 0,
+                    tilt: scope.panel.tilt ? 0.45 : 1,
+                    radius: 1,
+                    show: true,
+                    combine: {
+                      color: '#999',
+                      label: 'The Rest'
+                    },
+                    label: { 
+                      show: scope.panel.labels,
+                      radius: 2/3,
+                      formatter: function(label, series){
+                        return '<div ng-click="build_search(panel.query.field,\''+label+'\') "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
+                          label+'<br/>'+Math.round(series.percent)+'%</div>';
+                      },
+                      threshold: 0.1 
+                    }
+                  }
+                },
+                //grid: { hoverable: true, clickable: true },
+                grid:   { hoverable: true, clickable: true },
+                colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+              });
+
+            // Compensate for the height of the  legend. Gross
+            elem.height(
+              (scope.panel.height || scope.row.height).replace('px','') - $("#"+scope.$id+"-legend").height())
+
             // Work around for missing legend at initialization
             if(!scope.$$phase)
               scope.$apply()
@@ -198,9 +233,11 @@ angular.module('kibana.hits', [])
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
+          var value = scope.panel.chart === 'bar' ? 
+            item.datapoint[1] : item.datapoint[1][0][1];
           tt(pos.pageX, pos.pageY,
-            "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+item.series.color+";height:20px;width:20px'></div> "+
-            item.datapoint[1].toFixed(0))
+            "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+
+            item.series.color+";height:20px;width:20px'></div> "+value.toFixed(0))
         } else {
           $("#pie-tooltip").remove();
         }

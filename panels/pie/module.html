@@ -2,11 +2,15 @@
   <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
-  <span ng-show="panel.legend" ng-repeat='series in legend' style='padding-right:5px'>
-    <div style='white-space:nowrap;display:table-cell'>
-      <div style="display:inline-block;background:{{series.color}};height:10px;width:10px;border-radius:5px;"></div>
-      <div class='small' style='display:inline-block'>{{series.label}} ({{series.percent}}%)</div>
-    </div>
-  </span>  
+
+  <div ng-show="panel.legend == 'above'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
+    <span ng-show='panel.chart != "none"'><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+  </div><br>
+  <div style="clear:both"></div>
+
   <div pie params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+
+  <div ng-show="panel.legend == 'below'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
+    <span ng-show='panel.chart != "none"'><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+  </div>
 </kibana-panel>         

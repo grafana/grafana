@@ -16,6 +16,6 @@ var config = new Settings(
   kibana_index:   "kibana-int", 
   modules:        ['histogram','map','map2','pie','table','stringquery','sort',
                   'timepicker','text','fields','hits','dashcontrol',
-                  'column'], 
+                  'column', 'parallelcoordinates'],
   }
 );

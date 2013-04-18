@@ -1,0 +1,21 @@
+<div class="row-fluid" ng-controller="parallelcoordinates">
+    <div style="width:90%">
+        <form class="input-append">
+            <h6>Query</h6>
+            <input type="text" style="width:90%" ng-model="panel.query">
+            <button class="btn" ng-click="get_data();"><i class="icon-search"></i></button>
+        </form>
+    </div>
+</div>
+<h5>Panel Spy</h5>
+<div class="row-fluid">
+    <div class="span2">
+        <label class="small"> Spyable </label><input type="checkbox" ng-model="panel.spyable" ng-checked="panel.spyable">
+    </div>
+    <div class="span9 small">
+        The panel spy shows 'behind the scenes' information about a panel. It can
+        be accessed by clicking the <i class='icon-eye-open'></i> in the top right
+        of the panel.
+    </div>
+</div>
+

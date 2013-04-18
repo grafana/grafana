@@ -249,7 +249,7 @@ angular.module('kibana.histogram', [])
               },
               selection: {
                 mode: "x",
-                color: '#666'
+                color: '#999'
               },
               grid: {
                 backgroundColor: '#fff',
@@ -258,13 +258,7 @@ angular.module('kibana.histogram', [])
                 color: "#eee",
                 hoverable: true,
               },
-              colors: ['#86B22D',
-                      '#BF6730',
-                      '#1D7373',
-                      '#BFB930',
-                      '#BF3030',
-                      '#77207D'
-                      ]
+              colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
             })
             
             // Work around for missing legend at initialization
