@@ -16,7 +16,17 @@ angular.module('kibana.map2', [])
         scale:-1,
         data: {
           samples: 1000,
-          type: "mercator"
+          type: "mercator",
+          dropdown:[
+            {
+              "text": "Mercator (Flat)",
+              id: "mercator"
+            },
+            {
+              text: "Orthographic (Sphere)",
+              id: "orthographic"
+            }
+          ]
         },
         geopoints: {
           enabled: false,
@@ -186,24 +196,6 @@ angular.module('kibana.map2', [])
 
         dr.worldData = null;
         dr.worldNames = null;
-
-        //These are various options that should not be cached in scope.panel
-        dr.options = {
-
-          data: {
-            dropdown:[
-              {
-                "text": "Mercator (Flat)",
-                id: "mercator"
-              },
-              {
-                text: "Orthographic (Sphere)",
-                id: "orthographic"
-              }
-            ]
-          }
-        };
-
 
         /**
          * Initialize the panels if new, or render existing panels
@@ -403,7 +395,7 @@ angular.module('kibana.map2', [])
           //Special fix for when the user changes from mercator -> orthographic
           //The globe won't redraw automatically, we need to force it
           if (scope.panel.display.data.type === 'orthographic') {
-            //dr.svg.selectAll("path").attr("d", dr.path);
+            dr.svg.selectAll("path").attr("d", dr.path);
           }
 
 
