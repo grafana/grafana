@@ -1,0 +1,287 @@
+<style>
+    .tabDetails {
+        border-bottom: 1px solid #ddd;
+        padding-bottom:20px;
+    }
+    .tabDetails td {
+        padding-right: 10px;
+        padding-bottom:10px;
+    }
+</style>
+<div ng-controller="map2">
+    <div class="row-fluid" style="margin-bottom:20px">
+        <div class="span11">
+            The map panel is compatible with either Geopoints or two-letter country codes, depending on the graphing options.  Left click to drag/pan map, scroll wheel (or double click) to zoom.  Globes can be spun using ctrl-key + drag.
+        </div>
+    </div>
+
+
+    <div class="row-fluid">
+        <div class="span10">
+            <form class="form-horizontal">
+                <div class="control-group">
+                    <label class="control-label" for="panelfield">Primary Field</label>
+                    <div class="controls">
+                        <input type="text" id="panelfield" class="input"
+                               ng-model="panel.field"
+                               ng-change="get_data()" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="panelsecondaryfield">Secondary Field</label>
+                    <div class="controls">
+                        <input type="text" id="panelsecondaryfield" class="input"
+                               ng-model="panel.secondaryfield"
+                               ng-change="get_data()"
+                               data-placement="right"
+                               placeholder="Optional"
+                               bs-tooltip="'Allows aggregating on Primary field, while counting stats on a secondary (e.g. Group By user_id, Sum(purchase_price)).'" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="panelquery">Query</label>
+                    <div class="controls">
+                        <input type="text" id="panelquery" class="input" ng-model="panel.query">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span11">
+            <h4>Display Options</h4>
+        </div>
+        <!--
+            Rolling our own tab control here because the Angular-Strap Tab directive doesn't allow
+            updates to components inside, which is quite bizarre.  Or I just can't figure it out...
+        -->
+
+        <div class="span11">
+            <ul class="nav nav-tabs" ng-cloak="">
+                <li ng-repeat="tab in ['Geopoints', 'Binning', 'Choropleth', 'Bullseye', 'Data']" ng-class="{active:isActive(tab)}">
+                    <a ng-click="tabClick(tab)">{{tab}}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row-fluid tabDetails" ng-show="isActive('geopoints')">
+        <div class="span8 offset1">
+            <table>
+                <tbody  >
+                <tr>
+                    <td>Geopoints</td>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                            data-placement="right"
+                            bs-tooltip="'Compatible with Geopoint Type'"
+                            ng-change="$emit('render')"
+                            ng-class="{'btn-success': panel.display.geopoints.enabled}"
+                            ng-model="panel.display.geopoints.enabled">{{panel.display.geopoints.enabled|enabledText}}</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Point size</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                            ng-change="$emit('render')"
+                            data-placement="right"
+                            bs-tooltip="'Controls the size of the geopoints on the map.'"
+                            ng-model="panel.display.geopoints.pointSize"
+                            value="{{panel.display.geopoints.pointSize}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Point Transparency</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                               ng-change="$emit('render')"
+                               data-placement="right"
+                               bs-tooltip="'Controls the transparency of geopoints. Valid numbers are between 0.0 and 1.0'"
+                               ng-model="panel.display.geopoints.pointAlpha"
+                               value="{{panel.display.geopoints.pointAlpha}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Autosizing</td>
+                    <td>
+                        <input type="checkbox"
+                               ng-change="$emit('render')"
+                               data-placement="right"
+                               ng-model="panel.display.geopoints.autosize"
+                               bs-tooltip="'Allows point sizes to scale as you zoom in and out of the map.'" />
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row-fluid tabDetails" ng-show="isActive('binning')">
+        <div class="span8 offset1">
+            <table>
+                <tbody  >
+                <tr>
+                    <td>Binning</td>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                                data-placement="right"
+                                bs-tooltip="'Compatible with Geopoint Type'"
+                                ng-change="$emit('render')"
+                                ng-class="{'btn-success': panel.display.binning.enabled}"
+                                ng-model="panel.display.binning.enabled">{{panel.display.binning.enabled|enabledText}}</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Hexagon size</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                               ng-change="$emit('render')"
+                               data-placement="right"
+                               bs-tooltip="'Controls the size of the hexagonal binning'"
+                               ng-model="panel.display.binning.hexagonSize"
+                               value="{{panel.display.binning.hexagonSize}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Hexagon Transparency</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                               ng-change="$emit('render')"
+                               data-placement="right"
+                               bs-tooltip="'Controls the transparency of hexagonal bins. Valid numbers are between 0.0 and 1.0'"
+                               ng-model="panel.display.binning.hexagonAlpha"
+                               value="{{panel.display.binning.hexagonAlpha}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                                ng-change="$emit('render')"
+                                ng-class="{'btn-success': panel.display.binning.areaEncoding}"
+                                ng-model="panel.display.binning.areaEncoding">Area</button>
+                    </td>
+                    <td>
+                        <div class="btn-group" ng-model="panel.display.binning.areaEncodingField" bs-buttons-radio ng-change="$emit('render')">
+                            <button type="button" class="btn" value="primary">Primary Field</button>
+                            <button type="button" class="btn" value="secondary">Secondary Field</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                                ng-change="$emit('render')"
+                                ng-class="{'btn-success': panel.display.binning.colorEncoding}"
+                                ng-model="panel.display.binning.colorEncoding">Color</button>
+                    </td>
+                    <td>
+                        <div class="btn-group" ng-model="panel.display.binning.colorEncodingField" bs-buttons-radio ng-change="$emit('render')">
+                            <button type="button" class="btn" value="primary">Primary Field</button>
+                            <button type="button" class="btn" value="secondary">Secondary Field</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row-fluid tabDetails" ng-show="isActive('choropleth')">
+        <div class="span8 offset1">
+            <table>
+                <tbody  >
+                <tr>
+                    <td>Choropleth</td>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                                data-placement="right"
+                                bs-tooltip="'Choropleths color country regions according to your selected field. Compatible with Country-Coded fields'"
+                                ng-change="$emit('render')"
+                                ng-class="{'btn-success': panel.display.choropleth.enabled}"
+                                ng-model="panel.display.choropleth.enabled">{{panel.display.choropleth.enabled|enabledText}}</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row-fluid tabDetails" ng-show="isActive('bullseye')">
+        <div class="span8 offset1">
+            <table>
+                <tbody  >
+                <tr>
+                    <td>Bullseye</td>
+                    <td>
+                        <button type="button" class="btn" bs-button
+                                ng-change="$emit('render')"
+                                ng-class="{'btn-success': panel.display.bullseye.enabled}"
+                                ng-model="panel.display.bullseye.enabled">{{panel.display.bullseye.enabled|enabledText}}</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Bullseye Coordinates</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                               ng-change="$emit('render')"
+                               placeholder="Latitude"
+                               data-placement="right"
+                               bs-tooltip="'Latitude of Bullseye'"
+                               ng-model="panel.display.bullseye.coord.lat"
+                               value="{{panel.display.bullseye.coord.lat}}" />
+
+                        <input type="text" style="width:100px"
+                               placeholder="Longitude"
+                               ng-change="$emit('render')"
+                               data-placement="right"
+                               bs-tooltip="'Longitude of Bullseye'"
+                               ng-model="panel.display.bullseye.coord.lon"
+                               value="{{panel.display.bullseye.coord.lon}}" />
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row-fluid tabDetails" ng-show="isActive('data')">
+        <div class="span8 offset1">
+            <table>
+                <tbody  >
+                <tr>
+                    <td>Data Points</td>
+                    <td>
+                        <input type="text" style="width:100px"
+                               ng-change="get_data()"
+                               data-placement="right"
+                               bs-tooltip="'Controls the number of samples used in the map. Be careful with this value!'"
+                               ng-model="panel.display.data.samples"
+                               value="{{panel.display.data.samples}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Map Projection</td>
+                    <td>
+                        <select ng-model="panel.display.data.type" ng-options="option.id as option.text for option in panel.display.data.dropdown"></select>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h5>Panel Spy</h5>
+
+    <div class="row-fluid">
+        <div class="span2">
+            <label class="small">Spyable</label> <input type="checkbox" ng-model=
+                "panel.spyable" ng-checked="panel.spyable">
+        </div>
+
+        <div class="span9 small">
+            The panel spy shows 'behind the scenes' information about a panel. It can be
+            accessed by clicking the in the top right of the panel.
+        </div>
+    </div>
+</div>

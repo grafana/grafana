@@ -183,7 +183,8 @@ select:focus,input[type="file"]:focus,input[type="radio"]:focus,input[type="chec
 .uneditable-textarea{width:auto;height:auto;}
 input:-moz-placeholder,textarea:-moz-placeholder{color:#4d4d4d;}
 input:-ms-input-placeholder,textarea:-ms-input-placeholder{color:#4d4d4d;}
-input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:#4d4d4d;}
+input:-webkit-input-placeholder{color:#4d4d4d;}
+textarea:-webkit-input-placeholder{color:#4d4d4d;}
 .radio,.checkbox{min-height:20px;padding-left:20px;}
 .radio input[type="radio"],.checkbox input[type="checkbox"]{float:left;margin-left:-20px;}
 .controls>.radio:first-child,.controls>.checkbox:first-child{padding-top:5px;}
