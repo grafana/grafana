@@ -9,12 +9,9 @@
     }
 </style>
 <div ng-controller="map2">
-    <div class="row-fluid" >
+    <div class="row-fluid" style="margin-bottom:20px">
         <div class="span11">
-            The map panel uses 2 letter country or US state codes to plot concentrations
-            on a map. Darker terroritories mean more records matched that area. If
-            multiple queries are sent from a single panel the <strong>first query will be
-            displayed</strong>
+            The map panel is compatible with either Geopoints or two-letter country codes, depending on the graphing options.  Left click to drag/pan map, scroll wheel (or double click) to zoom.  Globes can be spun using ctrl-key + drag.
         </div>
     </div>
 
@@ -76,6 +73,8 @@
                     <td>Geopoints</td>
                     <td>
                         <button type="button" class="btn" bs-button
+                            data-placement="right"
+                            bs-tooltip="'Compatible with Geopoint Type'"
                             ng-change="$emit('render')"
                             ng-class="{'btn-success': panel.display.geopoints.enabled}"
                             ng-model="panel.display.geopoints.enabled">{{panel.display.geopoints.enabled|enabledText}}</button>
@@ -87,7 +86,7 @@
                         <input type="text" style="width:100px"
                             ng-change="$emit('render')"
                             data-placement="right"
-                            bs-tooltip="'Controls the size of the geopoints on the map. Units in kilometers (km)'"
+                            bs-tooltip="'Controls the size of the geopoints on the map.'"
                             ng-model="panel.display.geopoints.pointSize"
                             value="{{panel.display.geopoints.pointSize}}" />
                     </td>
@@ -126,6 +125,8 @@
                     <td>Binning</td>
                     <td>
                         <button type="button" class="btn" bs-button
+                                data-placement="right"
+                                bs-tooltip="'Compatible with Geopoint Type'"
                                 ng-change="$emit('render')"
                                 ng-class="{'btn-success': panel.display.binning.enabled}"
                                 ng-model="panel.display.binning.enabled">{{panel.display.binning.enabled|enabledText}}</button>
@@ -195,7 +196,7 @@
                     <td>
                         <button type="button" class="btn" bs-button
                                 data-placement="right"
-                                bs-tooltip="'Choropleths color country regions according to your selected field. Only compatible with Country-Coded fields'"
+                                bs-tooltip="'Choropleths color country regions according to your selected field. Compatible with Country-Coded fields'"
                                 ng-change="$emit('render')"
                                 ng-class="{'btn-success': panel.display.choropleth.enabled}"
                                 ng-model="panel.display.choropleth.enabled">{{panel.display.choropleth.enabled|enabledText}}</button>
@@ -262,7 +263,7 @@
                 <tr>
                     <td>Map Projection</td>
                     <td>
-                        <select ng-model="panel.display.data.type" ng-options="option.id as option.text for option in options.data.dropdown"></select>
+                        <select ng-model="panel.display.data.type" ng-options="option.id as option.text for option in panel.display.data.dropdown"></select>
                     </td>
                 </tr>
                 </tbody>
