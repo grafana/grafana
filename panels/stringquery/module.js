@@ -1,3 +1,25 @@
+/*
+
+  ## Sort
+
+  This will probably be removed in the near future since it only interacts with 
+  the table panel and the table panel already implements all of its functionality.
+  It only interacts with the table panel in any case
+
+  ### Parameters
+  * label ::  The label to stick over the drop down
+  * sort :: An array where the first elemetn is the field to sort on an the second
+            is the direction ('asc' or 'desc')
+  ### Group Events
+  #### Sends
+  * sort :: An array where the first elemetn is the field to sort on an the second
+            is the direction ('asc' or 'desc')
+  #### Receives
+  * fields :: An array containing the fields in a table. This will be concat'd + 
+              uniqued with the curent list. 
+
+*/
+
 angular.module('kibana.stringquery', [])
 .controller('stringquery', function($scope, eventBus) {
 
