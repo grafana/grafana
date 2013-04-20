@@ -1,3 +1,22 @@
+/*
+
+  ## Fields
+
+  Allows for enabling and disabling of fields in the table panel as well as a 
+  micro anaylsis panel for analyzing the events in the table panel
+
+  ### Parameters
+  * style :: a hash containing css styles
+  * arrange :: the layout pf the panel 'horizontal' or 'vertical'
+  * micropanel_position :: where to place the micropanel in relation to the field
+  
+  ### Group Events
+  #### Recieves
+  * table_documents :: An object containing the documents in the table panel
+  *** Sends
+  * fields :: an object containing the sort order, existing fields and selected fields
+
+*/
 angular.module('kibana.fields', [])
 .controller('fields', function($scope, eventBus, $timeout) {
 

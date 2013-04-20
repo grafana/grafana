@@ -1,30 +1,32 @@
 /*
-## Timepicker
 
-The timepicker panel is used to select time ranges and inform other panel of 
-them. It also handles searching for indices that match the given time range and 
-a pattern
+  ## Timepicker
 
-### Parameters
-* mode :: The default mode of the panel. Options: 'relative', 'absolute' 'since' Default: 'relative'
-* time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
-* timespan :: The default options selected for the relative view. Default: '15m'
-* timefield :: The field in which time is stored in the document.
-* index :: Index pattern to match. Literals should be double quoted. Default: '_all'
-* defaultindex :: Index to failover to if index not found
-* index_interval :: Time between timestamped indices (can be 'none') for static index
-* refresh: Object containing refresh parameters
-  * enable :: true/false, enable auto refresh by default. Default: false
-  * interval :: Seconds between auto refresh. Default: 30
-  * min :: The lowest interval a user may set
+  The timepicker panel is used to select time ranges and inform other panel of 
+  them. It also handles searching for indices that match the given time range and 
+  a pattern
 
-### Group Events
-#### Sends
-* time :: Object Includes from, to and index
-#### Receives
-* get_time :: Receives an object containing a $id, broadcasts back to it.
+  ### Parameters
+  * mode :: The default mode of the panel. Options: 'relative', 'absolute' 'since' Default: 'relative'
+  * time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
+  * timespan :: The default options selected for the relative view. Default: '15m'
+  * timefield :: The field in which time is stored in the document.
+  * index :: Index pattern to match. Literals should be double quoted. Default: '_all'
+  * defaultindex :: Index to failover to if index not found
+  * index_interval :: Time between timestamped indices (can be 'none') for static index
+  * refresh: Object containing refresh parameters
+    * enable :: true/false, enable auto refresh by default. Default: false
+    * interval :: Seconds between auto refresh. Default: 30
+    * min :: The lowest interval a user may set
+
+  ### Group Events
+  #### Sends
+  * time :: Object Includes from, to and index
+  #### Receives
+  * get_time :: Receives an object containing a $id, broadcasts back to it.
 
 */
+
 angular.module('kibana.timepicker', [])
 .controller('timepicker', function($scope, eventBus, $timeout, timer, $http) {
 
