@@ -1,12 +1,34 @@
+/*
+
+  ## Hits
+
+  A variety of representations of the hits a query matches
+
+  ### Parameters
+  * query ::  An array of queries. No labels here, just an array of strings. Maybe
+              there should be labels. Probably. 
+  * style :: A hash of css styles
+  * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
+  * chart :: Show a chart? 'none', 'bar', 'pie'
+  * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
+  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time. 
+  * lables :: Only 'pie' charts. Labels on the pie?
+  ### Group Events
+  #### Sends
+  * get_time :: On panel initialization get time range to query
+  #### Receives
+  * time :: An object containing the time range to use and the index(es) to query
+  * query :: An Array of queries, even if its only one
+
+*/
 angular.module('kibana.hits', [])
 .controller('hits', function($scope, eventBus) {
 
   // Set and populate defaults
   var _d = {
-    query   : "*",
+    query   : ["*"],
     group   : "default",
     style   : { "font-size": '10pt'},
-    aggregate   : true,
     arrangement : 'vertical',
     chart       : 'none',
     counter_pos : 'above',
