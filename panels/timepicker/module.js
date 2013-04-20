@@ -214,11 +214,15 @@ angular.module('kibana.timepicker', [])
     }
 
     // Update panel's string representation of the time object
-    $scope.panel.time = { 
-      from : $scope.time.from.format("mm/dd/yyyy HH:MM:ss"),
-      to : $scope.time.to.format("mm/dd/yyyy HH:MM:ss"),
-      index : $scope.time.index,
-    };
+    if($scope.panel.mode !== 'relative') {
+      $scope.panel.time = { 
+        from : $scope.time.from.format("mm/dd/yyyy HH:MM:ss"),
+        to : $scope.time.to.format("mm/dd/yyyy HH:MM:ss"),
+        index : $scope.time.index,
+      };
+    } else {
+      delete $scope.panel.time;
+    }
   };
 
   function set_timepicker(from,to) {

@@ -6,17 +6,19 @@
   color: #000;
 }
 
-.kibana-row {
-  margin-left: 15px;
-  margin-bottom: 15px;
-}
-
 .navbar .brand {
   color: #eee;
 }
 
 .navbar-inner {
-    border-width: 0 0 0px;
+  border-width: 0 0 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.kibana-row {
+  margin-left: 15px;
+  margin-bottom: 15px;
 }
 
 .row-close {
@@ -52,6 +54,10 @@
 
 .odd {
   background-color: #f9f9f9;
+}
+
+.nomargin {
+  margin: 0px;
 }
 
 [ng\:cloak], [ng-cloak], .ng-cloak {
@@ -90,7 +96,15 @@
   opacity: 1;
 }
 
-.pointer:hover {
+.link {
+  cursor: pointer;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.link:hover {
   color: #0088CC;
 }
 
@@ -98,29 +112,33 @@
   max-width: 500px;
 }
 
-.pointer {
-  cursor: pointer;
+.popover-title { display: none; }
+
+.tiny {
+  font-size: 50%;
 }
 
 .small {
   font-size: 85%;
 }
 
-.input-append label {
-  font-size: inherit !important;
-}
-
 .large {
   font-size: 120%;
-}
-
-.nomargin {
-  margin: 0px;
 }
 
 .strong {
   font-weight: bold;
 }
+
+.input-append label {
+  font-size: inherit !important;
+}
+
+.input-smaller {
+  width: 75px;
+}
+
+.typeahead { z-index: 1051; }
 
 .btn-active {
   background-color: #E6E6E6;
@@ -129,23 +147,7 @@
   outline: 0 none
 }
 
-.popover-title { display: none; }
-
-.input-smaller {
-  width: 75px;
-}
-
-.tiny {
-  font-size: 50%;
-}
-
 .remove:hover {
   background-color: #A60000;
 }
 
-.typeahead { z-index: 1051; }
-
-.navbar-inner {
-  padding-left: 0px;
-  padding-right: 0px;
-}
