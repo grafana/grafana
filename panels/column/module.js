@@ -1,3 +1,20 @@
+/*
+
+  ## Column
+
+  The column panel is sort of a hack to allow you to put multiple, veritcal, 
+  panels next to a bigger panel. Note that it has no group, and setting a group
+  for the panel itself will do nothing
+
+  ### Parameters
+  * panels :: an array of panel objects. All of their spans should be set to 12
+
+  ### Group Events
+  #### Sends
+  * time :: Object Includes from, to and index
+
+*/
+
 angular.module('kibana.column', [])
 .controller('column', function($scope, $rootScope) {
   // Set and populate defaults
