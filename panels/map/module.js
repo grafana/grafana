@@ -1,3 +1,33 @@
+/*
+
+  ## Map
+
+  LOL. Should this even be documented? Zach's map panel is going to ruin this one. 
+  For serious. This shades a map of the world, the US or Europe with the number of 
+  events that match the query. Uses 2 letter country codes and nothing else. This uses
+  a terms facet. Its probably safe as long as you point it at the right field. Nach.
+  There's no way to query sequentially here, so I'm going to hit them all at once!
+
+  ### Parameters
+  * query ::  A single query string, not and array. This panel can only handle one
+              query at a time. 
+  * map :: 'world', 'us' or 'europe'
+  * colors :: an array of colors to use for the regions of the map. If this is a 2 
+              element array, jquerymap will generate shades between these colors 
+  * size :: How big to make the facet. Higher = more countries
+  * exclude :: Exlude the array of counties
+  * spyable :: Show the 'eye' icon that reveals the last ES query
+  * index_limit :: This does nothing yet. Eventually will limit the query to the first
+                   N indices
+  ### Group Events
+  #### Sends
+  * get_time :: On panel initialization get time range to query
+  #### Receives
+  * time :: An object containing the time range to use and the index(es) to query
+  * query :: An Array of queries, even if its only one
+
+*/
+
 angular.module('kibana.map', [])
 .controller('map', function($scope, eventBus) {
 
