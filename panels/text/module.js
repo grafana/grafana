@@ -1,3 +1,16 @@
+/*
+
+  ## Text
+
+  A simple panel of static content
+
+  ### Parameters
+  * mode :: 'text', 'html', 'markdown'
+  * content :: Content of the panel
+  * style :: Hash containing css properties
+  
+*/
+
 angular.module('kibana.text', [])
 .controller('text', function($scope, $rootScope) {
 
