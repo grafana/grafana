@@ -1,29 +1,32 @@
 /*
-## Timepicker
 
-The timepicker panel is used to select time ranges and inform other panel of 
-them. It also handles searching for indices that match the given time range and 
-a pattern
+  ## Timepicker
 
-### Parameters
-* mode :: The default mode of the panel. Options: 'relative', 'absolute' 'since' Default: 'relative'
-* time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
-* timespan :: The default options selected for the relative view. Default: '15m'
-* timefield :: The field in which time is stored in the document.
-* index :: Index pattern to match. Literals should be double quoted. Default: '_all'
-* defaultindex :: Index to failover to if index not found
-* refresh: Object containing refresh parameters
-  * enable :: true/false, enable auto refresh by default. Default: false
-  * interval :: Seconds between auto refresh. Default: 30
-  * min :: The lowest interval a user may set
+  The timepicker panel is used to select time ranges and inform other panel of 
+  them. It also handles searching for indices that match the given time range and 
+  a pattern
 
-### Group Events
-#### Sends
-* time :: Object Includes from, to and index
-#### Receives
-* get_time :: Receives an object containing a uniqueid, broadcasts to it.
+  ### Parameters
+  * mode :: The default mode of the panel. Options: 'relative', 'absolute' 'since' Default: 'relative'
+  * time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
+  * timespan :: The default options selected for the relative view. Default: '15m'
+  * timefield :: The field in which time is stored in the document.
+  * index :: Index pattern to match. Literals should be double quoted. Default: '_all'
+  * defaultindex :: Index to failover to if index not found
+  * index_interval :: Time between timestamped indices (can be 'none') for static index
+  * refresh: Object containing refresh parameters
+    * enable :: true/false, enable auto refresh by default. Default: false
+    * interval :: Seconds between auto refresh. Default: 30
+    * min :: The lowest interval a user may set
+
+  ### Group Events
+  #### Sends
+  * time :: Object Includes from, to and index
+  #### Receives
+  * get_time :: Receives an object containing a $id, broadcasts back to it.
 
 */
+
 angular.module('kibana.timepicker', [])
 .controller('timepicker', function($scope, eventBus, $timeout, timer, $http) {
 
@@ -167,8 +170,8 @@ angular.module('kibana.timepicker', [])
     $scope.time_apply();
   }
 
-  $scope.time_check = function(){
-
+  // 
+  $scope.time_calc = function(){
     // If time picker is defined (on initialization)
     if(!(_.isUndefined($scope.timepicker))) {
       var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
@@ -198,7 +201,7 @@ angular.module('kibana.timepicker', [])
 
   $scope.time_apply = function() {      
     // Update internal time object
-    $scope.time = $scope.time_check();
+    $scope.time = $scope.time_calc();
     $scope.time.field = $scope.panel.timefield
 
     // Get indices for the time period, then broadcast time range and index list
@@ -213,12 +216,18 @@ angular.module('kibana.timepicker', [])
       eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
     }
 
-    // Update panel's string representation of the time object
-    $scope.panel.time = { 
-      from : $scope.time.from.format("mm/dd/yyyy HH:MM:ss"),
-      to : $scope.time.to.format("mm/dd/yyyy HH:MM:ss"),
-      index : $scope.time.index,
-    };
+    // Update panel's string representation of the time object.Don't update if
+    // we're in relative mode since we dont want to store the time object in the
+    // json for relative periods
+    if($scope.panel.mode !== 'relative') {
+      $scope.panel.time = { 
+        from : $scope.time.from.format("mm/dd/yyyy HH:MM:ss"),
+        to : $scope.time.to.format("mm/dd/yyyy HH:MM:ss"),
+        index : $scope.time.index,
+      };
+    } else {
+      delete $scope.panel.time;
+    }
   };
 
   function set_timepicker(from,to) {
@@ -272,6 +281,7 @@ angular.module('kibana.timepicker', [])
   // this is stupid, but there is otherwise no good way to ensure that when
   // I extract the date from an object that I'm get the UTC date. Stupid js.
   // I die a little inside every time I call this function.
+  // Update: I just read this again. I died a little more inside.
   function fake_utc(date) {
     return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
   }

@@ -1,3 +1,37 @@
+/*
+
+  ## Pie
+
+  This panel is probably going away. For now its has 2 modes: 
+    * terms: Run a terms facet on the query. You're gonna have a bad (ES crashing) day
+    if you run in this mode on a high cardinality field
+    * goal: Compare the query to this number and display the percentage that the query
+    represents
+
+  ### Parameters
+  * query :: An object with 3 possible parameters depends on the mode:
+  ** field: Fields to run a terms facet on. Only does anything in terms mode
+  ** query: A string of the query to run
+  ** goal: How many to shoot for, only does anything in goal mode
+  * exclude :: In terms mode, ignore these terms
+  * donut :: Drill a big hole in the pie
+  * tilt :: A janky 3D representation of the pie. Looks terrible 90% of the time.
+  * legend :: Show the legend?
+  * labels :: Label the slices of the pie?
+  * mode :: 'terms' or 'goal'
+  * default_field ::  LOL wat? A dumb fail over field if for some reason the query object 
+                      doesn't have a field
+  * spyable :: Show the 'eye' icon that displays the last ES query for this panel
+
+  ### Group Events
+  #### Sends
+  * get_time :: On panel initialization get time range to query
+  #### Receives
+  * time :: An object containing the time range to use and the index(es) to query
+  * query :: An Array of queries, this panel will use the first in the array
+
+*/
+
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, eventBus) {
 

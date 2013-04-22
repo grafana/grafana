@@ -1,3 +1,24 @@
+/*
+
+  ## Stringquery
+
+  Broadcasts a query object to other panels
+
+  ### Parameters
+  * label ::  The label to stick over the field 
+  * query ::  A string or an array of querys. String if multi is off, array if it is on
+              This should be fixed, it should always be an array even if its only 
+              one element
+  * multi :: Allow input of multiple queries? true/false
+  * multi_arrange :: How to arrange multu query string panels, 'vertical' or 'horizontal'
+  ### Group Events
+  #### Sends
+  * query :: Always broadcast as an array, even in multi: false
+  #### Receives
+  * query :: An array of queries. This is probably needs to be fixed.
+
+*/
+
 angular.module('kibana.stringquery', [])
 .controller('stringquery', function($scope, eventBus) {
 
@@ -5,8 +26,6 @@ angular.module('kibana.stringquery', [])
   var _d = {
     label   : "Search",
     query   : "*",
-    size    : 100,
-    sort    : ['_score','desc'],
     group   : "default",
     multi   : false,
     multi_arrange: 'horizontal',
@@ -39,13 +58,6 @@ angular.module('kibana.stringquery', [])
   $scope.set_multi = function(multi) {
     $scope.panel.query = multi ? 
       new Array($scope.panel.query) : $scope.panel.query[0];
-  }
-
-  $scope.set_sort = function(field) {
-    if($scope.panel.sort[0] === field)
-      $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
-    else
-      $scope.panel.sort[0] = field;
   }
 
   $scope.remove_query = function(index) {

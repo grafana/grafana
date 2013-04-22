@@ -1,3 +1,42 @@
+/*
+
+  ## Histogram
+
+  A bucketted time series representation of the current query or queries. Note that this
+  panel uses facetting. I tried to make it safe by using sequential/serial querying but,
+  yeah, you should know that it uses facetting. It should be pretty safe.
+
+  ### Parameters
+  * query ::  an array of objects as such: {query: 'somequery', label 'legent text'}.
+              this is usually populated by a stringquery panel wher the query and label
+              parameter are the same
+  * interval :: Generated automatically. Tells ES how to bucket the data points
+  * fill :: Only applies to line charts. Level of area shading from 0-10
+  * linewidth ::  Only applies to line charts. How thick the line should be in pixels
+                  While the editor only exposes 0-10, this can be any numeric value. 
+                  Set to 0 and you'll get something like a scatter plot
+  * timezone :: This isn't totally functional yet. Currently only supports browser and utc.
+                browser will adjust the x-axis labels to match the timezone of the user's 
+                browser
+  * spyable ::  Dislay the 'eye' icon that show the last elasticsearch query
+  * zoomlinks :: Show the zoom links?
+  * bars :: Show bars in the chart
+  * stack :: Stack multiple queries. This generally a crappy way to represent things.
+             You probably should just use a line chart without stacking
+  * points :: Should circles at the data points on the chart
+  * lines :: Line chart? Sweet.
+  * legend :: Show the legend?
+  * x-axis :: Show x-axis labels and grid lines
+  * y-axis :: Show y-axis labels and grid lines
+  ### Group Events
+  #### Receives
+  * time :: An object containing the time range to use and the index(es) to query
+  * query :: An Array of queries, even if its only one
+  #### Sends
+  * get_time :: On panel initialization get time range to query
+
+*/
+
 angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, eventBus) {
 

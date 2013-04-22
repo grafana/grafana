@@ -1,3 +1,32 @@
+/*
+
+  ## Dashcontrol
+
+  Dash control allows for saving, loading and sharing of dashboards. Do not
+  disable the dashcontrol module as a special instance of it allows for loading
+  the default dashboard from dashboards/default
+
+  ### Parameters
+  * save
+  ** gist :: Allow saving to gist. Requires registering an oauth domain with Github
+  ** elasticsearch :: Allow saving to a special Kibana index within Elasticsearch
+  ** local :: Allow saving to local file
+  * load
+  ** gist :: Allow loading from gists
+  ** elasticsearch :: Allow searching and loading of elasticsearch saved dashboards
+  ** local :: Allow loading of dashboards from Elasticsearch
+  * hide_control :: Upon save, hide this panel
+  * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
+  * elasticsearch_saveto :: Special kibana index to save to
+  * temp :: Allow saving of temp dashboards
+  * temp_ttl :: How long should temp dashboards persist
+
+  ### Group Events
+  #### Sends
+  * dashboard :: An object containing an entire dashboard to be loaded
+
+*/
+
 angular.module('kibana.dashcontrol', [])
 .controller('dashcontrol', function($scope, $routeParams, $http, eventBus, timer) {
   $scope.panel = $scope.panel || {};

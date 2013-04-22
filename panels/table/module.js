@@ -1,3 +1,31 @@
+/*
+
+  ## Table
+
+  A paginated table of events matching a query
+
+  ### Parameters
+  * query ::  A string representing then current query
+  * size :: Number of events per page to show
+  * pages :: Number of pages to show. size * pages = number of cached events. 
+             Bigger = more memory usage byh the browser
+  * offset :: Position from which to start in the array of hits
+  * sort :: An array with 2 elements. sort[0]: field, sort[1]: direction ('asc' or 'desc')
+  * style :: hash of css properties
+  * fields :: columns to show in table
+  * sortable :: Allow sorting?
+  * spyable :: Show the 'eye' icon that reveals the last ES query for this panel
+  ### Group Events
+  #### Sends
+  * table_documents :: An array containing all of the documents in the table. 
+                       Only used by the fields panel so far. 
+  #### Receives
+  * time :: An object containing the time range to use and the index(es) to query
+  * query :: An Array of queries, even if its only one
+  * sort :: An array with 2 elements. sort[0]: field, sort[1]: direction ('asc' or 'desc')
+  * selected_fields :: An array of fields to show
+*/
+
 angular.module('kibana.table', [])
 .controller('table', function($scope, eventBus, fields) {
 

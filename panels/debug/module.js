@@ -1,3 +1,21 @@
+/*
+
+  ## Debug
+
+  Shows the exchange of events between panels. Disabled by default and usually
+  should be. This panel exists in the ALL group by default so that it receives
+  all of the events from every panel
+
+  ### Parameters
+  * size :: How many events to show
+  * style :: A hash containing css style parameters
+
+  ### Group Events
+  #### Receives
+  * $kibana_debug :: Contains a meta object of any event sent
+
+*/
+
 angular.module('kibana.debug', [])
 .controller('debug', function($scope, eventBus) {
 
