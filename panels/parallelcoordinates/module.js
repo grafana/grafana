@@ -241,7 +241,16 @@ angular.module('kibana.parallelcoordinates', [])
           //.fade class hides the "inactive" lines, helps speed up rendering significantly
           directive.foregroundLines.classed("fade", function(d) {
             return !actives.every(function(p, i) {
-              var inside = extents[i][0] <= d[p] && d[p] <= extents[i][1];
+
+              var pointValue;
+
+              if (directive.ordinals[p] === true) {
+                pointValue = directive.y[p](d[p]);
+              } else {
+                pointValue = d[p];
+              }
+
+              var inside = extents[i][0] <= pointValue && pointValue <= extents[i][1];
               return inside;
             });
           });
@@ -305,32 +314,53 @@ angular.module('kibana.parallelcoordinates', [])
           directive.y = {};
 
           directive.line = d3.svg.line().interpolate('cardinal');
-          directive.axis = d3.svg.axis().orient("left");
-
-
-          var colorExtent = d3.extent(scope.data, function(p) { return +p[scope.panel.fields[0]]; });
-
-          directive.colors = d3.scale.linear()
-            .domain([colorExtent[0],colorExtent[1]])
-            .range(["#4580FF", "#FF9245"]);
-
+          directive.axis = d3.svg.axis().orient("left").ticks(5);
+          directive.ordinals = {};
 
           scope.panel.fields.forEach(function(d) {
+            var firstField = scope.data[0][d];
 
-            //If it is a string, setup an ordinal scale.
-            //Otherwise, use a linear scale for numbers
-            if (_.isString(scope.data[0][d])) {
+            if (_.isString(firstField)) {
+              if (isValidDate(new Date(firstField))) {
 
-              var value = function(v) { return v[d]; };
-              var values = _.map(_.uniq(scope.data, value),value);
+                //convert date timestamps to actual dates
+                _.map(scope.data, function(v) {
+                  v[d] = new Date(v[d]);
+                });
 
-              directive.y[d] = d3.scale.ordinal()
-                .domain(values)
-                .rangeBands([directive.h, 0]);
-            } else if (_.isNumber(scope.data[0][d])) {
+                var extents = d3.extent(scope.data, function(p) { return p[d]; });
+
+                directive.y[d] = d3.time.scale()
+                  .domain([extents[0],extents[1]])
+                  .range([directive.h, 0]);
+
+              } else {
+                directive.ordinals[d] = true;
+
+                var value = function(v) { return v[d]; };
+                var values = _.map(_.uniq(scope.data, value),value);
+
+                directive.y[d] = d3.scale.ordinal()
+                  .domain(values)
+                  .rangePoints([directive.h, 0]);
+
+              }
+
+            } else if (_.isNumber(firstField)) {
               directive.y[d] = d3.scale.linear()
                 .domain(d3.extent(scope.data, function(p) { return +p[d]; }))
                 .range([directive.h, 0]);
+
+            } else if (_.isDate(firstField)) {
+              //this section is only used after timestamps have been parsed into actual date objects...
+              //avoids reparsing
+
+              var extents = d3.extent(scope.data, function(p) { return p[d]; });
+
+              directive.y[d] = d3.time.scale()
+                .domain([extents[0],extents[1]])
+                .range([directive.h, 0]);
+
             }
 
             directive.y[d].brush = d3.svg.brush()
@@ -338,6 +368,8 @@ angular.module('kibana.parallelcoordinates', [])
               .on("brush", brush);
           });
 
+          //setup the colors for the lines
+          setColors();
 
           //pull out the actively selected columns for rendering the axis/lines
           var activeData = _.map(scope.data, function(d) {
@@ -437,6 +469,43 @@ angular.module('kibana.parallelcoordinates', [])
           //Simulate a dragend in case there is new data and we need to rearrange
           dragend();
 
+        }
+
+        function setColors() {
+
+          var firstPanelField = scope.data[0][scope.panel.fields[0]];
+          var extents = d3.extent(scope.data, function(p) { return p[scope.panel.fields[0]]; });
+
+          if (_.isString(firstPanelField)) {
+
+            var value = function(v) { return v[firstPanelField]; };
+            var values = _.map(_.uniq(scope.data, value),value);
+
+            values = scope.data;
+            directive.colors = d3.scale.ordinal()
+              .domain(values)
+              .range(d3.range(values.length).map(d3.scale.linear()
+                .domain([0, values.length - 1])
+                .range(["red", "blue"])
+                .interpolate(d3.interpolateLab)));
+
+          } else if (_.isNumber(firstPanelField)) {
+            directive.colors = d3.scale.linear()
+              .domain([extents[0],extents[1]])
+              .range(["#4580FF", "#FF9245"]);
+
+          } else if (_.isDate(firstPanelField)) {
+            directive.colors = d3.time.scale()
+              .domain([extents[0],extents[1]])
+              .range(["#4580FF", "#FF9245"]);
+          }
+
+        }
+
+        function isValidDate(d) {
+          if ( Object.prototype.toString.call(d) !== "[object Date]" )
+            return false;
+          return !isNaN(d.getTime());
         }
 
       }
