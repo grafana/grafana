@@ -1,4 +1,4 @@
-<div ng-controller='histogram'>
+<div>
   <div class="row-fluid">
     <div class="span3">
       <form style="margin-bottom: 0px">
@@ -23,9 +23,8 @@
       </form>
     </div>
     <div class="span8">
-      <form class="input-append" style="margin-bottom: 0px">
-        <input type="text" style="width:80%" ng-model="q.query">
-        <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
+      <form style="margin-bottom: 0px">
+        <input type="text" style="width:80%" ng-model="q.query" ng-change="set_refresh(true)">
       </form>
     </div>
     <div class="span1">
@@ -34,29 +33,38 @@
   </div>
   <h5>Chart Options</h5>
   <div class="row-fluid" style="margin-bottom:10px;">
-    <div class="span1"> <label class="small">Bars</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>
-    <div class="span1"> <label class="small">Lines</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.lines" ng-checked="panel.lines"></div>
-    <div class="span1"> <label class="small">Points</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.points" ng-checked="panel.points"></div>
-    <div class="span1"> <label class="small">Stack</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.stack" ng-checked="panel.stack"></div>
-    <div class="span1"> <label class="small">Legend</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel.legend" ng-checked="panel.legend"></div>
-    <div class="span1"> <label class="small">xAxis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
-    <div class="span1"> <label class="small">yAxis</label><input ng-change="$emit('render')" type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>
+    <div class="span1"> <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>
+    <div class="span1"> <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines"></div>
+    <div class="span1"> <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points"></div>
+    <div class="span1"> <label class="small">Stack</label><input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack"></div>
+    <div class="span1"> <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend"></div>
+    <div class="span1"> <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
+    <div class="span1"> <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>
     <div class="span2" ng-show="panel.lines">
       <label class="small">Line Fill</label> 
-      <select ng-change="$emit('render')" class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
+      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
     </div>
     <div class="span2" ng-show="panel.lines">
       <label class="small">Line Width</label> 
-      <select ng-change="$emit('render')" class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
+      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
     </div>
   </div> 
-  <div class="row-fluid">    
+  <div class="row-fluid">  
     <div class="span3">
       <label class="small">Time correction</label> 
-      <select ng-change="$emit('render')" ng-model="panel.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
+      <select ng-model="panel.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
     </div>
     <div class="span2"> 
-      <label class="small">Zoom Links</label><input type="checkbox" ng-model="panel.zoomlinks" ng-checked="panel.zoomlinks">
+      <label class="small">Zoom Links</label><input type="checkbox" ng-model="panel.zoomlinks" ng-checked="panel.zoomlinks" />
+    </div>
+    <div class="span2"> 
+      <label class="small">Auto-interval</label><input type="checkbox" ng-model="panel.auto_int" ng-checked="panel.auto_int" />
+    </div>
+    <div class="span2" ng-hide='panel.auto_int'> 
+      <label class="small">Interval</label><input type="text" class='input-mini' ng-model="panel.interval" ng-change='set_refresh(true)'/>
+    </div>
+    <div class="span3" ng-hide='panel.auto_int'> 
+      <label class="small">Use Elasticsearch date math format (eg 1m, 5m, 1d, 2w, 1y)</label>
     </div>
   </div>
   <h5>Panel Spy</h5>

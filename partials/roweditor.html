@@ -25,7 +25,7 @@
     <div ng-show="!(_.isUndefined(panel.type))">
       <div ng-include src="'partials/panelgeneral.html'"></div>
 
-      <div ng-include src="edit_path(panel.type)"></div>
+      <div add-panel="{{panel.type}}"></div>
       <button ng-click="add_panel(row,panel); reset_panel();" class="btn btn-primary">Create Panel</button><br>
     </div>
   </div>

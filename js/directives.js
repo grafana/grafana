@@ -15,6 +15,19 @@ angular.module('kibana.directives', [])
     }
   };
 })
+.directive('addPanel', function($compile) {
+  return {
+    restrict: 'A',
+    link: function(scope, elem, attrs) {
+      scope.$watch('panel.type', function(n,o) {
+        if(!_.isUndefined(scope.panel.type)) {
+          var template = '<div ng-controller="'+scope.panel.type+'" ng-include src="\''+scope.edit_path(scope.panel.type)+'\'"></div>';
+          elem.html($compile(angular.element(template))(scope));
+        }
+      })
+    }
+  };
+})
 .directive('arrayJoin', function() {
   return {
     restrict: 'A',

@@ -13,7 +13,7 @@
   ### Group Events
   #### Recieves
   * table_documents :: An object containing the documents in the table panel
-  *** Sends
+  #### Sends
   * fields :: an object containing the sort order, existing fields and selected fields
 
 */
@@ -42,7 +42,6 @@ angular.module('kibana.fields', [])
       $scope.docs = docs.docs;
     });
     eventBus.register($scope,"get_fields", function(event,id) {
-        console.log("field.get_fields");
       eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active);
     });
   }
@@ -79,7 +78,7 @@ angular.module('kibana.fields', [])
   }
 
   $scope.build_search = function(field, value,negate) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,negate)
+    $scope.panel.query = [add_to_query($scope.panel.query,field,value,negate)]
     eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
   }
 
