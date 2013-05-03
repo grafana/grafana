@@ -10,7 +10,8 @@
   * query ::  an array of objects as such: {query: 'somequery', label 'legent text'}.
               this is usually populated by a stringquery panel wher the query and label
               parameter are the same
-  * interval :: Generated automatically. Tells ES how to bucket the data points
+  * auto_int :: Auto calculate data point interval?
+  * interval :: Datapoint interval in elasticsearch date math format (eg 1d, 1w, 1y, 5y)
   * fill :: Only applies to line charts. Level of area shading from 0-10
   * linewidth ::  Only applies to line charts. How thick the line should be in pixels
                   While the editor only exposes 0-10, this can be any numeric value. 
@@ -44,7 +45,8 @@ angular.module('kibana.histogram', [])
   var _d = {
     group     : "default",
     query     : [ {query: "*", label:"Query"} ],
-    interval  : secondsToHms(calculate_interval($scope.from,$scope.to,40,0)/1000),
+    auto_int  : true,
+    interval  : '5m',
     fill      : 3,
     linewidth : 3,
     timezone  : 'browser', // browser, utc or a standard timezone
@@ -101,6 +103,9 @@ angular.module('kibana.histogram', [])
     // Make sure we have everything for the request to complete
     if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
       return
+
+    if ($scope.panel.auto_int)
+      $scope.panel.interval = secondsToHms(calculate_interval($scope.time.from,$scope.time.to,50,0)/1000);
 
     $scope.panel.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment
@@ -206,7 +211,7 @@ angular.module('kibana.histogram', [])
   // function $scope.zoom
   // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
   $scope.zoom = function(factor) {
-    eventBus.broadcast($scope.$id,$scope.panel.group,'zoom',factor)
+    eventBus.broadcast($scope.$id,$scope.panel.group,'zoom',factor);
   }
 
   // I really don't like this function, too much dom manip. Break out into directive?
@@ -220,11 +225,24 @@ angular.module('kibana.histogram', [])
     } 
   }
 
+  $scope.set_refresh = function (state) { 
+    $scope.refresh = state; 
+  }
+
+  $scope.close_edit = function() {
+    if($scope.refresh)
+      $scope.get_data();
+    $scope.refresh =  false;
+    $scope.$emit('render');
+  }
+
   $scope.set_time = function(time) {
     $scope.time = time;
-    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
-    $scope.panel.interval = secondsToHms(
-      calculate_interval(time.from,time.to,50,0)/1000);
+    // Should I be storing the index on the panel? It causes errors if the index
+    // goes away. Hmmm.
+    $scope.panel.index = time.index || $scope.panel.index
+    // Only calculate interval if auto_int is set, otherwise don't touch it
+    
     $scope.get_data();
   }
 
@@ -233,8 +251,6 @@ angular.module('kibana.histogram', [])
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
-
-      var height = scope.panel.height || scope.row.height;
 
       // Receive render events
       scope.$on('render',function(){
@@ -248,6 +264,7 @@ angular.module('kibana.histogram', [])
 
       // Function for rendering panel
       function render_panel() {
+ 
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 
@@ -288,7 +305,7 @@ angular.module('kibana.histogram', [])
               },
               selection: {
                 mode: "x",
-                color: '#999'
+                color: '#ccc'
               },
               grid: {
                 backgroundColor: '#fff',
@@ -323,15 +340,16 @@ angular.module('kibana.histogram', [])
       }
 
       function tt(x, y, contents) {
+        // If the tool tip already exists, don't recreate it, just update it
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-        //var tooltip = $('#pie-tooltip')
+
         tooltip.html(contents).css({
           position: 'absolute',
           top     : y + 5,
           left    : x + 5,
           color   : "#000",
-          border  : '2px solid #000',
+          border  : '1px solid #000',
           padding : '10px',
           'font-size': '11pt',
           'font-weight' : 200,

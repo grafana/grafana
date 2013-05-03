@@ -1,4 +1,4 @@
-<div ng-controller="column">
+<div>
   <div class="row-fluid">
     <h4>Add Panel to Column</h4>
     <select class="input-medium" ng-model="new_panel.type" ng-options="f for f in _.without(config.modules,'column')| stringSort" ng-change="reset_panel(new_panel.type);send_render();"></select>

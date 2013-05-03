@@ -13,5 +13,6 @@
   
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-success" ng-click="dismiss();close_edit()">Close</button>
+  <!-- close_edit() is provided here to allow for a scope to perform action on dismiss -->
+  <button type="button" class="btn btn-success" ng-click="close_edit();dismiss()">Close</button>
 </div>
