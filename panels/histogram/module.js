@@ -101,7 +101,7 @@ angular.module('kibana.histogram', [])
   $scope.get_data = function(segment,query_id) {
     delete $scope.panel.error
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
+    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
       return
 
     if ($scope.panel.auto_int)
@@ -109,7 +109,7 @@ angular.module('kibana.histogram', [])
 
     $scope.panel.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment
-    var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
+    var request = $scope.ejs.Request().indices($scope.index[_segment]);
     
     // Build the question part of the query
     var queries = [];
@@ -200,7 +200,7 @@ angular.module('kibana.histogram', [])
         $scope.$emit('render')
 
         // If we still have segments left, get them
-        if(_segment < $scope.panel.index.length-1) {
+        if(_segment < $scope.index.length-1) {
           $scope.get_data(_segment+1,query_id)
         }
       
@@ -219,7 +219,7 @@ angular.module('kibana.histogram', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
@@ -240,7 +240,7 @@ angular.module('kibana.histogram', [])
     $scope.time = time;
     // Should I be storing the index on the panel? It causes errors if the index
     // goes away. Hmmm.
-    $scope.panel.index = time.index || $scope.panel.index
+    $scope.index = time.index || $scope.index
     // Only calculate interval if auto_int is set, otherwise don't touch it
     
     $scope.get_data();
