@@ -58,11 +58,11 @@ angular.module('kibana.hits', [])
     $scope.panel.loading = true;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
+    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
       return
 
     var _segment = _.isUndefined(segment) ? 0 : segment
-    var request = $scope.ejs.Request().indices($scope.panel.index[_segment]);
+    var request = $scope.ejs.Request().indices($scope.index[_segment]);
     
     // Build the question part of the query
     var queries = [];
@@ -121,7 +121,7 @@ angular.module('kibana.hits', [])
           i++;
         });
         $scope.$emit('render');
-        if(_segment < $scope.panel.index.length-1) 
+        if(_segment < $scope.index.length-1) 
           $scope.get_data(_segment+1,query_id)
         
       }
@@ -143,7 +143,7 @@ angular.module('kibana.hits', [])
 
   function set_time(time) {
     $scope.time = time;
-    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
     $scope.get_data();
   }
 
