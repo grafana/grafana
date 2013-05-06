@@ -13,7 +13,7 @@ If you need to configure the default dashboard, please see dashboards/default
 var config = new Settings(
 {
   // By default this will attempt to reach ES at the same host you have
-  // elasticsearch installed on. You probable want to set it to the FQDN of your
+  // elasticsearch installed on. You probably want to set it to the FQDN of your
   // elasticsearch host
   elasticsearch:    "http://"+window.location.hostname+":9200",   
   // elasticsearch: 'http://localhost:9200',

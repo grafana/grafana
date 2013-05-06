@@ -93,11 +93,11 @@ angular.module('kibana.pie', [])
 
   $scope.get_data = function() {
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
+    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
       return
 
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.panel.index);
+    var request = $scope.ejs.Request().indices($scope.index);
 
     // Terms mode
     if ($scope.panel.mode == "terms") {
@@ -168,7 +168,7 @@ angular.module('kibana.pie', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.panel.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
@@ -182,7 +182,7 @@ angular.module('kibana.pie', [])
 
   function set_time(time) {
     $scope.time = time;
-    $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
     $scope.get_data();
   }
   

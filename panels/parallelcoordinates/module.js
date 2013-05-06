@@ -54,14 +54,14 @@ angular.module('kibana.parallelcoordinates', [])
     $scope.get_data = function (segment,query_id) {
 
       // Make sure we have everything for the request to complete
-      if (_.isUndefined($scope.panel.index) || _.isUndefined($scope.time))
+      if (_.isUndefined($scope.index) || _.isUndefined($scope.time))
         return;
 
       var _segment = _.isUndefined(segment) ? 0 : segment
       $scope.segment = _segment;
 
       $scope.panel.loading = true;
-      var request = $scope.ejs.Request().indices($scope.panel.index[_segment])
+      var request = $scope.ejs.Request().indices($scope.index[_segment])
         .query(ejs.FilteredQuery(
           ejs.QueryStringQuery($scope.panel.query || '*'),
           ejs.RangeFilter($scope.time.field)
@@ -126,13 +126,13 @@ angular.module('kibana.parallelcoordinates', [])
     $scope.populate_modal = function (request) {
       $scope.modal = {
         title: "Inspector",
-        body: "<h5>Last Elasticsearch Query</h5><pre>" + 'curl -XGET ' + config.elasticsearch + '/' + $scope.panel.index + "/_search?pretty -d'\n" + angular.toJson(JSON.parse(request.toString()), true) + "'</pre>"
+        body: "<h5>Last Elasticsearch Query</h5><pre>" + 'curl -XGET ' + config.elasticsearch + '/' + $scope.index + "/_search?pretty -d'\n" + angular.toJson(JSON.parse(request.toString()), true) + "'</pre>"
       }
     };
 
     function set_time(time) {
       $scope.time = time;
-      $scope.panel.index = _.isUndefined(time.index) ? $scope.panel.index : time.index
+      $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
       $scope.get_data();
     }
 

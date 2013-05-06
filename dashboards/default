@@ -127,9 +127,6 @@
           "timezone": "browser",
           "spyable": true,
           "zoomlinks": true,
-          "index": [
-            "logstash-2013.04.11"
-          ],
           "fill": 0,
           "linewidth": 2,
           "bars": true,
@@ -161,10 +158,7 @@
           "arrangement": "horizontal",
           "chart": true,
           "counters": true,
-          "count_pos": "above",
-          "index": [
-            "logstash-2013.04.11"
-          ]
+          "count_pos": "above"
         }
       ]
     },
@@ -228,10 +222,7 @@
             "@timestamp",
             "@message"
           ],
-          "sortable": true,
-          "index": [
-            "logstash-2013.04.11"
-          ]
+          "sortable": true
         }
       ]
     }

@@ -38,7 +38,7 @@ angular.module('kibana.timepicker', [])
     timefield     : '@timestamp',
     index         : '_all',
     defaultindex  : "_all",
-    index_interval: "day",
+    index_interval: "none",
     group         : "default",
     refresh       : {
       enable  : false, 
