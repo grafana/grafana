@@ -40,7 +40,9 @@ angular.module('kibana.table', [])
     style   : {'font-size': '9pt'},
     fields  : [],
     sortable: true,
-    spyable: true,
+    header  : true,
+    paging  : true, 
+    spyable: true
   }
   _.defaults($scope.panel,_d)
 
