@@ -11,6 +11,8 @@
               this is usually populated by a stringquery panel wher the query and label
               parameter are the same
   * auto_int :: Auto calculate data point interval?
+  * resolution ::  If auto_int is enables, shoot for this many data points, rounding to
+                    sane intervals
   * interval :: Datapoint interval in elasticsearch date math format (eg 1d, 1w, 1y, 5y)
   * fill :: Only applies to line charts. Level of area shading from 0-10
   * linewidth ::  Only applies to line charts. How thick the line should be in pixels
@@ -43,24 +45,25 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
-    group     : "default",
-    query     : [ {query: "*", label:"Query"} ],
-    mode      : 'count',
-    value_field: null,
-    auto_int  : true,
-    interval  : '5m',
-    fill      : 3,
-    linewidth : 3,
-    timezone  : 'browser', // browser, utc or a standard timezone
-    spyable   : true,
-    zoomlinks : true,
-    bars      : true,
-    stack     : true,
-    points    : false,
-    lines     : false,
-    legend    : true,
-    'x-axis'  : true,
-    'y-axis'  : true,
+    group       : "default",
+    query       : [ {query: "*", label:"Query"} ],
+    mode        : 'count',
+    value_field : null,
+    auto_int    : true,
+    resolution  : 100, 
+    interval    : '5m',
+    fill        : 3,
+    linewidth   : 3,
+    timezone    : 'browser', // browser, utc or a standard timezone
+    spyable     : true,
+    zoomlinks   : true,
+    bars        : true,
+    stack       : true,
+    points      : false,
+    lines       : false,
+    legend      : true,
+    'x-axis'    : true,
+    'y-axis'    : true,
   }
   _.defaults($scope.panel,_d)
 
@@ -107,7 +110,7 @@ angular.module('kibana.histogram', [])
       return
 
     if ($scope.panel.auto_int)
-      $scope.panel.interval = secondsToHms(calculate_interval($scope.time.from,$scope.time.to,50,0)/1000);
+      $scope.panel.interval = secondsToHms(calculate_interval($scope.time.from,$scope.time.to,$scope.panel.resolution,0)/1000);
 
     $scope.panel.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment
