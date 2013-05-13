@@ -70,10 +70,10 @@ angular.module('kibana.table', [])
     eventBus.register($scope,'selected_fields', function(event, fields) {
       $scope.panel.fields = _.clone(fields)
     });
-      eventBus.register($scope,'table_documents', function(event, docs) {
-          $scope.panel.query = docs.query;
-          $scope.data = docs.docs;
-      });
+    eventBus.register($scope,'table_documents', function(event, docs) {
+        $scope.panel.query = docs.query;
+        $scope.data = docs.docs;
+    });
   }
 
   $scope.set_sort = function(field) {
@@ -220,7 +220,11 @@ angular.module('kibana.table', [])
       active: $scope.panel.fields      
     });
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
-      {query:$scope.panel.query,docs:$scope.data});
+      {
+        query: $scope.panel.query,
+        docs : $scope.data,
+        index: $scope.index
+      });
   }
 
   function set_time(time) {

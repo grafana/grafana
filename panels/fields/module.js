@@ -40,6 +40,7 @@ angular.module('kibana.fields', [])
     eventBus.register($scope,'table_documents', function(event, docs) {
       $scope.panel.query = docs.query;
       $scope.docs = docs.docs;
+      $scope.index = docs.index;
     });
     eventBus.register($scope,"get_fields", function(event,id) {
       eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active);

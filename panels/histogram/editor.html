@@ -1,14 +1,29 @@
 <div>
   <div class="row-fluid">
     <div class="span3">
+      <label class="small">Mode</label> 
+      <select ng-change="set_refresh(true)" class="input-small" ng-model="panel.mode" ng-options="f for f in ['count','min','mean','max','total']"></select>
+    </div>
+    <div class="span3">
+      <label class="small">Field</label>
+      <form>
+        <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.value_field">
+      </form>
+    </div>
+    <div class="span5" ng-show="panel.mode != 'count'">
+      <label class="small">Note</label><small> In <strong>{{panel.mode}}</strong> mode the configured field <strong>must</strong> be a numeric type</small>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span3">
       <form style="margin-bottom: 0px">
-        <h6>Label</h6>
+        <label class="small">Label</label>
         <input type="text" placeholder="New Label" style="width:70%" ng-model="newlabel">
       </form>
     </div>
     <div class="span8">
+      <label class="small">Query</label>
       <form class="input-append" style="margin-bottom: 0px">
-        <h6>Query</h6>
         <input type="text" placeholder="New Query" style="width:80%" ng-model="newquery">
         <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery=''"><i class="icon-plus"></i></button>
       </form>

@@ -11,7 +11,7 @@
     <div style="display:inline-block;background:{{series.color}};height:10px;width:10px;border-radius:5px;"></div>
     <div class='small' style='display:inline-block'>{{series.label}} ({{series.hits}})</div>
   </span>
-  <span ng-show="panel.legend" class="small"> per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> total)</span>
+  <span ng-show="panel.legend" class="small"><span ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="common/img/load_big.gif"></center>
   <div histogram-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
