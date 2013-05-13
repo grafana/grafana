@@ -1,22 +1,23 @@
-kibana-dashboard
-================
+# Kibana
 
-Kibana Dashboard Preview
+__NOTE__: You have reached the Kibana 3 repository. Kibana 3 is completely new version of Kibana written entirely in HTML and Javascript. You can find the Kibana 2 repository at [https://github.com/rashidkpc/Kibana](https://github.com/rashidkpc/Kibana)
 
-This is very much a preview, many things will change. While it is functional and
-useful, please view it as a proof-of-concept. A play ground for ideas :-)
 
-Configuration is in config.js, the default dashboard is in dashboards/default The
-format of both of these is likely to change. Documentation for panel types 
-coming soon.
+## Overview
 
-The loading dashboards from disk requires an html5 compliant browser. This has 
-been tested on the latest versions of firefox and chrome. 
+Kibana is an open source (Apache Licensed), browser based analytics and search interface to Logstash and other timestamped data sets stored in ElasticSearch. With those in place Kibana is a snap to setup and start using (seriously). Kibana strives to be easy to get started with, while also being flexible and powerful
 
-This is all html and javascript, use it with any webserver, or there is a simple
-nodejs webserver in the scripts/ directory, it will listen on port 8000. You'll
-likely need to run Kibana Dashboard on an elasticsearch node, and not access it
-via a proxy.
+### Requirements
+* A modern web browser. The latest version of Chrome, Safari and Firefox have all been tested to work. IE8 is not currently supported
+* A webserver. No extensions are required, as long as it can serve plain html it will work
+* A browser reachable Elasticsearch server. Port 9200 must be open, or a proxy configured to allow access to it.
 
-Cheers  
-Rashid
+### Installation
+
+1. Copy the entire Kibana directory to your webserver
+2. Edit config.js to point to your elasticsearch server. This should __not be http://localhost:9200__, but rather the fully qualified domain name of your elasticsearch server. The url entered here _must be reachable_ by your browser.
+3. Point your browser at your installation. If you're using Logstash with the default indexing configuration the default Kibana dashboard should work nicely. 
+
+### Support
+Introduction videos can be found at [http://three.kibana.org](http://three.kibana.org/about.html)  
+If you have questions or comments the best place to reach me is #logstash or #elasticsearch on irc.freenode.net
