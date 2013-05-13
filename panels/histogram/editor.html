@@ -4,7 +4,7 @@
       <label class="small">Mode</label> 
       <select ng-change="set_refresh(true)" class="input-small" ng-model="panel.mode" ng-options="f for f in ['count','min','mean','max','total']"></select>
     </div>
-    <div class="span3">
+    <div class="span3" ng-show="panel.mode != 'count'">
       <label class="small">Field</label>
       <form>
         <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.value_field">
@@ -74,6 +74,12 @@
     </div>
     <div class="span2"> 
       <label class="small">Auto-interval</label><input type="checkbox" ng-model="panel.auto_int" ng-checked="panel.auto_int" />
+    </div>
+    <div class="span2" ng-show='panel.auto_int'> 
+      <label class="small">Resolution</label><input type="number" class='input-mini' ng-model="panel.resolution" ng-change='set_refresh(true)'/>
+    </div>
+    <div class="span3" ng-show='panel.auto_int'> 
+      <label class="small">Shoot for this many data points, rounding to sane intervals</label>
     </div>
     <div class="span2" ng-hide='panel.auto_int'> 
       <label class="small">Interval</label><input type="text" class='input-mini' ng-model="panel.interval" ng-change='set_refresh(true)'/>
