@@ -271,8 +271,10 @@ angular.module('kibana.dashcontrol', [])
   $scope.dash_load = function(dashboard) {
     if(!_.isObject(dashboard))
       dashboard = JSON.parse(dashboard)
-
-    eventBus.broadcast($scope.$id,'ALL','dashboard',dashboard)
+    eventBus.broadcast($scope.$id,'ALL','dashboard',{
+      dashboard : dashboard,
+      last      : $scope.dashboards
+    })
     timer.cancel_all();
   }
 
@@ -287,7 +289,6 @@ angular.module('kibana.dashcontrol', [])
     else
       return false
   }
-
 })
 .directive('dashUpload', function(timer, eventBus){
   return {

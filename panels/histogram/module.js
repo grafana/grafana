@@ -45,6 +45,8 @@ angular.module('kibana.histogram', [])
   var _d = {
     group     : "default",
     query     : [ {query: "*", label:"Query"} ],
+    mode      : 'count',
+    value_field: null,
     auto_int  : true,
     interval  : '5m',
     fill      : 3,
@@ -124,12 +126,20 @@ angular.module('kibana.histogram', [])
 
     // Build the facet part, injecting the query in as a facet filter
     _.each(queries, function(v) {
-      request = request
-        .facet($scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
-          .field($scope.time.field)
-          .interval($scope.panel.interval)
-          .facetFilter($scope.ejs.QueryFilter(v))
-        ).size(0)
+
+      var facet = $scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
+
+      if($scope.panel.mode === 'count') {
+        facet = facet.field($scope.time.field)
+      } else {
+        if(_.isNull($scope.panel.value_field)) {
+          $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
+          return
+        }
+        facet = facet.keyField($scope.time.field).valueField($scope.panel.value_field)
+      }
+      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(v))
+      request = request.facet(facet).size(0)
     })
 
     // Populate the inspector panel
@@ -171,13 +181,11 @@ angular.module('kibana.histogram', [])
           // Assemble segments
           var segment_data = [];
           _.each(v.entries, function(v, k) {
-            segment_data.push([v['time'],v['count']])
+            segment_data.push([v['time'],v[$scope.panel.mode]])
             hits += v['count']; // The series level hits counter
             $scope.hits += v['count']; // Entire dataset level hits counter
           });
-
           data.splice.apply(data,[1,0].concat(segment_data)) // Join histogram data
-
 
           // Create the flot series object
           var series = { 
