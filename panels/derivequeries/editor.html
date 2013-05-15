@@ -1,0 +1,17 @@
+<div>
+  <div class="row-fluid">    
+    <div class="span12">
+      The derive queries panel takes a query and a field, then runs a terms facet against both and generates a list of terms to query on. For example, you might want to see a histogram of the top 5 requests that return a 404. <strong>You should be careful not to select a high cardinality field</strong> as Elasticsearch must load all of these values into memory.
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span3">
+      <label class="small">Length</label>
+      <input type="number" style="width:80%" ng-model="panel.size" ng-change="set_refresh(true)">
+    </div>
+    <div class="span8">
+      <label class="small">Exclude Terms(s) (comma seperated)</label>
+        <input array-join type="text" style="width:90%" ng-change="set_refresh(true)" ng-model='panel.exclude'></input>
+    </div>
+  </div>
+</div>
