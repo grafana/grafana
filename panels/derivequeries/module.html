@@ -1,0 +1,29 @@
+<kibana-panel ng-controller='derivequeries' ng-init="init()">
+  <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+  <div ng-show="!panel.multi">
+    <form>
+      <table class="form-horizontal">
+        <tr>
+          <td><label><small>{{panel.label}}</small></label></td>
+          <td><label><small>Field</small></label></td>
+        </tr>
+        <tr>
+          <td width="97%" style="padding-right:20px">
+            <input type="text" style="width:100%" ng-model="panel.query">
+          </td>
+          <td>
+            <select class="input-small" ng-model="panel.field" ng-options="f for f in fields"></select>
+          </td>
+          <td style="margin-left:20px" width="1%">
+            <button style="margin-top:0px" type="submit" class="btn btn-info" ng-click="get_data()"><i class="icon-search"></i></button>
+          </td>
+          <td width="1%">
+            <button style="margin-top:0px"  type="submit" class="btn btn-danger" ng-click="panel.query='';get_data()"><i class="icon-ban-circle"></i></button>
+          </td>
+        <tr>
+      </table>
+    </form>
+  </div>
+</kibana-panel>
