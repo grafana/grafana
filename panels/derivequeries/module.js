@@ -30,6 +30,7 @@ angular.module('kibana.derivequeries', [])
     query   : "*",
     group   : "default",
     field   : '_type',
+    fields  : [],
     spyable : true,
     size    : 5,
     exclude : []
@@ -38,9 +39,7 @@ angular.module('kibana.derivequeries', [])
 
   $scope.init = function() {
     eventBus.register($scope,'fields', function(event, fields) {
-      $scope.panel.sort = _.clone(fields.sort);
-      $scope.fields     = fields.all,
-      $scope.active     = _.clone(fields.active);
+      $scope.panel.fields = fields.all;
     });
     eventBus.register($scope,'time', function(event,time){set_time(time)});
     eventBus.register($scope,'query', function(event, query) {

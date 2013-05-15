@@ -13,8 +13,11 @@
           <td width="97%" style="padding-right:20px">
             <input type="text" style="width:100%" ng-model="panel.query">
           </td>
-          <td>
-            <select class="input-small" ng-model="panel.field" ng-options="f for f in fields"></select>
+          <td ng-show="panel.fields.length > 0">
+            <select class="input-small" ng-model="panel.field" ng-options="f for f in panel.fields"></select>
+          </td>
+          <td ng-show="panel.fields.length == 0">
+            <input class="input-small" ng-model="panel.field" type="text"/>
           </td>
           <td style="margin-left:20px" width="1%">
             <button style="margin-top:0px" type="submit" class="btn btn-info" ng-click="get_data()"><i class="icon-search"></i></button>
