@@ -81,7 +81,7 @@ angular.module('kibana.derivequeries', [])
       $scope.panel.loading = false;
       var data = [];
       _.each(results.facets.query.terms, function(v) {
-        data.push($scope.panel.field+":"+v.term)
+        data.push($scope.panel.field+':"'+v.term+'"')
       });
       console.log(data)
       $scope.send_query(data)
