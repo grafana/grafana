@@ -1,0 +1,58 @@
+<kibana-panel ng-controller='bbuzz' ng-init="init()">
+
+<table class="table table-condensed" style="vertical-align: middle">
+  <tr ng-style="cluster_color(cluster.status)">
+    <td>
+      <span style="font-size:2.5em;line-height:50px">
+        <strong>Cluster:</strong> {{cluster.cluster_name}}
+      </span>
+    </td>
+    <td></td>
+    <td style="text-align:right;vertical-align:middle">
+      <form class="input-append" style="text-align:right">
+        <input ng-model="settings.replicas" type="number" class="input-mini">
+        <button class="btn btn-info" ng-click="set_replicas(settings.replicas)"><i class="icon-copy"></i></button>
+      </form>
+    </td>
+  </tr>
+  <tr ng-style="cluster_color('nothing')" style="vertical-align:middle" ng-repeat="(name,node) in nodes.info">
+    <td style='font-size:1.5em;vertical-align:middle'>
+      <img style='font-size:1.5em;width:25px;height:25px;border-radius:20px;border:1px solid #000;margin-right: 10px' src="{{bbuzz.picture(node.transport_address)}}"> 
+    {{node.name}} / {{bbuzz.ip_address(node.transport_address)}}
+    </td>
+    <td> 
+      P
+      <div ng-repeat='(index,shards) in nodes.routing[name]' bs-tooltip="index" style='display:inline-block;'>
+        <div ng-repeat='shard in primary(shards,true)' ng-class='shard_class(shard.state)' style='display:inline-block;font-size:7pt;line-height:10px;width:10px;height:10px;border-radius:10px;color:#fff;text-align:center;background:{{bbuzz.index_color(index)}};border:0px;margin-right: 2px'></div>
+      </div>
+      <br>
+      R 
+      <div ng-repeat='(index,shards) in nodes.routing[name]' bs-tooltip="index"  style='display:inline-block;'>
+        <div ng-repeat='shard in primary(shards,false)' ng-class='shard_class(shard.state)' style='display:inline-block;font-size:7pt;line-height:10px;width:10px;height:10px;border-radius:10px;color:#fff;text-align:center;background:{{bbuzz.index_color(index)}};border:0px;margin-right: 2px'></div>
+      </div><br>
+    </td>
+    <td style="text-align: right;vertical-align: middle">
+      <button ng-click="node_mode(bbuzz.ip_address(node.transport_address),'stop')" style="font-size:1.5em; margin-right:30px" class='icon-signout btn btn-danger'></button>
+    </td>
+  </tr>
+</table>
+<table style="vertical-align: middle" ng-show="nodes.dead.length > 0" class='table table-condensed'>
+  <tr ng-style="cluster_color('red')">
+    <td colspan='100'>
+      <span style="line-height:15px">
+        Missing nodes
+      </span>
+    </td>
+  </tr>
+  <tr ng-style="cluster_color('nothing')" ng-repeat="name in nodes.dead">
+    <td colspan="2">
+      <img style='width:30px;height:30px;border-radius:30px;border:2px solid #000;margin-right: 10px' src="{{bbuzz.picture(name)}}"> 
+    {{bbuzz.ip_address(name)}} {{nodes.status[name]}}
+    </td>
+    <td style="text-align: right">
+      <button ng-click="node_mode(bbuzz.ip_address(name),'start')" style="font-size:1.5em; margin-right:30px" class='icon-signin btn btn-info'></button>
+    </td>
+  </tr>
+</table>
+
+</kibana-panel>         
