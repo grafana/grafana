@@ -16,8 +16,21 @@
       </form>
     </div>
     <div class="span8">
-      <h6>Selected fields <small>Click to remove</small></h6>
+      <h6>Columns <small>Click to remove</small></h6>
       <span style="margin-left:3px" ng-click="toggle_field(field)" ng-repeat="field in $parent.panel.fields" class="label remove pointer">{{field}} </span>
+    </div>
+  </div>
+  <div class="row-fluid">    
+    <div class="span4">
+      <form class="input-append">
+        <h6>Add field</h6>
+        <input bs-typeahead="fields.list" type="text" class="input-small" ng-model='newhighlight' ng-change="set_refresh(true)">
+        <button class="btn" ng-click="toggle_highlight(newhighlight);newhighlight=''"><i class="icon-plus"></i></button>
+      </form>
+    </div>
+    <div class="span8">
+      <h6>Highlighted fields <small>Click to remove</small></h6>
+      <span style="margin-left:3px" ng-click="toggle_highlight(field);set_refresh(true)" ng-repeat="field in $parent.panel.highlight" class="label remove pointer">{{field}} </span>
     </div>
   </div>
   <h5>Options</h5>

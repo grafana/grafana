@@ -83,7 +83,6 @@ angular.module('kibana.derivequeries', [])
       _.each(results.facets.query.terms, function(v) {
         data.push($scope.panel.field+':"'+v.term+'"')
       });
-      console.log(data)
       $scope.send_query(data)
     });
   }

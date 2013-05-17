@@ -39,6 +39,7 @@ angular.module('kibana.table', [])
     group   : "default",
     style   : {'font-size': '9pt'},
     fields  : [],
+    highlight : [],
     sortable: true,
     header  : true,
     paging  : true, 
@@ -92,6 +93,13 @@ angular.module('kibana.table', [])
     broadcast_results();
   }
 
+  $scope.toggle_highlight = function(field) {
+    if (_.indexOf($scope.panel.highlight,field) > -1) 
+      $scope.panel.highlight = _.without($scope.panel.highlight,field)
+    else
+      $scope.panel.highlight.push(field)
+  }  
+
   $scope.toggle_details = function(row) {
     row.kibana = row.kibana || {};
     row.kibana.details = !row.kibana.details ? $scope.without_kibana(row) : false;
@@ -129,6 +137,12 @@ angular.module('kibana.table', [])
           .to($scope.time.to)
         )
       )
+      .highlight(
+        ejs.Highlight($scope.panel.highlight)
+        .fragmentSize(2147483647) // Max size of a 32bit unsigned int
+        .preTags('@start-highlight@')
+        .postTags('@end-highlight@')
+      )
       .size($scope.panel.size*$scope.panel.pages)
       .sort($scope.panel.sort[0],$scope.panel.sort[1]);
 
@@ -155,14 +169,17 @@ angular.module('kibana.table', [])
       // Check that we're still on the same query, if not stop
       if($scope.query_id === query_id) {
         $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
-          return flatten_json(hit['_source']);
+          return {
+            _source   : flatten_json(hit['_source']),
+            highlight : flatten_json(hit['highlight']||{})
+          }
         }));
         
         $scope.hits += results.hits.total;
 
         // Sort the data
         $scope.data = _.sortBy($scope.data, function(v){
-          return v[$scope.panel.sort[0]]
+          return v._source[$scope.panel.sort[0]]
         });
         
         // Reverse if needed
@@ -177,7 +194,7 @@ angular.module('kibana.table', [])
       }
       
       // This breaks, use $scope.data for this
-      $scope.all_fields = get_all_fields($scope.data);
+      $scope.all_fields = get_all_fields(_.pluck($scope.data,'_source'));
       broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for
@@ -205,9 +222,10 @@ angular.module('kibana.table', [])
   }
 
   $scope.without_kibana = function (row) {
-    row = _.clone(row)
-    delete row.kibana
-    return row
+    return { 
+      _source   : row._source,
+      highlight : row.highlight
+    }
   } 
 
   // Broadcast a list of all fields. Note that receivers of field array 
@@ -222,10 +240,21 @@ angular.module('kibana.table', [])
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
       {
         query: $scope.panel.query,
-        docs : $scope.data,
+        docs : _.pluck($scope.data,'_source'),
         index: $scope.index
       });
   }
+
+  $scope.set_refresh = function (state) { 
+    $scope.refresh = state; 
+  }
+
+  $scope.close_edit = function() {
+    if($scope.refresh)
+      $scope.get_data();
+    $scope.refresh =  false;
+  }
+
 
   function set_time(time) {
     $scope.time = time;
@@ -233,4 +262,17 @@ angular.module('kibana.table', [])
     $scope.get_data();
   }
 
+})
+.filter('highlight', function() {
+  return function(text) {
+    if (text.toString().length) {
+      return text.toString().
+        replace(/&/g, '&amp;').
+        replace(/</g, '&lt;').
+        replace(/>/g, '&gt;').
+        replace(/@start-highlight@/g, '<code class="highlight">').
+        replace(/@end-highlight@/g, '</code>')
+    }
+    return '';
+  }
 });
