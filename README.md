@@ -4,6 +4,10 @@ __NOTE__: You have reached the Kibana 3 repository.
 Kibana 3 is completely new version of Kibana written entirely in HTML and Javascript. You can find 
 the Kibana 2 repository at [https://github.com/rashidkpc/Kibana](https://github.com/rashidkpc/Kibana)
 
+### Important!
+The index pattern format has changed in Kibana 3 milestone 2. Please update your index pattern in the
+timepicker panel for any dashboards you've built. The default has been updated.
+
 More information about Kibana 3 can be found at [http://three.kibana.org](http://three.kibana.org)  
 
 ## Overview
