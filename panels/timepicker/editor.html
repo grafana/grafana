@@ -17,12 +17,12 @@
           indices that match a specified timestamp pattern. This can be very 
           efficient for some data sets (eg, logs) For example, to match the 
           default logstash index pattern you might use 
-          <code>"logstash-"yyyy.mm.dd</code>. The quotes around "logstash-" are 
+          <code>[logstash-]YYYY.MM.DD</code>. The [] in "[logstash-]" are 
           important as they instruct Kibana not to treat those letters as a 
           pattern.
         </p>
         <p class="small">
-          See <a href="http://blog.stevenlevithan.com/archives/date-time-format">http://blog.stevenlevithan.com/archives/date-time-format</a>
+          See <a href="http://momentjs.com/docs/#/displaying/format/">http://momentjs.com/docs/#/displaying/format/</a>
           for documentation on date formatting.
         </p>
 
@@ -33,7 +33,7 @@
         <h6>Timestamp</h6><select class="input-mini" ng-model="panel.index_interval" ng-options='f for f in ["none","hour","day","week","month","year"]'></select>
       </div>
       <div class="span5">
-        <h6>Index <span ng-show="panel.index_interval != 'none'">pattern <small>Absolutes in double quotes</small></span></h6>
+        <h6>Index <span ng-show="panel.index_interval != 'none'">pattern <small>Absolutes in []</small></span></h6>
         <input type="text" class="input-medium" ng-model="panel.index">
       </div>
       <div class="span4">

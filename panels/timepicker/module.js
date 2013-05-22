@@ -39,6 +39,7 @@ angular.module('kibana.timepicker', [])
     index         : '_all',
     defaultindex  : "_all",
     index_interval: "none",
+    timeformat    : "",
     group         : "default",
     refresh       : {
       enable  : false, 
@@ -60,20 +61,20 @@ angular.module('kibana.timepicker', [])
     switch($scope.panel.mode) {
       case 'absolute':
         $scope.time = {
-          from : new Date(Date.parse($scope.panel.time.from)) || time_ago($scope.panel.timespan),
-          to   : new Date(Date.parse($scope.panel.time.to)) || new Date()
+          from : moment($scope.panel.time.from,'YYYY-MM-DD HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
+          to   : moment($scope.panel.time.to,'YYYY-MM-DD HH:mm:ss') || moment()
         }
         break;
       case 'since':
         $scope.time = {
-          from : new Date(Date.parse($scope.panel.time.from)) || time_ago($scope.panel.timespan),
-          to   : new Date() || new Date()
+          from : moment($scope.panel.time.from,'YYYY-MM-DD HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
+          to   : moment()
         }
         break;
       case 'relative':
         $scope.time = {
-          from : time_ago($scope.panel.timespan),
-          to   : new Date()
+          from : moment(time_ago($scope.panel.timespan)),
+          to   : moment()
         }
         break;
     }
@@ -88,26 +89,26 @@ angular.module('kibana.timepicker', [])
     // request one be sent by broadcasting a 'get_time' with its _id to its group
     // This panel can handle multiple groups
     eventBus.register($scope,"get_time", function(event,id) {
-      eventBus.broadcast($scope.$id,id,'time',$scope.time)
+      eventBus.broadcast($scope.$id,id,'time',unmoment($scope.time))
     });
 
     // In case some other panel broadcasts a time, set us to an absolute range
     eventBus.register($scope,"set_time", function(event,time) {
       $scope.panel.mode = 'absolute';
-      set_timepicker(time.from,time.to)
+      set_timepicker(moment(time.from),moment(time.to))
       $scope.time_apply()
     });
     
     eventBus.register($scope,"zoom", function(event,factor) {
-      var _timespan = ($scope.time.to.getTime() - $scope.time.from.getTime());
+      var _timespan = ($scope.time.to.valueOf() - $scope.time.from.valueOf());
       try {
         if($scope.panel.mode != 'absolute') {
           $scope.panel.mode = 'since'
-          set_timepicker(new Date($scope.time.to.getTime() - _timespan*factor),$scope.time.to)
+          set_timepicker(moment($scope.time.to.valueOf() - _timespan*factor),$scope.time.to)
         } else {
-          var _center = $scope.time.to - _timespan/2
-          set_timepicker(new Date(_center - (_timespan*factor)/2),
-                         new Date(_center + (_timespan*factor)/2))        
+          var _center = $scope.time.to.valueOf() - _timespan/2
+          set_timepicker(moment(_center - (_timespan*factor)/2),
+                         moment(_center + (_timespan*factor)/2))        
         }
       } catch (e) {
         console.log(e)
@@ -152,16 +153,16 @@ angular.module('kibana.timepicker', [])
 
   $scope.to_now = function() {
     $scope.timepicker.to = {
-      time : new Date().format("HH:MM:ss"),
-      date : new Date().format("mm/dd/yyyy")
+      time : moment().format("HH:mm:ss"),
+      date : moment().format("MM/DD/YYYY")
     }
   }
 
   $scope.set_timespan = function(timespan) {
     $scope.panel.timespan = timespan;
     $scope.timepicker.from = {
-      time : time_ago(timespan).format("HH:MM:ss"),
-      date : time_ago(timespan).format("mm/dd/yyyy")
+      time : moment(time_ago(timespan)).format("HH:mm:ss"),
+      date : moment(time_ago(timespan)).format("MM/DD/YYYY")
     }
     $scope.time_apply();
   }
@@ -172,22 +173,22 @@ angular.module('kibana.timepicker', [])
 
   // 
   $scope.time_calc = function(){
-    // If time picker is defined (on initialization)
+    // If time picker is defined (usually is)
     if(!(_.isUndefined($scope.timepicker))) {
-      var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
-        new Date(Date.parse($scope.timepicker.from.date + " " + $scope.timepicker.from.time))
-      var to = $scope.panel.mode !== 'absolute' ? new Date() :
-        new Date(Date.parse($scope.timepicker.to.date + " " + $scope.timepicker.to.time))
-    // Otherwise 
+      var from = $scope.panel.mode === 'relative' ? moment(time_ago($scope.panel.timespan)) :
+        moment($scope.timepicker.from.date + " " + $scope.timepicker.from.time,'MM/DD/YYYY HH:mm:ss')
+      var to = $scope.panel.mode !== 'absolute' ? moment() :
+        moment($scope.timepicker.to.date + " " + $scope.timepicker.to.time,'MM/DD/YYYY HH:mm:ss')
+    // Otherwise (probably initialization)
     } else {
-      var from = $scope.panel.mode === 'relative' ? time_ago($scope.panel.timespan) :
+      var from = $scope.panel.mode === 'relative' ? moment(time_ago($scope.panel.timespan)) :
         $scope.time.from;
-      var to = $scope.panel.mode !== 'absolute' ? new Date() :
+      var to = $scope.panel.mode !== 'absolute' ? moment() :
         $scope.time.to;
     }
 
-    if (from.getTime() >= to.getTime())
-      from = new Date(to.getTime() - 1000)
+    if (from.valueOf() >= to.valueOf())
+      from = moment(to.valueOf() - 1000)
 
     $timeout(function(){
       set_timepicker(from,to)
@@ -209,11 +210,11 @@ angular.module('kibana.timepicker', [])
     if($scope.panel.index_interval !== 'none') {
       indices($scope.time.from,$scope.time.to).then(function (p) {
         $scope.time.index = p;
-        eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
+        eventBus.broadcast($scope.$id,$scope.panel.group,'time',unmoment($scope.time))
       });
     } else {
       $scope.time.index = [$scope.panel.index];
-      eventBus.broadcast($scope.$id,$scope.panel.group,'time',$scope.time)
+      eventBus.broadcast($scope.$id,$scope.panel.group,'time',unmoment($scope.time))
     }
 
     // Update panel's string representation of the time object.Don't update if
@@ -221,8 +222,8 @@ angular.module('kibana.timepicker', [])
     // json for relative periods
     if($scope.panel.mode !== 'relative') {
       $scope.panel.time = { 
-        from : $scope.time.from.format("mm/dd/yyyy HH:MM:ss"),
-        to : $scope.time.to.format("mm/dd/yyyy HH:MM:ss"),
+        from : $scope.time.from.format("MM/DD/YYYY HH:mm:ss"),
+        to : $scope.time.to.format("MM/DD/YYYY HH:mm:ss"),
         index : $scope.time.index,
       };
     } else {
@@ -230,16 +231,25 @@ angular.module('kibana.timepicker', [])
     }
   };
 
+  // Prefer to pass around Date() objects in the EventBus since interacting with
+  // moment objects in libraries that are expecting Date()s can be tricky
+  function unmoment(time) {
+    time = _.clone(time)
+    time.from = time.from.toDate()
+    time.to   = time.to.toDate()
+    return time;
+  }
+
   function set_timepicker(from,to) {
     // Janky 0s timeout to get around $scope queue processing view issue
     $scope.timepicker = {
       from : {
-        time : from.format("HH:MM:ss"),
-        date : from.format("mm/dd/yyyy")
+        time : from.format("HH:mm:ss"),
+        date : from.format("MM/DD/YYYY")
       },
       to : {
-        time : to.format("HH:MM:ss"),
-        date : to.format("mm/dd/yyyy")
+        time : to.format("HH:mm:ss"),
+        date : to.format("MM/DD/YYYY")
       } 
     }
   }
@@ -282,8 +292,10 @@ angular.module('kibana.timepicker', [])
   // I extract the date from an object that I'm get the UTC date. Stupid js.
   // I die a little inside every time I call this function.
   // Update: I just read this again. I died a little more inside.
+  // Update2: More death.
   function fake_utc(date) {
-    return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    date = date.clone().toDate()
+    return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000));
   }
 
   // Create an array of date objects by a given interval
@@ -296,19 +308,19 @@ angular.module('kibana.timepicker', [])
         range.push(start.clone());
         switch (interval) {
         case 'hour':
-          start.addHours(1)
+          start.add('hours',1)
           break
         case 'day':
-          start.addDays(1)
+          start.add('days',1)
           break
         case 'week':
-          start.addWeeks(1)
+          start.add('weeks',1)
           break
         case 'month':
-          start.addMonths(1)
+          start.add('months',1)
           break
         case 'year':
-          start.addYears(1)
+          start.add('years',1)
           break
         }
       }

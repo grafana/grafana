@@ -249,11 +249,7 @@ angular.module('kibana.histogram', [])
 
   $scope.set_time = function(time) {
     $scope.time = time;
-    // Should I be storing the index on the panel? It causes errors if the index
-    // goes away. Hmmm.
-    $scope.index = time.index || $scope.index
-    // Only calculate interval if auto_int is set, otherwise don't touch it
-    
+    $scope.index = time.index || $scope.index    
     $scope.get_data();
   }
 
@@ -305,21 +301,21 @@ angular.module('kibana.histogram', [])
                 points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
-              yaxis: { show: scope.panel['y-axis'], min: 0, color: "#000" },
+              yaxis: { show: scope.panel['y-axis'], min: 0, color: "#c8c8c8" },
               xaxis: {
                 timezone: scope.panel.timezone,
                 show: scope.panel['x-axis'],
                 mode: "time",
                 timeformat: time_format(scope.panel.interval),
                 label: "Datetime",
-                color: "#000",
+                color: "#c8c8c8",
               },
               selection: {
                 mode: "x",
                 color: '#ccc'
               },
               grid: {
-                backgroundColor: '#fff',
+                backgroundColor: '#272b30',
                 borderWidth: 0,
                 borderColor: '#eee',
                 color: "#eee",
@@ -359,13 +355,12 @@ angular.module('kibana.histogram', [])
           position: 'absolute',
           top     : y + 5,
           left    : x + 5,
-          color   : "#000",
-          border  : '1px solid #000',
+          color   : "#c8c8c8",
           padding : '10px',
           'font-size': '11pt',
           'font-weight' : 200,
-          'background-color': '#FFF',
-          'border-radius': '10px',
+          'background-color': '#1f1f1f',
+          'border-radius': '5px',
         }).appendTo("body");
       }
 
@@ -374,15 +369,15 @@ angular.module('kibana.histogram', [])
           tt(pos.pageX, pos.pageY,
             "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
             item.datapoint[1].toFixed(0) + " @ " + 
-            new Date(item.datapoint[0]).format('mm/dd HH:MM:ss'));
+            moment(item.datapoint[0]).format('MM/DD HH:mm:ss'));
         } else {
           $("#pie-tooltip").remove();
         }
       });
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.time.from = new Date(ranges.xaxis.from);
-        scope.time.to   = new Date(ranges.xaxis.to)
+        scope.time.from = moment(ranges.xaxis.from);
+        scope.time.to   = moment(ranges.xaxis.to)
         eventBus.broadcast(scope.$id,scope.panel.group,'set_time',scope.time)
       });
     }

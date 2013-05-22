@@ -1,6 +1,8 @@
 /*
 
-elasticsearch:  URL to your elasticsearch server
+elasticsearch:  URL to your elasticsearch server. You almost certainly don't 
+                want 'http://localhost:9200' here. Even if Kibana and ES are on
+                the same host
 kibana_index:   The default ES index to use for storing Kibana specific object
                 such as stored dashboards 
 modules:        Panel modules to load. In the future these will be inferred 

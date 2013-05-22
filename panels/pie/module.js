@@ -156,8 +156,8 @@ angular.module('kibana.pie', [])
         var complete  = results.hits.total;
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [
-          { label : 'Complete', data : complete, color: '#86B22D' },
-          { data : remaining, color: '#EEE'}]
+          { label : 'Complete', data : complete, color: '#BF6730' },
+          { data : remaining, color: '#e2d0c4'}]
         $scope.$emit('render');
       });
     }
@@ -214,9 +214,9 @@ angular.module('kibana.pie', [])
             show: scope.panel.labels,
             radius: 0,
             formatter: function(label, series){
-              var font = parseInt(scope.row.height.replace('px',''))/10 + String('px')
+              var font = parseInt(scope.row.height.replace('px',''))/8 + String('px')
               if(!(_.isUndefined(label)))
-                return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:black;">'+
+                return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:#fff;">'+
                 Math.round(series.percent)+'%</div>';
               else
                 return ''
@@ -236,7 +236,7 @@ angular.module('kibana.pie', [])
         var pie = {
           series: {
             pie: {
-              innerRadius: scope.panel.donut ? 0.4 : 0,
+              innerRadius: scope.panel.donut ? 0.45 : 0,
               tilt: scope.panel.tilt ? 0.45 : 1,
               radius: 1,
               show: true,
@@ -244,11 +244,19 @@ angular.module('kibana.pie', [])
                 color: '#999',
                 label: 'The Rest'
               },
-              label: label
+              label: label,
+              stroke: {
+                color: '#272b30',
+                width: 0
+              }
             }
           },
           //grid: { hoverable: true, clickable: true },
-          grid:   { hoverable: true, clickable: true },
+          grid:   { 
+            backgroundColor: '#272b30',
+            hoverable: true, 
+            clickable: true 
+          },
           legend: { show: false },
           colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
         };
@@ -264,16 +272,17 @@ angular.module('kibana.pie', [])
       function piett(x, y, contents) {
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
+
         tooltip.html(contents).css({
           position: 'absolute',
           top     : y + 10,
           left    : x + 10,
-          color   : "#000",
-          'font-weight': 200,
-          'border-radius': '5px',
-          border  : '2px solid #000',
+          color   : "#c8c8c8",
           padding : '10px',
-          'background-color': '#FFF',
+          'font-size': '11pt',
+          'font-weight' : 200,
+          'background-color': '#1f1f1f',
+          'border-radius': '5px',
         }).appendTo("body");
       }
 

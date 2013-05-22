@@ -181,10 +181,10 @@ angular.module('kibana.hits', [])
                   bars:   { show: true,  fill: 1, barWidth: 0.8, horizontal: false },
                   shadowSize: 1
                 },
-                yaxis: { show: true, min: 0, color: "#000" },
+                yaxis: { show: true, min: 0, color: "#c8c8c8" },
                 xaxis: { show: false },
                 grid: {
-                  backgroundColor: '#fff',
+                  backgroundColor: '#272b30',
                   borderWidth: 0,
                   borderColor: '#eee',
                   color: "#eee",
@@ -204,6 +204,10 @@ angular.module('kibana.hits', [])
                     combine: {
                       color: '#999',
                       label: 'The Rest'
+                    },
+                    stroke: {
+                      color: '#272b30',
+                      width: 0
                     },
                     label: { 
                       show: scope.panel.labels,
@@ -243,13 +247,12 @@ angular.module('kibana.hits', [])
           position: 'absolute',
           top     : y + 5,
           left    : x + 5,
-          color   : "#000",
-          border  : '2px solid #000',
+          color   : "#c8c8c8",
           padding : '10px',
           'font-size': '11pt',
           'font-weight' : 200,
-          'background-color': '#FFF',
-          'border-radius': '10px',
+          'background-color': '#1f1f1f',
+          'border-radius': '5px',
         }).appendTo("body");
       }
 
