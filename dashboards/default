@@ -30,7 +30,7 @@
           ],
           "timespan": "6h",
           "timefield": "@timestamp",
-          "index": "\"logstash-\"yyyy.mm.dd",
+          "index": "[logstash-]YYYY.MM.DD",
           "defaultindex": "NOINDEX",
           "index_interval": "day",
           "refresh": {

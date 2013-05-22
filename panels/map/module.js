@@ -34,7 +34,7 @@ angular.module('kibana.map', [])
   var _d = {
     query   : "*",
     map     : "world",
-    colors  : ['#C8EEFF', '#0071A4'],
+    colors  : ['#A0E2E2', '#265656'],
     size    : 100,
     exclude : [],
     spyable : true,
@@ -143,9 +143,9 @@ angular.module('kibana.map', [])
           $('.jvectormap-zoomin,.jvectormap-zoomout,.jvectormap-label').remove();
           var map = elem.vectorMap({  
             map: scope.panel.map,
-            regionStyle: {initial: {fill: '#ddd'}},
+            regionStyle: {initial: {fill: '#8c8c8c'}},
             zoomOnScroll: false,
-            backgroundColor: '#fff',
+            backgroundColor: '#272b30',
             series: {
               regions: [{
                 values: scope.data,
@@ -157,12 +157,12 @@ angular.module('kibana.map', [])
               $('.jvectormap-label').css({
                 "position"    : "absolute",
                 "display"     : "none",
-                "border"      : "solid 2px #000",
-                "background"  : "#FFF",
-                "font-weight" : 200,
-                "border-radius": "5px",
-                "color"       : "#000",
-                "padding"     : "5px"
+                'color'   : "#c8c8c8",
+                'padding' : '10px',
+                'font-size': '11pt',
+                'font-weight' : 200,
+                'background-color': '#1f1f1f',
+                'border-radius': '5px'
               })
               var count = _.isUndefined(scope.data[code]) ? 0 : scope.data[code];
               $('.jvectormap-label').text(label.text() + ": " + count);

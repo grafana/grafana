@@ -110,9 +110,9 @@ function add_to_query(original,field,value,negate) {
    */
 function calculate_interval(from,to,size,user_interval) {
   if(_.isObject(from))
-    from = from.getTime();
+    from = from.valueOf();
   if(_.isObject(to))
-    to = to.getTime();
+    to = to.valueOf();
   return user_interval == 0 ? round_interval((to - from)/size) : user_interval;
 }
 
