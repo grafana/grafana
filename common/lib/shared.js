@@ -271,7 +271,17 @@ function flatten_json(object,root,array) {
     var rootname = root.length == 0 ? index : root + '.' + index;
     if(typeof obj == 'object' ) {
       if(_.isArray(obj)) {
-        if(obj.length === 1 && _.isNumber(obj[0])) {
+        if(obj.length > 0 && typeof obj[0] === 'object') {
+          var strval = '';
+          for (var objidx = 0, objlen = obj.length; objidx < objlen; objidx++) {
+            if (objidx > 0) {
+              strval = strval + ', ';
+            }
+            
+            strval = strval + JSON.stringify(obj[objidx]);
+          }
+          array[rootname] = strval;
+        } else if(obj.length === 1 && _.isNumber(obj[0])) {
           array[rootname] = parseFloat(obj[0]);
         } else {
           array[rootname] = typeof obj === 'undefined' ? null : obj.join(',');
