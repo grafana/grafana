@@ -13,6 +13,8 @@
   * sort :: An array with 2 elements. sort[0]: field, sort[1]: direction ('asc' or 'desc')
   * style :: hash of css properties
   * fields :: columns to show in table
+  * overflow :: 'height' or 'min-height' controls wether the row will expand (min-height) to
+                to fit the table, or if the table will scroll to fit the row (height) 
   * sortable :: Allow sorting?
   * spyable :: Show the 'eye' icon that reveals the last ES query for this panel
   ### Group Events
@@ -38,6 +40,7 @@ angular.module('kibana.table', [])
     sort    : ['@timestamp','desc'],
     group   : "default",
     style   : {'font-size': '9pt'},
+    overflow: 'height',
     fields  : [],
     highlight : [],
     sortable: true,
@@ -50,6 +53,7 @@ angular.module('kibana.table', [])
   $scope.init = function () {
 
     $scope.set_listeners($scope.panel.group)
+
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,"get_time")
   }

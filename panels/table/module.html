@@ -4,7 +4,7 @@
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
 
-  <div style="height:{{panel.height || row.height}};overflow-y:auto;overflow-x:auto">
+  <div style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:auto">
     <div class="row-fluid" ng-show="panel.paging">
       <div class="span1 offset1" style="text-align:right">
         <i ng-click="panel.offset = 0" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
