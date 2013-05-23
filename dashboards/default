@@ -205,11 +205,12 @@
             "legend"
           ],
           "fill": 3,
+          "overflow": "min-height",
           "timezone": "browser",
           "spyable": true,
           "zoomlinks": true,
-          "size": 100,
-          "pages": 5,
+          "size": 50,
+          "pages": 10,
           "offset": 0,
           "sort": [
             "@timestamp",
