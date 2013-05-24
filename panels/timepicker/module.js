@@ -61,13 +61,13 @@ angular.module('kibana.timepicker', [])
     switch($scope.panel.mode) {
       case 'absolute':
         $scope.time = {
-          from : moment($scope.panel.time.from,'YYYY-MM-DD HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
-          to   : moment($scope.panel.time.to,'YYYY-MM-DD HH:mm:ss') || moment()
+          from : moment($scope.panel.time.from,'MM/DD/YYYY HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
+          to   : moment($scope.panel.time.to,'MM/DD/YYYY HH:mm:ss') || moment()
         }
         break;
       case 'since':
         $scope.time = {
-          from : moment($scope.panel.time.from,'YYYY-MM-DD HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
+          from : moment($scope.panel.time.from,'MM/DD/YYYY HH:mm:ss') || moment(time_ago($scope.panel.timespan)),
           to   : moment()
         }
         break;
