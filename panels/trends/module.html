@@ -1,6 +1,6 @@
 <kibana-panel ng-controller='trends' ng-init="init()">
 
-  <div ng-style="panel.style" style="line-height:{{panel.style['font-size']}};display:inline-block;padding-right: 5px;" ng-repeat="query in data">
+  <div ng-style="panel.style" style="line-height:{{panel.style['font-size']}};display:inline-block;padding-right: 5px;" ng-repeat="query in trends">
     <span ng-class="{'text-success': query.hits.new >= query.hits.old, 'text-error': query.hits.old > query.hits.new}" class='strong'>
       <i class='large' ng-class="{'icon-caret-up': query.hits.new >= query.hits.old, 'icon-caret-down': query.hits.old > query.hits.new}"></i> {{query.percent}}% 
     </span>
