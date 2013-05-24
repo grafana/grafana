@@ -64,6 +64,7 @@ angular.module('kibana.histogram', [])
     legend      : true,
     'x-axis'    : true,
     'y-axis'    : true,
+    percentage  : false
   }
   _.defaults($scope.panel,_d)
 
@@ -290,7 +291,8 @@ angular.module('kibana.histogram', [])
             scope.plot = $.plot(elem, scope.data, {
               legend: { show: false },
               series: {
-                stack:  stack,
+                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+                stack: scope.panel.percentage ? null : stack,
                 lines:  { 
                   show: scope.panel.lines, 
                   fill: scope.panel.fill/10, 
@@ -301,7 +303,12 @@ angular.module('kibana.histogram', [])
                 points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
-              yaxis: { show: scope.panel['y-axis'], min: 0, color: "#c8c8c8" },
+              yaxis: { 
+                show: scope.panel['y-axis'], 
+                min: 0, 
+                max: scope.panel.percentage && scope.panel.stack ? 100 : null, 
+                color: "#c8c8c8" 
+              },
               xaxis: {
                 timezone: scope.panel.timezone,
                 show: scope.panel['x-axis'],
@@ -367,7 +374,8 @@ angular.module('kibana.histogram', [])
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           tt(pos.pageX, pos.pageY,
-            "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
+            "<div style='vertical-align:middle;display:inline-block;background:"+
+            item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
             item.datapoint[1].toFixed(0) + " @ " + 
             moment(item.datapoint[0]).format('MM/DD HH:mm:ss'));
         } else {
