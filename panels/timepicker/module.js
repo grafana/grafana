@@ -28,7 +28,7 @@
 */
 
 angular.module('kibana.timepicker', [])
-.controller('timepicker', function($scope, eventBus, $timeout, timer, $http) {
+.controller('timepicker', function($scope, eventBus, $timeout, timer, $http, kbnIndex) {
 
   // Set and populate defaults
   var _d = {
@@ -89,7 +89,7 @@ angular.module('kibana.timepicker', [])
     // request one be sent by broadcasting a 'get_time' with its _id to its group
     // This panel can handle multiple groups
     eventBus.register($scope,"get_time", function(event,id) {
-      eventBus.broadcast($scope.$id,id,'time',unmoment($scope.time))
+      eventBus.broadcast($scope.$id,id,'time',compile_time($scope.time))
     });
 
     // In case some other panel broadcasts a time, set us to an absolute range
@@ -208,13 +208,17 @@ angular.module('kibana.timepicker', [])
     // Get indices for the time period, then broadcast time range and index list
     // in a single object. Not sure if I like this.
     if($scope.panel.index_interval !== 'none') {
-      indices($scope.time.from,$scope.time.to).then(function (p) {
+      kbnIndex.indices($scope.time.from,
+        $scope.time.to,
+        $scope.panel.index,
+        $scope.panel.index_interval
+      ).then(function (p) {
         $scope.time.index = p;
-        eventBus.broadcast($scope.$id,$scope.panel.group,'time',unmoment($scope.time))
+        eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
       });
     } else {
       $scope.time.index = [$scope.panel.index];
-      eventBus.broadcast($scope.$id,$scope.panel.group,'time',unmoment($scope.time))
+      eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
     }
 
     // Update panel's string representation of the time object.Don't update if
@@ -233,10 +237,12 @@ angular.module('kibana.timepicker', [])
 
   // Prefer to pass around Date() objects in the EventBus since interacting with
   // moment objects in libraries that are expecting Date()s can be tricky
-  function unmoment(time) {
+  function compile_time(time) {
     time = _.clone(time)
     time.from = time.from.toDate()
     time.to   = time.to.toDate()
+    time.interval = $scope.panel.index_interval
+    time.pattern = $scope.panel.index 
     return time;
   }
 
@@ -251,83 +257,6 @@ angular.module('kibana.timepicker', [])
         time : to.format("HH:mm:ss"),
         date : to.format("MM/DD/YYYY")
       } 
-    }
-  }
-
-  // returns a promise containing an array of all indices matching the index
-  // pattern that exist in a given range
-  function indices(from,to) {
-    var possible = [];
-    _.each(expand_range(fake_utc(from),fake_utc(to),$scope.panel.index_interval),function(d){
-      possible.push(d.format($scope.panel.index));
-    });
-
-    return all_indices().then(function(p) {
-      var indices = _.intersection(possible,p);
-      indices.reverse();
-      return indices.length == 0 ? [$scope.panel.defaultindex] : indices;
-    })
-  };
-
-  // returns a promise containing an array of all indices in an elasticsearch
-  // cluster
-  function all_indices() {
-    var something = $http({
-      url: config.elasticsearch + "/_aliases",
-      method: "GET"
-    }).error(function(data, status, headers, config) {
-      $scope.error = status;
-    });
-
-    return something.then(function(p) {
-      var indices = [];
-      _.each(p.data, function(v,k) {
-        indices.push(k)
-      });
-      return indices;
-    });
-  }
-
-  // this is stupid, but there is otherwise no good way to ensure that when
-  // I extract the date from an object that I'm get the UTC date. Stupid js.
-  // I die a little inside every time I call this function.
-  // Update: I just read this again. I died a little more inside.
-  // Update2: More death.
-  function fake_utc(date) {
-    date = date.clone().toDate()
-    return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000));
-  }
-
-  // Create an array of date objects by a given interval
-  function expand_range(start, end, interval) {
-    if(_.contains(['hour','day','week','month','year'],interval)) {
-      var range;
-      start = start.clone();
-      range = [];
-      while (start.isBefore(end)) {
-        range.push(start.clone());
-        switch (interval) {
-        case 'hour':
-          start.add('hours',1)
-          break
-        case 'day':
-          start.add('days',1)
-          break
-        case 'week':
-          start.add('weeks',1)
-          break
-        case 'month':
-          start.add('months',1)
-          break
-        case 'year':
-          start.add('years',1)
-          break
-        }
-      }
-      range.push(end.clone());
-      return range;
-    } else {
-      return false;
     }
   }
 

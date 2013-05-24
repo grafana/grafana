@@ -25,7 +25,7 @@
       <label class="small">Query</label>
       <form class="input-append" style="margin-bottom: 0px">
         <input type="text" placeholder="New Query" style="width:80%" ng-model="newquery">
-        <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery=''"><i class="icon-plus"></i></button>
+        <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery='';set_refresh(true)"><i class="icon-plus"></i></button>
       </form>
     </div>
     <div class="span1">
@@ -34,7 +34,7 @@
   <div class="row-fluid" ng-repeat="q in panel.query">        
     <div class="span3">
       <form style="margin-bottom: 0px">
-        <input type="text" style="width:70%" ng-model="q.label">
+        <input type="text" style="width:70%" ng-model="q.label" ng-change="set_refresh(true)">
       </form>
     </div>
     <div class="span8">
