@@ -145,7 +145,7 @@ angular.module('kibana.map', [])
             map: scope.panel.map,
             regionStyle: {initial: {fill: '#8c8c8c'}},
             zoomOnScroll: false,
-            backgroundColor: '#272b30',
+            backgroundColor: null,
             series: {
               regions: [{
                 values: scope.data,
@@ -157,9 +157,9 @@ angular.module('kibana.map', [])
               $('.jvectormap-label').css({
                 "position"    : "absolute",
                 "display"     : "none",
-                'color'   : "#c8c8c8",
-                'padding' : '10px',
-                'font-size': '11pt',
+                'color'       : "#c8c8c8",
+                'padding'     : '10px',
+                'font-size'   : '11pt',
                 'font-weight' : 200,
                 'background-color': '#1f1f1f',
                 'border-radius': '5px'

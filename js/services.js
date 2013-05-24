@@ -83,6 +83,85 @@ angular.module('kibana.services', [])
   return fields;
 
 })
+.service('kbnIndex',function($http) {
+    // returns a promise containing an array of all indices matching the index
+  // pattern that exist in a given range
+  this.indices = function(from,to,pattern,interval) {
+    var possible = [];
+    _.each(expand_range(fake_utc(from),fake_utc(to),interval),function(d){
+      possible.push(d.format(pattern));
+    });
+
+    return all_indices().then(function(p) {
+      var indices = _.intersection(possible,p);
+      indices.reverse();
+      return indices
+    })
+  };
+
+  // returns a promise containing an array of all indices in an elasticsearch
+  // cluster
+  function all_indices() {
+    var something = $http({
+      url: config.elasticsearch + "/_aliases",
+      method: "GET"
+    }).error(function(data, status, headers, config) {
+      // Handle error condition somehow?
+    });
+
+    return something.then(function(p) {
+      var indices = [];
+      _.each(p.data, function(v,k) {
+        indices.push(k)
+      });
+      return indices;
+    });
+  }
+
+  // this is stupid, but there is otherwise no good way to ensure that when
+  // I extract the date from an object that I'm get the UTC date. Stupid js.
+  // I die a little inside every time I call this function.
+  // Update: I just read this again. I died a little more inside.
+  // Update2: More death.
+  function fake_utc(date) {
+    date = moment(date).clone().toDate()
+    return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000));
+  }
+
+  // Create an array of date objects by a given interval
+  function expand_range(start, end, interval) {
+    if(_.contains(['hour','day','week','month','year'],interval)) {
+      var range;
+      start = moment(start).clone();
+      range = [];
+      while (start.isBefore(end)) {
+        range.push(start.clone());
+        switch (interval) {
+        case 'hour':
+          start.add('hours',1)
+          break
+        case 'day':
+          start.add('days',1)
+          break
+        case 'week':
+          start.add('weeks',1)
+          break
+        case 'month':
+          start.add('months',1)
+          break
+        case 'year':
+          start.add('years',1)
+          break
+        }
+      }
+      range.push(moment(end).clone());
+      return range;
+    } else {
+      return false;
+    }
+  }
+})
+
 .service('timer', function($timeout) {
   // This service really just tracks a list of $timeout promises to give us a
   // method for cancelling them all when we need to

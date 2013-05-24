@@ -131,6 +131,14 @@
   font-weight: bold;
 }
 
+.normal {
+  font-weight: normal;
+}
+
+.light {
+  font-weight: 200;
+}
+
 .input-append label {
   font-size: inherit !important;
 }

@@ -315,7 +315,7 @@ angular.module('kibana.histogram', [])
                 color: '#ccc'
               },
               grid: {
-                backgroundColor: '#272b30',
+                backgroundColor: null,
                 borderWidth: 0,
                 borderColor: '#eee',
                 color: "#eee",

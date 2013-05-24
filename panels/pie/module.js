@@ -246,14 +246,13 @@ angular.module('kibana.pie', [])
               },
               label: label,
               stroke: {
-                color: '#272b30',
                 width: 0
               }
             }
           },
           //grid: { hoverable: true, clickable: true },
           grid:   { 
-            backgroundColor: '#272b30',
+            backgroundColor: null,
             hoverable: true, 
             clickable: true 
           },

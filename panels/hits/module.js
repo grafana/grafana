@@ -141,6 +141,17 @@ angular.module('kibana.hits', [])
     $scope.get_data();
   }
 
+  $scope.set_refresh = function (state) { 
+    $scope.refresh = state; 
+  }
+
+  $scope.close_edit = function() {
+    if($scope.refresh)
+      $scope.get_data();
+    $scope.refresh =  false;
+    $scope.$emit('render');
+  }
+
   function set_time(time) {
     $scope.time = time;
     $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
