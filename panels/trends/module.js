@@ -164,7 +164,8 @@ angular.module('kibana.trends', [])
           $scope.$emit('render');
           if(_segment < $scope.index.length-1) 
             $scope.get_data(_segment+1,query_id)
-          
+          else
+            $scope.trends = $scope.data
         }
       });
     }
