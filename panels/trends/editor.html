@@ -15,7 +15,7 @@
     </div>
     <div class="span3">
        <label class="small">Time Ago</label>
-        <input type="text" class="input-small" ng-model="panel.ago">
+        <input type="text" class="input-small" ng-model="panel.ago" ng-change="set_refresh(true)">
     </div>
     <div class="span2">
       <label class="small">Font Size</label> 
@@ -52,10 +52,7 @@
       </form>
     </div>
     <div class="span8">
-      <form class="input-append" style="margin-bottom: 0px">
         <input type="text" style="width:80%" ng-model="q.query" ng-change="set_refresh(true)">
-        <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
-      </form>
     </div>
     <div class="span1">
       <i class="icon-remove pointer" ng-click="remove_query(q)"></i>

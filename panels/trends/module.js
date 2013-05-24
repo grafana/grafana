@@ -147,7 +147,8 @@ angular.module('kibana.trends', [])
             $scope.hits.new += n;
             $scope.hits.old += o;
 
-            var percent = Math.round(percentage(hits.old,hits.new)*100)/100
+            var percent = percentage(hits.old,hits.new) == null ? 
+              '?' : Math.round(percentage(hits.old,hits.new)*100)/100
             // Create series
             $scope.data[i] = { 
               label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
@@ -155,7 +156,7 @@ angular.module('kibana.trends', [])
                 new : hits.new,
                 old : hits.old
               },
-              percent: _.isNull(percent) ? 0 : percent
+              percent: percent
             };
 
             i++;
@@ -171,7 +172,7 @@ angular.module('kibana.trends', [])
   }
 
   function percentage(x,y) {
-    return 100*(y-x)/x
+    return x == 0 ? null : 100*(y-x)/x
   }
 
   $scope.remove_query = function(q) {
