@@ -31,6 +31,7 @@
   * legend :: Show the legend?
   * x-axis :: Show x-axis labels and grid lines
   * y-axis :: Show y-axis labels and grid lines
+  * interactive :: Allow drag to select time range
   ### Group Events
   #### Receives
   * time :: An object containing the time range to use and the index(es) to query
@@ -64,7 +65,8 @@ angular.module('kibana.histogram', [])
     legend      : true,
     'x-axis'    : true,
     'y-axis'    : true,
-    percentage  : false
+    percentage  : false,
+    interactive : true,
   }
   _.defaults($scope.panel,_d)
 
@@ -288,7 +290,7 @@ angular.module('kibana.histogram', [])
 
           // Populate element
           try { 
-            scope.plot = $.plot(elem, scope.data, {
+            var options = {
               legend: { show: false },
               series: {
                 stackpercent: scope.panel.stack ? scope.panel.percentage : false,
@@ -317,10 +319,6 @@ angular.module('kibana.histogram', [])
                 label: "Datetime",
                 color: "#c8c8c8",
               },
-              selection: {
-                mode: "x",
-                color: '#ccc'
-              },
               grid: {
                 backgroundColor: null,
                 borderWidth: 0,
@@ -329,7 +327,12 @@ angular.module('kibana.histogram', [])
                 hoverable: true,
               },
               colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
-            })
+            }
+
+            if(scope.panel.interactive)
+              options.selection = { mode: "x", color: '#aaa' };
+
+            scope.plot = $.plot(elem, scope.data, options)
             
             // Work around for missing legend at initialization
             if(!scope.$$phase)

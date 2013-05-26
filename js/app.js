@@ -17,12 +17,9 @@ var modules = [
 var scripts = []
 
 var labjs = $LAB
-  .script("common/lib/jquery-1.8.0.min.js").wait()
+  .script("common/lib/jquery-1.8.0.min.js")
   .script("common/lib/modernizr-2.6.1.min.js")
   .script("common/lib/underscore.min.js")  
-  .script("common/lib/bootstrap.min.js")
-  .script('common/lib/datepicker.js')
-  .script('common/lib/timepicker.js')
   .script("common/lib/angular.min.js")
   .script("common/lib/angular-strap.min.js")
   .script("common/lib/angular-sanitize.min.js")
@@ -31,6 +28,9 @@ var labjs = $LAB
   .script("common/lib/moment.js")
   .script("common/lib/shared.js")
   .script("common/lib/filesaver.js")
+  .script("common/lib/bootstrap.min.js")
+  .script('common/lib/datepicker.js')
+  .script('common/lib/timepicker.js')
   .script("js/services.js")
   .script("js/controllers.js")
   .script("js/filters.js")

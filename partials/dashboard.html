@@ -9,7 +9,7 @@
           <div ng-show="row.collapsable">
             <div ng-class="{'row-open': !row.collapse, 'row-close': row.collapse}" style="position:absolute;margin-left:-60px;">
               <span class='pointer' ng-click="toggle_row(row)">{{row.title}}</span>
-              <i ng-show="row.editable" class="icon-edit pointer editlink" bs-modal="'partials/roweditor.html'"></i>
+              <i ng-show="row.editable" class="icon-cog pointer editlink" bs-modal="'partials/roweditor.html'"></i>
             </div>
           </div>
           <small ng-hide="row.collapsable" class="rotated">{{row.title}}</small>

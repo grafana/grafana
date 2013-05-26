@@ -203,7 +203,6 @@ charts or filled areas).
 
         //set percentage for stacked chart
         function processRawData(plot, series, data, datapoints) {
-            console.log(plot)
             if (!processed) {
                 processed = true;
                 stackSums = getStackSums(plot.getData());
