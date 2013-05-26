@@ -1,10 +1,10 @@
 <div class="row-fluid" ng-switch="panel.mode">
+<div class="span3">
+  <label class="small">Mode</label> 
+  <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['terms','goal']"></select>
+</div> 
   <div ng-switch-when="terms">
     <div class="row-fluid">
-      <div class="span3">
-        <label class="small">Mode</label> 
-        <select class="input-small" ng-change="set_mode(panel.mode)" ng-model="panel.mode" ng-options="f for f in ['terms','goal']"></select>
-      </div> 
       <div class="span3">
         <form style="margin-bottom: 0px">
           <label class="small">Field</label>

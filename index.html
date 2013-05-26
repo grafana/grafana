@@ -19,6 +19,14 @@
     <link rel="stylesheet" href="common/css/main.css">
     <link rel="stylesheet" href="common/css/elasticjs.css">
     <link rel="stylesheet" href="common/css/timepicker.css">
+  
+    <!-- project dependency libs -->
+    <script src="common/lib/LAB.min.js"></script>
+    <script src="common/lib/underscore.min.js"></script>
+    <script src="common/lib/settings.js"></script>
+    <script src="config.js"></script>
+    <script src="js/app.js"></script>
+
 
   </head>
 
@@ -32,7 +40,7 @@
         <div class="container-fluid">
           <p class="navbar-text pull-right"><small><strong>Kibana 3</strong> <small>milestone 2</small></small></p>
           <span class="brand">{{dashboards.title}}</span>
-          <div class="brand"><i class='icon-edit pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
+          <div class="brand"><i class='icon-cog pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
         </div>
       </div>
     </div>
@@ -42,12 +50,5 @@
       </div>
     </div>
   </body>
-
-  <!-- project dependency libs -->
-  <script src="common/lib/LAB.min.js"></script>
-  <script src="common/lib/underscore.min.js"></script>
-  <script src="common/lib/settings.js"></script>
-  <script src="config.js"></script>
-  <script src="js/app.js"></script>
 
 </html>
