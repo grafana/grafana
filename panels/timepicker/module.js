@@ -200,7 +200,8 @@ angular.module('kibana.timepicker', [])
     };
   }
 
-  $scope.time_apply = function() {      
+  $scope.time_apply = function() {   
+    $scope.panel.error = "";   
     // Update internal time object
     $scope.time = $scope.time_calc();
     $scope.time.field = $scope.panel.timefield
@@ -213,8 +214,12 @@ angular.module('kibana.timepicker', [])
         $scope.panel.index,
         $scope.panel.index_interval
       ).then(function (p) {
-        $scope.time.index = p;
-        eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
+        if(p.length > 0) {
+          $scope.time.index = p;
+          eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
+        } else {
+          $scope.panel.error = "Could not match index pattern to any ElasticSearch indices"
+        }
       });
     } else {
       $scope.time.index = [$scope.panel.index];
