@@ -274,6 +274,7 @@ angular.module('kibana.table', [])
         replace(/&/g, '&amp;').
         replace(/</g, '&lt;').
         replace(/>/g, '&gt;').
+        replace(/\r?\n/g, '<br/>').
         replace(/@start-highlight@/g, '<code class="highlight">').
         replace(/@end-highlight@/g, '</code>')
     }
