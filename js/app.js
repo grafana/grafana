@@ -17,7 +17,6 @@ var modules = [
 var scripts = []
 
 var labjs = $LAB
-  .script("common/lib/jquery-1.8.0.min.js")
   .script("common/lib/modernizr-2.6.1.min.js")
   .script("common/lib/underscore.min.js")  
   .script("common/lib/angular.min.js")
