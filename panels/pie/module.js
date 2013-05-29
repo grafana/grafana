@@ -206,7 +206,7 @@ angular.module('kibana.pie', [])
 
       // Function for rendering panel
       function render_panel() {
-        var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
+        var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
                         .script("common/lib/panels/jquery.flot.pie.js")
 
         if(scope.panel.mode === 'goal')

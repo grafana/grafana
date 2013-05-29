@@ -17,27 +17,28 @@ var modules = [
 var scripts = []
 
 var labjs = $LAB
+  .script("common/lib/jquery-1.8.0.min.js").wait()
   .script("common/lib/modernizr-2.6.1.min.js")
   .script("common/lib/underscore.min.js")  
-  .script("common/lib/angular.min.js")
+  .script("common/lib/angular.min.js").wait()
   .script("common/lib/angular-strap.min.js")
   .script("common/lib/angular-sanitize.min.js")
   .script("common/lib/elastic.min.js")
-  .script("common/lib/elastic-angular-client.js")
+  .script("common/lib/elastic-angular-client.js").wait()
   .script("common/lib/moment.js")
   .script("common/lib/shared.js")
   .script("common/lib/filesaver.js")
   .script("common/lib/bootstrap.min.js")
   .script('common/lib/datepicker.js')
-  .script('common/lib/timepicker.js')
+  .script('common/lib/timepicker.js').wait()
   .script("js/services.js")
   .script("js/controllers.js")
   .script("js/filters.js")
   .script("js/directives.js")
-  .script("js/panels.js")
+  .script("js/panels.js").wait()
 
 _.each(config.modules, function(v) {
-  labjs = labjs.script('panels/'+v+'/module.js').wait()
+  labjs = labjs.script('panels/'+v+'/module.js')
   modules.push('kibana.'+v)
 })
 

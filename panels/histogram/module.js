@@ -278,7 +278,7 @@ angular.module('kibana.histogram', [])
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 
-        var scripts = $LAB.script("common/lib/panels/jquery.flot.js")
+        var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
           .script("common/lib/panels/jquery.flot.time.js")
           .script("common/lib/panels/jquery.flot.stack.js")
           .script("common/lib/panels/jquery.flot.selection.js")
