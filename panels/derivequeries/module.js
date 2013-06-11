@@ -10,6 +10,7 @@
   * field :: the field to facet on
   * size :: how many queries to generate
   * fields :: a list of fields known to us
+  * query_mode :: how to create query
   
   ### Group Events
   #### Sends
@@ -33,6 +34,7 @@ angular.module('kibana.derivequeries', [])
     fields  : [],
     spyable : true,
     size    : 5,
+    mode    : 'terms only',
     exclude : []
   }
   _.defaults($scope.panel,_d);
@@ -80,8 +82,15 @@ angular.module('kibana.derivequeries', [])
     results.then(function(results) {
       $scope.panel.loading = false;
       var data = [];
+      if ($scope.panel.query === '' || $scope.panel.mode === 'terms only') {
+        var suffix = '';
+      } else if ($scope.panel.mode === 'AND') {
+        var suffix = ' AND ' + $scope.panel.query;
+      } else if ($scope.panel.mode === 'OR') {
+        var suffix = ' OR ' + $scope.panel.query;
+      }
       _.each(results.facets.query.terms, function(v) {
-        data.push($scope.panel.field+':"'+v.term+'" AND ' + ($scope.panel.query || '*'))
+        data.push($scope.panel.field+':"'+v.term+'"'+suffix)
       });
       $scope.send_query(data)
     });
