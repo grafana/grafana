@@ -85,9 +85,9 @@ angular.module('kibana.derivequeries', [])
       if ($scope.panel.query === '' || $scope.panel.mode === 'terms only') {
         var suffix = '';
       } else if ($scope.panel.mode === 'AND') {
-        var suffix = ' AND ' + $scope.panel.query;
+        var suffix = ' AND (' + $scope.panel.query + ')';
       } else if ($scope.panel.mode === 'OR') {
-        var suffix = ' OR ' + $scope.panel.query;
+        var suffix = ' OR (' + $scope.panel.query + ')';
       }
       _.each(results.facets.query.terms, function(v) {
         data.push($scope.panel.field+':"'+v.term+'"'+suffix)
