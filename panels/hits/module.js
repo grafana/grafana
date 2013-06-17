@@ -26,6 +26,7 @@ angular.module('kibana.hits', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Beta",
     query   : ["*"],
     group   : "default",
     style   : { "font-size": '10pt'},

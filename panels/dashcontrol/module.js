@@ -32,6 +32,7 @@ angular.module('kibana.dashcontrol', [])
   $scope.panel = $scope.panel || {};
   // Set and populate defaults
   var _d = {
+    status  : "Stable",
     group   : "default",
     save : {
       gist: false,

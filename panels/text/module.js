@@ -16,6 +16,7 @@ angular.module('kibana.text', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Stable",
     group   : "default",
     mode    : "markdown",
     content : "",

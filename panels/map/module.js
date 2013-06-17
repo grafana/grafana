@@ -32,6 +32,7 @@ angular.module('kibana.map', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Beta",
     query   : "*",
     map     : "world",
     colors  : ['#A0E2E2', '#265656'],

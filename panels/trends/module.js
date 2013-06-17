@@ -23,6 +23,7 @@ angular.module('kibana.trends', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Beta",
     query   : ["*"],
     group   : "default",
     style   : { "font-size": '14pt'},

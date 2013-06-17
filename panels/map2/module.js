@@ -3,6 +3,7 @@ angular.module('kibana.map2', [])
 
     // Set and populate defaults
     var _d = {
+      status : "Broken",
       query: "*",
       map: "world",
       colors: ['#C8EEFF', '#0071A4'],

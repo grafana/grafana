@@ -37,6 +37,7 @@ angular.module('kibana.pie', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Deprecating Soon",
     query   : { field:"_all", query:"*", goal: 1}, 
     size    : 10,
     exclude : [],

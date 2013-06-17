@@ -21,6 +21,7 @@ angular.module('kibana.debug', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Experimental",
     group   : "ALL",
     style   : {'font-size':'9pt'},
     size   : 20

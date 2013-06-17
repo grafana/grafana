@@ -22,6 +22,7 @@ angular.module('kibana.fields', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Beta",
     group   : "default",
     style   : {},
     arrange : 'vertical',
