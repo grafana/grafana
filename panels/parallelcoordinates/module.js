@@ -6,6 +6,7 @@ angular.module('kibana.parallelcoordinates', [])
 
     // Set and populate defaults
     var _d = {
+      status  : "Broken",
       query   : "*",
       size    : 100, // Per page
       pages   : 5,   // Pages available

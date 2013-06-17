@@ -32,6 +32,7 @@ angular.module('kibana.timepicker', [])
 
   // Set and populate defaults
   var _d = {
+    status        : "Stable",
     mode          : "relative",
     time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
     timespan      : '15m',

@@ -33,6 +33,7 @@ angular.module('kibana.table', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Stable",
     query   : "*",
     size    : 100, // Per page
     pages   : 5,   // Pages available

@@ -46,6 +46,7 @@ angular.module('kibana.histogram', [])
 
   // Set and populate defaults
   var _d = {
+    status      : "Stable",
     group       : "default",
     query       : [ {query: "*", label:"Query"} ],
     mode        : 'count',

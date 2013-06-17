@@ -24,6 +24,7 @@ angular.module('kibana.stringquery', [])
 
   // Set and populate defaults
   var _d = {
+    status  : "Stable",
     label   : "Search",
     query   : "*",
     group   : "default",
