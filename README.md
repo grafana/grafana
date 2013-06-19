@@ -39,7 +39,7 @@ server are on the same machine
 __A__: Kibana 3 does not work like previous versions of Kibana. To ease deployment, the server side
 component has been eliminated. Thus __the browser connects directly to Elasticsearch__. The default
 config.js setup works for the webserver+Elasticsearch on the same machine scenario. Do not set it
-to http://localhost:9200 unless your browser Wnd elasticsearch are on the same machine
+to http://localhost:9200 unless your browser and elasticsearch are on the same machine
 
 __Q__: How do I secure this? I don't want to leave 9200 open.  
 __A__: A simple nginx virtual host and proxy configuration can be found in the sample/nginx.conf 
