@@ -30,21 +30,24 @@ angular.module('kibana.stringquery', [])
     group   : "default",
     multi   : false,
     multi_arrange: 'horizontal',
+    history : [],
+    remember: 10 // max: 100, angular strap can't take a variable for items param
   }
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
-
     // If we're in multi query mode, they all get wiped out if we receive a 
     // query. Query events must be exchanged as arrays.
     eventBus.register($scope,'query',function(event,query) {
       $scope.panel.query = query;
+      update_history(query);
     });   
   }
 
   $scope.send_query = function(query) {
-    var _query = _.isArray(query) ? query : [query]
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',_query)
+    var _query = _.isArray(query) ? query : [query];
+    update_history(_query);
+    eventBus.broadcast($scope.$id,$scope.panel.group,'query',_query);
   }
 
   $scope.add_query = function() {
@@ -63,6 +66,16 @@ angular.module('kibana.stringquery', [])
 
   $scope.remove_query = function(index) {
     $scope.panel.query.splice(index,1);
+  }
+
+  var update_history = function(query) {
+    if($scope.panel.remember > 0) {
+      $scope.panel.history = _.union(query.reverse(),$scope.panel.history)
+      var _length = $scope.panel.history.length
+      if(_length > $scope.panel.remember) {
+        $scope.panel.history = $scope.panel.history.slice(0,$scope.panel.remember)
+      }
+    }
   }
 
 });
