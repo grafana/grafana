@@ -7,7 +7,7 @@
           <td width="97%" style="padding-right:20px">
             <span style="position:relative">
               <i class="icon-remove-sign pointer" style="position:absolute;left:10px;top:3px" ng-show="panel.query.length > 0" ng-click="panel.query='';send_query(panel.query)"></i>
-              <input type="text" style="text-indent:20px;width:100%" ng-model="panel.query">
+              <input bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" style="text-indent:20px;width:100%" ng-model="panel.query">
             </span>
           </td>
           <td style="margin-left:20px" width="1%">
@@ -21,7 +21,7 @@
         <span ng-repeat="q in panel.query">
           <span style="margin-bottom:0px;margin-right:5px;display:inline-block;position:relative">
             <i class="icon-remove-sign pointer" style="position:absolute;left:10px;top:8px" ng-show="panel.query.length > 1" ng-click="remove_query($index);send_query(panel.query)"></i>
-            <input style="margin-bottom:5px; text-indent: 20px;" type="text"  ng-model="panel.query[$index]" ng-model-onblur style="width:90%">
+            <input bs-typeahead="panel.history" data-min-length=0 data-items=100 style="margin-bottom:5px; text-indent: 20px;" type="text"  ng-model="panel.query[$index]" ng-model-onblur style="width:90%">
             <br>
           </span>
         </span>
@@ -37,7 +37,7 @@
           <td width="99%">
             <span style="position:relative">
               <i class="icon-remove-sign pointer" style="position:absolute;left:10px;top:3px" ng-show="panel.query.length > 1" ng-click="remove_query($index);send_query(panel.query)"></i>
-              <input type="text"  ng-model="panel.query[$index]" ng-model-onblur style="text-indent: 20px;width:100%">
+              <input bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text"  ng-model="panel.query[$index]" ng-model-onblur style="text-indent: 20px;width:100%">
             </span>
           </td>
           <td width="1%" style="visibility:hidden"><button class="btn btn-info" type="submit"></button></td>

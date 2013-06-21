@@ -11,7 +11,7 @@
         </tr>
         <tr>
           <td width="97%" style="padding-right:20px">
-            <input type="text" style="width:100%" ng-model="panel.query">
+            <input bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" style="width:100%" ng-model="panel.query">
           </td>
           <td ng-show="panel.fields.length > 0">
             <select class="input-small" ng-model="panel.field" ng-options="f for f in panel.fields"></select>
