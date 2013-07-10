@@ -1,5 +1,23 @@
 <kibana-panel ng-controller='histogram' ng-init="init()" style="height:{{panel.height || row.height}}">
-  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+  <style>
+    .histogram-legend {
+      display:inline-block;
+      padding-right:5px
+    }
+    .histogram-legend-dot {
+      display:inline-block;
+      height:10px;
+      width:10px;
+      border-radius:5px;  
+    }
+    .histogram-legend-item {
+      display:inline-block; 
+    }
+    .histogram-chart {
+      position:relative;
+    }
+  </style>
+  <span ng-show="panel.spyable" class='spy panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
   <div>
@@ -7,12 +25,12 @@
     <a class='small' ng-click='zoom(0.5)'><i class='icon-zoom-in'></i> Zoom In</a>
     <a class='small' ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a> | 
   </span>
-  <span ng-show="panel.legend" ng-repeat='series in plot.getData()' style='display:inline-block;padding-right:5px'>
-    <div style="display:inline-block;background:{{series.color}};height:10px;width:10px;border-radius:5px;"></div>
-    <div class='small' style='display:inline-block'>{{series.label}} ({{series.hits}})</div>
+  <span ng-show="panel.legend" ng-repeat='series in plot.getData()' class="histogram-legend">
+    <div class="histogram-legend-dot" style="background:{{series.color}};"></div>
+    <div class='small histogram-legend-item'>{{series.label}} ({{series.hits}})</div>
   </span>
   <span ng-show="panel.legend" class="small"><span ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="common/img/load_big.gif"></center>
-  <div histogram-chart params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+  <div histogram-chart class="histogram-chart" params="{{panel}}" style="height:{{panel.height || row.height}};"></div>
 </kibana-panel>         

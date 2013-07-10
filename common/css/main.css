@@ -6,6 +6,12 @@
   color: #000;
 }
 
+.spy {
+  position:absolute;
+  right:0px;
+  top:0px;
+}
+
 .navbar .brand {
   color: #eee;
 }

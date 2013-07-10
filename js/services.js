@@ -52,7 +52,7 @@ angular.module('kibana.services', [])
       if(!(_.isArray(_group)))
         _group = [_group];
       
-      // Transmit even only if the send is not the receiver AND one of the following:
+      // Transmit event only if the sender is not the receiver AND one of the following:
       // 1) Receiver has group in _to 2) Receiver's $id is in _to
       // 3) Event is addressed to ALL 4) Receiver is in ALL group 
       if((_.intersection(_to,_group).length > 0 || 
@@ -66,10 +66,10 @@ angular.module('kibana.services', [])
       }
     });
   }
-
 })
-/* Service: fields
-   Provides a global list of all seen fields for use in editor panels
+/* 
+  Service: fields
+  Provides a global list of all seen fields for use in editor panels
 */
 .factory('fields', function($rootScope) {
   var fields = {
@@ -119,7 +119,7 @@ angular.module('kibana.services', [])
   }
 
   // this is stupid, but there is otherwise no good way to ensure that when
-  // I extract the date from an object that I'm get the UTC date. Stupid js.
+  // I extract the date from an object that I get the UTC date. Stupid js.
   // I die a little inside every time I call this function.
   // Update: I just read this again. I died a little more inside.
   // Update2: More death.
@@ -186,17 +186,264 @@ angular.module('kibana.services', [])
   }
 
 })
-.service('keylistener', function($rootScope) {
-    var keys = [];
-    $(document).keydown(function (e) {
-      keys[e.which] = true;
-    });
+.service('query', function() {
 
-    $(document).keyup(function (e) {
-      delete keys[e.which];
-    });
+})
+.service('dashboard', function($routeParams, $http, $rootScope, ejsResource, timer) {
+  // A hash of defaults to use when loading a dashboard
 
-    this.keyActive = function(key) {
-      return keys[key] == true;
+  var _dash = {
+    title: "",
+    editable: true,
+    rows: [],
+    services: {}
+  };
+
+  // An elasticJS client to use
+  var ejs = ejsResource(config.elasticsearch);  
+  var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
+
+  // Empty dashboard object
+  this.current = {};
+  this.last = {};
+
+  // Store a reference to this
+  var self = this;
+
+  $rootScope.$on('$routeChangeSuccess',function(){
+    route();
+  })
+
+  var route = function() {
+    // Is there a dashboard type and id in the URL?
+    if(!(_.isUndefined($routeParams.type)) && !(_.isUndefined($routeParams.id))) {
+      var _type = $routeParams.type;
+      var _id = $routeParams.id;
+
+      if(_type === 'elasticsearch')
+        self.elasticsearch_load('dashboard',_id)
+      if(_type === 'temp')
+        self.elasticsearch_load('temp',_id)
+      if(_type === 'file')
+        self.file_load(_id)
+
+    // No dashboard in the URL
+    } else {
+      // Check if browser supports localstorage, and if there's a dashboard 
+      if (Modernizr.localstorage && 
+        !(_.isUndefined(localStorage['dashboard'])) &&
+        localStorage['dashboard'] !== ''
+      ) {
+        var dashboard = JSON.parse(localStorage['dashboard']);
+        _.defaults(dashboard,_dash);
+        self.dash_load(dashboard)
+      // No? Ok, grab default.json, its all we have now
+      } else {
+        self.file_load('default')
+      } 
     }
+  }
+
+  this.to_file = function() {
+    var blob = new Blob([angular.toJson(self.current,true)], {type: "application/json;charset=utf-8"});
+    // from filesaver.js
+    saveAs(blob, self.current.title+"-"+new Date().getTime());
+    return true;
+  }
+
+  this.set_default = function(dashboard) {
+    if (Modernizr.localstorage) {
+      localStorage['dashboard'] = angular.toJson(dashboard || self.current);
+      return true;
+    } else {
+      return false;
+    }  
+  }
+
+  this.purge_default = function() {
+    if (Modernizr.localstorage) {
+      localStorage['dashboard'] = '';
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // TOFIX: Pretty sure this breaks when you're on a saved dashboard already
+  this.share_link = function(title,type,id) {
+    return {
+      location  : location.href.replace(location.hash,""),
+      type      : type,
+      id        : id,
+      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id,
+      title     : title
+    };
+  }
+
+  this.file_load = function(file) {
+    return $http({
+      url: "dashboards/"+file,
+      method: "GET",
+    }).then(function(result) {
+      var _dashboard = result.data
+      _.defaults(_dashboard,_dash);
+      self.dash_load(_dashboard);
+      return true;
+    },function(result) {
+      return false;
+    });
+  }
+
+  this.elasticsearch_load = function(type,id) {
+    var request = ejs.Request().indices(config.kibana_index).types(type);
+    var results = request.query(
+      ejs.IdsQuery(id)
+    ).doSearch();
+    return results.then(function(results) {
+      if(_.isUndefined(results)) {
+        return false;
+      } else {
+        self.dash_load(angular.fromJson(results.hits.hits[0]['_source']['dashboard']))
+        return true;
+      }
+    });
+  }
+
+  this.elasticsearch_save = function(type,title,ttl) {
+    // Clone object so we can modify it without influencing the existing obejct
+    var save = _.clone(self.current)
+
+    // Change title on object clone
+    if (type === 'dashboard') {
+      var id = save.title = _.isUndefined(title) ? self.current.title : title;
+    }
+
+    // Create request with id as title. Rethink this.
+    var request = ejs.Document(config.kibana_index,type,id).source({
+      user: 'guest',
+      group: 'guest',
+      title: save.title,
+      dashboard: angular.toJson(save)
+    })
+    
+    if (type === 'temp')
+      request = request.ttl(ttl)
+
+    // TOFIX: Implement error handling here
+    return request.doIndex(
+      // Success
+      function(result) {
+        return result;
+      },
+      // Failure
+      function(result) {
+        return false;
+      }
+    );
+
+
+  }
+
+  this.elasticsearch_delete = function(id) {
+    return ejs.Document(config.kibana_index,'dashboard',id).doDelete(
+      // Success
+      function(result) {
+        return result;
+      },
+      // Failure
+      function(result) {
+        return false;
+      }
+    );
+  }
+
+  this.elasticsearch_list = function(query,count) {
+    var request = ejs.Request().indices(config.kibana_index).types('dashboard');
+    return request.query(
+      ejs.QueryStringQuery(query || '*')
+      ).size(count).doSearch(
+        // Success
+        function(result) {
+          return result;
+        },
+        // Failure
+        function(result) {
+          return false;
+        }
+      );
+  }
+
+  // TOFIX: Gist functionality
+  this.save_gist = function(title,dashboard) {
+    var save = _.clone(dashboard || self.current)
+    save.title = title || self.current.title;
+    return $http({
+      url: "https://api.github.com/gists",
+      method: "POST",
+      data: {
+        "description": save.title,
+        "public": false,
+        "files": {
+          "kibana-dashboard.json": {
+            "content": angular.toJson(save,true)
+          }
+        }
+      }
+    }).then(function(data, status, headers, config) {
+      return data.data.html_url;
+    }, function(data, status, headers, config) {
+      return false;
+    });
+  }
+
+  this.gist_list = function(id) {
+    return $http.jsonp("https://api.github.com/gists/"+id+"?callback=JSON_CALLBACK"
+    ).then(function(response) {
+      var files = []
+      _.each(response.data.data.files,function(v,k) {
+        try {
+          var file = JSON.parse(v.content)
+          files.push(file)
+        } catch(e) {
+          // Nothing?
+        }
+      });
+      return files;
+    }, function(data, status, headers, config) {
+      return false;
+    });
+  }
+
+  this.dash_load = function(dashboard) {
+    self.current = dashboard;
+    timer.cancel_all();
+    return true;
+  }
+
+  this.gist_id = function(string) {
+    if(self.is_gist(string))
+      return string.match(gist_pattern)[0].replace(/.*\//, '');
+  }
+
+  this.is_gist = function(string) {
+    if(!_.isUndefined(string) && string != '' && !_.isNull(string.match(gist_pattern)))
+      return string.match(gist_pattern).length > 0 ? true : false;
+    else
+      return false
+  }
+
+})
+.service('keylistener', function($rootScope) {
+  var keys = [];
+  $(document).keydown(function (e) {
+    keys[e.which] = true;
+  });
+
+  $(document).keyup(function (e) {
+    delete keys[e.which];
+  });
+
+  this.keyActive = function(key) {
+    return keys[key] == true;
+  }
 });

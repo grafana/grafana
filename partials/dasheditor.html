@@ -1,15 +1,15 @@
 <div class="modal-header">
   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>{{dashboards.title}} <small> editor</small></h3>
+  <h3>{{dashboard.current.title}} <small> editor</small></h3>
 </div>
 <div class="modal-body">
   <h4>Dashboard Control</h4>
   <div class="row-fluid">
     <div class="span8">
-      <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboards.title'></input>
+      <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.current.title'></input>
     </div>
     <div class="span1"> 
-      <label class="small"> Editable </label><input type="checkbox" ng-model="dashboards.editable" ng-checked="dashboards.editable" />
+      <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
     </div>
   </div>
   <div class="row-fluid">
@@ -21,11 +21,11 @@
           <th>Delete</th>
           <th>Move</th>
         </thead>
-        <tr ng-repeat="row in dashboards.rows">
+        <tr ng-repeat="row in dashboard.current.rows">
           <td>{{row.title}}</td>
-          <td><i ng-click="dashboards.rows = _.without(dashboards.rows,row)" class="pointer icon-remove"></i></td>
-          <td><i ng-click="_.move(dashboards.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-          <td><i ng-click="_.move(dashboards.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+          <td><i ng-click="dashboard.current.rows = _.without(dashboard.current.rows,row)" class="pointer icon-remove"></i></td>
+          <td><i ng-click="_.move(dashboard.current.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+          <td><i ng-click="_.move(dashboard.current.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
         </tr>
       </table>
     </div>
@@ -45,7 +45,7 @@
         <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
       </div>
     </div>
-    <button ng-click="add_row(dashboards,row); reset_row();" class="btn btn-primary">Create Row</button><br>
+    <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-primary">Create Row</button><br>
   </div>
 </div>
 <div class="modal-footer">

@@ -49,7 +49,8 @@ angular.module('kibana.directives', [])
     }
   };
 })
-.directive('upload', function(timer){
+// Is this even used anymore? I don't think is is
+.directive('upload', function(timer,dashboard){
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -62,9 +63,7 @@ angular.module('kibana.directives', [])
           var reader = new FileReader();
           reader.onload = (function(theFile) {
             return function(e) {
-              // Render thumbnail.
-              scope.dashboards = JSON.parse(e.target.result)
-              timer.cancel_all();
+              dashboard.dash_load(JSON.parse(e.target.result))
               scope.$apply();
             };
           })(f);

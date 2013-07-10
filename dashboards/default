@@ -1,5 +1,6 @@
 {
   "title": "Logstash Search",
+  "services": {},
   "rows": [
     {
       "title": "Options",
