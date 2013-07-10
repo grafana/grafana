@@ -49,38 +49,7 @@ angular.module('kibana.directives', [])
     }
   };
 })
-// Is this even used anymore? I don't think is is
-.directive('upload', function(timer,dashboard){
-  return {
-    restrict: 'A',
-    link: function(scope, elem, attrs) {
-      function file_selected(evt) {
-        var files = evt.target.files; // FileList object
-
-        // files is a FileList of File objects. List some properties.
-        var output = [];
-        for (var i = 0, f; f = files[i]; i++) {
-          var reader = new FileReader();
-          reader.onload = (function(theFile) {
-            return function(e) {
-              dashboard.dash_load(JSON.parse(e.target.result))
-              scope.$apply();
-            };
-          })(f);
-          reader.readAsText(f);
-        }
-      }
-
-      // Check for the various File API support.
-      if (window.File && window.FileReader && window.FileList && window.Blob) {
-        // Something
-        document.getElementById('upload').addEventListener('change', file_selected, false);
-      } else {
-        alert('Sorry, the HTML5 File APIs are not fully supported in this browser.');
-      }
-    }
-  }
-}).directive('ngModelOnblur', function() {
+.directive('ngModelOnblur', function() {
   return {
     restrict: 'A',
     require: 'ngModel',
