@@ -28,9 +28,6 @@
     <div class="span3" ng-show="panel.load.elasticsearch">
       <label class="small">ES list size</label><input class="input-mini" type="number" ng-model="panel.elasticsearch_size">
     </div>
-    <div class="span3" ng-show="panel.load.elasticsearch">
-      <label class="small">ES store index</label><input class="input-small" type="text" ng-model="panel.elasticsearch_saveto">
-    </div>
   </div>
   <h5>Sharing</h5>
   <div class="row-fluid">    
@@ -41,11 +38,4 @@
       <label class="small">Shared Link TTL (examples: 1m,1d,1w,30d)</label><input class="input-small" type="text" ng-model="panel.temp_ttl">
     </div>
   </div>
-  <h5>Other Settings</h5>
-  <div class="row-fluid">    
-    <div class="span3" >
-      <label class="small"> Remove this Dashboard Control from saved copies </label><input type="checkbox" ng-model="panel.hide_control" ng-checked="panel.hide_control">    
-    </div>
-  </div>
-   
 </div>

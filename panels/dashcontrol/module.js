@@ -17,7 +17,6 @@
   ** local :: Allow loading of dashboards from Elasticsearch
   * hide_control :: Upon save, hide this panel
   * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
-  * elasticsearch_saveto :: Special kibana index to save to
   * temp :: Allow saving of temp dashboards
   * temp_ttl :: How long should temp dashboards persist
 
@@ -48,7 +47,6 @@ angular.module('kibana.dashcontrol', [])
     },
     hide_control: false,
     elasticsearch_size: 20,
-    elasticsearch_saveto: $scope.config.kibana_index,
     temp: true,
     temp_ttl: '30d'
   }
@@ -93,7 +91,6 @@ angular.module('kibana.dashcontrol', [])
         if(type === 'temp') {
           $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id)
         }
-        console.log(result)
       } else {
         $scope.alert('Save failed','Dashboard could not be saved to Elasticsearch','error',5000)
       }
@@ -133,7 +130,6 @@ angular.module('kibana.dashcontrol', [])
   $scope.save_gist = function() {
     dashboard.save_gist($scope.gist.title).then(
       function(link) {
-        console.log(link)
       if(!_.isUndefined(link)) {
         $scope.gist.last = link;
         $scope.alert('Gist saved','You will be able to access your exported dashboard file at <a href="'+link+'">'+link+'</a> in a moment','success');
