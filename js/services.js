@@ -186,7 +186,89 @@ angular.module('kibana.services', [])
   }
 
 })
-.service('query', function() {
+.service('query', function(dashboard) {
+  // Create an object to hold our service state on the dashboard
+  dashboard.current.services.query = dashboard.current.services.query || {};
+  _.defaults(dashboard.current.services.query,{
+    idQueue : [],
+    list : {},
+    ids : [],
+  });
+
+  // For convenience 
+  var _q = dashboard.current.services.query;
+  this.colors = [ 
+    "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0", //1
+    "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477", //2
+    "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0", //3
+    "#629E51","#E5AC0E","#64B0C8","#E0752D","#BF1B00","#0A50A1","#962D82","#614D93", //4
+    "#9AC48A","#F2C96D","#65C5DB","#F9934E","#EA6460","#5195CE","#D683CE","#806EB7", //5
+    "#3F6833","#967302","#2F575E","#99440A","#58140C","#052B51","#511749","#3F2B5B", //6
+    "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"  //7
+  ];
+
+  // Save a reference to this
+  this.list = dashboard.current.services.query.list;
+  this.ids = dashboard.current.services.query.ids;
+
+  var self = this;
+
+  var init = function() {
+    if (self.ids.length == 0) {
+      self.set({});
+    }
+  }
+
+  // This is used both for adding queries and modifying them. If an id is passed, the query at that id is updated
+  this.set = function(query,id) {
+    if(!_.isUndefined(id)) {
+      if(!_.isUndefined(self.list[id])) {
+        _.extend(self.list[id],query);
+        return id;
+      } else {
+        return false;
+      }
+    } else {
+      var _id = nextId();
+      var _query = {
+        query: '*',
+        alias: '',
+        color: colorAt(_id)
+      }
+      _.defaults(query,_query)
+      self.list[_id] = query;
+      self.ids.push(_id)
+      return id;
+    }
+
+  }
+
+  this.remove = function(id) {
+    if(!_.isUndefined(self.list[id])) {
+      delete self.list[id];
+      // This must happen on the full path also since _.without returns a copy
+      self.ids = dashboard.current.services.query.ids = _.without(self.ids,id)
+      _q.idQueue.unshift(id)
+      _q.idQueue.sort(function(a,b){return a-b});
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  var nextId = function() {
+    if(_q.idQueue.length > 0) {
+      return _q.idQueue.shift()
+    } else {
+      return self.ids.length;
+    }
+  }
+
+  var colorAt = function(id) {
+    return self.colors[id % self.colors.length]
+  }
+
+  init();
 
 })
 .service('dashboard', function($routeParams, $http, $rootScope, ejsResource, timer) {

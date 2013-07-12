@@ -22,7 +22,7 @@
 
 */
 angular.module('kibana.hits', [])
-.controller('hits', function($scope, eventBus) {
+.controller('hits', function($scope, eventBus, query) {
 
   // Set and populate defaults
   var _d = {
@@ -40,16 +40,20 @@ angular.module('kibana.hits', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function () {
+    $scope.queries = query;
+
     $scope.hits = 0;
     eventBus.register($scope,'time', function(event,time){
       set_time(time)
     });
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.map(query,function(q) {
-        return {query: q, label: q};
-      })
+
+
+    $scope.$on('refresh',function(){
+      console.log($scope.queries)
+      console.log(query)
       $scope.get_data();
-    });
+    })
+
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
@@ -66,23 +70,18 @@ angular.module('kibana.hits', [])
     var request = $scope.ejs.Request().indices($scope.index[_segment]);
     
     // Build the question part of the query
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
+    _.each($scope.queries.ids, function(id) {
+      var query = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
         ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
           .to($scope.time.to))
-      )
-    });
-
-    // Build the facet part
-    _.each(queries, function(v) {
+    
       request = request
-        .facet($scope.ejs.QueryFacet("query"+_.indexOf(queries,v))
-          .query(v)
+        .facet($scope.ejs.QueryFacet(id)
+          .query(query)
         ).size(0)
-    })
+    });
 
     // TODO: Spy for hits panel
     //$scope.populate_modal(request);
@@ -107,14 +106,15 @@ angular.module('kibana.hits', [])
       }
       if($scope.query_id === query_id) {
         var i = 0;
-        _.each(results.facets, function(v, k) {
+        _.each(results.facets, function(v, id) {
           var hits = _.isUndefined($scope.data[i]) || _segment == 0 ? 
             v.count : $scope.data[i].hits+v.count
           $scope.hits += v.count
 
           // Create series
           $scope.data[i] = { 
-            label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+            //label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+            id: id,
             hits: hits,
             data: [[i,hits]]
           };
@@ -176,6 +176,11 @@ angular.module('kibana.hits', [])
 
       // Function for rendering panel
       function render_panel() {
+
+        _.each(scope.data,function(series) {
+          series.label = scope.queries.list[series.id].alias,
+          series.color = scope.queries.list[series.id].color
+        })
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
                           .script("common/lib/panels/jquery.flot.pie.js")

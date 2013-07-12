@@ -91,7 +91,7 @@ function top_field_values(docs,field,count) {
 }
 
 function add_to_query(original,field,value,negate) {
-  var not = negate ? "NOT " : "";
+  var not = negate ? "-" : "";
   if(value !== '')
     var query = field + ":" + "\"" + addslashes(value.toString()) + "\"";
   else

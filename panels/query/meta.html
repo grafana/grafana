@@ -1,0 +1,5 @@
+<style>
+</style>
+<a class="close" ng-click="render();dismiss();" href="">×</a>
+<input class="input-medium" type="text" ng-model="queries.list[id].alias" placeholder='Alias...' />
+<i ng-repeat="color in queries.colors" class="pointer" ng-class="{'icon-circle-blank':queries.list[id].color == color,'icon-circle':queries.list[id].color != color}" style="color:{{color}}" ng-click="queries.list[id].color = color;render();"> </i>

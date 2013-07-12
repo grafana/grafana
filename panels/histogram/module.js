@@ -42,7 +42,7 @@
 */
 
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, eventBus) {
+.controller('histogram', function($scope, eventBus,query) {
 
   // Set and populate defaults
   var _d = {
@@ -72,39 +72,19 @@ angular.module('kibana.histogram', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
+
+    $scope.queries = query;
+
     eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
-    
-    // Consider eliminating the check for array, this should always be an array
-    eventBus.register($scope,'query', function(event, query) {
-      if(_.isArray(query)) {
-        $scope.panel.query = _.map(query,function(q) {
-          return {query: q, label: q};
-        })
-      } else {
-        $scope.panel.query[0] = {query: query, label: query}
-      }
+
+    $scope.$on('refresh',function(){
       $scope.get_data();
-    });
+    })
 
     // Now that we're all setup, request the time from our group if we don't 
     // have it yet
     if(_.isUndefined($scope.time))
       eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
-  }
-
-  $scope.remove_query = function(q) {
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    if(!(_.isArray($scope.panel.query)))
-      $scope.panel.query = new Array();
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
-    $scope.get_data();
   }
 
   $scope.get_data = function(segment,query_id) {
@@ -120,22 +100,17 @@ angular.module('kibana.histogram', [])
     var _segment = _.isUndefined(segment) ? 0 : segment
     var request = $scope.ejs.Request().indices($scope.index[_segment]);
 
-    // Build the question part of the query
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
+    // Build the query
+    _.each($scope.queries.ids, function(id) {
+      var query = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
         ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
-          .to($scope.time.to))
+          .to($scope.time.to)
       )
-    });
 
-    // Build the facet part, injecting the query in as a facet filter
-    _.each(queries, function(v) {
-
-      var facet = $scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
-
+      var facet = $scope.ejs.DateHistogramFacet(id)
+      
       if($scope.panel.mode === 'count') {
         facet = facet.field($scope.time.field)
       } else {
@@ -145,9 +120,9 @@ angular.module('kibana.histogram', [])
         }
         facet = facet.keyField($scope.time.field).valueField($scope.panel.value_field)
       }
-      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(v))
+      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(query))
       request = request.facet(facet).size(0)
-    })
+    });
 
     // Populate the inspector panel
     $scope.populate_modal(request);
@@ -174,7 +149,7 @@ angular.module('kibana.histogram', [])
       if($scope.query_id === query_id) {
 
         var i = 0;
-        _.each(results.facets, function(v, k) {
+        _.each(results.facets, function(v, id) {
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
@@ -197,15 +172,12 @@ angular.module('kibana.histogram', [])
           // Create the flot series object
           var series = { 
             data: {
-              label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+              id: id,
               data: data,
               hits: hits
             },
           };
 
-          if (!(_.isUndefined($scope.panel.query[i].color)))
-            series.data.color = $scope.panel.query[i].color;
-          
           $scope.data[i] = series.data
 
           i++;
@@ -276,6 +248,12 @@ angular.module('kibana.histogram', [])
       // Function for rendering panel
       function render_panel() {
  
+        // Populate from the query service
+        _.each(scope.data,function(series) {
+          series.label = scope.queries.list[series.id].alias,
+          series.color = scope.queries.list[series.id].color
+        })
+
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 

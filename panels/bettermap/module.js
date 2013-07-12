@@ -22,7 +22,7 @@
 */
 
 angular.module('kibana.bettermap', [])
-.controller('bettermap', function($scope, eventBus) {
+.controller('bettermap', function($scope, eventBus, query) {
 
   // Set and populate defaults
   var _d = {
@@ -37,11 +37,12 @@ angular.module('kibana.bettermap', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
+
+    $scope.$on('refresh',function(){
       $scope.get_data();
-    });
+    })
+
+    eventBus.register($scope,'time', function(event,time){set_time(time)});
 
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
@@ -64,9 +65,14 @@ $scope.get_data = function(segment,query_id) {
     var _segment = _.isUndefined(segment) ? 0 : segment
     $scope.segment = _segment;
 
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery((q.query || '*') + " AND _exists_:"+$scope.panel.field))
+    })
+
     var request = $scope.ejs.Request().indices($scope.index[_segment])
       .query(ejs.FilteredQuery(
-        ejs.QueryStringQuery(($scope.panel.query || '*') + " AND _exists_:"+$scope.panel.field),
+        boolQuery,
         ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
           .to($scope.time.to)
@@ -140,12 +146,6 @@ $scope.get_data = function(segment,query_id) {
     $scope.time = time;
     $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
     $scope.get_data();
-  }
-
-  $scope.build_search = function(field,value) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,false)
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
   }
 
 })

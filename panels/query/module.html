@@ -1,0 +1,51 @@
+<kibana-panel ng-controller='query' ng-init="init()">
+<style>
+  .short-query {
+    display:inline-block;
+    margin-left: 10px;
+  }
+  .begin-query {
+    position:absolute;
+    left:15px;
+    top:5px;
+  }
+  .end-query {
+    position:absolute;
+    right:15px;
+    top:5px;
+  }
+  .panel-query {
+    padding-left: 35px !important;
+    height: 31px !important;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
+  }
+  .form-search:hover .has-remove {
+    padding-left: 50px !important;
+  }
+  .remove-query {
+    opacity: 0;
+  }
+  .last-query {
+    padding-right: 45px !important;
+  }
+  .form-search:hover .remove-query {
+    opacity: 1;
+  }
+</style>
+  <label class="small">{{panel.label}}</label>
+  <div ng-repeat="id in queries.ids" ng-class="{'short-query': queries.ids.length>1}">
+    <form class="form-search" style="position:relative" ng-submit="refresh()">
+      <span class="begin-query">
+        <i class="icon-circle pointer" data-unique="1" bs-popover="'panels/query/meta.html'" data-placement="right" style="color:{{queries.list[id].color}}"></i>
+        <i class="icon-remove-sign pointer remove-query" ng-show="queries.ids.length>1" ng-click="queries.remove(id);refresh()"></i>
+      </span>
+      <input class="search-query panel-query" ng-class="{'input-block-level': queries.ids.length==1,'last-query': $last,'has-remove': queries.ids.length>1}" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="queries.list[id].query"/>
+      <span class="end-query">
+        <i class="icon-search pointer" ng-click="refresh()" ng-show="$last"></i>
+        <i class="icon-plus pointer" ng-click="queries.set({})" ng-show="$last"></i>
+      </span
+    </form>
+  </div>
+</kibana-panel>

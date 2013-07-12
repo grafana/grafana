@@ -14,38 +14,6 @@
       <label class="small">Note</label><small> In <strong>{{panel.mode}}</strong> mode the configured field <strong>must</strong> be a numeric type</small>
     </div>
   </div>
-  <div class="row-fluid">
-    <div class="span3">
-      <form style="margin-bottom: 0px">
-        <label class="small">Label</label>
-        <input type="text" placeholder="New Label" style="width:70%" ng-model="newlabel">
-      </form>
-    </div>
-    <div class="span8">
-      <label class="small">Query</label>
-      <form class="input-append" style="margin-bottom: 0px">
-        <input type="text" placeholder="New Query" style="width:80%" ng-model="newquery">
-        <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery='';set_refresh(true)"><i class="icon-plus"></i></button>
-      </form>
-    </div>
-    <div class="span1">
-    </div>
-  </div>
-  <div class="row-fluid" ng-repeat="q in panel.query">        
-    <div class="span3">
-      <form style="margin-bottom: 0px">
-        <input type="text" style="width:70%" ng-model="q.label" ng-change="set_refresh(true)">
-      </form>
-    </div>
-    <div class="span8">
-      <form style="margin-bottom: 0px">
-        <input type="text" style="width:80%" ng-model="q.query" ng-change="set_refresh(true)">
-      </form>
-    </div>
-    <div class="span1">
-      <i class="icon-remove pointer" ng-click="remove_query(q)"></i>
-    </div>
-  </div>
   <h5>Chart Options</h5>
   <div class="row-fluid" style="margin-bottom:10px;">
     <div class="span1"> <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>

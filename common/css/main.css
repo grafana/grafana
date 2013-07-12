@@ -107,6 +107,10 @@
   cursor: pointer;
 }
 
+.pointer:hover {
+  color: #fff;
+}
+
 .pointer {
   cursor: pointer;
 }

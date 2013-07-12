@@ -29,7 +29,7 @@
 */
 
 angular.module('kibana.table', [])
-.controller('table', function($scope, eventBus, fields) {
+.controller('table', function($rootScope, $scope, eventBus, fields, query) {
 
   // Set and populate defaults
   var _d = {
@@ -60,14 +60,10 @@ angular.module('kibana.table', [])
   }
 
   $scope.set_listeners = function(group) {
+    $scope.$on('refresh',function(){$scope.get_data()})
     eventBus.register($scope,'time',function(event,time) {
       $scope.panel.offset = 0;
       set_time(time)
-    });
-    eventBus.register($scope,'query',function(event,query) {
-      $scope.panel.offset = 0;
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
     });
     eventBus.register($scope,'sort', function(event,sort){
       $scope.panel.sort = _.clone(sort);
@@ -77,7 +73,7 @@ angular.module('kibana.table', [])
       $scope.panel.fields = _.clone(fields)
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
-        $scope.panel.query = docs.query;
+        query.list[query.ids[0]].query = docs.query;
         $scope.data = docs.docs;
     });
   }
@@ -116,10 +112,11 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field,value,negate) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,negate)
+    _.each(query.list,function(q) {
+      q.query = add_to_query(q.query,field,value,negate);
+    })
     $scope.panel.offset = 0;
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
+    $rootScope.$broadcast('refresh')
   }
 
   $scope.get_data = function(segment,query_id) {
@@ -135,8 +132,15 @@ angular.module('kibana.table', [])
     $scope.segment = _segment;
 
     var request = $scope.ejs.Request().indices($scope.index[_segment])
-      .query(ejs.FilteredQuery(
-        ejs.QueryStringQuery($scope.panel.query || '*'),
+
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
+    })
+
+    request = request.query(
+      ejs.FilteredQuery(
+        boolQuery,
         ejs.RangeFilter($scope.time.field)
           .from($scope.time.from)
           .to($scope.time.to)
@@ -244,7 +248,7 @@ angular.module('kibana.table', [])
     });
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
       {
-        query: $scope.panel.query,
+        query: query.list[query.ids[0]].query,
         docs : _.pluck($scope.data,'_source'),
         index: $scope.index
       });
