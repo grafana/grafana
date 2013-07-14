@@ -12,9 +12,64 @@
       <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
     </div>
   </div>
+  <div class="row-fluid">    
+    <h4>Index Settings</h4>
+    <div ng-show="dashboard.current.index.interval != 'none'" class="row-fluid"> 
+       <div class="span12">
+        <p class="small">
+          Time stamped indices use your selected time range to create a list of 
+          indices that match a specified timestamp pattern. This can be very 
+          efficient for some data sets (eg, logs) For example, to match the 
+          default logstash index pattern you might use 
+          <code>[logstash-]YYYY.MM.DD</code>. The [] in "[logstash-]" are 
+          important as they instruct Kibana not to treat those letters as a 
+          pattern.
+        </p>
+        <p class="small">
+          See <a href="http://momentjs.com/docs/#/displaying/format/">http://momentjs.com/docs/#/displaying/format/</a>
+          for documentation on date formatting.
+        </p>
+
+       </div>
+    </div>
+    <div class="row-fluid"> 
+      <div class="span3">
+        <h6>Timestamping</h6><select class="input-small" ng-model="dashboard.current.index.interval" ng-options='f for f in ["none","hour","day","week","month","year"]'></select>
+      </div>
+      <div class="span5">
+        <h6>Index <span ng-show="dashboard.current.index.interval != 'none'">pattern <small>Absolutes in []</small></span></h6>
+        <input type="text" class="input-medium" ng-model="dashboard.current.index.pattern">
+      </div>
+      <div class="span4">
+        <h6>Failover Index <small>If index not found</small></h6>
+        <input type="text" class="input-medium" ng-model="dashboard.current.index.default">
+      </div>
+    </div>
+  </div>
+  <hr/>
+  <h4>Rows</h4>
+  <div class="row-fluid">
+    <form>
+      <div class="span5">      
+        <label class="small">Title</label>
+        <input type="text" class="input-large" ng-model='row.title'></input>
+      </div>
+      <div class="span2">
+        <label class="small">Height</label>
+        <input type="text" class="input-mini" ng-model='row.height'></input>
+      </div>
+      <div class="span1">
+        <label class="small"> Editable </label>
+        <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
+      </div>
+      <div class="span4">
+        <label>&nbsp</label>
+        <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-primary">Create Row</button>
+      </div>
+    </form>
+  </div>
   <div class="row-fluid">
     <div class="span12">
-      <h4>Rows</h4>
       <table class="table table-condensed table-striped">
         <thead>
           <th>Title</th>
@@ -29,23 +84,6 @@
         </tr>
       </table>
     </div>
-  </div>
-  <h4>New row</h4>
-    <div class="row-fluid">
-      <div class="span8">      
-        <label class="small">Title</label>
-        <input type="text" class="input-large" ng-model='row.title'></input>
-      </div>
-      <div class="span2">
-        <label class="small">Height</label>
-        <input type="text" class="input-mini" ng-model='row.height'></input>
-      </div>
-      <div class="span1">
-        <label class="small"> Editable </label>
-        <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
-      </div>
-    </div>
-    <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-primary">Create Row</button><br>
   </div>
 </div>
 <div class="modal-footer">

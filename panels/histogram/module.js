@@ -42,7 +42,7 @@
 */
 
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, eventBus,query) {
+.controller('histogram', function($scope, eventBus, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -50,6 +50,7 @@ angular.module('kibana.histogram', [])
     group       : "default",
     query       : [ {query: "*", label:"Query"} ],
     mode        : 'count',
+    time_field  : '@timestamp',
     value_field : null,
     auto_int    : true,
     resolution  : 100, 
@@ -75,50 +76,46 @@ angular.module('kibana.histogram', [])
 
     $scope.queries = query;
 
-    eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
-
     $scope.$on('refresh',function(){
       $scope.get_data();
     })
 
-    // Now that we're all setup, request the time from our group if we don't 
-    // have it yet
-    if(_.isUndefined($scope.time))
-      eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
   }
 
   $scope.get_data = function(segment,query_id) {
     delete $scope.panel.error
+
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
 
+    var _range = $scope.range = filterSrv.timeRange('min');
+    
     if ($scope.panel.auto_int)
-      $scope.panel.interval = secondsToHms(calculate_interval($scope.time.from,$scope.time.to,$scope.panel.resolution,0)/1000);
-
+      $scope.panel.interval = secondsToHms(calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
+    
     $scope.panel.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment
-    var request = $scope.ejs.Request().indices($scope.index[_segment]);
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
     // Build the query
     _.each($scope.queries.ids, function(id) {
       var query = $scope.ejs.FilteredQuery(
         ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to)
+        filterSrv.getBoolFilter(filterSrv.ids)
       )
 
       var facet = $scope.ejs.DateHistogramFacet(id)
       
       if($scope.panel.mode === 'count') {
-        facet = facet.field($scope.time.field)
+        facet = facet.field($scope.panel.time_field)
       } else {
         if(_.isNull($scope.panel.value_field)) {
           $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
           return
         }
-        facet = facet.keyField($scope.time.field).valueField($scope.panel.value_field)
+        facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field)
       }
       facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(query))
       request = request.facet(facet).size(0)
@@ -132,6 +129,7 @@ angular.module('kibana.histogram', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+
       $scope.panel.loading = false;
       if(_segment == 0) {
         $scope.hits = 0;
@@ -145,15 +143,21 @@ angular.module('kibana.histogram', [])
         return;
       }
 
-      // Make sure we're still on the same query
-      if($scope.query_id === query_id) {
+      // Convert facet ids to numbers
+      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k);})
+
+      // Make sure we're still on the same query/queries
+      if($scope.query_id === query_id && 
+        _.intersection(facetIds,query.ids).length == query.ids.length
+        ) {
 
         var i = 0;
-        _.each(results.facets, function(v, id) {
+        _.each(query.ids, function(id) {
+          var v = results.facets[id];
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
-            var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
+            var data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
             var hits = 0;
           } else {
             var data = $scope.data[i].data
@@ -172,7 +176,7 @@ angular.module('kibana.histogram', [])
           // Create the flot series object
           var series = { 
             data: {
-              id: id,
+              info: $scope.queries.list[id],
               data: data,
               hits: hits
             },
@@ -187,7 +191,7 @@ angular.module('kibana.histogram', [])
         $scope.$emit('render')
 
         // If we still have segments left, get them
-        if(_segment < $scope.index.length-1) {
+        if(_segment < dashboard.indices.length-1) {
           $scope.get_data(_segment+1,query_id)
         }
       
@@ -198,7 +202,32 @@ angular.module('kibana.histogram', [])
   // function $scope.zoom
   // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
   $scope.zoom = function(factor) {
-    eventBus.broadcast($scope.$id,$scope.panel.group,'zoom',factor);
+    var _now = Date.now();
+    var _range = filterSrv.timeRange('min');
+    var _timespan = (_range.to.valueOf() - _range.from.valueOf());
+    var _center = _range.to.valueOf() - _timespan/2
+
+    var _to = (_center + (_timespan*factor)/2)
+    var _from = (_center - (_timespan*factor)/2)
+
+    // If we're not already looking into the future, don't.
+    if(_to > Date.now() && _range.to < Date.now()) {
+      var _offset = _to - Date.now()
+      _from = _from - _offset
+      _to = Date.now();
+    }
+
+    if(factor > 1) {
+      filterSrv.removeByType('time')
+    }
+    filterSrv.set({
+      type:'time',
+      from:moment.utc(_from),
+      to:moment.utc(_to),
+      field:$scope.panel.time_field
+    })
+    dashboard.refresh();
+
   }
 
   // I really don't like this function, too much dom manip. Break out into directive?
@@ -223,14 +252,8 @@ angular.module('kibana.histogram', [])
     $scope.$emit('render');
   }
 
-  $scope.set_time = function(time) {
-    $scope.time = time;
-    $scope.index = time.index || $scope.index    
-    $scope.get_data();
-  }
-
 })
-.directive('histogramChart', function(eventBus) {
+.directive('histogramChart', function(dashboard, eventBus, filterSrv, $rootScope) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -249,10 +272,12 @@ angular.module('kibana.histogram', [])
       function render_panel() {
  
         // Populate from the query service
-        _.each(scope.data,function(series) {
-          series.label = scope.queries.list[series.id].alias,
-          series.color = scope.queries.list[series.id].color
-        })
+        try {
+          _.each(scope.data,function(series) {
+            series.label = series.info.alias,
+            series.color = series.info.color
+          })
+        } catch(e) {return}
 
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
@@ -366,9 +391,13 @@ angular.module('kibana.histogram', [])
       });
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.time.from = moment(ranges.xaxis.from);
-        scope.time.to   = moment(ranges.xaxis.to)
-        eventBus.broadcast(scope.$id,scope.panel.group,'set_time',scope.time)
+        var _id = filterSrv.set({
+          type  : 'time',
+          from  : moment.utc(ranges.xaxis.from),
+          to    : moment.utc(ranges.xaxis.to),
+          field : scope.panel.time_field
+        })
+        dashboard.refresh();
       });
     }
   };

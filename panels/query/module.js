@@ -39,12 +39,10 @@ angular.module('kibana.query', [])
   }
 
   $scope.refresh = function(query) {
-    console.log('refresh')
     $rootScope.$broadcast('refresh')
   }
 
   $scope.render = function(query) {
-    console.log('render')
     $rootScope.$broadcast('render')
   }
 

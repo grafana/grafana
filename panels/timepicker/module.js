@@ -11,9 +11,6 @@
   * time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
   * timespan :: The default options selected for the relative view. Default: '15m'
   * timefield :: The field in which time is stored in the document.
-  * index :: Index pattern to match. Literals should be double quoted. Default: '_all'
-  * defaultindex :: Index to failover to if index not found
-  * index_interval :: Time between timestamped indices (can be 'none') for static index
   * refresh: Object containing refresh parameters
     * enable :: true/false, enable auto refresh by default. Default: false
     * interval :: Seconds between auto refresh. Default: 30
@@ -28,7 +25,7 @@
 */
 
 angular.module('kibana.timepicker', [])
-.controller('timepicker', function($scope, eventBus, $timeout, timer, $http, kbnIndex) {
+.controller('timepicker', function($scope, $rootScope, eventBus, $timeout, timer, $http, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -37,9 +34,6 @@ angular.module('kibana.timepicker', [])
     time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
     timespan      : '15m',
     timefield     : '@timestamp',
-    index         : '_all',
-    defaultindex  : "_all",
-    index_interval: "none",
     timeformat    : "",
     group         : "default",
     refresh       : {
@@ -57,6 +51,7 @@ angular.module('kibana.timepicker', [])
     // Private refresh interval that we can use for view display without causing
     // unnecessary refreshes during changes
     $scope.refresh_interval = $scope.panel.refresh.interval
+
 
     // Init a private time object with Date() objects depending on mode
     switch($scope.panel.mode) {
@@ -86,35 +81,20 @@ angular.module('kibana.timepicker', [])
     if ($scope.panel.refresh.enable)
       $scope.set_interval($scope.panel.refresh.interval);
 
-    // In the case that a panel is not ready to receive a time event, it may
-    // request one be sent by broadcasting a 'get_time' with its _id to its group
-    // This panel can handle multiple groups
-    eventBus.register($scope,"get_time", function(event,id) {
-      eventBus.broadcast($scope.$id,id,'time',compile_time($scope.time))
-    });
-
     // In case some other panel broadcasts a time, set us to an absolute range
-    eventBus.register($scope,"set_time", function(event,time) {
-      $scope.panel.mode = 'absolute';
-      set_timepicker(moment(time.from),moment(time.to))
-      $scope.time_apply()
-    });
-    
-    eventBus.register($scope,"zoom", function(event,factor) {
-      var _timespan = ($scope.time.to.valueOf() - $scope.time.from.valueOf());
-      try {
-        if($scope.panel.mode != 'absolute') {
-          $scope.panel.mode = 'since'
-          set_timepicker(moment($scope.time.to.valueOf() - _timespan*factor),$scope.time.to)
-        } else {
-          var _center = $scope.time.to.valueOf() - _timespan/2
-          set_timepicker(moment(_center - (_timespan*factor)/2),
-                         moment(_center + (_timespan*factor)/2))        
-        }
-      } catch (e) {
-        console.log(e)
-      }     
-      $scope.time_apply();
+    $scope.$on('refresh', function() {
+      var time = filterSrv.timeRange('min')
+
+      if($scope.time.from.diff(moment.utc(time.from)) != 0 
+        || $scope.time.to.diff(moment.utc(time.to)) != 0)
+      {
+        $scope.panel.mode = 'absolute';
+
+        // These 3 statements basicly do everything time_apply() does
+        set_timepicker(moment(time.from),moment(time.to))
+        $scope.time = $scope.time_calc();
+        update_panel()
+      }
     });
   }
 
@@ -146,10 +126,26 @@ angular.module('kibana.timepicker', [])
     }
   }
 
+  var update_panel = function() {
+    // Update panel's string representation of the time object.Don't update if
+    // we're in relative mode since we dont want to store the time object in the
+    // json for relative periods
+    if($scope.panel.mode !== 'relative') {
+      $scope.panel.time = { 
+        from : $scope.time.from.format("MM/DD/YYYY HH:mm:ss"),
+        to : $scope.time.to.format("MM/DD/YYYY HH:mm:ss"),
+      };
+    } else {
+      delete $scope.panel.time;
+    }
+  }
+
   $scope.set_mode = function(mode) {
     $scope.panel.mode = mode;
     $scope.panel.refresh.enable = mode === 'absolute' ? 
       false : $scope.panel.refresh.enable
+
+    update_panel();
   }
 
   $scope.to_now = function() {
@@ -201,45 +197,36 @@ angular.module('kibana.timepicker', [])
     };
   }
 
-  $scope.time_apply = function() {   
+  $scope.time_apply = function() { 
     $scope.panel.error = "";   
     // Update internal time object
+
+    // Remove all other time filters
+    filterSrv.removeByType('time')
+
     $scope.time = $scope.time_calc();
     $scope.time.field = $scope.panel.timefield
+    update_panel()
 
-    // Get indices for the time period, then broadcast time range and index list
-    // in a single object. Not sure if I like this.
-    if($scope.panel.index_interval !== 'none') {
-      kbnIndex.indices($scope.time.from,
-        $scope.time.to,
-        $scope.panel.index,
-        $scope.panel.index_interval
-      ).then(function (p) {
-        if(p.length > 0) {
-          $scope.time.index = p;
-          eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
-        } else {
-          $scope.panel.error = "Could not match index pattern to any ElasticSearch indices"
-        }
-      });
-    } else {
-      $scope.time.index = [$scope.panel.index];
-      eventBus.broadcast($scope.$id,$scope.panel.group,'time',compile_time($scope.time))
-    }
+    set_time_filter($scope.time)
+    dashboard.refresh();
 
-    // Update panel's string representation of the time object.Don't update if
-    // we're in relative mode since we dont want to store the time object in the
-    // json for relative periods
-    if($scope.panel.mode !== 'relative') {
-      $scope.panel.time = { 
-        from : $scope.time.from.format("MM/DD/YYYY HH:mm:ss"),
-        to : $scope.time.to.format("MM/DD/YYYY HH:mm:ss"),
-        index : $scope.time.index,
-      };
-    } else {
-      delete $scope.panel.time;
-    }
   };
+
+
+  function set_time_filter(time) {
+    time.type = 'time'
+    // Check if there's a time filter we remember, if not, set one and remember it
+    if(!_.isUndefined($scope.panel.filter_id) && 
+      !_.isUndefined(filterSrv.list[$scope.panel.filter_id]) && 
+      filterSrv.list[$scope.panel.filter_id].type == 'time') 
+    {
+      filterSrv.set(compile_time(time),$scope.panel.filter_id)
+    } else {
+      $scope.panel.filter_id = filterSrv.set(compile_time(time))
+    }
+    return $scope.panel.filter_id;
+  }
 
   // Prefer to pass around Date() objects in the EventBus since interacting with
   // moment objects in libraries that are expecting Date()s can be tricky
@@ -247,8 +234,6 @@ angular.module('kibana.timepicker', [])
     time = _.clone(time)
     time.from = time.from.toDate()
     time.to   = time.to.toDate()
-    time.interval = $scope.panel.index_interval
-    time.pattern = $scope.panel.index 
     return time;
   }
 

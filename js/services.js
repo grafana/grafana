@@ -84,6 +84,7 @@ angular.module('kibana.services', [])
 
 })
 .service('kbnIndex',function($http) {
+
   // returns a promise containing an array of all indices matching the index
   // pattern that exist in a given range
   this.indices = function(from,to,pattern,interval) {
@@ -233,14 +234,14 @@ angular.module('kibana.services', [])
       var _query = {
         query: '*',
         alias: '',
-        color: colorAt(_id)
+        color: colorAt(_id),
+        id: _id
       }
       _.defaults(query,_query)
       self.list[_id] = query;
       self.ids.push(_id)
-      return id;
+      return _id;
     }
-
   }
 
   this.remove = function(id) {
@@ -254,6 +255,10 @@ angular.module('kibana.services', [])
     } else {
       return false;
     }
+  }
+
+  this.findQuery = function(queryString) {
+    return _.findWhere(self.list,{query:queryString})
   }
 
   var nextId = function() {
@@ -271,14 +276,185 @@ angular.module('kibana.services', [])
   init();
 
 })
-.service('dashboard', function($routeParams, $http, $rootScope, ejsResource, timer) {
+.service('filterSrv', function(dashboard, ejsResource) {
+  // Create an object to hold our service state on the dashboard
+  dashboard.current.services.filter = dashboard.current.services.filter || {};
+  _.defaults(dashboard.current.services.filter,{
+    idQueue : [],
+    list : {},
+    ids : [],
+  });
+
+  // For convenience
+  var ejs = ejsResource(config.elasticsearch);  
+  var _f = dashboard.current.services.filter;
+
+  // Save a reference to this
+  var self = this;
+
+  // Accessors
+  this.list = dashboard.current.services.filter.list;
+  this.ids = dashboard.current.services.filter.ids;
+
+  // This is used both for adding filters and modifying them. 
+  // If an id is passed, the filter at that id is updated
+  this.set = function(filter,id) {
+    _.defaults(filter,{mandate:'must'})
+    if(!_.isUndefined(id)) {
+      if(!_.isUndefined(self.list[id])) {
+        _.extend(self.list[id],filter);
+        return id;
+      } else {
+        return false;
+      }
+    } else {
+      if(_.isUndefined(filter.type)) {
+        return false;
+      } else {
+        var _id = nextId();
+        var _filter = {
+          alias: '',
+          id: _id
+        }
+        _.defaults(filter,_filter)
+        self.list[_id] = filter;
+        self.ids.push(_id)
+        return _id;
+      }
+    }
+  }
+
+  this.getBoolFilter = function(ids) {
+    // A default match all filter, just in case there are no other filters
+    var bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
+    _.each(ids,function(id) {
+      switch(self.list[id].mandate) 
+      {
+      case 'mustNot':
+        bool = bool.mustNot(self.getEjsObj(id));
+        break;
+      case 'should':
+        bool = bool.should(self.getEjsObj(id));
+        break;
+      default:
+        bool = bool.must(self.getEjsObj(id));
+      }
+    })
+    return bool;
+  }
+
+  this.getEjsObj = function(id) {
+    return self.toEjsObj(self.list[id])
+  }
+
+  this.toEjsObj = function (filter) {
+    switch(filter.type)
+    {
+    case 'time':
+      return ejs.RangeFilter(filter.field)
+        .from(filter.from)
+        .to(filter.to)
+      break;
+    case 'range':
+      return ejs.RangeFilter(filter.field)
+        .from(filter.from)
+        .to(filter.to)
+      break;
+    case 'querystring':
+      console.log(filter.query)
+      return ejs.QueryFilter(ejs.QueryStringQuery(filter.query))
+      break;
+    case 'terms':
+      return ejs.TermsFilter(filter.field,filter.value)
+      break;
+    case 'exists':
+      return ejs.ExistsFilter(filter.field)
+      break;
+    case 'missing':
+      return ejs.MissingFilter(filter.field)
+      break;
+    default:
+      return false;
+    }
+  }
+
+  this.getByType = function(type) {
+    return _.pick(self.list,self.idsByType(type))
+  }
+
+  this.removeByType = function(type) {
+    var ids = self.idsByType(type)
+    _.each(ids,function(id) {
+      self.remove(id)
+    })
+    return ids;
+  }
+
+  this.idsByType = function(type) {
+    return _.pluck(_.where(self.list,{type:type}),'id')
+  }
+
+  // This special function looks for all time filters, and returns a time range according to the mode
+  this.timeRange = function(mode) {
+    var _t = _.where(self.list,{type:'time'})
+    if(_t.length == 0) {
+      return false;
+    }
+    switch(mode) {
+    case "min":
+      return {
+        from: new Date(_.max(_.pluck(_t,'from'))),
+        to: new Date(_.min(_.pluck(_t,'to')))
+      }
+      break;
+    case "max":
+      return {
+        from: new Date(_.min(_.pluck(_t,'from'))),
+        to: new Date(_.max(_.pluck(_t,'to')))
+      }
+      break;
+    default:
+      return false;
+    }
+
+  } 
+
+  this.remove = function(id) {
+    if(!_.isUndefined(self.list[id])) {
+      delete self.list[id];
+      // This must happen on the full path also since _.without returns a copy
+      self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id)
+      _f.idQueue.unshift(id)
+      _f.idQueue.sort(function(a,b){return a-b});
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  var nextId = function() {
+    if(_f.idQueue.length > 0) {
+      return _f.idQueue.shift()
+    } else {
+      return self.ids.length;
+    }
+  }
+
+})
+.service('dashboard', function($routeParams, $http, $rootScope, $injector, ejsResource, timer, kbnIndex) {
   // A hash of defaults to use when loading a dashboard
 
   var _dash = {
     title: "",
     editable: true,
     rows: [],
-    services: {}
+    services: {},
+    index: {
+      interval: 'none',
+      pattern: '_all',
+      default: '_all'
+    },
   };
 
   // An elasticJS client to use
@@ -288,9 +464,11 @@ angular.module('kibana.services', [])
   // Empty dashboard object
   this.current = {};
   this.last = {};
+  this.indices = [];
 
   // Store a reference to this
   var self = this;
+  var filterSrv,query;
 
   $rootScope.$on('$routeChangeSuccess',function(){
     route();
@@ -323,6 +501,33 @@ angular.module('kibana.services', [])
       } else {
         self.file_load('default')
       } 
+    }
+  }
+
+  // Since the dashboard is responsible for index computation, we can compute and assign the indices 
+  // here before telling the panels to refresh
+  this.refresh = function() {
+    if(self.current.index.interval !== 'none') {
+      if(filterSrv.idsByType('time').length > 0) {
+        var _range = filterSrv.timeRange('min');
+        kbnIndex.indices(_range.from,_range.to,
+          self.current.index.pattern,self.current.index.interval
+        ).then(function (p) {
+          if(p.length > 0) {
+            self.indices = p;          
+          } else {
+            self.indices = [self.current.index.default]
+          }
+          $rootScope.$broadcast('refresh')
+        });
+      } else {
+        // This is not optimal, we should be getting the entire index list here, or at least every
+        // index that possibly matches the pattern
+        self.indices = [self.current.index.default]
+      }
+    } else {
+      self.indices = [self.current.index.pattern]
+      $rootScope.$broadcast('refresh')
     }
   }
 
@@ -422,8 +627,6 @@ angular.module('kibana.services', [])
         return false;
       }
     );
-
-
   }
 
   this.elasticsearch_delete = function(id) {
@@ -497,8 +700,18 @@ angular.module('kibana.services', [])
   }
 
   this.dash_load = function(dashboard) {
+
+    if(dashboard.index.interval === 'none') {
+      self.indices = [dashboard.index.pattern]
+    }
+
     self.current = dashboard;
+
     timer.cancel_all();
+
+    // Ok, now that we've setup the current dashboard, we can inject our services
+    query = $injector.get('query');
+    filterSrv = $injector.get('filterSrv')
     return true;
   }
 

@@ -3,7 +3,8 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, eventBus, fields, dashboard) {
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, eventBus, 
+  fields, dashboard) {
 
   var _d = {
     title: "",

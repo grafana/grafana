@@ -18,7 +18,7 @@
 
 */
 angular.module('kibana.fields', [])
-.controller('fields', function($scope, eventBus, $timeout) {
+.controller('fields', function($scope, eventBus, $timeout, dashboard, query, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -79,9 +79,15 @@ angular.module('kibana.fields', [])
     eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
   }
 
-  $scope.build_search = function(field, value,negate) {
-    $scope.panel.query = [add_to_query($scope.panel.query,field,value,negate)]
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',$scope.panel.query);
+  $scope.build_search = function(field,value,negate) {
+    var query = (negate ? '-':'+')+field+":\""+value+"\""
+    filterSrv.set({type:'querystring',query:query})
+    dashboard.refresh();
+  }
+
+  $scope.fieldExists = function(field,mode) {
+    filterSrv.set({type:mode,field:field})
+    dashboard.refresh();
   }
 
   $scope.is_active = function(field) {

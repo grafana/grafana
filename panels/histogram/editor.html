@@ -4,13 +4,19 @@
       <label class="small">Mode</label> 
       <select ng-change="set_refresh(true)" class="input-small" ng-model="panel.mode" ng-options="f for f in ['count','min','mean','max','total']"></select>
     </div>
-    <div class="span3" ng-show="panel.mode != 'count'">
-      <label class="small">Field</label>
+    <div class="span2">
+      <label class="small">Time Field</label>
+      <form>
+        <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.time_field">
+      </form>
+    </div>
+    <div class="span2" ng-show="panel.mode != 'count'">
+      <label class="small">Value Field</label>
       <form>
         <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.value_field">
       </form>
     </div>
-    <div class="span5" ng-show="panel.mode != 'count'">
+    <div class="span3" ng-show="panel.mode != 'count'">
       <label class="small">Note</label><small> In <strong>{{panel.mode}}</strong> mode the configured field <strong>must</strong> be a numeric type</small>
     </div>
   </div>

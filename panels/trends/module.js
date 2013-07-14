@@ -19,7 +19,7 @@
 
 */
 angular.module('kibana.trends', [])
-.controller('trends', function($scope, eventBus, kbnIndex, query) {
+.controller('trends', function($scope, eventBus, kbnIndex, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -34,14 +34,11 @@ angular.module('kibana.trends', [])
 
   $scope.init = function () {
     $scope.hits = 0;
+
+    $scope.$on('refresh',function(){$scope.get_data()})
+
     eventBus.register($scope,'time', function(event,time){
       set_time(time)
-    });
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.map(query,function(q) {
-        return {query: q, label: q};
-      })
-      $scope.get_data();
     });
     // Now that we're all setup, request the time from our group
     eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
@@ -52,8 +49,11 @@ angular.module('kibana.trends', [])
     $scope.panel.loading = true;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    } else {
+      $scope.index = dashboard.indices
+    }
 
     $scope.old_time = {
       from : new Date($scope.time.from.getTime() - interval_to_seconds($scope.panel.ago)*1000),
@@ -67,9 +67,8 @@ angular.module('kibana.trends', [])
     _.each(query.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(query.list[id].query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to))
+        filterSrv.getBoolFilter(filterSrv.ids))
+
       request = request
         .facet($scope.ejs.QueryFacet(id)
           .query(q)
@@ -110,7 +109,6 @@ angular.module('kibana.trends', [])
     // Populate scope when we have results
     function process_results(results) { 
       results.then(function(results) {
-        console.log(results)
 
         $scope.panel.loading = false;
         if(_segment == 0) {
@@ -124,9 +122,17 @@ angular.module('kibana.trends', [])
           $scope.panel.error = $scope.parse_error(results.error);
           return;
         }
-        if($scope.query_id === query_id) {
+
+        // Convert facet ids to numbers
+        var facetIds = _.map(_.keys(results.facets),function(k){if(!isNaN(k)){return parseInt(k)}})
+
+        // Make sure we're still on the same query/queries
+        if($scope.query_id === query_id && 
+          _.intersection(facetIds,query.ids).length == query.ids.length
+          ) {
           var i = 0;
           _.each(query.ids, function(id) {
+            var v = results.facets[id]
             var n = results.facets[id].count
             var o = results.facets['old_'+id].count
 
@@ -193,7 +199,6 @@ angular.module('kibana.trends', [])
 
   function set_time(time) {
     $scope.time = time;
-    $scope.index = time.index || $scope.index
     $scope.get_data();
   }
 

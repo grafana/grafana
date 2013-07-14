@@ -29,7 +29,7 @@
 */
 
 angular.module('kibana.table', [])
-.controller('table', function($rootScope, $scope, eventBus, fields, query) {
+.controller('table', function($rootScope, $scope, eventBus, fields, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -61,10 +61,6 @@ angular.module('kibana.table', [])
 
   $scope.set_listeners = function(group) {
     $scope.$on('refresh',function(){$scope.get_data()})
-    eventBus.register($scope,'time',function(event,time) {
-      $scope.panel.offset = 0;
-      set_time(time)
-    });
     eventBus.register($scope,'sort', function(event,sort){
       $scope.panel.sort = _.clone(sort);
       $scope.get_data();
@@ -112,26 +108,26 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field,value,negate) {
-    _.each(query.list,function(q) {
-      q.query = add_to_query(q.query,field,value,negate);
-    })
+    var query = (negate ? '-':'+')+field+":\""+value+"\""
+    filterSrv.set({type:'querystring',query:query})
     $scope.panel.offset = 0;
-    $rootScope.$broadcast('refresh')
+    dashboard.refresh();
   }
 
   $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
     
     $scope.panel.loading = true;
 
     var _segment = _.isUndefined(segment) ? 0 : segment
     $scope.segment = _segment;
 
-    var request = $scope.ejs.Request().indices($scope.index[_segment])
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment])
 
     var boolQuery = ejs.BoolQuery();
     _.each(query.list,function(q) {
@@ -141,11 +137,8 @@ angular.module('kibana.table', [])
     request = request.query(
       ejs.FilteredQuery(
         boolQuery,
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to)
-        )
-      )
+        filterSrv.getBoolFilter(filterSrv.ids)
+      ))
       .highlight(
         ejs.Highlight($scope.panel.highlight)
         .fragmentSize(2147483647) // Max size of a 32bit unsigned int
@@ -209,10 +202,10 @@ angular.module('kibana.table', [])
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
-      if(
-          ($scope.data.length < $scope.panel.size*$scope.panel.pages || 
-            !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc')) && 
-          _segment+1 < $scope.index.length
+      if($scope.data.length < $scope.panel.size*$scope.panel.pages
+        //($scope.data.length < $scope.panel.size*$scope.panel.pages
+         // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
+        && _segment+1 < dashboard.indices.length
       ) {
         $scope.get_data(_segment+1,$scope.query_id)
       }
@@ -264,12 +257,6 @@ angular.module('kibana.table', [])
     $scope.refresh =  false;
   }
 
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
 
 })
 .filter('highlight', function() {
