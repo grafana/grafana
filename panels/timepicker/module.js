@@ -15,17 +15,10 @@
     * enable :: true/false, enable auto refresh by default. Default: false
     * interval :: Seconds between auto refresh. Default: 30
     * min :: The lowest interval a user may set
-
-  ### Group Events
-  #### Sends
-  * time :: Object Includes from, to and index
-  #### Receives
-  * get_time :: Receives an object containing a $id, broadcasts back to it.
-
 */
 
 angular.module('kibana.timepicker', [])
-.controller('timepicker', function($scope, $rootScope, eventBus, $timeout, timer, $http, dashboard, filterSrv) {
+.controller('timepicker', function($scope, $rootScope, $timeout, timer, $http, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -228,7 +221,7 @@ angular.module('kibana.timepicker', [])
     return $scope.panel.filter_id;
   }
 
-  // Prefer to pass around Date() objects in the EventBus since interacting with
+  // Prefer to pass around Date() objects since interacting with
   // moment objects in libraries that are expecting Date()s can be tricky
   function compile_time(time) {
     time = _.clone(time)

@@ -9,18 +9,10 @@
   * query ::  A string or an array of querys. String if multi is off, array if it is on
               This should be fixed, it should always be an array even if its only 
               one element
-  * multi :: Allow input of multiple queries? true/false
-  * multi_arrange :: How to arrange multu query string panels, 'vertical' or 'horizontal'
-  ### Group Events
-  #### Sends
-  * query :: Always broadcast as an array, even in multi: false
-  #### Receives
-  * query :: An array of queries. This is probably needs to be fixed.
-
 */
 
 angular.module('kibana.query', [])
-.controller('query', function($scope, eventBus, query, $rootScope) {
+.controller('query', function($scope, query, $rootScope) {
 
   // Set and populate defaults
   var _d = {

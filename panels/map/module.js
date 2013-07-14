@@ -19,16 +19,11 @@
   * spyable :: Show the 'eye' icon that reveals the last ES query
   * index_limit :: This does nothing yet. Eventually will limit the query to the first
                    N indices
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, this panel uses only the first one
+
 */
 
 angular.module('kibana.map', [])
-.controller('map', function($scope, $rootScope, eventBus, query, dashboard, filterSrv) {
+.controller('map', function($scope, $rootScope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {

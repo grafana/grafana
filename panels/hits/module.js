@@ -13,16 +13,10 @@
   * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
   * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time. 
   * lables :: Only 'pie' charts. Labels on the pie?
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
 
 */
 angular.module('kibana.hits', [])
-.controller('hits', function($scope, eventBus, query, dashboard, filterSrv) {
+.controller('hits', function($scope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -142,7 +136,7 @@ angular.module('kibana.hits', [])
     $scope.get_data();
   }
 
-}).directive('hitsChart', function(eventBus, query) {
+}).directive('hitsChart', function(query) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {

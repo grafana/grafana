@@ -11,19 +11,11 @@
   * size :: how many queries to generate
   * fields :: a list of fields known to us
   * query_mode :: how to create query
-  
-  ### Group Events
-  #### Sends
-  * query :: Always broadcast as an array, even in multi: false
-  * get_time :: Request the time object from the timepicker
-  #### Receives
-  * query :: An array of queries. This is probably needs to be fixed.
-  * time :: populate index and time
-  * fields :: A list of fields known to us
+
 */
 
 angular.module('kibana.derivequeries', [])
-.controller('derivequeries', function($scope, $rootScope, query, eventBus, fields, dashboard, filterSrv) {
+.controller('derivequeries', function($scope, $rootScope, query, fields, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {

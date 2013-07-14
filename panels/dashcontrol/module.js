@@ -27,7 +27,7 @@
 */
 
 angular.module('kibana.dashcontrol', [])
-.controller('dashcontrol', function($scope, $routeParams, $http, eventBus, timer, dashboard) {
+.controller('dashcontrol', function($scope, $routeParams, $http, timer, dashboard) {
 
   $scope.panel = $scope.panel || {};
   // Set and populate defaults
@@ -150,7 +150,7 @@ angular.module('kibana.dashcontrol', [])
     })
   }
 })
-.directive('dashUpload', function(timer, eventBus, dashboard){
+.directive('dashUpload', function(timer, dashboard){
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {

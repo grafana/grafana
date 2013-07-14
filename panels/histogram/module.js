@@ -226,6 +226,7 @@ angular.module('kibana.histogram', [])
       to:moment.utc(_to),
       field:$scope.panel.time_field
     })
+    
     dashboard.refresh();
 
   }

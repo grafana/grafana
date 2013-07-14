@@ -19,7 +19,7 @@
 
 */
 angular.module('kibana.trends', [])
-.controller('trends', function($scope, eventBus, kbnIndex, query, dashboard, filterSrv) {
+.controller('trends', function($scope, kbnIndex, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -37,11 +37,7 @@ angular.module('kibana.trends', [])
 
     $scope.$on('refresh',function(){$scope.get_data()})
 
-    eventBus.register($scope,'time', function(event,time){
-      set_time(time)
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    $scope.get_data();
   }
 
   $scope.get_data = function(segment,query_id) {
@@ -173,19 +169,6 @@ angular.module('kibana.trends', [])
     return x == 0 ? null : 100*(y-x)/x
   }
 
-  $scope.remove_query = function(q) {
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
-    $scope.get_data();
-  }
-
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
   }
@@ -195,11 +178,6 @@ angular.module('kibana.trends', [])
       $scope.get_data();
     $scope.refresh =  false;
     $scope.$emit('render');
-  }
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.get_data();
   }
 
 })

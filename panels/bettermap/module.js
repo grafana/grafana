@@ -15,7 +15,7 @@
 */
 
 angular.module('kibana.bettermap', [])
-.controller('bettermap', function($scope, eventBus, query, dashboard, filterSrv) {
+.controller('bettermap', function($scope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
