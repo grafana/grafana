@@ -29,7 +29,7 @@
 */
 
 angular.module('kibana.table', [])
-.controller('table', function($scope, eventBus, fields) {
+.controller('table', function($rootScope, $scope, eventBus, fields, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -55,20 +55,11 @@ angular.module('kibana.table', [])
 
     $scope.set_listeners($scope.panel.group)
 
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,"get_time")
+    $scope.get_data();
   }
 
   $scope.set_listeners = function(group) {
-    eventBus.register($scope,'time',function(event,time) {
-      $scope.panel.offset = 0;
-      set_time(time)
-    });
-    eventBus.register($scope,'query',function(event,query) {
-      $scope.panel.offset = 0;
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
-    });
+    $scope.$on('refresh',function(){$scope.get_data()})
     eventBus.register($scope,'sort', function(event,sort){
       $scope.panel.sort = _.clone(sort);
       $scope.get_data();
@@ -77,7 +68,7 @@ angular.module('kibana.table', [])
       $scope.panel.fields = _.clone(fields)
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
-        $scope.panel.query = docs.query;
+        query.list[query.ids[0]].query = docs.query;
         $scope.data = docs.docs;
     });
   }
@@ -116,32 +107,37 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field,value,negate) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,negate)
+    var query = field+":"+angular.toJson(value)
+    filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')})
     $scope.panel.offset = 0;
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
+    dashboard.refresh();
   }
 
   $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
     
     $scope.panel.loading = true;
 
     var _segment = _.isUndefined(segment) ? 0 : segment
     $scope.segment = _segment;
 
-    var request = $scope.ejs.Request().indices($scope.index[_segment])
-      .query(ejs.FilteredQuery(
-        ejs.QueryStringQuery($scope.panel.query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to)
-        )
-      )
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment])
+
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
+    })
+
+    request = request.query(
+      ejs.FilteredQuery(
+        boolQuery,
+        filterSrv.getBoolFilter(filterSrv.ids)
+      ))
       .highlight(
         ejs.Highlight($scope.panel.highlight)
         .fragmentSize(2147483647) // Max size of a 32bit unsigned int
@@ -205,10 +201,10 @@ angular.module('kibana.table', [])
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
-      if(
-          ($scope.data.length < $scope.panel.size*$scope.panel.pages || 
-            !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc')) && 
-          _segment+1 < $scope.index.length
+      if($scope.data.length < $scope.panel.size*$scope.panel.pages
+        //($scope.data.length < $scope.panel.size*$scope.panel.pages
+         // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
+        && _segment+1 < dashboard.indices.length
       ) {
         $scope.get_data(_segment+1,$scope.query_id)
       }
@@ -244,7 +240,7 @@ angular.module('kibana.table', [])
     });
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
       {
-        query: $scope.panel.query,
+        query: query.list[query.ids[0]].query,
         docs : _.pluck($scope.data,'_source'),
         index: $scope.index
       });
@@ -260,12 +256,6 @@ angular.module('kibana.table', [])
     $scope.refresh =  false;
   }
 
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
 
 })
 .filter('highlight', function() {

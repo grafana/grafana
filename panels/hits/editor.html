@@ -26,38 +26,4 @@
       <label class="small">Labels</label><input type="checkbox" ng-model="panel.labels" ng-checked="panel.labels">
     </div>
   </div>
-  <h5>Queries</h5>    
-  <div class="row-fluid">
-    <div class="span3">
-      <form style="margin-bottom: 0px">
-       <label class="small">Label</label>
-        <input type="text" placeholder="New Label" style="width:70%" ng-model="newlabel">
-      </form>
-    </div>
-    <div class="span8">
-      <form class="input-append" style="margin-bottom: 0px">
-        <label class="small">Query</label>
-        <input type="text" placeholder="New Query" style="width:80%" ng-model="newquery">
-        <button class="btn" ng-click="add_query(newlabel,newquery);newlabel='';newquery='';set_refresh(true)"><i class="icon-plus"></i></button>
-      </form>
-    </div>
-    <div class="span1">
-    </div>
-  </div>
-  <div class="row-fluid" ng-repeat="q in panel.query">        
-    <div class="span3">
-      <form style="margin-bottom: 0px">
-        <input type="text" style="width:70%" ng-model="q.label" ng-change="set_refresh(true)">
-      </form>
-    </div>
-    <div class="span8">
-      <form class="input-append" style="margin-bottom: 0px">
-        <input type="text" style="width:80%" ng-model="q.query" ng-change="set_refresh(true)">
-        <button class="btn" ng-click="get_data()"><i class="icon-search"></i></button>
-      </form>
-    </div>
-    <div class="span1">
-      <i class="icon-remove pointer" ng-click="remove_query(q)"></i>
-    </div>
-  </div>
 </div>

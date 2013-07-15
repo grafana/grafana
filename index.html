@@ -6,18 +6,17 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="description" content="Search based application built using ElasticSearch, elastic.js, and Angular.js">
     <meta name="viewport" content="width=device-width">
 
     <title>Kibana 3</title>
 
     <link rel="stylesheet" href="common/css/normalize.min.css">
-    <link rel="stylesheet" href="common/css/bootstrap.dark.min.css">
+    <link rel="stylesheet" href="common/css/bootstrap.dark.min.css" title="Dark">
+    <link rel="alternate stylesheet" href="common/css/bootstrap.light.min.css" title="Light">
     <link rel="stylesheet" href="common/css/animate.min.css">
     <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
     <link rel="stylesheet" href="common/css/font-awesome.min.css">
     <link rel="stylesheet" href="common/css/main.css">
-    <link rel="stylesheet" href="common/css/elasticjs.css">
     <link rel="stylesheet" href="common/css/timepicker.css">
   
     <!-- project dependency libs -->
@@ -38,9 +37,9 @@
     <div class="navbar navbar-static-top">
       <div class="navbar-inner">
         <div class="container-fluid">
-          <p class="navbar-text pull-right"><small><strong>Kibana 3</strong> <small>milestone 2</small></small></p>
-          <span class="brand">{{dashboards.title}}</span>
-          <div class="brand"><i class='icon-cog pointer' ng-show='dashboards.editable' bs-modal="'partials/dasheditor.html'"></i></div>
+          <p class="navbar-text pull-right"><small><strong>Kibana 3</strong> <small>milestone pre-3</small></small></p>
+          <span class="brand">{{dashboard.current.title}}</span>
+          <div class="brand"><i class='icon-cog pointer' ng-show='dashboard.current.editable' bs-modal="'partials/dasheditor.html'"></i></div>
         </div>
       </div>
     </div>

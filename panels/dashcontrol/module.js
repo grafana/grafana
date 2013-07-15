@@ -17,7 +17,6 @@
   ** local :: Allow loading of dashboards from Elasticsearch
   * hide_control :: Upon save, hide this panel
   * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
-  * elasticsearch_saveto :: Special kibana index to save to
   * temp :: Allow saving of temp dashboards
   * temp_ttl :: How long should temp dashboards persist
 
@@ -28,7 +27,8 @@
 */
 
 angular.module('kibana.dashcontrol', [])
-.controller('dashcontrol', function($scope, $routeParams, $http, eventBus, timer) {
+.controller('dashcontrol', function($scope, $http, timer, dashboard) {
+
   $scope.panel = $scope.panel || {};
   // Set and populate defaults
   var _d = {
@@ -47,7 +47,6 @@ angular.module('kibana.dashcontrol', [])
     },
     hide_control: false,
     elasticsearch_size: 20,
-    elasticsearch_saveto: $scope.config.kibana_index,
     temp: true,
     temp_ttl: '30d'
   }
@@ -57,241 +56,101 @@ angular.module('kibana.dashcontrol', [])
   var _dash = {
     title: "",
     editable: true,
-    rows: []
+    rows: [],
+    services: {}
   }
 
   $scope.init = function() {
-    // Long ugly if statement for figuring out which dashboard to load on init
-    // If there is no dashboard defined, find one
-    if(_.isUndefined($scope.dashboards)) {
-      // First check the URL for a path to a dashboard
-      if(!(_.isUndefined($routeParams.type)) && !(_.isUndefined($routeParams.id))) {
-        var _type = $routeParams.type;
-        var _id = $routeParams.id;
-        
-        if(_type === 'elasticsearch')
-          $scope.elasticsearch_load('dashboard',_id)
-        if(_type === 'temp')
-          $scope.elasticsearch_load('temp',_id)
-        if(_type === 'file')
-          $scope.file_load(_id)
-
-      // No dashboard in the URL
-      } else {
-        // Check if browser supports localstorage, and if there's a dashboard 
-        if (Modernizr.localstorage && 
-          !(_.isUndefined(localStorage['dashboard'])) &&
-          localStorage['dashboard'] !== ''
-        ) {
-          var dashboard = JSON.parse(localStorage['dashboard']);
-          _.defaults(dashboard,_dash);
-          $scope.dash_load(JSON.stringify(dashboard))
-        // No? Ok, grab default.json, its all we have now
-        } else {
-          $scope.file_load('default')
-        }
-        
-      }
-    }
-
     $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
     $scope.gist = {};
     $scope.elasticsearch = {};
   }
 
-  $scope.to_file = function() {
-    var blob = new Blob([angular.toJson($scope.dashboards,true)], {type: "application/json;charset=utf-8"});
-    saveAs(blob, $scope.dashboards.title+"-"+new Date().getTime());
-  }
-
-  $scope.default = function() {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = angular.toJson($scope.dashboards);
-      $scope.alert('Success',
-        $scope.dashboards.title + " has been set as your default dashboard",
-        'success',5000)
+  $scope.set_default = function() {
+    if(dashboard.set_default()) {
+      $scope.alert('Local Default Set',dashboard.current.title+' has been set as your local default','success',5000)
     } else {
-      $scope.alert('Bummer!',
-        "Your browser is too old for this functionality",
-        'error',5000);
-    }  
-  }
-
-  $scope.share_link = function(title,type,id) {
-    $scope.share = {
-      location  : location.href.replace(location.hash,""),
-      type      : type,
-      id        : id,
-      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id,
-      title     : title
-    };
-  }
-
-  $scope.purge = function() {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = '';
-      $scope.alert('Success',
-        'Default dashboard cleared',
-        'success',5000)
-    } else {
-      $scope.alert('Doh!',
-        "Your browser is too old for this functionality",
-        'error',5000);
-    }  
-  }
-
-  $scope.file_load = function(file) {
-    $http({
-      url: "dashboards/"+file,
-      method: "GET",
-    }).success(function(data, status, headers, config) {
-      var dashboard = data
-       _.defaults(dashboard,_dash);
-       $scope.dash_load(JSON.stringify(dashboard))
-    }).error(function(data, status, headers, config) {
-      $scope.alert('Default dashboard missing!','Could not locate dashboards/'+file,'error')
-    });
-  }
-
-  $scope.elasticsearch_save = function(type) {
-    // Clone object so we can modify it without influencing the existing obejct
-    if($scope.panel.hide_control) {
-      $scope.panel.hide = true;
-      var save = _.clone($scope.dashboards)
-    } else {
-      var save = _.clone($scope.dashboards)
+      $scope.alert('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000)
     }
-
-    // Change title on object clone
-    if(type === 'dashboard')
-      var id = save.title = $scope.elasticsearch.title;
-
-    // Create request with id as title. Rethink this.
-    var request = $scope.ejs.Document($scope.panel.elasticsearch_saveto,type,id).source({
-      user: 'guest',
-      group: 'guest',
-      title: save.title,
-      dashboard: angular.toJson(save)
-    })
-    
-    if(type === 'temp')
-      request = request.ttl($scope.panel.temp_ttl)
-
-    var result = request.doIndex();
-    var id = result.then(function(result) {
-      $scope.alert('Dashboard Saved','This dashboard has been saved to Elasticsearch','success',5000)
-      $scope.elasticsearch_dblist($scope.elasticsearch.query);
-      $scope.elasticsearch.title = '';
-      if(type === 'temp')
-        $scope.share_link($scope.dashboards.title,'temp',result._id)
-    })
-
-    $scope.panel.hide = false;
   }
 
-  $scope.elasticsearch_delete = function(dashboard) {
-    var result = $scope.ejs.Document($scope.panel.elasticsearch_saveto,'dashboard',dashboard._id).doDelete();
-    result.then(function(result) {
-      $scope.alert('Dashboard Deleted','','success',5000)
-      $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,dashboard)
-    })
+  $scope.purge_default = function() {
+    if(dashboard.purge_default()) {
+      $scope.alert('Local Default Clear','Your local default dashboard has been cleared','success',5000)
+    } else {
+      $scope.alert('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000)
+    }
   }
 
-  $scope.elasticsearch_load = function(type,id) {
-    var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types(type);
-    var results = request.query(
-        $scope.ejs.IdsQuery(id)
-        ).size($scope.panel.elasticsearch_size).doSearch();
-    results.then(function(results) {
-      if(_.isUndefined(results)) {
-        return;
+  $scope.elasticsearch_save = function(type,ttl) {
+    dashboard.elasticsearch_save(type,($scope.elasticsearch.title || dashboard.current.title),ttl).then(
+      function(result) {
+      if(!_.isUndefined(result._id)) {
+        $scope.alert('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
+          result._id + '"','success',5000)
+        if(type === 'temp') {
+          $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id)
+        }
+      } else {
+        $scope.alert('Save failed','Dashboard could not be saved to Elasticsearch','error',5000)
       }
-      $scope.panel.error =  false;
-      $scope.dash_load(results.hits.hits[0]['_source']['dashboard'])
-    });
+    })
+  }
+
+  $scope.elasticsearch_delete = function(id) {
+    dashboard.elasticsearch_delete(id).then(
+      function(result) {
+        if(!_.isUndefined(result)) {
+          if(result.found) {
+            $scope.alert('Dashboard Deleted',id+' has been deleted','success',5000)
+            // Find the deleted dashboard in the cached list and remove it
+            var toDelete = _.where($scope.elasticsearch.dashboards,{_id:id})[0]
+            $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,toDelete)
+          } else {
+            $scope.alert('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000)
+          }
+        } else {
+          $scope.alert('Dashboard Not Deleted','An error occurred deleting the dashboard',error,5000)
+        }
+      }
+    )
   }
 
   $scope.elasticsearch_dblist = function(query) {
-    if($scope.panel.load.elasticsearch) {
-      var request = $scope.ejs.Request().indices($scope.panel.elasticsearch_saveto).types('dashboard');
-      var results = request.query(
-        $scope.ejs.QueryStringQuery(query || '*')
-        ).size($scope.panel.elasticsearch_size).doSearch();
-      
-      results.then(function(results) {
-        if(_.isUndefined(results.hits)) {
-          return;
-        }
+    dashboard.elasticsearch_list(query,$scope.panel.elasticsearch_size).then(
+      function(result) {
+      if(!_.isUndefined(result.hits)) {
         $scope.panel.error =  false;
-        $scope.hits = results.hits.total;
-        $scope.elasticsearch.dashboards = results.hits.hits
-      });
-    }
+        $scope.hits = result.hits.total;
+        $scope.elasticsearch.dashboards = result.hits.hits
+      }
+    })
   }
 
   $scope.save_gist = function() {
-    var save = _.clone($scope.dashboards)
-    save.title = $scope.gist.title;
-    $http({
-    url: "https://api.github.com/gists",
-    method: "POST",
-    data: {
-      "description": save.title,
-      "public": false,
-      "files": {
-        "kibana-dashboard.json": {
-          "content": angular.toJson(save,true)
-        }
+    dashboard.save_gist($scope.gist.title).then(
+      function(link) {
+      if(!_.isUndefined(link)) {
+        $scope.gist.last = link;
+        $scope.alert('Gist saved','You will be able to access your exported dashboard file at <a href="'+link+'">'+link+'</a> in a moment','success');
+      } else {
+        $scope.alert('Save failed','Gist could not be saved','error',5000)
       }
-    }
-    }).success(function(data, status, headers, config) {
-      $scope.gist.last = data.html_url;
-      $scope.alert('Gist saved','You will be able to access your exported dashboard file at <a href="'+data.html_url+'">'+data.html_url+'</a> in a moment','success')
-    }).error(function(data, status, headers, config) {
-      $scope.alert('Unable to save','Save to gist failed for some reason','error',5000)
-    });
+    })
   }
 
   $scope.gist_dblist = function(id) {
-    $http.jsonp("https://api.github.com/gists/"+id+"?callback=JSON_CALLBACK"
-    ).success(function(response) {
-      $scope.gist.files = []
-      _.each(response.data.files,function(v,k) {
-        try {
-          var file = JSON.parse(v.content)
-          $scope.gist.files.push(file)
-        } catch(e) {
-          $scope.alert('Gist failure','The dashboard file is invalid','warning',5000)
-        }
-      });
-    }).error(function(data, status, headers, config) {
-      $scope.alert('Gist Failed','Could not retrieve dashboard list from gist','error',5000)
-    });
-  }
-
-  $scope.dash_load = function(dashboard) {
-    if(!_.isObject(dashboard))
-      dashboard = JSON.parse(dashboard)
-    eventBus.broadcast($scope.$id,'ALL','dashboard',{
-      dashboard : dashboard,
-      last      : $scope.dashboards
+    dashboard.gist_list(id).then(
+      function(files) {
+      if(files && files.length > 0) {
+        $scope.gist.files = files;
+      } else {
+        $scope.alert('Gist Failed','Could not retrieve dashboard list from gist','error',5000)
+      }
     })
-    timer.cancel_all();
-  }
-
-  $scope.gist_id = function(string) {
-    if($scope.is_gist(string))
-      return string.match($scope.gist_pattern)[0].replace(/.*\//, '');
-  }
-
-  $scope.is_gist = function(string) {
-    if(!_.isUndefined(string) && string != '' && !_.isNull(string.match($scope.gist_pattern)))
-      return string.match($scope.gist_pattern).length > 0 ? true : false;
-    else
-      return false
   }
 })
-.directive('dashUpload', function(timer, eventBus){
+.directive('dashUpload', function(timer, dashboard){
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -304,7 +163,7 @@ angular.module('kibana.dashcontrol', [])
           var reader = new FileReader();
           reader.onload = (function(theFile) {
             return function(e) {
-              scope.dash_load(JSON.parse(e.target.result))
+              dashboard.dash_load(JSON.parse(e.target.result))
               scope.$apply();
             };
           })(f);

@@ -19,7 +19,6 @@ var scripts = []
 var labjs = $LAB
   .script("common/lib/jquery-1.8.0.min.js").wait()
   .script("common/lib/modernizr-2.6.1.min.js")
-  .script("common/lib/underscore.min.js")  
   .script("common/lib/angular.min.js").wait()
   .script("common/lib/angular-strap.min.js")
   .script("common/lib/angular-sanitize.min.js")
@@ -47,10 +46,10 @@ labjs.wait(function(){
   angular.module('kibana', modules).config(['$routeProvider', function($routeProvider) {
       $routeProvider
         .when('/dashboard', {
-          templateUrl: 'partials/dashboard.html' 
+          templateUrl: 'partials/dashboard.html',
         })
         .when('/dashboard/:type/:id', {
-          templateUrl: 'partials/dashboard.html'
+          templateUrl: 'partials/dashboard.html',
         })
         .when('/dashboard/:type/:id/:params', {
           templateUrl: 'partials/dashboard.html'

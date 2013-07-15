@@ -49,39 +49,7 @@ angular.module('kibana.directives', [])
     }
   };
 })
-.directive('upload', function(timer){
-  return {
-    restrict: 'A',
-    link: function(scope, elem, attrs) {
-      function file_selected(evt) {
-        var files = evt.target.files; // FileList object
-
-        // files is a FileList of File objects. List some properties.
-        var output = [];
-        for (var i = 0, f; f = files[i]; i++) {
-          var reader = new FileReader();
-          reader.onload = (function(theFile) {
-            return function(e) {
-              // Render thumbnail.
-              scope.dashboards = JSON.parse(e.target.result)
-              timer.cancel_all();
-              scope.$apply();
-            };
-          })(f);
-          reader.readAsText(f);
-        }
-      }
-
-      // Check for the various File API support.
-      if (window.File && window.FileReader && window.FileList && window.Blob) {
-        // Something
-        document.getElementById('upload').addEventListener('change', file_selected, false);
-      } else {
-        alert('Sorry, the HTML5 File APIs are not fully supported in this browser.');
-      }
-    }
-  }
-}).directive('ngModelOnblur', function() {
+.directive('ngModelOnblur', function() {
   return {
     restrict: 'A',
     require: 'ngModel',

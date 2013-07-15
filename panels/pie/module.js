@@ -23,27 +23,20 @@
                       doesn't have a field
   * spyable :: Show the 'eye' icon that displays the last ES query for this panel
 
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, this panel will use the first in the array
-
 */
 
 angular.module('kibana.pie', [])
-.controller('pie', function($scope, eventBus) {
+.controller('pie', function($scope, $rootScope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
     status  : "Deprecating Soon",
-    query   : { field:"_all", query:"*", goal: 1}, 
+    query   : { field:"_type", goal: 100}, 
     size    : 10,
     exclude : [],
     donut   : false,
     tilt    : false,
-    legend  : true,
+    legend  : "above",
     labels  : true,
     mode    : "terms",
     group   : "default",
@@ -53,30 +46,7 @@ angular.module('kibana.pie', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
-  }
-
-
-  $scope.remove_query = function(q) {
-    if($scope.panel.mode !== 'query') 
-      return false;
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    if($scope.panel.mode !== 'query') 
-      return false;
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
+    $scope.$on('refresh',function(){$scope.get_data()})
     $scope.get_data();
   }
 
@@ -84,21 +54,40 @@ angular.module('kibana.pie', [])
     switch(mode)
     {
     case 'terms':
-      $scope.panel.query = {query:"*",field:"_all"};
+      $scope.panel.query = {field:"_all"};
       break;
     case 'goal':
-      $scope.panel.query = {query:"*",goal:100};
+      $scope.panel.query = {goal:100};
       break;
     }
   }
 
+  $scope.set_refresh = function (state) { 
+    $scope.refresh = state; 
+  }
+
+  $scope.close_edit = function() {
+    if($scope.refresh)
+      $scope.get_data();
+    $scope.refresh =  false;
+    $scope.$emit('render');
+  }
+
   $scope.get_data = function() {
+    
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    } 
 
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.index);
+    var request = $scope.ejs.Request().indices(dashboard.indices);
+
+    // This could probably be changed to a BoolFilter 
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
+    })
 
     // Terms mode
     if ($scope.panel.mode == "terms") {
@@ -109,10 +98,8 @@ angular.module('kibana.pie', [])
           .exclude($scope.panel.exclude)
           .facetFilter(ejs.QueryFilter(
             ejs.FilteredQuery(
-              ejs.QueryStringQuery($scope.panel.query.query || '*'),
-              ejs.RangeFilter($scope.time.field)
-                .from($scope.time.from)
-                .to($scope.time.to)
+              boolQuery,
+              filterSrv.getBoolFilter(filterSrv.ids)
               )))).size(0)
 
       $scope.populate_modal(request);
@@ -141,11 +128,8 @@ angular.module('kibana.pie', [])
     // Goal mode
     } else {
       request = request
-        .query(ejs.QueryStringQuery($scope.panel.query.query || '*'))
-        .filter(ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to)
-          .cache(false))
+        .query(boolQuery)
+        .filter(filterSrv.getBoolFilter(filterSrv.ids))
         .size(0)
       
       $scope.populate_modal(request);
@@ -169,26 +153,14 @@ angular.module('kibana.pie', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
   }
 
-  $scope.build_search = function(field,value) {
-    $scope.panel.query.query = add_to_query($scope.panel.query.query,field,value,false)
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query.query]);
-  }
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
-  
 })
-.directive('pie', function() {
+.directive('pie', function(query, filterSrv, dashboard) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -228,8 +200,8 @@ angular.module('kibana.pie', [])
             show: scope.panel.labels,
             radius: 2/3,
             formatter: function(label, series){
-              return '<div ng-click="build_search(panel.query.field,\''+label+'\') "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
-                label+'<br/>'+Math.round(series.percent)+'%</div>';
+              return '<div "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
+                series.info.alias+'<br/>'+Math.round(series.percent)+'%</div>';
             },
             threshold: 0.1 
           }
@@ -258,7 +230,7 @@ angular.module('kibana.pie', [])
             clickable: true 
           },
           legend: { show: false },
-          colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+          colors: query.colors
         };
 
         // Populate element
@@ -269,7 +241,7 @@ angular.module('kibana.pie', [])
         }
       }
 
-      function piett(x, y, contents) {
+      function tt(x, y, contents) {
         var tooltip = $('#pie-tooltip').length ? 
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
 
@@ -287,16 +259,19 @@ angular.module('kibana.pie', [])
       }
 
       elem.bind("plotclick", function (event, pos, object) {
-        if (!object)
+        if (!object) {
           return;
-        if(scope.panel.mode === 'terms')
-          scope.build_search(scope.panel.query.field,object.series.label);
+        }
+        if(scope.panel.mode === 'terms') {
+          filterSrv.set({type:'terms',field:scope.panel.query.field,value:object.series.label})
+          dashboard.refresh();
+        }
       });
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-          piett(pos.pageX, pos.pageY, "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> " + 
+          tt(pos.pageX, pos.pageY, "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> " + 
             (item.series.label||"")+ " " + percent);
         } else {
           $("#pie-tooltip").remove();

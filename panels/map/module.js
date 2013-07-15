@@ -19,16 +19,11 @@
   * spyable :: Show the 'eye' icon that reveals the last ES query
   * index_limit :: This does nothing yet. Eventually will limit the query to the first
                    N indices
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, this panel uses only the first one
+
 */
 
 angular.module('kibana.map', [])
-.controller('map', function($scope, eventBus) {
+.controller('map', function($scope, $rootScope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -45,22 +40,24 @@ angular.module('kibana.map', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    $scope.$on('refresh',function(){$scope.get_data()})
+    $scope.get_data();
   }
 
   $scope.get_data = function() {
+    
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
 
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.index);
+    var request = $scope.ejs.Request().indices(dashboard.indices);
+
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
+    })
 
     // Then the insert into facet and make the request
     var request = request
@@ -70,10 +67,8 @@ angular.module('kibana.map', [])
         .exclude($scope.panel.exclude)
         .facetFilter(ejs.QueryFilter(
           ejs.FilteredQuery(
-            ejs.QueryStringQuery($scope.panel.query || '*'),
-            ejs.RangeFilter($scope.time.field)
-              .from($scope.time.from)
-              .to($scope.time.to)
+            boolQuery,
+            filterSrv.getBoolFilter(filterSrv.ids)
             )))).size(0);
 
     $scope.populate_modal(request);
@@ -97,22 +92,15 @@ angular.module('kibana.map', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
   }
 
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
-
   $scope.build_search = function(field,value) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,false)
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
+    filterSrv.set({type:'querystring',mandate:'must',query:field+":"+value})
+    dashboard.refresh();
   }
 
 })
@@ -155,20 +143,12 @@ angular.module('kibana.map', [])
               }]
             },
             onRegionLabelShow: function(event, label, code){
-              $('.jvectormap-label').css({
-                "position"    : "absolute",
-                "display"     : "none",
-                'color'       : "#c8c8c8",
-                'padding'     : '10px',
-                'font-size'   : '11pt',
-                'font-weight' : 200,
-                'background-color': '#1f1f1f',
-                'border-radius': '5px'
-              })
+              elem.children('.map-legend').show()
               var count = _.isUndefined(scope.data[code]) ? 0 : scope.data[code];
-              $('.jvectormap-label').text(label.text() + ": " + count);
+              elem.children('.map-legend').text(label.text() + ": " + count);
             },
             onRegionOut: function(event, code) {
+              $('.map-legend').hide();
             },
             onRegionClick: function(event, code) {
               var count = _.isUndefined(scope.data[code]) ? 0 : scope.data[code];
@@ -176,6 +156,8 @@ angular.module('kibana.map', [])
                 scope.build_search(scope.panel.field,code)
             }
           });
+          elem.prepend('<span class="map-legend"></span>');
+          $('.map-legend').hide();
         })
       }
     }

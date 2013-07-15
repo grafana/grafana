@@ -12,17 +12,10 @@
   * field :: field containing a 2 element array in the format [lon,lat]
   * tooltip :: field to extract the tool tip value from
   * spyable :: Show the 'eye' icon that reveals the last ES query
-
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, this panel uses only the first one
 */
 
 angular.module('kibana.bettermap', [])
-.controller('bettermap', function($scope, eventBus) {
+.controller('bettermap', function($scope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -37,44 +30,53 @@ angular.module('kibana.bettermap', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
+    $scope.$on('refresh',function(){
       $scope.get_data();
-    });
-
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    })
+    $scope.get_data();
   }
 
-$scope.get_data = function(segment,query_id) {
+  $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
-      return
+    if(dashboard.indices.length == 0) {
+      return;
+    }
 
     if(_.isUndefined($scope.panel.field)) {
       $scope.panel.error = "Please select a field that contains geo point in [lon,lat] format"
       return
     }
     
-    //$scope.panel.loading = true;
+    // Determine the field to sort on
+    var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'))
+    if(timeField.length > 1) {
+      $scope.panel.error = "Time field must be consistent amongst time filters"
+    } else if(timeField.length == 0) {
+      timeField = null;
+    } else {
+      timeField = timeField[0]
+    }
 
     var _segment = _.isUndefined(segment) ? 0 : segment
-    $scope.segment = _segment;
 
-    var request = $scope.ejs.Request().indices($scope.index[_segment])
+    var boolQuery = ejs.BoolQuery();
+    _.each(query.list,function(q) {
+      boolQuery = boolQuery.should(ejs.QueryStringQuery((q.query || '*')))
+    })
+
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment])
       .query(ejs.FilteredQuery(
-        ejs.QueryStringQuery(($scope.panel.query || '*') + " AND _exists_:"+$scope.panel.field),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to)
-        )
-      )
+        boolQuery,
+        filterSrv.getBoolFilter(filterSrv.ids).must(ejs.ExistsFilter($scope.panel.field))
+      ))
       .fields([$scope.panel.field,$scope.panel.tooltip])
       .size($scope.panel.size)
-      .sort($scope.time.field,'desc');
+
+    if(!_.isNull(timeField)) {
+      request = request.sort(timeField,'desc');
+    }
 
     $scope.populate_modal(request)
 
@@ -119,7 +121,7 @@ $scope.get_data = function(segment,query_id) {
       $scope.$emit('draw')
 
       // Get $size results then stop querying
-      if($scope.data.length < $scope.panel.size && _segment+1 < $scope.index.length)
+      if($scope.data.length < $scope.panel.size && _segment+1 < dashboard.indices.length)
         $scope.get_data(_segment+1,$scope.query_id)
 
     });
@@ -130,22 +132,10 @@ $scope.get_data = function(segment,query_id) {
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
-  }
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
-
-  $scope.build_search = function(field,value) {
-    $scope.panel.query = add_to_query($scope.panel.query,field,value,false)
-    $scope.get_data();
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',[$scope.panel.query]);
   }
 
 })

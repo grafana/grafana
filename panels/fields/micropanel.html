@@ -1,8 +1,8 @@
 <a class="close" ng-click="dismiss()" href="">×</a>
 <h4>
   Micro Analysis of {{micropanel.field}} 
-  <i class="pointer icon-search" ng-click="build_search('_exists_',micropanel.field);dismiss();"></i>
-  <i class="pointer icon-ban-circle" ng-click="build_search('_missing_',micropanel.field);dismiss();"></i>
+  <i class="pointer icon-search" ng-click="fieldExists(micropanel.field,'must');dismiss();"></i>
+  <i class="pointer icon-ban-circle" ng-click="fieldExists(micropanel.field,'mustNot');dismiss();"></i>
   <br><small>{{micropanel.count}} events in the table set</small>
 </h4>
 <table style="width:480px" class='table table-bordered table-striped table-condensed'>
@@ -15,8 +15,8 @@
     <tr ng-repeat='field in micropanel.values'>
       <td>{{{true: "__blank__",false:field[0]}[field[0] == ""]}}</td>
       <td>
-        <i class="pointer icon-search" ng-click="build_search(micropanel.field,field[0]);dismiss();"></i>
-        <i class="pointer icon-ban-circle" ng-click="build_search(micropanel.field,field[0],true);dismiss();"></i>
+        <i class="pointer icon-search" ng-click="build_search(micropanel.field,field[0],'must');dismiss();"></i>
+        <i class="pointer icon-ban-circle" ng-click="build_search(micropanel.field,field[0],'mustNot');dismiss();"></i>
       </td>
       <td>{{field[1]}}</td>
     </tr>

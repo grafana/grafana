@@ -19,7 +19,7 @@
 
 */
 angular.module('kibana.trends', [])
-.controller('trends', function($scope, eventBus, kbnIndex) {
+.controller('trends', function($scope, kbnIndex, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -34,17 +34,10 @@ angular.module('kibana.trends', [])
 
   $scope.init = function () {
     $scope.hits = 0;
-    eventBus.register($scope,'time', function(event,time){
-      set_time(time)
-    });
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.map(query,function(q) {
-        return {query: q, label: q};
-      })
-      $scope.get_data();
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+
+    $scope.$on('refresh',function(){$scope.get_data()})
+
+    $scope.get_data();
   }
 
   $scope.get_data = function(segment,query_id) {
@@ -52,8 +45,11 @@ angular.module('kibana.trends', [])
     $scope.panel.loading = true;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    } else {
+      $scope.index = dashboard.indices
+    }
 
     $scope.old_time = {
       from : new Date($scope.time.from.getTime() - interval_to_seconds($scope.panel.ago)*1000),
@@ -64,43 +60,31 @@ angular.module('kibana.trends', [])
     var request = $scope.ejs.Request();
 
     // Build the question part of the query
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to))
-      )
+    _.each(query.ids, function(id) {
+      var q = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery(query.list[id].query || '*'),
+        filterSrv.getBoolFilter(filterSrv.ids))
+
+      request = request
+        .facet($scope.ejs.QueryFacet(id)
+          .query(q)
+        ).size(0)
     });
 
-    // Build the facet part
-    _.each(queries, function(v) {
-      request = request
-        .facet($scope.ejs.QueryFacet("new"+_.indexOf(queries,v))
-          .query(v)
-        ).size(0)
-    })
-
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
+    // And again for the old time period
+    _.each(query.ids, function(id) {
+      var q = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery(query.list[id].query || '*'),
         ejs.RangeFilter($scope.time.field)
           .from($scope.old_time.from)
           .to($scope.old_time.to))
-      )
+      request = request
+        .facet($scope.ejs.QueryFacet("old_"+id)
+          .query(q)
+        ).size(0)
     });
 
-    // Build the facet part
-    _.each(queries, function(v) {
-      request = request
-        .facet($scope.ejs.QueryFacet("old"+_.indexOf(queries,v))
-          .query(v)
-        ).size(0)
-    })
-
-    // TODO: Spy for hits panel
+    // TODO: Spy for trend panel
     //$scope.populate_modal(request);
 
     // If we're on the first segment we need to get our indices
@@ -134,11 +118,19 @@ angular.module('kibana.trends', [])
           $scope.panel.error = $scope.parse_error(results.error);
           return;
         }
-        if($scope.query_id === query_id) {
+
+        // Convert facet ids to numbers
+        var facetIds = _.map(_.keys(results.facets),function(k){if(!isNaN(k)){return parseInt(k)}})
+
+        // Make sure we're still on the same query/queries
+        if($scope.query_id === query_id && 
+          _.intersection(facetIds,query.ids).length == query.ids.length
+          ) {
           var i = 0;
-          _.each($scope.panel.query, function(k) {
-            var n = results.facets['new'+i].count
-            var o = results.facets['old'+i].count
+          _.each(query.ids, function(id) {
+            var v = results.facets[id]
+            var n = results.facets[id].count
+            var o = results.facets['old_'+id].count
 
             var hits = {
               new : _.isUndefined($scope.data[i]) || _segment == 0 ? n : $scope.data[i].hits.new+n,        
@@ -152,7 +144,7 @@ angular.module('kibana.trends', [])
               '?' : Math.round(percentage(hits.old,hits.new)*100)/100
             // Create series
             $scope.data[i] = { 
-              label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+              info: query.list[id],
               hits: {
                 new : hits.new,
                 old : hits.old
@@ -177,19 +169,6 @@ angular.module('kibana.trends', [])
     return x == 0 ? null : 100*(y-x)/x
   }
 
-  $scope.remove_query = function(q) {
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
-    $scope.get_data();
-  }
-
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
   }
@@ -199,12 +178,6 @@ angular.module('kibana.trends', [])
       $scope.get_data();
     $scope.refresh =  false;
     $scope.$emit('render');
-  }
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = time.index || $scope.index
-    $scope.get_data();
   }
 
 })

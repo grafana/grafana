@@ -32,17 +32,11 @@
   * x-axis :: Show x-axis labels and grid lines
   * y-axis :: Show y-axis labels and grid lines
   * interactive :: Allow drag to select time range
-  ### Group Events
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
-  #### Sends
-  * get_time :: On panel initialization get time range to query
 
 */
 
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, eventBus) {
+.controller('histogram', function($scope, eventBus, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -50,11 +44,12 @@ angular.module('kibana.histogram', [])
     group       : "default",
     query       : [ {query: "*", label:"Query"} ],
     mode        : 'count',
+    time_field  : '@timestamp',
     value_field : null,
     auto_int    : true,
     resolution  : 100, 
     interval    : '5m',
-    fill        : 3,
+    fill        : 0,
     linewidth   : 3,
     timezone    : 'browser', // browser, utc or a standard timezone
     spyable     : true,
@@ -72,82 +67,55 @@ angular.module('kibana.histogram', [])
   _.defaults($scope.panel,_d)
 
   $scope.init = function() {
-    eventBus.register($scope,'time', function(event,time){$scope.set_time(time)});
-    
-    // Consider eliminating the check for array, this should always be an array
-    eventBus.register($scope,'query', function(event, query) {
-      if(_.isArray(query)) {
-        $scope.panel.query = _.map(query,function(q) {
-          return {query: q, label: q};
-        })
-      } else {
-        $scope.panel.query[0] = {query: query, label: query}
-      }
+
+    $scope.queries = query;
+
+    $scope.$on('refresh',function(){
       $scope.get_data();
-    });
+    })
 
-    // Now that we're all setup, request the time from our group if we don't 
-    // have it yet
-    if(_.isUndefined($scope.time))
-      eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
-  }
+    $scope.get_data()
 
-  $scope.remove_query = function(q) {
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    if(!(_.isArray($scope.panel.query)))
-      $scope.panel.query = new Array();
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
-    $scope.get_data();
   }
 
   $scope.get_data = function(segment,query_id) {
     delete $scope.panel.error
+
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
 
+    var _range = $scope.range = filterSrv.timeRange('min');
+    
     if ($scope.panel.auto_int)
-      $scope.panel.interval = secondsToHms(calculate_interval($scope.time.from,$scope.time.to,$scope.panel.resolution,0)/1000);
-
+      $scope.panel.interval = secondsToHms(calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
+    
     $scope.panel.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment
-    var request = $scope.ejs.Request().indices($scope.index[_segment]);
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
-    // Build the question part of the query
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to))
+    // Build the query
+    _.each($scope.queries.ids, function(id) {
+      var query = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
+        filterSrv.getBoolFilter(filterSrv.ids)
       )
-    });
 
-    // Build the facet part, injecting the query in as a facet filter
-    _.each(queries, function(v) {
-
-      var facet = $scope.ejs.DateHistogramFacet("chart"+_.indexOf(queries,v))
-
+      var facet = $scope.ejs.DateHistogramFacet(id)
+      
       if($scope.panel.mode === 'count') {
-        facet = facet.field($scope.time.field)
+        facet = facet.field($scope.panel.time_field)
       } else {
         if(_.isNull($scope.panel.value_field)) {
           $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
           return
         }
-        facet = facet.keyField($scope.time.field).valueField($scope.panel.value_field)
+        facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field)
       }
-      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(v))
+      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(query))
       request = request.facet(facet).size(0)
-    })
+    });
 
     // Populate the inspector panel
     $scope.populate_modal(request);
@@ -157,6 +125,7 @@ angular.module('kibana.histogram', [])
 
     // Populate scope when we have results
     results.then(function(results) {
+
       $scope.panel.loading = false;
       if(_segment == 0) {
         $scope.hits = 0;
@@ -170,15 +139,24 @@ angular.module('kibana.histogram', [])
         return;
       }
 
-      // Make sure we're still on the same query
-      if($scope.query_id === query_id) {
+      // Convert facet ids to numbers
+      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k);})
+
+      // Make sure we're still on the same query/queries
+      if($scope.query_id === query_id && 
+        _.intersection(facetIds,query.ids).length == query.ids.length
+        ) {
 
         var i = 0;
-        _.each(results.facets, function(v, k) {
+        _.each(query.ids, function(id) {
+          var v = results.facets[id];
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
-            var data = [[$scope.time.from.getTime(), null],[$scope.time.to.getTime(), null]];
+            var data = []
+            if(filterSrv.idsByType('time').length > 0) {
+              data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
+            }
             var hits = 0;
           } else {
             var data = $scope.data[i].data
@@ -197,15 +175,12 @@ angular.module('kibana.histogram', [])
           // Create the flot series object
           var series = { 
             data: {
-              label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+              info: $scope.queries.list[id],
               data: data,
               hits: hits
             },
           };
 
-          if (!(_.isUndefined($scope.panel.query[i].color)))
-            series.data.color = $scope.panel.query[i].color;
-          
           $scope.data[i] = series.data
 
           i++;
@@ -215,7 +190,7 @@ angular.module('kibana.histogram', [])
         $scope.$emit('render')
 
         // If we still have segments left, get them
-        if(_segment < $scope.index.length-1) {
+        if(_segment < dashboard.indices.length-1) {
           $scope.get_data(_segment+1,query_id)
         }
       
@@ -226,7 +201,33 @@ angular.module('kibana.histogram', [])
   // function $scope.zoom
   // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
   $scope.zoom = function(factor) {
-    eventBus.broadcast($scope.$id,$scope.panel.group,'zoom',factor);
+    var _now = Date.now();
+    var _range = filterSrv.timeRange('min');
+    var _timespan = (_range.to.valueOf() - _range.from.valueOf());
+    var _center = _range.to.valueOf() - _timespan/2
+
+    var _to = (_center + (_timespan*factor)/2)
+    var _from = (_center - (_timespan*factor)/2)
+
+    // If we're not already looking into the future, don't.
+    if(_to > Date.now() && _range.to < Date.now()) {
+      var _offset = _to - Date.now()
+      _from = _from - _offset
+      _to = Date.now();
+    }
+
+    if(factor > 1) {
+      filterSrv.removeByType('time')
+    }
+    filterSrv.set({
+      type:'time',
+      from:moment.utc(_from),
+      to:moment.utc(_to),
+      field:$scope.panel.time_field
+    })
+    
+    dashboard.refresh();
+
   }
 
   // I really don't like this function, too much dom manip. Break out into directive?
@@ -234,7 +235,7 @@ angular.module('kibana.histogram', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
@@ -251,14 +252,8 @@ angular.module('kibana.histogram', [])
     $scope.$emit('render');
   }
 
-  $scope.set_time = function(time) {
-    $scope.time = time;
-    $scope.index = time.index || $scope.index    
-    $scope.get_data();
-  }
-
 })
-.directive('histogramChart', function(eventBus) {
+.directive('histogramChart', function(dashboard, eventBus, filterSrv, $rootScope) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -276,6 +271,14 @@ angular.module('kibana.histogram', [])
       // Function for rendering panel
       function render_panel() {
  
+        // Populate from the query service
+        try {
+          _.each(scope.data,function(series) {
+            series.label = series.info.alias,
+            series.color = series.info.color
+          })
+        } catch(e) {return}
+
         // Set barwidth based on specified interval
         var barwidth = interval_to_seconds(scope.panel.interval)*1000
 
@@ -388,9 +391,13 @@ angular.module('kibana.histogram', [])
       });
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.time.from = moment(ranges.xaxis.from);
-        scope.time.to   = moment(ranges.xaxis.to)
-        eventBus.broadcast(scope.$id,scope.panel.group,'set_time',scope.time)
+        var _id = filterSrv.set({
+          type  : 'time',
+          from  : moment.utc(ranges.xaxis.from),
+          to    : moment.utc(ranges.xaxis.to),
+          field : scope.panel.time_field
+        })
+        dashboard.refresh();
       });
     }
   };

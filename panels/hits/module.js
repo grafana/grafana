@@ -13,16 +13,10 @@
   * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
   * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time. 
   * lables :: Only 'pie' charts. Labels on the pie?
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
 
 */
 angular.module('kibana.hits', [])
-.controller('hits', function($scope, eventBus) {
+.controller('hits', function($scope, query, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -30,8 +24,8 @@ angular.module('kibana.hits', [])
     query   : ["*"],
     group   : "default",
     style   : { "font-size": '10pt'},
-    arrangement : 'vertical',
-    chart       : 'none',
+    arrangement : 'horizontal',
+    chart       : 'bar',
     counter_pos : 'above',
     donut   : false,
     tilt    : false,
@@ -41,17 +35,12 @@ angular.module('kibana.hits', [])
 
   $scope.init = function () {
     $scope.hits = 0;
-    eventBus.register($scope,'time', function(event,time){
-      set_time(time)
-    });
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.map(query,function(q) {
-        return {query: q, label: q};
-      })
+   
+    $scope.$on('refresh',function(){
       $scope.get_data();
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    })
+    $scope.get_data();
+
   }
 
   $scope.get_data = function(segment,query_id) {
@@ -59,30 +48,24 @@ angular.module('kibana.hits', [])
     $scope.panel.loading = true;
 
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
 
     var _segment = _.isUndefined(segment) ? 0 : segment
-    var request = $scope.ejs.Request().indices($scope.index[_segment]);
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
     
     // Build the question part of the query
-    var queries = [];
-    _.each($scope.panel.query, function(v) {
-      queries.push($scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(v.query || '*'),
-        ejs.RangeFilter($scope.time.field)
-          .from($scope.time.from)
-          .to($scope.time.to))
-      )
-    });
-
-    // Build the facet part
-    _.each(queries, function(v) {
+    _.each(query.ids, function(id) {
+      var _q = $scope.ejs.FilteredQuery(
+        ejs.QueryStringQuery(query.list[id].query || '*'),
+        filterSrv.getBoolFilter(filterSrv.ids));
+    
       request = request
-        .facet($scope.ejs.QueryFacet("query"+_.indexOf(queries,v))
-          .query(v)
+        .facet($scope.ejs.QueryFacet(id)
+          .query(_q)
         ).size(0)
-    })
+    });
 
     // TODO: Spy for hits panel
     //$scope.populate_modal(request);
@@ -92,7 +75,6 @@ angular.module('kibana.hits', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-
       $scope.panel.loading = false;
       if(_segment == 0) {
         $scope.hits = 0;
@@ -105,16 +87,25 @@ angular.module('kibana.hits', [])
         $scope.panel.error = $scope.parse_error(results.error);
         return;
       }
-      if($scope.query_id === query_id) {
+
+      // Convert facet ids to numbers
+      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k);})
+
+      // Make sure we're still on the same query/queries
+      if($scope.query_id === query_id && 
+        _.intersection(facetIds,query.ids).length == query.ids.length
+        ) {
         var i = 0;
-        _.each(results.facets, function(v, k) {
+        _.each(query.ids, function(id) {
+          var v = results.facets[id]
           var hits = _.isUndefined($scope.data[i]) || _segment == 0 ? 
             v.count : $scope.data[i].hits+v.count
           $scope.hits += v.count
 
           // Create series
           $scope.data[i] = { 
-            label: $scope.panel.query[i].label || "query"+(parseInt(i)+1), 
+            info: query.list[id],
+            id: id,
             hits: hits,
             data: [[i,hits]]
           };
@@ -122,24 +113,11 @@ angular.module('kibana.hits', [])
           i++;
         });
         $scope.$emit('render');
-        if(_segment < $scope.index.length-1) 
+        if(_segment < dashboard.indices.length-1) 
           $scope.get_data(_segment+1,query_id)
         
       }
     });
-  }
-
-  $scope.remove_query = function(q) {
-    $scope.panel.query = _.without($scope.panel.query,q);
-    $scope.get_data();
-  }
-
-  $scope.add_query = function(label,query) {
-    $scope.panel.query.unshift({
-      query: query,
-      label: label, 
-    });
-    $scope.get_data();
   }
 
   $scope.set_refresh = function (state) { 
@@ -155,11 +133,10 @@ angular.module('kibana.hits', [])
 
   function set_time(time) {
     $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
     $scope.get_data();
   }
 
-}).directive('hitsChart', function(eventBus) {
+}).directive('hitsChart', function(query) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -176,6 +153,13 @@ angular.module('kibana.hits', [])
 
       // Function for rendering panel
       function render_panel() {
+
+        try {
+          _.each(scope.data,function(series) {
+            series.label = series.info.alias,
+            series.color = series.info.color
+          })
+        } catch(e) {return}
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
                           .script("common/lib/panels/jquery.flot.pie.js")
@@ -196,13 +180,12 @@ angular.module('kibana.hits', [])
                 yaxis: { show: true, min: 0, color: "#c8c8c8" },
                 xaxis: { show: false },
                 grid: {
-                  backgroundColor: '#272b30',
                   borderWidth: 0,
                   borderColor: '#eee',
                   color: "#eee",
                   hoverable: true,
                 },
-                colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+                colors: query.colors
               })
             if(scope.panel.chart === 'pie')
               scope.plot = $.plot(elem, scope.data, {
@@ -218,7 +201,6 @@ angular.module('kibana.hits', [])
                       label: 'The Rest'
                     },
                     stroke: {
-                      color: '#272b30',
                       width: 0
                     },
                     label: { 
@@ -234,7 +216,7 @@ angular.module('kibana.hits', [])
                 },
                 //grid: { hoverable: true, clickable: true },
                 grid:   { hoverable: true, clickable: true },
-                colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+                colors: query.colors
               });
 
             // Compensate for the height of the  legend. Gross

@@ -1,10 +1,11 @@
 <kibana-panel ng-controller='trends' ng-init="init()">
 
   <div ng-style="panel.style" style="line-height:{{panel.style['font-size']}};display:inline-block;padding-right: 5px;" ng-repeat="query in trends">
+    <i class="icon-circle" style="color:{{query.info.color}}"></i>
     <span ng-class="{'text-success': query.hits.new >= query.hits.old, 'text-error': query.hits.old > query.hits.new}" class='strong'>
       <i class='large' ng-class="{'icon-caret-up': query.hits.new >= query.hits.old, 'icon-caret-down': query.hits.old > query.hits.new}"></i> {{query.percent}}% 
     </span>
-    <span class="tiny pointer light" bs-tooltip="'Then: '+query.hits.old+', Now: '+query.hits.new">({{query.label}})</span>
+    <span class="tiny pointer light" bs-tooltip="'Then: '+query.hits.old+', Now: '+query.hits.new" ng-show="query.info.alias != ''">({{query.info.alias}})</span>
     <br ng-show="panel.arrangement == 'vertical'">
   </div>
 </kibana-panel>         

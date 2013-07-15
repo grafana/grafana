@@ -11,12 +11,12 @@
     <h5>Gist <small>Enter a gist number or url</small></h5>
     <form>
       <input type="text" ng-model="gist.url"/><br>
-      <button class="btn" ng-click="gist_dblist(gist_id(gist.url))" ng-show="is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
+      <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
       <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
       <h6 ng-hide="gist.files.length">No gist dashboards found</h6>
       <table class="table table-condensed table-striped">
         <tr ng-repeat="file in gist.files">
-          <td><a ng-click="dash_load(file)">{{file.title}}</a></td>
+          <td><a ng-click="dashboard.dash_load(file)">{{file.title}}</a></td>
         </tr>
       </table>
     </form>
@@ -30,10 +30,10 @@
     <h6 ng-show="elasticsearch.dashboards.length">Elasticsearch stored dashboards</h6>
     <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
     <table class="table table-condensed table-striped">
-      <tr ng-repeat="dashboard in elasticsearch.dashboards">
-        <td><a ng-click="elasticsearch_delete(dashboard)"><i class="icon-remove"></i></a></td>
-        <td><a href="#/dashboard/elasticsearch/{{dashboard._id}}">{{dashboard._id}}</a></td>
-        <td><a><i class="icon-share" ng-click="share_link(dashboard._id,'elasticsearch',dashboard._id)" bs-modal="'panels/dashcontrol/share.html'"></i></a></td>
+      <tr ng-repeat="row in elasticsearch.dashboards">
+        <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
+        <td><a href="#/dashboard/elasticsearch/{{row._id}}">{{row._id}}</a></td>
+        <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'panels/dashcontrol/share.html'"></i></a></td>
       </tr>
     </table>
   </div>

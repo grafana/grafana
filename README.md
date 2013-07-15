@@ -5,8 +5,16 @@ Kibana 3 is completely new version of Kibana written entirely in HTML and Javasc
 the Kibana 2 repository at [https://github.com/rashidkpc/Kibana](https://github.com/rashidkpc/Kibana)
 
 ### Important!
-The index pattern format has changed in Kibana 3 milestone 2. Please update your index pattern in the
-timepicker panel for any dashboards you've built. The default has been updated.
+The dashboard storage format has changed in Kibana 3 milestone 3. Existing dashboards are unfortunately not backward compatible. However there's some great new features:
+* Every panel support multi-query
+* Customizable query colors and labels
+* Queries, label and colors are synced across panels at all times
+* New filtering functionality
+* Filters can be toggled and removed 
+* Drill down won't overwrite your queries, labels or colors
+* Confusing group functionality has been removed
+* Index configuration has been moved from the timepicker, to the main dashboard editor
+* The stringquery panel has been replaced with a more polished 'query' panel
 
 More information about Kibana 3 can be found at [http://three.kibana.org](http://three.kibana.org)  
 

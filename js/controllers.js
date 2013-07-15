@@ -3,7 +3,8 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, ejsResource, eventBus, fields) {
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, eventBus, 
+  fields, dashboard) {
 
   var _d = {
     title: "",
@@ -18,28 +19,18 @@ angular.module('kibana.controllers', [])
     // Make underscore.js available to views
     $scope._ = _;
 
+    $scope.dashboard = dashboard;
+
     // Provide a global list of all see fields
     $scope.fields = fields
     $scope.reset_row();
     $scope.clear_all_alerts();
 
-    // Load dashboard by event 
-    eventBus.register($scope,'dashboard', function(event,dashboard){
-      $scope.dashboards = dashboard.dashboard;
-      $scope.dashboards.last = dashboard.last;
-      _.defaults($scope.dashboards,_d)
-    })
-
-    // If the route changes, clear the existing dashboard
-    $rootScope.$on( "$routeChangeStart", function(event, next, current) {
-      delete $scope.dashboards
-    });
-
     var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
   }
 
-  $scope.add_row = function(dashboards,row) {
-    $scope.dashboards.rows.push(row);
+  $scope.add_row = function(dash,row) {
+    dash.rows.push(row);
   }
 
   $scope.reset_row = function() {

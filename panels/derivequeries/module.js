@@ -1,6 +1,6 @@
 /*
 
-  ## Termsquery
+  ## Derivequeries
 
   Broadcasts an array of queries based on the results of a terms facet
 
@@ -11,25 +11,19 @@
   * size :: how many queries to generate
   * fields :: a list of fields known to us
   * query_mode :: how to create query
-  
-  ### Group Events
-  #### Sends
-  * query :: Always broadcast as an array, even in multi: false
-  * get_time :: Request the time object from the timepicker
-  #### Receives
-  * query :: An array of queries. This is probably needs to be fixed.
-  * time :: populate index and time
-  * fields :: A list of fields known to us
+
 */
 
 angular.module('kibana.derivequeries', [])
-.controller('derivequeries', function($scope, eventBus) {
+.controller('derivequeries', function($scope, $rootScope, query, fields, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
+    loading : false,
     status  : "Beta",
     label   : "Search",
     query   : "*",
+    ids     : [],
     group   : "default",
     field   : '_type',
     fields  : [],
@@ -43,26 +37,19 @@ angular.module('kibana.derivequeries', [])
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
-    eventBus.register($scope,'fields', function(event, fields) {
-      $scope.panel.fields = fields.all;
-    });
-    eventBus.register($scope,'time', function(event,time){set_time(time)});
-    eventBus.register($scope,'query', function(event, query) {
-      $scope.panel.query = _.isArray(query) ? query[0] : query;
-      $scope.get_data();
-    });
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,'get_time')
+    $scope.panel.fields = fields.list
   }
 
   $scope.get_data = function() {
     update_history($scope.panel.query);
+    
     // Make sure we have everything for the request to complete
-    if(_.isUndefined($scope.index) || _.isUndefined($scope.time))
+    if(dashboard.indices.length == 0) {
       return
+    }
 
     $scope.panel.loading = true;
-    var request = $scope.ejs.Request().indices($scope.index);
+    var request = $scope.ejs.Request().indices(dashboard.indices);
 
     // Terms mode
     request = request
@@ -73,9 +60,7 @@ angular.module('kibana.derivequeries', [])
         .facetFilter(ejs.QueryFilter(
           ejs.FilteredQuery(
             ejs.QueryStringQuery($scope.panel.query || '*'),
-            ejs.RangeFilter($scope.time.field)
-              .from($scope.time.from)
-              .to($scope.time.to)
+            filterSrv.getBoolFilter(filterSrv.ids)
             )))).size(0)
 
     $scope.populate_modal(request);
@@ -93,10 +78,22 @@ angular.module('kibana.derivequeries', [])
       } else if ($scope.panel.mode === 'OR') {
         var suffix = ' OR (' + $scope.panel.query + ')';
       }
+      var ids = [];
       _.each(results.facets.query.terms, function(v) {
-        data.push($scope.panel.field+':"'+v.term+'"'+suffix)
+        var _q = $scope.panel.field+':"'+v.term+'"'+suffix;
+        // if it isn't in the list, remove it
+        var _iq = query.findQuery(_q)
+        if(!_iq) {
+          ids.push(query.set({query:_q}));
+        } else {
+          ids.push(_iq.id);
+        }
       });
-      $scope.send_query(data)
+      _.each(_.difference($scope.panel.ids,ids),function(id){
+        query.remove(id)
+      })
+      $scope.panel.ids = ids;
+      dashboard.refresh();
     });
   }
 
@@ -114,21 +111,10 @@ angular.module('kibana.derivequeries', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
-  }
-
-  function set_time(time) {
-    $scope.time = time;
-    $scope.index = _.isUndefined(time.index) ? $scope.index : time.index
-    $scope.get_data();
-  }
-
-  $scope.send_query = function(query) {
-    var _query = _.isArray(query) ? query : [query]
-    eventBus.broadcast($scope.$id,$scope.panel.group,'query',_query)
   }
 
   var update_history = function(query) {
