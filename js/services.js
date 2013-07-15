@@ -361,7 +361,6 @@ angular.module('kibana.services', [])
         .to(filter.to)
       break;
     case 'querystring':
-      console.log(filter.query)
       return ejs.QueryFilter(ejs.QueryStringQuery(filter.query))
       break;
     case 'terms':
@@ -499,7 +498,7 @@ angular.module('kibana.services', [])
         self.dash_load(dashboard)
       // No? Ok, grab default.json, its all we have now
       } else {
-        self.file_load('default')
+        self.file_load('default.json')
       } 
     }
   }
@@ -524,6 +523,7 @@ angular.module('kibana.services', [])
         // This is not optimal, we should be getting the entire index list here, or at least every
         // index that possibly matches the pattern
         self.indices = [self.current.index.default]
+        $rootScope.$broadcast('refresh')
       }
     } else {
       self.indices = [self.current.index.pattern]
@@ -700,14 +700,13 @@ angular.module('kibana.services', [])
   }
 
   this.dash_load = function(dashboard) {
+    timer.cancel_all();
 
     if(dashboard.index.interval === 'none') {
       self.indices = [dashboard.index.pattern]
     }
 
     self.current = dashboard;
-
-    timer.cancel_all();
 
     // Ok, now that we've setup the current dashboard, we can inject our services
     query = $injector.get('query');

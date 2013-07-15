@@ -32,12 +32,6 @@
   * x-axis :: Show x-axis labels and grid lines
   * y-axis :: Show y-axis labels and grid lines
   * interactive :: Allow drag to select time range
-  ### Group Events
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
-  #### Sends
-  * get_time :: On panel initialization get time range to query
 
 */
 
@@ -79,6 +73,8 @@ angular.module('kibana.histogram', [])
     $scope.$on('refresh',function(){
       $scope.get_data();
     })
+
+    $scope.get_data()
 
   }
 
@@ -157,7 +153,10 @@ angular.module('kibana.histogram', [])
 
           // Null values at each end of the time range ensure we see entire range
           if(_.isUndefined($scope.data[i]) || _segment == 0) {
-            var data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
+            var data = []
+            if(filterSrv.idsByType('time').length > 0) {
+              data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
+            }
             var hits = 0;
           } else {
             var data = $scope.data[i].data
@@ -236,7 +235,7 @@ angular.module('kibana.histogram', [])
     $scope.modal = {
       title: "Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 

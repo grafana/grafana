@@ -79,14 +79,15 @@ angular.module('kibana.fields', [])
     eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
   }
 
-  $scope.build_search = function(field,value,negate) {
-    var query = (negate ? '-':'+')+field+":\""+value+"\""
-    filterSrv.set({type:'querystring',query:query})
+  $scope.build_search = function(field,value,mandate) {
+    var query = field+":"+angular.toJson(value)
+    
+    filterSrv.set({type:'querystring',query:query,mandate:mandate})
     dashboard.refresh();
   }
 
-  $scope.fieldExists = function(field,mode) {
-    filterSrv.set({type:mode,field:field})
+  $scope.fieldExists = function(field,mandate) {
+    filterSrv.set({type:'exists',field:field,mandate:mandate})
     dashboard.refresh();
   }
 

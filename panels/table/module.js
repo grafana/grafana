@@ -55,8 +55,7 @@ angular.module('kibana.table', [])
 
     $scope.set_listeners($scope.panel.group)
 
-    // Now that we're all setup, request the time from our group
-    eventBus.broadcast($scope.$id,$scope.panel.group,"get_time")
+    $scope.get_data();
   }
 
   $scope.set_listeners = function(group) {
@@ -108,8 +107,8 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field,value,negate) {
-    var query = (negate ? '-':'+')+field+":\""+value+"\""
-    filterSrv.set({type:'querystring',query:query})
+    var query = field+":"+angular.toJson(value)
+    filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')})
     $scope.panel.offset = 0;
     dashboard.refresh();
   }

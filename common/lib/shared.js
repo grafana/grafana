@@ -284,7 +284,7 @@ function flatten_json(object,root,array) {
         } else if(obj.length === 1 && _.isNumber(obj[0])) {
           array[rootname] = parseFloat(obj[0]);
         } else {
-          array[rootname] = typeof obj === 'undefined' ? null : obj.join(',');
+          array[rootname] = typeof obj === 'undefined' ? null : obj;
         }
       } else {
         flatten_json(obj,rootname,array)

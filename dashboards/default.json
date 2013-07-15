@@ -1,6 +1,38 @@
 {
   "title": "Logstash Search",
-  "services": {},
+  "services": {
+    "query": {
+      "idQueue": [],
+      "list": {
+        "0": {
+          "query": "*",
+          "alias": "",
+          "color": "#7EB26D",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
+    },
+    "filter": {
+      "idQueue": [],
+      "list": {
+        "0": {
+          "from": "2013-07-15T03:54:27.219Z",
+          "to": "2013-07-15T04:09:27.219Z",
+          "field": "@timestamp",
+          "type": "time",
+          "mandate": "must",
+          "alias": "",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
+    }
+  },
   "rows": [
     {
       "title": "Options",
@@ -11,13 +43,14 @@
       "panels": [
         {
           "loading": false,
-          "error": false,
+          "error": "",
           "span": 5,
           "editable": true,
           "group": [
             "default"
           ],
           "type": "timepicker",
+          "status": "Stable",
           "mode": "relative",
           "time_options": [
             "5m",
@@ -27,18 +60,18 @@
             "12h",
             "24h",
             "2d",
-            "5d"
+            "7d",
+            "30d"
           ],
-          "timespan": "6h",
+          "timespan": "15m",
           "timefield": "@timestamp",
-          "index": "[logstash-]YYYY.MM.DD",
-          "defaultindex": "NOINDEX",
-          "index_interval": "day",
+          "timeformat": "",
           "refresh": {
             "enable": false,
             "interval": 30,
             "min": 3
-          }
+          },
+          "filter_id": 0
         },
         {
           "loading": false,
@@ -49,6 +82,7 @@
             "default"
           ],
           "type": "dashcontrol",
+          "status": "Stable",
           "save": {
             "gist": false,
             "elasticsearch": true,
@@ -62,7 +96,6 @@
           },
           "hide_control": false,
           "elasticsearch_size": 20,
-          "elasticsearch_saveto": "kibana-int",
           "temp": true,
           "temp_ttl": "30d"
         }
@@ -83,16 +116,12 @@
           "group": [
             "default"
           ],
-          "type": "stringquery",
+          "type": "query",
+          "status": "Experimental",
           "label": "Search",
           "query": "*",
-          "size": 100,
-          "sort": [
-            "_score",
-            "desc"
-          ],
-          "multi": false,
-          "multi_arrange": "horizontal"
+          "history": [],
+          "remember": 10
         }
       ]
     },
@@ -105,61 +134,77 @@
       "panels": [
         {
           "loading": false,
-          "span": 12,
+          "span": 9,
           "editable": true,
           "group": [
             "default"
           ],
           "type": "histogram",
+          "status": "Stable",
           "query": [
             {
               "query": "*",
-              "label": "*"
+              "label": "Query"
             }
           ],
-          "interval": "5m",
-          "show": [
-            "points",
-            "lines",
-            "legend",
-            "x-axis",
-            "y-axis"
-          ],
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "10s",
+          "fill": 3,
+          "linewidth": 3,
           "timezone": "browser",
           "spyable": true,
           "zoomlinks": true,
-          "fill": 0,
-          "linewidth": 2,
           "bars": true,
           "stack": true,
           "points": false,
           "lines": false,
           "legend": true,
           "x-axis": true,
-          "y-axis": true
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true
         },
         {
           "loading": false,
-          "span": 0,
+          "error": false,
+          "span": 3,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "hits",
+          "type": "filtering",
+          "status": "Stable",
           "query": [
             {
               "query": "*",
-              "label": "*"
+              "label": "Query"
             }
           ],
-          "style": {
-            "font-size": "9pt"
-          },
-          "aggregate": false,
-          "arrangement": "horizontal",
-          "chart": true,
-          "counters": true,
-          "count_pos": "above"
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "5m",
+          "fill": 3,
+          "linewidth": 3,
+          "timezone": "browser",
+          "spyable": true,
+          "zoomlinks": true,
+          "bars": true,
+          "stack": true,
+          "points": false,
+          "lines": false,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true,
+          "title": "Filters"
         }
       ]
     },
@@ -179,6 +224,7 @@
             "default"
           ],
           "type": "fields",
+          "status": "Beta",
           "style": {},
           "arrange": "vertical",
           "micropanel_position": "right",
@@ -197,21 +243,10 @@
             "default"
           ],
           "type": "table",
+          "status": "Stable",
           "query": "*",
-          "interval": "1y",
-          "show": [
-            "bars",
-            "y-axis",
-            "x-axis",
-            "legend"
-          ],
-          "fill": 3,
-          "overflow": "min-height",
-          "timezone": "browser",
-          "spyable": true,
-          "zoomlinks": true,
-          "size": 50,
-          "pages": 10,
+          "size": 100,
+          "pages": 5,
           "offset": 0,
           "sort": [
             "@timestamp",
@@ -220,14 +255,24 @@
           "style": {
             "font-size": "9pt"
           },
+          "overflow": "min-height",
           "fields": [
             "@timestamp",
             "@message"
           ],
-          "sortable": true
+          "highlight": [],
+          "sortable": true,
+          "header": true,
+          "paging": true,
+          "spyable": true
         }
       ]
     }
   ],
-  "editable": true
+  "editable": true,
+  "index": {
+    "interval": "day",
+    "pattern": "[logstash-]YYYY.MM.DD",
+    "default": "MISSING_INDEX"
+  }
 }

@@ -1,0 +1,36 @@
+<kibana-panel ng-controller='filtering' ng-init="init()">
+  <style>
+    .filter-panel-filter {
+      display:inline-block;
+      margin-left: 10px;
+      width: 200px;
+      padding: 5px;
+      border: #555 1px solid;
+      margin: 0px 5px 5px 0px;
+    }
+    .filter-must {
+      border-bottom: #7EB26D 3px solid;
+    }
+    .filter-mustNot {
+      border-bottom: #E24D42 3px solid;
+    }
+    .filter-should {
+      border-bottom: #EF843C 3px solid;
+    }
+    .filter-remove {
+      float:right;
+      margin-bottom: 0px !important;
+    }
+
+  </style>
+
+  <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter">
+    <div class="filter-{{filterSrv.list[id].mandate}}">
+      {{filterSrv.list[id].type}} ({{filterSrv.list[id].mandate}}) 
+      <i class="filter-remove pointer icon-remove" ng-click="remove(id)"></i>
+    </div>
+    <ul class="unstyled">
+      <li ng-repeat="(key,value) in stripped(filterSrv.list[id])"><strong>{{key}}</strong> : {{value}}</li>
+    </ul>
+  </div>
+</kibana-panel>
