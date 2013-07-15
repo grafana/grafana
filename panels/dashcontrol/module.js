@@ -27,7 +27,7 @@
 */
 
 angular.module('kibana.dashcontrol', [])
-.controller('dashcontrol', function($scope, $routeParams, $http, timer, dashboard) {
+.controller('dashcontrol', function($scope, $http, timer, dashboard) {
 
   $scope.panel = $scope.panel || {};
   // Set and populate defaults

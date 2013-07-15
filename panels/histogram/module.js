@@ -49,7 +49,7 @@ angular.module('kibana.histogram', [])
     auto_int    : true,
     resolution  : 100, 
     interval    : '5m',
-    fill        : 3,
+    fill        : 0,
     linewidth   : 3,
     timezone    : 'browser', // browser, utc or a standard timezone
     spyable     : true,

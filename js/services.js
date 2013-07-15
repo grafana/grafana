@@ -23,7 +23,6 @@ angular.module('kibana.services', [])
     if(_.contains(_types,'$kibana_debug'))
       $rootScope.$broadcast('$kibana_debug',packet);
 
-    //console.log('Sent: '+type + ' to ' + to + ' from ' + from + ': ' + angular.toJson(data))
     $rootScope.$broadcast(type,{
       from: from,
       to: to,
@@ -46,7 +45,6 @@ angular.module('kibana.services', [])
       var _time   = packet.time
       var _group  = (!(_.isUndefined(scope.panel))) ? scope.panel.group : ["NONE"] 
 
-      //console.log('registered:' + type + " for " + scope.panel.title + " " + scope.$id)
       if(!(_.isArray(_to)))
         _to = [_to];
       if(!(_.isArray(_group)))
@@ -61,7 +59,6 @@ angular.module('kibana.services', [])
         _.indexOf(_to,'ALL') > -1) &&
         _from !== _id
       ) {
-        //console.log('Got: '+type + ' from ' + _from + ' to ' + _to + ': ' + angular.toJson(packet.data))
         fn(event,packet.data,{time:_time,to:_to,from:_from,type:_type});
       }
     });
@@ -208,13 +205,15 @@ angular.module('kibana.services', [])
     "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"  //7
   ];
 
-  // Save a reference to this
-  this.list = dashboard.current.services.query.list;
-  this.ids = dashboard.current.services.query.ids;
 
+  // Save a reference to this
   var self = this;
 
-  var init = function() {
+  this.init = function() {
+    _q = dashboard.current.services.query;
+    self.list = dashboard.current.services.query.list;
+    self.ids = dashboard.current.services.query.ids;
+    
     if (self.ids.length == 0) {
       self.set({});
     }
@@ -273,7 +272,7 @@ angular.module('kibana.services', [])
     return self.colors[id % self.colors.length]
   }
 
-  init();
+  self.init();
 
 })
 .service('filterSrv', function(dashboard, ejsResource) {
@@ -292,9 +291,19 @@ angular.module('kibana.services', [])
   // Save a reference to this
   var self = this;
 
-  // Accessors
-  this.list = dashboard.current.services.filter.list;
-  this.ids = dashboard.current.services.filter.ids;
+  // Call this whenever we need to reload the important stuff
+  this.init = function() {
+    // Accessors
+    self.list = dashboard.current.services.filter.list;
+    self.ids = dashboard.current.services.filter.ids;
+    _f = dashboard.current.services.filter;
+
+    _.each(self.getByType('time',true),function(time) {
+      self.list[time.id].from = new Date(time.from)
+      self.list[time.id].to = new Date(time.to)
+    })
+
+  }
 
   // This is used both for adding filters and modifying them. 
   // If an id is passed, the filter at that id is updated
@@ -396,7 +405,8 @@ angular.module('kibana.services', [])
   }
 
   this.idsByType = function(type,inactive) {
-    return _.pluck(_.where(self.list,{type:type,active:(inactive ? false:true)}),'id')
+    var _require = inactive ? {type:type} : {type:type,active:true}
+    return _.pluck(_.where(self.list,_require),'id')
   }
 
   // This special function looks for all time filters, and returns a time range according to the mode
@@ -446,6 +456,9 @@ angular.module('kibana.services', [])
     }
   }
 
+  // Now init
+  self.init();
+
 })
 .service('dashboard', function($routeParams, $http, $rootScope, $injector, ejsResource, timer, kbnIndex) {
   // A hash of defaults to use when loading a dashboard
@@ -466,16 +479,17 @@ angular.module('kibana.services', [])
   var ejs = ejsResource(config.elasticsearch);  
   var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
 
-  // Empty dashboard object
-  this.current = {};
-  this.last = {};
-  this.indices = [];
-
   // Store a reference to this
   var self = this;
   var filterSrv,query;
 
+  this.current = {};
+  this.last = {};
+
   $rootScope.$on('$routeChangeSuccess',function(){
+    // Clear the current dashboard to prevent reloading
+    self.current = {};
+    self.indices = [];
     route();
   })
 
@@ -538,19 +552,26 @@ angular.module('kibana.services', [])
   }
 
   this.dash_load = function(dashboard) {
+    // Cancel all timers
     timer.cancel_all();
 
+    // If not using time based indices, use the default index
     if(dashboard.index.interval === 'none') {
       self.indices = [dashboard.index.default]
     }
 
-    self.current = dashboard;
+    self.current = _.clone(dashboard);
 
     // Ok, now that we've setup the current dashboard, we can inject our services
     query = $injector.get('query');
     filterSrv = $injector.get('filterSrv')
 
+    // Make sure these re-init
+    query.init();
+    filterSrv.init();
+
     if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length == 0) {
+    //if(dashboard.index.interval !== 'none') {
       self.refresh();
     }
 
