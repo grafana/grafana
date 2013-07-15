@@ -99,9 +99,7 @@ angular.module('kibana.map', [])
   }
 
   $scope.build_search = function(field,value) {
-    _.each(query.list,function(q) {
-      q.query = add_to_query(q.query,field,value,false);
-    })
+    filterSrv.set({type:'querystring',mandate:'must',query:field+":"+value})
     dashboard.refresh();
   }
 
