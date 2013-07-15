@@ -1,7 +1,11 @@
 <kibana-panel ng-controller='filtering' ng-init="init()">
   <style>
+    .filtering-container {
+      margin-top: 3px;
+    }
     .filter-panel-filter {
       display:inline-block;
+      vertical-align: top;
       margin-left: 10px;
       width: 200px;
       padding: 5px;
@@ -17,20 +21,25 @@
     .filter-should {
       border-bottom: #EF843C 3px solid;
     }
-    .filter-remove {
+    .filter-action {
       float:right;
       margin-bottom: 0px !important;
+      margin-left: 3px;
     }
 
   </style>
 
-  <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter">
-    <div class="filter-{{filterSrv.list[id].mandate}}">
-      {{filterSrv.list[id].type}} ({{filterSrv.list[id].mandate}}) 
-      <i class="filter-remove pointer icon-remove" ng-click="remove(id)"></i>
+  <div class='filtering-container'>
+    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter">
+      <div class="filter-{{filterSrv.list[id].mandate}}">
+        <strong>{{filterSrv.list[id].type}}</strong> {{filterSrv.list[id].mandate}}
+        <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(id)"></i>
+        <i class="filter-action pointer" ng-class="{'icon-check': filterSrv.list[id].active,'icon-check-empty': !filterSrv.list[id].active}" bs-tooltip="'Toggle'" ng-click="toggle(id)"></i>
+
+      </div>
+      <ul class="unstyled">
+        <li ng-repeat="(key,value) in filterSrv.list[id]" ng-show="show_key(key)"><strong>{{key}}</strong> : {{value}}</li>
+      </ul>
     </div>
-    <ul class="unstyled">
-      <li ng-repeat="(key,value) in stripped(filterSrv.list[id])"><strong>{{key}}</strong> : {{value}}</li>
-    </ul>
   </div>
 </kibana-panel>

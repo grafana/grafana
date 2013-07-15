@@ -26,6 +26,11 @@ angular.module('kibana.filtering', [])
     dashboard.refresh();
   }
 
+  $scope.toggle = function(id) {
+    filterSrv.list[id].active = !filterSrv.list[id].active;
+    dashboard.refresh();
+  }
+
   $scope.refresh = function(query) {
     $rootScope.$broadcast('refresh')
   }
@@ -34,9 +39,8 @@ angular.module('kibana.filtering', [])
     $rootScope.$broadcast('render')
   }
 
-  $scope.stripped = function(filter) {
-    var filter = _.omit(filter,'type','id','alias','mandate')
-    return filter
+  $scope.show_key = function(key) {
+    return !_.contains(['type','id','alias','mandate','active'],key)
   }
 
 });

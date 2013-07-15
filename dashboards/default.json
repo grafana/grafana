@@ -2,7 +2,12 @@
   "title": "Logstash Search",
   "services": {
     "query": {
-      "idQueue": [],
+      "idQueue": [
+        1,
+        2,
+        3,
+        4
+      ],
       "list": {
         "0": {
           "query": "*",
@@ -16,14 +21,18 @@
       ]
     },
     "filter": {
-      "idQueue": [],
+      "idQueue": [
+        1,
+        2
+      ],
       "list": {
         "0": {
-          "from": "2013-07-15T03:54:27.219Z",
-          "to": "2013-07-15T04:09:27.219Z",
+          "from": "2013-07-15T16:50:45.363Z",
+          "to": "2013-07-15T17:50:45.363Z",
           "field": "@timestamp",
           "type": "time",
           "mandate": "must",
+          "active": true,
           "alias": "",
           "id": 0
         }
@@ -63,7 +72,7 @@
             "7d",
             "30d"
           ],
-          "timespan": "15m",
+          "timespan": "1h",
           "timefield": "@timestamp",
           "timeformat": "",
           "refresh": {
@@ -126,6 +135,26 @@
       ]
     },
     {
+      "title": "Filters",
+      "height": "50px",
+      "editable": true,
+      "collapse": true,
+      "collapsable": true,
+      "panels": [
+        {
+          "loading": false,
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "filtering",
+          "status": "Experimental"
+        }
+      ]
+    },
+    {
       "title": "Graph",
       "height": "350px",
       "editable": true,
@@ -134,7 +163,7 @@
       "panels": [
         {
           "loading": false,
-          "span": 9,
+          "span": 12,
           "editable": true,
           "group": [
             "default"
@@ -152,14 +181,14 @@
           "value_field": null,
           "auto_int": true,
           "resolution": 100,
-          "interval": "10s",
+          "interval": "30s",
           "fill": 3,
           "linewidth": 3,
           "timezone": "browser",
           "spyable": true,
           "zoomlinks": true,
           "bars": true,
-          "stack": true,
+          "stack": false,
           "points": false,
           "lines": false,
           "legend": true,
@@ -167,44 +196,6 @@
           "y-axis": true,
           "percentage": false,
           "interactive": true
-        },
-        {
-          "loading": false,
-          "error": false,
-          "span": 3,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "filtering",
-          "status": "Stable",
-          "query": [
-            {
-              "query": "*",
-              "label": "Query"
-            }
-          ],
-          "mode": "count",
-          "time_field": "@timestamp",
-          "value_field": null,
-          "auto_int": true,
-          "resolution": 100,
-          "interval": "5m",
-          "fill": 3,
-          "linewidth": 3,
-          "timezone": "browser",
-          "spyable": true,
-          "zoomlinks": true,
-          "bars": true,
-          "stack": true,
-          "points": false,
-          "lines": false,
-          "legend": true,
-          "x-axis": true,
-          "y-axis": true,
-          "percentage": false,
-          "interactive": true,
-          "title": "Filters"
         }
       ]
     },
@@ -273,6 +264,6 @@
   "index": {
     "interval": "day",
     "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "MISSING_INDEX"
+    "default": "logstash-*"
   }
 }

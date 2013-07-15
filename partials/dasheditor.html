@@ -36,12 +36,12 @@
       <div class="span3">
         <h6>Timestamping</h6><select class="input-small" ng-model="dashboard.current.index.interval" ng-options='f for f in ["none","hour","day","week","month","year"]'></select>
       </div>
-      <div class="span5">
-        <h6>Index <span ng-show="dashboard.current.index.interval != 'none'">pattern <small>Absolutes in []</small></span></h6>
+      <div class="span5" ng-show="dashboard.current.index.interval != 'none'">
+        <h6>Index pattern <small>Absolutes in []</small></h6>
         <input type="text" class="input-medium" ng-model="dashboard.current.index.pattern">
       </div>
       <div class="span4">
-        <h6>Failover Index <small>If index not found</small></h6>
+        <h6>Default Index <small ng-show="dashboard.current.index.interval != 'none'">If index not found</small></h6>
         <input type="text" class="input-medium" ng-model="dashboard.current.index.default">
       </div>
     </div>
@@ -87,5 +87,5 @@
   </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-success" ng-click="dismiss();reset_panel();">Close</button>
+  <button type="button" class="btn btn-success" ng-click="dismiss();reset_panel();dashboard.refresh()">Close</button>
 </div>

@@ -300,6 +300,7 @@ angular.module('kibana.services', [])
   // If an id is passed, the filter at that id is updated
   this.set = function(filter,id) {
     _.defaults(filter,{mandate:'must'})
+    filter.active = true;
     if(!_.isUndefined(id)) {
       if(!_.isUndefined(self.list[id])) {
         _.extend(self.list[id],filter);
@@ -328,16 +329,18 @@ angular.module('kibana.services', [])
     // A default match all filter, just in case there are no other filters
     var bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
     _.each(ids,function(id) {
-      switch(self.list[id].mandate) 
-      {
-      case 'mustNot':
-        bool = bool.mustNot(self.getEjsObj(id));
-        break;
-      case 'should':
-        bool = bool.should(self.getEjsObj(id));
-        break;
-      default:
-        bool = bool.must(self.getEjsObj(id));
+      if(self.list[id].active) {
+        switch(self.list[id].mandate) 
+        {
+        case 'mustNot':
+          bool = bool.mustNot(self.getEjsObj(id));
+          break;
+        case 'should':
+          bool = bool.should(self.getEjsObj(id));
+          break;
+        default:
+          bool = bool.must(self.getEjsObj(id));
+        }
       }
     })
     return bool;
@@ -348,6 +351,9 @@ angular.module('kibana.services', [])
   }
 
   this.toEjsObj = function (filter) {
+    if(!filter.active) {
+      return false
+    }
     switch(filter.type)
     {
     case 'time':
@@ -377,8 +383,8 @@ angular.module('kibana.services', [])
     }
   }
 
-  this.getByType = function(type) {
-    return _.pick(self.list,self.idsByType(type))
+  this.getByType = function(type,inactive) {
+    return _.pick(self.list,self.idsByType(type,inactive))
   }
 
   this.removeByType = function(type) {
@@ -389,13 +395,13 @@ angular.module('kibana.services', [])
     return ids;
   }
 
-  this.idsByType = function(type) {
-    return _.pluck(_.where(self.list,{type:type}),'id')
+  this.idsByType = function(type,inactive) {
+    return _.pluck(_.where(self.list,{type:type,active:(inactive ? false:true)}),'id')
   }
 
   // This special function looks for all time filters, and returns a time range according to the mode
   this.timeRange = function(mode) {
-    var _t = _.where(self.list,{type:'time'})
+    var _t = _.where(self.list,{type:'time',active:true})
     if(_t.length == 0) {
       return false;
     }
@@ -526,9 +532,41 @@ angular.module('kibana.services', [])
         $rootScope.$broadcast('refresh')
       }
     } else {
-      self.indices = [self.current.index.pattern]
+      self.indices = [self.current.index.default]
       $rootScope.$broadcast('refresh')
     }
+  }
+
+  this.dash_load = function(dashboard) {
+    timer.cancel_all();
+
+    if(dashboard.index.interval === 'none') {
+      self.indices = [dashboard.index.default]
+    }
+
+    self.current = dashboard;
+
+    // Ok, now that we've setup the current dashboard, we can inject our services
+    query = $injector.get('query');
+    filterSrv = $injector.get('filterSrv')
+
+    if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length == 0) {
+      self.refresh();
+    }
+
+    return true;
+  }
+
+  this.gist_id = function(string) {
+    if(self.is_gist(string))
+      return string.match(gist_pattern)[0].replace(/.*\//, '');
+  }
+
+  this.is_gist = function(string) {
+    if(!_.isUndefined(string) && string != '' && !_.isNull(string.match(gist_pattern)))
+      return string.match(gist_pattern).length > 0 ? true : false;
+    else
+      return false
   }
 
   this.to_file = function() {
@@ -697,33 +735,6 @@ angular.module('kibana.services', [])
     }, function(data, status, headers, config) {
       return false;
     });
-  }
-
-  this.dash_load = function(dashboard) {
-    timer.cancel_all();
-
-    if(dashboard.index.interval === 'none') {
-      self.indices = [dashboard.index.pattern]
-    }
-
-    self.current = dashboard;
-
-    // Ok, now that we've setup the current dashboard, we can inject our services
-    query = $injector.get('query');
-    filterSrv = $injector.get('filterSrv')
-    return true;
-  }
-
-  this.gist_id = function(string) {
-    if(self.is_gist(string))
-      return string.match(gist_pattern)[0].replace(/.*\//, '');
-  }
-
-  this.is_gist = function(string) {
-    if(!_.isUndefined(string) && string != '' && !_.isNull(string.match(gist_pattern)))
-      return string.match(gist_pattern).length > 0 ? true : false;
-    else
-      return false
   }
 
 })

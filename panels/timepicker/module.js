@@ -44,7 +44,7 @@ angular.module('kibana.timepicker', [])
     // Private refresh interval that we can use for view display without causing
     // unnecessary refreshes during changes
     $scope.refresh_interval = $scope.panel.refresh.interval
-
+    $scope.filterSrv = filterSrv;
 
     // Init a private time object with Date() objects depending on mode
     switch($scope.panel.mode) {
@@ -68,7 +68,12 @@ angular.module('kibana.timepicker', [])
         break;
     }
     $scope.time.field = $scope.panel.timefield;
-    $scope.time_apply();
+    // These 3 statements basicly do everything time_apply() does
+    set_timepicker($scope.time.from,$scope.time.to)
+    update_panel()
+    set_time_filter($scope.time)
+    dashboard.refresh();
+
 
     // Start refresh timer if enabled
     if ($scope.panel.refresh.enable)
@@ -76,17 +81,19 @@ angular.module('kibana.timepicker', [])
 
     // In case some other panel broadcasts a time, set us to an absolute range
     $scope.$on('refresh', function() {
-      var time = filterSrv.timeRange('min')
+      if(filterSrv.idsByType('time').length > 0) {
+        var time = filterSrv.timeRange('min')
 
-      if($scope.time.from.diff(moment.utc(time.from)) != 0 
-        || $scope.time.to.diff(moment.utc(time.to)) != 0)
-      {
-        $scope.panel.mode = 'absolute';
+        if($scope.time.from.diff(moment.utc(time.from)) != 0 
+          || $scope.time.to.diff(moment.utc(time.to)) != 0)
+        {
+          $scope.set_mode('absolute');
 
-        // These 3 statements basicly do everything time_apply() does
-        set_timepicker(moment(time.from),moment(time.to))
-        $scope.time = $scope.time_calc();
-        update_panel()
+          // These 3 statements basicly do everything time_apply() does
+          set_timepicker(moment(time.from),moment(time.to))
+          $scope.time = $scope.time_calc();
+          update_panel()
+        }
       }
     });
   }
