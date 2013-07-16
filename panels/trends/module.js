@@ -48,9 +48,22 @@ angular.module('kibana.trends', [])
     if(dashboard.indices.length == 0) {
       return
     } else {
-      $scope.index = dashboard.indices
+      $scope.index = segment > 0 ? $scope.index : dashboard.indices;
     }
 
+    // Determine a time field
+    var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'))
+    if(timeField.length > 1) {
+      $scope.panel.error = "Time field must be consistent amongst time filters"
+      return
+    } else if(timeField.length == 0) {
+      $scope.panel.error = "A time filter must exist for this panel to function"
+      return
+    } else {
+      timeField = timeField[0]
+    }
+
+    $scope.time = filterSrv.timeRange('min');
     $scope.old_time = {
       from : new Date($scope.time.from.getTime() - interval_to_seconds($scope.panel.ago)*1000),
       to   : new Date($scope.time.to.getTime() - interval_to_seconds($scope.panel.ago)*1000)
@@ -58,12 +71,18 @@ angular.module('kibana.trends', [])
 
     var _segment = _.isUndefined(segment) ? 0 : segment
     var request = $scope.ejs.Request();
+    var _ids_without_time = _.difference(filterSrv.ids,filterSrv.idsByType('time'))
+
 
     // Build the question part of the query
     _.each(query.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(query.list[id].query || '*'),
-        filterSrv.getBoolFilter(filterSrv.ids))
+        filterSrv.getBoolFilter(_ids_without_time).must(
+          ejs.RangeFilter(timeField)
+          .from($scope.time.from)
+          .to($scope.time.to)
+        ))
 
       request = request
         .facet($scope.ejs.QueryFacet(id)
@@ -75,9 +94,11 @@ angular.module('kibana.trends', [])
     _.each(query.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
         ejs.QueryStringQuery(query.list[id].query || '*'),
-        ejs.RangeFilter($scope.time.field)
+        filterSrv.getBoolFilter(_ids_without_time).must(
+          ejs.RangeFilter(timeField)
           .from($scope.old_time.from)
-          .to($scope.old_time.to))
+          .to($scope.old_time.to)
+        ))
       request = request
         .facet($scope.ejs.QueryFacet("old_"+id)
           .query(q)
@@ -92,11 +113,13 @@ angular.module('kibana.trends', [])
       kbnIndex.indices(
         $scope.old_time.from,
         $scope.old_time.to,
-        $scope.time.pattern,
-        $scope.time.interval
+        dashboard.current.index.pattern,
+        dashboard.current.index.interval
       ).then(function (p) {
         $scope.index = _.union(p,$scope.index);
-        process_results(request.indices($scope.index[_segment]).doSearch());
+        request = request.indices($scope.index[_segment])
+        process_results(request.doSearch());
+
       });
     } else {
       process_results(request.indices($scope.index[_segment]).doSearch());
