@@ -188,7 +188,7 @@
           "spyable": true,
           "zoomlinks": true,
           "bars": true,
-          "stack": false,
+          "stack": true,
           "points": false,
           "lines": false,
           "legend": true,
