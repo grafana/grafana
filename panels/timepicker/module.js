@@ -84,9 +84,12 @@ angular.module('kibana.timepicker', [])
       if(filterSrv.idsByType('time').length > 0) {
         var time = filterSrv.timeRange('min')
 
-        if($scope.time.from.diff(moment.utc(time.from)) != 0 
-          || $scope.time.to.diff(moment.utc(time.to)) != 0)
+        if($scope.time.from.diff(moment.utc(time.from),'seconds') !== 0 
+          || $scope.time.to.diff(moment.utc(time.to),'seconds') !== 0)
         {
+          console.log($scope.time.from+ " and "+ moment.utc(time.from))
+          console.log($scope.time.to+" and "+moment.utc(time.to))
+
           $scope.set_mode('absolute');
 
           // These 3 statements basicly do everything time_apply() does
