@@ -39,9 +39,9 @@
         <strong>{{filterSrv.list[id].type}}</strong> 
         <span ng-show="!filterSrv.list[id].editing" class="filter-mandate" ng-click="filterSrv.list[id].editing = true">{{filterSrv.list[id].mandate}}</span>
 
-        <span class="small" ng-show="filterSrv.list[id].editing">
-          <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']" ng-change='filterSrv.list[id].editing=undefined;refresh()'></select>
-          <i class="pointer icon-remove" bs-tooltip="'Cancel  '" ng-click="filterSrv.list[id].editing=undefined"></i>
+        <span ng-show="filterSrv.list[id].editing">
+          <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']" ng-change='filterSrv.list[id].editing=undefined;refresh()' ng-blur="filterSrv.list[id].editing=undefined"></select>
+          <i class="pointer icon-remove" bs-tooltip="'Cancel '" ng-click="filterSrv.list[id].editing=undefined"></i>
         </span>
 
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(id)"></i>
