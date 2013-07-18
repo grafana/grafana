@@ -110,7 +110,7 @@ angular.module('kibana.table', [])
     var query;
     // This needs to be abstracted somewhere
     if(_.isArray(value)) {
-      query = field+":(" + _.map(value,function(v){return angular.toJson(v)}).join(",") + ")";
+      query = field+":(" + _.map(value,function(v){return angular.toJson(v)}).join(" AND ") + ")";
     } else {
       query = field+":"+angular.toJson(value);
     }
