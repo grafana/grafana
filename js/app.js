@@ -12,9 +12,9 @@ var modules = [
   '$strap.directives',
   'kibana.panels',
   'ngSanitize',
-  ]
+];
 
-var scripts = []
+var scripts = [];
 
 var labjs = $LAB
   .script("common/lib/jquery-1.8.0.min.js").wait()
@@ -34,12 +34,12 @@ var labjs = $LAB
   .script("js/controllers.js")
   .script("js/filters.js")
   .script("js/directives.js")
-  .script("js/panels.js").wait()
+  .script("js/panels.js").wait();
 
 _.each(config.modules, function(v) {
-  labjs = labjs.script('panels/'+v+'/module.js')
-  modules.push('kibana.'+v)
-})
+  labjs = labjs.script('panels/'+v+'/module.js');
+  modules.push('kibana.'+v);
+});
 
 /* Application level module which depends on filters, controllers, and services */
 labjs.wait(function(){
@@ -59,7 +59,7 @@ labjs.wait(function(){
         });
     }]);
   angular.element(document).ready(function() {
-    $('body').attr('ng-controller', 'DashCtrl')
+    $('body').attr('ng-controller', 'DashCtrl');
     angular.bootstrap(document, ['kibana']);
   });
 });

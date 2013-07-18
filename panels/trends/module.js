@@ -1,12 +1,12 @@
+/*jshint globalstrict:true */
+/*global angular:true */
 /*
 
-  ## Hits
+  ## Trends
 
-  A variety of representations of the hits a query matches
+  Shows how queries are moving from a specified time ago
 
   ### Parameters
-  * query ::  An array of queries. No labels here, just an array of strings. Maybe
-              there should be labels. Probably. 
   * style :: A hash of css styles
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
   * ago :: Date math formatted time to look back

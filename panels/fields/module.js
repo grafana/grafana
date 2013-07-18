@@ -80,8 +80,12 @@ angular.module('kibana.fields', [])
   }
 
   $scope.build_search = function(field,value,mandate) {
-    var query = field+":"+angular.toJson(value)
-    
+    var query;
+    if(_.isArray(value)) {
+      query = field+":(" + _.map(value,function(v){return "\""+v+"\""}).join(",") + ")";
+    } else {
+      query = field+":"+angular.toJson(value);
+    }    
     filterSrv.set({type:'querystring',query:query,mandate:mandate})
     dashboard.refresh();
   }

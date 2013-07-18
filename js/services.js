@@ -1,16 +1,18 @@
 /*jshint globalstrict:true */
 /*global angular:true */
+/*global Blob:false*/
 'use strict';
 
 angular.module('kibana.services', [])
 .service('eventBus', function($rootScope) {
 
   // An array of registed types
-  var _types = []
+  var _types = [];
 
   this.broadcast = function(from,to,type,data) {
-    if(_.isUndefined(data))
-      var data = from
+    if(_.isUndefined(data)) {
+      data = from;
+    }
 
     var packet = {
       time: new Date(),
@@ -18,38 +20,41 @@ angular.module('kibana.services', [])
       from: from,
       to: to,
       data: data
-    }
+    };
 
-    if(_.contains(_types,'$kibana_debug'))
+    if(_.contains(_types,'$kibana_debug')) {
       $rootScope.$broadcast('$kibana_debug',packet);
+    }
 
     $rootScope.$broadcast(type,{
       from: from,
       to: to,
       data: data
     });
-  }
+  };
 
   // This sets up an $on listener that checks to see if the event (packet) is
   // addressed to the scope in question and runs the registered function if it
   // is.
   this.register = function(scope,type,fn) {
 
-    _types = _.union(_types,[type])
+    _types = _.union(_types,[type]);
 
     scope.$on(type,function(event,packet){
       var _id     = scope.$id;
       var _to     = packet.to;
       var _from   = packet.from;
-      var _type   = packet.type
-      var _time   = packet.time
-      var _group  = (!(_.isUndefined(scope.panel))) ? scope.panel.group : ["NONE"] 
+      var _type   = packet.type;
+      var _time   = packet.time;
+      var _group  = (!(_.isUndefined(scope.panel))) ? scope.panel.group : ["NONE"];
 
-      if(!(_.isArray(_to)))
+      if(!(_.isArray(_to))) {
         _to = [_to];
-      if(!(_.isArray(_group)))
+      }
+      if(!(_.isArray(_group))) {
         _group = [_group];
-      
+      }
+
       // Transmit event only if the sender is not the receiver AND one of the following:
       // 1) Receiver has group in _to 2) Receiver's $id is in _to
       // 3) Event is addressed to ALL 4) Receiver is in ALL group 
@@ -62,7 +67,7 @@ angular.module('kibana.services', [])
         fn(event,packet.data,{time:_time,to:_to,from:_from,type:_type});
       }
     });
-  }
+  };
 })
 /* 
   Service: fields
@@ -71,11 +76,11 @@ angular.module('kibana.services', [])
 .factory('fields', function($rootScope) {
   var fields = {
     list : []
-  }
+  };
 
   $rootScope.$on('fields', function(event,f) {
-    fields.list = _.union(f.data.all,fields.list)
-  })
+    fields.list = _.union(f.data.all,fields.list);
+  });
 
   return fields;
 
@@ -93,8 +98,8 @@ angular.module('kibana.services', [])
     return all_indices().then(function(p) {
       var indices = _.intersection(possible,p);
       indices.reverse();
-      return indices
-    })
+      return indices;
+    });
   };
 
   // returns a promise containing an array of all indices in an elasticsearch
@@ -110,7 +115,11 @@ angular.module('kibana.services', [])
     return something.then(function(p) {
       var indices = [];
       _.each(p.data, function(v,k) {
-        indices.push(k)
+        indices.push(k);
+        // Also add the aliases. Could be expensive on systems with a lot of them
+        _.each(v.aliases, function(v, k) {
+          indices.push(k);
+        });
       });
       return indices;
     });
@@ -122,7 +131,7 @@ angular.module('kibana.services', [])
   // Update: I just read this again. I died a little more inside.
   // Update2: More death.
   function fake_utc(date) {
-    date = moment(date).clone().toDate()
+    date = moment(date).clone().toDate();
     return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000));
   }
 
@@ -136,20 +145,20 @@ angular.module('kibana.services', [])
         range.push(start.clone());
         switch (interval) {
         case 'hour':
-          start.add('hours',1)
-          break
+          start.add('hours',1);
+          break;
         case 'day':
-          start.add('days',1)
-          break
+          start.add('days',1);
+          break;
         case 'week':
-          start.add('weeks',1)
-          break
+          start.add('weeks',1);
+          break;
         case 'month':
-          start.add('months',1)
-          break
+          start.add('months',1);
+          break;
         case 'year':
-          start.add('years',1)
-          break
+          start.add('years',1);
+          break;
         }
       }
       range.push(moment(end).clone());
@@ -169,19 +178,19 @@ angular.module('kibana.services', [])
   this.register = function(promise) {
     timers.push(promise);
     return promise;
-  }
+  };
 
   this.cancel = function(promise) {
-    timers = _.without(timers,promise)
-    $timeout.cancel(promise)
-  }
+    timers = _.without(timers,promise);
+    $timeout.cancel(promise);
+  };
 
   this.cancel_all = function() {
     _.each(timers, function(t){
       $timeout.cancel(t);
     });
-    timers = new Array();
-  }
+    timers = [];
+  };
 
 })
 .service('query', function(dashboard) {
@@ -214,10 +223,10 @@ angular.module('kibana.services', [])
     self.list = dashboard.current.services.query.list;
     self.ids = dashboard.current.services.query.ids;
     
-    if (self.ids.length == 0) {
+    if (self.ids.length === 0) {
       self.set({});
     }
-  }
+  };
 
   // This is used both for adding queries and modifying them. If an id is passed, the query at that id is updated
   this.set = function(query,id) {
@@ -235,42 +244,44 @@ angular.module('kibana.services', [])
         alias: '',
         color: colorAt(_id),
         id: _id
-      }
-      _.defaults(query,_query)
+      };
+      _.defaults(query,_query);
       self.list[_id] = query;
-      self.ids.push(_id)
+      self.ids.push(_id);
       return _id;
     }
-  }
+  };
 
   this.remove = function(id) {
     if(!_.isUndefined(self.list[id])) {
       delete self.list[id];
       // This must happen on the full path also since _.without returns a copy
-      self.ids = dashboard.current.services.query.ids = _.without(self.ids,id)
-      _q.idQueue.unshift(id)
-      _q.idQueue.sort(function(a,b){return a-b});
+      self.ids = dashboard.current.services.query.ids = _.without(self.ids,id);
+      _q.idQueue.unshift(id);
+      _q.idQueue.sort(function(v,k){
+        return v-k;
+      });
       return true;
     } else {
       return false;
     }
-  }
+  };
 
   this.findQuery = function(queryString) {
-    return _.findWhere(self.list,{query:queryString})
-  }
+    return _.findWhere(self.list,{query:queryString});
+  };
 
   var nextId = function() {
     if(_q.idQueue.length > 0) {
-      return _q.idQueue.shift()
+      return _q.idQueue.shift();
     } else {
       return self.ids.length;
     }
-  }
+  };
 
   var colorAt = function(id) {
-    return self.colors[id % self.colors.length]
-  }
+    return self.colors[id % self.colors.length];
+  };
 
   self.init();
 
@@ -281,7 +292,7 @@ angular.module('kibana.services', [])
   _.defaults(dashboard.current.services.filter,{
     idQueue : [],
     list : {},
-    ids : [],
+    ids : []
   });
 
   // For convenience
@@ -299,16 +310,16 @@ angular.module('kibana.services', [])
     _f = dashboard.current.services.filter;
 
     _.each(self.getByType('time',true),function(time) {
-      self.list[time.id].from = new Date(time.from)
-      self.list[time.id].to = new Date(time.to)
-    })
+      self.list[time.id].from = new Date(time.from);
+      self.list[time.id].to = new Date(time.to);
+    });
 
-  }
+  };
 
   // This is used both for adding filters and modifying them. 
   // If an id is passed, the filter at that id is updated
   this.set = function(filter,id) {
-    _.defaults(filter,{mandate:'must'})
+    _.defaults(filter,{mandate:'must'});
     filter.active = true;
     if(!_.isUndefined(id)) {
       if(!_.isUndefined(self.list[id])) {
@@ -325,18 +336,19 @@ angular.module('kibana.services', [])
         var _filter = {
           alias: '',
           id: _id
-        }
-        _.defaults(filter,_filter)
+        };
+        _.defaults(filter,_filter);
         self.list[_id] = filter;
-        self.ids.push(_id)
+        self.ids.push(_id);
         return _id;
       }
     }
-  }
+  };
 
   this.getBoolFilter = function(ids) {
     // A default match all filter, just in case there are no other filters
     var bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
+    var either_bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
     _.each(ids,function(id) {
       if(self.list[id].active) {
         switch(self.list[id].mandate) 
@@ -344,75 +356,69 @@ angular.module('kibana.services', [])
         case 'mustNot':
           bool = bool.mustNot(self.getEjsObj(id));
           break;
-        case 'should':
-          bool = bool.should(self.getEjsObj(id));
+        case 'either':
+          either_bool = either_bool.should(self.getEjsObj(id));
           break;
         default:
           bool = bool.must(self.getEjsObj(id));
         }
       }
-    })
-    return bool;
-  }
+    });
+    return bool.must(either_bool);
+  };
 
   this.getEjsObj = function(id) {
-    return self.toEjsObj(self.list[id])
-  }
+    return self.toEjsObj(self.list[id]);
+  };
 
   this.toEjsObj = function (filter) {
     if(!filter.active) {
-      return false
+      return false;
     }
     switch(filter.type)
     {
     case 'time':
       return ejs.RangeFilter(filter.field)
         .from(filter.from)
-        .to(filter.to)
-      break;
+        .to(filter.to);
     case 'range':
       return ejs.RangeFilter(filter.field)
         .from(filter.from)
-        .to(filter.to)
-      break;
+        .to(filter.to);
     case 'querystring':
-      return ejs.QueryFilter(ejs.QueryStringQuery(filter.query))
-      break;
+      return ejs.QueryFilter(ejs.QueryStringQuery(filter.query));
     case 'terms':
-      return ejs.TermsFilter(filter.field,filter.value)
-      break;
+      return ejs.TermsFilter(filter.field,filter.value);
     case 'exists':
-      return ejs.ExistsFilter(filter.field)
-      break;
+      return ejs.ExistsFilter(filter.field);
     case 'missing':
-      return ejs.MissingFilter(filter.field)
-      break;
+      return ejs.MissingFilter(filter.field);
     default:
       return false;
     }
-  }
+  };
 
   this.getByType = function(type,inactive) {
-    return _.pick(self.list,self.idsByType(type,inactive))
-  }
+    return _.pick(self.list,self.idsByType(type,inactive));
+  };
 
   this.removeByType = function(type) {
-    var ids = self.idsByType(type)
+    var ids = self.idsByType(type);
     _.each(ids,function(id) {
-      self.remove(id)
-    })
+      self.remove(id);
+    });
     return ids;
-  }
+  };
 
   this.idsByType = function(type,inactive) {
-    var _require = inactive ? {type:type} : {type:type,active:true}
-    return _.pluck(_.where(self.list,_require),'id')
-  }
+    var _require = inactive ? {type:type} : {type:type,active:true};
+    return _.pluck(_.where(self.list,_require),'id');
+  };
 
   // This special function looks for all time filters, and returns a time range according to the mode
   this.timeRange = function(mode) {
-    var _t = _.where(self.list,{type:'time',active:true})
-    if(_t.length == 0) {
+    var _t = _.where(self.list,{type:'time',active:true});
+    if(_t.length === 0) {
       return false;
     }
     switch(mode) {
@@ -420,41 +426,38 @@ angular.module('kibana.services', [])
       return {
         from: new Date(_.max(_.pluck(_t,'from'))),
         to: new Date(_.min(_.pluck(_t,'to')))
-      }
-      break;
+      };
     case "max":
       return {
         from: new Date(_.min(_.pluck(_t,'from'))),
         to: new Date(_.max(_.pluck(_t,'to')))
-      }
-      break;
+      };
     default:
       return false;
     }
-
-  } 
+  };
 
   this.remove = function(id) {
     if(!_.isUndefined(self.list[id])) {
       delete self.list[id];
       // This must happen on the full path also since _.without returns a copy
-      self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id)
-      _f.idQueue.unshift(id)
-      _f.idQueue.sort(function(a,b){return a-b});
+      self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id);
+      _f.idQueue.unshift(id);
+      _f.idQueue.sort(function(v,k){return v-k;});
       return true;
     } else {
       return false;
     }
-  }
+  };
 
 
   var nextId = function() {
     if(_f.idQueue.length > 0) {
-      return _f.idQueue.shift()
+      return _f.idQueue.shift();
     } else {
       return self.ids.length;
     }
-  }
+  };
 
   // Now init
   self.init();
@@ -491,7 +494,7 @@ angular.module('kibana.services', [])
     self.current = {};
     self.indices = [];
     route();
-  })
+  });
 
   var route = function() {
     // Is there a dashboard type and id in the URL?
@@ -499,29 +502,36 @@ angular.module('kibana.services', [])
       var _type = $routeParams.type;
       var _id = $routeParams.id;
 
-      if(_type === 'elasticsearch')
-        self.elasticsearch_load('dashboard',_id)
-      if(_type === 'temp')
-        self.elasticsearch_load('temp',_id)
-      if(_type === 'file')
-        self.file_load(_id)
+      switch(_type) {
+      case ('elasticsearch'):
+        self.elasticsearch_load('dashboard',_id);
+        break;
+      case ('temp'):
+        self.elasticsearch_load('temp',_id);
+        break;
+      case ('file'):
+        self.file_load(_id);
+        break;
+      default:
+        self.file_load('default.json');
+      }
 
     // No dashboard in the URL
     } else {
       // Check if browser supports localstorage, and if there's a dashboard 
-      if (Modernizr.localstorage && 
-        !(_.isUndefined(localStorage['dashboard'])) &&
-        localStorage['dashboard'] !== ''
+      if (window.Modernizr.localstorage && 
+        !(_.isUndefined(window.localStorage['dashboard'])) &&
+        window.localStorage['dashboard'] !== ''
       ) {
-        var dashboard = JSON.parse(localStorage['dashboard']);
+        var dashboard = JSON.parse(window.localStorage['dashboard']);
         _.defaults(dashboard,_dash);
-        self.dash_load(dashboard)
+        self.dash_load(dashboard);
       // No? Ok, grab default.json, its all we have now
       } else {
-        self.file_load('default.json')
+        self.file_load('default.json');
       } 
     }
-  }
+  };
 
   // Since the dashboard is responsible for index computation, we can compute and assign the indices 
   // here before telling the panels to refresh
@@ -535,21 +545,21 @@ angular.module('kibana.services', [])
           if(p.length > 0) {
             self.indices = p;          
           } else {
-            self.indices = [self.current.index.default]
+            self.indices = [self.current.index.default];
           }
-          $rootScope.$broadcast('refresh')
+          $rootScope.$broadcast('refresh');
         });
       } else {
         // This is not optimal, we should be getting the entire index list here, or at least every
         // index that possibly matches the pattern
-        self.indices = [self.current.index.default]
-        $rootScope.$broadcast('refresh')
+        self.indices = [self.current.index.default];
+        $rootScope.$broadcast('refresh');
       }
     } else {
-      self.indices = [self.current.index.default]
-      $rootScope.$broadcast('refresh')
+      self.indices = [self.current.index.default];
+      $rootScope.$broadcast('refresh');
     }
-  }
+  };
 
   this.dash_load = function(dashboard) {
     // Cancel all timers
@@ -557,88 +567,89 @@ angular.module('kibana.services', [])
 
     // If not using time based indices, use the default index
     if(dashboard.index.interval === 'none') {
-      self.indices = [dashboard.index.default]
+      self.indices = [dashboard.index.default];
     }
 
     self.current = _.clone(dashboard);
 
     // Ok, now that we've setup the current dashboard, we can inject our services
     query = $injector.get('query');
-    filterSrv = $injector.get('filterSrv')
+    filterSrv = $injector.get('filterSrv');
 
     // Make sure these re-init
     query.init();
     filterSrv.init();
 
-    if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length == 0) {
-    //if(dashboard.index.interval !== 'none') {
+    if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length === 0) {
       self.refresh();
     }
 
     return true;
-  }
+  };
 
   this.gist_id = function(string) {
-    if(self.is_gist(string))
+    if(self.is_gist(string)) {
       return string.match(gist_pattern)[0].replace(/.*\//, '');
-  }
+    }
+  };
 
   this.is_gist = function(string) {
-    if(!_.isUndefined(string) && string != '' && !_.isNull(string.match(gist_pattern)))
+    if(!_.isUndefined(string) && string !== '' && !_.isNull(string.match(gist_pattern))) {
       return string.match(gist_pattern).length > 0 ? true : false;
-    else
-      return false
-  }
+    } else {
+      return false;
+    }
+  };
 
   this.to_file = function() {
     var blob = new Blob([angular.toJson(self.current,true)], {type: "application/json;charset=utf-8"});
     // from filesaver.js
-    saveAs(blob, self.current.title+"-"+new Date().getTime());
+    window.saveAs(blob, self.current.title+"-"+new Date().getTime());
     return true;
-  }
+  };
 
   this.set_default = function(dashboard) {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = angular.toJson(dashboard || self.current);
+    if (window.Modernizr.localstorage) {
+      window.localStorage['dashboard'] = angular.toJson(dashboard || self.current);
       return true;
     } else {
       return false;
     }  
-  }
+  };
 
   this.purge_default = function() {
-    if (Modernizr.localstorage) {
-      localStorage['dashboard'] = '';
+    if (window.Modernizr.localstorage) {
+      window.localStorage['dashboard'] = '';
       return true;
     } else {
       return false;
     }
-  }
+  };
 
   // TOFIX: Pretty sure this breaks when you're on a saved dashboard already
   this.share_link = function(title,type,id) {
     return {
-      location  : location.href.replace(location.hash,""),
+      location  : window.location.href.replace(window.location.hash,""),
       type      : type,
       id        : id,
-      link      : location.href.replace(location.hash,"")+"#dashboard/"+type+"/"+id,
+      link      : window.location.href.replace(window.location.hash,"")+"#dashboard/"+type+"/"+id,
       title     : title
     };
-  }
+  };
 
   this.file_load = function(file) {
     return $http({
       url: "dashboards/"+file,
       method: "GET",
     }).then(function(result) {
-      var _dashboard = result.data
+      var _dashboard = result.data;
       _.defaults(_dashboard,_dash);
       self.dash_load(_dashboard);
       return true;
     },function(result) {
       return false;
     });
-  }
+  };
 
   this.elasticsearch_load = function(type,id) {
     var request = ejs.Request().indices(config.kibana_index).types(type);
@@ -649,19 +660,20 @@ angular.module('kibana.services', [])
       if(_.isUndefined(results)) {
         return false;
       } else {
-        self.dash_load(angular.fromJson(results.hits.hits[0]['_source']['dashboard']))
+        self.dash_load(angular.fromJson(results.hits.hits[0]['_source']['dashboard']));
         return true;
       }
     });
-  }
+  };
 
   this.elasticsearch_save = function(type,title,ttl) {
     // Clone object so we can modify it without influencing the existing obejct
-    var save = _.clone(self.current)
-
+    var save = _.clone(self.current);
+    var id;
+    
     // Change title on object clone
     if (type === 'dashboard') {
-      var id = save.title = _.isUndefined(title) ? self.current.title : title;
+      id = save.title = _.isUndefined(title) ? self.current.title : title;
     }
 
     // Create request with id as title. Rethink this.
@@ -670,10 +682,10 @@ angular.module('kibana.services', [])
       group: 'guest',
       title: save.title,
       dashboard: angular.toJson(save)
-    })
+    });
     
-    if (type === 'temp')
-      request = request.ttl(ttl)
+    request = type === 'temp' ? request.ttl(ttl) : request;
+
 
     // TOFIX: Implement error handling here
     return request.doIndex(
@@ -686,7 +698,7 @@ angular.module('kibana.services', [])
         return false;
       }
     );
-  }
+  };
 
   this.elasticsearch_delete = function(id) {
     return ejs.Document(config.kibana_index,'dashboard',id).doDelete(
@@ -699,7 +711,7 @@ angular.module('kibana.services', [])
         return false;
       }
     );
-  }
+  };
 
   this.elasticsearch_list = function(query,count) {
     var request = ejs.Request().indices(config.kibana_index).types('dashboard');
@@ -715,11 +727,11 @@ angular.module('kibana.services', [])
           return false;
         }
       );
-  }
+  };
 
   // TOFIX: Gist functionality
   this.save_gist = function(title,dashboard) {
-    var save = _.clone(dashboard || self.current)
+    var save = _.clone(dashboard || self.current);
     save.title = title || self.current.title;
     return $http({
       url: "https://api.github.com/gists",
@@ -738,16 +750,16 @@ angular.module('kibana.services', [])
     }, function(data, status, headers, config) {
       return false;
     });
-  }
+  };
 
   this.gist_list = function(id) {
     return $http.jsonp("https://api.github.com/gists/"+id+"?callback=JSON_CALLBACK"
     ).then(function(response) {
-      var files = []
+      var files = [];
       _.each(response.data.data.files,function(v,k) {
         try {
-          var file = JSON.parse(v.content)
-          files.push(file)
+          var file = JSON.parse(v.content);
+          files.push(file);
         } catch(e) {
           // Nothing?
         }
@@ -756,20 +768,6 @@ angular.module('kibana.services', [])
     }, function(data, status, headers, config) {
       return false;
     });
-  }
+  };
 
-})
-.service('keylistener', function($rootScope) {
-  var keys = [];
-  $(document).keydown(function (e) {
-    keys[e.which] = true;
-  });
-
-  $(document).keyup(function (e) {
-    delete keys[e.which];
-  });
-
-  this.keyActive = function(key) {
-    return keys[key] == true;
-  }
 });
