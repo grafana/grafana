@@ -40,7 +40,7 @@ angular.module('kibana.filtering', [])
   }
 
   $scope.show_key = function(key) {
-    return !_.contains(['type','id','alias','mandate','active'],key)
+    return !_.contains(['type','id','alias','mandate','active','editing'],key)
   }
 
 });

@@ -24,7 +24,7 @@ angular.module('kibana.directives', [])
           var template = '<div ng-controller="'+scope.panel.type+'" ng-include src="\''+scope.edit_path(scope.panel.type)+'\'"></div>';
           elem.html($compile(angular.element(template))(scope));
         }
-      })
+      });
     }
   };
 })
@@ -39,11 +39,13 @@ angular.module('kibana.directives', [])
       }
 
       function join_array(text) {
-        if(_.isArray(text))  
+        if(_.isArray(text)) {
           return (text || '').join(',');
-        else
-          return text
+        } else {
+          return text;
+        }
       }
+
       ngModel.$parsers.push(split_array);
       ngModel.$formatters.push(join_array);
     }
@@ -54,8 +56,10 @@ angular.module('kibana.directives', [])
     restrict: 'A',
     require: 'ngModel',
     link: function(scope, elm, attr, ngModelCtrl) {
-      if (attr.type === 'radio' || attr.type === 'checkbox') return;
-      
+      if (attr.type === 'radio' || attr.type === 'checkbox') {
+        return;
+      }
+
       elm.unbind('input').unbind('keydown').unbind('change');
       elm.bind('blur', function() {
         scope.$apply(function() {
@@ -65,5 +69,4 @@ angular.module('kibana.directives', [])
     }
   };
 });
-;
 

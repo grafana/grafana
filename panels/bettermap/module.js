@@ -1,3 +1,6 @@
+/*jshint globalstrict:true */
+/*global angular:true */
+/*global L:false*/
 /*
 
   ## Better maps
@@ -14,6 +17,8 @@
   * spyable :: Show the 'eye' icon that reveals the last ES query
 */
 
+'use strict';
+
 angular.module('kibana.bettermap', [])
 .controller('bettermap', function($scope, query, dashboard, filterSrv) {
 
@@ -26,61 +31,61 @@ angular.module('kibana.bettermap', [])
     tooltip : "_id",
     field   : null,
     group   : "default"
-  }
-  _.defaults($scope.panel,_d)
+  };
+  _.defaults($scope.panel,_d);
 
   $scope.init = function() {
     $scope.$on('refresh',function(){
       $scope.get_data();
-    })
+    });
     $scope.get_data();
-  }
+  };
 
   $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
     // Make sure we have everything for the request to complete
-    if(dashboard.indices.length == 0) {
+    if(dashboard.indices.length === 0) {
       return;
     }
 
     if(_.isUndefined($scope.panel.field)) {
-      $scope.panel.error = "Please select a field that contains geo point in [lon,lat] format"
-      return
+      $scope.panel.error = "Please select a field that contains geo point in [lon,lat] format";
+      return;
     }
     
     // Determine the field to sort on
-    var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'))
+    var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'));
     if(timeField.length > 1) {
-      $scope.panel.error = "Time field must be consistent amongst time filters"
-    } else if(timeField.length == 0) {
+      $scope.panel.error = "Time field must be consistent amongst time filters";
+    } else if(timeField.length === 0) {
       timeField = null;
     } else {
-      timeField = timeField[0]
+      timeField = timeField[0];
     }
 
-    var _segment = _.isUndefined(segment) ? 0 : segment
+    var _segment = _.isUndefined(segment) ? 0 : segment;
 
-    var boolQuery = ejs.BoolQuery();
+    var boolQuery = $scope.ejs.BoolQuery();
     _.each(query.list,function(q) {
-      boolQuery = boolQuery.should(ejs.QueryStringQuery((q.query || '*')))
-    })
+      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery((q.query || '*')));
+    });
 
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment])
-      .query(ejs.FilteredQuery(
+      .query($scope.ejs.FilteredQuery(
         boolQuery,
-        filterSrv.getBoolFilter(filterSrv.ids).must(ejs.ExistsFilter($scope.panel.field))
+        filterSrv.getBoolFilter(filterSrv.ids).must($scope.ejs.ExistsFilter($scope.panel.field))
       ))
       .fields([$scope.panel.field,$scope.panel.tooltip])
-      .size($scope.panel.size)
+      .size($scope.panel.size);
 
     if(!_.isNull(timeField)) {
       request = request.sort(timeField,'desc');
     }
 
-    $scope.populate_modal(request)
+    $scope.populate_modal(request);
 
-    var results = request.doSearch()
+    var results = request.doSearch();
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -89,7 +94,7 @@ angular.module('kibana.bettermap', [])
       if(_segment === 0) {
         $scope.hits = 0;
         $scope.data = [];
-        query_id = $scope.query_id = new Date().getTime()
+        query_id = $scope.query_id = new Date().getTime();
       }
 
       // Check for error and abort if found
@@ -101,31 +106,32 @@ angular.module('kibana.bettermap', [])
       // Check that we're still on the same query, if not stop
       if($scope.query_id === query_id) {
 
-        var scripts = $LAB.script("panels/bettermap/lib/leaflet.js").wait()
+        var scripts = $LAB.script("panels/bettermap/lib/leaflet.js").wait();
 
         scripts.wait(function(){
           $scope.data = $scope.data.concat(_.map(results.hits.hits, function(hit) {
             return {
               coordinates : new L.LatLng(hit.fields[$scope.panel.field][1],hit.fields[$scope.panel.field][0]),
               tooltip : hit.fields[$scope.panel.tooltip]
-            }
+            };
           }));
         });
         // Keep only what we need for the set
-        $scope.data = $scope.data.slice(0,$scope.panel.size)
+        $scope.data = $scope.data.slice(0,$scope.panel.size);
 
       } else {
         return;
       }
   
-      $scope.$emit('draw')
+      $scope.$emit('draw');
 
       // Get $size results then stop querying
-      if($scope.data.length < $scope.panel.size && _segment+1 < dashboard.indices.length)
-        $scope.get_data(_segment+1,$scope.query_id)
+      if($scope.data.length < $scope.panel.size && _segment+1 < dashboard.indices.length) {
+        $scope.get_data(_segment+1,$scope.query_id);
+      }
 
     });
-  }
+  };
 
   // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
@@ -135,8 +141,8 @@ angular.module('kibana.bettermap', [])
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
-    } 
-  }
+    }; 
+  };
 
 })
 .directive('bettermap', function() {
@@ -144,7 +150,7 @@ angular.module('kibana.bettermap', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      elem.html('<center><img src="common/img/load_big.gif"></center>')
+      elem.html('<center><img src="common/img/load_big.gif"></center>');
 
       // Receive render events
       scope.$on('draw',function(){
@@ -154,9 +160,9 @@ angular.module('kibana.bettermap', [])
       scope.$on('render', function(){
         if(!_.isUndefined(map)) {
           map.invalidateSize();
-          var panes = map.getPanes()
+          var panes = map.getPanes();
         }
-      })
+      });
 
       var map, markers, layerGroup, mcg;
 
@@ -164,7 +170,7 @@ angular.module('kibana.bettermap', [])
         scope.panel.loading = false;
 
         var scripts = $LAB.script("panels/bettermap/lib/leaflet.js").wait()
-          .script("panels/bettermap/lib/plugins.js")
+          .script("panels/bettermap/lib/plugins.js");
    
         //add markers dynamically
         scripts.wait(function(){
@@ -185,16 +191,17 @@ angular.module('kibana.bettermap', [])
           }
 
           _.each(scope.data, function(p) {
-            if(!_.isUndefined(p.tooltip) && p.tooltip !== '')
-              layerGroup.addLayer(L.marker(p.coordinates).bindLabel(p.tooltip))
-            else
-              layerGroup.addLayer(L.marker(p.coordinates))
-          })
+            if(!_.isUndefined(p.tooltip) && p.tooltip !== '') {
+              layerGroup.addLayer(L.marker(p.coordinates).bindLabel(p.tooltip));
+            } else {
+              layerGroup.addLayer(L.marker(p.coordinates));
+            }
+          });
 
-          layerGroup.addTo(map)
+          layerGroup.addTo(map);
 
           map.fitBounds(_.pluck(scope.data,'coordinates'));
-        })
+        });
       }
     }
   };

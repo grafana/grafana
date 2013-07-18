@@ -2,4 +2,4 @@
 /*global angular:true */
 'use strict';
 
-angular.module('kibana.panels', [])
+angular.module('kibana.panels', []);

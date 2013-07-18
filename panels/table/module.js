@@ -107,7 +107,13 @@ angular.module('kibana.table', [])
   }
 
   $scope.build_search = function(field,value,negate) {
-    var query = field+":"+angular.toJson(value)
+    var query;
+    // This needs to be abstracted somewhere
+    if(_.isArray(value)) {
+      query = field+":(" + _.map(value,function(v){return "\""+v+"\""}).join(",") + ")";
+    } else {
+      query = field+":"+angular.toJson(value);
+    }
     filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')})
     $scope.panel.offset = 0;
     dashboard.refresh();
@@ -216,7 +222,7 @@ angular.module('kibana.table', [])
     $scope.modal = {
       title: "Table Inspector",
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+$scope.index+"/_search?pretty -d'\n"+
+          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
     } 
