@@ -1,3 +1,6 @@
+/*jshint globalstrict:true */
+/*global angular:true */
+
 /*
 
   ## Fields
@@ -17,6 +20,9 @@
   * fields :: an object containing the sort order, existing fields and selected fields
 
 */
+
+'use strict';
+
 angular.module('kibana.fields', [])
 .controller('fields', function($scope, eventBus, $timeout, dashboard, query, filterSrv) {
 
@@ -27,7 +33,7 @@ angular.module('kibana.fields', [])
     style   : {},
     arrange : 'vertical',
     micropanel_position : 'right', 
-  }
+  };
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
@@ -35,7 +41,7 @@ angular.module('kibana.fields', [])
     $scope.fields = [];
     eventBus.register($scope,'fields', function(event, fields) {
       $scope.panel.sort = _.clone(fields.sort);
-      $scope.fields     = fields.all,
+      $scope.fields     = fields.all;
       $scope.active     = _.clone(fields.active);
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
@@ -46,57 +52,57 @@ angular.module('kibana.fields', [])
     eventBus.register($scope,"get_fields", function(event,id) {
       eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active);
     });
-  }
+  };
 
   $scope.reload_list = function () {
     var temp = _.clone($scope.fields);
-    $scope.fields = []    
+    $scope.fields = [];    
     $timeout(function(){
       $scope.fields = temp;
-    },10)
+    },10);
     
-  }
+  };
 
   $scope.toggle_micropanel = function(field) {
     $scope.micropanel = {
       field: field,
-      values : top_field_values($scope.docs,field,10),
-      related : get_related_fields($scope.docs,field),
-      count: _.countBy($scope.docs,function(doc){
-        return _.contains(_.keys(doc),field)})['true'],
-    }
-  }
+      values : kbn.top_field_values($scope.docs,field,10),
+      related : kbn.get_related_fields($scope.docs,field),
+      count: _.countBy($scope.docs,function(doc){return _.contains(_.keys(doc),field);})['true']
+    };
+  };
 
   $scope.toggle_sort = function() {
-    $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
-  }
+    $scope.panel.sort[1] = $scope.panel.sort[1] === 'asc' ? 'desc' : 'asc';
+  };
 
   $scope.toggle_field = function(field) {
-    if (_.indexOf($scope.active,field) > -1) 
-      $scope.active = _.without($scope.active,field)
-    else
-      $scope.active.push(field)
-    eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active)
-  }
+    if (_.indexOf($scope.active,field) > -1) {
+      $scope.active = _.without($scope.active,field);
+    } else {
+      $scope.active.push(field);
+    }
+    eventBus.broadcast($scope.$id,$scope.panel.group,"selected_fields",$scope.active);
+  };
 
   $scope.build_search = function(field,value,mandate) {
     var query;
     if(_.isArray(value)) {
-      query = field+":(" + _.map(value,function(v){return "\""+v+"\""}).join(",") + ")";
+      query = field+":(" + _.map(value,function(v){return "\""+v+"\"";}).join(",") + ")";
     } else {
       query = field+":"+angular.toJson(value);
     }    
-    filterSrv.set({type:'querystring',query:query,mandate:mandate})
+    filterSrv.set({type:'querystring',query:query,mandate:mandate});
     dashboard.refresh();
-  }
+  };
 
   $scope.fieldExists = function(field,mandate) {
-    filterSrv.set({type:'exists',field:field,mandate:mandate})
+    filterSrv.set({type:'exists',field:field,mandate:mandate});
     dashboard.refresh();
-  }
+  };
 
   $scope.is_active = function(field) {
     return _.indexOf($scope.active,field) > -1 ? ['label','label-info'] : '';    
-  }
+  };
 
-})
+});

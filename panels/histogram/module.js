@@ -1,3 +1,6 @@
+/*jshint globalstrict:true */
+/*global angular:true */
+
 /*
 
   ## Histogram
@@ -35,6 +38,8 @@
 
 */
 
+'use strict';
+
 angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, eventBus, query, dashboard, filterSrv) {
 
@@ -63,8 +68,8 @@ angular.module('kibana.histogram', [])
     'y-axis'    : true,
     percentage  : false,
     interactive : true,
-  }
-  _.defaults($scope.panel,_d)
+  };
+  _.defaults($scope.panel,_d);
 
   $scope.init = function() {
 
@@ -72,49 +77,51 @@ angular.module('kibana.histogram', [])
 
     $scope.$on('refresh',function(){
       $scope.get_data();
-    })
+    });
 
-    $scope.get_data()
+    $scope.get_data();
 
-  }
+  };
 
   $scope.get_data = function(segment,query_id) {
-    delete $scope.panel.error
+    delete $scope.panel.error;
 
     // Make sure we have everything for the request to complete
-    if(dashboard.indices.length == 0) {
-      return
+    if(dashboard.indices.length === 0) {
+      return;
     }
 
     var _range = $scope.range = filterSrv.timeRange('min');
     
-    if ($scope.panel.auto_int)
-      $scope.panel.interval = secondsToHms(calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
-    
+    if ($scope.panel.auto_int) {
+      $scope.panel.interval = kbn.secondsToHms(
+        kbn.calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
+    }
+
     $scope.panel.loading = true;
-    var _segment = _.isUndefined(segment) ? 0 : segment
+    var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
     // Build the query
     _.each($scope.queries.ids, function(id) {
       var query = $scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
+        $scope.ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
         filterSrv.getBoolFilter(filterSrv.ids)
-      )
+      );
 
-      var facet = $scope.ejs.DateHistogramFacet(id)
+      var facet = $scope.ejs.DateHistogramFacet(id);
       
       if($scope.panel.mode === 'count') {
-        facet = facet.field($scope.panel.time_field)
+        facet = facet.field($scope.panel.time_field);
       } else {
         if(_.isNull($scope.panel.value_field)) {
           $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
-          return
+          return;
         }
-        facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field)
+        facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field);
       }
-      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(query))
-      request = request.facet(facet).size(0)
+      facet = facet.interval($scope.panel.interval).facetFilter($scope.ejs.QueryFilter(query));
+      request = request.facet(facet).size(0);
     });
 
     // Populate the inspector panel
@@ -127,7 +134,7 @@ angular.module('kibana.histogram', [])
     results.then(function(results) {
 
       $scope.panel.loading = false;
-      if(_segment == 0) {
+      if(_segment === 0) {
         $scope.hits = 0;
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime();
@@ -140,37 +147,39 @@ angular.module('kibana.histogram', [])
       }
 
       // Convert facet ids to numbers
-      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k);})
+      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k, 10);});
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,query.ids).length == query.ids.length
+        _.intersection(facetIds,query.ids).length === query.ids.length
         ) {
 
         var i = 0;
+        var data, hits;
+
         _.each(query.ids, function(id) {
           var v = results.facets[id];
 
           // Null values at each end of the time range ensure we see entire range
-          if(_.isUndefined($scope.data[i]) || _segment == 0) {
-            var data = []
+          if(_.isUndefined($scope.data[i]) || _segment === 0) {
+            data = [];
             if(filterSrv.idsByType('time').length > 0) {
               data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
             }
-            var hits = 0;
+            hits = 0;
           } else {
-            var data = $scope.data[i].data
-            var hits = $scope.data[i].hits
+            data = $scope.data[i].data;
+            hits = $scope.data[i].hits;
           }
 
           // Assemble segments
           var segment_data = [];
           _.each(v.entries, function(v, k) {
-            segment_data.push([v['time'],v[$scope.panel.mode]])
-            hits += v['count']; // The series level hits counter
-            $scope.hits += v['count']; // Entire dataset level hits counter
+            segment_data.push([v.time,v[$scope.panel.mode]]);
+            hits += v.count; // The series level hits counter
+            $scope.hits += v.count; // Entire dataset level hits counter
           });
-          data.splice.apply(data,[1,0].concat(segment_data)) // Join histogram data
+          data.splice.apply(data,[1,0].concat(segment_data)); // Join histogram data
 
           // Create the flot series object
           var series = { 
@@ -181,22 +190,22 @@ angular.module('kibana.histogram', [])
             },
           };
 
-          $scope.data[i] = series.data
+          $scope.data[i] = series.data;
 
           i++;
         });
 
         // Tell the histogram directive to render.
-        $scope.$emit('render')
+        $scope.$emit('render');
 
         // If we still have segments left, get them
         if(_segment < dashboard.indices.length-1) {
-          $scope.get_data(_segment+1,query_id)
+          $scope.get_data(_segment+1,query_id);
         }
       
       }
     });
-  }
+  };
 
   // function $scope.zoom
   // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
@@ -204,31 +213,31 @@ angular.module('kibana.histogram', [])
     var _now = Date.now();
     var _range = filterSrv.timeRange('min');
     var _timespan = (_range.to.valueOf() - _range.from.valueOf());
-    var _center = _range.to.valueOf() - _timespan/2
+    var _center = _range.to.valueOf() - _timespan/2;
 
-    var _to = (_center + (_timespan*factor)/2)
-    var _from = (_center - (_timespan*factor)/2)
+    var _to = (_center + (_timespan*factor)/2);
+    var _from = (_center - (_timespan*factor)/2);
 
     // If we're not already looking into the future, don't.
     if(_to > Date.now() && _range.to < Date.now()) {
-      var _offset = _to - Date.now()
-      _from = _from - _offset
+      var _offset = _to - Date.now();
+      _from = _from - _offset;
       _to = Date.now();
     }
 
     if(factor > 1) {
-      filterSrv.removeByType('time')
+      filterSrv.removeByType('time');
     }
     filterSrv.set({
       type:'time',
       from:moment.utc(_from),
       to:moment.utc(_to),
       field:$scope.panel.time_field
-    })
+    });
     
     dashboard.refresh();
 
-  }
+  };
 
   // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
@@ -238,19 +247,20 @@ angular.module('kibana.histogram', [])
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
-    } 
-  }
+    }; 
+  };
 
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
-  }
+  };
 
   $scope.close_edit = function() {
-    if($scope.refresh)
+    if($scope.refresh) {
       $scope.get_data();
+    }
     $scope.refresh =  false;
     $scope.$emit('render');
-  }
+  };
 
 })
 .directive('histogramChart', function(dashboard, eventBus, filterSrv, $rootScope) {
@@ -274,19 +284,19 @@ angular.module('kibana.histogram', [])
         // Populate from the query service
         try {
           _.each(scope.data,function(series) {
-            series.label = series.info.alias,
-            series.color = series.info.color
-          })
-        } catch(e) {return}
+            series.label = series.info.alias;
+            series.color = series.info.color;
+          });
+        } catch(e) {return;}
 
         // Set barwidth based on specified interval
-        var barwidth = interval_to_seconds(scope.panel.interval)*1000
+        var barwidth = kbn.interval_to_seconds(scope.panel.interval)*1000;
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
           .script("common/lib/panels/jquery.flot.time.js")
           .script("common/lib/panels/jquery.flot.stack.js")
           .script("common/lib/panels/jquery.flot.selection.js")
-          .script("common/lib/panels/timezone.js")
+          .script("common/lib/panels/timezone.js");
                     
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
@@ -331,33 +341,38 @@ angular.module('kibana.histogram', [])
                 hoverable: true,
               },
               colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+            };
+
+            if(scope.panel.interactive) {
+              options.selection = { mode: "x", color: '#aaa' };
             }
 
-            if(scope.panel.interactive)
-              options.selection = { mode: "x", color: '#aaa' };
-
-            scope.plot = $.plot(elem, scope.data, options)
+            scope.plot = $.plot(elem, scope.data, options);
             
-            // Work around for missing legend at initialization
-            if(!scope.$$phase)
-              scope.$apply()
+            // Work around for missing legend at initialization.
+            if(!scope.$$phase) {
+              scope.$apply();
+            }
 
           } catch(e) {
-            elem.text(e)
+            elem.text(e);
           }
-        })
+        });
       }
 
       function time_format(interval) {
-        var _int = interval_to_seconds(interval)
-        if(_int >= 2628000)
-          return "%m/%y"
-        if(_int >= 86400)
-          return "%m/%d/%y"
-        if(_int >= 60)
-          return "%H:%M<br>%m/%d"
-        else
-          return "%H:%M:%S"
+        var _int = kbn.interval_to_seconds(interval);
+        if(_int >= 2628000) {
+          return "%m/%y";
+        }
+        if(_int >= 86400) {
+          return "%m/%d/%y";
+        }
+        if(_int >= 60) {
+          return "%H:%M<br>%m/%d";
+        }
+        
+        return "%H:%M:%S";
       }
 
       function tt(x, y, contents) {
@@ -396,9 +411,9 @@ angular.module('kibana.histogram', [])
           from  : moment.utc(ranges.xaxis.from),
           to    : moment.utc(ranges.xaxis.to),
           field : scope.panel.time_field
-        })
+        });
         dashboard.refresh();
       });
     }
   };
-})
+});

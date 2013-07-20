@@ -1,3 +1,5 @@
+/*jshint globalstrict:true */
+/*global angular:true */
 /*
 
   ## Table
@@ -22,11 +24,10 @@
   * table_documents :: An array containing all of the documents in the table. 
                        Only used by the fields panel so far. 
   #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
-  * sort :: An array with 2 elements. sort[0]: field, sort[1]: direction ('asc' or 'desc')
   * selected_fields :: An array of fields to show
 */
+
+'use strict';
 
 angular.module('kibana.table', [])
 .controller('table', function($rootScope, $scope, eventBus, fields, query, dashboard, filterSrv) {
@@ -48,104 +49,107 @@ angular.module('kibana.table', [])
     header  : true,
     paging  : true, 
     spyable: true
-  }
-  _.defaults($scope.panel,_d)
+  };
+  _.defaults($scope.panel,_d);
 
   $scope.init = function () {
 
-    $scope.set_listeners($scope.panel.group)
+    $scope.set_listeners($scope.panel.group);
 
     $scope.get_data();
-  }
+  };
 
   $scope.set_listeners = function(group) {
-    $scope.$on('refresh',function(){$scope.get_data()})
+    $scope.$on('refresh',function(){$scope.get_data();});
     eventBus.register($scope,'sort', function(event,sort){
       $scope.panel.sort = _.clone(sort);
       $scope.get_data();
     });
     eventBus.register($scope,'selected_fields', function(event, fields) {
-      $scope.panel.fields = _.clone(fields)
+      $scope.panel.fields = _.clone(fields);
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
-        query.list[query.ids[0]].query = docs.query;
-        $scope.data = docs.docs;
+      query.list[query.ids[0]].query = docs.query;
+      $scope.data = docs.docs;
     });
-  }
+  };
 
   $scope.set_sort = function(field) {
-    if($scope.panel.sort[0] === field)
-      $scope.panel.sort[1] = $scope.panel.sort[1] == 'asc' ? 'desc' : 'asc';
-    else
+    if($scope.panel.sort[0] === field) {
+      $scope.panel.sort[1] = $scope.panel.sort[1] === 'asc' ? 'desc' : 'asc';
+    } else {
       $scope.panel.sort[0] = field;
+    }
     $scope.get_data();
-  }
+  };
 
   $scope.toggle_field = function(field) {
-    if (_.indexOf($scope.panel.fields,field) > -1) 
-      $scope.panel.fields = _.without($scope.panel.fields,field)
-    else
-      $scope.panel.fields.push(field)
+    if (_.indexOf($scope.panel.fields,field) > -1) {
+      $scope.panel.fields = _.without($scope.panel.fields,field);
+    } else {
+      $scope.panel.fields.push(field);
+    }
     broadcast_results();
-  }
+  };
 
   $scope.toggle_highlight = function(field) {
-    if (_.indexOf($scope.panel.highlight,field) > -1) 
-      $scope.panel.highlight = _.without($scope.panel.highlight,field)
-    else
-      $scope.panel.highlight.push(field)
-  }  
+    if (_.indexOf($scope.panel.highlight,field) > -1) {
+      $scope.panel.highlight = _.without($scope.panel.highlight,field);
+    } else {
+      $scope.panel.highlight.push(field);
+    }
+  };  
 
   $scope.toggle_details = function(row) {
     row.kibana = row.kibana || {};
     row.kibana.details = !row.kibana.details ? $scope.without_kibana(row) : false;
-  }
+  };
 
   $scope.page = function(page) {
-    $scope.panel.offset = page*$scope.panel.size
+    $scope.panel.offset = page*$scope.panel.size;
     $scope.get_data();
-  }
+  };
 
   $scope.build_search = function(field,value,negate) {
-    var query;
+    var query = field+":";
     // This needs to be abstracted somewhere
     if(_.isArray(value)) {
-      query = field+":(" + _.map(value,function(v){return angular.toJson(v)}).join(" AND ") + ")";
+      query = query+"(" + _.map(value,function(v){return angular.toJson(v);}).join(" AND ") + ")";
     } else {
-      query = field+":"+angular.toJson(value);
+      query = query+angular.toJson(value);
     }
-    filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')})
+    filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')});
     $scope.panel.offset = 0;
     dashboard.refresh();
-  }
+  };
 
   $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
     // Make sure we have everything for the request to complete
-    if(dashboard.indices.length == 0) {
-      return
+    if(dashboard.indices.length === 0) {
+      return;
     }
     
     $scope.panel.loading = true;
 
-    var _segment = _.isUndefined(segment) ? 0 : segment
+    var _segment = _.isUndefined(segment) ? 0 : segment;
     $scope.segment = _segment;
 
-    var request = $scope.ejs.Request().indices(dashboard.indices[_segment])
+    var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
-    var boolQuery = ejs.BoolQuery();
+    var boolQuery = $scope.ejs.BoolQuery();
     _.each(query.list,function(q) {
-      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
-    })
+      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
+    });
 
     request = request.query(
-      ejs.FilteredQuery(
+      $scope.ejs.FilteredQuery(
         boolQuery,
         filterSrv.getBoolFilter(filterSrv.ids)
       ))
       .highlight(
-        ejs.Highlight($scope.panel.highlight)
+        $scope.ejs.Highlight($scope.panel.highlight)
         .fragmentSize(2147483647) // Max size of a 32bit unsigned int
         .preTags('@start-highlight@')
         .postTags('@end-highlight@')
@@ -153,9 +157,9 @@ angular.module('kibana.table', [])
       .size($scope.panel.size*$scope.panel.pages)
       .sort($scope.panel.sort[0],$scope.panel.sort[1]);
 
-    $scope.populate_modal(request)
+    $scope.populate_modal(request);
 
-    var results = request.doSearch()
+    var results = request.doSearch();
 
     // Populate scope when we have results
     results.then(function(results) {
@@ -164,7 +168,7 @@ angular.module('kibana.table', [])
       if(_segment === 0) {
         $scope.hits = 0;
         $scope.data = [];
-        query_id = $scope.query_id = new Date().getTime()
+        query_id = $scope.query_id = new Date().getTime();
       }
 
       // Check for error and abort if found
@@ -177,46 +181,46 @@ angular.module('kibana.table', [])
       if($scope.query_id === query_id) {
         $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
           return {
-            _source   : flatten_json(hit['_source']),
-            highlight : flatten_json(hit['highlight']||{})
-          }
+            _source   : kbn.flatten_json(hit._source),
+            highlight : kbn.flatten_json(hit.highlight||{})
+          };
         }));
         
         $scope.hits += results.hits.total;
 
         // Sort the data
         $scope.data = _.sortBy($scope.data, function(v){
-          return v._source[$scope.panel.sort[0]]
+          return v._source[$scope.panel.sort[0]];
         });
         
         // Reverse if needed
-        if($scope.panel.sort[1] == 'desc')
+        if($scope.panel.sort[1] === 'desc') {
           $scope.data.reverse();
-        
+        }
+
         // Keep only what we need for the set
-        $scope.data = $scope.data.slice(0,$scope.panel.size * $scope.panel.pages)
+        $scope.data = $scope.data.slice(0,$scope.panel.size * $scope.panel.pages);
 
       } else {
         return;
       }
       
       // This breaks, use $scope.data for this
-      $scope.all_fields = get_all_fields(_.pluck($scope.data,'_source'));
+      $scope.all_fields = kbn.get_all_fields(_.pluck($scope.data,'_source'));
       broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
-      if($scope.data.length < $scope.panel.size*$scope.panel.pages
-        //($scope.data.length < $scope.panel.size*$scope.panel.pages
-         // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
-        && _segment+1 < dashboard.indices.length
-      ) {
-        $scope.get_data(_segment+1,$scope.query_id)
+      //($scope.data.length < $scope.panel.size*$scope.panel.pages
+     // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
+      if($scope.data.length < $scope.panel.size*$scope.panel.pages &&
+        _segment+1 < dashboard.indices.length ) {
+        $scope.get_data(_segment+1,$scope.query_id);
       }
 
     });
-  }
+  };
 
   $scope.populate_modal = function(request) {
     $scope.modal = {
@@ -225,15 +229,15 @@ angular.module('kibana.table', [])
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
-    } 
-  }
+    }; 
+  };
 
   $scope.without_kibana = function (row) {
     return { 
       _source   : row._source,
       highlight : row.highlight
-    }
-  } 
+    };
+  }; 
 
   // Broadcast a list of all fields. Note that receivers of field array 
   // events should be able to receive from multiple sources, merge, dedupe 
@@ -254,13 +258,14 @@ angular.module('kibana.table', [])
 
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
-  }
+  };
 
   $scope.close_edit = function() {
-    if($scope.refresh)
+    if($scope.refresh) {
       $scope.get_data();
+    }
     $scope.refresh =  false;
-  }
+  };
 
 
 })
@@ -273,8 +278,8 @@ angular.module('kibana.table', [])
         replace(/>/g, '&gt;').
         replace(/\r?\n/g, '<br/>').
         replace(/@start-highlight@/g, '<code class="highlight">').
-        replace(/@end-highlight@/g, '</code>')
+        replace(/@end-highlight@/g, '</code>');
     }
     return '';
-  }
+  };
 });
