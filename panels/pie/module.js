@@ -1,3 +1,5 @@
+/*jshint globalstrict:true */
+/*global angular:true */
 /*
 
   ## Pie
@@ -22,8 +24,9 @@
   * default_field ::  LOL wat? A dumb fail over field if for some reason the query object 
                       doesn't have a field
   * spyable :: Show the 'eye' icon that displays the last ES query for this panel
-
 */
+
+'use strict';
 
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, $rootScope, query, dashboard, filterSrv) {
@@ -42,13 +45,13 @@ angular.module('kibana.pie', [])
     group   : "default",
     default_field : 'DEFAULT',
     spyable : true,
-  }
-  _.defaults($scope.panel,_d)
+  };
+  _.defaults($scope.panel,_d);
 
   $scope.init = function() {
-    $scope.$on('refresh',function(){$scope.get_data()})
+    $scope.$on('refresh',function(){$scope.get_data();});
     $scope.get_data();
-  }
+  };
 
   $scope.set_mode = function(mode) {
     switch(mode)
@@ -60,51 +63,54 @@ angular.module('kibana.pie', [])
       $scope.panel.query = {goal:100};
       break;
     }
-  }
+  };
 
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
-  }
+  };
 
   $scope.close_edit = function() {
-    if($scope.refresh)
+    if($scope.refresh) {
       $scope.get_data();
+    }
     $scope.refresh =  false;
     $scope.$emit('render');
-  }
+  };
 
   $scope.get_data = function() {
     
     // Make sure we have everything for the request to complete
-    if(dashboard.indices.length == 0) {
-      return
+    if(dashboard.indices.length === 0) {
+      return;
     } 
 
     $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices(dashboard.indices);
 
     // This could probably be changed to a BoolFilter 
-    var boolQuery = ejs.BoolQuery();
+    var boolQuery = $scope.ejs.BoolQuery();
     _.each(query.list,function(q) {
-      boolQuery = boolQuery.should(ejs.QueryStringQuery(q.query || '*'))
-    })
+      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
+    });
+
+    var results;
 
     // Terms mode
-    if ($scope.panel.mode == "terms") {
+    if ($scope.panel.mode === "terms") {
       request = request
-        .facet(ejs.TermsFacet('pie')
+        .facet($scope.ejs.TermsFacet('pie')
           .field($scope.panel.query.field || $scope.panel.default_field)
-          .size($scope.panel['size'])
+          .size($scope.panel.size)
           .exclude($scope.panel.exclude)
-          .facetFilter(ejs.QueryFilter(
-            ejs.FilteredQuery(
+          .facetFilter($scope.ejs.QueryFilter(
+            $scope.ejs.FilteredQuery(
               boolQuery,
               filterSrv.getBoolFilter(filterSrv.ids)
-              )))).size(0)
+              )))).size(0);
 
       $scope.populate_modal(request);
 
-      var results = request.doSearch();
+      results = request.doSearch();
 
       // Populate scope when we have results
       results.then(function(results) {
@@ -115,12 +121,7 @@ angular.module('kibana.pie', [])
         _.each(results.facets.pie.terms, function(v) {
           var slice = { label : v.term, data : v.count }; 
           $scope.data.push();
-          if(!(_.isUndefined($scope.panel.colors)) 
-            && _.isArray($scope.panel.colors)
-            && $scope.panel.colors.length > 0) {
-            slice.color = $scope.panel.colors[k%$scope.panel.colors.length];
-          } 
-          $scope.data.push(slice)
+          $scope.data.push(slice);
           k = k + 1;
         });
         $scope.$emit('render');
@@ -130,11 +131,11 @@ angular.module('kibana.pie', [])
       request = request
         .query(boolQuery)
         .filter(filterSrv.getBoolFilter(filterSrv.ids))
-        .size(0)
+        .size(0);
       
       $scope.populate_modal(request);
  
-      var results = request.doSearch();
+      results = request.doSearch();
 
       results.then(function(results) {
         $scope.panel.loading = false;
@@ -142,11 +143,12 @@ angular.module('kibana.pie', [])
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [
           { label : 'Complete', data : complete, color: '#BF6730' },
-          { data : remaining, color: '#e2d0c4'}]
+          { data : remaining, color: '#e2d0c4' }
+        ];
         $scope.$emit('render');
       });
     }
-  }
+  };
 
   // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
@@ -156,8 +158,8 @@ angular.module('kibana.pie', [])
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
         "'</pre>", 
-    } 
-  }
+    }; 
+  };
 
 })
 .directive('pie', function(query, filterSrv, dashboard) {
@@ -165,7 +167,7 @@ angular.module('kibana.pie', [])
     restrict: 'A',
     link: function(scope, elem, attrs) {
 
-      elem.html('<center><img src="common/img/load_big.gif"></center>')
+      elem.html('<center><img src="common/img/load_big.gif"></center>');
 
       // Receive render events
       scope.$on('render',function(){
@@ -180,23 +182,25 @@ angular.module('kibana.pie', [])
       // Function for rendering panel
       function render_panel() {
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
-                        .script("common/lib/panels/jquery.flot.pie.js")
-
-        if(scope.panel.mode === 'goal')
-          var label = { 
+                          .script("common/lib/panels/jquery.flot.pie.js");
+    
+        var label;
+        if(scope.panel.mode === 'goal') {
+          label = { 
             show: scope.panel.labels,
             radius: 0,
             formatter: function(label, series){
-              var font = parseInt(scope.row.height.replace('px',''))/8 + String('px')
-              if(!(_.isUndefined(label)))
+              var font = parseInt(scope.row.height.replace('px',''),10)/8 + String('px');
+              if(!(_.isUndefined(label))) {
                 return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:#fff;">'+
                 Math.round(series.percent)+'%</div>';
-              else
-                return ''
+              } else {
+                return '';
+              }
             },
-          }
-        else 
-          var label = { 
+          };
+        } else { 
+          label = { 
             show: scope.panel.labels,
             radius: 2/3,
             formatter: function(label, series){
@@ -204,7 +208,8 @@ angular.module('kibana.pie', [])
                 label+'<br/>'+Math.round(series.percent)+'%</div>';
             },
             threshold: 0.1 
-          }
+          };
+        }
 
         var pie = {
           series: {
@@ -263,7 +268,7 @@ angular.module('kibana.pie', [])
           return;
         }
         if(scope.panel.mode === 'terms') {
-          filterSrv.set({type:'terms',field:scope.panel.query.field,value:object.series.label})
+          filterSrv.set({type:'terms',field:scope.panel.query.field,value:object.series.label});
           dashboard.refresh();
         }
       });
@@ -280,4 +285,4 @@ angular.module('kibana.pie', [])
 
     }
   };
-})
+});

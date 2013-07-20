@@ -1,3 +1,6 @@
+/*jshint globalstrict:true */
+/*global angular:true */
+
 /*
 
   ## Hits
@@ -15,6 +18,9 @@
   * lables :: Only 'pie' charts. Labels on the pie?
 
 */
+
+'use strict';
+
 angular.module('kibana.hits', [])
 .controller('hits', function($scope, query, dashboard, filterSrv) {
 
@@ -30,41 +36,41 @@ angular.module('kibana.hits', [])
     donut   : false,
     tilt    : false,
     labels  : true
-  }
-  _.defaults($scope.panel,_d)
+  };
+  _.defaults($scope.panel,_d);
 
   $scope.init = function () {
     $scope.hits = 0;
    
     $scope.$on('refresh',function(){
       $scope.get_data();
-    })
+    });
     $scope.get_data();
 
-  }
+  };
 
   $scope.get_data = function(segment,query_id) {
-    delete $scope.panel.error
+    delete $scope.panel.error;
     $scope.panel.loading = true;
 
     // Make sure we have everything for the request to complete
-    if(dashboard.indices.length == 0) {
-      return
+    if(dashboard.indices.length === 0) {
+      return;
     }
 
-    var _segment = _.isUndefined(segment) ? 0 : segment
+    var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
     
     // Build the question part of the query
     _.each(query.ids, function(id) {
       var _q = $scope.ejs.FilteredQuery(
-        ejs.QueryStringQuery(query.list[id].query || '*'),
+        $scope.ejs.QueryStringQuery(query.list[id].query || '*'),
         filterSrv.getBoolFilter(filterSrv.ids));
     
       request = request
         .facet($scope.ejs.QueryFacet(id)
           .query(_q)
-        ).size(0)
+        ).size(0);
     });
 
     // TODO: Spy for hits panel
@@ -76,7 +82,7 @@ angular.module('kibana.hits', [])
     // Populate scope when we have results
     results.then(function(results) {
       $scope.panel.loading = false;
-      if(_segment == 0) {
+      if(_segment === 0) {
         $scope.hits = 0;
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime();
@@ -89,18 +95,18 @@ angular.module('kibana.hits', [])
       }
 
       // Convert facet ids to numbers
-      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k);})
+      var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k, 10);});
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,query.ids).length == query.ids.length
+        _.intersection(facetIds,query.ids).length === query.ids.length
         ) {
         var i = 0;
         _.each(query.ids, function(id) {
-          var v = results.facets[id]
-          var hits = _.isUndefined($scope.data[i]) || _segment == 0 ? 
-            v.count : $scope.data[i].hits+v.count
-          $scope.hits += v.count
+          var v = results.facets[id];
+          var hits = _.isUndefined($scope.data[i]) || _segment === 0 ? 
+            v.count : $scope.data[i].hits+v.count;
+          $scope.hits += v.count;
 
           // Create series
           $scope.data[i] = { 
@@ -113,23 +119,25 @@ angular.module('kibana.hits', [])
           i++;
         });
         $scope.$emit('render');
-        if(_segment < dashboard.indices.length-1) 
-          $scope.get_data(_segment+1,query_id)
+        if(_segment < dashboard.indices.length-1) {
+          $scope.get_data(_segment+1,query_id);
+        }
         
       }
     });
-  }
+  };
 
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 
-  }
+  };
 
   $scope.close_edit = function() {
-    if($scope.refresh)
+    if($scope.refresh) {
       $scope.get_data();
+    }
     $scope.refresh =  false;
     $scope.$emit('render');
-  }
+  };
 
   function set_time(time) {
     $scope.time = time;
@@ -156,20 +164,20 @@ angular.module('kibana.hits', [])
 
         try {
           _.each(scope.data,function(series) {
-            series.label = series.info.alias,
-            series.color = series.info.color
-          })
-        } catch(e) {return}
+            series.label = series.info.alias;
+            series.color = series.info.color;
+          });
+        } catch(e) {return;}
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
-                          .script("common/lib/panels/jquery.flot.pie.js")
+                          .script("common/lib/panels/jquery.flot.pie.js");
 
         // Populate element.
         scripts.wait(function(){
           // Populate element
           try {
             // Add plot to scope so we can build out own legend 
-            if(scope.panel.chart === 'bar')
+            if(scope.panel.chart === 'bar') {
               scope.plot = $.plot(elem, scope.data, {
                 legend: { show: false },
                 series: {
@@ -186,8 +194,9 @@ angular.module('kibana.hits', [])
                   hoverable: true,
                 },
                 colors: query.colors
-              })
-            if(scope.panel.chart === 'pie')
+              });
+            }
+            if(scope.panel.chart === 'pie') {
               scope.plot = $.plot(elem, scope.data, {
                 legend: { show: false },
                 series: {
@@ -218,19 +227,20 @@ angular.module('kibana.hits', [])
                 grid:   { hoverable: true, clickable: true },
                 colors: query.colors
               });
-
+            }
             // Compensate for the height of the  legend. Gross
             elem.height(
-              (scope.panel.height || scope.row.height).replace('px','') - $("#"+scope.$id+"-legend").height())
+              (scope.panel.height || scope.row.height).replace('px','') - $("#"+scope.$id+"-legend").height());
 
             // Work around for missing legend at initialization
-            if(!scope.$$phase)
-              scope.$apply()
+            if(!scope.$$phase) {
+              scope.$apply();
+            }
 
           } catch(e) {
-            elem.text(e)
+            elem.text(e);
           }
-        })
+        });
       }
 
       function tt(x, y, contents) {
@@ -256,7 +266,7 @@ angular.module('kibana.hits', [])
             item.datapoint[1] : item.datapoint[1][0][1];
           tt(pos.pageX, pos.pageY,
             "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+
-            item.series.color+";height:20px;width:20px'></div> "+value.toFixed(0))
+            item.series.color+";height:20px;width:20px'></div> "+value.toFixed(0));
         } else {
           $("#pie-tooltip").remove();
         }
@@ -264,4 +274,4 @@ angular.module('kibana.hits', [])
 
     }
   };
-})
+});

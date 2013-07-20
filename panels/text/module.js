@@ -1,3 +1,6 @@
+/*jshint globalstrict:true */
+/*global angular:true */
+/*global Showdown:false */
 /*
 
   ## Text
@@ -11,6 +14,8 @@
   
 */
 
+'use strict';
+
 angular.module('kibana.text', [])
 .controller('text', function($scope, $rootScope) {
 
@@ -21,12 +26,12 @@ angular.module('kibana.text', [])
     mode    : "markdown",
     content : "",
     style: {},
-  }
+  };
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
     $scope.ready = false;
-  }
+  };
   
 }).directive('markdown', function() {
   return {
@@ -34,10 +39,10 @@ angular.module('kibana.text', [])
     link: function(scope, element, attrs) {
       scope.$on('render', function() {
         render_panel();
-      })
+      });
 
       function render_panel() {
-        var scripts = $LAB.script("panels/text/lib/showdown.js")
+        var scripts = $LAB.script("panels/text/lib/showdown.js");
         scripts.wait(function(){
           scope.ready = true;
           var converter = new Showdown.converter();
@@ -48,18 +53,18 @@ angular.module('kibana.text', [])
           element.html(htmlText);
           // For whatever reason, this fixes chrome. I don't like it, I think
           // it makes things slow?
-          scope.$apply()
+          scope.$apply();
         });
       }
 
       render_panel();
     }
-  }
+  };
 })
 .filter('newlines', function(){
   return function (input) {
     return input.replace(/\n/g, '<br/>');
-  }
+  };
 })
 .filter('striphtml', function () {
   return function(text) {
@@ -67,5 +72,5 @@ angular.module('kibana.text', [])
       .replace(/&/g, '&amp;')
       .replace(/>/g, '&gt;')
       .replace(/</g, '&lt;');
-  }
+  };
 });

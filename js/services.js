@@ -243,7 +243,8 @@ angular.module('kibana.services', [])
         query: '*',
         alias: '',
         color: colorAt(_id),
-        id: _id
+        id: _id,
+        type: 'lucene'
       };
       _.defaults(query,_query);
       self.list[_id] = query;
@@ -386,7 +387,7 @@ angular.module('kibana.services', [])
         .from(filter.from)
         .to(filter.to);
     case 'querystring':
-      return ejs.QueryFilter(ejs.QueryStringQuery(filter.query));
+      return ejs.QueryFilter(ejs.QueryStringQuery(filter.query)).cache(true);
     case 'terms':
       return ejs.TermsFilter(filter.field,filter.value);
     case 'exists':

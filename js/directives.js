@@ -77,6 +77,6 @@ angular.module('kibana.directives', [])
         fn(scope, {$event:event});
       });
     });
-  }
+  };
 }]);
 
