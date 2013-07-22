@@ -30,7 +30,7 @@
 'use strict';
 
 angular.module('kibana.table', [])
-.controller('table', function($rootScope, $scope, eventBus, fields, query, dashboard, filterSrv) {
+.controller('table', function($rootScope, $scope, eventBus, fields, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -69,7 +69,7 @@ angular.module('kibana.table', [])
       $scope.panel.fields = _.clone(fields);
     });
     eventBus.register($scope,'table_documents', function(event, docs) {
-      query.list[query.ids[0]].query = docs.query;
+      querySrv.list[querySrv.ids[0]].query = docs.query;
       $scope.data = docs.docs;
     });
   };
@@ -139,8 +139,8 @@ angular.module('kibana.table', [])
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(query.list,function(q) {
-      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
+    _.each(querySrv.list,function(q) {
+      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
     });
 
     request = request.query(
@@ -250,7 +250,7 @@ angular.module('kibana.table', [])
     });
     eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
       {
-        query: query.list[query.ids[0]].query,
+        query: querySrv.list[querySrv.ids[0]].query,
         docs : _.pluck($scope.data,'_source'),
         index: $scope.index
       });

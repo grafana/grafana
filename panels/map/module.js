@@ -28,7 +28,7 @@
 'use strict';
 
 angular.module('kibana.map', [])
-.controller('map', function($scope, $rootScope, query, dashboard, filterSrv) {
+.controller('map', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -62,7 +62,7 @@ angular.module('kibana.map', [])
     request = $scope.ejs.Request().indices(dashboard.indices);
 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(query.list,function(q) {
+    _.each(querySrv.list,function(q) {
       boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
     });
 

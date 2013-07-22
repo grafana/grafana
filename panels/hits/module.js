@@ -22,7 +22,7 @@
 'use strict';
 
 angular.module('kibana.hits', [])
-.controller('hits', function($scope, query, dashboard, filterSrv) {
+.controller('hits', function($scope, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -62,9 +62,9 @@ angular.module('kibana.hits', [])
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
     
     // Build the question part of the query
-    _.each(query.ids, function(id) {
+    _.each(querySrv.ids, function(id) {
       var _q = $scope.ejs.FilteredQuery(
-        $scope.ejs.QueryStringQuery(query.list[id].query || '*'),
+        querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(filterSrv.ids));
     
       request = request
@@ -99,10 +99,10 @@ angular.module('kibana.hits', [])
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,query.ids).length === query.ids.length
+        _.intersection(facetIds,querySrv.ids).length === querySrv.ids.length
         ) {
         var i = 0;
-        _.each(query.ids, function(id) {
+        _.each(querySrv.ids, function(id) {
           var v = results.facets[id];
           var hits = _.isUndefined($scope.data[i]) || _segment === 0 ? 
             v.count : $scope.data[i].hits+v.count;
@@ -110,7 +110,7 @@ angular.module('kibana.hits', [])
 
           // Create series
           $scope.data[i] = { 
-            info: query.list[id],
+            info: querySrv.list[id],
             id: id,
             hits: hits,
             data: [[i,hits]]
@@ -144,7 +144,7 @@ angular.module('kibana.hits', [])
     $scope.get_data();
   }
 
-}).directive('hitsChart', function(query) {
+}).directive('hitsChart', function(querySrv) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs, ctrl) {
@@ -195,7 +195,7 @@ angular.module('kibana.hits', [])
                   color: "#eee",
                   hoverable: true,
                 },
-                colors: query.colors
+                colors: querySrv.colors
               });
             }
             if(scope.panel.chart === 'pie') {
@@ -227,7 +227,7 @@ angular.module('kibana.hits', [])
                 },
                 //grid: { hoverable: true, clickable: true },
                 grid:   { hoverable: true, clickable: true },
-                colors: query.colors
+                colors: querySrv.colors
               });
             }
 

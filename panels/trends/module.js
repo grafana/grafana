@@ -22,7 +22,7 @@
 'use strict';
 
 angular.module('kibana.trends', [])
-.controller('trends', function($scope, kbnIndex, query, dashboard, filterSrv) {
+.controller('trends', function($scope, kbnIndex, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -78,9 +78,9 @@ angular.module('kibana.trends', [])
 
 
     // Build the question part of the query
-    _.each(query.ids, function(id) {
+    _.each(querySrv.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
-        $scope.ejs.QueryStringQuery(query.list[id].query || '*'),
+        querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(_ids_without_time).must(
           $scope.ejs.RangeFilter(timeField)
           .from($scope.time.from)
@@ -93,10 +93,11 @@ angular.module('kibana.trends', [])
         ).size(0);
     });
 
+
     // And again for the old time period
-    _.each(query.ids, function(id) {
+    _.each(querySrv.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
-        $scope.ejs.QueryStringQuery(query.list[id].query || '*'),
+        querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(_ids_without_time).must(
           $scope.ejs.RangeFilter(timeField)
           .from($scope.old_time.from)
@@ -107,6 +108,7 @@ angular.module('kibana.trends', [])
           .query(q)
         ).size(0);
     });
+
 
     // TODO: Spy for trend panel
     //$scope.populate_modal(request);
@@ -121,8 +123,7 @@ angular.module('kibana.trends', [])
       ).then(function (p) {
         $scope.index = _.union(p,$scope.index);
         request = request.indices($scope.index[_segment]);
-        process_results(request.doSearch());
-
+        process_results(request.doSearch(),_segment,query_id);
       });
     } else {
       process_results(request.indices($scope.index[_segment]).doSearch(),_segment,query_id);
@@ -133,7 +134,6 @@ angular.module('kibana.trends', [])
   // Populate scope when we have results
   var process_results = function(results,_segment,query_id) { 
     results.then(function(results) {
-
       $scope.panel.loading = false;
       if(_segment === 0) {
         $scope.hits = {};
@@ -152,10 +152,10 @@ angular.module('kibana.trends', [])
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,query.ids).length === query.ids.length
+        _.intersection(facetIds,querySrv.ids).length === querySrv.ids.length
         ) {
         var i = 0;
-        _.each(query.ids, function(id) {
+        _.each(querySrv.ids, function(id) {
           var v = results.facets[id];
           var n = results.facets[id].count;
           var o = results.facets['old_'+id].count;
@@ -172,7 +172,7 @@ angular.module('kibana.trends', [])
             '?' : Math.round(percentage(hits.old,hits.new)*100)/100;
           // Create series
           $scope.data[i] = { 
-            info: query.list[id],
+            info: querySrv.list[id],
             hits: {
               new : hits.new,
               old : hits.old
