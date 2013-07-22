@@ -4,13 +4,13 @@
   </span>
 
   <div ng-show="panel.legend == 'above'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
-    <span ng-show='panel.chart != "none"'><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+    <span ng-show='panel.chart != "none"'><i class="icon-circle" ng-style="{color:query.color}"></i></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
   </div><br>
   <div style="clear:both"></div>
 
-  <div pie params="{{panel}}" style="height:{{panel.height || row.height}};position:relative"></div>
+  <div pie params="{{panel}}" style="position:relative"></div>
 
   <div ng-show="panel.legend == 'below'" ng-repeat="query in plot.getData()" style="float:left;padding-left: 10px;">
-    <span ng-show='panel.chart != "none"'><div style="display:inline-block;border-radius:5px;background:{{query.color}};height:10px;width:10px"></div></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+    <span ng-show='panel.chart != "none"'><i class="icon-circle" ng-style="{color:query.color}"></i></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
   </div>
 </kibana-panel>         

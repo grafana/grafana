@@ -38,7 +38,7 @@
   <div ng-repeat="id in queries.ids" ng-class="{'short-query': queries.ids.length>1}">
     <form class="form-search" style="position:relative" ng-submit="refresh()">
       <span class="begin-query">
-        <i class="icon-circle pointer" data-unique="1" bs-popover="'panels/query/meta.html'" data-placement="right" style="color:{{queries.list[id].color}}"></i>
+        <i class="icon-circle pointer" data-unique="1" bs-popover="'panels/query/meta.html'" data-placement="right" ng-style="{color: queries.list[id].color}"></i>
         <i class="icon-remove-sign pointer remove-query" ng-show="queries.ids.length>1" ng-click="queries.remove(id);refresh()"></i>
       </span>
       <input class="search-query panel-query" ng-class="{'input-block-level': queries.ids.length==1,'last-query': $last,'has-remove': queries.ids.length>1}" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="queries.list[id].query"/>
