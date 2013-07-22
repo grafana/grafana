@@ -103,6 +103,9 @@ angular.module('kibana.controllers', [])
   };
 
   $scope.toggle_row = function(row) {
+    if(!row.collapsable) {
+      return;
+    }
     row.collapse = row.collapse ? false : true;
     if (!row.collapse) {
       $timeout(function() {
