@@ -266,6 +266,7 @@ angular.module('kibana.histogram', [])
 .directive('histogramChart', function(dashboard, eventBus, filterSrv, $rootScope) {
   return {
     restrict: 'A',
+    template: '<div></div>',
     link: function(scope, elem, attrs, ctrl) {
 
       // Receive render events
@@ -280,7 +281,10 @@ angular.module('kibana.histogram', [])
 
       // Function for rendering panel
       function render_panel() {
- 
+
+        // IE doesn't work without this
+        elem.css({height:scope.panel.height||scope.row.height});
+        
         // Populate from the query service
         try {
           _.each(scope.data,function(series) {

@@ -181,10 +181,14 @@ angular.module('kibana.pie', [])
 
       // Function for rendering panel
       function render_panel() {
+        // IE doesn't work without this
+        elem.css({height:scope.panel.height||scope.row.height});
+
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
                           .script("common/lib/panels/jquery.flot.pie.js");
     
         var label;
+
         if(scope.panel.mode === 'goal') {
           label = { 
             show: scope.panel.labels,

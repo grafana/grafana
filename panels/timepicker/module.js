@@ -92,8 +92,6 @@ angular.module('kibana.timepicker', [])
         if($scope.time.from.diff(moment.utc(time.from),'seconds') !== 0 ||
           $scope.time.to.diff(moment.utc(time.to),'seconds') !== 0)
         {
-          console.log($scope.time.from+ " and "+ moment.utc(time.from));
-          console.log($scope.time.to+" and "+moment.utc(time.to));
 
           $scope.set_mode('absolute');
 

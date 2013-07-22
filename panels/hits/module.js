@@ -161,6 +161,8 @@ angular.module('kibana.hits', [])
 
       // Function for rendering panel
       function render_panel() {
+        // IE doesn't work without this
+        elem.css({height:scope.panel.height||scope.row.height});
 
         try {
           _.each(scope.data,function(series) {
@@ -228,9 +230,6 @@ angular.module('kibana.hits', [])
                 colors: query.colors
               });
             }
-            // Compensate for the height of the  legend. Gross
-            elem.height(
-              (scope.panel.height || scope.row.height).replace('px','') - $("#"+scope.$id+"-legend").height());
 
             // Work around for missing legend at initialization
             if(!scope.$$phase) {
