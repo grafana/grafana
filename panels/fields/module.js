@@ -24,7 +24,7 @@
 'use strict';
 
 angular.module('kibana.fields', [])
-.controller('fields', function($scope, eventBus, $timeout, dashboard, query, filterSrv) {
+.controller('fields', function($scope, eventBus, $timeout, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {

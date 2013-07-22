@@ -16,31 +16,36 @@
 'use strict';
 
 angular.module('kibana.query', [])
-.controller('query', function($scope, query, $rootScope) {
+.controller('query', function($scope, querySrv, $rootScope) {
 
   // Set and populate defaults
   var _d = {
     status  : "Experimental",
     label   : "Search",
     query   : "*",
+    pinned  : true,
     group   : "default",
     history : [],
     remember: 10 // max: 100, angular strap can't take a variable for items param
   };
   _.defaults($scope.panel,_d);
 
-  $scope.queries = query;
+  $scope.querySrv = querySrv;
 
   $scope.init = function() {
   };
 
   $scope.refresh = function(query) {
-    update_history(_.pluck($scope.queries.list,'query'));
+    update_history(_.pluck($scope.querySrv.list,'query'));
     $rootScope.$broadcast('refresh');
   };
 
   $scope.render = function(query) {
     $rootScope.$broadcast('render');
+  };
+
+  $scope.toggle_pin = function(id) {
+    querySrv.list[id].pin = querySrv.list[id].pin ? false : true;
   };
 
   var update_history = function(query) {

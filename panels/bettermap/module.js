@@ -20,7 +20,7 @@
 'use strict';
 
 angular.module('kibana.bettermap', [])
-.controller('bettermap', function($scope, query, dashboard, filterSrv) {
+.controller('bettermap', function($scope, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -67,8 +67,8 @@ angular.module('kibana.bettermap', [])
     var _segment = _.isUndefined(segment) ? 0 : segment;
 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(query.list,function(q) {
-      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery((q.query || '*')));
+    _.each(querySrv.list,function(q) {
+      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
     });
 
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment])

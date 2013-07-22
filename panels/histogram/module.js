@@ -41,15 +41,15 @@
 'use strict';
 
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, eventBus, query, dashboard, filterSrv) {
+.controller('histogram', function($scope, eventBus, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
     status      : "Stable",
     group       : "default",
-    query       : [ {query: "*", label:"Query"} ],
     mode        : 'count',
     time_field  : '@timestamp',
+    queries     : [],
     value_field : null,
     auto_int    : true,
     resolution  : 100, 
@@ -73,7 +73,7 @@ angular.module('kibana.histogram', [])
 
   $scope.init = function() {
 
-    $scope.queries = query;
+    $scope.querySrv = querySrv;
 
     $scope.$on('refresh',function(){
       $scope.get_data();
@@ -103,9 +103,9 @@ angular.module('kibana.histogram', [])
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
     // Build the query
-    _.each($scope.queries.ids, function(id) {
+    _.each(querySrv.ids, function(id) {
       var query = $scope.ejs.FilteredQuery(
-        $scope.ejs.QueryStringQuery($scope.queries.list[id].query || '*'),
+        querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(filterSrv.ids)
       );
 
@@ -151,13 +151,13 @@ angular.module('kibana.histogram', [])
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,query.ids).length === query.ids.length
+        _.intersection(facetIds,querySrv.ids).length === querySrv.ids.length
         ) {
 
         var i = 0;
         var data, hits;
 
-        _.each(query.ids, function(id) {
+        _.each(querySrv.ids, function(id) {
           var v = results.facets[id];
 
           // Null values at each end of the time range ensure we see entire range
@@ -184,7 +184,7 @@ angular.module('kibana.histogram', [])
           // Create the flot series object
           var series = { 
             data: {
-              info: $scope.queries.list[id],
+              info: querySrv.list[id],
               data: data,
               hits: hits
             },

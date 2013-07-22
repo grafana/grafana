@@ -29,7 +29,7 @@
 'use strict';
 
 angular.module('kibana.pie', [])
-.controller('pie', function($scope, $rootScope, query, dashboard, filterSrv) {
+.controller('pie', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -89,8 +89,8 @@ angular.module('kibana.pie', [])
 
     // This could probably be changed to a BoolFilter 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(query.list,function(q) {
-      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
+    _.each(querySrv.list,function(q) {
+      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
     });
 
     var results;
@@ -162,7 +162,7 @@ angular.module('kibana.pie', [])
   };
 
 })
-.directive('pie', function(query, filterSrv, dashboard) {
+.directive('pie', function(querySrv, filterSrv, dashboard) {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -239,7 +239,7 @@ angular.module('kibana.pie', [])
             clickable: true 
           },
           legend: { show: false },
-          colors: query.colors
+          colors: querySrv.colors
         };
 
         // Populate element
@@ -248,6 +248,7 @@ angular.module('kibana.pie', [])
             scope.plot = $.plot(elem, scope.data, pie);
           });
         }
+
       }
 
       function tt(x, y, contents) {
