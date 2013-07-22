@@ -35,20 +35,12 @@ angular.module('kibana.query', [])
   };
 
   $scope.refresh = function(query) {
+    update_history(_.pluck($scope.queries.list,'query'));
     $rootScope.$broadcast('refresh');
   };
 
   $scope.render = function(query) {
     $rootScope.$broadcast('render');
-  };
-
-  $scope.add_query = function() {
-    if (_.isArray($scope.panel.query)) {
-      $scope.panel.query.push("");
-    } else {
-      $scope.panel.query = new Array($scope.panel.query);
-      $scope.panel.query.push("");
-    }
   };
 
   var update_history = function(query) {
