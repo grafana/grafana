@@ -30,7 +30,7 @@
     <h6 ng-show="elasticsearch.dashboards.length">Elasticsearch stored dashboards</h6>
     <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
     <table class="table table-condensed table-striped">
-      <tr ng-repeat="row in elasticsearch.dashboards">
+      <tr ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
         <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
         <td><a href="#/dashboard/elasticsearch/{{row._id}}">{{row._id}}</a></td>
         <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'panels/dashcontrol/share.html'"></i></a></td>
