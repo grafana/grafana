@@ -94,7 +94,7 @@ angular.module('kibana.derivequeries', [])
         // if it isn't in the list, remove it
         var _iq = querySrv.findQuery(_q);
         if(!_iq) {
-          ids.push(querySrv.set({query:_q}));
+          ids.push(querySrv.set({alias: v.term, query:_q}));
         } else {
           ids.push(_iq.id);
         }
