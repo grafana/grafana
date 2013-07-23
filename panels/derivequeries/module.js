@@ -19,7 +19,7 @@
 'use strict';
 
 angular.module('kibana.derivequeries', [])
-.controller('derivequeries', function($scope, $rootScope, query, fields, dashboard, filterSrv) {
+.controller('derivequeries', function($scope, $rootScope, querySrv, fields, dashboard, filterSrv) {
 
   // Set and populate defaults
   var _d = {
@@ -87,15 +87,15 @@ angular.module('kibana.derivequeries', [])
       _.each(results.facets.query.terms, function(v) {
         var _q = $scope.panel.field+':"'+v.term+'"'+suffix;
         // if it isn't in the list, remove it
-        var _iq = query.findQuery(_q);
+        var _iq = querySrv.findQuery(_q);
         if(!_iq) {
-          ids.push(query.set({query:_q}));
+          ids.push(querySrv.set({query:_q}));
         } else {
           ids.push(_iq.id);
         }
       });
       _.each(_.difference($scope.panel.ids,ids),function(id){
-        query.remove(id);
+        querySrv.remove(id);
       });
       $scope.panel.ids = ids;
       dashboard.refresh();
