@@ -1,0 +1,14 @@
+  <style>
+    .querySelect .query {
+      margin-right: 5px;
+    }
+  </style>
+  <h4>Queries</h4>
+  <div class="span2" style="margin-left:0px">
+    <select class="input-small" ng-change="set_refresh(true);" ng-model="panel.queries.mode" ng-options="f for f in ['all','pinned','selected']"></select>
+  </div>
+  <div class="span9 querySelect" ng-show="panel.queries.mode == 'selected'">
+    <span ng-repeat="id in querySrv.ids" class="query badge">
+      <i ng-click="panel.queries.ids = _.toggleInOut(panel.queries.ids,id);set_refresh(true);" ng-class="{'icon-check': _.contains(panel.queries.ids,id),'icon-check-empty': !_.contains(panel.queries.ids,id)}"></i> <i class="icon-circle" ng-style="{color: querySrv.list[id].color}"></i><span> {{querySrv.list[id].alias || querySrv.list[id].query}}</span>
+    </span>
+  </div>

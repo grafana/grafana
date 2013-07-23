@@ -13,6 +13,11 @@ angular.module('kibana.controllers', [])
     last: null
   };
 
+  // For
+  $scope.editor = {
+    index: 0
+  };
+
   $scope.init = function() {
 
     $scope.config = config;
