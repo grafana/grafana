@@ -1,18 +1,22 @@
-<div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>{{panel.title}} Editor</h3>
-</div>
-<div class="modal-body">
+<div class="modal-body" >
+  <div class="pull-right editor-title">{{panel.type}} settings</div>
 
-  <h4>General <small> panel settings</small></h4>
-  <div ng-include src="'partials/panelgeneral.html'"></div>
-
+  <div ng-model="editor.index" bs-tabs>
+    <div ng-repeat="tab in ['General','Panel']" data-title="{{tab}}">
+    </div>
+  </div>
+  <div ng-show="editor.index == 0">
+    <h4>{{panel.title}} General <small> panel settings</small></h4>
+    <div ng-include src="'partials/panelgeneral.html'"></div>
+  </div>
   
+  <div ng-show="editor.index == 1">
   <h4 style="text-transform: capitalize;">{{panel.type}} <small> panel settings. <strong ng-show="!_.isUndefined(panel.status)">({{panel.status}})</strong></small></h4>
   <div ng-include src="edit_path(panel.type)">No additional settings are available for this type of panel.</div>
-  
+  </div>
+
 </div>
 <div class="modal-footer">
   <!-- close_edit() is provided here to allow for a scope to perform action on dismiss -->
-  <button type="button" class="btn btn-success" ng-click="close_edit();dismiss()">Close</button>
+  <button type="button" class="btn btn-success" ng-click="editor.index=0;close_edit();dismiss()">Close</button>
 </div>

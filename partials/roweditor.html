@@ -1,10 +1,12 @@
-<div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>{{row.title}} <small>row editor</small></h3>
-</div>
 <div class="modal-body">
-  <h4>Row Control</h4>
-  <div class="row-fluid">
+  <div class="pull-right editor-title">Row settings</div>
+
+  <div ng-model="editor.index" bs-tabs>
+    <div ng-repeat="tab in ['General','Panels']" data-title="{{tab}}">
+    </div>
+  </div>
+
+  <div class="row-fluid" ng-show="editor.index == 0">
     <div class="span4">
       <label class="small">Title</label><input type="text" class="input-medium" ng-model='row.title'></input>
     </div>
@@ -18,7 +20,7 @@
       <label class="small"> Collapsable </label><input type="checkbox" ng-model="row.collapsable" ng-checked="row.collapsable" />
     </div>
   </div>
-  <div class="row-fluid">
+  <div class="row-fluid" ng-show="editor.index == 1">
     <h4>New Panel</h4>
     <form class="input-append">
     <select class="input-medium input-append" ng-model="panel.type" ng-options="f for f in config.modules|stringSort"></select>
@@ -30,7 +32,7 @@
       <div add-panel="{{panel.type}}"></div>
     </div>
   </div>
-  <div class="row-fluid">
+  <div class="row-fluid" ng-show="editor.index == 1">
     <div class="span12">
       <h4>Panels</h4>
       <table class="table table-condensed table-striped">

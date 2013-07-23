@@ -1,18 +1,21 @@
-<div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>{{dashboard.current.title}} <small> editor</small></h3>
-</div>
 <div class="modal-body">
-  <h4>Dashboard Control</h4>
-  <div class="row-fluid">
-    <div class="span8">
+  <div class="pull-right editor-title">Dashboard settings</div>
+
+  <div ng-model="editor.index" bs-tabs>
+    <div ng-repeat="tab in ['General','Index','Rows']" data-title="{{tab}}">
+    </div>
+  </div>
+
+
+  <div class="row-fluid" ng-show="editor.index == 0">
+    <div class="span4">
       <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.current.title'></input>
     </div>
     <div class="span1"> 
       <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
     </div>
   </div>
-  <div class="row-fluid">    
+  <div class="row-fluid" ng-show="editor.index == 1">    
     <h4>Index Settings</h4>
     <div ng-show="dashboard.current.index.interval != 'none'" class="row-fluid"> 
        <div class="span12">
@@ -46,9 +49,8 @@
       </div>
     </div>
   </div>
-  <hr/>
-  <h4>Rows</h4>
-  <div class="row-fluid">
+  <div class="row-fluid" ng-show="editor.index == 2">
+    <h4>Rows</h4>
     <form>
       <div class="span5">      
         <label class="small">Title</label>
@@ -68,7 +70,7 @@
       </div>
     </form>
   </div>
-  <div class="row-fluid">
+  <div class="row-fluid" ng-show="editor.index == 2">
     <div class="span12">
       <table class="table table-condensed table-striped">
         <thead>
@@ -87,5 +89,5 @@
   </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-success" ng-click="dismiss();reset_panel();dashboard.refresh()">Close</button>
+  <button type="button" class="btn btn-success" ng-click="editor.index=0;dismiss();reset_panel();dashboard.refresh()">Close</button>
 </div>

@@ -6,6 +6,13 @@
   color: #000;
 }
 
+.editor-title {
+  margin-right: 10px;
+  font-size: 1.7em;
+  font-weight: bold;
+  text-transform:capitalize;
+}
+
 .spy {
   position:absolute;
   right:0px;

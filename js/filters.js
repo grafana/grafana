@@ -20,4 +20,10 @@ angular.module('kibana.filters', [])
     });
     return ret;
   };
+}).filter('slice', function() {
+  return function(arr, start, end) {
+    if(!_.isUndefined(arr)) {
+      return arr.slice(start, end);
+    }
+  };
 });
