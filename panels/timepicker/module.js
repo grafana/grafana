@@ -86,16 +86,12 @@ angular.module('kibana.timepicker', [])
 
     // In case some other panel broadcasts a time, set us to an absolute range
     $scope.$on('refresh', function() {
-      /*
       if(filterSrv.idsByType('time').length > 0) {
         var time = filterSrv.timeRange('min');
 
         if($scope.time.from.diff(moment.utc(time.from),'seconds') !== 0 ||
           $scope.time.to.diff(moment.utc(time.to),'seconds') !== 0)
         {
-
-          console.log('time mismatch!')
-          return;
           $scope.set_mode('absolute');
 
           // These 3 statements basicly do everything time_apply() does
@@ -104,7 +100,6 @@ angular.module('kibana.timepicker', [])
           update_panel();
         }
       }
-      */
     });
   };
 
