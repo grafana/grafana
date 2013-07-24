@@ -11,8 +11,8 @@
   </div>
   
   <div ng-show="editor.index == 1">
-  <h4 style="text-transform: capitalize;">{{panel.type}} <small> panel settings. <strong ng-show="!_.isUndefined(panel.status)">({{panel.status}})</strong></small></h4>
-  <div ng-include src="edit_path(panel.type)">No additional settings are available for this type of panel.</div>
+    <h4 style="text-transform: capitalize;">{{panel.type}} <small> panel settings. <strong ng-show="!_.isUndefined(panel.status)">({{panel.status}})</strong></small></h4>
+    <div ng-include src="edit_path(panel.type)">No additional settings are available for this type of panel.</div>
   </div>
 
 </div>

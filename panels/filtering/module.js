@@ -6,8 +6,6 @@
 
   An experimental for interacting with the filter service
 
-  ### Parameters
-
 */
 
 'use strict';
@@ -17,7 +15,7 @@ angular.module('kibana.filtering', [])
 
   // Set and populate defaults
   var _d = {
-    status  : "Experimental"
+    status  : "Beta"
   };
   _.defaults($scope.panel,_d);
 

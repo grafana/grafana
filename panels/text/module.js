@@ -53,7 +53,9 @@ angular.module('kibana.text', [])
           element.html(htmlText);
           // For whatever reason, this fixes chrome. I don't like it, I think
           // it makes things slow?
-          scope.$apply();
+          if(!scope.$$phase) {
+            scope.$apply();
+          }
         });
       }
 

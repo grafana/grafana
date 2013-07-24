@@ -10,9 +10,6 @@
   yeah, you should know that it uses facetting. It should be pretty safe.
 
   ### Parameters
-  * query ::  an array of objects as such: {query: 'somequery', label 'legent text'}.
-              this is usually populated by a stringquery panel wher the query and label
-              parameter are the same
   * auto_int :: Auto calculate data point interval?
   * resolution ::  If auto_int is enables, shoot for this many data points, rounding to
                     sane intervals
@@ -46,10 +43,12 @@ angular.module('kibana.histogram', [])
   // Set and populate defaults
   var _d = {
     status      : "Stable",
-    group       : "default",
     mode        : 'count',
     time_field  : '@timestamp',
-    queries     : [],
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     value_field : null,
     auto_int    : true,
     resolution  : 100, 
@@ -69,12 +68,10 @@ angular.module('kibana.histogram', [])
     percentage  : false,
     interactive : true,
   };
+
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
-
-    $scope.querySrv = querySrv;
-
     $scope.$on('refresh',function(){
       $scope.get_data();
     });
@@ -91,6 +88,7 @@ angular.module('kibana.histogram', [])
       return;
     }
 
+
     var _range = $scope.range = filterSrv.timeRange('min');
     
     if ($scope.panel.auto_int) {
@@ -102,8 +100,9 @@ angular.module('kibana.histogram', [])
     var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
     // Build the query
-    _.each(querySrv.ids, function(id) {
+    _.each($scope.panel.queries.ids, function(id) {
       var query = $scope.ejs.FilteredQuery(
         querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(filterSrv.ids)
@@ -132,7 +131,6 @@ angular.module('kibana.histogram', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-
       $scope.panel.loading = false;
       if(_segment === 0) {
         $scope.hits = 0;
@@ -151,13 +149,13 @@ angular.module('kibana.histogram', [])
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,querySrv.ids).length === querySrv.ids.length
+        _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
         ) {
 
         var i = 0;
         var data, hits;
 
-        _.each(querySrv.ids, function(id) {
+        _.each($scope.panel.queries.ids, function(id) {
           var v = results.facets[id];
 
           // Null values at each end of the time range ensure we see entire range
@@ -343,20 +341,14 @@ angular.module('kibana.histogram', [])
                 borderColor: '#eee',
                 color: "#eee",
                 hoverable: true,
-              },
-              colors: ['#86B22D','#BF6730','#1D7373','#BFB930','#BF3030','#77207D']
+              }
             };
 
             if(scope.panel.interactive) {
-              options.selection = { mode: "x", color: '#aaa' };
+              options.selection = { mode: "x", color: '#666' };
             }
 
             scope.plot = $.plot(elem, scope.data, options);
-            
-            // Work around for missing legend at initialization.
-            if(!scope.$$phase) {
-              scope.$apply();
-            }
 
           } catch(e) {
             elem.text(e);

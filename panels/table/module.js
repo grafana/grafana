@@ -7,7 +7,6 @@
   A paginated table of events matching a query
 
   ### Parameters
-  * query ::  A string representing then current query
   * size :: Number of events per page to show
   * pages :: Number of pages to show. size * pages = number of cached events. 
              Bigger = more memory usage byh the browser
@@ -35,7 +34,10 @@ angular.module('kibana.table', [])
   // Set and populate defaults
   var _d = {
     status  : "Stable",
-    query   : "*",
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     size    : 100, // Per page
     pages   : 5,   // Pages available
     offset  : 0,
@@ -53,7 +55,6 @@ angular.module('kibana.table', [])
   _.defaults($scope.panel,_d);
 
   $scope.init = function () {
-
     $scope.set_listeners($scope.panel.group);
 
     $scope.get_data();
@@ -133,14 +134,16 @@ angular.module('kibana.table', [])
     
     $scope.panel.loading = true;
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+
     var _segment = _.isUndefined(segment) ? 0 : segment;
     $scope.segment = _segment;
 
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(querySrv.list,function(q) {
-      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
+    _.each($scope.panel.queries.ids,function(id) {
+      boolQuery = boolQuery.should(querySrv.getEjsObj(id));
     });
 
     request = request.query(

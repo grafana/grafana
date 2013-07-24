@@ -8,15 +8,21 @@
       vertical-align: top;
       margin-left: 10px;
       width: 200px;
-      padding: 5px;
+      padding: 5px 5px 0px 5px;
       border: #555 1px solid;
       margin: 0px 5px 5px 0px;
+    }
+    .filter-panel-filter ul {
+      margin-bottom: 3px;
     }
     .filter-must {
       border-bottom: #7EB26D 3px solid;
     }
     .filter-mustNot {
       border-bottom: #E24D42 3px solid;
+    }
+    .filter-deselected {
+      opacity: 0.5;
     }
     .filter-either {
       border-bottom: #EF843C 3px solid;
@@ -34,8 +40,8 @@
   </style>
 
   <div class='filtering-container'>
-    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter">
-      <div class="filter-{{filterSrv.list[id].mandate}}">
+    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter" ng-class="{'filter-deselected': !filterSrv.list[id].active}">
+      <div class="filter-{{filterSrv.list[id].mandate}}" >
         <strong>{{filterSrv.list[id].type}}</strong> 
         <span ng-show="!filterSrv.list[id].editing" class="filter-mandate" ng-click="filterSrv.list[id].editing = true">{{filterSrv.list[id].mandate}}</span>
 

@@ -15,6 +15,7 @@
       <select ng-change="$emit('render')" class="input-small" ng-model="panel.map" ng-options="f for f in ['world','europe','usa']"></select>
     </div>
   </div>
+  <div class="row-fluid" ng-include="'partials/querySelect.html'"></div>
   <h5>Panel Spy</h5>
   <div class="row-fluid">
     <div class="span2"> 

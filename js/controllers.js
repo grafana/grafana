@@ -23,7 +23,6 @@ angular.module('kibana.controllers', [])
     $scope.config = config;
     // Make underscore.js available to views
     $scope._ = _;
-
     $scope.dashboard = dashboard;
 
     // Provide a global list of all see fields
@@ -89,7 +88,7 @@ angular.module('kibana.controllers', [])
   $scope.init();
 
 })
-.controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource) {
+.controller('RowCtrl', function($scope, $rootScope, $timeout, ejsResource, querySrv) {
 
   var _d = {
     title: "Row",
@@ -104,6 +103,7 @@ angular.module('kibana.controllers', [])
 
 
   $scope.init = function() {
+    $scope.querySrv = querySrv;
     $scope.reset_panel();
   };
 

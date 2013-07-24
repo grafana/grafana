@@ -1,27 +1,23 @@
 <div>
   <div class="row-fluid">
-    <div class="span3">
+    <div class="span2">
       <label class="small">Mode</label> 
       <select ng-change="set_refresh(true)" class="input-small" ng-model="panel.mode" ng-options="f for f in ['count','min','mean','max','total']"></select>
     </div>
     <div class="span2">
       <label class="small">Time Field</label>
-      <form>
         <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.time_field">
-      </form>
     </div>
     <div class="span2" ng-show="panel.mode != 'count'">
       <label class="small">Value Field</label>
-      <form>
         <input ng-change="set_refresh(true)" placeholder="Start typing" bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.value_field">
-      </form>
     </div>
     <div class="span3" ng-show="panel.mode != 'count'">
       <label class="small">Note</label><small> In <strong>{{panel.mode}}</strong> mode the configured field <strong>must</strong> be a numeric type</small>
     </div>
   </div>
-  <h5>Chart Options</h5>
   <div class="row-fluid" style="margin-bottom:10px;">
+    <h5>Chart Settings</h5>
     <div class="span1"> <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>
     <div class="span1"> <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines"></div>
     <div class="span1"> <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points"></div>
@@ -64,6 +60,7 @@
       <label class="small">Use Elasticsearch date math format (eg 1m, 5m, 1d, 2w, 1y)</label>
     </div>
   </div>
+  <div class="row-fluid" ng-include="'partials/querySelect.html'"></div>
   <h5>Panel Spy</h5>
   <div class="row-fluid">
     <div class="span2"> 
