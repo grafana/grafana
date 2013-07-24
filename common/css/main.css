@@ -13,6 +13,12 @@
   text-transform:capitalize;
 }
 
+.editor-title small {
+  opacity: 0.5;
+  font-size: 0.7em;
+  font-weight: normal;
+}
+
 .spy {
   position:absolute;
   right:0px;
