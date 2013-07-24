@@ -10,12 +10,6 @@
   * style :: A hash of css styles
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
   * ago :: Date math formatted time to look back
-  ### Group Events
-  #### Sends
-  * get_time :: On panel initialization get time range to query
-  #### Receives
-  * time :: An object containing the time range to use and the index(es) to query
-  * query :: An Array of queries, even if its only one
 
 */
 
@@ -27,7 +21,10 @@ angular.module('kibana.trends', [])
   // Set and populate defaults
   var _d = {
     status  : "Beta",
-    query   : ["*"],
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     group   : "default",
     style   : { "font-size": '14pt'},
     ago     : '1d',
@@ -54,6 +51,8 @@ angular.module('kibana.trends', [])
       $scope.index = segment > 0 ? $scope.index : dashboard.indices;
     }
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+
     // Determine a time field
     var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'));
     if(timeField.length > 1) {
@@ -78,7 +77,7 @@ angular.module('kibana.trends', [])
 
 
     // Build the question part of the query
-    _.each(querySrv.ids, function(id) {
+    _.each($scope.panel.queries.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
         querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(_ids_without_time).must(
@@ -95,7 +94,7 @@ angular.module('kibana.trends', [])
 
 
     // And again for the old time period
-    _.each(querySrv.ids, function(id) {
+    _.each($scope.panel.queries.ids, function(id) {
       var q = $scope.ejs.FilteredQuery(
         querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(_ids_without_time).must(
@@ -152,10 +151,10 @@ angular.module('kibana.trends', [])
 
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && 
-        _.intersection(facetIds,querySrv.ids).length === querySrv.ids.length
+        _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
         ) {
         var i = 0;
-        _.each(querySrv.ids, function(id) {
+        _.each($scope.panel.queries.ids, function(id) {
           var v = results.facets[id];
           var n = results.facets[id].count;
           var o = results.facets['old_'+id].count;

@@ -343,3 +343,15 @@ _.mixin({
     return array;
   } 
 });
+
+_.mixin({
+  toggleInOut: function(array,value) {
+    'use strict';
+    if(_.contains(array,value)) {
+      array = _.without(array,value);
+    } else {
+      array.push(value);
+    }
+    return array;
+  }
+});

@@ -289,6 +289,20 @@ angular.module('kibana.services', [])
     return _.findWhere(self.list,{query:queryString});
   };
 
+  this.idsByMode = function(config) {
+    switch(config.mode) 
+    {
+    case 'all':
+      return self.ids;
+    case 'pinned':
+      return _.pluck(_.where(self.list,{pin:true}),'id');
+    case 'selected':
+      return _.intersection(self.ids,config.ids);
+    default:
+      return self.ids;
+    }
+  };
+
   var nextId = function() {
     if(_q.idQueue.length > 0) {
       return _q.idQueue.shift();

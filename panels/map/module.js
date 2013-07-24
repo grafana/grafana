@@ -12,8 +12,6 @@
   There's no way to query sequentially here, so I'm going to hit them all at once!
 
   ### Parameters
-  * query ::  A single query string, not and array. This panel can only handle one
-              query at a time. 
   * map :: 'world', 'us' or 'europe'
   * colors :: an array of colors to use for the regions of the map. If this is a 2 
               element array, jquerymap will generate shades between these colors 
@@ -33,13 +31,15 @@ angular.module('kibana.map', [])
   // Set and populate defaults
   var _d = {
     status  : "Beta",
-    query   : "*",
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     map     : "world",
     colors  : ['#A0E2E2', '#265656'],
     size    : 100,
     exclude : [],
     spyable : true,
-    group   : "default",
     index_limit : 0
   };
   _.defaults($scope.panel,_d);
@@ -61,9 +61,11 @@ angular.module('kibana.map', [])
     var request;
     request = $scope.ejs.Request().indices(dashboard.indices);
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+    // This could probably be changed to a BoolFilter 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(querySrv.list,function(q) {
-      boolQuery = boolQuery.should($scope.ejs.QueryStringQuery(q.query || '*'));
+    _.each($scope.panel.queries.ids,function(id) {
+      boolQuery = boolQuery.should(querySrv.getEjsObj(id));
     });
 
     // Then the insert into facet and make the request

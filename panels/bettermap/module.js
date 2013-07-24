@@ -6,11 +6,10 @@
   ## Better maps
 
   So the cavaet for this panel is that, for better or worse, it does NOT use the terms facet and it
-  DOES query sequentially. This however means that
+  DOES query sequentially. This however means that it transfer more data and is generally heavier
+  to computer, while showing less actual data
 
   ### Parameters
-  * query ::  A single query string, not and array. This panel can only handle one
-              query at a time. 
   * size :: How many results to show, more results = slower
   * field :: field containing a 2 element array in the format [lon,lat]
   * tooltip :: field to extract the tool tip value from
@@ -25,7 +24,10 @@ angular.module('kibana.bettermap', [])
   // Set and populate defaults
   var _d = {
     status  : "Experimental",
-    query   : "*",
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     size    : 1000,
     spyable : true,
     tooltip : "_id",
@@ -66,9 +68,11 @@ angular.module('kibana.bettermap', [])
 
     var _segment = _.isUndefined(segment) ? 0 : segment;
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+    // This could probably be changed to a BoolFilter 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(querySrv.list,function(q) {
-      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
+    _.each($scope.panel.queries.ids,function(id) {
+      boolQuery = boolQuery.should(querySrv.getEjsObj(id));
     });
 
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment])

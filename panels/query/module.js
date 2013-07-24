@@ -20,7 +20,7 @@ angular.module('kibana.query', [])
 
   // Set and populate defaults
   var _d = {
-    status  : "Experimental",
+    status  : "Beta",
     label   : "Search",
     query   : "*",
     pinned  : true,

@@ -11,9 +11,8 @@
     represents
 
   ### Parameters
-  * query :: An object with 3 possible parameters depends on the mode:
+  * query :: An object with 2 possible parameters depends on the mode:
   ** field: Fields to run a terms facet on. Only does anything in terms mode
-  ** query: A string of the query to run
   ** goal: How many to shoot for, only does anything in goal mode
   * exclude :: In terms mode, ignore these terms
   * donut :: Drill a big hole in the pie
@@ -35,6 +34,10 @@ angular.module('kibana.pie', [])
   var _d = {
     status  : "Deprecating Soon",
     query   : { field:"_type", goal: 100}, 
+    queries     : {
+      mode        : 'all',
+      ids         : []
+    },
     size    : 10,
     exclude : [],
     donut   : false,
@@ -84,14 +87,17 @@ angular.module('kibana.pie', [])
       return;
     } 
 
+
     $scope.panel.loading = true;
     var request = $scope.ejs.Request().indices(dashboard.indices);
 
+    $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
     // This could probably be changed to a BoolFilter 
     var boolQuery = $scope.ejs.BoolQuery();
-    _.each(querySrv.list,function(q) {
-      boolQuery = boolQuery.should(querySrv.toEjsObj(q));
+    _.each($scope.panel.queries.ids,function(id) {
+      boolQuery = boolQuery.should(querySrv.getEjsObj(id));
     });
+
 
     var results;
 
@@ -246,6 +252,10 @@ angular.module('kibana.pie', [])
         if(elem.is(":visible")){
           scripts.wait(function(){
             scope.plot = $.plot(elem, scope.data, pie);
+            scope.legend = scope.plot.getData();
+            if(!scope.$$phase) {
+              scope.$apply();
+            }
           });
         }
 
