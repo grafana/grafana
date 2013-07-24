@@ -21,6 +21,7 @@
   * hide_control :: Upon save, hide this panel
   * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
   * temp :: Allow saving of temp dashboards
+  * ttl :: Enable setting ttl. 
   * temp_ttl :: How long should temp dashboards persist
 
 */
@@ -48,6 +49,7 @@ angular.module('kibana.dashcontrol', [])
     hide_control: false,
     elasticsearch_size: 20,
     temp: true,
+    ttl_enable: true,
     temp_ttl: '30d'
   };
   _.defaults($scope.panel,_d);
@@ -83,7 +85,11 @@ angular.module('kibana.dashcontrol', [])
   };
 
   $scope.elasticsearch_save = function(type,ttl) {
-    dashboard.elasticsearch_save(type,($scope.elasticsearch.title || dashboard.current.title),ttl).then(
+    dashboard.elasticsearch_save(
+      type,
+      ($scope.elasticsearch.title || dashboard.current.title),
+      ($scope.panel.ttl_enable ? ttl : false)
+      ).then(
       function(result) {
       if(!_.isUndefined(result._id)) {
         $scope.alert('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
