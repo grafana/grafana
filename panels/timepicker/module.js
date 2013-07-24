@@ -75,7 +75,13 @@ angular.module('kibana.timepicker', [])
     // These 3 statements basicly do everything time_apply() does
     set_timepicker($scope.time.from,$scope.time.to);
     update_panel();
-    set_time_filter($scope.time);
+
+    // If we're in a mode where something must be calculated, clear existing filters
+    // and set new ones
+    if($scope.panel.mode !== 'absolute') {
+      set_time_filter($scope.time);
+    }
+
     dashboard.refresh();
 
 
@@ -224,15 +230,9 @@ angular.module('kibana.timepicker', [])
 
   function set_time_filter(time) {
     time.type = 'time';
-    // Check if there's a time filter we remember, if not, set one and remember it
-    if(!_.isUndefined($scope.panel.filter_id) && 
-      !_.isUndefined(filterSrv.list[$scope.panel.filter_id]) && 
-      filterSrv.list[$scope.panel.filter_id].type === 'time') 
-    {
-      filterSrv.set(compile_time(time),$scope.panel.filter_id);
-    } else {
-      $scope.panel.filter_id = filterSrv.set(compile_time(time));
-    }
+    // Clear all time filters, set a new one
+    filterSrv.removeByType('time');
+    $scope.panel.filter_id = filterSrv.set(compile_time(time));
     return $scope.panel.filter_id;
   }
 
