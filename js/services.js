@@ -716,8 +716,7 @@ angular.module('kibana.services', [])
       dashboard: angular.toJson(save)
     });
     
-    request = type === 'temp' ? request.ttl(ttl) : request;
-
+    request = type === 'temp' && ttl ? request.ttl(ttl) : request;
 
     // TOFIX: Implement error handling here
     return request.doIndex(
