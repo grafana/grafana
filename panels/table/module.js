@@ -69,10 +69,6 @@ angular.module('kibana.table', [])
     eventBus.register($scope,'selected_fields', function(event, fields) {
       $scope.panel.fields = _.clone(fields);
     });
-    eventBus.register($scope,'table_documents', function(event, docs) {
-      querySrv.list[querySrv.ids[0]].query = docs.query;
-      $scope.data = docs.docs;
-    });
   };
 
   $scope.set_sort = function(field) {
