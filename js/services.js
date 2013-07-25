@@ -411,8 +411,8 @@ angular.module('kibana.services', [])
     {
     case 'time':
       return ejs.RangeFilter(filter.field)
-        .from(filter.from)
-        .to(filter.to);
+        .from(filter.from.valueOf())
+        .to(filter.to.valueOf());
     case 'range':
       return ejs.RangeFilter(filter.field)
         .from(filter.from)
