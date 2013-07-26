@@ -25,10 +25,10 @@ angular.module('kibana.pie', [])
 .controller('pie', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
-    status  : "Deprecating Soon",
+    status  : "Deprecated",
     description : "Uses an Elasticsearch terms facet to create a pie chart. You should really only"+
-      " point this at not_analyzed fields for that reason. This panel is going away soon, to be"+
-      " replaced with a panel that can represent a terms facet in a variety of ways."
+      " point this at not_analyzed fields for that reason. This panel is going away soon, it has"+
+      " <strong>been replaced by the terms panel</strong>. Please use that one instead."
   };
 
   // Set and populate defaults
@@ -247,11 +247,10 @@ angular.module('kibana.pie', [])
           colors: querySrv.colors
         };
 
-        // Populate element
+        // Populate legend
         if(elem.is(":visible")){
           scripts.wait(function(){
-            scope.plot = $.plot(elem, scope.data, pie);
-            scope.legend = scope.plot.getData();
+            scope.legend = $.plot(elem, scope.data, pie).getData();
             if(!scope.$$phase) {
               scope.$apply();
             }
