@@ -4,8 +4,6 @@
 
   ## Derivequeries
 
-  Broadcasts an array of queries based on the results of a terms facet
-
   ### Parameters
   * label :: The label to stick over the field 
   * query :: A string to use as a filter for the terms facet
@@ -21,14 +19,21 @@
 angular.module('kibana.derivequeries', [])
 .controller('derivequeries', function($scope, $rootScope, querySrv, fields, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Experimental",
+    description : "Creates a new set of queries using the Elasticsearch terms facet. For example,"+
+     " you might want to create 5 queries showing the most frequent HTTP response codes. Be "+
+     "careful not to select a high cardinality field, as Elasticsearch must load all unique values"+
+     " into memory."
+  };
+
+
   // Set and populate defaults
   var _d = {
     loading : false,
-    status  : "Beta",
     label   : "Search",
     query   : "*",
     ids     : [],
-    group   : "default",
     field   : '_type',
     fields  : [],
     spyable : true,

@@ -4,12 +4,6 @@
 
   ## Pie
 
-  This panel is probably going away. For now its has 2 modes: 
-    * terms: Run a terms facet on the query. You're gonna have a bad (ES crashing) day
-    if you run in this mode on a high cardinality field
-    * goal: Compare the query to this number and display the percentage that the query
-    represents
-
   ### Parameters
   * query :: An object with 2 possible parameters depends on the mode:
   ** field: Fields to run a terms facet on. Only does anything in terms mode
@@ -30,9 +24,15 @@
 angular.module('kibana.pie', [])
 .controller('pie', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Deprecating Soon",
+    description : "Uses an Elasticsearch terms facet to create a pie chart. You should really only"+
+      " point this at not_analyzed fields for that reason. This panel is going away soon, to be"+
+      " replaced with a panel that can represent a terms facet in a variety of ways."
+  };
+
   // Set and populate defaults
   var _d = {
-    status  : "Deprecating Soon",
     query   : { field:"_type", goal: 100}, 
     queries     : {
       mode        : 'all',
@@ -45,7 +45,6 @@ angular.module('kibana.pie', [])
     legend  : "above",
     labels  : true,
     mode    : "terms",
-    group   : "default",
     default_field : 'DEFAULT',
     spyable : true,
   };
@@ -291,7 +290,8 @@ angular.module('kibana.pie', [])
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-          tt(pos.pageX, pos.pageY, "<div style='vertical-align:middle;display:inline-block;background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> " + 
+          tt(pos.pageX, pos.pageY, "<div "+"style='vertical-align:middle;display:inline-block;"+
+            "background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
             (item.series.label||"")+ " " + percent);
         } else {
           $("#pie-tooltip").remove();

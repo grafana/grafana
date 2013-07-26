@@ -8,8 +8,9 @@ angular.module('kibana.directives', [])
     restrict: 'E',
     link: function(scope, elem, attrs) {
       var template = '<img src="common/img/load.gif" class="panel-loading" ng-show="panel.loading == true">'+
-        ' <span class="editlink panelextra pointer" style="right:15px;top:0px" bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
-          '<span class="small">{{panel.type}}</span> <i class="icon-cog pointer"></i> '+
+        ' <span class="editlink panelextra pointer" style="right:15px;top:0px" ' + 
+        'bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
+        '<span class="small">{{panel.type}}</span> <i class="icon-cog pointer"></i> '+
         '</span><h4>{{panel.title}}</h4>';
       elem.prepend($compile(angular.element(template))(scope));
     }
@@ -21,7 +22,10 @@ angular.module('kibana.directives', [])
     link: function(scope, elem, attrs) {
       scope.$watch('panel.type', function(n,o) {
         if(!_.isUndefined(scope.panel.type)) {
-          var template = '<div ng-controller="'+scope.panel.type+'" ng-include src="\''+scope.edit_path(scope.panel.type)+'\'"></div>';
+          var template = '<div>'+
+          '<div ng-controller="'+scope.panel.type+'" ng-include src="\'partials/panelgeneral.html\'"></div>'+
+          '<div ng-controller="'+scope.panel.type+'" ng-include src="\''+scope.edit_path(scope.panel.type)+'\'">'+
+          '</div>';
           elem.html($compile(angular.element(template))(scope));
         }
       });

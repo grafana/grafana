@@ -4,8 +4,6 @@
 
   ## Trends
 
-  Shows how queries are moving from a specified time ago
-
   ### Parameters
   * style :: A hash of css styles
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
@@ -18,14 +16,21 @@
 angular.module('kibana.trends', [])
 .controller('trends', function($scope, kbnIndex, querySrv, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Beta",
+    description : "A stock-ticker style representation of how queries are moving over time. "+
+    "For example, if the time is 1:10pm, your time picker was set to \"Last 10m\", and the \"Time "+
+    "Ago\" parameter was set to '1h', the panel would show how much the query results have changed"+
+    " since 12:00-12:10pm"
+  };
+
+
   // Set and populate defaults
   var _d = {
-    status  : "Beta",
     queries     : {
       mode        : 'all',
       ids         : []
     },
-    group   : "default",
     style   : { "font-size": '14pt'},
     ago     : '1d',
     arrangement : 'vertical',

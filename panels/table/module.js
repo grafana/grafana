@@ -4,8 +4,6 @@
 
   ## Table
 
-  A paginated table of events matching a query
-
   ### Parameters
   * size :: Number of events per page to show
   * pages :: Number of pages to show. size * pages = number of cached events. 
@@ -30,6 +28,12 @@
 
 angular.module('kibana.table', [])
 .controller('table', function($rootScope, $scope, eventBus, fields, querySrv, dashboard, filterSrv) {
+
+  $scope.panelMeta = {
+    status: "Stable",
+    description: "A paginated table of records matching your query or queries. Click on a row to "+
+      "expand it and review all of the fields associated with that document. <p>"
+  };
 
   // Set and populate defaults
   var _d = {

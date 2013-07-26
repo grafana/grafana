@@ -4,8 +4,6 @@
 
   ## filtering
 
-  An experimental for interacting with the filter service
-
 */
 
 'use strict';
@@ -13,9 +11,14 @@
 angular.module('kibana.filtering', [])
 .controller('filtering', function($scope, filterSrv, $rootScope, dashboard) {
 
+  $scope.panelMeta = {
+    status  : "Beta",
+    description : "A controllable list of all filters currently applied to the dashboard. You "+
+      "almost certainly want one of these on your dashboard somewhere."
+  };
+
   // Set and populate defaults
   var _d = {
-    status  : "Beta"
   };
   _.defaults($scope.panel,_d);
 

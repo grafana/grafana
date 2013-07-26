@@ -5,10 +5,6 @@
 
   ## Histogram
 
-  A bucketted time series representation of the current query or queries. Note that this
-  panel uses facetting. I tried to make it safe by using sequential/serial querying but,
-  yeah, you should know that it uses facetting. It should be pretty safe.
-
   ### Parameters
   * auto_int :: Auto calculate data point interval?
   * resolution ::  If auto_int is enables, shoot for this many data points, rounding to
@@ -40,9 +36,15 @@
 angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, eventBus, querySrv, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "A bucketed time series chart of the current query or queries. Uses the "+
+      "Elasticsearch date_histogram facet. If using time stamped indices this panel will query"+
+      " them sequentially to attempt to apply the lighest possible load to your Elasticsearch cluster"
+  };
+
   // Set and populate defaults
   var _d = {
-    status      : "Stable",
     mode        : 'count',
     time_field  : '@timestamp',
     queries     : {

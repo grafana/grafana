@@ -4,10 +4,6 @@
 
   ## Timepicker
 
-  The timepicker panel is used to select time ranges and inform other panel of 
-  them. It also handles searching for indices that match the given time range and 
-  a pattern
-
   ### Parameters
   * mode :: The default mode of the panel. Options: 'relative', 'absolute' 'since' Default: 'relative'
   * time_options :: An array of possible time options. Default: ['5m','15m','1h','6h','12h','24h','2d','7d','30d']
@@ -24,6 +20,13 @@
 angular.module('kibana.timepicker', [])
 .controller('timepicker', function($scope, $rootScope, $timeout, timer, $http, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "A panel for controlling the time range filters. If you have time based data, "+
+      " or if you're using time stamped indices, you need one of these"
+  };
+
+
   // Set and populate defaults
   var _d = {
     status        : "Stable",
@@ -32,7 +35,6 @@ angular.module('kibana.timepicker', [])
     timespan      : '15m',
     timefield     : '@timestamp',
     timeformat    : "",
-    group         : "default",
     refresh       : {
       enable  : false, 
       interval: 30,

@@ -5,8 +5,6 @@
 
   ## Text
 
-  A simple panel of static content
-
   ### Parameters
   * mode :: 'text', 'html', 'markdown'
   * content :: Content of the panel
@@ -19,10 +17,15 @@
 angular.module('kibana.text', [])
 .controller('text', function($scope, $rootScope) {
 
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
+  };
+
+
   // Set and populate defaults
   var _d = {
     status  : "Stable",
-    group   : "default",
     mode    : "markdown",
     content : "",
     style: {},
