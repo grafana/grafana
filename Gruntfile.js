@@ -18,6 +18,7 @@ module.exports = function (grunt) {
       files: ['Gruntfile.js', 'js/*.js', 'panels/*/*.js' ],
       options: {
         bitwise: true,
+        maxlen: 140,
         curly: true,
         eqeqeq: true,
         immed: true,

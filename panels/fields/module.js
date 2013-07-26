@@ -5,8 +5,6 @@
 
   ## Fields
 
-  Allows for enabling and disabling of fields in the table panel as well as a 
-  micro anaylsis panel for analyzing the events in the table panel
 
   ### Parameters
   * style :: a hash containing css styles
@@ -26,9 +24,16 @@
 angular.module('kibana.fields', [])
 .controller('fields', function($scope, eventBus, $timeout, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Deprecating Soon",
+    description : "Allows for enabling and disabling of fields in the table panel as well as a "+
+      "micro anaylsis panel for analyzing the events in the table panel. This panel will soon be"+
+      "combined with the table panel"
+  };
+
+
   // Set and populate defaults
   var _d = {
-    status  : "Beta",
     group   : "default",
     style   : {},
     arrange : 'vertical',

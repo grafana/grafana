@@ -5,8 +5,6 @@
 
   ## Hits
 
-  A variety of representations of the hits a query matches
-
   ### Parameters
   * style :: A hash of css styles
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
@@ -22,9 +20,14 @@
 angular.module('kibana.hits', [])
 .controller('hits', function($scope, querySrv, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "The total hits for a query or set of queries. Can be a pie chart, bar chart, "+
+      "list, or absolute total of all queries combined"
+  };
+
   // Set and populate defaults
   var _d = {
-    status  : "Beta",
     queries     : {
       mode        : 'all',
       ids         : []
@@ -219,7 +222,8 @@ angular.module('kibana.hits', [])
                       show: scope.panel.labels,
                       radius: 2/3,
                       formatter: function(label, series){
-                        return '<div ng-click="build_search(panel.query.field,\''+label+'\') "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
+                        return '<div ng-click="build_search(panel.query.field,\''+label+'\')'+
+                          ' "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
                           label+'<br/>'+Math.round(series.percent)+'%</div>';
                       },
                       threshold: 0.1 

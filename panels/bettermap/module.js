@@ -5,10 +5,6 @@
 
   ## Better maps
 
-  So the cavaet for this panel is that, for better or worse, it does NOT use the terms facet and it
-  DOES query sequentially. This however means that it transfer more data and is generally heavier
-  to computer, while showing less actual data
-
   ### Parameters
   * size :: How many results to show, more results = slower
   * field :: field containing a 2 element array in the format [lon,lat]
@@ -21,9 +17,17 @@
 angular.module('kibana.bettermap', [])
 .controller('bettermap', function($scope, querySrv, dashboard, filterSrv) {
 
+  $scope.panelMeta = {
+    status  : "Experimental",
+    description : "Displays geo points in clustered groups on a map. The cavaet for this panel is"+
+      " that, for better or worse, it does NOT use the terms facet and it <b>does</b> query "+
+      "sequentially. This however means that it transfers more data and is generally heavier to"+
+      " compute, while showing less actual data. If you have a time filter, it will attempt to"+
+      " show to most recent points in your search, up to your defined limit"
+  };
+
   // Set and populate defaults
   var _d = {
-    status  : "Experimental",
     queries     : {
       mode        : 'all',
       ids         : []
@@ -31,8 +35,7 @@ angular.module('kibana.bettermap', [])
     size    : 1000,
     spyable : true,
     tooltip : "_id",
-    field   : null,
-    group   : "default"
+    field   : null
   };
   _.defaults($scope.panel,_d);
 

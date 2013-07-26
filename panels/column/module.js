@@ -4,10 +4,6 @@
 
   ## Column
 
-  The column panel is sort of a hack to allow you to put multiple, veritcal, 
-  panels next to a bigger panel. Note that it has no group, and setting a group
-  for the panel itself will do nothing
-
   ### Parameters
   * panels :: an array of panel objects. All of their spans should be set to 12
   
@@ -17,9 +13,15 @@
 
 angular.module('kibana.column', [])
 .controller('column', function($scope, $rootScope, $timeout) {
+
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "A pseudo panel that lets you add other panels to be arranged in a column with"+
+      "defined heights."
+  };
+
   // Set and populate defaults
   var _d = {
-    status: "Stable",
     panels : []
   };
   _.defaults($scope.panel,_d);

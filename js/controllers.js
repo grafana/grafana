@@ -129,6 +129,7 @@ angular.module('kibana.controllers', [])
   };
 
   $scope.reset_panel = function() {
+
     $scope.panel = {
       loading : false,
       error   : false,

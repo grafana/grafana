@@ -1,14 +1,7 @@
-  <div class="row-fluid">
-    <div class="span11">
-    This panel uses geoJSON points in a field to place markers on a map. 
-    Coordinates <strong>must be stored as an array in Elasticsearch</strong>. 
-    Also note that geoJSON is <strong>long,lat NOT lat,long</strong>.
-    </div>
-  </div>
   <div class="row-fluid">    
     <div class="span4">
       <form>
-        <h6>Coordinate Field</h6>
+        <h6>Coordinate Field <i class="icon-question-sign" bs-tooltip="'geoJSON array! Long,Lat NOT Lat,Long'"></i></h6>
         <input  bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.field">
       </form>
     </div>

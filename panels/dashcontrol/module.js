@@ -5,10 +5,6 @@
 
   ## Dashcontrol
 
-  Dash control allows for saving, loading and sharing of dashboards. Do not
-  disable the dashcontrol module as a special instance of it allows for loading
-  the default dashboard from dashboards/default
-
   ### Parameters
   * save
   ** gist :: Allow saving to gist. Requires registering an oauth domain with Github
@@ -30,11 +26,14 @@
 angular.module('kibana.dashcontrol', [])
 .controller('dashcontrol', function($scope, $http, timer, dashboard) {
 
+  $scope.panelMeta = {
+    status  : "Stable",
+    description : "This panel allows for saving, loading, exporting and sharing dashboard schemas."
+  };
+
   $scope.panel = $scope.panel || {};
   // Set and populate defaults
   var _d = {
-    status  : "Stable",
-    group   : "default",
     save : {
       gist: false,
       elasticsearch: true,
@@ -138,7 +137,8 @@ angular.module('kibana.dashcontrol', [])
       function(link) {
       if(!_.isUndefined(link)) {
         $scope.gist.last = link;
-        $scope.alert('Gist saved','You will be able to access your exported dashboard file at <a href="'+link+'">'+link+'</a> in a moment','success');
+        $scope.alert('Gist saved','You will be able to access your exported dashboard file at '+
+          '<a href="'+link+'">'+link+'</a> in a moment','success');
       } else {
         $scope.alert('Save failed','Gist could not be saved','error',5000);
       }
