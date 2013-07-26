@@ -22,6 +22,7 @@ var config = new Settings(
   kibana_index:     "kibana-int", 
   modules:          ['histogram','map','pie','table','filtering',
                     'timepicker','text','fields','hits','dashcontrol',
-                    'column','derivequeries','trends','bettermap','query'],
+                    'column','derivequeries','trends','bettermap','query',
+                    'terms'],
   }
 );
