@@ -27,8 +27,8 @@
       ],
       "list": {
         "0": {
-          "from": "2013-07-15T16:50:45.363Z",
-          "to": "2013-07-15T17:50:45.363Z",
+          "from": "2013-07-27T21:35:50.822Z",
+          "to": "2013-07-27T22:35:50.823Z",
           "field": "@timestamp",
           "type": "time",
           "mandate": "must",
@@ -51,7 +51,6 @@
       "collapsable": true,
       "panels": [
         {
-          "loading": false,
           "error": "",
           "span": 5,
           "editable": true,
@@ -59,7 +58,6 @@
             "default"
           ],
           "type": "timepicker",
-          "status": "Stable",
           "mode": "relative",
           "time_options": [
             "5m",
@@ -80,10 +78,10 @@
             "interval": 30,
             "min": 3
           },
-          "filter_id": 0
+          "filter_id": 0,
+          "status": "Stable"
         },
         {
-          "loading": false,
           "error": false,
           "span": 3,
           "editable": true,
@@ -91,7 +89,6 @@
             "default"
           ],
           "type": "dashcontrol",
-          "status": "Stable",
           "save": {
             "gist": false,
             "elasticsearch": true,
@@ -106,7 +103,8 @@
           "hide_control": false,
           "elasticsearch_size": 20,
           "temp": true,
-          "temp_ttl": "30d"
+          "temp_ttl": "30d",
+          "ttl_enable": true
         }
       ]
     },
@@ -118,7 +116,6 @@
       "collapsable": true,
       "panels": [
         {
-          "loading": false,
           "error": false,
           "span": 12,
           "editable": true,
@@ -126,11 +123,11 @@
             "default"
           ],
           "type": "query",
-          "status": "Experimental",
           "label": "Search",
-          "query": "*",
           "history": [],
-          "remember": 10
+          "remember": 10,
+          "pinned": true,
+          "query": "*"
         }
       ]
     },
@@ -142,15 +139,13 @@
       "collapsable": true,
       "panels": [
         {
-          "loading": false,
           "error": false,
           "span": 12,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "filtering",
-          "status": "Experimental"
+          "type": "filtering"
         }
       ]
     },
@@ -162,20 +157,12 @@
       "collapsable": true,
       "panels": [
         {
-          "loading": false,
           "span": 12,
           "editable": true,
           "group": [
             "default"
           ],
           "type": "histogram",
-          "status": "Stable",
-          "query": [
-            {
-              "query": "*",
-              "label": "Query"
-            }
-          ],
           "mode": "count",
           "time_field": "@timestamp",
           "value_field": null,
@@ -195,7 +182,13 @@
           "x-axis": true,
           "y-axis": true,
           "percentage": false,
-          "interactive": true
+          "interactive": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          }
         }
       ]
     },
@@ -207,35 +200,13 @@
       "collapsable": true,
       "panels": [
         {
-          "loading": false,
           "error": false,
-          "span": 2,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "fields",
-          "status": "Beta",
-          "style": {},
-          "arrange": "vertical",
-          "micropanel_position": "right",
-          "sort": [
-            "@timestamp",
-            "desc"
-          ],
-          "query": "*"
-        },
-        {
-          "loading": false,
-          "error": false,
-          "span": 10,
+          "span": 12,
           "editable": true,
           "group": [
             "default"
           ],
           "type": "table",
-          "status": "Stable",
-          "query": "*",
           "size": 100,
           "pages": 5,
           "offset": 0,
@@ -255,7 +226,15 @@
           "sortable": true,
           "header": true,
           "paging": true,
-          "spyable": true
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field_list": true,
+          "status": "Stable"
         }
       ]
     }
