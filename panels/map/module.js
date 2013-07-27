@@ -55,7 +55,7 @@ angular.module('kibana.map', [])
     if(dashboard.indices.length === 0) {
       return;
     }
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
 
 
     var request;
@@ -86,7 +86,7 @@ angular.module('kibana.map', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
       $scope.hits = results.hits.total;
       $scope.data = {};
       _.each(results.facets.map.terms, function(v) {

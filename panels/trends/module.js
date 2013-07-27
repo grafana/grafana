@@ -47,7 +47,7 @@ angular.module('kibana.trends', [])
 
   $scope.get_data = function(segment,query_id) {
     delete $scope.panel.error;
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
 
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
@@ -138,7 +138,7 @@ angular.module('kibana.trends', [])
   // Populate scope when we have results
   var process_results = function(results,_segment,query_id) { 
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
       if(_segment === 0) {
         $scope.hits = {};
         $scope.data = [];
