@@ -16,18 +16,13 @@
                 to fit the table, or if the table will scroll to fit the row (height) 
   * sortable :: Allow sorting?
   * spyable :: Show the 'eye' icon that reveals the last ES query for this panel
-  ### Group Events
-  #### Sends
-  * table_documents :: An array containing all of the documents in the table. 
-                       Only used by the fields panel so far. 
-  #### Receives
-  * selected_fields :: An array of fields to show
+
 */
 
 'use strict';
 
 angular.module('kibana.table', [])
-.controller('table', function($rootScope, $scope, eventBus, fields, querySrv, dashboard, filterSrv) {
+.controller('table', function($rootScope, $scope, fields, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
     status: "Stable",
@@ -214,8 +209,9 @@ angular.module('kibana.table', [])
         return;
       }
       
-      // This breaks, use $scope.data for this
       $scope.all_fields = kbn.get_all_fields(_.pluck($scope.data,'_source'));
+      fields.add_fields($scope.all_fields);
+      console.log(fields);
 
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
