@@ -64,7 +64,7 @@ angular.module('kibana.terms', [])
       return;
     } 
 
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
     var request,
       results,
       boolQuery;
@@ -97,7 +97,7 @@ angular.module('kibana.terms', [])
     // Populate scope when we have results
     results.then(function(results) {
       var k = 0;
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
       $scope.hits = results.hits.total;
       $scope.data = [];
       _.each(results.facets.terms.terms, function(v) {

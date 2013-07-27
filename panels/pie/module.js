@@ -87,7 +87,7 @@ angular.module('kibana.pie', [])
     } 
 
 
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
     var request = $scope.ejs.Request().indices(dashboard.indices);
 
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
@@ -119,7 +119,7 @@ angular.module('kibana.pie', [])
 
       // Populate scope when we have results
       results.then(function(results) {
-        $scope.panel.loading = false;
+        $scope.panelMeta.loading = false;
         $scope.hits = results.hits.total;
         $scope.data = [];
         var k = 0;
@@ -143,7 +143,7 @@ angular.module('kibana.pie', [])
       results = request.doSearch();
 
       results.then(function(results) {
-        $scope.panel.loading = false;
+        $scope.panelMeta.loading = false;
         var complete  = results.hits.total;
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [

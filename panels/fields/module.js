@@ -3,7 +3,7 @@
 
 /*
 
-  ## Fields
+  ## Fields (DEPRECATED)
 
 
   ### Parameters
@@ -25,10 +25,9 @@ angular.module('kibana.fields', [])
 .controller('fields', function($scope, eventBus, $timeout, dashboard, filterSrv) {
 
   $scope.panelMeta = {
-    status  : "Deprecating Soon",
-    description : "Allows for enabling and disabling of fields in the table panel as well as a "+
-      "micro anaylsis panel for analyzing the events in the table panel. This panel will soon be"+
-      "combined with the table panel"
+    status  : "Deprecated",
+    description : "You should not use this table, it does not work anymore. The table panel now"+
+      "integrates a field selector. This module will soon be removed."
   };
 
 

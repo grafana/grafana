@@ -57,7 +57,7 @@ angular.module('kibana.derivequeries', [])
       return;
     }
 
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
     var request = $scope.ejs.Request().indices(dashboard.indices);
 
     // Terms mode
@@ -78,7 +78,7 @@ angular.module('kibana.derivequeries', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
       var suffix,
           data = [];
       if ($scope.panel.query === '' || $scope.panel.mode === 'terms only') {

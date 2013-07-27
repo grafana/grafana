@@ -1,8 +1,3 @@
 <kibana-panel ng-controller='fields' ng-init="init()">
-  <ul class="unstyled" style="height:{{row.height}};overflow-y:auto;overflow-x:hidden;" ng-class="{'inline': panel.arrange == 'horizontal'}">
-    <li ng-style="panel.style" ng-repeat="field in fields" >
-      <i class="pointer" ng-class="{'icon-check': _.indexOf(active,field)>-1,'icon-check-empty': _.indexOf(active,field)<0}" ng-click="toggle_field(field)"></i>
-      <a data-unique="1" bs-popover="'panels/fields/micropanel.html'" data-placement="{{panel.micropanel_position}}" ng-click="toggle_micropanel(field)" ng-class="{label: _.indexOf(active,field)>-1}">{{field}}</a>
-    </li>
-  </ul>
+ <h4>The 'fields' panel is deprecated.</h4> The table panel now integrates a field selector.
 </kibana-panel>

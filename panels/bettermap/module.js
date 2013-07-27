@@ -96,7 +96,7 @@ angular.module('kibana.bettermap', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
 
       if(_segment === 0) {
         $scope.hits = 0;
@@ -174,7 +174,7 @@ angular.module('kibana.bettermap', [])
       var map, markers, layerGroup, mcg;
 
       function render_panel() { 
-        scope.panel.loading = false;
+        scope.panelMeta.loading = false;
 
         var scripts = $LAB.script("panels/bettermap/lib/leaflet.js").wait()
           .script("panels/bettermap/lib/plugins.js");

@@ -53,26 +53,28 @@ angular.module('kibana.table', [])
     highlight : [],
     sortable: true,
     header  : true,
-    paging  : true, 
-    spyable: true
+    paging  : true,
+    field_list: true, 
+    spyable : true
   };
   _.defaults($scope.panel,_d);
 
   $scope.init = function () {
-    $scope.set_listeners($scope.panel.group);
+    $scope.Math = Math;
+
+    $scope.$on('refresh',function(){$scope.get_data();});
 
     $scope.get_data();
   };
 
-  $scope.set_listeners = function(group) {
-    $scope.$on('refresh',function(){$scope.get_data();});
-    eventBus.register($scope,'sort', function(event,sort){
-      $scope.panel.sort = _.clone(sort);
-      $scope.get_data();
-    });
-    eventBus.register($scope,'selected_fields', function(event, fields) {
-      $scope.panel.fields = _.clone(fields);
-    });
+  $scope.toggle_micropanel = function(field) {
+    var docs = _.pluck($scope.data,'_source');
+    $scope.micropanel = {
+      field: field,
+      values : kbn.top_field_values(docs,field,10),
+      related : kbn.get_related_fields(docs,field),
+      count: _.countBy(docs,function(doc){return _.contains(_.keys(doc),field);})['true']
+    };
   };
 
   $scope.set_sort = function(field) {
@@ -90,7 +92,6 @@ angular.module('kibana.table', [])
     } else {
       $scope.panel.fields.push(field);
     }
-    broadcast_results();
   };
 
   $scope.toggle_highlight = function(field) {
@@ -124,6 +125,11 @@ angular.module('kibana.table', [])
     dashboard.refresh();
   };
 
+  $scope.fieldExists = function(field,mandate) {
+    filterSrv.set({type:'exists',field:field,mandate:mandate});
+    dashboard.refresh();
+  };
+
   $scope.get_data = function(segment,query_id) {
     $scope.panel.error =  false;
 
@@ -132,7 +138,7 @@ angular.module('kibana.table', [])
       return;
     }
     
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
 
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
 
@@ -166,7 +172,7 @@ angular.module('kibana.table', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
 
       if(_segment === 0) {
         $scope.hits = 0;
@@ -210,7 +216,6 @@ angular.module('kibana.table', [])
       
       // This breaks, use $scope.data for this
       $scope.all_fields = kbn.get_all_fields(_.pluck($scope.data,'_source'));
-      broadcast_results();
 
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
@@ -241,23 +246,6 @@ angular.module('kibana.table', [])
       highlight : row.highlight
     };
   }; 
-
-  // Broadcast a list of all fields. Note that receivers of field array 
-  // events should be able to receive from multiple sources, merge, dedupe 
-  // and sort on the fly if needed.
-  function broadcast_results() {
-    eventBus.broadcast($scope.$id,$scope.panel.group,"fields", {
-      all   : $scope.all_fields,
-      sort  : $scope.panel.sort,
-      active: $scope.panel.fields      
-    });
-    eventBus.broadcast($scope.$id,$scope.panel.group,"table_documents", 
-      {
-        query: querySrv.list[querySrv.ids[0]].query,
-        docs : _.pluck($scope.data,'_source'),
-        index: $scope.index
-      });
-  }
 
   $scope.set_refresh = function (state) { 
     $scope.refresh = state; 

@@ -98,7 +98,7 @@ angular.module('kibana.histogram', [])
         kbn.calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
     }
 
-    $scope.panel.loading = true;
+    $scope.panelMeta.loading = true;
     var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
@@ -133,7 +133,7 @@ angular.module('kibana.histogram', [])
 
     // Populate scope when we have results
     results.then(function(results) {
-      $scope.panel.loading = false;
+      $scope.panelMeta.loading = false;
       if(_segment === 0) {
         $scope.hits = 0;
         $scope.data = [];
