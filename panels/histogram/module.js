@@ -34,7 +34,7 @@
 'use strict';
 
 angular.module('kibana.histogram', [])
-.controller('histogram', function($scope, eventBus, querySrv, dashboard, filterSrv) {
+.controller('histogram', function($scope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
     status  : "Stable",
@@ -263,7 +263,7 @@ angular.module('kibana.histogram', [])
   };
 
 })
-.directive('histogramChart', function(dashboard, eventBus, filterSrv, $rootScope) {
+.directive('histogramChart', function(dashboard, filterSrv, $rootScope) {
   return {
     restrict: 'A',
     template: '<div></div>',

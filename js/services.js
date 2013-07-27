@@ -4,85 +4,16 @@
 'use strict';
 
 angular.module('kibana.services', [])
-.service('eventBus', function($rootScope) {
+.service('fields', function() {
 
-  // An array of registed types
-  var _types = [];
+  // Save a reference to this
+  var self = this;
 
-  this.broadcast = function(from,to,type,data) {
-    if(_.isUndefined(data)) {
-      data = from;
-    }
+  this.list = [];
 
-    var packet = {
-      time: new Date(),
-      type: type,
-      from: from,
-      to: to,
-      data: data
-    };
-
-    if(_.contains(_types,'$kibana_debug')) {
-      $rootScope.$broadcast('$kibana_debug',packet);
-    }
-
-    $rootScope.$broadcast(type,{
-      from: from,
-      to: to,
-      data: data
-    });
+  this.add_fields = function(f) {
+    self.list = _.union(f,self.list);
   };
-
-  // This sets up an $on listener that checks to see if the event (packet) is
-  // addressed to the scope in question and runs the registered function if it
-  // is.
-  this.register = function(scope,type,fn) {
-
-    _types = _.union(_types,[type]);
-
-    scope.$on(type,function(event,packet){
-      var _id     = scope.$id;
-      var _to     = packet.to;
-      var _from   = packet.from;
-      var _type   = packet.type;
-      var _time   = packet.time;
-      var _group  = (!(_.isUndefined(scope.panel))) ? scope.panel.group : ["NONE"];
-
-      if(!(_.isArray(_to))) {
-        _to = [_to];
-      }
-      if(!(_.isArray(_group))) {
-        _group = [_group];
-      }
-
-      // Transmit event only if the sender is not the receiver AND one of the following:
-      // 1) Receiver has group in _to 2) Receiver's $id is in _to
-      // 3) Event is addressed to ALL 4) Receiver is in ALL group 
-      if((_.intersection(_to,_group).length > 0 || 
-        _.indexOf(_to,_id) > -1 ||
-        _.indexOf(_group,'ALL') > -1 ||
-        _.indexOf(_to,'ALL') > -1) &&
-        _from !== _id
-      ) {
-        fn(event,packet.data,{time:_time,to:_to,from:_from,type:_type});
-      }
-    });
-  };
-})
-/* 
-  Service: fields
-  Provides a global list of all seen fields for use in editor panels
-*/
-.factory('fields', function($rootScope) {
-  var fields = {
-    list : []
-  };
-
-  $rootScope.$on('fields', function(event,f) {
-    fields.list = _.union(f.data.all,fields.list);
-  });
-
-  return fields;
 
 })
 .service('kbnIndex',function($http) {
