@@ -48,4 +48,13 @@ angular.module('kibana.filtering', [])
     return !_.contains(['type','id','alias','mandate','active','editing'],key);
   };
 
+  $scope.isEditable = function(filter) {
+    var uneditable = ['time'];
+    if(_.contains(uneditable,filter.type)) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
 });

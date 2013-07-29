@@ -108,14 +108,14 @@ angular.module('kibana.table', [])
   };
 
   $scope.build_search = function(field,value,negate) {
-    var query = field+":";
+    var query;
     // This needs to be abstracted somewhere
     if(_.isArray(value)) {
-      query = query+"(" + _.map(value,function(v){return angular.toJson(v);}).join(" AND ") + ")";
+      query = "(" + _.map(value,function(v){return angular.toJson(v);}).join(" AND ") + ")";
     } else {
-      query = query+angular.toJson(value);
+      query = angular.toJson(value);
     }
-    filterSrv.set({type:'querystring',query:query,mandate:(negate ? 'mustNot':'must')});
+    filterSrv.set({type:'field',field:field,query:query,mandate:(negate ? 'mustNot':'must')});
     $scope.panel.offset = 0;
     dashboard.refresh();
   };
