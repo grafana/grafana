@@ -8,7 +8,11 @@
       <label class="small">Length</label>
       <input class="input-small" type="number" ng-model="panel.size" ng-change="set_refresh(true)">
     </div>
-    <div class="span6">
+    <div class="span3"> 
+      <label class="small">Order</label> 
+      <select class="input-medium" ng-model="panel.order" ng-options="f for f in ['count','term','reverse_count','reverse_term']" ng-change="set_refresh(true)"></select></span>
+    </div>
+    <div class="span4">
       <label class="small">Exclude Terms(s) (comma seperated)</label>
       <input array-join type="text" ng-model='panel.exclude'></input>
     </div>

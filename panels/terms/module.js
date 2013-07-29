@@ -38,6 +38,7 @@ angular.module('kibana.terms', [])
     missing : true,
     other   : true,
     size    : 10,
+    order   : 'count',
     style   : { "font-size": '10pt'},
     donut   : false,
     tilt    : false,
@@ -83,6 +84,7 @@ angular.module('kibana.terms', [])
       .facet($scope.ejs.TermsFacet('terms')
         .field($scope.panel.field)
         .size($scope.panel.size)
+        .order($scope.panel.order)
         .exclude($scope.panel.exclude)
         .facetFilter($scope.ejs.QueryFilter(
           $scope.ejs.FilteredQuery(

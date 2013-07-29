@@ -211,7 +211,6 @@ angular.module('kibana.table', [])
       
       $scope.all_fields = kbn.get_all_fields(_.pluck($scope.data,'_source'));
       fields.add_fields($scope.all_fields);
-      console.log(fields);
 
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
