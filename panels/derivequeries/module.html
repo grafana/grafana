@@ -5,6 +5,10 @@
     right:15px;
     top:5px;
   }
+  .panel-derive-field {
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .panel-derive {
     padding-right: 35px !important;
     height: 31px !important;
@@ -16,38 +20,12 @@
   <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
       <i bs-modal="'partials/modal.html'" class="icon-eye-open"></i>
   </span>
-  <!--
-  <div>
-    <form>
-      <table class="form-horizontal">
-        <tr>
-          <td><label><small>{{panel.label}}</small></label></td>
-          <td><label><small>Field</small></label></td>
-        </tr>
-        <tr>
-          <td width="97%" style="padding-right:20px">
-            <input bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" style="width:100%" ng-model="panel.query">
-          </td>
-          <td ng-show="panel.fields.length > 0">
-            <select class="input-small" ng-model="panel.field" ng-options="f for f in panel.fields"></select>
-          </td>
-          <td ng-show="panel.fields.length == 0">
-            <input class="input-small" ng-model="panel.field" type="text"/>
-          </td>
-          <td style="margin-left:20px" width="1%">
-            <button style="margin-top:0px" type="submit" class="btn btn-info" ng-click="get_data()"><i class="icon-search"></i></button>
-          </td>
-          <td width="1%">
-            <button style="margin-top:0px"  type="submit" class="btn btn-danger" ng-click="panel.query='';get_data()"><i class="icon-ban-circle"></i></button>
-          </td>
-        <tr>
-      </table>
-    </form>
-  </div>
-  -->
 
-
-  <label class="small">Create new queries from <strong>{{panel.field}}</strong> ({{panel.mode}} mode)</label>
+  <label class="small">Create new queries from 
+    <span class="panel-derive-field" ng-show="!editing" ng-click="editing=true">{{panel.field}}</span>
+    <select ng-show="editing && fields.list.length>1" class="input-medium" ng-model="panel.field" ng-options="f for f in fields.list" ng-change='editing=false' ng-blur="editing=false"></select>
+    <input ng-show="editing && fields.list.length<2" type="text" ng-model="panel.field" ng-blur="editing=false"/>
+    ({{panel.mode}} mode)</label>
   <div>
     <form class="form-search" style="position:relative" ng-submit="get_data()">
       <input class="search-query panel-derive input-block-level" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="panel.query"/>

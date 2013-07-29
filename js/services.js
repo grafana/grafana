@@ -9,7 +9,7 @@ angular.module('kibana.services', [])
   // Save a reference to this
   var self = this;
 
-  this.list = [];
+  this.list = ['_type'];
 
   this.add_fields = function(f) {
     self.list = _.union(f,self.list);
