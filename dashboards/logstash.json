@@ -1,0 +1,248 @@
+{
+  "title": "Logstash Search",
+  "services": {
+    "query": {
+      "idQueue": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "list": {
+        "0": {
+          "query": "*",
+          "alias": "",
+          "color": "#7EB26D",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
+    },
+    "filter": {
+      "idQueue": [
+        1,
+        2
+      ],
+      "list": {
+        "0": {
+          "from": "2013-07-27T21:35:50.822Z",
+          "to": "2013-07-27T22:35:50.823Z",
+          "field": "@timestamp",
+          "type": "time",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
+    }
+  },
+  "rows": [
+    {
+      "title": "Options",
+      "height": "50px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": "",
+          "span": 6,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "timepicker",
+          "mode": "relative",
+          "time_options": [
+            "5m",
+            "15m",
+            "1h",
+            "6h",
+            "12h",
+            "24h",
+            "2d",
+            "7d",
+            "30d"
+          ],
+          "timespan": "1h",
+          "timefield": "@timestamp",
+          "timeformat": "",
+          "refresh": {
+            "enable": false,
+            "interval": 30,
+            "min": 3
+          },
+          "filter_id": 0,
+          "status": "Stable"
+        },
+        {
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "dashcontrol",
+          "save": {
+            "gist": false,
+            "elasticsearch": true,
+            "local": true,
+            "default": true
+          },
+          "load": {
+            "gist": true,
+            "elasticsearch": true,
+            "local": true
+          },
+          "hide_control": false,
+          "elasticsearch_size": 20,
+          "temp": true,
+          "temp_ttl": "30d",
+          "ttl_enable": true
+        }
+      ]
+    },
+    {
+      "title": "Query",
+      "height": "50px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "query",
+          "label": "Search",
+          "history": [],
+          "remember": 10,
+          "pinned": true,
+          "query": "*"
+        }
+      ]
+    },
+    {
+      "title": "Filters",
+      "height": "50px",
+      "editable": true,
+      "collapse": true,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "filtering"
+        }
+      ]
+    },
+    {
+      "title": "Graph",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "histogram",
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "30s",
+          "fill": 3,
+          "linewidth": 3,
+          "timezone": "browser",
+          "spyable": true,
+          "zoomlinks": true,
+          "bars": true,
+          "stack": true,
+          "points": false,
+          "lines": false,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Events",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "table",
+          "size": 100,
+          "pages": 5,
+          "offset": 0,
+          "sort": [
+            "@timestamp",
+            "desc"
+          ],
+          "style": {
+            "font-size": "9pt"
+          },
+          "overflow": "min-height",
+          "fields": [
+            "@timestamp",
+            "@message"
+          ],
+          "highlight": [],
+          "sortable": true,
+          "header": true,
+          "paging": true,
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field_list": true,
+          "status": "Stable"
+        }
+      ]
+    }
+  ],
+  "editable": true,
+  "index": {
+    "interval": "day",
+    "pattern": "[logstash-]YYYY.MM.DD",
+    "default": "logstash-*"
+  }
+}

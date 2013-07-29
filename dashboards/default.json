@@ -1,5 +1,5 @@
 {
-  "title": "Logstash Search",
+  "title": "Introduction",
   "services": {
     "query": {
       "idQueue": [
@@ -27,8 +27,8 @@
       ],
       "list": {
         "0": {
-          "from": "2013-07-27T21:35:50.822Z",
-          "to": "2013-07-27T22:35:50.823Z",
+          "from": "2013-07-27T22:08:06.800Z",
+          "to": "2013-07-27T23:08:06.801Z",
           "field": "@timestamp",
           "type": "time",
           "mandate": "must",
@@ -44,43 +44,61 @@
   },
   "rows": [
     {
-      "title": "Options",
+      "title": "Intro",
+      "height": "450px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": false,
+      "panels": [
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "mode": "markdown",
+          "content": "![kibana](common/img/kibana.png)  \n\n##### Did you just upgrade? Not expecting this screen?\nIf you were using the old default page you might not be expecting this screen. I understand, change can be awkward. Let me explain. \n\n##### Setting a global default dashboard\nKibana has always shipped with an interface for Logstash, still does! You can access it [here](index.html#dashboard/file/logstash.json). However, if you want to make it your default again, all you you need to do is rename a file!\nIn your Kibana installation directory: \n\nRename *logstash.json* to *default.json* and refresh. Should be all set.\n\n##### But wait, there's more!\nIn fact, you can add any exported dashboard to that directory and access it as *http://YOUR-HOST -HERE/index.html#dashboard/file/YOUR-DASHBOARD.json*. Neat trick eh?",
+          "style": {},
+          "title": "",
+          "status": "Stable"
+        },
+        {
+          "error": false,
+          "span": 1,
+          "editable": false,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "mode": "markdown",
+          "content": "",
+          "style": {},
+          "status": "Stable"
+        },
+        {
+          "error": false,
+          "span": 7,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "mode": "markdown",
+          "content": "### Welcome to Kibana. \nGlad you could make it. Happy to have you here! Lets get started, shall we?\n##### Requirements\n* **A good browser.**  \n    The latest version of Chrome or Firefox is recommended. Safari (latest version) and Internet Explorer 9 and above are also supported.\n* **A webserver.**  \n    Just somewhere to host the HTML and Javascript. Basically any webserver will work.\n* **Elasticsearch**  \n   0.20.5 or above. Kibana will soon move to requiring Elasticsearch 0.90 or above, so upgrading is recommended.\n\n##### Configuration\nIf Kibana and Elasticsearch are on the same host, and you're using the default Elasticsearch port, then you're all set. Kibana is configured to use that setup by default!  \n\nIf not, you need to edit *config.js* and set the *elasticsearch* parameter with the URL (including port, probably 9200) of your Elasticsearch server. The host part should be the entire, fully qualified domain name, or IP, **not localhost**.\n#### One quick question\n*Are you using logstash?*  \n**YES** - Great! We have a prebuilt dashboard: [(Logstash Dashboard)](index.html#/dashboard/file/logstash.json). See the note to the right about making it your global default  \n**NO** - Hey, no problem, you just have a bit of setup to do. Head over to the [(Guided Dashboard)](index.html#/dashboard/file/guided.json) and I'll try to walk you through it.",
+          "style": {},
+          "status": "Stable"
+        }
+      ]
+    },
+    {
+      "title": "Loader",
       "height": "50px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
       "panels": [
-        {
-          "error": "",
-          "span": 5,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "timepicker",
-          "mode": "relative",
-          "time_options": [
-            "5m",
-            "15m",
-            "1h",
-            "6h",
-            "12h",
-            "24h",
-            "2d",
-            "7d",
-            "30d"
-          ],
-          "timespan": "1h",
-          "timefield": "@timestamp",
-          "timeformat": "",
-          "refresh": {
-            "enable": false,
-            "interval": 30,
-            "min": 3
-          },
-          "filter_id": 0,
-          "status": "Stable"
-        },
         {
           "error": false,
           "span": 3,
@@ -103,138 +121,8 @@
           "hide_control": false,
           "elasticsearch_size": 20,
           "temp": true,
-          "temp_ttl": "30d",
-          "ttl_enable": true
-        }
-      ]
-    },
-    {
-      "title": "Query",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "query",
-          "label": "Search",
-          "history": [],
-          "remember": 10,
-          "pinned": true,
-          "query": "*"
-        }
-      ]
-    },
-    {
-      "title": "Filters",
-      "height": "50px",
-      "editable": true,
-      "collapse": true,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "filtering"
-        }
-      ]
-    },
-    {
-      "title": "Graph",
-      "height": "350px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "histogram",
-          "mode": "count",
-          "time_field": "@timestamp",
-          "value_field": null,
-          "auto_int": true,
-          "resolution": 100,
-          "interval": "30s",
-          "fill": 3,
-          "linewidth": 3,
-          "timezone": "browser",
-          "spyable": true,
-          "zoomlinks": true,
-          "bars": true,
-          "stack": true,
-          "points": false,
-          "lines": false,
-          "legend": true,
-          "x-axis": true,
-          "y-axis": true,
-          "percentage": false,
-          "interactive": true,
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "title": "Events",
-      "height": "350px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "table",
-          "size": 100,
-          "pages": 5,
-          "offset": 0,
-          "sort": [
-            "@timestamp",
-            "desc"
-          ],
-          "style": {
-            "font-size": "9pt"
-          },
-          "overflow": "min-height",
-          "fields": [
-            "@timestamp",
-            "@message"
-          ],
-          "highlight": [],
-          "sortable": true,
-          "header": true,
-          "paging": true,
-          "spyable": true,
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          },
-          "field_list": true,
-          "status": "Stable"
+          "ttl_enable": true,
+          "temp_ttl": "30d"
         }
       ]
     }
