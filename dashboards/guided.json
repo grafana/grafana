@@ -234,7 +234,7 @@
     },
     {
       "title": "Events",
-      "height": "350px",
+      "height": "650px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
@@ -251,7 +251,7 @@
           "pages": 5,
           "offset": 0,
           "sort": [
-            "@timestamp",
+            "_id",
             "desc"
           ],
           "style": {
