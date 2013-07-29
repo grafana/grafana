@@ -7,7 +7,7 @@
       display:inline-block;
       vertical-align: top;
       margin-left: 10px;
-      width: 200px;
+      width: 220px;
       padding: 5px 5px 0px 5px;
       border: #555 1px solid;
       margin: 0px 5px 5px 0px;
@@ -36,7 +36,10 @@
       text-decoration: underline;
       cursor: pointer;
     }
-
+    .filter-apply {
+      float:right;
+      margin-bottom: 5px;
+    }
   </style>
 
   <div class='filtering-container'>
@@ -47,17 +50,29 @@
         <span ng-show="!filterSrv.list[id].editing" class="filter-mandate" ng-click="filterSrv.list[id].editing = true">{{filterSrv.list[id].mandate}}</span>
 
         <span ng-show="filterSrv.list[id].editing">
-          <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']" ng-change='filterSrv.list[id].editing=undefined;refresh()' ng-blur="filterSrv.list[id].editing=undefined"></select>
-          <i class="pointer icon-remove" bs-tooltip="'Cancel '" ng-click="filterSrv.list[id].editing=undefined"></i>
+          <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']"></select>
         </span>
 
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(id)"></i>
         <i class="filter-action pointer" ng-class="{'icon-check': filterSrv.list[id].active,'icon-check-empty': !filterSrv.list[id].active}" bs-tooltip="'Toggle'" ng-click="toggle(id)"></i>
+        <i class="filter-action pointer icon-edit" ng-hide="filterSrv.list[id].editing" bs-tooltip="'Edit'" ng-click="filterSrv.list[id].editing = true"></i>
 
       </div>
-      <ul class="unstyled">
-        <li ng-repeat="(key,value) in filterSrv.list[id]" ng-show="show_key(key)"><strong>{{key}}</strong> : {{value}}</li>
-      </ul>
+
+      <div ng-hide="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
+        <ul class="unstyled">
+          <li ng-repeat="(key,value) in filterSrv.list[id]" ng-show="show_key(key)"><strong>{{key}}</strong> : {{value}}</li>
+        </ul>
+      </div>
+      <div ng-show="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
+        <ul class="unstyled">
+          <li ng-repeat="key in _.keys(filterSrv.list[id])" ng-show="show_key(key)"><strong>{{key}}</strong> : <input type='text' ng-model="filterSrv.list[id][key]"></li>
+        </ul>
+      </div>
+      <div class="filter-apply" ng-show="filterSrv.list[id].editing">
+        <button ng-click="filterSrv.list[id].editing=undefined" class="btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+        <button ng-click="filterSrv.list[id].editing=undefined;refresh()" class="btn btn-success btn-mini" bs-tooltip="'Save and refresh'">Apply</button>
+      </div>
     </div>
   </div>
 </kibana-panel>
