@@ -275,6 +275,6 @@
   "index": {
     "interval": "day",
     "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "logstash-*"
+    "default": "NO_TIME_FILTER_OR_INDEX_PATTERN_NOT_MATCHED"
   }
 }
