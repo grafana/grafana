@@ -8,6 +8,7 @@
   * label :: The label to stick over the field 
   * query :: A string to use as a filter for the terms facet
   * field :: the field to facet on
+  * rest  :: include a filter that matches all other terms,
   * size :: how many queries to generate
   * fields :: a list of fields known to us
   * query_mode :: how to create query
@@ -37,6 +38,7 @@ angular.module('kibana.derivequeries', [])
     field   : '_type',
     fields  : [],
     spyable : true,
+    rest    : false,
     size    : 5,
     mode    : 'terms only',
     exclude : [],
@@ -89,16 +91,28 @@ angular.module('kibana.derivequeries', [])
         suffix = ' OR (' + $scope.panel.query + ')';
       }
       var ids = [];
-      _.each(results.facets.query.terms, function(v) {
+      var terms = results.facets.query.terms;
+      var others = [];
+      _.each(terms, function(v) {
         var _q = $scope.panel.field+':"'+v.term+'"'+suffix;
         // if it isn't in the list, remove it
         var _iq = querySrv.findQuery(_q);
         if(!_iq) {
-          ids.push(querySrv.set({query:_q}));
+          ids.push(querySrv.set({alias: v.term, query:_q}));
         } else {
           ids.push(_iq.id);
         }
+        others.push("NOT (" + _q + ")");
       });
+      if ($scope.panel.rest) {
+        var _other_q = others.join(' AND ');
+        var _iq = querySrv.findQuery(_other_q);
+        if (!_iq) {
+          ids.push(querySrv.set({alias: 'other', query: _other_q}));
+        } else {
+          ids.push(_iq.id);
+        }
+      }
       _.each(_.difference($scope.panel.ids,ids),function(id){
         querySrv.remove(id);
       });
