@@ -227,6 +227,8 @@ angular.module('kibana.services', [])
       return self.ids;
     case 'pinned':
       return _.pluck(_.where(self.list,{pin:true}),'id');
+    case 'unpinned':
+      return _.difference(self.ids,_.pluck(_.where(self.list,{pin:true}),'id'));
     case 'selected':
       return _.intersection(self.ids,config.ids);
     default:
