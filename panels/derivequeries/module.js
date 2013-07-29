@@ -48,6 +48,7 @@ angular.module('kibana.derivequeries', [])
   _.defaults($scope.panel,_d);
 
   $scope.init = function() {
+    $scope.editing = false;
     $scope.panel.fields = fields.list;
   };
 
