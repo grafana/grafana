@@ -545,6 +545,7 @@ angular.module('kibana.services', [])
     querySrv.init();
     filterSrv.init();
 
+    // If there's an index interval set and no existing time filter, send a refresh to set one
     if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length === 0) {
       self.refresh();
     }
