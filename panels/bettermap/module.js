@@ -140,15 +140,8 @@ angular.module('kibana.bettermap', [])
     });
   };
 
-  // I really don't like this function, too much dom manip. Break out into directive?
   $scope.populate_modal = function(request) {
-    $scope.modal = {
-      title: "Inspector",
-      body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
-          angular.toJson(JSON.parse(request.toString()),true)+
-        "'</pre>", 
-    }; 
+    $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
   };
 
 })

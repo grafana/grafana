@@ -441,7 +441,7 @@ angular.module('kibana.services', [])
     index: {
       interval: 'none',
       pattern: '_all',
-      default: '_all'
+      default: 'INDEX_MISSING'
     },
   };
 

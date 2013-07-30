@@ -38,7 +38,8 @@ angular.module('kibana.hits', [])
     counter_pos : 'above',
     donut   : false,
     tilt    : false,
-    labels  : true
+    labels  : true,
+    spyable : true
   };
   _.defaults($scope.panel,_d);
 
@@ -77,8 +78,8 @@ angular.module('kibana.hits', [])
         ).size(0);
     });
 
-    // TODO: Spy for hits panel
-    //$scope.populate_modal(request);
+    // Populate the inspector panel
+    $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
     // Then run it
     var results = request.doSearch();

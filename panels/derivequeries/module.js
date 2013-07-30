@@ -134,13 +134,7 @@ angular.module('kibana.derivequeries', [])
   };
 
   $scope.populate_modal = function(request) {
-    $scope.modal = {
-      title: "Inspector",
-      body : "<h5>Last Elasticsearch Query</h5><pre>"+
-          'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
-          angular.toJson(JSON.parse(request.toString()),true)+
-        "'</pre>", 
-    }; 
+    $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
   };
 
   var update_history = function(query) {
