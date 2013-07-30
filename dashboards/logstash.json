@@ -27,8 +27,8 @@
       ],
       "list": {
         "0": {
-          "from": "2013-07-29T03:28:07.127Z",
-          "to": "2013-07-29T04:28:07.128Z",
+          "from": "2013-07-30T18:58:13.977Z",
+          "to": "2013-07-30T19:58:13.977Z",
           "field": "@timestamp",
           "type": "time",
           "mandate": "must",
@@ -157,7 +157,7 @@
       "collapsable": true,
       "panels": [
         {
-          "span": 9,
+          "span": 12,
           "editable": true,
           "group": [
             "default"
@@ -190,37 +190,6 @@
             ]
           },
           "title": "Events over time"
-        },
-        {
-          "error": false,
-          "span": 3,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "terms",
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          },
-          "field": "_type",
-          "exclude": [],
-          "missing": true,
-          "other": true,
-          "size": 10,
-          "order": "count",
-          "style": {
-            "font-size": "10pt"
-          },
-          "donut": false,
-          "tilt": false,
-          "labels": true,
-          "arrangement": "horizontal",
-          "chart": "table",
-          "counter_pos": "above",
-          "title": "Top log types"
         }
       ]
     },
