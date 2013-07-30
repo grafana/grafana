@@ -491,7 +491,6 @@ angular.module('kibana.services', [])
         window.localStorage['dashboard'] !== ''
       ) {
         var dashboard = JSON.parse(window.localStorage['dashboard']);
-        _.defaults(dashboard,_dash);
         self.dash_load(dashboard);
       // No? Ok, grab default.json, its all we have now
       } else {
@@ -531,6 +530,9 @@ angular.module('kibana.services', [])
   this.dash_load = function(dashboard) {
     // Cancel all timers
     timer.cancel_all();
+
+    // Make sure the dashboard being loaded has everything required
+    _.defaults(dashboard,_dash);
 
     // If not using time based indices, use the default index
     if(dashboard.index.interval === 'none') {
