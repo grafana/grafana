@@ -9,8 +9,9 @@ The dashboard storage format has changed in Kibana 3 milestone 3. Existing dashb
 * Every panel support multi-query
 * Customizable query colors and labels
 * Queries, label and colors are synced across panels at all times
+* Queries can assigned explicitly to panels, they can also be pinned and unpinned.
 * New filtering functionality
-* Filters can be toggled and removed and edited
+* Filters can be toggled, removed and edited
 * Drill down won't overwrite your queries, labels or colors
 * Confusing group functionality has been removed
 * Index configuration has been moved from the timepicker, to the main dashboard editor
