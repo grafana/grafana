@@ -45,7 +45,8 @@ angular.module('kibana.terms', [])
     labels  : true,
     arrangement : 'horizontal',
     chart       : 'bar',
-    counter_pos : 'above'
+    counter_pos : 'above',
+    spyable     : true
   };
   _.defaults($scope.panel,_d);
 
@@ -92,7 +93,8 @@ angular.module('kibana.terms', [])
             filterSrv.getBoolFilter(filterSrv.ids)
             )))).size(0);
 
-    //$scope.populate_modal(request);
+    // Populate the inspector panel
+    $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
     results = request.doSearch();
 

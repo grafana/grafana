@@ -86,7 +86,7 @@
           ],
           "type": "text",
           "mode": "markdown",
-          "content": "### Welcome to Kibana. \nGlad you could make it. Happy to have you here! Lets get started, shall we?\n##### Requirements\n* **A good browser.**  \n    The latest version of Chrome or Firefox is recommended. Safari (latest version) and Internet Explorer 9 and above are also supported.\n* **A webserver.**  \n    Just somewhere to host the HTML and Javascript. Basically any webserver will work.\n* **Elasticsearch**  \n   0.20.5 or above. Kibana will soon move to requiring Elasticsearch 0.90 or above, so upgrading is recommended.\n\n##### Configuration\nIf Kibana and Elasticsearch are on the same host, and you're using the default Elasticsearch port, then you're all set. Kibana is configured to use that setup by default!  \n\nIf not, you need to edit *config.js* and set the *elasticsearch* parameter with the URL (including port, probably 9200) of your Elasticsearch server. The host part should be the entire, fully qualified domain name, or IP, **not localhost**.\n#### One quick question\n*Are you using logstash?*  \n**YES** - Great! We have a prebuilt dashboard: [(Logstash Dashboard)](index.html#/dashboard/file/logstash.json). See the note to the right about making it your global default  \n**NO** - Hey, no problem, you just have a bit of setup to do. Head over to the [(Guided Dashboard)](index.html#/dashboard/file/guided.json) and I'll try to walk you through it.",
+          "content": "### Welcome to Kibana. \nGlad you could make it. Happy to have you here! Lets get started, shall we?\n##### Requirements\n* **A good browser.**  \n    The latest version of Chrome or Firefox is recommended. Safari (latest version) and Internet Explorer 9 and above are also supported.\n* **A webserver.**  \n    Just somewhere to host the HTML and Javascript. Basically any webserver will work.\n* **Elasticsearch**  \n   0.20.5 or above. Kibana will soon move to requiring Elasticsearch 0.90 or above, so upgrading is recommended.\n\n##### Configuration\nIf Kibana and Elasticsearch are on the same host, and you're using the default Elasticsearch port, then you're all set. Kibana is configured to use that setup by default!  \n\nIf not, you need to edit *config.js* and set the *elasticsearch* parameter with the URL (including port, probably 9200) of your Elasticsearch server. The host part should be the entire, fully qualified domain name, or IP, **not localhost**.\n#### Are you a Logstash User?\n+ **YES** - Great! We have a prebuilt dashboard: [(Logstash Dashboard)](index.html#/dashboard/file/logstash.json). See the note to the right about making it your global default  \n\n+ **NO** - Hey, no problem, you just have a bit of setup to do. You have a few choices:  \n\n    1. [Sample Dashboard](index.html#/dashboard/file/guided.json) *I don't have much data yet, please extract some basics for me*  \n    2. [Unconfigured Dashboard](index.html#/dashboard/file/noted.json) *I have a lot of data and I don't want Kibana to query it at once*\n    3. [Blank Dashboard](index.html#/dashboard/file/blank.json) *I'm comfortable figuring it out on my own*",
           "style": {},
           "status": "Stable"
         }
@@ -129,8 +129,8 @@
   ],
   "editable": true,
   "index": {
-    "interval": "day",
+    "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "logstash-*"
+    "default": "NOT_CONFIGURED"
   }
 }

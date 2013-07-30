@@ -26,4 +26,10 @@ angular.module('kibana.filters', [])
       return arr.slice(start, end);
     }
   };
+}).filter('stringify', function() {
+  return function(arr, start, end) {
+    if(!_.isUndefined(arr)) {
+      return arr.toString();
+    }
+  };
 });
