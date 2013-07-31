@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="common/css/animate.min.css">
     <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
     <link rel="stylesheet" href="common/css/font-awesome.min.css">
-    <link rel="stylesheet" href="common/css/main.css">
     <link rel="stylesheet" href="common/css/timepicker.css">
   
     <!-- project dependency libs -->
@@ -26,13 +25,15 @@
     <script src="config.js"></script>
     <script src="js/app.js"></script>
 
+    <style>
+    </style>
 
   </head>
 
   <body ng-controller="DashCtrl" ng-cloak>
-    <div ng-repeat='alert in global_alert' class="alert alert-{{alert.severity}} span12" style="position: fixed;top:2px;opacity:0.9;z-index:8000">
-      <button type="button" class="close" ng-click="clear_alert(alert)">&times;</button>
-      <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div class='pull-right small'> {{$index + 1}} alert(s) </div>
+    <div ng-repeat='alert in global_alert' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
+      <button type="button" class="close" ng-click="clear_alert(alert)" style="padding-right:50px">&times;</button>
+      <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
     </div>
     <div class="navbar navbar-static-top">
       <div class="navbar-inner">

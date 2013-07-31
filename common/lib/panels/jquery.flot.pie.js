@@ -1,6 +1,6 @@
 /* Flot plugin for rendering pie charts.
 
-Copyright (c) 2007-2012 IOLA and Ole Laursen.
+Copyright (c) 2007-2013 IOLA and Ole Laursen.
 Licensed under the MIT license.
 
 The plugin assumes that each series has a single data value, and that each
@@ -57,22 +57,22 @@ More detail and specific examples can be found in the included HTML file.
 
 (function($) {
 
+	// Maximum redraw attempts when fitting labels within the plot
+
+	var REDRAW_ATTEMPTS = 10;
+
+	// Factor by which to shrink the pie when fitting labels within the plot
+
+	var REDRAW_SHRINK = 0.95;
+
 	function init(plot) {
 
 		var canvas = null,
-			canvasWidth = 0,
-			canvasHeight = 0,
 			target = null,
 			maxRadius = null,
 			centerLeft = null,
 			centerTop = null,
-			total = 0,
-			redraw = true,
-			redrawAttempts = 10,
-			shrink = 0.95,
-			legendWidth = 0,
 			processed = false,
-			raw = false,
 			ctx = null;
 
 		// interactive variables
@@ -81,15 +81,8 @@ More detail and specific examples can be found in the included HTML file.
 
 		// add hook to determine if pie plugin in enabled, and then perform necessary operations
 
-		plot.hooks.processOptions.push(checkPieEnabled);
-		plot.hooks.bindEvents.push(bindEvents);
-
-		// check to see if the pie plugin is enabled
-
-		function checkPieEnabled(plot, options) {
+		plot.hooks.processOptions.push(function(plot, options) {
 			if (options.series.pie.show) {
-
-				//disable grid
 
 				options.grid.show = false;
 
@@ -120,21 +113,10 @@ More detail and specific examples can be found in the included HTML file.
 				} else if (options.series.pie.tilt < 0) {
 					options.series.pie.tilt = 0;
 				}
-
-				// add processData hook to do transformations on the data
-
-				plot.hooks.processDatapoints.push(processDatapoints);
-				plot.hooks.drawOverlay.push(drawOverlay);
-
-				//  draw hook
-
-				plot.hooks.draw.push(draw);
 			}
-		}
+		});
 
-		// bind hoverable events
-
-		function bindEvents(plot, eventHolder) {
+		plot.hooks.bindEvents.push(function(plot, eventHolder) {
 			var options = plot.getOptions();
 			if (options.series.pie.show) {
 				if (options.grid.hoverable) {
@@ -144,47 +126,30 @@ More detail and specific examples can be found in the included HTML file.
 					eventHolder.unbind("click").click(onClick);
 				}
 			}
-		}
+		});
 
-		// debugging function that prints out an object
-
-		function alertObject(obj) {
-
-			var msg = "";
-
-			function traverse(obj, depth) {
-
-				if (!depth) {
-					depth = 0;
-				}
-
-				for (var i = 0; i < obj.length; ++i) {
-					for (var j = 0; j < depth; j++) {
-						msg += "\t";
-					}
-					if( typeof obj[i] == "object") {
-						msg += "" + i + ":\n";
-						traverse(obj[i], depth + 1);
-					} else {
-						msg += "" + i + ": " + obj[i] + "\n";
-					}
-				}
+		plot.hooks.processDatapoints.push(function(plot, series, data, datapoints) {
+			var options = plot.getOptions();
+			if (options.series.pie.show) {
+				processDatapoints(plot, series, data, datapoints);
 			}
+		});
 
-			traverse(obj);
-			alert(msg);
-		}
-
-		function calcTotal(data) {
-			for (var i = 0; i < data.length; ++i) {
-				var item = parseFloat(data[i].data[0][1]);
-				if (item) {
-					total += item;
-				}
+		plot.hooks.drawOverlay.push(function(plot, octx) {
+			var options = plot.getOptions();
+			if (options.series.pie.show) {
+				drawOverlay(plot, octx);
 			}
-		}
+		});
 
-		function processDatapoints(plot, series, data, datapoints) {
+		plot.hooks.draw.push(function(plot, newCtx) {
+			var options = plot.getOptions();
+			if (options.series.pie.show) {
+				draw(plot, newCtx);
+			}
+		});
+
+		function processDatapoints(plot, series, datapoints) {
 			if (!processed)	{
 				processed = true;
 				canvas = plot.getCanvas();
@@ -194,9 +159,127 @@ More detail and specific examples can be found in the included HTML file.
 			}
 		}
 
-		function setupPie() {
+		function combine(data) {
 
-			legendWidth = target.children().filter(".legend").children().width() || 0;
+			var total = 0,
+				combined = 0,
+				numCombined = 0,
+				color = options.series.pie.combine.color,
+				newdata = [];
+
+			// Fix up the raw data from Flot, ensuring the data is numeric
+
+			for (var i = 0; i < data.length; ++i) {
+
+				var value = data[i].data;
+
+				// If the data is an array, we'll assume that it's a standard
+				// Flot x-y pair, and are concerned only with the second value.
+
+				// Note how we use the original array, rather than creating a
+				// new one; this is more efficient and preserves any extra data
+				// that the user may have stored in higher indexes.
+
+				if ($.isArray(value) && value.length == 1) {
+    				value = value[0];
+				}
+
+				if ($.isArray(value)) {
+					// Equivalent to $.isNumeric() but compatible with jQuery < 1.7
+					if (!isNaN(parseFloat(value[1])) && isFinite(value[1])) {
+						value[1] = +value[1];
+					} else {
+						value[1] = 0;
+					}
+				} else if (!isNaN(parseFloat(value)) && isFinite(value)) {
+					value = [1, +value];
+				} else {
+					value = [1, 0];
+				}
+
+				data[i].data = [value];
+			}
+
+			// Sum up all the slices, so we can calculate percentages for each
+
+			for (var i = 0; i < data.length; ++i) {
+				total += data[i].data[0][1];
+			}
+
+			// Count the number of slices with percentages below the combine
+			// threshold; if it turns out to be just one, we won't combine.
+
+			for (var i = 0; i < data.length; ++i) {
+				var value = data[i].data[0][1];
+				if (value / total <= options.series.pie.combine.threshold) {
+					combined += value;
+					numCombined++;
+					if (!color) {
+						color = data[i].color;
+					}
+				}
+			}
+
+			for (var i = 0; i < data.length; ++i) {
+				var value = data[i].data[0][1];
+				if (numCombined < 2 || value / total > options.series.pie.combine.threshold) {
+					newdata.push({
+						data: [[1, value]],
+						color: data[i].color,
+						label: data[i].label,
+						angle: value * Math.PI * 2 / total,
+						percent: value / (total / 100)
+					});
+				}
+			}
+
+			if (numCombined > 1) {
+				newdata.push({
+					data: [[1, combined]],
+					color: color,
+					label: options.series.pie.combine.label,
+					angle: combined * Math.PI * 2 / total,
+					percent: combined / (total / 100)
+				});
+			}
+
+			return newdata;
+		}
+
+		function draw(plot, newCtx) {
+
+			if (!target) {
+				return; // if no series were passed
+			}
+
+			var canvasWidth = plot.getPlaceholder().width(),
+				canvasHeight = plot.getPlaceholder().height(),
+				legendWidth = target.children().filter(".legend").children().width() || 0;
+
+			ctx = newCtx;
+
+			// WARNING: HACK! REWRITE THIS CODE AS SOON AS POSSIBLE!
+
+			// When combining smaller slices into an 'other' slice, we need to
+			// add a new series.  Since Flot gives plugins no way to modify the
+			// list of series, the pie plugin uses a hack where the first call
+			// to processDatapoints results in a call to setData with the new
+			// list of series, then subsequent processDatapoints do nothing.
+
+			// The plugin-global 'processed' flag is used to control this hack;
+			// it starts out false, and is set to true after the first call to
+			// processDatapoints.
+
+			// Unfortunately this turns future setData calls into no-ops; they
+			// call processDatapoints, the flag is true, and nothing happens.
+
+			// To fix this we'll set the flag back to false here in draw, when
+			// all series have been processed, so the next sequence of calls to
+			// processDatapoints once again starts out with a slice-combine.
+			// This is really a hack; in 0.9 we need to give plugins a proper
+			// way to modify series before any processing begins.
+
+			processed = false;
 
 			// calculate maximum radius and center point
 
@@ -219,110 +302,28 @@ More detail and specific examples can be found in the included HTML file.
 			} else if (centerLeft > canvasWidth - maxRadius) {
 				centerLeft = canvasWidth - maxRadius;
 			}
-		}
 
-		function fixData(data) {
-			for (var i = 0; i < data.length; ++i) {
-				if (typeof(data[i].data) == "number") {
-					data[i].data = [[1, data[i].data]];
-				} else if (typeof(data[i].data) == "undefined" || typeof(data[i].data[0]) == "undefined") {
-					if (typeof(data[i].data) != "undefined" && typeof(data[i].data.label) != "undefined") {
-						data[i].label = data[i].data.label; // fix weirdness coming from flot
-					}
-					data[i].data = [[1, 0]];
-				}
-			}
-			return data;
-		}
+			var slices = plot.getData(),
+				attempts = 0;
 
-		function combine(data) {
+			// Keep shrinking the pie's radius until drawPie returns true,
+			// indicating that all the labels fit, or we try too many times.
 
-			data = fixData(data);
-			calcTotal(data);
-
-			var combined = 0;
-			var numCombined = 0;
-			var color = options.series.pie.combine.color;
-			var newdata = [];
-
-			for (var i = 0; i < data.length; ++i) {
-
-				// make sure its a number
-
-				data[i].data[0][1] = parseFloat(data[i].data[0][1]);
-
-				if (!data[i].data[0][1]) {
-					data[i].data[0][1] = 0;
-				}
-
-				if (data[i].data[0][1] / total <= options.series.pie.combine.threshold) {
-					combined += data[i].data[0][1];
-					numCombined++;
-					if (!color) {
-						color = data[i].color;
-					}
-				} else {
-					newdata.push({
-						data: [[1, data[i].data[0][1]]],
-						color: data[i].color,
-						label: data[i].label,
-						angle: data[i].data[0][1] * Math.PI * 2 / total,
-						percent: data[i].data[0][1] / (total / 100)
-					});
-				}
-			}
-
-			if (numCombined > 0) {
-				newdata.push({
-					data: [[1, combined]],
-					color: color,
-					label: options.series.pie.combine.label,
-					angle: combined * Math.PI * 2 / total,
-					percent: combined / (total / 100)
-				});
-			}
-
-			return newdata;
-		}
-
-		function draw(plot, newCtx) {
-
-			if (!target) {
-				return; // if no series were passed
-			}
-
-			canvasWidth = plot.getPlaceholder().width();
-			canvasHeight = plot.getPlaceholder().height();
-
-			ctx = newCtx;
-			setupPie();
-
-			var slices = plot.getData();
-			var attempts = 0;
-
-			while (redraw && attempts<redrawAttempts) {
-				redraw = false;
+			do {
 				if (attempts > 0) {
-					maxRadius *= shrink;
+					maxRadius *= REDRAW_SHRINK;
 				}
 				attempts += 1;
 				clear();
 				if (options.series.pie.tilt <= 0.8) {
 					drawShadow();
 				}
-				drawPie();
-			}
+			} while (!drawPie() && attempts < REDRAW_ATTEMPTS)
 
-			if (attempts >= redrawAttempts) {
+			if (attempts >= REDRAW_ATTEMPTS) {
 				clear();
 				target.prepend("<div class='error'>Could not draw pie with labels contained inside canvas</div>");
 			}
-
-			// Reset the redraw flag on success, so the loop above can run
-			// again in the event of a resize or other update.
-			// TODO: We should remove this redraw system entirely!
-
-			redraw = true;
 
 			if (plot.setSeries && plot.insertLegend) {
 				plot.setSeries(slices);
@@ -408,14 +409,13 @@ More detail and specific examples can be found in the included HTML file.
 
 				drawDonutHole(ctx);
 
-				// draw labels
+				ctx.restore();
+
+				// Draw the labels, returning true if they fit within the plot
 
 				if (options.series.pie.label.show) {
-					drawLabels();
-				}
-
-				// restore to original state
-				ctx.restore();
+					return drawLabels();
+				} else return true;
 
 				function drawSlice(angle, color, fill) {
 
@@ -456,14 +456,19 @@ More detail and specific examples can be found in the included HTML file.
 
 					for (var i = 0; i < slices.length; ++i) {
 						if (slices[i].percent >= options.series.pie.label.threshold * 100) {
-							drawLabel(slices[i], currentAngle, i);
+							if (!drawLabel(slices[i], currentAngle, i)) {
+								return false;
+							}
 						}
 						currentAngle += slices[i].angle;
 					}
 
+					return true;
+
 					function drawLabel(slice, startAngle, index) {
+
 						if (slice.data[0][1] == 0) {
-							return;
+							return true;
 						}
 
 						// format label text
@@ -497,7 +502,7 @@ More detail and specific examples can be found in the included HTML file.
 						// check to make sure that the label is not outside the canvas
 
 						if (0 - labelTop > 0 || 0 - labelLeft > 0 || canvasHeight - (labelTop + label.height()) < 0 || canvasWidth - (labelLeft + label.width()) < 0) {
-							redraw = true;
+							return false;
 						}
 
 						if (options.series.pie.label.background.opacity != 0) {
@@ -515,6 +520,8 @@ More detail and specific examples can be found in the included HTML file.
 								.css("opacity", options.series.pie.label.background.opacity)
 								.insertBefore(label);
 						}
+
+						return true;
 					} // end individual label function
 				} // end drawLabels function
 			} // end drawPie function

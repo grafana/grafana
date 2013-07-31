@@ -8,7 +8,8 @@
   "devDependencies": {
     "grunt": "~0.4.0",
     "grunt-contrib": "~0.7.0",
-    "grunt-contrib-jshint": "~0.6.0"
+    "grunt-contrib-jshint": "~0.6.0",
+    "assemble-less": "~0.4.8"
   },
   "license": "Apache License"
 }

@@ -165,6 +165,7 @@ angular.module('kibana.histogram', [])
             data = [];
             if(filterSrv.idsByType('time').length > 0) {
               data = [[_range.from.getTime(), null],[_range.to.getTime(), null]];
+              //data = [];
             }
             hits = 0;
           } else {
@@ -313,7 +314,7 @@ angular.module('kibana.histogram', [])
                   lineWidth: scope.panel.linewidth,
                   steps: false
                 },
-                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8 },
+                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8, zero: false },
                 points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
@@ -321,22 +322,21 @@ angular.module('kibana.histogram', [])
                 show: scope.panel['y-axis'], 
                 min: 0, 
                 max: scope.panel.percentage && scope.panel.stack ? 100 : null, 
-                color: "#c8c8c8" 
               },
               xaxis: {
                 timezone: scope.panel.timezone,
                 show: scope.panel['x-axis'],
                 mode: "time",
+                min: scope.range.from.getTime(),
+                max: scope.range.to.getTime(),
                 timeformat: time_format(scope.panel.interval),
                 label: "Datetime",
-                color: "#c8c8c8",
               },
               grid: {
                 backgroundColor: null,
                 borderWidth: 0,
-                borderColor: '#eee',
-                color: "#eee",
                 hoverable: true,
+                color: '#c8c8c8'
               }
             };
 
