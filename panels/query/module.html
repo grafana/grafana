@@ -60,4 +60,8 @@
       <i class="icon-circle pointer" ng-style="{color: querySrv.list[id].color}" data-unique="1" bs-popover="'panels/query/meta.html'"></i><span bs-tooltip="querySrv.list[id].query"> {{querySrv.list[id].alias || querySrv.list[id].query}}</span>
     </span>
   </div>
+  <span style="display:inline-block" ng-show="unPinnedQueries.length == 0">
+    <i class="icon-search pointer" ng-click="refresh()"></i>
+    <i class="icon-plus pointer" ng-click="querySrv.set({})"></i>
+  </span>
 </kibana-panel>
