@@ -46,14 +46,28 @@ module.exports = function (grunt) {
           moment: false
         }
       }
+    },
+    less: {
+      production: {
+        options: {
+          paths: ["vendor/bootstrap/less"],
+          yuicompress:true
+        },
+        files: {
+          "common/css/bootstrap.dark.min.css": "vendor/bootstrap/less/bootstrap.dark.less",
+          "common/css/bootstrap.light.min.css": "vendor/bootstrap/less/bootstrap.light.less"
+        }
+      }
     }
   });
 
   // load plugins
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('assemble-less');
+
 
 
   // Default task.
-  grunt.registerTask('default', ['jshint']);
+  grunt.registerTask('default', ['jshint','less']);
 
 };
