@@ -37,7 +37,6 @@ hr {
 	}
 
 	.brand {
-		font-weight: bold;
 		text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
 		border-right: none;
 	}
@@ -144,10 +143,16 @@ hr {
 	}
 }
 
+.nav-tabs {
+	.active > a, .active a:hover {
+		border-bottom: 1px solid darken(@grayDark, 5%);;
+	}
+}
+
 div.subnav {
 
 	margin: 0 1px;
-	#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
+	//#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
 	border: 1px solid transparent;
 	.box-shadow('0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1)');
 
@@ -160,7 +165,7 @@ div.subnav {
 		&:hover {
 			color: @grayLighter;
 			background-color: @grayDark;
-			#gradient > .directional(@grayDarker, @grayDark, 280deg);
+			//#gradient > .directional(@grayDarker, @grayDark, 280deg);
 			border-left: 1px solid transparent;
 			border-right: 1px solid transparent;
 		}
@@ -211,7 +216,7 @@ div.subnav {
 	}
 
 	& > li > a {
-		#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
+		//#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
 		.box-shadow('0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1)');
 		border: none;
 		color: @grayLight;
@@ -222,7 +227,6 @@ div.subnav {
 	li.active > a,
 	li.active > a:hover {
 		background-color: transparent;
-		border: none;
 		color: @white;
 	}
 
@@ -236,57 +240,6 @@ div.subnav {
 		color: @grayLighter;
 	}
 
-}
-
-.nav-list {
-	background-color: @grayDark;
-
-	li > a {
-		background-image: none;
-		text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.3);
-	}
-
-	.nav-header {
-		color: @gray;
-		text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.3);
-	}
-
-	.divider {
-		border-bottom: 1px solid darken(@grayDarker, 5%);
-		background-color: transparent;
-	}
-}
-
-.nav-tabs {
-	border-bottom: none;
-}
-
-.tabs-below .nav-tabs {
-	border-top: none;
-}
-
-.tabs-left .nav-tabs {
-	border-right: none;
-}
-
-.tabs-right .nav-tabs {
-	border-left: none;
-}
-
-.nav-tabs.nav-stacked {
-
-	li > a,
-	li > a:hover {
-		border: 1px solid darken(@grayDarker, 5%);
-		background-image: none;
-	}
-
-	li > a:hover,
-	.active > a,
-	.active > a:hover {
-		background-color: @wellBackground;
-		color: @white;
-	}
 }
 
 .breadcrumb {

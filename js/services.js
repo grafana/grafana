@@ -435,6 +435,7 @@ angular.module('kibana.services', [])
 
   var _dash = {
     title: "",
+    style: "dark",
     editable: true,
     rows: [],
     services: {},

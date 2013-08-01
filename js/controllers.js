@@ -10,7 +10,8 @@ angular.module('kibana.controllers', [])
     title: "",
     editable: true,
     rows: [],
-    last: null
+    last: null,
+    style: 'dark'
   };
 
   // For

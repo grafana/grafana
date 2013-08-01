@@ -9,15 +9,11 @@
     <meta name="viewport" content="width=device-width">
 
     <title>Kibana 3</title>
+    <link rel="stylesheet" href="common/css/bootstrap.light.min.css" title="Light">
 
-    <link rel="stylesheet" href="common/css/normalize.min.css">
-    <link rel="stylesheet" href="common/css/bootstrap.dark.min.css" title="Dark">
-    <link rel="alternate stylesheet" href="common/css/bootstrap.light.min.css" title="Light">
-    <link rel="stylesheet" href="common/css/animate.min.css">
-    <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
-    <link rel="stylesheet" href="common/css/font-awesome.min.css">
     <link rel="stylesheet" href="common/css/timepicker.css">
-  
+    <link rel="stylesheet" href="common/css/animate.min.css">
+    <link rel="stylesheet" href="common/css/normalize.min.css">
     <!-- project dependency libs -->
     <script src="common/lib/LAB.min.js"></script>
     <script src="common/lib/underscore.min.js"></script>
@@ -31,6 +27,11 @@
   </head>
 
   <body ng-controller="DashCtrl" ng-cloak>
+
+    <link rel="stylesheet" href="common/css/bootstrap.{{dashboard.current.style}}.min.css">
+    <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
+    <link rel="stylesheet" href="common/css/font-awesome.min.css">
+
     <div ng-repeat='alert in global_alert' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
       <button type="button" class="close" ng-click="clear_alert(alert)" style="padding-right:50px">&times;</button>
       <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
