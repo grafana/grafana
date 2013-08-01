@@ -14,6 +14,9 @@
     <div class="span1"> 
       <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
     </div>
+    <div class="span3">
+      <label class="small">Style</label><select class="input-small" ng-model="dashboard.current.style" ng-options='f for f in ["dark","light"]'></select>
+    </div>
   </div>
   <div class="row-fluid" ng-show="editor.index == 1">    
     <h4>Index Settings</h4>
@@ -50,27 +53,6 @@
     </div>
   </div>
   <div class="row-fluid" ng-show="editor.index == 2">
-    <h4>Rows</h4>
-    <form>
-      <div class="span5">      
-        <label class="small">Title</label>
-        <input type="text" class="input-large" ng-model='row.title'></input>
-      </div>
-      <div class="span2">
-        <label class="small">Height</label>
-        <input type="text" class="input-mini" ng-model='row.height'></input>
-      </div>
-      <div class="span1">
-        <label class="small"> Editable </label>
-        <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
-      </div>
-      <div class="span4">
-        <label>&nbsp</label>
-        <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-primary">Create Row</button>
-      </div>
-    </form>
-  </div>
-  <div class="row-fluid" ng-show="editor.index == 2">
     <div class="span12">
       <table class="table table-condensed table-striped">
         <thead>
@@ -87,7 +69,25 @@
       </table>
     </div>
   </div>
+  <div class="row-fluid" ng-show="editor.index == 2">
+    <form>
+      <div class="span5">      
+        <label class="small">Title</label>
+        <input type="text" class="input-large" ng-model='row.title' placeholder="New row"></input>
+      </div>
+      <div class="span2">
+        <label class="small">Height</label>
+        <input type="text" class="input-mini" ng-model='row.height'></input>
+      </div>
+      <div class="span1">
+        <label class="small"> Editable </label>
+        <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
+      </div>
+    </form>
+  </div>
 </div>
 <div class="modal-footer">
+  <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-success" ng-show="editor.index == 2">Create Row</button>
+
   <button type="button" class="btn btn-danger" ng-click="editor.index=0;dismiss();reset_panel();dashboard.refresh()">Close</button>
 </div>
