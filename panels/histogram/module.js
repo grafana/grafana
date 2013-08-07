@@ -306,7 +306,7 @@ angular.module('kibana.histogram', [])
             var options = {
               legend: { show: false },
               series: {
-                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+                //stackpercent: scope.panel.stack ? scope.panel.percentage : false,
                 stack: scope.panel.percentage ? null : stack,
                 lines:  { 
                   show: scope.panel.lines, 
@@ -327,8 +327,8 @@ angular.module('kibana.histogram', [])
                 timezone: scope.panel.timezone,
                 show: scope.panel['x-axis'],
                 mode: "time",
-                min: scope.range.from.getTime(),
-                max: scope.range.to.getTime(),
+                min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
+                max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
                 timeformat: time_format(scope.panel.interval),
                 label: "Datetime",
               },

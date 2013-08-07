@@ -454,7 +454,7 @@ angular.module('kibana.services', [])
   var self = this;
   var filterSrv,querySrv;
 
-  this.current = {};
+  this.current = _.clone(_dash);
   this.last = {};
 
   $rootScope.$on('$routeChangeSuccess',function(){
