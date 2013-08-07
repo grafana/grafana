@@ -32,17 +32,21 @@
     <div class="span1"> 
       <h6>Sorting</h6><input type="checkbox" ng-model="panel.sortable" ng-checked="panel.sortable">
     </div>
-    <div class="span4" style="white-space:nowrap" ng-show='panel.sortable'>
+    <div class="span3" style="white-space:nowrap" ng-show='panel.sortable'>
       <h6>Sort</h6>
       <input ng-show="all_fields.length<=0 || !all_fields"style="width:85%" ng-model="panel.sort[0]" type="text"></input>
       <select ng-show="all_fields.length>0"style="width:85%" ng-model="panel.sort[0]" ng-options="f for f in all_fields"></select>
       <i ng-click="set_sort(panel.sort[0])" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
     </div>
-    <div class="span3"><h6>Font Size</h6> 
+    <div class="span2"><h6>Font Size</h6> 
       <select class="input-small" ng-model="panel.style['font-size']" ng-options="f for f in ['7pt','8pt','9pt','10pt','12pt','14pt','16pt','18pt','20pt','24pt','28pt','32pt','36pt','42pt','48pt','52pt','60pt','72pt']"></select></span>
     </div>
     <div class="span2"> 
       <h6>Page Control</h6><input type="checkbox" ng-model="panel.paging" ng-checked="panel.paging">
+    </div>
+    <div class="span2">
+      <h6>Trim Factor <i class="icon-question-sign" bs-tooltip="'Trim fields to this long divided by # of rows'"></i></h6>
+      <input type="number" class="input-small" ng-model="panel.trimFactor">
     </div>
   </div>
   <h5>Paging</h5>

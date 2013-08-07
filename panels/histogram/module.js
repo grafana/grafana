@@ -306,7 +306,7 @@ angular.module('kibana.histogram', [])
             var options = {
               legend: { show: false },
               series: {
-                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+                //stackpercent: scope.panel.stack ? scope.panel.percentage : false,
                 stack: scope.panel.percentage ? null : stack,
                 lines:  { 
                   show: scope.panel.lines, 

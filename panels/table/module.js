@@ -14,6 +14,7 @@
   * fields :: columns to show in table
   * overflow :: 'height' or 'min-height' controls wether the row will expand (min-height) to
                 to fit the table, or if the table will scroll to fit the row (height) 
+  * trimFactor :: If line is > this many characters, divided by the number of columns, trim it.
   * sortable :: Allow sorting?
   * spyable :: Show the 'eye' icon that reveals the last ES query for this panel
 
@@ -49,7 +50,8 @@ angular.module('kibana.table', [])
     sortable: true,
     header  : true,
     paging  : true,
-    field_list: true, 
+    field_list: true,
+    trimFactor: 300,
     spyable : true
   };
   _.defaults($scope.panel,_d);
@@ -249,7 +251,7 @@ angular.module('kibana.table', [])
 
 
 })
-.filter('highlight', function() {
+.filter('tableHighlight', function() {
   return function(text) {
     if (!_.isUndefined(text) && !_.isNull(text) && text.toString().length > 0) {
       return text.toString().
@@ -259,6 +261,14 @@ angular.module('kibana.table', [])
         replace(/\r?\n/g, '<br/>').
         replace(/@start-highlight@/g, '<code class="highlight">').
         replace(/@end-highlight@/g, '</code>');
+    }
+    return '';
+  };
+})
+.filter('tableTruncate', function() {
+  return function(text,length,factor) {
+    if (!_.isUndefined(text) && !_.isNull(text) && text.toString().length > 0) {
+      return text.length > length/factor ? text.substr(0,length/factor)+'...' : text;
     }
     return '';
   };
