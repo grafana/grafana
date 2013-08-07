@@ -14,7 +14,6 @@ angular.module('kibana.controllers', [])
     style: 'dark'
   };
 
-  // For
   $scope.editor = {
     index: 0
   };
