@@ -6,14 +6,6 @@ angular.module('kibana.controllers', [])
 .controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, 
   fields, dashboard) {
 
-  var _d = {
-    title: "",
-    editable: true,
-    rows: [],
-    last: null,
-    style: 'dark'
-  };
-
   $scope.editor = {
     index: 0
   };
