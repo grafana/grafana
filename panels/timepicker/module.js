@@ -186,9 +186,9 @@ angular.module('kibana.timepicker', [])
     // If time picker is defined (usually is) TOFIX: Horrible parsing
     if(!(_.isUndefined($scope.timepicker))) {
       from = $scope.panel.mode === 'relative' ? moment(kbn.time_ago($scope.panel.timespan)) :
-        moment(moment.utc($scope.timepicker.from.date).format('MM/DD/YYYY') + " " + $scope.timepicker.from.time,'MM/DD/YYYY HH:mm:ss');
+        moment(moment($scope.timepicker.from.date).format('MM/DD/YYYY') + " " + $scope.timepicker.from.time,'MM/DD/YYYY HH:mm:ss');
       to = $scope.panel.mode !== 'absolute' ? moment() :
-        moment(moment.utc($scope.timepicker.to.date).format('MM/DD/YYYY') + " " + $scope.timepicker.to.time,'MM/DD/YYYY HH:mm:ss');
+        moment(moment($scope.timepicker.to.date).format('MM/DD/YYYY') + " " + $scope.timepicker.to.time,'MM/DD/YYYY HH:mm:ss');
     // Otherwise (probably initialization)
     } else {
       from = $scope.panel.mode === 'relative' ? moment(kbn.time_ago($scope.panel.timespan)) :
