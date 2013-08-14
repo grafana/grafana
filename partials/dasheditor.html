@@ -30,6 +30,7 @@
           <code>[logstash-]YYYY.MM.DD</code>. The [] in "[logstash-]" are 
           important as they instruct Kibana not to treat those letters as a 
           pattern.
+          Please also note that indices should rollover at midnight <strong>UTC</strong>.
         </p>
         <p class="small">
           See <a href="http://momentjs.com/docs/#/displaying/format/">http://momentjs.com/docs/#/displaying/format/</a>
@@ -84,6 +85,8 @@
         <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
       </div>
     </form>
+  </div>
+  <div class="row-fluid" ng-show="editor.index == 3">
   </div>
 </div>
 <div class="modal-footer">

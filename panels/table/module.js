@@ -52,6 +52,7 @@ angular.module('kibana.table', [])
     paging  : true,
     field_list: true,
     trimFactor: 300,
+    normTimes : true,
     spyable : true
   };
   _.defaults($scope.panel,_d);
@@ -219,10 +220,9 @@ angular.module('kibana.table', [])
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
-      //($scope.data.length < $scope.panel.size*$scope.panel.pages
-      // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
-      if($scope.data.length < $scope.panel.size*$scope.panel.pages &&
-        _segment+1 < dashboard.indices.length ) {
+      if (($scope.data.length < $scope.panel.size*$scope.panel.pages ||
+        !(($scope.panel.sort[0] === filterSrv.timeField()) && $scope.panel.sort[1] === 'desc')) &&
+        _segment+1 < dashboard.indices.length) {
         $scope.get_data(_segment+1,$scope.query_id);
       }
 
@@ -273,5 +273,20 @@ angular.module('kibana.table', [])
       return text.length > length/factor ? text.substr(0,length/factor)+'...' : text;
     }
     return '';
+  };
+// WIP
+}).filter('tableFieldFormat', function(fields){
+  return function(text,field,event,scope) {
+    var type;
+    if(
+      !_.isUndefined(fields.mapping[event._index]) &&
+      !_.isUndefined(fields.mapping[event._index][event._type])
+    ) {
+      type = fields.mapping[event._index][event._type][field]['type'];
+      if(type === 'date' && scope.panel.normTimes) {
+        return moment(text).format('YYYY-MM-DD HH:mm:ss');
+      }    
+    }
+    return text;
   };
 });

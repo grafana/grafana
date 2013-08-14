@@ -55,11 +55,12 @@
           </th>
         
         </thead>
-        <tbody ng-repeat="row in data | slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
-          <tr ng-click="toggle_details(row)" class="pointer">
-            <td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(row.highlight[field]||row._source[field]) | tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
+        <tbody ng-repeat="event in data | slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
+          <tr ng-click="toggle_details(event)" class="pointer">
+            <!--<td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) | tableFieldFormat:field:event:this |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>-->
+            <td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
-          <tr ng-show="row.kibana.details">
+          <tr ng-show="event.kibana.details">
             <td colspan=1000>
               <table class='table table-bordered table-condensed'>
                 <thead>
@@ -67,7 +68,7 @@
                   <th>Action</th>
                   <th>Value</th>
                 </thead>
-                <tr ng-repeat="(key,value) in row.kibana.details._source" ng-class-odd="'odd'">
+                <tr ng-repeat="(key,value) in event.kibana.details._source" ng-class-odd="'odd'">
                   <td>{{key}}</td>
                   <td>
                     <i class='icon-search pointer' ng-click="build_search(key,value)"></i> 
