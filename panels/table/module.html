@@ -15,8 +15,8 @@
     <div ng-class="{'span3':panel.field_list}" ng-show="panel.field_list">
       <div class="sidebar-nav">
         <h5>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></h5>
-        <ul class="unstyled" style="height:{{row.height}};overflow-y:auto;overflow-x:hidden;">
-          <li ng-style="panel.style" ng-repeat="field in all_fields" >
+        <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;">
+          <li ng-style="panel.style" ng-repeat="field in fields.list" >
             <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
             <a data-unique="1" bs-popover="'panels/table/micropanel.html'" data-placement="right" ng-click="toggle_micropanel(field)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
           </li>
