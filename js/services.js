@@ -449,6 +449,11 @@ angular.module('kibana.services', [])
     return _.pluck(_.where(self.list,_require),'id');
   };
 
+  // TOFIX: Error handling when there is more than one field
+  this.timeField = function() {
+    return self.getByType('time')[0].field;
+  };
+
   // This special function looks for all time filters, and returns a time range according to the mode
   // No idea when max would actually be used
   this.timeRange = function(mode) {
