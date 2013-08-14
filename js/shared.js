@@ -71,39 +71,6 @@
     return value;
   };
 
-  // Probably useless now, leaving for cases where you might not want
-  // a flat dot notated data structure
-  kbn.get_field_value = function(object,field,opt) {
-    var value = kbn.recurse_field_dots(object._source,field);
-
-    if(value === null) {
-      return '';
-    }
-    if(_.isArray(value)) {
-      if (opt === 'raw') {
-        return value;
-      } else {
-        var complex = false;
-        _.each(value, function(el, index) {
-          if (typeof(el) === 'object') {
-            complex = true;
-          }
-        });
-        if (complex) {
-          return JSON.stringify(value, null, 4);
-        }
-        return value.toString();
-      }
-    }
-    if(typeof value === 'object' && value !== null) {
-      // Leaving this out for now
-      //return opt == 'raw' ? value : JSON.stringify(value,null,4)
-      return JSON.stringify(value,null,4);
-    }
-
-    return (value !== null) ? value.toString() : '';
-  };
-
   kbn.top_field_values = function(docs,field,count) {
     var counts = _.countBy(_.pluck(docs,field),function(field){
       return _.isUndefined(field) ? '' : field;

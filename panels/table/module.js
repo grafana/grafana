@@ -61,6 +61,7 @@ angular.module('kibana.table', [])
 
     $scope.$on('refresh',function(){$scope.get_data();});
 
+    $scope.fields = fields;
     $scope.get_data();
   };
 
@@ -188,7 +189,11 @@ angular.module('kibana.table', [])
         $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
           return {
             _source   : kbn.flatten_json(hit._source),
-            highlight : kbn.flatten_json(hit.highlight||{})
+            highlight : kbn.flatten_json(hit.highlight||{}),
+            _type     : hit._type,
+            _index    : hit._index,
+            _id       : hit._id,
+            _sort     : hit.sort
           };
         }));
         
@@ -196,7 +201,7 @@ angular.module('kibana.table', [])
 
         // Sort the data
         $scope.data = _.sortBy($scope.data, function(v){
-          return v._source[$scope.panel.sort[0]];
+          return v._sort[0];
         });
         
         // Reverse if needed
@@ -210,15 +215,12 @@ angular.module('kibana.table', [])
       } else {
         return;
       }
-      
-      $scope.all_fields = kbn.get_all_fields(_.pluck($scope.data,'_source'));
-      fields.add_fields($scope.all_fields);
 
       // If we're not sorting in reverse chrono order, query every index for
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
       //($scope.data.length < $scope.panel.size*$scope.panel.pages
-     // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
+      // || !(($scope.panel.sort[0] === $scope.time.field) && $scope.panel.sort[1] === 'desc'))
       if($scope.data.length < $scope.panel.size*$scope.panel.pages &&
         _segment+1 < dashboard.indices.length ) {
         $scope.get_data(_segment+1,$scope.query_id);
