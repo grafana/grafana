@@ -23,6 +23,9 @@ angular.module('kibana.map', [])
 .controller('map', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Stable",
     description : "Displays a map of shaded regions using a field containing a 2 letter country "+
      ", or US state, code. Regions with more hit are shaded darker. Node that this does use the"+

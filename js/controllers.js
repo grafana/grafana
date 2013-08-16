@@ -71,6 +71,14 @@ angular.module('kibana.controllers', [])
     }
   };
 
+  $scope.setEditorTabs = function(panelMeta) {
+    $scope.editorTabs = ['General','Panel'];
+    if(!_.isUndefined(panelMeta.editorTabs)) {
+      $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
+    }
+    return $scope.editorTabs;
+  };
+
   // This is whoafully incomplete, but will do for now 
   $scope.parse_error = function(data) {
     var _error = data.match("nested: (.*?);");
@@ -125,8 +133,7 @@ angular.module('kibana.controllers', [])
     $scope.panel = {
       error   : false,
       span    : 3,
-      editable: true,
-      group   : ['default']
+      editable: true
     };
   };
 

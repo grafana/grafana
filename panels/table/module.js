@@ -26,6 +26,9 @@ angular.module('kibana.table', [])
 .controller('table', function($rootScope, $scope, fields, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status: "Stable",
     description: "A paginated table of records matching your query or queries. Click on a row to "+
       "expand it and review all of the fields associated with that document. <p>"
@@ -221,7 +224,7 @@ angular.module('kibana.table', [])
       // size*pages results
       // Otherwise, only get size*pages results then stop querying
       if (($scope.data.length < $scope.panel.size*$scope.panel.pages ||
-        !(($scope.panel.sort[0] === filterSrv.timeField()) && $scope.panel.sort[1] === 'desc')) &&
+        !((_.contains(filterSrv.timeField(),$scope.panel.sort[0])) && $scope.panel.sort[1] === 'desc')) &&
         _segment+1 < dashboard.indices.length) {
         $scope.get_data(_segment+1,$scope.query_id);
       }

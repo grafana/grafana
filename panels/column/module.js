@@ -55,7 +55,6 @@ angular.module('kibana.column', [])
       span: 12,
       height: "150px",
       editable: true,
-      group: ['default'],
       type: type,
     };
   };

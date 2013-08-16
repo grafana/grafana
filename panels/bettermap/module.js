@@ -18,6 +18,9 @@ angular.module('kibana.bettermap', [])
 .controller('bettermap', function($scope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Experimental",
     description : "Displays geo points in clustered groups on a map. The cavaet for this panel is"+
       " that, for better or worse, it does NOT use the terms facet and it <b>does</b> query "+

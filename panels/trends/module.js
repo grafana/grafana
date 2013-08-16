@@ -17,6 +17,9 @@ angular.module('kibana.trends', [])
 .controller('trends', function($scope, kbnIndex, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Beta",
     description : "A stock-ticker style representation of how queries are moving over time. "+
     "For example, if the time is 1:10pm, your time picker was set to \"Last 10m\", and the \"Time "+

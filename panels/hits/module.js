@@ -21,6 +21,9 @@ angular.module('kibana.hits', [])
 .controller('hits', function($scope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Stable",
     description : "The total hits for a query or set of queries. Can be a pie chart, bar chart, "+
       "list, or absolute total of all queries combined"

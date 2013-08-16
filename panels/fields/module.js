@@ -21,7 +21,6 @@ angular.module('kibana.fields', [])
 
   // Set and populate defaults
   var _d = {
-    group   : "default",
     style   : {},
     arrange : 'vertical',
     micropanel_position : 'right', 

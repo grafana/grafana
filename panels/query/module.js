@@ -60,4 +60,6 @@ angular.module('kibana.query', [])
     }
   };
 
+  $scope.init();
+
 });

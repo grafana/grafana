@@ -37,6 +37,9 @@ angular.module('kibana.histogram', [])
 .controller('histogram', function($scope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Stable",
     description : "A bucketed time series chart of the current query or queries. Uses the "+
       "Elasticsearch date_histogram facet. If using time stamped indices this panel will query"+

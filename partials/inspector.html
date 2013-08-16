@@ -1,11 +1,10 @@
 <div class="modal-header">
   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>Inspector</h3>
+  <h3>Last Elasticsearch Query</h3>
 </div>
 <div class="modal-body">
 
   <div>
-    <h5>Last Elasticsearch Query</h5>
     <pre>curl -XGET '{{config.elasticsearch}}/{{dashboard.indices|stringify}}/_search?pretty' -d '{{inspector}}'
     </pre>
   </div>

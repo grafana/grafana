@@ -26,10 +26,9 @@ angular.module('kibana.directives', [])
     link: function(scope, elem, attrs) {
       scope.$watch('panel.type', function(n,o) {
         if(!_.isUndefined(scope.panel.type)) {
-          var template = '<div>'+
-          '<div ng-controller="'+scope.panel.type+'" ng-include src="\'partials/panelgeneral.html\'"></div>'+
-          '<div ng-controller="'+scope.panel.type+'" ng-include src="\''+scope.edit_path(scope.panel.type)+'\'">'+
-          '</div>';
+          var template = '<div ng-controller="'+scope.panel.type+'">'+
+            '<span ng-include src="\'partials/paneladd.html\'"></span>'+
+            '</div>';
           elem.html($compile(angular.element(template))(scope));
         }
       });
