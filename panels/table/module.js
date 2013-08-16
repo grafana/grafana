@@ -27,6 +27,7 @@ angular.module('kibana.table', [])
 
   $scope.panelMeta = {
     editorTabs : [
+      {title:'Paging', src:'panels/table/pagination.html'},
       {title:'Queries', src:'partials/querySelect.html'}
     ],
     status: "Stable",

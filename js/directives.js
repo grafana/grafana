@@ -23,13 +23,15 @@ angular.module('kibana.directives', [])
 .directive('addPanel', function($compile) {
   return {
     restrict: 'A',
-    link: function(scope, elem, attrs) {
-      scope.$watch('panel.type', function(n,o) {
-        if(!_.isUndefined(scope.panel.type)) {
-          var template = '<div ng-controller="'+scope.panel.type+'">'+
+    link: function($scope, elem, attrs) {
+      $scope.$watch('panel.type', function(n,o) {
+        var _type = $scope.panel.type;
+        $scope.reset_panel(_type);
+        if(!_.isUndefined($scope.panel.type)) {
+          var template = '<div ng-controller="'+$scope.panel.type+'">'+
             '<span ng-include src="\'partials/paneladd.html\'"></span>'+
             '</div>';
-          elem.html($compile(angular.element(template))(scope));
+          elem.html($compile(angular.element(template))($scope));
         }
       });
     }

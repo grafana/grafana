@@ -13,4 +13,10 @@
     <div class="span2"> 
       <label class="small">Editable</label><input type="checkbox" ng-model="panel.editable" ng-checked="panel.editable">
     </div>
+    <div class="span2" ng-show="!_.isUndefined(panel.spyable)"> 
+      <label class="small">
+        Spyable <i class="icon-question-sign" bs-tooltip="'Allow query reveal via <i class=icon-eye-open></i>'"></i>
+      </label>
+      <input type="checkbox" ng-model="panel.spyable" ng-checked="panel.spyable">
+    </div>
   </div>
