@@ -1,7 +1,7 @@
   <div class="row-fluid">    
     <div class="span4">
       <form class="input-append">
-        <h6>Add field</h6>
+        <h6>Add Column</h6>
         <input bs-typeahead="fields.list" type="text" class="input-small" ng-model='newfield'>
         <button class="btn" ng-click="toggle_field(newfield);newfield=''"><i class="icon-plus"></i></button>
       </form>
@@ -41,45 +41,8 @@
     <div class="span2"><h6>Font Size</h6> 
       <select class="input-small" ng-model="panel.style['font-size']" ng-options="f for f in ['7pt','8pt','9pt','10pt','12pt','14pt','16pt','18pt','20pt','24pt','28pt','32pt','36pt','42pt','48pt','52pt','60pt','72pt']"></select></span>
     </div>
-    <div class="span2"> 
-      <h6>Page Control</h6><input type="checkbox" ng-model="panel.paging" ng-checked="panel.paging">
-    </div>
     <div class="span2">
       <h6>Trim Factor <i class="icon-question-sign" bs-tooltip="'Trim fields to this long divided by # of rows'"></i></h6>
       <input type="number" class="input-small" ng-model="panel.trimFactor">
-    </div>
-  </div>
-  <h5>Paging</h5>
-  <div class="row-fluid">
-    <div class="span2">
-      <h6>Per Page</h6>
-      <input type="number" class="input-mini" ng-model="panel.size" ng-change="get_data()">
-    </div>
-    <div class="span1">
-      <h6>&nbsp;</h6>
-      <center><i class='icon-remove'></i><center>
-    </div>
-    <div class="span2">
-      <h6>Page limit</h6>
-      <input type="number" class="input-mini" ng-model="panel.pages" ng-change="get_data()">
-    </div>
-    <div class="span2 large">
-      <h6>Pageable</h6>
-      <strong>= {{panel.size * panel.pages}}</strong>
-    </div>
-    <div class="span3">
-      <h6>Page Overflow</h6>
-      <select class="input-small" ng-model="panel.overflow" ng-options="f.value as f.key for f in [{key:'scroll',value:'height'},{key:'expand',value:'min-height'}]"></select>
-    </div>
-  </div>  
-  <h5>Panel Spy</h5>
-  <div class="row-fluid">
-    <div class="span2"> 
-      <label class="small"> Spyable </label><input type="checkbox" ng-model="panel.spyable" ng-checked="panel.spyable">
-    </div>
-    <div class="span9 small">
-      The panel spy shows 'behind the scenes' information about a panel. It can
-      be accessed by clicking the <i class='icon-eye-open'></i> in the top right
-      of the panel.
     </div>
   </div>

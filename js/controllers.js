@@ -128,12 +128,12 @@ angular.module('kibana.controllers', [])
     $scope.row.panels.push(panel);
   };
 
-  $scope.reset_panel = function() {
-
+  $scope.reset_panel = function(type) {
     $scope.panel = {
       error   : false,
       span    : 3,
-      editable: true
+      editable: true,
+      type    : type
     };
   };
 
