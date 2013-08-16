@@ -33,6 +33,9 @@ angular.module('kibana.pie', [])
 
   // Set and populate defaults
   var _d = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     query   : { field:"_type", goal: 100}, 
     queries     : {
       mode        : 'all',

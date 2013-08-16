@@ -22,6 +22,9 @@ angular.module('kibana.terms', [])
 .controller('terms', function($scope, querySrv, dashboard, filterSrv) {
 
   $scope.panelMeta = {
+    editorTabs : [
+      {title:'Queries', src:'partials/querySelect.html'}
+    ],
     status  : "Beta",
     description : "Displays the results of an elasticsearch facet as a pie chart, bar chart, or a "+ 
       "table"

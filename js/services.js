@@ -166,7 +166,6 @@ angular.module('kibana.services', [])
     }
   }
 })
-
 .service('timer', function($timeout) {
   // This service really just tracks a list of $timeout promises to give us a
   // method for cancelling them all when we need to
@@ -451,7 +450,7 @@ angular.module('kibana.services', [])
 
   // TOFIX: Error handling when there is more than one field
   this.timeField = function() {
-    return self.getByType('time')[0].field;
+    return _.pluck(self.getByType('time'),'field');
   };
 
   // This special function looks for all time filters, and returns a time range according to the mode

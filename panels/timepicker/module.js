@@ -43,9 +43,6 @@ angular.module('kibana.timepicker', [])
   };
   _.defaults($scope.panel,_d);
 
-  var _groups = _.isArray($scope.panel.group) ? 
-    $scope.panel.group : [$scope.panel.group];
-
   $scope.init = function() {
     // Private refresh interval that we can use for view display without causing
     // unnecessary refreshes during changes
