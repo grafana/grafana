@@ -70,6 +70,8 @@ angular.module('kibana.table', [])
     $scope.get_data();
   };
 
+  $scope.percent = kbn.to_percent;
+
   $scope.toggle_micropanel = function(field) {
     var docs = _.pluck($scope.data,'_source');
     $scope.micropanel = {
@@ -78,6 +80,11 @@ angular.module('kibana.table', [])
       related : kbn.get_related_fields(docs,field),
       count: _.countBy(docs,function(doc){return _.contains(_.keys(doc),field);})['true']
     };
+  };
+
+  $scope.micropanelColor = function(index) {
+    var _c = ['bar-success','bar-warning','bar-danger','bar-info','bar-primary'];
+    return index > _c.length ? '' : _c[index];
   };
 
   $scope.set_sort = function(field) {

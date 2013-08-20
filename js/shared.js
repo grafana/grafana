@@ -179,7 +179,7 @@
   };
 
   kbn.to_percent = function(number,outof) {
-    return Math.round((number/outof)*10000)/100 + "%";
+    return Math.floor((number/outof)*10000)/100 + "%";
   };
 
   kbn.addslashes = function(str) {
