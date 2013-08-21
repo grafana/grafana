@@ -6,7 +6,7 @@
     <div ng-include src="edit_path(panel.type)"></div>
   </div>
 
-  <div ng-repeat="tab in panelMeta.editorTabs" ng-show="addTab == tab.title">
+  <div ng-repeat="tab in panelMeta.editorTabs">
     <h4>{{tab.title}}</h4>
     <div ng-include src="tab.src"></div>
   </div>
