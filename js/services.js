@@ -4,7 +4,36 @@
 'use strict';
 
 angular.module('kibana.services', [])
-.service('fields', function(dashboard, $rootScope, $http) {
+.service('alertSrv', function($timeout) {
+  var self = this;
+
+  // List of all alert objects
+  this.list = [];
+
+  this.set = function(title,text,severity,timeout) {
+    var _a = {
+      title: title || '',
+      text: text || '',
+      severity: severity || 'info',
+    };
+    self.list.push(_a);
+    if (timeout > 0) {
+      $timeout(function() {
+        self.list = _.without(self.list,_a);
+      }, timeout);
+    }
+  };
+
+  this.clear = function(alert) {
+    self.list = _.without(self.list,alert);
+  };
+
+  this.clearAll = function() {
+    self.list = [];
+  }; 
+
+})
+.service('fields', function(dashboard, $rootScope, $http, alertSrv) {
   // Save a reference to this
   var self = this;
 
@@ -46,6 +75,14 @@ angular.module('kibana.services', [])
     var request = $http({
       url: config.elasticsearch + "/" + indices.join(',') + "/_mapping",
       method: "GET"
+    }).error(function(data, status, headers, conf) {
+      if(status === 0) {
+        alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
+          ". Please ensure that Elasticsearch is reachable from your system." ,'error');
+      } else {
+        alertSrv.set('Error',"Could not find "+config.elasticsearch+"/"+indices.join(',')+"/_mapping. If you"+
+          " are using a proxy, ensure it is configured correctly",'error');
+      }
     });
 
     return request.then(function(p) {
@@ -83,7 +120,7 @@ angular.module('kibana.services', [])
   };
 
 })
-.service('kbnIndex',function($http) {
+.service('kbnIndex',function($http,alertSrv) {
 
   // returns a promise containing an array of all indices matching the index
   // pattern that exist in a given range
@@ -106,8 +143,14 @@ angular.module('kibana.services', [])
     var something = $http({
       url: config.elasticsearch + "/_aliases",
       method: "GET"
-    }).error(function(data, status, headers, config) {
-      // Handle error condition somehow?
+    }).error(function(data, status, headers, conf) {
+      if(status === 0) {
+        alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
+          ". Please ensure that Elasticsearch is reachable from your system." ,'error');
+      } else {
+        alertSrv.set('Error',"Could not reach "+config.elasticsearch+"/_aliases. If you"+
+          " are using a proxy, ensure it is configured correctly",'error');
+      }
     });
 
     return something.then(function(p) {
@@ -502,13 +545,14 @@ angular.module('kibana.services', [])
   self.init();
 
 })
-.service('dashboard', function($routeParams, $http, $rootScope, $injector, ejsResource, timer, kbnIndex) {
+.service('dashboard', function($routeParams, $http, $rootScope, $injector, ejsResource, timer, kbnIndex, alertSrv) {
   // A hash of defaults to use when loading a dashboard
 
   var _dash = {
     title: "",
     style: "dark",
     editable: true,
+    failover: false,
     rows: [],
     services: {},
     index: {
@@ -584,7 +628,17 @@ angular.module('kibana.services', [])
           if(p.length > 0) {
             self.indices = p;          
           } else {
-            self.indices = [self.current.index.default];
+            //TODO: Option to not failover
+            if(self.current.failover) {
+              self.indices = [self.current.index.default];
+            } else {
+              alertSrv.set('No indices matched','The pattern <i>'+self.current.index.pattern+
+                '</i> did not match any indices in your selected'+
+                ' time range.','info',5000);
+              // Do not issue refresh if no indices match. This should be removed when panels
+              // properly understand when no indices are present
+              return false;
+            }
           }
           $rootScope.$broadcast('refresh');
         });
@@ -690,22 +744,25 @@ angular.module('kibana.services', [])
       self.dash_load(_dashboard);
       return true;
     },function(result) {
+      alertSrv.set('Error',"Could not load <i>dashboards/"+file+"</i>. Please make sure it exists" ,'error');
       return false;
     });
   };
 
   this.elasticsearch_load = function(type,id) {
     var request = ejs.Request().indices(config.kibana_index).types(type);
-    var results = request.query(
+    return request.query(
       ejs.IdsQuery(id)
-    ).doSearch();
-    return results.then(function(results) {
+    ).doSearch(function(results) {
       if(_.isUndefined(results)) {
         return false;
       } else {
         self.dash_load(angular.fromJson(results.hits.hits[0]['_source']['dashboard']));
         return true;
       }
+    },
+    function(data,status) {
+      alertSrv.set('Error','Could not load '+config.elasticsearch+"/"+config.kibana_index+"/"+type+"/"+id,'error');
     });
   };
 

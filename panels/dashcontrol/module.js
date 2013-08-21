@@ -24,7 +24,7 @@
 'use strict';
 
 angular.module('kibana.dashcontrol', [])
-.controller('dashcontrol', function($scope, $http, timer, dashboard) {
+.controller('dashcontrol', function($scope, $http, timer, dashboard, alertSrv) {
 
   $scope.panelMeta = {
     status  : "Stable",
@@ -69,17 +69,17 @@ angular.module('kibana.dashcontrol', [])
 
   $scope.set_default = function() {
     if(dashboard.set_default()) {
-      $scope.alert('Local Default Set',dashboard.current.title+' has been set as your local default','success',5000);
+      alertSrv.set('Local Default Set',dashboard.current.title+' has been set as your local default','success',5000);
     } else {
-      $scope.alert('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
+      alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
     }
   };
 
   $scope.purge_default = function() {
     if(dashboard.purge_default()) {
-      $scope.alert('Local Default Clear','Your local default dashboard has been cleared','success',5000);
+      alertSrv.set('Local Default Clear','Your local default dashboard has been cleared','success',5000);
     } else {
-      $scope.alert('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
+      alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
     }
   };
 
@@ -91,13 +91,13 @@ angular.module('kibana.dashcontrol', [])
       ).then(
       function(result) {
       if(!_.isUndefined(result._id)) {
-        $scope.alert('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
+        alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
           result._id + '"','success',5000);
         if(type === 'temp') {
           $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
         }
       } else {
-        $scope.alert('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
+        alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
       }
     });
   };
@@ -107,15 +107,15 @@ angular.module('kibana.dashcontrol', [])
       function(result) {
         if(!_.isUndefined(result)) {
           if(result.found) {
-            $scope.alert('Dashboard Deleted',id+' has been deleted','success',5000);
+            alertSrv.set('Dashboard Deleted',id+' has been deleted','success',5000);
             // Find the deleted dashboard in the cached list and remove it
             var toDelete = _.where($scope.elasticsearch.dashboards,{_id:id})[0];
             $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,toDelete);
           } else {
-            $scope.alert('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000);
+            alertSrv.set('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000);
           }
         } else {
-          $scope.alert('Dashboard Not Deleted','An error occurred deleting the dashboard','error',5000);
+          alertSrv.set('Dashboard Not Deleted','An error occurred deleting the dashboard','error',5000);
         }
       }
     );
@@ -137,10 +137,10 @@ angular.module('kibana.dashcontrol', [])
       function(link) {
       if(!_.isUndefined(link)) {
         $scope.gist.last = link;
-        $scope.alert('Gist saved','You will be able to access your exported dashboard file at '+
+        alertSrv.set('Gist saved','You will be able to access your exported dashboard file at '+
           '<a href="'+link+'">'+link+'</a> in a moment','success');
       } else {
-        $scope.alert('Save failed','Gist could not be saved','error',5000);
+        alertSrv.set('Save failed','Gist could not be saved','error',5000);
       }
     });
   };
@@ -151,12 +151,12 @@ angular.module('kibana.dashcontrol', [])
       if(files && files.length > 0) {
         $scope.gist.files = files;
       } else {
-        $scope.alert('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
+        alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
       }
     });
   };
 })
-.directive('dashUpload', function(timer, dashboard){
+.directive('dashUpload', function(timer, dashboard, alertSrv){
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
@@ -183,7 +183,7 @@ angular.module('kibana.dashcontrol', [])
         // Something
         document.getElementById('dashupload').addEventListener('change', file_selected, false);
       } else {
-        alert('Sorry, the HTML5 File APIs are not fully supported in this browser.');
+        alertSrv.set('Oops','Sorry, the HTML5 File APIs are not fully supported in this browser.','error');
       }
     }
   };
