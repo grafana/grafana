@@ -4,7 +4,7 @@
 
 angular.module('kibana.controllers', [])
 .controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, 
-  fields, dashboard) {
+  fields, dashboard, alertSrv) {
 
   $scope.editor = {
     index: 0
@@ -16,11 +16,12 @@ angular.module('kibana.controllers', [])
     // Make underscore.js available to views
     $scope._ = _;
     $scope.dashboard = dashboard;
+    $scope.dashAlerts = alertSrv;
+    alertSrv.clearAll();
 
     // Provide a global list of all see fields
     $scope.fields = fields;
     $scope.reset_row();
-    $scope.clear_all_alerts();
 
     var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
   };
@@ -40,28 +41,6 @@ angular.module('kibana.controllers', [])
   $scope.row_style = function(row) {
     return { 'min-height': row.collapse ? '5px' : row.height };
   };
-
-  $scope.alert = function(title,text,severity,timeout) {
-    var alert = {
-      title: title,
-      text: text,
-      severity: severity || 'info',
-    };
-    $scope.global_alert.push(alert);
-    if (timeout > 0) {
-      $timeout(function() {
-        $scope.global_alert = _.without($scope.global_alert,alert);
-      }, timeout);
-    }
-  };
-
-  $scope.clear_alert = function(alert) {
-    $scope.global_alert = _.without($scope.global_alert,alert);
-  };
-
-  $scope.clear_all_alerts = function() {
-    $scope.global_alert = [];
-  }; 
 
   $scope.edit_path = function(type) {
     if(type) {
