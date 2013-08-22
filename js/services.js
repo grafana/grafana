@@ -30,7 +30,7 @@ angular.module('kibana.services', [])
 
   this.clearAll = function() {
     self.list = [];
-  }; 
+  };
 
 })
 .service('fields', function(dashboard, $rootScope, $http, alertSrv) {
@@ -116,7 +116,7 @@ angular.module('kibana.services', [])
         ret[propName] = obj;
       }
     }
-    return ret; 
+    return ret;
   };
 
 })
@@ -242,11 +242,11 @@ angular.module('kibana.services', [])
     ids : [],
   });
 
-  // For convenience 
-  var ejs = ejsResource(config.elasticsearch);  
+  // For convenience
+  var ejs = ejsResource(config.elasticsearch);
   var _q = dashboard.current.services.query;
 
-  this.colors = [ 
+  this.colors = [
     "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0", //1
     "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477", //2
     "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0", //3
@@ -264,7 +264,7 @@ angular.module('kibana.services', [])
     _q = dashboard.current.services.query;
     self.list = dashboard.current.services.query.list;
     self.ids = dashboard.current.services.query.ids;
-    
+
     if (self.ids.length === 0) {
       self.set({});
     }
@@ -330,7 +330,7 @@ angular.module('kibana.services', [])
   };
 
   this.idsByMode = function(config) {
-    switch(config.mode) 
+    switch(config.mode)
     {
     case 'all':
       return self.ids;
@@ -370,7 +370,7 @@ angular.module('kibana.services', [])
   });
 
   // For convenience
-  var ejs = ejsResource(config.elasticsearch);  
+  var ejs = ejsResource(config.elasticsearch);
   var _f = dashboard.current.services.filter;
 
   // Save a reference to this
@@ -390,7 +390,7 @@ angular.module('kibana.services', [])
 
   };
 
-  // This is used both for adding filters and modifying them. 
+  // This is used both for adding filters and modifying them.
   // If an id is passed, the filter at that id is updated
   this.set = function(filter,id) {
     _.defaults(filter,{mandate:'must'});
@@ -425,7 +425,7 @@ angular.module('kibana.services', [])
     var either_bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
     _.each(ids,function(id) {
       if(self.list[id].active) {
-        switch(self.list[id].mandate) 
+        switch(self.list[id].mandate)
         {
         case 'mustNot':
           bool = bool.mustNot(self.getEjsObj(id));
@@ -563,7 +563,7 @@ angular.module('kibana.services', [])
   };
 
   // An elasticJS client to use
-  var ejs = ejsResource(config.elasticsearch);  
+  var ejs = ejsResource(config.elasticsearch);
   var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
 
   // Store a reference to this
@@ -602,8 +602,8 @@ angular.module('kibana.services', [])
 
     // No dashboard in the URL
     } else {
-      // Check if browser supports localstorage, and if there's a dashboard 
-      if (window.Modernizr.localstorage && 
+      // Check if browser supports localstorage, and if there's a dashboard
+      if (window.Modernizr.localstorage &&
         !(_.isUndefined(window.localStorage['dashboard'])) &&
         window.localStorage['dashboard'] !== ''
       ) {
@@ -612,11 +612,11 @@ angular.module('kibana.services', [])
       // No? Ok, grab default.json, its all we have now
       } else {
         self.file_load('default.json');
-      } 
+      }
     }
   };
 
-  // Since the dashboard is responsible for index computation, we can compute and assign the indices 
+  // Since the dashboard is responsible for index computation, we can compute and assign the indices
   // here before telling the panels to refresh
   this.refresh = function() {
     if(self.current.index.interval !== 'none') {
@@ -626,7 +626,7 @@ angular.module('kibana.services', [])
           self.current.index.pattern,self.current.index.interval
         ).then(function (p) {
           if(p.length > 0) {
-            self.indices = p;          
+            self.indices = p;
           } else {
             //TODO: Option to not failover
             if(self.current.failover) {
@@ -711,7 +711,7 @@ angular.module('kibana.services', [])
       return true;
     } else {
       return false;
-    }  
+    }
   };
 
   this.purge_default = function() {
@@ -770,7 +770,7 @@ angular.module('kibana.services', [])
     // Clone object so we can modify it without influencing the existing obejct
     var save = _.clone(self.current);
     var id;
-    
+
     // Change title on object clone
     if (type === 'dashboard') {
       id = save.title = _.isUndefined(title) ? self.current.title : title;
@@ -783,7 +783,7 @@ angular.module('kibana.services', [])
       title: save.title,
       dashboard: angular.toJson(save)
     });
-    
+
     request = type === 'temp' && ttl ? request.ttl(ttl) : request;
 
     // TOFIX: Implement error handling here
@@ -868,5 +868,79 @@ angular.module('kibana.services', [])
       return false;
     });
   };
+})
+.service('timeSeries', function () {
+  /**
+   * Certain graphs require 0 entries to be specified for them to render
+   * properly (like the line graph). So with this we will caluclate all of
+   * the expected time measurements, and fill the missing ones in with 0
+   * @param date     start     The start time for the result set
+   * @param date     end       The end time for the result set
+   * @param integer  interval  The length between measurements, in es interval
+   *                           notation (1m, 30s, 1h, 15d)
+   */
+  var undef;
+  function dateToSecondsWithBlankMs(date) {
+    // return the date as millis since epoch, with 0 millis
+    return Math.floor(date.getTime() / 1000)*1000;
+  }
+  function base10Int(val) {
+    return parseInt(val, 10);
+  }
+  this.ZeroFilled = function (interval, start, end) {
+    // the expected differenece between readings.
+    this.interval_ms = parseInt(kbn.interval_to_seconds(interval), 10) * 1000;
+    // will keep all values here, keyed by their time
+    this._data = {};
 
+    if (start) {
+      this.addValue(start, null);
+    }
+    if (end) {
+      this.addValue(end, null);
+    }
+  }
+  /**
+   * Add a row
+   * @param  int  time  The time for the value, in
+   * @param  any  value The value at this time
+   */
+  this.ZeroFilled.prototype.addValue = function (time, value) {
+    if (time instanceof Date) {
+      time = dateToSecondsWithBlankMs(time);
+    } else {
+      time = parseInt(time, 10);
+    }
+    if (!isNaN(time)) {
+      this._data[time] = (value === undef ? 0 : value);
+    }
+  };
+  /**
+   * return the rows in the format:
+   * [ [time, value], [time, value], ... ]
+   * @return array
+   */
+  this.ZeroFilled.prototype.getFlotPairs = function () {
+    // var startTime = performance.now();
+    var times = _.map(_.keys(this._data), base10Int).sort()
+      , result = []
+      , i
+      , next
+      , expected_next;
+    for(i = 0; i < times.length; i++) {
+      result.push([ times[i], this._data[times[i]] ]);
+      next = times[i + 1];
+      expected_next = times[i] + this.interval_ms;
+      for(; times.length > i && next > expected_next; expected_next+= this.interval_ms) {
+        /**
+         * since we don't know how the server will round subsequent segments
+         * we have to recheck for blanks each time.
+         */
+        // this._data[expected_next] = 0;
+        result.push([expected_next, 0]);
+      }
+    }
+    // console.log(Math.round((performance.now() - startTime)*100)/100, 'ms to get', result.length, 'pairs');
+    return result;
+  };
 });
