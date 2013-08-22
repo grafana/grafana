@@ -870,5 +870,4 @@ angular.module('kibana.services', [])
       return false;
     });
   };
-
 });
