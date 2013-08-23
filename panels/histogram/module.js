@@ -342,7 +342,7 @@ angular.module('kibana.histogram', [])
                   lineWidth: scope.panel.linewidth,
                   steps: false
                 },
-                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8, zero: false },
+                bars:   { show: scope.panel.bars,  fill: 1, lineWidth:0, barWidth: barwidth/1.7, zero: false },
                 points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
