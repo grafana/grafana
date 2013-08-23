@@ -95,7 +95,7 @@ angular.module('kibana.histogram', [])
   };
 
   $scope.get_interval = function () {
-    var interval = $scope.panel.interval, 
+    var interval = $scope.panel.interval,
                     range;
     if ($scope.panel.auto_int) {
       range = $scope.get_time_range();
@@ -188,8 +188,8 @@ angular.module('kibana.histogram', [])
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && _.difference(facetIds, $scope.panel.queries.ids).length === 0) {
 
-        var i = 0, 
-          time_series, 
+        var i = 0,
+          time_series,
           hits;
 
         _.each($scope.panel.queries.ids, function(id) {
@@ -342,8 +342,19 @@ angular.module('kibana.histogram', [])
                   lineWidth: scope.panel.linewidth,
                   steps: false
                 },
-                bars:   { show: scope.panel.bars,  fill: 1, lineWidth:0, barWidth: barwidth/1.7, zero: false },
-                points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
+                bars:   {
+                  show: scope.panel.bars,
+                  fill: 1,
+                  barWidth: barwidth/1.8,
+                  zero: false,
+                  lineWidth: 0
+                },
+                points: {
+                  show: scope.panel.points,
+                  fill: 1,
+                  fillColor: false,
+                  radius: 5
+                },
                 shadowSize: 1
               },
               yaxis: {
@@ -485,24 +496,33 @@ angular.module('kibana.histogram', [])
    */
   this.ZeroFilled.prototype.getFlotPairs = function () {
     // var startTime = performance.now();
-    var times = _.map(_.keys(this._data), base10Int).sort(), 
-      result = [],
-      i,
-      next,
-      expected_next;
-    for(i = 0; i < times.length; i++) {
-      result.push([ times[i], this._data[times[i]] ]);
-      next = times[i + 1];
-      expected_next = times[i] + this.interval_ms;
-      for(; times.length > i && next > expected_next; expected_next+= this.interval_ms) {
-        /**
-         * since we don't know how the server will round subsequent segments
-         * we have to recheck for blanks each time.
-         */
-        // this._data[expected_next] = 0;
-        result.push([expected_next, 0]);
+    var times = _.map(_.keys(this._data), base10Int).sort(),
+      result = [];
+    _.each(times, function (time, i, times) {
+      var next, expected_next, prev, expected_prev;
+
+      // check for previous measurement
+      if (i > 0) {
+        prev = times[i - 1];
+        expected_prev = time - this.interval_ms;
+        if (prev < expected_prev) {
+          result.push([expected_prev, 0]);
+        }
       }
-    }
+
+      // add the current time
+      result.push([ time, this._data[time] ]);
+
+      // check for next measurement
+      if (times.length > i) {
+        next = times[i + 1];
+        expected_next = time + this.interval_ms;
+        if (next > expected_next) {
+          result.push([expected_next, 0]);
+        }
+      }
+
+    }, this);
     // console.log(Math.round((performance.now() - startTime)*100)/100, 'ms to get', result.length, 'pairs');
     return result;
   };
