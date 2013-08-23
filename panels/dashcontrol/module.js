@@ -88,7 +88,7 @@ angular.module('kibana.dashcontrol', [])
       type,
       ($scope.elasticsearch.title || dashboard.current.title),
       ($scope.panel.ttl_enable ? ttl : false)
-      ).then(
+    ).then(
       function(result) {
       if(!_.isUndefined(result._id)) {
         alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 

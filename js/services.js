@@ -749,20 +749,22 @@ angular.module('kibana.services', [])
     });
   };
 
+
   this.elasticsearch_load = function(type,id) {
-    var request = ejs.Request().indices(config.kibana_index).types(type);
-    return request.query(
-      ejs.IdsQuery(id)
-    ).doSearch(function(results) {
-      if(_.isUndefined(results)) {
-        return false;
+    return $http({
+      url: config.elasticsearch + "/" + config.kibana_index + "/"+type+"/"+id,
+      method: "GET"
+    }).error(function(data, status, headers, conf) {
+      if(status === 0) {
+        alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
+          ". Please ensure that Elasticsearch is reachable from your system." ,'error');
       } else {
-        self.dash_load(angular.fromJson(results.hits.hits[0]['_source']['dashboard']));
-        return true;
+        alertSrv.set('Error',"Could not find "+id+". If you"+
+          " are using a proxy, ensure it is configured correctly",'error');
       }
-    },
-    function(data,status) {
-      alertSrv.set('Error','Could not load '+config.elasticsearch+"/"+config.kibana_index+"/"+type+"/"+id,'error');
+      return false;
+    }).success(function(data, status, headers) {
+      self.dash_load(angular.fromJson(data['_source']['dashboard']));
     });
   };
 
@@ -786,7 +788,6 @@ angular.module('kibana.services', [])
 
     request = type === 'temp' && ttl ? request.ttl(ttl) : request;
 
-    // TOFIX: Implement error handling here
     return request.doIndex(
       // Success
       function(result) {

@@ -92,12 +92,13 @@ angular.module('kibana.histogram', [])
   $scope.get_time_range = function () {
     var range = $scope.range = filterSrv.timeRange('min');
     return range;
-  }
+  };
+
   $scope.get_interval = function () {
-    var interval = $scope.panel.interval
-      , range;
+    var interval = $scope.panel.interval, 
+                    range;
     if ($scope.panel.auto_int) {
-      range = $scope.get_time_range()
+      range = $scope.get_time_range();
       if (range) {
         interval = kbn.secondsToHms(
           kbn.calculate_interval(range.from, range.to, $scope.panel.resolution, 0) / 1000
@@ -105,8 +106,8 @@ angular.module('kibana.histogram', [])
       }
     }
     $scope.panel.interval = interval || '10m';
-    return $scope.panel.interval
-  }
+    return $scope.panel.interval;
+  };
   /**
    * Fetch the data for a chunk of a queries results. Multiple segments occur when several indicies
    * need to be consulted (like timestamped logstash indicies)
@@ -116,7 +117,7 @@ angular.module('kibana.histogram', [])
    */
   $scope.get_data = function(segment, query_id) {
     if (_.isUndefined(segment)) {
-      segment = 0
+      segment = 0;
     }
     delete $scope.panel.error;
 
@@ -126,7 +127,7 @@ angular.module('kibana.histogram', [])
     }
 
 
-    var _range = $scope.get_time_range()
+    var _range = $scope.get_time_range();
     var _interval = $scope.get_interval(_range);
 
     if ($scope.panel.auto_int) {
@@ -187,9 +188,9 @@ angular.module('kibana.histogram', [])
       // Make sure we're still on the same query/queries
       if($scope.query_id === query_id && _.difference(facetIds, $scope.panel.queries.ids).length === 0) {
 
-        var i = 0
-          , time_series
-          , hits;
+        var i = 0, 
+          time_series, 
+          hits;
 
         _.each($scope.panel.queries.ids, function(id) {
           var query_results = results.facets[id];
@@ -341,7 +342,7 @@ angular.module('kibana.histogram', [])
                   lineWidth: scope.panel.linewidth,
                   steps: false
                 },
-                bars:   { show: scope.panel.bars,  fill: 1, barWidth: barwidth/1.8, zero: false },
+                bars:   { show: scope.panel.bars,  fill: 1, lineWidth:0, barWidth: barwidth/1.7, zero: false },
                 points: { show: scope.panel.points, fill: 1, fillColor: false, radius: 5},
                 shadowSize: 1
               },
@@ -396,9 +397,7 @@ angular.module('kibana.histogram', [])
 
       function tt(x, y, contents) {
         // If the tool tip already exists, don't recreate it, just update it
-        var tooltip = $('#pie-tooltip').length
-          ? $('#pie-tooltip')
-          : $('<div id="pie-tooltip"></div>');
+        var tooltip = $('#pie-tooltip').length ? $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
 
         tooltip.html(contents).css({
           position: 'absolute',
@@ -463,7 +462,7 @@ angular.module('kibana.histogram', [])
     if (end) {
       this.addValue(end, null);
     }
-  }
+  };
   /**
    * Add a row
    * @param  int  time  The time for the value, in
@@ -486,11 +485,11 @@ angular.module('kibana.histogram', [])
    */
   this.ZeroFilled.prototype.getFlotPairs = function () {
     // var startTime = performance.now();
-    var times = _.map(_.keys(this._data), base10Int).sort()
-      , result = []
-      , i
-      , next
-      , expected_next;
+    var times = _.map(_.keys(this._data), base10Int).sort(), 
+      result = [],
+      i,
+      next,
+      expected_next;
     for(i = 0; i < times.length; i++) {
       result.push([ times[i], this._data[times[i]] ]);
       next = times[i + 1];
