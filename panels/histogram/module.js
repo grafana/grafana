@@ -108,11 +108,17 @@ angular.module('kibana.histogram', [])
     $scope.panel.interval = interval || '10m';
     return $scope.panel.interval;
   };
+
   /**
    * Fetch the data for a chunk of a queries results. Multiple segments occur when several indicies
    * need to be consulted (like timestamped logstash indicies)
-   * @param  number   segment   The segment count, (0 based)
-   * @param  number   query_id  The id of the query, generated on the first run and passed back when
+   *
+   * The results of this function are stored on the scope's data property. This property will be an
+   * array of objects with the properties info, time_series, and hits. These objects are used in the
+   * render_panel function to create the historgram.
+   *
+   * @param {number} segment   The segment count, (0 based)
+   * @param {number} query_id  The id of the query, generated on the first run and passed back when
    *                            this call is made recursively for more segments
    */
   $scope.get_data = function(segment, query_id) {
@@ -469,17 +475,17 @@ angular.module('kibana.histogram', [])
    * Certain graphs require 0 entries to be specified for them to render
    * properly (like the line graph). So with this we will caluclate all of
    * the expected time measurements, and fill the missing ones in with 0
-   * @param object  opts  An object specifying some/all of the options
+   * @param {object} opts  An object specifying some/all of the options
    *
    * OPTIONS:
-   * @opt string  interval    The interval notion describing the expected spacing between
-   *                          each data point.
-   * @opt date    start_date  (optional) The start point for the time series, setting this and the
-   *                          end_date will ensure that the series streches to resemble the entire
-   *                          expected result
-   * @opt date    end_date    (optional) The end point for the time series, see start_date
-   * @opt string  fill_style  Either "minimal", or "all" describing the strategy used to zero-fill
-   *                          the series.
+   * @opt   {string}   interval    The interval notion describing the expected spacing between
+   *                                each data point.
+   * @opt   {date}     start_date  (optional) The start point for the time series, setting this and the
+   *                                end_date will ensure that the series streches to resemble the entire
+   *                                expected result
+   * @opt   {date}     end_date    (optional) The end point for the time series, see start_date
+   * @opt   {string}   fill_style  Either "minimal", or "all" describing the strategy used to zero-fill
+   *                                the series.
    */
   this.ZeroFilled = function (opts) {
     this.opts = _.defaults(opts, {
@@ -522,7 +528,7 @@ angular.module('kibana.histogram', [])
 
   /**
    * Get an array of the times that have been explicitly set in the series
-   * @param {array} include (optional) list of timestamps to include in the response
+   * @param  {array} include (optional) list of timestamps to include in the response
    * @return {array} An array of integer times.
    */
   this.ZeroFilled.prototype.getOrderedTimes = function (include) {
@@ -538,7 +544,7 @@ angular.module('kibana.histogram', [])
    * [ [time, value], [time, value], ... ]
    *
    * Heavy lifting is done by _get(Min|All)FlotPairs()
-   * @param {array} required_times  An array of timestamps that must be in the resulting pairs
+   * @param  {array} required_times  An array of timestamps that must be in the resulting pairs
    * @return {array}
    */
   this.ZeroFilled.prototype.getFlotPairs = function (required_times) {
