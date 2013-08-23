@@ -53,7 +53,6 @@ angular.module('kibana.services', [])
         self.map(indices).then(function(result) {
           self.mapping = _.extend(self.mapping,result);
           self.list = mapFields(self.mapping);
-          console.log(self.mapping);
         });
       // Otherwise just use the cached mapping
       } else {
