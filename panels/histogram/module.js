@@ -207,7 +207,7 @@ angular.module('kibana.histogram', [])
               interval: _interval,
               start_date: _range && _range.from,
               end_date: _range && _range.to,
-              fillStyle: 'minimal'
+              fill_style: 'minimal'
             });
             hits = 0;
           } else {
