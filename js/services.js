@@ -800,6 +800,10 @@ angular.module('kibana.services', [])
     );
   };
 
+  this.elasticsearch_create_index = function () {
+    return ejs.client.post('/'+config.kibana_index);
+  };
+
   this.elasticsearch_delete = function(id) {
     return ejs.Document(config.kibana_index,'dashboard',id).doDelete(
       // Success
