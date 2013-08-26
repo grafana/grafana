@@ -108,11 +108,17 @@ angular.module('kibana.histogram', [])
     $scope.panel.interval = interval || '10m';
     return $scope.panel.interval;
   };
+
   /**
    * Fetch the data for a chunk of a queries results. Multiple segments occur when several indicies
    * need to be consulted (like timestamped logstash indicies)
-   * @param  number   segment   The segment count, (0 based)
-   * @param  number   query_id  The id of the query, generated on the first run and passed back when
+   *
+   * The results of this function are stored on the scope's data property. This property will be an
+   * array of objects with the properties info, time_series, and hits. These objects are used in the
+   * render_panel function to create the historgram.
+   *
+   * @param {number} segment   The segment count, (0 based)
+   * @param {number} query_id  The id of the query, generated on the first run and passed back when
    *                            this call is made recursively for more segments
    */
   $scope.get_data = function(segment, query_id) {
@@ -197,12 +203,12 @@ angular.module('kibana.histogram', [])
           // we need to initialize the data variable on the first run,
           // and when we are working on the first segment of the data.
           if(_.isUndefined($scope.data[i]) || segment === 0) {
-            time_series = new timeSeries.ZeroFilled(
-              _interval,
-              // range may be false
-              _range && _range.from,
-              _range && _range.to
-            );
+            time_series = new timeSeries.ZeroFilled({
+              interval: _interval,
+              start_date: _range && _range.from,
+              end_date: _range && _range.to,
+              fill_style: 'minimal'
+            });
             hits = 0;
           } else {
             time_series = $scope.data[i].time_series;
@@ -216,9 +222,8 @@ angular.module('kibana.histogram', [])
             $scope.hits += entry.count; // Entire dataset level hits counter
           });
           $scope.data[i] = {
-            time_series: time_series,
             info: querySrv.list[id],
-            data: time_series.getFlotPairs(),
+            time_series: time_series,
             hits: hits
           };
 
@@ -310,7 +315,7 @@ angular.module('kibana.histogram', [])
 
         // Populate from the query service
         try {
-          _.each(scope.data,function(series) {
+          _.each(scope.data, function(series) {
             series.label = series.info.alias;
             series.color = series.info.color;
           });
@@ -383,6 +388,19 @@ angular.module('kibana.histogram', [])
               options.selection = { mode: "x", color: '#666' };
             }
 
+            // when rendering stacked bars, we need to ensure each point that has data is zero-filled
+            // so that the stacking happens in the proper order
+            var required_times = [];
+            if (scope.panel.bars && stack) {
+              required_times = Array.prototype.concat.apply([], _.map(scope.data, function (series) {
+                return series.time_series.getOrderedTimes();
+              }));
+            }
+
+            for (var i = 0; i < scope.data.length; i++) {
+              scope.data[i].data = scope.data[i].time_series.getFlotPairs(required_times);
+            }
+
             scope.plot = $.plot(elem, scope.data, options);
 
           } catch(e) {
@@ -448,36 +466,53 @@ angular.module('kibana.histogram', [])
   };
 })
 .service('timeSeries', function () {
+  // map compatable parseInt
+  function base10Int(val) {
+    return parseInt(val, 10);
+  }
+
   /**
    * Certain graphs require 0 entries to be specified for them to render
    * properly (like the line graph). So with this we will caluclate all of
    * the expected time measurements, and fill the missing ones in with 0
-   * @param date     start     The start time for the result set
-   * @param date     end       The end time for the result set
-   * @param integer  interval  The length between measurements, in es interval
-   *                           notation (1m, 30s, 1h, 15d)
+   * @param {object} opts  An object specifying some/all of the options
+   *
+   * OPTIONS:
+   * @opt   {string}   interval    The interval notion describing the expected spacing between
+   *                                each data point.
+   * @opt   {date}     start_date  (optional) The start point for the time series, setting this and the
+   *                                end_date will ensure that the series streches to resemble the entire
+   *                                expected result
+   * @opt   {date}     end_date    (optional) The end point for the time series, see start_date
+   * @opt   {string}   fill_style  Either "minimal", or "all" describing the strategy used to zero-fill
+   *                                the series.
    */
-  var undef;
-  function base10Int(val) {
-    return parseInt(val, 10);
-  }
-  this.ZeroFilled = function (interval, start, end) {
+  this.ZeroFilled = function (opts) {
+    this.opts = _.defaults(opts, {
+      interval: '10m',
+      start_date: null,
+      end_date: null,
+      fill_style: 'minimal'
+    });
+
     // the expected differenece between readings.
-    this.interval_ms = base10Int(kbn.interval_to_seconds(interval)) * 1000;
+    this.interval_ms = base10Int(kbn.interval_to_seconds(opts.interval)) * 1000;
+
     // will keep all values here, keyed by their time
     this._data = {};
 
-    if (start) {
-      this.addValue(start, null);
+    if (opts.start_date) {
+      this.addValue(opts.start_date, null);
     }
-    if (end) {
-      this.addValue(end, null);
+    if (opts.end_date) {
+      this.addValue(opts.end_date, null);
     }
   };
+
   /**
    * Add a row
-   * @param  int  time  The time for the value, in
-   * @param  any  value The value at this time
+   * @param {int}  time  The time for the value, in
+   * @param {any}  value The value at this time
    */
   this.ZeroFilled.prototype.addValue = function (time, value) {
     if (time instanceof Date) {
@@ -486,44 +521,101 @@ angular.module('kibana.histogram', [])
       time = base10Int(time);
     }
     if (!isNaN(time)) {
-      this._data[time] = (value === undef ? 0 : value);
+      this._data[time] = (_.isUndefined(value) ? 0 : value);
     }
+    this._cached_times = null;
   };
+
+  /**
+   * Get an array of the times that have been explicitly set in the series
+   * @param  {array} include (optional) list of timestamps to include in the response
+   * @return {array} An array of integer times.
+   */
+  this.ZeroFilled.prototype.getOrderedTimes = function (include) {
+    var times = _.map(_.keys(this._data), base10Int).sort();
+    if (_.isArray(include)) {
+      times = times.concat(include);
+    }
+    return times;
+  };
+
   /**
    * return the rows in the format:
    * [ [time, value], [time, value], ... ]
-   * @return array
+   *
+   * Heavy lifting is done by _get(Min|All)FlotPairs()
+   * @param  {array} required_times  An array of timestamps that must be in the resulting pairs
+   * @return {array}
    */
-  this.ZeroFilled.prototype.getFlotPairs = function () {
-    // var startTime = performance.now();
-    var times = _.map(_.keys(this._data), base10Int).sort(),
-      result = [];
-    _.each(times, function (time, i, times) {
-      var next, expected_next, prev, expected_prev;
+  this.ZeroFilled.prototype.getFlotPairs = function (required_times) {
+    var times = this.getOrderedTimes(required_times),
+      strategy,
+      pairs;
 
-      // check for previous measurement
-      if (i > 0) {
-        prev = times[i - 1];
-        expected_prev = time - this.interval_ms;
-        if (prev < expected_prev) {
-          result.push([expected_prev, 0]);
-        }
+    if(this.opts.fill_style === 'all') {
+      strategy = this._getAllFlotPairs;
+    } else {
+      strategy = this._getMinFlotPairs;
+    }
+
+    return _.reduce(
+      times,    // what
+      strategy, // how
+      [],       // where
+      this      // context
+    );
+  };
+
+  /**
+   * ** called as a reduce stragegy in getFlotPairs() **
+   * Fill zero's on either side of the current time, unless there is already a measurement there or
+   * we are looking at an edge.
+   * @return {array} An array of points to plot with flot
+   */
+  this.ZeroFilled.prototype._getMinFlotPairs = function (result, time, i, times) {
+    var next, expected_next, prev, expected_prev;
+
+    // check for previous measurement
+    if (i > 0) {
+      prev = times[i - 1];
+      expected_prev = time - this.interval_ms;
+      if (prev < expected_prev) {
+        result.push([expected_prev, 0]);
       }
+    }
 
-      // add the current time
-      result.push([ time, this._data[time] ]);
+    // add the current time
+    result.push([ time, this._data[time] || 0 ]);
 
-      // check for next measurement
-      if (times.length > i) {
-        next = times[i + 1];
-        expected_next = time + this.interval_ms;
-        if (next > expected_next) {
-          result.push([expected_next, 0]);
-        }
+    // check for next measurement
+    if (times.length > i) {
+      next = times[i + 1];
+      expected_next = time + this.interval_ms;
+      if (next > expected_next) {
+        result.push([expected_next, 0]);
       }
+    }
 
-    }, this);
-    // console.log(Math.round((performance.now() - startTime)*100)/100, 'ms to get', result.length, 'pairs');
     return result;
   };
+
+  /**
+   * ** called as a reduce stragegy in getFlotPairs() **
+   * Fill zero's to the right of each time, until the next measurement is reached or we are at the
+   * last measurement
+   * @return {array}  An array of points to plot with flot
+   */
+  this.ZeroFilled.prototype._getAllFlotPairs = function (result, time, i, times) {
+    var next, expected_next;
+
+    result.push([ times[i], this._data[times[i]] || 0 ]);
+    next = times[i + 1];
+    expected_next = times[i] + this.interval_ms;
+    for(; times.length > i && next > expected_next; expected_next+= this.interval_ms) {
+      result.push([expected_next, 0]);
+    }
+
+    return result;
+  };
+
 });
