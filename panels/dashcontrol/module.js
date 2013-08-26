@@ -17,7 +17,7 @@
   * hide_control :: Upon save, hide this panel
   * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
   * temp :: Allow saving of temp dashboards
-  * ttl :: Enable setting ttl.
+  * ttl :: Enable setting ttl. 
   * temp_ttl :: How long should temp dashboards persist
 
 */
@@ -61,10 +61,6 @@ angular.module('kibana.dashcontrol', [])
     services: {}
   };
 
-  function notice(type, title, message) {
-    alertSrv.set(title, message, type, 5000);
-  }
-
   $scope.init = function() {
     $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
     $scope.gist = {};
@@ -73,17 +69,17 @@ angular.module('kibana.dashcontrol', [])
 
   $scope.set_default = function() {
     if(dashboard.set_default()) {
-      notice('success', 'Local Default Set', dashboard.current.title+' has been set as your local default');
+      alertSrv.set('Local Default Set',dashboard.current.title+' has been set as your local default','success',5000);
     } else {
-      notice('error', 'Incompatible Browser', 'Sorry, your browser is too old for this feature');
+      alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
     }
   };
 
   $scope.purge_default = function() {
     if(dashboard.purge_default()) {
-      notice('success', 'Local Default Clear', 'Your local default dashboard has been cleared');
+      alertSrv.set('Local Default Clear','Your local default dashboard has been cleared','success',5000);
     } else {
-      notice('error', 'Incompatible Browser', 'Sorry, your browser is too old for this feature');
+      alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
     }
   };
 
@@ -95,30 +91,13 @@ angular.module('kibana.dashcontrol', [])
     ).then(
       function(result) {
       if(!_.isUndefined(result._id)) {
-        notice(
-          'success',
-          'Dashboard Saved',
-          'This dashboard has been saved to Elasticsearch as "'+result._id + '"'
-        );
+        alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
+          result._id + '"','success',5000);
         if(type === 'temp') {
-          $scope.share = dashboard.share_link(dashboard.current.title, 'temp', result._id);
+          $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
         }
       } else {
-        if (result.status === 404) {
-          // auto create must be disabled and the index doesn't exist, create it!
-          return dashboard.elasticsearch_create_index().then(function () {
-            return $scope.elasticsearch_save(type, ttl);
-          }, function () {
-            notice(
-              'error',
-              'Save failed',
-              'Dashboard could not be saved because the "'+config.kibana_index+'" '+
-                'index does not exist and could not be created.'
-            );
-          });
-        } else {
-          notice('error', 'Save failed', 'Dashboard could not be saved to Elasticsearch');
-        }
+        alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
       }
     });
   };
@@ -128,15 +107,15 @@ angular.module('kibana.dashcontrol', [])
       function(result) {
         if(!_.isUndefined(result)) {
           if(result.found) {
-            notice('success', 'Dashboard Deleted', id+' has been deleted');
+            alertSrv.set('Dashboard Deleted',id+' has been deleted','success',5000);
             // Find the deleted dashboard in the cached list and remove it
             var toDelete = _.where($scope.elasticsearch.dashboards,{_id:id})[0];
             $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,toDelete);
           } else {
-            notice('warning', 'Dashboard Not Found', 'Could not find '+id+' in Elasticsearch');
+            alertSrv.set('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000);
           }
         } else {
-          notice('error', 'Dashboard Not Deleted', 'An error occurred deleting the dashboard');
+          alertSrv.set('Dashboard Not Deleted','An error occurred deleting the dashboard','error',5000);
         }
       }
     );
@@ -158,14 +137,10 @@ angular.module('kibana.dashcontrol', [])
       function(link) {
       if(!_.isUndefined(link)) {
         $scope.gist.last = link;
-        notice(
-          'success',
-          'Gist saved',
-          'You will be able to access your exported dashboard file at '+
-            '<a href="'+link+'">'+link+'</a> in a moment'
-        );
+        alertSrv.set('Gist saved','You will be able to access your exported dashboard file at '+
+          '<a href="'+link+'">'+link+'</a> in a moment','success');
       } else {
-        notice('error', 'Save failed', 'Gist could not be saved');
+        alertSrv.set('Save failed','Gist could not be saved','error',5000);
       }
     });
   };
@@ -176,7 +151,7 @@ angular.module('kibana.dashcontrol', [])
       if(files && files.length > 0) {
         $scope.gist.files = files;
       } else {
-        notice('error', 'Gist Failed', 'Could not retrieve dashboard list from gist',5000);
+        alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
       }
     });
   };
@@ -208,7 +183,7 @@ angular.module('kibana.dashcontrol', [])
         // Something
         document.getElementById('dashupload').addEventListener('change', file_selected, false);
       } else {
-        alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error', 5000);
+        alertSrv.set('Oops','Sorry, the HTML5 File APIs are not fully supported in this browser.','error');
       }
     }
   };
