@@ -392,9 +392,9 @@ angular.module('kibana.histogram', [])
             // so that the stacking happens in the proper order
             var required_times = [];
             if (scope.panel.bars && stack) {
-              required_times = Array.prototype.concat.apply([], _.map(scope.data, function (series) {
-                return series.time_series.getOrderedTimes();
-              }));
+              required_times = _.uniq(Array.prototype.concat.apply([], _.map(scope.data, function (query) {
+                return query.time_series.getOrderedTimes();
+              })).sort(), true);
             }
 
             for (var i = 0; i < scope.data.length; i++) {
@@ -532,11 +532,11 @@ angular.module('kibana.histogram', [])
    * @return {array} An array of integer times.
    */
   this.ZeroFilled.prototype.getOrderedTimes = function (include) {
-    var times = _.map(_.keys(this._data), base10Int).sort();
+    var times = _.map(_.keys(this._data), base10Int);
     if (_.isArray(include)) {
       times = times.concat(include);
     }
-    return times;
+    return _.uniq(times.sort(), true);
   };
 
   /**
