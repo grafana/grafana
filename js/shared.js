@@ -73,10 +73,20 @@
   };
 
   kbn.top_field_values = function(docs,field,count) {
-    var counts = _.countBy(_.pluck(docs,field),function(field){
-      return _.isUndefined(field) ? '' : field;
+    var all_values = _.pluck(docs,field),
+      groups = {};
+
+    // manually grouping into pairs allows us to keep the original value,
+    _.each(all_values, function (value) {
+      var key = _.isUndefined(value) ? '' : value.toString();
+      if (_.has(groups, key)) {
+        groups[key][1] ++;
+      } else {
+        groups[key] = [value, 1];
+      }
     });
-    return _.pairs(counts).sort(function(a, b) {
+
+    return _.values(groups).sort(function(a, b) {
       return a[1] - b[1];
     }).reverse().slice(0,count);
   };
