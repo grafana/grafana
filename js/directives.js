@@ -9,7 +9,7 @@ angular.module('kibana.directives', [])
     link: function(scope, elem, attrs) {
       var template = '<i class="icon-spinner small icon-spin icon-large panel-loading" '+
         'ng-show="panelMeta.loading == true && !panel.title"></i>'+
-        ' <span class="editlink panelextra pointer" style="right:15px;top:0px" ' + 
+        ' <span class="editlink panelextra pointer" style="right:15px;top:0px" ' +
         'bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
         '<span class="small">{{panel.type}}</span> <i class="icon-cog pointer"></i> '+
         '</span><h4>'+
@@ -73,7 +73,7 @@ angular.module('kibana.directives', [])
       elm.bind('blur', function() {
         scope.$apply(function() {
           ngModelCtrl.$setViewValue(elm.val());
-        });         
+        });
       });
     }
   };

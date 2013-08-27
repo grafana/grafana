@@ -9,7 +9,7 @@
   * mode :: 'text', 'html', 'markdown'
   * content :: Content of the panel
   * style :: Hash containing css properties
-  
+
 */
 
 'use strict';
@@ -35,7 +35,7 @@ angular.module('kibana.text', [])
   $scope.init = function() {
     $scope.ready = false;
   };
-  
+
 }).directive('markdown', function() {
   return {
     restrict: 'E',

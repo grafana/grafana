@@ -17,7 +17,7 @@
   * hide_control :: Upon save, hide this panel
   * elasticsearch_size :: show this many dashboards under the ES section in the load drop down
   * temp :: Allow saving of temp dashboards
-  * ttl :: Enable setting ttl. 
+  * ttl :: Enable setting ttl.
   * temp_ttl :: How long should temp dashboards persist
 
 */
@@ -91,7 +91,7 @@ angular.module('kibana.dashcontrol', [])
     ).then(
       function(result) {
       if(!_.isUndefined(result._id)) {
-        alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' + 
+        alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' +
           result._id + '"','success',5000);
         if(type === 'temp') {
           $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);

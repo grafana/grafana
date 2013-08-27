@@ -5,7 +5,7 @@
   ## Derivequeries
 
   ### Parameters
-  * label :: The label to stick over the field 
+  * label :: The label to stick over the field
   * query :: A string to use as a filter for the terms facet
   * field :: the field to facet on
   * rest  :: include a filter that matches all other terms,
@@ -54,7 +54,7 @@ angular.module('kibana.derivequeries', [])
 
   $scope.get_data = function() {
     update_history($scope.panel.query);
-    
+
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
       return;
@@ -122,8 +122,8 @@ angular.module('kibana.derivequeries', [])
     });
   };
 
-  $scope.set_refresh = function (state) { 
-    $scope.refresh = state; 
+  $scope.set_refresh = function (state) {
+    $scope.refresh = state;
   };
 
   $scope.close_edit = function() {

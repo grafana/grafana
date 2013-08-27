@@ -7,8 +7,8 @@
 
   ### Parameters
   * map :: 'world', 'us' or 'europe'
-  * colors :: an array of colors to use for the regions of the map. If this is a 2 
-              element array, jquerymap will generate shades between these colors 
+  * colors :: an array of colors to use for the regions of the map. If this is a 2
+              element array, jquerymap will generate shades between these colors
   * size :: How big to make the facet. Higher = more countries
   * exclude :: Exlude the array of counties
   * spyable :: Show the 'eye' icon that reveals the last ES query
@@ -53,7 +53,7 @@ angular.module('kibana.map', [])
   };
 
   $scope.get_data = function() {
-    
+
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
       return;
@@ -65,7 +65,7 @@ angular.module('kibana.map', [])
     request = $scope.ejs.Request().indices(dashboard.indices);
 
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-    // This could probably be changed to a BoolFilter 
+    // This could probably be changed to a BoolFilter
     var boolQuery = $scope.ejs.BoolQuery();
     _.each($scope.panel.queries.ids,function(id) {
       boolQuery = boolQuery.should(querySrv.getEjsObj(id));
@@ -106,8 +106,8 @@ angular.module('kibana.map', [])
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
-        "'</pre>", 
-    }; 
+        "'</pre>",
+    };
   };
 
   $scope.build_search = function(field,value) {
@@ -137,12 +137,12 @@ angular.module('kibana.map', [])
         // Using LABjs, wait until all scripts are loaded before rendering panel
         var scripts = $LAB.script("panels/map/lib/jquery.jvectormap.min.js").wait()
           .script("panels/map/lib/map."+scope.panel.map+".js");
-                    
+
         // Populate element. Note that jvectormap appends, does not replace.
         scripts.wait(function(){
           elem.text('');
           $('.jvectormap-zoomin,.jvectormap-zoomout,.jvectormap-label').remove();
-          var map = elem.vectorMap({  
+          var map = elem.vectorMap({
             map: scope.panel.map,
             regionStyle: {initial: {fill: '#8c8c8c'}},
             zoomOnScroll: false,

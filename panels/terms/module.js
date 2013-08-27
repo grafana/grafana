@@ -11,7 +11,7 @@
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
   * chart :: Show a chart? 'none', 'bar', 'pie'
   * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
-  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time. 
+  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time.
   * lables :: Only 'pie' charts. Labels on the pie?
 
 */
@@ -26,7 +26,7 @@ angular.module('kibana.terms', [])
       {title:'Queries', src:'partials/querySelect.html'}
     ],
     status  : "Beta",
-    description : "Displays the results of an elasticsearch facet as a pie chart, bar chart, or a "+ 
+    description : "Displays the results of an elasticsearch facet as a pie chart, bar chart, or a "+
       "table"
   };
 
@@ -55,7 +55,7 @@ angular.module('kibana.terms', [])
 
   $scope.init = function () {
     $scope.hits = 0;
-   
+
     $scope.$on('refresh',function(){
       $scope.get_data();
     });
@@ -67,7 +67,7 @@ angular.module('kibana.terms', [])
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
       return;
-    } 
+    }
 
     $scope.panelMeta.loading = true;
     var request,
@@ -77,7 +77,7 @@ angular.module('kibana.terms', [])
     request = $scope.ejs.Request().indices(dashboard.indices);
 
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-    // This could probably be changed to a BoolFilter 
+    // This could probably be changed to a BoolFilter
     boolQuery = $scope.ejs.BoolQuery();
     _.each($scope.panel.queries.ids,function(id) {
       boolQuery = boolQuery.should(querySrv.getEjsObj(id));
@@ -108,11 +108,11 @@ angular.module('kibana.terms', [])
       $scope.hits = results.hits.total;
       $scope.data = [];
       _.each(results.facets.terms.terms, function(v) {
-        var slice = { label : v.term, data : [[k,v.count]], actions: true}; 
+        var slice = { label : v.term, data : [[k,v.count]], actions: true};
         $scope.data.push(slice);
         k = k + 1;
       });
-      
+
       $scope.data.push({label:'Missing field',
         data:[[k,results.facets.terms.missing]],meta:"missing",color:'#aaa',opacity:0});
       $scope.data.push({label:'Other values',
@@ -135,8 +135,8 @@ angular.module('kibana.terms', [])
     dashboard.refresh();
   };
 
-  $scope.set_refresh = function (state) { 
-    $scope.refresh = state; 
+  $scope.set_refresh = function (state) {
+    $scope.refresh = state;
   };
 
   $scope.close_edit = function() {
@@ -169,7 +169,7 @@ angular.module('kibana.terms', [])
       scope.$on('render',function(){
         render_panel();
       });
-  
+
       // Re-render if the window is resized
       angular.element(window).bind('resize', function(){
         render_panel();
@@ -186,16 +186,16 @@ angular.module('kibana.terms', [])
 
         // Make a clone we can operate on.
         chartData = _.clone(scope.data);
-        chartData = scope.panel.missing ? chartData : 
+        chartData = scope.panel.missing ? chartData :
           _.without(chartData,_.findWhere(chartData,{meta:'missing'}));
-        chartData = scope.panel.other ? chartData : 
+        chartData = scope.panel.other ? chartData :
         _.without(chartData,_.findWhere(chartData,{meta:'other'}));
 
         // Populate element.
         scripts.wait(function(){
           // Populate element
           try {
-            // Add plot to scope so we can build out own legend 
+            // Add plot to scope so we can build out own legend
             if(scope.panel.chart === 'bar') {
               plot = $.plot(elem, chartData, {
                 legend: { show: false },
@@ -238,11 +238,11 @@ angular.module('kibana.terms', [])
                     stroke: {
                       width: 0
                     },
-                    label: { 
+                    label: {
                       show: scope.panel.labels,
                       radius: 2/3,
                       formatter: labelFormat,
-                      threshold: 0.1 
+                      threshold: 0.1
                     }
                   }
                 },
@@ -269,7 +269,7 @@ angular.module('kibana.terms', [])
       }
 
       function tt(x, y, contents) {
-        var tooltip = $('#pie-tooltip').length ? 
+        var tooltip = $('#pie-tooltip').length ?
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
         //var tooltip = $('#pie-tooltip')
         tooltip.html(contents).css({
@@ -293,7 +293,7 @@ angular.module('kibana.terms', [])
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
-          var value = scope.panel.chart === 'bar' ? 
+          var value = scope.panel.chart === 'bar' ?
             item.datapoint[1] : item.datapoint[1][0][1];
           tt(pos.pageX, pos.pageY,
             "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+

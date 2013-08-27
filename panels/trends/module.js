@@ -139,7 +139,7 @@ angular.module('kibana.trends', [])
   };
 
   // Populate scope when we have results
-  var process_results = function(results,_segment,query_id) { 
+  var process_results = function(results,_segment,query_id) {
     results.then(function(results) {
       $scope.panelMeta.loading = false;
       if(_segment === 0) {
@@ -147,7 +147,7 @@ angular.module('kibana.trends', [])
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime();
       }
-      
+
       // Check for error and abort if found
       if(!(_.isUndefined(results.error))) {
         $scope.panel.error = $scope.parse_error(results.error);
@@ -158,7 +158,7 @@ angular.module('kibana.trends', [])
       var facetIds = _.map(_.keys(results.facets),function(k){if(!isNaN(k)){return parseInt(k, 10);}});
 
       // Make sure we're still on the same query/queries
-      if($scope.query_id === query_id && 
+      if($scope.query_id === query_id &&
         _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
         ) {
         var i = 0;
@@ -168,17 +168,17 @@ angular.module('kibana.trends', [])
           var o = results.facets['old_'+id].count;
 
           var hits = {
-            new : _.isUndefined($scope.data[i]) || _segment === 0 ? n : $scope.data[i].hits.new+n,        
+            new : _.isUndefined($scope.data[i]) || _segment === 0 ? n : $scope.data[i].hits.new+n,
             old : _.isUndefined($scope.data[i]) || _segment === 0 ? o : $scope.data[i].hits.old+o
           };
-          
+
           $scope.hits.new += n;
           $scope.hits.old += o;
 
-          var percent = percentage(hits.old,hits.new) == null ? 
+          var percent = percentage(hits.old,hits.new) == null ?
             '?' : Math.round(percentage(hits.old,hits.new)*100)/100;
           // Create series
-          $scope.data[i] = { 
+          $scope.data[i] = {
             info: querySrv.list[id],
             hits: {
               new : hits.new,
@@ -203,8 +203,8 @@ angular.module('kibana.trends', [])
     return x === 0 ? null : 100*(y-x)/x;
   }
 
-  $scope.set_refresh = function (state) { 
-    $scope.refresh = state; 
+  $scope.set_refresh = function (state) {
+    $scope.refresh = state;
   };
 
   $scope.close_edit = function() {
