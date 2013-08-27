@@ -3,7 +3,7 @@
 'use strict';
 
 angular.module('kibana.controllers', [])
-.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource, 
+.controller('DashCtrl', function($scope, $rootScope, $http, $timeout, $route, ejsResource,
   fields, dashboard, alertSrv) {
 
   $scope.editor = {
@@ -23,7 +23,7 @@ angular.module('kibana.controllers', [])
     $scope.fields = fields;
     $scope.reset_row();
 
-    var ejs = $scope.ejs = ejsResource(config.elasticsearch);  
+    var ejs = $scope.ejs = ejsResource(config.elasticsearch);
   };
 
   $scope.add_row = function(dash,row) {
@@ -58,7 +58,7 @@ angular.module('kibana.controllers', [])
     return $scope.editorTabs;
   };
 
-  // This is whoafully incomplete, but will do for now 
+  // This is whoafully incomplete, but will do for now
   $scope.parse_error = function(data) {
     var _error = data.match("nested: (.*?);");
     return _.isNull(_error) ? data : _error[1];

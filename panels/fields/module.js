@@ -23,7 +23,7 @@ angular.module('kibana.fields', [])
   var _d = {
     style   : {},
     arrange : 'vertical',
-    micropanel_position : 'right', 
+    micropanel_position : 'right',
   };
   _.defaults($scope.panel,_d);
 

@@ -1,3 +1,4 @@
+/*jshint forin:false*/
 // Wrap this all up in a 'kbn' object so I don't have a billion globals
 (function() {
   'use strict';
@@ -102,54 +103,54 @@
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
-    case (interval <= 500):         
+    case (interval <= 500):
       return 100;       // 0.1s
     // 5s
-    case (interval <= 5000):        
+    case (interval <= 5000):
       return 1000;      // 1s
     // 7.5s
-    case (interval <= 7500):        
+    case (interval <= 7500):
       return 5000;      // 5s
     // 15s
-    case (interval <= 15000):       
+    case (interval <= 15000):
       return 10000;     // 10s
     // 45s
-    case (interval <= 45000):       
+    case (interval <= 45000):
       return 30000;     // 30s
     // 3m
-    case (interval <= 180000):      
+    case (interval <= 180000):
       return 60000;     // 1m
     // 9m
-    case (interval <= 450000):      
+    case (interval <= 450000):
       return 300000;    // 5m
     // 20m
-    case (interval <= 1200000):     
+    case (interval <= 1200000):
       return 600000;    // 10m
     // 45m
-    case (interval <= 2700000):     
+    case (interval <= 2700000):
       return 1800000;   // 30m
     // 2h
-    case (interval <= 7200000):     
+    case (interval <= 7200000):
       return 3600000;   // 1h
     // 6h
-    case (interval <= 21600000):    
+    case (interval <= 21600000):
       return 10800000;  // 3h
     // 24h
-    case (interval <= 86400000):      
+    case (interval <= 86400000):
       return 43200000;  // 12h
     // 48h
-    case (interval <= 172800000):     
+    case (interval <= 172800000):
       return 86400000;  // 24h
     // 1w
-    case (interval <= 604800000):   
+    case (interval <= 604800000):
       return 86400000;  // 24h
     // 3w
-    case (interval <= 1814400000):  
+    case (interval <= 1814400000):
       return 604800000; // 1w
     // 2y
-    case (interval < 3628800000):   
+    case (interval < 3628800000):
       return 2592000000; // 30d
-    default:                        
+    default:
       return 31536000000; // 1y
     }
   };
@@ -194,21 +195,21 @@
   kbn.interval_to_seconds = function(string) {
     var matches = string.match(/(\d+(?:\.\d+)?)([Mwdhmsy])/);
     switch (matches[2]) {
-    case 'y': 
+    case 'y':
       return matches[1]*31536000;
-    case 'M': 
+    case 'M':
       return matches[1]*2592000;
-    case 'w': 
+    case 'w':
       return matches[1]*604800;
-    case 'd': 
+    case 'd':
       return matches[1]*86400;
-    case 'h': 
+    case 'h':
       return matches[1]*3600;
-    case 'm': 
+    case 'm':
       return matches[1]*60;
-    case 's': 
+    case 's':
       return matches[1];
-    } 
+    }
   };
 
   // This should go away, moment.js can do this
@@ -235,7 +236,7 @@
               if (objidx > 0) {
                 strval = strval + ', ';
               }
-              
+
               strval = strval + JSON.stringify(obj[objidx]);
             }
             array[rootname] = strval;
@@ -299,7 +300,7 @@ _.mixin({
 
     array.splice(toIndex, 0, array.splice(fromIndex, 1)[0] );
     return array;
-  } 
+  }
 });
 
 _.mixin({
@@ -308,7 +309,7 @@ _.mixin({
 
     array.splice(index, 1);
     return array;
-  } 
+  }
 });
 
 _.mixin({

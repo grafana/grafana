@@ -6,7 +6,7 @@
 
   ### Parameters
   * panels :: an array of panel objects. All of their spans should be set to 12
-  
+
 */
 
 'use strict';
@@ -84,7 +84,7 @@ angular.module('kibana.column', [])
           }
           elem.html($compile(angular.element(template))(scope));
         });
-      });   
+      });
     }
   };
 }).filter('withoutColumn', function() {

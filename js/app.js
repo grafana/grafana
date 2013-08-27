@@ -5,9 +5,9 @@
 // Base modules
 var modules = [
   'kibana.services',
-  'kibana.controllers', 
-  'kibana.filters', 
-  'kibana.directives', 
+  'kibana.controllers',
+  'kibana.filters',
+  'kibana.directives',
   'elasticjs.service',
   '$strap.directives',
   'kibana.panels',

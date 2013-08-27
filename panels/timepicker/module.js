@@ -36,7 +36,7 @@ angular.module('kibana.timepicker', [])
     timefield     : '@timestamp',
     timeformat    : "",
     refresh       : {
-      enable  : false, 
+      enable  : false,
       interval: 30,
       min     : 3
     }
@@ -112,7 +112,7 @@ angular.module('kibana.timepicker', [])
     $scope.panel.refresh.interval = refresh_interval;
     if(_.isNumber($scope.panel.refresh.interval)) {
       if($scope.panel.refresh.interval < $scope.panel.refresh.min) {
-        $scope.panel.refresh.interval = $scope.panel.refresh.min;        
+        $scope.panel.refresh.interval = $scope.panel.refresh.min;
         timer.cancel($scope.refresh_timer);
         return;
       }
@@ -140,7 +140,7 @@ angular.module('kibana.timepicker', [])
     // we're in relative mode since we dont want to store the time object in the
     // json for relative periods
     if($scope.panel.mode !== 'relative') {
-      $scope.panel.time = { 
+      $scope.panel.time = {
         from : $scope.time.from.format("MM/DD/YYYY HH:mm:ss"),
         to : $scope.time.to.format("MM/DD/YYYY HH:mm:ss"),
       };
@@ -151,7 +151,7 @@ angular.module('kibana.timepicker', [])
 
   $scope.set_mode = function(mode) {
     $scope.panel.mode = mode;
-    $scope.panel.refresh.enable = mode === 'absolute' ? 
+    $scope.panel.refresh.enable = mode === 'absolute' ?
       false : $scope.panel.refresh.enable;
 
     update_panel();
@@ -177,7 +177,7 @@ angular.module('kibana.timepicker', [])
     $scope.time_apply();
   };
 
-  // 
+  //
   $scope.time_calc = function(){
     var from,to;
     // If time picker is defined (usually is) TOFIX: Horrible parsing
@@ -208,17 +208,17 @@ angular.module('kibana.timepicker', [])
     };
   };
 
-  $scope.time_apply = function() { 
-    $scope.panel.error = "";   
+  $scope.time_apply = function() {
+    $scope.panel.error = "";
     // Update internal time object
 
     // Remove all other time filters
     filterSrv.removeByType('time');
 
-    
+
     $scope.time = $scope.time_calc();
     $scope.time.field = $scope.panel.timefield;
-    
+
     update_panel();
     set_time_filter($scope.time);
 
@@ -254,7 +254,7 @@ angular.module('kibana.timepicker', [])
       to : {
         time : to.format("HH:mm:ss"),
         date : to.format("MM/DD/YYYY")
-      } 
+      }
     };
   }
 
