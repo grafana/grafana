@@ -14,7 +14,7 @@
   * legend :: Show the legend?
   * labels :: Label the slices of the pie?
   * mode :: 'terms' or 'goal'
-  * default_field ::  LOL wat? A dumb fail over field if for some reason the query object 
+  * default_field ::  LOL wat? A dumb fail over field if for some reason the query object
                       doesn't have a field
   * spyable :: Show the 'eye' icon that displays the last ES query for this panel
 */
@@ -36,7 +36,7 @@ angular.module('kibana.pie', [])
     editorTabs : [
       {title:'Queries', src:'partials/querySelect.html'}
     ],
-    query   : { field:"_type", goal: 100}, 
+    query   : { field:"_type", goal: 100},
     queries     : {
       mode        : 'all',
       ids         : []
@@ -70,8 +70,8 @@ angular.module('kibana.pie', [])
     }
   };
 
-  $scope.set_refresh = function (state) { 
-    $scope.refresh = state; 
+  $scope.set_refresh = function (state) {
+    $scope.refresh = state;
   };
 
   $scope.close_edit = function() {
@@ -83,18 +83,18 @@ angular.module('kibana.pie', [])
   };
 
   $scope.get_data = function() {
-    
+
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
       return;
-    } 
+    }
 
 
     $scope.panelMeta.loading = true;
     var request = $scope.ejs.Request().indices(dashboard.indices);
 
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-    // This could probably be changed to a BoolFilter 
+    // This could probably be changed to a BoolFilter
     var boolQuery = $scope.ejs.BoolQuery();
     _.each($scope.panel.queries.ids,function(id) {
       boolQuery = boolQuery.should(querySrv.getEjsObj(id));
@@ -127,7 +127,7 @@ angular.module('kibana.pie', [])
         $scope.data = [];
         var k = 0;
         _.each(results.facets.pie.terms, function(v) {
-          var slice = { label : v.term, data : v.count }; 
+          var slice = { label : v.term, data : v.count };
           $scope.data.push();
           $scope.data.push(slice);
           k = k + 1;
@@ -140,9 +140,9 @@ angular.module('kibana.pie', [])
         .query(boolQuery)
         .filter(filterSrv.getBoolFilter(filterSrv.ids))
         .size(0);
-      
+
       $scope.populate_modal(request);
- 
+
       results = request.doSearch();
 
       results.then(function(results) {
@@ -165,8 +165,8 @@ angular.module('kibana.pie', [])
       body : "<h5>Last Elasticsearch Query</h5><pre>"+
           'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
           angular.toJson(JSON.parse(request.toString()),true)+
-        "'</pre>", 
-    }; 
+        "'</pre>",
+    };
   };
 
 })
@@ -194,11 +194,11 @@ angular.module('kibana.pie', [])
 
         var scripts = $LAB.script("common/lib/panels/jquery.flot.js").wait()
                           .script("common/lib/panels/jquery.flot.pie.js");
-    
+
         var label;
 
         if(scope.panel.mode === 'goal') {
-          label = { 
+          label = {
             show: scope.panel.labels,
             radius: 0,
             formatter: function(label, series){
@@ -211,15 +211,15 @@ angular.module('kibana.pie', [])
               }
             },
           };
-        } else { 
-          label = { 
+        } else {
+          label = {
             show: scope.panel.labels,
             radius: 2/3,
             formatter: function(label, series){
               return '<div "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
                 label+'<br/>'+Math.round(series.percent)+'%</div>';
             },
-            threshold: 0.1 
+            threshold: 0.1
           };
         }
 
@@ -241,10 +241,10 @@ angular.module('kibana.pie', [])
             }
           },
           //grid: { hoverable: true, clickable: true },
-          grid:   { 
+          grid:   {
             backgroundColor: null,
-            hoverable: true, 
-            clickable: true 
+            hoverable: true,
+            clickable: true
           },
           legend: { show: false },
           colors: querySrv.colors
@@ -263,7 +263,7 @@ angular.module('kibana.pie', [])
       }
 
       function tt(x, y, contents) {
-        var tooltip = $('#pie-tooltip').length ? 
+        var tooltip = $('#pie-tooltip').length ?
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
 
         tooltip.html(contents).css({

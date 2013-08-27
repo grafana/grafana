@@ -1,4 +1,4 @@
-/*jshint globalstrict:true */
+/*jshint globalstrict:true, forin:false */
 /*global angular:true */
 /*global Blob:false*/
 'use strict';

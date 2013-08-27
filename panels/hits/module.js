@@ -10,7 +10,7 @@
   * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
   * chart :: Show a chart? 'none', 'bar', 'pie'
   * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
-  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time. 
+  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time.
   * lables :: Only 'pie' charts. Labels on the pie?
 
 */
@@ -48,7 +48,7 @@ angular.module('kibana.hits', [])
 
   $scope.init = function () {
     $scope.hits = 0;
-   
+
     $scope.$on('refresh',function(){
       $scope.get_data();
     });
@@ -67,14 +67,14 @@ angular.module('kibana.hits', [])
 
     var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
-    
+
     $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
     // Build the question part of the query
     _.each($scope.panel.queries.ids, function(id) {
       var _q = $scope.ejs.FilteredQuery(
         querySrv.getEjsObj(id),
         filterSrv.getBoolFilter(filterSrv.ids));
-    
+
       request = request
         .facet($scope.ejs.QueryFacet(id)
           .query(_q)
@@ -95,7 +95,7 @@ angular.module('kibana.hits', [])
         $scope.data = [];
         query_id = $scope.query_id = new Date().getTime();
       }
-      
+
       // Check for error and abort if found
       if(!(_.isUndefined(results.error))) {
         $scope.panel.error = $scope.parse_error(results.error);
@@ -106,18 +106,18 @@ angular.module('kibana.hits', [])
       var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k, 10);});
 
       // Make sure we're still on the same query/queries
-      if($scope.query_id === query_id && 
+      if($scope.query_id === query_id &&
         _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
         ) {
         var i = 0;
         _.each($scope.panel.queries.ids, function(id) {
           var v = results.facets[id];
-          var hits = _.isUndefined($scope.data[i]) || _segment === 0 ? 
+          var hits = _.isUndefined($scope.data[i]) || _segment === 0 ?
             v.count : $scope.data[i].hits+v.count;
           $scope.hits += v.count;
 
           // Create series
-          $scope.data[i] = { 
+          $scope.data[i] = {
             info: querySrv.list[id],
             id: id,
             hits: hits,
@@ -130,13 +130,13 @@ angular.module('kibana.hits', [])
         if(_segment < dashboard.indices.length-1) {
           $scope.get_data(_segment+1,query_id);
         }
-        
+
       }
     });
   };
 
-  $scope.set_refresh = function (state) { 
-    $scope.refresh = state; 
+  $scope.set_refresh = function (state) {
+    $scope.refresh = state;
   };
 
   $scope.close_edit = function() {
@@ -161,7 +161,7 @@ angular.module('kibana.hits', [])
       scope.$on('render',function(){
         render_panel();
       });
-  
+
       // Re-render if the window is resized
       angular.element(window).bind('resize', function(){
         render_panel();
@@ -186,7 +186,7 @@ angular.module('kibana.hits', [])
         scripts.wait(function(){
           // Populate element
           try {
-            // Add plot to scope so we can build out own legend 
+            // Add plot to scope so we can build out own legend
             if(scope.panel.chart === 'bar') {
               scope.plot = $.plot(elem, scope.data, {
                 legend: { show: false },
@@ -222,7 +222,7 @@ angular.module('kibana.hits', [])
                     stroke: {
                       width: 0
                     },
-                    label: { 
+                    label: {
                       show: scope.panel.labels,
                       radius: 2/3,
                       formatter: function(label, series){
@@ -230,7 +230,7 @@ angular.module('kibana.hits', [])
                           ' "style="font-size:8pt;text-align:center;padding:2px;color:white;">'+
                           label+'<br/>'+Math.round(series.percent)+'%</div>';
                       },
-                      threshold: 0.1 
+                      threshold: 0.1
                     }
                   }
                 },
@@ -247,7 +247,7 @@ angular.module('kibana.hits', [])
       }
 
       function tt(x, y, contents) {
-        var tooltip = $('#pie-tooltip').length ? 
+        var tooltip = $('#pie-tooltip').length ?
           $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
         //var tooltip = $('#pie-tooltip')
         tooltip.html(contents).css({
@@ -265,7 +265,7 @@ angular.module('kibana.hits', [])
 
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
-          var value = scope.panel.chart === 'bar' ? 
+          var value = scope.panel.chart === 'bar' ?
             item.datapoint[1] : item.datapoint[1][0][1];
           tt(pos.pageX, pos.pageY,
             "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+
