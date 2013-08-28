@@ -301,13 +301,10 @@
   };
 
   kbn.query_color_dot = function (color, diameter) {
-    return '<div style="' + [
-        'vertical-align:middle',
-        'border-radius:10px',
+    return '<div class="icon-circle" style="' + [
         'display:inline-block',
-        'background:' + color,
-        'height:' + diameter + 'px',
-        'width:' + diameter + 'px',
+        'color:' + color,
+        'font-size:' + diameter + 'px',
       ].join(';') + '"></div>';
   };
 }).call(this);
