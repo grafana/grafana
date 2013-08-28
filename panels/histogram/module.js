@@ -391,7 +391,7 @@ angular.module('kibana.histogram', [])
             // when rendering stacked bars, we need to ensure each point that has data is zero-filled
             // so that the stacking happens in the proper order
             var required_times = [];
-            if (scope.panel.bars && stack) {
+            if (scope.data.length > 1) {
               required_times = _.uniq(Array.prototype.concat.apply([], _.map(scope.data, function (query) {
                 return query.time_series.getOrderedTimes();
               })).sort(), true);
@@ -458,7 +458,7 @@ angular.module('kibana.histogram', [])
   }
 
   function getDatesTime(date) {
-    return Math.floor(date.getTime() / 1000)*1000
+    return Math.floor(date.getTime() / 1000)*1000;
   }
 
   /**
@@ -536,7 +536,8 @@ angular.module('kibana.histogram', [])
   this.ZeroFilled.prototype.getFlotPairs = function (required_times) {
     var times = this.getOrderedTimes(required_times),
       strategy,
-      pairs;
+      pairs,
+      pairs_empty;
 
     if(this.opts.fill_style === 'all') {
       strategy = this._getAllFlotPairs;
@@ -553,10 +554,10 @@ angular.module('kibana.histogram', [])
 
     // if the start and end of the pairs are inside either the start or end time,
     // add those times to the series with null values so the graph will stretch to contain them.
-    if (this.start_time && pairs[0][0] > this.start_time) {
+    if (this.start_time && (pairs.length === 0 || pairs[0][0] > this.start_time)) {
       pairs.unshift([this.start_time, null]);
     }
-    if (this.end_time && pairs[pairs.length -1][0] < this.end_time) {
+    if (this.end_time && (pairs.length === 0 || pairs[pairs.length - 1][0] < this.end_time)) {
       pairs.push([this.end_time, null]);
     }
 
