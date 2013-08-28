@@ -424,32 +424,18 @@ angular.module('kibana.histogram', [])
         return "%H:%M:%S";
       }
 
-      function tt(x, y, contents) {
-        // If the tool tip already exists, don't recreate it, just update it
-        var tooltip = $('#pie-tooltip').length ? $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-
-        tooltip.html(contents).css({
-          position: 'absolute',
-          top     : y + 5,
-          left    : x + 5,
-          color   : "#c8c8c8",
-          padding : '10px',
-          'font-size': '11pt',
-          'font-weight' : 200,
-          'background-color': '#1f1f1f',
-          'border-radius': '5px',
-        }).appendTo("body");
-      }
-
+      var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
-          tt(pos.pageX, pos.pageY,
-            "<div style='vertical-align:middle;display:inline-block;background:"+
-            item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
-            item.datapoint[1].toFixed(0) + " @ " +
-            moment(item.datapoint[0]).format('MM/DD HH:mm:ss'));
+          $tooltip
+            .html(
+              kbn.query_color_dot(item.series.color, 15) + ' ' +
+              item.datapoint[1].toFixed(0) + " @ " +
+              moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
+            )
+            .place_tt(pos.pageX, pos.pageY);
         } else {
-          $("#pie-tooltip").remove();
+          $tooltip.detach();
         }
       });
 

@@ -262,24 +262,7 @@ angular.module('kibana.pie', [])
 
       }
 
-      function tt(x, y, contents) {
-        var tooltip = $('#pie-tooltip').length ?
-          $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-
-        tooltip.html(contents).css({
-          position: 'absolute',
-          top     : y + 10,
-          left    : x + 10,
-          color   : "#c8c8c8",
-          padding : '10px',
-          'font-size': '11pt',
-          'font-weight' : 200,
-          'background-color': '#1f1f1f',
-          'border-radius': '5px',
-        }).appendTo("body");
-      }
-
-      elem.bind("plotclick", function (event, pos, object) {
+      elem.bind('plotclick', function (event, pos, object) {
         if (!object) {
           return;
         }
@@ -289,14 +272,20 @@ angular.module('kibana.pie', [])
         }
       });
 
-      elem.bind("plothover", function (event, pos, item) {
+      var $tooltip = $('<div>');
+      elem.bind('plothover', function (event, pos, item) {
         if (item) {
-          var percent = parseFloat(item.series.percent).toFixed(1) + "%";
-          tt(pos.pageX, pos.pageY, "<div "+"style='vertical-align:middle;display:inline-block;"+
-            "background:"+item.series.color+";height:15px;width:15px;border-radius:10px;'></div> "+
-            (item.series.label||"")+ " " + percent);
+          $tooltip
+            .html([
+              kbn.query_color_dot(item.series.color, 15),
+              (item.series.label || ''),
+              parseFloat(item.series.percent).toFixed(1) + '%'
+            ].join(' '))
+            .place_tt(pos.pageX, pos.pageY, {
+              offset: 10
+            });
         } else {
-          $("#pie-tooltip").remove();
+          $tooltip.remove();
         }
       });
 

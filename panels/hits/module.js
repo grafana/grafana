@@ -246,32 +246,16 @@ angular.module('kibana.hits', [])
         });
       }
 
-      function tt(x, y, contents) {
-        var tooltip = $('#pie-tooltip').length ?
-          $('#pie-tooltip') : $('<div id="pie-tooltip"></div>');
-        //var tooltip = $('#pie-tooltip')
-        tooltip.html(contents).css({
-          position: 'absolute',
-          top     : y + 5,
-          left    : x + 5,
-          color   : "#c8c8c8",
-          padding : '10px',
-          'font-size': '11pt',
-          'font-weight' : 200,
-          'background-color': '#1f1f1f',
-          'border-radius': '5px',
-        }).appendTo("body");
-      }
-
+      var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
         if (item) {
           var value = scope.panel.chart === 'bar' ?
             item.datapoint[1] : item.datapoint[1][0][1];
-          tt(pos.pageX, pos.pageY,
-            "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:"+
-            item.series.color+";height:20px;width:20px'></div> "+value.toFixed(0));
+          $tooltip
+            .html(kbn.query_color_dot(item.series.color, 20) + ' ' + value.toFixed(0))
+            .place_tt(pos.pageX, pos.pageY);
         } else {
-          $("#pie-tooltip").remove();
+          $tooltip.remove();
         }
       });
 
