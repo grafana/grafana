@@ -426,13 +426,19 @@ angular.module('kibana.histogram', [])
 
       var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
+        var grouping;
         if (item) {
+          if (item.series.info.alias) {
+            grouping = '<small style="font-size:0.9em;">' +
+              '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
+              item.series.info.alias +
+            '</small><br>';
+          } else {
+            grouping = kbn.query_color_dot(item.series.color, 15) + ' ';
+          }
           $tooltip
             .html(
-              '<small style="font-size:0.9em;color:'+item.series.color+'">' +
-                '<i class="icon-circle"></i>' + ' ' +
-                (item.series.info.alias || item.series.info.query) +
-              '</small><br>' +
+              grouping +
               item.datapoint[1].toFixed(0) + " @ " +
               moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
             )
