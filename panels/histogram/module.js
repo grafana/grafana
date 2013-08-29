@@ -429,7 +429,10 @@ angular.module('kibana.histogram', [])
         if (item) {
           $tooltip
             .html(
-              kbn.query_color_dot(item.series.color, 15) + ' ' +
+              '<small style="font-size:0.9em;color:'+item.series.color+'">' +
+                '<i class="icon-circle"></i>' + ' ' +
+                (item.series.info.alias || item.series.info.query) +
+              '</small><br>' +
               item.datapoint[1].toFixed(0) + " @ " +
               moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
             )
