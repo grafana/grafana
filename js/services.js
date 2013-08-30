@@ -17,21 +17,20 @@ angular.module('kibana.services', [])
         text: text || '',
         severity: severity || 'info',
       },
-      _ca = angular.copy(_a),
-      _clist = angular.copy(self.list);
+      _ca = angular.toJson(_a),
+      _clist = _.map(self.list,function(alert){return angular.toJson(alert);});
 
-    console.log(_.contains(_clist,_ca))
+    // If we already have this alert, remove it and add a new one
+    // Why do this instead of skipping the add because it resets the timer
+    if(_.contains(_clist,_ca)) {
+      _.remove(self.list,_.indexOf(_clist,_ca));
+    }
 
-    // If there isn't already a message with the same text
-    if(!_.contains(_clist,_ca)) {
-      console.log(_clist);
-      console.log([_ca]);
-      self.list.push(_a);
-      if (timeout > 0) {
-        $timeout(function() {
-          self.list = _.without(self.list,_a);
-        }, timeout);
-      }
+    self.list.push(_a);
+    if (timeout > 0) {
+      $timeout(function() {
+        self.list = _.without(self.list,_a);
+      }, timeout);
     }
   };
 
