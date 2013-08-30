@@ -20,6 +20,15 @@ angular.module('kibana.directives', [])
     }
   };
 })
+.directive('tip', function($compile) {
+  return {
+    restrict: 'E',
+    link: function(scope, elem, attrs) {
+      var _t = '<i class="icon-question-sign" bs-tooltip="\''+elem.text()+'\'"></i>';
+      elem.replaceWith($compile(angular.element(_t))(scope));
+    }
+  };
+})
 .directive('addPanel', function($compile) {
   return {
     restrict: 'A',
