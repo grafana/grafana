@@ -45,9 +45,9 @@
     <form class="form-search" style="position:relative;margin-bottom:5px;" ng-submit="refresh()">
       <span class="begin-query">
         <i class="icon-circle pointer" data-unique="1" bs-popover="'panels/query/meta.html'" data-placement="right" ng-style="{color: querySrv.list[id].color}"></i>
-        <i class="icon-remove-sign pointer remove-query" ng-show="unPinnedQueries.length>1" ng-click="querySrv.remove(id);refresh()"></i>
+        <i class="icon-remove-sign pointer remove-query" ng-show="querySrv.ids.length > 1" ng-click="querySrv.remove(id);refresh()"></i>
       </span>
-      <input class="search-query panel-query" ng-class="{'input-block-level': unPinnedQueries.length==1,'last-query': $last,'has-remove': unPinnedQueries.length>1}" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="querySrv.list[id].query"/>
+      <input class="search-query panel-query" ng-class="{ 'input-block-level': unPinnedQueries.length==1, 'last-query': $last, 'has-remove': querySrv.ids.length > 1 }" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="querySrv.list[id].query" />
       <span class="end-query">
         <i class="icon-search pointer" ng-click="refresh()" ng-show="$last"></i>
         <i class="icon-plus pointer" ng-click="querySrv.set({})" ng-show="$last"></i>
