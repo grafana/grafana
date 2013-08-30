@@ -1,11 +1,11 @@
-  <div class="row-fluid">    
+  <div class="row-fluid">
     <div class="span3">
       <form>
-        <h6>Field</h6>
-        <input  bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.field">
+        <h6>Field <tip>2 letter country or state code</tip></h6>
+        <input bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.field">
       </form>
     </div>
-    <div class="span1"><h6>Map</h6> 
+    <div class="span1"><h6>Map</h6>
       <select ng-change="$emit('render')" class="input-small" ng-model="panel.map" ng-options="f for f in ['world','europe','usa']"></select>
     </div>
   </div>
