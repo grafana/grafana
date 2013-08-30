@@ -72,6 +72,9 @@ angular.module('kibana.histogram', [])
     'y-axis'    : true,
     percentage  : false,
     interactive : true,
+    tooltip     : {
+      value_type: 'cumulative'
+    }
   };
 
   _.defaults($scope.panel,_d);
@@ -426,11 +429,17 @@ angular.module('kibana.histogram', [])
 
       var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
+        var value;
         if (item) {
+          if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual')  {
+            value = item.datapoint[1] - item.datapoint[2];
+          } else {
+            value = item.datapoint[1];
+          }
           $tooltip
             .html(
               kbn.query_color_dot(item.series.color, 15) + ' ' +
-              item.datapoint[1].toFixed(0) + " @ " +
+              value + " @ " +
               moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
             )
             .place_tt(pos.pageX, pos.pageY);
