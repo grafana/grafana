@@ -73,7 +73,8 @@ angular.module('kibana.histogram', [])
     percentage  : false,
     interactive : true,
     tooltip     : {
-      value_type: 'cumulative'
+      value_type: 'cumulative',
+      query_as_alias: false
     }
   };
 
@@ -429,8 +430,16 @@ angular.module('kibana.histogram', [])
 
       var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
-        var value;
+        var group, value;
         if (item) {
+          if (item.series.info.alias || scope.panel.tooltip.query_as_alias) {
+            group = '<small style="font-size:0.9em;">' +
+              '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
+              (item.series.info.alias || item.series.info.query)+
+            '</small><br>';
+          } else {
+            group = kbn.query_color_dot(item.series.color, 15) + ' ';
+          }
           if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual')  {
             value = item.datapoint[1] - item.datapoint[2];
           } else {
@@ -438,9 +447,7 @@ angular.module('kibana.histogram', [])
           }
           $tooltip
             .html(
-              kbn.query_color_dot(item.series.color, 15) + ' ' +
-              value + " @ " +
-              moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
+              group + value + " @ " + moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
             )
             .place_tt(pos.pageX, pos.pageY);
         } else {
