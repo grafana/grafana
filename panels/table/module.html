@@ -74,7 +74,8 @@
                     <i class='icon-search pointer' ng-click="build_search(key,value)"></i>
                     <i class='icon-ban-circle pointer' ng-click="build_search(key,value,true)"></i>
                   </td>
-                  <td style="white-space:pre-wrap">{{value}}</td>
+                  <!-- At some point we need to create a more efficient way of applying the filter pipeline -->
+                  <td style="white-space:pre-wrap" ng-bind-html-unsafe="value|noXml|urlLink"></td>
                 </tr>
               </table>
             </td>

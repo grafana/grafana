@@ -72,6 +72,10 @@ angular.module('kibana.histogram', [])
     'y-axis'    : true,
     percentage  : false,
     interactive : true,
+    tooltip     : {
+      value_type: 'cumulative',
+      query_as_alias: false
+    }
   };
 
   _.defaults($scope.panel,_d);
@@ -426,21 +430,24 @@ angular.module('kibana.histogram', [])
 
       var $tooltip = $('<div>');
       elem.bind("plothover", function (event, pos, item) {
-        var grouping;
+        var group, value;
         if (item) {
-          if (item.series.info.alias) {
-            grouping = '<small style="font-size:0.9em;">' +
+          if (item.series.info.alias || scope.panel.tooltip.query_as_alias) {
+            group = '<small style="font-size:0.9em;">' +
               '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-              item.series.info.alias +
+              (item.series.info.alias || item.series.info.query)+
             '</small><br>';
           } else {
-            grouping = kbn.query_color_dot(item.series.color, 15) + ' ';
+            group = kbn.query_color_dot(item.series.color, 15) + ' ';
+          }
+          if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual')  {
+            value = item.datapoint[1] - item.datapoint[2];
+          } else {
+            value = item.datapoint[1];
           }
           $tooltip
             .html(
-              grouping +
-              item.datapoint[1].toFixed(0) + " @ " +
-              moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
+              group + value + " @ " + moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
             )
             .place_tt(pos.pageX, pos.pageY);
         } else {
