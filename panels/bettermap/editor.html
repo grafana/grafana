@@ -1,8 +1,8 @@
-  <div class="row-fluid">    
+  <div class="row-fluid">
     <div class="span4">
       <form>
-        <h6>Coordinate Field <i class="icon-question-sign" bs-tooltip="'geoJSON array! Long,Lat NOT Lat,Long'"></i></h6>
-        <input  bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.field">
+        <h6>Coordinate Field <tip>geoJSON array! Long,Lat NOT Lat,Long</tip></h6>
+        <input bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.field">
       </form>
     </div>
     <div class="span4">
@@ -11,7 +11,7 @@
         <input  bs-typeahead="fields.list" type="text" class="input-small" ng-model="panel.tooltip">
       </form>
     </div>
-    <div class="span2"><h6>Max Points</h6> 
+    <div class="span2"><h6>Max Points</h6>
       <input type="number" class="input-small" ng-model="panel.size">
     </div>
   </div>
