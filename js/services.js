@@ -11,16 +11,27 @@ angular.module('kibana.services', [])
   this.list = [];
 
   this.set = function(title,text,severity,timeout) {
-    var _a = {
-      title: title || '',
-      text: text || '',
-      severity: severity || 'info',
-    };
-    self.list.push(_a);
-    if (timeout > 0) {
-      $timeout(function() {
-        self.list = _.without(self.list,_a);
-      }, timeout);
+    var
+      _a = {
+        title: title || '',
+        text: text || '',
+        severity: severity || 'info',
+      },
+      _ca = angular.copy(_a),
+      _clist = angular.copy(self.list);
+
+    console.log(_.contains(_clist,_ca))
+
+    // If there isn't already a message with the same text
+    if(!_.contains(_clist,_ca)) {
+      console.log(_clist);
+      console.log([_ca]);
+      self.list.push(_a);
+      if (timeout > 0) {
+        $timeout(function() {
+          self.list = _.without(self.list,_a);
+        }, timeout);
+      }
     }
   };
 
