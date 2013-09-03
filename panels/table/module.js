@@ -127,6 +127,9 @@ angular.module('kibana.table', [])
     // This needs to be abstracted somewhere
     if(_.isArray(value)) {
       query = "(" + _.map(value,function(v){return angular.toJson(v);}).join(" AND ") + ")";
+    } else if (_.isUndefined(value)) {
+      query = '*';
+      negate = !negate;
     } else {
       query = angular.toJson(value);
     }
