@@ -135,8 +135,6 @@ angular.module('kibana.histogram', [])
     if(dashboard.indices.length === 0) {
       return;
     }
-
-
     var _range = $scope.get_time_range();
     var _interval = $scope.get_interval(_range);
 
@@ -176,6 +174,7 @@ angular.module('kibana.histogram', [])
 
     // Then run it
     var results = request.doSearch();
+
 
     // Populate scope when we have results
     results.then(function(results) {

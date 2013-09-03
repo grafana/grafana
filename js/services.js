@@ -252,6 +252,13 @@ angular.module('kibana.services', [])
     ids : [],
   });
 
+  // Defaults for query objects
+  var _query = {
+    query: '*',
+    alias: '',
+    pin: false,
+    type: 'lucene'
+  };
   // For convenience
   var ejs = ejsResource(config.elasticsearch);
   var _q = dashboard.current.services.query;
@@ -275,6 +282,12 @@ angular.module('kibana.services', [])
     self.list = dashboard.current.services.query.list;
     self.ids = dashboard.current.services.query.ids;
 
+    // Check each query object, populate its defaults
+    _.each(self.list,function(query,id) {
+      _.defaults(query,_query);
+      query.color = colorAt(id);
+    });
+
     if (self.ids.length === 0) {
       self.set({});
     }
@@ -290,16 +303,12 @@ angular.module('kibana.services', [])
         return false;
       }
     } else {
-      var _id = nextId();
-      var _query = {
-        query: '*',
-        alias: '',
-        color: colorAt(_id),
-        pin: false,
-        id: _id,
-        type: 'lucene'
-      };
+      var _id = query.id || nextId();
+      query.id = _id;
+      query.color = query.color || colorAt(_id);
       _.defaults(query,_query);
+
+
       self.list[_id] = query;
       self.ids.push(_id);
       return _id;
@@ -373,11 +382,13 @@ angular.module('kibana.services', [])
 .service('filterSrv', function(dashboard, ejsResource) {
   // Create an object to hold our service state on the dashboard
   dashboard.current.services.filter = dashboard.current.services.filter || {};
-  _.defaults(dashboard.current.services.filter,{
+
+  // Defaults for it
+  var _d = {
     idQueue : [],
     list : {},
     ids : []
-  });
+  };
 
   // For convenience
   var ejs = ejsResource(config.elasticsearch);
@@ -388,6 +399,9 @@ angular.module('kibana.services', [])
 
   // Call this whenever we need to reload the important stuff
   this.init = function() {
+    // Populate defaults
+    _.defaults(dashboard.current.services.filter,_d);
+
     // Accessors
     self.list = dashboard.current.services.filter.list;
     self.ids = dashboard.current.services.filter.ids;
@@ -606,6 +620,9 @@ angular.module('kibana.services', [])
       case ('file'):
         self.file_load(_id);
         break;
+      case('script'):
+        self.script_load(_id);
+        break;
       default:
         self.file_load('default.json');
       }
@@ -665,6 +682,7 @@ angular.module('kibana.services', [])
   };
 
   this.dash_load = function(dashboard) {
+
     // Cancel all timers
     timer.cancel_all();
 
@@ -744,11 +762,32 @@ angular.module('kibana.services', [])
     };
   };
 
+  var renderTemplate = function(json,params) {
+    var _r;
+    _.templateSettings = {interpolate : /\{\{(.+?)\}\}/g};
+    var template = _.template(json);
+    var rendered = template({ARGS:params});
+
+    try {
+      _r = angular.fromJson(rendered);
+    } catch(e) {
+      _r = false;
+    }
+    return _r;
+  };
+
   this.file_load = function(file) {
     return $http({
       url: "dashboards/"+file,
       method: "GET",
+      transformResponse: function(response) {
+        return renderTemplate(response,$routeParams);
+      }
     }).then(function(result) {
+      if(!result) {
+        return false;
+      }
+
       var _dashboard = result.data;
       _.defaults(_dashboard,_dash);
       self.dash_load(_dashboard);
@@ -759,11 +798,13 @@ angular.module('kibana.services', [])
     });
   };
 
-
   this.elasticsearch_load = function(type,id) {
     return $http({
       url: config.elasticsearch + "/" + config.kibana_index + "/"+type+"/"+id,
-      method: "GET"
+      method: "GET",
+      transformResponse: function(response) {
+        return renderTemplate(angular.fromJson(response)['_source']['dashboard'],$routeParams);
+      }
     }).error(function(data, status, headers, conf) {
       if(status === 0) {
         alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
@@ -774,7 +815,32 @@ angular.module('kibana.services', [])
       }
       return false;
     }).success(function(data, status, headers) {
-      self.dash_load(angular.fromJson(data['_source']['dashboard']));
+      self.dash_load(data);
+    });
+  };
+
+  this.script_load = function(file) {
+    return $http({
+      url: "dashboards/"+file,
+      method: "GET",
+      transformResponse: function(response) {
+        /*jshint -W054 */
+        var _f = new Function(response);
+        return _f($routeParams);
+      }
+    }).then(function(result) {
+      if(!result) {
+        return false;
+      }
+      var _dashboard = result.data;
+      _.defaults(_dashboard,_dash);
+      self.dash_load(_dashboard);
+      return true;
+    },function(result) {
+      alertSrv.set('Error',
+        "Could not load <i>scripts/"+file+"</i>. Please make sure it exists and returns a valid dashboard" ,
+        'error');
+      return false;
     });
   };
 

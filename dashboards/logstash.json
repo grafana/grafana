@@ -3,14 +3,11 @@
   "services": {
     "query": {
       "idQueue": [
-        1,
-        2,
-        3,
-        4
+        1
       ],
       "list": {
         "0": {
-          "query": "*",
+          "query": "{{ARGS.query || '*'}}",
           "alias": "",
           "color": "#7EB26D",
           "id": 0
@@ -22,8 +19,7 @@
     },
     "filter": {
       "idQueue": [
-        1,
-        2
+        1
       ],
       "list": {
         "0": {
@@ -70,7 +66,7 @@
             "7d",
             "30d"
           ],
-          "timespan": "1h",
+          "timespan": "{{ARGS.from || '1h'}}",
           "timefield": "@timestamp",
           "timeformat": "",
           "refresh": {
