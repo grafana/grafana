@@ -606,9 +606,9 @@ angular.module('kibana.services', [])
 
   var route = function() {
     // Is there a dashboard type and id in the URL?
-    if(!(_.isUndefined($routeParams.type)) && !(_.isUndefined($routeParams.id))) {
-      var _type = $routeParams.type;
-      var _id = $routeParams.id;
+    if(!(_.isUndefined($routeParams.kbnType)) && !(_.isUndefined($routeParams.kbnId))) {
+      var _type = $routeParams.kbnType;
+      var _id = $routeParams.kbnId;
 
       switch(_type) {
       case ('elasticsearch'):
@@ -827,7 +827,7 @@ angular.module('kibana.services', [])
       method: "GET",
       transformResponse: function(response) {
         /*jshint -W054 */
-        var _f = new Function(response);
+        var _f = new Function("ARGS",response);
         return _f($routeParams);
       }
     }).then(function(result) {

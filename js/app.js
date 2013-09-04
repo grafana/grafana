@@ -48,10 +48,10 @@ labjs.wait(function(){
         .when('/dashboard', {
           templateUrl: 'partials/dashboard.html',
         })
-        .when('/dashboard/:type/:id', {
+        .when('/dashboard/:kbnType/:kbnId', {
           templateUrl: 'partials/dashboard.html',
         })
-        .when('/dashboard/:type/:id/:params', {
+        .when('/dashboard/:kbnType/:kbnId/:params', {
           templateUrl: 'partials/dashboard.html'
         })
         .otherwise({

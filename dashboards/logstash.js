@@ -18,13 +18,16 @@
  *
  */
 
-var dashboard, ARGS, queries, _d_timespan;
+'use strict';
+
+// Setup some variables
+var dashboard, queries, _d_timespan;
+
+// All url parameters are available via the ARGS object
+var ARGS;
 
 // Set a default timespan if one isn't specified
 _d_timespan = '1h';
-
-// arguments[0] contains a hash of the URL parameters, make it shorter
-ARGS = arguments[0];
 
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
@@ -40,7 +43,7 @@ if(!_.isUndefined(ARGS.index)) {
   dashboard.index = {
     default: ARGS.index,
     interval: 'none'
-  }
+  };
 } else {
   // Don't fail to default
   dashboard.failover = false;
@@ -48,7 +51,7 @@ if(!_.isUndefined(ARGS.index)) {
     default: ARGS.index||'ADD_A_TIME_FILTER',
     pattern: ARGS.pattern||'[logstash-]YYYY.MM.DD',
     interval: ARGS.interval||'day'
-  }
+  };
 }
 
 // In this dashboard we let users pass queries as comma seperated list to the query parameter.
@@ -59,7 +62,7 @@ if(!_.isUndefined(ARGS.query)) {
   queries = _.object(_.map(ARGS.query.split(ARGS.split||','), function(v,k) {
     return [k,{
       query: v,
-      id: parseInt(k),
+      id: parseInt(k,10),
       alias: v
     }];
   }));
@@ -70,14 +73,14 @@ if(!_.isUndefined(ARGS.query)) {
       query: '*',
       id: 0
     }
-  }
+  };
 }
 
 // Now populate the query service with our objects
 dashboard.services.query = {
   list : queries,
-  ids : _.map(_.keys(queries),function(v){return parseInt(v);})
-}
+  ids : _.map(_.keys(queries),function(v){return parseInt(v,10);})
+};
 
 // Lets also add a default time filter, the value of which can be specified by the user
 // This isn't strictly needed, but it gets rid of the info alert about the missing time filter
@@ -93,7 +96,7 @@ dashboard.services.filter = {
     }
   },
   ids: [0]
-}
+};
 
 // Ok, lets make some rows. The Filters row is collapsed by default
 dashboard.rows = [
@@ -138,7 +141,7 @@ dashboard.rows[1].panels = [
   {
     type: 'Query'
   }
-]
+];
 
 
 // Add a filtering panel to the 3rd row
@@ -146,7 +149,7 @@ dashboard.rows[2].panels = [
   {
     type: 'filtering'
   }
-]
+];
 
 // And a histogram that allows the user to specify the interval and time field
 dashboard.rows[3].panels = [
@@ -155,7 +158,7 @@ dashboard.rows[3].panels = [
     time_field: ARGS.timefield||"@timestamp",
     auto_int: true
   }
-]
+];
 
 // And a table row where you can specify field and sort order
 dashboard.rows[4].panels = [
@@ -165,7 +168,7 @@ dashboard.rows[4].panels = [
     sort: !_.isUndefined(ARGS.sort) ? ARGS.sort.split(',') : [ARGS.timefield||'@timestamp','desc'],
     overflow: 'expand'
   }
-]
+];
 
 // Now return the object and we're good!
 return dashboard;
