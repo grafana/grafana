@@ -659,9 +659,7 @@ angular.module('kibana.services', [])
             if(self.current.failover) {
               self.indices = [self.current.index.default];
             } else {
-              alertSrv.set('No indices matched','The pattern <i>'+self.current.index.pattern+
-                '</i> did not match any indices in your selected'+
-                ' time range.','info',5000);
+
               // Do not issue refresh if no indices match. This should be removed when panels
               // properly understand when no indices are present
               return false;
@@ -670,10 +668,14 @@ angular.module('kibana.services', [])
           $rootScope.$broadcast('refresh');
         });
       } else {
-        // This is not optimal, we should be getting the entire index list here, or at least every
-        // index that possibly matches the pattern
-        self.indices = [self.current.index.default];
-        $rootScope.$broadcast('refresh');
+        if(self.current.failover) {
+          self.indices = [self.current.index.default];
+          $rootScope.$broadcast('refresh');
+        } else {
+          alertSrv.set("No time filter",
+            'Timestamped indices are configured without a failover. Waiting for time filter.',
+            'info',5000);
+        }
       }
     } else {
       self.indices = [self.current.index.default];
