@@ -15,7 +15,7 @@ module.exports = function (grunt) {
         ' Licensed <%= pkg.license %> */\n\n'
     },
     jshint: {
-      files: ['Gruntfile.js', 'js/*.js', 'panels/*/*.js' ],
+      files: ['Gruntfile.js', 'js/*.js', 'panels/*/*.js', 'dashboards/*.js' ],
       options: {
         jshintrc: '.jshintrc'
       }
