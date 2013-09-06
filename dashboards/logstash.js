@@ -129,10 +129,6 @@ dashboard.rows[0].panels = [
     type: 'timepicker',
     span: 6,
     timespan: ARGS.from||_d_timespan
-  },
-  {
-    type: 'dashcontrol',
-    span: 3
   }
 ];
 

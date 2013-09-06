@@ -12,7 +12,7 @@ angular.module('kibana.directives', [])
         ' <span class="editlink panelextra pointer" style="right:15px;top:0px" ' +
         'bs-modal="\'partials/paneleditor.html\'" ng-show="panel.editable != false">'+
         '<span class="small">{{panel.type}}</span> <i class="icon-cog pointer"></i> '+
-        '</span><h4>'+
+        '</span><h4 ng-show="panel.title">'+
         '{{panel.title}} '+
         '<i class="icon-spinner smaller icon-spin icon-large" ng-show="panelMeta.loading == true && panel.title"></i>'+
         '</h4>';
@@ -24,7 +24,8 @@ angular.module('kibana.directives', [])
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var _t = '<i class="icon-question-sign" bs-tooltip="\''+elem.text()+'\'"></i>';
+      var _t = '<i class="icon-'+(attrs.icon||'question-sign')+'" bs-tooltip="\''+
+        kbn.addslashes(elem.text())+'\'"></i>';
       elem.replaceWith($compile(angular.element(_t))(scope));
     }
   };
@@ -96,5 +97,37 @@ angular.module('kibana.directives', [])
       });
     });
   };
-}]);
+}])
+.directive('dashUpload', function(timer, dashboard, alertSrv){
+  return {
+    restrict: 'A',
+    link: function(scope, elem, attrs) {
+      function file_selected(evt) {
+        var files = evt.target.files; // FileList object
+
+        // files is a FileList of File objects. List some properties.
+        var output = [];
+        var readerOnload = function(theFile) {
+          return function(e) {
+            dashboard.dash_load(JSON.parse(e.target.result));
+            scope.$apply();
+          };
+        };
+        for (var i = 0, f; f = files[i]; i++) {
+          var reader = new FileReader();
+          reader.onload = (readerOnload)(f);
+          reader.readAsText(f);
+        }
+      }
+
+      // Check for the various File API support.
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Something
+        document.getElementById('dashupload').addEventListener('change', file_selected, false);
+      } else {
+        alertSrv.set('Oops','Sorry, the HTML5 File APIs are not fully supported in this browser.','error');
+      }
+    }
+  };
+});
 

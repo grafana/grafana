@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-  <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en" id="ng-app"> <![endif]-->
-  <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang="en" id="ng-app"> <![endif]-->
   <!--[if IE 8]>         <html class="no-js lt-ie9" lang="en"> <![endif]-->
   <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
   <head>
@@ -39,9 +37,14 @@
     <div class="navbar navbar-static-top">
       <div class="navbar-inner">
         <div class="container-fluid">
-          <p class="navbar-text pull-right version"><strong>Kibana 3</strong> milestone 3</p>
           <span class="brand">{{dashboard.current.title}}</span>
-          <div class="brand"><i class='icon-cog pointer' ng-show='dashboard.current.editable' bs-modal="'partials/dasheditor.html'"></i></div>
+          <ul class="nav" ng-show='dashboard.current.editable'>
+            <li>
+              <a href='#' bs-modal="'partials/dasheditor.html'"><i class='icon-cog pointer'></i></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'partials/dashLoader.html'">
+          </ul>
         </div>
       </div>
     </div>

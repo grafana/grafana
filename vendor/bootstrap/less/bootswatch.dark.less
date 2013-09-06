@@ -62,7 +62,7 @@ hr {
 	.nav > li.active > a:hover {
 		color: @grayLighter;
 		background-color: @grayDark;
-		#gradient > .directional(lighten(@grayDarker, 4%), lighten(@grayDark, 4%), 280deg);
+		#gradient > .directional(lighten(@grayDarker, 2%), lighten(@grayDark, 2%), 0deg);
 		border-right: 1px solid darken(@gray, 15%);
 	}
 
@@ -309,7 +309,7 @@ div.subnav {
 
 	li > a,
 	li > span {
-		
+
 		border: 1px solid transparent;
 		.box-shadow('0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1)');
 		#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
@@ -318,7 +318,7 @@ div.subnav {
 			#gradient > .directional(@grayDarker, @grayDark, 280deg);
 			border: 1px solid transparent;
 		}
-	}	
+	}
 
 	.disabled a,
 	.disabled a:hover {

@@ -40,45 +40,6 @@
       "panels": [
         {
           "error": false,
-          "span": 3,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "dashcontrol",
-          "save": {
-            "gist": false,
-            "elasticsearch": true,
-            "local": true,
-            "default": true
-          },
-          "load": {
-            "gist": true,
-            "elasticsearch": true,
-            "local": true
-          },
-          "hide_control": false,
-          "elasticsearch_size": 20,
-          "temp": true,
-          "temp_ttl": "30d",
-          "ttl_enable": true
-        },
-        {
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "text",
-          "status": "Stable",
-          "mode": "markdown",
-          "content": "The dashcontrol panel to the left lets you save this dashboard to Elasticsearch once you have it how you like it. See the note on the welcome page about setting a global default.",
-          "style": {},
-          "title": "The dashcontrol panel"
-        },
-        {
-          "error": false,
           "span": 5,
           "editable": true,
           "group": [

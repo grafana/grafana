@@ -91,40 +91,6 @@
           "status": "Stable"
         }
       ]
-    },
-    {
-      "title": "Loader",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 3,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "dashcontrol",
-          "save": {
-            "gist": false,
-            "elasticsearch": true,
-            "local": true,
-            "default": true
-          },
-          "load": {
-            "gist": true,
-            "elasticsearch": true,
-            "local": true
-          },
-          "hide_control": false,
-          "elasticsearch_size": 20,
-          "temp": true,
-          "ttl_enable": true,
-          "temp_ttl": "30d"
-        }
-      ]
     }
   ],
   "editable": true,
