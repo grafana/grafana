@@ -27,8 +27,8 @@ angular.module('kibana.dashcontrol', [])
 .controller('dashcontrol', function($scope, $http, timer, dashboard, alertSrv) {
 
   $scope.panelMeta = {
-    status  : "Stable",
-    description : "This panel allows for saving, loading, exporting and sharing dashboard schemas."
+    status  : "Deprecated",
+    description : "This panel has been moved to the navigation bar. See the dashboard setting editor to configure it."
   };
 
   $scope.panel = $scope.panel || {};

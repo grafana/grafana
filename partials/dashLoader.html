@@ -1,0 +1,74 @@
+  <li class="dropdown" bs-tooltip="'Load'" data-placement="bottom" ng-show="showDropdown('load')" >
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="elasticsearch_dblist('*')">
+      <i class='icon-folder-open'></i>
+    </a>
+    <ul class="dropdown-menu" style="padding:10px">
+      <li ng-show='loader.load_local'>
+        <h5>Local File <tip>Load dashboard JSON layout from file</tip></h5>
+        <form>
+          <input type="file" id="dashupload" dash-upload /><br>
+        </form>
+      </li>
+      <li ng-show='loader.load_gist'>
+        <h5>Gist <tip>Enter a gist number or url</tip></h5>
+        <form>
+          <input type="text" ng-model="gist.url"/ placeholder="Gist number or URL"><br>
+          <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
+          <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
+          <h6 ng-hide="gist.files.length">No gist dashboards found</h6>
+          <table class="table table-condensed table-striped">
+            <tr ng-repeat="file in gist.files">
+              <td><a ng-click="dashboard.dash_load(file)">{{file.title}}</a></td>
+            </tr>
+          </table>
+        </form>
+      </li>
+      <li ng-show='loader.load_elasticsearch'>
+        <h5>Elasticsearch</h5>
+        <form>
+          <input type="text" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist('title:'+elasticsearch.query+'*')" placeholder="Type to filter"/>
+        </form>
+        <h6 ng-show="elasticsearch.dashboards.length">Elasticsearch stored dashboards</h6>
+        <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
+        <table class="table table-condensed table-striped">
+          <tr ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
+            <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
+            <td><a href="#/dashboard/elasticsearch/{{row._id}}">{{row._id}}</a></td>
+            <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'panels/dashcontrol/share.html'"></i></a></td>
+          </tr>
+        </table>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown" bs-tooltip="'Save'" data-placement="bottom" ng-show="showDropdown('save')">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+      <i class='icon-save'></i>
+    </a>
+    <ul class="dropdown-menu" style="padding:10px">
+      <li ng-show="loader.save_default || loader.save_local">
+        <h5>Locally</h5>
+        <ul class="unstyled">
+          <li><a class="link" ng-show="loader.save_local" ng-click="dashboard.to_file()"><i class="icon-download"></i> Export to File</a> <tip>Export layout, not data, to file</tip></li>
+          <li><a class="link" ng-show="loader.save_default" ng-click="set_default()"><i class="icon-bookmark"></i> Set as Browser Default</a> <tip>Store dashboard preference to browser's localStorage</tip></li>
+          <li><a class="link" ng-show="loader.save_default" ng-click="purge_default()"><i class="icon-ban-circle"></i> Clear Browser Default</a></li>
+        </ul>
+      </li>
+      <li ng-show="loader.save_gist">
+        <h5>Gist</h5>
+        <form class="input-append">
+          <input class='input-medium' placeholder='Title' type="text" ng-model="gist.title"/>
+          <button class="btn" ng-click="save_gist()"><i class="icon-github-alt"></i></button>
+        </form><br>
+        <small ng-show="gist.last">Last gist: <a target="_blank" href="{{gist.last}}">{{gist.last}}</a></small>
+      </li>
+      <li ng-show="loader.save_elasticsearch">
+        <h5>Elasticsearch</h5>
+        <form class="input-append">
+          <input class='input-medium' placeholder='Title' type="text" ng-model="elasticsearch.title"/>
+          <button class="btn" ng-click="elasticsearch_save('dashboard')"><i class="icon-save"></i></button>
+        </form>
+      </li>
+    </ul>
+  </li>
+
+  <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="elasticsearch_save('temp',loader.save_temp_ttl)" bs-modal="'partials/dashLoaderShare.html'"><i class='icon-share'></i></a></li>

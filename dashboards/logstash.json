@@ -76,31 +76,6 @@
           },
           "filter_id": 0,
           "status": "Stable"
-        },
-        {
-          "error": false,
-          "span": 3,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "dashcontrol",
-          "save": {
-            "gist": false,
-            "elasticsearch": true,
-            "local": true,
-            "default": true
-          },
-          "load": {
-            "gist": true,
-            "elasticsearch": true,
-            "local": true
-          },
-          "hide_control": false,
-          "elasticsearch_size": 20,
-          "temp": true,
-          "temp_ttl": "30d",
-          "ttl_enable": true
         }
       ]
     },

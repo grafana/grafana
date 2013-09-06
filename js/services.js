@@ -579,6 +579,20 @@ angular.module('kibana.services', [])
     failover: false,
     rows: [],
     services: {},
+    loader: {
+      save_gist: false,
+      save_elasticsearch: true,
+      save_local: true,
+      save_default: true,
+      save_temp: true,
+      save_temp_ttl_enable: true,
+      save_temp_ttl: '30d',
+      load_gist: true,
+      load_elasticsearch: true,
+      load_elasticsearch_size: 20,
+      load_local: true,
+      hide: false
+    },
     index: {
       interval: 'none',
       pattern: '_all',
@@ -683,13 +697,20 @@ angular.module('kibana.services', [])
     }
   };
 
+  var dash_defaults = function(dashboard) {
+    _.defaults(dashboard,_dash);
+    _.defaults(dashboard.index,_dash.index);
+    _.defaults(dashboard.loader,_dash.loader);
+    return dashboard;
+  };
+
   this.dash_load = function(dashboard) {
 
     // Cancel all timers
     timer.cancel_all();
 
     // Make sure the dashboard being loaded has everything required
-    _.defaults(dashboard,_dash);
+    dashboard = dash_defaults(dashboard);
 
     // If not using time based indices, use the default index
     if(dashboard.index.interval === 'none') {
@@ -790,9 +811,7 @@ angular.module('kibana.services', [])
         return false;
       }
 
-      var _dashboard = result.data;
-      _.defaults(_dashboard,_dash);
-      self.dash_load(_dashboard);
+      self.dash_load(dash_defaults(result.data));
       return true;
     },function(result) {
       alertSrv.set('Error',"Could not load <i>dashboards/"+file+"</i>. Please make sure it exists" ,'error');
@@ -834,9 +853,7 @@ angular.module('kibana.services', [])
       if(!result) {
         return false;
       }
-      var _dashboard = result.data;
-      _.defaults(_dashboard,_dash);
-      self.dash_load(_dashboard);
+      self.dash_load(dash_defaults(result.data));
       return true;
     },function(result) {
       alertSrv.set('Error',
@@ -907,7 +924,6 @@ angular.module('kibana.services', [])
       );
   };
 
-  // TOFIX: Gist functionality
   this.save_gist = function(title,dashboard) {
     var save = _.clone(dashboard || self.current);
     save.title = title || self.current.title;
@@ -939,7 +955,7 @@ angular.module('kibana.services', [])
           var file = JSON.parse(v.content);
           files.push(file);
         } catch(e) {
-          // Nothing?
+          return false;
         }
       });
       return files;

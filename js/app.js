@@ -43,6 +43,7 @@ _.each(config.modules, function(v) {
 
 /* Application level module which depends on filters, controllers, and services */
 labjs.wait(function(){
+  // Create the module
   angular.module('kibana', modules).config(['$routeProvider', function($routeProvider) {
       $routeProvider
         .when('/dashboard', {
@@ -58,6 +59,8 @@ labjs.wait(function(){
           redirectTo: 'dashboard'
         });
     }]);
+
+  // Wait for ready, then bootstrap
   angular.element(document).ready(function() {
     $('body').attr('ng-controller', 'DashCtrl');
     angular.bootstrap(document, ['kibana']);

@@ -68,4 +68,15 @@ angular.module('kibana.filters', [])
     });
     return text;
   };
+}).filter('gistid', function() {
+  var gist_pattern = /(\d{5,})|([a-z0-9]{10,})|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
+  return function(input, scope) {
+    //return input+"boners"
+    if(!(_.isUndefined(input))) {
+      var output = input.match(gist_pattern);
+      if(!_.isNull(output) && !_.isUndefined(output)) {
+        return output[0].replace(/.*\//, '');
+      }
+    }
+  };
 });
