@@ -40,7 +40,8 @@ define([
   'jquery.flot.pie',
   'jquery.flot.selection',
   'jquery.flot.time',
-  'jquery.flot.stack'
+  'jquery.flot.stack',
+  'jquery.flot.stackpercent'
 ],
 function (angular, app, $, _, kbn, moment, timeSeries) {
 
@@ -348,7 +349,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             var options = {
               legend: { show: false },
               series: {
-                //stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
                 stack: scope.panel.percentage ? null : stack,
                 lines:  {
                   show: scope.panel.lines,
