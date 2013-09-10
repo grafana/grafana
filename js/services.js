@@ -89,7 +89,7 @@ angular.module('kibana.services', [])
       if(status === 0) {
         alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
           ". Please ensure that Elasticsearch is reachable from your system." ,'error');
-     } else {
+      } else {
         alertSrv.set('Error',"No index found at "+config.elasticsearch+"/" +
          indices.join(',')+"/_mapping. Please create at least one index."  +
          "If you're using a proxy ensure it is configured correctly.",'error');
