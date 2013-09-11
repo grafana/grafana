@@ -267,6 +267,7 @@ angular.module('kibana.table', [])
 
 
 })
+// This also escapes some xml sequences
 .filter('tableHighlight', function() {
   return function(text) {
     if (!_.isUndefined(text) && !_.isNull(text) && text.toString().length > 0) {
