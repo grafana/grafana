@@ -29,7 +29,11 @@ angular.module('kibana.filters', [])
 }).filter('stringify', function() {
   return function(arr, start, end) {
     if(!_.isUndefined(arr)) {
-      return arr.toString();
+      if(_.isObject(arr) && !_.isArray(arr)) {
+        return angular.toJson(arr);
+      } else {
+        return arr.toString();
+      }
     }
   };
 }).filter('noXml', function() {
