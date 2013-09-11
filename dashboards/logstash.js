@@ -160,7 +160,7 @@ dashboard.rows[3].panels = [
 dashboard.rows[4].panels = [
   {
     type: 'table',
-    fields: !_.isUndefined(ARGS.fields) ? ARGS.fields.split(',') : ['@timestamp','@message'],
+    fields: !_.isUndefined(ARGS.fields) ? ARGS.fields.split(',') : [],
     sort: !_.isUndefined(ARGS.sort) ? ARGS.sort.split(',') : [ARGS.timefield||'@timestamp','desc'],
     overflow: 'expand'
   }

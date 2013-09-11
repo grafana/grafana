@@ -191,8 +191,6 @@
           },
           "overflow": "min-height",
           "fields": [
-            "@timestamp",
-            "@message"
           ],
           "highlight": [],
           "sortable": true,
