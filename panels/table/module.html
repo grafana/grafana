@@ -39,9 +39,11 @@
           <i ng-click="panel.offset = (panel.offset + panel.size)" ng-show="data.length > panel.offset+panel.size" class='icon-arrow-right pointer'></i>
         </div>
       </div>
-      <div class="small" ng-show="panel.fields.length == 0"><center>No columns configured. You may want to select some from the list on the left.</center></div>
+
       <table class="table-hover table table-condensed" ng-style="panel.style">
         <thead ng-show="panel.header">
+
+          <th ng-show="panel.fields.length<1">_source (select columns from the list to the left)</th>
 
           <th style="white-space:nowrap" ng-repeat="field in panel.fields">
             <i ng-show="!$first" class="pointer link icon-caret-left" ng-click="_.move(panel.fields,$index,$index-1)"></i>
@@ -58,7 +60,8 @@
         <tbody ng-repeat="event in data | slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
           <tr ng-click="toggle_details(event)" class="pointer">
             <!--<td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) | tableFieldFormat:field:event:this |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>-->
-            <td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
+            <td ng-show="panel.fields.length<1">{{event._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
+            <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
           <tr ng-show="event.kibana.details">
             <td colspan=1000>
@@ -70,9 +73,10 @@
                 </thead>
                 <tr ng-repeat="(key,value) in event.kibana.details._source" ng-class-odd="'odd'">
                   <td>{{key}}</td>
-                  <td>
-                    <i class='icon-search pointer' ng-click="build_search(key,value)"></i>
-                    <i class='icon-ban-circle pointer' ng-click="build_search(key,value,true)"></i>
+                  <td style="white-space:nowrap">
+                    <i class='icon-search pointer' ng-click="build_search(key,value)" bs-tooltip="'Add filter to match this value'"></i>
+                    <i class='icon-ban-circle pointer' ng-click="build_search(key,value,true)" bs-tooltip="'Add filter to NOT match this value'"></i>
+                    <i class="pointer icon-th" ng-click="toggle_field(key)" bs-tooltip="'Toggle table column'"></i>
                   </td>
                   <!-- At some point we need to create a more efficient way of applying the filter pipeline -->
                   <td style="white-space:pre-wrap" ng-bind-html-unsafe="value|noXml|urlLink|stringify"></td>
