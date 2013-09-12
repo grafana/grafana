@@ -135,7 +135,7 @@ dashboard.rows[0].panels = [
 // Add a filtering panel to the 3rd row
 dashboard.rows[1].panels = [
   {
-    type: 'Query'
+    type: 'query'
   }
 ];
 
