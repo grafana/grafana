@@ -4,6 +4,7 @@
 require.config({
   baseUrl: 'app',
   paths: {
+    config:                   '../config',
     settings:                 'components/settings',
     kbn:                      'components/kbn',
 

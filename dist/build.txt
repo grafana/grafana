@@ -14,7 +14,6 @@ vendor/angular/timepicker.js
 vendor/angular/datepicker.js
 vendor/angular/angular-strap.js
 app/components/settings.js
-app/config.js
 app/services/alertSrv.js
 vendor/modernizr-2.6.1.js
 app/services/dashboard.js
