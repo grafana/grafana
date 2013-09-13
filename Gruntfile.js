@@ -30,13 +30,7 @@ module.exports = function (grunt) {
           'panels/bettermap/leaflet/*.png'
         ],
         dest: '<%= tempDir %>'
-      }//,
-      // dist_to_temp: {
-      //   cwd: '<%= destDir %>',
-      //   expand: true,
-      //   src: '**/*',
-      //   dest: '<%= tempDir %>'
-      // }
+      }
     },
     jshint: {
       // just lint the source dir
@@ -111,19 +105,13 @@ module.exports = function (grunt) {
           modules: [], // populated below
           mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
           keepBuildDir: true,
-          optimize: 'uglify',
+          optimize: 'none',
           optimizeCss: 'none',
-          uglify: {
-            max_line_length: 1000,
-            // beautify: true, // uncomment for easier debugging
-            indent_level: 2,
-          },
           preserveLicenseComments: false,
           findNestedDependencies: true,
           normalizeDirDefines: "none",
           inlineText: true,
           skipPragmas: true,
-          // stubModules: ["text"],
           optimizeAllPluginResources: false,
           removeCombined: true,
           fileExclusionRegExp: /^\./,
@@ -145,6 +133,20 @@ module.exports = function (grunt) {
               registerTemplate: function () {}
             }
           }
+        }
+      }
+    },
+    uglify: {
+      dest: {
+        expand: true,
+        src: ['**/*.js', '!config.js', '!app/dashboards/*.js'],
+        dest: '<%= destDir %>',
+        cwd: '<%= destDir %>',
+        options: {
+          quite: true,
+          compress: true,
+          preserveComments: false,
+          banner: '<%= meta.banner %>',
         }
       }
     }
@@ -173,7 +175,8 @@ module.exports = function (grunt) {
         'services/all',
         'jquery.flot',
         'jquery.flot.pie',
-        'text'
+        'text',
+        'settings'
       ]
     }
   ];
@@ -184,6 +187,12 @@ module.exports = function (grunt) {
       name: 'panels/'+panelName+'/module',
       exclude: ['app']
     });
+  });
+
+  // exclude the literal config definition from all modules
+  requireModules.forEach(function (module) {
+    module.excludeShallow = module.excludeShallow || [];
+    module.excludeShallow.push('config');
   });
 
   config.requirejs.compile_temp.options.modules = requireModules;
@@ -213,7 +222,8 @@ module.exports = function (grunt) {
     'copy:everthing_left_in_src',
     'ngmin',
     'requirejs:compile_temp',
-    'clean:after_require'
+    'clean:after_require',
+    'uglify:dest'
   ]);
 
 };
