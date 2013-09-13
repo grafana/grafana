@@ -1,0 +1,16 @@
+<div ng-controller='pie' ng-init="init()">
+  <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'app/partials/modal.html'" class="icon-eye-open"></i>
+  </span>
+
+  <div ng-show="panel.legend == 'above'" ng-repeat="query in legend" style="float:left;padding-left: 10px;">
+    <span ng-show='panel.chart != "none"'><i class="icon-circle" ng-style="{color:query.color}"></i></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+  </div><br>
+  <div style="clear:both"></div>
+
+  <div pie class="pointer" params="{{panel}}" style="position:relative"></div>
+
+  <div ng-show="panel.legend == 'below'" ng-repeat="query in legend" style="float:left;padding-left: 10px;">
+    <span ng-show='panel.chart != "none"'><i class="icon-circle" ng-style="{color:query.color}"></i></span><span class="small"> {{query.label}} ({{query.data[0][1]}}) </span></span>
+  </div>
+</div>
