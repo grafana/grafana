@@ -1,0 +1,6 @@
+  <div ng-include="'app/partials/panelgeneral.html'"></div>
+  <div ng-include="edit_path(panel.type)"></div>
+  <div ng-repeat="tab in panelMeta.editorTabs">
+    <h4>{{tab.title}}</h4>
+    <div ng-include="tab.src"></div>
+  </div>

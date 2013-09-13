@@ -1,0 +1,1 @@
+define(["module"],function(e){var t=e.config&&e.config()||{};return{load:function(e,n,r,i){var s=n.toUrl(e);n(["text!"+e],function(e){t.registerTemplate&&t.registerTemplate(s,e),r(e)})}}});

@@ -1,0 +1,101 @@
+<div ng-controller='table' ng-init='init()'>
+  <style>
+    .table-doc-table {
+      margin-left: 0px !important;
+      overflow-y: auto;
+      overflow-x: scroll;
+    }
+  </style>
+
+  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+      <i bs-modal="'app/partials/inspector.html'" class="icon-eye-open"></i>
+  </span>
+
+  <div class="row-fluid">
+    <div ng-class="{'span3':panel.field_list}" ng-show="panel.field_list">
+      <div class="sidebar-nav">
+        <h5>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></h5>
+        <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;">
+          <li ng-style="panel.style" ng-repeat="field in fields.list" >
+            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="right" ng-click="toggle_micropanel(field)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+    <div style="{{panel.overflow}}:{{panel.height || row.height}};" ng-class="{'span9':panel.field_list,'span12':!panel.field_list}" class="table-doc-table">
+      <i class="pull-left icon-chevron-sign-right pointer" ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Show field list'" ng-show="!panel.field_list"></i>
+      <div class="row-fluid" ng-show="panel.paging">
+        <div class="span1 offset1" style="text-align:right">
+          <i ng-click="panel.offset = 0" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
+          <i ng-click="panel.offset = (panel.offset - panel.size)" ng-show="panel.offset > 0" class='icon-arrow-left pointer'></i>
+        </div>
+        <div class="span8" style="text-align:center">
+          <strong>{{panel.offset}}</strong> to <strong>{{panel.offset + data.slice(panel.offset,panel.offset+panel.size).length}}</strong>
+          <small> of {{data.length}} available for paging</small>
+        </div>
+        <div class="span1" style="text-align:left">
+          <i ng-click="panel.offset = (panel.offset + panel.size)" ng-show="data.length > panel.offset+panel.size" class='icon-arrow-right pointer'></i>
+        </div>
+      </div>
+      <table class="table-hover table table-condensed" ng-style="panel.style">
+        <thead ng-show="panel.header">
+          <th ng-show="panel.fields.length<1">_source (select columns from the list to the left)</th>
+          <th style="white-space:nowrap" ng-repeat="field in panel.fields">
+            <i ng-show="!$first" class="pointer link icon-caret-left" ng-click="_.move(panel.fields,$index,$index-1)"></i>
+
+            <span  class="pointer" ng-click="set_sort(field)" ng-show='panel.sortable'>
+              {{field}}
+              <i ng-show='field == panel.sort[0]' class="pointer link" ng-class="{'icon-chevron-up': panel.sort[1] == 'asc','icon-chevron-down': panel.sort[1] == 'desc'}"></i>
+            </span>
+            <span ng-show='!panel.sortable'>{{field}}</span>
+            <i ng-show="!$last" class="pointer link icon-caret-right" ng-click="_.move(panel.fields,$index,$index+1)"></i>
+          </th>
+
+        </thead>
+        <tbody ng-repeat="event in data | slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
+          <tr ng-click="toggle_details(event)" class="pointer">
+            <!--<td ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) | tableFieldFormat:field:event:this |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>-->
+            <td ng-show="panel.fields.length<1">{{event._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
+            <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.highlight[field]||event._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
+          </tr>
+          <tr ng-show="event.kibana.details">
+            <td colspan=1000>
+              <table class='table table-bordered table-condensed'>
+                <thead>
+                  <th>Field</th>
+                  <th>Action</th>
+                  <th>Value</th>
+                </thead>
+                <tr ng-repeat="(key,value) in event.kibana.details._source" ng-class-odd="'odd'">
+                  <td>{{key}}</td>
+                  <td style="white-space:nowrap">
+                    <i class='icon-search pointer' ng-click="build_search(key,value)" bs-tooltip="'Add filter to match this value'"></i>
+                    <i class='icon-ban-circle pointer' ng-click="build_search(key,value,true)" bs-tooltip="'Add filter to NOT match this value'"></i>
+                    <i class="pointer icon-th" ng-click="toggle_field(key)" bs-tooltip="'Toggle table column'"></i>
+                  </td>
+                  <!-- At some point we need to create a more efficient way of applying the filter pipeline -->
+                  <td style="white-space:pre-wrap" ng-bind-html-unsafe="value|noXml|urlLink|stringify"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="row-fluid" ng-show="panel.paging">
+        <div class="span1 offset3" style="text-align:right">
+          <i ng-click="panel.offset = 0" ng-show="panel.offset > 0" class='icon-circle-arrow-left pointer'></i>
+          <i ng-click="panel.offset = (panel.offset - panel.size)" ng-show="panel.offset > 0" class='icon-arrow-left pointer'></i>
+        </div>
+        <div class="span4" style="text-align:center">
+          <strong>{{panel.offset}}</strong> to <strong>{{panel.offset + data.slice(panel.offset,panel.offset+panel.size).length}}</strong>
+          <small> of {{data.length}} available for paging</small>
+        </div>
+        <div class="span1" style="text-align:left">
+          <i ng-click="panel.offset = (panel.offset + panel.size)" ng-show="data.length > panel.offset+panel.size" class='icon-arrow-right pointer'></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

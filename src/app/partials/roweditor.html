@@ -1,0 +1,62 @@
+<div class="modal-body">
+  <div class="pull-right editor-title">Row settings</div>
+
+  <div ng-model="editor.index" bs-tabs>
+    <div ng-repeat="tab in ['General','Panels','Add Panel']" data-title="{{tab}}">
+    </div>
+  </div>
+
+  <div class="row-fluid" ng-show="editor.index == 0">
+    <div class="span4">
+      <label class="small">Title</label><input type="text" class="input-medium" ng-model='row.title'></input>
+    </div>
+    <div class="span2">
+      <label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
+    </div>
+    <div class="span1">
+      <label class="small"> Editable </label><input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
+    </div>
+    <div class="span1">
+      <label class="small"> Collapsable </label><input type="checkbox" ng-model="row.collapsable" ng-checked="row.collapsable" />
+    </div>
+  </div>
+  <div class="row-fluid" ng-show="editor.index == 1">
+    <div class="span12">
+      <h4>Panels</h4>
+      <table class="table table-condensed table-striped">
+        <thead>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Span</th>
+          <th>Delete</th>
+          <th>Move</th>
+          <th></th>
+          <th>Hide</th>
+        </thead>
+        <tr ng-repeat="panel in row.panels">
+          <td>{{panel.title}}</td>
+          <td>{{panel.type}}</td>
+          <td><select ng-hide="panel.sizeable == false" class="input-mini" ng-model="panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select></td>
+          <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
+          <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+          <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+          <td><input type="checkbox" ng-model="panel.hide" ng-checked="panel.hide"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="row-fluid" ng-show="editor.index == 2">
+    <h4>Select Panel Type</h4>
+    <form class="input-append">
+    <select class="input-medium input-append" ng-model="panel.type" ng-options="f for f in config.panel_names|stringSort"></select>
+    <small ng-show="!panel.type">Select Type</small></form>
+
+    <div ng-show="!(_.isUndefined(panel.type))">
+      <div add-panel="{{panel.type}}"></div>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button ng-show="panel.type &amp;&amp; editor.index == 2" ng-click="add_panel(row,panel); reset_panel(); editor.index == 1;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
+  <button type="button" class="btn btn-danger" ng-click="editor.index=0;dismiss();reset_panel();close_edit()">Close</button>
+</div>
