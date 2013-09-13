@@ -9,7 +9,17 @@
     "grunt": "~0.4.0",
     "grunt-contrib": "~0.7.0",
     "grunt-contrib-jshint": "~0.6.0",
-    "assemble-less": "~0.4.8"
+    "grunt-contrib-less": "~0.7.0",
+    "grunt-contrib-requirejs": "~0.4.1",
+    "grunt-ngmin": "0.0.3",
+    "cssmin": "~0.4.1",
+    "grunt-contrib-htmlmin": "~0.1.3",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-cssmin": "~0.6.1",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-uglify": "~0.2.4",
+    "rjs-build-analysis": "0.0.3",
+    "grunt-angular-templates": "~0.3.12"
   },
   "license": "Apache License"
 }

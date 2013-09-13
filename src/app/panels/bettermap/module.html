@@ -1,0 +1,9 @@
+<div ng-controller='bettermap' ng-init="init()">
+  <span ng-show="panel.spyable" style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
+    <i bs-modal="'app/partials/inspector.html'" class="icon-eye-open"></i>
+  </span>
+  <!-- This solution might work well for other panels that have trouble with heights -->
+  <div  style="padding-right:10px;padding-top:10px;height:{{panel.height|| row.height}};overflow:hidden">
+    <div bettermap id='bettermap' params="{{panel}}" style="height:100%"></div>
+  </div>
+</div>

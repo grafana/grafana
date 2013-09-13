@@ -1,0 +1,246 @@
+{
+  "title": "Your Basic Dashboard",
+  "services": {
+    "query": {
+      "idQueue": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "list": {
+        "0": {
+          "query": "*",
+          "alias": "",
+          "color": "#7EB26D",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
+    },
+    "filter": {
+      "idQueue": [
+        0,
+        1,
+        2
+      ],
+      "list": {},
+      "ids": []
+    }
+  },
+  "rows": [
+    {
+      "title": "Options",
+      "height": "50px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 5,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "status": "Stable",
+          "mode": "markdown",
+          "content": "If you have a field with a timestamp in it, you might want to add a 'timepicker' panel here. Click the cog icon over to the left to do so. You can also remove these information text panels there",
+          "style": {},
+          "title": "Have a timestamp somewhere?"
+        }
+      ]
+    },
+    {
+      "title": "Query",
+      "height": "50px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 5,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "query",
+          "label": "Search",
+          "history": [
+            "*"
+          ],
+          "remember": 10,
+          "pinned": true,
+          "query": "*"
+        },
+        {
+          "error": false,
+          "span": 7,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "status": "Stable",
+          "mode": "markdown",
+          "content": "#### Filtering\nSee the small *Filters* text to the left below? Click it to expand the filters row. Right now there are none. click on one of the icons in the document types list to filter down to only that document type",
+          "style": {}
+        }
+      ]
+    },
+    {
+      "title": "Filters",
+      "height": "50px",
+      "editable": true,
+      "collapse": true,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "filtering"
+        }
+      ]
+    },
+    {
+      "title": "Graph",
+      "height": "250px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "terms",
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field": "_type",
+          "exclude": [],
+          "missing": true,
+          "other": true,
+          "size": 100,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "pie",
+          "counter_pos": "none",
+          "title": "Document types"
+        },
+        {
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "terms",
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field": "_type",
+          "exclude": [],
+          "missing": true,
+          "other": true,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above"
+        },
+        {
+          "error": false,
+          "span": 6,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "text",
+          "status": "Stable",
+          "mode": "markdown",
+          "content": "### The most generic dashboard ever\nIt's the best I can do without knowing much about your data! I've tried to pick some sane defaults for you. The two *terms* panels to the left of this *text* panel show a breakdown of your document type. \n\nKibana is currently configured to point at the special Elasticsearch *_all* index. You can change that by clicking on the cog icon in the title bar. You can also add rows from that dialog. You can edit individual panels by click on the link that appears in their top right when yuo mouse over them\n\nThe *table* panel below has attempted to list your fields to the left, select a few to view them in the table. To add more panels, of different types, click the cog on the row label to the far left",
+          "style": {}
+        }
+      ]
+    },
+    {
+      "title": "Events",
+      "height": "650px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "table",
+          "size": 100,
+          "pages": 5,
+          "offset": 0,
+          "sort": [
+            "_id",
+            "desc"
+          ],
+          "style": {
+            "font-size": "9pt"
+          },
+          "overflow": "min-height",
+          "fields": [],
+          "highlight": [],
+          "sortable": true,
+          "header": true,
+          "paging": true,
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field_list": true,
+          "status": "Stable"
+        }
+      ]
+    }
+  ],
+  "editable": true,
+  "index": {
+    "interval": "none",
+    "pattern": "[logstash-]YYYY.MM.DD",
+    "default": "_all"
+  }
+}
