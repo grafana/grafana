@@ -3,6 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
+  // urlArgs: 'r=@REV@',
   paths: {
     config:                   '../config',
     settings:                 'components/settings',
@@ -36,12 +37,10 @@ require.config({
   },
   shim: {
     underscore: {
-      // requiring should work, but isn't required
       exports: '_'
     },
 
     angular: {
-      // requiring should work, but isn't required
       deps: ['jquery'],
       exports: 'angular'
     },
@@ -55,11 +54,10 @@ require.config({
     },
 
     'jquery-src': {
-      // requiring should work, but isn't required
       exports: 'jQuery'
     },
 
-    // simple dependency declatation
+    // simple dependency declaration
     'jquery.flot':          ['jquery'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],
