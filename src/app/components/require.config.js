@@ -25,7 +25,7 @@ require.config({
 
     jquery:                   '../vendor/jquery/jquery-1.8.0',
 
-    'extend-jquery':          'components/extend-jquery.js',
+    'extend-jquery':          'components/extend-jquery',
 
     'jquery.flot':            '../vendor/jquery/jquery.flot',
     'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',

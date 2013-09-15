@@ -12,7 +12,7 @@ vendor/angular/angular-sanitize.js
 vendor/angular/timepicker.js
 vendor/angular/datepicker.js
 vendor/angular/angular-strap.js
-app/components/jquery.kbn.js
+app/components/extend-jquery.js
 app/components/settings.js
 app/services/alertSrv.js
 vendor/modernizr-2.6.1.js
