@@ -55,8 +55,16 @@ require.config({
     },
 
     'jquery-src': {
-      // requiring should work, but isn't required
-      exports: 'jQuery'
+      init: (function (global) {
+        'use strict';
+        return function () {
+          var jQuery = global.jQuery;
+          // jquery defines itself, but we want to extend it and provide our version as the 'jquery'
+          // package
+          require.undef('jquery');
+          return jQuery;
+        };
+      })(this)
     },
 
     // simple dependency declatation
