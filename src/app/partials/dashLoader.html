@@ -1,5 +1,5 @@
 <li class="dropdown" bs-tooltip="'Load'" data-placement="bottom" ng-show="showDropdown('load')" >
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="elasticsearch_dblist('*')">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="elasticsearch_dblist('title:'+elasticsearch.query+'*')">
     <i class='icon-folder-open'></i>
   </a>
   <ul class="dropdown-menu" style="padding:10px">
