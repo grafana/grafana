@@ -23,8 +23,10 @@ require.config({
     'underscore-src':         '../vendor/underscore',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
-    jquery:                   'components/jquery.extended',
-    'jquery-src':             '../vendor/jquery/jquery-1.8.0',
+    jquery:                   '../vendor/jquery/jquery-1.8.0',
+
+    'extend-jquery':          'components/extend-jquery.js',
+
     'jquery.flot':            '../vendor/jquery/jquery.flot',
     'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
     'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
@@ -54,17 +56,8 @@ require.config({
       exports: 'Modernizr'
     },
 
-    'jquery-src': {
-      init: (function (global) {
-        'use strict';
-        return function () {
-          var jQuery = global.jQuery;
-          // jquery defines itself, but we want to extend it and provide our version as the 'jquery'
-          // package
-          require.undef('jquery');
-          return jQuery;
-        };
-      })(this)
+    jquery: {
+      exports: 'jQuery'
     },
 
     // simple dependency declatation

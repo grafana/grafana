@@ -1,4 +1,4 @@
-define(['jquery-src'],
+define(['jquery'],
 function ($) {
   'use strict';
 
