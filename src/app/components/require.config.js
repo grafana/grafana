@@ -24,8 +24,10 @@ require.config({
     'underscore-src':         '../vendor/underscore',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
-    jquery:                   'components/jquery.extended',
-    'jquery-src':             '../vendor/jquery/jquery-1.8.0',
+    jquery:                   '../vendor/jquery/jquery-1.8.0',
+
+    'extend-jquery':          'components/extend-jquery',
+
     'jquery.flot':            '../vendor/jquery/jquery.flot',
     'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
     'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
@@ -53,7 +55,7 @@ require.config({
       exports: 'Modernizr'
     },
 
-    'jquery-src': {
+    jquery: {
       exports: 'jQuery'
     },
 

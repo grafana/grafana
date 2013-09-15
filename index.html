@@ -1,56 +1,81 @@
 <!DOCTYPE html>
-  <!--[if IE 8]>         <html class="no-js lt-ie9" lang="en"> <![endif]-->
-  <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width">
-
     <title>Kibana 3</title>
-    <link rel="stylesheet" href="common/css/timepicker.css">
-    <link rel="stylesheet" href="common/css/animate.min.css">
-    <link rel="stylesheet" href="common/css/normalize.min.css">
-    <!-- project dependency libs -->
-    <script src="common/lib/LAB.min.js"></script>
-    <script src="common/lib/underscore.min.js"></script>
-    <script src="common/lib/settings.js"></script>
-    <script src="config.js"></script>
-    <script src="js/app.js"></script>
+    <style>/* add your css style rules here */
+    body {
+      color:#c8c8c8;
+      background-color:#272b30;
+      font-family: 'Open Sans', sans-serif;
+    }
+    .title1 {
+      font-weight: 800;
+      line-height: .9;
+      font-size: 98px
+    }
 
-    <style>
-    </style>
+    .title2 {
+      font-weight: 800;
+      line-height: .9;
+      font-size: 60px
+    }
 
+    .title3 {
+      font-weight: 800;
+      font-size: 25px;
+      line-height: 1.1;
+    }
+
+    .lowercase {
+      text-transform: lowercase;
+    }
+
+    .uppercase {
+      text-transform: uppercase;
+    }
+
+    .light {
+      font-weight: 200;
+    }
+
+    .big { text-transform: uppercase; margin: 0; padding: 0; }
+    .bold { font-weight: 800; }
+
+    .orange {
+      color: #FF9640;
+    }
+
+    .yellow {
+      color: #FFDD68;
+    }
+
+    .teal {
+      color: #63ABB5;
+    }
+
+    .green {
+      color: #629153;
+    }
+
+    .purple {
+      color: #645068;
+    }
+
+    .white {
+      color: #fff;
+    }
+  </style>
   </head>
 
   <body ng-controller="DashCtrl" ng-cloak>
-
-    <link rel="stylesheet" ng-href="common/css/bootstrap.{{dashboard.current.style||'dark'}}.min.css">
-    <link rel="stylesheet" href="common/css/bootstrap-responsive.min.css">
-    <link rel="stylesheet" href="common/css/font-awesome.min.css">
-
-    <div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
-      <button type="button" class="close" ng-click="dashAlerts.clear(alert)" style="padding-right:50px">&times;</button>
-      <strong>{{alert.title}}</strong> <span ng-bind-html-unsafe='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
+    <img src='dist/img/kibana.png' style="float:right;margin-right:30px;"><p>
+    <div class="title2">
+      <span class="orange">Oops.</span> Looks like you've upgraded from an old version
     </div>
-    <div class="navbar navbar-static-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <span class="brand">{{dashboard.current.title}}</span>
-          <ul class="nav" ng-show='dashboard.current.editable'>
-            <li>
-              <a href='#' bs-modal="'partials/dasheditor.html'"><i class='icon-cog pointer'></i></a>
-            </li>
-          </ul>
-          <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'partials/dashLoader.html'">
-          </ul>
-        </div>
-      </div>
-    </div>
-    <div class="container-fluid main">
-      <div class="row-fluid">
-        <div ng-view></div>
-      </div>
-    </div>
+    <div class="title3">No worries. <span class="light">Kibana has a new build system. Now its faster and lighter than ever before.</span></div>
+    <p>
+    <div class="white title3 uppercase">To fix this</div>
+    <div class="title3 light">Instead of copying the entire kibana repository, you need only copy the contents of the <a href="dist/index.html" class="teal">dist/</a> folder. After upgrading you may need to clear your browsers cache to see all of the new features.</div>
   </body>
 
 </html>
