@@ -51,7 +51,7 @@ function (angular, _, config) {
       // Check each query object, populate its defaults
       _.each(self.list,function(query,id) {
         _.defaults(query,_query);
-        query.color = colorAt(id);
+        query.color = query.color || colorAt(id);
       });
 
       if (self.ids.length === 0) {
