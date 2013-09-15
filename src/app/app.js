@@ -10,7 +10,8 @@ define([
   'elasticjs',
   'bootstrap',
   'angular-sanitize',
-  'angular-strap'
+  'angular-strap',
+  'extend-jquery'
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
