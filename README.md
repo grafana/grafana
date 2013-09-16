@@ -35,7 +35,7 @@ access to it.
 
 ### Installation
 
-1. Download and extract [http://download.elasticsearch.org/kibana/releases/kibana-latest.zip](http://download.elasticsearch.org/kibana/releases/kibana-latest.zip) to your webserver.
+1. Download and extract [http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip](http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip) to your webserver.
 2. Edit config.js in your deployed directory to point to your elasticsearch server. This should __not be
 http://localhost:9200__, but rather the fully qualified domain name of your elasticsearch server.
 The url entered here _must be reachable_ by your browser.

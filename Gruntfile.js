@@ -180,7 +180,7 @@ module.exports = function (grunt) {
         upload: [
           {
             src: '<%= tempDir %>/dist.zip',
-            dest: 'kibana/releases/<%= pkg.name %>-latest.zip',
+            dest: 'kibana/kibana/<%= pkg.name %>-latest.zip',
           }
         ]
       }
