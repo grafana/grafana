@@ -1,6 +1,0 @@
-<div class="panel-query-meta row-fluid" style="width:170px"><style>.input-query-alias {
-      margin-bottom: 5px !important;
-    }
-    .panel-query-meta .pin {
-      text-decoration: underline;
-    }</style><a class="close" ng-click="render();dismiss();" href="">×</a> <i ng-click="toggle_pin(id);dismiss();" class="small pointer icon-pushpin"></i><label class="strong small">Query Alias</label><form><input class="input-medium input-query-alias" type="text" ng-model="querySrv.list[id].alias" placeholder="Alias..."><div><i ng-repeat="color in querySrv.colors" class="pointer" ng-class="{'icon-circle-blank':querySrv.list[id].color == color,'icon-circle':querySrv.list[id].color != color}" ng-style="{color:color}" ng-click="querySrv.list[id].color = color;render();"></i></div></form></div>

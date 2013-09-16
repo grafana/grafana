@@ -21,7 +21,9 @@
     "rjs-build-analysis": "0.0.3",
     "grunt-angular-templates": "~0.3.12",
     "grunt-string-replace": "~0.2.4",
-    "grunt-git-describe": "~2.3.2"
+    "grunt-git-describe": "~2.3.2",
+    "grunt-zip": "~0.9.2",
+    "grunt-s3": "~0.2.0-alpha.2"
   },
   "license": "Apache License"
 }

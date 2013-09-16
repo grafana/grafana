@@ -1,1 +1,0 @@
-<div ng-controller="text" ng-init="init()"><markdown ng-show="ready && panel.mode == 'markdown'">{{panel.content}}</markdown><p ng-show="panel.mode == 'text'" ng-style="panel.style" ng-bind-html="panel.content | striphtml | newlines"></p><p ng-show="panel.mode == 'html'" ng-bind-html="panel.content"></p></div>
