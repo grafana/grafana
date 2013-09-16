@@ -52,6 +52,17 @@ module.exports = function (grunt) {
         cwd:'<%= srcDir %>/vendor/bootstrap/less/',
         src: ['bootstrap.dark.less', 'bootstrap.light.less'],
         dest: '<%= tempDir %>/css/',
+      },
+      // Compile to src when not building
+      src:{
+        options: {
+          paths: ["<%= srcDir %>/vendor/bootstrap/less"],
+          yuicompress:true
+        },
+        files: {
+          "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.dark.less",
+          "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less"
+        }
       }
     },
     cssmin: {
@@ -214,12 +225,12 @@ module.exports = function (grunt) {
   grunt.initConfig(config);
 
   // Default task.
-  grunt.registerTask('default', ['jshint:source','less']);
+  grunt.registerTask('default', ['jshint:source','less:src']);
   grunt.registerTask('build', [
     'jshint:source',
     'clean:on_start',
     'htmlmin',
-    'less',
+    'less:dist',
     'cssmin',
     'copy:everthing_left_in_src',
     'ngmin',
