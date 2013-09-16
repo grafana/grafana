@@ -280,7 +280,7 @@ function (angular, _, config, Modernizr) {
 
     this.script_load = function(file) {
       return $http({
-        url: "dashboards/"+file,
+        url: "app/dashboards/"+file,
         method: "GET",
         transformResponse: function(response) {
           /*jshint -W054 */
