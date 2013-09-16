@@ -18,6 +18,7 @@ app/services/alertSrv.js
 app/components/kbn.js
 vendor/moment.js
 vendor/modernizr-2.6.1.js
+vendor/filesaver.js
 app/services/dashboard.js
 app/services/fields.js
 app/services/filterSrv.js
