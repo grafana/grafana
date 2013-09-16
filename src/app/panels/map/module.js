@@ -145,7 +145,7 @@ function (angular, app, _, $, config) {
         function render_panel() {
           elem.text('');
           $('.jvectormap-zoomin,.jvectormap-zoomout,.jvectormap-label').remove();
-          require(['./lib/map.'+scope.panel.map], function () {
+          require(['./panels/map/lib/map.'+scope.panel.map], function () {
             elem.vectorMap({
               map: scope.panel.map,
               regionStyle: {initial: {fill: '#8c8c8c'}},
