@@ -87,11 +87,14 @@ function (angular, app, _, kbn, moment) {
 
     $scope.percent = kbn.to_percent;
 
-    $scope.toggle_micropanel = function(field) {
+    $scope.toggle_micropanel = function(field,groups) {
       var docs = _.pluck($scope.data,'_source');
+      var topFieldValues = kbn.top_field_values(docs,field,10,groups);
       $scope.micropanel = {
         field: field,
-        values : kbn.top_field_values(docs,field,10),
+        grouped: groups,
+        values : topFieldValues.counts,
+        hasArrays : topFieldValues.hasArrays,
         related : kbn.get_related_fields(docs,field),
         count: _.countBy(docs,function(doc){return _.contains(_.keys(doc),field);})['true']
       };

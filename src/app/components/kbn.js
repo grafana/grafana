@@ -61,23 +61,41 @@ function($, _) {
     return value;
   };
 
-  kbn.top_field_values = function(docs,field,count) {
+  kbn.top_field_values = function(docs,field,count,grouped) {
     var all_values = _.pluck(docs,field),
-      groups = {};
-
+      groups = {},
+      counts,
+      hasArrays;
     // manually grouping into pairs allows us to keep the original value,
     _.each(all_values, function (value) {
-      var key = _.isUndefined(value) ? '' : value.toString();
-      if (_.has(groups, key)) {
-        groups[key][1] ++;
-      } else {
-        groups[key] = [value, 1];
+      var k;
+      if(_.isArray(value)) {
+        hasArrays =  true;
       }
+      if(_.isArray(value) && !grouped) {
+        k = value;
+      } else {
+        k = _.isUndefined(value) ? '' : [value.toString()];
+      }
+      _.each(k, function(key) {
+        if (_.has(groups, key)) {
+          groups[key][1] ++;
+        } else {
+          groups[key] = [(grouped ? value : key), 1];
+        }
+      });
     });
 
-    return _.values(groups).sort(function(a, b) {
+    counts = _.values(groups).sort(function(a, b) {
       return a[1] - b[1];
     }).reverse().slice(0,count);
+
+    console.log(hasArrays);
+
+    return {
+      counts: counts,
+      hasArrays : hasArrays
+    };
   };
 
    /**

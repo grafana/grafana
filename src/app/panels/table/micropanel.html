@@ -3,22 +3,30 @@
   Micro Analysis of {{micropanel.field}}
   <i class="pointer icon-search" ng-click="fieldExists(micropanel.field,'must');dismiss();"></i>
   <i class="pointer icon-ban-circle" ng-click="fieldExists(micropanel.field,'mustNot');dismiss();"></i>
-  <br><small>{{micropanel.count}} events in the table set</small>
+  <br>
+  <small>
+    {{micropanel.count}} events in the table set
+    <span ng-show="micropanel.hasArrays">
+      as
+      <a class="link" ng-class="{'strong':micropanel.grouped}" ng-click="toggle_micropanel(micropanel.field,true)">Groups</a> /
+      <a class="link" ng-class="{'strong':!micropanel.grouped}" ng-click="toggle_micropanel(micropanel.field,false)">Singles</a>
+    </span>
+  </small>
 </h4>
-<table style="width:100%" class='table table-striped table-condensed'>
+<table style="width:100%;table-layout:fixed" class='table table-striped table-condensed'>
   <thead>
-    <th>{{micropanel.field}}</th>
-    <th>Action</th>
-    <th style="text-align:right">Count</th>
+    <th style="width:260px">{{micropanel.field}}</th>
+    <th style="width:40px">Action</th>
+    <th style="width:100px;text-align:right">Count</th>
   </thead>
   <tbody>
     <tr ng-repeat='field in micropanel.values'>
-      <td>{{{true: "__blank__", false:field[0] }[field[0] == '' || field[0] == undefined]|tableTruncate:panel.trimFactor:3}}</td>
-      <td style="width:40px">
+      <td style="word-wrap:break-word">{{{true: "__blank__", false:field[0] }[field[0] == '' || field[0] == undefined]|tableTruncate:panel.trimFactor:3}}</td>
+      <td>
         <i class="pointer icon-search" ng-click="build_search(micropanel.field,field[0]);dismiss();"></i>
         <i class="pointer icon-ban-circle" ng-click="build_search(micropanel.field,field[0],true);dismiss();"></i>
       </td>
-      <td class="progress" style="width:100px;position:relative">
+      <td class="progress" style="position:relative">
         <style scoped>
           .progress {
             overflow: visible;
@@ -30,7 +38,7 @@
     </tr>
   </tbody>
 </table>
-<div class="progress">
+<div class="progress" ng-show="micropanel.grouped">
   <div ng-repeat='field in micropanel.values' bs-tooltip="field[0]+' ('+percent(field[1],data.length)+')'" class="bar {{micropanelColor($index)}}" ng-style="{width: percent(field[1],data.length)};"></div>
 </div>
 <span ng-repeat='(field,count) in micropanel.related'><a ng-click="toggle_field(field)">{{field}}</a> ({{Math.round((count / micropanel.count) * 100)}}%), </span>
