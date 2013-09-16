@@ -15,11 +15,12 @@ vendor/angular/angular-strap.js
 app/components/extend-jquery.js
 app/components/settings.js
 app/services/alertSrv.js
+app/components/kbn.js
+vendor/moment.js
 vendor/modernizr-2.6.1.js
 app/services/dashboard.js
 app/services/fields.js
 app/services/filterSrv.js
-vendor/moment.js
 app/services/kbnIndex.js
 app/services/querySrv.js
 app/services/timer.js
@@ -34,7 +35,6 @@ app/directives/dashUpload.js
 app/directives/kibanaPanel.js
 app/directives/ngBlur.js
 app/directives/ngModelOnBlur.js
-app/components/kbn.js
 app/directives/tip.js
 app/directives/all.js
 app/filters/all.js
