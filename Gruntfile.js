@@ -102,21 +102,21 @@ module.exports = function (grunt) {
         options: {
           appDir: '<%= tempDir %>',
           dir: '<%= destDir %>',
-          modules: [], // populated below
+
           mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-          keepBuildDir: true,
+          modules: [], // populated below
+
           optimize: 'none',
           optimizeCss: 'none',
+
+          removeCombined: true,
           preserveLicenseComments: false,
           findNestedDependencies: true,
           normalizeDirDefines: "none",
           inlineText: true,
           skipPragmas: true,
           optimizeAllPluginResources: false,
-          removeCombined: true,
-          fileExclusionRegExp: /^\./,
-          logLevel: 0,
-          skipSemiColonInsertion: true,
+
           done: function (done, output) {
             var duplicates = require('rjs-build-analysis').duplicates(output);
 
@@ -127,11 +127,6 @@ module.exports = function (grunt) {
             }
 
             done();
-          },
-          config: {
-            'tmpl': {
-              registerTemplate: function () {}
-            }
           }
         }
       }
@@ -146,9 +141,14 @@ module.exports = function (grunt) {
           quite: true,
           compress: true,
           preserveComments: false,
-          banner: '<%= meta.banner %>',
+          banner: '<%= meta.banner %>'
         }
       }
+    },
+    'git-describe': {
+      me: {
+        // Target-specific file lists and/or options go here.
+      },
     }
   };
 
@@ -201,10 +201,12 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-ngmin');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-less');
+  grunt.loadNpmTasks('grunt-git-describe');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-cssmin');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-contrib-htmlmin');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
 
@@ -223,7 +225,28 @@ module.exports = function (grunt) {
     'ngmin',
     'requirejs:compile_temp',
     'clean:after_require',
+    'write_revision_to_dest', // runs git-describe and replace:config
     'uglify:dest'
   ]);
+
+  grunt.registerTask('write_revision_to_dest', function() {
+    grunt.event.once('git-describe', function (desc) {
+      grunt.config('string-replace.config', {
+        src: '<%= destDir %>/app/components/require.config.js',
+        dest: '<%= destDir %>/app/components/require.config.js',
+        options: {
+          replacements: [
+            {
+              pattern: /(?:^|\/\/)(.*)@REV@/,
+              replacement: '$1'+desc.object
+            }
+          ]
+        }
+      });
+
+      grunt.task.run('string-replace:config');
+    });
+    grunt.task.run('git-describe');
+  });
 
 };
