@@ -339,7 +339,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           } catch(e) {return;}
 
           // Set barwidth based on specified interval
-          var barwidth = kbn.interval_to_seconds(scope.panel.interval)*1000;
+          var barwidth = kbn.interval_to_ms(scope.panel.interval);
 
           var stack = scope.panel.stack ? true : null;
 
@@ -401,9 +401,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             // so that the stacking happens in the proper order
             var required_times = [];
             if (scope.data.length > 1) {
-              required_times = _.uniq(Array.prototype.concat.apply([], _.map(scope.data, function (query) {
+              required_times = Array.prototype.concat.apply([], _.map(scope.data, function (query) {
                 return query.time_series.getOrderedTimes();
-              })).sort(), true);
+              }));
+              required_times = _.uniq(required_times.sort(function (a, b) {
+                // decending numeric sort
+                return a-b;
+              }), true);
             }
 
             for (var i = 0; i < scope.data.length; i++) {
