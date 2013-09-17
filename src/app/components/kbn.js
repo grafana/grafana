@@ -90,8 +90,6 @@ function($, _) {
       return a[1] - b[1];
     }).reverse().slice(0,count);
 
-    console.log(hasArrays);
-
     return {
       counts: counts,
       hasArrays : hasArrays

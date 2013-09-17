@@ -88,7 +88,7 @@ function (angular, app, _, kbn, moment) {
     $scope.percent = kbn.to_percent;
 
     $scope.toggle_micropanel = function(field,groups) {
-      var docs = _.pluck($scope.data,'_source');
+      var docs = _.map($scope.data,function(_d){return _d.kibana._source;});
       var topFieldValues = kbn.top_field_values(docs,field,10,groups);
       $scope.micropanel = {
         field: field,
@@ -131,8 +131,9 @@ function (angular, app, _, kbn, moment) {
     };
 
     $scope.toggle_details = function(row) {
-      row.kibana = row.kibana || {};
-      row.kibana.details = !row.kibana.details ? $scope.without_kibana(row) : false;
+      row.kibana.details = row.kibana.details ? false : true;
+      row.kibana.view = row.kibana.view || 'table';
+      //row.kibana.details = !row.kibana.details ? $scope.without_kibana(row) : false;
     };
 
     $scope.page = function(page) {
@@ -220,21 +221,21 @@ function (angular, app, _, kbn, moment) {
         // Check that we're still on the same query, if not stop
         if($scope.query_id === query_id) {
           $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
-            return {
-              _source   : kbn.flatten_json(hit._source),
-              highlight : kbn.flatten_json(hit.highlight||{}),
-              _type     : hit._type,
-              _index    : hit._index,
-              _id       : hit._id,
-              _sort     : hit.sort
+            var _h = _.clone(hit);
+            //_h._source = kbn.flatten_json(hit._source);
+            //_h.highlight = kbn.flatten_json(hit.highlight||{});
+            _h.kibana = {
+              _source : kbn.flatten_json(hit._source),
+              highlight : kbn.flatten_json(hit.highlight||{})
             };
+            return _h;
           }));
 
           $scope.hits += results.hits.total;
 
           // Sort the data
           $scope.data = _.sortBy($scope.data, function(v){
-            return v._sort[0];
+            return v.sort[0];
           });
 
           // Reverse if needed
@@ -266,10 +267,9 @@ function (angular, app, _, kbn, moment) {
     };
 
     $scope.without_kibana = function (row) {
-      return {
-        _source   : row._source,
-        highlight : row.highlight
-      };
+      var _c = _.clone(row);
+      delete _c.kibana;
+      return _c;
     };
 
     $scope.set_refresh = function (state) {
@@ -281,6 +281,20 @@ function (angular, app, _, kbn, moment) {
         $scope.get_data();
       }
       $scope.refresh =  false;
+    };
+
+    $scope.locate = function(obj, path) {
+      path = path.split('.');
+      var arrayPattern = /(.+)\[(\d+)\]/;
+      for (var i = 0; i < path.length; i++) {
+        var match = arrayPattern.exec(path[i]);
+        if (match) {
+          obj = obj[match[1]][parseInt(match[2],10)];
+        } else {
+          obj = obj[path[i]];
+        }
+      }
+      return obj;
     };
 
 
@@ -306,6 +320,36 @@ function (angular, app, _, kbn, moment) {
     return function(text,length,factor) {
       if (!_.isUndefined(text) && !_.isNull(text) && text.toString().length > 0) {
         return text.length > length/factor ? text.substr(0,length/factor)+'...' : text;
+      }
+      return '';
+    };
+  });
+
+  module.filter('tableJson', function() {
+    var json;
+    return function(text,prettyLevel) {
+      if (!_.isUndefined(text) && !_.isNull(text) && text.toString().length > 0) {
+        json = angular.toJson(text,prettyLevel > 0 ? true : false);
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if(prettyLevel > 1) {
+          /* jshint maxlen: false */
+          json = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+              if (/:$/.test(match)) {
+                cls = 'key strong';
+              } else {
+                cls = '';
+              }
+            } else if (/true|false/.test(match)) {
+              cls = 'boolean';
+            } else if (/null/.test(match)) {
+              cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+          });
+        }
+        return json;
       }
       return '';
     };

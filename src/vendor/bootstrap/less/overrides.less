@@ -41,7 +41,7 @@
 }
 
 .row-close {
-  color: #bbb;  
+  color: #bbb;
   position: absolute;
   font-size: 9pt;
   font-weight: 200;
@@ -51,7 +51,7 @@
 
 .row-open {
   text-align: right;
-  color: #bbb;  
+  color: #bbb;
   margin-top:30px;
   position: absolute;
   font-size: 13pt;
@@ -62,8 +62,8 @@
   -webkit-transform-origin: 40px;
   transform-origin: 40px;
   transform: rotate(-90deg);
-  -webkit-transform: rotate(-90deg); 
-  -moz-transform: rotate(-90deg); 
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
   -ms-transform: rotate(-90deg);
 }
 
@@ -177,6 +177,11 @@
 .input-smaller {
   width: 75px;
 }
+
+.string {color:lighten(@textColor, 5%)}
+.number {color:lighten(@infoText, 5%)}
+.boolean {color:lighten(@warningText, 5%)}
+.key {color:lighten(@errorText, 5%)}
 
 .typeahead { z-index: 1051; }
 
