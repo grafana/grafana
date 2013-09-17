@@ -244,7 +244,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.file_load = function(file) {
       return $http({
-        url: "app/dashboards/"+file,
+        url: "app/dashboards/"+file+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(response,$routeParams);
