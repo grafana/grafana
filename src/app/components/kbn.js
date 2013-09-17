@@ -206,30 +206,35 @@ function($, _) {
     return str;
   };
 
+  kbn.interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
+
   // histogram & trends
-  kbn.interval_to_seconds = function(string) {
-    var matches = string.match(/(\d+(?:\.\d+)?)([Mwdhmsy])/);
-    switch (matches[2]) {
-    case 'y':
-      return matches[1]*31536000;
-    case 'M':
-      return matches[1]*2592000;
-    case 'w':
-      return matches[1]*604800;
-    case 'd':
-      return matches[1]*86400;
-    case 'h':
-      return matches[1]*3600;
-    case 'm':
-      return matches[1]*60;
-    case 's':
-      return matches[1];
+  var intervals_in_seconds = {
+    y: 31536000,
+    M: 2592000,
+    w: 604800,
+    d: 86400,
+    h: 3600,
+    m: 60,
+    s: 1
+  };
+
+  kbn.interval_to_ms = function(string) {
+    var matches = string.match(kbn.interval_regex);
+    if (!matches || !_.has(intervals_in_seconds, matches[2])) {
+      throw new Error('Invalid interval string, expexcting a number followed by one of "Mwdhmsy"');
+    } else {
+      return intervals_in_seconds[matches[2]] * matches[1] * 1000;
     }
+  };
+
+  kbn.interval_to_seconds = function (string) {
+    return kbn.interval_to_ms(string)/1000;
   };
 
   // This should go away, moment.js can do this
   kbn.time_ago = function(string) {
-    return new Date(new Date().getTime() - (kbn.interval_to_seconds(string)*1000));
+    return new Date(new Date().getTime() - (kbn.interval_to_ms(string)));
   };
 
   // LOL. hahahahaha. DIE.
