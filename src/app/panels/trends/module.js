@@ -80,8 +80,8 @@ function (angular, app, _, kbn) {
 
       $scope.time = filterSrv.timeRange('min');
       $scope.old_time = {
-        from : new Date($scope.time.from.getTime() - kbn.interval_to_seconds($scope.panel.ago)*1000),
-        to   : new Date($scope.time.to.getTime() - kbn.interval_to_seconds($scope.panel.ago)*1000)
+        from : new Date($scope.time.from.getTime() - kbn.interval_to_ms($scope.panel.ago)),
+        to   : new Date($scope.time.to.getTime() - kbn.interval_to_ms($scope.panel.ago))
       };
 
       var _segment = _.isUndefined(segment) ? 0 : segment;

@@ -1,5 +1,8 @@
-define(['underscore', 'kbn'],
-function (_, kbn) {
+define([
+  'underscore',
+  './interval'
+],
+function (_, Interval) {
   'use strict';
 
   var ts = {};
@@ -39,7 +42,7 @@ function (_, kbn) {
     });
 
     // the expected differenece between readings.
-    this.interval_ms = base10Int(kbn.interval_to_seconds(opts.interval)) * 1000;
+    this.interval = new Interval(opts.interval);
 
     // will keep all values here, keyed by their time
     this._data = {};
@@ -75,7 +78,10 @@ function (_, kbn) {
     if (_.isArray(include)) {
       times = times.concat(include);
     }
-    return _.uniq(times.sort(), true);
+    return _.uniq(times.sort(function (a, b) {
+      // decending numeric sort
+      return a - b;
+    }), true);
   };
 
   /**
@@ -104,7 +110,7 @@ function (_, kbn) {
       this      // context
     );
 
-    // if the start and end of the pairs are inside either the start or end time,
+    // if the first or last pair is inside either the start or end time,
     // add those times to the series with null values so the graph will stretch to contain them.
     if (this.start_time && (pairs.length === 0 || pairs[0][0] > this.start_time)) {
       pairs.unshift([this.start_time, null]);
@@ -128,7 +134,7 @@ function (_, kbn) {
     // check for previous measurement
     if (i > 0) {
       prev = times[i - 1];
-      expected_prev = time - this.interval_ms;
+      expected_prev = this.interval.before(time);
       if (prev < expected_prev) {
         result.push([expected_prev, 0]);
       }
@@ -140,7 +146,7 @@ function (_, kbn) {
     // check for next measurement
     if (times.length > i) {
       next = times[i + 1];
-      expected_next = time + this.interval_ms;
+      expected_next = this.interval.after(time);
       if (next > expected_next) {
         result.push([expected_next, 0]);
       }
@@ -160,8 +166,8 @@ function (_, kbn) {
 
     result.push([ times[i], this._data[times[i]] || 0 ]);
     next = times[i + 1];
-    expected_next = times[i] + this.interval_ms;
-    for(; times.length > i && next > expected_next; expected_next+= this.interval_ms) {
+    expected_next = this.interval.after(time);
+    for(; times.length > i && next > expected_next; expected_next = this.interval.after(expected_next)) {
       result.push([expected_next, 0]);
     }
 
