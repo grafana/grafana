@@ -427,7 +427,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             scope.plot = $.plot(elem, scope.data, options);
 
           } catch(e) {
-            elem.text(e);
+            console.log(e);
           }
         }
 
