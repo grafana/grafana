@@ -77,8 +77,8 @@
                 stackSums = getStackSums(plot.getData());
             }
             var newPoints = [];
-			
-			
+
+
 			var key_idx = 0;
 			var value_idx = 1;
 			if (s.bars && s.bars.horizontal && s.bars.horizontal === true) {
