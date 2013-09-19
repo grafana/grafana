@@ -4,7 +4,6 @@ module.exports = function (grunt) {
 
   var config = {
     pkg: grunt.file.readJSON('package.json'),
-    aws: grunt.file.readJSON('.aws-config.json'),
     srcDir: 'src',
     destDir: 'dist',
     tempDir: 'tmp',
@@ -170,12 +169,6 @@ module.exports = function (grunt) {
       }
     },
     s3: {
-      options: {
-        key: '<%= aws.key %>',
-        secret: '<%= aws.secret %>',
-        bucket: 'download.elasticsearch.org',
-        access: 'private'
-      },
       dist: {
         upload: [
           {
@@ -267,11 +260,22 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('distribute', [
+    'load_s3_config',
     'build',
     'zip:dist',
     's3:dist',
     'clean:temp'
   ]);
+
+  grunt.registerTask('load_s3_config', function () {
+    var config = grunt.file.readJSON('.aws-config.json');
+    grunt.config('s3.options', {
+      key: config.key,
+      secret: config.secret,
+      bucket: 'download.elasticsearch.org',
+      access: 'private'
+    });
+  });
 
   grunt.registerTask('write_revision_to_dest', function() {
     grunt.event.once('git-describe', function (desc) {
