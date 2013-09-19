@@ -161,11 +161,42 @@ module.exports = function (grunt) {
         // Target-specific file lists and/or options go here.
       },
     },
-    zip: {
-      dist: {
-        cwd: '<%= destDir %>',
-        src: ['<%= destDir %>/**/*','LICENSE.md','README.md'],
-        dest: '<%= tempDir %>/dist.zip'
+    compress: {
+      zip: {
+        options: {
+          archive: '<%= tempDir %>/<%= pkg.name %>-latest.zip'
+        },
+        files : [
+          {
+            expand: true,
+            cwd: '<%= destDir %>',
+            src: ['**/*'],
+            dest: '<%= pkg.name %>-latest'
+          },
+          {
+            expand: true,
+            src: ['LICENSE.md','README.md'],
+            dest: '<%= pkg.name %>-latest'
+          }
+        ]
+      },
+      tgz: {
+        options: {
+          archive: '<%= tempDir %>/<%= pkg.name %>-latest.tar.gz'
+        },
+        files : [
+          {
+            expand: true,
+            cwd: '<%= destDir %>',
+            src: ['**/*'],
+            dest: '<%= pkg.name %>-latest'
+          },
+          {
+            expand: true,
+            src: ['LICENSE.md','README.md'],
+            dest: '<%= pkg.name %>-latest'
+          }
+        ]
       }
     },
     s3: {
@@ -175,8 +206,12 @@ module.exports = function (grunt) {
         // debug: true, // uncommment to prevent actual upload
         upload: [
           {
-            src: '<%= tempDir %>/dist.zip',
+            src: '<%= tempDir %>/<%= pkg.name %>-latest.zip',
             dest: 'kibana/kibana/<%= pkg.name %>-latest.zip',
+          },
+          {
+            src: '<%= tempDir %>/<%= pkg.name %>-latest.tar.gz',
+            dest: 'kibana/kibana/<%= pkg.name %>-latest.tar.gz',
           }
         ]
       }
@@ -272,7 +307,8 @@ module.exports = function (grunt) {
   grunt.registerTask('distribute', [
     'distribute:load_s3_config',
     'build',
-    'zip:dist',
+    'compress:zip',
+    'compress:tgz',
     's3:dist',
     'clean:temp'
   ]);
@@ -288,7 +324,6 @@ module.exports = function (grunt) {
 
   // load plugins
   grunt.loadNpmTasks('grunt-s3');
-  grunt.loadNpmTasks('grunt-zip');
   grunt.loadNpmTasks('grunt-ngmin');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-less');
@@ -300,6 +335,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-contrib-htmlmin');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-contrib-compress');
+
 
   // pass the config to grunt
   grunt.initConfig(config);
