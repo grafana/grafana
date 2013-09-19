@@ -170,6 +170,9 @@ module.exports = function (grunt) {
     },
     s3: {
       dist: {
+        bucket: 'download.elasticsearch.org',
+        access: 'private',
+        // debug: true, // uncommment to prevent actual upload
         upload: [
           {
             src: '<%= tempDir %>/dist.zip',
@@ -180,71 +183,56 @@ module.exports = function (grunt) {
     }
   };
 
-  var fs = require('fs');
-  var requireModules = [
+  // setup the modules require will build
+  var requireModules = config.requirejs.compile_temp.options.modules = [
     {
       // main/common module
       name: 'app',
       include: [
+        'css',
         'kbn',
+        'text',
         'jquery',
-        'underscore',
         'angular',
+        'settings',
         'bootstrap',
         'modernizr',
-        'jquery',
-        'angular-sanitize',
+        'elasticjs',
         'timepicker',
         'datepicker',
-        'elasticjs',
+        'underscore',
+        'filters/all',
+        'jquery.flot',
+        'services/all',
         'angular-strap',
         'directives/all',
-        'filters/all',
-        'services/all',
-        'jquery.flot',
         'jquery.flot.pie',
-        'text',
-        'settings'
+        'angular-sanitize'
       ]
     }
   ];
 
   // create a module for each directory in src/app/panels/
-  fs.readdirSync(config.srcDir+'/app/panels').forEach(function (panelName) {
-    requireModules.push({
-      name: 'panels/'+panelName+'/module',
-      exclude: ['app']
+  require('fs')
+    .readdirSync(config.srcDir+'/app/panels')
+    .forEach(function (panelName) {
+      requireModules.push({
+        name: 'panels/'+panelName+'/module',
+        exclude: ['app']
+      });
     });
-  });
 
   // exclude the literal config definition from all modules
-  requireModules.forEach(function (module) {
-    module.excludeShallow = module.excludeShallow || [];
-    module.excludeShallow.push('config');
-  });
+  requireModules
+    .forEach(function (module) {
+      module.excludeShallow = module.excludeShallow || [];
+      module.excludeShallow.push('config');
+    });
 
-  config.requirejs.compile_temp.options.modules = requireModules;
+  // Run jshint
+  grunt.registerTask('default', ['jshint:source', 'less:src']);
 
-  // load plugins
-  grunt.loadNpmTasks('grunt-s3');
-  grunt.loadNpmTasks('grunt-zip');
-  grunt.loadNpmTasks('grunt-ngmin');
-  grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-contrib-less');
-  grunt.loadNpmTasks('grunt-git-describe');
-  grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-cssmin');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-string-replace');
-  grunt.loadNpmTasks('grunt-contrib-htmlmin');
-  grunt.loadNpmTasks('grunt-contrib-requirejs');
-
-  // Project configuration.
-  grunt.initConfig(config);
-
-  // Default task.
-  grunt.registerTask('default', ['jshint:source','less:src']);
+  // Concat and Minify the src directory into dist
   grunt.registerTask('build', [
     'jshint:source',
     'clean:on_start',
@@ -255,29 +243,12 @@ module.exports = function (grunt) {
     'ngmin',
     'requirejs:compile_temp',
     'clean:temp',
-    'write_revision_to_dest', // runs git-describe and replace:config
+    'build:write_revision',
     'uglify:dest'
   ]);
 
-  grunt.registerTask('distribute', [
-    'load_s3_config',
-    'build',
-    'zip:dist',
-    's3:dist',
-    'clean:temp'
-  ]);
-
-  grunt.registerTask('load_s3_config', function () {
-    var config = grunt.file.readJSON('.aws-config.json');
-    grunt.config('s3.options', {
-      key: config.key,
-      secret: config.secret,
-      bucket: 'download.elasticsearch.org',
-      access: 'private'
-    });
-  });
-
-  grunt.registerTask('write_revision_to_dest', function() {
+  // run a string replacement on the require config, using the latest revision number as the cache buster
+  grunt.registerTask('build:write_revision', function() {
     grunt.event.once('git-describe', function (desc) {
       grunt.config('string-replace.config', {
         src: '<%= destDir %>/app/components/require.config.js',
@@ -296,5 +267,41 @@ module.exports = function (grunt) {
     });
     grunt.task.run('git-describe');
   });
+
+  // build, then zip and upload to s3
+  grunt.registerTask('distribute', [
+    'distribute:load_s3_config',
+    'build',
+    'zip:dist',
+    's3:dist',
+    'clean:temp'
+  ]);
+
+  // collect the key and secret from the .aws-config.json file, finish configuring the s3 task
+  grunt.registerTask('distribute:load_s3_config', function () {
+    var config = grunt.file.readJSON('.aws-config.json');
+    grunt.config('s3.options', {
+      key: config.key,
+      secret: config.secret
+    });
+  });
+
+  // load plugins
+  grunt.loadNpmTasks('grunt-s3');
+  grunt.loadNpmTasks('grunt-zip');
+  grunt.loadNpmTasks('grunt-ngmin');
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-less');
+  grunt.loadNpmTasks('grunt-git-describe');
+  grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-cssmin');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-string-replace');
+  grunt.loadNpmTasks('grunt-contrib-htmlmin');
+  grunt.loadNpmTasks('grunt-contrib-requirejs');
+
+  // pass the config to grunt
+  grunt.initConfig(config);
 
 };
