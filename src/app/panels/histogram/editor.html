@@ -16,12 +16,15 @@
     </div>
   </div>
   <h5>Chart Settings</h5>
-  <div class="row-fluid" style="margin-bottom:10px;">
+  <div class="row-fluid" style="text-align:center;margin-bottom:10px;">
     <div class="span1"> <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars"></div>
     <div class="span1"> <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines"></div>
     <div class="span1"> <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points"></div>
     <div class="span1"> <label class="small">Stack</label><input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack"></div>
-    <!--<div class="span1" ng-show="panel.stack">Percent <tip>Stack as a percentage of total</tip></label><input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage"></div>-->
+    <div class="span1" ng-show="panel.stack">
+      <label style="white-space:nowrap" class="small">Percent <tip>Stack as a percentage of total</tip></label>
+      <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage">
+    </div>
     <div class="span1"> <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend"></div>
     <div class="span1"> <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
     <div class="span1"> <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>

@@ -32,6 +32,7 @@ require.config({
     'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
     'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
     'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
+    'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
 
     modernizr:                '../vendor/modernizr-2.6.1',
@@ -64,6 +65,7 @@ require.config({
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],
     'jquery.flot.stack':    ['jquery', 'jquery.flot'],
+    'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
 
     'angular-sanitize':     ['angular'],

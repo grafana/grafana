@@ -40,7 +40,8 @@ define([
   'jquery.flot.pie',
   'jquery.flot.selection',
   'jquery.flot.time',
-  'jquery.flot.stack'
+  'jquery.flot.stack',
+  'jquery.flot.stackpercent'
 ],
 function (angular, app, $, _, kbn, moment, timeSeries) {
 
@@ -89,6 +90,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       'y-axis'    : true,
       percentage  : false,
       interactive : true,
+      options     : true,
       tooltip     : {
         value_type: 'cumulative',
         query_as_alias: false
@@ -98,6 +100,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
+      // Hide view options by default
+      $scope.options = false;
       $scope.$on('refresh',function(){
         $scope.get_data();
       });
@@ -307,6 +311,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.refresh =  false;
       $scope.$emit('render');
     };
+
+    $scope.render = function() {
+      $scope.$emit('render');
+    };
+
   });
 
   module.directive('histogramChart', function(dashboard, filterSrv) {
@@ -348,11 +357,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             var options = {
               legend: { show: false },
               series: {
-                //stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
                 stack: scope.panel.percentage ? null : stack,
                 lines:  {
                   show: scope.panel.lines,
-                  fill: scope.panel.fill/10,
+                  // Silly, but fixes bug in stacked percentages
+                  fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
                   lineWidth: scope.panel.linewidth,
                   steps: false
                 },

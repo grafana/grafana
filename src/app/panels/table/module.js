@@ -325,6 +325,8 @@ function (angular, app, _, kbn, moment) {
     };
   });
 
+
+
   module.filter('tableJson', function() {
     var json;
     return function(text,prettyLevel) {
