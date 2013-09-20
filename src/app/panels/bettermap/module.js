@@ -194,7 +194,7 @@ function (angular, app, _, L, localRequire) {
         function render_panel() {
           scope.require(['./leaflet/plugins'], function () {
             scope.panelMeta.loading = false;
-
+            L.Icon.Default.imagePath = 'app/panels/bettermap/leaflet/images';
             if(_.isUndefined(map)) {
               map = L.map(attrs.id, {
                 scrollWheelZoom: false,
