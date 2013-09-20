@@ -11,9 +11,7 @@ function (angular) {
         '<i class="icon-spinner small icon-spin icon-large panel-loading"' +
           'ng-show="panelMeta.loading == true && !panel.title"></i>' +
 
-        // Editor link
         '<span class="panelextra">' +
-
 
           '<span ng-repeat="task in panelMeta.modals" ng-show="task.show">' +
             '<span bs-modal="task.partial" class="pointer"><i ' +
@@ -23,6 +21,12 @@ function (angular) {
           '<span ng-show="panel.editable != false">' +
             '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer">'+
             '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
+          ' / </span>' +
+
+          '<span ng-show="panel.editable != false">' +
+            '<span confirm-click="row.panels = _.without(row.panels,panel)" '+
+            'confirmation="Are you sure you want to remove this {{panel.type}} panel?" class="pointer">'+
+            '<i class="icon-remove-sign pointer" bs-tooltip="\'Remove\'"></i></span>'+
           ' / </span>' +
 
           '<span class="small strong">{{panel.type}}</span> ' +

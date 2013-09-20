@@ -5,5 +5,6 @@ define([
   './kibanaPanel',
   './ngBlur',
   './ngModelOnBlur',
-  './tip'
+  './tip',
+  './confirmClick'
 ], function () {});
