@@ -18,17 +18,34 @@ module.exports = function (grunt) {
       on_start: ['<%= destDir %>', '<%= tempDir %>'],
       temp: ['<%= tempDir %>'],
     },
+    less: {
+      // this is the only task, other than copy, that runs on the src directory, since we don't really need
+      // the less files in the dist. Everything else runs from on temp, and require copys everything
+      // from temp -> dist
+      dist:{
+        expand: true,
+        cwd:'<%= srcDir %>/vendor/bootstrap/less/',
+        src: ['bootstrap.dark.less', 'bootstrap.light.less'],
+        dest: '<%= tempDir %>/css/',
+      },
+      // Compile in place when not building
+      src:{
+        options: {
+          paths: ["<%= srcDir %>/vendor/bootstrap/less"],
+          yuicompress:true
+        },
+        files: {
+          "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.dark.less",
+          "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less"
+        }
+      }
+    },
     copy: {
-      everthing_left_in_src: {
+      // copy source to temp, we will minify in place for the dist build
+      everything_but_less_to_temp: {
         cwd: '<%= srcDir %>',
         expand: true,
-        src: [
-          '**/*.js',
-          '**/*.json',
-          'font/**/*',
-          'img/**/*',
-          'app/panels/bettermap/leaflet/images/*'
-        ],
+        src: ['**/*', '!**/*.less'],
         dest: '<%= tempDir %>'
       }
     },
@@ -43,46 +60,14 @@ module.exports = function (grunt) {
         jshintrc: '.jshintrc'
       }
     },
-    less: {
-      dist:{
-        options:{
-          compress: true
-        },
-        expand: true,
-        cwd:'<%= srcDir %>/vendor/bootstrap/less/',
-        src: ['bootstrap.dark.less', 'bootstrap.light.less'],
-        dest: '<%= tempDir %>/css/',
-      },
-      // Compile to src when not building
-      src:{
-        options: {
-          paths: ["<%= srcDir %>/vendor/bootstrap/less"],
-          yuicompress:true
-        },
-        files: {
-          "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.dark.less",
-          "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less"
-        }
-      }
-    },
-    cssmin: {
-      dist: {
-        expand: true,
-        cwd: '<%= srcDir %>',
-        src: [
-          '**/*.css'
-        ],
-        dest: '<%= tempDir %>'
-      }
-    },
     htmlmin:{
-      dist: {
+      build: {
         options:{
           removeComments: true,
           collapseWhitespace: true
         },
         expand: true,
-        cwd: '<%= srcDir %>',
+        cwd: '<%= tempDir %>',
         src: [
           'index.html',
           'app/panels/**/*.html',
@@ -91,8 +76,16 @@ module.exports = function (grunt) {
         dest: '<%= tempDir %>'
       }
     },
+    cssmin: {
+      build: {
+        expand: true,
+        cwd: '<%= tempDir %>',
+        src: '**/*.css',
+        dest: '<%= tempDir %>'
+      }
+    },
     ngmin: {
-      scripts: {
+      build: {
         expand:true,
         cwd:'<%= tempDir %>',
         src: [
@@ -109,7 +102,7 @@ module.exports = function (grunt) {
       }
     },
     requirejs: {
-      compile_temp: {
+      build: {
         options: {
           appDir: '<%= tempDir %>',
           dir: '<%= destDir %>',
@@ -119,14 +112,13 @@ module.exports = function (grunt) {
 
           optimize: 'none',
           optimizeCss: 'none',
+          optimizeAllPluginResources: false,
 
           removeCombined: true,
-          preserveLicenseComments: false,
           findNestedDependencies: true,
-          normalizeDirDefines: "none",
+          normalizeDirDefines: 'all',
           inlineText: true,
           skipPragmas: true,
-          optimizeAllPluginResources: false,
 
           done: function (done, output) {
             var duplicates = require('rjs-build-analysis').duplicates(output);
@@ -175,7 +167,7 @@ module.exports = function (grunt) {
           },
           {
             expand: true,
-            src: ['LICENSE.md','README.md'],
+            src: ['LICENSE.md', 'README.md'],
             dest: '<%= pkg.name %>-latest'
           }
         ]
@@ -193,7 +185,7 @@ module.exports = function (grunt) {
           },
           {
             expand: true,
-            src: ['LICENSE.md','README.md'],
+            src: ['LICENSE.md', 'README.md'],
             dest: '<%= pkg.name %>-latest'
           }
         ]
@@ -219,7 +211,7 @@ module.exports = function (grunt) {
   };
 
   // setup the modules require will build
-  var requireModules = config.requirejs.compile_temp.options.modules = [
+  var requireModules = config.requirejs.build.options.modules = [
     {
       // main/common module
       name: 'app',
@@ -271,12 +263,12 @@ module.exports = function (grunt) {
   grunt.registerTask('build', [
     'jshint:source',
     'clean:on_start',
-    'htmlmin',
     'less:dist',
-    'cssmin',
-    'copy:everthing_left_in_src',
-    'ngmin',
-    'requirejs:compile_temp',
+    'copy:everything_but_less_to_temp',
+    'htmlmin:build',
+    'cssmin:build',
+    'ngmin:build',
+    'requirejs:build',
     'clean:temp',
     'build:write_revision',
     'uglify:dest'
