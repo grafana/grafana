@@ -118,6 +118,19 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     };
 
+    $scope.set_interval = function(interval) {
+      if(interval !== 'auto') {
+        $scope.panel.auto_int = false;
+        $scope.panel.interval = interval;
+      } else {
+        $scope.panel.auto_int = true;
+      }
+    };
+
+    $scope.interval_label = function(interval) {
+      return $scope.panel.auto_int && interval === $scope.panel.interval ? interval+" (auto)" : interval;
+    };
+
     /**
      * The time range effecting the panel
      * @return {[type]} [description]

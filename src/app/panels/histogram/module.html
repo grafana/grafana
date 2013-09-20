@@ -24,6 +24,9 @@
     .histogram-options label {
       margin: 0px 0px 0px 10px !important;
     }
+    .histogram-options span {
+      white-space: nowrap;
+    }
   </style>
   <div>
     <span ng-show='panel.options'>
@@ -49,6 +52,9 @@
     <span ng-show="panel.stack">
       <label style="white-space:nowrap" class="small">Percent</label>
       <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
+    </span>
+    <span>
+      <label class="small">Interval</label> <select ng-change="set_interval(panel.interval);get_data();" class="input-small" ng-model="panel.interval" ng-options="interval_label(time) for time in _.union([panel.interval],['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1M','1y'])"></select>
     </span>
   </form>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="img/load_big.gif"></center>
