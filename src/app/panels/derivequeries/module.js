@@ -24,6 +24,14 @@ function (angular, app, _) {
 
   module.controller('derivequeries', function($scope, $rootScope, querySrv, fields, dashboard, filterSrv) {
     $scope.panelMeta = {
+      modals : [
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable
+        }
+      ],
       status  : "Experimental",
       description : "Creates a new set of queries using the Elasticsearch terms facet. For example,"+
        " you might want to create 5 queries showing the most frequent HTTP response codes. Be "+

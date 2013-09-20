@@ -25,6 +25,14 @@ function (angular, app, _, $, kbn) {
 
   module.controller('terms', function($scope, querySrv, dashboard, filterSrv) {
     $scope.panelMeta = {
+      modals : [
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable
+        }
+      ],
       editorTabs : [
         {title:'Queries', src:'app/partials/querySelect.html'}
       ],

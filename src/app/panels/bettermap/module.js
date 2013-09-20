@@ -32,6 +32,14 @@ function (angular, app, _, L, localRequire) {
           src: 'app/partials/querySelect.html'
         }
       ],
+      modals : [
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable
+        }
+      ],
       status  : "Experimental",
       description : "Displays geo points in clustered groups on a map. The cavaet for this panel is"+
         " that, for better or worse, it does NOT use the terms facet and it <b>does</b> query "+

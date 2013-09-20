@@ -23,7 +23,7 @@ define([
   'jquery',
   'kbn',
   'config'
-], function (angular, app, _, $, kbn, config) {
+], function (angular, app, _, $, kbn) {
   'use strict';
 
   var module = angular.module('kibana.panels.pie', []);
@@ -32,6 +32,17 @@ define([
   module.controller('pie', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
 
     $scope.panelMeta = {
+      editorTabs : [
+        {title:'Queries', src:'app/partials/querySelect.html'}
+      ],
+      modals : [
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable
+        }
+      ],
       status  : "Deprecated",
       description : "Uses an Elasticsearch terms facet to create a pie chart. You should really only"+
         " point this at not_analyzed fields for that reason. This panel is going away soon, it has"+
@@ -40,9 +51,6 @@ define([
 
     // Set and populate defaults
     var _d = {
-      editorTabs : [
-        {title:'Queries', src:'app/partials/querySelect.html'}
-      ],
       query   : { field:"_type", goal: 100},
       queries     : {
         mode        : 'all',
@@ -123,7 +131,7 @@ define([
                 filterSrv.getBoolFilter(filterSrv.ids)
                 )))).size(0);
 
-        $scope.populate_modal(request);
+        $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
         results = request.doSearch();
 
@@ -148,7 +156,7 @@ define([
           .filter(filterSrv.getBoolFilter(filterSrv.ids))
           .size(0);
 
-        $scope.populate_modal(request);
+        $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
         results = request.doSearch();
 
@@ -163,17 +171,6 @@ define([
           $scope.$emit('render');
         });
       }
-    };
-
-    // I really don't like this function, too much dom manip. Break out into directive?
-    $scope.populate_modal = function(request) {
-      $scope.modal = {
-        title: "Inspector",
-        body : "<h5>Last Elasticsearch Query</h5><pre>"+
-            'curl -XGET '+config.elasticsearch+'/'+dashboard.indices+"/_search?pretty -d'\n"+
-            angular.toJson(JSON.parse(request.toString()),true)+
-          "'</pre>",
-      };
     };
 
   });

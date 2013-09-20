@@ -21,7 +21,16 @@ function (angular, app, _, kbn) {
   app.useModule(module);
 
   module.controller('trends', function($scope, kbnIndex, querySrv, dashboard, filterSrv) {
+
     $scope.panelMeta = {
+      modals : [
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable
+        }
+      ],
       editorTabs : [
         {title:'Queries', src:'app/partials/querySelect.html'}
       ],
@@ -32,7 +41,6 @@ function (angular, app, _, kbn) {
       " since 12:00-12:10pm"
     };
 
-
     // Set and populate defaults
     var _d = {
       queries     : {
@@ -42,6 +50,7 @@ function (angular, app, _, kbn) {
       style   : { "font-size": '14pt'},
       ago     : '1d',
       arrangement : 'vertical',
+      spyable: true
     };
     _.defaults($scope.panel,_d);
 
@@ -122,8 +131,8 @@ function (angular, app, _, kbn) {
       });
 
 
-      // TODO: Spy for trend panel
-      //$scope.populate_modal(request);
+      // Populate the inspector panel
+      $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
       // If we're on the first segment we need to get our indices
       if (_segment === 0) {

@@ -10,6 +10,8 @@
   color: @black;
 }
 
+
+
 .editor-title {
   margin-right: 10px;
   font-size: 1.7em;
@@ -109,14 +111,20 @@
   position: absolute;
   z-index: 800;
   display: none;
+  opacity: 0.7;
+  right:15px;
+  top:-13px;
+}
+
+.panel span.panelextra .link {
+  margin-right: 5px;
 }
 
 .panel:hover span.panelextra {
   display: block;
-  opacity: 0.3;
 }
 
-.panel span.panelextra:hover {
+.panel span.panelextra .editlink:hover {
   opacity: 1;
 }
 

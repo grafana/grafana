@@ -10,9 +10,24 @@ function (angular) {
       var editorTemplate =
         '<i class="icon-spinner small icon-spin icon-large panel-loading"' +
           'ng-show="panelMeta.loading == true && !panel.title"></i>' +
-        '<span class="editlink panelextra pointer" style="right:15px;top:0px"' +
-          'bs-modal="\'app/partials/paneleditor.html\'" ng-show="panel.editable != false">' +
-        '<span class="small">{{panel.type}}</span> <i class="icon-cog pointer"></i></span>' +
+
+        // Editor link
+        '<span class="panelextra">' +
+
+
+          '<span ng-repeat="task in panelMeta.modals" ng-show="task.show">' +
+            '<span bs-modal="task.partial" class="pointer"><i ' +
+              'bs-tooltip="task.description" ng-class="task.icon" class="pointer"></i></span>'+
+          ' / </span>' +
+
+          '<span ng-show="panel.editable != false">' +
+            '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer">'+
+            '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
+          ' / </span>' +
+
+          '<span class="small strong">{{panel.type}}</span> ' +
+        '</span>' +
+
         '<h4 ng-show="panel.title">' +
           '{{panel.title}}' +
           '<i class="icon-spinner smaller icon-spin icon-large"' +

@@ -1,7 +1,4 @@
 <div ng-controller='terms' ng-init="init()">
-  <span ng-show="panel.spyable" class='spy panelextra pointer'>
-      <i bs-modal="'app/partials/inspector.html'" class="icon-eye-open"></i>
-  </span>
   <!-- START Pie or bar chart -->
   <div ng-show="panel.counter_pos == 'above' && (panel.chart == 'bar' || panel.chart == 'pie')" id='{{$id}}-legend'>
     <!-- vertical legend above -->

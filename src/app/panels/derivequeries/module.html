@@ -17,10 +17,6 @@
     box-sizing: border-box;         /* Opera/IE 8+ */
   }
 </style>
-  <span ng-show='panel.spyable' style="position:absolute;right:0px;top:0px" class='panelextra pointer'>
-      <i bs-modal="'app/partials/inspector.html'" class="icon-eye-open"></i>
-  </span>
-
   <label class="small">Create new queries from
     <span class="panel-derive-field" ng-show="!editing" ng-click="editing=true">{{panel.field}}</span>
     <select ng-show="editing && fields.list.length>1" class="input-medium" ng-model="panel.field" ng-options="f for f in fields.list" ng-change='editing=false' ng-blur="editing=false"></select>
