@@ -27,7 +27,7 @@ module.exports = function (grunt) {
           '**/*.json',
           'font/**/*',
           'img/**/*',
-          'panels/bettermap/leaflet/*.png'
+          'app/panels/bettermap/leaflet/images/*'
         ],
         dest: '<%= tempDir %>'
       }
