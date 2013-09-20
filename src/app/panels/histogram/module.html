@@ -27,6 +27,11 @@
     .histogram-options span {
       white-space: nowrap;
     }
+
+    /* this is actually should be in bootstrap */
+    .form-inline .checkbox {
+        display: inline-block;
+    }
   </style>
   <div>
     <span ng-show='panel.options'>
@@ -45,13 +50,37 @@
     <span ng-show="panel.legend" class="small"><span ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
   <form class="form-inline bordered histogram-options" ng-show="options">
-    <label class="small">Bars</label> <input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
-    <label class="small">Lines</label> <input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
-    <label class="small">Points</label> <input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
-    <label class="small">Stack</label> <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
+    <div class="checkbox">
+      <label class="small">
+        <input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
+        Bars
+      </label>
+    </div>
+    <div class="checkbox">
+      <label class="small">
+        <input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
+        Lines
+      </label>
+    </div>
+    <div class="checkbox">
+      <label class="small">
+        <input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
+        Points
+      </label>
+    </div>
+    <div class="checkbox">
+      <label class="small">
+        <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
+        Stack
+      </label>
+    </div>
     <span ng-show="panel.stack">
-      <label style="white-space:nowrap" class="small">Percent</label>
-      <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
+      <div class="checkbox">
+        <label style="white-space:nowrap" class="small">
+          <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
+          Percent
+        </label>
+      </div>
     </span>
     <span>
       <label class="small">Interval</label> <select ng-change="set_interval(panel.interval);get_data();" class="input-small" ng-model="panel.interval" ng-options="interval_label(time) for time in _.union([panel.interval],panel.intervals)"></select>
