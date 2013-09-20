@@ -28,8 +28,8 @@ function (angular) {
           '<span class="small strong">{{panel.type}}</span> ' +
         '</span>' +
 
-        '<h4 ng-show="panel.title">' +
-          '{{panel.title}}' +
+        '<h4 ng-show="panel.title" style="margin:0px;">' +
+          '{{panel.title}}&nbsp' +
           '<i class="icon-spinner smaller icon-spin icon-large"' +
             'ng-show="panelMeta.loading == true && panel.title"></i>' +
         '</h4>';

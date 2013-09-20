@@ -23,6 +23,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       style: "dark",
       editable: true,
       failover: false,
+      panel_hints: true,
       rows: [],
       services: {},
       loader: {

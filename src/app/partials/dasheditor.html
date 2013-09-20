@@ -14,6 +14,9 @@
       <div class="span1">
         <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
       </div>
+      <div class="span1">
+        <label class="small"> Hints <tip>Show 'Add panel' hints in empty spaces</tip></label><input type="checkbox" ng-model="dashboard.current.panel_hints" ng-checked="dashboard.current.panel_hints" />
+      </div>
       <div class="span3">
         <label class="small">Style</label><select class="input-small" ng-model="dashboard.current.style" ng-options="f for f in ['dark','light']"></select>
       </div>

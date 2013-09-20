@@ -20,7 +20,6 @@ function (angular, app, _) {
 
       _.defaults($scope.row,_d);
 
-
       $scope.init = function() {
         $scope.querySrv = querySrv;
         $scope.reset_panel();
@@ -38,6 +37,12 @@ function (angular, app, _) {
         }
       };
 
+      $scope.rowSpan = function(row) {
+        return _.reduce(_.pluck(row.panels,'span'), function(p,v) {
+          return p+v;
+        },0);
+      };
+
       // This can be overridden by individual panels
       $scope.close_edit = function() {
         $scope.$broadcast('render');
@@ -48,9 +53,13 @@ function (angular, app, _) {
       };
 
       $scope.reset_panel = function(type) {
+        var
+          defaultSpan = 4,
+          _as = 12-$scope.rowSpan($scope.row);
+
         $scope.panel = {
           error   : false,
-          span    : 3,
+          span    : _as < defaultSpan && _as > 0 ? _as : defaultSpan,
           editable: true,
           type    : type
         };

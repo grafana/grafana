@@ -27,7 +27,7 @@
         <thead>
           <th>Title</th>
           <th>Type</th>
-          <th>Span</th>
+          <th>Span <span class="small">({{rowSpan(row)}}/12)</span></th>
           <th>Delete</th>
           <th>Move</th>
           <th></th>
@@ -47,9 +47,12 @@
   </div>
   <div class="row-fluid" ng-show="editor.index == 2">
     <h4>Select Panel Type</h4>
-    <form class="input-append">
-    <select class="input-medium input-append" ng-model="panel.type" ng-options="f for f in config.panel_names|stringSort"></select>
-    <small ng-show="!panel.type">Select Type</small></form>
+    <form class="form-inline">
+      <select class="input-medium input-append" ng-model="panel.type" ng-options="f for f in config.panel_names|stringSort"></select>
+      <small ng-show="rowSpan(row) > 11">
+        Note: This row is full, new panels will wrap to a new line. You should add another row.
+      </small>
+    </form>
 
     <div ng-show="!(_.isUndefined(panel.type))">
       <div add-panel="{{panel.type}}"></div>
