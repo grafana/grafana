@@ -254,7 +254,7 @@ define([
 
           // Populate legend
           if(elem.is(":visible")){
-            require(['vendor/jquery/jquery.flot.pie.js'], function(){
+            require(['jquery.flot.pie'], function(){
               scope.legend = $.plot(elem, scope.data, pie).getData();
               if(!scope.$$phase) {
                 scope.$apply();
