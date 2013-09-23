@@ -137,7 +137,8 @@ dashboard.rows[0].panels = [
 // Add a filtering panel to the 3rd row
 dashboard.rows[1].panels = [
   {
-    type: 'query'
+    type: 'query',
+    span: 12
   }
 ];
 
@@ -145,7 +146,8 @@ dashboard.rows[1].panels = [
 // Add a filtering panel to the 3rd row
 dashboard.rows[2].panels = [
   {
-    type: 'filtering'
+    type: 'filtering',
+    span: 12
   }
 ];
 
@@ -154,7 +156,8 @@ dashboard.rows[3].panels = [
   {
     type: 'histogram',
     time_field: ARGS.timefield||"@timestamp",
-    auto_int: true
+    auto_int: true,
+    span: 12
   }
 ];
 
@@ -164,7 +167,8 @@ dashboard.rows[4].panels = [
     type: 'table',
     fields: !_.isUndefined(ARGS.fields) ? ARGS.fields.split(',') : [],
     sort: !_.isUndefined(ARGS.sort) ? ARGS.sort.split(',') : [ARGS.timefield||'@timestamp','desc'],
-    overflow: 'expand'
+    overflow: 'expand',
+    span: 12
   }
 ];
 
