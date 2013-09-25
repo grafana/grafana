@@ -15,6 +15,7 @@ define([
   './leaflet/leaflet-src',
   'require',
 
+  'css!./module.css',
   'css!./leaflet/leaflet.css',
   'css!./leaflet/plugins.css'
 ],
