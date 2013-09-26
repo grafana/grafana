@@ -243,7 +243,11 @@ function (angular, app, _, kbn, moment) {
 
           // Sort the data
           $scope.data = _.sortBy($scope.data, function(v){
-            return v.sort[0];
+            if(!_.isUndefined(v.sort)) {
+              return v.sort[0];
+            } else {
+              return 0;
+            }
           });
 
           // Reverse if needed

@@ -15,6 +15,7 @@ require.config({
     filesaver:                '../vendor/filesaver',
 
     angular:                  '../vendor/angular/angular',
+    'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
     'angular-sanitize':       '../vendor/angular/angular-sanitize',
     timepicker:               '../vendor/angular/timepicker',
@@ -25,6 +26,7 @@ require.config({
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
     jquery:                   '../vendor/jquery/jquery-1.8.0',
+    'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
 
     'extend-jquery':          'components/extend-jquery',
 
@@ -61,6 +63,7 @@ require.config({
     },
 
     // simple dependency declaration
+    'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],
@@ -70,6 +73,7 @@ require.config({
 
     'angular-sanitize':     ['angular'],
     'angular-cookies':      ['angular'],
+    'angular-dragdrop':     ['jquery','jquery-ui','angular'],
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],

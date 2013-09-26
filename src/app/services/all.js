@@ -5,6 +5,7 @@ define([
   './filterSrv',
   './kbnIndex',
   './querySrv',
-  './timer'
+  './timer',
+  './panelMove'
 ],
 function () {});

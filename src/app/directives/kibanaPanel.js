@@ -7,36 +7,47 @@ function (angular) {
   angular
     .module('kibana.directives')
     .directive('kibanaPanel', function($compile) {
+      var container = '<div class="panelCont"></div>';
+
       var editorTemplate =
-        '<i class="icon-spinner small icon-spin icon-large panel-loading"' +
-          'ng-show="panelMeta.loading == true && !panel.title"></i>' +
 
-        '<span class="panelextra">' +
+        '<div class="row-fluid panel-extra"><div class="panel-extra-container">' +
 
-          '<span ng-repeat="task in panelMeta.modals" ng-show="task.show">' +
-            '<span bs-modal="task.partial" class="pointer"><i ' +
-              'bs-tooltip="task.description" ng-class="task.icon" class="pointer"></i></span>'+
-          ' / </span>' +
+          '<span class="extra row-button " ng-show="panel.editable != false">' +
+            '<span class="row-text pointer" bs-tooltip="\'Drag title to move\'" data-drag=true '+
+            'data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
+            ' jqyoui-draggable="'+
+            '{'+
+              'animate:false,'+
+              'index:{{$index}},'+
+              'onStart:\'panelMoveStart\','+
+              'onStop:\'panelMoveStop\''+
+              '}"  ng-model="row.panels">{{panel.type}}</span>'+
+          '</span>' +
 
-          '<span ng-show="panel.editable != false">' +
-            '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer">'+
-            '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
-          ' / </span>' +
-
-          '<span ng-show="panel.editable != false">' +
+          '<span class="extra row-button" ng-show="panel.editable != false">' +
             '<span confirm-click="row.panels = _.without(row.panels,panel)" '+
             'confirmation="Are you sure you want to remove this {{panel.type}} panel?" class="pointer">'+
-            '<i class="icon-remove-sign pointer" bs-tooltip="\'Remove\'"></i></span>'+
-          ' / </span>' +
+            '<i class="icon-remove pointer" bs-tooltip="\'Remove\'"></i></span>'+
+          '</span>' +
 
-          '<span class="small strong">{{panel.type}}</span> ' +
-        '</span>' +
+          '<span class="row-button extra" ng-show="panel.editable != false">' +
+            '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer">'+
+            '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
+          '</span>' +
 
-        '<h4 ng-show="panel.title" style="margin:0px;">' +
-          '{{panel.title}}&nbsp' +
-          '<i class="icon-spinner smaller icon-spin icon-large"' +
-            'ng-show="panelMeta.loading == true && panel.title"></i>' +
-        '</h4>';
+          '<span ng-repeat="task in panelMeta.modals" class="row-button extra" ng-show="task.show">' +
+            '<span bs-modal="task.partial" class="pointer"><i ' +
+              'bs-tooltip="task.description" ng-class="task.icon" class="pointer"></i></span>'+
+          '</span>' +
+
+          '<span class="row-button row-text panel-title" ng-show="panel.title">' +
+            '{{panel.title}}&nbsp' +
+            '<i class="icon-spinner smaller icon-spin icon-large"' +
+              'ng-show="panelMeta.loading == true && panel.title"></i>' +
+          '</span>'+
+
+        '</div></div>';
       return {
         restrict: 'E',
         link: function($scope, elem, attr) {
@@ -46,6 +57,7 @@ function (angular) {
           // compile the module and uncloack. We're done
           function loadModule($module) {
             $module.appendTo(elem);
+            elem.wrap(container);
             /* jshint indent:false */
             $compile(elem.contents())($scope);
             elem.removeClass("ng-cloak");

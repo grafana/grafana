@@ -1,5 +1,4 @@
 <div ng-controller='query' ng-init="init()" class="query-panel">
-  <label class="small">{{panel.label}}</label>
   <div ng-repeat="id in (unPinnedQueries = (querySrv.ids|pinnedQuery:false))" ng-class="{'short-query': unPinnedQueries.length>1}">
     <form class="form-search" style="position:relative;margin-bottom:5px;" ng-submit="refresh()">
       <span class="begin-query">

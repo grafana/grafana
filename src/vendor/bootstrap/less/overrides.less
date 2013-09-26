@@ -10,8 +10,6 @@
   color: @black;
 }
 
-
-
 .editor-title {
   margin-right: 10px;
   font-size: 1.7em;
@@ -42,23 +40,35 @@
 }
 
 .kibana-row {
-  margin-left: 15px;
   margin-bottom: 10px;
 }
 
+.row-button {
+  border-left: 1px solid lighten(@bodyBackground, 10%);
+  border-right: 1px solid darken(@bodyBackground, 10%);
+  padding: 2px 7px 0px 7px;
+  float: left;
+}
+
+.row-text {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
 .row-close {
-  color: #bbb;
-  margin-left: -35px;
-  font-size: 9pt;
-  font-weight: 200;
-  padding-left: 35px;
-  padding-top:0px;
+  outline: 1px solid darken(@bodyBackground, 10%);
+  border-top: 1px solid lighten(@bodyBackground, 10%);
+  padding: 0px;
+  margin: 0px;
+  min-height: 24px !important;
+  line-height: 24px;
+  background: darken(@bodyBackground, 3%);
 }
 
 .row-open {
   text-align: right;
-  color: #bbb;
-  left:-30px;
+  left:-18px;
   position: absolute;
   font-size: 13pt;
   font-weight: 200;
@@ -81,7 +91,7 @@
   display: none !important;
 }
 
-.table tbody + tbody{
+.table tbody + tbody {
   border-top: 0px;
 }
 
@@ -98,26 +108,43 @@
   z-index: 800;
 }
 
-.panel span.panelextra {
-  position: absolute;
-  z-index: 800;
-  display: none;
-  opacity: 0.7;
-  top:-13px;
-  width: 98%;
-  text-align:right;
-}
-
-.panel span.panelextra .link {
-  margin-right: 5px;
-}
-
-.panel:hover span.panelextra {
+.ui-draggable-dragging {
   display: block;
+  visibility: visible;
+  opacity: 1;
+  z-index: 9999;
 }
 
-.panel span.panelextra .editlink:hover {
-  opacity: 1;
+.panelCont {
+    outline: 1px solid darken(@bodyBackground, 10%);
+    border-top: 1px solid lighten(@bodyBackground, 10%);
+    padding: 0px 10px 10px 10px;
+    background: darken(@bodyBackground, 3%);
+    margin: 0px;
+}
+
+.panel-title {
+  border: 0px;
+  margin-left: -11px;
+}
+
+.panel div.panel-extra div.panel-extra-container {
+  margin-right: -11px;
+}
+
+.panel div.panel-extra {
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.panel div.panel-extra .extra {
+  float:right !important;
+  border-bottom: 1px solid lighten(@bodyBackground, 5%);
+}
+
+.dragInProgress {
+  background-color: darken(@bodyBackground,1%);
+  border: 1px solid @tableBorder;
 }
 
 .link {

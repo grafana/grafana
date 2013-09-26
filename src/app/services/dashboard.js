@@ -406,7 +406,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         return false;
       });
     };
-
   });
 
 });

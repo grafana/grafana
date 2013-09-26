@@ -8,16 +8,15 @@
     <div ng-switch-when="absolute" >
       <div class="timepicker-block">
         <form class="nomargin">
-          <label><small>From</small></label>
           <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>
           <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
         </form>
       </div>
-      <div class="timepicker-block" style="margin-left:10px">
+      to
+      <div class="timepicker-block" style="margin-left:5px">
         <form class="nomargin">
-          <label style="margin-left:5px"><small>To (<a ng-click="to_now()">now</a>)</small></label>
           <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.to.date" data-date-format="mm/dd/yyyy" bs-datepicker>
-          <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.to.time" bs-timepicker>
+          <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.to.time" bs-timepicker> <!--(<a ng-click="to_now()">now</a>)-->
       </form>
       </div>
       <div class="timepicker-block">
@@ -29,14 +28,12 @@
     <div ng-switch-when="since">
       <div class="timepicker-block">
         <form class="nomargin">
-          <label><small>Since</small></label>
           <input type="text" class="input-smaller" ng-change="time_check()" ng-model="timepicker.from.date" data-date-format="mm/dd/yyyy" bs-datepicker>
           <input type="text" class="input-mini" ng-change="time_check()" data-show-meridian="false" data-show-seconds="true" ng-model="timepicker.from.time" bs-timepicker>
         </form>
       </div>
-      <div class="timepicker-block" style="margin-left:10px">
+      <div class="timepicker-block" style="margin-left:5px">
         <form class="nomargin">
-          <label><small><br></small></label>
           <button class="btn" ng-click="time_apply()" ><i class="icon-ok"></i></button>
         </form>
       </div>
@@ -44,7 +41,6 @@
     <div ng-switch-when="relative">
       <div class="timepicker-block">
         <form class="nomargin input-append">
-          <label><small>The last</small></label>
           <button class="btn btn" ng-repeat='timespan in panel.time_options' ng-class="{'btn-success': (panel.timespan == timespan)}" ng-click="set_timespan(timespan)">{{timespan}}</button>
           <!--<select ng-model="panel.sort[0]" ng-options="f for f in fields"></select>-->
         </form>

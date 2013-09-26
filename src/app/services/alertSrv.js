@@ -35,6 +35,7 @@ function (angular, _) {
           self.list = _.without(self.list,_a);
         }, timeout);
       }
+      return(_a);
     };
 
     this.clear = function(alert) {

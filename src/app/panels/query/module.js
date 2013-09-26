@@ -3,7 +3,6 @@
   ## query
 
   ### Parameters
-  * label ::  The label to stick over the field
   * query ::  A string or an array of querys. String if multi is off, array if it is on
               This should be fixed, it should always be an array even if its only
               one element
@@ -29,7 +28,6 @@ define([
 
     // Set and populate defaults
     var _d = {
-      label   : "Search",
       query   : "*",
       pinned  : true,
       history : [],
