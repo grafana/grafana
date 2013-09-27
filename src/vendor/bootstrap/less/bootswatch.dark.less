@@ -2,6 +2,15 @@
 // Bootswatch
 // -----------------------------------------------------
 
+// KIBANA
+.panelCont {
+    outline: 1px solid darken(@bodyBackground, 10%);
+    border-top: 1px solid lighten(@bodyBackground, 10%);
+    padding: 0px 10px 10px 10px;
+    background: darken(@bodyBackground, 3%);
+    margin: 0px;
+}
+
 
 // TYPOGRAPHY
 // -----------------------------------------------------
@@ -33,7 +42,7 @@ hr {
 .navbar {
 
 	.navbar-inner {
-		#gradient > .vertical-three-colors(@gray, @grayDark, 70%, @grayDark);
+		#gradient > .vertical-three-colors(@grayDark, darken(@bodyBackground,3%), 70%, darken(@bodyBackground,3%));
 	}
 
 	.brand {

@@ -1,3 +1,6 @@
+
+<li><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/dashboard'><i class='icon-home'></i></a></li>
+
 <li class="dropdown" bs-tooltip="'Load'" data-placement="bottom" ng-show="showDropdown('load')" >
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="elasticsearch_dblist('title:'+elasticsearch.query+'*')">
     <i class='icon-folder-open'></i>
@@ -71,3 +74,5 @@
   </ul>
 </li>
 <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="elasticsearch_save('temp',loader.save_temp_ttl)" bs-modal="'app/partials/dashLoaderShare.html'"><i class='icon-share'></i></a></li>
+
+<li ng-show="dashboard.current.editable "bs-tooltip="'Configure dashboard'" data-placement="bottom"><a href='#' bs-modal="'app/partials/dasheditor.html'"><i class='icon-cog pointer'></i></a></li>

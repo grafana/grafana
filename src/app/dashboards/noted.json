@@ -1,5 +1,5 @@
 {
-  "title": "Your Basic Dashboard",
+  "title": "A few notes",
   "services": {
     "query": {
       "idQueue": [
@@ -13,7 +13,9 @@
           "query": "*",
           "alias": "",
           "color": "#7EB26D",
-          "id": 0
+          "id": 0,
+          "pin": false,
+          "type": "lucene"
         }
       },
       "ids": [
@@ -40,7 +42,7 @@
       "panels": [
         {
           "error": false,
-          "span": 5,
+          "span": 8,
           "editable": true,
           "group": [
             "default"
@@ -75,7 +77,8 @@
           ],
           "remember": 10,
           "pinned": true,
-          "query": "*"
+          "query": "*",
+          "title": "Search"
         }
       ]
     },
@@ -88,7 +91,7 @@
       "panels": [
         {
           "error": false,
-          "span": 3,
+          "span": 5,
           "editable": true,
           "group": [
             "default"
@@ -97,16 +100,18 @@
           "status": "Stable",
           "mode": "markdown",
           "content": "You found the filter row! This row has a 'filtering' panel in it that lists any active filters. You usually want one of these on any dashboard.",
-          "style": {}
+          "style": {},
+          "title": "Found me!"
         },
         {
           "error": false,
-          "span": 9,
+          "span": 7,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "filtering"
+          "type": "filtering",
+          "title": "Filters (applied globally)"
         }
       ]
     },
@@ -127,7 +132,7 @@
           "type": "text",
           "status": "Stable",
           "mode": "markdown",
-          "content": "See the small Filters text above this? Click it to expand the filters row. Right now there are none, but if you were to add a Table panel, you could click on event fields to drill down and add some. Or if you had timestamped data and used a time picker, your time filter would appear there",
+          "content": "See the small Filters bar above this? Click it to expand the filters row. Right now there are none, but if you were to add a Table panel, you could click on event fields to drill down and add some. Or if you had timestamped data and used a time picker, your time filter would appear there",
           "style": {},
           "title": "Filtering"
         },
@@ -142,7 +147,8 @@
           "status": "Stable",
           "mode": "markdown",
           "content": "### Start here\nThis dashboard doesn't run any queries, but it's the best I can do without knowing much about your data!\n\n##### Kibana is currently configured to point at the special Elasticsearch *_all* index. You can change that by clicking on the cog icon in the title bar of this dashboard\nIf you have several indices and a lot of data, you should probably do that before you add any new panels. You can also add rows from that dialog. You can edit individual panels by click on the link that appears in their top right when you mouse over them",
-          "style": {}
+          "style": {},
+          "title": "Welcome!"
         }
       ]
     },
@@ -164,7 +170,8 @@
           "status": "Stable",
           "mode": "markdown",
           "content": "## A good place for a table\nThis is a good place for a table panel. Table panels present your data in a tabular format and allow you pick the fields you want to see, sort on them, and drill down.",
-          "style": {}
+          "style": {},
+          "title": "Put a table here maybe?"
         }
       ]
     }
@@ -174,5 +181,22 @@
     "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "_all"
+  },
+  "style": "dark",
+  "failover": false,
+  "panel_hints": true,
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": true,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": true,
+    "hide": false
   }
 }

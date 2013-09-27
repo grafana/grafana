@@ -103,7 +103,7 @@ dashboard.services.filter = {
 // Ok, lets make some rows. The Filters row is collapsed by default
 dashboard.rows = [
   {
-    title: "Options",
+    title: "Time span",
     height: "30px"
   },
   {
@@ -128,6 +128,7 @@ dashboard.rows = [
 // Setup some panels. A query panel and a filter panel on the same row
 dashboard.rows[0].panels = [
   {
+    title: "Set time filter",
     type: 'timepicker',
     span: 6,
     timespan: ARGS.from||_d_timespan
@@ -137,6 +138,7 @@ dashboard.rows[0].panels = [
 // Add a filtering panel to the 3rd row
 dashboard.rows[1].panels = [
   {
+    title: 'search',
     type: 'query',
     span: 12
   }
@@ -146,6 +148,7 @@ dashboard.rows[1].panels = [
 // Add a filtering panel to the 3rd row
 dashboard.rows[2].panels = [
   {
+    title: 'filters (applied globally)',
     type: 'filtering',
     span: 12
   }
@@ -154,6 +157,7 @@ dashboard.rows[2].panels = [
 // And a histogram that allows the user to specify the interval and time field
 dashboard.rows[3].panels = [
   {
+    title: 'events over time',
     type: 'histogram',
     time_field: ARGS.timefield||"@timestamp",
     auto_int: true,
@@ -164,6 +168,7 @@ dashboard.rows[3].panels = [
 // And a table row where you can specify field and sort order
 dashboard.rows[4].panels = [
   {
+    title: 'all events',
     type: 'table',
     fields: !_.isUndefined(ARGS.fields) ? ARGS.fields.split(',') : [],
     sort: !_.isUndefined(ARGS.sort) ? ARGS.sort.split(',') : [ARGS.timefield||'@timestamp','desc'],

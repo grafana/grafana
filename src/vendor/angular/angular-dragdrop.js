@@ -86,16 +86,27 @@ var jqyoui = angular.module('ngDragDrop', []).service('ngDragDropService', ['$ti
             $draggable.css({'position': 'relative', 'left': '', 'top': ''});
             $droppableDraggable.css({'position': 'relative', 'left': '', 'top': ''});
 
-            this.mutateDraggable(draggableScope, dropSettings, dragSettings, dragModel, dropModel, dropItem, $draggable);
-            this.mutateDroppable(droppableScope, dropSettings, dragSettings, dropModel, dragItem, jqyoui_pos);
+            if(dragSettings.mutate !== false) {
+              this.mutateDraggable(draggableScope, dropSettings, dragSettings, dragModel, dropModel, dropItem, $draggable);
+            }
+
+            if(dropSettings.mutate !== false) {
+              this.mutateDroppable(droppableScope, dropSettings, dragSettings, dropModel, dragItem, jqyoui_pos);
+            }
 
             this.callEventCallback(droppableScope, dropSettings.onDrop, event, ui, data);
           }.bind(this));
         }.bind(this));
       } else {
         $timeout(function() {
-          this.mutateDraggable(draggableScope, dropSettings, dragSettings, dragModel, dropModel, dropItem, $draggable);
-          this.mutateDroppable(droppableScope, dropSettings, dragSettings, dropModel, dragItem, jqyoui_pos);
+
+          if(dragSettings.mutate !== false) {
+            this.mutateDraggable(draggableScope, dropSettings, dragSettings, dragModel, dropModel, dropItem, $draggable);
+          }
+
+          if(dropSettings.mutate !== false) {
+            this.mutateDroppable(droppableScope, dropSettings, dragSettings, dropModel, dragItem, jqyoui_pos);
+          }
 
           this.callEventCallback(droppableScope, dropSettings.onDrop, event, ui, data);
         }.bind(this));

@@ -62,6 +62,7 @@ function (angular, app, _, config) {
         height: "150px",
         editable: true,
         type: type,
+        draggable: false
       };
     };
 

@@ -1,5 +1,5 @@
 {
-  "title": "",
+  "title": "New Dashboard",
   "services": {
     "query": {
       "idQueue": [
@@ -33,9 +33,10 @@
   "rows": [
   ],
   "editable": true,
+  "failover": false,
   "index": {
     "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "NOT_CONFIGURED"
+    "default": "_all"
   }
 }

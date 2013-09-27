@@ -13,16 +13,20 @@ function (angular) {
 
         '<div class="row-fluid panel-extra"><div class="panel-extra-container">' +
 
-          '<span class="extra row-button " ng-show="panel.editable != false">' +
-            '<span class="row-text pointer" bs-tooltip="\'Drag title to move\'" data-drag=true '+
-            'data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
+          '<span class="extra row-button" ng-hide="panel.draggable == false">' +
+            '<span class="row-text pointer" bs-tooltip="\'Drag here to move\'"' +
+            'data-drag=true data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
             ' jqyoui-draggable="'+
             '{'+
               'animate:false,'+
+              'mutate:false,'+
               'index:{{$index}},'+
               'onStart:\'panelMoveStart\','+
               'onStop:\'panelMoveStop\''+
               '}"  ng-model="row.panels">{{panel.type}}</span>'+
+          '</span>' +
+          '<span class="extra row-button" ng-show="panel.draggable == false">' +
+            '<span class="row-text">{{panel.type}}</span>'+
           '</span>' +
 
           '<span class="extra row-button" ng-show="panel.editable != false">' +
@@ -41,10 +45,14 @@ function (angular) {
               'bs-tooltip="task.description" ng-class="task.icon" class="pointer"></i></span>'+
           '</span>' +
 
+          '<span class="row-button extra" ng-show="panelMeta.loading == true">' +
+            '<span>'+
+              '<i class="icon-spinner smaller icon-spin icon-large"></i>' +
+            '</span>'+
+          '</span>' +
+
           '<span class="row-button row-text panel-title" ng-show="panel.title">' +
-            '{{panel.title}}&nbsp' +
-            '<i class="icon-spinner smaller icon-spin icon-large"' +
-              'ng-show="panelMeta.loading == true && panel.title"></i>' +
+            '{{panel.title}}' +
           '</span>'+
 
         '</div></div>';

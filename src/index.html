@@ -34,11 +34,6 @@
       <div class="navbar-inner">
         <div class="container-fluid">
           <span class="brand">{{dashboard.current.title}}</span>
-          <ul class="nav" ng-show='dashboard.current.editable'>
-            <li>
-              <a href='#' bs-modal="'app/partials/dasheditor.html'"><i class='icon-cog pointer'></i></a>
-            </li>
-          </ul>
           <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'app/partials/dashLoader.html'">
           </ul>
         </div>

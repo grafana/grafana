@@ -13,7 +13,9 @@
           "query": "*",
           "alias": "",
           "color": "#7EB26D",
-          "id": 0
+          "id": 0,
+          "pin": false,
+          "type": "lucene"
         }
       },
       "ids": [
@@ -40,7 +42,7 @@
       "panels": [
         {
           "error": false,
-          "span": 5,
+          "span": 8,
           "editable": true,
           "group": [
             "default"
@@ -48,7 +50,7 @@
           "type": "text",
           "status": "Stable",
           "mode": "markdown",
-          "content": "If you have a field with a timestamp in it, you might want to add a 'timepicker' panel here. Click the cog icon over to the left to do so. You can also remove these information text panels there",
+          "content": "If you have a field with a timestamp in it, you might want to add a 'timepicker' panel here. Click the plus sign over to the right to do so. You can also remove these information text panels there by clicking the 'x' icon above",
           "style": {},
           "title": "Have a timestamp somewhere?"
         }
@@ -75,7 +77,8 @@
           ],
           "remember": 10,
           "pinned": true,
-          "query": "*"
+          "query": "*",
+          "title": "Search"
         },
         {
           "error": false,
@@ -87,8 +90,9 @@
           "type": "text",
           "status": "Stable",
           "mode": "markdown",
-          "content": "#### Filtering\nSee the small *Filters* text to the left below? Click it to expand the filters row. Right now there are none. click on one of the icons in the document types list to filter down to only that document type",
-          "style": {}
+          "content": "See the *Filters* bar to the below? Click it to expand the filters row. Right now there are none. click on one of the icons in the document types list to filter down to only that document type",
+          "style": {},
+          "title": "About filters"
         }
       ]
     },
@@ -146,7 +150,8 @@
           "arrangement": "horizontal",
           "chart": "pie",
           "counter_pos": "none",
-          "title": "Document types"
+          "title": "Document types",
+          "spyable": true
         },
         {
           "error": false,
@@ -176,7 +181,9 @@
           "labels": true,
           "arrangement": "horizontal",
           "chart": "table",
-          "counter_pos": "above"
+          "counter_pos": "above",
+          "spyable": true,
+          "title": "Document Types"
         },
         {
           "error": false,
@@ -188,8 +195,9 @@
           "type": "text",
           "status": "Stable",
           "mode": "markdown",
-          "content": "### The most generic dashboard ever\nIt's the best I can do without knowing much about your data! I've tried to pick some sane defaults for you. The two *terms* panels to the left of this *text* panel show a breakdown of your document type. \n\nKibana is currently configured to point at the special Elasticsearch *_all* index. You can change that by clicking on the cog icon in the title bar. You can also add rows from that dialog. You can edit individual panels by click on the link that appears in their top right when yuo mouse over them\n\nThe *table* panel below has attempted to list your fields to the left, select a few to view them in the table. To add more panels, of different types, click the cog on the row label to the far left",
-          "style": {}
+          "content": "It's the best I can do without knowing much about your data! I've tried to pick some sane defaults for you. The two *terms* panels to the left of this *text* panel show a breakdown of your document type. \n\nKibana is currently configured to point at the special Elasticsearch *_all* index. You can change that by clicking on the cog icon in the navigation bar at the top. You can also add rows from that dialog. You can edit individual panels by click on the cog icon on the panel you want to edit\n\nThe *table* panel below has attempted to list your fields to the left, select a few to view them in the table. To add more panels, of different types, click the cog on the row label to the far left",
+          "style": {},
+          "title": "The most generic dashboard ever"
         }
       ]
     },
@@ -232,7 +240,10 @@
             ]
           },
           "field_list": true,
-          "status": "Stable"
+          "status": "Stable",
+          "trimFactor": 300,
+          "normTimes": true,
+          "title": "Documents"
         }
       ]
     }
@@ -242,5 +253,22 @@
     "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "_all"
+  },
+  "style": "dark",
+  "failover": false,
+  "panel_hints": true,
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": true,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": true,
+    "hide": false
   }
 }

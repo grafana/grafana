@@ -46,20 +46,19 @@
     <div class="span2">
       <label class="small">Zoom Links</label><input type="checkbox" ng-model="panel.zoomlinks" ng-checked="panel.zoomlinks" />
     </div>
+        <div class="span2">
+      <label class="small">View Options</label><input type="checkbox" ng-model="panel.options" ng-checked="panel.options" />
+    </div>
     <div class="span2">
       <label class="small">Auto-interval</label><input type="checkbox" ng-model="panel.auto_int" ng-checked="panel.auto_int" />
     </div>
     <div class="span2" ng-show='panel.auto_int'>
-      <label class="small">Resolution</label><input type="number" class='input-mini' ng-model="panel.resolution" ng-change='set_refresh(true)'/>
-    </div>
-    <div class="span3" ng-show='panel.auto_int'>
-      <label class="small">Shoot for this many data points, rounding to sane intervals</label>
+      <label class="small">Resolution <tip>Shoot for this many data points, rounding to sane intervals</tip></label>
+      <input type="number" class='input-mini' ng-model="panel.resolution" ng-change='set_refresh(true)'/>
     </div>
     <div class="span2" ng-hide='panel.auto_int'>
-      <label class="small">Interval</label><input type="text" class='input-mini' ng-model="panel.interval" ng-change='set_refresh(true)'/>
-    </div>
-    <div class="span3" ng-hide='panel.auto_int'>
-      <label class="small">Use Elasticsearch date math format (eg 1m, 5m, 1d, 2w, 1y)</label>
+      <label class="small">Interval <tip>Use Elasticsearch date math format (eg 1m, 5m, 1d, 2w, 1y)</tip></label>
+      <input type="text" class='input-mini' ng-model="panel.interval" ng-change='set_refresh(true)'/>
     </div>
   </div>
   <h5>Tooltip Settings</h5>

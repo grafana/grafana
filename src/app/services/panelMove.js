@@ -15,18 +15,13 @@ function (angular, _) {
 
     this.onStart = function() {
       dashboard.panelDragging =  true;
-      notices.push(alertSrv.set('Moving','Drop this panel into an empty space, or on top of another panel','info'));
+      notices.push(alertSrv.set('Moving','Drop this panel into an available space, or on top of another panel','info'));
       $rootScope.$apply();
     };
 
-    this.onOver = function(event,ui,data,replace) {
-      if(replace) {
-        notices.push(alertSrv.set('Swap panel',
-          'Drop to swap these panels. Panels will use row height, but retain their span','success'));
-      } else {
-        notices.push(alertSrv.set('Add panel',
-          'Drop to add to this row. Panel will use row height, but retain their span','success'));
-      }
+    this.onOver = function() {
+      notices.push(alertSrv.set('Add panel',
+          'Drop to add panel to this row. Panel will use row height, but retain their span','success'));
       $rootScope.$apply();
     };
 
@@ -35,7 +30,25 @@ function (angular, _) {
       $rootScope.$apply();
     };
 
-    this.onDrop = function() {
+    /*
+      Use our own drop logic. the $parent.$parent this is ugly.
+    */
+    this.onDrop = function(event,ui,data) {
+      var
+        dragRow = data.draggableScope.$parent.$parent.row.panels,
+        dropRow =  data.droppableScope.$parent.$parent.row.panels,
+        dragIndex = data.dragSettings.index,
+        dropIndex =  data.dropSettings.index;
+
+
+      // Remove panel from source row
+      dragRow.splice(dragIndex,1);
+
+      // Add to destination row
+      if(!_.isUndefined(dropRow)) {
+        dropRow.splice(dropIndex,0,data.dragItem);
+      }
+
       dashboard.panelDragging = false;
       // Cleanup nulls/undefined left behind
       cleanup();

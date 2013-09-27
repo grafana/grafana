@@ -6,24 +6,27 @@
       <div class="row-fluid" style="padding:0px;margin:0px;position:relative;">
 
         <div class="row-close span12" ng-show="row.collapse" data-placement="bottom" >
-          <span class="row-button" ng-click="toggle_row(row)" ng-show="row.collapsable}">
-            <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-expand pointer" ></i>
-          </span>
           <span class="row-button" bs-modal="'app/partials/roweditor.html'" class="pointer">
             <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
           </span>
-          <span class="row-button row-text">{{row.title || 'Row '+$index}}</span>
+          <span class="row-button" ng-click="toggle_row(row)" ng-show="row.collapsable">
+            <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-expand pointer" ></i>
+          </span>
+          <span class="row-button row-text" ng-click="toggle_row(row)" ng-class="{'pointer':row.collapsable}">{{row.title || 'Row '+$index}}</span>
         </div>
 
         <div style="text-align:left" class="row-open" ng-show="!row.collapse">
-          <span>
-            <i bs-tooltip="'Hide row'" data-placement="right" ng-show="row.collapsable" class="icon-collapse-top" ng-click="toggle_row(row)"></i>
-          </span><br>
-          <span bs-modal="'app/partials/roweditor.html'">
-            <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
-          </span><br>
-          <span bs-modal="'app/partials/roweditor.html'">
-            <i ng-click="editor.index = 2" bs-tooltip="'Add panel'" data-placement="right" ng-show="row.editable" class="icon-plus pointer"></i>
+          <span ng-show="row.collapsable">
+            <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-collapse-top" ng-click="toggle_row(row)"></i>
+            <br>
+          </span>
+          <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable">
+            <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
+            <br>
+          </span>
+          <span ng-show="rowSpan(row) > 11 && row.editable">
+            <i bs-tooltip="'Row full. Create a new row to add more panels'" data-placement="right" class="icon-trello"></i>
+            <br>
           </span>
         </div>
 
@@ -31,7 +34,7 @@
       <div class="row-fluid" style="padding-top:0px" ng-hide="row.collapse">
 
         <!-- Panels -->
-        <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.span == 0 || panel.hide" class="span{{panel.span}} panel nospace" style="min-height:{{row.height}}; position:relative" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}">
+        <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.span == 0 || panel.hide" class="span{{panel.span}} panel nospace" style="min-height:{{row.height}}; position:relative" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}">
           <!-- Error Panel -->
           <div class="row-fluid">
             <div class="span12 alert alert-error panel-error" ng-hide="!panel.error">
@@ -45,9 +48,26 @@
           </div>
         </div>
 
-        <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" style="height:{{row.height}};" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,onDrop:'panelMoveDrop({{(12-rowSpan(row))}})',onOver:'panelMoveOver(false)',onOut:'panelMoveOut'}"></div>
+        <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" style="height:{{row.height}};" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,onDrop:'panelMoveDrop({{(12-rowSpan(row))}})',onOver:'panelMoveOver(false)',onOut:'panelMoveOut'}">
+
+          <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable && !dashboard.panelDragging">
+            <i ng-hide="rowSpan(row) == 0" class="pointer icon-plus-sign" ng-click="editor.index = 2" bs-tooltip="'Add a panel to this row'" data-placement="right"></i>
+            <span ng-click="editor.index = 2" style="margin-top: 8px; margin-left: 3px" ng-show="rowSpan(row) == 0" class="btn btn-mini">Add panel to empty row</btn>
+          </span>
+
+        </div>
 
       </div>
     </div>
   </div>
+
+  <div class="row-fluid" ng-show='dashboard.current.editable'>
+    <div class="span12" style="text-align:right;">
+      <span style="margin-left: 0px;" class="pointer btn btn-mini" bs-modal="'app/partials/dasheditor.html'">
+        <span ng-click="editor.index = 2"><i class="icon-plus-sign"></i> ADD A ROW</span>
+      </span>
+    </div>
+  </div>
+
+
 </div>

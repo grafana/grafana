@@ -46,14 +46,14 @@
     {
       "title": "Intro",
       "height": "450px",
-      "editable": true,
+      "editable": false,
       "collapse": false,
       "collapsable": false,
       "panels": [
         {
           "error": false,
           "span": 4,
-          "editable": true,
+          "editable": false,
           "group": [
             "default"
           ],
@@ -66,21 +66,8 @@
         },
         {
           "error": false,
-          "span": 1,
+          "span": 8,
           "editable": false,
-          "group": [
-            "default"
-          ],
-          "type": "text",
-          "mode": "markdown",
-          "content": "",
-          "style": {},
-          "status": "Stable"
-        },
-        {
-          "error": false,
-          "span": 7,
-          "editable": true,
           "group": [
             "default"
           ],
@@ -93,7 +80,7 @@
       ]
     }
   ],
-  "editable": true,
+  "editable": false,
   "index": {
     "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
