@@ -24,8 +24,12 @@
             <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
             <br>
           </span>
-          <span ng-show="rowSpan(row) > 11 && row.editable">
+          <span ng-show="rowSpan(row) == 12 && row.editable">
             <i bs-tooltip="'Row full. Create a new row to add more panels'" data-placement="right" class="icon-trello"></i>
+            <br>
+          </span>
+          <span ng-show="rowSpan(row) > 12">
+            <i bs-tooltip="'Total span > 12. This row may format poorly'" data-placement="right" class="icon-warning-sign text-warning"></i>
             <br>
           </span>
         </div>
