@@ -10,11 +10,10 @@ function (kbn) {
    */
   function Interval(interval_string) {
     this.string = interval_string;
-    this.ms = kbn.interval_to_ms(interval_string);
 
-    var matches = interval_string.match(kbn.interval_regex);
-    this.count = parseInt(matches[1], 10);
-    this.type = matches[2];
+    var info = kbn.describe_interval(interval_string);
+    this.type = info.type;
+    this.ms = info.sec * 1000 * info.count;
 
     // does the length of the interval change based on the current time?
     if (this.type === 'y' || this.type === 'M') {
@@ -31,10 +30,10 @@ function (kbn) {
       return this.string;
     },
     after: function(current_ms) {
-      return this.get(current_ms, this.count);
+      return this.get(current_ms, 1);
     },
     before: function (current_ms) {
-      return this.get(current_ms, -this.count);
+      return this.get(current_ms, -1);
     },
     get_complex: function (current, delta) {
       this.date.setTime(current);
