@@ -1207,6 +1207,40 @@
           case 'right':
             tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
             break
+
+          // extend placements (top)
+          case 'topLeft':
+            tp = {top: pos.top - actualHeight,  left: pos.left + pos.width / 2 - (actualWidth * .10)};
+            break;
+          case 'topRight':
+            tp = {top: pos.top - actualHeight, left: pos.left + pos.width / 2 - (actualWidth * .90)};
+            break;
+
+          // extend placements (right)
+          case 'rightTop':
+            tp = {top: pos.top + pos.height / 2 - (actualHeight *.10), left: pos.left + pos.width};
+            break;
+          case 'rightBottom':
+            tp = {top: pos.top + pos.height / 2 - (actualHeight * .90), left: pos.left + pos.width};
+            break;
+
+          // extend placements (bottom)
+          case 'bottomLeft':
+            tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - (actualWidth * .10)};
+            break;
+          case 'bottomRight':
+            tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - (actualWidth * .90)};
+            break;
+
+          // extend placements (left)
+          case 'leftTop':
+            tp = {top: pos.top + pos.height / 2 - (actualHeight *.10), left: pos.left - actualWidth};
+            break;
+          case 'leftBottom':
+            tp = {top: pos.top + pos.height / 2 - (actualHeight * .90), left: pos.left - actualWidth};
+            break;
+
+
         }
 
         this.applyPlacement(tp, placement)

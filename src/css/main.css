@@ -37,7 +37,7 @@
 }
 
 .row-close {
-  color: #bbb;  
+  color: #bbb;
   position: absolute;
   font-size: 9pt;
   font-weight: 200;
@@ -47,7 +47,7 @@
 
 .row-open {
   text-align: right;
-  color: #bbb;  
+  color: #bbb;
   margin-top:30px;
   position: absolute;
   font-size: 13pt;
@@ -58,8 +58,8 @@
   -webkit-transform-origin: 40px;
   transform-origin: 40px;
   transform: rotate(-90deg);
-  -webkit-transform: rotate(-90deg); 
-  -moz-transform: rotate(-90deg); 
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
   -ms-transform: rotate(-90deg);
 }
 
@@ -189,5 +189,204 @@
 
 .faded {
   opacity: 0.2;
+}
+
+/* ===================================================
+ * popover-extra-placements.css v0.1
+ * http://twitter.github.com/bootstrap-popover-extra-placements
+ * ===================================================
+ * Copyright 2012 Daniel Kleehammer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================== */
+
+
+/*************************
+ *   Top Positions
+ *************************/
+
+/** Top Left **/
+.popover.topLeft {
+  margin-top: -10px;
+}
+
+.popover.topLeft .arrow {
+  bottom: -10px;
+  left: 25%;
+  margin-left: -10px;
+  border-width: 10px 10px 0;
+  border-top-color: #ffffff;
+}
+
+.popover.topLeft .arrow:after {
+  border-width: 11px 11px 0;
+  border-top-color: rgba(0, 0, 0, 0.25);
+  bottom: -1px;
+  left: -11px;
+}
+
+/** Top Right **/
+.popover.topRight {
+  margin-top: -10px;
+}
+
+.popover.topRight .arrow {
+  bottom: -10px;
+  left: 75%;
+  margin-left: -10px;
+  border-width: 10px 10px 0;
+  border-top-color: #ffffff;
+}
+
+.popover.topRight .arrow:after {
+  border-width: 11px 11px 0;
+  border-top-color: rgba(0, 0, 0, 0.25);
+  bottom: -1px;
+  left: -11px;
+}
+
+
+/*************************
+ *   Right Positions
+ *************************/
+
+/** Right Top **/
+.popover.rightTop {
+  margin-left: 10px;
+}
+
+.popover.rightTop .arrow {
+  top: 25%;
+  left: -10px;
+  margin-top: -10px;
+  border-width: 10px 10px 10px 0;
+  border-right-color: #ffffff;
+}
+
+.popover.rightTop .arrow:after {
+  border-width: 11px 11px 11px 0;
+  border-right-color: rgba(0, 0, 0, 0.25);
+  bottom: -11px;
+  left: -1px;
+}
+
+/** Right Bottom **/
+.popover.rightBottom {
+  margin-left: 10px;
+}
+
+.popover.rightBottom .arrow {
+  top: 75%;
+  left: -10px;
+  margin-top: -10px;
+  border-width: 10px 10px 10px 0;
+  border-right-color: #ffffff;
+}
+
+.popover.rightBottom .arrow:after {
+  border-width: 11px 11px 11px 0;
+  border-right-color: rgba(0, 0, 0, 0.25);
+  bottom: -11px;
+  left: -1px;
+}
+
+/*************************
+ *   Bottom Positions
+ *************************/
+
+/** Bottom Left **/
+.popover.bottomLeft {
+  margin-top: 10px;
+}
+
+.popover.bottomLeft .arrow {
+  top: -10px;
+  left: 25%;
+  margin-left: -10px;
+  border-width: 0 10px 10px;
+  border-bottom-color: #ffffff;
+}
+
+.popover.bottomLeft .arrow:after {
+  border-width: 0 11px 11px;
+  border-bottom-color: rgba(0, 0, 0, 0.25);
+  top: -1px;
+  left: -11px;
+}
+
+
+/** Bottom Right **/
+.popover.bottomRight {
+  margin-top: 10px;
+}
+
+.popover.bottomRight .arrow {
+  top: -10px;
+  left: 75%;
+  margin-left: -10px;
+  border-width: 0 10px 10px;
+  border-bottom-color: #ffffff;
+}
+
+.popover.bottomRight .arrow:after {
+  border-width: 0 11px 11px;
+  border-bottom-color: rgba(0, 0, 0, 0.25);
+  top: -1px;
+  left: -11px;
+}
+
+/*************************
+ *   Left Positions
+ *************************/
+
+/** Left Top **/
+.popover.leftTop {
+  margin-left: -10px;
+}
+
+.popover.leftTop .arrow {
+  top: 25%;
+  right: -10px;
+  margin-top: -10px;
+  border-width: 10px 0 10px 10px;
+  border-left-color: #ffffff;
+}
+
+.popover.leftTop .arrow:after {
+  border-width: 11px 0 11px 11px;
+  border-left-color: rgba(0, 0, 0, 0.25);
+  bottom: -11px;
+  right: -1px;
+}
+
+
+/** Left Bottom **/
+.popover.leftBottom {
+  margin-left: -10px;
+}
+
+.popover.leftBottom .arrow {
+  top: 75%;
+  right: -10px;
+  margin-top: -10px;
+  border-width: 10px 0 10px 10px;
+  border-left-color: #ffffff;
+}
+
+.popover.leftBottom .arrow:after {
+  border-width: 11px 0 11px 11px;
+  border-left-color: rgba(0, 0, 0, 0.25);
+  bottom: -11px;
+  right: -1px;
 }
 
