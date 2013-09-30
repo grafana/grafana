@@ -116,12 +116,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
             if(p.length > 0) {
               self.indices = p;
             } else {
-              //TODO: Option to not failover
+              // Option to not failover
               if(self.current.failover) {
                 self.indices = [self.current.index.default];
               } else {
                 // Do not issue refresh if no indices match. This should be removed when panels
                 // properly understand when no indices are present
+                alertSrv.set('No results','There were no results because no indices were found that match your'+
+                  ' selected time span','info',5000);
                 return false;
               }
             }
