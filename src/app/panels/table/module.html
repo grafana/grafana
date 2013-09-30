@@ -55,7 +55,7 @@
             <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.kibana.highlight[field]||event.kibana._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
           <tr ng-show="event.kibana.details">
-            <td colspan=10000 ng-switch="event.kibana.view">
+            <td colspan={{panel.fields.length}} ng-switch="event.kibana.view">
               <span>
                 View:
                 <a class="link" ng-class="{'strong':event.kibana.view == 'table'}" ng-click="event.kibana.view = 'table'">Table</a> /
