@@ -4,7 +4,7 @@
     "company": "Elasticsearch BV"
   },
   "name": "kibana",
-  "version": "3.0.0m3pre",
+  "version": "3.0.0m4pre",
   "devDependencies": {
     "rjs-build-analysis": "0.0.3",
     "grunt": "~0.4.0",
