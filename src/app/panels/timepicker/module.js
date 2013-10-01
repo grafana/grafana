@@ -87,9 +87,6 @@ function (angular, app, _, moment, kbn) {
         set_time_filter($scope.time);
       }
 
-      dashboard.refresh();
-
-
       // Start refresh timer if enabled
       if ($scope.panel.refresh.enable) {
         $scope.set_interval($scope.panel.refresh.interval);
@@ -219,8 +216,7 @@ function (angular, app, _, moment, kbn) {
       // Update internal time object
 
       // Remove all other time filters
-      filterSrv.removeByType('time');
-
+      filterSrv.removeByType('time',true);
 
       $scope.time = $scope.time_calc();
       $scope.time.field = $scope.panel.timefield;
@@ -228,15 +224,14 @@ function (angular, app, _, moment, kbn) {
       update_panel();
       set_time_filter($scope.time);
 
-      dashboard.refresh();
-
     };
-    $scope.$watch('panel.mode', $scope.time_apply);
+
+    //$scope.$watch('panel.mode', $scope.time_apply);
 
     function set_time_filter(time) {
       time.type = 'time';
       // Clear all time filters, set a new one
-      filterSrv.removeByType('time');
+      filterSrv.removeByType('time',true);
       $scope.panel.filter_id = filterSrv.set(compile_time(time));
       return $scope.panel.filter_id;
     }

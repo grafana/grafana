@@ -33,16 +33,16 @@ function (angular, app, _) {
 
     $scope.remove = function(id) {
       filterSrv.remove(id);
-      dashboard.refresh();
     };
 
+    // This function should be moved to the service
     $scope.toggle = function(id) {
       filterSrv.list[id].active = !filterSrv.list[id].active;
       dashboard.refresh();
     };
 
     $scope.refresh = function() {
-      $rootScope.$broadcast('refresh');
+      dashboard.refresh();
     };
 
     $scope.render = function() {

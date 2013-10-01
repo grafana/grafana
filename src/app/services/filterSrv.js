@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('filterSrv', function(dashboard, ejsResource) {
+  module.service('filterSrv', function(dashboard, ejsResource, $rootScope, $timeout) {
     // Create an object to hold our service state on the dashboard
     dashboard.current.services.filter = dashboard.current.services.filter || {};
 
@@ -44,19 +44,20 @@ define([
 
     // This is used both for adding filters and modifying them.
     // If an id is passed, the filter at that id is updated
-    this.set = function(filter,id) {
+    this.set = function(filter,id,noRefresh) {
+      var _r;
       _.defaults(filter,{mandate:'must'});
       filter.active = true;
       if(!_.isUndefined(id)) {
         if(!_.isUndefined(self.list[id])) {
           _.extend(self.list[id],filter);
-          return id;
+          _r = id;
         } else {
-          return false;
+          _r = false;
         }
       } else {
         if(_.isUndefined(filter.type)) {
-          return false;
+          _r = false;
         } else {
           var _id = nextId();
           var _filter = {
@@ -66,9 +67,54 @@ define([
           _.defaults(filter,_filter);
           self.list[_id] = filter;
           self.ids.push(_id);
-          return _id;
+          _r = _id;
         }
       }
+      if(!$rootScope.$$phase) {
+        $rootScope.$apply();
+      }
+      if(noRefresh !== true) {
+        $timeout(function(){
+          dashboard.refresh();
+        },0);
+      }
+      return _r;
+    };
+
+    this.remove = function(id,noRefresh) {
+      var _r;
+      if(!_.isUndefined(self.list[id])) {
+        delete self.list[id];
+        // This must happen on the full path also since _.without returns a copy
+        self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id);
+        _f.idQueue.unshift(id);
+        _f.idQueue.sort(function(v,k){return v-k;});
+        _r = true;
+      } else {
+        _r = false;
+      }
+      if(!$rootScope.$$phase) {
+        $rootScope.$apply();
+      }
+      if(noRefresh !== true) {
+        $timeout(function(){
+          dashboard.refresh();
+        },0);
+      }
+      return _r;
+    };
+
+    this.removeByType = function(type,noRefresh) {
+      var ids = self.idsByType(type);
+      _.each(ids,function(id) {
+        self.remove(id,true);
+      });
+      if(noRefresh !== true) {
+        $timeout(function(){
+          dashboard.refresh();
+        },0);
+      }
+      return ids;
     };
 
     this.getBoolFilter = function(ids) {
@@ -106,6 +152,7 @@ define([
       case 'time':
         return ejs.RangeFilter(filter.field)
           .from(filter.from.valueOf())
+          //.from("now-1d")
           .to(filter.to.valueOf());
       case 'range':
         return ejs.RangeFilter(filter.field)
@@ -128,14 +175,6 @@ define([
 
     this.getByType = function(type,inactive) {
       return _.pick(self.list,self.idsByType(type,inactive));
-    };
-
-    this.removeByType = function(type) {
-      var ids = self.idsByType(type);
-      _.each(ids,function(id) {
-        self.remove(id);
-      });
-      return ids;
     };
 
     this.idsByType = function(type,inactive) {
@@ -170,20 +209,6 @@ define([
         return false;
       }
     };
-
-    this.remove = function(id) {
-      if(!_.isUndefined(self.list[id])) {
-        delete self.list[id];
-        // This must happen on the full path also since _.without returns a copy
-        self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id);
-        _f.idQueue.unshift(id);
-        _f.idQueue.sort(function(v,k){return v-k;});
-        return true;
-      } else {
-        return false;
-      }
-    };
-
 
     var nextId = function() {
       if(_f.idQueue.length > 0) {

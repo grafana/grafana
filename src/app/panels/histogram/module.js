@@ -312,9 +312,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         to:moment.utc(_to),
         field:$scope.panel.time_field
       });
-
-      dashboard.refresh();
-
     };
 
     // I really don't like this function, too much dom manip. Break out into directive?
@@ -449,7 +446,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             scope.plot = $.plot(elem, scope.data, options);
 
           } catch(e) {
-            console.log(e);
+            // Nothing to do here
           }
         }
 
@@ -502,7 +499,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             to    : moment.utc(ranges.xaxis.to),
             field : scope.panel.time_field
           });
-          dashboard.refresh();
         });
       }
     };

@@ -35,7 +35,7 @@
         </div>
 
       </div>
-      <div class="row-fluid" style="padding-top:0px" ng-hide="row.collapse">
+      <div class="row-fluid" style="padding-top:0px" ng-if="!row.collapse">
 
         <!-- Panels -->
         <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.span == 0 || panel.hide" class="span{{panel.span}} panel nospace" style="min-height:{{row.height}}; position:relative" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}">
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" style="height:{{row.height}};" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,onDrop:'panelMoveDrop({{(12-rowSpan(row))}})',onOver:'panelMoveOver(false)',onOut:'panelMoveOut'}">
+        <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" style="height:{{row.height}};" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
 
           <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable && !dashboard.panelDragging">
             <i ng-hide="rowSpan(row) == 0" class="pointer icon-plus-sign" ng-click="editor.index = 2" bs-tooltip="'Add a panel to this row'" data-placement="right"></i>

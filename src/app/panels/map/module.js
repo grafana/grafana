@@ -121,7 +121,6 @@ function (angular, app, _, $) {
 
     $scope.build_search = function(field,value) {
       filterSrv.set({type:'querystring',mandate:'must',query:field+":"+value});
-      dashboard.refresh();
     };
 
   });

@@ -160,14 +160,12 @@ function (angular, app, _, kbn, moment) {
       } else {
         query = angular.toJson(value);
       }
-      filterSrv.set({type:'field',field:field,query:query,mandate:(negate ? 'mustNot':'must')});
       $scope.panel.offset = 0;
-      dashboard.refresh();
+      filterSrv.set({type:'field',field:field,query:query,mandate:(negate ? 'mustNot':'must')});
     };
 
     $scope.fieldExists = function(field,mandate) {
       filterSrv.set({type:'exists',field:field,mandate:mandate});
-      dashboard.refresh();
     };
 
     $scope.get_data = function(segment,query_id) {

@@ -1,5 +1,5 @@
 /**
- * @license AngularJS v1.0.8
+ * @license AngularJS v1.1.5
  * (c) 2010-2012 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -10,25 +10,6 @@
  * @ngdoc overview
  * @name ngSanitize
  * @description
- *
- * The `ngSanitize` module provides functionality to sanitize HTML.
- *
- * # Installation
- * As a separate module, it must be loaded after Angular core is loaded; otherwise, an 'Uncaught Error:
- * No module: ngSanitize' runtime error will occur.
- *
- * <pre>
- *   <script src="angular.js"></script>
- *   <script src="angular-sanitize.js"></script>
- * </pre>
- *
- * # Usage
- * To make sure the module is available to your application, declare it as a dependency of you application
- * module.
- *
- * <pre>
- *   angular.module('app', ['ngSanitize']);
- * </pre>
  */
 
 /*
@@ -148,7 +129,7 @@ var START_TAG_REGEXP = /^<\s*([\w:-]+)((?:\s+[\w:-]+(?:\s*=\s*(?:(?:"[^"]*")|(?:
   BEGING_END_TAGE_REGEXP = /^<\s*\//,
   COMMENT_REGEXP = /<!--(.*?)-->/g,
   CDATA_REGEXP = /<!\[CDATA\[(.*?)]]>/g,
-  URI_REGEXP = /^((ftp|https?):\/\/|mailto:|#)/i,
+  URI_REGEXP = /^((ftp|https?):\/\/|mailto:|tel:|#)/,
   NON_ALPHANUMERIC_REGEXP = /([^\#-~| |!])/g; // Match everything outside of normal chars and " (quote character)
 
 
@@ -302,10 +283,10 @@ function htmlParser( html, handler ) {
 
     var attrs = {};
 
-    rest.replace(ATTR_REGEXP, function(match, name, doubleQuotedValue, singleQuotedValue, unquotedValue) {
+    rest.replace(ATTR_REGEXP, function(match, name, doubleQuotedValue, singleQoutedValue, unqoutedValue) {
       var value = doubleQuotedValue
-        || singleQuotedValue
-        || unquotedValue
+        || singleQoutedValue
+        || unqoutedValue
         || '';
 
       attrs[name] = decodeEntities(value);
@@ -452,6 +433,7 @@ angular.module('ngSanitize').directive('ngBindHtml', ['$sanitize', function($san
  *   plain email address links.
  *
  * @param {string} text Input text.
+ * @param {string} target Window (_blank|_self|_parent|_top) or named frame to open links in.
  * @returns {string} Html-linkified text.
  *
  * @usage
@@ -468,6 +450,7 @@ angular.module('ngSanitize').directive('ngBindHtml', ['$sanitize', function($san
              'mailto:us@somewhere.org,\n'+
              'another@somewhere.org,\n'+
              'and one more: ftp://127.0.0.1/.';
+           $scope.snippetWithTarget = 'http://angularjs.org/';
          }
        </script>
        <div ng-controller="Ctrl">
@@ -486,6 +469,15 @@ angular.module('ngSanitize').directive('ngBindHtml', ['$sanitize', function($san
            <td>
              <div ng-bind-html="snippet | linky"></div>
            </td>
+         </tr>
+         <tr id="linky-target">
+          <td>linky target</td>
+          <td>
+            <pre>&lt;div ng-bind-html="snippetWithTarget | linky:'_blank'"&gt;<br>&lt;/div&gt;</pre>
+          </td>
+          <td>
+            <div ng-bind-html="snippetWithTarget | linky:'_blank'"></div>
+          </td>
          </tr>
          <tr id="escaped-html">
            <td>no filter</td>
@@ -519,6 +511,11 @@ angular.module('ngSanitize').directive('ngBindHtml', ['$sanitize', function($san
            toBe('new <a href="http://link">http://link</a>.');
          expect(using('#escaped-html').binding('snippet')).toBe('new http://link.');
        });
+
+       it('should work with the target property', function() {
+        expect(using('#linky-target').binding("snippetWithTarget | linky:'_blank'")).
+          toBe('<a target="_blank" href="http://angularjs.org/">http://angularjs.org/</a>');
+       });
      </doc:scenario>
    </doc:example>
  */
@@ -526,7 +523,7 @@ angular.module('ngSanitize').filter('linky', function() {
   var LINKY_URL_REGEXP = /((ftp|https?):\/\/|(mailto:)?[A-Za-z0-9._%+-]+@)\S*[^\s\.\;\,\(\)\{\}\<\>]/,
       MAILTO_REGEXP = /^mailto:/;
 
-  return function(text) {
+  return function(text, target) {
     if (!text) return text;
     var match;
     var raw = text;
@@ -535,6 +532,10 @@ angular.module('ngSanitize').filter('linky', function() {
     var writer = htmlSanitizeWriter(html);
     var url;
     var i;
+    var properties = {};
+    if (angular.isDefined(target)) {
+      properties.target = target;
+    }
     while ((match = raw.match(LINKY_URL_REGEXP))) {
       // We can not end in these as they are sometimes found at the end of the sentence
       url = match[0];
@@ -542,7 +543,8 @@ angular.module('ngSanitize').filter('linky', function() {
       if (match[2] == match[3]) url = 'mailto:' + url;
       i = match.index;
       writer.chars(raw.substr(0, i));
-      writer.start('a', {href:url});
+      properties.href = url;
+      writer.start('a', properties);
       writer.chars(match[0].replace(MAILTO_REGEXP, ''));
       writer.end('a');
       raw = raw.substring(i + match[0].length);

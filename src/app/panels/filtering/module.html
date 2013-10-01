@@ -61,7 +61,7 @@
 
       <div ng-hide="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
         <ul class="unstyled">
-          <li ng-repeat="(key,value) in filterSrv.list[id]" ng-show="show_key(key)"><strong>{{key}}</strong> : {{value}}</li>
+          <li ng-repeat="(key,value) in filterSrv.list[id] track by $index" ng-show="show_key(key)"><strong>{{key}}</strong> : {{value}}</li>
         </ul>
       </div>
       <div ng-show="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">

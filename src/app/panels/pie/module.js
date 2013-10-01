@@ -175,7 +175,7 @@ define([
 
   });
 
-  module.directive('pie', function(querySrv, filterSrv, dashboard) {
+  module.directive('pie', function(querySrv, filterSrv) {
     return {
       restrict: 'A',
       link: function(scope, elem) {
@@ -270,7 +270,6 @@ define([
           }
           if(scope.panel.mode === 'terms') {
             filterSrv.set({type:'terms',field:scope.panel.query.field,value:object.series.label});
-            dashboard.refresh();
           }
         });
 
