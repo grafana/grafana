@@ -87,7 +87,8 @@ function (angular, app, _, kbn) {
         timeField = timeField[0];
       }
 
-      $scope.time = filterSrv.timeRange('min');
+      // This logic can be simplifie greatly with the new kbn.parseDate
+      $scope.time = filterSrv.timeRange('last');
       $scope.old_time = {
         from : new Date($scope.time.from.getTime() - kbn.interval_to_ms($scope.panel.ago)),
         to   : new Date($scope.time.to.getTime() - kbn.interval_to_ms($scope.panel.ago))

@@ -137,7 +137,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
      * @return {[type]} [description]
      */
     $scope.get_time_range = function () {
-      var range = $scope.range = filterSrv.timeRange('min');
+      var range = $scope.range = filterSrv.timeRange('last');
       return range;
     };
 
@@ -289,7 +289,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = filterSrv.timeRange('min');
+      var _range = filterSrv.timeRange('last');
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
       var _center = _range.to.valueOf() - _timespan/2;
 
@@ -496,8 +496,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         elem.bind("plotselected", function (event, ranges) {
           filterSrv.set({
             type  : 'time',
-            from  : moment.utc(ranges.xaxis.from),
-            to    : moment.utc(ranges.xaxis.to),
+            from  : moment.utc(ranges.xaxis.from).toDate(),
+            to    : moment.utc(ranges.xaxis.to).toDate(),
             field : scope.panel.time_field
           });
         });

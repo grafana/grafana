@@ -16,6 +16,7 @@ function (angular, app, _) {
         collapsable: true,
         editable: true,
         panels: [],
+        notice: false
       };
 
       _.defaults($scope.row,_d);
@@ -34,6 +35,8 @@ function (angular, app, _) {
           $timeout(function() {
             $scope.$broadcast('render');
           });
+        } else {
+          row.notice = false;
         }
       };
 

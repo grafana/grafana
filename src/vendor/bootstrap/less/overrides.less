@@ -16,6 +16,10 @@ div.fake-input {
   .border-radius(@inputBorderRadius @inputBorderRadius @inputBorderRadius @inputBorderRadius);
 }
 
+form input.ng-invalid {
+  color: @errorText;
+}
+
 .editor-title {
   margin-right: 10px;
   font-size: 1.7em;
@@ -78,6 +82,22 @@ div.fake-input {
   position: absolute;
   font-size: 13pt;
   font-weight: 200;
+}
+
+.top-row-open {
+  background: darken(@bodyBackground, 3%);
+  padding: 5px 25px 5px 25px;
+}
+
+.top-row-close {
+  outline: 1px solid darken(@bodyBackground, 10%);
+  border-top: 1px solid lighten(@bodyBackground, 10%);
+  padding: 0px;
+  margin: 1px 0px 0px 0px;
+  text-align: center;
+  min-height: 16px !important;
+  line-height: 16px;
+  background: darken(@bodyBackground, 3%);
 }
 
 .row-open i {
@@ -146,8 +166,14 @@ div.fake-input {
 }
 
 .link {
+  color: @linkColor;
   cursor: pointer;
 }
+
+.link:hover {
+  color: @linkColorHover;
+}
+
 
 .pointer:hover {
   color: @linkColorHover;
@@ -155,10 +181,6 @@ div.fake-input {
 
 .pointer {
   cursor: pointer;
-}
-
-.link:hover {
-  color: @linkColorHover;
 }
 
 .popover {
@@ -189,6 +211,10 @@ div.fake-input {
 
 .strong {
   font-weight: bold;
+}
+
+a {
+  cursor: pointer;
 }
 
 .normal {

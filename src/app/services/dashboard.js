@@ -25,6 +25,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
+      pulldowns: [
+        {
+          type: 'query',
+        },
+        {
+          type: 'filtering'
+        }
+      ],
       services: {},
       loader: {
         save_gist: false,
@@ -109,7 +117,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.refresh = function() {
       if(self.current.index.interval !== 'none') {
         if(filterSrv.idsByType('time').length > 0) {
-          var _range = filterSrv.timeRange('min');
+          var _range = filterSrv.timeRange('last');
           kbnIndex.indices(_range.from,_range.to,
             self.current.index.pattern,self.current.index.interval
           ).then(function (p) {
@@ -175,7 +183,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       filterSrv.init();
 
       // If there's an index interval set and no existing time filter, send a refresh to set one
-      if(dashboard.index.interval !== 'none' && filterSrv.idsByType('time').length === 0) {
+      if(dashboard.index.interval !== 'none') {
         self.refresh();
       }
 

@@ -1,4 +1,4 @@
-define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
+define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, moment) {
   'use strict';
 
   var module = angular.module('kibana.filters');
@@ -39,6 +39,16 @@ define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
       } else {
         return arr.toString();
       }
+    };
+  });
+
+  module.filter('moment', function() {
+    return function(date,mode) {
+      switch(mode) {
+      case 'ago':
+        return moment(date).fromNow();
+      }
+      return moment(date).fromNow();
     };
   });
 

@@ -27,6 +27,10 @@ function (angular, app, _) {
     };
     _.defaults($scope.panel,_d);
 
+    $scope.$on('filter', function() {
+      $scope.row.notice = true;
+    });
+
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
     };

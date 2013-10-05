@@ -1,8 +1,9 @@
 define([
   'angular',
   'underscore',
-  'config'
-], function (angular, _, config) {
+  'config',
+  'kbn'
+], function (angular, _, config, kbn) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -35,10 +36,13 @@ define([
       self.ids = dashboard.current.services.filter.ids;
       _f = dashboard.current.services.filter;
 
+      // Date filters hold strings now, not dates
+      /*
       _.each(self.getByType('time',true),function(time) {
         self.list[time.id].from = new Date(time.from);
         self.list[time.id].to = new Date(time.to);
       });
+      */
 
     };
 
@@ -78,6 +82,7 @@ define([
           dashboard.refresh();
         },0);
       }
+      $rootScope.$broadcast('filter');
       return _r;
     };
 
@@ -101,6 +106,7 @@ define([
           dashboard.refresh();
         },0);
       }
+      $rootScope.$broadcast('filter');
       return _r;
     };
 
@@ -150,10 +156,11 @@ define([
       switch(filter.type)
       {
       case 'time':
-        return ejs.RangeFilter(filter.field)
-          .from(filter.from.valueOf())
-          //.from("now-1d")
-          .to(filter.to.valueOf());
+        var _f = ejs.RangeFilter(filter.field).from(kbn.parseDate(filter.from).valueOf());
+        if(!_.isUndefined(filter.to)) {
+          _f = _f.to(filter.to.valueOf());
+        }
+        return _f;
       case 'range':
         return ejs.RangeFilter(filter.field)
           .from(filter.from)
@@ -187,26 +194,26 @@ define([
       return _.pluck(self.getByType('time'),'field');
     };
 
-    // This special function looks for all time filters, and returns a time range according to the mode
-    // No idea when max would actually be used
-    this.timeRange = function(mode) {
-      var _t = _.where(self.list,{type:'time',active:true});
-      if(_t.length === 0) {
+    // Parse is used when you need to know about the raw filter
+    this.timeRange = function(parse) {
+      var _t = _.last(_.where(self.list,{type:'time',active:true}));
+      if(_.isUndefined(_t)) {
         return false;
       }
-      switch(mode) {
-      case "min":
+      if(parse === false) {
         return {
-          from: new Date(_.max(_.pluck(_t,'from'))),
-          to: new Date(_.min(_.pluck(_t,'to')))
+          from: _t.from,
+          to: _t.to
         };
-      case "max":
+      } else {
+        var
+          _from = _t.from,
+          _to = _t.to || new Date();
+
         return {
-          from: new Date(_.min(_.pluck(_t,'from'))),
-          to: new Date(_.max(_.pluck(_t,'to')))
+          from : kbn.parseDate(_from),
+          to : kbn.parseDate(_to)
         };
-      default:
-        return false;
       }
     };
 
