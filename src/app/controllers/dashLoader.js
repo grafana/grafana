@@ -22,7 +22,7 @@ function (angular, _) {
         return (_l.load_elasticsearch || _l.load_gist || _l.load_local);
       }
       if(type === 'save') {
-        return (_l.save_elasticsearch || _l.save_gist || _l.local_local || _l.save_default);
+        return (_l.save_elasticsearch || _l.save_gist || _l.save_local || _l.save_default);
       }
       if(type === 'share') {
         return (_l.save_temp);
