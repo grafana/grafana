@@ -36,16 +36,10 @@ function (angular, app, _, moment, kbn) {
     // Set and populate defaults
     var _d = {
       status        : "Stable",
-      mode          : "relative",
       time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
-      timespan      : '15m',
-      timefield     : '@timestamp',
-      timeformat    : "",
-      refresh       : {
-        enable  : false,
-        interval: 30,
-        min     : 3
-      }
+      refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
+
+      timefield     : '@timestamp'
     };
     _.defaults($scope.panel,_d);
 
@@ -212,9 +206,7 @@ function (angular, app, _, moment, kbn) {
 
     // Do not use the results of this function unless you plan to use setHour/Minutes/etc on the result
     var datepickerToLocal = function(date) {
-      console.log(date);
       date = moment(date).clone().toDate();
-      console.log(moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).toDate());
       return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).toDate();
     };
 

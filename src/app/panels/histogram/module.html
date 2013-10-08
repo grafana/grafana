@@ -50,30 +50,32 @@
     <span ng-show="panel.legend" class="small"><span ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
   <form class="form-inline bordered histogram-options" ng-show="options">
-    <div class="checkbox">
-      <label class="small">
-        <input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
-        Bars
-      </label>
-    </div>
-    <div class="checkbox">
-      <label class="small">
-        <input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
-        Lines
-      </label>
-    </div>
-    <div class="checkbox">
-      <label class="small">
-        <input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
-        Points
-      </label>
-    </div>
-    <div class="checkbox">
-      <label class="small">
-        <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
-        Stack
-      </label>
-    </div>
+    <span>
+      <div class="checkbox">
+        <label class="small">
+          <input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
+          Bars
+        </label>
+      </div>
+      <div class="checkbox">
+        <label class="small">
+          <input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
+          Lines
+        </label>
+      </div>
+      <div class="checkbox">
+        <label class="small">
+          <input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
+          Points
+        </label>
+      </div>
+      <div class="checkbox">
+        <label class="small">
+          <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
+          Stack
+        </label>
+      </div>
+    </span>
     <span ng-show="panel.stack">
       <div class="checkbox">
         <label style="white-space:nowrap" class="small">

@@ -10,7 +10,9 @@
           "query": "{{ARGS.query || '*'}}",
           "alias": "",
           "color": "#7EB26D",
-          "id": 0
+          "id": 0,
+          "pin": false,
+          "type": "lucene"
         }
       },
       "ids": [
@@ -23,10 +25,10 @@
       ],
       "list": {
         "0": {
-          "from": "2013-07-30T18:58:13.977Z",
-          "to": "2013-07-30T19:58:13.977Z",
-          "field": "@timestamp",
           "type": "time",
+          "field": "@timestamp",
+          "from": "now-{{ARGS.from || '24h'}}",
+          "to": "now",
           "mandate": "must",
           "active": true,
           "alias": "",
@@ -39,90 +41,6 @@
     }
   },
   "rows": [
-    {
-      "title": "Options",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "title": "Set time span",
-          "error": "",
-          "span": 6,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "timepicker",
-          "mode": "relative",
-          "time_options": [
-            "5m",
-            "15m",
-            "1h",
-            "6h",
-            "12h",
-            "24h",
-            "2d",
-            "7d",
-            "30d"
-          ],
-          "timespan": "{{ARGS.from || '1h'}}",
-          "timefield": "@timestamp",
-          "timeformat": "",
-          "refresh": {
-            "enable": false,
-            "interval": 30,
-            "min": 3
-          },
-          "filter_id": 0,
-          "status": "Stable"
-        }
-      ]
-    },
-    {
-      "title": "Query",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "title": "Search",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "query",
-          "label": "Search",
-          "history": [],
-          "remember": 10,
-          "pinned": true,
-          "query": "*"
-        }
-      ]
-    },
-    {
-      "title": "Filters",
-      "height": "50px",
-      "editable": true,
-      "collapse": true,
-      "collapsable": true,
-      "panels": [
-        {
-          "title": "dashboard filters",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "filtering"
-        }
-      ]
-    },
     {
       "title": "Graph",
       "height": "350px",
@@ -142,7 +60,7 @@
           "value_field": null,
           "auto_int": true,
           "resolution": 100,
-          "interval": "30s",
+          "interval": "10m",
           "fill": 3,
           "linewidth": 3,
           "timezone": "browser",
@@ -163,9 +81,30 @@
               0
             ]
           },
-          "title": "Events over time"
+          "title": "Events over time",
+          "intervals": [
+            "auto",
+            "1s",
+            "1m",
+            "5m",
+            "10m",
+            "30m",
+            "1h",
+            "3h",
+            "12h",
+            "1d",
+            "1w",
+            "1M",
+            "1y"
+          ],
+          "options": true,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": false
+          }
         }
-      ]
+      ],
+      "notice": false
     },
     {
       "title": "Events",
@@ -207,9 +146,12 @@
             ]
           },
           "field_list": true,
-          "status": "Stable"
+          "status": "Stable",
+          "trimFactor": 300,
+          "normTimes": true
         }
-      ]
+      ],
+      "notice": false
     }
   ],
   "editable": true,
@@ -218,5 +160,72 @@
     "interval": "day",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "NO_TIME_FILTER_OR_INDEX_PATTERN_NOT_MATCHED"
-  }
+  },
+  "style": "dark",
+  "panel_hints": true,
+  "pulldowns": [
+    {
+      "type": "query",
+      "collapse": false,
+      "notice": false,
+      "query": "*",
+      "pinned": true,
+      "history": [],
+      "remember": 10
+    },
+    {
+      "type": "filtering",
+      "collapse": true,
+      "notice": false
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker2",
+      "collapse": false,
+      "notice": false,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "timefield": "@timestamp",
+      "now": true,
+      "filter_id": 0
+    }
+  ],
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": true,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": true,
+    "hide": false
+  },
+  "refresh": false
 }

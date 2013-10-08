@@ -10,6 +10,7 @@ function (angular) {
       return {
         restrict: 'E',
         link: function($scope, elem, attr) {
+
           // once we have the template, scan it for controllers and
           // load the module.js if we have any
 

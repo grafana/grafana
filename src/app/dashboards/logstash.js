@@ -1,4 +1,4 @@
-/* global _, kbn */
+/* global _ */
 
 /*
  * Complex scripted Logstash dashboard
@@ -29,7 +29,7 @@ var dashboard, queries, _d_timespan;
 var ARGS;
 
 // Set a default timespan if one isn't specified
-_d_timespan = '1h';
+_d_timespan = '1d';
 
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
@@ -85,12 +85,11 @@ dashboard.services.query = {
 };
 
 // Lets also add a default time filter, the value of which can be specified by the user
-// This isn't strictly needed, but it gets rid of the info alert about the missing time filter
 dashboard.services.filter = {
   list: {
     0: {
-      from: kbn.time_ago(ARGS.from||_d_timespan),
-      to: new Date(),
+      from: "now-"+(ARGS.from||_d_timespan),
+      to: "now",
       field: ARGS.timefield||"@timestamp",
       type: "time",
       active: true,
@@ -103,19 +102,6 @@ dashboard.services.filter = {
 // Ok, lets make some rows. The Filters row is collapsed by default
 dashboard.rows = [
   {
-    title: "Time span",
-    height: "30px"
-  },
-  {
-    title: "Query",
-    height: "30px"
-  },
-  {
-    title: "Filters",
-    height: "100px",
-    collapse: true
-  },
-  {
     title: "Chart",
     height: "300px"
   },
@@ -125,37 +111,8 @@ dashboard.rows = [
   }
 ];
 
-// Setup some panels. A query panel and a filter panel on the same row
-dashboard.rows[0].panels = [
-  {
-    title: "Set time filter",
-    type: 'timepicker',
-    span: 6,
-    timespan: ARGS.from||_d_timespan
-  }
-];
-
-// Add a filtering panel to the 3rd row
-dashboard.rows[1].panels = [
-  {
-    title: 'search',
-    type: 'query',
-    span: 12
-  }
-];
-
-
-// Add a filtering panel to the 3rd row
-dashboard.rows[2].panels = [
-  {
-    title: 'filters (applied globally)',
-    type: 'filtering',
-    span: 12
-  }
-];
-
 // And a histogram that allows the user to specify the interval and time field
-dashboard.rows[3].panels = [
+dashboard.rows[0].panels = [
   {
     title: 'events over time',
     type: 'histogram',
@@ -166,7 +123,7 @@ dashboard.rows[3].panels = [
 ];
 
 // And a table row where you can specify field and sort order
-dashboard.rows[4].panels = [
+dashboard.rows[1].panels = [
   {
     title: 'all events',
     type: 'table',

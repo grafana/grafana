@@ -39,7 +39,7 @@
         <div class="timepicker-from-column">
           <label class="small">From</label>
           <div class="fake-input timepicker-input">
-            <input class="timepicker-date" type="text" ng-change="validate(temptime)" ng-model="temptime.from.date" data-date-format="mm/dd/yyyy" required bs-datepicker />@
+            <input class="timepicker-date" type="text" ng-change="validate(temptime)" ng-model="temptime.from.date" data-date-format="yyyy-mm-dd" required bs-datepicker />@
             <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.from.hour" required ng-pattern="patterns.hour" onClick="this.select();"/>:
             <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.from.minute" required ng-pattern="patterns.minute" onClick="this.select();"/>:
             <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.from.second" required ng-pattern="patterns.second" onClick="this.select();"/>.
@@ -53,7 +53,7 @@
 
           <div class="fake-input timepicker-input">
             <div ng-hide="panel.now">
-              <input class="timepicker-date" type="text" ng-change="validate(temptime)" ng-model="temptime.to.date" data-date-format="mm/dd/yyyy" required bs-datepicker />@
+              <input class="timepicker-date" type="text" ng-change="validate(temptime)" ng-model="temptime.to.date" data-date-format="yyyy-mm-dd" required bs-datepicker />@
               <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.to.hour" required ng-pattern="patterns.hour" onClick="this.select();"/>:
               <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.to.minute" required ng-pattern="patterns.minute" onClick="this.select();"/>:
               <input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.to.second" required ng-pattern="patterns.second" onClick="this.select();"/>.

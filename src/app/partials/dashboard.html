@@ -1,12 +1,12 @@
 <!-- is there a better way to repeat without actually affecting the page? -->
-<nil ng-repeat="row in dashboard.current.pulldowns" ng-controller="RowCtrl">
-  <div class="top-row-open" ng-hide="row.collapse">
-    <kibana-simple-panel type="row.type" ng-cloak></kibana-simple-panel>
+<nil ng-repeat="pulldown in dashboard.current.pulldowns" ng-controller="PulldownCtrl">
+  <div class="top-row-open" ng-hide="pulldown.collapse">
+    <kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel>
   </div>
-  <div class="top-row-close pointer" ng-click="toggle_row(row);dismiss();" bs-tooltip="'Toggle '+row.type" data-placement="bottom">
-    <span class="small row-text">{{row.type}}</span>
-    <i class="small" ng-class="{'icon-expand':row.collapse,'icon-collapse-top':!row.collapse}"></i>
-    <i class="small icon-circle text-warning" ng-show="row.notice && row.collapse"></i>
+  <div class="top-row-close pointer" ng-click="toggle_pulldown(pulldown);dismiss();" bs-tooltip="'Toggle '+pulldown.type" data-placement="bottom">
+    <span class="small row-text">{{pulldown.type}}</span>
+    <i class="small" ng-class="{'icon-expand':pulldown.collapse,'icon-collapse-top':!pulldown.collapse}"></i>
+    <i class="small icon-star text-warning" ng-show="row.notice && pulldown.collapse"></i>
   </div>
 </nil>
 

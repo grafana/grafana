@@ -308,8 +308,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
       filterSrv.set({
         type:'time',
-        from:moment.utc(_from),
-        to:moment.utc(_to),
+        from:moment.utc(_from).toDate(),
+        to:moment.utc(_to).toDate(),
         field:$scope.panel.time_field
       });
     };

@@ -1,5 +1,6 @@
 define([
   './dash',
   './dashLoader',
-  './row'
+  './row',
+  './pulldown'
 ], function () {});

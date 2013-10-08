@@ -295,7 +295,6 @@ function($, _, moment) {
       } else if (c === '-') {
         type = 2;
       } else {
-        console.log("no type");
         return false;
       }
 
@@ -311,7 +310,6 @@ function($, _, moment) {
       if (type === 0) {
         // rounding is only allowed on whole numbers
         if (num !== 1) {
-          console.log("nbad rounding");
           return false;
         }
       }
@@ -373,7 +371,6 @@ function($, _, moment) {
         }
         break;
       default:
-        console.log("unknown unit");
         return false;
       }
     }

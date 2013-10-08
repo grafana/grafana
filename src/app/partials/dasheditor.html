@@ -1,8 +1,10 @@
 <div class="modal-body">
   <div class="pull-right editor-title">Dashboard settings</div>
 
-  <div ng-model="editor.index" bs-tabs>
+  <div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
     <div ng-repeat="tab in ['General','Index','Rows','Controls']" data-title="{{tab}}">
+    </div>
+    <div ng-repeat="tab in dashboard.current.nav" data-title="{{tab.type}}">
     </div>
   </div>
 
@@ -103,45 +105,48 @@
     <h5>Allow saving to</h5>
     <div class="row-fluid">
       <div class="span2">
-        <label class="small">File</label><input type="checkbox" ng-model="loader.save_local" ng-checked="loader.save_local">
+        <label class="small">File</label><input type="checkbox" ng-model="dashboard.current.loader.save_local" ng-checked="dashboard.current.loader.save_local">
       </div>
       <div class="span2">
-        <label class="small">Browser</label><input type="checkbox" ng-model="loader.save_default" ng-checked="loader.save_default">
+        <label class="small">Browser</label><input type="checkbox" ng-model="dashboard.current.loader.save_default" ng-checked="dashboard.current.loader.save_default">
       </div>
       <div class="span2">
-        <label class="small">Gist <tip>Requires your domain to be OAUTH registered with Github<tip></label><input type="checkbox" ng-model="loader.save_gist" ng-checked="loader.save_gist">
+        <label class="small">Gist <tip>Requires your domain to be OAUTH registered with Github<tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_gist" ng-checked="dashboard.current.loader.save_gist">
       </div>
       <div class="span2">
-        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="loader.save_elasticsearch" ng-checked="loader.save_elasticsearch">
+        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.save_elasticsearch" ng-checked="dashboard.current.loader.save_elasticsearch">
       </div>
     </div>
     <h5>Allow loading from</h5>
     <div class="row-fluid">
       <div class="span2">
-        <label class="small">Local file</label><input type="checkbox" ng-model="loader.load_local" ng-checked="loader.load_local">
+        <label class="small">Local file</label><input type="checkbox" ng-model="dashboard.current.loader.load_local" ng-checked="dashboard.current.loader.load_local">
       </div>
       <div class="span2">
-        <label class="small">Gist</label><input type="checkbox" ng-model="loader.load_gist" ng-checked="loader.load_gist">
+        <label class="small">Gist</label><input type="checkbox" ng-model="dashboard.current.loader.load_gist" ng-checked="dashboard.current.loader.load_gist">
       </div>
       <div class="span2">
-        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="loader.load_elasticsearch" ng-checked="loader.load_elasticsearch">
+        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.load_elasticsearch" ng-checked="dashboard.current.loader.load_elasticsearch">
       </div>
-      <div class="span3" ng-show="loader.load.elasticsearch">
-        <label class="small">ES list size</label><input class="input-mini" type="number" ng-model="loader.load_elasticsearch_size">
+      <div class="span3" ng-show="dashboard.current.loader.load.elasticsearch">
+        <label class="small">ES list size</label><input class="input-mini" type="number" ng-model="dashboard.current.loader.load_elasticsearch_size">
       </div>
     </div>
     <h5>Sharing</h5>
     <div class="row-fluid">
       <div class="span2" >
-        <label class="small">Allow Sharing <tip>Allow generating adhoc links to dashboards</tip></label><input type="checkbox" ng-model="loader.save_temp" ng-checked="loader.save_temp">
+        <label class="small">Allow Sharing <tip>Allow generating adhoc links to dashboards</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp" ng-checked="dashboard.current.loader.save_temp">
       </div>
-      <div class="span2" ng-show="loader.save_temp">
-        <label class="small">TTL <tip>Expire temp urls</tip></label><input type="checkbox" ng-model="loader.save_temp_ttl_enable">
+      <div class="span2" ng-show="dashboard.current.loader.save_temp">
+        <label class="small">TTL <tip>Expire temp urls</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp_ttl_enable">
       </div>
-      <div class="span5" ng-show="loader.save_temp &amp;&amp; loader.save_temp_ttl_enable">
-        <label class="small">TTL Duration <tip>Elasticsearch date math, eg: 1m,1d,1w,30d  </tip></label><input class="input-small" type="text" ng-model="loader.save_temp_ttl">
+      <div class="span5" ng-show="dashboard.current.loader.save_temp &amp;&amp; dashboard.current.loader.save_temp_ttl_enable">
+        <label class="small">TTL Duration <tip>Elasticsearch date math, eg: 1m,1d,1w,30d  </tip></label><input class="input-small" type="text" ng-model="dashboard.current.loader.save_temp_ttl">
       </div>
     </div>
+  </div>
+
+  <div ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-include="'./app/panels/'+pulldown.type+'/editor.html'" ng-show="editor.index == 4+$index">
   </div>
 </div>
 

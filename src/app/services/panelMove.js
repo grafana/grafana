@@ -7,26 +7,20 @@ function (angular, _) {
 
   var module = angular.module('kibana.services');
 
-  module.service('panelMove', function(dashboard, $rootScope, alertSrv) {
+  module.service('panelMove', function(dashboard, $rootScope) {
 
     /* each of these can take event,ui,data parameters */
 
-    var notices = [];
-
     this.onStart = function() {
       dashboard.panelDragging =  true;
-      notices.push(alertSrv.set('Moving','Drop this panel into an available space, or on top of another panel','info'));
       $rootScope.$apply();
     };
 
     this.onOver = function() {
-      notices.push(alertSrv.set('Add panel',
-          'Drop to add panel to this row. Panel will use row height, but retain their span','success'));
       $rootScope.$apply();
     };
 
     this.onOut = function() {
-      clearNotices({severity:'success'});
       $rootScope.$apply();
     };
 
@@ -63,18 +57,9 @@ function (angular, _) {
     };
 
     var cleanup = function () {
-      _.each(notices, function(n){
-        alertSrv.clear(n);
-      });
       _.each(dashboard.current.rows, function(row) {
         row.panels = _.without(row.panels,{});
         row.panels = _.compact(row.panels);
-      });
-    };
-
-    var clearNotices = function(options) {
-      _.each(_.where(notices,options), function(n) {
-        alertSrv.clear(n);
       });
     };
 
