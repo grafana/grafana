@@ -101,8 +101,20 @@
     </div>
   </div>
 
+  <div ng-show="editor.index == 3">
+    <h5>Pulldowns</h5>
+    <div class="row-fluid">
+      <div class="span2" ng-repeat="pulldown in dashboard.current.pulldowns">
+        <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+      </div>
+      <div class="span2" ng-repeat="pulldown in dashboard.current.nav">
+        <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+      </div>
+    </div>
+  </div>
+
   <div ng-show="editor.index == 3" ng-controller="dashLoader">
-    <h5>Allow saving to</h5>
+    <h5>Save to</h5>
     <div class="row-fluid">
       <div class="span2">
         <label class="small">File</label><input type="checkbox" ng-model="dashboard.current.loader.save_local" ng-checked="dashboard.current.loader.save_local">
@@ -117,7 +129,7 @@
         <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.save_elasticsearch" ng-checked="dashboard.current.loader.save_elasticsearch">
       </div>
     </div>
-    <h5>Allow loading from</h5>
+    <h5>Load from</h5>
     <div class="row-fluid">
       <div class="span2">
         <label class="small">Local file</label><input type="checkbox" ng-model="dashboard.current.loader.load_local" ng-checked="dashboard.current.loader.load_local">
@@ -146,8 +158,9 @@
     </div>
   </div>
 
-  <div ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-include="'./app/panels/'+pulldown.type+'/editor.html'" ng-show="editor.index == 4+$index">
+  <div ng-repeat="pulldown in dashboard.current.nav|filter:{enable:true}" ng-controller="PulldownCtrl" ng-include="'./app/panels/'+pulldown.type+'/editor.html'" ng-show="editor.index == 4+$index">
   </div>
+
 </div>
 
 <div class="modal-footer">

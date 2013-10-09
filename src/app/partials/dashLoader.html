@@ -4,7 +4,7 @@
   }
 </style>
 
-<li ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl"><kibana-simple-panel type="pulldown.type" panel="pulldown" ng-cloak></kibana-simple-panel></li>
+<li ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable"><kibana-simple-panel type="pulldown.type" panel="pulldown" ng-cloak></kibana-simple-panel></li>
 
 <li><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/dashboard'><i class='icon-home'></i></a></li>
 <li class="dropdown" bs-tooltip="'Load'" data-placement="bottom" ng-show="showDropdown('load')" >

@@ -48,7 +48,7 @@
   <div class="row-fluid" ng-show="editor.index == 2">
     <h4>Select Panel Type</h4>
     <form class="form-inline">
-      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in config.panel_names|stringSort"></select>
+      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in dashboard.availablePanels|stringSort"></select>
       <small ng-show="rowSpan(row) > 11">
         Note: This row is full, new panels will wrap to a new line. You should add another row.
       </small>

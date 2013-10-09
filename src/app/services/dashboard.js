@@ -72,6 +72,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.current = _.clone(_dash);
     this.last = {};
+    this.availablePanels = [];
 
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
@@ -199,6 +200,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
       }
+
+      self.availablePanels = _.difference(config.panel_names,
+        _.pluck(_.union(self.current.nav,self.current.pulldowns),'type'));
 
       return true;
     };

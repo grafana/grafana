@@ -12,6 +12,7 @@ function (angular, app, _) {
       var _d = {
         collapse: false,
         notice: false,
+        enable: true
       };
 
       _.defaults($scope.pulldown,_d);
