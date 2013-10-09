@@ -5,7 +5,7 @@
   </div>
   <div class="top-row-close pointer" ng-click="toggle_pulldown(pulldown);dismiss();" bs-tooltip="'Toggle '+pulldown.type" data-placement="bottom">
     <span class="small row-text">{{pulldown.type}}</span>
-    <i class="small" ng-class="{'icon-expand':pulldown.collapse,'icon-collapse-top':!pulldown.collapse}"></i>
+    <i class="small" ng-class="{'icon-caret-left':pulldown.collapse,'icon-caret-up':!pulldown.collapse}"></i>
     <i class="small icon-star text-warning" ng-show="row.notice && pulldown.collapse"></i>
   </div>
 </nil>
@@ -23,14 +23,14 @@
                 <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
               </span>
               <span class="row-button" ng-click="toggle_row(row)" ng-show="row.collapsable">
-                <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-expand pointer" ></i>
+                <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-caret-right pointer" ></i>
               </span>
               <span class="row-button row-text" ng-click="toggle_row(row)" ng-class="{'pointer':row.collapsable}">{{row.title || 'Row '+$index}}</span>
             </div>
 
-            <div style="text-align:left" class="row-open" ng-show="!row.collapse">
+            <div style="text-align:center" class="row-open" ng-show="!row.collapse">
               <span ng-show="row.collapsable">
-                <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-collapse-top" ng-click="toggle_row(row)"></i>
+                <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-caret-up" ng-click="toggle_row(row)"></i>
                 <br>
               </span>
               <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable">
@@ -38,7 +38,7 @@
                 <br>
               </span>
               <span ng-show="rowSpan(row) == 12 && row.editable">
-                <i bs-tooltip="'Row full. Create a new row to add more panels'" data-placement="right" class="icon-trello"></i>
+                <i bs-tooltip="'Row full. Create a new row to add more panels'" data-placement="right" class="icon-columns"></i>
                 <br>
               </span>
               <span ng-show="rowSpan(row) > 12">
@@ -66,7 +66,7 @@
               </div>
             </div>
 
-            <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" style="height:{{row.height}};" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
+            <div ng-hide="(12-rowSpan(row)) < 1 || !dashboard.current.panel_hints" class="panel span{{(12-rowSpan(row))}}" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
 
               <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable && !dashboard.panelDragging">
                 <i ng-hide="rowSpan(row) == 0" class="pointer icon-plus-sign" ng-click="editor.index = 2" bs-tooltip="'Add a panel to this row'" data-placement="right"></i>

@@ -42,46 +42,6 @@
       "panels": [
         {
           "error": false,
-          "span": 8,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "text",
-          "status": "Stable",
-          "mode": "markdown",
-          "content": "If you have a field with a timestamp in it, you might want to add a 'timepicker' panel here. Click the plus sign over to the right to do so. You can also remove these information text panels there by clicking the 'x' icon above",
-          "style": {},
-          "title": "Have a timestamp somewhere?"
-        }
-      ]
-    },
-    {
-      "title": "Query",
-      "height": "50px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 5,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "query",
-          "label": "Search",
-          "history": [
-            "*"
-          ],
-          "remember": 10,
-          "pinned": true,
-          "query": "*",
-          "title": "Search"
-        },
-        {
-          "error": false,
           "span": 7,
           "editable": true,
           "group": [
@@ -90,29 +50,26 @@
           "type": "text",
           "status": "Stable",
           "mode": "markdown",
-          "content": "See the *Filters* bar to the below? Click it to expand the filters row. Right now there are none. click on one of the icons in the document types list to filter down to only that document type",
+          "content": "If you have a field with a timestamp in it, you can set a time filter using the control in the navigation bar. You'll need to click the cog icon to configure the field that your timestamp is in.",
           "style": {},
-          "title": "About filters"
-        }
-      ]
-    },
-    {
-      "title": "Filters",
-      "height": "50px",
-      "editable": true,
-      "collapse": true,
-      "collapsable": true,
-      "panels": [
+          "title": "Have a timestamp somewhere?"
+        },
         {
           "error": false,
-          "span": 12,
+          "span": 5,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "filtering"
+          "type": "text",
+          "status": "Stable",
+          "mode": "markdown",
+          "content": "See the *Filters* bar above? Click it to expand the filters panel. Right now there are none. click on one of the icons in the document types list to filter down to only that document type",
+          "style": {},
+          "title": "About filters"
         }
-      ]
+      ],
+      "notice": false
     },
     {
       "title": "Graph",
@@ -199,7 +156,8 @@
           "style": {},
           "title": "The most generic dashboard ever"
         }
-      ]
+      ],
+      "notice": false
     },
     {
       "title": "Events",
@@ -245,7 +203,8 @@
           "normTimes": true,
           "title": "Documents"
         }
-      ]
+      ],
+      "notice": false
     }
   ],
   "editable": true,
@@ -270,5 +229,54 @@
     "load_elasticsearch_size": 20,
     "load_local": true,
     "hide": false
-  }
+  },
+  "pulldowns": [
+    {
+      "type": "query",
+      "collapse": false,
+      "notice": false,
+      "query": "*",
+      "pinned": true,
+      "history": [],
+      "remember": 10
+    },
+    {
+      "type": "filtering",
+      "collapse": true,
+      "notice": false
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "timefield": "@timestamp"
+    }
+  ],
+  "refresh": false
 }

@@ -1,34 +1,14 @@
-  <div class="row-fluid">    
-    <div class="span3">
-      <h6>Default Mode</h6>
-      <select style="width:85%" ng-model="panel.mode" ng-options="f for f in ['relative','absolute','since']"></select>
-    </div>
-    <div class="span3">
-      <h6>Time Field</h6>
-      <input type="text" class="input-small" ng-model="panel.timefield">
-    </div>
-  </div>
   <div class="row-fluid">
-    <h5>Relative mode <small>settings</small></h5>  
-    <div class="span6">
-      <h6>Relative time options <small>comma seperated</small></h6>
+    <div class="span4">
+      <label class="small">Relative time options <small>comma seperated</small></label>
       <input type="text" array-join class="input-large" ng-model="panel.time_options">
     </div>
-    <div class="span3">
-      <h6>Default timespan</h6>
-      <select class="input-mini" ng-model="panel.timespan" ng-options="f for f in panel.time_options"></select>
-    </div>
-  <div class="row-fluid">
-    <h5>Auto-refresh <small>settings</small></h5>  
-    <div class="span1">
-      <label class="small"> Enable </label><input type="checkbox" ng-model="panel.refresh.enable" ng-checked="panel.refresh.enable">
+    <div class="span4">
+      <label class="small">Auto-refresh options <small>comma seperated</small></label>
+      <input type="text" array-join class="input-large" ng-model="panel.refresh_intervals">
     </div>
     <div class="span2">
-      <label class="small"> Interval (seconds) </label>
-      <input type="number" class="input-mini" ng-model="panel.refresh.interval">
-    </div>
-    <div class="span3">
-      <label class="small"> Minimum Interval (seconds) </label>
-      <input type="number" class="input-mini" ng-model="panel.refresh.min">
+      <label class="small">Time Field</label>
+      <input type="text" class="input-small" ng-model="panel.timefield">
     </div>
   </div>

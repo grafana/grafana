@@ -36,7 +36,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       ],
       nav: [
         {
-          type: 'timepicker2'
+          type: 'timepicker'
         }
       ],
       services: {},

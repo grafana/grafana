@@ -98,7 +98,7 @@
   ],
   "nav": [
     {
-      "type": "timepicker2",
+      "type": "timepicker",
       "collapse": false,
       "notice": false,
       "status": "Stable",
