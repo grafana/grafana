@@ -1,0 +1,45 @@
+  <div class="modal-body">
+    <style>
+      .timepicker-to-column {
+        margin-top: 10px;
+      }
+
+      .timepicker-input input {
+        outline: 0 !important;
+        border: 0px !important;
+        -webkit-box-shadow: 0;
+        -moz-box-shadow: 0;
+        box-shadow: 0;
+        position: relative;
+      }
+
+      .timepicker-input input::-webkit-outer-spin-button,
+      .timepicker-input input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+      }
+
+      input.timepicker-date {
+        width: 90px;
+      }
+      input.timepicker-hms {
+        width: 20px;
+      }
+      input.timepicker-ms {
+        width: 25px;
+      }
+      div.timepicker-now {
+        float: right;
+      }
+    </style>
+    <h4>Top 10 terms in field {{modalField}}</h4>
+    <div>
+      <kibana-simple-panel ng-click="dismiss();" type="'{{facetType}}'" panel='{{facetPanel}}' ng-cloak></kibana-simple-panel>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <form name="input" style="margin-bottom:0">
+    <button ng-click="dismiss();" class="btn btn-danger">Close</button>
+    </form>
+  </div>

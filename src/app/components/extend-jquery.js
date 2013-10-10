@@ -20,6 +20,7 @@ function ($) {
         'font-weight' : 200,
         'background-color': '#1f1f1f',
         'border-radius': '5px',
+        'z-index': 9999
       }
     };
 

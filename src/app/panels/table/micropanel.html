@@ -41,4 +41,12 @@
 <div class="progress" ng-show="micropanel.grouped">
   <div ng-repeat='field in micropanel.values' bs-tooltip="field[0]+' ('+percent(field[1],data.length)+')'" class="bar {{micropanelColor($index)}}" ng-style="{width: percent(field[1],data.length)};"></div>
 </div>
-<span ng-repeat='(field,count) in micropanel.related track by $index'><a ng-click="toggle_field(field)">{{field}}</a> ({{Math.round((count / micropanel.count) * 100)}}%), </span>
+<div>
+  <span ng-repeat='(field,count) in micropanel.related track by $index'><a ng-click="toggle_field(field)">{{field}}</a> ({{Math.round((count / micropanel.count) * 100)}}%), </span>
+</div>
+<div class="row-fluid">
+  <div class="span12">
+    <h5>Facets</h5>
+    <button class="btn" ng-click="termsModal(field);dismiss();"><i class="icon-list-ol"></i> Terms</button>
+  </div>
+</div>
