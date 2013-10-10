@@ -96,10 +96,10 @@ function (angular, app, _, kbn, moment) {
     // Create a percent function for the view
     $scope.percent = kbn.to_percent;
 
-    $scope.termsModal = function(field) {
+    $scope.termsModal = function(field,chart) {
       $scope.modalField = field;
       showModal(
-        '{"height":"200px","chart":"bar","field":"'+field+'"}','terms');
+        '{"height":"300px","chart":"'+chart+'","field":"'+field+'"}','terms');
     };
 
     $scope.statsModal = function(field) {

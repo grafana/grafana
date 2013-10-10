@@ -47,6 +47,19 @@
 <div class="row-fluid">
   <div class="span12">
     <h5>Facets</h5>
-    <button class="btn" ng-click="termsModal(field);dismiss();"><i class="icon-list-ol"></i> Terms</button>
+    <!--<button class="btn" ng-click="termsModal(field,'pie');dismiss();"><i class="icon-list-ol"></i> Terms</button>-->
+
+    <div class="btn-group">
+      <a class="btn dropdown-toggle pointer" data-toggle="dropdown">
+        <i class="icon-list-ol"></i> Terms
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a ng-click="termsModal(field,'bar');dismiss();">Bar</a></li>
+        <li><a ng-click="termsModal(field,'pie');dismiss();">Pie</a></li>
+        <li><a ng-click="termsModal(field,'table');dismiss();">Table</a></li>
+      </ul>
+    </div>
+
   </div>
 </div>

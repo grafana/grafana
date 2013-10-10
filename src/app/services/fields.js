@@ -75,7 +75,7 @@ function (angular, _, config) {
         ret = {};
       for(var attr in obj){
         // For now only support multi field on the top level
-        // and if if there is a default field set.
+        // and if there is a default field set.
         if(obj[attr]['type'] === 'multi_field') {
           ret[attr] = obj[attr]['fields'][attr] || obj[attr];
           continue;
