@@ -41,7 +41,7 @@ function($, _, moment) {
       }
     });
     var counts = _.countBy(_.without(field_array,field),function(field){return field;});
-    return counts;
+    return _.map(counts, function(num, key){return {name:key,count:num};});
   };
 
   kbn.recurse_field_dots = function(object,field) {

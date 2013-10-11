@@ -42,13 +42,12 @@
   <div ng-repeat='field in micropanel.values' bs-tooltip="field[0]+' ('+percent(field[1],data.length)+')'" class="bar {{micropanelColor($index)}}" ng-style="{width: percent(field[1],data.length)};"></div>
 </div>
 <div>
-  <span ng-repeat='(field,count) in micropanel.related track by $index'><a ng-click="toggle_field(field)">{{field}}</a> ({{Math.round((count / micropanel.count) * 100)}}%), </span>
+  <span ng-repeat="field in micropanel.related|orderBy:'count':true|limitTo:micropanel.limit track by $index"><a ng-click="toggle_field(field)">{{field.name}}</a> ({{Math.round((field.count / micropanel.count) * 100)}}%), </span>
+  <a class="link" ng-show="micropanel.related.length > micropanel.limit" ng-click="micropanel.limit = micropanel.limit + 10">More <i class="icon-caret-right"></i></a>
 </div>
 <div class="row-fluid">
   <div class="span12">
     <h5>Facets</h5>
-    <!--<button class="btn" ng-click="termsModal(field,'pie');dismiss();"><i class="icon-list-ol"></i> Terms</button>-->
-
     <div class="btn-group">
       <a class="btn dropdown-toggle pointer" data-toggle="dropdown">
         <i class="icon-list-ol"></i> Terms

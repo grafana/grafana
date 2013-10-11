@@ -138,6 +138,7 @@ function (angular, app, _, kbn, moment) {
         values : topFieldValues.counts,
         hasArrays : topFieldValues.hasArrays,
         related : kbn.get_related_fields(docs,field),
+        limit: 10,
         count: _.countBy(docs,function(doc){return _.contains(_.keys(doc),field);})['true']
       };
     };
