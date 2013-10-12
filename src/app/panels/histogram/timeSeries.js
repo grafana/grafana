@@ -99,6 +99,8 @@ function (_, Interval) {
 
     if(this.opts.fill_style === 'all') {
       strategy = this._getAllFlotPairs;
+    } else if(this.opts.fill_style = 'default') {
+      strategy = this._getDefaultFlotPairs;
     } else {
       strategy = this._getMinFlotPairs;
     }
@@ -112,6 +114,7 @@ function (_, Interval) {
 
     // if the first or last pair is inside either the start or end time,
     // add those times to the series with null values so the graph will stretch to contain them.
+    // Not sure this is required with flot 0.8.1's min/max params. Might be harmful?
     if (this.start_time && (pairs.length === 0 || pairs[0][0] > this.start_time)) {
       pairs.unshift([this.start_time, null]);
     }
@@ -162,6 +165,24 @@ function (_, Interval) {
    * @return {array}  An array of points to plot with flot
    */
   ts.ZeroFilled.prototype._getAllFlotPairs = function (result, time, i, times) {
+    var next, expected_next;
+
+    result.push([ times[i], this._data[times[i]] || 0 ]);
+    next = times[i + 1];
+    expected_next = this.interval.after(time);
+    for(; times.length > i && next > expected_next; expected_next = this.interval.after(expected_next)) {
+      result.push([expected_next, 0]);
+    }
+
+    return result;
+  };
+
+  /**
+   * ** called as a reduce stragegy in getFlotPairs() **
+   * Does no zero filling
+   * @return {array}  An array of points to plot with flot
+   */
+  ts.ZeroFilled.prototype._getDefaultFlotPairs = function (result, time, i, times) {
     var next, expected_next;
 
     result.push([ times[i], this._data[times[i]] || 0 ]);
