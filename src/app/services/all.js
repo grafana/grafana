@@ -6,6 +6,7 @@ define([
   './kbnIndex',
   './querySrv',
   './timer',
-  './panelMove'
+  './panelMove',
+  './esVersion'
 ],
 function () {});
