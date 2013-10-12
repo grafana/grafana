@@ -1906,7 +1906,8 @@
     constructor: Typeahead
 
   , select: function () {
-      var val = this.$menu.find('.active').attr('data-value')
+    // CHANGE (rashidkpc) If nothing is selected, use existing value
+      var val = this.$menu.find('.active').attr('data-value') || this.$element.val();
       this.$element
         .val(this.updater(val))
         .change()
@@ -2005,7 +2006,8 @@
         return i[0]
       })
 
-      items.first().addClass('active')
+      // CHANGE (rashidpc) Do not select first element by default
+      // items.first().addClass('active')
       this.$menu.html(items)
       return this
     }
@@ -2116,8 +2118,14 @@
           this.lookup()
       }
 
-      e.stopPropagation()
-      e.preventDefault()
+      if(e.keyCode === 13 && typeof this.$menu.find('.active').attr('data-value') === 'undefined') {
+        // CHANGE (rashidkpc). Enter was hit, nothing was selected from typeahead, submit form
+        this.$element.submit();
+      } else {
+        e.stopPropagation()
+        e.preventDefault()
+      }
+
   }
 
   , focus: function (e) {
