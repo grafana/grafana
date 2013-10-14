@@ -42,7 +42,8 @@ function (angular, _, config) {
     // Define the query types and the version of elasticsearch they were first available in
     this.queryTypes = [
       {name:'lucene',require:">=0.17.0"},
-      {name:'regex',require:">=0.90.3"}
+      {name:'regex',require:">=0.90.3"},
+      {name:'derive',require:">=2.0.0"}
     ];
 
 
