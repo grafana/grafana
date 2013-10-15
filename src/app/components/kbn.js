@@ -14,9 +14,10 @@ function($, _, moment) {
   };
 
   kbn.get_all_fields = function(data) {
+    var _d = data;
     var fields = [];
-    _.each(data,function(hit) {
-      fields = _.uniq(fields.concat(_.keys(hit)));
+    _.each(_d,function(hit) {
+      fields = _.uniq(fields.concat(_.keys(kbn.flatten_json(hit._source))));
     });
     // Remove stupid angular key
     fields = _.without(fields,'$$hashKey');

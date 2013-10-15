@@ -78,6 +78,7 @@ function (angular, app, _, kbn, moment) {
       header  : true,
       paging  : true,
       field_list: true,
+      all_fields: false,
       trimFactor: 300,
       normTimes : true,
       spyable : true
@@ -290,6 +291,9 @@ function (angular, app, _, kbn, moment) {
 
           // Keep only what we need for the set
           $scope.data = $scope.data.slice(0,$scope.panel.size * $scope.panel.pages);
+
+          // Populate current_fields list
+          $scope.current_fields = kbn.get_all_fields($scope.data);
 
         } else {
           return;
