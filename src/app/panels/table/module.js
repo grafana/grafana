@@ -87,7 +87,7 @@ function (angular, app, _, kbn, moment) {
 
     $scope.init = function () {
       $scope.Math = Math;
-
+      $scope.identity = angular.identity;
       $scope.$on('refresh',function(){$scope.get_data();});
 
       $scope.fields = fields;
