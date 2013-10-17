@@ -36,7 +36,7 @@ function (angular, _, config) {
       var fields = [];
       _.each(m, function(types) {
         _.each(types, function(v) {
-          fields = _.union(fields,_.keys(v));
+          fields = _.without(_.union(fields,_.keys(v)),'_all','_source');
         });
       });
       return fields;
