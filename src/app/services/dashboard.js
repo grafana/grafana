@@ -123,6 +123,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     // Since the dashboard is responsible for index computation, we can compute and assign the indices
     // here before telling the panels to refresh
     this.refresh = function() {
+
       if(self.current.index.interval !== 'none') {
         if(filterSrv.idsByType('time').length > 0) {
           var _range = filterSrv.timeRange('last');

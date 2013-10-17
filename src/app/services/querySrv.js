@@ -17,12 +17,26 @@ function (angular, _, config) {
       ids : [],
     });
 
-    // Defaults for query objects
+    // Defaults for generic query object
     var _query = {
-      query: '*',
       alias: '',
       pin: false,
       type: 'lucene'
+    };
+
+    // Defaults for specific query types
+    var _dTypes = {
+      "lucene": {
+        query: "*"
+      },
+      "regex": {
+        query: ".*"
+      },
+      "derive": {
+        query: "*",
+        field: "_type",
+        size: "5"
+      }
     };
 
     // For convenience
@@ -80,6 +94,7 @@ function (angular, _, config) {
         query.id = _id;
         query.color = query.color || colorAt(_id);
         _.defaults(query,_query);
+        _.defaults(query,_dTypes[query.type]);
 
         self.list[_id] = query;
         self.ids.push(_id);
@@ -102,10 +117,13 @@ function (angular, _, config) {
       }
     };
 
-    this.getEjsObj = function(id) {
-      return self.toEjsObj(self.list[id]);
+    // This must return an array to correctly resolve compound query types, eg derived
+    this.getEjsObj = function(ids) {
+      return self.toEjsObj(self.list[ids]);
     };
 
+    // In the case of a compound query, such as a derived query, we'd need to
+    // return an array of elasticJS objects. Not sure if that is appropriate?
     this.toEjsObj = function (q) {
       switch(q.type)
       {

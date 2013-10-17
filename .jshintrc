@@ -28,6 +28,7 @@
 
   "globals": {
     "define": true,
-    "require": true
+    "require": true,
+    "Chromath": false
   }
 }
