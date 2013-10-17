@@ -47,6 +47,9 @@
         </ul>
 
       </li>
+      <li ng-show="!dashboard.current.refresh">
+        <a class="icon-refresh" ng-click="dashboard.refresh()"></a>
+      </li>
     </ul>
 
   </form>
