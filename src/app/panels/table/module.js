@@ -87,6 +87,7 @@ function (angular, app, _, kbn, moment) {
 
     $scope.init = function () {
       $scope.Math = Math;
+      $scope.metaFields = [];
       $scope.identity = angular.identity;
       $scope.$on('refresh',function(){$scope.get_data();});
 
@@ -205,6 +206,12 @@ function (angular, app, _, kbn, moment) {
     };
 
     $scope.get_data = function(segment,query_id) {
+      var
+        _segment,
+        request,
+        boolQuery,
+        results;
+
       $scope.panel.error =  false;
 
       // Make sure we have everything for the request to complete
@@ -216,12 +223,12 @@ function (angular, app, _, kbn, moment) {
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
 
-      var _segment = _.isUndefined(segment) ? 0 : segment;
+      _segment = _.isUndefined(segment) ? 0 : segment;
       $scope.segment = _segment;
 
-      var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
+      request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
-      var boolQuery = $scope.ejs.BoolQuery();
+      boolQuery = $scope.ejs.BoolQuery();
       _.each($scope.panel.queries.ids,function(id) {
         boolQuery = boolQuery.should(querySrv.getEjsObj(id));
       });
@@ -242,7 +249,7 @@ function (angular, app, _, kbn, moment) {
 
       $scope.populate_modal(request);
 
-      var results = request.doSearch();
+      results = request.doSearch();
 
       // Populate scope when we have results
       results.then(function(results) {
@@ -263,11 +270,15 @@ function (angular, app, _, kbn, moment) {
         // Check that we're still on the same query, if not stop
         if($scope.query_id === query_id) {
           $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
-            var _h = _.clone(hit);
-            //_h._source = kbn.flatten_json(hit._source);
-            //_h.highlight = kbn.flatten_json(hit.highlight||{});
+            var
+              _h = _.clone(hit),
+              _p = _.omit(hit,'_source','sort','_score');
+
+            $scope.metaFields = _.union(_.keys(_p),$scope.metaFields);
+
+            // _source is kind of a lie here, never display it, only select values from it
             _h.kibana = {
-              _source : kbn.flatten_json(hit._source),
+              _source : _.extend(kbn.flatten_json(hit._source),_p),
               highlight : kbn.flatten_json(hit.highlight||{})
             };
             return _h;

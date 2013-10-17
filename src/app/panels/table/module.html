@@ -18,6 +18,11 @@
 
 
         <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;">
+          <li ng-style="panel.style" ng-repeat="field in metaFields|filter:fieldFilter|orderBy:identity">
+            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+          </li>
+
           <li ng-style="panel.style" ng-repeat="field in fields.list|filter:fieldFilter|orderBy:identity" ng-show="panel.all_fields">
             <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
             <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
@@ -62,7 +67,7 @@
         </thead>
         <tbody ng-repeat="event in data| slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
           <tr ng-click="toggle_details(event)" class="pointer">
-            <td ng-show="panel.fields.length<1">{{event._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
+            <td ng-show="panel.fields.length<1">{{event.kibana._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
             <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.kibana.highlight[field]||event.kibana._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
           <tr ng-show="event.kibana.details">
