@@ -10,7 +10,7 @@
     "grunt": "~0.4.0",
     "grunt-s3": "~0.2.0-alpha.2",
     "grunt-ngmin": "0.0.3",
-    "grunt-contrib": "~0.7.0",
+    "grunt-contrib": "~0.8.0",
     "grunt-contrib-less": "~0.7.0",
     "grunt-contrib-copy": "~0.4.1",
     "grunt-git-describe": "~2.3.2",
