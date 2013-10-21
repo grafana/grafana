@@ -1,14 +1,16 @@
 define([
   'angular',
   'underscore',
-  'config'
+  'config',
+  'kbn'
 ],
-function (angular, _, config) {
+function (angular, _, config, kbn) {
   'use strict';
 
   var module = angular.module('kibana.services');
 
-  module.service('querySrv', function(dashboard, ejsResource) {
+  module.service('querySrv', function(dashboard, ejsResource, filterSrv, $q) {
+
     // Create an object to hold our service state on the dashboard
     dashboard.current.services.query = dashboard.current.services.query || {};
     _.defaults(dashboard.current.services.query,{
@@ -16,6 +18,23 @@ function (angular, _, config) {
       list : {},
       ids : [],
     });
+
+    this.colors = [
+      "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0", //1
+      "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477", //2
+      "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0", //3
+      "#629E51","#E5AC0E","#64B0C8","#E0752D","#BF1B00","#0A50A1","#962D82","#614D93", //4
+      "#9AC48A","#F2C96D","#65C5DB","#F9934E","#EA6460","#5195CE","#D683CE","#806EB7", //5
+      "#3F6833","#967302","#2F575E","#99440A","#58140C","#052B51","#511749","#3F2B5B", //6
+      "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"  //7
+    ];
+
+    // For convenience
+    var ejs = ejsResource(config.elasticsearch);
+    var _q = dashboard.current.services.query;
+
+    // Holds all actual queries, including all resolved abstract queries
+    var resolvedQueries = [];
 
     // Defaults for generic query object
     var _query = {
@@ -39,40 +58,77 @@ function (angular, _, config) {
       }
     };
 
-    // For convenience
-    var ejs = ejsResource(config.elasticsearch);
-    var _q = dashboard.current.services.query;
+    // query type meta data that is not stored on the dashboard object
+    this.queryTypes = {
+      lucene: {
+        require:">=0.17.0",
+        icon: "icon-circle",
+        resolve: function(query) {
+          // Simply returns itself
+          var p = $q.defer();
+          p.resolve(_.extend(query,{parent:query.id}));
+          return p.promise;
+        }
+      },
+      regex: {
+        require:">=0.90.3",
+        icon: "icon-circle",
+        resolve: function(query) {
+          // Simply returns itself
+          var p = $q.defer();
+          p.resolve(_.extend(query,{parent:query.id}));
+          return p.promise;
+        }
+      }
+    };
 
-    this.colors = [
-      "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0", //1
-      "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477", //2
-      "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0", //3
-      "#629E51","#E5AC0E","#64B0C8","#E0752D","#BF1B00","#0A50A1","#962D82","#614D93", //4
-      "#9AC48A","#F2C96D","#65C5DB","#F9934E","#EA6460","#5195CE","#D683CE","#806EB7", //5
-      "#3F6833","#967302","#2F575E","#99440A","#58140C","#052B51","#511749","#3F2B5B", //6
-      "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"  //7
-    ];
+    this.queryTypes.derive = {
+      require:">=0.90.3",
+      icon: "icon-cog",
+      resolve: function(q) {
+        var request = ejs.Request().indices(dashboard.indices);
+        var field = "extension";
+        // Terms mode
+        request = request
+          .facet(ejs.TermsFacet('query')
+            .field(field)
+            .size(10)
+            .facetFilter(ejs.QueryFilter(
+              ejs.FilteredQuery(
+                ejs.QueryStringQuery(q.query || '*'),
+                filterSrv.getBoolFilter(filterSrv.ids)
+                )))).size(0);
 
-    // Define the query types and the version of elasticsearch they were first available in
-    this.queryTypes = [
-      {name:'lucene',require:">=0.17.0"},
-      {name:'regex',require:">=0.90.3"},
-      {name:'derive',require:">=2.0.0"}
-    ];
-
+        var results = request.doSearch();
+        return results.then(function(data) {
+          var _colors = kbn.colorSteps(q.color,data.facets.query.terms.length);
+          var i = -1;
+          return _.map(data.facets.query.terms,function(t) {
+            ++i;
+            return self.defaults({
+              query  : field+":"+t.term+" AND ("+q.query+")",
+              alias  : t.term + (q.alias ? " ("+q.alias+")" : ""),
+              type   : 'lucene',
+              color  : _colors[i],
+              parent : q.id
+            });
+          });
+        });
+      }
+    };
 
     // Save a reference to this
     var self = this;
 
     this.init = function() {
       _q = dashboard.current.services.query;
+
       self.list = dashboard.current.services.query.list;
       self.ids = dashboard.current.services.query.ids;
 
       // Check each query object, populate its defaults
-      _.each(self.list,function(query,id) {
-        _.defaults(query,_query);
-        query.color = query.color || colorAt(id);
+      _.each(self.list,function(query) {
+        query = self.defaults(query);
       });
 
       if (self.ids.length === 0) {
@@ -90,16 +146,21 @@ function (angular, _, config) {
           return false;
         }
       } else {
-        var _id = query.id || nextId();
-        query.id = _id;
-        query.color = query.color || colorAt(_id);
-        _.defaults(query,_query);
-        _.defaults(query,_dTypes[query.type]);
-
-        self.list[_id] = query;
-        self.ids.push(_id);
-        return _id;
+        // Query must have an id and color already
+        query.id = _.isUndefined(query.id) ? nextId() : query.id;
+        query.color = query.color || colorAt(query.id);
+        // Then it can get defaults
+        query = self.defaults(query);
+        self.list[query.id] = query;
+        self.ids.push(query.id);
+        return query.id;
       }
+    };
+
+    this.defaults = function(query) {
+      _.defaults(query,_query);
+      _.defaults(query,_dTypes[query.type]);
+      return query;
     };
 
     this.remove = function(id) {
@@ -117,11 +178,6 @@ function (angular, _, config) {
       }
     };
 
-    // This must return an array to correctly resolve compound query types, eg derived
-    this.getEjsObj = function(ids) {
-      return self.toEjsObj(self.list[ids]);
-    };
-
     // In the case of a compound query, such as a derived query, we'd need to
     // return an array of elasticJS objects. Not sure if that is appropriate?
     this.toEjsObj = function (q) {
@@ -132,14 +188,22 @@ function (angular, _, config) {
       case 'regex':
         return ejs.RegexpQuery('_all',q.query);
       default:
-        return _.isUndefined(q.query) ? false : ejs.QueryStringQuery(q.query || '*');
+        return false;
       }
     };
 
-    this.findQuery = function(queryString) {
-      return _.findWhere(self.list,{query:queryString});
+    //
+    this.getQueryObjs = function(ids) {
+      if(_.isUndefined(ids)) {
+        return resolvedQueries;
+      } else {
+        return _.flatten(_.map(ids,function(id) {
+          return _.where(resolvedQueries,{parent:id});
+        }));
+      }
     };
 
+    // BROKEN
     this.idsByMode = function(config) {
       switch(config.mode)
       {
@@ -154,6 +218,25 @@ function (angular, _, config) {
       default:
         return self.ids;
       }
+    };
+
+    // This populates the internal query list and returns a promise containing it
+    this.resolve = function() {
+      // Find ids of all abstract queries
+      console.log("keys: "+_.keys(self.list));
+      console.log("ids : "+_.pluck(self.list,'id'));
+      // Get a list of resolvable ids, constrast with total list to get abstract ones
+      return $q.all(_.map(self.ids,function(q) {
+        return self.queryTypes[self.list[q].type].resolve(_.clone(self.list[q])).then(function(data){
+          return data;
+        });
+      })).then(function(data) {
+        resolvedQueries = _.flatten(data);
+        _.each(resolvedQueries,function(q,i) {
+          q.id = i;
+        });
+        return resolvedQueries;
+      });
     };
 
     var nextId = function() {

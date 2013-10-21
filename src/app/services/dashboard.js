@@ -123,7 +123,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     // Since the dashboard is responsible for index computation, we can compute and assign the indices
     // here before telling the panels to refresh
     this.refresh = function() {
-
       if(self.current.index.interval !== 'none') {
         if(filterSrv.idsByType('time').length > 0) {
           var _range = filterSrv.timeRange('last');
@@ -144,12 +143,13 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
                 return false;
               }
             }
-            $rootScope.$broadcast('refresh');
+            // Don't resolve queries until indices are updated
+            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
           });
         } else {
           if(self.current.failover) {
             self.indices = [self.current.index.default];
-            $rootScope.$broadcast('refresh');
+            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
           } else {
             alertSrv.set("No time filter",
               'Timestamped indices are configured without a failover. Waiting for time filter.',
@@ -158,7 +158,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         }
       } else {
         self.indices = [self.current.index.default];
-        $rootScope.$broadcast('refresh');
+        querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
       }
     };
 

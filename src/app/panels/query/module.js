@@ -19,7 +19,7 @@ define([
   var module = angular.module('kibana.panels.query', []);
   app.useModule(module);
 
-  module.controller('query', function($scope, querySrv, $rootScope) {
+  module.controller('query', function($scope, querySrv, $rootScope, dashboard) {
     $scope.panelMeta = {
       status  : "Stable",
       description : "Manage all of the queries on the dashboard. You almost certainly need one of "+
@@ -37,12 +37,20 @@ define([
 
     $scope.querySrv = querySrv;
 
+    // A list of query types for the query config popover
+    $scope.queryTypes = _.map(querySrv.queryTypes, function(v,k) {
+      return {
+        name:k,
+        require:v.require
+      };
+    });
+
     $scope.init = function() {
     };
 
     $scope.refresh = function() {
       update_history(_.pluck($scope.querySrv.list,'query'));
-      $rootScope.$broadcast('refresh');
+      dashboard.refresh();
     };
 
     $scope.render = function() {
@@ -51,6 +59,10 @@ define([
 
     $scope.toggle_pin = function(id) {
       querySrv.list[id].pin = querySrv.list[id].pin ? false : true;
+    };
+
+    $scope.queryIcon = function(type) {
+      return querySrv.queryTypes[type].icon;
     };
 
     var update_history = function(query) {

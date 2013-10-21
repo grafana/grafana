@@ -190,14 +190,17 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       var request = $scope.ejs.Request().indices(dashboard.indices[segment]);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+
+      var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
       // Build the query
-      _.each($scope.panel.queries.ids, function(id) {
+      _.each(queries, function(q) {
         var query = $scope.ejs.FilteredQuery(
-          querySrv.getEjsObj(id),
+          querySrv.toEjsObj(q),
           filterSrv.getBoolFilter(filterSrv.ids)
         );
 
-        var facet = $scope.ejs.DateHistogramFacet(id);
+        var facet = $scope.ejs.DateHistogramFacet(q.id);
 
         if($scope.panel.mode === 'count') {
           facet = facet.field($scope.panel.time_field);
@@ -220,6 +223,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       // Populate scope when we have results
       results.then(function(results) {
+
         $scope.panelMeta.loading = false;
         if(segment === 0) {
           $scope.hits = 0;
@@ -233,18 +237,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           return;
         }
 
-        // Convert facet ids to numbers
-        var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k, 10);});
-
         // Make sure we're still on the same query/queries
-        if($scope.query_id === query_id && _.difference(facetIds, $scope.panel.queries.ids).length === 0) {
+        if($scope.query_id === query_id) {
 
           var i = 0,
             time_series,
             hits;
 
-          _.each($scope.panel.queries.ids, function(id) {
-            var query_results = results.facets[id];
+          _.each(queries, function(q) {
+            var query_results = results.facets[q.id];
             // we need to initialize the data variable on the first run,
             // and when we are working on the first segment of the data.
             if(_.isUndefined($scope.data[i]) || segment === 0) {
@@ -267,7 +268,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               $scope.hits += entry.count; // Entire dataset level hits counter
             });
             $scope.data[i] = {
-              info: querySrv.list[id],
+              info: q,
               time_series: time_series,
               hits: hits
             };

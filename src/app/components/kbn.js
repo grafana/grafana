@@ -460,7 +460,8 @@ function($, _, moment) {
   };
 
   kbn.colorSteps = function(col,steps) {
-    var _d = 1.6/steps, // distance between steps
+
+    var _d = steps > 5 ? 1.6/steps : 0.3, // distance between steps
       _p = []; // adjustment percentage
 
     // Create a range of numbers between -0.8 and 0.8
