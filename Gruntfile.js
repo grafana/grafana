@@ -189,6 +189,42 @@ module.exports = function (grunt) {
             dest: '<%= pkg.name %>-latest'
           }
         ]
+      },
+      zip_release: {
+        options: {
+          archive: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.zip'
+        },
+        files : [
+          {
+            expand: true,
+            cwd: '<%= destDir %>',
+            src: ['**/*'],
+            dest: '<%= pkg.name %>-<%= pkg.version %>'
+          },
+          {
+            expand: true,
+            src: ['LICENSE.md', 'README.md'],
+            dest: '<%= pkg.name %>-<%= pkg.version %>'
+          }
+        ]
+      },
+      tgz_release: {
+        options: {
+          archive: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.tar.gz'
+        },
+        files : [
+          {
+            expand: true,
+            cwd: '<%= destDir %>',
+            src: ['**/*'],
+            dest: '<%= pkg.name %>-<%= pkg.version %>'
+          },
+          {
+            expand: true,
+            src: ['LICENSE.md', 'README.md'],
+            dest: '<%= pkg.name %>-<%= pkg.version %>'
+          }
+        ]
       }
     },
     s3: {
@@ -204,6 +240,21 @@ module.exports = function (grunt) {
           {
             src: '<%= tempDir %>/<%= pkg.name %>-latest.tar.gz',
             dest: 'kibana/kibana/<%= pkg.name %>-latest.tar.gz',
+          }
+        ]
+      },
+      release: {
+        bucket: 'download.elasticsearch.org',
+        access: 'private',
+        // debug: true, // uncommment to prevent actual upload
+        upload: [
+          {
+            src: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.zip',
+            dest: 'kibana/kibana/<%= pkg.name %>-<%= pkg.version %>.zip',
+          },
+          {
+            src: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.tar.gz',
+            dest: 'kibana/kibana/<%= pkg.name %>-<%= pkg.version %>.tar.gz',
           }
         ]
       }
@@ -303,6 +354,16 @@ module.exports = function (grunt) {
     'compress:zip',
     'compress:tgz',
     's3:dist',
+    'clean:temp'
+  ]);
+
+  // build, then zip and upload to s3
+  grunt.registerTask('release', [
+    'distribute:load_s3_config',
+    'build',
+    'compress:zip_release',
+    'compress:tgz_release',
+    's3:release',
     'clean:temp'
   ]);
 
