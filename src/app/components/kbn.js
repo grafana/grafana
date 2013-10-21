@@ -316,6 +316,15 @@ function($, _, moment) {
       }
       unit = mathString.charAt(i++);
       switch (unit) {
+      case 'y':
+        if (type === 0) {
+          roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
+        } else if (type === 1) {
+          dateTime.add('years',num);
+        } else if (type === 2) {
+          dateTime.subtract('years',num);
+        }
+        break;
       case 'M':
         if (type === 0) {
           roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
