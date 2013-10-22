@@ -19,7 +19,7 @@ define([
   var module = angular.module('kibana.panels.query', []);
   app.useModule(module);
 
-  module.controller('query', function($scope, querySrv, $rootScope, dashboard) {
+  module.controller('query', function($scope, querySrv, $rootScope, dashboard, $q, $modal) {
     $scope.panelMeta = {
       status  : "Stable",
       description : "Manage all of the queries on the dashboard. You almost certainly need one of "+
@@ -45,6 +45,13 @@ define([
       };
     });
 
+    var queryHelpModal = $modal({
+      template: './app/panels/query/helpModal.html',
+      persist: true,
+      show: false,
+      scope: $scope,
+    });
+
     $scope.init = function() {
     };
 
@@ -65,6 +72,34 @@ define([
       return querySrv.queryTypes[type].icon;
     };
 
+    $scope.queryConfig = function(type) {
+      return "./app/panels/query/editors/"+(type||'lucene')+".html";
+    };
+
+    $scope.queryHelpPath = function(type) {
+      return "./app/panels/query/help/"+(type||'lucene')+".html";
+    };
+
+    $scope.queryHelp = function(type) {
+      $scope.help = {
+        type: type
+      };
+      $q.when(queryHelpModal).then(function(modalEl) {
+        modalEl.modal('show');
+      });
+    };
+
+    $scope.typeChange = function(q) {
+      var _nq = {
+        id   : q.id,
+        type : q.type,
+        query: q.query,
+        alias: q.alias,
+        color: q.color
+      };
+      querySrv.list[_nq.id] = querySrv.defaults(_nq);
+    };
+
     var update_history = function(query) {
       if($scope.panel.remember > 0) {
         $scope.panel.history = _.union(query.reverse(),$scope.panel.history);
@@ -78,4 +113,15 @@ define([
     $scope.init();
 
   });
+
+  module.directive('queryConfig', function() {
+    return {
+      restrict: 'A',
+      template: '<div></div>',
+      link: function(scope, elem) {
+        console.log(elem);
+      }
+    };
+  });
+
 });
