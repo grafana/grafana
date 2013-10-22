@@ -1,33 +1,3 @@
 <div ng-controller='derivequeries' ng-init="init()">
-<style>
-  .end-derive {
-    position:absolute;
-    right:15px;
-    top:5px;
-  }
-  .panel-derive-field {
-    text-decoration: underline;
-    cursor: pointer;
-  }
-  .panel-derive {
-    padding-right: 35px !important;
-    height: 31px !important;
-    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;         /* Opera/IE 8+ */
-  }
-</style>
-  <label class="small">Create new queries from
-    <span class="panel-derive-field" ng-show="!editing" ng-click="editing=true">{{panel.field}}</span>
-    <select ng-show="editing && fields.list.length>1" class="input-medium" ng-model="panel.field" ng-options="f for f in fields.list" ng-change='editing=false' ng-blur="editing=false"></select>
-    <input ng-show="editing && fields.list.length<2" type="text" ng-model="panel.field" ng-blur="editing=false"/>
-    ({{panel.mode}} mode)</label>
-  <div>
-    <form class="form-search" style="position:relative" ng-submit="get_data()">
-      <input class="search-query panel-derive input-block-level" bs-typeahead="panel.history" data-min-length=0 data-items=100 type="text" ng-model="panel.query"/>
-      <span class="end-derive">
-        <i class="icon-search pointer" ng-click="get_data()"></i>
-      </span
-    </form>
-  </div>
+ <h4>This panel has been removed and replaced with the new topN query type. Click the colored dot associated with a query to configure the, much improved, equivilent of a derived query.</h4>
 </div>
