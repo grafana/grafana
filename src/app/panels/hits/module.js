@@ -84,14 +84,16 @@ define([
       var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+      var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
       // Build the question part of the query
-      _.each($scope.panel.queries.ids, function(id) {
+      _.each(queries, function(q) {
         var _q = $scope.ejs.FilteredQuery(
-          querySrv.getEjsObj(id),
+          querySrv.toEjsObj(q),
           filterSrv.getBoolFilter(filterSrv.ids));
 
         request = request
-          .facet($scope.ejs.QueryFacet(id)
+          .facet($scope.ejs.QueryFacet(q.id)
             .query(_q)
           ).size(0);
       });
@@ -117,24 +119,19 @@ define([
           return;
         }
 
-        // Convert facet ids to numbers
-        var facetIds = _.map(_.keys(results.facets),function(k){return parseInt(k, 10);});
-
         // Make sure we're still on the same query/queries
-        if($scope.query_id === query_id &&
-          _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
-          ) {
+        if($scope.query_id === query_id) {
           var i = 0;
-          _.each($scope.panel.queries.ids, function(id) {
-            var v = results.facets[id];
+          _.each(queries, function(q) {
+            var v = results.facets[q.id];
             var hits = _.isUndefined($scope.data[i]) || _segment === 0 ?
               v.count : $scope.data[i].hits+v.count;
             $scope.hits += v.count;
 
             // Create series
             $scope.data[i] = {
-              info: querySrv.list[id],
-              id: id,
+              info: q,
+              id: q.id,
               hits: hits,
               data: [[i,hits]]
             };

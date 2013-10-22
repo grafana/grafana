@@ -51,10 +51,11 @@ function (angular, _, config, kbn) {
       "regex": {
         query: ".*"
       },
-      "derive": {
+      "topN": {
         query: "*",
         field: "_type",
-        size: "5"
+        size: 5,
+        union: 'AND'
       }
     };
 
@@ -79,41 +80,46 @@ function (angular, _, config, kbn) {
           p.resolve(_.extend(query,{parent:query.id}));
           return p.promise;
         }
-      }
-    };
+      },
+      topN : {
+        require:">=0.90.3",
+        icon: "icon-cog",
+        resolve: function(q) {
+          var suffix = '';
+          if (q.union === 'AND') {
+            suffix = ' AND (' + (q.query||'*') + ')';
+          } else if (q.union === 'OR') {
+            suffix = ' OR (' + (q.query||'*') + ')';
+          }
 
-    this.queryTypes.derive = {
-      require:">=0.90.3",
-      icon: "icon-cog",
-      resolve: function(q) {
-        var request = ejs.Request().indices(dashboard.indices);
-        var field = "extension";
-        // Terms mode
-        request = request
-          .facet(ejs.TermsFacet('query')
-            .field(field)
-            .size(10)
-            .facetFilter(ejs.QueryFilter(
-              ejs.FilteredQuery(
-                ejs.QueryStringQuery(q.query || '*'),
-                filterSrv.getBoolFilter(filterSrv.ids)
-                )))).size(0);
+          var request = ejs.Request().indices(dashboard.indices);
+          // Terms mode
+          request = request
+            .facet(ejs.TermsFacet('query')
+              .field(q.field)
+              .size(q.size)
+              .facetFilter(ejs.QueryFilter(
+                ejs.FilteredQuery(
+                  ejs.QueryStringQuery(q.query || '*'),
+                  filterSrv.getBoolFilter(filterSrv.ids)
+                  )))).size(0);
 
-        var results = request.doSearch();
-        return results.then(function(data) {
-          var _colors = kbn.colorSteps(q.color,data.facets.query.terms.length);
-          var i = -1;
-          return _.map(data.facets.query.terms,function(t) {
-            ++i;
-            return self.defaults({
-              query  : field+":"+t.term+" AND ("+q.query+")",
-              alias  : t.term + (q.alias ? " ("+q.alias+")" : ""),
-              type   : 'lucene',
-              color  : _colors[i],
-              parent : q.id
+          var results = request.doSearch();
+          return results.then(function(data) {
+            var _colors = kbn.colorSteps(q.color,data.facets.query.terms.length);
+            var i = -1;
+            return _.map(data.facets.query.terms,function(t) {
+              ++i;
+              return self.defaults({
+                query  : q.field+':"'+t.term+'"'+suffix,
+                alias  : t.term + (q.alias ? " ("+q.alias+")" : ""),
+                type   : 'lucene',
+                color  : _colors[i],
+                parent : q.id
+              });
             });
           });
-        });
+        }
       }
     };
 
@@ -223,8 +229,6 @@ function (angular, _, config, kbn) {
     // This populates the internal query list and returns a promise containing it
     this.resolve = function() {
       // Find ids of all abstract queries
-      console.log("keys: "+_.keys(self.list));
-      console.log("ids : "+_.pluck(self.list,'id'));
       // Get a list of resolvable ids, constrast with total list to get abstract ones
       return $q.all(_.map(self.ids,function(q) {
         return self.queryTypes[self.list[q].type].resolve(_.clone(self.list[q])).then(function(data){

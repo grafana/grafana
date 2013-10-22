@@ -76,14 +76,17 @@ function (angular, app, _, $) {
       $scope.panelMeta.loading = true;
 
 
-      var request;
-      request = $scope.ejs.Request().indices(dashboard.indices);
+      var request,
+        boolQuery,
+        queries;
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-      // This could probably be changed to a BoolFilter
-      var boolQuery = $scope.ejs.BoolQuery();
-      _.each($scope.panel.queries.ids,function(id) {
-        boolQuery = boolQuery.should(querySrv.getEjsObj(id));
+      request = $scope.ejs.Request().indices(dashboard.indices);
+      queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
+      boolQuery = $scope.ejs.BoolQuery();
+      _.each(queries,function(q) {
+        boolQuery = boolQuery.should(querySrv.toEjsObj(q));
       });
 
       // Then the insert into facet and make the request

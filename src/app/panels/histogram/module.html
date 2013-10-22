@@ -65,12 +65,6 @@
       </div>
       <div class="checkbox">
         <label class="small">
-          <input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
-          Points
-        </label>
-      </div>
-      <div class="checkbox">
-        <label class="small">
           <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
           Stack
         </label>
@@ -81,6 +75,14 @@
         <label style="white-space:nowrap" class="small">
           <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
           Percent
+        </label>
+      </div>
+    </span>
+    <span>
+      <div class="checkbox">
+        <label class="small">
+          <input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend" ng-change="render()">
+          Legend
         </label>
       </div>
     </span>

@@ -73,8 +73,6 @@ function (angular, app, _, kbn) {
         $scope.index = segment > 0 ? $scope.index : dashboard.indices;
       }
 
-      $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-
       // Determine a time field
       var timeField = _.uniq(_.pluck(filterSrv.getByType('time'),'field'));
       if(timeField.length > 1) {
@@ -98,11 +96,13 @@ function (angular, app, _, kbn) {
       var request = $scope.ejs.Request();
       var _ids_without_time = _.difference(filterSrv.ids,filterSrv.idsByType('time'));
 
+      $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+      var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
 
       // Build the question part of the query
-      _.each($scope.panel.queries.ids, function(id) {
+      _.each(queries, function(query) {
         var q = $scope.ejs.FilteredQuery(
-          querySrv.getEjsObj(id),
+          querySrv.toEjsObj(query),
           filterSrv.getBoolFilter(_ids_without_time).must(
             $scope.ejs.RangeFilter(timeField)
             .from($scope.time.from)
@@ -110,23 +110,23 @@ function (angular, app, _, kbn) {
           ));
 
         request = request
-          .facet($scope.ejs.QueryFacet(id)
+          .facet($scope.ejs.QueryFacet(query.id)
             .query(q)
           ).size(0);
       });
 
 
       // And again for the old time period
-      _.each($scope.panel.queries.ids, function(id) {
+      _.each(queries, function(query) {
         var q = $scope.ejs.FilteredQuery(
-          querySrv.getEjsObj(id),
+          querySrv.toEjsObj(query),
           filterSrv.getBoolFilter(_ids_without_time).must(
             $scope.ejs.RangeFilter(timeField)
             .from($scope.old_time.from)
             .to($scope.old_time.to)
           ));
         request = request
-          .facet($scope.ejs.QueryFacet("old_"+id)
+          .facet($scope.ejs.QueryFacet("old_"+query.id)
             .query(q)
           ).size(0);
       });
@@ -169,17 +169,14 @@ function (angular, app, _, kbn) {
           return;
         }
 
-        // Convert facet ids to numbers
-        var facetIds = _.map(_.keys(results.facets),function(k){if(!isNaN(k)){return parseInt(k, 10);}});
-
         // Make sure we're still on the same query/queries
-        if($scope.query_id === query_id &&
-          _.intersection(facetIds,$scope.panel.queries.ids).length === $scope.panel.queries.ids.length
-          ) {
+        if($scope.query_id === query_id) {
           var i = 0;
-          _.each($scope.panel.queries.ids, function(id) {
-            var n = results.facets[id].count;
-            var o = results.facets['old_'+id].count;
+          var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
+          _.each(queries, function(query) {
+            var n = results.facets[query.id].count;
+            var o = results.facets['old_'+query.id].count;
 
             var hits = {
               new : _.isUndefined($scope.data[i]) || _segment === 0 ? n : $scope.data[i].hits.new+n,
@@ -193,7 +190,7 @@ function (angular, app, _, kbn) {
               '?' : Math.round(percentage(hits.old,hits.new)*100)/100;
             // Create series
             $scope.data[i] = {
-              info: querySrv.list[id],
+              info: query,
               hits: {
                 new : hits.new,
                 old : hits.old
