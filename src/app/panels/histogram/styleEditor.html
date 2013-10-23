@@ -1,0 +1,58 @@
+<div class="editor-row">
+  <div class="section">
+    <h5>Chart Options</h5>
+    <div class="editor-option">
+      <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars">
+    </div>
+    <div class="editor-option">
+      <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines">
+    </div>
+    <div class="editor-option">
+      <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points">
+    </div>
+    <div class="editor-option">
+      <label class="small">Selectable</label><input type="checkbox" ng-model="panel.interactive" ng-checked="panel.interactive">
+    </div>
+    <div class="editor-option">
+      <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']"></div>
+    <div class="editor-option">
+      <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']"></div>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Fill</label>
+      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Width</label>
+      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"></select>
+    </div>
+  </div>
+  <div class="section">
+    <h5>Multiple Series</h5>
+    <div class="editor-option">
+      <label class="small">Stack</label><input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack">
+    </div>
+    <div class="editor-option" ng-show="panel.stack">
+      <label style="white-space:nowrap" class="small">Percent <tip>Stack as a percentage of total</tip></label>
+      <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage">
+    </div>
+    <div class="editor-option" ng-show="panel.stack">
+      <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
+      <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']"></select>
+    </div>
+  </div>
+</div>
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Header<h5>
+    <div class="editor-option">
+      <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend">
+    </div>
+    <div class="editor-option">
+      <label class="small">Zoom</label><input type="checkbox" ng-model="panel.zoomlinks" ng-checked="panel.zoomlinks" />
+    </div>
+    <div class="editor-option">
+      <label class="small">View</label><input type="checkbox" ng-model="panel.options" ng-checked="panel.options" />
+    </div>
+  </div>
+</div>

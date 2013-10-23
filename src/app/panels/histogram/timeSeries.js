@@ -88,7 +88,7 @@ function (_, Interval) {
    * return the rows in the format:
    * [ [time, value], [time, value], ... ]
    *
-   * Heavy lifting is done by _get(Min|All)FlotPairs()
+   * Heavy lifting is done by _get(Min|Default|All)FlotPairs()
    * @param  {array} required_times  An array of timestamps that must be in the resulting pairs
    * @return {array}
    */
@@ -99,8 +99,8 @@ function (_, Interval) {
 
     if(this.opts.fill_style === 'all') {
       strategy = this._getAllFlotPairs;
-    } else if(this.opts.fill_style = 'default') {
-      strategy = this._getDefaultFlotPairs;
+    } else if(this.opts.fill_style === 'null') {
+      strategy = this._getNullFlotPairs;
     } else {
       strategy = this._getMinFlotPairs;
     }
@@ -114,13 +114,15 @@ function (_, Interval) {
 
     // if the first or last pair is inside either the start or end time,
     // add those times to the series with null values so the graph will stretch to contain them.
-    // Not sure this is required with flot 0.8.1's min/max params. Might be harmful?
+    // Removing, flot 0.8.1's max/min params satisfy this
+    /*
     if (this.start_time && (pairs.length === 0 || pairs[0][0] > this.start_time)) {
       pairs.unshift([this.start_time, null]);
     }
     if (this.end_time && (pairs.length === 0 || pairs[pairs.length - 1][0] < this.end_time)) {
       pairs.push([this.end_time, null]);
     }
+    */
 
     return pairs;
   };
@@ -144,7 +146,7 @@ function (_, Interval) {
     }
 
     // add the current time
-    result.push([ time, this._data[time] || 0 ]);
+    result.push([ time, this._data[time] || 0]);
 
     // check for next measurement
     if (times.length > i) {
@@ -179,17 +181,31 @@ function (_, Interval) {
 
   /**
    * ** called as a reduce stragegy in getFlotPairs() **
-   * Does no zero filling
+   * Same as min, but fills with nulls
    * @return {array}  An array of points to plot with flot
    */
-  ts.ZeroFilled.prototype._getDefaultFlotPairs = function (result, time, i, times) {
-    var next, expected_next;
+  ts.ZeroFilled.prototype._getNullFlotPairs = function (result, time, i, times) {
+    var next, expected_next, prev, expected_prev;
 
-    result.push([ times[i], this._data[times[i]] || 0 ]);
-    next = times[i + 1];
-    expected_next = this.interval.after(time);
-    for(; times.length > i && next > expected_next; expected_next = this.interval.after(expected_next)) {
-      result.push([expected_next, 0]);
+    // check for previous measurement
+    if (i > 0) {
+      prev = times[i - 1];
+      expected_prev = this.interval.before(time);
+      if (prev < expected_prev) {
+        result.push([expected_prev, null]);
+      }
+    }
+
+    // add the current time
+    result.push([ time, this._data[time] || null]);
+
+    // check for next measurement
+    if (times.length > i) {
+      next = times[i + 1];
+      expected_next = this.interval.after(time);
+      if (next > expected_next) {
+        result.push([expected_next, null]);
+      }
     }
 
     return result;

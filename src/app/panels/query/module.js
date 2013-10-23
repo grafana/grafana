@@ -114,14 +114,4 @@ define([
 
   });
 
-  module.directive('queryConfig', function() {
-    return {
-      restrict: 'A',
-      template: '<div></div>',
-      link: function(scope, elem) {
-        console.log(elem);
-      }
-    };
-  });
-
 });

@@ -62,9 +62,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       ],
       editorTabs : [
         {
+          title:'Style',
+          src:'app/panels/histogram/styleEditor.html'
+        },
+        {
           title:'Queries',
           src:'app/partials/querySelect.html'
-        }
+        },
       ],
       status  : "Stable",
       description : "A bucketed time series chart of the current query or queries. Uses the "+
@@ -98,11 +102,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       'x-axis'    : true,
       'y-axis'    : true,
       percentage  : false,
+      zerofill    : true,
       interactive : true,
       options     : true,
+      derivative  : false,
+      scale       : 1,
       tooltip     : {
         value_type: 'cumulative',
-        query_as_alias: false
+        query_as_alias: true
       }
     };
 
@@ -114,6 +121,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.$on('refresh',function(){
         $scope.get_data();
       });
+
+      // Always show the query if an alias isn't set. Users can set an alias if the query is too
+      // long
+      $scope.panel.tooltip.query_as_alias = true;
 
       $scope.get_data();
 
@@ -249,12 +260,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             // we need to initialize the data variable on the first run,
             // and when we are working on the first segment of the data.
             if(_.isUndefined($scope.data[i]) || segment === 0) {
-              time_series = new timeSeries.ZeroFilled({
+              var tsOpts = {
                 interval: _interval,
                 start_date: _range && _range.from,
                 end_date: _range && _range.to,
-                fill_style: 'minimal'
-              });
+                fill_style: $scope.panel.derivative ? 'null' : 'minimal'
+              };
+              time_series = new timeSeries.ZeroFilled(tsOpts);
               hits = 0;
             } else {
               time_series = $scope.data[i].time_series;
@@ -354,6 +366,24 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           render_panel();
         });
 
+        var scale = function(series,factor) {
+          return _.map(series,function(p) {
+            return [p[0],p[1]*factor];
+          });
+        };
+
+        var derivative = function(series) {
+          return _.map(series, function(p,i) {
+            var _v;
+            if(i === 0 || p[1] === null) {
+              _v = [p[0],null];
+            } else {
+              _v = series[i-1][1] === null ? [p[0],null] : [p[0],p[1]-(series[i-1][1])];
+            }
+            return _v;
+          });
+        };
+
         // Function for rendering panel
         function render_panel() {
           // IE doesn't work without this
@@ -441,8 +471,16 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               }), true);
             }
 
+
             for (var i = 0; i < scope.data.length; i++) {
-              scope.data[i].data = scope.data[i].time_series.getFlotPairs(required_times);
+              var _d = scope.data[i].time_series.getFlotPairs(required_times);
+              if(scope.panel.derivative) {
+                _d = derivative(_d);
+              }
+              if(scope.panel.scale !== 1) {
+                _d = scale(_d,scope.panel.scale);
+              }
+              scope.data[i].data = _d;
             }
 
             scope.plot = $.plot(elem, scope.data, options);
