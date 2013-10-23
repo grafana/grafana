@@ -1,4 +1,4 @@
-define(['jquery', 'underscore','moment'],
+define(['jquery','underscore','moment','chromath'],
 function($, _, moment) {
   'use strict';
 
@@ -14,9 +14,10 @@ function($, _, moment) {
   };
 
   kbn.get_all_fields = function(data) {
+    var _d = data;
     var fields = [];
-    _.each(data,function(hit) {
-      fields = _.uniq(fields.concat(_.keys(hit)));
+    _.each(_d,function(hit) {
+      fields = _.uniq(fields.concat(_.keys(kbn.flatten_json(hit._source))));
     });
     // Remove stupid angular key
     fields = _.without(fields,'$$hashKey');
@@ -315,6 +316,15 @@ function($, _, moment) {
       }
       unit = mathString.charAt(i++);
       switch (unit) {
+      case 'y':
+        if (type === 0) {
+          roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
+        } else if (type === 1) {
+          dateTime.add('years',num);
+        } else if (type === 2) {
+          dateTime.subtract('years',num);
+        }
+        break;
       case 'M':
         if (type === 0) {
           roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
@@ -456,6 +466,22 @@ function($, _, moment) {
         'color:' + color,
         'font-size:' + diameter + 'px',
       ].join(';') + '"></div>';
+  };
+
+  kbn.colorSteps = function(col,steps) {
+
+    var _d = steps > 5 ? 1.6/steps : 0.3, // distance between steps
+      _p = []; // adjustment percentage
+
+    // Create a range of numbers between -0.8 and 0.8
+    for(var i = 1; i<steps+1; i+=1) {
+      _p.push(i%2 ? ((i-1)*_d*-1)/2 : i*_d/2);
+    }
+
+    // Create the color range
+    return _.map(_p.sort(function(a,b){return a-b;}),function(v) {
+      return v<0 ? Chromath.darken(col,v*-1).toString() : Chromath.lighten(col,v).toString();
+    });
   };
 
   return kbn;

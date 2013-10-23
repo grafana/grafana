@@ -2085,7 +2085,7 @@
     }
 
   , keydown: function (e) {
-      this.suppressKeyPressRepeat = ~$.inArray(e.keyCode, [40,38,9,13,27])
+      this.suppressKeyPressRepeat = ~$.inArray(e.keyCode, [40,38,9,13,27,57])
       this.move(e)
     }
 
@@ -2115,7 +2115,7 @@
           break
 
         default:
-          this.lookup()
+          this.lookup();
       }
 
       if(e.keyCode === 13 && typeof this.$menu.find('.active').attr('data-value') === 'undefined') {

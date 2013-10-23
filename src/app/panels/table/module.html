@@ -6,12 +6,29 @@
       overflow-x: scroll;
     }
   </style>
+
   <div class="row-fluid">
     <div ng-class="{'span3':panel.field_list}" ng-show="panel.field_list">
       <div class="sidebar-nav">
-        <h5>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></h5>
+        <strong>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></strong><p>
+        <div class="small">
+          <span class="link" ng-click="panel.all_fields = true;" ng-class="{strong:panel.all_fields}">All</span> /
+           <span class="link" ng-click="panel.all_fields = false;" ng-class="{strong:!panel.all_fields}">Current</span>
+        </div>
+        <div><input type="text" class="input-medium" placeholder="Type to filter..." ng-model="fieldFilter"></div>
+
+
         <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;">
-          <li ng-style="panel.style" ng-repeat="field in fields.list" >
+          <li ng-style="panel.style" ng-repeat="field in metaFields|filter:fieldFilter|orderBy:identity">
+            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+          </li>
+
+          <li ng-style="panel.style" ng-repeat="field in fields.list|filter:fieldFilter|orderBy:identity" ng-show="panel.all_fields">
+            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+          </li>
+          <li ng-style="panel.style" ng-repeat="field in current_fields|filter:fieldFilter|orderBy:identity" ng-hide="panel.all_fields">
             <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
             <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
           </li>
@@ -51,7 +68,7 @@
         </thead>
         <tbody ng-repeat="event in data| slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
           <tr ng-click="toggle_details(event)" class="pointer">
-            <td ng-show="panel.fields.length<1">{{event._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
+            <td ng-show="panel.fields.length<1">{{event.kibana._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
             <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.kibana.highlight[field]||event.kibana._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
           <tr ng-show="event.kibana.details">

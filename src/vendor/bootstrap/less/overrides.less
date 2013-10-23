@@ -16,6 +16,10 @@ div.fake-input {
   .border-radius(@inputBorderRadius @inputBorderRadius @inputBorderRadius @inputBorderRadius);
 }
 
+hr.small {
+  margin: 5px 0px;
+}
+
 form input.ng-invalid {
   color: @errorText;
 }
@@ -35,6 +39,13 @@ form input.ng-invalid {
 
 .bordered {
   border: 1px solid @tableBorder;
+}
+
+.table-unpadded {
+  th,
+  td {
+    padding: 0px 2px;
+  }
 }
 
 .spy {
@@ -119,12 +130,6 @@ form input.ng-invalid {
 
 .table tbody + tbody {
   border-top: 0px;
-}
-
-.panel-error {
-  opacity: 0.9;
-  position:absolute;
-  z-index: 1000;
 }
 
 .panel-loading {
@@ -262,6 +267,11 @@ div.flot-text {
   width:100%;
   color: @textColor;
   padding-left:20px;
+}
+
+.panel-error {
+  color: @textColor;
+  padding: 3px 10px 0px 10px;
 }
 
 /* ===================================================

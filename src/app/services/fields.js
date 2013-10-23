@@ -19,7 +19,7 @@ function (angular, _, config) {
       if(!_.isUndefined(n) && n.length) {
         // Only get the mapping for indices we don't know it for
         var indices = _.difference(n,_.keys(self.mapping));
-        // Only get the mapping if there are indices
+        // Only get the mapping if there are new indices
         if(indices.length > 0) {
           self.map(indices).then(function(result) {
             self.mapping = _.extend(self.mapping,result);
@@ -36,7 +36,7 @@ function (angular, _, config) {
       var fields = [];
       _.each(m, function(types) {
         _.each(types, function(v) {
-          fields = _.union(fields,_.keys(v));
+          fields = _.without(_.union(fields,_.keys(v)),'_all','_source');
         });
       });
       return fields;

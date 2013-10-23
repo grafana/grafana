@@ -83,16 +83,20 @@ function (angular, app, _, $, kbn) {
       $scope.panelMeta.loading = true;
       var request,
         results,
-        boolQuery;
+        boolQuery,
+        queries;
 
       request = $scope.ejs.Request().indices(dashboard.indices);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
+      queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
       // This could probably be changed to a BoolFilter
       boolQuery = $scope.ejs.BoolQuery();
-      _.each($scope.panel.queries.ids,function(id) {
-        boolQuery = boolQuery.should(querySrv.getEjsObj(id));
+      _.each(queries,function(q) {
+        boolQuery = boolQuery.should(querySrv.toEjsObj(q));
       });
+
 
       // Terms mode
       request = request

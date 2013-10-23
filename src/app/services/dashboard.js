@@ -143,12 +143,13 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
                 return false;
               }
             }
-            $rootScope.$broadcast('refresh');
+            // Don't resolve queries until indices are updated
+            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
           });
         } else {
           if(self.current.failover) {
             self.indices = [self.current.index.default];
-            $rootScope.$broadcast('refresh');
+            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
           } else {
             alertSrv.set("No time filter",
               'Timestamped indices are configured without a failover. Waiting for time filter.',
@@ -157,7 +158,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         }
       } else {
         self.indices = [self.current.index.default];
-        $rootScope.$broadcast('refresh');
+        querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
       }
     };
 

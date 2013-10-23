@@ -6,7 +6,6 @@ define([
   'jquery',
   'underscore',
   'require',
-
   'elasticjs',
   'bootstrap',
   'angular-sanitize',

@@ -49,7 +49,7 @@ define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, m
       if(_.isObject(arr) && !_.isArray(arr)) {
         return angular.toJson(arr);
       } else {
-        return arr.toString();
+        return _.isNull(arr) ? null : arr.toString();
       }
     };
   });

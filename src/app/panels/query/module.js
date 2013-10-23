@@ -19,7 +19,7 @@ define([
   var module = angular.module('kibana.panels.query', []);
   app.useModule(module);
 
-  module.controller('query', function($scope, querySrv, $rootScope) {
+  module.controller('query', function($scope, querySrv, $rootScope, dashboard, $q, $modal) {
     $scope.panelMeta = {
       status  : "Stable",
       description : "Manage all of the queries on the dashboard. You almost certainly need one of "+
@@ -37,12 +37,27 @@ define([
 
     $scope.querySrv = querySrv;
 
+    // A list of query types for the query config popover
+    $scope.queryTypes = _.map(querySrv.queryTypes, function(v,k) {
+      return {
+        name:k,
+        require:v.require
+      };
+    });
+
+    var queryHelpModal = $modal({
+      template: './app/panels/query/helpModal.html',
+      persist: true,
+      show: false,
+      scope: $scope,
+    });
+
     $scope.init = function() {
     };
 
     $scope.refresh = function() {
       update_history(_.pluck($scope.querySrv.list,'query'));
-      $rootScope.$broadcast('refresh');
+      dashboard.refresh();
     };
 
     $scope.render = function() {
@@ -51,6 +66,38 @@ define([
 
     $scope.toggle_pin = function(id) {
       querySrv.list[id].pin = querySrv.list[id].pin ? false : true;
+    };
+
+    $scope.queryIcon = function(type) {
+      return querySrv.queryTypes[type].icon;
+    };
+
+    $scope.queryConfig = function(type) {
+      return "./app/panels/query/editors/"+(type||'lucene')+".html";
+    };
+
+    $scope.queryHelpPath = function(type) {
+      return "./app/panels/query/help/"+(type||'lucene')+".html";
+    };
+
+    $scope.queryHelp = function(type) {
+      $scope.help = {
+        type: type
+      };
+      $q.when(queryHelpModal).then(function(modalEl) {
+        modalEl.modal('show');
+      });
+    };
+
+    $scope.typeChange = function(q) {
+      var _nq = {
+        id   : q.id,
+        type : q.type,
+        query: q.query,
+        alias: q.alias,
+        color: q.color
+      };
+      querySrv.list[_nq.id] = querySrv.defaults(_nq);
     };
 
     var update_history = function(query) {
@@ -66,4 +113,15 @@ define([
     $scope.init();
 
   });
+
+  module.directive('queryConfig', function() {
+    return {
+      restrict: 'A',
+      template: '<div></div>',
+      link: function(scope, elem) {
+        console.log(elem);
+      }
+    };
+  });
+
 });

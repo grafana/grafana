@@ -2,6 +2,9 @@
   display:inline-block;
   margin-right: 10px;
 }
+.short-query input.search-query {
+    width: 280px;
+}
 .begin-query {
   position:absolute;
   left:13px;
