@@ -78,42 +78,52 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     // Set and populate defaults
     var _d = {
-      mode        : 'count',
-      time_field  : '@timestamp',
-      queries     : {
-        mode        : 'all',
-        ids         : []
+      mode          : 'count',
+      time_field    : '@timestamp',
+      queries       : {
+        mode          : 'all',
+        ids           : []
       },
-      value_field : null,
-      auto_int    : true,
-      resolution  : 100,
-      interval    : '5m',
-      intervals   : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1M','1y'],
-      fill        : 0,
-      linewidth   : 3,
-      timezone    : 'browser', // browser, utc or a standard timezone
-      spyable     : true,
-      zoomlinks   : true,
-      bars        : true,
-      stack       : true,
-      points      : false,
-      lines       : false,
-      legend      : true,
-      'x-axis'    : true,
-      'y-axis'    : true,
-      percentage  : false,
-      zerofill    : true,
-      interactive : true,
-      options     : true,
-      derivative  : false,
-      scale       : 1,
-      tooltip     : {
+      value_field   : null,
+      auto_int      : true,
+      resolution    : 100,
+      interval      : '5m',
+      intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1M','1y'],
+      fill          : 0,
+      linewidth     : 3,
+      timezone      : 'browser', // browser, utc or a standard timezone
+      spyable       : true,
+      zoomlinks     : true,
+      bars          : true,
+      stack         : true,
+      points        : false,
+      lines         : false,
+      legend        : true,
+      show_query    : true,
+      legend_counts : true,
+      'x-axis'      : true,
+      'y-axis'      : true,
+      percentage    : false,
+      zerofill      : true,
+      interactive   : true,
+      options       : true,
+      derivative    : false,
+      scale         : 1,
+      tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
+      },
+      grid          : {
+        max: null,
+        min: 0
       }
     };
 
     _.defaults($scope.panel,_d);
+    _.defaults($scope.panel.tooltip,_d.tooltip);
+    _.defaults($scope.panel.grid,_d.grid);
+
+
 
     $scope.init = function() {
       // Hide view options by default
@@ -433,8 +443,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               },
               yaxis: {
                 show: scope.panel['y-axis'],
-                min: 0,
-                max: scope.panel.percentage && scope.panel.stack ? 100 : null,
+                min: scope.panel.grid.min,
+                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
               },
               xaxis: {
                 timezone: scope.panel.timezone,

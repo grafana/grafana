@@ -18,6 +18,10 @@ function () {
       array.splice(index, 1);
       return array;
     },
+    // If variable is value, then return alt. If variable is anything else, return value;
+    toggle: function (variable, value, alt) {
+      return variable === value ? alt : value;
+    },
     toggleInOut: function(array,value) {
       if(_.contains(array,value)) {
         array = _.without(array,value);

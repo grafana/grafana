@@ -45,7 +45,11 @@
     </span>
     <span ng-show="panel.legend" ng-repeat='series in data' class="histogram-legend">
       <i class='icon-circle' ng-style="{color: series.info.color}"></i>
-      <span class='small histogram-legend-item'>{{series.info.alias}} ({{series.hits}})</span>
+      <span class='small histogram-legend-item'>
+        <span ng-if="panel.show_query">{{series.info.alias || series.info.query}}</span>
+        <span ng-if="!panel.show_query">{{series.info.alias}}</span>
+        <span ng-show="panel.legend_counts"> ({{series.hits}})</span>
+      </span>
     </span>
     <span ng-show="panel.legend" class="small"><span ng-show="panel.derivative">change in </span><span class="strong" ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
