@@ -40,7 +40,8 @@ function (angular, _, config, kbn) {
     var _query = {
       alias: '',
       pin: false,
-      type: 'lucene'
+      type: 'lucene',
+      enable: true
     };
 
     // Defaults for specific query types
@@ -214,15 +215,15 @@ function (angular, _, config, kbn) {
       switch(config.mode)
       {
       case 'all':
-        return self.ids;
+        return _.pluck(_.where(self.list,{enable:true}),'id');
       case 'pinned':
-        return _.pluck(_.where(self.list,{pin:true}),'id');
+        return _.pluck(_.where(self.list,{pin:true,enable:true}),'id');
       case 'unpinned':
-        return _.difference(self.ids,_.pluck(_.where(self.list,{pin:true}),'id'));
+        return _.difference(self.ids,_.pluck(_.where(self.list,{pin:true,enable:true}),'id'));
       case 'selected':
-        return _.intersection(self.ids,config.ids);
+        return _.intersection(_.pluck(_.where(self.list,{enable:true}),'id'),config.ids);
       default:
-        return self.ids;
+        return _.pluck(_.where(self.list,{enable:true}),'id');
       }
     };
 

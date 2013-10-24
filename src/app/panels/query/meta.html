@@ -27,7 +27,7 @@
 
 
   <div class="pull-right">
-
+    <a class="btn btn-mini" ng-click="querySrv.list[id].enable=false;dashboard.refresh();dismiss();" class="pointer">Deactivate</a>
     <a class="btn btn-mini" ng-class="{active:querySrv.list[id].pin}" ng-click="toggle_pin(id);dismiss();" class="pointer">Pin <i class="icon-pushpin"></i></a>
     <input class="btn btn-mini" ng-click="dashboard.refresh();dismiss();" type="submit"/ value="Close">
   </div>
