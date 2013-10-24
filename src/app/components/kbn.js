@@ -13,15 +13,10 @@ function($, _, moment) {
     return field_array.sort();
   };
 
-  kbn.get_all_fields = function(data) {
-    var _d = data;
-    var fields = [];
-    _.each(_d,function(hit) {
-      fields = _.uniq(fields.concat(_.keys(kbn.flatten_json(hit._source))));
-    });
-    // Remove stupid angular key
-    fields = _.without(fields,'$$hashKey');
-    return fields;
+  kbn.get_all_fields = function(data,flat) {
+    return _.uniq(_.without(_.reduce(data,function(memo,hit) {
+      return flat ? memo.concat(_.keys(kbn.flatten_json(hit._source))) : memo.concat(_.keys(hit._source));
+    },[]),'$$hashkey'));
   };
 
   kbn.has_field = function(obj,field) {

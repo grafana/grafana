@@ -21,6 +21,7 @@ function (angular, _, config) {
         var indices = _.difference(n,_.keys(self.mapping));
         // Only get the mapping if there are new indices
         if(indices.length > 0) {
+          console.log('getting mapping');
           self.map(indices).then(function(result) {
             self.mapping = _.extend(self.mapping,result);
             self.list = mapFields(self.mapping);

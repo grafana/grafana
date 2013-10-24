@@ -87,7 +87,6 @@ function (angular, app, _, kbn, moment) {
 
     $scope.init = function () {
       $scope.Math = Math;
-      $scope.metaFields = [];
       $scope.identity = angular.identity;
       $scope.$on('refresh',function(){$scope.get_data();});
 
@@ -258,6 +257,7 @@ function (angular, app, _, kbn, moment) {
         if(_segment === 0) {
           $scope.hits = 0;
           $scope.data = [];
+          $scope.current_fields = [];
           query_id = $scope.query_id = new Date().getTime();
         }
 
@@ -269,21 +269,26 @@ function (angular, app, _, kbn, moment) {
 
         // Check that we're still on the same query, if not stop
         if($scope.query_id === query_id) {
-          $scope.data= $scope.data.concat(_.map(results.hits.hits, function(hit) {
+
+          // This is exceptionally expensive, especially on events with a large number of fields
+          $scope.data = $scope.data.concat(_.map(results.hits.hits, function(hit) {
             var
               _h = _.clone(hit),
               _p = _.omit(hit,'_source','sort','_score');
-
-            $scope.metaFields = _.union(_.keys(_p),$scope.metaFields);
 
             // _source is kind of a lie here, never display it, only select values from it
             _h.kibana = {
               _source : _.extend(kbn.flatten_json(hit._source),_p),
               highlight : kbn.flatten_json(hit.highlight||{})
             };
+
+            // Kind of cheating with the _.map here, but this is faster than kbn.get_all_fields
+            $scope.current_fields = $scope.current_fields.concat(_.keys(_h.kibana._source));
+
             return _h;
           }));
 
+          $scope.current_fields = _.uniq($scope.current_fields);
           $scope.hits += results.hits.total;
 
           // Sort the data
@@ -302,9 +307,6 @@ function (angular, app, _, kbn, moment) {
 
           // Keep only what we need for the set
           $scope.data = $scope.data.slice(0,$scope.panel.size * $scope.panel.pages);
-
-          // Populate current_fields list
-          $scope.current_fields = kbn.get_all_fields($scope.data);
 
         } else {
           return;
