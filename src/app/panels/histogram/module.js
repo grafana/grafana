@@ -91,6 +91,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1y'],
       fill          : 0,
       linewidth     : 3,
+      pointradius   : 5,
       timezone      : 'browser', // browser, utc or a standard timezone
       spyable       : true,
       zoomlinks     : true,
@@ -437,7 +438,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                   show: scope.panel.points,
                   fill: 1,
                   fillColor: false,
-                  radius: 5
+                  radius: scope.panel.pointradius
                 },
                 shadowSize: 1
               },
