@@ -74,17 +74,18 @@
           </li>
         </ul>
       </div>
-      <div ng-show="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
+      <form ng-show="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
         <ul class="unstyled">
           <li ng-repeat="key in _.keys(filterSrv.list[id])" ng-show="show_key(key)">
             <strong>{{key}}</strong> : <input type='text' ng-model="filterSrv.list[id][key]">
           </li>
         </ul>
-      </div>
-      <div class="filter-apply" ng-show="filterSrv.list[id].editing">
-        <button ng-click="filterSrv.list[id].editing=undefined" class="btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
-        <button ng-click="filterSrv.list[id].editing=undefined;refresh()" class="btn btn-success btn-mini" bs-tooltip="'Save and refresh'">Apply</button>
-      </div>
+        <div>
+          <input type="submit" value="Apply" ng-click="filterSrv.list[id].editing=undefined;refresh()" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
+          <button ng-click="filterSrv.list[id].editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+        </div>
+      </form>
     </div>
+    <i class="link icon-plus-sign" ng-click="add()" bs-tooltip="'Add a query filter'" data-placement="right"></i>
   </div>
 </div>

@@ -36,7 +36,7 @@ function (angular, app, _, $, kbn) {
       editorTabs : [
         {title:'Queries', src:'app/partials/querySelect.html'}
       ],
-      status  : "Beta",
+      status  : "Stable",
       description : "Displays the results of an elasticsearch facet as a pie chart, bar chart, or a "+
         "table"
     };

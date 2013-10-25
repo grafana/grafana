@@ -17,7 +17,7 @@ function (angular, app, _) {
   module.controller('filtering', function($scope, filterSrv, $rootScope, dashboard) {
 
     $scope.panelMeta = {
-      status  : "Beta",
+      status  : "Stable",
       description : "A controllable list of all filters currently applied to the dashboard. You "+
         "almost certainly want one of these on your dashboard somewhere."
     };
@@ -43,6 +43,16 @@ function (angular, app, _) {
     $scope.toggle = function(id) {
       filterSrv.list[id].active = !filterSrv.list[id].active;
       dashboard.refresh();
+    };
+
+    $scope.add = function(query) {
+      query = query || '*';
+      filterSrv.set({
+        editing   : true,
+        type      : 'querystring',
+        query     : query,
+        mandate   : 'must'
+      },undefined,true);
     };
 
     $scope.refresh = function() {
