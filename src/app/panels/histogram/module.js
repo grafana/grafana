@@ -88,7 +88,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       auto_int      : true,
       resolution    : 100,
       interval      : '5m',
-      intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1M','1y'],
+      intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1y'],
       fill          : 0,
       linewidth     : 3,
       timezone      : 'browser', // browser, utc or a standard timezone
