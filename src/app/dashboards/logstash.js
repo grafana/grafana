@@ -73,7 +73,7 @@ if(!_.isUndefined(ARGS.query)) {
   queries = {
     0: {
       query: '*',
-      id: 0
+      id: 0,
     }
   };
 }
@@ -93,7 +93,7 @@ dashboard.services.filter = {
       field: ARGS.timefield||"@timestamp",
       type: "time",
       active: true,
-      id: 0
+      id: 0,
     }
   },
   ids: [0]

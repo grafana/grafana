@@ -36,6 +36,10 @@ define([
       self.ids = dashboard.current.services.filter.ids;
       _f = dashboard.current.services.filter;
 
+      _.each(self.list,function(f) {
+        self.set(f,f.id,true);
+      });
+
       // Date filters hold strings now, not dates
       /*
       _.each(self.getByType('time',true),function(time) {
@@ -66,7 +70,8 @@ define([
           var _id = nextId();
           var _filter = {
             alias: '',
-            id: _id
+            id: _id,
+            mandate: 'must'
           };
           _.defaults(filter,_filter);
           self.list[_id] = filter;
