@@ -11,9 +11,6 @@ function (angular, _) {
     $scope.loader = dashboard.current.loader;
 
     $scope.init = function() {
-      $scope.advancedLoad = false;
-      $scope.advancedSave = false;
-
       $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
       $scope.gist = $scope.gist || {};
       $scope.elasticsearch = $scope.elasticsearch || {};
