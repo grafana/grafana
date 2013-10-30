@@ -88,7 +88,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         enable      : false,
         query       : "*",
         size        : 20,
-        field       : '@message',
+        field       : '_type',
         sort        : ['_score','desc']
       },
       value_field   : null,
@@ -204,9 +204,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         request,
         queries,
         results;
-
-      $scope.panel.annotate.enable = true;
-      $scope.panel.annotate.ids = [1];
 
       if (_.isUndefined(segment)) {
         segment = 0;
