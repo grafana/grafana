@@ -32,6 +32,7 @@ require.config({
 
     'jquery.flot':            '../vendor/jquery/jquery.flot',
     'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
+    'jquery.flot.events':     '../vendor/jquery/jquery.flot.events',
     'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
     'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
@@ -66,6 +67,7 @@ require.config({
     'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
+    'jquery.flot.events':   ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],
     'jquery.flot.stack':    ['jquery', 'jquery.flot'],
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],

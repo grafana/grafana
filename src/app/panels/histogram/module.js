@@ -37,7 +37,7 @@ define([
   './timeSeries',
 
   'jquery.flot',
-  'jquery.flot.pie',
+  'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
   'jquery.flot.stack',
@@ -67,7 +67,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         },
         {
           title:'Queries',
-          src:'app/partials/querySelect.html'
+          src:'app/panels/histogram/queriesEditor.html'
         },
       ],
       status  : "Stable",
@@ -83,6 +83,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       queries       : {
         mode          : 'all',
         ids           : []
+      },
+      annotate      : {
+        enable      : false,
+        query       : "*",
+        size        : 20,
+        field       : '@message',
+        sort        : ['_score','desc']
       },
       value_field   : null,
       auto_int      : true,
@@ -121,6 +128,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     _.defaults($scope.panel,_d);
     _.defaults($scope.panel.tooltip,_d.tooltip);
+    _.defaults($scope.panel.annotate,_d.annotate);
     _.defaults($scope.panel.grid,_d.grid);
 
 
@@ -190,6 +198,16 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
      *                            this call is made recursively for more segments
      */
     $scope.get_data = function(segment, query_id) {
+      var
+        _range,
+        _interval,
+        request,
+        queries,
+        results;
+
+      $scope.panel.annotate.enable = true;
+      $scope.panel.annotate.ids = [1];
+
       if (_.isUndefined(segment)) {
         segment = 0;
       }
@@ -199,8 +217,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       if(dashboard.indices.length === 0) {
         return;
       }
-      var _range = $scope.get_time_range();
-      var _interval = $scope.get_interval(_range);
+      _range = $scope.get_time_range();
+      _interval = $scope.get_interval(_range);
 
       if ($scope.panel.auto_int) {
         $scope.panel.interval = kbn.secondsToHms(
@@ -208,11 +226,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       $scope.panelMeta.loading = true;
-      var request = $scope.ejs.Request().indices(dashboard.indices[segment]);
+      request = $scope.ejs.Request().indices(dashboard.indices[segment]);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
 
-      var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+      queries = querySrv.getQueryObjs($scope.panel.queries.ids);
 
       // Build the query
       _.each(queries, function(q) {
@@ -224,7 +242,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var facet = $scope.ejs.DateHistogramFacet(q.id);
 
         if($scope.panel.mode === 'count') {
-          facet = facet.field($scope.panel.time_field);
+          facet = facet.field($scope.panel.time_field).global(true);
         } else {
           if(_.isNull($scope.panel.value_field)) {
             $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
@@ -233,14 +251,30 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field);
         }
         facet = facet.interval(_interval).facetFilter($scope.ejs.QueryFilter(query));
-        request = request.facet(facet).size(0);
+        request = request.facet(facet)
+          .size($scope.panel.annotate.enable ? $scope.panel.annotate.size : 0);
       });
+
+      if($scope.panel.annotate.enable) {
+        var query = $scope.ejs.FilteredQuery(
+          $scope.ejs.QueryStringQuery($scope.panel.annotate.query || '*'),
+          filterSrv.getBoolFilter(filterSrv.idsByType('time'))
+        );
+        request = request.query(query);
+
+        // This is a hack proposed by @boaz to work around the fact that we can't get
+        // to field data values directly, and we need timestamps as normalized longs
+        request = request.sort([
+          $scope.ejs.Sort($scope.panel.annotate.sort[0]).order($scope.panel.annotate.sort[1]),
+          $scope.ejs.Sort($scope.panel.time_field).desc()
+        ]);
+      }
 
       // Populate the inspector panel
       $scope.populate_modal(request);
 
       // Then run it
-      var results = request.doSearch();
+      results = request.doSearch();
 
       // Populate scope when we have results
       results.then(function(results) {
@@ -249,6 +283,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         if(segment === 0) {
           $scope.hits = 0;
           $scope.data = [];
+          $scope.annotations = [];
           query_id = $scope.query_id = new Date().getTime();
         }
 
@@ -297,6 +332,30 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
             i++;
           });
+
+          if($scope.panel.annotate.enable) {
+            $scope.annotations = $scope.annotations.concat(_.map(results.hits.hits, function(hit) {
+              var _p = _.omit(hit,'_source','sort','_score');
+              var _h = _.extend(kbn.flatten_json(hit._source),_p);
+              return  {
+                min: hit.sort[1],
+                max: hit.sort[1],
+                eventType: "annotation",
+                title: null,
+                description: "<small><i class='icon-tag icon-flip-vertical'></i> "+
+                  _h[$scope.panel.annotate.field]+"</small><br>"+
+                  moment(hit.sort[1]).format('YYYY-MM-DD HH:mm:ss'),
+                score: hit.sort[0]
+              };
+            }));
+            // Sort the data
+            $scope.annotations = _.sortBy($scope.annotations, function(v){
+              // Sort in reverse
+              return v.score*($scope.panel.annotate.sort[1] === 'desc' ? -1 : 1);
+            });
+            // And slice to the right size
+            $scope.annotations = $scope.annotations.slice(0,$scope.panel.annotate.size);
+          }
 
           // Tell the histogram directive to render.
           $scope.$emit('render');
@@ -429,7 +488,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 bars:   {
                   show: scope.panel.bars,
                   fill: 1,
-                  barWidth: barwidth/1.8,
+                  barWidth: barwidth/1.5,
                   zero: false,
                   lineWidth: 0
                 },
@@ -463,6 +522,25 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 color: '#c8c8c8'
               }
             };
+
+            if(scope.panel.annotate.enable) {
+              options.events = {
+                levels: 1,
+                data: scope.annotations,
+                types: {
+                  'annotation': {
+                    level: 1,
+                    icon: {
+                      icon: "icon-tag icon-flip-vertical",
+                      size: 20,
+                      color: "#222",
+                      outline: "#bbb"
+                    }
+                  }
+                }
+                //xaxis: int    // the x axis to attach events to
+              };
+            }
 
             if(scope.panel.interactive) {
               options.selection = { mode: "x", color: '#666' };
@@ -503,13 +581,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         function time_format(interval) {
           var _int = kbn.interval_to_seconds(interval);
           if(_int >= 2628000) {
-            return "%m/%y";
+            return "%Y-%m";
           }
           if(_int >= 86400) {
-            return "%m/%d/%y";
+            return "%Y-%m-%d";
           }
           if(_int >= 60) {
-            return "%H:%M<br>%m/%d";
+            return "%H:%M<br>%m-%d";
           }
 
           return "%H:%M:%S";
@@ -534,7 +612,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             }
             $tooltip
               .html(
-                group + value + " @ " + moment(item.datapoint[0]).format('MM/DD HH:mm:ss')
+                group + value + " @ " + moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss')
               )
               .place_tt(pos.pageX, pos.pageY);
           } else {
