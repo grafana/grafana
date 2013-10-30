@@ -4,19 +4,6 @@ __NOTE__: You have reached the Kibana 3 repository.
 Kibana 3 is a completely new version of Kibana written entirely in HTML and Javascript. You can find
 the Kibana 2 repository at [https://github.com/rashidkpc/Kibana](https://github.com/rashidkpc/Kibana)
 
-### Important!
-The dashboard storage format has changed in Kibana 3 milestone 3. Existing dashboards are unfortunately not backward compatible. However there are some great new features:
-* Every panel supports multi-query
-* Customizable query colors and labels
-* Queries, labels and colors are synced across panels at all times
-* Queries can be assigned explicitly to panels, they can also be pinned and unpinned
-* New filtering functionality
-* Filters can be toggled, removed and edited
-* Drill down won't overwrite your queries, labels or colors
-* Confusing group functionality has been removed
-* Index configuration has been moved from the timepicker, to the main dashboard editor
-* The stringquery panel has been replaced with a more polished 'query' panel
-
 More information about Kibana 3 can be found at [http://www.elasticsearch.org/overview/kibana/](http://www.elasticsearch.org/overview/kibana/)
 
 ## Overview
@@ -56,3 +43,9 @@ __A__: A simple nginx virtual host and proxy configuration can be found in the s
 ### Support
 
 If you have questions or comments the best place to reach me is #logstash or #elasticsearch on irc.freenode.net
+
+### Contributing
+
+Please see [CONTRIBUTING.md](https://github.com/elasticsearch/kibana/blob/master/CONTRIBUTING.md). 
+If you have a bugfix or new feature that you would like to contribute to Kibana, **please find or open an issue 
+about it first.** 
