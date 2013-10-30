@@ -245,7 +245,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             $scope.panel.error = "In " + $scope.panel.mode + " mode a field must be specified";
             return;
           }
-          facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field);
+          facet = facet.keyField($scope.panel.time_field).valueField($scope.panel.value_field).global(true);
         }
         facet = facet.interval(_interval).facetFilter($scope.ejs.QueryFilter(query));
         request = request.facet(facet)
