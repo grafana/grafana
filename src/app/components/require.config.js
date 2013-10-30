@@ -86,5 +86,6 @@ require.config({
     datepicker:             ['jquery', 'bootstrap'],
 
     elasticjs:              ['angular', '../vendor/elasticjs/elastic']
-  }
+  },
+  waitSeconds: 60,
 });
