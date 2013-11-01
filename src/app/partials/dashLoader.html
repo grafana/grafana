@@ -28,7 +28,7 @@
       </table>
     </li>
 
-    <li class="dropdown-submenu noarrow">
+    <li class="dropdown-submenu noarrow" ng-show="dashboard.current.loader.load_gist || dashboard.current.loader.load_local">
       <a tabindex="-1" class="small" style="padding:0"><i class="icon-caret-left"></i> Advanced</a>
       <ul class="dropdown-menu" style="padding:10px">
         <li ng-show='dashboard.current.loader.load_local'>
@@ -73,7 +73,7 @@
       </form>
     </li>
 
-    <li class="dropdown-submenu noarrow">
+    <li class="dropdown-submenu noarrow" ng-show="dashboard.current.loader.save_local || dashboard.current.loader.save_gist || dashboard.current.loader.save_default">
       <a tabindex="-1" class="small" style="padding:0"><i class="icon-caret-left"></i> Advanced</a>
       <ul class="dropdown-menu">
 
