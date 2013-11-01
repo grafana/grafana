@@ -293,7 +293,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.elasticsearch_load = function(type,id) {
       return $http({
-        url: config.elasticsearch + "/" + config.kibana_index + "/"+type+"/"+id,
+        url: config.elasticsearch + "/" + config.kibana_index + "/"+type+"/"+id+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(angular.fromJson(response)._source.dashboard, $routeParams);
