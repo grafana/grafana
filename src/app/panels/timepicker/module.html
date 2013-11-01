@@ -13,9 +13,9 @@
         $scope.input isn't available on the controller unless the form element is in this file -->
   <form name="input" style="margin:3px 0 0 0">
     <ul class="nav nav-pills timepicker-dropdown">
-      <li class="dropdown" bs-tooltip="(time.from.date | date:'yyyy-MM-dd HH:mm:ss.sss') + ' to ' +(time.to.date | date:'yyyy-MM-dd HH:mm:ss.sss')" data-placement="bottom" ng-click="dismiss();">
+      <li class="dropdown">
 
-        <a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="#">
+        <a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="(time.from.date | date:'yyyy-MM-dd HH:mm:ss.sss') + ' to ' +(time.to.date | date:'yyyy-MM-dd HH:mm:ss.sss')" data-placement="bottom" ng-click="dismiss();">
 
           <span ng-show="filterSrv.idsByType('time').length">
             <span class="pointer" ng-hide="panel.now">{{time.from.date | date:'MMM d, y HH:mm:ss'}}</span>
