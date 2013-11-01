@@ -593,7 +593,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
         var $tooltip = $('<div>');
         elem.bind("plothover", function (event, pos, item) {
-          var group, value;
+          var group, value, timestamp;
           if (item) {
             if (item.series.info.alias || scope.panel.tooltip.query_as_alias) {
               group = '<small style="font-size:0.9em;">' +
@@ -603,14 +603,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             } else {
               group = kbn.query_color_dot(item.series.color, 15) + ' ';
             }
-            if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual')  {
-              value = item.datapoint[1] - item.datapoint[2];
-            } else {
-              value = item.datapoint[1];
-            }
+            value = (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') ?
+              item.datapoint[1] - item.datapoint[2] :
+              item.datapoint[1];
+            timestamp = scope.panel.timezone === 'browser' ?
+              moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
+              moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
             $tooltip
               .html(
-                group + value + " @ " + moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss')
+                group + value + " @ " + timestamp
               )
               .place_tt(pos.pageX, pos.pageY);
           } else {
