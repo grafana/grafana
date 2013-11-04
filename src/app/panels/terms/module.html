@@ -1,4 +1,7 @@
 <div ng-controller='terms' ng-init="init()">
+  <style>
+    .pieLabel { pointer-events: none }
+  </style>
   <!-- START Pie or bar chart -->
   <div ng-show="panel.counter_pos == 'above' && (panel.chart == 'bar' || panel.chart == 'pie')" id='{{$id}}-legend'>
     <!-- vertical legend above -->

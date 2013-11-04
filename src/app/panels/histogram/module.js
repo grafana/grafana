@@ -35,7 +35,6 @@ define([
   'kbn',
   'moment',
   './timeSeries',
-
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
