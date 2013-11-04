@@ -106,13 +106,14 @@ function (angular, _, config, kbn) {
                   )))).size(0);
 
           var results = request.doSearch();
+          // Like the regex and lucene queries, this returns a promise
           return results.then(function(data) {
             var _colors = kbn.colorSteps(q.color,data.facets.query.terms.length);
             var i = -1;
             return _.map(data.facets.query.terms,function(t) {
               ++i;
               return self.defaults({
-                query  : q.field+':"'+t.term+'"'+suffix,
+                query  : q.field+':"'+kbn.addslashes(t.term)+'"'+suffix,
                 alias  : t.term + (q.alias ? " ("+q.alias+")" : ""),
                 type   : 'lucene',
                 color  : _colors[i],
@@ -143,7 +144,8 @@ function (angular, _, config, kbn) {
       }
     };
 
-    // This is used both for adding queries and modifying them. If an id is passed, the query at that id is updated
+    // This is used both for adding queries and modifying them. If an id is passed,
+    // the query at that id is updated
     this.set = function(query,id) {
       if(!_.isUndefined(id)) {
         if(!_.isUndefined(self.list[id])) {
@@ -185,8 +187,8 @@ function (angular, _, config, kbn) {
       }
     };
 
-    // In the case of a compound query, such as a derived query, we'd need to
-    // return an array of elasticJS objects. Not sure if that is appropriate?
+
+    // These are the only query types that can be returned by a compound query.
     this.toEjsObj = function (q) {
       switch(q.type)
       {
