@@ -137,6 +137,7 @@ function (angular, _, config, kbn) {
       // Check each query object, populate its defaults
       _.each(self.list,function(query) {
         query = self.defaults(query);
+        console.log(query);
       });
 
       if (self.ids.length === 0) {
@@ -169,6 +170,7 @@ function (angular, _, config, kbn) {
     this.defaults = function(query) {
       _.defaults(query,_query);
       _.defaults(query,_dTypes[query.type]);
+      query.color = query.color || colorAt(query.id);
       return query;
     };
 
