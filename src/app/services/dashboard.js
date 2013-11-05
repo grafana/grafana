@@ -158,6 +158,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         }
       } else {
         self.indices = [self.current.index.default];
+        console.log(self.indices);
+        console.log('sending refresh');
         querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
       }
     };
@@ -194,9 +196,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // If there's an interval set, the indices have not been calculated yet,
       // so there is no data. Call refresh to calculate the indices and notify the panels.
-      if(dashboard.index.interval !== 'none') {
-        self.refresh();
-      }
+      self.refresh();
 
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
