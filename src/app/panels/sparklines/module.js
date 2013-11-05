@@ -332,7 +332,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               max: _.isUndefined(scope.series.range.to) ? null : scope.series.range.to.getTime()
             },
             grid: {
-              hoverable: true,
+              hoverable: false,
               show: false
             }
           };
