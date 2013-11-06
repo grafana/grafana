@@ -54,8 +54,12 @@ define([
     // If an id is passed, the filter at that id is updated
     this.set = function(filter,id,noRefresh) {
       var _r;
-      _.defaults(filter,{mandate:'must'});
-      filter.active = true;
+
+      _.defaults(filter,{
+        mandate:'must',
+        active: true
+      });
+
       if(!_.isUndefined(id)) {
         if(!_.isUndefined(self.list[id])) {
           _.extend(self.list[id],filter);
