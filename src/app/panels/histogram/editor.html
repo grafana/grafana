@@ -17,6 +17,9 @@
         <input type="text" class="input-mini" ng-model="panel.scale">
     </div>
     <div class="editor-option">
+      <label class="small">Seconds <tip>Normalize intervals to per-second</tip></label><input type="checkbox" ng-model="panel.scaleSeconds" ng-checked="panel.scaleSeconds">
+    </div>
+    <div class="editor-option">
       <label class="small">Derivative <tip>Plot the change per interval in the series</tip></label><input type="checkbox" ng-model="panel.derivative" ng-checked="panel.derivative" ng-change="set_refresh(true)">
     </div>
   </div>

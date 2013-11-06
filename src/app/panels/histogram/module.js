@@ -438,6 +438,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           });
         };
 
+        var scaleSeconds = function(series,interval) {
+          return _.map(series,function(p) {
+            return [p[0],p[1]/kbn.interval_to_seconds(interval)];
+          });
+        };
+
         var derivative = function(series) {
           return _.map(series, function(p,i) {
             var _v;
@@ -564,6 +570,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               }
               if(scope.panel.scale !== 1) {
                 _d = scale(_d,scope.panel.scale);
+              }
+              if(scope.panel.scaleSeconds) {
+                _d = scaleSeconds(_d,scope.panel.interval);
               }
               scope.data[i].data = _d;
             }

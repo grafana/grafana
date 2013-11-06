@@ -51,7 +51,7 @@
         <span ng-show="panel.legend_counts"> ({{series.hits}})</span>
       </span>
     </span>
-    <span ng-show="panel.legend" class="small"><span ng-show="panel.derivative">change in </span><span class="strong" ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong>{{panel.interval}}</strong> | (<strong>{{hits}}</strong> hits)</span>
+    <span ng-show="panel.legend" class="small"><span ng-show="panel.derivative">change in </span><span class="strong" ng-show="panel.value_field && panel.mode != 'count'">{{panel.value_field}}</span> {{panel.mode}} per <strong ng-hide="panel.scaleSeconds">{{panel.interval}}</strong><strong ng-show="panel.scaleSeconds">1s</strong> | (<strong>{{hits}}</strong> hits)</span>
   </div>
   <form class="form-inline bordered histogram-options" ng-show="options">
     <span>
