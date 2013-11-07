@@ -17,7 +17,7 @@ function (angular, app, _) {
             $scope.reset_panel(_type);
             if(!_.isUndefined($scope.panel.type)) {
               $scope.panel.loadingEditor = true;
-              $scope.require(['panels/'+$scope.panel.type+'/module'], function () {
+              $scope.require(['panels/'+$scope.panel.type.replace(".","/") +'/module'], function () {
                 var template = '<div ng-controller="'+$scope.panel.type+'" ng-include="\'app/partials/paneladd.html\'"></div>';
                 elem.html($compile(angular.element(template))($scope));
                 $scope.panel.loadingEditor = false;

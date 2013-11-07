@@ -75,9 +75,10 @@ function (angular) {
           $scope.$watch(attr.type, function (name) {
             elem.addClass("ng-cloak");
             // load the panels module file, then render it in the dom.
+            var nameAsPath = name.replace(".", "/");
             $scope.require([
               'jquery',
-              'text!panels/'+name+'/module.html'
+              'text!panels/'+nameAsPath+'/module.html'
             ], function ($, moduleTemplate) {
               var $module = $(moduleTemplate);
               // top level controllers
@@ -88,7 +89,7 @@ function (angular) {
               if ($controllers.length) {
                 $controllers.first().prepend(editorTemplate);
                 $scope.require([
-                  'panels/'+name+'/module'
+                  'panels/'+nameAsPath+'/module'
                 ], function() {
                   loadModule($module);
                 });

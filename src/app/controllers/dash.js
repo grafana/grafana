@@ -70,7 +70,7 @@ function (angular, config, _) {
 
     $scope.edit_path = function(type) {
       if(type) {
-        return 'app/panels/'+type+'/editor.html';
+        return 'app/panels/'+type.replace(".","/")+'/editor.html';
       } else {
         return false;
       }
