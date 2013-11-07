@@ -159,7 +159,7 @@
   </div>
 
   <div ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-show="editor.index == 4+$index">
-    <ng-include ng-show="pulldown.enable" src="'./app/panels/'+pulldown.type+'/editor.html'"></ng-include>
+    <ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
     <button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
   </div>
 

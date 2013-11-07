@@ -68,9 +68,18 @@ function (angular, config, _) {
       return { 'min-height': row.collapse ? '5px' : row.height };
     };
 
-    $scope.edit_path = function(type) {
+    $scope.panel_path =function(type) {
       if(type) {
-        return 'app/panels/'+type.replace(".","/")+'/editor.html';
+        return 'app/panels/'+type.replace(".","/");
+      } else {
+        return false;
+      }
+    };
+
+    $scope.edit_path = function(type) {
+      var p = $scope.panel_path(type);
+      if(p) {
+        return p+'/editor.html';
       } else {
         return false;
       }
