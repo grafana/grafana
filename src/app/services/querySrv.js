@@ -113,7 +113,7 @@ function (angular, _, config, kbn) {
             return _.map(data.facets.query.terms,function(t) {
               ++i;
               return self.defaults({
-                query  : q.field+':"'+kbn.addslashes(t.term)+'"'+suffix,
+                query  : q.field+':"'+kbn.addslashes('' + t.term)+'"'+suffix,
                 alias  : t.term + (q.alias ? " ("+q.alias+")" : ""),
                 type   : 'lucene',
                 color  : _colors[i],
