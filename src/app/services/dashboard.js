@@ -274,7 +274,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.file_load = function(file) {
       return $http({
-        url: "app/dashboards/"+file.replace(".","/")+'?' + new Date().getTime(),
+        url: "app/dashboards/"+file.replace(".(?!json)","/")+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(response,$routeParams);
@@ -314,7 +314,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.script_load = function(file) {
       return $http({
-        url: "app/dashboards/"+file.replace(".","/"),
+        url: "app/dashboards/"+file.replace(".(?!js)","/"),
         method: "GET",
         transformResponse: function(response) {
           /*jshint -W054 */
