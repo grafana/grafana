@@ -1,5 +1,0 @@
-node_modules/*
-dist/*
-sample/*
-src/vendor/*
-src/app/panels/*/{lib,leaflet}/*
