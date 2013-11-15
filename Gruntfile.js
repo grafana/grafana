@@ -22,7 +22,7 @@ module.exports = function (grunt) {
       var key = option.replace(/\.js$/,'');
       // If key already exists, extend it. It is your responsibility to avoid naming collisions
       config[key] = config[key] || {};
-      grunt.util._.extend(config[key], require(path + option)(config));
+      grunt.util._.extend(config[key], require(path + option)(config,grunt));
     });
     // technically not required
     return config;

@@ -1,4 +1,4 @@
-module.exports = function(config) {
+module.exports = function(config,grunt) {
   var _c = {
     build: {
       options: {
@@ -63,15 +63,24 @@ module.exports = function(config) {
     }
   ];
 
+  var fs = require('fs');
+  var panelPath = config.srcDir+'/app/panels'
+
   // create a module for each directory in src/app/panels/
-  require('fs')
-    .readdirSync(config.srcDir+'/app/panels')
-    .forEach(function (panelName) {
+  fs.readdirSync(panelPath).forEach(function (panelName) {
+    if(!grunt.file.exists(panelPath+'/'+panelName+'/module.js')) {
+      fs.readdirSync(panelPath+"/"+panelName).forEach(function (subName) {
+        requireModules.push({
+          name: 'panels/'+panelName+'/'+subName+'/module',
+          exclude: ['app']
+        });      })
+    } else {
       requireModules.push({
         name: 'panels/'+panelName+'/module',
         exclude: ['app']
       });
-    });
+    }
+  });
 
   // exclude the literal config definition from all modules
   requireModules
