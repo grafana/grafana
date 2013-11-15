@@ -4,6 +4,7 @@ module.exports = function (grunt) {
 
   var config = {
     pkg: grunt.file.readJSON('package.json'),
+    baseDir: '.',
     srcDir: 'src',
     destDir: 'dist',
     tempDir: 'tmp',

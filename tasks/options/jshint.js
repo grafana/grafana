@@ -7,7 +7,14 @@ module.exports = function(config) {
       }
     },
     options: {
-      jshintrc: '.jshintrc'
+      jshintrc: '<%= baseDir %>/.jshintrc',
+      ignores: [
+        'node_modules/*',
+        'dist/*',
+        'sample/*',
+        '<%= srcDir %>/vendor/*',
+        '<%= srcDir %>/app/panels/*/{lib,leaflet}/*'
+      ]
     }
   };
 };
