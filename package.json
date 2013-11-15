@@ -28,7 +28,8 @@
     "grunt-contrib-compress": "~0.5.2",
     "grunt-contrib-uglify": "~0.2.4",
     "load-grunt-tasks": "~0.2.0",
-    "glob": "~3.2.7"
+    "glob": "~3.2.7",
+    "grunt-contrib-connect": "~0.5.0"
   },
   "license": "Apache License"
 }
