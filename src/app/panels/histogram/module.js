@@ -39,6 +39,7 @@ define([
   'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
+  'jquery.flot.byte',
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
@@ -116,6 +117,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       options       : true,
       derivative    : false,
       scale         : 1,
+      y_as_bytes    : true,
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
@@ -506,7 +508,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               yaxis: {
                 show: scope.panel['y-axis'],
                 min: scope.panel.grid.min,
-                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
+                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
               },
               xaxis: {
                 timezone: scope.panel.timezone,
@@ -525,6 +527,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 color: '#c8c8c8'
               }
             };
+
+            if(scope.panel.y_as_bytes) {
+              options.yaxis.mode = "byte";
+            }
 
             if(scope.panel.annotate.enable) {
               options.events = {

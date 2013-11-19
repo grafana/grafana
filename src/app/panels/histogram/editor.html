@@ -17,6 +17,9 @@
         <input type="text" class="input-mini" ng-model="panel.scale">
     </div>
     <div class="editor-option">
+      <label class="small">Bytes <tip>Y-axis as bytes, eg 4 Mib instead of 4000000</tip></label><input type="checkbox" ng-model="panel.y_as_bytes" ng-checked="panel.y_as_bytes">
+    </div>
+    <div class="editor-option">
       <label class="small">Seconds <tip>Normalize intervals to per-second</tip></label><input type="checkbox" ng-model="panel.scaleSeconds" ng-checked="panel.scaleSeconds">
     </div>
     <div class="editor-option">
