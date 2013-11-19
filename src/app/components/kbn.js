@@ -479,5 +479,47 @@ function($, _, moment) {
     });
   };
 
+  kbn.byteFormat = function(size, decimals) {
+    var ext, steps = 0;
+    decimals = decimals || 2;
+
+    while (Math.abs(size) >= 1024) {
+      steps++;
+      size /= 1024;
+    }
+
+    switch (steps) {
+    case 0:
+      ext = " B";
+      break;
+    case 1:
+      ext = " KB";
+      break;
+    case 2:
+      ext = " MB";
+      break;
+    case 3:
+      ext = " GB";
+      break;
+    case 4:
+      ext = " TB";
+      break;
+    case 5:
+      ext = " PB";
+      break;
+    case 6:
+      ext = " EB";
+      break;
+    case 7:
+      ext = " ZB";
+      break;
+    case 8:
+      ext = " YB";
+      break;
+    }
+
+    return (size.toFixed(decimals) + ext);
+  };
+
   return kbn;
 });

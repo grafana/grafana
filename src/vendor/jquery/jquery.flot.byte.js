@@ -76,14 +76,14 @@
 
             switch (steps) {
               case 0: ext = " B";  break;
-              case 1: ext = " KiB"; break;
-              case 2: ext = " MiB"; break;
-              case 3: ext = " GiB"; break;
-              case 4: ext = " TiB"; break;
-              case 5: ext = " PiB"; break;
-              case 6: ext = " EiB"; break;
-              case 7: ext = " ZiB"; break;
-              case 8: ext = " YiB"; break;
+              case 1: ext = " KB"; break;
+              case 2: ext = " MB"; break;
+              case 3: ext = " GB"; break;
+              case 4: ext = " TB"; break;
+              case 5: ext = " PB"; break;
+              case 6: ext = " EB"; break;
+              case 7: ext = " ZB"; break;
+              case 8: ext = " YB"; break;
             }
 
 
