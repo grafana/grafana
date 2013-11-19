@@ -129,25 +129,32 @@ define([
     };
 
     this.getBoolFilter = function(ids) {
-      // A default match all filter, just in case there are no other filters
-      var bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
-      var either_bool = ejs.BoolFilter().must(ejs.MatchAllFilter());
+      var bool = ejs.BoolFilter();
+      // there is no way to introspect the BoolFilter and find out if it has a filter. We must keep note.
+      var added_a_filter = false;
+
       _.each(ids,function(id) {
         if(self.list[id].active) {
+          added_a_filter = true;
+
           switch(self.list[id].mandate)
           {
           case 'mustNot':
-            bool = bool.mustNot(self.getEjsObj(id));
+            bool.mustNot(self.getEjsObj(id));
             break;
           case 'either':
-            either_bool = either_bool.should(self.getEjsObj(id));
+            bool.should(self.getEjsObj(id));
             break;
           default:
-            bool = bool.must(self.getEjsObj(id));
+            bool.must(self.getEjsObj(id));
           }
         }
       });
-      return bool.must(either_bool);
+      // add a match filter so we'd get some data
+      if (!added_a_filter) {
+        bool.must(ejs.MatchAllFilter());
+      }
+      return bool;
     };
 
     this.getEjsObj = function(id) {
