@@ -620,6 +620,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             value = (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') ?
               item.datapoint[1] - item.datapoint[2] :
               item.datapoint[1];
+            if(scope.panel.y_as_bytes) {
+              value = kbn.byteFormat(value,2);
+            }
             timestamp = scope.panel.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
               moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
