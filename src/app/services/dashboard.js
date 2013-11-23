@@ -158,8 +158,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         }
       } else {
         self.indices = [self.current.index.default];
-        console.log(self.indices);
-        console.log('sending refresh');
         querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
       }
     };
