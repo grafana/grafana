@@ -117,7 +117,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       options       : true,
       derivative    : false,
       scale         : 1,
-      y_as_bytes    : true,
+      y_as_bytes    : false,
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
