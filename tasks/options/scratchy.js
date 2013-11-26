@@ -5,7 +5,8 @@ module.exports = function(config) {
       dest: config.docsDir,
       options: {
         unslash: true,
-        extension: '.asciidoc'
+        extension: '.asciidoc',
+        annotate: '// '
       }
     }
   }
