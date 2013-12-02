@@ -1,7 +1,4 @@
 /** @scratch /configuration/config.js/1
- *
- * = Kibana =
- *
  * == Configuration ==
  * config.js is where you will find the core Kibana configuration. This file contains parameter that
  * must be set before kibana is run for the first time.
@@ -48,11 +45,9 @@ function (Settings) {
       'filtering',
       'timepicker',
       'text',
-      'fields',
       'hits',
       'dashcontrol',
       'column',
-      'derivequeries',
       'trends',
       'bettermap',
       'query',

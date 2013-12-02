@@ -1,0 +1,64 @@
+[[panels]]
+= Panels
+
+[partintro]
+--
+*Kibana* dashboards are made up of blocks called +panels+. Panels are organized into rows
+and can serve many purposes, though most are designed to provide the results of a query or
+multiple queries as a visualization. Other panels may show collections of documents or
+allow you to insert instructions for your users.
+
+Panels can be configured easily via the Kibana web interface. For more advanced usage, such
+as templated or scripted dashboards, documentation of panel properties is available in this
+section. You may find settings here which are not exposed via the web interface.
+
+Each panel type has its own properties, hover there are several that are shared.
+
+// src/app/controllers/row.js:61
+
+span:: A number, 1-12, that describes the width of the panel.
+// src/app/controllers/row.js:87
+
+editable:: Enable or disable the edit button the the panel
+// src/app/controllers/row.js:91
+
+type:: The type of panel this object contains. Each panel type will require additional
+properties. See the panel types list to the right.
+// src/app/controllers/row.js:95
+
+--
+// src/app/controllers/row.js:103
+
+include::panels/bettermap.asciidoc[]
+// src/app/panels/bettermap/module.js:1
+
+include::panels/column.asciidoc[]
+// src/app/panels/column/module.js:1
+
+include::panels/histogram.asciidoc[]
+// src/app/panels/histogram/module.js:1
+
+include::panels/hits.asciidoc[]
+// src/app/panels/hits/module.js:1
+
+include::panels/map.asciidoc[]
+// src/app/panels/map/module.js:1
+
+include::panels/pie.asciidoc[]
+// src/app/panels/pie/module.js:1
+
+include::panels/sparklines.asciidoc[]
+// src/app/panels/sparklines/module.js:1
+
+include::panels/table.asciidoc[]
+// src/app/panels/table/module.js:1
+
+include::panels/terms.asciidoc[]
+// src/app/panels/terms/module.js:1
+
+include::panels/text.asciidoc[]
+// src/app/panels/text/module.js:1
+
+include::panels/trends.asciidoc[]
+// src/app/panels/trends/module.js:1
+

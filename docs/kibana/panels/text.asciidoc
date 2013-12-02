@@ -1,0 +1,16 @@
+== text
+Status: *Stable*
+
+The text panel is used for displaying static text formated as markdown, sanitized html or as plain
+text.
+
+// src/app/panels/text/module.js:5
+
+=== Parameters
+
+mode:: `html', `markdown' or `text'
+// src/app/panels/text/module.js:33
+
+content:: The content of your panel, written in the mark up specified in +mode+
+// src/app/panels/text/module.js:39
+

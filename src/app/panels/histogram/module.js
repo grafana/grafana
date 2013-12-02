@@ -1,32 +1,16 @@
-/*
+/** @scratch /panels/5
+ * include::panels/histogram.asciidoc[]
+ */
 
-  ## Histogram
-
-  ### Parameters
-  * auto_int :: Auto calculate data point interval?
-  * resolution ::  If auto_int is enables, shoot for this many data points, rounding to
-                    sane intervals
-  * interval :: Datapoint interval in elasticsearch date math format (eg 1d, 1w, 1y, 5y)
-  * fill :: Only applies to line charts. Level of area shading from 0-10
-  * linewidth ::  Only applies to line charts. How thick the line should be in pixels
-                  While the editor only exposes 0-10, this can be any numeric value.
-                  Set to 0 and you'll get something like a scatter plot
-  * timezone :: This isn't totally functional yet. Currently only supports browser and utc.
-                browser will adjust the x-axis labels to match the timezone of the user's
-                browser
-  * spyable ::  Dislay the 'eye' icon that show the last elasticsearch query
-  * zoomlinks :: Show the zoom links?
-  * bars :: Show bars in the chart
-  * stack :: Stack multiple queries. This generally a crappy way to represent things.
-             You probably should just use a line chart without stacking
-  * points :: Should circles at the data points on the chart
-  * lines :: Line chart? Sweet.
-  * legend :: Show the legend?
-  * x-axis :: Show x-axis labels and grid lines
-  * y-axis :: Show y-axis labels and grid lines
-  * interactive :: Allow drag to select time range
-
-*/
+/** @scratch /panels/histogram/0
+ * == Histogram
+ * Status: *Stable*
+ *
+ * The histogram panel allow for the display of time charts. It includes several modes and tranformations
+ * to display event counts, mean, min, max and total of numeric fields, and derivatives of counter
+ * fields.
+ *
+ */
 define([
   'angular',
   'app',
@@ -78,12 +62,66 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     // Set and populate defaults
     var _d = {
+      /** @scratch /panels/histogram/3
+       * === Parameters
+       * ==== Axis options
+       * mode:: Value to use for the y-axis. For all modes other than count, +value_field+ must be
+       * defined. Possible values: count, mean, max, min, total.
+       */
       mode          : 'count',
+      /** @scratch /panels/histogram/3
+       * time_field:: x-axis field. This must be defined as a date type in Elasticsearch.
+       */
       time_field    : '@timestamp',
-      queries       : {
-        mode          : 'all',
-        ids           : []
+      /** @scratch /panels/histogram/3
+       * value_field:: y-axis field if +mode+ is set to mean, max, min or total. Must be numeric.
+       */
+      value_field   : null,
+      /** @scratch /panels/histogram/3
+       * x-axis:: Show the x-axis
+       */
+      'x-axis'      : true,
+      /** @scratch /panels/histogram/3
+       * y-axis:: Show the y-axis
+       */
+      'y-axis'      : true,
+      /** @scratch /panels/histogram/3
+       * scale:: Scale the y-axis by this factor
+       */
+      scale         : 1,
+      /** @scratch /panels/histogram/3
+       * y_as_bytes:: Show the y-axis scale as bytes, automatically round to KB, MB, GB, etc.
+       */
+      y_as_bytes    : false,
+      /** @scratch /panels/histogram/5
+       * grid object:: Min and max y-axis values
+       * grid.min::: Minimum y-axis value
+       * grid.max::: Maximum y-axis value
+       */
+      grid          : {
+        max: null,
+        min: 0
       },
+      /** @scratch /panels/histogram/5
+       * ==== Queries
+       * queries object:: This object describes the queries to use on this panel.
+       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+       * queries.ids::: In +selected+ mode, which query ids are selected.
+       */
+      queries     : {
+        mode        : 'all',
+        ids         : []
+      },
+      /** @scratch /panels/histogram/3
+       * ==== Annotations
+       * annotate object:: A query can be specified, the results of which will be displayed as markers on
+       * the chart. For example, for noting code deploys.
+       * annotate.enable::: Should annotations, aka markers, be shown?
+       * annotate.query::: Lucene query_string syntax query to use for markers.
+       * annotate.size::: Max number of markers to show
+       * annotate.field::: Field from documents to show
+       * annotate.sort::: Sort array in format [field,order], For example [`@timestamp',`desc']
+       */
       annotate      : {
         enable      : false,
         query       : "*",
@@ -91,40 +129,106 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         field       : '_type',
         sort        : ['_score','desc']
       },
-      value_field   : null,
+      /** @scratch /panels/histogram/3
+       * ==== Interval options
+       * auto_int:: Automatically scale intervals?
+       */
       auto_int      : true,
+      /** @scratch /panels/histogram/3
+       * resolution:: If auto_int is true, shoot for this many bars.
+       */
       resolution    : 100,
+      /** @scratch /panels/histogram/3
+       * interval:: If auto_int is set to false, use this as the interval.
+       */
       interval      : '5m',
+      /** @scratch /panels/histogram/3
+       * interval:: Array of possible intervals in the *View* selector. Example [`auto',`1s',`5m',`3h']
+       */
       intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1y'],
-      fill          : 0,
-      linewidth     : 3,
-      pointradius   : 5,
-      timezone      : 'browser', // browser, utc or a standard timezone
-      spyable       : true,
-      zoomlinks     : true,
-      bars          : true,
-      stack         : true,
-      points        : false,
+      /** @scratch /panels/histogram/3
+       * ==== Drawing options
+       * lines:: Show line chart
+       */
       lines         : false,
-      legend        : true,
-      show_query    : true,
-      legend_counts : true,
-      'x-axis'      : true,
-      'y-axis'      : true,
-      percentage    : false,
-      zerofill      : true,
-      interactive   : true,
+      /** @scratch /panels/histogram/3
+       * fill:: Area fill factor for line charts, 1-10
+       */
+      fill          : 0,
+      /** @scratch /panels/histogram/3
+       * linewidth:: Weight of lines in pixels
+       */
+      linewidth     : 3,
+      /** @scratch /panels/histogram/3
+       * points:: Show points on chart
+       */
+      points        : false,
+      /** @scratch /panels/histogram/3
+       * pointradius:: Size of points in pixels
+       */
+      pointradius   : 5,
+      /** @scratch /panels/histogram/3
+       * bars:: Show bars on chart
+       */
+      bars          : true,
+      /** @scratch /panels/histogram/3
+       * stack:: Stack multiple series
+       */
+      stack         : true,
+      /** @scratch /panels/histogram/3
+       * spyable:: Show inspect icon
+       */
+      spyable       : true,
+      /** @scratch /panels/histogram/3
+       * zoomlinks:: Show `Zoom Out' link
+       */
+      zoomlinks     : true,
+      /** @scratch /panels/histogram/3
+       * options:: Show quick view options section
+       */
       options       : true,
+      /** @scratch /panels/histogram/3
+       * legend:: Display the legond
+       */
+      legend        : true,
+      /** @scratch /panels/histogram/3
+       * show_query:: If no alias is set, should the query be displayed?
+       */
+      show_query    : true,
+      /** @scratch /panels/histogram/3
+       * interactive:: Enable click-and-drag to zoom functionality
+       */
+      interactive   : true,
+      /** @scratch /panels/histogram/3
+       * legend_counts:: Show counts in legend
+       */
+      legend_counts : true,
+      /** @scratch /panels/histogram/3
+       * ==== Transformations
+       * timezone:: Correct for browser timezone?. Valid values: browser, utc
+       */
+      timezone      : 'browser', // browser or utc
+      /** @scratch /panels/histogram/3
+       * percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
+       * queries
+       */
+      percentage    : false,
+      /** @scratch /panels/histogram/3
+       * zerofill:: Improves the accuracy of line charts at a small performance cost.
+       */
+      zerofill      : true,
+      /** @scratch /panels/histogram/3
+       * derivative:: Show each point on the x-axis as the change from the previous point
+       */
       derivative    : false,
-      scale         : 1,
-      y_as_bytes    : false,
+      /** @scratch /panels/histogram/3
+       * tooltip object::
+       * tooltip.value_type::: Individual or cumulative controls how tooltips are display on stacked charts
+       * tooltip.query_as_alias::: If no alias is set, should the query be displayed?
+       */
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
-      },
-      grid          : {
-        max: null,
-        min: 0
       }
     };
 

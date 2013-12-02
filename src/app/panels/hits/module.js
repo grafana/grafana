@@ -1,16 +1,15 @@
-/*
+/** @scratch /panels/5
+ * include::panels/hits.asciidoc[]
+ */
 
-  ## Hits
-
-  ### Parameters
-  * style :: A hash of css styles
-  * arrangement :: How should I arrange the query results? 'horizontal' or 'vertical'
-  * chart :: Show a chart? 'none', 'bar', 'pie'
-  * donut :: Only applies to 'pie' charts. Punches a hole in the chart for some reason
-  * tilt :: Only 'pie' charts. Janky 3D effect. Looks terrible 90% of the time.
-  * lables :: Only 'pie' charts. Labels on the pie?
-
-*/
+/** @scratch /panels/hits/0
+ * == Hits
+ * Status: *Stable*
+ *
+ * The hits panel displays the number of hits for each of the queries on the dashboard in a
+ * configurable format specified by the `chart' property.
+ *
+ */
 define([
   'angular',
   'app',
@@ -46,18 +45,47 @@ define([
 
     // Set and populate defaults
     var _d = {
+      style   : { "font-size": '10pt'},
+      /** @scratch /panels/hits/3
+       * === Parameters
+       *
+       * arrangement:: The arrangement of the legend. horizontal or vertical
+       */
+      arrangement : 'horizontal',
+      /** @scratch /panels/hits/3
+       * chart:: bar, pie or none
+       */
+      chart       : 'bar',
+      /** @scratch /panels/hits/3
+       * counter_pos:: The position of the legend, above or below
+       */
+      counter_pos : 'above',
+      /** @scratch /panels/hits/3
+       * donut:: If the chart is set to pie, setting donut to true will draw a hole in the midle of it
+       */
+      donut   : false,
+      /** @scratch /panels/hits/3
+       * tilt:: If the chart is set to pie, setting tilt to true will tilt it back into an oval
+       */
+      tilt    : false,
+      /** @scratch /panels/hits/3
+       * labels:: If the chart is set to pie, setting labels to true will draw labels in the slices
+       */
+      labels  : true,
+      /** @scratch /panels/hits/3
+       * spyable:: Setting spyable to false disables the inspect icon.
+       */
+      spyable : true,
+      /** @scratch /panels/hits/5
+       * ==== Queries
+       * queries object:: This object describes the queries to use on this panel.
+       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+       * queries.ids::: In +selected+ mode, which query ids are selected.
+       */
       queries     : {
         mode        : 'all',
         ids         : []
       },
-      style   : { "font-size": '10pt'},
-      arrangement : 'horizontal',
-      chart       : 'bar',
-      counter_pos : 'above',
-      donut   : false,
-      tilt    : false,
-      labels  : true,
-      spyable : true
     };
     _.defaults($scope.panel,_d);
 

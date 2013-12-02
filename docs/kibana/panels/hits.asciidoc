@@ -1,0 +1,37 @@
+== Hits
+Status: *Stable*
+
+The hits panel displays the number of hits for each of the queries on the dashboard in a
+configurable format specified by the `chart' property.
+
+// src/app/panels/hits/module.js:5
+
+=== Parameters
+
+arrangement:: The arrangement of the legend. horizontal or vertical
+// src/app/panels/hits/module.js:49
+
+chart:: bar, pie or none
+// src/app/panels/hits/module.js:55
+
+counter_pos:: The position of the legend, above or below
+// src/app/panels/hits/module.js:59
+
+donut:: If the chart is set to pie, setting donut to true will draw a hole in the midle of it
+// src/app/panels/hits/module.js:63
+
+tilt:: If the chart is set to pie, setting tilt to true will tilt it back into an oval
+// src/app/panels/hits/module.js:67
+
+labels:: If the chart is set to pie, setting labels to true will draw labels in the slices
+// src/app/panels/hits/module.js:71
+
+spyable:: Setting spyable to false disables the inspect icon.
+// src/app/panels/hits/module.js:75
+
+==== Queries
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/hits/module.js:79
+

@@ -1,13 +1,21 @@
-/*
+/** @scratch /panels/5
+ * include::panels/bettermap.asciidoc[]
+ */
 
-  ## Better maps
-
-  ### Parameters
-  * size :: How many results to show, more results = slower
-  * field :: field containing a 2 element array in the format [lon,lat]
-  * tooltip :: field to extract the tool tip value from
-  * spyable :: Show the 'eye' icon that reveals the last ES query
-*/
+/** @scratch /panels/bettermap/0
+ * == Bettermap
+ * Status: *Experimental*
+ *
+ * Bettermap is called bettermap for lack of a better name. Bettermap uses geographic coordinates to
+ * create clusters of markers on map and shade them orange, yellow and green depending on the
+ * density of the cluster.
+ *
+ * To drill down, click on a cluster. The map will be zoomed and the cluster broken into smaller cluster.
+ * When it no longer makes visual sense to cluster, individual markers will be displayed. Hover over
+ * a marker to see the tooltip value/
+ *
+ * IMPORTANT: bettermap requires an internet connection to download its map panels.
+ */
 define([
   'angular',
   'app',
@@ -51,21 +59,43 @@ function (angular, app, _, L, localRequire) {
 
     // Set and populate defaults
     var _d = {
+      /** @scratch /panels/bettermap/3
+       * === Parameters
+       *
+       * field:: The field that contains the coordinates, in geojson format. GeoJSON is
+       * +[longitude,latitude]+ in an array. This is different from most implementations, which use
+       * latitude, longitude.
+       */
+      field   : null,
+      /** @scratch /panels/bettermap/5
+       * size:: The number of documents to use when drawing the map
+       */
+      size    : 1000,
+      /** @scratch /panels/bettermap/5
+       * spyable:: Should the `inspect` icon be shown?
+       */
+      spyable : true,
+      /** @scratch /panels/bettermap/5
+       * tooltip:: Which field to use for the tooltip when hovering over a marker
+       */
+      tooltip : "_id",
+      /** @scratch /panels/bettermap/5
+       * ==== Queries
+       * queries object:: This object describes the queries to use on this panel.
+       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+       * queries.ids::: In +selected+ mode, which query ids are selected.
+       */
       queries     : {
         mode        : 'all',
         ids         : []
       },
-      size    : 1000,
-      spyable : true,
-      tooltip : "_id",
-      field   : null
     };
 
     _.defaults($scope.panel,_d);
-    $scope.requireContext = localRequire;
 
     // inorder to use relative paths in require calls, require needs a context to run. Without
     // setting this property the paths would be relative to the app not this context/file.
+    $scope.requireContext = localRequire;
 
     $scope.init = function() {
       $scope.$on('refresh',function(){
@@ -204,6 +234,7 @@ function (angular, app, _, L, localRequire) {
                 zoom: 10
               });
 
+              // This could be made configurable?
               L.tileLayer('http://{s}.tile.cloudmade.com/57cbb6ca8cac418dbb1a402586df4528/22677/256/{z}/{x}/{y}.png', {
                 maxZoom: 18,
                 minZoom: 2

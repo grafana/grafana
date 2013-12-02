@@ -1,32 +1,15 @@
-/*
+/** @scratch /panels/5
+ * include::panels/sparklines.asciidoc[]
+ */
 
-  ## Histogram
-
-  ### Parameters
-  * auto_int :: Auto calculate data point interval?
-  * resolution ::  If auto_int is enables, shoot for this many data points, rounding to
-                    sane intervals
-  * interval :: Datapoint interval in elasticsearch date math format (eg 1d, 1w, 1y, 5y)
-  * fill :: Only applies to line charts. Level of area shading from 0-10
-  * linewidth ::  Only applies to line charts. How thick the line should be in pixels
-                  While the editor only exposes 0-10, this can be any numeric value.
-                  Set to 0 and you'll get something like a scatter plot
-  * timezone :: This isn't totally functional yet. Currently only supports browser and utc.
-                browser will adjust the x-axis labels to match the timezone of the user's
-                browser
-  * spyable ::  Dislay the 'eye' icon that show the last elasticsearch query
-  * zoomlinks :: Show the zoom links?
-  * bars :: Show bars in the chart
-  * stack :: Stack multiple queries. This generally a crappy way to represent things.
-             You probably should just use a line chart without stacking
-  * points :: Should circles at the data points on the chart
-  * lines :: Line chart? Sweet.
-  * legend :: Show the legend?
-  * x-axis :: Show x-axis labels and grid lines
-  * y-axis :: Show y-axis labels and grid lines
-  * interactive :: Allow drag to select time range
-
-*/
+/** @scratch /panels/sparklines/0
+ * == Sparklines
+ * Status: *Experimental*
+ *
+ * The sparklines panel shows tiny time charts. The purpose of these is not to give an exact value,
+ * but rather to show the shape of the time series in a compact manner
+ *
+ */
 define([
   'angular',
   'app',
@@ -70,15 +53,39 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     // Set and populate defaults
     var _d = {
+      /** @scratch /panels/sparklines/3
+       * === Parameters
+       * mode:: Value to use for the y-axis. For all modes other than count, +value_field+ must be
+       * defined. Possible values: count, mean, max, min, total.
+       */
       mode          : 'count',
+      /** @scratch /panels/sparklines/3
+       * time_field:: x-axis field. This must be defined as a date type in Elasticsearch.
+       */
       time_field    : '@timestamp',
-      queries       : {
-        mode          : 'all',
-        ids           : []
-      },
+      /** @scratch /panels/sparklines/3
+       * value_field:: y-axis field if +mode+ is set to mean, max, min or total. Must be numeric.
+       */
       value_field   : null,
+      /** @scratch /panels/sparklines/3
+       * interval:: Sparkline intervals are computed automatically as long as there is a time filter
+       * present. In the absence of a time filter, use this interval.
+       */
       interval      : '5m',
-      spyable       : true
+      /** @scratch /panels/sparklines/3
+       * spyable:: Show inspect icon
+       */
+      spyable       : true,
+      /** @scratch /panels/sparklines/5
+       * ==== Queries
+       * queries object:: This object describes the queries to use on this panel.
+       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+       * queries.ids::: In +selected+ mode, which query ids are selected.
+       */
+      queries     : {
+        mode        : 'all',
+        ids         : []
+      },
     };
 
     _.defaults($scope.panel,_d);

@@ -1,0 +1,50 @@
+== Pie
+Status: *Deprecated*
+
+The pie panel has been largely replaced by the +terms+ panel. It exists for backwards compatibility
+for now, but will be removed in a future release
+
+// src/app/panels/pie/module.js:5
+
+=== Parameters
+
+mode:: terms or goal. Terms mode finds the top N most popular terms, Goal mode display
+progress towards a fix goal in terms of documents matched
+// src/app/panels/pie/module.js:48
+
+size:: The max number of results to display in +terms+ mode.
+// src/app/panels/pie/module.js:55
+
+exclude:: Exclude these terms in terms mode
+// src/app/panels/pie/module.js:59
+
+donut:: Draw a hole in the middle of the pie, creating a tasty donut.
+// src/app/panels/pie/module.js:63
+
+tilt:: Tilt the pie back into an oval shape
+// src/app/panels/pie/module.js:67
+
+legend:: The location of the legend, above, below or none
+// src/app/panels/pie/module.js:71
+
+labels:: Set to false to disable drawing labels inside the pie slices
+// src/app/panels/pie/module.js:75
+
+spyable:: Set to false to disable the inspect function.
+// src/app/panels/pie/module.js:79
+
+==== Query
+
+query object:: This confusingly named object has properties to set the terms mode field,
+and the fixed goal for the goal mode
+query.field::: the field to facet on in terms mode
+query.goal::: the fixed goal for goal mode
+// src/app/panels/pie/module.js:83
+
+==== Queries
+
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/pie/module.js:92
+
