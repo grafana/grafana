@@ -2,12 +2,6 @@
   "title": "Your Basic Dashboard",
   "services": {
     "query": {
-      "idQueue": [
-        1,
-        2,
-        3,
-        4
-      ],
       "list": {
         "0": {
           "query": "*",
@@ -23,11 +17,6 @@
       ]
     },
     "filter": {
-      "idQueue": [
-        0,
-        1,
-        2
-      ],
       "list": {},
       "ids": []
     }
