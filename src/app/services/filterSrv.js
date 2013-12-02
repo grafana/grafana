@@ -14,14 +14,12 @@ define([
 
     // Defaults for it
     var _d = {
-      idQueue : [],
       list : {},
       ids : []
     };
 
     // For convenience
     var ejs = ejsResource(config.elasticsearch);
-    var _f = dashboard.current.services.filter;
 
     // Save a reference to this
     var self = this;
@@ -34,7 +32,6 @@ define([
       // Accessors
       self.list = dashboard.current.services.filter.list;
       self.ids = dashboard.current.services.filter.ids;
-      _f = dashboard.current.services.filter;
 
       _.each(self.list,function(f) {
         self.set(f,f.id,true);
@@ -97,8 +94,6 @@ define([
         delete self.list[id];
         // This must happen on the full path also since _.without returns a copy
         self.ids = dashboard.current.services.filter.ids = _.without(self.ids,id);
-        _f.idQueue.unshift(id);
-        _f.idQueue.sort(function(v,k){return v-k;});
         _r = true;
       } else {
         _r = false;
@@ -230,10 +225,14 @@ define([
     };
 
     var nextId = function() {
-      if(_f.idQueue.length > 0) {
-        return _f.idQueue.shift();
+      var idCount = dashboard.current.services.filter.ids.length;
+      if(idCount > 0) {
+        // Make a sorted copy of the ids array
+        var ids = _.clone(dashboard.current.services.filter.ids).sort();
+        return kbn.smallestMissing(ids);
       } else {
-        return self.ids.length;
+        // No ids currently in list
+        return 0;
       }
     };
 

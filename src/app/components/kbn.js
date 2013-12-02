@@ -479,6 +479,26 @@ function($, _, moment) {
     });
   };
 
+  // Find the smallest missing number in an array
+  kbn.smallestMissing = function(arr,start,end) {
+    start = start || 0;
+    end = end || arr.length-1;
+
+    if(start > end) {
+      return end + 1;
+    }
+    if(start !== arr[start]) {
+      return start;
+    }
+    var middle = Math.floor((start + end) / 2);
+
+    if (arr[middle] > middle) {
+      return kbn.smallestMissing(arr, start, middle);
+    } else {
+      return kbn.smallestMissing(arr, middle + 1, end);
+    }
+  };
+
   kbn.byteFormat = function(size, decimals) {
     var ext, steps = 0;
     decimals = decimals || 2;
