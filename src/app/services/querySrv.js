@@ -14,7 +14,6 @@ function (angular, _, config, kbn) {
     // Create an object to hold our service state on the dashboard
     dashboard.current.services.query = dashboard.current.services.query || {};
     _.defaults(dashboard.current.services.query,{
-      idQueue : [],
       list : {},
       ids : [],
     });
@@ -31,7 +30,6 @@ function (angular, _, config, kbn) {
 
     // For convenience
     var ejs = ejsResource(config.elasticsearch);
-    var _q = dashboard.current.services.query;
 
     // Holds all actual queries, including all resolved abstract queries
     var resolvedQueries = [];
@@ -176,10 +174,6 @@ function (angular, _, config, kbn) {
         delete self.list[id];
         // This must happen on the full path also since _.without returns a copy
         self.ids = dashboard.current.services.query.ids = _.without(self.ids,id);
-        _q.idQueue.unshift(id);
-        _q.idQueue.sort(function(v,k){
-          return v-k;
-        });
         return true;
       } else {
         return false;
@@ -246,10 +240,14 @@ function (angular, _, config, kbn) {
     };
 
     var nextId = function() {
-      if(_q.idQueue.length > 0) {
-        return _q.idQueue.shift();
+      var idCount = dashboard.current.services.query.ids.length;
+      if(idCount > 0) {
+        // Make a sorted copy of the ids array
+        var ids = _.clone(dashboard.current.services.query.ids).sort();
+        return kbn.smallestMissing(ids);
       } else {
-        return self.ids.length;
+        // No ids currently in list
+        return 0;
       }
     };
 
