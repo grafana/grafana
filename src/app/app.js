@@ -11,7 +11,8 @@ define([
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
-  'extend-jquery'
+  'extend-jquery',
+  'bindonce'
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
@@ -84,7 +85,8 @@ function (angular, $, _, appLevelRequire) {
     '$strap.directives',
     'ngSanitize',
     'ngDragDrop',
-    'kibana'
+    'kibana',
+    'pasvaz.bindonce'
   ];
 
   _.each('controllers directives factories services filters'.split(' '),
