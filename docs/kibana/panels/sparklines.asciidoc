@@ -1,0 +1,32 @@
+== Sparklines
+Status: *Experimental*
+
+The sparklines panel shows tiny time charts. The purpose of these is not to give an exact value,
+but rather to show the shape of the time series in a compact manner
+
+// src/app/panels/sparklines/module.js:5
+
+=== Parameters
+mode:: Value to use for the y-axis. For all modes other than count, +value_field+ must be
+defined. Possible values: count, mean, max, min, total.
+// src/app/panels/sparklines/module.js:56
+
+time_field:: x-axis field. This must be defined as a date type in Elasticsearch.
+// src/app/panels/sparklines/module.js:62
+
+value_field:: y-axis field if +mode+ is set to mean, max, min or total. Must be numeric.
+// src/app/panels/sparklines/module.js:66
+
+interval:: Sparkline intervals are computed automatically as long as there is a time filter
+present. In the absence of a time filter, use this interval.
+// src/app/panels/sparklines/module.js:70
+
+spyable:: Show inspect icon
+// src/app/panels/sparklines/module.js:75
+
+==== Queries
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/sparklines/module.js:79
+

@@ -1,21 +1,15 @@
-/*
+/** @scratch /panels/5
+ * include::panels/pie.asciidoc[]
+ */
 
-  ## Pie
-
-  ### Parameters
-  * query :: An object with 2 possible parameters depends on the mode:
-  ** field: Fields to run a terms facet on. Only does anything in terms mode
-  ** goal: How many to shoot for, only does anything in goal mode
-  * exclude :: In terms mode, ignore these terms
-  * donut :: Drill a big hole in the pie
-  * tilt :: A janky 3D representation of the pie. Looks terrible 90% of the time.
-  * legend :: Show the legend?
-  * labels :: Label the slices of the pie?
-  * mode :: 'terms' or 'goal'
-  * default_field ::  LOL wat? A dumb fail over field if for some reason the query object
-                      doesn't have a field
-  * spyable :: Show the 'eye' icon that displays the last ES query for this panel
-*/
+/** @scratch /panels/pie/0
+ * == Pie
+ * Status: *Deprecated*
+ *
+ * The pie panel has been largely replaced by the +terms+ panel. It exists for backwards compatibility
+ * for now, but will be removed in a future release
+ *
+ */
 define([
   'angular',
   'app',
@@ -51,20 +45,63 @@ define([
 
     // Set and populate defaults
     var _d = {
+      /** @scratch /panels/pie/3
+       * === Parameters
+       *
+       * mode:: terms or goal. Terms mode finds the top N most popular terms, Goal mode display
+       * progress towards a fix goal in terms of documents matched
+       */
+      mode    : "terms",
+      /** @scratch /panels/pie/3
+       * size:: The max number of results to display in +terms+ mode.
+       */
+      size    : 10,
+      /** @scratch /panels/pie/3
+       * exclude:: Exclude these terms in terms mode
+       */
+      exclude : [],
+      /** @scratch /panels/pie/3
+       * donut:: Draw a hole in the middle of the pie, creating a tasty donut.
+       */
+      donut   : false,
+      /** @scratch /panels/pie/3
+       * tilt:: Tilt the pie back into an oval shape
+       */
+      tilt    : false,
+      /** @scratch /panels/pie/3
+       * legend:: The location of the legend, above, below or none
+       */
+      legend  : "above",
+      /** @scratch /panels/pie/3
+       * labels:: Set to false to disable drawing labels inside the pie slices
+       */
+      labels  : true,
+      /** @scratch /panels/pie/3
+       * spyable:: Set to false to disable the inspect function.
+       */
+      spyable : true,
+      /** @scratch /panels/pie/3
+       * ==== Query
+       *
+       * query object:: This confusingly named object has properties to set the terms mode field,
+       * and the fixed goal for the goal mode
+       * query.field::: the field to facet on in terms mode
+       * query.goal::: the fixed goal for goal mode
+       */
       query   : { field:"_type", goal: 100},
+      /** @scratch /panels/pie/5
+       * ==== Queries
+       *
+       * queries object:: This object describes the queries to use on this panel.
+       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+       * queries.ids::: In +selected+ mode, which query ids are selected.
+       */
       queries     : {
         mode        : 'all',
         ids         : []
       },
-      size    : 10,
-      exclude : [],
-      donut   : false,
-      tilt    : false,
-      legend  : "above",
-      labels  : true,
-      mode    : "terms",
-      default_field : 'DEFAULT',
-      spyable : true,
+      default_field : '_type',
+
     };
     _.defaults($scope.panel,_d);
 

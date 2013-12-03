@@ -1,0 +1,129 @@
+== Histogram
+Status: *Stable*
+
+The histogram panel allow for the display of time charts. It includes several modes and tranformations
+to display event counts, mean, min, max and total of numeric fields, and derivatives of counter
+fields.
+
+// src/app/panels/histogram/module.js:5
+
+=== Parameters
+==== Axis options
+mode:: Value to use for the y-axis. For all modes other than count, +value_field+ must be
+defined. Possible values: count, mean, max, min, total.
+// src/app/panels/histogram/module.js:65
+
+time_field:: x-axis field. This must be defined as a date type in Elasticsearch.
+// src/app/panels/histogram/module.js:72
+
+value_field:: y-axis field if +mode+ is set to mean, max, min or total. Must be numeric.
+// src/app/panels/histogram/module.js:76
+
+x-axis:: Show the x-axis
+// src/app/panels/histogram/module.js:80
+
+y-axis:: Show the y-axis
+// src/app/panels/histogram/module.js:84
+
+scale:: Scale the y-axis by this factor
+// src/app/panels/histogram/module.js:88
+
+y_as_bytes:: Show the y-axis scale as bytes, automatically round to KB, MB, GB, etc.
+// src/app/panels/histogram/module.js:92
+
+==== Annotations
+annotate object:: A query can be specified, the results of which will be displayed as markers on
+the chart. For example, for noting code deploys.
+annotate.enable::: Should annotations, aka markers, be shown?
+annotate.query::: Lucene query_string syntax query to use for markers.
+annotate.size::: Max number of markers to show
+annotate.field::: Field from documents to show
+annotate.sort::: Sort array in format [field,order], For example [`@timestamp',`desc']
+// src/app/panels/histogram/module.js:115
+
+==== Interval options
+auto_int:: Automatically scale intervals?
+// src/app/panels/histogram/module.js:132
+
+resolution:: If auto_int is true, shoot for this many bars.
+// src/app/panels/histogram/module.js:137
+
+interval:: If auto_int is set to false, use this as the interval.
+// src/app/panels/histogram/module.js:141
+
+interval:: Array of possible intervals in the *View* selector. Example [`auto',`1s',`5m',`3h']
+// src/app/panels/histogram/module.js:145
+
+==== Drawing options
+lines:: Show line chart
+// src/app/panels/histogram/module.js:149
+
+fill:: Area fill factor for line charts, 1-10
+// src/app/panels/histogram/module.js:154
+
+linewidth:: Weight of lines in pixels
+// src/app/panels/histogram/module.js:158
+
+points:: Show points on chart
+// src/app/panels/histogram/module.js:162
+
+pointradius:: Size of points in pixels
+// src/app/panels/histogram/module.js:166
+
+bars:: Show bars on chart
+// src/app/panels/histogram/module.js:170
+
+stack:: Stack multiple series
+// src/app/panels/histogram/module.js:174
+
+spyable:: Show inspect icon
+// src/app/panels/histogram/module.js:178
+
+zoomlinks:: Show `Zoom Out' link
+// src/app/panels/histogram/module.js:182
+
+options:: Show quick view options section
+// src/app/panels/histogram/module.js:186
+
+legend:: Display the legond
+// src/app/panels/histogram/module.js:190
+
+show_query:: If no alias is set, should the query be displayed?
+// src/app/panels/histogram/module.js:194
+
+interactive:: Enable click-and-drag to zoom functionality
+// src/app/panels/histogram/module.js:198
+
+legend_counts:: Show counts in legend
+// src/app/panels/histogram/module.js:202
+
+==== Transformations
+timezone:: Correct for browser timezone?. Valid values: browser, utc
+// src/app/panels/histogram/module.js:206
+
+percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
+queries
+// src/app/panels/histogram/module.js:211
+
+zerofill:: Improves the accuracy of line charts at a small performance cost.
+// src/app/panels/histogram/module.js:216
+
+derivative:: Show each point on the x-axis as the change from the previous point
+// src/app/panels/histogram/module.js:220
+
+tooltip object::
+tooltip.value_type::: Individual or cumulative controls how tooltips are display on stacked charts
+tooltip.query_as_alias::: If no alias is set, should the query be displayed?
+// src/app/panels/histogram/module.js:224
+
+grid object:: Min and max y-axis values
+grid.min::: Minimum y-axis value
+grid.max::: Maximum y-axis value
+// src/app/panels/histogram/module.js:96
+
+==== Queries
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/histogram/module.js:105
+

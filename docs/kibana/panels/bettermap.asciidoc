@@ -1,0 +1,36 @@
+== Bettermap
+Status: *Experimental*
+
+Bettermap is called bettermap for lack of a better name. Bettermap uses geographic coordinates to
+create clusters of markers on map and shade them orange, yellow and green depending on the
+density of the cluster.
+
+To drill down, click on a cluster. The map will be zoomed and the cluster broken into smaller cluster.
+When it no longer makes visual sense to cluster, individual markers will be displayed. Hover over
+a marker to see the tooltip value/
+
+IMPORTANT: bettermap requires an internet connection to download its map panels.
+// src/app/panels/bettermap/module.js:5
+
+=== Parameters
+
+field:: The field that contains the coordinates, in geojson format. GeoJSON is
++[longitude,latitude]+ in an array. This is different from most implementations, which use
+latitude, longitude.
+// src/app/panels/bettermap/module.js:62
+
+size:: The number of documents to use when drawing the map
+// src/app/panels/bettermap/module.js:70
+
+spyable:: Should the `inspect` icon be shown?
+// src/app/panels/bettermap/module.js:74
+
+tooltip:: Which field to use for the tooltip when hovering over a marker
+// src/app/panels/bettermap/module.js:78
+
+==== Queries
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/bettermap/module.js:82
+

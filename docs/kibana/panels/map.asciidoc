@@ -1,0 +1,32 @@
+== Map
+Status: *Stable*
+
+The map panel translates 2 letter country or state codes into shaded regions on a map. Currently
+available maps are world, usa and europe.
+
+// src/app/panels/map/module.js:5
+
+=== Parameters
+
+map:: Map to display. world, usa, europe
+// src/app/panels/map/module.js:48
+
+colors:: An array of colors to use to shade the map. If 2 colors are specified, shades
+between them will be used. For example [`#A0E2E2', `#265656']
+// src/app/panels/map/module.js:54
+
+size:: Max number of regions to shade
+// src/app/panels/map/module.js:59
+
+exclude:: exclude this array of regions. For example [`US',`BR',`IN']
+// src/app/panels/map/module.js:63
+
+spyable:: Setting spyable to false disables the inspect icon.
+// src/app/panels/map/module.js:67
+
+==== Queries
+queries object:: This object describes the queries to use on this panel.
+queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
+queries.ids::: In +selected+ mode, which query ids are selected.
+// src/app/panels/map/module.js:71
+
