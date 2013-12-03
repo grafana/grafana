@@ -712,7 +712,6 @@ angular.module('$strap.directives').directive('bsTabs', [
             scope.$watch(iAttrs.ngModel, function (newValue, oldValue) {
               if (angular.isUndefined(newValue))
                 return;
-              console.log(oldValue +" -> "+ newValue);
               activeTab = newValue;
               setTimeout(function () {
                 // Check if we're still on the same tab before making the switch
