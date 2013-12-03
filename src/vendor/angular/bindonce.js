@@ -11,7 +11,6 @@
 
  .directive('bindonce', function()
  {
-  console.log('called');
   var toBoolean = function(value)
   {
     if (value && value.length !== 0)

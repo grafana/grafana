@@ -85,6 +85,11 @@ function (angular, app, _, kbn, moment) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function () {
+      $scope.columns = {};
+      _.each($scope.panel.fields,function(field) {
+        $scope.columns[field] = true;
+      });
+
       $scope.Math = Math;
       $scope.identity = angular.identity;
       $scope.$on('refresh',function(){$scope.get_data();});
@@ -159,8 +164,10 @@ function (angular, app, _, kbn, moment) {
     $scope.toggle_field = function(field) {
       if (_.indexOf($scope.panel.fields,field) > -1) {
         $scope.panel.fields = _.without($scope.panel.fields,field);
+        delete $scope.columns[field];
       } else {
         $scope.panel.fields.push(field);
+        $scope.columns[field] = true;
       }
     };
 
