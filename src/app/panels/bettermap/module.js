@@ -213,13 +213,17 @@ function (angular, app, _, L, localRequire) {
               layerGroup.clearLayers();
             }
 
+            var markerList = [];
+
             _.each(scope.data, function(p) {
               if(!_.isUndefined(p.tooltip) && p.tooltip !== '') {
-                layerGroup.addLayer(L.marker(p.coordinates).bindLabel(p.tooltip));
+                markerList.push(L.marker(p.coordinates).bindLabel(p.tooltip));
               } else {
-                layerGroup.addLayer(L.marker(p.coordinates));
+                markerList.push(L.marker(p.coordinates));
               }
             });
+
+            layerGroup.addLayers(markerList);
 
             layerGroup.addTo(map);
 
