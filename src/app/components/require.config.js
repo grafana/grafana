@@ -20,6 +20,7 @@ require.config({
     'angular-sanitize':       '../vendor/angular/angular-sanitize',
     timepicker:               '../vendor/angular/timepicker',
     datepicker:               '../vendor/angular/datepicker',
+    bindonce:                 '../vendor/angular/bindonce',
 
     underscore:               'components/underscore.extended',
     'underscore-src':         '../vendor/underscore',
@@ -84,7 +85,7 @@ require.config({
     'angular-resource':     ['angular'],
     'angular-route':        ['angular'],
     'angular-touch':        ['angular'],
-
+    'bindonce':             ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
 
     timepicker:             ['jquery', 'bootstrap'],

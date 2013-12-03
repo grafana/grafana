@@ -2,9 +2,6 @@
   "title": "Logstash Search",
   "services": {
     "query": {
-      "idQueue": [
-        1
-      ],
       "list": {
         "0": {
           "query": "{{ARGS.query || '*'}}",
@@ -20,9 +17,6 @@
       ]
     },
     "filter": {
-      "idQueue": [
-        1
-      ],
       "list": {
         "0": {
           "type": "time",

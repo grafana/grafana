@@ -14,20 +14,22 @@ function (angular, _, config) {
 
     this.list = ['_type'];
     this.mapping = {};
+    this.fullMapping = {};
 
     $rootScope.$watch(function(){return dashboard.indices;},function(n) {
       if(!_.isUndefined(n) && n.length) {
         // Only get the mapping for indices we don't know it for
-        var indices = _.difference(n,_.keys(self.mapping));
+        var indices = _.difference(n,_.keys(self.fullMapping));
         // Only get the mapping if there are new indices
         if(indices.length > 0) {
           self.map(indices).then(function(result) {
-            self.mapping = _.extend(self.mapping,result);
-            self.list = mapFields(self.mapping);
+            self.fullMapping = _.extend(self.fullMapping,result);
+            self.list = mapFields(self.fullMapping);
           });
         // Otherwise just use the cached mapping
         } else {
-          self.list = mapFields(_.pick(self.mapping,n));
+          // This is inefficient, should not need to reprocess?
+          self.list = mapFields(_.pick(self.fullMapping,n));
         }
       }
     });
@@ -57,12 +59,13 @@ function (angular, _, config) {
         }
       });
 
+      // Flatten the mapping of each index into dot notated keys.
       return request.then(function(p) {
         var mapping = {};
-        _.each(p.data, function(v,k) {
-          mapping[k] = {};
-          _.each(v, function (v,f) {
-            mapping[k][f] = flatten(v);
+        _.each(p.data, function(type,index) {
+          mapping[index] = {};
+          _.each(type, function (fields,typename) {
+            mapping[index][typename] = flatten(fields);
           });
         });
         return mapping;

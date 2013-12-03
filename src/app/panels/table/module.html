@@ -8,24 +8,29 @@
   </style>
 
   <div class="row-fluid">
-    <div ng-class="{'span3':panel.field_list}" ng-show="panel.field_list">
+    <div bindonce ng-class="{'span3':panel.field_list}" ng-if="panel.field_list">
       <div class="sidebar-nav">
         <strong>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></strong><p>
         <div class="small">
-          <span class="link" ng-click="panel.all_fields = true;" ng-class="{strong:panel.all_fields}">All</span> /
-           <span class="link" ng-click="panel.all_fields = false;" ng-class="{strong:!panel.all_fields}">Current</span>
+          <span class="link" ng-click="panel.all_fields = true;" ng-class="{strong:panel.all_fields}">
+            All ({{fields.list.length}})</span><br>
+          <span class="link" ng-click="panel.all_fields = false;" ng-class="{strong:!panel.all_fields}">
+            Current ({{current_fields.length || 0}})</span>
+
         </div>
         <div><input type="text" class="input-medium" placeholder="Type to filter..." ng-model="fieldFilter"></div>
 
-
-        <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;">
-          <li ng-style="panel.style" ng-repeat="field in fields.list|filter:fieldFilter|orderBy:identity" ng-show="panel.all_fields">
-            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
-            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+        <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;" ng-if="panel.all_fields">
+          <li ng-style="panel.style" ng-repeat="field in fields.list|filter:fieldFilter|orderBy:identity">
+            <i class="pointer" ng-class="{'icon-check': columns[field],'icon-check-empty': _.isUndefined(columns[field])}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: columns[field]}" bo-text="field"></a>
           </li>
-          <li ng-style="panel.style" ng-repeat="field in current_fields|filter:fieldFilter|orderBy:identity" ng-hide="panel.all_fields">
-            <i class="pointer" ng-class="{'icon-check': _.contains(panel.fields,field),'icon-check-empty': !_.contains(panel.fields,field)}" ng-click="toggle_field(field)"></i>
-            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: _.contains(panel.fields,field)}">{{field}}</a>
+        </ul>
+
+        <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;" ng-if="!panel.all_fields">
+          <li ng-style="panel.style" ng-repeat="field in current_fields|filter:fieldFilter|orderBy:identity">
+            <i class="pointer" ng-class="{'icon-check': columns[field],'icon-check-empty': _.isUndefined(columns[field])}" ng-click="toggle_field(field)"></i>
+            <a class="pointer" data-unique="1" bs-popover="'app/panels/table/micropanel.html'" data-placement="rightTop" ng-click="toggle_micropanel(field,true)" ng-class="{label: columns[field]}" bo-text="field"></a>
           </li>
         </ul>
 
@@ -61,12 +66,12 @@
           </th>
 
         </thead>
-        <tbody ng-repeat="event in data| slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
+        <tbody bindonce ng-repeat="event in data| slice:panel.offset:panel.offset+panel.size" ng-class-odd="'odd'">
           <tr ng-click="toggle_details(event)" class="pointer">
-            <td ng-show="panel.fields.length<1">{{event._source|stringify|tableTruncate:panel.trimFactor:1}}</td>
-            <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" ng-bind-html-unsafe="(event.kibana.highlight[field]||event.kibana._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
+            <td ng-if="panel.fields.length<1" bo-text="event._source|stringify|tableTruncate:panel.trimFactor:1"></td>
+            <td ng-show="panel.fields.length>0" ng-repeat="field in panel.fields" bo-html="(event.kibana.highlight[field]||event.kibana._source[field]) |tableHighlight | tableTruncate:panel.trimFactor:panel.fields.length"></td>
           </tr>
-          <tr ng-show="event.kibana.details">
+          <tr ng-if="event.kibana.details">
             <td colspan={{panel.fields.length}} ng-switch="event.kibana.view">
               <span>
                 View:
@@ -82,18 +87,18 @@
                   <th>Value</th>
                 </thead>
                 <tr ng-repeat="(key,value) in event.kibana._source track by $index" ng-class-odd="'odd'">
-                  <td>{{key}}</td>
+                  <td bo-text="key"></td>
                   <td style="white-space:nowrap">
                     <i class='icon-search pointer' ng-click="build_search(key,value)" bs-tooltip="'Add filter to match this value'"></i>
                     <i class='icon-ban-circle pointer' ng-click="build_search(key,value,true)" bs-tooltip="'Add filter to NOT match this value'"></i>
                     <i class="pointer icon-th" ng-click="toggle_field(key)" bs-tooltip="'Toggle table column'"></i>
                   </td>
                   <!-- At some point we need to create a more efficient way of applying the filter pipeline -->
-                  <td style="white-space:pre-wrap" ng-bind-html-unsafe="value|noXml|urlLink|stringify"></td>
+                  <td style="white-space:pre-wrap" bo-html="value|noXml|urlLink|stringify"></td>
                 </tr>
               </table>
-              <pre style="white-space:pre-wrap"  ng-bind-html="without_kibana(event)|tableJson:2" ng-switch-when="json"></pre>
-              <pre ng-bind-html="without_kibana(event)|tableJson:1" ng-switch-when="raw"></pre>
+              <pre style="white-space:pre-wrap"  bo-html="without_kibana(event)|tableJson:2" ng-switch-when="json"></pre>
+              <pre bo-html="without_kibana(event)|tableJson:1" ng-switch-when="raw"></pre>
             </td>
           </tr>
         </tbody>

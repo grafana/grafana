@@ -184,17 +184,19 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Set the current dashboard
       self.current = _.clone(dashboard);
 
-      // Ok, now that we've setup the current dashboard, we can inject our services
-      querySrv = $injector.get('querySrv');
-      filterSrv = $injector.get('filterSrv');
+      // Delay this until we're sure that querySrv and filterSrv are ready
+      $timeout(function() {
+        // Ok, now that we've setup the current dashboard, we can inject our services
+        querySrv = $injector.get('querySrv');
+        filterSrv = $injector.get('filterSrv');
 
-      // Make sure these re-init
-      querySrv.init();
-      filterSrv.init();
-
-      // If there's an interval set, the indices have not been calculated yet,
-      // so there is no data. Call refresh to calculate the indices and notify the panels.
-      self.refresh();
+        // Make sure these re-init
+        querySrv.init();
+        filterSrv.init();
+      },0).then(function() {
+        // Call refresh to calculate the indices and notify the panels that we're ready to roll
+        self.refresh();
+      });
 
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
