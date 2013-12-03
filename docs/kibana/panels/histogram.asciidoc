@@ -28,7 +28,7 @@ y-axis:: Show the y-axis
 scale:: Scale the y-axis by this factor
 // src/app/panels/histogram/module.js:88
 
-y_as_bytes:: Show the y-axis scale as bytes, automatically round to KB, MB, GB, etc.
+y_format:: 'none','bytes','short '
 // src/app/panels/histogram/module.js:92
 
 ==== Annotations

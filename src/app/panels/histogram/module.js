@@ -90,9 +90,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_as_bytes:: Show the y-axis scale as bytes, automatically round to KB, MB, GB, etc.
+       * y_format:: 'none','bytes','short '
        */
-      y_as_bytes    : false,
+      y_format    : 'none',
       /** @scratch /panels/histogram/5
        * grid object:: Min and max y-axis values
        * grid.min::: Minimum y-axis value
@@ -632,8 +632,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               }
             };
 
-            if(scope.panel.y_as_bytes) {
+            if(scope.panel.y_format === 'bytes') {
               options.yaxis.mode = "byte";
+            }
+
+            if(scope.panel.y_format === 'short') {
+              options.yaxis.tickFormatter = function(val) {
+                return kbn.shortFormat(val,0);
+              };
             }
 
             if(scope.panel.annotate.enable) {
@@ -724,8 +730,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             value = (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') ?
               item.datapoint[1] - item.datapoint[2] :
               item.datapoint[1];
-            if(scope.panel.y_as_bytes) {
+            if(scope.panel.y_format === 'bytes') {
               value = kbn.byteFormat(value,2);
+            }
+            if(scope.panel.y_format === 'short') {
+              value = kbn.shortFormat(value,2);
             }
             timestamp = scope.panel.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :

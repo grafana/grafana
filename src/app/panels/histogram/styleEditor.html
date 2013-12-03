@@ -29,6 +29,10 @@
       <label class="small">Point Radius</label>
       <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]"></select>
     </div>
+    <div class="editor-option">
+      <label class="small">Y Format <tip>Y-axis formatting</tip></label>
+      <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes']"></select>
+    </div>
   </div>
   <div class="section">
     <h5>Multiple Series</h5>
