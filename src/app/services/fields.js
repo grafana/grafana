@@ -17,7 +17,7 @@ function (angular, _, config) {
     this.fullMapping = {};
 
     $rootScope.$watch(function(){return dashboard.indices;},function(n) {
-      if(!_.isUndefined(n) && n.length) {
+      if(!_.isUndefined(n) && n.length && dashboard.current.index.warm_fields) {
         // Only get the mapping for indices we don't know it for
         var indices = _.difference(n,_.keys(self.fullMapping));
         // Only get the mapping if there are new indices

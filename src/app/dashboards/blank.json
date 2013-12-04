@@ -26,6 +26,7 @@
   "index": {
     "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "_all"
+    "default": "_all",
+    "warm_fields": false
   }
 }

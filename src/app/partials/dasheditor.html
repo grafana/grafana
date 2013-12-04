@@ -62,6 +62,10 @@
         <h6>Default Index <small ng-show="dashboard.current.index.interval != 'none'">If index not found</small></h6>
         <input type="text" class="input-medium" ng-model="dashboard.current.index.default">
       </div>
+      <div class="span2">
+        <h6>Preload Fields <i class="icon-question-sign" bs-tooltip="'Preload available fields for the purpose of autocomplete. Turn this off if you have many fields'"></i></h6>
+        <input type="checkbox" ng-model="dashboard.current.index.warm_fields" ng-checked="dashboard.current.index.warm_fields" />
+      </div>
     </div>
   </div>
 

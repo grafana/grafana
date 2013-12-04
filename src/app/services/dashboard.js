@@ -57,7 +57,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       index: {
         interval: 'none',
         pattern: '_all',
-        default: 'INDEX_MISSING'
+        default: 'INDEX_MISSING',
+        warm_fields: true
       },
       refresh: false
     };
