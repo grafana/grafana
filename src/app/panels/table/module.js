@@ -110,6 +110,14 @@ function (angular, app, _, kbn, moment) {
        */
       trimFactor: 300,
       /** @scratch /panels/table/5
+       * localTime:: Set to true to adjust the timeField to the browser's local time
+       */
+      localTime: false,
+      /** @scratch /panels/table/5
+       * timeField:: If localTime is set to true, this field will be adjusted to the browsers local time
+       */
+      timeField: '@timestamp',
+      /** @scratch /panels/table/5
        * spyable:: Set to false to disable the inspect icon
        */
       spyable : true,
@@ -258,7 +266,8 @@ function (angular, app, _, kbn, moment) {
         _segment,
         request,
         boolQuery,
-        results;
+        queries,
+        sort;
 
       $scope.panel.error =  false;
 
@@ -266,6 +275,12 @@ function (angular, app, _, kbn, moment) {
       if(dashboard.indices.length === 0) {
         return;
       }
+
+      sort = [$scope.ejs.Sort($scope.panel.sort[0]).order($scope.panel.sort[1])];
+      if($scope.panel.localTime) {
+        sort.push($scope.ejs.Sort($scope.panel.timeField).order($scope.panel.sort[1]));
+      }
+
 
       $scope.panelMeta.loading = true;
 
@@ -275,7 +290,8 @@ function (angular, app, _, kbn, moment) {
       request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
-      var queries = querySrv.getQueryObjs($scope.panel.queries.ids);
+
+      queries = querySrv.getQueryObjs($scope.panel.queries.ids);
 
       boolQuery = $scope.ejs.BoolQuery();
       _.each(queries,function(q) {
@@ -294,14 +310,12 @@ function (angular, app, _, kbn, moment) {
           .postTags('@end-highlight@')
         )
         .size($scope.panel.size*$scope.panel.pages)
-        .sort($scope.panel.sort[0],$scope.panel.sort[1]);
+        .sort(sort);
 
       $scope.populate_modal(request);
 
-      results = request.doSearch();
-
       // Populate scope when we have results
-      results.then(function(results) {
+      request.doSearch().then(function(results) {
         $scope.panelMeta.loading = false;
 
         if(_segment === 0) {
@@ -470,19 +484,9 @@ function (angular, app, _, kbn, moment) {
   });
 
   // WIP
-  module.filter('tableFieldFormat', function(fields){
-    return function(text,field,event,scope) {
-      var type;
-      if(
-        !_.isUndefined(fields.mapping[event._index]) &&
-        !_.isUndefined(fields.mapping[event._index][event._type])
-      ) {
-        type = fields.mapping[event._index][event._type][field]['type'];
-        if(type === 'date' && scope.panel.normTimes) {
-          return moment(text).format('YYYY-MM-DD HH:mm:ss');
-        }
-      }
-      return text;
+  module.filter('tableLocalTime', function(){
+    return function(text,event) {
+      return moment(event.sort[1]).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
     };
   });
 

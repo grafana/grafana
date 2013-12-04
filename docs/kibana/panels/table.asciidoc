@@ -52,12 +52,18 @@ columns in the table, would trim each column at 20 character. The entirety of th
 still available in the expanded view of the event.
 // src/app/panels/table/module.js:105
 
-spyable:: Set to false to disable the inspect icon
+localTime:: Set to true to adjust the timeField to the browser's local time
 // src/app/panels/table/module.js:112
+
+timeField:: If localTime is set to true, this field will be adjusted to the browsers local time
+// src/app/panels/table/module.js:116
+
+spyable:: Set to false to disable the inspect icon
+// src/app/panels/table/module.js:120
 
 ==== Queries
 queries object:: This object describes the queries to use on this panel.
 queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
 queries.ids::: In +selected+ mode, which query ids are selected.
-// src/app/panels/table/module.js:116
+// src/app/panels/table/module.js:124
 
