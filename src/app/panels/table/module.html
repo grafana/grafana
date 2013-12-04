@@ -10,11 +10,11 @@
   <div class="row-fluid">
     <div bindonce ng-class="{'span3':panel.field_list}" ng-if="panel.field_list">
       <div class="sidebar-nav">
-        <strong>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'" ng-show="panel.field_list"></i></strong><p>
+        <strong>Fields <i class=" icon-chevron-sign-left pointer " ng-click="panel.field_list = !panel.field_list" bs-tooltip="'Hide field list'"></i></strong><p>
         <div class="small">
-          <span class="link" ng-click="panel.all_fields = true;" ng-class="{strong:panel.all_fields}">
-            All ({{fields.list.length}})</span><br>
-          <span class="link" ng-click="panel.all_fields = false;" ng-class="{strong:!panel.all_fields}">
+          <span class="link small" ng-click="panel.all_fields = true;" ng-if="fields.list.length" ng-class="{strong:panel.all_fields}">
+            All ({{fields.list.length}})</span> /
+          <span class="link small" ng-click="panel.all_fields = false;" ng-class="{strong:!panel.all_fields}">
             Current ({{current_fields.length || 0}})</span>
 
         </div>
