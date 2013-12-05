@@ -50,7 +50,8 @@
           "group": [
             "default"
           ],
-          "type": "graph"
+          "type": "graph",
+          "someprop": "hej from config"
         }
       ],
       "notice": true

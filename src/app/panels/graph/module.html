@@ -1,9 +1,13 @@
 <div ng-controller='graph' ng-init="init()">
-	<h2>{{saySomething}}</h2>
+	<h2>{{panel.someprop}}</h2>
 
 	<ul>
 		<li>{{panel.graphiteUrl}}</li>
 		<li>{{panel.targets}}</li>
 	</ul>
-
+	<mychart ng-model='data'></mychart>
+	<div class="chart_container flot" id="chart_container_flot">
+        <div class="chart" id="chart_flot" height="300px" width="700px"></div>
+        <div class="legend" id="legend_flot_simple"></div>
+    </div>
 </div>

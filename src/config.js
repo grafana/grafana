@@ -38,21 +38,9 @@ function (Settings) {
      * dashboard, but this list is used in the "add panel" interface.
      */
     panel_names: [
-      'histogram',
-      'map',
-      'pie',
-      'table',
-      'filtering',
-      'timepicker',
+      'graph',
       'text',
-      'hits',
-      'dashcontrol',
-      'column',
-      'trends',
-      'bettermap',
-      'query',
-      'terms',
-      'sparklines'
+      'column'
     ]
   });
 });
