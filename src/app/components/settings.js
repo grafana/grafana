@@ -10,9 +10,10 @@ function (_) {
      * @type {Object}
      */
     var defaults = {
-      elasticsearch : "http://"+window.location.hostname+":9200",
-      panel_names   : [],
-      kibana_index  : 'kibana-int'
+      elasticsearch     : "http://"+window.location.hostname+":9200",
+      panel_names       : [],
+      kibana_index      : 'kibana-int',
+      default_route     : '/dashboard/file/default.json'
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

@@ -12,9 +12,10 @@ define([
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce'
+  'bindonce',
 ],
 function (angular, $, _, appLevelRequire) {
+
   "use strict";
 
   var app = angular.module('kibana', []),
@@ -24,6 +25,11 @@ function (angular, $, _, appLevelRequire) {
     // these are the functions that we need to call to register different
     // features if we define them after boot time
     register_fns = {};
+
+  app.constant('kibanaVersion',"3.0.0pre5");
+
+  // Use this for cache busting partials
+  app.constant('cacheBust',"cache-bust="+Date.now());
 
   /**
    * Tells the application to watch the module, once bootstraping has completed
@@ -59,6 +65,7 @@ function (angular, $, _, appLevelRequire) {
   };
 
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
+
     $routeProvider
       .when('/dashboard', {
         templateUrl: 'app/partials/dashboard.html',
@@ -72,6 +79,7 @@ function (angular, $, _, appLevelRequire) {
       .otherwise({
         redirectTo: 'dashboard'
       });
+
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;

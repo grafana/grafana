@@ -50,7 +50,7 @@ require.config({
     },
 
     angular: {
-      deps: ['jquery'],
+      deps: ['jquery','config'],
       exports: 'angular'
     },
 
@@ -67,6 +67,7 @@ require.config({
     },
 
     // simple dependency declaration
+    //
     'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
     'jquery.flot.byte':     ['jquery', 'jquery.flot'],

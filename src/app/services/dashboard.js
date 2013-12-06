@@ -102,7 +102,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           self.script_load(_id);
           break;
         default:
-          self.file_load('default.json');
+          $location.path(config.default_route);
         }
 
       // No dashboard in the URL
@@ -116,7 +116,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           self.dash_load(dashboard);
         // No? Ok, grab default.json, its all we have now
         } else {
-          self.file_load('default.json');
+          $location.path(config.default_route);
         }
       }
     };
