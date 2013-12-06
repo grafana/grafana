@@ -26,7 +26,7 @@ function (angular, $, _, appLevelRequire) {
     // features if we define them after boot time
     register_fns = {};
 
-  app.constant('kibanaVersion',"3.0.0pre5");
+  app.constant('version',"3.0.0pre5");
 
   // Use this for cache busting partials
   app.constant('cacheBust',"cache-bust="+Date.now());

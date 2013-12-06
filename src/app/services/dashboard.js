@@ -101,20 +101,29 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         case('script'):
           self.script_load(_id);
           break;
+        case('local'):
+          self.local_load();
+          break;
         default:
           $location.path(config.default_route);
         }
-
       // No dashboard in the URL
       } else {
-        // Check if browser supports localstorage, and if there's a dashboard
-        if (Modernizr.localstorage &&
-          !(_.isUndefined(window.localStorage['dashboard'])) &&
-          window.localStorage['dashboard'] !== ''
-        ) {
-          var dashboard = JSON.parse(window.localStorage['dashboard']);
-          self.dash_load(dashboard);
-        // No? Ok, grab default.json, its all we have now
+        // Check if browser supports localstorage, and if there's an old dashboard. If there is,
+        // inform the user that they should save their dashboard to Elasticsearch and then set that
+        // as their default
+        if (Modernizr.localstorage) {
+          if(!(_.isUndefined(window.localStorage['dashboard'])) && window.localStorage['dashboard'] !== '') {
+            console.log(window.localStorage['dashboard']);
+            $location.path(config.default_route);
+            alertSrv.set('Saving to browser storage has been replaced',' with saving to Elasticsearch.'+
+              ' Click <a href="#/dashboard/local/deprecated">here</a> to load your old dashboard anyway.');
+          } else if(!(_.isUndefined(window.localStorage.kibanaDashboardDefault))) {
+            $location.path(window.localStorage.kibanaDashboardDefault);
+          } else {
+            $location.path(config.default_route);
+          }
+        // No? Ok, grab the default route, its all we have now
         } else {
           $location.path(config.default_route);
         }
@@ -230,10 +239,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       return true;
     };
 
-    this.set_default = function(dashboard) {
+    this.set_default = function(route) {
+      console.log(route);
       if (Modernizr.localstorage) {
-        window.localStorage['dashboard'] = angular.toJson(dashboard || self.current);
-        $location.path('/dashboard');
+        // Purge any old dashboards
+        if(!_.isUndefined(window.localStorage['dashboard'])) {
+          delete window.localStorage['dashboard'];
+        }
+        window.localStorage.kibanaDashboardDefault = route;
         return true;
       } else {
         return false;
@@ -242,7 +255,12 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.purge_default = function() {
       if (Modernizr.localstorage) {
-        window.localStorage['dashboard'] = '';
+        // Purge any old dashboards
+        if(!_.isUndefined(window.localStorage['dashboard'])) {
+
+          delete window.localStorage['dashboard'];
+        }
+        delete window.localStorage.kibanaDashboardDefault;
         return true;
       } else {
         return false;
@@ -271,6 +289,31 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         _r = false;
       }
       return _r;
+    };
+
+    this.local_load = function() {
+      var dashboard = JSON.parse(window.localStorage['dashboard']);
+      dashboard.rows.unshift({
+        height: "30",
+        title: "Deprecation Notice",
+        panels: [
+          {
+            title: 'WARNING: Legacy dashboard',
+            type: 'text',
+            span: 12,
+            mode: 'html',
+            content: 'This dashboard has been loaded from the browsers local cache. If you use '+
+            'another brower or computer you will not be able to access it! '+
+            '\n\n  <h4>Good news!</h4> Kibana'+
+            ' now stores saved dashboards in Elasticsearch. Click the <i class="icon-save"></i> '+
+            'button in the top left to save this dashboard. Then select "Set as Home" from'+
+            ' the "advanced" sub menu to automatically use the stored dashboard as your Kibana '+
+            'landing page afterwards'+
+            '<br><br><strong>Tip:</strong> You may with to remove this row before saving!'
+          }
+        ]
+      });
+      self.dash_load(dashboard);
     };
 
     this.file_load = function(file) {
