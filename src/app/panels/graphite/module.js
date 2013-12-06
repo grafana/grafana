@@ -64,21 +64,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
     // Set and populate defaults
     var _d = {
       /** @scratch /panels/histogram/3
-       * === Parameters
-       * ==== Axis options
-       * mode:: Value to use for the y-axis. For all modes other than count, +value_field+ must be
-       * defined. Possible values: count, mean, max, min, total.
-       */
-      mode          : 'count',
-      /** @scratch /panels/histogram/3
-       * time_field:: x-axis field. This must be defined as a date type in Elasticsearch.
-       */
-      time_field    : '@timestamp',
-      /** @scratch /panels/histogram/3
-       * value_field:: y-axis field if +mode+ is set to mean, max, min or total. Must be numeric.
-       */
-      value_field   : null,
-      /** @scratch /panels/histogram/3
        * x-axis:: Show the x-axis
        */
       'x-axis'      : true,
@@ -102,16 +87,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
       grid          : {
         max: null,
         min: 0
-      },
-      /** @scratch /panels/histogram/5
-       * ==== Queries
-       * queries object:: This object describes the queries to use on this panel.
-       * queries.mode::: Of the queries available, which to use. Options: +all, pinned, unpinned, selected+
-       * queries.ids::: In +selected+ mode, which query ids are selected.
-       */
-      queries     : {
-        mode        : 'all',
-        ids         : []
       },
       /** @scratch /panels/histogram/3
        * ==== Annotations
@@ -151,7 +126,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
        * ==== Drawing options
        * lines:: Show line chart
        */
-      lines         : false,
+      lines         : true,
       /** @scratch /panels/histogram/3
        * fill:: Area fill factor for line charts, 1-10
        */
@@ -159,7 +134,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
       /** @scratch /panels/histogram/3
        * linewidth:: Weight of lines in pixels
        */
-      linewidth     : 3,
+      linewidth     : 1,
       /** @scratch /panels/histogram/3
        * points:: Show points on chart
        */
@@ -171,7 +146,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
       /** @scratch /panels/histogram/3
        * bars:: Show bars on chart
        */
-      bars          : true,
+      bars          : false,
       /** @scratch /panels/histogram/3
        * stack:: Stack multiple series
        */
@@ -302,7 +277,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
         {
           name: 'series 1',
           color: '#CC6699',
-          target: "summarize(groupByNode(prod.apps.tradera_site.*.counters.global.request_status.code_{301,302,404}.count, 7, 'sum'), '1min')",
+          target: "summarize(sum(prod.apps.tradera_site.*.counters.global.request_status.code_404.count), '30s')",
+          //target: 'integral(prod.apps.touchweb.snake.counters.login.success.count)',
           //target: "randomWalk('random1')",
         }
       ],
@@ -351,8 +327,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
 
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
-      console.log('range: ', range);
-      console.log('interval: ', interval);
+      console.log('interval: ' + interval);
+
+      graphOptions.from = $.plot.formatDate(range.from, '%H%:%M_%Y%m%d');
 
       $scope.panelMeta.loading = true;
 
@@ -374,7 +351,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
           interval: "30s",
           start_date: range && range.from,
           end_date: range && range.to,
-          fill_style: 'null'
+          fill_style: 'connect'
         };
 
         var hits = 0;
@@ -383,9 +360,14 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
           var time_series = new timeSeries.ZeroFilled(tsOpts);
 
           _.each(targetData.datapoints, function(valueArray) {
-            time_series.addValue(valueArray[1] * 1000, valueArray[0]);
+            var value = valueArray[0];
+            if (value) {
+              time_series.addValue(valueArray[1] * 1000, value);
+            }
             hits += +1;
           });
+
+          console.log('graphite timeseries: ', time_series);
 
           $scope.data.push({
             info: {
@@ -531,7 +513,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
                   // Silly, but fixes bug in stacked percentages
                   fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
                   lineWidth: scope.panel.linewidth,
-                  steps: false
+                  steps: true
                 },
                 bars:   {
                   show: scope.panel.bars,
@@ -617,20 +599,11 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
               }), true);
             }
 
-
             for (var i = 0; i < scope.data.length; i++) {
               var _d = scope.data[i].time_series.getFlotPairs(required_times);
-              if(scope.panel.derivative) {
-                _d = derivative(_d);
-              }
-              if(scope.panel.scale !== 1) {
-                _d = scale(_d,scope.panel.scale);
-              }
-              if(scope.panel.scaleSeconds) {
-                _d = scaleSeconds(_d,scope.panel.interval);
-              }
               scope.data[i].data = _d;
             }
+            console.log('Sent to plot', scope.data);
 
             scope.plot = $.plot(elem, scope.data, options);
 
@@ -701,3 +674,4 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
   });
 
 });
+
