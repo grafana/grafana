@@ -222,7 +222,9 @@ function (_, Interval) {
     var next, expected_next, prev, expected_prev;
 
     // add the current time
-    result.push([ time, this._data[time] || 0 ]);
+    if(this._data[time]){
+      result.push([ time, this._data[time]]);
+    }
 
     return result;
   };
