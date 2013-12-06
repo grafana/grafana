@@ -17,8 +17,21 @@
       ]
     },
     "filter": {
-      "list": {},
-      "ids": []
+      "list": {
+        "0": {
+          "type": "time",
+          "field": "@timestamp",
+          "from": "now-1h",
+          "to": "now",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
     }
   },
   "rows": [
@@ -30,28 +43,99 @@
       "collapsable": false,
       "panels": [
         {
+          "title": "graphite",
           "error": false,
-          "span": 4,
-          "editable": false,
-          "group": [
-            "default"
-          ],
-          "type": "text",
-          "mode": "markdown",
-          "content": "hej!",
-          "style": {},
-          "title": "",
-          "status": "Stable"
-        },
-        {
-          "error": false,
-          "span": 8,
+          "span": 12,
           "editable": true,
           "group": [
             "default"
           ],
-          "type": "graph",
-          "someprop": "hej from config"
+          "type": "graphite",
+          "spyable": true
+        }
+      ],
+      "notice": true
+    },
+    {
+      "title": "Intro",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": false,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "histogram",
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_format": "none",
+          "grid": {
+            "max": null,
+            "min": 0
+          },
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "annotate": {
+            "enable": false,
+            "query": "*",
+            "size": 20,
+            "field": "_type",
+            "sort": [
+              "_score",
+              "desc"
+            ]
+          },
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "30s",
+          "intervals": [
+            "auto",
+            "1s",
+            "1m",
+            "5m",
+            "10m",
+            "30m",
+            "1h",
+            "3h",
+            "12h",
+            "1d",
+            "1w",
+            "1y"
+          ],
+          "lines": false,
+          "fill": 0,
+          "linewidth": 3,
+          "points": false,
+          "pointradius": 5,
+          "bars": true,
+          "stack": true,
+          "spyable": true,
+          "zoomlinks": true,
+          "options": true,
+          "legend": true,
+          "show_query": true,
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "browser",
+          "percentage": false,
+          "zerofill": true,
+          "derivative": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          }
         }
       ],
       "notice": true
@@ -60,7 +144,7 @@
   "editable": true,
   "index": {
     "interval": "none",
-    "pattern": "[logstash-]YYYY.MM.DD",
+    "pattern": "applogs-error",
     "default": "_all",
     "warm_fields": false
   },
@@ -97,7 +181,10 @@
         "2h",
         "1d"
       ],
-      "timefield": "@timestamp"
+      "timefield": "@timestamp",
+      "enable": true,
+      "now": true,
+      "filter_id": 0
     }
   ],
   "loader": {

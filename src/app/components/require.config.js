@@ -44,8 +44,8 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
 
-    'ts-widget':            '../vendor/timeserieswidget/jquery.tswidget',
-    'ts-graphite-helpers':  '../vendor/timeserieswidget/graphite_helpers'
+    'ts-widget':              '../vendor/timeserieswidget/jquery.tswidget',
+    'ts-graphite-helpers':    '../vendor/timeserieswidget/graphite_helpers'
   },
   shim: {
     underscore: {
@@ -96,14 +96,7 @@ require.config({
 
     elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
 
-    'ts-widget': [
-        'jquery',
-        'jquery.flot',
-        'jquery.flot.selection',
-        'jquery.flot.stack',
-        'jquery.flot.time',
-        'ts-graphite-helpers'
-    ]
+    'ts-widget': ['jquery', 'jquery.flot', 'jquery.flot.selection', 'jquery.flot.stack', 'jquery.flot.time', 'ts-graphite-helpers']
   },
   waitSeconds: 60,
 });

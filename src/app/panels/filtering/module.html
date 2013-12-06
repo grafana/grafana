@@ -1,0 +1,90 @@
+<div ng-controller='filtering' ng-init="init()">
+  <style>
+    .filtering-container {
+      margin-top: 3px;
+    }
+    .filter-panel-filter {
+      display:inline-block;
+      vertical-align: top;
+      width: 220px;
+      padding: 5px 5px 0px 5px;
+      border: #555 1px solid;
+      margin: 5px 5px 5px 0px;
+    }
+    .filter-panel-filter ul {
+      margin-bottom: 3px;
+    }
+
+
+    .filter-must {
+      border-top: #7EB26D 3px solid;
+    }
+    .filter-mustNot {
+      border-top: #E24D42 3px solid;
+    }
+    .filter-either {
+      border-top: #EF843C 3px solid;
+    }
+    .filter-deselected {
+      opacity: 0.5;
+    }
+    .filter-action {
+      float:right;
+      margin-bottom: 0px !important;
+      margin-left: 3px;
+    }
+    .filter-mandate {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .filter-apply {
+      float:right;
+      margin-bottom: 5px;
+    }
+  </style>
+
+  <div class='filtering-container'>
+    <span ng-show="filterSrv.ids.length == 0">
+      <h5>No filters available</h5>
+    </span>
+    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter filter-{{filterSrv.list[id].mandate}}" ng-class="{'filter-deselected': !filterSrv.list[id].active}">
+      <div>
+        <strong>{{filterSrv.list[id].type}}</strong>
+        <span ng-show="!filterSrv.list[id].editing && isEditable(filterSrv.list[id])" class="filter-mandate" ng-click="filterSrv.list[id].editing = true">
+          {{filterSrv.list[id].mandate}}
+        </span>
+        <span ng-show="!isEditable(filterSrv.list[id])">
+          {{filterSrv.list[id].mandate}}
+        </span>
+
+        <span ng-show="filterSrv.list[id].editing">
+          <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']"></select>
+        </span>
+
+        <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(id)"></i>
+        <i class="filter-action pointer" ng-class="{'icon-check': filterSrv.list[id].active,'icon-check-empty': !filterSrv.list[id].active}" bs-tooltip="'Toggle'" ng-click="toggle(id)"></i>
+        <i class="filter-action pointer icon-edit" ng-hide="filterSrv.list[id].editing || !isEditable(filterSrv.list[id])" bs-tooltip="'Edit'" ng-click="filterSrv.list[id].editing = true"></i>
+      </div>
+
+      <div ng-hide="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
+        <ul class="unstyled">
+          <li ng-repeat="(key,value) in filterSrv.list[id] track by $index" ng-show="show_key(key)">
+            <strong>{{key}}</strong> : {{value}}
+          </li>
+        </ul>
+      </div>
+      <form ng-show="filterSrv.list[id].editing && isEditable(filterSrv.list[id])">
+        <ul class="unstyled">
+          <li ng-repeat="key in _.keys(filterSrv.list[id])" ng-show="show_key(key)">
+            <strong>{{key}}</strong> : <input type='text' ng-model="filterSrv.list[id][key]">
+          </li>
+        </ul>
+        <div>
+          <input type="submit" value="Apply" ng-click="filterSrv.list[id].editing=undefined;refresh()" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
+          <button ng-click="filterSrv.list[id].editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+        </div>
+      </form>
+    </div>
+    <i class="link icon-plus-sign" ng-click="add()" bs-tooltip="'Add a query filter'" data-placement="right"></i>
+  </div>
+</div>

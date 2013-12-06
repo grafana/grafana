@@ -5,7 +5,7 @@ define([
   'underscore',
   'ts-widget'
 ],
-function ($, angular, app, _, timeseriesWidget) {
+function ($, angular, app, _) {
   'use strict';
 
   var module = angular.module('kibana.panels.graph', []);
@@ -33,47 +33,42 @@ function ($, angular, app, _, timeseriesWidget) {
   angular
     .module('kibana.directives')
     .directive('mychart', function () {
-    return {
+      return {
         restrict: 'E',
-        link: function (scope, elem, attrs) {
-            var tsData = {
-              graphite_url: 'http://localhost:3030/data',
-              from: '-24hours',
-              until: 'now',
-              height: '300',
-              width: '740',
-              targets: [
-                  {
-                    name: 'series 1',
-                    color: '#CC6699',
-                    target: 'random1',
-                  }
-              ],
-              title: 'horizontal title',
-              vtitle: 'vertical title',
-              drawNullAsZero: false,
-              legend: { container: '#legend_flot_simple', noColumns: 1 },
+        link: function (scope, elem) {
+          var tsData = {
+            from: '-30d',
+            until: 'now',
+            height: '300',
+            width: '740',
+            targets: [
+              {
+                name: 'series 1',
+                color: '#CC6699',
+                target: 'randomWalk("random1")',
+              },
+              {
+                name: 'series 2',
+                color: '#006699',
+                target: 'randomWalk("random2")',
+              }
+            ],
+            title: 'horizontal title',
+            vtitle: 'vertical title',
+            drawNullAsZero: false,
+            state: 'stacked',
+            hover_details: true,
+            legend: { container: '#legend_flot_simple', noColumns: 4 },
           };
+
           $("#chart_flot").graphiteFlot(tsData, function(err) {
             console.log(err);
           });
 
-            console.log('asd');
-            $(elem).html('NJEEEJ!');
-            /*// If the data changes somehow, update it in the chart
-            scope.$watch('data', function(v){
-                 if(!chart){
-                    chart = $.plot(elem, v , options);
-                    elem.show();
-                }else{
-                    chart.setData(v);
-                    chart.setupGrid();
-                    chart.draw();
-                }
-            });*/
+          console.log('asd');
+          $(elem).html('NJEEEJ!');
         }
-    };
-
-  });
+      };
+    });
 
 });
