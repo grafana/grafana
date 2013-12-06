@@ -14,15 +14,15 @@
 
 
   <ul class="dropdown-menu" style="padding:10px">
-    <li ng-show='dashboard.current.loader.load_elasticsearch'>
+    <li ng-if='dashboard.current.loader.load_elasticsearch'>
       <form class="nomargin">
         <input type="text" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist('title:'+elasticsearch.query+'*')" placeholder="Type to filter"/>
       </form>
       <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
       <table class="table table-condensed table-striped">
-        <tr ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
+        <tr bindonce ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
           <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
-          <td><a href="#/dashboard/elasticsearch/{{row._id}}">{{row._id}}</a></td>
+          <td><a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a></td>
           <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/panels/dashcontrol/share.html'"></i></a></td>
         </tr>
       </table>

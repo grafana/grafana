@@ -1,5 +1,5 @@
-<div class="modal-body">
-  <div class="pull-right editor-title">{{panel.type}} settings</div>
+<div bindonce class="modal-body">
+  <div class="pull-right editor-title" bo-text="panel.type+' settings'"></div>
   <div ng-model="editor.index" bs-tabs>
     <div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
     </div>

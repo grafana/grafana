@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <div ng-show="editor.index == 0">
+  <div ng-if="editor.index == 0">
     <div class="row-fluid">
       <div class="span4">
         <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.current.title'></input>
@@ -24,7 +24,7 @@
       </div>
     </div>
   </div>
-  <div ng-show="editor.index == 1">
+  <div ng-if="editor.index == 1">
     <div class="row-fluid">
       <h4>Index Settings</h4>
       <div ng-show="dashboard.current.index.interval != 'none'" class="row-fluid">
@@ -69,7 +69,7 @@
     </div>
   </div>
 
-  <div ng-show="editor.index == 2">
+  <div ng-if="editor.index == 2">
     <div class="row-fluid">
       <div class="span12">
         <table class="table table-condensed table-striped">
@@ -105,7 +105,7 @@
     </div>
   </div>
 
-  <div ng-show="editor.index == 3">
+  <div ng-if="editor.index == 3">
     <h5>Pulldowns</h5>
     <div class="row-fluid">
       <div class="span2" ng-repeat="pulldown in dashboard.current.pulldowns">
@@ -117,7 +117,7 @@
     </div>
   </div>
 
-  <div ng-show="editor.index == 3" ng-controller="dashLoader">
+  <div ng-if="editor.index == 3" ng-controller="dashLoader">
     <h5>Save to</h5>
     <div class="row-fluid">
       <div class="span2">
