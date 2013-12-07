@@ -19,8 +19,7 @@ define([
   'kbn',
   'moment',
   './timeSeries',
-  './graphiteUtil',
-  'config',
+  './graphiteSrv',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -29,7 +28,7 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
+function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
 
   'use strict';
 
@@ -50,11 +49,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
         {
           title:'Style',
           src:'app/panels/graphite/styleEditor.html'
-        },
-        {
-          title:'Queries',
-          src:'app/panels/graphite/queriesEditor.html'
-        },
+        }
       ],
       status  : "Stable",
       description : "A bucketed time series chart of the current query or queries. Uses the "+
@@ -169,10 +164,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
        */
       legend        : true,
       /** @scratch /panels/histogram/3
-       * show_query:: If no alias is set, should the query be displayed?
-       */
-      show_query    : true,
-      /** @scratch /panels/histogram/3
        * interactive:: Enable click-and-drag to zoom functionality
        */
       interactive   : true,
@@ -197,23 +188,17 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
       /** @scratch /panels/histogram/3
        * derivative:: Show each point on the x-axis as the change from the previous point
        */
-      derivative    : false,
-      /** @scratch /panels/histogram/3
-       * tooltip object::
-       * tooltip.value_type::: Individual or cumulative controls how tooltips are display on stacked charts
-       * tooltip.query_as_alias::: If no alias is set, should the query be displayed?
-       */
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
-      }
+      },
+      targets: []
     };
 
     _.defaults($scope.panel,_d);
     _.defaults($scope.panel.tooltip,_d.tooltip);
     _.defaults($scope.panel.annotate,_d.annotate);
     _.defaults($scope.panel.grid,_d.grid);
-
 
 
     $scope.init = function() {
@@ -268,33 +253,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
       return $scope.panel.interval;
     };
 
-    var graphOptions = {
-      until: 'now',
-      targets: [
-        {
-          name: 'series 1',
-          color: '#CC6699',
-          target: "summarize(sum(prod.apps.tradera_site.*.counters.global.request_status.code_404.count), '30s')",
-          //target: 'integral(prod.apps.touchweb.snake.counters.login.success.count)',
-          //target: "randomWalk('random1')",
-        }
-      ]
-    };
-
-    $scope.getGraphiteData = function (options, parameters) {
-      return $.ajax({
-        accepts: { text: 'application/json' },
-        cache: false,
-        dataType: 'json',
-        url: config.graphiteUrl,
-        type: "POST",
-        data: parameters.join('&'),
-        error: function(xhr, textStatus, errorThrown) {
-          $scope.panel.error = 'Failed to do graphite POST request: ' + textStatus + ' : '  + errorThrown;
-        }
-      });
-    };
-
     $scope.colors = [
       "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0", //1
       "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477", //2
@@ -317,18 +275,24 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
     $scope.get_data = function() {
       delete $scope.panel.error;
 
+      $scope.panelMeta.loading = true;
+
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
 
-      graphOptions.from = $.plot.formatDate(range.from, '%H%:%M_%Y%m%d');
+      var graphiteLoadOptions = {
+        range: range,
+        targets: $scope.panel.targets
+      };
 
-      $scope.panelMeta.loading = true;
+      var result = RQ.sequence([graphiteSrv.loadGraphiteData]);
 
-      var graphiteParameters = graphiteUtil.build_graphite_options(graphOptions, true);
-      var request = $scope.getGraphiteData(graphOptions, graphiteParameters);
-      $scope.populate_modal(graphiteParameters);
+      result(function (results, failure) {
+        if (failure || !results) {
+          $scope.panel.error = 'Failed to do fetch graphite data: ' + failure;
+          return;
+        }
 
-      request.done(function(results) {
         $scope.data = [];
         $scope.panelMeta.loading = false;
 
@@ -339,7 +303,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
         console.log('Data from graphite:', results);
 
         var tsOpts = {
-          interval: "30s",
+          interval: interval,
           start_date: range && range.from,
           end_date: range && range.to,
           fill_style: 'connect'
@@ -380,7 +344,13 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
 
         // Tell the histogram directive to render.
         $scope.$emit('render');
-      });
+
+      }, graphiteLoadOptions);
+
+    };
+
+    $scope.add_target = function() {
+      $scope.panel.targets.push({target: ''});
     };
 
     // function $scope.zoom

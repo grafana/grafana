@@ -43,13 +43,18 @@ require.config({
 
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
+    rq:                       '../vendor/rq',
+    setImmediate:             '../vendor/setImmediate',
 
-    'ts-widget':              '../vendor/timeserieswidget/jquery.tswidget',
-    'ts-graphite-helpers':    '../vendor/timeserieswidget/graphite_helpers'
   },
   shim: {
     underscore: {
       exports: '_'
+    },
+
+    rq: {
+        deps: ['setImmediate'],
+        exports: 'RQ'
     },
 
     angular: {
