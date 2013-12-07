@@ -12,7 +12,8 @@ function (_) {
     var defaults = {
       elasticsearch : "http://"+window.location.hostname+":9200",
       panel_names   : [],
-      kibana_index  : 'kibana-int'
+      kibana_index  : 'kibana-int',
+      graphiteUrl   : null,
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

@@ -20,6 +20,7 @@ define([
   'moment',
   './timeSeries',
   './graphiteUtil',
+  'config',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -28,14 +29,14 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
+function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil, config) {
 
   'use strict';
 
-  var module = angular.module('kibana.panels.histogram', []);
+  var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('histogram', function($scope, querySrv, dashboard, filterSrv) {
+  module.controller('graphite', function($scope, querySrv, dashboard, filterSrv) {
     $scope.panelMeta = {
       modals : [
         {
@@ -48,11 +49,11 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
       editorTabs : [
         {
           title:'Style',
-          src:'app/panels/histogram/styleEditor.html'
+          src:'app/panels/graphite/styleEditor.html'
         },
         {
           title:'Queries',
-          src:'app/panels/histogram/queriesEditor.html'
+          src:'app/panels/graphite/queriesEditor.html'
         },
       ],
       status  : "Stable",
@@ -268,11 +269,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
     };
 
     var graphOptions = {
-      graphite_url: 'http://metrics.prod.tradera.com/render/',
-      from: '-1h',
       until: 'now',
-      height: '300',
-      width: '740',
       targets: [
         {
           name: 'series 1',
@@ -281,12 +278,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
           //target: 'integral(prod.apps.touchweb.snake.counters.login.success.count)',
           //target: "randomWalk('random1')",
         }
-      ],
-      title: 'horizontal title',
-      vtitle: 'vertical title',
-      drawNullAsZero: false,
-      state: 'stacked',
-      hover_details: true,
+      ]
     };
 
     $scope.getGraphiteData = function (options, parameters) {
@@ -294,7 +286,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
         accepts: { text: 'application/json' },
         cache: false,
         dataType: 'json',
-        url: options['graphite_url'],
+        url: config.graphiteUrl,
         type: "POST",
         data: parameters.join('&'),
         error: function(xhr, textStatus, errorThrown) {
@@ -327,7 +319,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
 
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
-      console.log('interval: ' + interval);
 
       graphOptions.from = $.plot.formatDate(range.from, '%H%:%M_%Y%m%d');
 
@@ -513,7 +504,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteUtil) {
                   // Silly, but fixes bug in stacked percentages
                   fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
                   lineWidth: scope.panel.linewidth,
-                  steps: true
+                  steps: false
                 },
                 bars:   {
                   show: scope.panel.bars,

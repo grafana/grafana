@@ -37,7 +37,7 @@
   "rows": [
     {
       "title": "Intro",
-      "height": "150px",
+      "height": "400px",
       "editable": true,
       "collapse": false,
       "collapsable": false,
@@ -52,90 +52,6 @@
           ],
           "type": "graphite",
           "spyable": true
-        }
-      ],
-      "notice": true
-    },
-    {
-      "title": "Intro",
-      "height": "150px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": false,
-      "panels": [
-        {
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "histogram",
-          "mode": "count",
-          "time_field": "@timestamp",
-          "value_field": null,
-          "x-axis": true,
-          "y-axis": true,
-          "scale": 1,
-          "y_format": "none",
-          "grid": {
-            "max": null,
-            "min": 0
-          },
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          },
-          "annotate": {
-            "enable": false,
-            "query": "*",
-            "size": 20,
-            "field": "_type",
-            "sort": [
-              "_score",
-              "desc"
-            ]
-          },
-          "auto_int": true,
-          "resolution": 100,
-          "interval": "30s",
-          "intervals": [
-            "auto",
-            "1s",
-            "1m",
-            "5m",
-            "10m",
-            "30m",
-            "1h",
-            "3h",
-            "12h",
-            "1d",
-            "1w",
-            "1y"
-          ],
-          "lines": false,
-          "fill": 0,
-          "linewidth": 3,
-          "points": false,
-          "pointradius": 5,
-          "bars": true,
-          "stack": true,
-          "spyable": true,
-          "zoomlinks": true,
-          "options": true,
-          "legend": true,
-          "show_query": true,
-          "interactive": true,
-          "legend_counts": true,
-          "timezone": "browser",
-          "percentage": false,
-          "zerofill": true,
-          "derivative": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
-          }
         }
       ],
       "notice": true
