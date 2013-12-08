@@ -2,13 +2,13 @@
   <div class="section">
     <h5>Chart Options</h5>
     <div class="editor-option">
-      <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars">
+      <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
     </div>
     <div class="editor-option">
-      <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines">
+      <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
     </div>
     <div class="editor-option">
-      <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points">
+      <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
     </div>
     <div class="editor-option">
       <label class="small">Selectable</label><input type="checkbox" ng-model="panel.interactive" ng-checked="panel.interactive">

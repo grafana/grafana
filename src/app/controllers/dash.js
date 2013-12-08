@@ -67,10 +67,6 @@ function (angular, config, _) {
       });
     };
 
-    $scope.closeFullEdit = function() {
-      $rootScope.$emit('fullEditMode', false);
-    };
-
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
         return true;

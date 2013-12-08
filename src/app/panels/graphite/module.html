@@ -110,5 +110,27 @@
         <span ng-if="panel.show_query">{{series.info.alias || series.info.query}}</span>
         <span ng-if="!panel.show_query">{{series.info.alias}}</span>
       </span>
-    </span>
+  </span>
+
+  <div class="fluid-row panel-full-edit-mode-controls" ng-show="inEditMode" style="margin-top: 20px;">
+      <div ng-model="editor.index" bs-tabs>
+        <div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
+        </div>
+      </div>
+      <div ng-show="editorTabs[editor.index] == 'General'">
+        <div ng-include src="'app/partials/panelgeneral.html'"></div>
+      </div>
+
+      <div ng-show="editorTabs[editor.index] == 'Panel'">
+        <div ng-include src="edit_path(panel.type)"></div>
+      </div>
+
+      <div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
+        <div ng-include src="tab.src"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" ng-click="closeEditMode()">Close</button>
+    </div>
+  </div>
 </div>

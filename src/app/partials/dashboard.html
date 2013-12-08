@@ -13,14 +13,6 @@
 <div class="container-fluid main">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
-      <!-- Full edit mode -->
-      <div class="row-fluid kibana-row" ng-show="fullEditMode" style="text-align: center; z-index: 1500; position: absolute; background-color: #272b30">
-        <h5>
-          Configure Panel
-          <i ng-click="closeFullEdit()" class="pointer icon-remove" style="position: relative; top: 0px; left: 15px;"></i>
-        </h5>
-      </div>
-
       <div ng-show="fullEditMode" class="modal-backdrop fade in"></div>
       <!-- Rows -->
       <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.current.rows" ng-style="row_style(row)">

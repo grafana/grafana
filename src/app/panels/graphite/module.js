@@ -225,6 +225,10 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       }
     };
 
+    $scope.closeEditMode = function() {
+      $rootScope.$emit('fullEditMode', false);
+    };
+
     $scope.interval_label = function(interval) {
       return $scope.panel.auto_int && interval === $scope.panel.interval ? interval+" (auto)" : interval;
     };
