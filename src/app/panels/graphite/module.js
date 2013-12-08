@@ -300,6 +300,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         }
 
         $scope.panelMeta.loading = false;
+        $scope.$apply();
 
         // Tell the histogram directive to render.
         $scope.$emit('render');
@@ -317,6 +318,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         }
 
         console.log('Data from graphite:', results);
+        console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
 
         var tsOpts = {
           interval: interval,
@@ -325,8 +327,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
           fill_style: 'connect'
         };
 
-        var hits = 0;
-
         _.each(results, function(targetData) {
           var time_series = new timeSeries.ZeroFilled(tsOpts);
 
@@ -334,10 +334,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
             if (valueArray[0]) {
               time_series.addValue(valueArray[1] * 1000, valueArray[0]);
             }
-            hits += +1;
           });
-
-          //console.log('graphite timeseries: ', time_series);
 
           $scope.data.push({
             info: {
@@ -346,11 +343,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
               enable: true
             },
             time_series: time_series,
-            hits: hits
+            hits: 0
           });
         });
-
-        $scope.hits = hits;
 
         requestion('ok');
       };
@@ -572,11 +567,15 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
               scope.data[i].data = _d;
             }
 
-            //console.log('Sent to plot', scope.data);
+            var totalDataPoints = _.reduce(scope.data, function(num, series) { return series.data.length + num; }, 0);
+            console.log('Datapoints[0] count:', scope.data[0].data.length);
+            console.log('Datapoints.Total count:', totalDataPoints);
+
 
             scope.plot = $.plot(elem, scope.data, options);
 
           } catch(e) {
+            console.log(e);
             // Nothing to do here
           }
         }
