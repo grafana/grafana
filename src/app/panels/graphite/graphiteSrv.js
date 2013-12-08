@@ -59,22 +59,24 @@ function ($, RQ, config) {
     return clean_options;
   }
 
-  function loadGraphiteData(requestion, options)
+  function loadGraphiteData(options)
   {
-    var graphOptions = {
-      from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
-      until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
-      targets: options.targets
-    }
+    return function (requestion) {
+      var graphOptions = {
+        from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
+        until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
+        targets: options.targets
+      }
 
-    var graphiteParameters = build_graphite_options(graphOptions, true);
-    getGraphiteData(graphiteParameters)
-      .done(function(data) {
-        requestion(data);
-      })
-      .fail(function() {
-        requestion(null, 'Error in ajax call to graphite');
-      });
+      var graphiteParameters = build_graphite_options(graphOptions, true);
+      getGraphiteData(graphiteParameters)
+        .done(function(data) {
+          requestion(data);
+        })
+        .fail(function() {
+          requestion(null, 'Error in ajax call to graphite');
+        });
+    }
   }
 
   function getGraphiteData(parameters) {

@@ -239,8 +239,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
     };
 
     $scope.get_interval = function () {
-      var interval = $scope.panel.interval,
-                      range;
+      var interval = $scope.panel.interval;
+      var range;
+
       if ($scope.panel.auto_int) {
         range = $scope.get_time_range();
         if (range) {
@@ -280,24 +281,39 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
 
+      console.log('Interval: ' + interval);
+
       var graphiteLoadOptions = {
         range: range,
         targets: $scope.panel.targets
       };
 
-      var result = RQ.sequence([graphiteSrv.loadGraphiteData]);
+      var result = RQ.sequence([
+        graphiteSrv.loadGraphiteData(graphiteLoadOptions),
+        $scope.receiveGraphiteData(range, interval)
+      ]);
 
-      result(function (results, failure) {
-        if (failure || !results) {
+      result(function (success, failure) {
+        if (failure) {
           $scope.panel.error = 'Failed to do fetch graphite data: ' + failure;
           return;
         }
 
-        $scope.data = [];
         $scope.panelMeta.loading = false;
 
+        // Tell the histogram directive to render.
+        $scope.$emit('render');
+      });
+
+    };
+
+    $scope.receiveGraphiteData = function(range, interval) {
+
+      return function receive_graphite_data_requestor(requestion, results) {
+
+        $scope.data = [];
         if(results.length == 0 ) {
-          $scope.panel.error = 'no data in response from graphite';
+          requestion('no data in response from graphite');
         }
 
         console.log('Data from graphite:', results);
@@ -315,25 +331,19 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
           var time_series = new timeSeries.ZeroFilled(tsOpts);
 
           _.each(targetData.datapoints, function(valueArray) {
-            var value = valueArray[0];
-            if (value) {
-              time_series.addValue(valueArray[1] * 1000, value);
+            if (valueArray[0]) {
+              time_series.addValue(valueArray[1] * 1000, valueArray[0]);
             }
             hits += +1;
           });
 
-          console.log('graphite timeseries: ', time_series);
+          //console.log('graphite timeseries: ', time_series);
 
           $scope.data.push({
             info: {
               alias: targetData.target,
               color: $scope.colors[$scope.data.length],
-              enable: true,
-              id: 0,
-              parent: 0,
-              pin: false,
-              query: "*",
-              type: "lucene"
+              enable: true
             },
             time_series: time_series,
             hits: hits
@@ -342,11 +352,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
 
         $scope.hits = hits;
 
-        // Tell the histogram directive to render.
-        $scope.$emit('render');
-
-      }, graphiteLoadOptions);
-
+        requestion('ok');
+      };
     };
 
     $scope.add_target = function() {
@@ -564,7 +571,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
               var _d = scope.data[i].time_series.getFlotPairs(required_times);
               scope.data[i].data = _d;
             }
-            console.log('Sent to plot', scope.data);
+
+            //console.log('Sent to plot', scope.data);
 
             scope.plot = $.plot(elem, scope.data, options);
 
