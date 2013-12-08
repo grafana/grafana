@@ -29,7 +29,7 @@ function (angular, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $route, ejsResource, fields, dashboard, alertSrv, panelMove, esVersion) {
+    $scope, $rootScope, $route, ejsResource, fields, dashboard, alertSrv, panelMove, esVersion) {
 
     $scope.requiredElasticSearchVersion = ">=0.20.5";
 
@@ -61,6 +61,14 @@ function (angular, config, _) {
       $scope.reset_row();
 
       $scope.ejs = ejsResource(config.elasticsearch);
+
+      $rootScope.$on('fullEditMode', function(evt, enabled) {
+        $scope.fullEditMode = enabled;
+      });
+    };
+
+    $scope.closeFullEdit = function() {
+      $rootScope.$emit('fullEditMode', false);
     };
 
     $scope.isPanel = function(obj) {

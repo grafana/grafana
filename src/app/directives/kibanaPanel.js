@@ -37,7 +37,7 @@ function (angular) {
           '</span>' +
 
           '<span class="row-button extra" ng-show="panel.editable != false">' +
-            '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer">'+
+            '<span bs-modal="\'app/partials/paneleditor.html\'" class="pointer" ng-click="openConfigureModal($event)" >'+
             '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
           '</span>' +
 

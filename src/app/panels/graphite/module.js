@@ -35,7 +35,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, querySrv, dashboard, filterSrv) {
+  module.controller('graphite', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
     $scope.panelMeta = {
       modals : [
         {
@@ -381,6 +381,24 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         to:moment.utc(_to).toDate(),
         field:$scope.panel.time_field
       });
+    };
+
+    $scope.openConfigureModal = function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      var closeEditMode = $rootScope.$on('fullEditMode', function(evt, enabled) {
+        $scope.inEditMode = enabled;
+        if (!enabled) {
+          closeEditMode();
+        }
+
+        setTimeout(function() {
+         $scope.$emit('render');
+        }, 200);
+      });
+
+      $rootScope.$emit('fullEditMode', true);
     };
 
     // I really don't like this function, too much dom manip. Break out into directive?

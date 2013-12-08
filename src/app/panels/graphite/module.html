@@ -1,4 +1,4 @@
-<div ng-controller='graphite' ng-init="init()" style="min-height:{{panel.height || row.height}}">
+<div ng-controller='graphite' ng-init="init()" style="min-height:{{panel.height || row.height}}" ng-class='{"panel-full-edit-mode": inEditMode}'>
   <style>
     .histogram-legend {
       display:inline-block;
@@ -31,6 +31,23 @@
     /* this is actually should be in bootstrap */
     .form-inline .checkbox {
         display: inline-block;
+    }
+
+    .full-edit-mode {
+      //display: none;
+    }
+
+    .panel-full-edit-mode {
+      z-index: 1500;
+      display: block;
+      position: fixed;
+      left: 20px;
+      right: 20px;
+      top: 100px;
+      outline: 1px solid #101214;
+      border-top: 1px solid #3e444c;
+      padding: 0 10px 10px 10px;
+      background: #202328;
     }
   </style>
   <div>
