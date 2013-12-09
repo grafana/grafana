@@ -242,9 +242,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.init = function() {
       // Hide view options by default
       $scope.options = false;
-      $scope.$on('refresh',function(){
-        $scope.get_data();
-      });
 
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
@@ -303,7 +300,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
      * @param {number} query_id  The id of the query, generated on the first run and passed back when
      *                            this call is made recursively for more segments
      */
-    $scope.get_data = function(segment, query_id) {
+    $scope.get_data = function(data, segment, query_id) {
       var
         _range,
         _interval,
@@ -380,12 +377,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       results = request.doSearch();
 
       // Populate scope when we have results
-      results.then(function(results) {
-
+      return results.then(function(results) {
         $scope.panelMeta.loading = false;
         if(segment === 0) {
           $scope.hits = 0;
-          $scope.data = [];
+          data = [];
           $scope.annotations = [];
           query_id = $scope.query_id = new Date().getTime();
         }
@@ -407,7 +403,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             var query_results = results.facets[q.id];
             // we need to initialize the data variable on the first run,
             // and when we are working on the first segment of the data.
-            if(_.isUndefined($scope.data[i]) || segment === 0) {
+            if(_.isUndefined(data[i]) || segment === 0) {
               var tsOpts = {
                 interval: _interval,
                 start_date: _range && _range.from,
@@ -417,8 +413,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               time_series = new timeSeries.ZeroFilled(tsOpts);
               hits = 0;
             } else {
-              time_series = $scope.data[i].time_series;
-              hits = $scope.data[i].hits;
+              time_series = data[i].time_series;
+              hits = data[i].hits;
             }
 
             // push each entry into the time series, while incrementing counters
@@ -427,7 +423,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               hits += entry.count; // The series level hits counter
               $scope.hits += entry.count; // Entire dataset level hits counter
             });
-            $scope.data[i] = {
+            data[i] = {
               info: q,
               time_series: time_series,
               hits: hits
@@ -461,11 +457,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           }
 
           // Tell the histogram directive to render.
-          $scope.$emit('render');
+          $scope.$emit('render', data);
 
           // If we still have segments left, get them
           if(segment < dashboard.indices.length-1) {
-            $scope.get_data(segment+1,query_id);
+            $scope.get_data(data,segment+1,query_id);
           }
         }
       });
@@ -527,15 +523,20 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       restrict: 'A',
       template: '<div></div>',
       link: function(scope, elem) {
+        var data;
+
+        scope.$on('refresh',function(){
+          scope.get_data();
+        });
 
         // Receive render events
-        scope.$on('render',function(){
-          render_panel();
+        scope.$on('render',function(event,data){
+          render_panel(data);
         });
 
         // Re-render if the window is resized
         angular.element(window).bind('resize', function(){
-          render_panel();
+          render_panel(data);
         });
 
         var scale = function(series,factor) {
@@ -563,13 +564,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         };
 
         // Function for rendering panel
-        function render_panel() {
+        function render_panel(data) {
           // IE doesn't work without this
           elem.css({height:scope.panel.height || scope.row.height});
 
           // Populate from the query service
           try {
-            _.each(scope.data, function(series) {
+            _.each(data, function(series) {
               series.label = series.info.alias;
               series.color = series.info.color;
             });
@@ -668,8 +669,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             // when rendering stacked bars, we need to ensure each point that has data is zero-filled
             // so that the stacking happens in the proper order
             var required_times = [];
-            if (scope.data.length > 1) {
-              required_times = Array.prototype.concat.apply([], _.map(scope.data, function (query) {
+            if (data.length > 1) {
+              required_times = Array.prototype.concat.apply([], _.map(data, function (query) {
                 return query.time_series.getOrderedTimes();
               }));
               required_times = _.uniq(required_times.sort(function (a, b) {
@@ -679,8 +680,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             }
 
 
-            for (var i = 0; i < scope.data.length; i++) {
-              var _d = scope.data[i].time_series.getFlotPairs(required_times);
+            for (var i = 0; i < data.length; i++) {
+              var _d = data[i].time_series.getFlotPairs(required_times);
               if(scope.panel.derivative) {
                 _d = derivative(_d);
               }
@@ -690,10 +691,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               if(scope.panel.scaleSeconds) {
                 _d = scaleSeconds(_d,scope.panel.interval);
               }
-              scope.data[i].data = _d;
+              data[i].data = _d;
             }
 
-            scope.plot = $.plot(elem, scope.data, options);
+            scope.plot = $.plot(elem, data, options);
 
           } catch(e) {
             // Nothing to do here
