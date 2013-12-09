@@ -380,6 +380,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return results.then(function(results) {
         $scope.panelMeta.loading = false;
         if(segment === 0) {
+          $scope.legend = [];
           $scope.hits = 0;
           data = [];
           $scope.annotations = [];
@@ -423,6 +424,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               hits += entry.count; // The series level hits counter
               $scope.hits += entry.count; // Entire dataset level hits counter
             });
+
+            $scope.legend[i] = q;
+
             data[i] = {
               info: q,
               time_series: time_series,
@@ -530,7 +534,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
 
         // Receive render events
-        scope.$on('render',function(event,data){
+        scope.$on('render',function(event,d){
+          data = d || data;
           render_panel(data);
         });
 
