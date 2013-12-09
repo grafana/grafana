@@ -112,7 +112,7 @@
       </span>
   </span>
 
-  <div class="fluid-row panel-full-edit-mode-controls" ng-show="inEditMode" style="margin-top: 20px;">
+  <div class="fluid-row panel-full-edit-mode-controls" ng-show="inEditMode" style="margin: 20px;">
       <div ng-model="editor.index" bs-tabs>
         <div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
         </div>
@@ -128,9 +128,5 @@
       <div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" ng-click="closeEditMode()">Close</button>
-    </div>
   </div>
 </div>

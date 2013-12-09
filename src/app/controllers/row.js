@@ -58,6 +58,12 @@ function (angular, app, _) {
         $scope.row.panels.push(panel);
       };
 
+      $scope.remove_panel_from_row = function(row, panel) {
+        if (confirm('Are you sure you want to remove this ' + panel.type + ' panel?')) {
+          row.panels = _.without(row.panels,panel);
+        }
+      };
+
       /** @scratch /panels/0
        * [[panels]]
        * = Panels

@@ -225,6 +225,15 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       }
     };
 
+    $scope.remove_panel_from_row = function(row, panel) {
+      if ($scope.inEditMode) {
+        $rootScope.$emit('fullEditMode', false);
+      }
+      else {
+        $scope.$parent.remove_panel_from_row(row, panel);
+      }
+    };
+
     $scope.closeEditMode = function() {
       $rootScope.$emit('fullEditMode', false);
     };

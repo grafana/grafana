@@ -15,8 +15,7 @@ function (angular) {
 
 
           '<span class="extra row-button" ng-show="panel.editable != false">' +
-            '<span confirm-click="row.panels = _.without(row.panels,panel)" '+
-            'confirmation="Are you sure you want to remove this {{panel.type}} panel?" class="pointer">'+
+            '<span ng-click="remove_panel_from_row(row,panel)" class="pointer">'+
             '<i class="icon-remove pointer" bs-tooltip="\'Remove\'"></i></span>'+
           '</span>' +
 
