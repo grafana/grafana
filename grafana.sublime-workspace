@@ -1,0 +1,531 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"gra",
+				"graphiteParameters"
+			],
+			[
+				"build",
+				"build_graphite_url"
+			],
+			[
+				"cookie",
+				"cookieUtil"
+			],
+			[
+				"re",
+				"requesition"
+			],
+			[
+				"req",
+				"requesition"
+			],
+			[
+				"res",
+				"requesition"
+			],
+			[
+				"serve",
+				"serverStatus"
+			],
+			[
+				"fet",
+				"fetchServerStatus"
+			],
+			[
+				"conn",
+				"connectToMongoDb"
+			],
+			[
+				"mongo",
+				"mongoDbUrl"
+			],
+			[
+				"fetc",
+				"fetchDataForInstance"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "src/config.dev.js",
+			"settings":
+			{
+				"buffer_size": 1509,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/app/panels/graphite/graphiteSrv.js",
+			"settings":
+			{
+				"buffer_size": 3330,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "Searching 14481 files for \"maxDataPoints\"\n\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-http-upload.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-auto-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-handle-source-errors.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/gifsicle/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-proxy-readable.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-http-upload.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-auto-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-handle-source-errors.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-max-data-size.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-pipe-resumes.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-proxy-readable.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/jpegtran-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/test/integration/test-delayed-streams-and-buffers-and-strings.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-http-upload.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-auto-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-handle-source-errors.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-max-data-size.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-pipe-resumes.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-proxy-readable.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/optipng-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/test/integration/test-delayed-streams-and-buffers-and-strings.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-http-upload.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-auto-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream-pause.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-delayed-stream.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-handle-source-errors.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-max-data-size.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-pipe-resumes.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/node_modules/delayed-stream/test/integration/test-proxy-readable.js\nUnable to open /D/oss/grafana/node_modules/grunt-contrib-imagemin/node_modules/pngquant-bin/node_modules/bin-wrapper/node_modules/download/node_modules/request/node_modules/form-data/node_modules/combined-stream/test/integration/test-delayed-streams-and-buffers-and-strings.js\n\n\nSearching 636 files for \"maxDataPoints\"\n\n0 matches across 0 files\n",
+			"settings":
+			{
+				"buffer_size": 9412,
+				"line_ending": "Windows",
+				"name": "Find Results",
+				"scratch": true
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 210.0,
+		"selected_items":
+		[
+			[
+				"syn ava",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"Install ",
+				"Package Control: Install Package"
+			],
+			[
+				"powers",
+				"SublimeREPL: PowerShell"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"Install",
+				"Package Control: Install Package"
+			],
+			[
+				"remove ",
+				"Package Control: Remove Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: List Packages"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"packa	",
+				"Package Control: Install Package"
+			],
+			[
+				"Pack",
+				"Package Control: Remove Package"
+			]
+		],
+		"width": 386.0
+	},
+	"console":
+	{
+		"height": 368.0,
+		"history":
+		[
+			"import urllib.request,os; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); open(os.path.join(ipp, pf), 'wb').write(urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ','%20')).read())"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/D/Temp/graphite-web-0.9.12/graphite-web-0.9.12/webapp/graphite/views.py",
+		"/D/Temp/graphite-web-0.9.12/graphite-web-0.9.12/webapp/graphite/render/views.py",
+		"/D/ebay/tradera/DB/Main/5_sprocs/Listing/EbaySweden_Trading_Listing_GetItemForRestart.proc.sql",
+		"//dashboards/d$/Inetpub/GiraffeOps/dashboards.js",
+		"/D/oss/grafana/src/app/partials/inspector.html",
+		"/D/ebay/tradera/Applications/TouchWeb/src/EbaySweden.TouchWeb/static/script/app/ui/layout/google-tagmanager.js",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.json",
+		"/D/ebay/tradera/Applications/TouchWeb/src/EbaySweden.TouchWeb/static/script/utils/cookie.js",
+		"/D/ebay/tradera/Applications/TouchWeb/src/EbaySweden.TouchWeb/static/script/app/boot/boot-layout.js",
+		"/D/ebay/tradera/Applications/TouchWeb/build/js-and-css.ps1",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.prod_tradera_site.json",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.prod_app_servers.json",
+		"/D/ebay/tradera/Applications/TouchWeb/node_modules/grunt-contrib-uglify/package.json",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.test.json",
+		"/D/oss/mongodb-metrics/node_modules/mongodb/lib/mongodb/admin.js",
+		"/D/oss/mongodb-metrics/node_modules/mongodb/lib/mongodb/connection/repl_set/repl_set.js",
+		"/D/oss/mongodb-metrics/node_modules/mongodb/lib/mongodb/connection/repl_set/options.js",
+		"/D/oss/mongodb-metrics/node_modules/mongodb/lib/mongodb/db.js",
+		"/D/oss/mongodb-metrics/node_modules/mongodb/lib/mongodb/commands/db_command.js",
+		"/D/ebay/tradera/Deployment/VerificationPackages/TraderaSite/run.js",
+		"/C/Users/todegaard/AppData/Roaming/Sublime Text 3/Packages/User/node_app_js.sublime-build",
+		"/D/ebay/tools/Tools/AppLogs2Elastic/Gruntfile.js",
+		"/D/oss/mongodb-metrics/gruntfile.js",
+		"/C/Users/todegaard/AppData/Roaming/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/D/oss/asimov-deploy-ui/Gruntfile.js",
+		"/D/ebay/tradera/Applications/TouchWeb/Gruntfile.js",
+		"/D/oss/mongodb-metrics/app.js",
+		"/D/oss/mongodb-metrics/tests/test.js",
+		"/C/Users/todegaard/AppData/Roaming/Sublime Text 3/Installed Packages/Tomorrow Color Schemes.sublime-package",
+		"/D/ebay/tradera/Build/EbaySweden-StartBuild.ps1",
+		"/D/ebay/tradera/Applications/TouchWeb/src/EbaySweden.TouchWeb/static/script/app.js",
+		"/D/ebay/tradera/Applications/TouchWeb/src/EbaySweden.TouchWeb/static/script/app/ui/view-item/bidding-ui.js",
+		"/D/ebay/tools/Tools/AppLogs2Elastic/App.config",
+		"//dashboards/d$/Inetpub/Kibana/config.js",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.prod_api.json",
+		"/D/ebay/asimov-tradera/WinAgent.ConfigFiles/config.prod_tradera_site_test.json",
+		"/C/Users/todegaard/AppData/Roaming/Sublime Text 3/Packages/User/Package Control.sublime-settings"
+	],
+	"find":
+	{
+		"height": 41.0
+	},
+	"find_in_files":
+	{
+		"height": 104.0,
+		"where_history":
+		[
+			"D:\\Temp\\graphite-web-0.9.12\\graphite-web-0.9.12",
+			"",
+			" \"filter\": {\n      \"list\": {\n        \"0\": {\n          \"type\": \"time\",\n          \"field\": \"@timestamp\",\n          \"from\": \"now-1h\",\n          \"to\": \"now\",\n          \"mandate\": \"must\",\n          \"active\": true,\n          \"alias\": \"\",\n          \"id\": 0\n        }\n      },\n      \"ids\": [\n        0\n      ]\n",
+			" \"filter\": {\n      \"list\": {\n        \"0\": {\n          \"type\": \"time\",\n          \"field\": \"@timestamp\",\n          \"from\": \"now-1h\",\n          \"to\": \"now\",\n          \"mandate\": \"must\",\n          \"active\": true,\n          \"alias\": \"\",\n          \"id\": 0\n        }\n      },\n      \"ids\": [\n        0\n      ]\n   ",
+			"D:\\oss\\mongodb-metrics\\node_modules\\mongodb",
+			"D:\\ebay\\tradera\\Applications\\TouchWeb",
+			"D:\\ebay\\tradera"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"graphite_options",
+			"maxDataPoints",
+			"kibanaSimplePanel",
+			"kibanaPanel",
+			"<kibanaPanel",
+			"$scope.panelMeta.loading",
+			"\"tab\"",
+			"\"timepicker\"",
+			"doSearch",
+			"doSearch = ",
+			".loading = false",
+			"$scope.apply",
+			"get_data",
+			"histogram",
+			"$scope.panelMeta.loading",
+			"$scope.panel.error",
+			"$scope.panel",
+			"panel.error",
+			"requests",
+			"graphiteUtil",
+			"populate_modal",
+			"get_data",
+			"inspect",
+			"partial",
+			"inspector",
+			"1h",
+			"graphiteFlot",
+			"2.4.5",
+			"spawn",
+			"connections: { cu",
+			"connections: { curren",
+			"mongoDbUrl",
+			"console.lo",
+			"createAdminDbCommandSlaveOk",
+			"DbCommand",
+			"createAdminDbCommand",
+			"executeDbAdminCommand",
+			"command",
+			"executeDbAdminCommand",
+			"primaryPreferered",
+			"_executeQueryCommand",
+			"executeDbA",
+			"executeDbAdminCommand",
+			"ReadPreference.PRIMARY_PREFERRED",
+			"PREFERRED",
+			"PRIMARY PREFERRED",
+			"No primary found in set",
+			"connectWithNoPrimary",
+			"No primary found in set",
+			"var",
+			"_redirectToCartCheckout",
+			"data:cart:after-checkout-started",
+			"_startCheckout",
+			"ui:cart:on-checkout-start",
+			"on-checkout-start",
+			"_goToCheckout",
+			"checkoutAction",
+			"data-view-cart-button",
+			"cdn",
+			"traderaSite",
+			"(\"#",
+			"traderaSite",
+			"		",
+			"${",
+			"\n",
+			"back-to-tradera",
+			"CreateDeferr",
+			"Deferr<",
+			".Deferr",
+			"IDeferredMessage",
+			"SendFeedbackRemovalMail",
+			"SendFeedbackRemovalMail'",
+			"SendFeedbackRemovalMail",
+			"Create_DSR",
+			"Update_DSR_Stats",
+			"Create_DSR",
+			"Create_Grade_DSR\nCreate_DSR",
+			"Create_Grade_DSR\nCreate_Grade_DSR",
+			"Create_Grade_DSR\nCreate_Grade_DSR\n"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "src/config.dev.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1509,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								909,
+								909
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 138.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/app/panels/graphite/graphiteSrv.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3330,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								328,
+								328
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9412,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9412,
+								9412
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 552.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 28.0
+	},
+	"input":
+	{
+		"height": 40.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": false,
+	"output.exec":
+	{
+		"height": 271.0
+	},
+	"project": "grafana.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"graphites",
+				"src\\app\\panels\\graphite\\graphiteSrv.js"
+			],
+			[
+				"inspec",
+				"src\\app\\partials\\inspector.html"
+			],
+			[
+				"module",
+				"src\\app\\panels\\graph\\module.js"
+			],
+			[
+				"tagm",
+				"src\\EbaySweden.TouchWeb\\static\\script\\app\\ui\\layout\\google-tagmanager.js"
+			],
+			[
+				"cookie.",
+				"src\\EbaySweden.TouchWeb\\static\\script\\utils\\cookie.js"
+			],
+			[
+				"page.js",
+				"src\\EbaySweden.TouchWeb\\static\\script\\app\\ui\\layout\\page.js"
+			],
+			[
+				"_main",
+				"src\\EbaySweden.TouchWeb\\Areas\\Default\\Views\\Shared\\_MainLayout.cshtml"
+			],
+			[
+				"",
+				"D:\\ebay\\tradera\\Applications\\TouchWeb\\src\\EbaySweden.TouchWeb\\TouchWeb.csproj"
+			],
+			[
+				"start-",
+				"src\\EbaySweden.TouchWeb\\static\\style\\components\\start-page.scss"
+			],
+			[
+				"bidding",
+				"src\\EbaySweden.TouchWeb\\static\\script\\app\\ui\\view-item\\bidding-ui.js"
+			],
+			[
+				"app.",
+				"src\\EbaySweden.TouchWeb\\static\\script\\app.js"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 279.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

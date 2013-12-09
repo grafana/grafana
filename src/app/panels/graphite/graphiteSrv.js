@@ -11,7 +11,7 @@ function ($, RQ, config) {
     raw = raw || false;
     var clean_options = [];
     //var internal_options = ['_t'];
-    var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format'];
+    var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
     var graphite_png_options = ['areaMode', 'width', 'height', 'template', 'margin', 'bgcolor',
                          'fgcolor', 'fontName', 'fontSize', 'fontBold', 'fontItalic',
                          'yMin', 'yMax', 'colorList', 'title', 'vtitle', 'lineMode',
@@ -55,7 +55,6 @@ function ($, RQ, config) {
         clean_options.push(key + "=" + encodeURIComponent(value));
       }
     });
-
     return clean_options;
   }
 
@@ -65,7 +64,8 @@ function ($, RQ, config) {
       var graphOptions = {
         from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
         until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
-        targets: options.targets
+        targets: options.targets,
+        maxDataPoints: options.maxDataPoints
       }
 
       var graphiteParameters = build_graphite_options(graphOptions, true);

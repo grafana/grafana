@@ -103,7 +103,9 @@
     </span>
   </form>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="img/load_big.gif"></center>
+
   <div histogram-chart class="pointer histogram-chart" params="{{panel}}"></div>
+
   <span ng-show="panel.legend" ng-repeat='series in data' class="histogram-legend">
       <i class='icon-circle' ng-style="{color: series.info.color}"></i>
       <span class='small histogram-legend-item'>
