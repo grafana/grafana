@@ -2,5 +2,6 @@ define([
   './dash',
   './dashLoader',
   './row',
-  './pulldown'
+  './pulldown',
+  './zoom'
 ], function () {});

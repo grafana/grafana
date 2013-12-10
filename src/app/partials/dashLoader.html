@@ -4,6 +4,10 @@
   }
 </style>
 
+<li>
+  <a class='small' ng-controller="ZoomCtrl" ng-click='zoom(2)'><i class='icon-zoom-out'></i> Zoom Out</a>
+</li>
+
 <li ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable"><kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel></li>
 
 <li><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/dashboard'><i class='icon-home'></i></a></li>
@@ -11,7 +15,6 @@
   <a href="#" bs-tooltip="'Load'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="elasticsearch_dblist('title:'+elasticsearch.query+'*')">
     <i class='icon-folder-open'></i>
   </a>
-
 
   <ul class="dropdown-menu" style="padding:10px">
     <li ng-if='dashboard.current.loader.load_elasticsearch'>

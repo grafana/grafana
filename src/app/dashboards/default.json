@@ -51,7 +51,12 @@
             "default"
           ],
           "type": "graphite",
-          "spyable": true
+          "spyable": true,
+          "targets": [
+            {
+              "target": "summarize(sum(prod.apps.tradera_site.*.counters.global.request_status.code_404.count), '30s')"
+            }
+          ]
         }
       ],
       "notice": true
