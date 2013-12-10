@@ -1,9 +1,10 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'underscore',
+  'moment',
 ],
-function (angular, app, _) {
+function (angular, app, _, moment) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -30,6 +31,7 @@ function (angular, app, _) {
       if(factor > 1) {
         filterSrv.removeByType('time');
       }
+
       filterSrv.set({
         type:'time',
         from:moment.utc(_from).toDate(),

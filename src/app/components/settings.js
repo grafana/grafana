@@ -12,8 +12,8 @@ function (_) {
     var defaults = {
       elasticsearch     : "http://"+window.location.hostname+":9200",
       panel_names       : [],
-      kibana_index  	: 'kibana-int',
-      graphiteUrl   	: null,
+      kibana_index      : 'kibana-int',
+      graphiteUrl       : null,
       default_route     : '/dashboard/file/default.json'
     };
 

@@ -20,6 +20,7 @@ define([
   'moment',
   './timeSeries',
   './graphiteSrv',
+  'rq',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -28,7 +29,7 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
+function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
   'use strict';
 
@@ -323,7 +324,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         $scope.legend = [];
         var data = [];
 
-        if(results.length == 0 ) {
+        if(results.length === 0 ) {
           requestion('no data in response from graphite');
         }
 
@@ -369,34 +370,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       $scope.panel.targets.push({target: ''});
     };
 
-    // function $scope.zoom
-    // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
-    $scope.zoom = function(factor) {
-      var _range = filterSrv.timeRange('last');
-      var _timespan = (_range.to.valueOf() - _range.from.valueOf());
-      var _center = _range.to.valueOf() - _timespan/2;
-
-      var _to = (_center + (_timespan*factor)/2);
-      var _from = (_center - (_timespan*factor)/2);
-
-      // If we're not already looking into the future, don't.
-      if(_to > Date.now() && _range.to < Date.now()) {
-        var _offset = _to - Date.now();
-        _from = _from - _offset;
-        _to = Date.now();
-      }
-
-      if(factor > 1) {
-        filterSrv.removeByType('time');
-      }
-      filterSrv.set({
-        type:'time',
-        from:moment.utc(_from).toDate(),
-        to:moment.utc(_to).toDate(),
-        field:$scope.panel.time_field
-      });
-    };
-
     $scope.openConfigureModal = function($event) {
       $event.preventDefault();
       $event.stopPropagation();
@@ -408,7 +381,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         }
 
         setTimeout(function() {
-         $scope.$emit('render');
+          $scope.$emit('render');
         }, 200);
       });
 
@@ -459,30 +432,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         angular.element(window).bind('resize', function() {
           render_panel(data);
         });
-
-        var scale = function(series,factor) {
-          return _.map(series,function(p) {
-            return [p[0],p[1]*factor];
-          });
-        };
-
-        var scaleSeconds = function(series,interval) {
-          return _.map(series,function(p) {
-            return [p[0],p[1]/kbn.interval_to_seconds(interval)];
-          });
-        };
-
-        var derivative = function(series) {
-          return _.map(series, function(p,i) {
-            var _v;
-            if(i === 0 || p[1] === null) {
-              _v = [p[0],null];
-            } else {
-              _v = series[i-1][1] === null ? [p[0],null] : [p[0],p[1]-(series[i-1][1])];
-            }
-            return _v;
-          });
-        };
 
         // Function for rendering panel
         function render_panel(data) {
@@ -622,7 +571,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
           if(_int >= 2628000) {
             return "%Y-%m";
           }
-          if(_int >= 86400) {
+          if(_int >= 10000) {
             return "%Y-%m-%d";
           }
           if(_int >= 60) {
@@ -633,6 +582,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         }
 
         var $tooltip = $('<div>');
+
         elem.bind("plothover", function (event, pos, item) {
           var group, value, timestamp;
           if (item) {

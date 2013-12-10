@@ -53,8 +53,8 @@ require.config({
     },
 
     rq: {
-        deps: ['setImmediate'],
-        exports: 'RQ'
+      deps: ['setImmediate'],
+      exports: 'RQ'
     },
 
     angular: {

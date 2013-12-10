@@ -66,7 +66,7 @@ function ($, RQ, config) {
         until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
         targets: options.targets,
         maxDataPoints: options.maxDataPoints
-      }
+      };
 
       var graphiteParameters = build_graphite_options(graphOptions, true);
       getGraphiteData(graphiteParameters)
@@ -76,7 +76,7 @@ function ($, RQ, config) {
         .fail(function() {
           requestion(null, 'Error in ajax call to graphite');
         });
-    }
+    };
   }
 
   function getGraphiteData(parameters) {

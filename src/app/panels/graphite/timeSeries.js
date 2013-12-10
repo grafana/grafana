@@ -121,7 +121,7 @@ function (_, Interval) {
   ts.ZeroFilled.prototype._getFlotPairsConnect = function (result, time, i, times) {
     result.push([times[i], this._data[times[i]] || 0 ]);
     return result;
-  }
+  };
 
   /**
    * ** called as a reduce stragegy in getFlotPairs() **
