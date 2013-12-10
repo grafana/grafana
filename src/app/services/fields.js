@@ -13,23 +13,22 @@ function (angular, _, config) {
     var self = this;
 
     this.list = ['_type'];
-    this.mapping = {};
-    this.fullMapping = {};
+    this.indices = [];
 
+    // Stop tracking the full mapping, too expensive, instead we only remember the index names
+    // we've already seen.
+    //
     $rootScope.$watch(function(){return dashboard.indices;},function(n) {
       if(!_.isUndefined(n) && n.length && dashboard.current.index.warm_fields) {
         // Only get the mapping for indices we don't know it for
-        var indices = _.difference(n,_.keys(self.fullMapping));
+        var indices = _.difference(n,_.keys(self.indices));
         // Only get the mapping if there are new indices
         if(indices.length > 0) {
           self.map(indices).then(function(result) {
-            self.fullMapping = _.extend(self.fullMapping,result);
-            self.list = mapFields(self.fullMapping);
+            self.indices = _.union(self.indices,_.keys(result));
+            self.list = mapFields(result);
           });
         // Otherwise just use the cached mapping
-        } else {
-          // This is inefficient, should not need to reprocess?
-          self.list = mapFields(_.pick(self.fullMapping,n));
         }
       }
     });
@@ -37,8 +36,8 @@ function (angular, _, config) {
     var mapFields = function (m) {
       var fields = [];
       _.each(m, function(types) {
-        _.each(types, function(v) {
-          fields = _.without(_.union(fields,_.keys(v)),'_all','_source');
+        _.each(types, function(type) {
+          fields = _.without(_.union(fields,_.keys(type)),'_all','_source');
         });
       });
       return fields;

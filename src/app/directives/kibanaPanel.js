@@ -77,7 +77,8 @@ function (angular) {
             var nameAsPath = name.replace(".", "/");
             $scope.require([
               'jquery',
-              'text!panels/'+nameAsPath+'/module.html'
+              'text!panels/'+nameAsPath+'/module.html',
+              'text!panels/'+nameAsPath+'/editor.html'
             ], function ($, moduleTemplate) {
               var $module = $(moduleTemplate);
               // top level controllers

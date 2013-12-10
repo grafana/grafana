@@ -30,7 +30,6 @@ module.exports = function(grunt) {
           ]
         }
       });
-
       grunt.task.run('string-replace:config');
     });
     grunt.task.run('git-describe');

@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $http, timer, dashboard, alertSrv) {
+  module.controller('dashLoader', function($scope, $http, timer, dashboard, alertSrv, $location) {
     $scope.loader = dashboard.current.loader;
 
     $scope.init = function() {
@@ -35,8 +35,8 @@ function (angular, _) {
     };
 
     $scope.set_default = function() {
-      if(dashboard.set_default()) {
-        alertSrv.set('Local Default Set',dashboard.current.title+' has been set as your local default','success',5000);
+      if(dashboard.set_default($location.path())) {
+        alertSrv.set('Home Set','This page has been set as your default Kibana dashboard','success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
       }
@@ -44,7 +44,8 @@ function (angular, _) {
 
     $scope.purge_default = function() {
       if(dashboard.purge_default()) {
-        alertSrv.set('Local Default Clear','Your local default dashboard has been cleared','success',5000);
+        alertSrv.set('Local Default Clear','Your Kibana default dashboard has been reset to the default',
+          'success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
       }
