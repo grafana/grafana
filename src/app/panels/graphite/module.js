@@ -299,7 +299,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       var graphiteLoadOptions = {
         range: range,
         targets: $scope.panel.targets,
-        maxDataPoints: $scope.panel.span * 100
+        maxDataPoints: $scope.panel.span * 50
       };
 
       var result = RQ.sequence([
