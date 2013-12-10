@@ -106,11 +106,11 @@
 
   <div histogram-chart class="pointer histogram-chart" params="{{panel}}"></div>
 
-  <span ng-show="panel.legend" ng-repeat='series in data' class="histogram-legend">
-      <i class='icon-circle' ng-style="{color: series.info.color}"></i>
+  <span ng-show="panel.legend" ng-repeat='series in legend' class="histogram-legend">
+      <i class='icon-circle' ng-style="{color: series.color}"></i>
       <span class='small histogram-legend-item'>
-        <span ng-if="panel.show_query">{{series.info.alias || series.info.query}}</span>
-        <span ng-if="!panel.show_query">{{series.info.alias}}</span>
+        <span ng-if="panel.show_query">{{series.alias || series.query}}</span>
+        <span ng-if="!panel.show_query">{{series.alias}}</span>
       </span>
   </span>
 

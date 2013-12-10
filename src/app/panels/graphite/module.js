@@ -204,9 +204,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
     $scope.init = function() {
       // Hide view options by default
       $scope.options = false;
-      $scope.$on('refresh',function(){
-        $scope.get_data();
-      });
 
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
@@ -294,8 +291,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
 
-      console.log('Interval: ' + interval);
-
       var graphiteLoadOptions = {
         range: range,
         targets: $scope.panel.targets,
@@ -307,7 +302,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         $scope.receiveGraphiteData(range, interval)
       ]);
 
-      result(function (success, failure) {
+      result(function (data, failure) {
         if (failure) {
           $scope.panel.error = 'Failed to do fetch graphite data: ' + failure;
           return;
@@ -317,7 +312,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         $scope.$apply();
 
         // Tell the histogram directive to render.
-        $scope.$emit('render');
+        $scope.$emit('render', data);
       });
 
     };
@@ -325,14 +320,15 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
     $scope.receiveGraphiteData = function(range, interval) {
 
       return function receive_graphite_data_requestor(requestion, results) {
+        $scope.legend = [];
+        var data = [];
 
-        $scope.data = [];
         if(results.length == 0 ) {
           requestion('no data in response from graphite');
         }
 
-        console.log('Data from graphite:', results);
-        console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
+        //console.log('Data from graphite:', results);
+        //console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
 
         var tsOpts = {
           interval: interval,
@@ -350,18 +346,22 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
             }
           });
 
-          $scope.data.push({
-            info: {
-              alias: targetData.target,
-              color: $scope.colors[$scope.data.length],
-              enable: true
-            },
-            time_series: time_series,
-            hits: 0
+          var seriesInfo = {
+            alias: targetData.target,
+            color: $scope.colors[data.length],
+            enable: true
+          };
+
+          $scope.legend.push(seriesInfo);
+
+          data.push({
+            info: seriesInfo,
+            time_series: time_series
           });
+
         });
 
-        requestion('ok');
+        requestion(data);
       };
     };
 
@@ -443,15 +443,21 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
       restrict: 'A',
       template: '<div></div>',
       link: function(scope, elem) {
+        var data = [];
+
+        scope.$on('refresh',function() {
+          scope.get_data();
+        });
 
         // Receive render events
-        scope.$on('render',function(){
-          render_panel();
+        scope.$on('render',function(event, d) {
+          data = d || data;
+          render_panel(data);
         });
 
         // Re-render if the window is resized
-        angular.element(window).bind('resize', function(){
-          render_panel();
+        angular.element(window).bind('resize', function() {
+          render_panel(data);
         });
 
         var scale = function(series,factor) {
@@ -479,13 +485,13 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
         };
 
         // Function for rendering panel
-        function render_panel() {
+        function render_panel(data) {
           // IE doesn't work without this
           elem.css({height:scope.panel.height || scope.row.height});
 
           // Populate from the query service
           try {
-            _.each(scope.data, function(series) {
+            _.each(data, function(series) {
               series.label = series.info.alias;
               series.color = series.info.color;
             });
@@ -584,8 +590,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
             // when rendering stacked bars, we need to ensure each point that has data is zero-filled
             // so that the stacking happens in the proper order
             var required_times = [];
-            if (scope.data.length > 1) {
-              required_times = Array.prototype.concat.apply([], _.map(scope.data, function (query) {
+            if (data.length > 1) {
+              required_times = Array.prototype.concat.apply([], _.map(data, function (query) {
                 return query.time_series.getOrderedTimes();
               }));
               required_times = _.uniq(required_times.sort(function (a, b) {
@@ -594,17 +600,16 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv) {
               }), true);
             }
 
-            for (var i = 0; i < scope.data.length; i++) {
-              var _d = scope.data[i].time_series.getFlotPairs(required_times);
-              scope.data[i].data = _d;
+            for (var i = 0; i < data.length; i++) {
+              var _d = data[i].time_series.getFlotPairs(required_times);
+              data[i].data = _d;
             }
 
-            var totalDataPoints = _.reduce(scope.data, function(num, series) { return series.data.length + num; }, 0);
-            console.log('Datapoints[0] count:', scope.data[0].data.length);
-            console.log('Datapoints.Total count:', totalDataPoints);
+           /* var totalDataPoints = _.reduce(data, function(num, series) { return series.data.length + num; }, 0);
+            console.log('Datapoints[0] count:', data[0].data.length);
+            console.log('Datapoints.Total count:', totalDataPoints);*/
 
-
-            scope.plot = $.plot(elem, scope.data, options);
+            scope.plot = $.plot(elem, data, options);
 
           } catch(e) {
             console.log(e);
