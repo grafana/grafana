@@ -425,7 +425,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               $scope.hits += entry.count; // Entire dataset level hits counter
             });
 
-            $scope.legend[i] = q;
+            $scope.legend[i] = {query:q,hits:hits};
 
             data[i] = {
               info: q,
