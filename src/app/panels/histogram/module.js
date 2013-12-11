@@ -527,7 +527,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       restrict: 'A',
       template: '<div></div>',
       link: function(scope, elem) {
-        var data;
+        var data, plot;
 
         scope.$on('refresh',function(){
           scope.get_data();
@@ -699,7 +699,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               data[i].data = _d;
             }
 
-            scope.plot = $.plot(elem, data, options);
+            plot = $.plot(elem, data, options);
 
           } catch(e) {
             // Nothing to do here
