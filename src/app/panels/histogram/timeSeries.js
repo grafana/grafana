@@ -218,8 +218,7 @@ function (_, Interval) {
    * Not fill zero's on either side of the current time, only the current time
    * @return {array}  An array of points to plot with flot
    */
-  ts.ZeroFilled.prototype._getNoZeroFlotPairs = function (result, time, i, times) {
-    var next, expected_next, prev, expected_prev;
+  ts.ZeroFilled.prototype._getNoZeroFlotPairs = function (result, time) {
 
     // add the current time
     if(this._data[time]){
@@ -228,6 +227,6 @@ function (_, Interval) {
 
     return result;
   };
-  
+
   return ts;
 });
