@@ -35,6 +35,32 @@
         <div class="container-fluid">
           <span class="brand"><img src="img/small.png" bs-tooltip="'Kibana 3 milestone pre-5'" data-placement="bottom"> {{dashboard.current.title}}</span>
 
+          <style>
+            .grafana-search {
+              position: fixed;
+              right: 0;
+              left: 0;
+              top: 39px;
+              margin-right: auto;
+              margin-left: auto;
+              /* give it dimensions */
+              min-height: 10em;
+              width: 90%;
+            }
+          </style>
+          <ul class="nav pull-left">
+            <li class="dropdown">
+              <a href="#" bs-tooltip="'Search'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown">
+                <i class='icon-search'></i>
+              </a>
+              <ul class="dropdown-menu grafana-search">
+                <li>
+                  <h2>asd</h2>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
           <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'app/partials/dashLoader.html'">
           </ul>
         </div>

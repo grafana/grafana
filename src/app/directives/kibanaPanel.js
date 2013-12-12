@@ -51,7 +51,7 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span class="row-button row-text panel-title" ng-show="panel.title">' +
+          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="openConfigureModal($event)">' +
             '{{panel.title}}' +
           '</span>'+
 
