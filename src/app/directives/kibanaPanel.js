@@ -61,15 +61,21 @@ function (angular) {
         link: function($scope, elem, attr) {
           // once we have the template, scan it for controllers and
           // load the module.js if we have any
+          var newScope = $scope.$new();
 
           // compile the module and uncloack. We're done
           function loadModule($module) {
             $module.appendTo(elem);
             elem.wrap(container);
             /* jshint indent:false */
-            $compile(elem.contents())($scope);
+            $compile(elem.contents())(newScope);
             elem.removeClass("ng-cloak");
           }
+
+          newScope.$on('$destroy',function(){
+            elem.unbind();
+            elem.remove();
+          });
 
           $scope.$watch(attr.type, function (name) {
             elem.addClass("ng-cloak");
