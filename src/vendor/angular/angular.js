@@ -8464,6 +8464,21 @@ function $RootScopeProvider(){
         } else {
           this.$$childHead = this.$$childTail = child;
         }
+
+        // RASHID: Fix for chrome GC bug
+        child.$on('$destroy', function() {
+          if(Child)
+            Child.prototype = null;
+          // Async so that the $broadcast('$destroy') can traverse the rest
+          setTimeout(function() {
+            child.__proto__ = {};
+            for(var i in child)
+              child[i] = null;
+            child = null;
+            return null;
+          });
+        });
+
         return child;
       },
 
@@ -8892,6 +8907,8 @@ function $RootScopeProvider(){
         // This is bogus code that works around Chrome's GC leak
         // see: https://github.com/angular/angular.js/issues/1313#issuecomment-10378451
         this.$parent = this.$$nextSibling = this.$$prevSibling = this.$$childHead =
+            this.$$childTail = null;
+        parent = this.$$nextSibling = this.$$prevSibling = this.$$childHead =
             this.$$childTail = null;
       },
 

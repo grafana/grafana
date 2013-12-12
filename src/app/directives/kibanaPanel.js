@@ -13,7 +13,6 @@ function (angular) {
 
         '<div class="row-fluid panel-extra"><div class="panel-extra-container">' +
 
-
           '<span class="extra row-button" ng-show="panel.editable != false">' +
             '<span confirm-click="row.panels = _.without(row.panels,panel)" '+
             'confirmation="Are you sure you want to remove this {{panel.type}} panel?" class="pointer">'+
