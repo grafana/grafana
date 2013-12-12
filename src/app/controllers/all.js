@@ -4,5 +4,6 @@ define([
   './row',
   './pulldown',
   './zoom',
-  './search'
+  './search',
+  './metricKeys'
 ], function () {});

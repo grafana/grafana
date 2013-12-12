@@ -84,7 +84,7 @@ function ($, RQ, config) {
       accepts: { text: 'application/json' },
       cache: false,
       dataType: 'json',
-      url: config.graphiteUrl,
+      url: config.graphiteUrl + '/render/',
       type: "POST",
       data: parameters.join('&')
     });

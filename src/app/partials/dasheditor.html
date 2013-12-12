@@ -2,7 +2,7 @@
   <div class="pull-right editor-title">Dashboard settings</div>
 
   <div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-    <div ng-repeat="tab in ['General', 'Rows','Controls']" data-title="{{tab}}">
+    <div ng-repeat="tab in ['General', 'Rows','Controls', 'Metrics']" data-title="{{tab}}">
     </div>
     <div ng-repeat="tab in dashboard.current.nav" data-title="{{tab.type}}">
     </div>
@@ -122,11 +122,14 @@
     </div>
   </div>
 
-  <div ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-show="editor.index == 3+$index">
+  <div ng-show="editor.index == 3">
+    <ng-include src="'app/partials/loadmetrics.html'"></ng-include>
+  </div>
+
+  <div ng-repeat="pulldown in dashboard.current.nav" ng-controller="PulldownCtrl" ng-show="editor.index == 4+$index">
     <ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
     <button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
   </div>
-
 
 </div>
 

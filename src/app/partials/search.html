@@ -19,15 +19,19 @@
   <ul class="dropdown-menu grafana-search">
     <li>
       <div class="grafana-search-panel">
-        <input type="text" placeholder="search dashboards, metrics, or graphs" xng-focus="giveSearchFocus" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist('title:'+elasticsearch.query+'*')" />
+        <input type="text" placeholder="search dashboards, metrics, or graphs" xng-focus="giveSearchFocus" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist(elasticsearch.query)" />
 
-        <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
+        <h6 ng-hide="search_results.metrics.length">No dashboards matching your query found</h6>
         <table class="table table-condensed table-striped">
-          <tr bindonce ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
+          <tr bindonce ng-repeat="row in search_results.metrics">
+            <td><span class="label label-info">metric</span> {{row._id}}</td>
+          </tr>
+<!--
+          <tr bindonce ng-repeat="row in search_results | orderBy:['_id']">
             <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
             <td><a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a></td>
             <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/panels/dashcontrol/share.html'"></i></a></td>
-          </tr>
+          </tr> -->
         </table>
       </div>
     </li>

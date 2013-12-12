@@ -1,0 +1,25 @@
+<div ng-controller="MetricKeysCtrl" ng-init="init()">
+  <h5>Load metrics keys into elastic search</h5>
+  <div class="row-fluid">
+    <div class="span8">
+      <label class="small">Load all metric keys at once (intensive for graphite web)</label>
+    </div>
+    <div class="span4">
+      <button class="btn btn-danger">Start load all</button>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span8">
+      <label class="small">Load metric keys recursively starting at metric key path</label>
+      <input type="text" class="input-xlarge" ng-model="metricPath"> </input>
+    </div>
+    <div class="span4">
+      <button class="btn btn-danger" style="margin-top: 20px" ng-click="loadMetricsFromPath()">Start load from metric path</button>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span12 alert-message block-message info">
+      {{infoText}}
+    </div>
+  </div>
+</div>

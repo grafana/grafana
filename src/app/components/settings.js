@@ -14,7 +14,8 @@ function (_) {
       panel_names       : [],
       kibana_index      : 'kibana-int',
       graphiteUrl       : null,
-      default_route     : '/dashboard/file/default.json'
+      default_route     : '/dashboard/file/default.json',
+      grafana_index     : 'grafana-int2'
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
