@@ -1,0 +1,35 @@
+  <style>
+    .grafana-search {
+      position: fixed;
+      right: 0;
+      left: 0;
+      top: 39px;
+      margin-right: auto;
+      margin-left: auto;
+      /* give it dimensions */
+      min-height: 10em;
+      width: 90%;
+    }
+  </style>
+
+ <li class="dropdown">
+  <a href="#" bs-tooltip="'Search'" data-placement="bottom" ng-click="openSearch()" class="dropdown-toggle" data-toggle="dropdown">
+    <i class='icon-search'></i>
+  </a>
+  <ul class="dropdown-menu grafana-search">
+    <li>
+      <div class="grafana-search-panel">
+        <input type="text" placeholder="search dashboards, metrics, or graphs" xng-focus="giveSearchFocus" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist('title:'+elasticsearch.query+'*')" />
+
+        <h6 ng-hide="elasticsearch.dashboards.length">No dashboards matching your query found</h6>
+        <table class="table table-condensed table-striped">
+          <tr bindonce ng-repeat="row in elasticsearch.dashboards | orderBy:['_id']">
+            <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
+            <td><a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a></td>
+            <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/panels/dashcontrol/share.html'"></i></a></td>
+          </tr>
+        </table>
+      </div>
+    </li>
+  </ul>
+</li>

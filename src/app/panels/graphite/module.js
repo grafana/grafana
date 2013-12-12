@@ -335,7 +335,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           interval: interval,
           start_date: range && range.from,
           end_date: range && range.to,
-          fill_style: 'connect'
+          fill_style: 'no'
         };
 
         _.each(results, function(targetData) {

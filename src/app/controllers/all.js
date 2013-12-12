@@ -3,5 +3,6 @@ define([
   './dashLoader',
   './row',
   './pulldown',
-  './zoom'
+  './zoom',
+  './search'
 ], function () {});
