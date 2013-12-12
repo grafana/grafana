@@ -101,6 +101,8 @@ function (_, Interval) {
       strategy = this._getAllFlotPairs;
     } else if(this.opts.fill_style === 'null') {
       strategy = this._getNullFlotPairs;
+    } else if(this.opts.fill_style === 'no') {
+      strategy = this._getNoZeroFlotPairs;
     } else {
       strategy = this._getMinFlotPairs;
     }
@@ -211,6 +213,20 @@ function (_, Interval) {
     return result;
   };
 
+  /**
+   * ** called as a reduce stragegy in getFlotPairs() **
+   * Not fill zero's on either side of the current time, only the current time
+   * @return {array}  An array of points to plot with flot
+   */
+  ts.ZeroFilled.prototype._getNoZeroFlotPairs = function (result, time) {
+
+    // add the current time
+    if(this._data[time]){
+      result.push([ time, this._data[time]]);
+    }
+
+    return result;
+  };
 
   return ts;
 });
