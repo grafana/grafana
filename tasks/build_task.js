@@ -19,13 +19,19 @@ module.exports = function(grunt) {
   grunt.registerTask('build:write_revision', function() {
     grunt.event.once('git-describe', function (desc) {
       grunt.config('string-replace.config', {
-        src: '<%= destDir %>/app/components/require.config.js',
-        dest: '<%= destDir %>/app/components/require.config.js',
+        files: {
+          '<%= destDir %>/app/components/require.config.js': '<%= destDir %>/app/components/require.config.js',
+          '<%= destDir %>/app/app.js': '<%= destDir %>/app/app.js'
+        },
         options: {
           replacements: [
             {
               pattern: /(?:^|\/\/)(.*)@REV@/,
               replacement: '$1'+desc.object
+            },
+            {
+              pattern: /@REV@/,
+              replacement: desc.object
             }
           ]
         }
@@ -34,4 +40,4 @@ module.exports = function(grunt) {
     });
     grunt.task.run('git-describe');
   });
-}
+};
