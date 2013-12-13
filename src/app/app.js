@@ -136,9 +136,12 @@ function (angular, $, _, appLevelRequire) {
               var $scope = this;
               $scope.requireContext(deps, function () {
                 var deps = _.toArray(arguments);
-                $scope.$apply(function () {
-                  fn.apply($scope, deps);
-                });
+                // Check that this is a valid scope.
+                if($scope.$id) {
+                  $scope.$apply(function () {
+                    fn.apply($scope, deps);
+                  });
+                }
               });
             };
           }]);
