@@ -21,15 +21,18 @@ function (angular, _, config, $) {
       };
     };
 
-    $scope.elasticsearch_dblist = function(query) {
-      var words = query.split(" ");
+    $scope.elasticsearch_dblist = function(queryStr) {
+      var words = queryStr.split(" ");
       var query = $scope.ejs.BoolQuery();
       var terms = _.map(words, function(word) {
-        return $scope.ejs.MatchQuery("metricPath", word);
+        return $scope.ejs.MatchQuery("metricPath_ng", word).boost(1.2);
       });
 
-      console.log("query: ", terms);
-      query.must(terms);
+      var ngramQuery = $scope.ejs.BoolQuery();
+      ngramQuery.must(terms);
+
+      var fieldMatchQuery = $scope.ejs.FieldQuery('metricPath', queryStr + "*").boost(1.2);
+      query.should([ngramQuery, fieldMatchQuery]);
 
       var request = $scope.ejs.Request().indices(config.grafana_index).types('metricKey');
       var results = request.query(query).size(20).doSearch();

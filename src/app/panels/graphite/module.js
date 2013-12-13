@@ -416,7 +416,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       restrict: 'A',
       template: '<div></div>',
       link: function(scope, elem) {
-        var data = [];
+        var data, plot;
 
         scope.$on('refresh',function() {
           scope.get_data();
@@ -558,7 +558,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
             console.log('Datapoints[0] count:', data[0].data.length);
             console.log('Datapoints.Total count:', totalDataPoints);*/
 
-            scope.plot = $.plot(elem, data, options);
+            plot = $.plot(elem, data, options);
 
           } catch(e) {
             console.log(e);

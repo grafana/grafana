@@ -8,73 +8,116 @@ function (angular, _, config) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('MetricKeysCtrl', function($scope, $http) {
+  module.controller('MetricKeysCtrl', function($scope, $http, $q) {
+    var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_index + '/';
+    var loadingDefered;
 
     $scope.init = function () {
       $scope.metricPath = "prod.apps.api.boobarella.*";
+      $scope.metricCounter = 0;
+    };
+
+    function deleteIndex()
+    {
+      var deferred = $q.defer();
+      $http.delete(elasticSearchUrlForMetricIndex)
+        .success(function() {
+          deferred.resolve('ok');
+        })
+        .error(function(data, status) {
+          if (status === 404) {
+            deferred.resolve('ok');
+          }
+          else {
+            deferred.reject('elastic search returned unexpected error');
+          }
+        });
+
+      return deferred.promise;
+    }
+
+    function createIndex()
+    {
+      return $http.put(elasticSearchUrlForMetricIndex, {
+        settings: {
+          analysis: {
+            analyzer: {
+              metric_path_ngram : { tokenizer : "my_ngram_tokenizer" }
+            },
+            tokenizer: {
+              my_ngram_tokenizer : {
+                type : "nGram",
+                min_gram : "3",
+                max_gram : "8",
+                token_chars: [ "letter", "digit", "punctuation", "symbol"]
+              }
+            }
+          }
+        },
+        mappings: {
+          metricKey: {
+            properties: {
+              metricPath: {
+/*                type: "string",
+                index: "analyzed",
+                index_analyzer: "metric_path_ngram"
+*/
+                type: "multi_field",
+                fields: {
+                  "metricPath": { type: "string", index: "analyzed", index_analyzer: "standard" },
+                  "metricPath_ng": { type: "string", index: "analyzed", index_analyzer: "metric_path_ngram" }
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    $scope.createIndex = function () {
+      $scope.errorText = null;
+      $scope.infoText = null;
+
+      deleteIndex()
+        .then(createIndex)
+        .then(function () {
+          $scope.infoText = "Index created!";
+        })
+        .then(null, function (err) {
+          $scope.errorText = angular.toJson(err);
+        });
     };
 
     $scope.loadMetricsFromPath = function () {
-      $scope.infoText = 'loading';
-      loadMetricsRecursive($scope.metricPath)
+      $scope.errorText = null;
+      $scope.infoText = null;
+      $scope.metricCounter = 0;
 
-      /*$http.put(config.elasticsearch + "/grafana-int/", {
-{
-  "settings": {
-    "analysis": {
-      "analyzer": {
-        "category_path": {
-          "type": "custom",
-          "tokenizer": "category_path"
-        },
-        "my_ngram_analyzer" : {
-      "tokenizer" : "my_ngram_tokenizer"
-    }
-      },
-      "tokenizer": {
-        "category_path": {
-          "type": "path_hierarchy",
-          "delimiter": "."
-        },
-        "my_ngram_tokenizer" : {
-          "type" : "nGram",
-          "min_gram" : "4",
-          "max_gram" : "8",
-          "token_chars": [ "letter", "digit" ]
-        }
-      }
-    }
-  },
-  "mappings": {
-    "metricKey": {
-      "properties": {
-        "metricPath": {
-          "type": "string",
-          "index": "analyzed",
-          "index_analyzer": "my_ngram_analyzer"
-    }
-      }
-    }
-  }
-}
-      });*/
+      return loadMetricsRecursive($scope.metricPath)
+        .then(function() {
+          $scope.infoText = "Indexing completed!";
+        }, function(err) {
+          $scope.errorText = "Error: " + err;
+        });
     };
 
-    function receiveMetric(data) {
+    function receiveMetric(result) {
+      var data = result.data;
       if (!data || data.length == 0) {
         console.log('no data');
         return;
       }
 
-      _.each(data, function(metric) {
+      var funcs = _.map(data, function(metric) {
         if (metric.expandable) {
-          console.log('Loading children: ' + metric.id);
-          loadMetricsRecursive(metric.id + ".*");
+          return loadMetricsRecursive(metric.id + ".*");
         }
         if (metric.leaf) {
-          saveMetricKey(metric.id);
+          return saveMetricKey(metric.id);
         }
       });
+
+      return $q.all(funcs);
     }
 
     function saveMetricKey(metricId) {
@@ -84,28 +127,27 @@ function (angular, _, config) {
         metricPath: metricId
       });
 
-      request.doIndex(
+      return request.doIndex(
         // Success
         function(result) {
-          console.log('save metric success', result);
+          $scope.infoText = "Indexing " + metricId;
+          $scope.metricCounter = $scope.metricCounter + 1;
         },
         function(error) {
-          console.log('save metric error', error);
+          $scope.errorText = "failed to save metric " + metricId;
         }
       );
     }
 
     function metricLoadError(data, status, headers, config)
     {
-      console.log('error: ' + status);
-      $scope.error = "failed to get metrics from graphite";
+        $scope.errorText = "failed to get metric";
     }
 
-    function loadMetricsRecursive(metricPath, data, callback)
+    function loadMetricsRecursive(metricPath)
     {
-      $http({ method: 'GET', url: config.graphiteUrl + '/metrics/find/?query=' + metricPath} )
-        .success(receiveMetric)
-        .error(metricLoadError);
+      return $http({ method: 'GET', url: config.graphiteUrl + '/metrics/find/?query=' + metricPath} )
+              .then(receiveMetric);
     }
 
   });
