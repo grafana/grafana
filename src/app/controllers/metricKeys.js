@@ -10,7 +10,6 @@ function (angular, _, config) {
 
   module.controller('MetricKeysCtrl', function($scope, $http, $q) {
     var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_index + '/';
-    var loadingDefered;
 
     $scope.init = function () {
       $scope.metricPath = "prod.apps.api.boobarella.*";
@@ -103,7 +102,7 @@ function (angular, _, config) {
 
     function receiveMetric(result) {
       var data = result.data;
-      if (!data || data.length == 0) {
+      if (!data || data.length === 0) {
         console.log('no data');
         return;
       }
@@ -123,31 +122,24 @@ function (angular, _, config) {
     function saveMetricKey(metricId) {
 
       // Create request with id as title. Rethink this.
-      var request = ejs.Document(config.grafana_index, 'metricKey', metricId).source({
+      var request = $scope.ejs.Document(config.grafana_index, 'metricKey', metricId).source({
         metricPath: metricId
       });
 
       return request.doIndex(
-        // Success
-        function(result) {
+        function() {
           $scope.infoText = "Indexing " + metricId;
           $scope.metricCounter = $scope.metricCounter + 1;
         },
-        function(error) {
+        function() {
           $scope.errorText = "failed to save metric " + metricId;
         }
       );
     }
 
-    function metricLoadError(data, status, headers, config)
-    {
-        $scope.errorText = "failed to get metric";
-    }
-
     function loadMetricsRecursive(metricPath)
     {
-      return $http({ method: 'GET', url: config.graphiteUrl + '/metrics/find/?query=' + metricPath} )
-              .then(receiveMetric);
+      return $http.get(config.graphiteUrl + '/metrics/find/?query=' + metricPath).then(receiveMetric);
     }
 
   });

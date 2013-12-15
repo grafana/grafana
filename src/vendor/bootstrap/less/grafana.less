@@ -23,3 +23,21 @@
   margin-left: -385px;
   top: 100px !important;
 }
+
+.grafana-search-metric-actions {
+  visibility: hidden;
+  padding-left: 20px;
+}
+
+.grafana-search-metric-name {
+  white-space: nowrap;
+}
+
+.grafana-search-metric-result:hover {
+  .grafana-search-metric-actions {
+    visibility: visible;
+  }
+  .grafana-search-metric-name {
+    color: @blue;
+  }
+}
