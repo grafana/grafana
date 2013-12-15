@@ -1,17 +1,15 @@
 <div class="editor-row">
 
-	<h5>Graphite Targets</h5>
+	<div ng-repeat="target in panel.targets">
 
-  	<div ng-repeat="target in panel.targets">
-
-  	<div class="row-fluid">
-  		<div class="span12">
-    		<input type="text" ng-model="target.target" class="input-large" style="width:95%" ng-model-onblur ng-change="get_data()" />
-    		<i ng-click="panel.targets = _.without(panel.targets, target)" class="pointer icon-remove" style="position: relative; top: -5px; left: 5px;"></i>
-    	</div>
-    </div>
+	<div class="row-fluid">
+		<div class="span12">
+  		<input type="text" ng-model="target.target" class="input-large" style="width:95%" ng-model-onblur ng-change="get_data()" bs-typeahead="typeAheadSource" ata-min-length=0 />
+  		<i ng-click="panel.targets = _.without(panel.targets, target)" class="pointer icon-remove" style="position: relative; top: -5px; left: 5px;"></i>
+  	</div>
+  </div>
   </div>
 
-  <button ng-click="add_target(panel.target)" class="btn btn-success" ng-show="editor.index == 1">Add target</button>
+  <a ng-click="add_target(panel.target)"  ng-show="editor.index == 1">Add target</a>
 
 </div>

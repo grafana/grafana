@@ -16,7 +16,7 @@ function (angular, _, config, $) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = null;
 
-      keyboardManager.bind('s', function() {
+      keyboardManager.bind('shift+s', function() {
         $element.find('.dropdown').addClass('open');
         $scope.giveSearchFocus += 1;
       });

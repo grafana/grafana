@@ -100,7 +100,8 @@
   </form>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="img/load_big.gif"></center>
 
-  <div histogram-chart class="pointer histogram-chart" params="{{panel}}"></div>
+  <div histogram-chart class="pointer histogram-chart" params="{{panel}}">
+  </div>
 
   <span ng-show="panel.legend" ng-repeat='series in legend' class="histogram-legend">
       <i class='icon-circle' ng-style="{color: series.color}"></i>
@@ -118,11 +119,6 @@
       <div ng-show="editorTabs[editor.index] == 'General'">
         <div ng-include src="'app/partials/panelgeneral.html'"></div>
       </div>
-
-      <div ng-show="editorTabs[editor.index] == 'Panel'">
-        <div ng-include src="edit_path(panel.type)"></div>
-      </div>
-
       <div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>

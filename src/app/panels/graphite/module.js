@@ -48,14 +48,20 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       ],
       editorTabs : [
         {
+          title:'Targets',
+          src:'app/panels/graphite/editor.html'
+        },
+        {
+          title:'Axis labels',
+          src:'app/panels/graphite/axisEditor.html'
+        },
+        {
           title:'Style',
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
-      status  : "Stable",
-      description : "A bucketed time series chart of the current query or queries. Uses the "+
-        "Elasticsearch date_histogram facet. If using time stamped indices this panel will query"+
-        " them sequentially to attempt to apply the lighest possible load to your Elasticsearch cluster"
+      status  : "Work in progress",
+      description : " Graphite graphing panel"
     };
 
     // Set and populate defaults
@@ -221,6 +227,10 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       } else {
         $scope.panel.auto_int = true;
       }
+    };
+
+    $scope.typeAheadSource = function (str) {
+      return ["test", "asd", "testing2" + str];
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
@@ -409,12 +419,21 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       $scope.$emit('render');
     };
 
+
+    $scope.setEditorTabs = function(panelMeta) {
+      $scope.editorTabs = ['General'];
+      if(!_.isUndefined(panelMeta.editorTabs)) {
+        $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
+      }
+      return $scope.editorTabs;
+    };
+
   });
 
   module.directive('histogramChart', function(dashboard, filterSrv) {
     return {
       restrict: 'A',
-      template: '<div></div>',
+      template: '<div> </div>',
       link: function(scope, elem) {
         var data, plot;
 
@@ -559,6 +578,17 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
             console.log('Datapoints.Total count:', totalDataPoints);*/
 
             plot = $.plot(elem, data, options);
+
+            if (scope.panel.leftYAxisLabel) {
+              elem.css('margin-left', '10px');
+              var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>")
+                .text(scope.panel.leftYAxisLabel)
+                .appendTo(elem);
+
+              yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
+            } else if (elem.css('margin-left')) {
+              elem.css('margin-left', '');
+            }
 
           } catch(e) {
             console.log(e);
