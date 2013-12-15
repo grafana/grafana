@@ -9,12 +9,21 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, dashboard) {
+  module.controller('SearchCtrl', function($scope, dashboard, keyboardManager, $element) {
 
     $scope.init = function() {
       $scope.elasticsearch = $scope.elasticsearch || {};
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = null;
+
+      keyboardManager.bind('s', function() {
+        $element.find('.dropdown').addClass('open');
+        $scope.giveSearchFocus += 1;
+      });
+
+      keyboardManager.bind('esc', function() {
+        $element.find('.dropdown').removeClass('open');
+      });
     };
 
     $scope.keyDown = function (evt) {

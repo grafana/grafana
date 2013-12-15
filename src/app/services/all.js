@@ -7,6 +7,7 @@ define([
   './querySrv',
   './timer',
   './panelMove',
-  './esVersion'
+  './esVersion',
+  './keyboardManager',
 ],
 function () {});
