@@ -235,7 +235,7 @@ function (angular, app, _, L, localRequire) {
               });
 
               // This could be made configurable?
-              L.tileLayer('http://{s}.tile.cloudmade.com/57cbb6ca8cac418dbb1a402586df4528/22677/256/{z}/{x}/{y}.png', {
+              L.tileLayer('https://ssl_tiles.cloudmade.com/57cbb6ca8cac418dbb1a402586df4528/22677/256/{z}/{x}/{y}.png', {
                 maxZoom: 18,
                 minZoom: 2
               }).addTo(map);
