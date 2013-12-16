@@ -44,14 +44,36 @@ function (angular, _, config) {
     };
 
     $scope.loadAll = function() {
-      return $http.get(config.graphiteUrl + "/metrics/index.json")
-        .then(function (data) {
+      $scope.infoText = "Fetching all metrics from graphite...";
 
+      return $http.get(config.graphiteUrl + "/metrics/index.json")
+        .then(saveMetricsArray)
+        .then(function () {
+          $scope.infoText = "Indexing complete!";
         })
         .then(null, function(err) {
-          $scope.errorText = "Failed to fetch index.json metrics file from graphite: " + err;
+          $scope.errorText = err;
+          deferred.reject(err);
         });
     };
+
+    function saveMetricsArray(data, currentIndex)
+    {
+      if (!data && !data.data && !data.data.length == 0) {
+        return $q.reject('No metrics from graphite');
+      }
+
+      if (data.data.length === currentIndex) {
+        return $q.when('done');
+      }
+
+      currentIndex = currentIndex || 0;
+
+      return saveMetricKey(data.data[currentIndex])
+        .then(function() {
+          return saveMetricsArray(data, currentIndex + 1);
+        });
+    }
 
     function deleteIndex()
     {
