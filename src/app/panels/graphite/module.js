@@ -229,8 +229,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       }
     };
 
-    $scope.typeAheadSource = function (str) {
-      return ["test", "asd", "testing2" + str];
+    $scope.typeAheadSource = function () {
+      return ["test", "asd", "testing2"];
     };
 
     $scope.remove_panel_from_row = function(row, panel) {

@@ -16,6 +16,43 @@ function (angular, _, config) {
       $scope.metricCounter = 0;
     };
 
+    $scope.createIndex = function () {
+      $scope.errorText = null;
+      $scope.infoText = null;
+
+      deleteIndex()
+        .then(createIndex)
+        .then(function () {
+          $scope.infoText = "Index created!";
+        })
+        .then(null, function (err) {
+          $scope.errorText = angular.toJson(err);
+        });
+    };
+
+    $scope.loadMetricsFromPath = function() {
+      $scope.errorText = null;
+      $scope.infoText = null;
+      $scope.metricCounter = 0;
+
+      return loadMetricsRecursive($scope.metricPath)
+        .then(function() {
+          $scope.infoText = "Indexing completed!";
+        }, function(err) {
+          $scope.errorText = "Error: " + err;
+        });
+    };
+
+    $scope.loadAll = function() {
+      return $http.get(config.graphiteUrl + "/metrics/index.json")
+        .then(function (data) {
+
+        })
+        .then(null, function(err) {
+          $scope.errorText = "Failed to fetch index.json metrics file from graphite: " + err;
+        });
+    };
+
     function deleteIndex()
     {
       var deferred = $q.defer();
@@ -57,10 +94,6 @@ function (angular, _, config) {
           metricKey: {
             properties: {
               metricPath: {
-/*                type: "string",
-                index: "analyzed",
-                index_analyzer: "metric_path_ngram"
-*/
                 type: "multi_field",
                 fields: {
                   "metricPath": { type: "string", index: "analyzed", index_analyzer: "standard" },
@@ -72,33 +105,6 @@ function (angular, _, config) {
         }
       });
     }
-
-    $scope.createIndex = function () {
-      $scope.errorText = null;
-      $scope.infoText = null;
-
-      deleteIndex()
-        .then(createIndex)
-        .then(function () {
-          $scope.infoText = "Index created!";
-        })
-        .then(null, function (err) {
-          $scope.errorText = angular.toJson(err);
-        });
-    };
-
-    $scope.loadMetricsFromPath = function () {
-      $scope.errorText = null;
-      $scope.infoText = null;
-      $scope.metricCounter = 0;
-
-      return loadMetricsRecursive($scope.metricPath)
-        .then(function() {
-          $scope.infoText = "Indexing completed!";
-        }, function(err) {
-          $scope.errorText = "Error: " + err;
-        });
-    };
 
     function receiveMetric(result) {
       var data = result.data;
