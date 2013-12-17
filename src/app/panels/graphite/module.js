@@ -393,10 +393,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           closeEditMode();
         }
 
-
-        setTimeout(function() {
+        setImmediate(function() {
           $scope.$emit('render');
-        }, 200);
+        });
       });
 
       $rootScope.$emit('fullEditMode', true);
