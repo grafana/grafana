@@ -5,5 +5,6 @@ define([
   './pulldown',
   './zoom',
   './search',
-  './metricKeys'
+  './metricKeys',
+  './graphiteTarget'
 ], function () {});

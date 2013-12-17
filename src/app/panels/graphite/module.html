@@ -1,4 +1,4 @@
-<div ng-controller='graphite' ng-init="init()" style="min-height:{{panel.height || row.height}}" ng-class='{"panel-full-edit-mode": inEditMode}'>
+<div ng-controller='graphite' ng-init="init()" style="min-height:{{panel.height || row.height}}" ng-class='{"panel-full-edit": inEditMode}'>
   <style>
     .histogram-legend {
       display:inline-block;
@@ -86,15 +86,17 @@
   <div histogram-chart class="pointer histogram-chart" params="{{panel}}">
   </div>
 
-  <span ng-show="panel.legend" ng-repeat='series in legend' class="histogram-legend">
-      <i class='icon-circle' ng-style="{color: series.color}"></i>
-      <span class='small histogram-legend-item'>
-        <span ng-if="panel.show_query">{{series.alias || series.query}}</span>
-        <span ng-if="!panel.show_query">{{series.alias}}</span>
-      </span>
-  </span>
+  <div class="grafana-legend-container">
+    <span ng-show="panel.legend" ng-repeat='series in legend' class="histogram-legend">
+        <i class='icon-circle' ng-style="{color: series.color}"></i>
+        <span class='small histogram-legend-item'>
+          <span ng-if="panel.show_query">{{series.alias || series.query}}</span>
+          <span ng-if="!panel.show_query">{{series.alias}}</span>
+        </span>
+    </span>
+  </div>
 
-  <div class="fluid-row panel-full-edit-mode-controls" ng-show="inEditMode" style="margin: 20px;">
+  <div class="fluid-row panel-full-edit-controls" ng-show="inEditMode">
       <div ng-model="editor.index" bs-tabs>
         <div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
         </div>

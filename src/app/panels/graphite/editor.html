@@ -1,13 +1,21 @@
 <div class="editor-row">
 
-	<div ng-repeat="target in panel.targets">
+	<div ng-repeat="target in panel.targets" ng-controller="GraphiteTargetCtrl">
+  	<div class="row-fluid">
+  		<div class="span12">
+        <span ng-if="!editMode">
+          {{target.target}}
+        </span>
 
-	<div class="row-fluid">
-		<div class="span12">
-  		<input type="text" ng-model="target.target" class="input-large" style="width:95%" ng-model-onblur ng-change="get_data()" bs-typeahead="typeAheadSource" data-min-length=0 />
-  		<i ng-click="panel.targets = _.without(panel.targets, target)" class="pointer icon-remove" style="position: relative; top: -5px; left: 5px;"></i>
-  	</div>
-  </div>
+    		<input ng-if="editMode" type="text" ng-model="target.target" class="input-large" style="width:100%" ng-model-onblur ng-change="targetChanged()" bs-typeahead="typeAheadSource" data-min-length=0 />
+
+        <span ng-if="!editMode">
+          <i ng-click="edit()" class="pointer icon-edit" style="padding: 0 7px;"></i>
+          <i ng-click="panel.targets = _.without(panel.targets, target)" class="pointer icon-remove" style="padding: 0 7px;"></i>
+    	 </span>
+
+      </div>
+    </div>
   </div>
 
   <a ng-click="add_target(panel.target)"  ng-show="editor.index == 1">Add target</a>

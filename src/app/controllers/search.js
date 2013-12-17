@@ -16,10 +16,10 @@ function (angular, _, config, $) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = null;
 
-      keyboardManager.bind('shift+s', function() {
+      /*keyboardManager.bind('shift+s', function() {
         $element.find('.dropdown').addClass('open');
         $scope.giveSearchFocus += 1;
-      });
+      });*/
 
       keyboardManager.bind('esc', function() {
         $element.find('.dropdown').removeClass('open');
