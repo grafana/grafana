@@ -22,7 +22,7 @@ function (angular, app, _, $, kbn) {
   var module = angular.module('kibana.panels.terms', []);
   app.useModule(module);
 
-  module.controller('terms', function($scope, querySrv, dashboard, filterSrv) {
+  module.controller('terms', function($scope, querySrv, dashboard, filterSrv, fields) {
     $scope.panelMeta = {
       modals : [
         {
@@ -134,6 +134,9 @@ function (angular, app, _, $, kbn) {
         boolQuery,
         queries;
 
+      $scope.field = _.contains(fields.list,$scope.panel.field+'.raw') ?
+        $scope.panel.field+'.raw' : $scope.panel.field;
+
       request = $scope.ejs.Request().indices(dashboard.indices);
 
       $scope.panel.queries.ids = querySrv.idsByMode($scope.panel.queries);
@@ -145,11 +148,10 @@ function (angular, app, _, $, kbn) {
         boolQuery = boolQuery.should(querySrv.toEjsObj(q));
       });
 
-
       // Terms mode
       request = request
         .facet($scope.ejs.TermsFacet('terms')
-          .field($scope.panel.field)
+          .field($scope.field)
           .size($scope.panel.size)
           .order($scope.panel.order)
           .exclude($scope.panel.exclude)
@@ -187,10 +189,10 @@ function (angular, app, _, $, kbn) {
 
     $scope.build_search = function(term,negate) {
       if(_.isUndefined(term.meta)) {
-        filterSrv.set({type:'terms',field:$scope.panel.field,value:term.label,
+        filterSrv.set({type:'terms',field:$scope.field,value:term.label,
           mandate:(negate ? 'mustNot':'must')});
       } else if(term.meta === 'missing') {
-        filterSrv.set({type:'exists',field:$scope.panel.field,
+        filterSrv.set({type:'exists',field:$scope.field,
           mandate:(negate ? 'must':'mustNot')});
       } else {
         return;

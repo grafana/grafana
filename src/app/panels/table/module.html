@@ -19,6 +19,12 @@
 
         </div>
         <div><input type="text" class="input-medium" placeholder="Type to filter..." ng-model="fieldFilter"></div>
+        <div ng-show="panel.all_fields" class="small muted" style="margin-bottom:10px">
+          <strong>Note</strong> These fields have been<br>
+          extracted from your mapping.<br>
+          Not all fields may be available<br>
+          in your source document.
+        </div>
 
         <ul class="unstyled" style="{{panel.overflow}}:{{panel.height || row.height}};overflow-y:auto;overflow-x:hidden;" ng-if="panel.all_fields">
           <li ng-style="panel.style" ng-repeat="field in fields.list|filter:fieldFilter|orderBy:identity">
