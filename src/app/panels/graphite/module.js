@@ -383,12 +383,16 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
     $scope.openConfigureModal = function($event) {
       $event.preventDefault();
       $event.stopPropagation();
+      var oldHeight = $scope.row.height;
+      $scope.row.height = 200;
 
       var closeEditMode = $rootScope.$on('fullEditMode', function(evt, enabled) {
         $scope.inEditMode = enabled;
         if (!enabled) {
+          $scope.row.height = oldHeight;
           closeEditMode();
         }
+
 
         setTimeout(function() {
           $scope.$emit('render');

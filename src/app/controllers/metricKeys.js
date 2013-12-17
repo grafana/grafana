@@ -53,13 +53,12 @@ function (angular, _, config) {
         })
         .then(null, function(err) {
           $scope.errorText = err;
-          deferred.reject(err);
         });
     };
 
     function saveMetricsArray(data, currentIndex)
     {
-      if (!data && !data.data && !data.data.length == 0) {
+      if (!data && !data.data && data.data.length === 0) {
         return $q.reject('No metrics from graphite');
       }
 
