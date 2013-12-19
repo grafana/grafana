@@ -40,7 +40,7 @@
         <li ng-show='dashboard.current.loader.load_gist'>
           <h5>Gist <tip>Enter a gist number or url</tip></h5>
           <form>
-            <input type="text" ng-model="gist.url"/ placeholder="Gist number or URL"><br>
+            <input type="text" ng-model="gist.url" placeholder="Gist number or URL"><br>
             <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
             <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
             <h6 ng-hide="gist.files.length || !gist.url.length">No gist dashboards found</h6>
