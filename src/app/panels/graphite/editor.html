@@ -15,7 +15,6 @@
     .grafana-segment-list {
       list-style: none;
       margin: 0;
-      margin-left: 5px;
     }
     .grafana-segment-list li {
       float: left;
@@ -42,13 +41,13 @@
 
     <table style="margin: 0; padding: 0;width:100%;">
       <tr class="grafana-target-top">
-        <td style="padding-left: 5px;"><i class="icon-eye-open"></i></td>
+        <td style="padding-left: 10px;"><i class="icon-eye-open"></i></td>
         <td>
           <ul class="grafana-segment-list">
           <li class="dropdown" ng-repeat="segment in segments">
             <a  class="grafana-target-segment dropdown-toggle"
                 data-toggle="dropdown"
-                data-placement="bottom" ng-bind-html-unsafe="segment.val"></a>
+                data-placement="bottom" ng-bind-html-unsafe="segment.html"></a>
             <ul class="dropdown-menu">
               <li>
                 <a ng-click="setSegmentStar($index)">All <i class="icon-star" /></a>
