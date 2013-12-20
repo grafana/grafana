@@ -11,15 +11,11 @@ function (angular, _, config) {
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
     $scope.init = function() {
-      $scope.segments = [];
-      var strSegments = $scope.target.target.split('.');
-      _.each(strSegments, function (segment, index) {
-        if (segment === '*') {
-          $scope.segments[index] = { val: segment, html: '<i class="icon-asterisk"><i>' };
-          return;
-        }
-
-        $scope.segments[index] = { val: segment, html: segment};
+      $scope.segments = _.map($scope.target.target.split('.'), function (segmentStr) {
+        return {
+          val: segmentStr,
+          html: segmentStr === '*' ? '<i class="icon-asterisk"><i>' : segmentStr
+        };
       });
     };
 
@@ -31,31 +27,99 @@ function (angular, _, config) {
       }, null);
     }
 
-    $scope.getItems = function (index) {
-      $scope.altSegments = [];
-      var metricPath = getSegmentPathUpTo(index) + '.*';
-      var url = config.graphiteUrl + '/metrics/find/?query=' + metricPath;
-      return $http.get(url)
+    function graphiteMetricQuery(query) {
+      var url = config.graphiteUrl + '/metrics/find/?query=' + query;
+      return $http.get(url);
+    }
+
+    function checkOtherSegments(fromIndex) {
+      var path = getSegmentPathUpTo(fromIndex + 1);
+      return graphiteMetricQuery(path)
         .then(function(result) {
-          $scope.altSegments = result.data;
+          if (result.data.length === 0) {
+            $scope.segments = $scope.segments.splice(0, fromIndex);
+            $scope.segments.push({html: 'select metric'});
+            return;
+          }
+          if (result.data[0].expandable) {
+            if ($scope.segments.length === fromIndex) {
+              $scope.segments.push({html: 'select metric'});
+            }
+            else {
+              return checkOtherSegments(fromIndex + 1);
+            }
+          }
+        });
+    }
+
+    function setSegmentFocus(segmentIndex) {
+      _.each($scope.segments, function(segment, index) {
+        segment.focus = segmentIndex == index;
+      });
+    }
+
+    $scope.getAltSegments = function (index) {
+      $scope.altSegments = [];
+
+      return graphiteMetricQuery(getSegmentPathUpTo(index) + '.*')
+        .then(function(result) {
+          var altSegments = _.map(result.data, function(altSegment) {
+            return {
+              val: altSegment.text,
+              html: altSegment.text,
+              expandable: altSegment.expandable
+            }
+          });
+
+          altSegments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' })
+          $scope.altSegments = altSegments;
         });
     };
 
     $scope.setSegment = function (altIndex, segmentIndex) {
-      $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].text;
-      $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].text;
-      $scope.target.target = getSegmentPathUpTo($scope.segments.length);
+      $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
+      $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
+
+      if ($scope.altSegments[altIndex].expandable) {
+        return checkOtherSegments(segmentIndex + 1)
+          .then(function () {
+            setSegmentFocus(segmentIndex + 1);
+            $scope.targetChanged();
+          });
+      }
+
+      setSegmentFocus(segmentIndex + 1);
       $scope.targetChanged();
     };
 
     $scope.targetChanged = function() {
+      $scope.target.target = getSegmentPathUpTo($scope.segments.length);
       $scope.$parent.get_data();
-      $scope.editMode = false;
-    };
-
-    $scope.edit = function() {
-      $scope.editMode = true;
     };
 
   });
+
+  module.directive('focusMe', function($timeout, $parse) {
+    return {
+      //scope: true,   // optionally create a child scope
+      link: function(scope, element, attrs) {
+        var model = $parse(attrs.focusMe);
+        scope.$watch(model, function(value) {
+          console.log('value=',value);
+          if(value === true) {
+            $timeout(function() {
+              element[0].focus();
+            });
+          }
+        });
+        // to address @blesh's comment, set attribute value to 'false'
+        // on blur event:
+        element.bind('blur', function() {
+           console.log('blur');
+           scope.$apply(model.assign(scope, false));
+        });
+      }
+    };
+  });
+
 });

@@ -16,7 +16,7 @@
       list-style: none;
       margin: 0;
     }
-    .grafana-segment-list li {
+    .grafana-segment-list > li {
       float: left;
     }
     .grafana-target-segment {
@@ -41,21 +41,20 @@
 
     <table style="margin: 0; padding: 0;width:100%;">
       <tr class="grafana-target-top">
-        <td style="padding-left: 10px;"><i class="icon-eye-open"></i></td>
+        <td style="padding-left: 10px;width: 25px;"><i class="icon-eye-open"></i></td>
         <td>
-          <ul class="grafana-segment-list">
-          <li class="dropdown" ng-repeat="segment in segments">
-            <a  class="grafana-target-segment dropdown-toggle"
-                data-toggle="dropdown" ng-click="getItems($index)"
-                data-placement="bottom" ng-bind-html-unsafe="segment.html"></a>
-            <ul class="dropdown-menu">
-              <li ng-repeat="altSegment in altSegments">
-                <a ng-click="setSegment($index, $parent.$index)">{{altSegment.text}}</a>
-              </li>
-            </ul>
-          </li>
+          <ul class="grafana-segment-list" role="menu">
+            <li class="dropdown" ng-repeat="segment in segments" role="menuitem">
+              <a tabindex="1" class="grafana-target-segment dropdown-toggle"
+                  data-toggle="dropdown" ng-click="getAltSegments($index)" focus-me="segment.focus"
+                  data-placement="bottom" ng-bind-html-unsafe="segment.html"></a>
+              <ul class="dropdown-menu" role="menu">
+                <li ng-repeat="altSegment in altSegments" role="menuitem">
+                  <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html"></a>
+                </li>
+              </ul>
+            </li>
           <ul>
-
         </td>
         <td>
             <i class="icon-remove"></i>
