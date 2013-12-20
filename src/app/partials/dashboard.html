@@ -14,6 +14,7 @@
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
       <div ng-show="fullEditMode" class="modal-backdrop fade in"></div>
+
       <!-- Rows -->
       <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.current.rows" ng-style="row_style(row)">
         <div class="row-control">

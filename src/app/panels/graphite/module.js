@@ -211,6 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
     $scope.init = function() {
       // Hide view options by default
       $scope.options = false;
+      $scope.editor = {index: 1};
 
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
@@ -421,7 +422,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
     $scope.render = function() {
       $scope.$emit('render');
     };
-
 
     $scope.setEditorTabs = function(panelMeta) {
       $scope.editorTabs = ['General'];
