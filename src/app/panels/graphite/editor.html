@@ -46,15 +46,16 @@
           <ul class="grafana-segment-list">
           <li class="dropdown" ng-repeat="segment in segments">
             <a  class="grafana-target-segment dropdown-toggle"
-                data-toggle="dropdown"
+                data-toggle="dropdown" ng-click="getItems($index)"
                 data-placement="bottom" ng-bind-html-unsafe="segment.html"></a>
             <ul class="dropdown-menu">
-              <li>
-                <a ng-click="setSegmentStar($index)">All <i class="icon-star" /></a>
+              <li ng-repeat="altSegment in altSegments">
+                <a ng-click="setSegment($index, $parent.$index)">{{altSegment.text}}</a>
               </li>
             </ul>
           </li>
           <ul>
+
         </td>
         <td>
             <i class="icon-remove"></i>
