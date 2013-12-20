@@ -7,6 +7,20 @@ function (angular, _, config) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
+  var graphiteFunctions = [
+    {
+      name: "scaleToSeconds",
+      params: [ { name: "seconds", type: "int" } ]
+    },
+    {
+      name: "sumSeries",
+      params: []
+    },
+    {
+      name: "groupByNode",
+      params: [ { name: "node", type: "node" }, { name: "function", type: "function" }]
+    }
+  ];
 
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
@@ -17,6 +31,23 @@ function (angular, _, config) {
           html: segmentStr === '*' ? '<i class="icon-asterisk"><i>' : segmentStr
         };
       });
+
+      $scope.functions = [
+        {
+          text: "scaleToSeconds(1)",
+          def: graphiteFunctions[0],
+          params: {
+            seconds: 1
+          }
+        },
+        {
+          text: "groupByNode",
+          def: graphiteFunctions[2],
+          params: {
+
+          }
+        }
+      ];
     };
 
     function getSegmentPathUpTo(index) {
@@ -97,6 +128,25 @@ function (angular, _, config) {
       $scope.$parent.get_data();
     };
 
+    $scope.removeFunction = function(func) {
+      $scope.functions = _.without($scope.functions, func);
+    };
+
+    $scope.functionParmsChanged = function(func) {
+      func.text = func.name + '(';
+      _.each(func.def.params, function(param) {
+        func.text += func.params[param.name];
+      });
+    };
+
+    $scope.addFunction = function() {
+      console.log($scope.functions);
+    };
+
+    $scope.editFunction = function(func) {
+      //func.edit = true;
+    };
+
   });
 
   module.directive('focusMe', function($timeout, $parse) {
@@ -112,12 +162,12 @@ function (angular, _, config) {
             });
           }
         });
-        // to address @blesh's comment, set attribute value to 'false'
+    /*    // to address @blesh's comment, set attribute value to 'false'
         // on blur event:
         element.bind('blur', function() {
            console.log('blur');
            scope.$apply(model.assign(scope, false));
-        });
+        });*/
       }
     };
   });

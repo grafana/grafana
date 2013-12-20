@@ -31,31 +31,37 @@
       border-left: 1px solid #050505;
       color: #c8c8c8;
     }
+
     .grafana-target-controls {
       float: right;
+      padding: 5px 7px;
     }
+
     .grafana-target .dropdown {
       padding: 0; margin: 0;
     }
+
     .grafana-target-segment:hover {
       text-decoration: none;
     }
+
     a.grafana-target-segment:focus {
       outline: 0;
       text-decoration: none;
     }
 
-    .grafana-target-fun-panel ul {
+    .grafana-target-func-panel ul {
       list-style: none;
+      margin: 0;
     }
-    .grafana-target-fun-panel ul > li {
+    .grafana-target-func-panel ul > li {
       float: left;
-      padding: 5px 7px;
+      padding: 1px 7px;
     }
 
-    .grafana-target-fun-panel-icon {
+    .grafana-target-func-panel-icon {
       float: left;
-      padding: 5px 7px;
+      padding: 1px 7px;
     }
   </style>
 
@@ -82,28 +88,22 @@
         </span>
         <div class="clearfix"></div>
       </div>
-      <div class="grafana-target-fun-panel">
-        <span class="grafana-target-fun-panel-icon">
-          <i class="icon-share-alt"></i>
-        </span>
-        <ul>
-          <li>
-            <a href="asd">sumSeries</a>
-          </li>
-          <li>
-            <a href="asd">avgSeries</a>
-          </li>
-          <li>
-            <a href="asd">scaleToSeconds</a>
-          </li>
-          <li>
-            <a href="asd">alias</a>
-          </li>
-          <li>
-            <a href="asd">other</a>
-          </li>
-        </ul>
-      </div>
+    </div>
+
+    <div class="grafana-target-func-panel">
+      <span class="grafana-target-func-panel-icon">
+        <i class="icon-long-arrow-right"></i>
+      </span>
+      <ul>
+        <li ng-repeat="func in functions">
+          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
+          <i class="icon-long-arrow-right"></i>
+        </li>
+        <li>
+          <a ng-click="addFunction">add function</a>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
     </div>
 
     <!-- <div class="row-fluid">
