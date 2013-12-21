@@ -95,8 +95,11 @@
         <i class="icon-long-arrow-right"></i>
       </span>
       <ul>
+        <li>
+          groupByNode( <input type="text" class="func-param" value="1"
+        </li>
         <li ng-repeat="func in functions">
-          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
+          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="bottom">{{func.text}}</a>
           <i class="icon-long-arrow-right"></i>
         </li>
         <li>

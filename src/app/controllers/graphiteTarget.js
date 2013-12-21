@@ -132,11 +132,12 @@ function (angular, _, config) {
       $scope.functions = _.without($scope.functions, func);
     };
 
-    $scope.functionParmsChanged = function(func) {
-      func.text = func.name + '(';
+    $scope.functionParamsChanged = function(func) {
+      func.text = func.def.name + '(';
       _.each(func.def.params, function(param) {
         func.text += func.params[param.name];
       });
+      func.text += ')';
     };
 
     $scope.addFunction = function() {
