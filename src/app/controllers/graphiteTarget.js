@@ -7,18 +7,29 @@ function (angular, _, config) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
-  var graphiteFunctions = [
+  var funcDefs = [
     {
       name: "scaleToSeconds",
-      params: [ { name: "seconds", type: "int" } ]
+      params: [ { name: "seconds", type: "int" } ],
+      defaultParams: [1]
     },
     {
       name: "sumSeries",
-      params: []
+      params: [],
     },
     {
       name: "groupByNode",
-      params: [ { name: "node", type: "node" }, { name: "function", type: "function" }]
+      params: [
+        {
+          name: "node",
+          type: "node",
+        },
+        {
+          name: "function",
+          type: "function",
+        }
+      ],
+      defaultParams: [3, "sumSeries"]
     }
   ];
 
@@ -32,22 +43,8 @@ function (angular, _, config) {
         };
       });
 
-      $scope.functions = [
-        {
-          text: "scaleToSeconds(1)",
-          def: graphiteFunctions[0],
-          params: {
-            seconds: 1
-          }
-        },
-        {
-          text: "groupByNode",
-          def: graphiteFunctions[2],
-          params: {
-
-          }
-        }
-      ];
+      $scope.funcDefs = funcDefs;
+      $scope.functions = [];
     };
 
     function getSegmentPathUpTo(index) {
@@ -87,6 +84,20 @@ function (angular, _, config) {
       _.each($scope.segments, function(segment, index) {
         segment.focus = segmentIndex === index;
       });
+    }
+
+    function getFuncText(funcDef, params) {
+      if (params.length === 0) {
+        return funcDef.name + '()';
+      }
+
+      var text = funcDef.name + '(';
+      _.each(funcDef.params, function(param, index) {
+        text += params[index] + ', ';
+      });
+      text = text.substring(0, text.length - 2);
+      text += ')';
+      return text;
     }
 
     $scope.getAltSegments = function (index) {
@@ -133,20 +144,15 @@ function (angular, _, config) {
     };
 
     $scope.functionParamsChanged = function(func) {
-      func.text = func.def.name + '(';
-      _.each(func.def.params, function(param) {
-        func.text += func.params[param.name] + ', ';
+      func.text = getFuncText(func.def, func.params);
+    };
+
+    $scope.addFunction = function(funcDef) {
+      $scope.functions.push({
+        def: funcDef,
+        params: funcDef.defaultParams,
+        text: getFuncText(funcDef, funcDef.defaultParams)
       });
-      func.text = func.text.substring(0, func.text.length - 2);
-      func.text += ')';
-    };
-
-    $scope.addFunction = function() {
-      console.log($scope.functions);
-    };
-
-    $scope.editFunction = function() {
-      //func.edit = true;
     };
 
   });
@@ -157,7 +163,6 @@ function (angular, _, config) {
       link: function(scope, element, attrs) {
         var model = $parse(attrs.focusMe);
         scope.$watch(model, function(value) {
-          console.log('value=',value);
           if(value === true) {
             $timeout(function() {
               element[0].focus();
