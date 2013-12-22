@@ -12,6 +12,7 @@ function () {
     {
       name: "sumSeries",
       params: [],
+      defaultParams: []
     },
     {
       name: "groupByNode",

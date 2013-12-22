@@ -30,6 +30,13 @@
               ng-change="functionParamsChanged(func)" ng-model-onblur
               ng-model="func.params[$index]" />
 
+        <input ng-if="param.type === 'string'"
+              type="text"
+              focus-me="true"
+              class="input-small"
+              ng-change="functionParamsChanged(func)" ng-model-onblur
+              ng-model="func.params[$index]" />
+
          <select  ng-if="param.type === 'node'"
                   class="input-mini"
                   ng-model="func.params[$index]"
