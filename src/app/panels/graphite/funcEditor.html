@@ -23,7 +23,7 @@
       <div class="editor-option" ng-repeat="param in func.def.params">
         <label class="small">{{param.name}}</label>
         <input ng-if="param.type === 'int'"
-              type="text"
+              type="number"
               placeholder="seconds"
               focus-me="true"
               class="input-mini"

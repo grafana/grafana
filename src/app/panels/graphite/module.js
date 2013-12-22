@@ -459,6 +459,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
         // Function for rendering panel
         function render_panel(data) {
+          if (!data) {
+            return;
+          }
           // IE doesn't work without this
           elem.css({height:scope.panel.height || scope.row.height});
 
@@ -476,129 +479,124 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           var stack = scope.panel.stack ? true : null;
 
           // Populate element
-          try {
-            var options = {
-              legend: { show: false },
-              series: {
-                stackpercent: scope.panel.stack ? scope.panel.percentage : false,
-                stack: scope.panel.percentage ? null : stack,
-                lines:  {
-                  show: scope.panel.lines,
-                  // Silly, but fixes bug in stacked percentages
-                  fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
-                  lineWidth: scope.panel.linewidth,
-                  steps: false
-                },
-                bars:   {
-                  show: scope.panel.bars,
-                  fill: 1,
-                  barWidth: barwidth/1.5,
-                  zero: false,
-                  lineWidth: 0
-                },
-                points: {
-                  show: scope.panel.points,
-                  fill: 1,
-                  fillColor: false,
-                  radius: scope.panel.pointradius
-                },
-                shadowSize: 1
+          var options = {
+            legend: { show: false },
+            series: {
+              stackpercent: scope.panel.stack ? scope.panel.percentage : false,
+              stack: scope.panel.percentage ? null : stack,
+              lines:  {
+                show: scope.panel.lines,
+                // Silly, but fixes bug in stacked percentages
+                fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
+                lineWidth: scope.panel.linewidth,
+                steps: false
               },
-              yaxis: {
-                show: scope.panel['y-axis'],
-                min: scope.panel.grid.min,
-                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+              bars:   {
+                show: scope.panel.bars,
+                fill: 1,
+                barWidth: barwidth/1.5,
+                zero: false,
+                lineWidth: 0
               },
-              xaxis: {
-                timezone: scope.panel.timezone,
-                show: scope.panel['x-axis'],
-                mode: "time",
-                min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
-                max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
-                timeformat: time_format(scope.panel.interval),
-                label: "Datetime",
-                ticks: elem.width()/100
+              points: {
+                show: scope.panel.points,
+                fill: 1,
+                fillColor: false,
+                radius: scope.panel.pointradius
               },
-              grid: {
-                backgroundColor: null,
-                borderWidth: 0,
-                hoverable: true,
-                color: '#c8c8c8'
-              }
+              shadowSize: 1
+            },
+            yaxis: {
+              show: scope.panel['y-axis'],
+              min: scope.panel.grid.min,
+              max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+            },
+            xaxis: {
+              timezone: scope.panel.timezone,
+              show: scope.panel['x-axis'],
+              mode: "time",
+              min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
+              max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
+              timeformat: time_format(scope.panel.interval),
+              label: "Datetime",
+              ticks: elem.width()/100
+            },
+            grid: {
+              backgroundColor: null,
+              borderWidth: 0,
+              hoverable: true,
+              color: '#c8c8c8'
+            }
+          };
+
+          if(scope.panel.y_format === 'bytes') {
+            options.yaxis.mode = "byte";
+          }
+
+          if(scope.panel.y_format === 'short') {
+            options.yaxis.tickFormatter = function(val) {
+              return kbn.shortFormat(val,0);
             };
+          }
 
-            if(scope.panel.y_format === 'bytes') {
-              options.yaxis.mode = "byte";
-            }
-
-            if(scope.panel.y_format === 'short') {
-              options.yaxis.tickFormatter = function(val) {
-                return kbn.shortFormat(val,0);
-              };
-            }
-
-            if(scope.panel.annotate.enable) {
-              options.events = {
-                levels: 1,
-                data: scope.annotations,
-                types: {
-                  'annotation': {
-                    level: 1,
-                    icon: {
-                      icon: "icon-tag icon-flip-vertical",
-                      size: 20,
-                      color: "#222",
-                      outline: "#bbb"
-                    }
+          if(scope.panel.annotate.enable) {
+            options.events = {
+              levels: 1,
+              data: scope.annotations,
+              types: {
+                'annotation': {
+                  level: 1,
+                  icon: {
+                    icon: "icon-tag icon-flip-vertical",
+                    size: 20,
+                    color: "#222",
+                    outline: "#bbb"
                   }
                 }
-                //xaxis: int    // the x axis to attach events to
-              };
-            }
-
-            if(scope.panel.interactive) {
-              options.selection = { mode: "x", color: '#666' };
-            }
-
-            // when rendering stacked bars, we need to ensure each point that has data is zero-filled
-            // so that the stacking happens in the proper order
-            var required_times = [];
-            if (data.length > 1) {
-              required_times = Array.prototype.concat.apply([], _.map(data, function (query) {
-                return query.time_series.getOrderedTimes();
-              }));
-              required_times = _.uniq(required_times.sort(function (a, b) {
-                // decending numeric sort
-                return a-b;
-              }), true);
-            }
-
-            for (var i = 0; i < data.length; i++) {
-              var _d = data[i].time_series.getFlotPairs(required_times);
-              data[i].data = _d;
-            }
-
-           /* var totalDataPoints = _.reduce(data, function(num, series) { return series.data.length + num; }, 0);
-            console.log('Datapoints[0] count:', data[0].data.length);
-            console.log('Datapoints.Total count:', totalDataPoints);*/
-
-            plot = $.plot(elem, data, options);
-
-            if (scope.panel.leftYAxisLabel) {
-              elem.css('margin-left', '10px');
-              var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>")
-                .text(scope.panel.leftYAxisLabel)
-                .appendTo(elem);
-
-              yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
-            } else if (elem.css('margin-left')) {
-              elem.css('margin-left', '');
-            }
-
-          } catch(e) {
-            console.log(e);
-            // Nothing to do here
+              }
+              //xaxis: int    // the x axis to attach events to
+            };
           }
+
+          if(scope.panel.interactive) {
+            options.selection = { mode: "x", color: '#666' };
+          }
+
+          // when rendering stacked bars, we need to ensure each point that has data is zero-filled
+          // so that the stacking happens in the proper order
+          var required_times = [];
+          if (data.length > 1) {
+            required_times = Array.prototype.concat.apply([], _.map(data, function (query) {
+              return query.time_series.getOrderedTimes();
+            }));
+            required_times = _.uniq(required_times.sort(function (a, b) {
+              // decending numeric sort
+              return a-b;
+            }), true);
+          }
+
+          for (var i = 0; i < data.length; i++) {
+            var _d = data[i].time_series.getFlotPairs(required_times);
+            data[i].data = _d;
+          }
+
+         /* var totalDataPoints = _.reduce(data, function(num, series) { return series.data.length + num; }, 0);
+          console.log('Datapoints[0] count:', data[0].data.length);
+          console.log('Datapoints.Total count:', totalDataPoints);*/
+
+          plot = $.plot(elem, data, options);
+
+          if (scope.panel.leftYAxisLabel) {
+            elem.css('margin-left', '10px');
+            var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>")
+              .text(scope.panel.leftYAxisLabel)
+              .appendTo(elem);
+
+            yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
+          } else if (elem.css('margin-left')) {
+            elem.css('margin-left', '');
+          }
+
         }
 
         function time_format(interval) {

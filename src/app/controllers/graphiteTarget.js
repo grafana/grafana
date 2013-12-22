@@ -1,37 +1,13 @@
 define([
   'angular',
   'underscore',
-  'config'
+  'config',
+  '/app/services/graphite/functions.js'
 ],
-function (angular, _, config) {
+function (angular, _, config, graphiteFunctions) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
-  var funcDefs = [
-    {
-      name: "scaleToSeconds",
-      params: [ { name: "seconds", type: "int" } ],
-      defaultParams: [1]
-    },
-    {
-      name: "sumSeries",
-      params: [],
-    },
-    {
-      name: "groupByNode",
-      params: [
-        {
-          name: "node",
-          type: "node",
-        },
-        {
-          name: "function",
-          type: "function",
-        }
-      ],
-      defaultParams: [3, "sumSeries"]
-    }
-  ];
 
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
@@ -43,7 +19,7 @@ function (angular, _, config) {
         };
       });
 
-      $scope.funcDefs = funcDefs;
+      $scope.funcDefs = graphiteFunctions;
       $scope.functions = [];
     };
 
@@ -100,6 +76,19 @@ function (angular, _, config) {
       return text;
     }
 
+    function wrapFunction(target, func) {
+      var targetWrapped = func.def.name + '(' + target;
+      _.each(func.params, function(param) {
+        if (_.isString(param)) {
+          targetWrapped += ",'" + param + "'";
+        }
+        else {
+          targetWrapped += "," + param;
+        }
+      });
+      return targetWrapped + ')';
+    }
+
     $scope.getAltSegments = function (index) {
       $scope.altSegments = [];
 
@@ -135,16 +124,21 @@ function (angular, _, config) {
     };
 
     $scope.targetChanged = function() {
-      $scope.target.target = getSegmentPathUpTo($scope.segments.length);
+      var target = getSegmentPathUpTo($scope.segments.length);
+      target = _.reduce($scope.functions, wrapFunction, target);
+      console.log('target: ', target);
+      $scope.target.target = target;
       $scope.$parent.get_data();
     };
 
     $scope.removeFunction = function(func) {
       $scope.functions = _.without($scope.functions, func);
+      $scope.targetChanged();
     };
 
     $scope.functionParamsChanged = function(func) {
       func.text = getFuncText(func.def, func.params);
+      $scope.targetChanged();
     };
 
     $scope.addFunction = function(funcDef) {
@@ -153,6 +147,7 @@ function (angular, _, config) {
         params: funcDef.defaultParams,
         text: getFuncText(funcDef, funcDef.defaultParams)
       });
+      $scope.targetChanged();
     };
 
   });
