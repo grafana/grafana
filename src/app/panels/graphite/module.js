@@ -36,7 +36,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, querySrv, dashboard, filterSrv) {
+  module.controller('graphite', function($scope, $rootScope, filterSrv) {
     $scope.panelMeta = {
       modals : [
         {
@@ -209,6 +209,8 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
 
     $scope.init = function() {
+      $scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
+
       // Hide view options by default
       $scope.options = false;
       $scope.editor = {index: 1};
@@ -433,7 +435,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
   });
 
-  module.directive('histogramChart', function(dashboard, filterSrv) {
+  module.directive('histogramChart', function(filterSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',

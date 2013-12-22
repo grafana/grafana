@@ -96,3 +96,96 @@
     font-size: 0.8rem;
   }
 }
+
+/* Graphite Target Editor */
+.grafana-target-inner-wrapper {
+  border-top: 1px solid #444444;
+  border-bottom: 1px solid #444444;
+}
+.grafana-target-inner {
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+  background: #202020;
+}
+
+.grafana-target-onoff {
+  float: left;
+  padding: 5px 7px;
+}
+
+.grafana-segment-list {
+  list-style: none;
+  margin: 0;
+  float: left;
+  >li {
+    float: left;
+  }
+}
+
+.grafana-target-segment {
+  padding: 5px 7px;
+  display: inline-block;
+  font-weight: normal;
+  border-left: 1px solid #050505;
+  color: #c8c8c8;
+
+  &:hover {
+    text-decoration: none;
+  }
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.grafana-target-controls {
+  float: right;
+  padding: 5px 7px;
+}
+
+.grafana-target .dropdown {
+  padding: 0; margin: 0;
+}
+
+.grafana-target-func-panel {
+  ul {
+    list-style: none;
+    margin: 0;
+
+    >li {
+      float: left;
+      padding: 1px 7px;
+    }
+  }
+}
+
+.grafana-target-func-panel-icon {
+  float: left;
+  padding: 1px 7px;
+}
+
+input[type=text].func-param {
+  border: none;
+  background: inherit;
+  width: 30px;
+  border-radius: none;
+  padding: 0;
+  margin: 0;
+}
+
+.grafana-target {
+  .popover-content {
+    padding: 0;
+  }
+}
+
+.grafana-func-editor {
+  .grafana-func-editor-header {
+    background: #41474c;
+    text-align: center;
+    border-bottom: 1px solid #353a3e;
+    padding: 2px 5px;
+  }
+  .editor-row {
+    padding: 5px;
+  }
+}

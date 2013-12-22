@@ -1,6 +1,6 @@
 <div class="grafana-func-editor">
 
-<div class="row-fluid">
+<div class="grafana-func-editor-header">
   <a ng-click="removeFunction(func)">
     Remove
   </a>
@@ -23,6 +23,7 @@
     <div class="editor-option" ng-repeat="param in func.def.params">
       <label class="small">{{param.name}}</label>
       <input ng-if="param.type === 'int'"
+            type="text"
             placeholder="seconds"
             focus-me="true"
             class="input-mini"
@@ -37,7 +38,7 @@
        </select>
 
        <select  ng-if="param.type === 'function'"
-                class="input-small"
+                style="width: 110px"
                 ng-change="functionParamsChanged(func)"
                 ng-model="func.params[param.name]"
                 ng-options="f for f in ['sumSeries', 'avgSeries']">

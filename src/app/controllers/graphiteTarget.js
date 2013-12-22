@@ -85,7 +85,7 @@ function (angular, _, config) {
 
     function setSegmentFocus(segmentIndex) {
       _.each($scope.segments, function(segment, index) {
-        segment.focus = segmentIndex == index;
+        segment.focus = segmentIndex === index;
       });
     }
 
@@ -99,10 +99,10 @@ function (angular, _, config) {
               val: altSegment.text,
               html: altSegment.text,
               expandable: altSegment.expandable
-            }
+            };
           });
 
-          altSegments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' })
+          altSegments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' });
           $scope.altSegments = altSegments;
         });
     };
@@ -135,8 +135,9 @@ function (angular, _, config) {
     $scope.functionParamsChanged = function(func) {
       func.text = func.def.name + '(';
       _.each(func.def.params, function(param) {
-        func.text += func.params[param.name];
+        func.text += func.params[param.name] + ', ';
       });
+      func.text = func.text.substring(0, func.text.length - 2);
       func.text += ')';
     };
 
@@ -144,7 +145,7 @@ function (angular, _, config) {
       console.log($scope.functions);
     };
 
-    $scope.editFunction = function(func) {
+    $scope.editFunction = function() {
       //func.edit = true;
     };
 
@@ -163,12 +164,6 @@ function (angular, _, config) {
             });
           }
         });
-    /*    // to address @blesh's comment, set attribute value to 'false'
-        // on blur event:
-        element.bind('blur', function() {
-           console.log('blur');
-           scope.$apply(model.assign(scope, false));
-        });*/
       }
     };
   });

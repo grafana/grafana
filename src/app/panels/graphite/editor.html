@@ -1,69 +1,4 @@
 <div class="editor-row">
-  <style>
-
-    .grafana-target-inner-wrapper {
-      border-top: 1px solid #444444;
-      border-bottom: 1px solid #444444;
-    }
-    .grafana-target-inner {
-      border-top: 1px solid black;
-      border-bottom: 1px solid black;
-      background: #202020;
-    }
-
-    .grafana-target-onoff {
-      float: left;
-      padding: 5px 7px;
-    }
-
-    .grafana-segment-list {
-      list-style: none;
-      margin: 0;
-      float: left;
-    }
-    .grafana-segment-list > li {
-      float: left;
-    }
-    .grafana-target-segment {
-      padding: 5px 7px;
-      display: inline-block;
-      font-weight: normal;
-      border-left: 1px solid #050505;
-      color: #c8c8c8;
-    }
-
-    .grafana-target-controls {
-      float: right;
-      padding: 5px 7px;
-    }
-
-    .grafana-target .dropdown {
-      padding: 0; margin: 0;
-    }
-
-    .grafana-target-segment:hover {
-      text-decoration: none;
-    }
-
-    a.grafana-target-segment:focus {
-      outline: 0;
-      text-decoration: none;
-    }
-
-    .grafana-target-func-panel ul {
-      list-style: none;
-      margin: 0;
-    }
-    .grafana-target-func-panel ul > li {
-      float: left;
-      padding: 1px 7px;
-    }
-
-    .grafana-target-func-panel-icon {
-      float: left;
-      padding: 1px 7px;
-    }
-  </style>
 
 	<div class="grafana-target" ng-repeat="target in panel.targets" ng-controller="GraphiteTargetCtrl" ng-init="init()">
     <div class="grafana-target-inner-wrapper">
@@ -95,11 +30,8 @@
         <i class="icon-long-arrow-right"></i>
       </span>
       <ul>
-        <li>
-          groupByNode( <input type="text" class="func-param" value="1"
-        </li>
         <li ng-repeat="func in functions">
-          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="bottom">{{func.text}}</a>
+          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
           <i class="icon-long-arrow-right"></i>
         </li>
         <li>
