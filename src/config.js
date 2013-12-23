@@ -18,7 +18,7 @@ function (Settings) {
      * The URL to your elasticsearch server. You almost certainly don't
      * want +http://localhost:9200+ here. Even if Kibana and Elasticsearch are on
      * the same host. By default this will attempt to reach ES at the same host you have
-     * elasticsearch installed on. You probably want to set it to the FQDN of your
+     * kibana installed on. You probably want to set it to the FQDN of your
      * elasticsearch host
      */
     elasticsearch: "http://"+window.location.hostname+":9200",
