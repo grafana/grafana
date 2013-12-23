@@ -185,10 +185,14 @@ define([
         }
       }
 
-      var match =
+      var match = this.scanStringLiteral();
+      if (match) {
+        return match;
+      }
+
+      match =
         this.scanIdentifier() ||
         this.scanPunctuator() ||
-        this.scanStringLiteral() ||
         this.scanNumericLiteral();
 
       if (match) {

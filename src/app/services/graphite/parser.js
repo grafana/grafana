@@ -3,9 +3,11 @@ define([
 ], function (Lexer) {
 
   var NodeTypes = {
-    MetricExpression = 1,
+    MetricExpression: 1,
     MetricNode: 2,
-    FunctionCall: 4
+    FunctionCall: 4,
+    NumericLiteral: 5,
+    StringLiteral: 6
   };
 
   function Node(type, value) {
@@ -20,147 +22,184 @@ define([
     this.error = null;
   }
 
+  Parser.Nodes = NodeTypes;
+
   Parser.prototype = {
       getAst: function () {
-        return parse('start');
+        return this.parse('start');
       },
 
-      checkToken: function (token, expected) {
-        if (token === null) {
+      isUnexpectedToken: function (expected, value) {
+        if (this.token === null) {
           this.error = "Expected token: " + expected + " instead found end of string";
-          return;
-        }
-
-        if (token.type === expected) {
           return true;
         }
 
-        this.error = "Expected  token "
-            + expected + " instead found + "
-            found + " at position: " + lexer.char;
+        if (this.token.type === expected) {
+          return false;
+        }
 
-        return false;
+        if (value && this.token.value === value) {
+          return false;
+        }
+
+        this.error = "Expected  token " + expected +
+            ' instead found token ' + this.token.type +
+            ' ("'  + this.token.value + '")' +
+            " at position: " + this.lexer.char;
+
+        return true;
       },
 
-      parse: function (state) {
-        var node = { children: [] };
-
-        var token = lexer.next();
-        var nextToken = lexer.next();
-
-        if (checkToken(token, Lexer.Token.Identifier) {
-          return null;
-        }
-
-        if (nextToken == null) {
-          return {
-            type: NodeTypes.MetricExpression,
-            nodes: [
-              {
-                type: NodeTypes.MetricNode,
-                value: token.value
-              }
-            ]
-          }
-        }
-
-        if (checkToken(nextToken, Lexer.Token.Punctuator)) {
-          return null;
-        }
-
-        if (nextToken.value === '.') {
-          return parseMetricExpression(token);
-        }
-      },
-
-      parseMetricExpression: function(firstToken) {
-        var node = {
-          type: NodeTypes.MetricExpression,
-          nodes: [
-            {
-              type: NodeTypes.MetricNode,
-              value: firstToken.value
-            }
-          ]
-        };
-
-        var token;
+      parse: function (state, allowParams) {
+        var node = { };
 
         while(true) {
-          token = lexer.nextToken();
-          if (checkToken(token, Lexer.Token.Identifier)) {
-            return null;
-          }
-
-        }
-      }
-        /*while(true) {
-          token = lexer.next();
+          this.token = this.lexer.next();
 
           switch(state) {
-
           case "start":
-            if (checkToken(token, Lexer.Token.Identifier) {
+            if (allowParams) {
+              if (this.token === null) {
+                return null;
+              }
+
+              if (this.token.type === Lexer.Token.NumericLiteral) {
+                return {
+                  type: NodeTypes.NumericLiteral,
+                  value: parseInt(this.token.value)
+                };
+              }
+
+              if (this.token.type === Lexer.Token.StringLiteral) {
+                return {
+                  type: NodeTypes.StringLiteral,
+                  value: this.token.value
+                };
+              }
+            }
+
+            if (this.isUnexpectedToken(Lexer.Token.Identifier)) {
               return;
             }
 
             state = "identifier";
-            prevToken = token;
+            this.prevToken = this.token;
             break;
 
           case "identifier":
-            if (token == null) {
-              node.type = NodeTypes.MetricExpression;
-              node.children.push([
-                type: NodeTypes.MetricNode,
-                value: prevToken.value;
-              ]);
+            if (this.token == null || (allowParams && this.token.value === ',')) {
+              return {
+                type: NodeTypes.MetricExpression,
+                segments: [{
+                    type: NodeTypes.MetricExpression,
+                    value: this.prevToken.value
+                }]
+              };
+            }
 
+            if (this.isUnexpectedToken(Lexer.Token.Punctuator)) {
+              return null;
+            }
+
+            if (this.token.value === '.') {
+              state = "metricNode";
+              node.type = NodeTypes.MetricExpression;
+              node.segments = [{
+                type: NodeTypes.MetricNode,
+                value: this.prevToken.value
+              }];
+
+              continue;
+            }
+
+            if (this.token.value === '(') {
+              node.type = NodeTypes.FunctionCall;
+              node.name = this.prevToken.value;
+              node.params = this.parseFunc();
               return node;
             }
 
-            if (checkToken(token, Lexer.Token.Punctuator)) {
-              return;
-            }
-
-            if (token.value === '.') {
-              state = "metricNode";
-              node.type = NodeTypes.MetricExpression;
-              node.children.push({
-                type: NodeTypes.MetricNode,
-                value: prevToken.value
-              });
-            }
-
-            if (token.value === '(') {
-              state = 'function';
+            if (this.token.value === ')') {
+              return node;
             }
 
             break;
+
           case 'metricEnd':
-            if (token === null) {
+            if (this.token === null) {
               return node;
             }
 
-            if (checkToken(token, Lexer.Token.Punctuator)) {
+            if (this.isUnexpectedToken(Lexer.Token.Punctuator)) {
               return null;
             }
 
+            if (this.token.value === '.') {
+              state = 'metricNode';
+            }
+
+            if (allowParams && (this.token.value === ',' || this.token.value === ')')) {
+              return node;
+            }
+
+            break;
           case 'metricNode':
-            if (checkToken(token, Lexer.Token.Identifier)) {
+            if (this.isUnexpectedToken(Lexer.Token.Identifier)) {
               return null;
             }
 
-            node.children.push([
+            node.segments.push({
               type: NodeTypes.MetricNode,
-              value: token.value
-            ]);
+              value: this.token.value
+            });
 
             state = 'metricEnd';
             break;
+          default:
+            this.error = 'unknown token: ' + this.token.type;
           }
         }
-      }*/
+      },
+
+      parseFunc: function() {
+        var arguments = [];
+        var arg;
+
+        while(true) {
+
+          arg = this.parse('start', true);
+          if (arg === null) {
+            this.error = "expected function arguments";
+            return null;
+          }
+
+          arguments.push(arg);
+
+          if (this.token === null) {
+            this.error = "expected closing function at position: " + this.lexer.char;
+            return null;
+          }
+
+          if (this.token.value === ')') {
+            return arguments;
+          }
+
+          if (this.token.type === Lexer.Token.NumericLiteral ||
+              this.token.type === Lexer.Token.StringLiteral) {
+            this.token = this.lexer.next();
+          }
+
+          if (this.isUnexpectedToken(Lexer.Token.Punctuator, ',')) {
+            return null;
+          }
+
+          if (this.token.value === ')') {
+            return arguments;
+          }
+        }
+
+      }
   };
 
   return Parser;

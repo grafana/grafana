@@ -26,6 +26,7 @@ define([
       expect(tokens[6].value).to.be('12');
       expect(tokens[8].type).to.be(Lexer.Token.StringLiteral);
       expect(tokens[8].value).to.be('test');
+      expect(tokens[tokens.length - 1].value).to.be(')');
     });
 
   });
