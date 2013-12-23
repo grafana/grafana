@@ -31,9 +31,6 @@ function (angular) {
               'onStop:\'panelMoveStop\''+
               '}"  ng-model="row.panels"><i class="icon-move"></i></span>'+
           '</span>' +
-          '<span class="extra row-button" ng-show="panel.draggable == false">' +
-            '<span class="row-text">{{panel.type}}</span>'+
-          '</span>' +
 
           '<span class="row-button extra" ng-show="panel.editable != false">' +
             '<span config-modal class="pointer">'+
@@ -51,7 +48,7 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span class="row-button row-text panel-title" ng-show="panel.title">' +
+          '<span class="panel-text panel-title" ng-show="panel.title">' +
             '{{panel.title}}' +
           '</span>'+
 

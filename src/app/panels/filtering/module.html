@@ -8,22 +8,12 @@
       vertical-align: top;
       width: 220px;
       padding: 5px 5px 0px 5px;
-      border: #555 1px solid;
       margin: 5px 5px 5px 0px;
+      color: #fff;
+      background-color: #444;
     }
     .filter-panel-filter ul {
       margin-bottom: 3px;
-    }
-
-
-    .filter-must {
-      border-top: #7EB26D 3px solid;
-    }
-    .filter-mustNot {
-      border-top: #E24D42 3px solid;
-    }
-    .filter-either {
-      border-top: #EF843C 3px solid;
     }
     .filter-deselected {
       opacity: 0.5;
@@ -47,7 +37,7 @@
     <span ng-show="filterSrv.ids.length == 0">
       <h5>No filters available</h5>
     </span>
-    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter filter-{{filterSrv.list[id].mandate}}" ng-class="{'filter-deselected': !filterSrv.list[id].active}">
+    <div ng-repeat="id in filterSrv.ids" class="small filter-panel-filter">
       <div>
         <strong>{{filterSrv.list[id].type}}</strong>
         <span ng-show="!filterSrv.list[id].editing && isEditable(filterSrv.list[id])" class="filter-mandate" ng-click="filterSrv.list[id].editing = true">
@@ -56,6 +46,8 @@
         <span ng-show="!isEditable(filterSrv.list[id])">
           {{filterSrv.list[id].mandate}}
         </span>
+
+        <i ng-class="getFilterClass(filterSrv.list[id])" class="icon-circle"></i>
 
         <span ng-show="filterSrv.list[id].editing">
           <select class="input-small" ng-model="filterSrv.list[id].mandate" ng-options="f for f in ['must','mustNot','either']"></select>
@@ -85,6 +77,6 @@
         </div>
       </form>
     </div>
-    <i class="link icon-plus-sign" ng-click="add()" bs-tooltip="'Add a query filter'" data-placement="right"></i>
+    <i class="pointer icon-plus-sign" ng-click="add()" bs-tooltip="'Add a query filter'" data-placement="right"></i>
   </div>
 </div>
