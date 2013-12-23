@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Tests</title>
+    <link rel="stylesheet" href="assets/mocha.css"/>
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../vendor/require/require.js"></script>
+    <script src="../app/components/require.config.js"></script>
+    <script src="assets/mocha.js"></script>
+    <script src="assets/expect.js"></script>
+    <script>
+
+      /*globals mocha */
+      mocha.setup('bdd');
+
+      require([
+        '../specs/lexer-specs',
+        '../specs/parser-specs',
+        ], function () {
+        mocha.run();
+      });
+    </script>
+  </body>
+</html>
