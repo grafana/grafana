@@ -1,6 +1,7 @@
 define([
   './lexer'
 ], function (Lexer) {
+  'use strict';
 
   var NodeTypes = {
     MetricExpression: 1,
@@ -47,7 +48,7 @@ define([
           type: 'segment',
           value: this.tokens[this.index].value
         }]
-      }
+      };
 
       this.index++;
 
@@ -59,7 +60,7 @@ define([
           return null;
         }
 
-        node.segments = node.segments.concat(rest.segments)
+        node.segments = node.segments.concat(rest.segments);
       }
 
       return node;
@@ -117,7 +118,7 @@ define([
 
       return {
         type: 'number',
-        value: parseInt(this.tokens[this.index-1].value)
+        value: parseInt(this.tokens[this.index-1].value, 10)
       };
     },
 
@@ -151,7 +152,7 @@ define([
 
     match: function(token1, token2) {
       return this.matchToken(token1, 0) &&
-        (!token2 || this.matchToken(token2, 1))
+        (!token2 || this.matchToken(token2, 1));
     },
 
   };
