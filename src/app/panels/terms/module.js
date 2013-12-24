@@ -231,14 +231,6 @@ function (angular, app, _, $, kbn) {
       restrict: 'A',
       link: function(scope, elem) {
 
-        scope.$on('$destroy', function() {
-          console.log('destroy');
-          if($tooltip) {
-            console.log('destroyed tooltip');
-            $tooltip.remove();
-          }
-        });
-
         // Receive render events
         scope.$on('render',function(){
           render_panel();
