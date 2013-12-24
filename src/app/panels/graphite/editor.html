@@ -29,36 +29,36 @@
       </div>
     </div>
 
-    <div class="grafana-target-func-panel">
-      <span class="grafana-target-func-panel-icon">
-        <!-- <i class="icon-long-arrow-right"></i> -->
-      </span>
-      <ul>
-        <li ng-repeat="func in functions">
-          <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
-          <i class="icon-long-arrow-right"></i>
-        </li>
-        <li class="dropdown">
-          <a  class="dropdown-toggle"
-              data-toggle="dropdown"
-              tabindex="1"
-              ng-click="addFunction">
-              add function
-          </a>
-          <ul class="dropdown-menu" role="menu">
-            <li ng-repeat="funcDef in funcDefs" role="menuitem">
-              <a href="javascript:void(0)"
-                 tabindex="1"
-                 ng-click="addFunction(funcDef)">
-                 {{funcDef.name}}
-              </a>
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <div class="clearfix"></div>
+    <div class="grafana-target-func-panel-wrapper">
+      <div class="grafana-target-func-panel">
+        <span class="grafana-target-func-panel-icon">
+          
+        </span>
+        <ul>
+          <li ng-repeat="func in functions">
+            <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
+          </li>
+          <li class="dropdown">
+            <a  class="dropdown-toggle"
+                data-toggle="dropdown"
+                tabindex="1"
+                ng-click="addFunction">
+                add function
+            </a>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="funcDef in funcDefs" role="menuitem">
+                <a href="javascript:void(0)"
+                   tabindex="1"
+                   ng-click="addFunction(funcDef)">
+                   {{funcDef.name}}
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
     </div>
-
     <!-- <div class="row-fluid">
   		<div class="span12">
         <span ng-if="!editMode">
