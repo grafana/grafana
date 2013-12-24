@@ -54,21 +54,15 @@ define([
       if (this.match('.')) {
         this.index++;
         var rest = this.metricExpression();
+        if (!rest) {
+          this.errorMark('Expected metric identifier');
+          return null;
+        }
+
         node.segments = node.segments.concat(rest.segments)
       }
 
       return node;
-    },
-
-    matchToken: function(type, index) {
-      var token = this.tokens[this.index + index];
-      return (token === undefined && type === '') ||
-             token && token.type === type;
-    },
-
-    match: function(token1, token2) {
-      return this.matchToken(token1, 0) &&
-        (!token2 || this.matchToken(token2, 1))
     },
 
     functionCall: function() {
@@ -86,7 +80,7 @@ define([
       node.params = this.functionParameters();
 
       if (!this.match(')')) {
-        this.error = 'missing closing paranthesis';
+        this.errorMark('Expected closing paranthesis');
         return null;
       }
 
@@ -140,27 +134,26 @@ define([
       };
     },
 
-    isUnexpectedToken: function (expected, value) {
-      if (this.token === null) {
-        this.error = "Expected token: " + expected + " instead found end of string";
-        return true;
-      }
-
-      if (this.token.type === expected) {
-        return false;
-      }
-
-      if (value && this.token.value === value) {
-        return false;
-      }
-
-      this.error = "Expected  token " + expected +
-          ' instead found token ' + this.token.type +
-          ' ("'  + this.token.value + '")' +
-          " at position: " + this.lexer.char;
-
-      return true;
+    errorMark: function(text) {
+      var currentToken = this.tokens[this.index];
+      var type = currentToken ? currentToken.type : 'end of string';
+      this.error = {
+        text: text + " instead found " + type,
+        pos: currentToken ? currentToken.pos : this.lexer.char
+      };
     },
+
+    matchToken: function(type, index) {
+      var token = this.tokens[this.index + index];
+      return (token === undefined && type === '') ||
+             token && token.type === type;
+    },
+
+    match: function(token1, token2) {
+      return this.matchToken(token1, 0) &&
+        (!token2 || this.matchToken(token2, 1))
+    },
+
   };
 
   return Parser;

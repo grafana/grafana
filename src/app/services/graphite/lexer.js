@@ -339,7 +339,8 @@ define([
 
       return {
         type: type,
-        value: id
+        value: id,
+        pos: this.char
       };
 
     },
@@ -407,7 +408,8 @@ define([
               return {
                 type: 'number',
                 value: value,
-                isMalformed: true
+                isMalformed: true,
+                pos: this.char
               };
             }
 
@@ -422,7 +424,8 @@ define([
               type: 'number',
               value: value,
               base: 16,
-              isMalformed: false
+              isMalformed: false,
+              pos: this.char
             };
           }
 
@@ -538,6 +541,7 @@ define([
         type: 'number',
         value: value,
         base: 10,
+        pos: this.char,
         isMalformed: !isFinite(value)
       };
     },
@@ -554,7 +558,8 @@ define([
       case "}":
         return {
           type: ch1,
-          value: ch1
+          value: ch1,
+          pos: this.char
         };
       }
 
@@ -658,7 +663,8 @@ define([
         type: 'string',
         value: value,
         isUnclosed: false,
-        quote: quote
+        quote: quote,
+        pos: this.char
       };
     },
 

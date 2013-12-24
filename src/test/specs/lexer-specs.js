@@ -11,6 +11,7 @@ define([
       expect(tokens[1].value).to.be('.');
       expect(tokens[2].type).to.be('identifier');
       expect(tokens[4].type).to.be('identifier');
+      expect(tokens[4].pos).to.be(13);
     });
 
     it('should tokenize functions and args', function() {
