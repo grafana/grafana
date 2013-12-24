@@ -577,7 +577,7 @@ define([
      *   var str = "hello\
      *   world";
      */
-    scanStringLiteral: function (checks) {
+    scanStringLiteral: function () {
       /*jshint loopfunc:true */
       var quote = this.peek();
 
@@ -587,8 +587,6 @@ define([
       }
 
       var value = "";
-      var startLine = this.line;
-      var startChar = this.char;
 
       this.skip();
 

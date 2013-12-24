@@ -32,7 +32,7 @@ function (angular, _, config, graphiteFunctions, Parser) {
 
       if (astNode.type === 'function') {
         var innerFunc = {};
-        innerFunc.def = _.findWhere($scope.funcDefs, { name: astNode.name })
+        innerFunc.def = _.findWhere($scope.funcDefs, { name: astNode.name });
         innerFunc.params = innerFunc.def.defaultParams;
 
         _.each(astNode.params, function(param, index) {

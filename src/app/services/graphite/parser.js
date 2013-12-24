@@ -11,11 +11,6 @@ define([
     StringLiteral: 6
   };
 
-  function Node(type, value) {
-    this.type = type;
-    this.value = value;
-  }
-
   function Parser(expression) {
     this.expression = expression;
     this.lexer = new Lexer(expression);
