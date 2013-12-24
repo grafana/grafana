@@ -2,9 +2,10 @@ define([
   'angular',
   'underscore',
   'config',
-  '/app/services/graphite/functions.js'
+  '../services/graphite/functions',
+  '../services/graphite/parser'
 ],
-function (angular, _, config, graphiteFunctions) {
+function (angular, _, config, graphiteFunctions, Parser) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -12,16 +13,49 @@ function (angular, _, config, graphiteFunctions) {
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
     $scope.init = function() {
-      $scope.segments = _.map($scope.target.target.split('.'), function (segmentStr) {
-        return {
-          val: segmentStr,
-          html: segmentStr === '*' ? '<i class="icon-asterisk"><i>' : segmentStr
-        };
-      });
-
-      $scope.funcDefs = graphiteFunctions;
       $scope.functions = [];
+      $scope.segments = [];
+      $scope.funcDefs = graphiteFunctions;
+
+      var parser = new Parser($scope.target.target);
+      var astNode = parser.getAst();
+      console.log('GraphiteTargetCtrl:init -> target', $scope.target.target);
+      console.log('GraphiteTargetCtrl:init -> ast', astNode);
+      parseTargetExpression(astNode);
+
     };
+
+    function parseTargetExpression(astNode, func, index) {
+      if (astNode === null) {
+        return null;
+      }
+
+      if (astNode.type === 'function') {
+        var innerFunc = {};
+        innerFunc.def = _.findWhere($scope.funcDefs, { name: astNode.name })
+        innerFunc.params = innerFunc.def.defaultParams;
+
+        _.each(astNode.params, function(param, index) {
+          parseTargetExpression(param, innerFunc, index);
+        });
+
+        innerFunc.text = getFuncText(innerFunc.def, innerFunc.params);
+        $scope.functions.push(innerFunc);
+      }
+
+      if (astNode.type === 'number' || astNode.type === 'string') {
+        func.params[index - 1] = astNode.value;
+      }
+
+      if (astNode.type === 'metric') {
+        $scope.segments = _.map(astNode.segments, function(segment) {
+          return {
+            val: segment.value,
+            html: segment.value === '*' ? '<i class="icon-asterisk"><i>' : segment.value
+          };
+        });
+      }
+    }
 
     function getSegmentPathUpTo(index) {
       var arr = $scope.segments.slice(0, index);

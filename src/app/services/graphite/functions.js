@@ -26,7 +26,7 @@ function () {
           type: "function",
         }
       ],
-      defaultParams: [3, "sumSeries"]
+      defaultParams: [3, "sum"]
     },
     {
       name: "alias",

@@ -117,7 +117,7 @@ define([
 
       return {
         type: 'number',
-        value: this.tokens[this.index-1].value
+        value: parseInt(this.tokens[this.index-1].value)
       };
     },
 
