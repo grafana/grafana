@@ -9,7 +9,7 @@ define([
       var rootNode = parser.getAst();
 
       expect(parser.error).to.be(null);
-      expect(rootNode.type).to.be(Parser.Nodes.MetricExpression);
+      expect(rootNode.type).to.be('metric');
       expect(rootNode.segments.length).to.be(5);
       expect(rootNode.segments[0].value).to.be('metric');
 
@@ -19,7 +19,7 @@ define([
       var parser = new Parser('sum(test)');
       var rootNode = parser.getAst();
       expect(parser.error).to.be(null);
-      expect(rootNode.type).to.be(Parser.Nodes.FunctionCall);
+      expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(1);
     });
 
@@ -28,11 +28,11 @@ define([
       var rootNode = parser.getAst();
 
       expect(parser.error).to.be(null);
-      expect(rootNode.type).to.be(Parser.Nodes.FunctionCall);
+      expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(3);
-      expect(rootNode.params[0].type).to.be(Parser.Nodes.MetricExpression);
-      expect(rootNode.params[1].type).to.be(Parser.Nodes.NumericLiteral);
-      expect(rootNode.params[2].type).to.be(Parser.Nodes.StringLiteral);
+      expect(rootNode.params[0].type).to.be('metric');
+      expect(rootNode.params[1].type).to.be('number');
+      expect(rootNode.params[2].type).to.be('string');
     });
 
     it('function with nested function', function() {
@@ -40,13 +40,13 @@ define([
       var rootNode = parser.getAst();
 
       expect(parser.error).to.be(null);
-      expect(rootNode.type).to.be(Parser.Nodes.FunctionCall);
+      expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(1);
-      expect(rootNode.params[0].type).to.be(Parser.Nodes.FunctionCall);
+      expect(rootNode.params[0].type).to.be('function');
       expect(rootNode.params[0].name).to.be('scaleToSeconds');
       expect(rootNode.params[0].params.length).to.be(2);
-      expect(rootNode.params[0].params[0].type).to.be(Parser.Nodes.MetricExpression);
-      expect(rootNode.params[0].params[1].type).to.be(Parser.Nodes.NumericLiteral);
+      expect(rootNode.params[0].params[0].type).to.be('metric');
+      expect(rootNode.params[0].params[1].type).to.be('number');
     });
 
     it('function with multiple series', function() {
@@ -54,10 +54,10 @@ define([
       var rootNode = parser.getAst();
 
       expect(parser.error).to.be(null);
-      expect(rootNode.type).to.be(Parser.Nodes.FunctionCall);
+      expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(2);
-      expect(rootNode.params[0].type).to.be(Parser.Nodes.MetricExpression);
-      expect(rootNode.params[1].type).to.be(Parser.Nodes.MetricExpression);
+      expect(rootNode.params[0].type).to.be('metric');
+      expect(rootNode.params[1].type).to.be('metric');
     });
 
   });

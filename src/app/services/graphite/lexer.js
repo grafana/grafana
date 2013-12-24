@@ -130,21 +130,11 @@ define([
       i2 >= 48 && i2 <= 57;        // 0-9
   }
 
-  var Token = {
-    Identifier: "Identifier",
-    NumericLiteral: "NumericLiteral",
-    StringLiteral: "StringLiteral",
-    Punctuator: "Punctuator"
-  };
-
-
   function Lexer(expression) {
     this.input = expression;
     this.char = 1;
     this.from = 1;
   }
-
-  Lexer.Token = Token;
 
   Lexer.prototype = {
 
@@ -344,7 +334,7 @@ define([
 
       switch (id) {
       default:
-        type = Token.Identifier;
+        type = "identifier";
       }
 
       return {
@@ -415,7 +405,7 @@ define([
 
             if (value.length <= 2) { // 0x
               return {
-                type: Token.NumericLiteral,
+                type: 'number',
                 value: value,
                 isMalformed: true
               };
@@ -429,7 +419,7 @@ define([
             }
 
             return {
-              type: Token.NumericLiteral,
+              type: 'number',
               value: value,
               base: 16,
               isMalformed: false
@@ -465,7 +455,7 @@ define([
             }
 
             return {
-              type: Token.NumericLiteral,
+              type: 'number',
               value: value,
               base: 8,
               isMalformed: false
@@ -545,7 +535,7 @@ define([
       }
 
       return {
-        type: Token.NumericLiteral,
+        type: 'number',
         value: value,
         base: 10,
         isMalformed: !isFinite(value)
@@ -563,7 +553,7 @@ define([
       case "{":
       case "}":
         return {
-          type: Token.Punctuator,
+          type: ch1,
           value: ch1
         };
       }
@@ -594,93 +584,22 @@ define([
       var value = "";
       var startLine = this.line;
       var startChar = this.char;
-      var allowNewLine = false;
 
       this.skip();
 
       while (this.peek() !== quote) {
-        while (this.peek() === "") { // End Of Line
 
-          // If an EOL is not preceded by a backslash, show a warning
-          // and proceed like it was a legit multi-line string where
-          // author simply forgot to escape the newline symbol.
-          //
-          // Another approach is to implicitly close a string on EOL
-          // but it generates too many false positives.
-
-          if (!allowNewLine) {
-            this.trigger("warning", {
-              code: "W112",
-              line: this.line,
-              character: this.char
-            });
-          } else {
-            allowNewLine = false;
-
-            // Otherwise show a warning if multistr option was not set.
-            // For JSON, show warning no matter what.
-
-            this.triggerAsync("warning", {
-              code: "W043",
-              line: this.line,
-              character: this.char
-            }, checks, function () { return !state.option.multistr; });
-
-            this.triggerAsync("warning", {
-              code: "W042",
-              line: this.line,
-              character: this.char
-            }, checks, function () { return state.jsonMode && state.option.multistr; });
-          }
-
-          // If we get an EOF inside of an unclosed string, show an
-          // error and implicitly close it at the EOF point.
-
-          if (!this.nextLine()) {
-            this.trigger("error", {
-              code: "E029",
-              line: startLine,
-              character: startChar
-            });
-
-            return {
-              type: Token.StringLiteral,
-              value: value,
-              isUnclosed: true,
-              quote: quote
-            };
-          }
-        }
-
-        allowNewLine = false;
         var char = this.peek();
         var jump = 1; // A length of a jump, after we're done
                       // parsing this character.
 
-        if (char < " ") {
-          // Warn about a control character in a string.
-          this.trigger("warning", {
-            code: "W113",
-            line: this.line,
-            character: this.char,
-            data: [ "<non-printable>" ]
-          });
-        }
-
         // Special treatment for some escaped characters.
-
         if (char === "\\") {
           this.skip();
           char = this.peek();
 
           switch (char) {
           case "'":
-            this.triggerAsync("warning", {
-              code: "W114",
-              line: this.line,
-              character: this.char,
-              data: [ "\\'" ]
-            }, checks, function () {return state.jsonMode; });
             break;
           case "b":
             char = "\b";
@@ -699,41 +618,16 @@ define([
             break;
           case "0":
             char = "\0";
-
-            // Octal literals fail in strict mode.
-            // Check if the number is between 00 and 07.
-            var n = parseInt(this.peek(1), 10);
-            this.triggerAsync("warning", {
-              code: "W115",
-              line: this.line,
-              character: this.char
-            }, checks,
-            function () { return n >= 0 && n <= 7 && state.directive["use strict"]; });
             break;
           case "u":
             char = String.fromCharCode(parseInt(this.input.substr(1, 4), 16));
             jump = 5;
             break;
           case "v":
-            this.triggerAsync("warning", {
-              code: "W114",
-              line: this.line,
-              character: this.char,
-              data: [ "\\v" ]
-            }, checks, function () { return state.jsonMode; });
-
             char = "\v";
             break;
           case "x":
             var x = parseInt(this.input.substr(1, 2), 16);
-
-            this.triggerAsync("warning", {
-              code: "W114",
-              line: this.line,
-              character: this.char,
-              data: [ "\\x-" ]
-            }, checks, function () { return state.jsonMode; });
-
             char = String.fromCharCode(x);
             jump = 3;
             break;
@@ -742,7 +636,6 @@ define([
           case "/":
             break;
           case "":
-            allowNewLine = true;
             char = "";
             break;
           case "!":
@@ -753,11 +646,6 @@ define([
             /*falls through */
           default:
             // Weird escaping.
-            this.trigger("warning", {
-              code: "W044",
-              line: this.line,
-              character: this.char
-            });
           }
         }
 
@@ -767,7 +655,7 @@ define([
 
       this.skip();
       return {
-        type: Token.StringLiteral,
+        type: 'string',
         value: value,
         isUnclosed: false,
         quote: quote
