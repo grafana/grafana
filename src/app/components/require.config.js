@@ -102,7 +102,6 @@ require.config({
 
     elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
 
-    'ts-widget': ['jquery', 'jquery.flot', 'jquery.flot.selection', 'jquery.flot.stack', 'jquery.flot.time', 'ts-graphite-helpers']
   },
   waitSeconds: 60,
 });

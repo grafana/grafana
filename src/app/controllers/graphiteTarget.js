@@ -19,10 +19,12 @@ function (angular, _, config, graphiteFunctions, Parser) {
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
+
       console.log('GraphiteTargetCtrl:init -> target', $scope.target.target);
       console.log('GraphiteTargetCtrl:init -> ast', astNode);
-      parseTargetExpression(astNode);
 
+      parseTargetExpression(astNode);
+      checkOtherSegments($scope.segments.length);
     };
 
     function parseTargetExpression(astNode, func, index) {
@@ -62,7 +64,7 @@ function (angular, _, config, graphiteFunctions, Parser) {
 
       return _.reduce(arr, function(result, segment) {
         return result ? (result + "." + segment.val) : segment.val;
-      }, null);
+      }, "");
     }
 
     function graphiteMetricQuery(query) {
@@ -71,6 +73,11 @@ function (angular, _, config, graphiteFunctions, Parser) {
     }
 
     function checkOtherSegments(fromIndex) {
+      if (fromIndex === 0) {
+        $scope.segments.push({html: 'select metric'});
+        return;
+      }
+
       var path = getSegmentPathUpTo(fromIndex + 1);
       return graphiteMetricQuery(path)
         .then(function(result) {
@@ -126,7 +133,10 @@ function (angular, _, config, graphiteFunctions, Parser) {
     $scope.getAltSegments = function (index) {
       $scope.altSegments = [];
 
-      return graphiteMetricQuery(getSegmentPathUpTo(index) + '.*')
+      var query = index === 0 ?
+        '*' : getSegmentPathUpTo(index) + '.*';
+
+      return graphiteMetricQuery(query)
         .then(function(result) {
           var altSegments = _.map(result.data, function(altSegment) {
             return {

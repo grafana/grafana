@@ -245,6 +245,11 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       }
     };
 
+    $scope.removeTarget = function (target) {
+      $scope.panel.targets = _.without($scope.panel.targets, target);
+      $scope.get_data();
+    };
+
     $scope.closeEditMode = function() {
       $rootScope.$emit('fullEditMode', false);
     };

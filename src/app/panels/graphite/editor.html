@@ -22,9 +22,23 @@
             </ul>
           </li>
         </ul>
-        <span class="grafana-target-controls">
-          <i class="icon-remove"></i>
-        </span>
+        <ul class="grafana-target-controls">
+          <li>
+            <a class="pointer" tabindex="1" ng-click="enableTextEditor()">
+              <i class="icon-pencil"></i>
+            </a>
+          </li>
+          <li>
+            <a class="pointer" tabindex="1" ng-click="enableTextEditor()">
+              <i class="icon-cog"></i>
+            </a>
+          </li>
+          <li>
+            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
+              <i class="icon-remove"></i>
+            </a>
+          </li>
+        </ul>
         <div class="clearfix"></div>
       </div>
     </div>
@@ -32,11 +46,12 @@
     <div class="grafana-target-func-panel-wrapper">
       <div class="grafana-target-func-panel">
         <span class="grafana-target-func-panel-icon">
-          
+
         </span>
         <ul>
           <li ng-repeat="func in functions">
             <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
+            <i class="icon-long-arrow-right"></i>
           </li>
           <li class="dropdown">
             <a  class="dropdown-toggle"
