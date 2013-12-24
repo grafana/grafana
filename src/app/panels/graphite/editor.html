@@ -6,7 +6,10 @@
         <span class="grafana-target-onoff">
           <i class="icon-eye-open"></i>
         </span>
-        <ul class="grafana-segment-list" role="menu">
+
+        <input type="text" class="grafana-target-text-input" ng-model="target.target" focus-me="showTextEditor" ng-blur="showTextEditor = false" ng-show="showTextEditor" />
+
+        <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
           <li class="dropdown" ng-repeat="segment in segments" role="menuitem">
             <a  tabindex="1"
                 class="grafana-target-segment dropdown-toggle"
@@ -24,7 +27,7 @@
         </ul>
         <ul class="grafana-target-controls">
           <li>
-            <a class="pointer" tabindex="1" ng-click="enableTextEditor()">
+            <a class="pointer" tabindex="1" ng-click="showTextEditor = true">
               <i class="icon-pencil"></i>
             </a>
           </li>
@@ -43,7 +46,7 @@
       </div>
     </div>
 
-    <div class="grafana-target-func-panel-wrapper">
+    <div class="grafana-target-func-panel-wrapper" ng-hide="showTextEditor">
       <div class="grafana-target-func-panel">
         <span class="grafana-target-func-panel-icon">
 

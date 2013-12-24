@@ -16,6 +16,7 @@ function (angular, _, config, graphiteFunctions, Parser) {
       $scope.functions = [];
       $scope.segments = [];
       $scope.funcDefs = graphiteFunctions;
+      $scope.showTextEditor = false;
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
