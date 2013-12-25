@@ -13,22 +13,32 @@ function (angular, _, config, graphiteFunctions, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
     $scope.init = function() {
+      $scope.funcDefs = graphiteFunctions;
+      parseTarget();
+      console.log('init:');
+    };
+
+    function parseTarget() {
       $scope.functions = [];
       $scope.segments = [];
-      $scope.funcDefs = graphiteFunctions;
       $scope.showTextEditor = false;
+
+      delete $scope.parserError;
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
 
-      console.log('GraphiteTargetCtrl:init -> target', $scope.target.target);
-      console.log('GraphiteTargetCtrl:init -> ast', astNode);
+      if (parser.error) {
+        $scope.parserError = parser.error.text + " at position: " + parser.error.pos;
+        $scope.showTextEditor = true;
+        return;
+      }
 
-      parseTargetExpression(astNode);
+      parseTargeRecursive(astNode);
       checkOtherSegments($scope.segments.length);
-    };
+    }
 
-    function parseTargetExpression(astNode, func, index) {
+    function parseTargeRecursive(astNode, func, index) {
       if (astNode === null) {
         return null;
       }
@@ -36,10 +46,10 @@ function (angular, _, config, graphiteFunctions, Parser) {
       if (astNode.type === 'function') {
         var innerFunc = {};
         innerFunc.def = _.findWhere($scope.funcDefs, { name: astNode.name });
-        innerFunc.params = innerFunc.def.defaultParams;
+        innerFunc.params = innerFunc.def.defaultParams.slice(0);
 
         _.each(astNode.params, function(param, index) {
-          parseTargetExpression(param, innerFunc, index);
+          parseTargeRecursive(param, innerFunc, index);
         });
 
         innerFunc.text = getFuncText(innerFunc.def, innerFunc.params);
@@ -168,10 +178,18 @@ function (angular, _, config, graphiteFunctions, Parser) {
       $scope.targetChanged();
     };
 
+    $scope.targetTextChanged = function() {
+      parseTarget();
+      $scope.$parent.get_data();
+    };
+
     $scope.targetChanged = function() {
+      if ($scope.parserError) {
+        return;
+      }
+
       var target = getSegmentPathUpTo($scope.segments.length);
       target = _.reduce($scope.functions, wrapFunction, target);
-      console.log('target: ', target);
       $scope.target.target = target;
       $scope.$parent.get_data();
     };
@@ -189,7 +207,7 @@ function (angular, _, config, graphiteFunctions, Parser) {
     $scope.addFunction = function(funcDef) {
       $scope.functions.push({
         def: funcDef,
-        params: funcDef.defaultParams,
+        params: funcDef.defaultParams.slice(0),
         text: getFuncText(funcDef, funcDef.defaultParams)
       });
       $scope.targetChanged();

@@ -46,7 +46,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           show: $scope.panel.spyable
         }
       ],
-      editorTabs : [
+      editorTabs: [],
+
+      fullEditorTabs : [
         {
           title:'Targets',
           src:'app/panels/graphite/editor.html'
@@ -433,10 +435,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
     };
 
     $scope.setEditorTabs = function(panelMeta) {
-      $scope.editorTabs = ['General'];
-      if(!_.isUndefined(panelMeta.editorTabs)) {
-        $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
-      }
+      $scope.editorTabs = _.union(['General'],_.pluck(panelMeta.fullEditorTabs,'title'));
       return $scope.editorTabs;
     };
 

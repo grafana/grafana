@@ -105,7 +105,7 @@
       <div ng-show="editorTabs[editor.index] == 'General'">
         <div ng-include src="'app/partials/panelgeneral.html'"></div>
       </div>
-      <div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
+      <div ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>
   </div>

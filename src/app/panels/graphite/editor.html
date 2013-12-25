@@ -5,7 +5,7 @@
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
           <li>
-            <a class="pointer" tabindex="1" ng-click="showTextEditor = true">
+            <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
               <i class="icon-pencil"></i>
             </a>
           </li>
@@ -22,9 +22,14 @@
         </ul>
 
         <ul class="grafana-target-controls-left">
-          <li>
+          <li ng-hide="parserError">
             <a class="grafana-target-segment" ng-click="hideit()" role="menuitem">
               <i class="icon-eye-open"></i>
+            </a>
+          </li>
+          <li ng-show="parserError">
+            <a class="grafana-target-segment" bs-tooltip="parserError" style="color: rgb(229, 189, 28)" ng-click="hideit()" role="menuitem">
+              <i class="icon-warning-sign"></i>
             </a>
           </li>
         </ul>
@@ -33,8 +38,7 @@
                 class="grafana-target-text-input"
                 ng-model="target.target"
                 focus-me="showTextEditor"
-                ng-blur="showTextEditor = false"
-                ng-model-onblur ng-change="targetChanged()"
+                ng-model-onblur ng-change="targetTextChanged()"
                 ng-show="showTextEditor" />
 
         <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
