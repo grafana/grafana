@@ -103,22 +103,27 @@
 .grafana-target-inner-wrapper {
   border-top: 1px solid #444444;
   border-bottom: 1px solid #444444;
+  width: 100%;
 }
+
 .grafana-target-inner {
   border-top: 1px solid black;
   border-bottom: 1px solid black;
   background: #202020;
+  width: 100%;
 }
 
 .grafana-target-onoff {
-  float: left;
+  display: inline-block;
   padding: 5px 7px;
+  display: inline-block;
 }
 
 .grafana-segment-list {
   list-style: none;
   margin: 0;
-  float: left;
+  margin-right: 90px;
+  margin-left: 30px;
   >li {
     float: left;
   }
@@ -128,30 +133,51 @@
   padding: 5px 7px;
   display: inline-block;
   font-weight: normal;
-  border-left: 1px solid #050505;
+  border: 1px solid #050505;
   color: #c8c8c8;
+  display: inline-block;
 
-  &:hover {
+  &:hover, &:focus {
     text-decoration: none;
   }
-  &:focus {
-    text-decoration: none;
+  &:hover {
+    background: #282828;
+  }
+}
+.grafana-target-function {
+  background: #303030;
+  &:hover {
+    background: #383838;
   }
 }
 
+.grafana-target-controls-left {
+  list-style: none;
+  float: left;
+  width: 30px;
+  margin: 0px;
+}
+
 .grafana-target-controls {
+  width: 90px;
   float: right;
   list-style: none;
   margin: 0;
 
   >li {
-    float: left;
+    display: inline-block;
+    white-space: nowrap;
   }
 
   a {
     padding: 5px 7px;
     position: relative;
     top: 5px;
+    color: #c8c8c8;
+
+    &:hover, &:focus {
+      text-decoration: none;
+    }
   }
 }
 
@@ -166,37 +192,6 @@ input[type=text].grafana-target-text-input {
 
 .grafana-target .dropdown {
   padding: 0; margin: 0;
-}
-
-.grafana-target-func-panel-wrapper {
-  border-bottom: 1px;
-  border-bottom: 1px solid #444444;
-}
-
-.grafana-target-func-panel {
-  background: #202020;
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
-
-  ul {
-    list-style: none;
-    margin: 0;
-
-    >li, li.dropdown {
-      float: left;
-      padding: 2px 5px;
-      >i {
-        padding-left: 5px;
-        postition: relative;
-      }
-    }
-
-  }
-}
-
-.grafana-target-func-panel-icon {
-  float: left;
-  padding: 12px 14px;
 }
 
 input[type=text].func-param {
@@ -220,6 +215,7 @@ input[type=text].func-param {
     text-align: center;
     border-bottom: 1px solid #353a3e;
     padding: 2px 5px;
+    white-space: nowrap;
   }
   .editor-row {
     padding: 5px;

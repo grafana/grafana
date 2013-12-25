@@ -1,86 +1,9 @@
 <div class="editor-row">
-<style>
-  .table-top {
-    table-layout: fixed;
-    width: 100%;
-  }
-  .my-wrapper {
-    width: 100%;
-    overflow: hidden;
-  }
 
-  .grafana-segment-list {
-    display: block;
-    float: none;
-    position: relative;
-    white-space: nowrap;
-  }
-
-  .grafana-segment-list li {
-    display: inline-block;
-    float: none;
-  }
-</style>
 	<div class="grafana-target" ng-repeat="target in panel.targets" ng-controller="GraphiteTargetCtrl" ng-init="init()">
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
-        <table class="table-top">
-        <tr>
-        <td>
-        <span class="grafana-target-onoff">
-          <i class="icon-eye-open"></i>
-        </span>
-        </td>
-        <input  type="text"
-                class="grafana-target-text-input"
-                ng-model="target.target"
-                focus-me="showTextEditor"
-                ng-blur="showTextEditor = false"
-                ng-model-onblur ng-change="targetChanged()"
-                ng-show="showTextEditor" />
-        <td style="width: 100%">
-          <div class="my-wrapper">
-        <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
-          <li class="dropdown" ng-repeat="segment in segments" role="menuitem">
-            <a  tabindex="1"
-                class="grafana-target-segment dropdown-toggle"
-                data-toggle="dropdown"
-                ng-click="getAltSegments($index)"
-                focus-me="segment.focus"
-                ng-bind-html-unsafe="segment.html">
-            </a>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="altSegment in altSegments" role="menuitem">
-                <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html"></a>
-              </li>
-            </ul>
-          </li>
-          <li ng-repeat="func in functions" class="dropdown">
-            <a class="grafana-target-segment dropdown-toggle" bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
-            <i class="icon-long-arrow-right"></i>
-          </li>
-          <li class="dropdown">
-            <a  class="grafana-target-segment dropdown-toggle"
-                data-toggle="dropdown"
-                tabindex="1"
-                ng-click="addFunction">
-                add function
-            </a>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="funcDef in funcDefs" role="menuitem">
-                <a href="javascript:void(0)"
-                   tabindex="1"
-                   ng-click="addFunction(funcDef)">
-                   {{funcDef.name}}
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-        </div>
-        </td>
-        <td style="width: 90px;">
-        <ul class="grafana-target-controls" style="width: 90px;">
+        <ul class="grafana-target-controls">
           <li>
             <a class="pointer" tabindex="1" ng-click="showTextEditor = true">
               <i class="icon-pencil"></i>
@@ -97,29 +20,49 @@
             </a>
           </li>
         </ul>
-        </td>
-        </tr>
-        </table>
-        <div class="clearfix"></div>
-      </div>
-    </div>
 
-    <div class="grafana-target-func-panel-wrapper" ng-if="false">
-      <div class="grafana-target-func-panel">
-        <span class="grafana-target-func-panel-icon">
+        <ul class="grafana-target-controls-left">
+          <li>
+            <a class="grafana-target-segment" ng-click="hideit()" role="menuitem">
+              <i class="icon-eye-open"></i>
+            </a>
+          </li>
+        </ul>
 
-        </span>
-        <ul>
+<!--         <input  type="text"
+                class="grafana-target-text-input"
+                ng-model="target.target"
+                focus-me="showTextEditor"
+                ng-blur="showTextEditor = false"
+                ng-model-onblur ng-change="targetChanged()"
+                ng-show="showTextEditor" />
+ -->
+        <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
+          <li class="dropdown" ng-repeat="segment in segments" role="menuitem">
+            <a  tabindex="1"
+                class="grafana-target-segment dropdown-toggle"
+                data-toggle="dropdown"
+                ng-click="getAltSegments($index)"
+                focus-me="segment.focus"
+                ng-bind-html-unsafe="segment.html">
+            </a>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="altSegment in altSegments" role="menuitem">
+                <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html"></a>
+              </li>
+            </ul>
+          </li>
           <li ng-repeat="func in functions">
-            <a bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="top">{{func.text}}</a>
-            <i class="icon-long-arrow-right"></i>
+            <a class="grafana-target-segment grafana-target-function dropdown-toggle" bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="bottom">
+              {{func.text}}
+            </a>
           </li>
           <li class="dropdown">
-            <a  class="dropdown-toggle"
+            <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
                 data-toggle="dropdown"
                 tabindex="1"
                 ng-click="addFunction">
-                add function
+                <i class="icon-plus"></i>
             </a>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="funcDef in funcDefs" role="menuitem">
@@ -132,24 +75,11 @@
             </ul>
           </li>
         </ul>
+
+
         <div class="clearfix"></div>
       </div>
     </div>
-    <!-- <div class="row-fluid">
-  		<div class="span12">
-        <span ng-if="!editMode">
-          {{target.target}}
-        </span>
-
-    		<input ng-if="editMode" type="text" ng-model="target.target" class="input-large" style="width:100%" ng-model-onblur ng-change="targetChanged()" bs-typeahead="typeAheadSource" data-min-length=0 />
-
-        <span ng-if="!editMode">
-          <i ng-click="edit()" class="pointer icon-edit" style="padding: 0 7px;"></i>
-          <i ng-click="panel.targets = _.without(panel.targets, target)" class="pointer icon-remove" style="padding: 0 7px;"></i>
-    	 </span>
-
-      </div>
-    </div> -->
   </div>
 
   <div class="row-fluid" style="margin-top: 20px">
