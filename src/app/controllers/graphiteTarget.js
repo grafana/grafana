@@ -2,10 +2,10 @@ define([
   'angular',
   'underscore',
   'config',
-  '../services/graphite/functions',
+  '../services/graphite/graphiteFuncs',
   '../services/graphite/parser'
 ],
-function (angular, _, config, graphiteFunctions, Parser) {
+function (angular, _, config, graphiteFuncs, Parser) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -13,9 +13,8 @@ function (angular, _, config, graphiteFunctions, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
     $scope.init = function() {
-      $scope.funcDefs = graphiteFunctions;
+      $scope.funcDefs = graphiteFuncs.getDefList();
       parseTarget();
-      console.log('init:');
     };
 
     function parseTarget() {
@@ -34,7 +33,15 @@ function (angular, _, config, graphiteFunctions, Parser) {
         return;
       }
 
-      parseTargeRecursive(astNode);
+      try {
+        parseTargeRecursive(astNode);
+      }
+      catch (err) {
+        console.log('error parsing target:', err.message);
+        $scope.parserError = err.message;
+        $scope.showTextEditor = true;
+      }
+
       checkOtherSegments($scope.segments.length);
     }
 
@@ -43,24 +50,26 @@ function (angular, _, config, graphiteFunctions, Parser) {
         return null;
       }
 
-      if (astNode.type === 'function') {
-        var innerFunc = {};
-        innerFunc.def = _.findWhere($scope.funcDefs, { name: astNode.name });
-        innerFunc.params = innerFunc.def.defaultParams.slice(0);
+      switch(astNode.type) {
+      case 'function':
+        var innerFunc = graphiteFuncs.createFuncInstance(astNode.name);
 
         _.each(astNode.params, function(param, index) {
           parseTargeRecursive(param, innerFunc, index);
         });
 
-        innerFunc.text = getFuncText(innerFunc.def, innerFunc.params);
+        innerFunc.updateText();
         $scope.functions.push(innerFunc);
-      }
+        break;
 
-      if (astNode.type === 'number' || astNode.type === 'string') {
+      case 'string':
+      case 'number':
+        if ((index-1) >= func.def.params.length) {
+          throw { message: 'invalid number of parameters to method ' + func.def.name };
+        }
         func.params[index - 1] = astNode.value;
-      }
-
-      if (astNode.type === 'metric') {
+        break;
+      case 'metric':
         $scope.segments = _.map(astNode.segments, function(segment) {
           return {
             val: segment.value,
@@ -112,20 +121,6 @@ function (angular, _, config, graphiteFunctions, Parser) {
       _.each($scope.segments, function(segment, index) {
         segment.focus = segmentIndex === index;
       });
-    }
-
-    function getFuncText(funcDef, params) {
-      if (params.length === 0) {
-        return funcDef.name + '()';
-      }
-
-      var text = funcDef.name + '(';
-      _.each(funcDef.params, function(param, index) {
-        text += params[index] + ', ';
-      });
-      text = text.substring(0, text.length - 2);
-      text += ')';
-      return text;
     }
 
     function wrapFunction(target, func) {
@@ -200,16 +195,12 @@ function (angular, _, config, graphiteFunctions, Parser) {
     };
 
     $scope.functionParamsChanged = function(func) {
-      func.text = getFuncText(func.def, func.params);
+      func.updateText();
       $scope.targetChanged();
     };
 
     $scope.addFunction = function(funcDef) {
-      $scope.functions.push({
-        def: funcDef,
-        params: funcDef.defaultParams.slice(0),
-        text: getFuncText(funcDef, funcDef.defaultParams)
-      });
+      $scope.functions.push(graphiteFuncs.createFuncInstance(funcDef));
       $scope.targetChanged();
     };
 
