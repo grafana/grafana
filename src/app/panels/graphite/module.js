@@ -322,12 +322,14 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       ]);
 
       result(function (data, failure) {
-        if (failure) {
+        $scope.panelMeta.loading = false;
+
+        if (failure || !data) {
           $scope.panel.error = 'Failed to do fetch graphite data: ' + failure;
+          $scope.$apply();
           return;
         }
 
-        $scope.panelMeta.loading = false;
         $scope.$apply();
 
         // Tell the histogram directive to render.
