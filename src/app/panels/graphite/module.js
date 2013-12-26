@@ -211,7 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
 
     $scope.init = function() {
-      //$scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
+      $scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
 
       // Hide view options by default
       $scope.options = false;
@@ -369,17 +369,23 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
             }
           });
 
+          var target = graphiteSrv.match($scope.panel.targets, targetData.target);
+
           var seriesInfo = {
             alias: targetData.target,
             color: $scope.colors[data.length],
-            enable: true
+            enable: true,
+            yaxis: target.yaxis || 1
           };
 
           $scope.legend.push(seriesInfo);
 
+          data.hasSecondY = (target.yaxis || 1) > 1;
+
           data.push({
             info: seriesInfo,
-            time_series: time_series
+            time_series: time_series,
+            yaxis: target.yaxis || 1
           });
 
         });
@@ -468,6 +474,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           if (!data) {
             return;
           }
+
           // IE doesn't work without this
           elem.css({height:scope.panel.height || scope.row.height});
 
@@ -512,11 +519,14 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
               },
               shadowSize: 1
             },
-            yaxis: {
-              show: scope.panel['y-axis'],
-              min: scope.panel.grid.min,
-              max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
-            },
+            yaxes: [
+              {
+                position: 'left',
+                show: scope.panel['y-axis'],
+                min: scope.panel.grid.min,
+                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+              }
+            ],
             xaxis: {
               timezone: scope.panel.timezone,
               show: scope.panel['x-axis'],
@@ -584,6 +594,15 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           for (var i = 0; i < data.length; i++) {
             var _d = data[i].time_series.getFlotPairs(required_times);
             data[i].data = _d;
+          }
+
+          if (data.hasSecondY) {
+            options.yaxes.push({
+              position: 'right',
+              show: scope.panel['y-axis'],
+              min: scope.panel.grid.min,
+              max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+            });
           }
 
          /* var totalDataPoints = _.reduce(data, function(num, series) { return series.data.length + num; }, 0);

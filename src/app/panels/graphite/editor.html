@@ -9,10 +9,27 @@
               <i class="icon-pencil"></i>
             </a>
           </li>
-          <li>
-            <a class="pointer" tabindex="1" ng-click="enableTextEditor()">
+          <li class="dropdown">
+            <a  class="pointer dropdown-toggle"
+                data-toggle="dropdown"
+                tabindex="1"
+                ng-click="doSomethign()">
               <i class="icon-cog"></i>
             </a>
+            <ul class="dropdown-menu pull-right" role="menu">
+              <li role="menuitem">
+                <a  tabindex="1"
+                    ng-click="duplicate()">
+                  Duplicate
+                </a>
+              </li>
+              <li role="menuitem">
+                <a  tabindex="1"
+                    ng-click="setYAxis()">
+                  Right Y-axis
+                </a>
+              </li>
+            </ul>
           </li>
           <li>
             <a class="pointer" tabindex="1" ng-click="removeTarget(target)">

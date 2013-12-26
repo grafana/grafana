@@ -1,9 +1,10 @@
 define([
   'jquery',
   'rq',
+  'underscore',
   'config'
 ],
-function ($, RQ, config) {
+function ($, RQ, _, config) {
   'use strict';
 
 
@@ -90,7 +91,24 @@ function ($, RQ, config) {
     });
   }
 
+  function match(targets, graphiteTargetStr) {
+    var found = targets[0];
+
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i].target == graphiteTargetStr) {
+        found = targets[i];
+        break;
+      }
+      if(targets[i].target.match("'" + graphiteTargetStr + "'")) {
+        found = targets[i];
+      }
+    };
+
+    return found;
+  }
+
   return {
-    loadGraphiteData: loadGraphiteData
+    loadGraphiteData: loadGraphiteData,
+    match: match
   };
 });
