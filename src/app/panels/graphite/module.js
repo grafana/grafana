@@ -19,8 +19,6 @@ define([
   'kbn',
   'moment',
   './timeSeries',
-  './graphiteSrv',
-  'rq',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -29,14 +27,15 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
+function (angular, app, $, _, kbn, moment, timeSeries) {
 
   'use strict';
 
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv) {
+  module.controller('graphite', function($scope, $rootScope, filterSrv, graphiteSrv, $timeout) {
+
     $scope.panelMeta = {
       modals : [
         {
@@ -211,7 +210,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
 
     $scope.init = function() {
-      $scope.openConfigureModal();
+      //$scope.openConfigureModal();
 
       // Hide view options by default
       $scope.options = false;
@@ -313,84 +312,71 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       var range = $scope.get_time_range();
       var interval = $scope.get_interval(range);
 
-      var graphiteLoadOptions = {
+      var graphiteQuery = {
         range: range,
         targets: $scope.panel.targets,
         maxDataPoints: $scope.panel.span * 50
       };
 
-      var result = RQ.sequence([
-        graphiteSrv.loadGraphiteData(graphiteLoadOptions),
-        $scope.receiveGraphiteData(range, interval)
-      ]);
-
-      result(function (data, failure) {
-        $scope.panelMeta.loading = false;
-
-        if (failure || !data) {
-          $scope.panel.error = 'Failed to do fetch graphite data: ' + failure;
-          $scope.$apply();
-          return;
-        }
-
-        $scope.$apply();
-
-        // Tell the histogram directive to render.
-        $scope.$emit('render', data);
-      });
-
+      return graphiteSrv.query(graphiteQuery)
+        .then(function(results) {
+          $scope.panelMeta.loading = false;
+          var data = $scope.receiveGraphiteData(results, range, interval)
+          $scope.$emit('render', data);
+        })
+        .then(null, function(err) {
+          $scope.panel.error = err.message || "Graphite HTTP Request Error";
+        });
     };
 
-    $scope.receiveGraphiteData = function(range, interval) {
+    $scope.receiveGraphiteData = function(results, range, interval) {
+      var results = results.data;
+      $scope.legend = [];
+      var data = [];
 
-      return function receive_graphite_data_requestor(requestion, results) {
-        $scope.legend = [];
-        var data = [];
+      if(results.length === 0 ) {
+        throw { message: 'no data in response from graphite' };
+      }
 
-        if(results.length === 0 ) {
-          requestion('no data in response from graphite');
-        }
+      //console.log('Data from graphite:', results);
+      //console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
 
-        //console.log('Data from graphite:', results);
-        //console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
+      var tsOpts = {
+        interval: interval,
+        start_date: range && range.from,
+        end_date: range && range.to,
+        fill_style: 'no'
+      };
 
-        var tsOpts = {
-          interval: interval,
-          start_date: range && range.from,
-          end_date: range && range.to,
-          fill_style: 'no'
-        };
+      _.each(results, function(targetData) {
+        var time_series = new timeSeries.ZeroFilled(tsOpts);
 
-        _.each(results, function(targetData) {
-          var time_series = new timeSeries.ZeroFilled(tsOpts);
-
-          _.each(targetData.datapoints, function(valueArray) {
-            if (valueArray[0]) {
-              time_series.addValue(valueArray[1] * 1000, valueArray[0]);
-            }
-          });
-
-          var target = graphiteSrv.match($scope.panel.targets, targetData.target);
-
-          var seriesInfo = {
-            alias: targetData.target,
-            color: $scope.colors[data.length],
-            enable: true,
-            yaxis: target.yaxis || 1
-          };
-
-          $scope.legend.push(seriesInfo);
-
-          data.push({
-            info: seriesInfo,
-            time_series: time_series,
-            yaxis: target.yaxis || 1
-          });
-
+        _.each(targetData.datapoints, function(valueArray) {
+          if (valueArray[0]) {
+            time_series.addValue(valueArray[1] * 1000, valueArray[0]);
+          }
         });
 
-        requestion(data);
-      };
+        var target = graphiteSrv.match($scope.panel.targets, targetData.target);
+
+        var seriesInfo = {
+          alias: targetData.target,
+          color: $scope.colors[data.length],
+          enable: true,
+          yaxis: target.yaxis || 1
+        };
+
+        $scope.legend.push(seriesInfo);
+
+        data.push({
+          info: seriesInfo,
+          time_series: time_series,
+          yaxis: target.yaxis || 1
+        });
+
+      });
+
+      return data;
     };
 
     $scope.add_target = function() {
@@ -413,7 +399,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           closeEditMode();
         }
 
-        setImmediate(function() {
+        $timeout(function() {
           $scope.$emit('render');
         });
       });

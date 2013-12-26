@@ -4,6 +4,7 @@ define([
   './filterSrv',
   './timer',
   './panelMove',
+  './graphite/graphiteSrv',
   './esVersion',
   './keyboardManager',
 ],

@@ -43,18 +43,10 @@ require.config({
 
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
-    rq:                       '../vendor/rq',
-    setImmediate:             '../vendor/setImmediate',
-
   },
   shim: {
     underscore: {
       exports: '_'
-    },
-
-    rq: {
-      deps: ['setImmediate'],
-      exports: 'RQ'
     },
 
     angular: {
