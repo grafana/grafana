@@ -29,7 +29,7 @@ function (angular, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, $route, ejsResource, fields, dashboard, alertSrv, panelMove, esVersion, keyboardManager) {
+    $scope, $rootScope, $route, ejsResource, dashboard, alertSrv, panelMove, esVersion, keyboardManager) {
 
     $scope.requiredElasticSearchVersion = ">=0.90.3";
 
@@ -56,8 +56,6 @@ function (angular, config, _) {
       // Clear existing alerts
       alertSrv.clearAll();
 
-      // Provide a global list of all seen fields
-      $scope.fields = fields;
       $scope.reset_row();
 
       $scope.ejs = ejsResource(config.elasticsearch);

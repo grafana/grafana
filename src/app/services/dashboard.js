@@ -15,7 +15,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
   module.service('dashboard', function(
     $routeParams, $http, $rootScope, $injector, $location, $timeout,
-    ejsResource, timer, kbnIndex, alertSrv
+    ejsResource, timer, alertSrv
   ) {
     // A hash of defaults to use when loading a dashboard
 
