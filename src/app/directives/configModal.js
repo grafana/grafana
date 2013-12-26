@@ -14,6 +14,12 @@ function (angular) {
           // create a new modal. Can't reuse one modal unforunately as the directive will not
           // re-render on show.
           elem.bind('click',function(){
+            if (scope.openConfigureModal) {
+              scope.openConfigureModal();
+              scope.$apply();
+              return;
+            }
+
             var panelModal = $modal({
               template: './app/partials/paneleditor.html',
               persist: true,

@@ -211,7 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
 
     $scope.init = function() {
-      $scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
+      $scope.openConfigureModal();
 
       // Hide view options by default
       $scope.options = false;
@@ -398,9 +398,12 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       $scope.panel.targets.push({target: ''});
     };
 
-    $scope.openConfigureModal = function($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
+    $scope.openConfigureModal = function() {
+      if ($scope.inEditMode) {
+        $rootScope.$emit('fullEditMode', false);
+        return;
+      }
+
       var oldHeight = $scope.row.height;
       $scope.row.height = 200;
 

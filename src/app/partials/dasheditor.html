@@ -9,115 +9,117 @@
   </div>
 
   <div ng-if="editor.index == 0">
-    <div class="row-fluid">
-      <div class="span4">
-        <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.current.title'></input>
-      </div>
-      <div class="span1">
-        <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
-      </div>
-      <div class="span1">
-        <label class="small"> Hints <tip>Show 'Add panel' hints in empty spaces</tip></label><input type="checkbox" ng-model="dashboard.current.panel_hints" ng-checked="dashboard.current.panel_hints" />
-      </div>
-      <div class="span2">
-        <label class="small">Hide controls</label>
-        <input type="checkbox" ng-model="dashboard.current.hideControls" ng-checked="dashboard.current.hideControls">
-      </div>
-      <div class="span3">
-        <label class="small">Style</label><select class="input-small" ng-model="dashboard.current.style" ng-options="f for f in ['dark','light']"></select>
+    <div class="editor-row">
+      <div class="section">
+        <div class="editor-option">
+          <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.current.title'></input>
+        </div>
+        <div class="editor-option">
+          <label class="small">Style</label><select class="input-small" ng-model="dashboard.current.style" ng-options="f for f in ['dark','light']"></select>
+        </div>
+        <div class="editor-option">
+          <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
+        </div>
+        <div class="editor-option">
+          <label class="small"> Hints <tip>Show 'Add panel' hints in empty spaces</tip></label><input type="checkbox" ng-model="dashboard.current.panel_hints" ng-checked="dashboard.current.panel_hints" />
+        </div>
+        <div class="editor-option">
+          <label class="small">Hide controls</label>
+          <input type="checkbox" ng-model="dashboard.current.hideControls" ng-checked="dashboard.current.hideControls">
+        </div>
       </div>
     </div>
   </div>
 
-  <div ng-show="editor.index == 1">
+  <div ng-if="editor.index == 1">
     <div class="row-fluid">
-      <div class="span12">
-        <table class="table table-condensed table-striped">
+      <div class="span8">
+        <h4>Rows</h4>
+        <table class="table table-condensed table-bordered">
           <thead>
-            <th>Title</th>
-            <th>Delete</th>
-            <th>Move</th>
+            <th width="1%"></th>
+            <th width="1%"></th>
+            <th width="1%"></th>
+            <th width="97%">Title</th>
           </thead>
           <tr ng-repeat="row in dashboard.current.rows">
-            <td>{{row.title}}</td>
-            <td><i ng-click="dashboard.current.rows = _.without(dashboard.current.rows,row)" class="pointer icon-remove"></i></td>
             <td><i ng-click="_.move(dashboard.current.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
             <td><i ng-click="_.move(dashboard.current.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+            <td><i ng-click="dashboard.current.rows = _.without(dashboard.current.rows,row)" class="pointer icon-remove"></i></td>
+            <td>{{row.title}}</td>
           </tr>
         </table>
       </div>
+      <div class="span4">
+        <h4>Add Row</h4>
+        <label class="small">Title</label>
+        <input type="text" class="input-medium" ng-model='row.title' placeholder="New row"></input>
+        <label class="small">Height</label>
+        <input type="text" class="input-mini" ng-model='row.height'></input>
+      </div>
     </div>
     <div class="row-fluid">
-      <form>
-        <div class="span5">
-          <label class="small">Title</label>
-          <input type="text" class="input-large" ng-model='row.title' placeholder="New row"></input>
-        </div>
-        <div class="span2">
-          <label class="small">Height</label>
-          <input type="text" class="input-mini" ng-model='row.height'></input>
-        </div>
-        <div class="span1">
-          <label class="small"> Editable </label>
-          <input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
-        </div>
-      </form>
+
     </div>
   </div>
 
-  <div ng-show="editor.index == 2">
-    <h5>Pulldowns</h5>
-    <div class="row-fluid">
-      <div class="span2" ng-repeat="pulldown in dashboard.current.pulldowns">
-        <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+  <div ng-if="editor.index == 2" ng-controller="dashLoader">
+    <div class="editor-row">
+      <div class="section">
+        <h5>Save to</h5>
+        <div class="editor-option">
+          <label class="small">Export</label><input type="checkbox" ng-model="dashboard.current.loader.save_local" ng-checked="dashboard.current.loader.save_local">
+        </div>
+        <div class="editor-option">
+          <label class="small">Browser</label><input type="checkbox" ng-model="dashboard.current.loader.save_default" ng-checked="dashboard.current.loader.save_default">
+        </div>
+        <div class="editor-option">
+          <label class="small">Gist <tip>Requires your domain to be OAUTH registered with Github<tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_gist" ng-checked="dashboard.current.loader.save_gist">
+        </div>
+        <div class="editor-option">
+          <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.save_elasticsearch" ng-checked="dashboard.current.loader.save_elasticsearch">
+        </div>
       </div>
-      <div class="span2" ng-repeat="pulldown in dashboard.current.nav">
-        <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+      <div class="section">
+        <h5>Load from</h5>
+        <div class="editor-option">
+          <label class="small">Local file</label><input type="checkbox" ng-model="dashboard.current.loader.load_local" ng-checked="dashboard.current.loader.load_local">
+        </div>
+        <div class="editor-option">
+          <label class="small">Gist</label><input type="checkbox" ng-model="dashboard.current.loader.load_gist" ng-checked="dashboard.current.loader.load_gist">
+        </div>
+        <div class="editor-option">
+          <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.load_elasticsearch" ng-checked="dashboard.current.loader.load_elasticsearch">
+        </div>
+        <div class="editor-option" ng-show="dashboard.current.loader.load.elasticsearch">
+          <label class="small">ES list size</label><input class="input-mini" type="number" ng-model="dashboard.current.loader.load_elasticsearch_size">
+        </div>
+      </div>
+      <div class="section">
+      <h5>Sharing</h5>
+        <div class="editor-option" >
+          <label class="small">Allow Sharing <tip>Allow generating adhoc links to dashboards</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp" ng-checked="dashboard.current.loader.save_temp">
+        </div>
+        <div class="editor-option" ng-show="dashboard.current.loader.save_temp">
+          <label class="small">TTL <tip>Expire temp urls</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp_ttl_enable">
+        </div>
+        <div class="editor-option" ng-show="dashboard.current.loader.save_temp &amp;&amp; dashboard.current.loader.save_temp_ttl_enable">
+          <label class="small">TTL Duration <tip>Elasticsearch date math, eg: 1m,1d,1w,30d  </tip></label><input class="input-small" type="text" ng-model="dashboard.current.loader.save_temp_ttl">
+        </div>
       </div>
     </div>
   </div>
 
-  <div ng-show="editor.index == 2" ng-controller="dashLoader">
-    <h5>Save to</h5>
-    <div class="row-fluid">
-      <div class="span2">
-        <label class="small">Export</label><input type="checkbox" ng-model="dashboard.current.loader.save_local" ng-checked="dashboard.current.loader.save_local">
-      </div>
-      <div class="span2">
-        <label class="small">Browser</label><input type="checkbox" ng-model="dashboard.current.loader.save_default" ng-checked="dashboard.current.loader.save_default">
-      </div>
-      <div class="span2">
-        <label class="small">Gist <tip>Requires your domain to be OAUTH registered with Github<tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_gist" ng-checked="dashboard.current.loader.save_gist">
-      </div>
-      <div class="span2">
-        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.save_elasticsearch" ng-checked="dashboard.current.loader.save_elasticsearch">
-      </div>
-    </div>
-    <h5>Load from</h5>
-    <div class="row-fluid">
-      <div class="span2">
-        <label class="small">Local file</label><input type="checkbox" ng-model="dashboard.current.loader.load_local" ng-checked="dashboard.current.loader.load_local">
-      </div>
-      <div class="span2">
-        <label class="small">Gist</label><input type="checkbox" ng-model="dashboard.current.loader.load_gist" ng-checked="dashboard.current.loader.load_gist">
-      </div>
-      <div class="span2">
-        <label class="small">Elasticsearch</label><input type="checkbox" ng-model="dashboard.current.loader.load_elasticsearch" ng-checked="dashboard.current.loader.load_elasticsearch">
-      </div>
-      <div class="span3" ng-show="dashboard.current.loader.load.elasticsearch">
-        <label class="small">ES list size</label><input class="input-mini" type="number" ng-model="dashboard.current.loader.load_elasticsearch_size">
-      </div>
-    </div>
-    <h5>Sharing</h5>
-    <div class="row-fluid">
-      <div class="span2" >
-        <label class="small">Allow Sharing <tip>Allow generating adhoc links to dashboards</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp" ng-checked="dashboard.current.loader.save_temp">
-      </div>
-      <div class="span2" ng-show="dashboard.current.loader.save_temp">
-        <label class="small">TTL <tip>Expire temp urls</tip></label><input type="checkbox" ng-model="dashboard.current.loader.save_temp_ttl_enable">
-      </div>
-      <div class="span5" ng-show="dashboard.current.loader.save_temp &amp;&amp; dashboard.current.loader.save_temp_ttl_enable">
-        <label class="small">TTL Duration <tip>Elasticsearch date math, eg: 1m,1d,1w,30d  </tip></label><input class="input-small" type="text" ng-model="dashboard.current.loader.save_temp_ttl">
+  <div ng-if="editor.index == 2">
+    <div class="editor-row">
+      <div class="section">
+        <h5>Pulldowns</h5>
+        <div class="editor-option" ng-repeat="pulldown in dashboard.current.pulldowns">
+          <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+        </div>
+        <div class="editor-option" ng-repeat="pulldown in dashboard.current.nav">
+          <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+        </div>
       </div>
     </div>
   </div>

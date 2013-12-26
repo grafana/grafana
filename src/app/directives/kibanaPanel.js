@@ -34,7 +34,7 @@ function (angular) {
             '<span class="row-text">{{panel.type}}</span>'+
           '</span>' +
 
-	  '<span class="row-button extra" ng-show="panel.editable != false">' +
+          '<span class="row-button extra" ng-show="panel.editable != false">' +
             '<span config-modal class="pointer">'+
             '<i class="icon-cog pointer" bs-tooltip="\'Configure\'"></i></span>'+
           '</span>' +
@@ -50,7 +50,7 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="openConfigureModal($event)">' +
+          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="openConfigureModal()">' +
             '{{panel.title}}' +
           '</span>'+
 
