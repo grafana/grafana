@@ -211,7 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
 
     $scope.init = function() {
-      $scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
+      //$scope.openConfigureModal({preventDefault: function() {}, stopPropagation: function() {} });
 
       // Hide view options by default
       $scope.options = false;

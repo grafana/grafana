@@ -67,9 +67,15 @@ function (angular, _, config, graphiteFuncs, Parser) {
         if ((index-1) >= func.def.params.length) {
           throw { message: 'invalid number of parameters to method ' + func.def.name };
         }
+
         func.params[index - 1] = astNode.value;
         break;
+
       case 'metric':
+        if ($scope.segments.length > 0) {
+          throw { message: 'Multiple metric params not supported, use text editor.' };
+        }
+
         $scope.segments = _.map(astNode.segments, function(segment) {
           return {
             val: segment.value,
