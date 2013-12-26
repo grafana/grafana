@@ -99,6 +99,9 @@
 }
 
 /* Graphite Target Editor */
+@grafanaTargetColor:       #c8c8c8;
+@grafanaTargetColorHide:   darken(#c8c8c8, 25%);
+
 .grafana-target {
 }
 
@@ -136,8 +139,12 @@
   display: inline-block;
   font-weight: normal;
   border: 1px solid #050505;
-  color: #c8c8c8;
+  color: @grafanaTargetColor;
   display: inline-block;
+
+  .grafana-target-hidden & {
+    color: @grafanaTargetColorHide;
+  }
 
   &:hover, &:focus {
     text-decoration: none;
@@ -146,6 +153,7 @@
     background: #282828;
   }
 }
+
 .grafana-target-function {
   background: #303030;
   &:hover {
@@ -176,7 +184,11 @@
     padding: 5px 7px;
     position: relative;
     top: 5px;
-    color: #c8c8c8;
+    color: @grafanaTargetColor;
+
+    .grafana-target-hidden & {
+      color: @grafanaTargetColorHide;
+    }
 
     &:hover, &:focus {
       text-decoration: none;
@@ -191,7 +203,7 @@ input[type=text].grafana-target-text-input {
   background: transparent;
   width: 80%;
   float: left;
-  color: #c8c8c8;
+  color: @grafanaTargetColor;
   border-radius: 0;
 }
 

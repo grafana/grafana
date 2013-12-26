@@ -1,6 +1,11 @@
 <div class="editor-row">
 
-	<div class="grafana-target" ng-repeat="target in panel.targets" ng-controller="GraphiteTargetCtrl" ng-init="init()">
+	<div  ng-repeat="target in panel.targets"
+        class="grafana-target"
+        ng-class="{'grafana-target-hidden': target.hide}"
+        ng-controller="GraphiteTargetCtrl"
+        ng-init="init()">
+
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
@@ -17,8 +22,7 @@
           <li class="dropdown">
             <a  class="pointer dropdown-toggle"
                 data-toggle="dropdown"
-                tabindex="1"
-                ng-click="doSomethign()">
+                tabindex="1">
               <i class="icon-cog"></i>
             </a>
             <ul class="dropdown-menu pull-right" role="menu">
@@ -45,7 +49,9 @@
 
         <ul class="grafana-target-controls-left">
           <li ng-hide="parserError">
-            <a class="grafana-target-segment" ng-click="hideit()" role="menuitem">
+            <a  class="grafana-target-segment"
+                ng-click="target.hide = !target.hide; get_data();"
+                role="menuitem">
               <i class="icon-eye-open"></i>
             </a>
           </li>
