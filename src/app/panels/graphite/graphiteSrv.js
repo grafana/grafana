@@ -95,14 +95,14 @@ function ($, RQ, _, config) {
     var found = targets[0];
 
     for (var i = 0; i < targets.length; i++) {
-      if (targets[i].target == graphiteTargetStr) {
+      if (targets[i].target === graphiteTargetStr) {
         found = targets[i];
         break;
       }
       if(targets[i].target.match("'" + graphiteTargetStr + "'")) {
         found = targets[i];
       }
-    };
+    }
 
     return found;
   }

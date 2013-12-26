@@ -88,7 +88,10 @@
   </div>
 
   <div class="grafana-legend-container">
-    <span ng-show="panel.legend" ng-repeat='series in legend' class="histogram-legend">
+    <span ng-show="panel.legend"
+          ng-class="{'pull-right': series.yaxis === 2}"
+          ng-repeat='series in legend'
+          class="histogram-legend">
         <i class='icon-circle' ng-style="{color: series.color}"></i>
         <span class='small histogram-legend-item'>
           <span ng-if="panel.show_query">{{series.alias || series.query}}</span>

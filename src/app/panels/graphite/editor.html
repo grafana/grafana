@@ -4,6 +4,11 @@
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
+          <li ng-if="target.yaxis">
+            <a class="pointer" ng-click="setYAxis()">
+              y&sup2;
+            </a>
+          </li>
           <li>
             <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
               <i class="icon-pencil"></i>
