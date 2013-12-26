@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('PulldownCtrl', function($scope, $rootScope, $timeout,ejsResource, querySrv) {
+  module.controller('PulldownCtrl', function($scope, $rootScope, $timeout,ejsResource) {
       var _d = {
         collapse: false,
         notice: false,
@@ -18,8 +18,6 @@ function (angular, app, _) {
       _.defaults($scope.pulldown,_d);
 
       $scope.init = function() {
-        $scope.querySrv = querySrv;
-
         // Provide a combined skeleton for panels that must interact with panel and row.
         // This might create name spacing issues.
         $scope.panel = $scope.pulldown;

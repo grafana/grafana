@@ -9,21 +9,6 @@ define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, m
     };
   });
 
-  module.filter('pinnedQuery', function(querySrv) {
-    return function( items, pinned) {
-      var ret = _.filter(querySrv.ids,function(id){
-        var v = querySrv.list[id];
-        if(!_.isUndefined(v.pin) && v.pin === true && pinned === true) {
-          return true;
-        }
-        if((_.isUndefined(v.pin) || v.pin === false) && pinned === false) {
-          return true;
-        }
-      });
-      return ret;
-    };
-  });
-
   /*
     Filter an array of objects by elasticsearch version requirements
   */

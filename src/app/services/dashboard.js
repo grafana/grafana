@@ -69,7 +69,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     // Store a reference to this
     var self = this;
-    var filterSrv,querySrv;
+    var filterSrv;
 
     this.current = _.clone(_dash);
     this.last = {};
@@ -130,49 +130,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       }
     };
 
-    // Since the dashboard is responsible for index computation, we can compute and assign the indices
-    // here before telling the panels to refresh
     this.refresh = function() {
-      if(self.current.index.interval !== 'none') {
-        if(_.isUndefined(filterSrv)) {
-          return;
-        }
-        if(filterSrv.idsByType('time').length > 0) {
-          var _range = filterSrv.timeRange('last');
-          kbnIndex.indices(_range.from,_range.to,
-            self.current.index.pattern,self.current.index.interval
-          ).then(function (p) {
-            if(p.length > 0) {
-              self.indices = p;
-            } else {
-              // Option to not failover
-              if(self.current.failover) {
-                self.indices = [self.current.index.default];
-              } else {
-                // Do not issue refresh if no indices match. This should be removed when panels
-                // properly understand when no indices are present
-                alertSrv.set('No results','There were no results because no indices were found that match your'+
-                  ' selected time span','info',5000);
-                return false;
-              }
-            }
-            // Don't resolve queries until indices are updated
-            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
-          });
-        } else {
-          if(self.current.failover) {
-            self.indices = [self.current.index.default];
-            querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
-          } else {
-            alertSrv.set("No time filter",
-              'Timestamped indices are configured without a failover. Waiting for time filter.',
-              'info',5000);
-          }
-        }
-      } else {
-        self.indices = [self.current.index.default];
-        querySrv.resolve().then(function(){$rootScope.$broadcast('refresh');});
-      }
+      $rootScope.$broadcast('refresh');
     };
 
     var dash_defaults = function(dashboard) {
@@ -200,12 +159,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Delay this until we're sure that querySrv and filterSrv are ready
       $timeout(function() {
         // Ok, now that we've setup the current dashboard, we can inject our services
-        querySrv = $injector.get('querySrv');
         filterSrv = $injector.get('filterSrv');
-
-        // Make sure these re-init
-        querySrv.init();
         filterSrv.init();
+
       },0).then(function() {
         // Call refresh to calculate the indices and notify the panels that we're ready to roll
         self.refresh();
