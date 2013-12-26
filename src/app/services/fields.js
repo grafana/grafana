@@ -28,7 +28,6 @@ function (angular, _, config) {
             self.indices = _.union(self.indices,_.keys(result));
             self.list = mapFields(result);
           });
-        // Otherwise just use the cached mapping
         }
       }
     });
@@ -76,13 +75,18 @@ function (angular, _, config) {
         dot = (prefix) ? '.':'',
         ret = {};
       for(var attr in obj){
+        if(attr === 'dynamic_templates' || attr === '_default_') {
+          continue;
+        }
         // For now only support multi field on the top level
         // and if there is a default field set.
         if(obj[attr]['type'] === 'multi_field') {
           ret[attr] = obj[attr]['fields'][attr] || obj[attr];
-          continue;
-        }
-        if (attr === 'properties') {
+          var keys = _.without(_.keys(obj[attr]['fields']),attr);
+          for(var key in keys) {
+            ret[attr+'.'+keys[key]] = obj[attr]['fields'][keys[key]];
+          }
+        } else if (attr === 'properties') {
           _.extend(ret,flatten(obj[attr], propName));
         } else if(typeof obj[attr] === 'object'){
           _.extend(ret,flatten(obj[attr], propName + dot + attr));

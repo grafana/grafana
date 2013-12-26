@@ -26,7 +26,8 @@ function (angular, $, _, appLevelRequire) {
     // features if we define them after boot time
     register_fns = {};
 
-  app.constant('version',"3.0.0pre5");
+  // This stores the Kibana revision number, @REV@ is replaced by grunt.
+  app.constant('kbnVersion',"@REV@");
 
   // Use this for cache busting partials
   app.constant('cacheBust',"cache-bust="+Date.now());
