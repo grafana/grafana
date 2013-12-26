@@ -216,6 +216,7 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       // Hide view options by default
       $scope.options = false;
       $scope.editor = {index: 1};
+      $scope.hiddenSeries = {};
 
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
@@ -380,8 +381,6 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
 
           $scope.legend.push(seriesInfo);
 
-          data.hasSecondY = (target.yaxis || 1) > 1;
-
           data.push({
             info: seriesInfo,
             time_series: time_series,
@@ -443,9 +442,21 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       $scope.$emit('render');
     };
 
+    $scope.toggleSeries = function(info) {
+      if ($scope.hiddenSeries[info.alias]) {
+        delete $scope.hiddenSeries[info.alias];
+        info.hidden = false;
+      }
+      else {
+        $scope.hiddenSeries[info.alias] = true;
+        info.hidden = true;
+      }
+
+      $scope.$emit('toggleLegend', info.alias);
+    };
+
     $scope.setEditorTabs = function(panelMeta) {
       $scope.editorTabs = _.union(['General'],_.pluck(panelMeta.fullEditorTabs,'title'));
-      return $scope.editorTabs;
     };
 
   });
@@ -456,9 +467,19 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
       template: '<div> </div>',
       link: function(scope, elem) {
         var data, plot;
+        var hiddenData = {};
 
         scope.$on('refresh',function() {
           scope.get_data();
+        });
+
+        scope.$on('toggleLegend', function(e, alias) {
+          if (hiddenData[alias]) {
+            data.push(hiddenData[alias]);
+            delete hiddenData[alias];
+          }
+
+          render_panel(data);
         });
 
         // Receive render events
@@ -481,13 +502,20 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
           // IE doesn't work without this
           elem.css({height:scope.panel.height || scope.row.height});
 
-          // Populate from the query service
-          try {
-            _.each(data, function(series) {
-              series.label = series.info.alias;
-              series.color = series.info.color;
+          _.each(data, function(series) {
+            series.label = series.info.alias;
+            series.color = series.info.color;
+          });
+
+          _.each(_.keys(scope.hiddenSeries), function(seriesAlias) {
+            var dataSeries = _.find(data, function(series) {
+              return series.info.alias === seriesAlias;
             });
-          } catch(e) {return;}
+            if (dataSeries) {
+              hiddenData[dataSeries.info.alias] = dataSeries;
+              data = _.without(data, dataSeries);
+            }
+          });
 
           // Set barwidth based on specified interval
           var barwidth = kbn.interval_to_ms(scope.panel.interval);
@@ -599,7 +627,9 @@ function (angular, app, $, _, kbn, moment, timeSeries, graphiteSrv, RQ) {
             data[i].data = _d;
           }
 
-          if (data.hasSecondY) {
+          var hasSecondY = _.findWhere(data, { yaxis: 2});
+
+          if (hasSecondY) {
             options.yaxes.push({
               position: 'right',
               show: scope.panel['y-axis'],

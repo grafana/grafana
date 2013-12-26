@@ -41,47 +41,6 @@
     </span>
   </div>
 
-  <form class="form-inline bordered histogram-options" ng-show="options">
-    <span>
-      <div class="checkbox">
-        <label class="small">
-          <input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
-          Bars
-        </label>
-      </div>
-      <div class="checkbox">
-        <label class="small">
-          <input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
-          Lines
-        </label>
-      </div>
-      <div class="checkbox">
-        <label class="small">
-          <input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
-          Stack
-        </label>
-      </div>
-    </span>
-    <span ng-show="panel.stack">
-      <div class="checkbox">
-        <label style="white-space:nowrap" class="small">
-          <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
-          Percent
-        </label>
-      </div>
-    </span>
-    <span>
-      <div class="checkbox">
-        <label class="small">
-          <input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend" ng-change="render()">
-          Legend
-        </label>
-      </div>
-    </span>
-    <span>
-      <label class="small">Interval</label> <select ng-change="set_interval(panel.interval);get_data();" class="input-small" ng-model="panel.interval" ng-options="interval_label(time) for time in _.union([panel.interval],panel.intervals)"></select>
-    </span>
-  </form>
   <center><img ng-show='panel.loading && _.isUndefined(data)' src="img/load_big.gif"></center>
 
   <div histogram-chart class="pointer histogram-chart" params="{{panel}}">
@@ -89,13 +48,14 @@
 
   <div class="grafana-legend-container">
     <span ng-show="panel.legend"
-          ng-class="{'pull-right': series.yaxis === 2}"
+          ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
           ng-repeat='series in legend'
           class="histogram-legend">
         <i class='icon-circle' ng-style="{color: series.color}"></i>
         <span class='small histogram-legend-item'>
-          <span ng-if="panel.show_query">{{series.alias || series.query}}</span>
-          <span ng-if="!panel.show_query">{{series.alias}}</span>
+          <a ng-click="toggleSeries(series)">
+            {{series.alias}}
+          </a>
         </span>
     </span>
   </div>
