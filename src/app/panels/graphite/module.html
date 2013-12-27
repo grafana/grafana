@@ -62,7 +62,7 @@
 
   <div class="panel-full-edit-tabs" ng-if="inEditMode">
       <div ng-model="editor.index" bs-tabs>
-        <div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
+        <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
         </div>
       </div>
       <div ng-show="editorTabs[editor.index] == 'General'">

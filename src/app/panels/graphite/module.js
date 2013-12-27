@@ -215,6 +215,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       // Hide view options by default
       $scope.options = false;
       $scope.editor = {index: 1};
+      $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
       $scope.hiddenSeries = {};
 
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
@@ -439,10 +440,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       $scope.$emit('toggleLegend', info.alias);
-    };
-
-    $scope.setEditorTabs = function(panelMeta) {
-      $scope.editorTabs = _.union(['General'],_.pluck(panelMeta.fullEditorTabs,'title'));
     };
 
   });
