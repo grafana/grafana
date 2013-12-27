@@ -460,22 +460,22 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             delete hiddenData[alias];
           }
 
-          render_panel(data);
+          render_panel();
         });
 
         // Receive render events
         scope.$on('render',function(event, d) {
           data = d || data;
-          render_panel(data);
+          render_panel();
         });
 
         // Re-render if the window is resized
         angular.element(window).bind('resize', function() {
-          render_panel(data);
+          render_panel();
         });
 
         // Function for rendering panel
-        function render_panel(data) {
+        function render_panel() {
           if (!data) {
             return;
           }
