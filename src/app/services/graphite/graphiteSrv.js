@@ -46,17 +46,6 @@ function (angular, _, $, config) {
       return found;
     };
 
-    /*function getGraphiteData(parameters) {
-      return $.ajax({
-        accepts: { text: 'application/json' },
-        cache: false,
-        dataType: 'json',
-        url: config.graphiteUrl + '/render/',
-        type: "POST",
-        data: parameters.join('&')
-      });
-    }
-*/
     function buildGraphitePostParams(options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
@@ -64,19 +53,20 @@ function (angular, _, $, config) {
       options['format'] = 'json';
 
       $.each(options, function (key, value) {
-      if ($.inArray(key, graphite_options) === -1) {
-        return;
-      }
+        if ($.inArray(key, graphite_options) === -1) {
+          return;
+        }
 
-      if (key === "targets") {
-        $.each(value, function (index, value) {
-          if (!value.hide) {
-            clean_options.push("target=" + encodeURIComponent(value.target));
-          }
-        });
-      } else if (value !== null) {
-        clean_options.push(key + "=" + encodeURIComponent(value));
-      }
+        if (key === "targets") {
+          $.each(value, function (index, value) {
+            if (!value.hide) {
+              clean_options.push("target=" + encodeURIComponent(value.target));
+            }
+          });
+        }
+        else if (value !== null) {
+          clean_options.push(key + "=" + encodeURIComponent(value));
+        }
       });
       return clean_options;
     }

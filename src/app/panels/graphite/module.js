@@ -61,8 +61,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
-      status  : "Work in progress",
-      description : " Graphite graphing panel"
+      status  : "Unstable",
+      description : "Graphite graphing panel <br /><br />"
     };
 
     // Set and populate defaults
@@ -240,8 +240,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
-      if ($scope.inEditMode) {
-        $rootScope.$emit('fullEditMode', false);
+      if ($scope.showFullscreen) {
+        $rootScope.$emit('panel-fullscreen-exit');
       }
       else {
         $scope.$parent.remove_panel_from_row(row, panel);
@@ -251,10 +251,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.removeTarget = function (target) {
       $scope.panel.targets = _.without($scope.panel.targets, target);
       $scope.get_data();
-    };
-
-    $scope.closeEditMode = function() {
-      $rootScope.$emit('fullEditMode', false);
     };
 
     $scope.interval_label = function(interval) {
@@ -322,7 +318,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return graphiteSrv.query(graphiteQuery)
         .then(function(results) {
           $scope.panelMeta.loading = false;
-          var data = $scope.receiveGraphiteData(results, range, interval)
+          var data = $scope.receiveGraphiteData(results, range, interval);
           $scope.$emit('render', data);
         })
         .then(null, function(err) {
@@ -331,7 +327,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.receiveGraphiteData = function(results, range, interval) {
-      var results = results.data;
+      results = results.data;
       $scope.legend = [];
       var data = [];
 
@@ -384,28 +380,39 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.panel.targets.push({target: ''});
     };
 
-    $scope.openConfigureModal = function() {
-      if ($scope.inEditMode) {
-        $rootScope.$emit('fullEditMode', false);
-        return;
-      }
-
+    $scope.enterFullscreenMode = function(options) {
       var oldHeight = $scope.row.height;
-      $scope.row.height = 200;
+      var docHeight = $(window).height();
+      $scope.row.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
 
-      var closeEditMode = $rootScope.$on('fullEditMode', function(evt, enabled) {
-        $scope.inEditMode = enabled;
-        if (!enabled) {
-          $scope.row.height = oldHeight;
-          closeEditMode();
-        }
+      var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
+        $scope.inEditMode = false;
+        $scope.showFullscreen = false;
+        $scope.row.height = oldHeight;
+
+        closeEditMode();
 
         $timeout(function() {
           $scope.$emit('render');
         });
       });
 
-      $rootScope.$emit('fullEditMode', true);
+      $scope.inEditMode = options.edit;
+      $scope.showFullscreen = true;
+      $rootScope.$emit('panel-fullscreen-enter');
+
+      $timeout(function() {
+        $scope.$emit('render');
+      });
+    };
+
+    $scope.openConfigureModal = function() {
+      if ($scope.showFullscreen) {
+        $rootScope.$emit('panel-fullscreen-exit');
+        return;
+      }
+
+      $scope.enterFullscreenMode({edit: true});
     };
 
     // I really don't like this function, too much dom manip. Break out into directive?
@@ -427,6 +434,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.render = function() {
       $scope.$emit('render');
+    };
+
+    $scope.toggleFullscreen = function(evt) {
+      if ($scope.showFullscreen) {
+        $rootScope.$emit('panel-fullscreen-exit');
+        return;
+      }
+
+      if (evt) {
+        var elem = $(evt.target);
+        if (!elem.hasClass('panel-extra') ||
+          elem.attr('ng-click')) {
+          return;
+        }
+      }
+
+      $scope.enterFullscreenMode({edit: false});
     };
 
     $scope.toggleSeries = function(info) {

@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('PulldownCtrl', function($scope, $rootScope, $timeout,ejsResource) {
+  module.controller('PulldownCtrl', function($scope, $rootScope, $timeout) {
       var _d = {
         collapse: false,
         notice: false,

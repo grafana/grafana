@@ -60,12 +60,16 @@ function (angular, config, _) {
 
       $scope.ejs = ejsResource(config.elasticsearch);
 
-      $rootScope.$on('fullEditMode', function(evt, enabled) {
-        $scope.fullEditMode = enabled;
+      $rootScope.$on('panel-fullscreen-enter', function() {
+        $scope.fullscreenPanelExists = true;
+      });
+
+      $rootScope.$on('panel-fullscreen-exit', function() {
+        $scope.fullscreenPanelExists = false;
       });
 
       keyboardManager.bind('esc', function() {
-        $rootScope.$emit('fullEditMode', false);
+        $rootScope.$emit('panel-fullscreen-exit');
       });
     };
 

@@ -13,7 +13,7 @@
 <div class="container-fluid main" ng-class="{'grafana-dashboard-hide-controls': dashboard.current.hideControls}">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
-      <div ng-show="fullEditMode" class="modal-backdrop fade in"></div>
+      <div ng-show="fullscreenPanelExists" class="modal-backdrop fade in"></div>
 
       <!-- Rows -->
       <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.current.rows" ng-style="row_style(row)">
@@ -81,7 +81,7 @@
         </div>
       </div>
 
-      <div class="row-fluid" ng-show='dashboard.current.editable'>
+      <div class="row-fluid" ng-show='dashboard.current.editable && dashboard.current.panel_hints'>
         <div class="span12" style="text-align:right;">
           <span style="margin-left: 0px;" class="pointer btn btn-mini" bs-modal="'app/partials/dasheditor.html'">
             <span ng-click="editor.index = 2"><i class="icon-plus-sign"></i> ADD A ROW</span>

@@ -50,7 +50,7 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="openConfigureModal()">' +
+          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="toggleFullscreen()">' +
             '{{panel.title}}' +
           '</span>'+
 
