@@ -432,11 +432,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.toggleSeries = function(info) {
       if ($scope.hiddenSeries[info.alias]) {
         delete $scope.hiddenSeries[info.alias];
-        info.hidden = false;
       }
       else {
         $scope.hiddenSeries[info.alias] = true;
-        info.hidden = true;
       }
 
       $scope.$emit('toggleLegend', info.alias);

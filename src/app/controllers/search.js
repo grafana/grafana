@@ -43,13 +43,23 @@ function (angular, _, config, $) {
       });
     };
 
+    $scope.toggleImport = function ($event) {
+      $event.stopPropagation();
+
+      $scope.showImport = !$scope.showImport;
+    };
+
     $scope.elasticsearch_dblist = function(queryStr) {
+      $scope.showImport = false;
+
       queryStr = queryStr.toLowerCase();
 
-      if (queryStr.indexOf('d:') === 0) {
-        $scope.elasticsearch_dashboards(queryStr.substring(2, queryStr.length));
+      if (queryStr.indexOf('m:') !== 0) {
+        $scope.elasticsearch_dashboards(queryStr);
         return;
       }
+
+      queryStr = queryStr.substring(2, queryStr.length);
 
       var words = queryStr.split(' ');
       var query = $scope.ejs.BoolQuery();
@@ -78,6 +88,7 @@ function (angular, _, config, $) {
 
     $scope.openSearch = function () {
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      $scope.elasticsearch_dblist("");
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {

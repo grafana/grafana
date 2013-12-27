@@ -34,10 +34,6 @@
       <div class="navbar-inner">
         <div class="container-fluid">
           <span class="brand"><img src="img/small.png" bs-tooltip="'Kibana 3 milestone pre-5'" data-placement="bottom"> {{dashboard.current.title}}</span>
-
-          <ul class="nav pull-left" ng-controller="SearchCtrl" ng-init="init()" ng-include="'app/partials/search.html'">
-          </ul>
-
           <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'app/partials/dashLoader.html'">
           </ul>
         </div>

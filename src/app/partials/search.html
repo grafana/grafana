@@ -1,5 +1,5 @@
   <style>
-    .grafana-search {
+    #grafana-search {
       position: fixed;
       right: 0;
       left: 0;
@@ -12,15 +12,19 @@
     }
   </style>
 
- <li class="dropdown">
   <a href="#" bs-tooltip="'Search'" data-placement="bottom" ng-click="openSearch()" class="dropdown-toggle" data-toggle="dropdown">
-    <i class='icon-search'></i>
+    <i class='icon-folder-open'></i>
   </a>
-  <ul class="dropdown-menu grafana-search">
-    <li>
-      <div class="grafana-search-panel">
-        <input type="text" placeholder="search dashboards, metrics, or graphs" xng-focus="giveSearchFocus" ng-keydown="keyDown($event)" ng-model="elasticsearch.query" ng-change="elasticsearch_dblist(elasticsearch.query)" />
 
+  <ul class="dropdown-menu" id="grafana-search">
+    <li ng-if="!showImport">
+      <div class="grafana-search-panel">
+        <input  type="text"
+                placeholder="search dashboards, metrics, or graphs"
+                xng-focus="giveSearchFocus"
+                ng-keydown="keyDown($event)"
+                ng-model="elasticsearch.query"
+                ng-change="elasticsearch_dblist(elasticsearch.query)" />
         <h6 ng-hide="search_results.dashboards.length || search_results.metrics.length">No dashboards or metrics matching your query found</h6>
         <table class="table table-condensed table-striped">
           <tr bindonce ng-repeat="row in search_results.metrics" class="grafana-search-metric-result">
@@ -43,5 +47,35 @@
         </table>
       </div>
     </li>
-  </ul>
-</li>
+
+    <li class="pull-right" style="margin: 5px;">
+      <a ng-click="toggleImport($event)">Import</a>
+    </li>
+    <!-- ng-show="dashboard.current.loader.load_gist || dashboard.current.loader.load_local" -->
+    <li ng-if="showImport" style="margin: 20px;">
+      <div class="editor-row">
+        <div class="section">
+          <div class="editor-option">
+            <h5>Local File <tip>Load dashboard JSON layout from file</tip></h5>
+            <form>
+              <input type="file" id="dashupload" dash-upload /><br>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-row" ng-show='dashboard.current.loader.load_gist'>
+        <h5>Gist <tip>Enter a gist number or url</tip></h5>
+        <form>
+          <input type="text" ng-model="gist.url" placeholder="Gist number or URL"><br>
+          <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
+          <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
+          <h6 ng-hide="gist.files.length || !gist.url.length">No gist dashboards found</h6>
+          <table class="table table-condensed table-striped">
+            <tr ng-repeat="file in gist.files">
+              <td><a ng-click="dashboard.dash_load(file)">{{file.title}}</a></td>
+            </tr>
+          </table>
+        </form>
+      </div>
+    </li>
