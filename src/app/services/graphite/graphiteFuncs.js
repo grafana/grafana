@@ -4,38 +4,77 @@ define([
 function (_) {
   'use strict';
 
-  var funcDefList = [];
   var index = [];
+  var categories = {
+    Combine: [],
+    Transform: [],
+    Calculate: [],
+    Filter: [],
+    Special: []
+  };
 
   function addFuncDef(funcDef) {
-    funcDefList.push(funcDef);
+    if (funcDef.category) {
+      funcDef.category.push(funcDef);
+    }
     index[funcDef.name] = funcDef;
     index[funcDef.shortName || funcDef.name] = funcDef;
   }
 
   addFuncDef({
     name: 'scaleToSeconds',
+    category: categories.Transform,
     params: [ { name: 'seconds', type: 'int' } ],
     defaultParams: [1],
   });
 
   addFuncDef({
     name: "alias",
-    params: [
-      { name: "alias", type: 'string' }
-    ],
+    category: categories.Special,
+    params: [ { name: "alias", type: 'string' } ],
     defaultParams: ['alias']
+  });
+
+  addFuncDef({
+    name: "holtWintersForecast",
+    category: categories.Calculate,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
+    name: "holtWintersConfidenceBands",
+    category: categories.Calculate,
+    params: [ { name: "delta", type: 'int' } ],
+    defaultParams: [3]
+  });
+
+  addFuncDef({
+    name: "holtWintersAberration",
+    category: categories.Calculate,
+    params: [ { name: "delta", type: 'int' } ],
+    defaultParams: [3]
   });
 
   addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
+    category: categories.Combine,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
+    name: 'averageSeries',
+    shortName: 'avg',
+    category: categories.Combine,
     params: [],
     defaultParams: []
   });
 
   addFuncDef({
     name: "groupByNode",
+    category: categories.Special,
     params: [
       {
         name: "node",
@@ -43,7 +82,8 @@ function (_) {
       },
       {
         name: "function",
-        type: "function",
+        type: "select",
+        options: ['sumSeries', 'averageSeries']
       }
     ],
     defaultParams: [3, "sum"]
@@ -51,8 +91,37 @@ function (_) {
 
   addFuncDef({
     name: 'aliasByNode',
+    category: categories.Special,
     params: [ { name: "node", type: "node", } ],
     defaultParams: [3]
+  });
+
+  addFuncDef({
+    name: 'scale',
+    category: categories.Transform,
+    params: [ { name: "factor", type: "int", } ],
+    defaultParams: [1]
+  });
+
+  addFuncDef({
+    name: 'integral',
+    category: categories.Transform,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
+    name: 'derivate',
+    category: categories.Transform,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
+    name: 'timeShift',
+    category: categories.Transform,
+    params: [ { name: "amount", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
+    defaultParams: ['1d']
   });
 
   function FuncInstance(funcDef) {
@@ -88,8 +157,8 @@ function (_) {
       return new FuncInstance(name);
     },
 
-    getDefList: function() {
-      return funcDefList.slice(0);
+    getCategories: function() {
+      return categories;
     }
   };
 

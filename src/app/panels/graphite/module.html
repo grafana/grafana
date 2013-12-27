@@ -1,9 +1,7 @@
 <div  ng-controller='graphite'
       ng-init="init()"
       style="min-height:{{panel.height || row.height}}"
-      ng-class='{"panel-fullscreen": showFullscreen}'
-      ng-dblclick="toggleFullscreen($event);"
-      >
+      ng-class='{"panel-fullscreen": showFullscreen}'>
 
   <style>
     .histogram-legend {

@@ -1,56 +1,52 @@
 <div class="grafana-func-editor">
 
   <div class="grafana-func-editor-header">
-    <a ng-click="removeFunction(func)">
+   <a ng-click="removeFunction(func)">
       Remove
     </a>
-    |
-    <a ng-click="disableFunction(func)">
-      Disable
-    </a>
-    |
+    |&nbsp;
     <a ng-click="helpFunction(func)">
       Help
     </a>
-    |
+    |&nbsp;
     <a ng-click="dismiss()">
       Close
     </a>
   </div>
 
-  <div class="editor-row">
+  <div class="editor-row" ng-if="func.def.params.length">
     <div class="section">
       <div class="editor-option" ng-repeat="param in func.def.params">
         <label class="small">{{param.name}}</label>
-        <input ng-if="param.type === 'int'"
-              type="number"
-              placeholder="seconds"
-              focus-me="true"
-              class="input-mini"
-              ng-change="functionParamsChanged(func)" ng-model-onblur
-              ng-model="func.params[$index]" />
-
-        <input ng-if="param.type === 'string'"
-              type="text"
-              focus-me="true"
-              class="input-small"
-              ng-change="functionParamsChanged(func)" ng-model-onblur
-              ng-model="func.params[$index]" />
-
-         <select  ng-if="param.type === 'node'"
+        <div ng-switch on="param.type">
+          <div ng-switch-when="int">
+             <input
+                type="number"
+                placeholder="seconds"
+                focus-me="true"
+                class="input-mini"
+                ng-change="functionParamsChanged(func)" ng-model-onblur
+                ng-model="func.params[$index]" />
+          </div>
+          <div ng-switch-when="string">
+             <input
+                type="text"
+                focus-me="true"
+                class="input-small"
+                ng-change="functionParamsChanged(func)" ng-model-onblur
+                ng-model="func.params[$index]" />
+          </div>
+          <div ng-switch-when="select">
+              <select
                   class="input-mini"
                   ng-model="func.params[$index]"
                   ng-change="functionParamsChanged(func)"
                   focus-me="true"
-                  ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]">
-         </select>
+                  ng-options="f for f in param.options">
+              </select>
+          </div>
+        </div>
 
-         <select  ng-if="param.type === 'function'"
-                  style="width: 110px"
-                  ng-change="functionParamsChanged(func)"
-                  ng-model="func.params[$index]"
-                  ng-options="f for f in ['sum', 'avg']">
-         </select>
       </div>
     </div>
   </div>

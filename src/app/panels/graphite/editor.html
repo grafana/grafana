@@ -89,7 +89,7 @@
               {{func.text}}
             </a>
           </li>
-          <li class="dropdown">
+          <li class="dropdown dropup">
             <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
                 data-toggle="dropdown"
                 tabindex="1"
@@ -97,12 +97,18 @@
                 <i class="icon-plus"></i>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="funcDef in funcDefs" role="menuitem">
+              <li ng-repeat="(category, funcList) in funcCategories" class="dropdown-submenu" role="menuitem">
                 <a href="javascript:void(0)"
-                   tabindex="1"
-                   ng-click="addFunction(funcDef)">
-                   {{funcDef.name}}
+                   tabindex="1">
+                   {{category}}
                 </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li ng-repeat="func in funcList" role="menuitem">
+                    <a ng-click="addFunction(func)" tabindex="1">
+                      {{func.name}}
+                    </a>
+                  </li>
+                </ul>
               </li>
             </ul>
           </li>

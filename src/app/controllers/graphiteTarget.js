@@ -13,7 +13,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope, $http) {
 
     $scope.init = function() {
-      $scope.funcDefs = graphiteFuncs.getDefList();
+      $scope.funcCategories = graphiteFuncs.getCategories();
       parseTarget();
     };
 
