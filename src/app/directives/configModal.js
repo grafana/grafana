@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'underscore'
 ],
-function (angular) {
+function (angular,_) {
   'use strict';
 
   angular
@@ -15,11 +16,15 @@ function (angular) {
           // re-render on show.
           elem.bind('click',function(){
 
+            // Create a temp scope so we can discard changes to it if needed
             var tmpScope = scope.$new();
             tmpScope.panel = angular.copy(scope.panel);
 
             tmpScope.editSave = function(panel) {
-              scope.panel = panel;
+              // Correctly set the top level properties of the panel object
+              _.each(panel,function(v,k) {
+                scope.panel[k] = panel[k];
+              });
             };
 
             var panelModal = $modal({
