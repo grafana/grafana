@@ -8,7 +8,6 @@ define([
       var parser = new Parser('metric.test.*.asd.count');
       var rootNode = parser.getAst();
 
-      expect(parser.error).to.be(null);
       expect(rootNode.type).to.be('metric');
       expect(rootNode.segments.length).to.be(5);
       expect(rootNode.segments[0].value).to.be('metric');
@@ -17,7 +16,6 @@ define([
     it('simple function', function() {
       var parser = new Parser('sum(test)');
       var rootNode = parser.getAst();
-      expect(parser.error).to.be(null);
       expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(1);
     });
@@ -26,7 +24,6 @@ define([
       var parser = new Parser("sum(test, 1, 'test')");
       var rootNode = parser.getAst();
 
-      expect(parser.error).to.be(null);
       expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(3);
       expect(rootNode.params[0].type).to.be('metric');
@@ -38,7 +35,6 @@ define([
       var parser = new Parser("sum(scaleToSeconds(test, 1))");
       var rootNode = parser.getAst();
 
-      expect(parser.error).to.be(null);
       expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(1);
       expect(rootNode.params[0].type).to.be('function');
@@ -52,7 +48,6 @@ define([
       var parser = new Parser("sum(test.test.*.count, test.timers.*.count)");
       var rootNode = parser.getAst();
 
-      expect(parser.error).to.be(null);
       expect(rootNode.type).to.be('function');
       expect(rootNode.params.length).to.be(2);
       expect(rootNode.params[0].type).to.be('metric');
@@ -63,16 +58,24 @@ define([
       var parser = new Parser('metric.test.*.asd.');
       var rootNode = parser.getAst();
 
-      expect(parser.error.text).to.be('Expected metric identifier instead found end of string');
-      expect(parser.error.pos).to.be(19);
+      expect(rootNode.message).to.be('Expected metric identifier instead found end of string');
+      expect(rootNode.pos).to.be(19);
     });
 
     it('invalid function expression missing closing paranthesis', function() {
       var parser = new Parser('sum(test');
       var rootNode = parser.getAst();
 
-      expect(parser.error.text).to.be('Expected closing paranthesis instead found end of string');
-      expect(parser.error.pos).to.be(9);
+      expect(rootNode.message).to.be('Expected closing paranthesis instead found end of string');
+      expect(rootNode.pos).to.be(9);
+    });
+
+    it('unclosed string in function', function() {
+      var parser = new Parser("sum('test)");
+      var rootNode = parser.getAst();
+
+      expect(rootNode.message).to.be('Unclosed string parameter');
+      expect(rootNode.pos).to.be(11);
     });
 
   });

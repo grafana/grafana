@@ -30,6 +30,19 @@ define([
       expect(tokens[tokens.length - 1].value).to.be(')');
     });
 
+    it('should handle error with unterminated string', function() {
+      var lexer = new Lexer("alias(metric, 'asd)");
+      var tokens = lexer.tokenize();
+      expect(tokens[0].value).to.be('alias');
+      expect(tokens[1].value).to.be('(');
+      expect(tokens[2].value).to.be('metric');
+      expect(tokens[3].value).to.be(',');
+      expect(tokens[4].type).to.be('string');
+      expect(tokens[4].isUnclosed).to.be(true);
+      expect(tokens[4].pos).to.be(20);
+    });
+
+
   });
 
 });

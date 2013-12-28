@@ -591,6 +591,15 @@ define([
       this.skip();
 
       while (this.peek() !== quote) {
+        if (this.peek() === "") { // End Of Line
+          return {
+            type: 'string',
+            value: value,
+            isUnclosed: true,
+            quote: quote,
+            pos: this.char
+          };
+        }
 
         var char = this.peek();
         var jump = 1; // A length of a jump, after we're done

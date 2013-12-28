@@ -124,6 +124,10 @@ function (_) {
     defaultParams: ['1d']
   });
 
+  _.each(categories, function(funcList, catName) {
+    categories[catName] = _.sortBy(funcList, 'name');
+  });
+
   function FuncInstance(funcDef) {
     this.def = funcDef;
     this.params = funcDef.defaultParams.slice(0);

@@ -3,24 +3,12 @@ define([
 ], function (Lexer) {
   'use strict';
 
-  var NodeTypes = {
-    MetricExpression: 1,
-    MetricNode: 2,
-    FunctionCall: 4,
-    NumericLiteral: 5,
-    StringLiteral: 6
-  };
-
   function Parser(expression) {
     this.expression = expression;
     this.lexer = new Lexer(expression);
-    this.state = "start";
-    this.error = null;
     this.tokens = this.lexer.tokenize();
     this.index = 0;
   }
-
-  Parser.Nodes = NodeTypes;
 
   Parser.prototype = {
 
@@ -29,7 +17,16 @@ define([
     },
 
     start: function () {
-      return this.functionCall() || this.metricExpression();
+      try {
+        return this.functionCall() || this.metricExpression();
+      }
+      catch(e) {
+        return {
+          type: 'error',
+          message: e.message,
+          pos: e.pos
+        };
+      }
     },
 
     metricExpression: function() {
@@ -52,7 +49,6 @@ define([
         var rest = this.metricExpression();
         if (!rest) {
           this.errorMark('Expected metric identifier');
-          return null;
         }
 
         node.segments = node.segments.concat(rest.segments);
@@ -77,7 +73,6 @@ define([
 
       if (!this.match(')')) {
         this.errorMark('Expected closing paranthesis');
-        return null;
       }
 
       this.index++;
@@ -122,19 +117,24 @@ define([
         return null;
       }
 
+      var token = this.tokens[this.index];
+      if (token.isUnclosed) {
+        throw { message: 'Unclosed string parameter', pos: token.pos };
+      }
+
       this.index++;
 
       return {
         type: 'string',
-        value: this.tokens[this.index-1].value
+        value: token.value
       };
     },
 
     errorMark: function(text) {
       var currentToken = this.tokens[this.index];
       var type = currentToken ? currentToken.type : 'end of string';
-      this.error = {
-        text: text + " instead found " + type,
+      throw {
+        message: text + " instead found " + type,
         pos: currentToken ? currentToken.pos : this.lexer.char
       };
     },

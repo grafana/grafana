@@ -27,8 +27,8 @@ function (angular, _, config, graphiteFuncs, Parser) {
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
 
-      if (parser.error) {
-        $scope.parserError = parser.error.text + " at position: " + parser.error.pos;
+      if (astNode.type === 'error') {
+        $scope.parserError = astNode.message + " at position: " + astNode.pos;
         $scope.showTextEditor = true;
         return;
       }
