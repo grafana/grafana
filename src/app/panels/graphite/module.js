@@ -193,14 +193,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        * zerofill:: Improves the accuracy of line charts at a small performance cost.
        */
       zerofill      : true,
-      /** @scratch /panels/histogram/3
-       * derivative:: Show each point on the x-axis as the change from the previous point
-       */
+
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
       },
-      targets: []
+
+      targets: [],
+
+      aliasColors: {}
     };
 
     _.defaults($scope.panel,_d);
@@ -217,7 +218,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.editor = {index: 1};
       $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
       $scope.hiddenSeries = {};
-      $scope.aliasToColor = {};
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
       $scope.panel.tooltip.query_as_alias = true;
@@ -335,9 +335,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         throw { message: 'no data in response from graphite' };
       }
 
-      //console.log('Data from graphite:', results);
-      //console.log('nr datapoints from graphite: %d', results[0].datapoints.length);
-
       var tsOpts = {
         interval: interval,
         start_date: range && range.from,
@@ -356,7 +353,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
         var target = graphiteSrv.match($scope.panel.targets, targetData.target);
         var alias = targetData.target;
-        var color = $scope.aliasToColor[alias] || $scope.colors[data.length];
+        var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
 
         var seriesInfo = {
           alias: alias,
@@ -437,6 +434,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.render = function() {
       $scope.$emit('render');
     };
+
+    $scope.changeSeriesColor = function(series, color) {
+      series.color = color;
+      $scope.panel.aliasColors[series.alias] = series.color;
+      $scope.render();
+    }
 
     $scope.toggleFullscreen = function(evt) {
       if ($scope.showFullscreen) {

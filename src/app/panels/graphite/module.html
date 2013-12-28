@@ -50,23 +50,8 @@
   <div histogram-chart class="pointer histogram-chart" params="{{panel}}">
   </div>
 
-  <div class="grafana-legend-container">
-    <span ng-show="panel.legend"
-          ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
-          ng-repeat='series in legend'
-          class="histogram-legend">
-        <i  class='icon-circle pointer'
-            ng-style="{color: series.color}"
-            bs-popover="'app/panels/graphite/seriesColor.html'"
-            data-unique="1"
-            data-placement="bottomLeft">
-        </i>
-        <span class='small histogram-legend-item'>
-          <a ng-click="toggleSeries(series)">
-            {{series.alias}}
-          </a>
-        </span>
-    </span>
+  <div ng-if="panel.legend" class="grafana-legend-container">
+    <div ng-include="'app/panels/graphite/legend.html'"></div>
   </div>
 
   <div class="panel-full-edit-tabs" ng-if="inEditMode">
