@@ -217,7 +217,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.editor = {index: 1};
       $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
       $scope.hiddenSeries = {};
-
+      $scope.aliasToColor = {};
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
       $scope.panel.tooltip.query_as_alias = true;
@@ -355,10 +355,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
 
         var target = graphiteSrv.match($scope.panel.targets, targetData.target);
+        var alias = targetData.target;
+        var color = $scope.aliasToColor[alias] || $scope.colors[data.length];
 
         var seriesInfo = {
-          alias: targetData.target,
-          color: $scope.colors[data.length],
+          alias: alias,
+          color:  color,
           enable: true,
           yaxis: target.yaxis || 1
         };

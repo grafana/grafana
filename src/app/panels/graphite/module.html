@@ -55,7 +55,12 @@
           ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
           ng-repeat='series in legend'
           class="histogram-legend">
-        <i class='icon-circle' ng-style="{color: series.color}"></i>
+        <i  class='icon-circle pointer'
+            ng-style="{color: series.color}"
+            bs-popover="'app/panels/graphite/seriesColor.html'"
+            data-unique="1"
+            data-placement="bottomLeft">
+        </i>
         <span class='small histogram-legend-item'>
           <a ng-click="toggleSeries(series)">
             {{series.alias}}
