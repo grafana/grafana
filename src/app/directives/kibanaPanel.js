@@ -50,7 +50,16 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span class="row-button row-text panel-title pointer" ng-show="panel.title" ng-click="toggleFullscreen()">' +
+          '<span ng-if="panelMenuItems" class="dropdown" ng-show="panel.title">' +
+            '<span class="pointer dropdown-toggle row-text row-button panel-title pointer" data-toggle="dropdown" tabindex="1">' +
+              '{{panel.title}}' +
+            '</span>' +
+            '<ul class="dropdown-menu" role="menu">' +
+              '<li ng-repeat="item in panelMenuItems"><a ng-click="item.action();">{{item.text}}</a></li>' +
+            '</ul>' +
+          '</span>'+
+
+          '<span ng-if="!panelMenuItems" class="row-button row-text panel-title pointer" ng-show="panel.title">' +
             '{{panel.title}}' +
           '</span>'+
 

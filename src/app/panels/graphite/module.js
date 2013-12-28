@@ -212,6 +212,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.init = function() {
       //$scope.openConfigureModal();
+      $scope.panelMenuItems = [
+        { text: 'View fullscreen',  action: $scope.toggleFullscreen },
+        { text: 'Edit',             action: $scope.openConfigureModal },
+        { text: 'Duplicate',        action: $scope.duplicate }
+      ];
 
       // Hide view options by default
       $scope.options = false;
@@ -439,7 +444,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       series.color = color;
       $scope.panel.aliasColors[series.alias] = series.color;
       $scope.render();
-    }
+    };
+
+    $scope.duplicate = function() {
+      var panelCopy = angular.copy($scope.panel);
+
+      var currentRowSpan = $scope.rowSpan($scope.row);
+      if (currentRowSpan <= 8) {
+        $scope.row.panels.push(panelCopy);
+      }
+      else {
+        var rowCopy = angular.copy($scope.row);
+        rowCopy.panels = [panelCopy];
+        $scope.dashboard.current.rows.push(rowCopy);
+      }
+    };
 
     $scope.toggleFullscreen = function(evt) {
       if ($scope.showFullscreen) {
@@ -587,11 +606,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           };
 
           if(scope.panel.y_format === 'bytes') {
-            options.yaxis.mode = "byte";
+            options.yaxes[0].mode = "byte";
           }
 
           if(scope.panel.y_format === 'short') {
-            options.yaxis.tickFormatter = function(val) {
+            options.yaxes[0].tickFormatter = function(val) {
               return kbn.shortFormat(val,0);
             };
           }
