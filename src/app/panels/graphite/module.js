@@ -211,7 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
 
     $scope.init = function() {
-      //$scope.openConfigureModal();
+
       $scope.panelMenuItems = [
         { text: 'View fullscreen',  action: $scope.toggleFullscreen },
         { text: 'Edit',             action: $scope.openConfigureModal },
@@ -446,17 +446,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
-    $scope.duplicate = function() {
-      var panelCopy = angular.copy($scope.panel);
-
-      var currentRowSpan = $scope.rowSpan($scope.row);
+    $scope.duplicate = function(addToRow) {
+      addToRow = addToRow || $scope.row;
+      var currentRowSpan = $scope.rowSpan(addToRow);
       if (currentRowSpan <= 8) {
-        $scope.row.panels.push(panelCopy);
+        addToRow.panels.push(angular.copy($scope.panel));
       }
       else {
-        var rowCopy = angular.copy($scope.row);
-        rowCopy.panels = [panelCopy];
-        $scope.dashboard.current.rows.push(rowCopy);
+        var rowsList = $scope.dashboard.current.rows;
+        var rowIndex = _.indexOf(rowsList, addToRow);
+        if (rowIndex === rowsList.length - 1) {
+          var newRow = angular.copy($scope.row);
+          newRow.panels = [];
+          $scope.duplicate(newRow);
+        }
+        else {
+          $scope.duplicate(rowsList[rowIndex+1]);
+        }
       }
     };
 

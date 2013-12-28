@@ -73,6 +73,23 @@ function (angular, config, _) {
       });
     };
 
+    $scope.countWatchers = function (scopeStart) {
+      var q = [scopeStart || $rootScope], watchers = 0, scope;
+      while (q.length > 0) {
+        scope = q.pop();
+        if (scope.$$watchers) {
+          watchers += scope.$$watchers.length;
+        }
+        if (scope.$$childHead) {
+          q.push(scope.$$childHead);
+        }
+        if (scope.$$nextSibling) {
+          q.push(scope.$$nextSibling);
+        }
+      }
+      window.console.log(watchers);
+    };
+
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
         return true;

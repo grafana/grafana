@@ -9,12 +9,12 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, dashboard, keyboardManager, $element) {
+  module.controller('SearchCtrl', function($scope, dashboard, keyboardManager, $element, $location) {
 
     $scope.init = function() {
       $scope.elasticsearch = $scope.elasticsearch || {};
       $scope.giveSearchFocus = 0;
-      $scope.selectedIndex = null;
+      $scope.selectedIndex = -1;
 
       /*keyboardManager.bind('shift+s', function() {
         $element.find('.dropdown').addClass('open');
@@ -28,7 +28,19 @@ function (angular, _, config, $) {
 
     $scope.keyDown = function (evt) {
       if (evt.keyCode === 40) {
-        $scope.selectedIndex = ($scope.selectedIndex || 0) + 1;
+        $scope.selectedIndex++;
+      }
+      if (evt.keyCode === 38) {
+        $scope.selectedIndex--;
+      }
+      if (evt.keyCode === 13) {
+        var selectedDash = $scope.search_results.dashboards[$scope.selectedIndex];
+        if (selectedDash) {
+          $location.path("/dashboard/elasticsearch/" + encodeURIComponent(selectedDash._id));
+          setTimeout(function(){
+            $('body').click(); // hack to force dropdown to close;
+          });
+        }
       }
     };
 
@@ -51,6 +63,7 @@ function (angular, _, config, $) {
 
     $scope.elasticsearch_dblist = function(queryStr) {
       $scope.showImport = false;
+      $scope.selectedIndex = -1;
 
       queryStr = queryStr.toLowerCase();
 

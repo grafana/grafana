@@ -12,6 +12,15 @@
     .box-sizing(border-box);
     padding: 15px;
   }
+
+  .selected td, tr.selected:nth-child(odd)>td {
+    background: darken(@blue, 20%);
+    color: white;
+    text-shadow: -1px -1px 1px rgba(0,0,0,0.3);
+    a {
+      color: white;
+    }
+  }
 }
 
 .panelCont {

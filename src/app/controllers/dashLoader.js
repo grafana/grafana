@@ -71,6 +71,10 @@ function (angular, _) {
     };
 
     $scope.elasticsearch_delete = function(id) {
+      if (!confirm('Are you sure you want to delete dashboard?')) {
+        return;
+      }
+
       dashboard.elasticsearch_delete(id).then(
         function(result) {
           if(!_.isUndefined(result)) {
