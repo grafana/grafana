@@ -153,7 +153,6 @@ function (angular, app, _, moment, kbn) {
       // Create filter object
       var _filter = {
         type : 'time',
-        field : $scope.panel.timefield,
         from : "now-"+timespan,
         to: "now"
       };

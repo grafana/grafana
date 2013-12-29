@@ -737,7 +737,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             type  : 'time',
             from  : moment.utc(ranges.xaxis.from).toDate(),
             to    : moment.utc(ranges.xaxis.to).toDate(),
-            field : scope.panel.time_field
           });
         });
       }

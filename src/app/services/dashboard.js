@@ -139,6 +139,16 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       _.defaults(dashboard,_dash);
       _.defaults(dashboard.index,_dash.index);
       _.defaults(dashboard.loader,_dash.loader);
+
+      var filtering = _.findWhere(dashboard.pulldowns, {type: 'filtering'});
+      if (!filtering) {
+        dashboard.pulldowns.push({
+          type: 'filtering',
+          enable: false,
+          collapse: true
+        });
+      }
+
       return dashboard;
     };
 

@@ -18,8 +18,7 @@ function (angular, app, _) {
 
     $scope.panelMeta = {
       status  : "Stable",
-      description : "A controllable list of all filters currently applied to the dashboard. You "+
-        "almost certainly want one of these on your dashboard somewhere."
+      description : "graphite target filters"
     };
 
     // Set and populate defaults
