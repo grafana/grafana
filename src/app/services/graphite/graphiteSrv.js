@@ -46,6 +46,20 @@ function (angular, _, $, config) {
       return found;
     };
 
+    this.metricFindQuery = function(query) {
+      var url = config.graphiteUrl + '/metrics/find/?query=' + query;
+      return $http.get(url)
+        .then(function(results) {
+          return _.map(results.data, function(metric) {
+            return {
+              text: metric.text,
+              expandable: metric.expandable ? true : false
+            };
+          });
+        });
+    }
+
+
     function buildGraphitePostParams(options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];

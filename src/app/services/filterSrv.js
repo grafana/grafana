@@ -53,9 +53,15 @@ define([
       var _r;
 
       _.defaults(filter,{
-        mandate:'must',
         active: true
       });
+
+      if (!id && filter.type === 'time') {
+        var _existing = _.findWhere(self.list, {type: 'time'});
+        if (_existing) {
+          id = _existing.id;
+        }
+      }
 
       if(!_.isUndefined(id)) {
         if(!_.isUndefined(self.list[id])) {
@@ -70,9 +76,7 @@ define([
         } else {
           var _id = nextId();
           var _filter = {
-            alias: '',
             id: _id,
-            mandate: 'must'
           };
           _.defaults(filter,_filter);
           self.list[_id] = filter;

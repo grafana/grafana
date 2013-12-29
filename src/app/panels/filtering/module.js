@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, filterSrv, $rootScope, dashboard) {
+  module.controller('filtering', function($scope, filterSrv, graphiteSrv, $rootScope, dashboard) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -45,13 +45,17 @@ function (angular, app, _) {
     };
 
     $scope.add = function(query) {
-      query = query || '*';
       filterSrv.set({
         editing   : true,
-        type      : 'querystring',
-        query     : query,
-        mandate   : 'must'
+        type      : 'filter',
+        name      : 'filter name',
+        value     : '*',
+        query     : 'metric.path.query.*',
       },undefined,true);
+    };
+
+    $scope.getMetricFilterOptions = function(filter) {
+      return graphiteSrv.metricFindQuery(filter.query);
     };
 
     $scope.refresh = function() {
@@ -62,8 +66,12 @@ function (angular, app, _) {
       $rootScope.$broadcast('render');
     };
 
+    $scope.edit_key = function(key) {
+      return !_.contains(['type','id','active','editing', 'value'],key);
+    };
+
     $scope.show_key = function(key) {
-      return !_.contains(['type','id','alias','mandate','active','editing'],key);
+      return !_.contains(['type','id','active','editing', 'name', 'query', 'value'],key);
     };
 
     $scope.isEditable = function(filter) {
