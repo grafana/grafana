@@ -29,7 +29,6 @@
     }
     .filter-apply {
       float:right;
-      margin-bottom: 5px;
     }
   </style>
 
@@ -72,8 +71,10 @@
           </li>
         </ul>
         <div>
-          <input type="submit" value="Apply" ng-click="filterSrv.list[id].editing=undefined;refresh()" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
-          <button ng-click="filterSrv.list[id].editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+
+          <button type="submit" ng-click="filterSrv.list[id].editing=undefined;refresh()" class="filter-apply btn btn-mini btn-success" bs-tooltip="'Save and refresh'">Apply</button>
+
+          <button ng-click="filterSrv.list[id].editing=undefined" class="filter-apply btn-mini btn" bs-tooltip="'Save without refresh'">Save</button>
         </div>
       </form>
     </div>
