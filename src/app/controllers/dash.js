@@ -87,6 +87,10 @@ function (angular, $, config, _) {
         $rootScope.$emit('save-dashboard', evt);
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+r', function(evt) {
+        dashboard.refresh();
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
         var popups = $('.popover.in');
         if (popups.length > 0) {
