@@ -185,6 +185,8 @@ function (angular, app, _, kbn, moment) {
       });
     };
 
+
+
     $scope.toggle_micropanel = function(field,groups) {
       var docs = _.map($scope.data,function(_d){return _d.kibana._source;});
       var topFieldValues = kbn.top_field_values(docs,field,10,groups);

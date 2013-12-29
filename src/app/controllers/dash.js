@@ -104,6 +104,12 @@ function (angular, config, _) {
       }
     };
 
+    $scope.pulldownTabStyle = function(i) {
+      var classes = ['bgPrimary','bgSuccess','bgWarning','bgDanger','bgInverse','bgInfo'];
+      i = i%classes.length;
+      return classes[i];
+    };
+
     $scope.setEditorTabs = function(panelMeta) {
       $scope.editorTabs = ['General','Panel'];
       if(!_.isUndefined(panelMeta.editorTabs)) {

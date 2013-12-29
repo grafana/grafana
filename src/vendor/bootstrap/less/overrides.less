@@ -1,6 +1,70 @@
+// Containers
+// ---------------------
+.container-fluid {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+
+// Backgrounds
+// ---------------------
+
+.bgNav {
+  background: @navbarBackground;
+}
+
+.bgPrimary {
+  background: @btnPrimaryBackground;
+  color: rgba(255,255,255,.90);
+}
+
+.bgInfo {
+  background: @btnInfoBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgSuccess {
+  background: @btnSuccessBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgWarning {
+  background: @btnWarningBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgDanger {
+  background: @btnDangerBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgInverse {
+  background: @btnInverseBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+code, pre {
+  background-color: @grayLighter;
+}
+
+// KIBANA
+.panelCont {
+  padding: 0px 10px 10px 10px;
+  background: @kibanaPanelBackground;
+  //box-shadow: 0px 0px 8px rgba(30, 30, 30, 0.75);
+  margin: 0px;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+}
+
 div.editor-row {
   vertical-align: top;
 }
+
 div.editor-row div.section {
   margin-right: 20px;
   vertical-align: top;
@@ -73,63 +137,66 @@ form input.ng-invalid {
 
 .navbar-inner {
   border-width: 0 0 0px;
-  padding-left: 0px;
-  padding-right: 0px;
 }
 
 .kibana-row {
   margin-bottom: 10px;
 }
 
+.row-tab {
+  padding: 0px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  vertical-align: middle;
+}
+
 .row-button {
-  border-left: 1px solid lighten(@bodyBackground, 10%);
-  border-right: 1px solid darken(@bodyBackground, 10%);
-  padding: 2px 7px 0px 7px;
+  width: 30px;
+  text-align: center;
   float: left;
+  cursor: pointer;
 }
 
 .row-text {
+  white-space: nowrap;
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.9em;
+  margin: 0px 10px;
 }
 
 .row-close {
-  outline: 1px solid darken(@bodyBackground, 10%);
-  border-top: 1px solid lighten(@bodyBackground, 10%);
   padding: 0px;
   margin: 0px;
-  min-height: 24px !important;
-  line-height: 24px;
-  background: darken(@bodyBackground, 3%);
-}
-
-.row-open {
-  text-align: right;
-  left:-18px;
-  position: absolute;
-  font-size: 13pt;
-  font-weight: 200;
+  min-height: 30px !important;
+  line-height: 30px;
+  background: @kibanaPanelBackground;
 }
 
 .top-row-open {
-  background: darken(@bodyBackground, 3%);
+  background: @navbarBackground;
   padding: 5px 25px 5px 25px;
 }
 
 .top-row-close {
-  outline: 1px solid darken(@bodyBackground, 10%);
-  border-top: 1px solid lighten(@bodyBackground, 10%);
-  padding: 0px;
-  margin: 1px 0px 0px 0px;
-  text-align: center;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  margin: 0px;
+  text-align: left;
   min-height: 16px !important;
   line-height: 16px;
-  background: darken(@bodyBackground, 3%);
 }
 
-.row-open i {
-  font-size: 10pt;
+.row-open {
+  left:-34px;
+  position: absolute;
+  z-index: 100;
+}
+
+.row-open:hover {
+  left:-12px;
 }
 
 .odd {
@@ -165,11 +232,13 @@ form input.ng-invalid {
 
 .panel-title {
   border: 0px;
-  margin-left: -11px;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 .panel div.panel-extra div.panel-extra-container {
-  margin-right: -11px;
+  margin-right: 0px;
+  margin-top: 7px;
 }
 
 .panel div.panel-extra {
@@ -179,7 +248,7 @@ form input.ng-invalid {
 
 .panel div.panel-extra .extra {
   float:right !important;
-  border-bottom: 1px solid lighten(@bodyBackground, 5%);
+  //border-bottom: 1px solid lighten(@bodyBackground, 5%);
 }
 
 .dragInProgress {
@@ -193,11 +262,6 @@ form input.ng-invalid {
 }
 
 .link:hover {
-  color: @linkColorHover;
-}
-
-
-.pointer:hover {
   color: @linkColorHover;
 }
 
@@ -279,12 +343,12 @@ div.flot-text {
   margin-left:0px;
   padding:3px 0px 3px 0px;
   width:100%;
-  color: @textColor;
   padding-left:20px;
+  color: @white;
 }
 
 .panel-error {
-  color: @textColor;
+  color: @white;
   padding: 3px 10px 0px 10px;
 }
 

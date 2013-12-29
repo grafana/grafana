@@ -243,7 +243,9 @@ function (angular, _, config, kbn) {
       var idCount = dashboard.current.services.query.ids.length;
       if(idCount > 0) {
         // Make a sorted copy of the ids array
-        var ids = _.clone(dashboard.current.services.query.ids).sort();
+        var ids = _.sortBy(_.clone(dashboard.current.services.query.ids),function(num){
+          return num;
+        });
         return kbn.smallestMissing(ids);
       } else {
         // No ids currently in list

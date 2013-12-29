@@ -22,7 +22,7 @@
   </div>
   <div class="row-fluid" ng-if="editor.index == 1">
     <div class="span12">
-      <h4>Panels <i class="icon-plus-sign link" bs-tooltip="'Add panel'" ng-click="editor.index = 2"></i></h4>
+      <h4>Panels</h4>
       <table class="table table-condensed table-striped">
         <thead>
           <th>Title</th>
@@ -60,6 +60,7 @@
   </div>
 </div>
 <div class="modal-footer">
-  <button ng-show="panel.type &amp;&amp; editor.index == 2" ng-click="add_panel(row,panel); reset_panel(); editor.index == 1;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
+  <button ng-show="editor.index == 1" ng-click="editor.index = 2;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
+  <button ng-show="panel.type && editor.index == 2" ng-click="add_panel(row,panel); reset_panel(); editor.index = 1;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
   <button type="button" class="btn btn-danger" ng-click="editor.index=0;dismiss();reset_panel();close_edit()">Close</button>
 </div>
