@@ -19,11 +19,12 @@
 
 define([
   'angular',
+  'jquery',
   'config',
   'underscore',
   'services/all'
 ],
-function (angular, config, _) {
+function (angular, $, config, _) {
   "use strict";
 
   var module = angular.module('kibana.controllers');
@@ -60,6 +61,10 @@ function (angular, config, _) {
 
       $scope.ejs = ejsResource(config.elasticsearch);
 
+      $scope.bindKeyboardShortcuts();
+    };
+
+    $scope.bindKeyboardShortcuts = function() {
       $rootScope.$on('panel-fullscreen-enter', function() {
         $scope.fullscreenPanelExists = true;
       });
@@ -68,9 +73,27 @@ function (angular, config, _) {
         $scope.fullscreenPanelExists = false;
       });
 
+      keyboardManager.bind('ctrl+f', function(evt) {
+        $rootScope.$emit('open-search', evt);
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+h', function(evt) {
+        var current = dashboard.current.hideControls;
+        dashboard.current.hideControls = !current;
+        dashboard.current.panel_hints = !current;
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+s', function(evt) {
+        $rootScope.$emit('save-dashboard', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
+        var popups = $('.popover.in');
+        if (popups.length > 0) {
+          return;
+        }
         $rootScope.$emit('panel-fullscreen-exit');
-      });
+      }, { inputDisabled: true });
     };
 
     $scope.countWatchers = function (scopeStart) {

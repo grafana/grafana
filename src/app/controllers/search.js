@@ -9,24 +9,20 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, dashboard, keyboardManager, $element, $location) {
+  module.controller('SearchCtrl', function($scope, $rootScope, dashboard, $element, $location) {
 
     $scope.init = function() {
       $scope.elasticsearch = $scope.elasticsearch || {};
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
 
-      /*keyboardManager.bind('shift+s', function() {
-        $element.find('.dropdown').addClass('open');
-        $scope.giveSearchFocus += 1;
-      });*/
-
-      keyboardManager.bind('esc', function() {
-        $element.find('.dropdown').removeClass('open');
-      });
+      $rootScope.$on('open-search', $scope.openSearch);
     };
 
     $scope.keyDown = function (evt) {
+      if (evt.keyCode === 27) {
+        $element.find('.dropdown-toggle').dropdown('toggle');
+      }
       if (evt.keyCode === 40) {
         $scope.selectedIndex++;
       }
@@ -99,7 +95,11 @@ function (angular, _, config, $) {
       });
     };
 
-    $scope.openSearch = function () {
+    $scope.openSearch = function (evt) {
+      if (evt) {
+        $element.find('.dropdown-toggle').dropdown('toggle');
+      }
+
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.elasticsearch_dblist("");
     };

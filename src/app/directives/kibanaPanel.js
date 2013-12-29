@@ -50,7 +50,7 @@ function (angular) {
             '</span>'+
           '</span>' +
 
-          '<span ng-if="panelMenuItems" class="dropdown" ng-show="panel.title">' +
+          '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
             '<span class="pointer dropdown-toggle row-text row-button panel-title pointer" data-toggle="dropdown" tabindex="1">' +
               '{{panel.title}}' +
             '</span>' +

@@ -37,14 +37,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   module.controller('graphite', function($scope, $rootScope, filterSrv, graphiteSrv, $timeout) {
 
     $scope.panelMeta = {
-      modals : [
-        {
-          description: "Inspect",
-          icon: "icon-info-sign",
-          partial: "app/partials/inspector.html",
-          show: $scope.panel.spyable
-        }
-      ],
+      modals : [],
       editorTabs: [],
 
       fullEditorTabs : [
@@ -61,6 +54,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
+
+      menuItems: [
+        { text: 'View fullscreen',  action: $scope.toggleFullscreen },
+        { text: 'Edit',             action: $scope.openConfigureModal },
+        { text: 'Duplicate',        action: $scope.duplicate }
+      ],
+
       status  : "Unstable",
       description : "Graphite graphing panel <br /><br />"
     };
@@ -417,11 +417,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       $scope.enterFullscreenMode({edit: true});
-    };
-
-    // I really don't like this function, too much dom manip. Break out into directive?
-    $scope.populate_modal = function(request) {
-      $scope.inspector = angular.toJson(request,true);
     };
 
     $scope.set_refresh = function (state) {

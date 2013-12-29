@@ -546,6 +546,7 @@ angular.module('$strap.directives').directive('bsPopover', [
     $('body').on('keyup', function (ev) {
       if (ev.keyCode === 27) {
         $('.popover.in').each(function () {
+          debugger;
           $(this).popover('hide');
         });
       }

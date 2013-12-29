@@ -46,7 +46,7 @@
               ng-class="{'selected': $index === selectedIndex }">
             <td><a ng-click="elasticsearch_delete(row._id)"><i class="icon-remove"></i></a></td>
             <td style="width:100%"><a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a></td>
-            <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/panels/dashcontrol/share.html'"></i></a></td>
+            <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/partials/dashLoaderShare.html'"></i></a></td>
           </tr>
         </table>
       </div>
