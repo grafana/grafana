@@ -55,11 +55,11 @@ function (angular) {
               '{{panel.title}}' +
             '</span>' +
             '<ul class="dropdown-menu" role="menu">' +
-              '<li ng-repeat="item in panelMenuItems"><a ng-click="item.action();">{{item.text}}</a></li>' +
+              '<li ng-repeat="item in panelMeta.menuItems"><a ng-click="item.action();">{{item.text}}</a></li>' +
             '</ul>' +
           '</span>'+
 
-          '<span ng-if="!panelMenuItems" class="row-button row-text panel-title pointer" ng-show="panel.title">' +
+          '<span ng-if="!panelMeta.menuItems" class="row-button row-text panel-title pointer" ng-show="panel.title">' +
             '{{panel.title}}' +
           '</span>'+
 

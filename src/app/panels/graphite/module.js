@@ -56,9 +56,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       ],
 
       menuItems: [
-        { text: 'View fullscreen',  action: $scope.toggleFullscreen },
-        { text: 'Edit',             action: $scope.openConfigureModal },
-        { text: 'Duplicate',        action: $scope.duplicate }
+        { text: 'View fullscreen',  action: function() { $scope.toggleFullscreen(); }},
+        { text: 'Edit',             action: function() { $scope.openConfigureModal(); }},
+        { text: 'Duplicate',        action: function() { $scope.duplicate(); }},
+        { text: 'Remove',           action: function() { $scope.remove_panel_from_row($scope.row, $scope.panel); }}
       ],
 
       status  : "Unstable",
@@ -211,12 +212,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
 
     $scope.init = function() {
-
-      $scope.panelMenuItems = [
-        { text: 'View fullscreen',  action: $scope.toggleFullscreen },
-        { text: 'Edit',             action: $scope.openConfigureModal },
-        { text: 'Duplicate',        action: $scope.duplicate }
-      ];
 
       // Hide view options by default
       $scope.options = false;

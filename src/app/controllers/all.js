@@ -3,7 +3,6 @@ define([
   './dashLoader',
   './row',
   './pulldown',
-  './zoom',
   './search',
   './metricKeys',
   './graphiteTarget'

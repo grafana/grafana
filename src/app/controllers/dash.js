@@ -91,6 +91,10 @@ function (angular, $, config, _) {
         dashboard.refresh();
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+z', function(evt) {
+        $rootScope.$emit('zoom-out', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
         var popups = $('.popover.in');
         if (popups.length > 0) {

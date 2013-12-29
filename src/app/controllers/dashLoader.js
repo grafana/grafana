@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, timer, dashboard, alertSrv, $location) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, filterSrv) {
     $scope.loader = dashboard.current.loader;
 
     $scope.init = function() {
@@ -17,6 +17,10 @@ function (angular, _) {
 
       $rootScope.$on('save-dashboard', function() {
         $scope.elasticsearch_save('dashboard', false);
+      });
+
+      $rootScope.$on('zoom-out', function() {
+        $scope.zoom(2);
       });
     };
 
@@ -128,6 +132,35 @@ function (angular, _) {
         } else {
           alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
         }
+      });
+    };
+
+    // function $scope.zoom
+    // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
+    $scope.zoom = function(factor) {
+      var _range = filterSrv.timeRange('last');
+      var _timespan = (_range.to.valueOf() - _range.from.valueOf());
+      var _center = _range.to.valueOf() - _timespan/2;
+
+      var _to = (_center + (_timespan*factor)/2);
+      var _from = (_center - (_timespan*factor)/2);
+
+      // If we're not already looking into the future, don't.
+      if(_to > Date.now() && _range.to < Date.now()) {
+        var _offset = _to - Date.now();
+        _from = _from - _offset;
+        _to = Date.now();
+      }
+
+      if(factor > 1) {
+        filterSrv.removeByType('time');
+      }
+
+      filterSrv.set({
+        type:'time',
+        from:moment.utc(_from).toDate(),
+        to:moment.utc(_to).toDate(),
+        field:"@timestamp"
       });
     };
 
