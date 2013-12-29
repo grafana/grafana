@@ -1,3 +1,11 @@
+// Containers
+// ---------------------
+.container-fluid {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+
 // Backgrounds
 // ---------------------
 
@@ -40,13 +48,17 @@
 
 }
 
+code, pre {
+  background-color: @grayLighter;
+}
+
 // KIBANA
 .panelCont {
   padding: 0px 10px 10px 10px;
   background: @kibanaPanelBackground;
-  box-shadow: 0px 0px 8px rgba(30, 30, 30, 0.75);
+  //box-shadow: 0px 0px 8px rgba(30, 30, 30, 0.75);
   margin: 0px;
-  .border-radius(1);
+  border: 1px solid rgba(100, 100, 100, 0.25);
 }
 
 div.editor-row {
@@ -125,8 +137,6 @@ form input.ng-invalid {
 
 .navbar-inner {
   border-width: 0 0 0px;
-  padding-left: 0px;
-  padding-right: 0px;
 }
 
 .kibana-row {
@@ -150,6 +160,7 @@ form input.ng-invalid {
 }
 
 .row-text {
+  white-space: nowrap;
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.9em;
@@ -169,10 +180,6 @@ form input.ng-invalid {
   padding: 5px 25px 5px 25px;
 }
 
-.shadow {
-  box-shadow: 0px 0px 8px rgba(50, 50, 50, 0.75);
-}
-
 .top-row-close {
   padding: 5px 10px;
   text-transform: uppercase;
@@ -182,17 +189,14 @@ form input.ng-invalid {
   line-height: 16px;
 }
 
-.nav-shadow {
-  box-shadow: 0 4px 2px -2px rgba(50, 50, 50, 0.75);
-  border-bottom: 1px solid lighten(@navbarBackground,20%);
+.row-open {
+  left:-34px;
+  position: absolute;
+  z-index: 100;
 }
 
-.row-open {
-  text-align: right;
-  left:-32px;
-  position: absolute;
-  font-weight: 200;
-  box-shadow: 0px 0px 8px rgba(50, 50, 50, 0.75);
+.row-open:hover {
+  left:-12px;
 }
 
 .odd {
@@ -340,10 +344,11 @@ div.flot-text {
   padding:3px 0px 3px 0px;
   width:100%;
   padding-left:20px;
+  color: @white;
 }
 
 .panel-error {
-  color: @textColor;
+  color: @white;
   padding: 3px 10px 0px 10px;
 }
 

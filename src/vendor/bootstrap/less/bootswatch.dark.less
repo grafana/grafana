@@ -12,9 +12,7 @@ label, input, button, select, textarea,
 	color: @gray;
 }
 
-code, pre {
-	background-color: @grayLighter;
-}
+
 
 blockquote {
 	border-left: 5px solid @grayDark;
@@ -35,7 +33,8 @@ body {
 	min-height: 100%;
 	//#gradient > .vertical (@bodyBackground, #252A30);
 	//background: @bodyBackground;
-	background: @bodyBackground url('../img/cubes.png') repeat right top;
+	background: @bodyBackground;
+	// url('../img/cubes.png') repeat right top;
 }
 
 .page-header {
@@ -162,6 +161,11 @@ hr {
 		}
 	}
 }
+
+.dropdown-menu {
+	.border-radius(0);
+}
+
 
 div.subnav {
 
@@ -463,13 +467,6 @@ legend, label {
 	}
 }
 
-// DROPDOWNS
-// -----------------------------------------------------
-
-.dropdown-menu {
-	.box-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
-}
-
 // ALERTS, LABELS, BADGES
 // -----------------------------------------------------
 
@@ -490,6 +487,11 @@ legend, label {
 
 .label {
 	color: @grayLighter;
+}
+
+.badge {
+	border-radius: 0;
+	font-weight: 200;
 }
 
 .label, .alert { background-color: darken(@gray, 20%); }
@@ -518,7 +520,7 @@ legend, label {
 // -----------------------------------------------------
 
 .well, .hero-unit {
-	.border-radius(1px);
+	.border-radius(0px);
 }
 
 .well, .hero-unit {
@@ -549,8 +551,18 @@ legend, label {
 .modal-footer {
 	background-color: @grayDark;
 	border-top: 1px solid @grayDark;
-	.border-radius(0 0 6px 6px);
+	.border-radius(0 0 0px 0px);
 	.box-shadow(none);
+}
+
+.popover {
+	.border-radius(0);
+
+	&-title {
+		border-bottom: none;
+		color: @white;
+	}
+
 }
 
 .footer {
@@ -559,17 +571,3 @@ legend, label {
 
 // MEDIA QUERIES
 // -----------------------------------------------------
-
-@media (max-width: 768px) {
-	div.subnav .nav > li + li > a,
-	div.subnav .nav > li:first-child > a {
-		border-top: 1px solid @grayDark;
-		border-left: 1px solid @grayDark;
-	}
-
-	.subnav .nav > li + li > a:hover,
-	.subnav .nav > li:first-child > a:hover {
-			border-bottom: 0;
-			background-color: @blue;
-	}
-}

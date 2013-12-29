@@ -10,7 +10,7 @@
     <kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel>
   </div>
 </nil>
-<div class="clearfix bgNav nav-shadow" ></div>
+<div class="clearfix bgNav" ></div>
 <div class="container-fluid main">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
@@ -19,8 +19,8 @@
         <div class="row-control">
           <div class="row-fluid" style="padding:0px;margin:0px;position:relative;">
 
-            <div class="row-close shadow span12" ng-show="row.collapse" data-placement="bottom" >
-              <span class="row-button bgInverse" bs-modal="'app/partials/roweditor.html'" class="pointer">
+            <div class="row-close span12" ng-show="row.collapse" data-placement="bottom" >
+              <span class="row-button bgWarning" bs-modal="'app/partials/roweditor.html'" class="pointer">
                 <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
               </span>
               <span class="row-button bgPrimary" ng-click="toggle_row(row)" ng-show="row.collapsable">
@@ -34,11 +34,11 @@
                 <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-caret-right" ></i>
                 <br>
               </div>
-              <div bs-modal="'app/partials/roweditor.html'" class='row-tab bgInverse' ng-show="row.editable">
+              <div bs-modal="'app/partials/roweditor.html'" class='row-tab bgWarning' ng-show="row.editable">
                 <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
                 <br>
               </div>
-              <div ng-show="rowSpan(row) > 12" class='row-tab bgWarning'>
+              <div ng-show="rowSpan(row) > 12" class='row-tab bgDanger'>
                 <i bs-tooltip="'Total span > 12. This row may format poorly'" data-placement="right" class="icon-warning-sign"></i>
                 <br>
               </div>

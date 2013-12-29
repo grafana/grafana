@@ -8,7 +8,8 @@
 
 body {
 	font-weight: 300;
-	background: @bodyBackground url('../img/light.png') repeat right top;
+	background: @bodyBackground;
+	//url('../img/light.png') repeat right top;
 }
 
 h1 {
@@ -507,6 +508,7 @@ legend {
 	.border-radius(0);
 	font-weight: 300;
 	text-shadow: none;
+	color: @black;
 
 	&-success {
 		background-color: @green;
@@ -555,32 +557,9 @@ a.thumbnail {
 }
 
 .progress {
-	height: 6px;
-	.border-radius(0);
-	.box-shadow(none);
 	background-color: @grayLighter;
 	background-image: none;
-
-	.bar {
-		//background-color: @blue;
-		background-image: none;
-	}
-
-	&-info {
-		background-color: @purple;
-	}
-
-	&-success {
-		background-color: @green;
-	}
-
-	&-warning {
-		background-color: @orange;
-	}
-
-	&-danger {
-		background-color: @red;
-	}
+	.border-radius(0);
 }
 
 .modal {

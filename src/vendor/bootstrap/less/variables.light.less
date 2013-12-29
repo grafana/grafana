@@ -35,7 +35,7 @@
 
 // Scaffolding
 // -------------------------
-@bodyBackground:        @white;
+@bodyBackground:        @grayLighter;
 @textColor:             #555;
 
 
@@ -233,19 +233,19 @@
 
 // Form states and alerts
 // -------------------------
-@warningText:             @white;
+@warningText:             lighten(@orange, 10%);
 @warningBackground:       @orange;
 @warningBorder:           transparent;
 
-@errorText:               @white;
+@errorText:               lighten(@red, 10%);
 @errorBackground:         @red;
 @errorBorder:             transparent;
 
-@successText:             @white;
+@successText:             lighten(@green, 10%);
 @successBackground:       @green;
 @successBorder:           transparent;
 
-@infoText:                @white;
+@infoText:                lighten(@purple,10%);
 @infoBackground:          @purple;
 @infoBorder:              transparent;
 
@@ -257,10 +257,10 @@
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 
-@popoverBackground:       @bodyBackground;
+@popoverBackground:       @white;
 @popoverArrowWidth:       15px;
-@popoverArrowColor:       @bodyBackground;
-@popoverTitleBackground:  @bodyBackground;
+@popoverArrowColor:       @white;
+@popoverTitleBackground:  @white;
 
 // Special enhancement for popovers
 @popoverArrowOuterWidth:  @popoverArrowWidth + 1;

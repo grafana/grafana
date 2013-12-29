@@ -39,9 +39,6 @@
 .form-search:hover .remove-query {
   opacity: 1;
 }
-.query-panel .pins {
-  text-decoration: underline;
-}
 .query-panel .pinned {
   margin-right: 5px;
 }

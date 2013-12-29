@@ -16,7 +16,7 @@
     </form>
   </div>
   <div style="display:inline-block" ng-repeat="id in querySrv.ids|pinnedQuery:true">
-    <span class="pointer" ng-show="$first" ng-click="panel.pinned = !panel.pinned"><span class="pins">Pinned</span> <i ng-class="{'icon-caret-right':panel.pinned,'icon-caret-left':!panel.pinned}"></i></span>
+    <span class="pointer badge pins" ng-show="$first" ng-click="panel.pinned = !panel.pinned">Pinned <i ng-class="{'icon-caret-right':panel.pinned,'icon-caret-left':!panel.pinned}"></i></span>
     <span ng-show="panel.pinned" class="badge pinned">
       <i class="icon-circle pointer" ng-show="querySrv.list[id].enable" ng-style="{color: querySrv.list[id].color}" data-unique="1" bs-popover="'app/panels/query/meta.html'" data-placement="bottomLeft"></i>
       <i class="pointer icon-circle-blank" bs-tooltip="'Activate query'" ng-click="querySrv.list[id].enable=true;dashboard.refresh();" ng-hide="querySrv.list[id].enable" ng-style="{color: querySrv.list[id].color}"></i>
