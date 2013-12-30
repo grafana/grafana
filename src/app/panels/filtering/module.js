@@ -74,24 +74,6 @@ function (angular, app, _) {
       return !_.contains(['type','id','active','editing', 'name', 'query', 'value'],key);
     };
 
-    $scope.getFilterClass = function(filter) {
-      if(filter.active !== true) {
-        return 'muted';
-      } else {
-        switch (filter.mandate)
-        {
-        case 'must':
-          return 'text-success';
-        case 'mustNot':
-          return 'text-error';
-        case 'either':
-          return 'text-warning';
-        default:
-          return 'text-info';
-        }
-      }
-    };
-
     $scope.isEditable = function(filter) {
       var uneditable = ['time'];
       if(_.contains(uneditable,filter.type)) {
