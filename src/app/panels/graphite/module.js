@@ -262,7 +262,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
      * @return {[type]} [description]
      */
     $scope.get_time_range = function () {
-      var range = $scope.range = filterSrv.timeRange('last');
+      var range = $scope.range = filterSrv.timeRange();
       return range;
     };
 
@@ -354,7 +354,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var target = graphiteSrv.match($scope.panel.targets, targetData.target);
         var alias = targetData.target;
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
-
         var seriesInfo = {
           alias: alias,
           color:  color,
@@ -733,8 +732,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
 
         elem.bind("plotselected", function (event, ranges) {
-          filterSrv.set({
-            type  : 'time',
+          filterSrv.setTime({
             from  : moment.utc(ranges.xaxis.from).toDate(),
             to    : moment.utc(ranges.xaxis.to).toDate(),
           });

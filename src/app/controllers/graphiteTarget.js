@@ -28,6 +28,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
       var astNode = parser.getAst();
       if (astNode === null) {
         checkOtherSegments(0);
+        return;
       }
 
       if (astNode.type === 'error') {

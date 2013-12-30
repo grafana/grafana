@@ -65,7 +65,7 @@ function (angular, app, _, moment, kbn) {
     $scope.$on('refresh', function(){$scope.init();});
 
     $scope.init = function() {
-      var time = filterSrv.timeRange('last');
+      var time = filterSrv.timeRange();
       if(time) {
         $scope.panel.now = filterSrv.timeRange(false).to === "now" ? true : false;
         $scope.time = getScopeTimeObj(time.from,time.to);
@@ -124,49 +124,31 @@ function (angular, app, _, moment, kbn) {
       }
     */
     $scope.setAbsoluteTimeFilter = function (time) {
-
       // Create filter object
       var _filter = _.clone(time);
-
-      _filter.type = 'time';
-      _filter.field = $scope.panel.timefield;
 
       if($scope.panel.now) {
         _filter.to = "now";
       }
 
-      // Clear all time filters, set a new one
-      filterSrv.removeByType('time',true);
-
       // Set the filter
-      $scope.panel.filter_id = filterSrv.set(_filter);
+      $scope.panel.filter_id = filterSrv.setTime(_filter);
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
-
-      return $scope.panel.filter_id;
     };
 
     $scope.setRelativeFilter = function(timespan) {
-
       $scope.panel.now = true;
-      // Create filter object
+
       var _filter = {
-        type : 'time',
         from : "now-"+timespan,
         to: "now"
       };
 
-      // Clear all time filters, set a new one
-      filterSrv.removeByType('time',true);
+      filterSrv.setTime(_filter);
 
-      // Set the filter
-      $scope.panel.filter_id = filterSrv.set(_filter);
-
-      // Update our representation
       $scope.time = getScopeTimeObj(kbn.parseDate(_filter.from),new Date());
-
-      return $scope.panel.filter_id;
     };
 
     var pad = function(n, width, z) {

@@ -80,7 +80,7 @@ function (angular, $, config, _) {
       keyboardManager.bind('ctrl+h', function() {
         var current = dashboard.current.hideControls;
         dashboard.current.hideControls = !current;
-        dashboard.current.panel_hints = !current;
+        dashboard.current.panel_hints = current;
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+s', function(evt) {
@@ -160,12 +160,6 @@ function (angular, $, config, _) {
       } else {
         return false;
       }
-    };
-
-    $scope.pulldownTabStyle = function(i) {
-      var classes = ['bgPrimary','bgSuccess','bgWarning','bgDanger','bgInverse','bgInfo'];
-      i = i%classes.length;
-      return classes[i];
     };
 
     $scope.setEditorTabs = function(panelMeta) {

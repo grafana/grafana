@@ -34,14 +34,13 @@ function (angular, app, _) {
       $scope.filterSrv = filterSrv;
     };
 
-    $scope.remove = function(id) {
-      filterSrv.remove(id);
+    $scope.remove = function(filter) {
+      filterSrv.remove(filter);
     };
 
-    // This function should be moved to the service
-    $scope.toggle = function(id) {
-      filterSrv.list[id].active = !filterSrv.list[id].active;
-      dashboard.refresh();
+    $scope.applyFilter = function(filter) {
+      filterSrv.list[id].editing=undefined;
+      $scope.refresh()
     };
 
     $scope.add = function() {

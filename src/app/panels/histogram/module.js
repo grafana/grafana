@@ -269,7 +269,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
      * @return {[type]} [description]
      */
     $scope.get_time_range = function () {
-      var range = $scope.range = filterSrv.timeRange('last');
+      var range = $scope.range = filterSrv.timeRange();
       return range;
     };
 
@@ -475,7 +475,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = filterSrv.timeRange('last');
+      var _range = filterSrv.timeRange();
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
       var _center = _range.to.valueOf() - _timespan/2;
 
