@@ -236,7 +236,9 @@ define([
       var idCount = dashboard.current.services.filter.ids.length;
       if(idCount > 0) {
         // Make a sorted copy of the ids array
-        var ids = _.clone(dashboard.current.services.filter.ids).sort();
+        var ids = _.sortBy(_.clone(dashboard.current.services.filter.ids),function(num){
+          return num;
+        });
         return kbn.smallestMissing(ids);
       } else {
         // No ids currently in list

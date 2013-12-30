@@ -15,7 +15,6 @@ function (angular, _, config, graphiteFuncs, Parser) {
     $scope.init = function() {
       $scope.funcCategories = graphiteFuncs.getCategories();
       parseTarget();
-      i = 10;
     };
 
     function parseTarget() {

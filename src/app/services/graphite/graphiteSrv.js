@@ -57,7 +57,7 @@ function (angular, _, $, config) {
             };
           });
         });
-    }
+    };
 
 
     function buildGraphitePostParams(options) {

@@ -77,7 +77,7 @@ function (angular, $, config, _) {
         $rootScope.$emit('open-search', evt);
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+h', function(evt) {
+      keyboardManager.bind('ctrl+h', function() {
         var current = dashboard.current.hideControls;
         dashboard.current.hideControls = !current;
         dashboard.current.panel_hints = !current;
@@ -87,7 +87,7 @@ function (angular, $, config, _) {
         $rootScope.$emit('save-dashboard', evt);
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+r', function(evt) {
+      keyboardManager.bind('ctrl+r', function() {
         dashboard.refresh();
       }, { inputDisabled: true });
 
@@ -160,6 +160,12 @@ function (angular, $, config, _) {
       } else {
         return false;
       }
+    };
+
+    $scope.pulldownTabStyle = function(i) {
+      var classes = ['bgPrimary','bgSuccess','bgWarning','bgDanger','bgInverse','bgInfo'];
+      i = i%classes.length;
+      return classes[i];
     };
 
     $scope.setEditorTabs = function(panelMeta) {

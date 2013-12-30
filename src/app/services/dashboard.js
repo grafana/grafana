@@ -115,7 +115,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         // as their default
         if (Modernizr.localstorage) {
           if(!(_.isUndefined(window.localStorage['dashboard'])) && window.localStorage['dashboard'] !== '') {
-            console.log(window.localStorage['dashboard']);
             $location.path(config.default_route);
             alertSrv.set('Saving to browser storage has been replaced',' with saving to Elasticsearch.'+
               ' Click <a href="#/dashboard/local/deprecated">here</a> to load your old dashboard anyway.');
@@ -215,7 +214,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     this.set_default = function(route) {
-      console.log(route);
       if (Modernizr.localstorage) {
         // Purge any old dashboards
         if(!_.isUndefined(window.localStorage['dashboard'])) {

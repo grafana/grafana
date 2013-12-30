@@ -1,15 +1,16 @@
 <!-- is there a better way to repeat without actually affecting the page? -->
 <nil ng-repeat="pulldown in dashboard.current.pulldowns" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
+  <div class="top-row-close pointer pull-left" ng-class="pulldownTabStyle($index)" ng-click="toggle_pulldown(pulldown);dismiss();" bs-tooltip="'Toggle '+pulldown.type" data-placement="bottom">
+    <span class="small">{{pulldown.type}}</span>
+    <i class="small" ng-class="{'icon-caret-left':pulldown.collapse,'icon-caret-right':!pulldown.collapse}"></i>
+    <i class="small icon-star" ng-show="row.notice && pulldown.collapse"></i>
+  </div>
+  <div class="clearfix bgNav" ng-hide="pulldown.collapse"></div>
   <div class="top-row-open" ng-hide="pulldown.collapse">
     <kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel>
   </div>
-  <div class="top-row-close pointer" ng-click="toggle_pulldown(pulldown);dismiss();" bs-tooltip="'Toggle '+pulldown.type" data-placement="bottom">
-    <span class="small row-text">{{pulldown.type}}</span>
-    <i class="small" ng-class="{'icon-caret-left':pulldown.collapse,'icon-caret-up':!pulldown.collapse}"></i>
-    <i class="small icon-star text-warning" ng-show="row.notice && pulldown.collapse"></i>
-  </div>
 </nil>
-
+<div class="clearfix bgNav" ></div>
 <div class="container-fluid main" ng-class="{'grafana-dashboard-hide-controls': dashboard.current.hideControls}">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
@@ -21,32 +22,28 @@
           <div class="row-fluid grafana-row" style="padding:0px;margin:0px;position:relative;">
 
             <div class="row-close span12" ng-show="row.collapse" data-placement="bottom" >
-              <span class="row-button" bs-modal="'app/partials/roweditor.html'" class="pointer">
+              <span class="row-button bgWarning" bs-modal="'app/partials/roweditor.html'" class="pointer">
                 <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
               </span>
-              <span class="row-button" ng-click="toggle_row(row)" ng-show="row.collapsable">
-                <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-caret-right pointer" ></i>
+              <span class="row-button bgPrimary" ng-click="toggle_row(row)" ng-show="row.collapsable">
+                <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-caret-left pointer" ></i>
               </span>
               <span class="row-button row-text" ng-click="toggle_row(row)" ng-class="{'pointer':row.collapsable}">{{row.title || 'Row '+$index}}</span>
             </div>
 
             <div style="text-align:center" class="row-open" ng-show="!row.collapse">
-              <span ng-show="row.collapsable">
-                <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-caret-up" ng-click="toggle_row(row)"></i>
+              <div ng-show="row.collapsable" class='row-tab bgPrimary' ng-click="toggle_row(row)">
+                <i bs-tooltip="'Hide row'" data-placement="right"  class="icon-caret-right" ></i>
                 <br>
-              </span>
-              <span bs-modal="'app/partials/roweditor.html'" ng-show="row.editable">
+              </div>
+              <div bs-modal="'app/partials/roweditor.html'" class='row-tab bgWarning' ng-show="row.editable">
                 <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
                 <br>
-              </span>
-              <span ng-show="rowSpan(row) == 12 && row.editable">
-                <i bs-tooltip="'Row full. Create a new row to add more panels'" data-placement="right" class="icon-columns"></i>
+              </div>
+              <div ng-show="rowSpan(row) > 12" class='row-tab bgDanger'>
+                <i bs-tooltip="'Total span > 12. This row may format poorly'" data-placement="right" class="icon-warning-sign"></i>
                 <br>
-              </span>
-              <span ng-show="rowSpan(row) > 12">
-                <i bs-tooltip="'Total span > 12. This row may format poorly'" data-placement="right" class="icon-warning-sign text-warning"></i>
-                <br>
-              </span>
+              </div>
             </div>
 
           </div>

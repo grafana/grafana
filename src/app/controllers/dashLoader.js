@@ -1,8 +1,9 @@
 define([
   'angular',
-  'underscore'
+  'underscore',
+  'moment'
 ],
-function (angular, _) {
+function (angular, _, moment) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -160,7 +161,6 @@ function (angular, _) {
         type:'time',
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
-        field:"@timestamp"
       });
     };
 

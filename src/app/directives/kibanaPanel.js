@@ -30,9 +30,6 @@ function (angular) {
               'onStop:\'panelMoveStop\''+
               '}"  ng-model="row.panels"><i class="icon-move"></i></span>'+
           '</span>' +
-          '<span class="extra row-button" ng-show="panel.draggable == false">' +
-            '<span class="row-text">{{panel.type}}</span>'+
-          '</span>' +
 
           '<span class="row-button extra" ng-show="panel.editable != false">' +
             '<span config-modal class="pointer">'+
@@ -51,7 +48,7 @@ function (angular) {
           '</span>' +
 
           '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
-            '<span class="pointer dropdown-toggle row-text row-button panel-title pointer" data-toggle="dropdown" tabindex="1">' +
+            '<span class="dropdown-toggle panel-text panel-title pointer" data-toggle="dropdown" tabindex="1">' +
               '{{panel.title}}' +
             '</span>' +
             '<ul class="dropdown-menu" role="menu">' +
@@ -59,7 +56,7 @@ function (angular) {
             '</ul>' +
           '</span>'+
 
-          '<span ng-if="!panelMeta.menuItems" class="row-button row-text panel-title pointer" ng-show="panel.title">' +
+          '<span ng-if="!panelMeta.menuItems" class="panel-text panel-title" ng-show="panel.title">' +
             '{{panel.title}}' +
           '</span>'+
 
