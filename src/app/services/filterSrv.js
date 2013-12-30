@@ -26,14 +26,15 @@ define([
       _.defaults(dashboard.current.services.filter, _d);
       self.list = dashboard.current.services.filter.list;
       self.time = dashboard.current.services.filter.time;
+
     };
 
     this.add = function(filter) {
-      self.list.add(filter);
+      self.list.push(filter);
     };
 
     this.remove = function(filter) {
-      self.list = dashboard.current.services.filters = _.without(self.list, filter);
+      self.list = dashboard.current.services.filter.list = _.without(self.list, filter);
 
       if(!$rootScope.$$phase) {
         $rootScope.$apply();

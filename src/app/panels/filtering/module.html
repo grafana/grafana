@@ -6,7 +6,6 @@
     .filter-panel-filter {
       display:inline-block;
       vertical-align: top;
-      width: 220px;
       padding: 5px 5px 0px 5px;
       margin: 0px 5px;
       background-color: #444;
@@ -38,39 +37,39 @@
   </style>
 
   <div class='filtering-container'>
-    <span ng-show="filterSrv.ids.length == 0">
+    <span ng-show="filterSrv.list.length == 0">
       <h5>No filters available</h5>
     </span>
-    <div ng-repeat="id in filterSrv.ids" ng-show="filterSrv.list[id].type !== 'time'" class="small filter-panel-filter">
+    <div ng-repeat="filter in filterSrv.list" class="small filter-panel-filter">
       <div>
-        <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(id)"></i>
-        <i class="filter-action pointer icon-edit" ng-hide="filterSrv.list[id].editing || !isEditable(filterSrv.list[id])" bs-tooltip="'Edit'" ng-click="filterSrv.list[id].editing = true"></i>
+        <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
+        <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true"></i>
       </div>
 
-      <div ng-hide="filterSrv.list[id].editing" style="margin-right: 35px;">
+      <div ng-hide="filter.editing" style="margin-right: 45px;">
         <ul class="unstyled">
-          <li ng-if="filterSrv.list[id].name" class="dropdown">
-            {{filterSrv.list[id].name}} :
-            <a bs-dropdown="getMetricFilterOptions(filterSrv.list[id])">
-              {{filterSrv.list[id].value || 'All'}}
+          <li ng-if="filter.name" class="dropdown">
+            {{filter.name}} :
+            <a bs-dropdown="filter.options">
+              'All'
             </a>
-          </li>
-          <li ng-repeat="(key,value) in filterSrv.list[id] track by $index" ng-show="show_key(key)">
-            <strong>{{key}}</strong> : {{value}}
           </li>
         </ul>
       </div>
 
-      <form ng-show="filterSrv.list[id].editing">
+      <form ng-show="filter.editing">
         <ul class="unstyled">
-          <li ng-repeat="key in _.keys(filterSrv.list[id])" ng-show="edit_key(key)">
-            <strong>{{key}}</strong> : <input type='text' ng-model="filterSrv.list[id][key]">
+          <li>
+            <strong>name</strong> : <input type='text' ng-model="filter.name">
+          </li>
+          <li>
+            <strong>filter.query</strong> : <input type='text' ng-model="filter.query">
           </li>
         </ul>
         <div>
-          <input type="submit" value="Apply" ng-click="applyFilter(filterSrv.list[id])" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
+          <input type="submit" value="Apply" ng-click="applyFilter(filter)" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
 
-          <button ng-click="filterSrv.list[id].editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+          <button ng-click="filter.editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
         </div>
       </form>
     </div>

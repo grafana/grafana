@@ -26,10 +26,6 @@ function (angular, app, _) {
     };
     _.defaults($scope.panel,_d);
 
-    $scope.$on('filter', function() {
-      $scope.row.notice = true;
-    });
-
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
     };
@@ -39,22 +35,21 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      filterSrv.list[id].editing=undefined;
-      $scope.refresh()
+      graphiteSrv.metricFindQuery(filter.query)
+        .then(function (results) {
+          filter.editing=undefined;
+          filter.options = results;
+        });
     };
 
     $scope.add = function() {
-      filterSrv.set({
-        editing   : true,
+      filterSrv.add({
         type      : 'filter',
         name      : 'filter name',
+        editing   : true,
         value     : '*',
         query     : 'metric.path.query.*',
-      },undefined,true);
-    };
-
-    $scope.getMetricFilterOptions = function(filter) {
-      return graphiteSrv.metricFindQuery(filter.query);
+      });
     };
 
     $scope.refresh = function() {
@@ -63,23 +58,6 @@ function (angular, app, _) {
 
     $scope.render = function() {
       $rootScope.$broadcast('render');
-    };
-
-    $scope.edit_key = function(key) {
-      return !_.contains(['type','id','active','editing', 'value'],key);
-    };
-
-    $scope.show_key = function(key) {
-      return !_.contains(['type','id','active','editing', 'name', 'query', 'value'],key);
-    };
-
-    $scope.isEditable = function(filter) {
-      var uneditable = ['time'];
-      if(_.contains(uneditable,filter.type)) {
-        return false;
-      } else {
-        return true;
-      }
     };
 
   });
