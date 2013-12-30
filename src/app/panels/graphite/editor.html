@@ -119,8 +119,9 @@
       </div>
     </div>
   </div>
+</div>
 
-  <div class="row-fluid" style="margin-top: 20px">
-    <a class="pull-right" ng-click="add_target(panel.target)"  ng-show="editor.index == 1">Add target</a>
-  </div>
+<div class="editor-row" style="margin-top: 20px" ng-show="editor.index == 1">
+  <button class="btn pull-right" ng-click="toggleFullscreen()">Close</button>
+  <button class="btn btn-success pull-right" ng-click="add_target(panel.target)">Add target</button>
 </div>

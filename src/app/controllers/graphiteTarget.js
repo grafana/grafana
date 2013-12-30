@@ -26,6 +26,9 @@ function (angular, _, config, graphiteFuncs, Parser) {
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
+      if (astNode === null) {
+        checkOtherSegments(0);
+      }
 
       if (astNode.type === 'error') {
         $scope.parserError = astNode.message + " at position: " + astNode.pos;
