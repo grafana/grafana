@@ -38,7 +38,13 @@ function (angular, app, _) {
       graphiteSrv.metricFindQuery(filter.query)
         .then(function (results) {
           filter.editing=undefined;
-          filter.options = results;
+          filter.options = _.map(results, function(node) {
+            return { text: node.text, value: node.text };
+          });
+          if (filter.includeAll) {
+            filter.options.unshift({text: 'All', value: '*'});
+          }
+          filter.current = filter.options[0];
         });
     };
 
@@ -47,7 +53,6 @@ function (angular, app, _) {
         type      : 'filter',
         name      : 'filter name',
         editing   : true,
-        value     : '*',
         query     : 'metric.path.query.*',
       });
     };

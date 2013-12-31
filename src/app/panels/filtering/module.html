@@ -6,9 +6,10 @@
     .filter-panel-filter {
       display:inline-block;
       vertical-align: top;
-      padding: 5px 5px 0px 5px;
+      padding: 5px 10px 0px 10px;
       margin: 0px 5px;
-      background-color: #444;
+      border-left: 1px solid #111;
+      border-right: 1px solid #111;
     }
     .filter-panel-filter ul {
       margin-bottom: 3px;
@@ -25,7 +26,7 @@
     }
     .add-filter-action {
       position: relative;
-      top: 3px;
+      top: 4px;
     }
     .filter-mandate {
       text-decoration: underline;
@@ -50,9 +51,14 @@
         <ul class="unstyled">
           <li ng-if="filter.name" class="dropdown">
             {{filter.name}} :
-            <a bs-dropdown="filter.options">
-              'All'
+            <a class="dropdown-toggle" data-toggle="dropdown">
+              {{filter.current.text}}
             </a>
+              <ul class="dropdown-menu">
+                <li ng-repeat="option in filter.options">
+                  <a ng-click="filter.current = option">{{option.text}}</a>
+                </li>
+              </ul>
           </li>
         </ul>
       </div>
@@ -60,10 +66,15 @@
       <form ng-show="filter.editing">
         <ul class="unstyled">
           <li>
-            <strong>name</strong> : <input type='text' ng-model="filter.name">
+            <strong>name</strong>:<br/>
+            <input type='text' ng-model="filter.name">
           </li>
           <li>
-            <strong>filter.query</strong> : <input type='text' ng-model="filter.query">
+            <strong>filter.query</strong>:<br/>
+            <input type='text' ng-model="filter.query">
+          </li>
+          <li>
+            <strong>Include All</strong> : <input type='checkbox' ng-model="filter.includeAll">
           </li>
         </ul>
         <div>

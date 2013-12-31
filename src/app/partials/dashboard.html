@@ -1,15 +1,13 @@
 <!-- is there a better way to repeat without actually affecting the page? -->
-<nil ng-repeat="pulldown in dashboard.current.pulldowns" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
+<div class="filter-pulldown" ng-repeat="pulldown in dashboard.current.pulldowns" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
   <div class="top-row-close pointer pull-left" ng-click="toggle_pulldown(pulldown);dismiss();" bs-tooltip="'Toggle '+pulldown.type" data-placement="bottom">
-    <span class="small">{{pulldown.type}}</span>
-    <i class="small" ng-class="{'icon-caret-left':pulldown.collapse,'icon-caret-right':!pulldown.collapse}"></i>
-    <i class="small icon-star" ng-show="row.notice && pulldown.collapse"></i>
+    <span class="small"><strong>{{pulldown.type}}</strong></span>
   </div>
   <div class="top-row-open" ng-hide="pulldown.collapse">
     <kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel>
   </div>
-</nil>
-<div class="clearfix bgNav" ></div>
+</div>
+<div class="clearfix"></div>
 <div class="container-fluid main" ng-class="{'grafana-dashboard-hide-controls': dashboard.current.hideControls}">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
