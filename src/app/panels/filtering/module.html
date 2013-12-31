@@ -6,7 +6,7 @@
     .filter-panel-filter {
       display:inline-block;
       vertical-align: top;
-      padding: 5px 10px 0px 10px;
+      padding: 3px 10px 0px 10px;
       margin: 0px 5px;
       border-left: 1px solid #111;
       border-right: 1px solid #111;
@@ -22,7 +22,7 @@
       float:right;
       margin-bottom: 0px !important;
       margin-left: 3px;
-      margin-top: 3px;
+      margin-top: 4px;
     }
     .add-filter-action {
       position: relative;
@@ -56,7 +56,7 @@
             </a>
               <ul class="dropdown-menu">
                 <li ng-repeat="option in filter.options">
-                  <a ng-click="filter.current = option">{{option.text}}</a>
+                  <a ng-click="filterSrv.filterOptionSelected(filter, option)">{{option.text}}</a>
                 </li>
               </ul>
           </li>

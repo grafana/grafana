@@ -27,10 +27,33 @@ define([
       self.list = dashboard.current.services.filter.list;
       self.time = dashboard.current.services.filter.time;
 
+      self.templateSettings = {
+        interpolate : /\[\[([\s\S]+?)\]\]/g,
+      };
+    };
+
+    this.filterOptionSelected = function(filter, option) {
+      filter.current = option;
+      self.filterTemplateData = undefined;
+      dashboard.refresh();
     };
 
     this.add = function(filter) {
       self.list.push(filter);
+    };
+
+    this.applyFilterToTarget = function(target) {
+      if (target.indexOf('[[') === -1) {
+        return target;
+      }
+      if (!self.filterTemplateData) {
+        self.filterTemplateData = {};
+        _.each(self.list, function(filter) {
+          self.filterTemplateData[filter.name] = filter.current.value;
+        });
+      }
+
+      return _.template(target, self.filterTemplateData, self.templateSettings);
     };
 
     this.remove = function(filter) {

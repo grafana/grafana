@@ -9,7 +9,7 @@ function (angular, _, $, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('graphiteSrv', function($http) {
+  module.service('graphiteSrv', function($http, filterSrv) {
 
     this.query = function(options) {
       var graphOptions = {
@@ -74,7 +74,8 @@ function (angular, _, $, config) {
         if (key === "targets") {
           $.each(value, function (index, value) {
             if (!value.hide) {
-              clean_options.push("target=" + encodeURIComponent(value.target));
+              var targetValue = filterSrv.applyFilterToTarget(value.target);
+              clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           });
         }
