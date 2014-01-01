@@ -3,13 +3,18 @@
     .filtering-container {
       float: left;
     }
+    .filtering-container label {
+      float: left;
+      font-size: inherit;
+    }
+    .filtering-container input[type=checkbox] {
+      margin: 0;
+    }
     .filter-panel-filter {
       display:inline-block;
       vertical-align: top;
       padding: 3px 10px 0px 10px;
-      margin: 0px 5px;
-      border-left: 1px solid #111;
-      border-right: 1px solid #111;
+      border-right: 1px solid #202020;
     }
     .filter-panel-filter ul {
       margin-bottom: 3px;
@@ -25,6 +30,7 @@
       margin-top: 4px;
     }
     .add-filter-action {
+      padding: 3px 10px 0px 10px;
       position: relative;
       top: 4px;
     }
@@ -38,9 +44,7 @@
   </style>
 
   <div class='filtering-container'>
-    <span ng-show="filterSrv.list.length == 0">
-      <h5>No filters available</h5>
-    </span>
+
     <div ng-repeat="filter in filterSrv.list" class="small filter-panel-filter">
       <div>
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
@@ -74,7 +78,8 @@
             <input type='text' ng-model="filter.query">
           </li>
           <li>
-            <strong>Include All</strong> : <input type='checkbox' ng-model="filter.includeAll">
+            <label for="includeAll">Include all</label>:
+            <input id="includeAll" type='checkbox' ng-model="filter.includeAll">
           </li>
         </ul>
         <div>

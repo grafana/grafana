@@ -5,6 +5,10 @@
 @grayDark:              #303030;
 @grayLighter:           #BBBFC2;
 
+.navbar-static-top {
+  border-bottom: 1px solid black;
+}
+
 .grafana-dashboard-hide-controls {
   padding: 0;
   .extra, .grafana-row {
@@ -21,7 +25,7 @@
   }
 
   .selected td, tr.selected:nth-child(odd)>td {
-    background: darken(@blue, 20%);
+    background: @blue;
     color: white;
     text-shadow: -1px -1px 1px rgba(0,0,0,0.3);
     a {
@@ -31,9 +35,15 @@
 }
 
 .filter-pulldown {
-  background: #444;
-  border-top: 1px solid #111;
-  border-bottom: 1px solid #111;
+  background: rgba(31, 31, 31, 0.42);
+  border-top: 1px solid #444;
+  border-left: 1px solid @grayDarker;
+  border-right: 1px solid @grayDarker;
+  border-bottom: 1px solid @grayDarker;
+}
+
+.top-row-close {
+  border-right: 1px solid #202020;
 }
 
 .top-row-open {

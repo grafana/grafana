@@ -49,6 +49,10 @@ define([
       if (!self.filterTemplateData) {
         self.filterTemplateData = {};
         _.each(self.list, function(filter) {
+          if (!filter.current || !filter.current.value) {
+            return;
+          }
+
           self.filterTemplateData[filter.name] = filter.current.value;
         });
       }

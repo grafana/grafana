@@ -44,7 +44,8 @@ function (angular, app, _) {
           if (filter.includeAll) {
             filter.options.unshift({text: 'All', value: '*'});
           }
-          filter.current = filter.options[0];
+
+          filterSrv.filterOptionSelected(filter, filter.options[0]);
         });
     };
 
