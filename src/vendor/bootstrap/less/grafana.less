@@ -144,11 +144,26 @@
 
 .panel-full-edit-tabs {
   margin-top: 10px;
-  padding: 10px;
   min-height: 250px;
   margin-left: -10px;
   margin-right: -10px;
-  background: @grayDark;
+  border-top: 1px solid black;
+
+  .tabs {
+    .nav-tabs {
+      margin: 0;
+      background: @grayDark;
+      border-top: 1px solid #555;
+    }
+
+    .tab-content {
+      display: none;
+    }
+  }
+  .tab-content {
+    overflow: visible;
+    padding: 10px;
+  }
 
   .nav-tabs > li > a {
     line-height: 15px;
@@ -166,15 +181,15 @@
 }
 
 .grafana-target-inner-wrapper {
-  border-top: 1px solid #444444;
-  border-bottom: 1px solid #444444;
+  //border-top: 1px solid #444444;
   width: 100%;
 }
 
 .grafana-target-inner {
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
-  background: #202020;
+  border-top: 2px solid black;
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+  background: @grayDark;
   width: 100%;
 }
 
@@ -198,7 +213,7 @@
   padding: 5px 7px;
   display: inline-block;
   font-weight: normal;
-  border: 1px solid #050505;
+  border-right: 2px solid #050505;
   color: @grafanaTargetColor;
   display: inline-block;
 
@@ -210,14 +225,14 @@
     text-decoration: none;
   }
   &:hover {
-    background: #282828;
+    background: #444;
   }
 }
 
 .grafana-target-function {
-  background: #303030;
+  background: #444;
   &:hover {
-    background: #383838;
+    background: #555;
   }
 }
 
