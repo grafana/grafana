@@ -1,5 +1,5 @@
 define([
-  '../../app/services/graphite/Parser'
+  'app/services/graphite/parser'
 ], function(Parser) {
 
   describe('when parsing', function() {
