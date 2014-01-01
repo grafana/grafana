@@ -81,23 +81,21 @@ function (angular, _, config, graphiteFuncs, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          return {
+          var node = {
             type: segment.type,
             val: segment.value,
-            html: getSegmentHtml(segment)
+            html: segment.value
           };
+          if (segment.value === '*') {
+            node.html = '<i class="icon-asterisk"><i>';
+          }
+          if (segment.type === 'template') {
+            node.val = node.html = '[[' + segment.value + ']]';
+            node.html = "<span style='color: #ECEC09'>" + node.html + "</span>";
+          }
+          return node;
         });
       }
-    }
-
-    function getSegmentHtml(segment) {
-      if (segment.value === '*') {
-        return '<i class="icon-asterisk"><i>';
-      }
-      if (segment.type === 'template') {
-        return "<span style='color: #ECEC09'>[[" + segment.value  + "]]</span>";
-      }
-      return segment.value;
     }
 
     function getSegmentPathUpTo(index) {

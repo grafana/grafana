@@ -332,7 +332,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       var data = [];
 
       if(results.length === 0 ) {
-        throw { message: 'no data in response from graphite' };
+        return [];
       }
 
       var tsOpts = {
@@ -662,10 +662,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             });
           }
 
-         /* var totalDataPoints = _.reduce(data, function(num, series) { return series.data.length + num; }, 0);
-          console.log('Datapoints[0] count:', data[0].data.length);
-          console.log('Datapoints.Total count:', totalDataPoints);*/
-
           plot = $.plot(elem, data, options);
 
           if (scope.panel.leftYAxisLabel) {
@@ -678,7 +674,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           } else if (elem.css('margin-left')) {
             elem.css('margin-left', '');
           }
-
         }
 
         function time_format(interval) {
