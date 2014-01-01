@@ -29,29 +29,61 @@ define([
       }
     },
 
-    metricExpression: function() {
+    metricSegment: function() {
+      if (this.match('identifier')) {
+        this.index++;
+        return {
+          type: 'segment',
+          value: this.tokens[this.index-1].value
+        };
+      }
+
+      if (!this.match('templateStart')) {
+        this.errorMark('Expected metric identifier');
+      }
+
+      this.index++;
+
       if (!this.match('identifier')) {
+        this.errorMark('Expected identifier after templateStart');
+      }
+
+      var node = {
+        type: 'template',
+        value: this.tokens[this.index].value
+      };
+
+      this.index++;
+
+      if (!this.match('templateEnd')) {
+        this.errorMark('Expected templateEnd');
+      }
+
+      this.index++;
+      return node;
+    },
+
+    metricExpression: function() {
+      if (!this.match('templateStart') && !this.match('identifier')) {
         return null;
       }
 
       var node = {
         type: 'metric',
-        segments: [{
-          type: 'segment',
-          value: this.tokens[this.index].value
-        }]
+        segments: []
       };
 
-      this.index++;
+      node.segments.push(this.metricSegment());
 
-      if (this.match('.')) {
+      while(this.match('.')) {
         this.index++;
-        var rest = this.metricExpression();
-        if (!rest) {
+
+        var segment = this.metricSegment();
+        if (!segment) {
           this.errorMark('Expected metric identifier');
         }
 
-        node.segments = node.segments.concat(rest.segments);
+        node.segments.push(segment);
       }
 
       return node;

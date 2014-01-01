@@ -54,6 +54,15 @@ define([
       expect(rootNode.params[1].type).to.be('metric');
     });
 
+    it('function with templated series', function() {
+      var parser = new Parser("sum(test.[[server]].count)");
+      var rootNode = parser.getAst();
+
+      expect(rootNode.message).to.be(undefined)
+      expect(rootNode.params[0].type).to.be('metric');
+      expect(rootNode.params[0].segments[1].type).to.be('template');
+    });
+
     it('invalid metric expression', function() {
       var parser = new Parser('metric.test.*.asd.');
       var rootNode = parser.getAst();

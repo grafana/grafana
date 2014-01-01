@@ -30,6 +30,15 @@ define([
       expect(tokens[tokens.length - 1].value).to.be(')');
     });
 
+    it('should tokenize metric with template parameter', function() {
+      var lexer = new Lexer("metric.[[server]].test");
+      var tokens = lexer.tokenize();
+      expect(tokens[2].type).to.be('templateStart');
+      expect(tokens[3].type).to.be('identifier');
+      expect(tokens[3].value).to.be('server');
+      expect(tokens[4].type).to.be('templateEnd');
+    });
+
     it('should handle error with unterminated string', function() {
       var lexer = new Lexer("alias(metric, 'asd)");
       var tokens = lexer.tokenize();

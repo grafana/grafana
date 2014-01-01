@@ -182,6 +182,7 @@ define([
 
       match =
         this.scanIdentifier() ||
+        this.scanTemplateSequence() ||
         this.scanPunctuator() ||
         this.scanNumericLiteral();
 
@@ -191,6 +192,26 @@ define([
       }
 
       // No token could be matched, give up.
+      return null;
+    },
+
+    scanTemplateSequence: function() {
+      if (this.peek() === '[' && this.peek(1) === '[') {
+        return {
+          type: 'templateStart',
+          value: '[[',
+          pos: this.char
+        };
+      }
+
+      if (this.peek() === ']' && this.peek(1) === ']') {
+        return {
+          type: 'templateEnd',
+          value: '[[',
+          pos: this.char
+        };
+      }
+
       return null;
     },
 

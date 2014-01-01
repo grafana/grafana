@@ -82,11 +82,22 @@ function (angular, _, config, graphiteFuncs, Parser) {
 
         $scope.segments = _.map(astNode.segments, function(segment) {
           return {
+            type: segment.type,
             val: segment.value,
-            html: segment.value === '*' ? '<i class="icon-asterisk"><i>' : segment.value
+            html: getSegmentHtml(segment)
           };
         });
       }
+    }
+
+    function getSegmentHtml(segment) {
+      if (segment.value === '*') {
+        return '<i class="icon-asterisk"><i>';
+      }
+      if (segment.type === 'template') {
+        return "<span style='color: #ECEC09'>[[" + segment.value  + "]]</span>";
+      }
+      return segment.value;
     }
 
     function getSegmentPathUpTo(index) {
