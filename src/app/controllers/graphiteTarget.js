@@ -10,7 +10,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteTargetCtrl', function($scope, $http) {
+  module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv, graphiteSrv) {
 
     $scope.init = function() {
       $scope.funcCategories = graphiteFuncs.getCategories();
@@ -98,17 +98,12 @@ function (angular, _, config, graphiteFuncs, Parser) {
       }
     }
 
-    function getSegmentPathUpTo(index) {
+    function getSegmentPathUpTo(index, interpolateTemplate) {
       var arr = $scope.segments.slice(0, index);
 
       return _.reduce(arr, function(result, segment) {
         return result ? (result + "." + segment.val) : segment.val;
       }, "");
-    }
-
-    function graphiteMetricQuery(query) {
-      var url = config.graphiteUrl + '/metrics/find/?query=' + query;
-      return $http.get(url);
     }
 
     function checkOtherSegments(fromIndex) {
@@ -117,15 +112,15 @@ function (angular, _, config, graphiteFuncs, Parser) {
         return;
       }
 
-      var path = getSegmentPathUpTo(fromIndex + 1);
-      return graphiteMetricQuery(path)
-        .then(function(result) {
-          if (result.data.length === 0) {
+      var path = getSegmentPathUpTo(fromIndex + 1, true);
+      return graphiteSrv.metricFindQuery(path)
+        .then(function(segments) {
+          if (segments.length === 0) {
             $scope.segments = $scope.segments.splice(0, fromIndex);
             $scope.segments.push({html: 'select metric'});
             return;
           }
-          if (result.data[0].expandable) {
+          if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
               $scope.segments.push({html: 'select metric'});
             }
@@ -161,7 +156,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
       var query = index === 0 ?
         '*' : getSegmentPathUpTo(index) + '.*';
 
-      return graphiteMetricQuery(query)
+      return graphiteSrv.metricFindQuery(query)
         .then(function(result) {
           var altSegments = _.map(result.data, function(altSegment) {
             return {
