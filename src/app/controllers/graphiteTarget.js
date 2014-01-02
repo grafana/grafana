@@ -98,7 +98,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
       }
     }
 
-    function getSegmentPathUpTo(index, interpolateTemplate) {
+    function getSegmentPathUpTo(index) {
       var arr = $scope.segments.slice(0, index);
 
       return _.reduce(arr, function(result, segment) {
@@ -112,7 +112,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
         return;
       }
 
-      var path = getSegmentPathUpTo(fromIndex + 1, true);
+      var path = getSegmentPathUpTo(fromIndex + 1);
       return graphiteSrv.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
@@ -128,6 +128,9 @@ function (angular, _, config, graphiteFuncs, Parser) {
               return checkOtherSegments(fromIndex + 1);
             }
           }
+        })
+        .then(null, function(err) {
+          $scope.parserError = err.message || 'Failed to issue metric query';
         });
     }
 
@@ -157,21 +160,30 @@ function (angular, _, config, graphiteFuncs, Parser) {
         '*' : getSegmentPathUpTo(index) + '.*';
 
       return graphiteSrv.metricFindQuery(query)
-        .then(function(result) {
-          var altSegments = _.map(result.data, function(altSegment) {
-            return {
-              val: altSegment.text,
-              html: altSegment.text,
-              expandable: altSegment.expandable
-            };
+        .then(function(segments) {
+          _.each(segments, function(segment) {
+            segment.html = segment.val = segment.text;
           });
 
-          altSegments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' });
-          $scope.altSegments = altSegments;
+          _.each(filterSrv.list, function(filter) {
+            segments.unshift({
+              type: 'template',
+              html: '[[' + filter.name + ']]',
+              val: '[[' + filter.name + ']]'
+            });
+          });
+
+          segments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' });
+          $scope.altSegments = segments;
+        })
+        .then(null, function(err) {
+          $scope.parserError = err.message || 'Failed to issue metric query';
         });
     };
 
     $scope.setSegment = function (altIndex, segmentIndex) {
+      delete $scope.parserError;
+
       $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
       $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 

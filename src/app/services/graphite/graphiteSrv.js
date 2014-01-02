@@ -9,25 +9,29 @@ function (angular, _, $, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('graphiteSrv', function($http, filterSrv) {
+  module.service('graphiteSrv', function($http, $q, filterSrv) {
 
     this.query = function(options) {
-      var graphOptions = {
-        from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
-        until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
-        targets: options.targets,
-        maxDataPoints: options.maxDataPoints
-      };
+      try {
+        var graphOptions = {
+          from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
+          until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
+          targets: options.targets,
+          maxDataPoints: options.maxDataPoints
+        };
 
-      var params = buildGraphitePostParams(graphOptions);
+        var params = buildGraphitePostParams(graphOptions);
 
-      var url = config.graphiteUrl + '/render/';
-      return $http({
-        method: 'POST',
-        url: url,
-        data: params.join('&'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-      });
+        return $http({
+          method: 'POST',
+          url: config.graphiteUrl + '/render/',
+          data: params.join('&'),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+        });
+      }
+      catch(err) {
+        return $q.reject(err);
+      }
     };
 
     this.match = function(targets, graphiteTargetStr) {
@@ -47,7 +51,15 @@ function (angular, _, $, config) {
     };
 
     this.metricFindQuery = function(query) {
-      var url = config.graphiteUrl + '/metrics/find/?query=' + query;
+      var interpolated;
+      try {
+        interpolated = filterSrv.applyFilterToTarget(query);
+      }
+      catch(err) {
+        return $q.reject(err);
+      }
+
+      var url = config.graphiteUrl + '/metrics/find/?query=' + interpolated;
       return $http.get(url)
         .then(function(results) {
           return _.map(results.data, function(metric) {
