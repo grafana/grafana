@@ -12,8 +12,6 @@
 <div class="container-fluid main" ng-class="{'grafana-dashboard-hide-controls': dashboard.current.hideControls}">
   <div class="row-fluid">
     <div class="row-fluid container" style="margin-top:10px; width:98%">
-      <div ng-show="fullscreenPanelExists" class="modal-backdrop fade in"></div>
-
       <!-- Rows -->
       <div class="row-fluid kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.current.rows" ng-style="row_style(row)">
         <div class="row-control">

@@ -240,7 +240,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
-      if ($scope.showFullscreen) {
+      if ($scope.fullscreen) {
         $rootScope.$emit('panel-fullscreen-exit');
       }
       else {
@@ -385,7 +385,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
         $scope.inEditMode = false;
-        $scope.showFullscreen = false;
+        $scope.fullscreen = false;
         $scope.row.height = oldHeight;
 
         closeEditMode();
@@ -395,8 +395,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
       });
 
+      $(window).scrollTop(0);
+
       $scope.inEditMode = options.edit;
-      $scope.showFullscreen = true;
+      $scope.fullscreen = true;
       $rootScope.$emit('panel-fullscreen-enter');
 
       $timeout(function() {
@@ -405,7 +407,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.openConfigureModal = function() {
-      if ($scope.showFullscreen) {
+      if ($scope.fullscreen) {
         $rootScope.$emit('panel-fullscreen-exit');
         return;
       }
@@ -457,7 +459,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.toggleFullscreen = function(evt) {
-      if ($scope.showFullscreen) {
+      if ($scope.fullscreen) {
         $rootScope.$emit('panel-fullscreen-exit');
         return;
       }

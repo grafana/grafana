@@ -122,16 +122,23 @@
 
 .panel-fullscreen {
   z-index: 1500;
-  display: block;
+  display: block important;
   position: fixed;
-  left: 20px;
-  right: 20px;
-  top: 25px;
-  bottom: 25px;
+  left: 0px;
+  right: 0px;
+  top: 49px;
+  bottom: 0px;
   outline: 1px solid #101214;
   border-top: 1px solid #3e444c;
   padding: 0 10px;
   background: @kibanaPanelBackground;
+}
+
+.dashboard-fullscreen .container-fluid.main {
+  height: 0px;
+  width: 0px;
+  position: fixed;
+  right: -10000px;
 }
 
 .grafana-legend-container {
