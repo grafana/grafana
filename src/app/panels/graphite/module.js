@@ -447,6 +447,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         if (rowIndex === rowsList.length - 1) {
           var newRow = angular.copy($scope.row);
           newRow.panels = [];
+          $scope.dashboard.current.rows.push(newRow);
           $scope.duplicate(newRow);
         }
         else {
