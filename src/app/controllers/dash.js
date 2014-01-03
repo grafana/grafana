@@ -66,11 +66,11 @@ function (angular, $, config, _) {
 
     $scope.bindKeyboardShortcuts = function() {
       $rootScope.$on('panel-fullscreen-enter', function() {
-        $scope.fullscreenPanelExists = true;
+        $rootScope.fullscreen = true;
       });
 
       $rootScope.$on('panel-fullscreen-exit', function() {
-        $scope.fullscreenPanelExists = false;
+        $rootScope.fullscreen = false;
       });
 
       keyboardManager.bind('ctrl+f', function(evt) {

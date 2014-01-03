@@ -54,7 +54,7 @@
     <div ng-include="'app/panels/graphite/legend.html'"></div>
   </div>
 
-  <div class="panel-full-edit-tabs" ng-if="inEditMode">
+  <div class="panel-full-edit-tabs" ng-if="editMode">
       <div ng-model="editor.index" bs-tabs>
         <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
         </div>

@@ -214,6 +214,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.init = function() {
 
       // Hide view options by default
+      $scope.fullscreen = false;
       $scope.options = false;
       $scope.editor = {index: 1};
       $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
@@ -381,23 +382,26 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.enterFullscreenMode = function(options) {
       var oldHeight = $scope.row.height;
       var docHeight = $(window).height();
+
       $scope.row.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
+      $scope.editMode = options.edit;
 
-      var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
-        $scope.inEditMode = false;
-        $scope.fullscreen = false;
-        $scope.row.height = oldHeight;
+      if (!$scope.fullscreen) {
+        var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
+          $scope.editMode = false;
+          $scope.fullscreen = false;
+          $scope.row.height = oldHeight;
 
-        closeEditMode();
+          closeEditMode();
 
-        $timeout(function() {
-          $scope.$emit('render');
+          $timeout(function() {
+            $scope.dashboard.refresh();
+          });
         });
-      });
+      }
 
       $(window).scrollTop(0);
 
-      $scope.inEditMode = options.edit;
       $scope.fullscreen = true;
       $rootScope.$emit('panel-fullscreen-enter');
 
@@ -407,24 +411,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.openConfigureModal = function() {
-      if ($scope.fullscreen) {
+      if ($scope.editMode) {
         $rootScope.$emit('panel-fullscreen-exit');
         return;
       }
 
       $scope.enterFullscreenMode({edit: true});
-    };
-
-    $scope.set_refresh = function (state) {
-      $scope.refresh = state;
-    };
-
-    $scope.close_edit = function() {
-      if($scope.refresh) {
-        $scope.get_data();
-      }
-      $scope.refresh =  false;
-      $scope.$emit('render');
     };
 
     $scope.render = function() {
@@ -458,18 +450,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
     };
 
-    $scope.toggleFullscreen = function(evt) {
-      if ($scope.fullscreen) {
+    $scope.toggleFullscreen = function() {
+      if ($scope.fullscreen && !$scope.editMode) {
         $rootScope.$emit('panel-fullscreen-exit');
         return;
-      }
-
-      if (evt) {
-        var elem = $(evt.target);
-        if (!elem.hasClass('panel-extra') ||
-          elem.attr('ng-click')) {
-          return;
-        }
       }
 
       $scope.enterFullscreenMode({edit: false});
@@ -488,7 +472,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   });
 
-  module.directive('histogramChart', function(filterSrv) {
+  module.directive('histogramChart', function(filterSrv, $rootScope) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -497,6 +481,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var hiddenData = {};
 
         scope.$on('refresh',function() {
+          if ($rootScope.fullscreen && !scope.fullscreen) {
+            return;
+          }
+
           scope.get_data();
         });
 
