@@ -6,7 +6,7 @@
         ng-style="{color: series.color}"
         bs-popover="'colorPopup.html'"
         data-unique="1"
-        data-placement="bottomLeft">
+        data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
     </i>
     <span class='small histogram-legend-item'>
       <a ng-click="toggleSeries(series)">
@@ -16,17 +16,22 @@
 </span>
 
 <script type="text/ng-template" id="colorPopup.html">
-  <div style="width: 150px;">
-    <div>
-      <a class="close pull-right" ng-click="dismiss();" href="">×</a>
-      <div class="clearfix"></div>
+  <div class="histogram-legend-popover">
+    <div class="histogram-legend-popover-header">
+      <a class="small" ng-click="toggleYAxis(series)">
+        Toggle Y-axis (y&sup2;)
+      </a>
+
+      <a class="close" ng-click="dismiss();" href="">×</a>
     </div>
 
-    <i ng-repeat="color in colors"
-      class="pointer"
-      ng-class="{'icon-circle-blank': color === series.color,'icon-circle': color !== series.color}"
-      ng-style="{color:color}"
-      ng-click="changeSeriesColor(series, color);dismiss();">
-    </i>
-</div>
+    <div class="editor-row">
+      <i ng-repeat="color in colors"
+        class="pointer"
+        ng-class="{'icon-circle-blank': color === series.color,'icon-circle': color !== series.color}"
+        ng-style="{color:color}"
+        ng-click="changeSeriesColor(series, color);dismiss();">
+      </i>
+    </div>
+  </div>
 </script>

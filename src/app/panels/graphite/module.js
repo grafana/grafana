@@ -202,7 +202,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       targets: [],
 
-      aliasColors: {}
+      aliasColors: {},
+      aliasYAxis: {}
     };
 
     _.defaults($scope.panel,_d);
@@ -352,14 +353,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           }
         });
 
-        var target = graphiteSrv.match($scope.panel.targets, targetData.target);
         var alias = targetData.target;
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
+        var yaxis = $scope.panel.aliasYAxis[alias] || 1;
+
         var seriesInfo = {
           alias: alias,
           color:  color,
           enable: true,
-          yaxis: target.yaxis || 1
+          yaxis: yaxis
         };
 
         $scope.legend.push(seriesInfo);
@@ -367,7 +369,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         data.push({
           info: seriesInfo,
           time_series: time_series,
-          yaxis: target.yaxis || 1
         });
 
       });
@@ -468,6 +469,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       $scope.$emit('toggleLegend', info.alias);
+    };
+
+    $scope.toggleYAxis = function(info) {
+      info.yaxis = info.yaxis === 2 ? 1 : 2;
+      $scope.panel.aliasYAxis[info.alias] = info.yaxis;
+      $scope.$emit('render');
     };
 
   });
@@ -639,18 +646,17 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
           for (var i = 0; i < data.length; i++) {
             var _d = data[i].time_series.getFlotPairs(required_times);
+            data[i].yaxis = data[i].info.yaxis;
             data[i].data = _d;
-          }
 
-          var hasSecondY = _.findWhere(data, { yaxis: 2});
-
-          if (hasSecondY) {
-            options.yaxes.push({
-              position: 'right',
-              show: scope.panel['y-axis'],
-              min: scope.panel.grid.min,
-              max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
-            });
+            if (options.yaxes.length === 1 && data[i].yaxis === 2) {
+              options.yaxes.push({
+                position: 'right',
+                show: scope.panel['y-axis'],
+                min: scope.panel.grid.min,
+                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+              });
+            }
           }
 
           plot = $.plot(elem, data, options);

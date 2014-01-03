@@ -230,16 +230,6 @@ function (angular, _, config, graphiteFuncs, Parser) {
       $scope.targetChanged();
     };
 
-    $scope.setYAxis = function() {
-      if ($scope.target.yaxis) {
-        delete $scope.target.yaxis;
-      } else {
-        $scope.target.yaxis = 2;
-      }
-
-      $scope.get_data();
-    };
-
     $scope.duplicate = function() {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);
