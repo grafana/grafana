@@ -259,29 +259,19 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return $scope.panel.auto_int && interval === $scope.panel.interval ? interval+" (auto)" : interval;
     };
 
-    /**
-     * The time range effecting the panel
-     * @return {[type]} [description]
-     */
-    $scope.get_time_range = function () {
-      var range = $scope.range = filterSrv.timeRange();
-      return range;
-    };
-
-    $scope.get_interval = function () {
-      var interval = $scope.panel.interval;
-      var range;
+    $scope.updateTimeRange = function () {
+      $scope.range = filterSrv.timeRange();
+      $scope.interval = $scope.panel.interval;
 
       if ($scope.panel.auto_int) {
-        range = $scope.get_time_range();
-        if (range) {
-          interval = kbn.secondsToHms(
-            kbn.calculate_interval(range.from, range.to, $scope.panel.resolution, 0) / 1000
+        if ($scope.range) {
+          $scope.interval = kbn.secondsToHms(
+            kbn.calculate_interval($scope.range, $scope.range, $scope.panel.resolution, 0) / 1000
           );
         }
       }
-      $scope.panel.interval = interval || '10m';
-      return $scope.panel.interval;
+      $scope.panel.interval = $scope.interval || '10m';
+      $scope.interval = $scope.panel.interval;
     };
 
     $scope.colors = [
@@ -308,11 +298,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.panelMeta.loading = true;
 
-      var range = $scope.get_time_range();
-      var interval = $scope.get_interval(range);
+      $scope.updateTimeRange();
 
       var graphiteQuery = {
-        range: range,
+        range: $scope.range,
         targets: $scope.panel.targets,
         maxDataPoints: $scope.panel.span * 50
       };
@@ -320,7 +309,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return graphiteSrv.query(graphiteQuery)
         .then(function(results) {
           $scope.panelMeta.loading = false;
-          var data = $scope.receiveGraphiteData(results, range, interval);
+          var data = $scope.receiveGraphiteData(results);
           $scope.$emit('render', data);
         })
         .then(null, function(err) {
@@ -328,7 +317,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
-    $scope.receiveGraphiteData = function(results, range, interval) {
+    $scope.receiveGraphiteData = function(results) {
       results = results.data;
       $scope.legend = [];
       var data = [];
@@ -338,9 +327,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       var tsOpts = {
-        interval: interval,
-        start_date: range && range.from,
-        end_date: range && range.to,
+        interval: $scope.interval,
+        start_date: $scope.range && $scope.range.from,
+        end_date: $scope.range && $scope.range.to,
         fill_style: 'no'
       };
 
@@ -383,6 +372,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.enterFullscreenMode = function(options) {
       var oldHeight = $scope.row.height;
       var docHeight = $(window).height();
+      var oldTimeRange = $scope.range;
 
       $scope.row.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
       $scope.editMode = options.edit;
@@ -396,7 +386,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           closeEditMode();
 
           $timeout(function() {
-            $scope.dashboard.refresh();
+            $scope.$emit('render');
+            if (oldTimeRange !== $scope.range) {
+              $scope.dashboard.refresh();
+            }
           });
         });
       }
