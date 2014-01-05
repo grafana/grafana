@@ -14,6 +14,9 @@ function (_) {
   };
 
   function addFuncDef(funcDef) {
+    funcDef.params = funcDef.params || [];
+    funcDef.defaultParams = funcDef.defaultParams || [];
+
     if (funcDef.category) {
       funcDef.category.push(funcDef);
     }
@@ -38,8 +41,6 @@ function (_) {
   addFuncDef({
     name: "holtWintersForecast",
     category: categories.Calculate,
-    params: [],
-    defaultParams: []
   });
 
   addFuncDef({
@@ -60,16 +61,12 @@ function (_) {
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
-    params: [],
-    defaultParams: []
   });
 
   addFuncDef({
     name: 'averageSeries',
     shortName: 'avg',
     category: categories.Combine,
-    params: [],
-    defaultParams: []
   });
 
   addFuncDef({
@@ -106,15 +103,11 @@ function (_) {
   addFuncDef({
     name: 'integral',
     category: categories.Transform,
-    params: [],
-    defaultParams: []
   });
 
   addFuncDef({
     name: 'derivate',
     category: categories.Transform,
-    params: [],
-    defaultParams: []
   });
 
   addFuncDef({
@@ -150,15 +143,14 @@ function (_) {
   };
 
   return {
-    createFuncInstance: function(name) {
-      if (_.isString(name)) {
-        var funcDef = index[name];
-        if (!funcDef) {
+    createFuncInstance: function(funcDef) {
+      if (_.isString(funcDef)) {
+        if (!index[funcDef]) {
           throw { message: 'Method not found ' + name };
         }
-        name = funcDef;
+        funcDef = index[funcDef];
       }
-      return new FuncInstance(name);
+      return new FuncInstance(funcDef);
     },
 
     getCategories: function() {
