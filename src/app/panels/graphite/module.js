@@ -260,18 +260,19 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = filterSrv.timeRange();
-      $scope.interval = $scope.panel.interval;
+      var range = filterSrv.timeRange();
+      var interval = filterSrv.timeRange();
 
       if ($scope.panel.auto_int) {
-        if ($scope.range) {
-          $scope.interval = kbn.secondsToHms(
-            kbn.calculate_interval($scope.range, $scope.range, $scope.panel.resolution, 0) / 1000
+        if (range) {
+          interval = kbn.secondsToHms(
+            kbn.calculate_interval(range.from, range.to, $scope.panel.resolution, 0) / 1000
           );
         }
       }
-      $scope.panel.interval = $scope.interval || '10m';
-      $scope.interval = $scope.panel.interval;
+
+      $scope.interval = $scope.panel.interval = interval || '10m';
+      $scope.range = range;
     };
 
     $scope.colors = [
