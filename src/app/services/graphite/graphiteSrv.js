@@ -71,6 +71,18 @@ function (angular, _, $, config) {
         });
     };
 
+    this.listDashboards = function(query) {
+      var url = config.graphiteUrl + '/dashboard/find/';
+      return $http.get(url, {params: {query: query || ''}})
+        .then(function(results) {
+          return results.data.dashboards;
+        });
+    };
+
+    this.loadDashboard = function(dashName) {
+      var url = config.graphiteUrl + '/dashboard/load/' + encodeURIComponent(dashName);
+      return $http.get(url);
+    };
 
     function buildGraphitePostParams(options) {
       var clean_options = [];

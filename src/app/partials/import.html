@@ -1,0 +1,22 @@
+<div ng-controller="GraphiteImportCtrl" ng-init="init()">
+  <h5>Import dashboards from graphite webb</h5>
+
+  <div class="editor-row">
+    <div class="section">
+      <button ng-click="listAll()" class="btn btn-primary">List all dashboards</button>
+    </div>
+  </div>
+
+  <div class="editor-row" style="margin-top: 10px;">
+    <table class="table table-condensed table-striped">
+      <tr ng-repeat="dash in dashboards">
+        <td style="padding-right: 20px;"><button class="btn btn-success" ng-click="import(dash.name)">Import</button>
+        <td style="width: 100%; vertical-align: middle;">{{dash.name}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div ng-show="error" style="margin-top: 20px" class="alert alert-error">
+    {{error}}
+  </div>
+</div>
