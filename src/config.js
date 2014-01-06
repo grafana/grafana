@@ -50,8 +50,6 @@ function (Settings) {
      */
     panel_names: [
       'text',
-      'column',
-      'histogram',
       'graphite'
     ]
   });

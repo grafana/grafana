@@ -370,23 +370,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.enterFullscreenMode = function(options) {
-      var oldHeight = $scope.row.height;
       var docHeight = $(window).height();
       var oldTimeRange = $scope.range;
 
-      $scope.row.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
+      $scope.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
       $scope.editMode = options.edit;
 
       if (!$scope.fullscreen) {
         var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
           $scope.editMode = false;
           $scope.fullscreen = false;
-          $scope.row.height = oldHeight;
+          delete $scope.height;
 
           closeEditMode();
 
           $timeout(function() {
             $scope.$emit('render');
+
             if (oldTimeRange !== $scope.range) {
               $scope.dashboard.refresh();
             }
@@ -515,7 +515,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           }
 
           // IE doesn't work without this
-          elem.css({height:scope.panel.height || scope.row.height});
+          elem.css({height:scope.height || scope.row.height});
 
           _.each(data, function(series) {
             series.label = series.info.alias;

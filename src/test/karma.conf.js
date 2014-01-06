@@ -8,6 +8,7 @@ module.exports = function(config) {
     files: [
       'test/test-main.js',
       {pattern: 'app/**/*.js', included: false},
+      {pattern: 'vendor/**/*.js', included: false},
       {pattern: 'test/**/*.js', included: false}
     ],
 

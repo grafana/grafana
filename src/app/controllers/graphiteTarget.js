@@ -2,10 +2,10 @@ define([
   'angular',
   'underscore',
   'config',
-  '../services/graphite/graphiteFuncs',
+  '../services/graphite/gfunc',
   '../services/graphite/parser'
 ],
-function (angular, _, config, graphiteFuncs, Parser) {
+function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -13,7 +13,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv, graphiteSrv) {
 
     $scope.init = function() {
-      $scope.funcCategories = graphiteFuncs.getCategories();
+      $scope.funcCategories = gfunc.getCategories();
       parseTarget();
     };
 
@@ -56,7 +56,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
 
       switch(astNode.type) {
       case 'function':
-        var innerFunc = graphiteFuncs.createFuncInstance(astNode.name);
+        var innerFunc = gfunc.createFuncInstance(astNode.name);
 
         _.each(astNode.params, function(param, index) {
           parseTargeRecursive(param, innerFunc, index);
@@ -226,7 +226,7 @@ function (angular, _, config, graphiteFuncs, Parser) {
     };
 
     $scope.addFunction = function(funcDef) {
-      $scope.functions.push(graphiteFuncs.createFuncInstance(funcDef));
+      $scope.functions.push(gfunc.createFuncInstance(funcDef));
       $scope.targetChanged();
     };
 
