@@ -3,3 +3,4 @@ node_modules
 dist
 web.config
 config.dev.js
+*.sublime-workspace
