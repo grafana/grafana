@@ -371,9 +371,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.enterFullscreenMode = function(options) {
       var docHeight = $(window).height();
+      var editHeight = Math.floor(docHeight * 0.3);
+      var fullscreenHeight = Math.floor(docHeight * 0.7);
       var oldTimeRange = $scope.range;
 
-      $scope.height = options.edit ? 200 : Math.floor(docHeight * 0.7);
+      $scope.height = options.edit ? editHeight : fullscreenHeight;
       $scope.editMode = options.edit;
 
       if (!$scope.fullscreen) {
