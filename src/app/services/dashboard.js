@@ -26,19 +26,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [
-        {
-          type: 'query',
-        },
-        {
-          type: 'filtering'
-        }
-      ],
-      nav: [
-        {
-          type: 'timepicker'
-        }
-      ],
+      pulldowns: [ { type: 'filtering' } ],
+      nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {
         save_gist: false,
@@ -53,12 +42,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         load_elasticsearch_size: 20,
         load_local: false,
         hide: false
-      },
-      index: {
-        interval: 'none',
-        pattern: '_all',
-        default: 'INDEX_MISSING',
-        warm_fields: true
       },
       refresh: false
     };
@@ -136,7 +119,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     var dash_defaults = function(dashboard) {
       _.defaults(dashboard,_dash);
-      _.defaults(dashboard.index,_dash.index);
       _.defaults(dashboard.loader,_dash.loader);
 
       var filtering = _.findWhere(dashboard.pulldowns, {type: 'filtering'});
@@ -157,11 +139,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Make sure the dashboard being loaded has everything required
       dashboard = dash_defaults(dashboard);
-
-      // If not using time based indices, use the default index
-      if(dashboard.index.interval === 'none') {
-        self.indices = [dashboard.index.default];
-      }
 
       // Set the current dashboard
       self.current = _.clone(dashboard);

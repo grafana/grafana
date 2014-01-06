@@ -1,32 +1,15 @@
 {
   "title": "New Dashboard",
   "services": {
-    "query": {
-      "list": {
-        "0": {
-          "query": "*",
-          "alias": "",
-          "color": "#7EB26D",
-          "id": 0
-        }
-      },
-      "ids": [
-        0
-      ]
-    },
     "filter": {
-      "list": {},
-      "ids": []
+      "list": [],
+      "time": {
+        "from": "now-5m",
+        "to": "now"
+      }
     }
   },
-  "rows": [
-  ],
+  "rows": [],
   "editable": true,
-  "failover": false,
-  "index": {
-    "interval": "none",
-    "pattern": "[logstash-]YYYY.MM.DD",
-    "default": "_all",
-    "warm_fields": false
-  }
+  "failover": false
 }

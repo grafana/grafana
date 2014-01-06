@@ -9,9 +9,6 @@ define([
   var module = angular.module('kibana.services');
 
   module.service('filterSrv', function(dashboard, $rootScope, $timeout) {
-    // Create an object to hold our service state on the dashboard
-    dashboard.current.services.filter = dashboard.current.services.filter || {};
-
     // defaults
     var _d = {
       list: [],
@@ -23,7 +20,10 @@ define([
 
     // Call this whenever we need to reload the important stuff
     this.init = function() {
+      dashboard.current.services.filter = dashboard.current.services.filter || {};
+
       _.defaults(dashboard.current.services.filter, _d);
+
       self.list = dashboard.current.services.filter.list;
       self.time = dashboard.current.services.filter.time;
 
