@@ -48,12 +48,9 @@ function (angular) {
           '</span>' +
 
           '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
-            '<span class="dropdown-toggle panel-text panel-title pointer" data-toggle="dropdown" tabindex="1">' +
+            '<span class="panel-text panel-title pointer" bs-dropdown="panelMeta.menuItems" tabindex="1">' +
               '{{panel.title}}' +
             '</span>' +
-            '<ul class="dropdown-menu" role="menu">' +
-              '<li ng-repeat="item in panelMeta.menuItems"><a ng-click="item.action();">{{item.text}}</a></li>' +
-            '</ul>' +
           '</span>'+
 
           '<span ng-if="!panelMeta.menuItems" class="panel-text panel-title" ng-show="panel.title">' +

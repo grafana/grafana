@@ -56,10 +56,24 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       ],
 
       menuItems: [
-        { text: 'View fullscreen',  action: function() { $scope.toggleFullscreen(); }},
-        { text: 'Edit',             action: function() { $scope.openConfigureModal(); }},
-        { text: 'Duplicate',        action: function() { $scope.duplicate(); }},
-        { text: 'Remove',           action: function() { $scope.remove_panel_from_row($scope.row, $scope.panel); }}
+        { text: 'View fullscreen', click: 'toggleFullscreen()' },
+        { text: 'Edit',            click: 'openConfigureModal()' },
+        { text: 'Duplicate',       click: 'duplicate()' },
+        { text: 'Span', submenu: [
+          { text: '1', click: 'updateColumnSpan(1)' },
+          { text: '2', click: 'updateColumnSpan(2)' },
+          { text: '3', click: 'updateColumnSpan(3)' },
+          { text: '4', click: 'updateColumnSpan(4)' },
+          { text: '5', click: 'updateColumnSpan(5)' },
+          { text: '6', click: 'updateColumnSpan(6)' },
+          { text: '7', click: 'updateColumnSpan(7)' },
+          { text: '8', click: 'updateColumnSpan(8)' },
+          { text: '9', click: 'updateColumnSpan(9)' },
+          { text: '10', click: 'updateColumnSpan(10)' },
+          { text: '11', click: 'updateColumnSpan(11)' },
+          { text: '12', click: 'updateColumnSpan(12)' },
+        ]},
+        { text: 'Remove',          click: 'remove_panel_from_row(row, panel)' }
       ],
 
       status  : "Unstable",
@@ -308,17 +322,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       };
 
       return graphiteSrv.query(graphiteQuery)
-        .then(function(results) {
-          $scope.panelMeta.loading = false;
-          var data = $scope.receiveGraphiteData(results);
-          $scope.$emit('render', data);
-        })
+        .then($scope.receiveGraphiteData)
         .then(null, function(err) {
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
         });
     };
 
     $scope.receiveGraphiteData = function(results) {
+      $scope.panelMeta.loading = false;
+
       results = results.data;
       $scope.legend = [];
       var data = [];
@@ -363,7 +375,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       });
 
-      return data;
+      $scope.render(data);
     };
 
     $scope.add_target = function() {
@@ -402,9 +414,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.fullscreen = true;
       $rootScope.$emit('panel-fullscreen-enter');
 
-      $timeout(function() {
-        $scope.$emit('render');
-      });
+      $timeout($scope.render);
     };
 
     $scope.openConfigureModal = function() {
@@ -416,8 +426,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.enterFullscreenMode({edit: true});
     };
 
-    $scope.render = function() {
-      $scope.$emit('render');
+    $scope.render = function(data) {
+      $scope.$emit('render', data);
     };
 
     $scope.changeSeriesColor = function(series, color) {
@@ -470,7 +480,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.toggleYAxis = function(info) {
       info.yaxis = info.yaxis === 2 ? 1 : 2;
       $scope.panel.aliasYAxis[info.alias] = info.yaxis;
-      $scope.$emit('render');
+      $scope.render();
+    };
+
+    $scope.updateColumnSpan = function(span) {
+      $scope.panel.span = span;
+      $timeout($scope.render);
     };
 
   });
