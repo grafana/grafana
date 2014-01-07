@@ -2,41 +2,6 @@
       ng-init="init()"
       style="min-height:{{panel.height || row.height}}"
       ng-class='{"panel-fullscreen": fullscreen}'>
-
-  <style>
-    .histogram-legend {
-      display:inline-block;
-      padding-right:5px
-    }
-    .histogram-legend-dot {
-      display:inline-block;
-      height:10px;
-      width:10px;
-      border-radius:5px;
-    }
-    .histogram-legend-item {
-      display:inline-block;
-    }
-    .histogram-chart {
-      position:relative;
-    }
-    .histogram-options {
-      padding: 5px;
-      margin-right: 15px;
-      margin-bottom: 0px;
-    }
-    .histogram-options label {
-      margin: 0px 0px 0px 10px !important;
-    }
-    .histogram-options span {
-      white-space: nowrap;
-    }
-
-    /* this is actually should be in bootstrap */
-    .form-inline .checkbox {
-        display: inline-block;
-    }
-  </style>
   <div>
     <span ng-show='panel.options'>
       <a class="link underline small" ng-show='panel.options' ng-click="options=!options">
