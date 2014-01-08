@@ -117,6 +117,13 @@ function (_) {
     defaultParams: ['1d']
   });
 
+  addFuncDef({
+    name: 'summarize',
+    category: categories.Transform,
+    params: [ { name: "interval", type: "string" }],
+    defaultParams: ['1h']
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });

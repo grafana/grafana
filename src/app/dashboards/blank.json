@@ -11,5 +11,6 @@
   },
   "rows": [],
   "editable": true,
-  "failover": false
+  "failover": false,
+  "panel_hints": true
 }
