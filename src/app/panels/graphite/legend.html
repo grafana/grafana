@@ -2,7 +2,7 @@
       ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
       ng-repeat='series in legend'
       class="histogram-legend">
-    <i  class='icon-circle pointer'
+    <i  class='icon-minus pointer'
         ng-style="{color: series.color}"
         bs-popover="'colorPopup.html'"
         data-unique="1"

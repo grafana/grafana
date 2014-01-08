@@ -17,7 +17,8 @@ module.exports = function(config) {
       },
       files: {
         "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.dark.less",
-        "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less"
+        "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less",
+        "<%= srcDir %>/css/bootstrap-responsive.min.css": "<%= srcDir %>/vendor/bootstrap/less/grafana-responsive.less"
       }
     }
   };

@@ -1,9 +1,3 @@
-// Global color overrides
-// ---------------------------------------------------------
-//@grayDark:              #3A3F44;
-//@grayDarker:            #272B30;
-@grayDark:              #303030;
-@grayLighter:           #BBBFC2;
 
 .navbar-static-top {
   border-bottom: 1px solid black;
@@ -11,7 +5,7 @@
 
 .grafana-dashboard-hide-controls {
   padding: 0;
-  .extra, .grafana-row {
+  .grafana-row {
     display: none;
   }
 }
@@ -35,11 +29,7 @@
 }
 
 .filter-pulldown {
-  background: rgba(31, 31, 31, 0.42);
-  border-top: 1px solid #444;
-  border-left: 1px solid @grayDarker;
-  border-right: 1px solid @grayDarker;
-  border-bottom: 1px solid @grayDarker;
+  background: #292929;
 }
 
 .top-row-close {
@@ -49,19 +39,6 @@
   float: left;
   padding: 0px;
   background: none;
-}
-
-.panelCont {
-  padding: 0px 10px;
-}
-
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 0px;
-}
-
-.panel-title {
-  font-size: 0.9em;
 }
 
 .row-button {
@@ -141,6 +118,8 @@
   right: -10000px;
 }
 
+// Graphite Graph Legends
+
 .grafana-legend-container {
   margin: 4px 15px;
   text-align: left;
@@ -148,6 +127,30 @@
 
 .grafana-legend-container .popover-content {
   padding: 0;
+}
+
+.histogram-legend {
+  display:inline-block;
+  padding: 0 4px;
+  i {
+    position: relative;
+    top: 3px;
+  }
+}
+
+.histogram-legend-dot {
+  display:inline-block;
+  height:10px;
+  width:10px;
+  border-radius:5px;
+}
+
+.histogram-legend-item {
+  display:inline-block;
+}
+
+.histogram-chart {
+  position:relative;
 }
 
 .histogram-legend-popover {
