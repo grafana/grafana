@@ -217,7 +217,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       targets: [],
 
       aliasColors: {},
-      aliasYAxis: {}
+      aliasYAxis: {},
+      aliasFillStyle: {}
     };
 
     _.defaults($scope.panel,_d);
@@ -338,15 +339,18 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       if(results.length === 0 ) {
         return [];
       }
-
-      var tsOpts = {
-        interval: $scope.interval,
-        start_date: $scope.range && $scope.range.from,
-        end_date: $scope.range && $scope.range.to,
-        fill_style: 'no'
-      };
-
       _.each(results, function(targetData) {
+        var alias = targetData.target;
+        var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
+        var yaxis = $scope.panel.aliasYAxis[alias] || 1;
+
+        var tsOpts = {
+          interval: $scope.interval,
+          start_date: $scope.range && $scope.range.from,
+          end_date: $scope.range && $scope.range.to,
+          fill_style: $scope.panel.aliasFillStyle[alias] || 'no',
+        };
+
         var time_series = new timeSeries.ZeroFilled(tsOpts);
 
         _.each(targetData.datapoints, function(valueArray) {
@@ -354,10 +358,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             time_series.addValue(valueArray[1] * 1000, valueArray[0]);
           }
         });
-
-        var alias = targetData.target;
-        var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
-        var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
         var seriesInfo = {
           alias: alias,

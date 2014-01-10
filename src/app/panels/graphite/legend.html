@@ -18,11 +18,17 @@
 <script type="text/ng-template" id="colorPopup.html">
   <div class="histogram-legend-popover">
     <div class="histogram-legend-popover-header">
-      <a class="small" ng-click="toggleYAxis(series)">
-        Toggle Y-axis (y&sup2;)
-      </a>
-
       <a class="close" ng-click="dismiss();" href="">×</a>
+    </div>
+
+    <div class="editor-row">
+      <a class="small" ng-click="toggleYAxis(series)">
+        2:nd Y-axis (y&sup2;) <input type="checkbox"></input>
+      </a>
+    </div>
+
+    <div class="editor-row">
+      Fill style <select class="input-mini" ng-model="panel.aliasFillStyle[series.alias]" ng-options="f for f in ['no', 'all', 'null']" ng-change="get_data()"></select>
     </div>
 
     <div class="editor-row">

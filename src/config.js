@@ -1,6 +1,6 @@
 /** @scratch /configuration/config.js/1
  * == Configuration
- * config.js is where you will find the core Kibana configuration. This file contains parameter that
+ * config.js is where you will find the core Grafana configuration. This file contains parameter that
  * must be set before kibana is run for the first time.
  */
 define(['settings'],
@@ -16,12 +16,14 @@ function (Settings) {
      * ==== elasticsearch
      *
      * The URL to your elasticsearch server. You almost certainly don't
-     * want +http://localhost:9200+ here. Even if Kibana and Elasticsearch are on
+     * want +http://localhost:9200+ here. Even if Grafana and Elasticsearch are on
      * the same host. By default this will attempt to reach ES at the same host you have
-     * kibana installed on. You probably want to set it to the FQDN of your
+     * Grafana installed on. You probably want to set it to the FQDN of your
      * elasticsearch host
      */
     elasticsearch: "http://"+window.location.hostname+":9200",
+
+    graphiteUrl: "http://"+window.location.hostname+":8080",
 
     /** @scratch /configuration/config.js/5
      * ==== default_route
@@ -35,12 +37,13 @@ function (Settings) {
     default_route     : '/dashboard/file/default.json',
 
     /** @scratch /configuration/config.js/5
-     * ==== kibana-int
+     * ==== Grafana-int
      *
-     * The default ES index to use for storing Kibana specific object
+     * The default ES index to use for storing Grafana specific object
      * such as stored dashboards
      */
     kibana_index: "kibana-int",
+    grafana_index: "grafana-int",
 
     /** @scratch /configuration/config.js/5
      * ==== panel_name
