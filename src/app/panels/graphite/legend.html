@@ -15,20 +15,35 @@
     </span>
 </span>
 
+ <!-- <a class="small" ng-click="toggleYAxis(series)">
+  2:nd Y-axis (y&sup2;) <input type="checkbox"></input>
+</a> -->
+
+<!--     <div class="editor-row">
+      Fill style <select class="input-mini" ng-model="panel.aliasFillStyle[series.alias]" ng-options="f for f in ['no', 'all', 'null']" ng-change="get_data()"></select>
+    </div>
+ -->
+
 <script type="text/ng-template" id="colorPopup.html">
   <div class="histogram-legend-popover">
-    <div class="histogram-legend-popover-header">
-      <a class="close" ng-click="dismiss();" href="">×</a>
-    </div>
+    <a class="close" ng-click="dismiss();" href="">×</a>
 
-    <div class="editor-row">
-      <a class="small" ng-click="toggleYAxis(series)">
-        2:nd Y-axis (y&sup2;) <input type="checkbox"></input>
-      </a>
-    </div>
-
-    <div class="editor-row">
-      Fill style <select class="input-mini" ng-model="panel.aliasFillStyle[series.alias]" ng-options="f for f in ['no', 'all', 'null']" ng-change="get_data()"></select>
+    <div class="editor-row small" style="margin-left: 5px; padding-bottom: 0;">
+      <label>Axis:</label>
+      <button ng-click="toggleYAxis(series)"
+              class="btn btn-mini"
+              ng-class="{'btn-success': series.yaxis === 1 }">
+              Left
+      </button>
+      <button ng-click="toggleYAxis(series)"
+              class="btn btn-mini"
+              ng-class="{'btn-success': series.yaxis === 2 }">
+              Right
+      </button>
+      <label>Null points:</label>
+      <button ng-click="panel.aliasFillStyle[series.alias] = 'no'; get_data();" class="btn btn btn-mini">Connect</button>
+      <button ng-click="panel.aliasFillStyle[series.alias] = 'null';get_data();" class="btn btn-success btn-mini">Null</button>
+      <button ng-click="panel.aliasFillStyle[series.alias] = 'all';get_data();" class="btn btn btn-mini">Zero</button>
     </div>
 
     <div class="editor-row">
