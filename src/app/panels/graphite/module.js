@@ -338,9 +338,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.legend = [];
       var data = [];
 
-      if(results.length === 0 ) {
-        return [];
-      }
       _.each(results, function(targetData) {
         var alias = targetData.target;
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
@@ -643,6 +640,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             var _d = data[i].time_series.getFlotPairs(required_times, scope.panel.nullPointMode);
             data[i].yaxis = data[i].info.yaxis;
             data[i].data = _d;
+            data[i].info.y_format = data[i].yaxis === 1 ? scope.panel.y_format : scope.panel.y2_format;
           }
 
           configureAxisOptions(data, options);
@@ -724,10 +722,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             value = (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') ?
               item.datapoint[1] - item.datapoint[2] :
               item.datapoint[1];
-            if(scope.panel.y_format === 'bytes') {
+            if(item.series.info.y_format === 'bytes') {
               value = kbn.byteFormat(value,2);
             }
-            if(scope.panel.y_format === 'short') {
+            if(item.series.info.y_format === 'short') {
               value = kbn.shortFormat(value,2);
             }
             timestamp = scope.panel.timezone === 'browser' ?
