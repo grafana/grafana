@@ -211,6 +211,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       zerofill      : true,
 
       nullPointMode : 'connected',
+      steppedLine: false,
 
       tooltip       : {
         value_type: 'cumulative',
@@ -564,7 +565,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 // Silly, but fixes bug in stacked percentages
                 fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
                 lineWidth: scope.panel.linewidth,
-                steps: false
+                steps: scope.panel.steppedLine
               },
               bars:   {
                 show: scope.panel.bars,

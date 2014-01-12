@@ -17,13 +17,6 @@
       <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()"></div>
     <div class="editor-option">
       <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()"></div>
-    <div class="editor-option" ng-show="panel.lines">
-      <label class="small">Line Fill</label>
-      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
-    </div>
-    <div class="editor-option" ng-show="panel.lines">
-      <label class="small">Line Width</label>
-      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
     </div>
     <div class="editor-option" ng-show="panel.points">
       <label class="small">Point Radius</label>
@@ -37,9 +30,23 @@
       <label class="small">Right Y Format <tip>Y-axis formatting</tip></label>
       <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes']" ng-change="render()"></select>
     </div>
+  </div>
+  <div class="section">
+    <h5>Line options</h5>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Fill</label>
+      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Width</label>
+      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
     <div class="editor-option">
       <label class="small">Null point mode <tip>Define how null values should be drawn</tip></label>
       <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Stepped lines</label><input type="checkbox" ng-model="panel.steppedLine" ng-checked="panel.steppedLine" ng-change="render()"></div>
     </div>
   </div>
   <div class="section">
