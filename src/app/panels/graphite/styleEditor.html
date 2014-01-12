@@ -13,10 +13,14 @@
     <div class="editor-option">
       <label class="small">Selectable</label><input type="checkbox" ng-model="panel.interactive" ng-checked="panel.interactive">
     </div>
+  </div>
+  <div class="section">
+    <h5>Axis</h5>
     <div class="editor-option">
-      <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()"></div>
+      <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
+    </div>
     <div class="editor-option">
-      <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()"></div>
+      <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
     </div>
     <div class="editor-option" ng-show="panel.points">
       <label class="small">Point Radius</label>
@@ -46,7 +50,7 @@
       <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
     </div>
     <div class="editor-option">
-      <label class="small">Stepped lines</label><input type="checkbox" ng-model="panel.steppedLine" ng-checked="panel.steppedLine" ng-change="render()"></div>
+      <label class="small">Stepped lines</label><input type="checkbox" ng-model="panel.steppedLine" ng-checked="panel.steppedLine" ng-change="render()">
     </div>
   </div>
   <div class="section">
