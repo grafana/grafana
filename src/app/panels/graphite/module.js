@@ -209,6 +209,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       zerofill      : true,
 
+      nullPointMode : 'connected',
+
       tooltip       : {
         value_type: 'cumulative',
         query_as_alias: true
@@ -218,7 +220,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       aliasColors: {},
       aliasYAxis: {},
-      aliasFillStyle: {}
     };
 
     _.defaults($scope.panel,_d);
@@ -348,7 +349,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           interval: $scope.interval,
           start_date: $scope.range && $scope.range.from,
           end_date: $scope.range && $scope.range.to,
-          fill_style: $scope.panel.aliasFillStyle[alias] || 'no',
         };
 
         var time_series = new timeSeries.ZeroFilled(tsOpts);
@@ -363,7 +363,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           alias: alias,
           color:  color,
           enable: true,
-          yaxis: yaxis
+          yaxis: yaxis,
         };
 
         $scope.legend.push(seriesInfo);
@@ -656,7 +656,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           }
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].time_series.getFlotPairs(required_times);
+            var _d = data[i].time_series.getFlotPairs(required_times, scope.panel.nullPointMode);
             data[i].yaxis = data[i].info.yaxis;
             data[i].data = _d;
 

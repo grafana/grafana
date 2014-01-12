@@ -30,15 +30,12 @@ function (_, Interval) {
    *                                end_date will ensure that the series streches to resemble the entire
    *                                expected result
    * @opt   {date}     end_date    (optional) The end point for the time series, see start_date
-   * @opt   {string}   fill_style  Either "minimal", or "all" describing the strategy used to zero-fill
-   *                                the series.
    */
   ts.ZeroFilled = function (opts) {
     opts = _.defaults(opts, {
       interval: '10m',
       start_date: null,
       end_date: null,
-      fill_style: 'minimal'
     });
 
     // the expected differenece between readings.
@@ -92,16 +89,16 @@ function (_, Interval) {
    * @param  {array} required_times  An array of timestamps that must be in the resulting pairs
    * @return {array}
    */
-  ts.ZeroFilled.prototype.getFlotPairs = function (required_times) {
+  ts.ZeroFilled.prototype.getFlotPairs = function (required_times, fillStyle) {
     var times = this.getOrderedTimes(required_times),
       strategy,
       pairs;
 
-    if(this.opts.fill_style === 'all') {
+    if(fillStyle === 'null as zero') {
       strategy = this._getAllFlotPairs;
-    } else if(this.opts.fill_style === 'null') {
+    } else if(fillStyle === 'null') {
       strategy = this._getNullFlotPairs;
-    } else if(this.opts.fill_style === 'no') {
+    } else if(fillStyle === 'connected') {
       strategy = this._getNoZeroFlotPairs;
     } else {
       strategy = this._getMinFlotPairs;

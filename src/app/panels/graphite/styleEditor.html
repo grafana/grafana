@@ -30,8 +30,16 @@
       <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
     </div>
     <div class="editor-option">
-      <label class="small">Y Format <tip>Y-axis formatting</tip></label>
+      <label class="small">Left Y Format <tip>Y-axis formatting</tip></label>
       <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes']" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Right Y Format <tip>Y-axis formatting</tip></label>
+      <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes']" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Null point mode <tip>Define how null values should be drawn</tip></label>
+      <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
     </div>
   </div>
   <div class="section">
