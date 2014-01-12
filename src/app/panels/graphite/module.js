@@ -98,6 +98,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        * y_format:: 'none','bytes','short '
        */
       y_format    : 'none',
+      y2_format   : 'none',
       /** @scratch /panels/histogram/5
        * grid object:: Min and max y-axis values
        * grid.min::: Minimum y-axis value
@@ -583,14 +584,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               },
               shadowSize: 1
             },
-            yaxes: [
-              {
-                position: 'left',
-                show: scope.panel['y-axis'],
-                min: scope.panel.grid.min,
-                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
-              }
-            ],
+            yaxes: [],
             xaxis: {
               timezone: scope.panel.timezone,
               show: scope.panel['x-axis'],
@@ -608,16 +602,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               color: '#c8c8c8'
             }
           };
-
-          if(scope.panel.y_format === 'bytes') {
-            options.yaxes[0].mode = "byte";
-          }
-
-          if(scope.panel.y_format === 'short') {
-            options.yaxes[0].tickFormatter = function(val) {
-              return kbn.shortFormat(val,0);
-            };
-          }
 
           if(scope.panel.annotate.enable) {
             options.events = {
@@ -659,16 +643,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             var _d = data[i].time_series.getFlotPairs(required_times, scope.panel.nullPointMode);
             data[i].yaxis = data[i].info.yaxis;
             data[i].data = _d;
-
-            if (options.yaxes.length === 1 && data[i].yaxis === 2) {
-              options.yaxes.push({
-                position: 'right',
-                show: scope.panel['y-axis'],
-                min: scope.panel.grid.min,
-                max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
-              });
-            }
           }
+
+          configureAxisOptions(data, options);
 
           plot = $.plot(elem, data, options);
 
@@ -681,6 +658,38 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
           } else if (elem.css('margin-left')) {
             elem.css('margin-left', '');
+          }
+        }
+
+        function configureAxisOptions(data, options)
+        {
+          var defaults = {
+            position: 'left',
+            show: scope.panel['y-axis'],
+            min: scope.panel.grid.min,
+            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+          };
+
+          options.yaxes.push(defaults);
+
+          if (_.findWhere(data, {yaxis: 2})) {
+            var secondY = _.clone(defaults);
+            secondY.position = 'right';
+            options.yaxes.push(secondY);
+            configureAxisMode(options.yaxes[1], scope.panel.y2_format);
+          }
+
+          configureAxisMode(options.yaxes[0], scope.panel.y_format);
+        }
+
+        function configureAxisMode(axis, format) {
+          if (format === 'bytes') {
+            axis.mode = "byte";
+          }
+          if (format === 'short') {
+            axis.tickFormatter = function(val) {
+              return kbn.shortFormat(val,0);
+            };
           }
         }
 
