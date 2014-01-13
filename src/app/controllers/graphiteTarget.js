@@ -46,7 +46,7 @@ function (angular, _, config, gfunc, Parser) {
         $scope.showTextEditor = true;
       }
 
-      checkOtherSegments($scope.segments.length);
+      checkOtherSegments($scope.segments.length - 1);
     }
 
     function parseTargeRecursive(astNode, func, index) {
