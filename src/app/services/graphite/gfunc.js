@@ -75,12 +75,13 @@ function (_) {
     params: [
       {
         name: "node",
-        type: "node",
+        type: "select",
+        options: [1,2,3,4,5,6,7,8,9,10,12]
       },
       {
         name: "function",
         type: "select",
-        options: ['sumSeries', 'averageSeries']
+        options: ['sum', 'avg']
       }
     ],
     defaultParams: [3, "sum"]
