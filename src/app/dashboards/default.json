@@ -1,126 +1,16 @@
 {
-  "title": "Introduction",
+  "title": "New Dashboard",
   "services": {
-    "query": {
-      "list": {
-        "0": {
-          "query": "*",
-          "alias": "",
-          "color": "#7EB26D",
-          "id": 0,
-          "pin": false,
-          "type": "lucene"
-        }
-      },
-      "ids": [
-        0
-      ]
-    },
     "filter": {
-      "list": {
-        "0": {
-          "type": "time",
-          "field": "@timestamp",
-          "from": "now-1h",
-          "to": "now",
-          "mandate": "must",
-          "active": true,
-          "alias": "",
-          "id": 0
-        }
-      },
-      "ids": [
-        0
-      ]
+      "list": [],
+      "time": {
+        "from": "now-5m",
+        "to": "now"
+      }
     }
   },
-  "rows": [
-    {
-      "title": "Intro",
-      "height": "400px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": false,
-      "panels": [
-        {
-          "title": "graphite",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "group": [
-            "default"
-          ],
-          "type": "graphite",
-          "spyable": true,
-          "targets": [
-            {
-              "target": ""
-            }
-          ]
-        }
-      ],
-      "notice": true
-    }
-  ],
+  "rows": [],
   "editable": true,
-  "index": {
-    "interval": "none",
-    "pattern": "applogs-error",
-    "default": "_all",
-    "warm_fields": false
-  },
-  "style": "dark",
   "failover": false,
-  "panel_hints": true,
-  "pulldowns": [],
-  "nav": [
-    {
-      "type": "timepicker",
-      "collapse": false,
-      "notice": false,
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "timefield": "@timestamp",
-      "enable": true,
-      "now": true,
-      "filter_id": 0
-    }
-  ],
-  "loader": {
-    "save_gist": false,
-    "save_elasticsearch": true,
-    "save_local": true,
-    "save_default": true,
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d",
-    "load_gist": true,
-    "load_elasticsearch": true,
-    "load_elasticsearch_size": 20,
-    "load_local": true,
-    "hide": false
-  },
-  "refresh": false
+  "panel_hints": true
 }

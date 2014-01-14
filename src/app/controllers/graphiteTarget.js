@@ -227,6 +227,16 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.addFunction = function(funcDef) {
       $scope.functions.push(gfunc.createFuncInstance(funcDef));
+
+      var aliasFunc = _.find($scope.functions, function(func) {
+        return func.def.name === 'alias';
+      });
+
+      if (aliasFunc) {
+        $scope.functions = _.without($scope.functions, aliasFunc);
+        $scope.functions.push(aliasFunc);
+      }
+
       $scope.targetChanged();
     };
 
