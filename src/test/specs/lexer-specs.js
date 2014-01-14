@@ -14,6 +14,14 @@ define([
       expect(tokens[4].pos).to.be(13);
     });
 
+    it('should tokenize metric expression with dash', function() {
+      var lexer = new Lexer('metric.test.se1-server-*.asd.count');
+      var tokens = lexer.tokenize();
+      expect(tokens[4].type).to.be('identifier');
+      expect(tokens[4].value).to.be('se1-server-*');
+    });
+
+
     it('should tokenize functions and args', function() {
       var lexer = new Lexer("sum(metric.test, 12, 'test')");
       var tokens = lexer.tokenize();

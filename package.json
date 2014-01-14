@@ -42,7 +42,8 @@
     "karma-phantomjs-launcher": "~0.1.1",
     "karma": "~0.10.9",
     "grunt-karma": "~0.6.2",
-    "karma-mocha": "~0.1.1"
+    "karma-mocha": "~0.1.1",
+    "karma-expect": "~1.0.0"
   },
   "license": "Apache License"
 }
