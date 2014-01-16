@@ -7,7 +7,8 @@
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-cli": "~0.1.11",
-    "grunt-connect": "~0.2.0",
+    "grunt-contrib": "~0.8.0",
+    "grunt-contrib-connect": "~0.5.0",
     "load-grunt-tasks": "~0.2.1",
     "glob": "~3.2.8"
   },

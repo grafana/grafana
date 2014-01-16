@@ -12,6 +12,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine:bold,bolditalic|Inconsolata:italic|Droid+Sans">
 
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -57,9 +58,9 @@
      <div class="container" style="margin-bottom: 20px;margin-top: 5px;">
         <div class="row" style="height: 300px; background-image: url(assets/img/test.png);">
             <h1>Grafana</h1>
-            <p class="lead">
+            <h2 class="lead">
               A beautifully, easy to use and feature rich Graphite dashboard replacement and graph editor.
-            </p>
+            </h2>
             <a href="#" class="btn btn-success btn-lg">Download</a>
             <a href="#" class="btn btn-success btn-lg">Github project</a>
         </div>
@@ -75,47 +76,55 @@
       <!-- Three columns of text below the carousel -->
       <div class="row" style="font-size: 1.7rem;">
         <div class="col-lg-4">
-          <i class="glyphicon glyphicon-signal" style="font-size: 32px;"></i>
-          <h2>Graphing</h2>
-          <ul style="text-align: initial;">
-            <li>Fast client side rendering, even over large timespans</li>
-            <li>Click and drag to zoom</li>
-            <li>Multiple Y-axis</li>
-            <li>Bars, Lines, Points</li>
-            <li>Smart Y-axis formats (Bytes, Milliseconds, Short)</li>
-            <li>View a dashboard in fullscreen</li>
-            <li>Much more...</li>
-          </ul>
-          <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          <div class="feature-group">
+            <i class="glyphicon glyphicon-signal" style="font-size: 32px;"></i>
+            <h2>Graphing</h2>
+            <ul style="text-align: initial;">
+              <li>Fast rendering, even over large timespans.</li>
+              <li>Click and drag to zoom.</li>
+              <li>Multiple Y-axis.</li>
+              <li>Bars, Lines, Points.</li>
+              <li>Smart Y-axis formating</li>
+              <li>Series toggles &amp; color selector</li>
+              <li>Axis labels</li>
+              <li>Fullscreen views and more...</li>
+            </ul>
+            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          </div>
         </div><!-- /.col-lg-4 -->
         <div class="col-lg-4">
-          <i class="glyphicon glyphicon-th" style="font-size: 32px;"></i>
-          <h2>Dashboards</h2>
-          <ul style="text-align: initial;">
-            <li>Create and edit dashboards</li>
-            <li>Drag and drop Graphs to rearrange</li>
-            <li>Set column spans and row heights</li>
-            <li>Save dashboards to ElasticSearch</li>
-            <li>Search dashboards saved in ElasticSearch</li>
-            <li>Import / Export dashboard from file</li>
-            <li>Import dashboard from Graphite</li>
-            <li>Templating</li>
-            <li>Much more...</li>
-          </ul>
-          <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          <div class="feature-group">
+            <i class="glyphicon glyphicon-th" style="font-size: 32px;"></i>
+            <h2>Dashboards</h2>
+            <ul style="text-align: initial;">
+              <li>Create and edit dashboards</li>
+              <li>Drag and drop graphs to rearrange</li>
+              <li>Set column spans and row heights</li>
+              <li>Save &amp; search dashboards (ElasticSearch)</li>
+              <li>Import &amp; export dashboard (json file)</li>
+              <li>Import dashboard from Graphite</li>
+              <li>Templating</li>
+              <li>Much more...</li>
+            </ul>
+            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          </div>
         </div><!-- /.col-lg-4 -->
         <div class="col-lg-4">
-          <i class="glyphicon glyphicon-cog" style="font-size: 32px;"></i>
-          <h2>Graphite Target Editor</h2>
-          <ul style="text-align: initial;">
-            <li>Graphite target expressions parser</li>
-            <li>Quickly add / edit / remove function</li>
-            <li>Function parameters can be easy edited</li>
-            <li>Quickly navigate graphite metric structure</li>
-            <li>Templating</li>
-            <li>Much more...</li>
-          </ul>
-          <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          <div class="feature-group">
+            <i class="glyphicon glyphicon-cog" style="font-size: 32px;"></i>
+            <h2>Graphite Target Editor</h2>
+            <ul style="text-align: initial;">
+              <li>Graphite target expression parser</li>
+              <li>Quickly add / edit / remove function</li>
+              <li>Function parameters can be easy edited</li>
+              <li>Quickly navigate graphite metric structure</li>
+              <li>Templating</li>
+              <li>Integrated function documentation</li>
+              <li>Click &amp; drag functions to rearrange order</li>
+              <li>Much more...</li>
+            </ul>
+            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+          </div>
         </div><!-- /.col-lg-4 -->
       </div><!-- /.row -->
 

@@ -6,8 +6,32 @@ body {
   padding-bottom: 40px;
   color: #E9E9E9;
   background: #1F1F1F;
+  font-family: 'Droid Sans', serif;
 }
 
+h1  {
+  font-size: 6em;
+  font-family: 'Droid Sans', serif;
+  font-weight: bold;
+  text-shadow: 2px 2px 0px #2c2e38, 4px 4px 0px #5c5f72;
+  letter-spacing: 10px;
+  margin-bottom: 5px;
+}
+
+h2.lead {
+  margin-top: 5px;
+}
+
+@font-face {
+    font-family: 'DroidSans';
+    src: url('fonts/DroidSans-webfont.eot?') format('eot'),
+         url('fonts/DroidSans-webfont.woff') format('woff'),
+         url('fonts/DroidSans-webfont.ttf') format('truetype'),
+         url('fonts/DroidSans-webfont.svg#webfontw7zqO19G') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
 
 
 /* CUSTOMIZE THE NAVBAR
@@ -123,4 +147,36 @@ body {
   .featurette-heading {
     margin-top: 120px;
   }
+}
+
+
+.feature-group {
+  background: #272727;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.feature-group h2 {
+  margin-top: 10px;
+}
+
+.feature-group ul {
+  padding-left: 10px;
+  text-align: left;
+  list-style: none;
+}
+
+.feature-group li {
+  padding-left: 1.8rem;
+}
+
+.feature-group li:before {
+  content: "\e013";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  position: relative;
+  top: 3px;
+  margin-left: -2.8rem;
+  width: 1.5em;
+  color: #5CB85C;
 }
