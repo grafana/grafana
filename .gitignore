@@ -1,0 +1,6 @@
+node_modules
+.aws-config.json
+dist
+web.config
+config.dev.js
+*.sublime-workspace

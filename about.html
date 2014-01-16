@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Kibana 3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet">
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet">
+
+
+    <style>
+
+    
+    </style>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+  </head>
+
+  <body>
+
+
+
+    <!-- NAVBAR
+    ================================================== -->
+
+    <div class="navbar navbar-fixed-top navbar-inverse">
+      <div class="navbar-inner">
+
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li><a href="index.html">Home</a></li>
+              <li class="active"><a href="about.html">About</a></li>
+              <li><a href="intro.html">Installation</a></li>
+              <li><a href="contact.html">Support</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Marketing messaging and featurettes
+    ================================================== -->
+    <!-- Wrap the rest of the page in another container to center all the content. -->
+
+    <div class="container-fluid marketing" style="margin-top: 50px">
+
+      <div class="featurette">
+        <div class="row-fluid">
+          <div class="span3">
+            <img src="http://kibana.org/images/g3962.png">
+          </div>
+          <div class="span9">
+            <h4 class="featurette-heading">Welcome to Kibana 3</h4>
+            <p class="lead">Kibana is an open source (Apache Licensed), browser based analytics and search interface to Logstash and other timestamped data sets stored in ElasticSearch. With those in place Kibana is a snap to setup and start using (<a href="http://three.kibana.org/intro.html">seriously</a>). Kibana strives to be easy to get started with, while also being flexible and powerful, just like Logstash and Elasticsearch. Check it out ... </p> 
+          </div>
+        </div>
+      </div>
+
+      <hr class="featurette-divider">
+
+
+      <div class="featurette" id="logs">
+        <div class="row-fluid">
+          <div class="span6">
+            <h4 class="featurette-heading">Log Search. <span class="muted small">Born for it.</span></h4>
+            <p class="lead">
+              Kibana was created to search logs and machine generated data. It plays extra nice with Logstash, using Logstash's time stamped indices to query Elasticsearch in the most efficient way.
+              <p>Find 'Mozilla' in any field of any event, even if you never used a Logstash filter to define a single field</p>
+<pre>Mozilla</pre>
+<p>If you've defined a field called agent to store user agent strings:</p>
+<pre>agent:"Mozilla Firefox"</pre>
+<p>We can also search numerical ranges. Lets find every zip file downloaded larger than 300 bytes</p>
+<pre>extension:zip AND bytes:[300 TO *]</pre></p> 
+          </div>
+          <div class="span6">
+            <center><iframe class="span12" height="355" src="http://www.youtube.com/embed/hXiBe8NcLPA" frameborder="0" allowfullscreen></iframe></center>
+          </div>
+        </div>
+      </div>
+
+      <hr class="featurette-divider">
+
+      <div class="featurette"  id="custom">
+        <div class="row-fluid">
+          <div class="span6">
+            <center><iframe class="span12" height="355" src="http://www.youtube.com/embed/ZeLnjFpHv_8" frameborder="0" allowfullscreen></iframe></center>
+          </div>
+          <div class="span6">
+            <h4 class="featurette-heading">Dashboarding. <span class="muted small">Done Right.</span></h4>
+            <p class="lead">
+              Kibana 3 ships with a great interface to Logstash, but it doesn't stop there. Design your own custom dashboards with configurable panels that can be grouped by role. The possibilities are endless and we're adding fun new features, panels and visualizations all the time. Charts and panels are fully interactive with features like drill down, range selection and customization. They're also totally sharable and saveable.
+              <ul>
+                <li>Multiple concurrent search inputs</li>
+                <li>Hightlight to drill down bar charts</li>
+                <li>Line charts, stacked, unstacked, filled or unfilled, with or without points</li>
+                <li>Pie and donut charts that compare top terms or the results of multiple queries</li>
+                <li>Maps of the World, US and Europe <i>more coming soon</i></li>
+                <li>Flexible date and time selection with configurable auto refresh interfaces</li>
+                <li>And growing!</li>
+              </ul>
+          </div>
+        </div>
+      </div>
+
+      <hr class="featurette-divider"  id="build">
+
+      <div class="featurette">
+        <div class="row-fluid">
+          <div class="span6">
+            <h4 class="featurette-heading">Be the Builder. <span class="muted small">No code required.</span></h4>
+            <p class="lead">
+              You're not here to write code. You're here to <strong>get things done</strong>. Kibana 3 allows you to build custom dashboards right in your browser without writing a line of code. Dashboards are built on a grid system with fixed height rows and variable width panels that are given a 'span' of 1 through 12 depending on how much of the screen you want them to use. And the best part: Its all point + click + awesomeness.
+            </p>
+            <p>By now you're thinking: Oh great, another black box that I can't integrate with my configuration management system. <strong>No way homefry.</strong> Under all the slick, colorful, <a href='http://twitter.github.com/bootstrap/'>Bootstrap based</a> control, we're cooking up fresh JSON, and you know you can build that programatically. Drop you totally awesome puppet/chef/cfengine generated dashboard in <code>dashboards/myawesomeness</code> and point your browser at <code>http://localhost:8000/index.html#/dashboard/file/myawesomeness</code>. Who's awesome? You're awesome.
+          </div>
+          <div class="span6">
+            <center><iframe class="span12" height="355" style="margin-bottom:50px" src="http://www.youtube.com/embed/xjIMbn2ib-0" frameborder="0" allowfullscreen></iframe></center>
+            <div>
+            <h2>Sold yet? <span class="muted small"><strong>Sweet</strong>, let's do this.</span> <a href="intro.html" class="btn-large btn btn-success">Get Kibana 3 <i class="icon-download"></i> </a></h2>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="featurette-divider">
+
+
+      <!-- /END THE FEATURETTES -->
+
+
+      <!-- FOOTER -->
+      <footer>
+        <p class="pull-right"><a href="#">Back to top</a></p>
+        <p>&copy; 2013 Rashid Khan
+
+    </div><!-- /.container -->
+
+
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script>
+      !function ($) {
+        $(function(){
+          // carousel demo
+          $('#myCarousel').carousel()
+        })
+      }(window.jQuery)
+    </script>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Kibana 3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet">
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet">
+
+
+    <style>
+
+    
+    </style>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+  </head>
+
+  <body>
+
+
+
+    <!-- NAVBAR
+    ================================================== -->
+
+    <div class="navbar navbar-fixed-top navbar-inverse">
+      <div class="navbar-inner">
+
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li class="active"><a href="intro.html">Installation</a></li>
+              <li><a href="contact.html">Support</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid marketing">
+
+      <hr class="featurette-divider">
+
+      <div class="featurette">
+        <h4 class="featurette-heading">Installation. <span class="muted">Easy.</h4>
+        <div class="row-fluid">
+          <div class="span12">
+            <p class="lead">You've already got <a href="http://logstash.net">Logstash</a> and <a href="http://elasticsearch.org">Elasticsearch</a> right?<br>
+            <small><strong>Then you don't need</strong> nodejs, ruby, php, python or more than a couple minutes. <strong>You do need</strong> a webserver and a good browser.</small>
+            </p> 
+          </div>
+        </div>
+      </div>
+      <hr class="featurette-divider">
+    </div>
+
+    <div class="container-fluid">
+      <section id="intro">
+        <div class="row-fluid">
+        <div class="span4">
+          <h2>1. Download <small> @github</small></h2>
+          <p>
+            <a href="https://github.com/elasticsearch/kibana/archive/master.zip"><img src=http://github.com/images/modules/download/zip.png></a>
+            <a href="https://github.com/elasticsearch/kibana/archive/master.tar.gz"><img src=http://github.com/images/modules/download/tar.png></a>
+          </p>
+          <div class="span11">
+            <p>Or head over to the Github project page</p><a class='btn btn-info btn-large' href="https://github.com/elasticsearch/kibana">Github Project Page &raquo;</a>
+          </div>
+        </div>
+        <div class="span4">
+          <h2>2. Setup <small>one thing</small></h2>
+          <p>You've made it this far. I'm going to bet you know how to:</p>
+          <ol>
+            <li>Extract your archive</li>
+            <li>Open config.js in your favorite editor</li>
+            <li><strong>Set</strong> <code>elasticsearch: 'http://localhost:9200',</code> to your ElasticSearch server</li>
+            <li><strong>Copy</strong> The entire directory to your webserver</li>
+          </ol>
+          <div class='alert alert-info'><strong>Heads Up</strong> Don't miss the comma at the end of line in step 3!</div>
+        </div>
+        <div class="span4">
+          <h2>3. Awesome <small>that was easy</small></h2>
+          <ol>
+            <li>Point your browser at your shiney new installation</li>
+            <li>The default dashboard has a gist link you can load to get a logstash dashboard view</li>
+          </ol>
+          <p>For more information, including a short introduction to Lucene search syntax, check out the about section of this page.</p> <a href=about.html class='btn btn-success'>About Kibana &raquo;</a></p>
+        </div>
+      </div>
+    </section>
+    
+    <hr>
+    
+    <section id="morehelp">
+      <div class="row">
+        <div class="span12">
+          <h3>A Note</h3>
+          <p>Kibana 3 <strong>talks directly to Elasticsearch from the browser</strong>. This means that your browser communicates directly with Elasticsearch, not via an intermediary. You may wish to configure a reverse proxy to restrict access to Elasticsearch</p>
+          <!--<h4>A more complex architecture</h4>
+          <p>Kibana is powerful, but its just one of many tools that can fit into an even more powerful metrics and analysis infrastructure.
+          <a href=infrastructure.html> See a complete metrics infrastructure &raquo;</a>
+          </p>-->
+          <h3>Still have questions? <a href=contact.html class='btn btn-small btn-danger'>Support &raquo;</a> </h3>
+          
+        </div>
+      </div>
+    </section>
+  </div>
+
+
+      <!-- /END THE FEATURETTES -->
+
+    <div class="container-fluid">
+      <!-- FOOTER -->
+      <footer>
+        <p class="pull-right"><a href="#">Back to top</a></p>
+        <p>&copy; 2013 Rashid Khan
+      </footer>
+    </div><!-- /.container -->
+
+
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script>
+      !function ($) {
+        $(function(){
+          // carousel demo
+          $('#myCarousel').carousel()
+        })
+      }(window.jQuery)
+    </script>
+  </body>
+</html>
