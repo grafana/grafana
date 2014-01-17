@@ -180,3 +180,22 @@ h2.lead {
   width: 1.5em;
   color: #5CB85C;
 }
+
+footer p {
+  float: left;
+}
+
+.bs-social-buttons {
+  list-style: none;
+  float: right;
+  margin: 0;
+}
+
+.bs-social-buttons li {
+  float: left;
+  padding: 0;
+}
+
+iframe {
+  margin: 15px 0 0 0;
+}
