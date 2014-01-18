@@ -32,28 +32,6 @@
 
         <div class="navbar navbar-inverse navbar-static-top" role="navigation">
           <div class="container">
-            <ul class="bs-social-buttons">
-              <li>
-                <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=watch&amp;count=true"
-                        width="100"
-                        height="20"
-                        title="Star on GitHub"
-                        frameborder="false"
-                        scrolling="0"
-                        allowtransparency="true">
-
-                </iframe>
-              </li>
-              <li>
-                <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=fork&amp;count=true"
-                        width="80"
-                        height="20"
-                        title="Fork on GitHub"
-                        frameborder="false"
-                        scrolling="0"
-                        allowtransparency="true"></iframe>
-              </li>
-            </ul>
             <div class="navbar-header">
               <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                 <span class="sr-only">Toggle navigation</span>
@@ -64,10 +42,31 @@
               <a class="navbar-brand" href="#">Grafana</a>
             </div>
             <div class="navbar-collapse collapse">
+              <ul class="bs-social-buttons">
+                <li>
+                  <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=watch&amp;count=true"
+                          width="100"
+                          height="20"
+                          title="Star on GitHub"
+                          frameborder="false"
+                          scrolling="0"
+                          allowtransparency="true">
+                  </iframe>
+                </li>
+                <li>
+                  <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=fork&amp;count=true"
+                          width="80"
+                          height="20"
+                          title="Fork on GitHub"
+                          frameborder="false"
+                          scrolling="0"
+                          allowtransparency="true"></iframe>
+                </li>
+              </ul>
               <ul class="nav navbar-nav">
                 <li class="active"><a href="#">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Download</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="download.html">Download</a></li>
               </ul>
             </div>
           </div>
@@ -77,7 +76,8 @@
     </div>
 
 
-     <div class="container" style="margin-bottom: 20px;margin-top: 5px;">
+    <div class="main">
+      <div class="container" style="margin-bottom: 20px;margin-top: 5px;">
         <div class="row" style="height: 300px; background-image: url(assets/img/test.png);">
             <h1>Grafana</h1>
             <h2 class="lead">
@@ -86,82 +86,76 @@
             <a href="#" class="btn btn-success btn-lg">Download</a>
             <a href="#" class="btn btn-success btn-lg">Github project</a>
         </div>
-     </div>
-
-
-    <!-- Marketing messaging and featurettes
-    ================================================== -->
-    <!-- Wrap the rest of the page in another container to center all the content. -->
-
-    <div class="container marketing">
-
-      <!-- Three columns of text below the carousel -->
-      <div class="row" style="font-size: 1.7rem;">
-        <div class="col-lg-4">
-          <div class="feature-group">
-            <i class="glyphicon glyphicon-signal" style="font-size: 32px;"></i>
-            <h2>Graphing</h2>
-            <ul style="text-align: initial;">
-              <li>Fast rendering, even over large timespans.</li>
-              <li>Click and drag to zoom.</li>
-              <li>Multiple Y-axis.</li>
-              <li>Bars, Lines, Points.</li>
-              <li>Smart Y-axis formating</li>
-              <li>Series toggles &amp; color selector</li>
-              <li>Axis labels</li>
-              <li>Fullscreen views and more...</li>
-            </ul>
-            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
-          </div>
-        </div><!-- /.col-lg-4 -->
-        <div class="col-lg-4">
-          <div class="feature-group">
-            <i class="glyphicon glyphicon-th" style="font-size: 32px;"></i>
-            <h2>Dashboards</h2>
-            <ul style="text-align: initial;">
-              <li>Create and edit dashboards</li>
-              <li>Drag and drop graphs to rearrange</li>
-              <li>Set column spans and row heights</li>
-              <li>Save &amp; search dashboards (ElasticSearch)</li>
-              <li>Import &amp; export dashboard (json file)</li>
-              <li>Import dashboard from Graphite</li>
-              <li>Templating</li>
-              <li>Much more...</li>
-            </ul>
-            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
-          </div>
-        </div><!-- /.col-lg-4 -->
-        <div class="col-lg-4">
-          <div class="feature-group">
-            <i class="glyphicon glyphicon-cog" style="font-size: 32px;"></i>
-            <h2>Graphite Target Editor</h2>
-            <ul style="text-align: initial;">
-              <li>Graphite target expression parser</li>
-              <li>Quickly add / edit / remove function</li>
-              <li>Function parameters can be easy edited</li>
-              <li>Quickly navigate graphite metric structure</li>
-              <li>Templating</li>
-              <li>Integrated function documentation</li>
-              <li>Click &amp; drag functions to rearrange order</li>
-              <li>Much more...</li>
-            </ul>
-            <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
-          </div>
-        </div><!-- /.col-lg-4 -->
-      </div><!-- /.row -->
-
-      <div style="margin-bottom: 10px;padding: 5px;font-size: 1.3em;">
-        If you encounter any problem or have ideas for improvement please open a <a href="https://github.com/torkelo/grafana/issues">github issue.</a>
       </div>
 
-      <!-- FOOTER -->
+      <div class="container marketing">
+        <div class="row" style="font-size: 1.7rem;">
+          <div class="col-lg-4">
+            <div class="feature-group">
+              <i class="glyphicon glyphicon-signal" style="font-size: 32px;"></i>
+              <h2>Graphing</h2>
+              <ul style="text-align: initial;">
+                <li>Fast rendering, even over large timespans.</li>
+                <li>Click and drag to zoom.</li>
+                <li>Multiple Y-axis.</li>
+                <li>Bars, Lines, Points.</li>
+                <li>Smart Y-axis formating</li>
+                <li>Series toggles &amp; color selector</li>
+                <li>Axis labels</li>
+                <li>Fullscreen views and more...</li>
+              </ul>
+              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+            </div>
+          </div><!-- /.col-lg-4 -->
+
+          <div class="col-lg-4">
+            <div class="feature-group">
+              <i class="glyphicon glyphicon-th" style="font-size: 32px;"></i>
+              <h2>Dashboards</h2>
+              <ul style="text-align: initial;">
+                <li>Create and edit dashboards</li>
+                <li>Drag and drop graphs to rearrange</li>
+                <li>Set column spans and row heights</li>
+                <li>Save &amp; search dashboards (ElasticSearch)</li>
+                <li>Import &amp; export dashboard (json file)</li>
+                <li>Import dashboard from Graphite</li>
+                <li>Templating</li>
+                <li>Much more...</li>
+              </ul>
+              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="feature-group">
+              <i class="glyphicon glyphicon-cog" style="font-size: 32px;"></i>
+              <h2>Graphite Target Editor</h2>
+              <ul style="text-align: initial;">
+                <li>Graphite target expression parser</li>
+                <li>Quickly add / edit / remove function</li>
+                <li>Function parameters can be easy edited</li>
+                <li>Quickly navigate graphite metric structure</li>
+                <li>Templating</li>
+                <li>Integrated function documentation</li>
+                <li>Click &amp; drag functions to rearrange order</li>
+                <li>Much more...</li>
+              </ul>
+              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container">
       <footer>
         <p>
-          &copy; 2013 Torkel Ödegaard
+          &copy; 2013 Torkel Ödegaard  |  <a href="https://github.com/torkelo/grafana/issues">Github project</a> | <a href="https://github.com/torkelo/grafana/issues">Github issues.</a>
         </p>
       </footer>
-
-    </div><!-- /.container -->
+    </div>
 
 
     <!-- Bootstrap core JavaScript

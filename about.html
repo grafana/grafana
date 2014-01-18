@@ -2,170 +2,246 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Kibana 3</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
+    <link rel="shortcut icon" href="favicon.png">
 
-    <!-- Le styles -->
-    <link href="assets/css/bootstrap.css" rel="stylesheet">
-    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="assets/css/main.css" rel="stylesheet">
-    <link href="assets/css/font-awesome.min.css" rel="stylesheet">
+    <title>Grafana - Graphite Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/blueimp-gallery.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine:bold,bolditalic|Inconsolata:italic|Droid+Sans">
 
 
-    <style>
-
-    
-    </style>
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="../assets/js/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
 
+    <!-- Custom styles for this template -->
+    <link href="assets/css/carousel.css" rel="stylesheet">
   </head>
-
+<!-- NAVBAR
+================================================== -->
   <body>
+    <div class="navbar-wrapper">
+      <div class="container-fluid">
 
-
-
-    <!-- NAVBAR
-    ================================================== -->
-
-    <div class="navbar navbar-fixed-top navbar-inverse">
-      <div class="navbar-inner">
-
-        <div class="container-fluid">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li><a href="index.html">Home</a></li>
-              <li class="active"><a href="about.html">About</a></li>
-              <li><a href="intro.html">Installation</a></li>
-              <li><a href="contact.html">Support</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Marketing messaging and featurettes
-    ================================================== -->
-    <!-- Wrap the rest of the page in another container to center all the content. -->
-
-    <div class="container-fluid marketing" style="margin-top: 50px">
-
-      <div class="featurette">
-        <div class="row-fluid">
-          <div class="span3">
-            <img src="http://kibana.org/images/g3962.png">
-          </div>
-          <div class="span9">
-            <h4 class="featurette-heading">Welcome to Kibana 3</h4>
-            <p class="lead">Kibana is an open source (Apache Licensed), browser based analytics and search interface to Logstash and other timestamped data sets stored in ElasticSearch. With those in place Kibana is a snap to setup and start using (<a href="http://three.kibana.org/intro.html">seriously</a>). Kibana strives to be easy to get started with, while also being flexible and powerful, just like Logstash and Elasticsearch. Check it out ... </p> 
-          </div>
-        </div>
-      </div>
-
-      <hr class="featurette-divider">
-
-
-      <div class="featurette" id="logs">
-        <div class="row-fluid">
-          <div class="span6">
-            <h4 class="featurette-heading">Log Search. <span class="muted small">Born for it.</span></h4>
-            <p class="lead">
-              Kibana was created to search logs and machine generated data. It plays extra nice with Logstash, using Logstash's time stamped indices to query Elasticsearch in the most efficient way.
-              <p>Find 'Mozilla' in any field of any event, even if you never used a Logstash filter to define a single field</p>
-<pre>Mozilla</pre>
-<p>If you've defined a field called agent to store user agent strings:</p>
-<pre>agent:"Mozilla Firefox"</pre>
-<p>We can also search numerical ranges. Lets find every zip file downloaded larger than 300 bytes</p>
-<pre>extension:zip AND bytes:[300 TO *]</pre></p> 
-          </div>
-          <div class="span6">
-            <center><iframe class="span12" height="355" src="http://www.youtube.com/embed/hXiBe8NcLPA" frameborder="0" allowfullscreen></iframe></center>
-          </div>
-        </div>
-      </div>
-
-      <hr class="featurette-divider">
-
-      <div class="featurette"  id="custom">
-        <div class="row-fluid">
-          <div class="span6">
-            <center><iframe class="span12" height="355" src="http://www.youtube.com/embed/ZeLnjFpHv_8" frameborder="0" allowfullscreen></iframe></center>
-          </div>
-          <div class="span6">
-            <h4 class="featurette-heading">Dashboarding. <span class="muted small">Done Right.</span></h4>
-            <p class="lead">
-              Kibana 3 ships with a great interface to Logstash, but it doesn't stop there. Design your own custom dashboards with configurable panels that can be grouped by role. The possibilities are endless and we're adding fun new features, panels and visualizations all the time. Charts and panels are fully interactive with features like drill down, range selection and customization. They're also totally sharable and saveable.
-              <ul>
-                <li>Multiple concurrent search inputs</li>
-                <li>Hightlight to drill down bar charts</li>
-                <li>Line charts, stacked, unstacked, filled or unfilled, with or without points</li>
-                <li>Pie and donut charts that compare top terms or the results of multiple queries</li>
-                <li>Maps of the World, US and Europe <i>more coming soon</i></li>
-                <li>Flexible date and time selection with configurable auto refresh interfaces</li>
-                <li>And growing!</li>
+        <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Grafana</a>
+            </div>
+            <div class="navbar-collapse collapse">
+              <ul class="bs-social-buttons">
+                <li>
+                  <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=watch&amp;count=true"
+                          width="100"
+                          height="20"
+                          title="Star on GitHub"
+                          frameborder="false"
+                          scrolling="0"
+                          allowtransparency="true">
+                  </iframe>
+                </li>
+                <li>
+                  <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=fork&amp;count=true"
+                          width="80"
+                          height="20"
+                          title="Fork on GitHub"
+                          frameborder="false"
+                          scrolling="0"
+                          allowtransparency="true"></iframe>
+                </li>
               </ul>
-          </div>
-        </div>
-      </div>
-
-      <hr class="featurette-divider"  id="build">
-
-      <div class="featurette">
-        <div class="row-fluid">
-          <div class="span6">
-            <h4 class="featurette-heading">Be the Builder. <span class="muted small">No code required.</span></h4>
-            <p class="lead">
-              You're not here to write code. You're here to <strong>get things done</strong>. Kibana 3 allows you to build custom dashboards right in your browser without writing a line of code. Dashboards are built on a grid system with fixed height rows and variable width panels that are given a 'span' of 1 through 12 depending on how much of the screen you want them to use. And the best part: Its all point + click + awesomeness.
-            </p>
-            <p>By now you're thinking: Oh great, another black box that I can't integrate with my configuration management system. <strong>No way homefry.</strong> Under all the slick, colorful, <a href='http://twitter.github.com/bootstrap/'>Bootstrap based</a> control, we're cooking up fresh JSON, and you know you can build that programatically. Drop you totally awesome puppet/chef/cfengine generated dashboard in <code>dashboards/myawesomeness</code> and point your browser at <code>http://localhost:8000/index.html#/dashboard/file/myawesomeness</code>. Who's awesome? You're awesome.
-          </div>
-          <div class="span6">
-            <center><iframe class="span12" height="355" style="margin-bottom:50px" src="http://www.youtube.com/embed/xjIMbn2ib-0" frameborder="0" allowfullscreen></iframe></center>
-            <div>
-            <h2>Sold yet? <span class="muted small"><strong>Sweet</strong>, let's do this.</span> <a href="intro.html" class="btn-large btn btn-success">Get Kibana 3 <i class="icon-download"></i> </a></h2>
-
+              <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+                <li class="active"><a href="#about">About</a></li>
+                <li><a href="#contact">Download</a></li>
+              </ul>
             </div>
           </div>
         </div>
+
       </div>
-
-      <hr class="featurette-divider">
-
-
-      <!-- /END THE FEATURETTES -->
+    </div>
 
 
-      <!-- FOOTER -->
+    <div class="main">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h2>Design goal</h2>
+            <p>
+              Grafana is meant to be a general purpose dashboard replacement for <a href="http://graphite.wikidot.com/">Graphite</a>.
+              Graphite is an incredible time series database and metric visualization tool. However the default dashboard and graph editor
+              leaves much to be desired. The goal for Grafana is to be a dashboard and graph editor that is flexible, feature rich, easy
+              to use and beautiful with low noice and clutter in its visual presentation.
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/fullscreen_mongodb.png" title="Grafana dashboard example" data-gallery>
+                <img src="/assets/img/fullscreen_mongodb_small.jpg" alt="Grafana dashboard example">
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/graph_editor.png" title="Graph Editor" data-gallery>
+                <img src="/assets/img/graph_editor_small.jpg" alt="Graph Editor">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Target editor</h2>
+            <p>
+              Click on the graph title to open any graph in edit mode. Edit mode quickly fills the entire page with
+              a clear view of the graph being edited. The Grafana built in target parser unwrapps the method calls and presents
+              the inner metric expression as a series of clickable segments followed by the applied functions.
+            </p>
+            <p class="small">
+              <i class="glyphicon glyphicon-info-sign"></i>
+              The parser and the unwrapping of functions has some current limitations (will be improved).
+              By clicking on the pen icon you can edit the expression in a text box instead.
+            </p>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <h2>Metric &amp; function editing</h2>
+            <p>
+              Click on a metric path segment and a dropdown with other segments and wildcard option is shown.
+              Click on a function and easily change function parameters.
+              Click on a series legend and change series color and Y-axis.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <div class="row">
+                <a class="screenshot col-md-4" href="/assets/img/segment_dropdown.png" title="Metric segment dropdown" data-gallery>
+                   <img src="/assets/img/segment_dropdown.png" alt="Graph Editor">
+                </a>
+                <a class="screenshot col-md-4" href="/assets/img/function_editor.png" title="Function editor" data-gallery>
+                   <img src="/assets/img/function_editor.png" alt="Graph Editor">
+                </a>
+                 <a class="screenshot col-md-4" href="/assets/img/series_options.png" title="Series options" data-gallery>
+                   <img src="/assets/img/series_options.png" alt="Graph Editor">
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/graph_style_editor.png" title="Style Editor" data-gallery>
+                 <img src="/assets/img/graph_style_editor_small.png" alt="Graph Editor">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Graph Style Editor</h2>
+            <p>
+              In the style editor you have a lot of control of how the graph should be drawn.
+              Grafana uses the plotting library <a href="http://www.flotcharts.org/">Flot</a> and many of its options are exposed
+              in the style editor.
+            </p>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <h2>Dashboards</h2>
+            <p>
+              In the dashboard view you can easily edit, view in fullscreen, duplicate, change column span of any graph by clicking
+              the graph label. Click and select region to zoom in on any graph.
+              Ctrl+F opens up a search bar to quickly search and open another dashboard. Ctrl+S saves the current dashboard.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/edit_dashboards.png" title="Graph Editor" data-gallery>
+                 <img src="/assets/img/edit_dashboards_small.png" alt="Edit dashboards">
+              </a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/templated_metric.png" title="Templated metric" data-gallery>
+                 <img src="/assets/img/templated_metric.png" alt="Templated metric">
+              </a>
+            </div>
+            <div class="screenshot-frame top-buffer">
+              <a class="screenshot" href="/assets/img/templated_dashboard.png" title="Templated dashboard" data-gallery>
+                 <img src="/assets/img/templated_dashboard.png" alt="Templated dashboard">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Templating</h2>
+            <p>
+              Create templated metric segments. This enabled reuse of a single dashboard for multiple servers, apps, clusters etc.
+            </p>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+
+    <div class="container">
       <footer>
-        <p class="pull-right"><a href="#">Back to top</a></p>
-        <p>&copy; 2013 Rashid Khan
+        <p>
+          &copy; 2013 Torkel Ödegaard  |  <a href="https://github.com/torkelo/grafana/issues">Github project</a> | <a href="https://github.com/torkelo/grafana/issues">Github issues.</a>
+        </p>
+      </footer>
+    </div>
 
-    </div><!-- /.container -->
+    <!-- The Gallery as lightbox dialog, should be a child element of the document body -->
+    <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls">
+        <div class="slides"></div>
+        <h3 class="title"></h3>
+        <a class="prev">‹</a>
+        <a class="next">›</a>
+        <a class="close">×</a>
+        <a class="play-pause"></a>
+        <ol class="indicator"></ol>
+    </div>
 
 
-
-    <!-- Le javascript
+    <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/blueimp-gallery.min.js"></script>
+
     <script>
-      !function ($) {
-        $(function(){
-          // carousel demo
-          $('#myCarousel').carousel()
-        })
-      }(window.jQuery)
+      $('.screenshot').click(function(evt) {
+        var options = { index: this, event: evt};
+        blueimp.Gallery($('.screenshot'), options);
+      });
     </script>
   </body>
 </html>

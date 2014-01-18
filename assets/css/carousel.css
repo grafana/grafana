@@ -5,8 +5,23 @@
 body {
   padding-bottom: 40px;
   color: #E9E9E9;
-  background: #1F1F1F;
+  background: #222;
   font-family: 'Droid Sans', serif;
+}
+
+.main {
+  background: #1F1F1F;
+  padding-bottom: 30px;
+  padding-top: 40px;
+  border-bottom: 1px solid black;
+}
+
+p {
+  font-size: 1.8rem;
+}
+
+.small {
+  font-size: 1.4rem;
 }
 
 h1  {
@@ -15,7 +30,12 @@ h1  {
   font-weight: bold;
   text-shadow: 2px 2px 0px #2c2e38, 4px 4px 0px #5c5f72;
   letter-spacing: 10px;
+  margin-top: 0;
   margin-bottom: 5px;
+}
+
+a {
+  color: #6BDCFD;
 }
 
 h2.lead {
@@ -33,6 +53,7 @@ h2.lead {
 
 }
 
+.top-buffer { margin-top:20px; }
 
 /* CUSTOMIZE THE NAVBAR
 -------------------------------------------------- */
@@ -181,6 +202,10 @@ h2.lead {
   color: #5CB85C;
 }
 
+footer {
+  margin-top: 20px;
+}
+
 footer p {
   float: left;
 }
@@ -198,4 +223,24 @@ footer p {
 
 iframe {
   margin: 15px 0 0 0;
+}
+
+.screenshot-frame {
+  background: #444;
+  border: 1px solid #888888;
+  text-align: center;
+  padding: 10px;
+}
+
+.feature-box {
+  padding-left: 45px;
+}
+
+.screenshot {
+  display: inline-block;
+}
+
+.screenshot img {
+  width: 100%;
+  height:auto;
 }
