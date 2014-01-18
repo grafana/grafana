@@ -229,11 +229,7 @@ iframe {
   background: #444;
   border: 1px solid #888888;
   text-align: center;
-  padding: 10px;
-}
-
-.feature-box {
-  padding-left: 45px;
+  padding: 5px;
 }
 
 .screenshot {
@@ -243,4 +239,11 @@ iframe {
 .screenshot img {
   width: 100%;
   height:auto;
+}
+
+.about-box {
+  background-color: #222;
+  border-color: #080808;
+  height: 30px;
+  text-align: center;
 }

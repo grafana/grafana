@@ -12,6 +12,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/blueimp-gallery.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine:bold,bolditalic|Inconsolata:italic|Droid+Sans">
 
 
@@ -65,7 +66,8 @@
               </ul>
               <ul class="nav navbar-nav">
                 <li class="active"><a href="#">Home</a></li>
-                <li><a href="about.html">About</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#about">Docs</a></li>
                 <li><a href="download.html">Download</a></li>
               </ul>
             </div>
@@ -74,7 +76,6 @@
 
       </div>
     </div>
-
 
     <div class="main">
       <div class="container" style="margin-bottom: 20px;margin-top: 5px;">
@@ -104,7 +105,6 @@
                 <li>Axis labels</li>
                 <li>Fullscreen views and more...</li>
               </ul>
-              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
             </div>
           </div><!-- /.col-lg-4 -->
 
@@ -122,7 +122,6 @@
                 <li>Templating</li>
                 <li>Much more...</li>
               </ul>
-              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
             </div>
           </div>
 
@@ -133,18 +132,155 @@
               <ul style="text-align: initial;">
                 <li>Graphite target expression parser</li>
                 <li>Quickly add / edit / remove function</li>
-                <li>Function parameters can be easy edited</li>
+                <li>Function parameters can be easily changed</li>
                 <li>Quickly navigate graphite metric structure</li>
                 <li>Templating</li>
                 <li>Integrated function documentation</li>
                 <li>Click &amp; drag functions to rearrange order</li>
                 <li>Much more...</li>
               </ul>
-              <p><a class="btn btn-info" href="#" role="button">View details &raquo;</a></p>
             </div>
           </div>
 
         </div>
+      </div>
+    </div>
+
+
+    <div class="main" style="background-color: #292929" id="about">
+      <div class="container">
+
+        <div class="row">
+          <div class="col-md-6">
+            <h2>Design goal</h2>
+            <p>
+              Grafana is meant to be a general purpose dashboard replacement for <a href="http://graphite.wikidot.com/">Graphite</a>.
+              Graphite is an incredible time series database and metric visualization tool. However the default dashboard and graph editor
+              leaves much to be desired. The goal for Grafana is to be a dashboard and graph editor that is flexible, feature rich, easy
+              to use and beautiful with low noice and clutter in its visual presentation.
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/fullscreen_mongodb.png" title="Grafana dashboard example" data-gallery>
+                <img src="/assets/img/fullscreen_mongodb_small.jpg" alt="Grafana dashboard example">
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/graph_editor.png" title="Graph Editor" data-gallery>
+                <img src="/assets/img/graph_editor_small.jpg" alt="Graph Editor">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Target editor</h2>
+            <p>
+              Click on the graph title to open any graph in edit mode. Edit mode quickly fills the entire page with
+              a clear view of the graph being edited. Grafana includes a built in target parser. This parse can help with
+              syntax errors but most importantly it can visualize the expression in other ways. For example unwrap the method calls and presents
+              the inner metric expression as a series of clickable segments followed by the applied functions.
+            </p>
+            <p class="small">
+              <i class="glyphicon glyphicon-info-sign"></i>
+              The parser and the unwrapping of functions has some current limitations (will be improved).
+              By clicking on the pen icon you can edit the expression in a text box instead.
+            </p>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <h2>Metric &amp; function editing</h2>
+            <p>
+              Click on a metric path segment and a dropdown with other segments and wildcard option is shown.
+              Click on a function and easily change function parameters.
+              Click on a series legend and change series color and Y-axis.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <div class="row">
+                <a class="screenshot col-md-4" href="/assets/img/segment_dropdown.png" title="Metric segment dropdown" data-gallery>
+                   <img src="/assets/img/segment_dropdown.png" alt="Graph Editor">
+                </a>
+                <a class="screenshot col-md-4" href="/assets/img/function_editor.png" title="Function editor" data-gallery>
+                   <img src="/assets/img/function_editor.png" alt="Graph Editor">
+                </a>
+                 <a class="screenshot col-md-4" href="/assets/img/series_options.png" title="Series options" data-gallery>
+                   <img src="/assets/img/series_options.png" alt="Graph Editor">
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/graph_style_editor.png" title="Style Editor" data-gallery>
+                 <img src="/assets/img/graph_style_editor_small.png" alt="Graph Editor">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Graph Style Editor</h2>
+            <p>
+              In the style editor you have a lot of control of how the graph should be drawn.
+              Grafana uses the plotting library <a href="http://www.flotcharts.org/">Flot</a> and many of its options are exposed
+              in the style editor.
+            </p>
+          </div>
+        </div>
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <h2>Dashboards</h2>
+            <p>
+              In the dashboard view you can easily edit, view in fullscreen, duplicate, change column span of any graph by clicking
+              the graph label. Click and select region to zoom in on any graph. Click and drag the graph label to rearrange graphs.
+              Ctrl+F opens up a search bar to quickly search and open another dashboard. Ctrl+S saves the current dashboard.
+            </p>
+          </div>
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/edit_dashboards.png" title="Graph Editor" data-gallery>
+                 <img src="/assets/img/edit_dashboards_small.png" alt="Edit dashboards">
+              </a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="row top-buffer">
+          <div class="col-md-6">
+            <div class="screenshot-frame">
+              <a class="screenshot" href="/assets/img/templated_metric.png" title="Templated metric" data-gallery>
+                 <img src="/assets/img/templated_metric.png" alt="Templated metric">
+              </a>
+            </div>
+            <div class="screenshot-frame top-buffer">
+              <a class="screenshot" href="/assets/img/templated_dashboard.png" title="Templated dashboard" data-gallery>
+                 <img src="/assets/img/templated_dashboard.png" alt="Templated dashboard">
+              </a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h2>Templating</h2>
+            <p>
+              Create templated metric segments. This enabled reuse of a single dashboard for multiple servers, apps, clusters etc.
+            </p>
+          </div>
+        </div>
+
+
+      </div>
+
       </div>
     </div>
 
@@ -158,11 +294,30 @@
     </div>
 
 
+    <!-- The Gallery as lightbox dialog, should be a child element of the document body -->
+    <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls">
+        <div class="slides"></div>
+        <h3 class="title"></h3>
+        <a class="prev">‹</a>
+        <a class="next">›</a>
+        <a class="close">×</a>
+        <a class="play-pause"></a>
+        <ol class="indicator"></ol>
+    </div>
+
+
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/holder.js"></script>
+    <script src="assets/js/blueimp-gallery.min.js"></script>
+    <script>
+      $('.screenshot').click(function(evt) {
+        var options = { index: this, event: evt};
+        blueimp.Gallery($('.screenshot'), options);
+      });
+    </script>
+
   </body>
 </html>
