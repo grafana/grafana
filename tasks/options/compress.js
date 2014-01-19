@@ -9,12 +9,10 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
-          dest: '<%= pkg.name %>-latest'
         },
         {
           expand: true,
-          src: ['LICENSE.md', 'README.md'],
-          dest: '<%= pkg.name %>-latest'
+          src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
         }
       ]
     },
@@ -27,12 +25,10 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
-          dest: '<%= pkg.name %>-latest'
         },
         {
           expand: true,
-          src: ['LICENSE.md', 'README.md'],
-          dest: '<%= pkg.name %>-latest'
+          src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
         }
       ]
     },
@@ -45,12 +41,10 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
-          dest: '<%= pkg.name %>-<%= pkg.version %>'
         },
         {
           expand: true,
-          src: ['LICENSE.md', 'README.md'],
-          dest: '<%= pkg.name %>-<%= pkg.version %>'
+          src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
         }
       ]
     },
@@ -63,12 +57,10 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
-          dest: '<%= pkg.name %>-<%= pkg.version %>'
         },
         {
           expand: true,
-          src: ['LICENSE.md', 'README.md'],
-          dest: '<%= pkg.name %>-<%= pkg.version %>'
+          src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
         }
       ]
     }
