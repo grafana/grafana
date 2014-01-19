@@ -11,11 +11,10 @@ function (_) {
      */
     var defaults = {
       elasticsearch     : "http://"+window.location.hostname+":9200",
+      graphiteUrl       : "http://"+window.location.hostname+":8080",
       panel_names       : [],
-      kibana_index      : 'kibana-int',
-      graphiteUrl       : null,
       default_route     : '/dashboard/file/default.json',
-      grafana_index     : 'grafana-int2'
+      grafana_index     : 'grafana-dash'
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

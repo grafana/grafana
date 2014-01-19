@@ -287,7 +287,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     this.elasticsearch_load = function(type,id) {
       return $http({
-        url: config.elasticsearch + "/" + config.kibana_index + "/"+type+"/"+id+'?' + new Date().getTime(),
+        url: config.elasticsearch + "/" + config.grafana_index + "/"+type+"/"+id+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(angular.fromJson(response)._source.dashboard, $routeParams);
@@ -340,7 +340,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       }
 
       // Create request with id as title. Rethink this.
-      var request = ejs.Document(config.kibana_index,type,id).source({
+      var request = ejs.Document(config.grafana_index,type,id).source({
         user: 'guest',
         group: 'guest',
         title: save.title,
@@ -365,7 +365,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     this.elasticsearch_delete = function(id) {
-      return ejs.Document(config.kibana_index,'dashboard',id).doDelete(
+      return ejs.Document(config.grafana_index,'dashboard',id).doDelete(
         // Success
         function(result) {
           return result;
@@ -378,7 +378,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     this.elasticsearch_list = function(query,count) {
-      var request = ejs.Request().indices(config.kibana_index).types('dashboard');
+      var request = ejs.Request().indices(config.grafana_index).types('dashboard');
       return request.query(
         ejs.QueryStringQuery(query || '*')
         ).size(count).doSearch(

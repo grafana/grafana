@@ -9,7 +9,7 @@ function (angular, _, config) {
   var module = angular.module('kibana.controllers');
 
   module.controller('MetricKeysCtrl', function($scope, $http, $q) {
-    var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_index + '/';
+    var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_metrics_index + '/';
 
     $scope.init = function () {
       $scope.metricPath = "prod.apps.api.boobarella.*";
@@ -149,7 +149,7 @@ function (angular, _, config) {
     function saveMetricKey(metricId) {
 
       // Create request with id as title. Rethink this.
-      var request = $scope.ejs.Document(config.grafana_index, 'metricKey', metricId).source({
+      var request = $scope.ejs.Document(config.grafana_metrics_index, 'metricKey', metricId).source({
         metricPath: metricId
       });
 
