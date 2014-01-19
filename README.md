@@ -1,6 +1,6 @@
 # Grafana - Graphite Dashboard
 
-A beautifully, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and feature lists.
+A beautifully, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and overview.
 
 # Features
 ## Graphite Target Editor
@@ -21,7 +21,7 @@ A beautifully, easy to use and feature rich Graphite dashboard replacement and g
 - Smart Y-axis formating
 - Series toggles & color selector
 - Axis labels
-- Fullscreen views and more... 	
+- Fullscreen views and more...
 
 ## Dashboards
 - Create and edit dashboards
@@ -38,8 +38,8 @@ Grafana is very easy to install. It is a client side web app with no backend. An
 
 # Installation
 - Download and extract the [latest release](https://github.com/asimov-deploy/asimov-deploy-winagent/releases/latest).
-- Edit config.js , the change graphiteUrl and elasticsearch to the correct urls. The urls entered here must be reachable by your browser. 
-- Point your browser to the installation. 
+- Edit config.js , the change graphiteUrl and elasticsearch to the correct urls. The urls entered here must be reachable by your browser.
+- Point your browser to the installation.
 
 # Graphite server config
 If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
@@ -47,7 +47,7 @@ If you haven't used an alternative dashboard for graphite before you need to ena
 Header set Access-Control-Allow-Origin "*"
 Header set Access-Control-Allow-Methods "GET, OPTIONS"
 Header set Access-Control-Allow-Headers "origin, authorization, accept"
-``` 
+```
 
 If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS. This looks like the following for Apache:
 ```
@@ -65,18 +65,16 @@ If your Graphite web is proteced by basic authentication, you have to enable the
 - Improve and refine the target parser and editing
 - Improve graphite import feature
 - Refine and simplify common tasks
-- More panel types (not just graphs) 
+- More panel types (not just graphs)
 - Use elasticsearch to search for metrics
-- Improve template support 
-- Add support for other time series databases like InfluxDB 
+- Improve template support
+- Add support for other time series databases like InfluxDB
 
 # Contribute
-If you have any idea for improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about! 
-
-![](http://grafana.org/assets/img/edit_dashboards.png)
+If you have any idea for improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
 
 # Notice
 This software is based on the great log dashboard [kibana](https://github.com/elasticsearch/kibana).
 
 # License
-Grafana is distributed under Apache 2.0 License. 
+Grafana is distributed under Apache 2.0 License.
