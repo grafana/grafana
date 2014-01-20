@@ -12,12 +12,12 @@ module.exports = function(grunt) {
 
   // build, then zip and upload to s3
   grunt.registerTask('release', [
-    'distribute:load_s3_config',
+  //  'distribute:load_s3_config',
     'build',
     'compress:zip_release',
     'compress:tgz_release',
-    's3:release',
-    'clean:temp'
+    //'s3:release',
+    //'clean:temp'
   ]);
 
   // collect the key and secret from the .aws-config.json file, finish configuring the s3 task

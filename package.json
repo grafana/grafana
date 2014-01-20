@@ -1,13 +1,13 @@
 {
   "author": {
-    "name": "Rashid Khan",
-    "company": "Elasticsearch BV"
+    "name": "Torkel Ödegaard",
+    "company": "Coding Instinct AB"
   },
-  "name": "kibana",
-  "version": "3.0.0pre-milestone5",
+  "name": "grafana",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "http://github.com/elasticsearch/kibana.git"
+    "url": "http://github.com/torkelo/grafana.git"
   },
   "devDependencies": {
     "rjs-build-analysis": "0.0.3",
