@@ -1,6 +1,6 @@
 # Grafana - Graphite Dashboard
 
-A beautifully, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and an overview.
+A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and an overview.
 
 # Features
 ## Graphite Target Editor
