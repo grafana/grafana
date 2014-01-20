@@ -531,8 +531,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             return;
           }
 
-          // IE doesn't work without this
-          elem.css({height:scope.height || scope.row.height});
+          try {
+            elem.css({ height:scope.panel.height || scope.row.height });
+          } catch(e) { return; }
 
           _.each(data, function(series) {
             series.label = series.info.alias;

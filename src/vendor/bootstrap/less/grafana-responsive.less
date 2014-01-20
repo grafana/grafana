@@ -21,3 +21,16 @@
 // 768px-979px
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
+
+
+// Media queries
+// ---------------------
+@media (max-width: 767px) {
+  div.panel {
+    width: 100% !important;
+    padding: 0px !important;
+  }
+  body {
+    padding: 0;
+  }
+}
