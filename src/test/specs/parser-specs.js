@@ -20,6 +20,14 @@ define([
       expect(rootNode.params.length).to.be(1);
     });
 
+    it('simple function with string arg', function() {
+      var parser = new Parser("randomWalk('test')");
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('function');
+      expect(rootNode.params.length).to.be(1);
+      expect(rootNode.params[0].type).to.be('string');
+    });
+
     it('function with multiple args', function() {
       var parser = new Parser("sum(test, 1, 'test')");
       var rootNode = parser.getAst();

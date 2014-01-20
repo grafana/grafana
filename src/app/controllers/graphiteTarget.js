@@ -17,6 +17,8 @@ function (angular, _, config, gfunc, Parser) {
       parseTarget();
     };
 
+    // The way parsing and the target editor works needs
+    // to be rewritten to handle functions that take multiple series
     function parseTarget() {
       $scope.functions = [];
       $scope.segments = [];
@@ -72,7 +74,13 @@ function (angular, _, config, gfunc, Parser) {
           throw { message: 'invalid number of parameters to method ' + func.def.name };
         }
 
-        func.params[index - 1] = astNode.value;
+        if (index === 0) {
+          func.params[index] = astNode.value;
+        }
+        else {
+          func.params[index - 1] = astNode.value;
+        }
+
         break;
 
       case 'metric':
@@ -141,16 +149,7 @@ function (angular, _, config, gfunc, Parser) {
     }
 
     function wrapFunction(target, func) {
-      var targetWrapped = func.def.name + '(' + target;
-      _.each(func.params, function(param) {
-        if (_.isString(param)) {
-          targetWrapped += ",'" + param + "'";
-        }
-        else {
-          targetWrapped += "," + param;
-        }
-      });
-      return targetWrapped + ')';
+      return func.render(target);
     }
 
     $scope.getAltSegments = function (index) {

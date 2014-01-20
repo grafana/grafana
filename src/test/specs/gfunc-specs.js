@@ -2,7 +2,7 @@ define([
   'app/services/graphite/gfunc'
 ], function(gfunc) {
 
-  describe('when creating func instance from func namae', function() {
+  describe('when creating func instance from func names', function() {
 
     it('should return func instance', function() {
       var func = gfunc.createFuncInstance('sumSeries');
@@ -34,11 +34,33 @@ define([
 
   });
 
+  describe('when rendering func instance', function() {
+
+    it('should handle single metric param', function() {
+      var func = gfunc.createFuncInstance('sumSeries');
+      expect(func.render('hello.metric')).to.equal("sumSeries(hello.metric)");
+    });
+
+    it('should handle metric param and int param and string param', function() {
+      var func = gfunc.createFuncInstance('groupByNode');
+      func.params[0] = 5;
+      func.params[1] = 'avg';
+      expect(func.render('hello.metric')).to.equal("groupByNode(hello.metric,5,'avg')");
+    });
+
+    it('should handle function with no metric param', function() {
+      var func = gfunc.createFuncInstance('randomWalk');
+      func.params[0] = 'test';
+      expect(func.render(undefined)).to.equal("randomWalk('test')");
+    });
+
+  });
+
   describe('when requesting function categories', function() {
 
     it('should return function categories', function() {
       var catIndex = gfunc.getCategories();
-      expect(catIndex.Special.length).to.equal(3);
+      expect(catIndex.Special.length).to.equal(7);
     });
 
   });

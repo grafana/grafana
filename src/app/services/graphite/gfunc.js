@@ -32,13 +32,6 @@ function (_) {
   });
 
   addFuncDef({
-    name: "alias",
-    category: categories.Special,
-    params: [ { name: "alias", type: 'string' } ],
-    defaultParams: ['alias']
-  });
-
-  addFuncDef({
     name: "holtWintersForecast",
     category: categories.Calculate,
   });
@@ -70,6 +63,20 @@ function (_) {
   });
 
   addFuncDef({
+    name: "alias",
+    category: categories.Special,
+    params: [ { name: "alias", type: 'string' } ],
+    defaultParams: ['alias']
+  });
+
+  addFuncDef({
+    name: "aliasSub",
+    category: categories.Special,
+    params: [ { name: "search", type: 'string' }, { name: "replace", type: 'string' } ],
+    defaultParams: ['', '']
+  });
+
+  addFuncDef({
     name: "groupByNode",
     category: categories.Special,
     params: [
@@ -92,6 +99,30 @@ function (_) {
     category: categories.Special,
     params: [ { name: "node", type: "select", options: [1,2,3,4,5,6,7,8,9,10,12] } ],
     defaultParams: [3]
+  });
+
+  addFuncDef({
+    name: 'aliasByMetric',
+    category: categories.Special,
+  });
+
+  addFuncDef({
+    name: 'randomWalk',
+    category: categories.Special,
+    params: [ { name: "name", type: "string", } ],
+    defaultParams: ['randomWalk']
+  });
+
+  addFuncDef({
+    name: 'countSeries',
+    category: categories.Special
+  });
+
+  addFuncDef({
+    name: 'constantLine',
+    category: categories.Special,
+    params: [ { name: "value", type: "int", } ],
+    defaultParams: [10]
   });
 
   addFuncDef({
@@ -125,6 +156,25 @@ function (_) {
     defaultParams: ['1h']
   });
 
+  addFuncDef({
+    name: 'absolute',
+    category: categories.Transform,
+  });
+
+  addFuncDef({
+    name: 'averageAbove',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int", } ],
+    defaultParams: [25]
+  });
+
+  addFuncDef({
+    name: 'averageBelow',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int", } ],
+    defaultParams: [25]
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
@@ -134,6 +184,19 @@ function (_) {
     this.params = funcDef.defaultParams.slice(0);
     this.updateText();
   }
+
+  FuncInstance.prototype.render = function (metricExp) {
+    var str = this.def.name + '(';
+    var parameters = _.map(this.params, function(value) {
+      return _.isString(value) ? "'" + value + "'" : value;
+    });
+
+    if (metricExp !== undefined) {
+      parameters.unshift(metricExp);
+    }
+
+    return str + parameters.join(',') + ')';
+  };
 
   FuncInstance.prototype.updateText = function () {
     if (this.params.length === 0) {
