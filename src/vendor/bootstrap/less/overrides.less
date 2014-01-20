@@ -66,6 +66,37 @@ code, pre {
   font-weight: bold;
 }
 
+.panel-loading {
+  position:absolute;
+  top: 0px;
+  right: 4px;
+  z-index: 800;
+}
+
+.panel div.panel-extra div.panel-extra-container {
+  margin-right: -10px;
+  margin-top: 3px;
+  text-align: center;
+  ul {
+    text-align: left;
+  }
+}
+
+.panel div.panel-extra {
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.panel div.panel-extra .extra {
+  float:right !important;
+}
+
+.panel-error {
+  color: @white;
+  padding: 3px 10px 0px 10px;
+}
+
+
 div.editor-row {
   vertical-align: top;
 }
@@ -224,37 +255,11 @@ form input.ng-invalid {
   border-top: 0px;
 }
 
-.panel-loading {
-  position:absolute;
-  top: 0px;
-  left: 0px;
-  z-index: 800;
-}
-
 .ui-draggable-dragging {
   display: block;
   visibility: visible;
   opacity: 1;
   z-index: 9999;
-}
-
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 3px;
-  text-align: center;
-  ul {
-    text-align: left;
-  }
-}
-
-.panel div.panel-extra {
-  font-size: 0.9em;
-  margin-bottom: 10px;
-}
-
-.panel div.panel-extra .extra {
-  float:right !important;
-  //border-bottom: 1px solid lighten(@bodyBackground, 5%);
 }
 
 .dragInProgress {
@@ -353,10 +358,6 @@ div.flot-text {
   color: @white;
 }
 
-.panel-error {
-  color: @white;
-  padding: 3px 10px 0px 10px;
-}
 
 .alert-warning {
   background-color: @warningBackground;

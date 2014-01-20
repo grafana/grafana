@@ -8,7 +8,7 @@ function (angular) {
     .module('kibana.directives')
     .directive('kibanaPanel', function($compile) {
 
-      var container = '<div class="panel-container"></div>';
+      var container = '<div class="panel-container" ng-style="{\'min-height\':row.height}""></div>';
       var content = '<div class="panel-content"></div>';
 
       var panelHeader =
@@ -23,10 +23,8 @@ function (angular) {
         '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
 
-            '<span class="row-button extra" ng-show="panelMeta.loading == true">' +
-              '<span>'+
-                '<i class="icon-spinner icon-spin icon-large"></i>' +
-              '</span>'+
+            '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
+              '<i class="icon-spinner icon-spin icon-large"></i>' +
             '</span>' +
 
             '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
