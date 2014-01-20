@@ -8,7 +8,7 @@ function (angular) {
     .module('kibana.directives')
     .directive('kibanaPanel', function($compile) {
 
-      var container = '<div class="panel-container" ng-style="{\'min-height\':row.height}""></div>';
+      var container = '<div class="panel-container"></div>';
       var content = '<div class="panel-content"></div>';
 
       var panelHeader =
@@ -27,9 +27,9 @@ function (angular) {
               '<i class="icon-spinner icon-spin icon-large"></i>' +
             '</span>' +
 
-            '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
+            '<span ng-if="panelMeta.menuItems" class="dropdown">' +
               '<span class="panel-text panel-title pointer" bs-dropdown="panelMeta.menuItems" tabindex="1" ' +
-              'data-drag=true data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
+              'data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
               ' jqyoui-draggable="'+
               '{'+
                 'animate:false,'+
@@ -57,6 +57,15 @@ function (angular) {
           // once we have the template, scan it for controllers and
           // load the module.js if we have any
           var newScope = $scope.$new();
+
+          $scope.kbnJqUiDraggableOptions = {
+            revert: 'invalid',
+            helper: function(event) {
+              console.log(event);
+              return $('<div style="width:200px;height:100px;background: rgba(100,100,100,0.50);"/>');
+            },
+            placeholder: 'keep'
+          };
 
           // compile the module and uncloack. We're done
           function loadModule($module) {
