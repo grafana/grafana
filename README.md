@@ -38,15 +38,15 @@ Grafana is very easy to install. It is a client side web app with no backend. An
 
 # Installation
 - Download and extract the [latest release](https://github.com/asimov-deploy/asimov-deploy-winagent/releases/latest).
-- Edit config.js , the change graphiteUrl and elasticsearch to the correct urls. The urls entered here must be reachable by your browser.
+- Edit config.js, then change graphiteUrl and elasticsearch to point to the correct urls. The urls entered here must be reachable by your browser.
 - Point your browser to the installation.
 
 To run from master:
-- Clone repository
+- Clone this repository
 - Start a web server in src folder
 - For development you can use
   - npm install
-  - grunt server (starts node server)  
+  - grunt server (starts node server)
 
 # Graphite server config
 If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
@@ -80,9 +80,10 @@ If your Graphite web is proteced by basic authentication, you have to enable the
 # Contribute
 If you have any idea for improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
 
-Clone repository: 
+Clone repository:
 - npm install
 - grunt server (starts development web server in src folder)
+- grunt (runs jshint and less -> css compilation)
 - grunt build (creates minified & optimized javascript & partials)
 
 # Notice
