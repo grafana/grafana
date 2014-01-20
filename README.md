@@ -37,7 +37,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
 
 # Installation
-- Download and extract the [latest release](https://github.com/asimov-deploy/asimov-deploy-winagent/releases/latest).
+- Download and extract the [latest release](https://github.com/torkelo/grafana/releases).
 - Edit config.js, then change graphiteUrl and elasticsearch to point to the correct urls. The urls entered here must be reachable by your browser.
 - Point your browser to the installation.
 
