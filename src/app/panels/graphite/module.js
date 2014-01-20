@@ -438,7 +438,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.duplicate = function(addToRow) {
       addToRow = addToRow || $scope.row;
       var currentRowSpan = $scope.rowSpan(addToRow);
-      if (currentRowSpan <= 8) {
+      if (currentRowSpan <= 9) {
         addToRow.panels.push(angular.copy($scope.panel));
       }
       else {
