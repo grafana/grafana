@@ -21,7 +21,6 @@ function (angular,_) {
               return;
             }
 
-
             // Create a temp scope so we can discard changes to it if needed
             var tmpScope = scope.$new();
             tmpScope.panel = angular.copy(scope.panel);

@@ -35,7 +35,7 @@ function (angular) {
             '</span>' +
           '</span>'+
 
-          '<span ng-if="!panelMeta.menuItems" class="panel-text panel-title" ng-show="panel.title">' +
+          '<span ng-if="!panelMeta.menuItems" config-modal class="panel-text panel-title pointer" ng-show="panel.title">' +
             '{{panel.title}}' +
           '</span>'+
 
