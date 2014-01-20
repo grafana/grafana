@@ -349,34 +349,7 @@
             function(){
                 var pos = $(this).offset();
 
-                /*// check if the mouse is not already over the event
-                if ($(this).data("bouncing") == false || $(this).data("bouncing") == undefined) {
-
-                    // check the div is not already bouncing
-                    if ($(this).position().top == $(this).data("top")) {
-                        $(this).effect("bounce", {
-                            times: 3
-                        }, 300);
-                    }
-
-                    $(this).data("bouncing", true);
-                    _showTooltip(pos.left + $(this).width() / 2, pos.top, $(this).data("event"));
-                }*/
-
                 _showTooltip(pos.left + $(this).width() / 2, pos.top, $(this).data("event"));
-
-                if (event.min != event.max) {
-                    plot.setSelection({
-                        xaxis: {
-                            from: event.min,
-                            to: event.max
-                        },
-                        yaxis: {
-                            from: yaxis.min,
-                            to: yaxis.max
-                        }
-                    });
-                }
             },
             // mouseleave
             function(){
