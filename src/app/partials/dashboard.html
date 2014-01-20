@@ -11,7 +11,7 @@
 <div class="clearfix"></div>
 <div class="container-fluid main" ng-class="{'grafana-dashboard-hide-controls': dashboard.current.hideControls}">
   <div>
-    <div class="container" style="margin-top:10px; width:98%">
+    <div class="grafana-container container">
       <!-- Rows -->
       <div class="kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.current.rows" ng-style="row_style(row)">
         <div class="row-control">
