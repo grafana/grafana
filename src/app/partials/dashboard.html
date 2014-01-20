@@ -47,14 +47,6 @@
 
             <!-- Panels -->
             <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.span == 0 || panel.hide" class="span{{panel.span}} panel nospace" style="min-height:{{row.height}}; position:relative" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}">
-              <!-- Error Panel -->
-              <div class="row-fluid">
-                <div class="span12 alert-error panel-error" ng-hide="!panel.error">
-                  <a class="close" ng-click="panel.error=false">&times;</a>
-                  <i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}}
-                </div>
-              </div>
-
               <!-- Content Panel -->
               <div class="row-fluid" style="position:relative" ng-class="{'dragInProgress':dashboard.panelDragging}" >
                 <kibana-panel type="panel.type" ng-cloak></kibana-panel>

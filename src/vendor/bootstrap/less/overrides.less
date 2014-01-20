@@ -51,12 +51,19 @@ code, pre {
   background-color: @grayLighter;
 }
 
-.panelCont {
-  padding: 0px 10px 10px 10px;
+.panel-container {
+  padding: 0px 0px 0px 0px;
   background: @kibanaPanelBackground;
   margin: 0px;
-  //border: 1px solid rgba(100, 100, 100, 0.25);
-  //outline: 1px solid darken(@bodyBackground, 10%);
+}
+
+.panel-content {
+  padding: 0px 10px 10px 10px;
+}
+
+.panel-title {
+  border: 0px;
+  font-weight: bold;
 }
 
 div.editor-row {
@@ -229,12 +236,6 @@ form input.ng-invalid {
   visibility: visible;
   opacity: 1;
   z-index: 9999;
-}
-
-.panel-title {
-  border: 0px;
-  //text-transform: uppercase;
-  font-weight: bold;
 }
 
 .panel div.panel-extra div.panel-extra-container {

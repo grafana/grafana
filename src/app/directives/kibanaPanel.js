@@ -7,39 +7,52 @@ function (angular) {
   angular
     .module('kibana.directives')
     .directive('kibanaPanel', function($compile) {
-      var container = '<div class="panelCont"></div>';
 
-      var editorTemplate =
+      var container = '<div class="panel-container"></div>';
+      var content = '<div class="panel-content"></div>';
 
-        '<div class="row-fluid panel-extra"><div class="panel-extra-container">' +
+      var panelHeader =
+      '<div class="panel-header">'+
+        '<div class="row-fluid">' +
+          '<div class="span12 alert-error panel-error" ng-hide="!panel.error">' +
+            '<a class="close" ng-click="panel.error=false">&times;</a>' +
+            '<i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}}' +
+          '</div>' +
+        '</div>\n' +
 
-          '<span class="row-button extra" ng-show="panelMeta.loading == true">' +
-            '<span>'+
-              '<i class="icon-spinner icon-spin icon-large"></i>' +
-            '</span>'+
-          '</span>' +
+        '<div class="row-fluid panel-extra">' +
+          '<div class="panel-extra-container">' +
 
-          '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
-            '<span class="panel-text panel-title pointer" bs-dropdown="panelMeta.menuItems" tabindex="1" ' +
-            'data-drag=true data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
-            ' jqyoui-draggable="'+
-            '{'+
-              'animate:false,'+
-              'mutate:false,'+
-              'index:{{$index}},'+
-              'onStart:\'panelMoveStart\','+
-              'onStop:\'panelMoveStop\''+
-              '}"  ng-model="row.panels" ' +
-              '>' +
-              '{{panel.title}}' +
+            '<span class="row-button extra" ng-show="panelMeta.loading == true">' +
+              '<span>'+
+                '<i class="icon-spinner icon-spin icon-large"></i>' +
+              '</span>'+
             '</span>' +
-          '</span>'+
 
-          '<span ng-if="!panelMeta.menuItems" config-modal class="panel-text panel-title pointer" ng-show="panel.title">' +
-            '{{panel.title}}' +
-          '</span>'+
+            '<span ng-if="panelMeta.menuItems" class="dropdown" ng-show="panel.title">' +
+              '<span class="panel-text panel-title pointer" bs-dropdown="panelMeta.menuItems" tabindex="1" ' +
+              'data-drag=true data-jqyoui-options="{revert: \'invalid\',helper:\'clone\'}"'+
+              ' jqyoui-draggable="'+
+              '{'+
+                'animate:false,'+
+                'mutate:false,'+
+                'index:{{$index}},'+
+                'onStart:\'panelMoveStart\','+
+                'onStop:\'panelMoveStop\''+
+                '}"  ng-model="row.panels" ' +
+                '>' +
+                '{{panel.title}}' +
+              '</span>' +
+            '</span>'+
 
-        '</div></div>';
+            '<span ng-if="!panelMeta.menuItems" config-modal class="panel-text panel-title pointer" ng-show="panel.title">' +
+              '{{panel.title}}' +
+            '</span>'+
+
+          '</div>'+
+        '</div>\n'+
+      '</div>';
+
       return {
         restrict: 'E',
         link: function($scope, elem, attr) {
@@ -77,7 +90,9 @@ function (angular) {
               $controllers = $controllers.add($module.find('ngcontroller, [ng-controller], .ng-controller'));
 
               if ($controllers.length) {
-                $controllers.first().prepend(editorTemplate);
+                $controllers.first().prepend(panelHeader);
+                $controllers.first().find('.panel-header').nextAll().wrapAll(content);
+
                 $scope.require([
                   'panels/'+nameAsPath+'/module'
                 ], function() {
