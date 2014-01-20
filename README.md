@@ -75,6 +75,7 @@ If your Graphite web is proteced by basic authentication, you have to enable the
 - More panel types (not just graphs)
 - Use elasticsearch to search for metrics
 - Improve template support
+- Annotate graph by querying ElasticSearch for events (or other event sources)
 - Add support for other time series databases like InfluxDB
 
 # Contribute
