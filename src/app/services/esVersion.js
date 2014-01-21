@@ -16,7 +16,7 @@ function (angular, _, config) {
     var self = this;
 
     this.init = function() {
-      getVersions();
+      //getVersions();
     };
 
     var getVersions = function() {
