@@ -44,9 +44,9 @@ Grafana is very easy to install. It is a client side web app with no backend. An
 To run from master:
 - Clone this repository
 - Start a web server in src folder
-- For development you can use
-  - npm install
-  - grunt server (starts node server)
+- Or create a optimized & minified build:
+-- npm install (requires nodejs)
+-- grunt build
 
 # Graphite server config
 If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
@@ -79,13 +79,12 @@ If your Graphite web is proteced by basic authentication, you have to enable the
 - Add support for other time series databases like InfluxDB
 
 # Contribute
-If you have any idea for improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
+If you have any idea for an improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
 
 Clone repository:
 - npm install
 - grunt server (starts development web server in src folder)
 - grunt (runs jshint and less -> css compilation)
-- grunt build (creates minified & optimized javascript & partials)
 
 # Notice
 This software is based on the great log dashboard [kibana](https://github.com/elasticsearch/kibana).
