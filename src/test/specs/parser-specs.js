@@ -13,6 +13,24 @@ define([
       expect(rootNode.segments[0].value).to.be('metric');
     });
 
+    it('simple metric expression with curly braces', function() {
+      var parser = new Parser('metric.se1-{count, max}');
+      var rootNode = parser.getAst();
+
+      expect(rootNode.type).to.be('metric');
+      expect(rootNode.segments.length).to.be(2);
+      expect(rootNode.segments[1].value).to.be('se1-{count,max}');
+    });
+
+    it('simple metric expression with curly braces at start of segment and with post chars', function() {
+      var parser = new Parser('metric.{count, max}-something.count');
+      var rootNode = parser.getAst();
+
+      expect(rootNode.type).to.be('metric');
+      expect(rootNode.segments.length).to.be(3);
+      expect(rootNode.segments[1].value).to.be('{count,max}-something');
+    });
+
     it('simple function', function() {
       var parser = new Parser('sum(test)');
       var rootNode = parser.getAst();

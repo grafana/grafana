@@ -21,6 +21,16 @@ define([
       expect(tokens[4].value).to.be('se1-server-*');
     });
 
+    it('should tokenize metric expression with curly braces', function() {
+      var lexer = new Lexer('metric.se1-{first, second}.count');
+      var tokens = lexer.tokenize();
+      expect(tokens.length).to.be(10);
+      expect(tokens[3].type).to.be('{');
+      expect(tokens[4].value).to.be('first');
+      expect(tokens[5].value).to.be(',');
+      expect(tokens[6].value).to.be('second');
+    });
+
 
     it('should tokenize functions and args', function() {
       var lexer = new Lexer("sum(metric.test, 12, 'test')");

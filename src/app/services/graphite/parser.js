@@ -29,12 +29,47 @@ define([
       }
     },
 
-    metricSegment: function() {
-      if (this.match('identifier')) {
-        this.index++;
+    curlyBraceSegment: function() {
+      if (this.match('identifier', '{') || this.match('{')) {
+
+        var curlySegment = "";
+
+        while(!this.match('') && !this.match('}')) {
+          curlySegment += this.consumeToken().value;
+        }
+
+        if (!this.match('}')) {
+          this.errorMark("Expected closing '}'");
+        }
+
+        curlySegment += this.consumeToken().value;
+
+        // if curly segment is directly followed by identifier
+        // include it in the segment
+        if (this.match('identifier')) {
+          curlySegment += this.consumeToken().value;
+        }
+
         return {
           type: 'segment',
-          value: this.tokens[this.index-1].value
+          value: curlySegment
+        };
+      }
+      else {
+        return null;
+      }
+    },
+
+    metricSegment: function() {
+      var curly = this.curlyBraceSegment();
+      if (curly) {
+        return curly;
+      }
+
+      if (this.match('identifier')) {
+        return {
+          type: 'segment',
+          value: this.consumeToken().value
         };
       }
 
@@ -42,7 +77,7 @@ define([
         this.errorMark('Expected metric identifier');
       }
 
-      this.index++;
+      this.consumeToken();
 
       if (!this.match('identifier')) {
         this.errorMark('Expected identifier after templateStart');
@@ -50,16 +85,14 @@ define([
 
       var node = {
         type: 'template',
-        value: this.tokens[this.index].value
+        value: this.consumeToken().value
       };
-
-      this.index++;
 
       if (!this.match('templateEnd')) {
         this.errorMark('Expected templateEnd');
       }
 
-      this.index++;
+      this.consumeToken();
       return node;
     },
 
@@ -76,7 +109,7 @@ define([
       node.segments.push(this.metricSegment());
 
       while(this.match('.')) {
-        this.index++;
+        this.consumeToken();
 
         var segment = this.metricSegment();
         if (!segment) {
@@ -96,10 +129,11 @@ define([
 
       var node = {
         type: 'function',
-        name: this.tokens[this.index].value,
+        name: this.consumeToken().value,
       };
 
-      this.index += 2;
+      // consume left paranthesis
+      this.consumeToken();
 
       node.params = this.functionParameters();
 
@@ -107,7 +141,7 @@ define([
         this.errorMark('Expected closing paranthesis');
       }
 
-      this.index++;
+      this.consumeToken();
 
       return node;
     },
@@ -127,7 +161,7 @@ define([
         return [param];
       }
 
-      this.index++;
+      this.consumeToken();
       return [param].concat(this.functionParameters());
     },
 
@@ -136,11 +170,9 @@ define([
         return null;
       }
 
-      this.index++;
-
       return {
         type: 'number',
-        value: parseInt(this.tokens[this.index-1].value, 10)
+        value: parseInt(this.consumeToken().value, 10)
       };
     },
 
@@ -149,12 +181,10 @@ define([
         return null;
       }
 
-      var token = this.tokens[this.index];
+      var token = this.consumeToken();
       if (token.isUnclosed) {
         throw { message: 'Unclosed string parameter', pos: token.pos };
       }
-
-      this.index++;
 
       return {
         type: 'string',
@@ -169,6 +199,12 @@ define([
         message: text + " instead found " + type,
         pos: currentToken ? currentToken.pos : this.lexer.char
       };
+    },
+
+    // returns token value and incre
+    consumeToken: function() {
+      this.index++;
+      return this.tokens[this.index-1];
     },
 
     matchToken: function(type, index) {

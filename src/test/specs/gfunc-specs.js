@@ -60,7 +60,7 @@ define([
 
     it('should return function categories', function() {
       var catIndex = gfunc.getCategories();
-      expect(catIndex.Special.length).to.equal(7);
+      expect(catIndex.Special.length).to.equal(8);
     });
 
   });

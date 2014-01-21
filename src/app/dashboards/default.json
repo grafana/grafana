@@ -81,7 +81,7 @@
           ],
           "lines": true,
           "fill": 1,
-          "linewidth": 1,
+          "linewidth": 2,
           "points": false,
           "pointradius": 5,
           "bars": false,
