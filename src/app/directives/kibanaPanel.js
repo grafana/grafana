@@ -61,8 +61,7 @@ function (angular, $) {
 
           $scope.kbnJqUiDraggableOptions = {
             revert: 'invalid',
-            helper: function(event) {
-              console.log(event);
+            helper: function() {
               return $('<div style="width:200px;height:100px;background: rgba(100,100,100,0.50);"/>');
             },
             placeholder: 'keep'

@@ -505,5 +505,14 @@ function($, _, moment) {
     return (size.toFixed(decimals) + ext);
   };
 
+  kbn.msFormat = function(size) {
+    if (size < 500) {
+      return size.toFixed(0) + " ms";
+    }
+    else {
+      return (size / 1000).toFixed(0) + " s";
+    }
+  };
+
   return kbn;
 });
