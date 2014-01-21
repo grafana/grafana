@@ -5,7 +5,6 @@ define([
   './timer',
   './panelMove',
   './graphite/graphiteSrv',
-  './esVersion',
   './keyboardManager',
 ],
 function () {});
