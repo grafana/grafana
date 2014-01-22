@@ -14,8 +14,8 @@ function (angular, _, $, config) {
     this.query = function(options) {
       try {
         var graphOptions = {
-          from: $.plot.formatDate(options.range.from, '%H%:%M_%Y%m%d'),
-          until: $.plot.formatDate(options.range.to, '%H%:%M_%Y%m%d'),
+          from: this.translateTime(options.range.from),
+          until: this.translateTime(options.range.to),
           targets: options.targets,
           maxDataPoints: options.maxDataPoints
         };
@@ -32,6 +32,22 @@ function (angular, _, $, config) {
       catch(err) {
         return $q.reject(err);
       }
+    };
+
+    this.translateTime = function(date) {
+      if (_.isDate(date)) {
+        return $.plot.formatDate(date, '%H%:%M_%Y%m%d');
+      }
+
+      if (date === 'now') {
+        return 'now';
+      }
+
+      date = date.substring(3);
+      date = date.replace('m', 'min');
+      date = date.replace('M', 'mon');
+
+      return date;
     };
 
     this.match = function(targets, graphiteTargetStr) {

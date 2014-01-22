@@ -320,7 +320,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.updateTimeRange();
 
       var graphiteQuery = {
-        range: $scope.range,
+        range: filterSrv.timeRange(false),
         targets: $scope.panel.targets,
         maxDataPoints: $scope.panel.span * 50
       };
