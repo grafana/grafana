@@ -15,7 +15,7 @@ function (Settings) {
 
     default_route: '/dashboard/file/default.json',
 
-    grafana_index: "kibana-int",
+    grafana_index: "grafana-dash",
 
     panel_names: [
       'text',
