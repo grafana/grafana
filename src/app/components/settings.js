@@ -1,5 +1,8 @@
-define(['underscore'],
-function (_) {
+define([
+  'underscore',
+  'crypto',
+],
+function (_, crypto) {
   "use strict";
 
   return function Settings (options) {
@@ -23,6 +26,16 @@ function (_) {
     _.each(defaults, function(value, key) {
       settings[key] = typeof options[key] !== 'undefined' ? options[key]  : defaults[key];
     });
+
+    var url = settings.graphiteUrl;
+    var passwordAt = url.indexOf('@');
+    if (passwordAt > 0) {
+      var userStart = url.indexOf('//') + 2;
+      var userAndPassword = url.substring(userStart, passwordAt);
+      var bytes = crypto.charenc.Binary.stringToBytes(userAndPassword);
+      var base64 = crypto.util.bytesToBase64(bytes);
+      settings.graphiteBasicAuth = base64;
+    }
 
     return settings;
   };

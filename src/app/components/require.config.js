@@ -21,6 +21,7 @@ require.config({
     timepicker:               '../vendor/angular/timepicker',
     datepicker:               '../vendor/angular/datepicker',
     bindonce:                 '../vendor/angular/bindonce',
+    crypto:                   '../vendor/crypto.min',
 
     underscore:               'components/underscore.extended',
     'underscore-src':         '../vendor/underscore',
@@ -47,6 +48,10 @@ require.config({
   shim: {
     underscore: {
       exports: '_'
+    },
+
+    crypto: {
+      exports: 'Crypto'
     },
 
     angular: {

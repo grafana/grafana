@@ -11,6 +11,11 @@ function (Settings) {
 
     elasticsearch: "http://"+window.location.hostname+":9200",
 
+    /**
+     * For Basic authentication use: http://username:password@domain.com
+     * Basic authentication requires special nginx or apache2 headers for cross origin comain to work
+     * Check install documentation on github
+     */
     graphiteUrl: "http://"+window.location.hostname+":8080",
 
     default_route: '/dashboard/file/default.json',

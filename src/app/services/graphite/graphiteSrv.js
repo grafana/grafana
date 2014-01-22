@@ -2,7 +2,7 @@ define([
   'angular',
   'underscore',
   'jquery',
-  'config'
+  'config',
 ],
 function (angular, _, $, config) {
   'use strict';
@@ -22,11 +22,13 @@ function (angular, _, $, config) {
 
         var params = buildGraphitePostParams(graphOptions);
 
-        return $http({
+        return doGraphiteRequest({
           method: 'POST',
           url: config.graphiteUrl + '/render/',
           data: params.join('&'),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }
         });
       }
       catch(err) {
@@ -76,7 +78,7 @@ function (angular, _, $, config) {
       }
 
       var url = config.graphiteUrl + '/metrics/find/?query=' + interpolated;
-      return $http.get(url)
+      return doGraphiteRequest({method: 'GET', url: url})
         .then(function(results) {
           return _.map(results.data, function(metric) {
             return {
@@ -89,7 +91,7 @@ function (angular, _, $, config) {
 
     this.listDashboards = function(query) {
       var url = config.graphiteUrl + '/dashboard/find/';
-      return $http.get(url, {params: {query: query || ''}})
+      return doGraphiteRequest({ method: 'GET',  url: url, params: {query: query || ''} })
         .then(function(results) {
           return results.data.dashboards;
         });
@@ -97,8 +99,18 @@ function (angular, _, $, config) {
 
     this.loadDashboard = function(dashName) {
       var url = config.graphiteUrl + '/dashboard/load/' + encodeURIComponent(dashName);
-      return $http.get(url);
+      return doGraphiteRequest({method: 'GET', url: url});
     };
+
+    function doGraphiteRequest(options) {
+      if (config.graphiteBasicAuth) {
+        options.withCredentials = true;
+        options.headers = options.headers || {};
+        options.headers.Authorization = 'Basic ' + config.graphiteBasicAuth;
+      }
+
+      return $http(options);
+    }
 
     function buildGraphitePostParams(options) {
       var clean_options = [];
