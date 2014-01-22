@@ -68,6 +68,13 @@ If your Graphite web is proteced by basic authentication, you have to enable the
 </Location>
 ```
 
+If you use basic authentication you need to set **Access-Control-Allow-Origin and add **Access-Control-Allow-Credentials. Example:
+```
+Header set Access-Control-Allow-Origin "http://mygrafana.com:5656"
+Header set Access-Control-Allow-Credentials true
+```
+
+
 # Roadmap
 - Improve and refine the target parser and editing
 - Improve graphite import feature
