@@ -1,6 +1,7 @@
 # Grafana - Graphite Dashboard
-
 A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and an overview.
+
+![](http://grafana.org/assets/img/edit_dashboards.png)
 
 # Features
 ## Graphite Target Editor
@@ -47,6 +48,9 @@ To run from master:
 - Or create a optimized & minified build:
 -- npm install (requires nodejs)
 -- grunt build
+
+When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
+an introduction on how to use Grafana.
 
 # Graphite server config
 If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
