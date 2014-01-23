@@ -28,11 +28,11 @@
     </div>
     <div class="editor-option">
       <label class="small">Left Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes']" ng-change="render()"></select>
+      <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
     </div>
     <div class="editor-option">
       <label class="small">Right Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes']" ng-change="render()"></select>
+      <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
     </div>
   </div>
   <div class="section">

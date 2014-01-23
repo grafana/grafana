@@ -691,6 +691,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
               return kbn.shortFormat(val,0);
             };
           }
+          if (format === 'ms') {
+            axis.tickFormatter = kbn.msFormat;
+          }
         }
 
         function time_format(interval) {
@@ -729,6 +732,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
             }
             if(item.series.info.y_format === 'short') {
               value = kbn.shortFormat(value,2);
+            }
+            if(item.series.info.y_format === 'ms') {
+              value = kbn.msFormat(value);
             }
             timestamp = scope.panel.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :

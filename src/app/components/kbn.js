@@ -506,11 +506,14 @@ function($, _, moment) {
   };
 
   kbn.msFormat = function(size) {
-    if (size < 500) {
+    if (size < 1000) {
       return size.toFixed(0) + " ms";
     }
+    else if (size < 60000) {
+      return (size / 1000).toFixed(1) + " s";
+    }
     else {
-      return (size / 1000).toFixed(0) + " s";
+      return (size / 60000).toFixed(1) + " min";
     }
   };
 

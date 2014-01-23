@@ -4,10 +4,11 @@
       class="histogram-legend">
     <i  class='icon-minus pointer'
         ng-style="{color: series.color}"
-        ng-click="toggleSeries(series)">
+        bs-popover="'colorPopup.html'"
+        >
     </i>
     <span class='small histogram-legend-item'>
-      <a bs-popover="'colorPopup.html'" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
+      <a ng-click="toggleSeries(series)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
         {{series.alias}}
       </a>
     </span>
