@@ -3,8 +3,9 @@ define([
   'underscore',
   'jquery',
   'config',
+  'kbn'
 ],
-function (angular, _, $, config) {
+function (angular, _, $, config, kbn) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -37,19 +38,21 @@ function (angular, _, $, config) {
     };
 
     this.translateTime = function(date) {
-      if (_.isDate(date)) {
-        return $.plot.formatDate(date, '%H%:%M_%Y%m%d');
+      if (_.isString(date)) {
+        if (date === 'now') {
+          return 'now';
+        }
+        else if (date.indexOf('now') > 0) {
+          date = date.substring(3);
+          date = date.replace('m', 'min');
+          date = date.replace('M', 'mon');
+          return date;
+        }
+
+        date = kbn.parseDate(date);
       }
 
-      if (date === 'now') {
-        return 'now';
-      }
-
-      date = date.substring(3);
-      date = date.replace('m', 'min');
-      date = date.replace('M', 'mon');
-
-      return date;
+      return $.plot.formatDate(date, '%H%:%M_%Y%m%d');
     };
 
     this.match = function(targets, graphiteTargetStr) {
