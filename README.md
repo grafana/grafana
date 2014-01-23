@@ -56,8 +56,12 @@ Header set Access-Control-Allow-Methods "GET, OPTIONS"
 Header set Access-Control-Allow-Headers "origin, authorization, accept"
 ```
 
-If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS. This looks like the following for Apache:
+If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS, origin
+(no wildcards are allowed in this case) and add Access-Control-Allow-Credentials. This looks like the following for Apache:
 ```
+Header set Access-Control-Allow-Origin "http://mygrafana.com:5656"
+Header set Access-Control-Allow-Credentials true
+
 <Location />
     AuthName "graphs restricted"
     AuthType Basic
@@ -67,13 +71,6 @@ If your Graphite web is proteced by basic authentication, you have to enable the
     </LimitExcept>
 </Location>
 ```
-
-If you use basic authentication you need to set **Access-Control-Allow-Origin and add **Access-Control-Allow-Credentials. Example:
-```
-Header set Access-Control-Allow-Origin "http://mygrafana.com:5656"
-Header set Access-Control-Allow-Credentials true
-```
-
 
 # Roadmap
 - Improve and refine the target parser and editing
