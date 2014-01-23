@@ -532,7 +532,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           }
 
           try {
-            elem.css({ height:scope.panel.height || scope.row.height });
+            elem.css({ height: scope.height || scope.panel.height || scope.row.height });
           } catch(e) { return; }
 
           _.each(data, function(series) {
