@@ -1,6 +1,11 @@
+
+
 <div class="editor-row">
   <div class="section">
     <h5>Chart Options</h5>
+    <div class="editor-option">
+      <label class="small">Renderer</label><select class="input-mini" ng-model="panel.renderer" ng-options="f for f in ['flot', 'png']" ng-change="get_data()"></select>
+    </div>
     <div class="editor-option">
         <label class="small">Time correction</label>
         <select ng-model="panel.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>

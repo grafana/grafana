@@ -12,6 +12,7 @@ function (angular, _, $, config, kbn, moment) {
   var module = angular.module('kibana.services');
 
   module.service('graphiteSrv', function($http, $q, filterSrv) {
+    var graphiteRenderUrl = config.graphiteUrl + "/render";
 
     this.query = function(options) {
       try {
@@ -19,14 +20,19 @@ function (angular, _, $, config, kbn, moment) {
           from: this.translateTime(options.range.from),
           until: this.translateTime(options.range.to),
           targets: options.targets,
+          renderer: options.renderer,
           maxDataPoints: options.maxDataPoints
         };
 
-        var params = buildGraphitePostParams(graphOptions);
+        var params = buildGraphiteParams(graphOptions);
+
+        if (options.renderer === 'png') {
+          return $q.when(graphiteRenderUrl + '?' + params.join('&'));
+        }
 
         return doGraphiteRequest({
           method: 'POST',
-          url: config.graphiteUrl + '/render/',
+          url: graphiteRenderUrl,
           data: params.join('&'),
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -122,11 +128,13 @@ function (angular, _, $, config, kbn, moment) {
       return $http(options);
     }
 
-    function buildGraphitePostParams(options) {
+    function buildGraphiteParams(options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
 
-      options['format'] = 'json';
+      if (options.renderer === 'flot') {
+        options['format'] = 'json';
+      }
 
       $.each(options, function (key, value) {
         if ($.inArray(key, graphite_options) === -1) {
