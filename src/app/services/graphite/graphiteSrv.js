@@ -42,7 +42,7 @@ function (angular, _, $, config, kbn) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') > 0) {
+        else if (date.indexOf('now') >= 0) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
