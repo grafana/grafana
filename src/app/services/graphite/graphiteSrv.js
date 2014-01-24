@@ -52,7 +52,13 @@ function (angular, _, $, config, kbn) {
         date = kbn.parseDate(date);
       }
 
-      return $.plot.formatDate(date, '%H%:%M_%Y%m%d');
+      date = moment.utc(date).local();
+
+      if (config.timezoneOffset) {
+        date = date.zone(config.timezoneOffset)
+      }
+
+      return date.format('HH:mm_YYYYMMDD');
     };
 
     this.match = function(targets, graphiteTargetStr) {

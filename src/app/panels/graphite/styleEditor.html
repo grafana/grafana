@@ -2,6 +2,10 @@
   <div class="section">
     <h5>Chart Options</h5>
     <div class="editor-option">
+        <label class="small">Time correction</label>
+        <select ng-model="panel.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
+    </div>
+    <div class="editor-option">
       <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
     </div>
     <div class="editor-option">

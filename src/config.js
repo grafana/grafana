@@ -20,6 +20,12 @@ function (Settings) {
 
     default_route: '/dashboard/file/default.json',
 
+    /**
+     * If your graphite server has another timezone than you & users browsers specify the offset here
+     * Example: "-0500" (for UTC - 5 hours)
+     */
+    timezoneOffset: null,
+
     grafana_index: "grafana-dash",
 
     panel_names: [
