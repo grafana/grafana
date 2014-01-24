@@ -70,6 +70,7 @@ function (angular, app, _) {
         panel = {
           type: 'graphite',
           span: 12 / graphsPerRow,
+          title: graph[1].title,
           targets: []
         };
 
