@@ -27,6 +27,7 @@ function (Settings) {
     timezoneOffset: null,
 
     grafana_index: "grafana-dash",
+    grafana_metrics_index : 'grafana-metrics',
 
     panel_names: [
       'text',
