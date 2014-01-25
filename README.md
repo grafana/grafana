@@ -46,8 +46,8 @@ To run from master:
 - Clone this repository
 - Start a web server in src folder
 - Or create a optimized & minified build:
--- npm install (requires nodejs)
--- grunt build
+ - npm install (requires nodejs)
+ - grunt build
 
 When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
 an introduction on how to use Grafana.
