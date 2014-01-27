@@ -3,13 +3,13 @@ define([
   'underscore',
   'jquery',
   'config',
-  'kbn'
+  'kbn',
+  'moment'
 ],
-function (angular, _, $, config, kbn) {
+function (angular, _, $, config, kbn, moment) {
   'use strict';
 
   var module = angular.module('kibana.services');
-  var moment = require('moment');
 
   module.service('graphiteSrv', function($http, $q, filterSrv) {
 
