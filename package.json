@@ -10,6 +10,7 @@
     "url": "http://github.com/torkelo/grafana.git"
   },
   "devDependencies": {
+    "moment": "~2.5.1",
     "rjs-build-analysis": "0.0.3",
     "grunt": "~0.4.0",
     "grunt-ngmin": "0.0.3",
