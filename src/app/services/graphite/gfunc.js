@@ -138,7 +138,7 @@ function (_) {
   });
 
   addFuncDef({
-    name: 'derivate',
+    name: 'derivative',
     category: categories.Transform,
   });
 
