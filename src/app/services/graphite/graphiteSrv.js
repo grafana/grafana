@@ -3,9 +3,10 @@ define([
   'underscore',
   'jquery',
   'config',
-  'kbn'
+  'kbn',
+  'moment'
 ],
-function (angular, _, $, config, kbn) {
+function (angular, _, $, config, kbn, moment) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -55,7 +56,7 @@ function (angular, _, $, config, kbn) {
       date = moment.utc(date).local();
 
       if (config.timezoneOffset) {
-        date = date.zone(config.timezoneOffset)
+        date = date.zone(config.timezoneOffset);
       }
 
       return date.format('HH:mm_YYYYMMDD');
