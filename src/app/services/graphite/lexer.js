@@ -116,6 +116,7 @@ define([
 
   for (var i = 0; i < 128; i++) {
     identifierStartTable[i] =
+      i >= 48 && i <= 57 || // 0-9
       i === 36 ||           // $
       i >= 65 && i <= 90 || // A-Z
       i === 95 ||           // _
@@ -183,10 +184,10 @@ define([
       }
 
       match =
-        this.scanIdentifier() ||
-        this.scanTemplateSequence() ||
         this.scanPunctuator() ||
-        this.scanNumericLiteral();
+        this.scanNumericLiteral() ||
+        this.scanIdentifier() ||
+        this.scanTemplateSequence();
 
       if (match) {
         this.skip(match.value.length);
@@ -402,7 +403,6 @@ define([
       }
 
       // Numbers must start either with a decimal digit or a point.
-
       if (char !== "." && !isDecimalDigit(char)) {
         return null;
       }

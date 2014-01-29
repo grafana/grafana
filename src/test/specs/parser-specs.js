@@ -13,6 +13,17 @@ define([
       expect(rootNode.segments[0].value).to.be('metric');
     });
 
+    it('simple metric expression with numbers in segments', function() {
+      var parser = new Parser('metric.10.15_20.5');
+      var rootNode = parser.getAst();
+
+      expect(rootNode.type).to.be('metric');
+      expect(rootNode.segments.length).to.be(4);
+      expect(rootNode.segments[1].value).to.be('10');
+      expect(rootNode.segments[2].value).to.be('15_20');
+      expect(rootNode.segments[3].value).to.be('5');
+    });
+
     it('simple metric expression with curly braces', function() {
       var parser = new Parser('metric.se1-{count, max}');
       var rootNode = parser.getAst();

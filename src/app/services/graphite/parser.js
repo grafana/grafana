@@ -66,7 +66,7 @@ define([
         return curly;
       }
 
-      if (this.match('identifier')) {
+      if (this.match('identifier') || this.match('number')) {
         return {
           type: 'segment',
           value: this.consumeToken().value
@@ -97,7 +97,7 @@ define([
     },
 
     metricExpression: function() {
-      if (!this.match('templateStart') && !this.match('identifier')) {
+      if (!this.match('templateStart') && !this.match('identifier') && !this.match('number')) {
         return null;
       }
 
@@ -153,8 +153,8 @@ define([
 
       var param =
         this.functionCall() ||
-        this.metricExpression() ||
         this.numericLiteral() ||
+        this.metricExpression() ||
         this.stringLiteral();
 
       if (!this.match(',')) {
