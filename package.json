@@ -43,7 +43,8 @@
     "karma": "~0.10.9",
     "grunt-karma": "~0.6.2",
     "karma-mocha": "~0.1.1",
-    "karma-expect": "~1.0.0"
+    "karma-expect": "~1.0.0",
+    "grunt-cli": "~0.1.13"
   },
   "license": "Apache License"
 }
