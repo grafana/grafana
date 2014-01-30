@@ -8,5 +8,6 @@ define([
   './ngModelOnBlur',
   './tip',
   './confirmClick',
-  './configModal'
+  './configModal',
+  './grafanaGraph'
 ], function () {});
