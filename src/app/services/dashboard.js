@@ -47,7 +47,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     // An elasticJS client to use
-    var ejs = ejsResource(config.elasticsearch);
+    var ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
     var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
 
     // Store a reference to this
@@ -286,13 +286,21 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     this.elasticsearch_load = function(type,id) {
-      return $http({
+      var options = {
         url: config.elasticsearch + "/" + config.grafana_index + "/"+type+"/"+id+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(angular.fromJson(response)._source.dashboard, $routeParams);
         }
-      }).error(function(data, status) {
+      };
+      if (config.elasticsearchBasicAuth) {
+        options.withCredentials = true;
+        options.headers = {
+          "Authorization": "Basic " + config.elasticsearchBasicAuth
+        };
+      }
+      return $http(options)
+      .error(function(data, status) {
         if(status === 0) {
           alertSrv.set('Error',"Could not contact Elasticsearch at "+config.elasticsearch+
             ". Please ensure that Elasticsearch is reachable from your system." ,'error');

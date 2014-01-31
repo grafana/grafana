@@ -58,7 +58,7 @@ function (angular, $, config, _) {
 
       $scope.reset_row();
 
-      $scope.ejs = ejsResource(config.elasticsearch);
+      $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
 
       $scope.bindKeyboardShortcuts();
     };
