@@ -11,6 +11,7 @@ function (Settings) {
 
     elasticsearch: "http://"+window.location.hostname+":9200",
 
+    elasticsearch_all_disabled: false,
     /**
      * For Basic authentication use: http://username:password@domain.com
      * Basic authentication requires special nginx or apache2 headers for cross origin comain to work

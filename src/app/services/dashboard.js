@@ -380,7 +380,13 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.elasticsearch_list = function(query,count) {
       var request = ejs.Request().indices(config.grafana_index).types('dashboard');
       return request.query(
-        ejs.QueryStringQuery(query || '*')
+        var q = null;
+        if(config.elasticsearch_all_disabled){
+          q = ('title:' + (query || '*'))
+        }else{
+          q = (query || '*')
+        }
+        ejs.QueryStringQuery(q)
         ).size(count).doSearch(
           // Success
           function(result) {
