@@ -13,12 +13,13 @@ function (_, crypto) {
      * @type {Object}
      */
     var defaults = {
-      elasticsearch     : "http://"+window.location.hostname+":9200",
-      graphiteUrl       : "http://"+window.location.hostname+":8080",
-      panel_names       : [],
-      default_route     : '/dashboard/file/default.json',
-      grafana_index     : 'grafana-dash',
-      timezoneOffset    : null,
+      elasticsearch                 : "http://"+window.location.hostname+":9200",
+      graphiteUrl                   : "http://"+window.location.hostname+":8080",
+      panel_names                   : [],
+      default_route                 : '/dashboard/file/default.json',
+      grafana_index                 : 'grafana-dash',
+      elasticsearch_all_disabled    : false,
+      timezoneOffset                : null,
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
