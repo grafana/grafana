@@ -11,6 +11,10 @@ function (Settings) {
 
     elasticsearch: "http://"+window.location.hostname+":9200",
 
+    /**
+      If you have _all query disabled on Elastic search then this must be set to true
+      https://github.com/torkelo/grafana/issues/24
+    **/
     elasticsearch_all_disabled: false,
     /**
      * For Basic authentication use: http://username:password@domain.com
