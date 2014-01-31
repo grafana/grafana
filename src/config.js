@@ -15,6 +15,7 @@ function (Settings) {
      */
     elasticsearch: "http://"+window.location.hostname+":9200",
 
+    elasticsearch_all_disabled: false,
     /**
      * graphite-web url:
      * For Basic authentication use: http://username:password@domain.com
