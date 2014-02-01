@@ -40,7 +40,7 @@ function (angular, $) {
                 'onStop:\'panelMoveStop\''+
                 '}"  ng-model="row.panels" ' +
                 '>' +
-                '{{panel.title}}' +
+                '{{panel.title || "No title"}}' +
               '</span>' +
             '</span>'+
 
