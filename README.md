@@ -1,4 +1,5 @@
-# Grafana - Graphite Dashboard [![Build Status](https://api.travis-ci.org/torkelo/grafana.png)](https://travis-ci.org/torkelo/grafana)
+[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/torkelo/grafana.png)](https://travis-ci.org/torkelo/grafana)
+=================
 A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and an overview.
 
 ![](http://grafana.org/assets/img/edit_dashboards.png)
