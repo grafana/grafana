@@ -385,14 +385,12 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       );
     };
 
-    this.elasticsearch_list = function(query,count) {
+    this.elasticsearch_list = function(query, count) {
       var request = ejs.Request().indices(config.grafana_index).types('dashboard');
-      var q = null;
-      if(config.elasticsearch_all_disabled==true){
-        q = ('title:' + (query || '*'))
-      }else{
-        q = (query || '*')
-      }
+      // if elasticsearch has disabled _all field we need
+      // need to specifiy field here
+      var q = 'title:' + (query || '*');
+
       return request.query(
         ejs.QueryStringQuery(q)
         ).size(count).doSearch(
