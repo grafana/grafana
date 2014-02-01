@@ -9,11 +9,17 @@ function (Settings) {
 
   return new Settings({
 
+    /**
+     * elasticsearch url:
+     * For Basic authentication use: http://username:password@domain.com:9200
+     */
     elasticsearch: "http://"+window.location.hostname+":9200",
 
     /**
+     * graphite-web url:
      * For Basic authentication use: http://username:password@domain.com
-     * Basic authentication requires special nginx or apache2 headers for cross origin comain to work
+     * Basic authentication requires special HTTP headers to be configured
+     * in nginx or apache for cross origin domain sharing to work (CORS).
      * Check install documentation on github
      */
     graphiteUrl: "http://"+window.location.hostname+":8080",
