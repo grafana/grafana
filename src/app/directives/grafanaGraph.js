@@ -46,15 +46,25 @@ function (angular, $, kbn, moment, _) {
           render_panel();
         });
 
-        // Function for rendering panel
-        function render_panel() {
-          if (!data) {
-            return;
-          }
-
+        function setElementHeight() {
           try {
             elem.css({ height: scope.height || scope.panel.height || scope.row.height });
-          } catch(e) { return; }
+            return true;
+          } catch(e) { // IE throws errors sometimes
+            return false;
+          }
+        }
+
+        // Function for rendering panel
+        function render_panel() {
+          if (!data) { return; }
+
+          if (!setElementHeight()) { return; }
+
+          if (_.isString(data)) {
+            render_panel_as_graphite_png();
+            return;
+          }
 
           _.each(data, function(series) {
             series.label = series.info.alias;
@@ -123,24 +133,7 @@ function (angular, $, kbn, moment, _) {
             }
           };
 
-          if(scope.panel.annotate.enable) {
-            options.events = {
-              levels: 1,
-              data: scope.annotations,
-              types: {
-                'annotation': {
-                  level: 1,
-                  icon: {
-                    icon: "icon-tag icon-flip-vertical",
-                    size: 20,
-                    color: "#222",
-                    outline: "#bbb"
-                  }
-                }
-              }
-              //xaxis: int    // the x axis to attach events to
-            };
-          }
+          addAnnotations(options);
 
           if(scope.panel.interactive) {
             options.selection = { mode: "x", color: '#666' };
@@ -170,6 +163,55 @@ function (angular, $, kbn, moment, _) {
 
           plot = $.plot(elem, data, options);
 
+          addAxisLabels();
+        }
+
+        function render_panel_as_graphite_png() {
+          data += '&width=' + elem.width();
+          data += '&height=' + elem.css('height').replace('px', '');
+          data += '&bgcolor=1f1f1f'; // @grayDarker & @kibanaPanelBackground
+          data += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
+          data += scope.panel.stack ? '&areaMode=stacked' : '';
+          data += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
+          data += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
+          data += scope.panel.steppedLine ? '&lineMode=staircase' : '';
+
+          switch(scope.panel.nullPointMode) {
+          case 'connected':
+            data += '&lineMode=connected';
+            break;
+          case 'null':
+            break; // graphite default lineMode
+          case 'null as zero':
+            data += "&drawNullAsZero=true";
+            break;
+          }
+
+          elem.html('<img src="' + data + '"></img>');
+        }
+
+
+        function addAnnotations(options) {
+          if(scope.panel.annotate.enable) {
+            options.events = {
+              levels: 1,
+              data: scope.annotations,
+              types: {
+                'annotation': {
+                  level: 1,
+                  icon: {
+                    icon: "icon-tag icon-flip-vertical",
+                    size: 20,
+                    color: "#222",
+                    outline: "#bbb"
+                  }
+                }
+              }
+            };
+          }
+        }
+
+        function addAxisLabels() {
           if (scope.panel.leftYAxisLabel) {
             elem.css('margin-left', '10px');
             var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>")
@@ -182,13 +224,12 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
-        function configureAxisOptions(data, options)
-        {
+        function configureAxisOptions(data, options) {
           var defaults = {
             position: 'left',
             show: scope.panel['y-axis'],
             min: scope.panel.grid.min,
-            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max
+            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
           };
 
           options.yaxes.push(defaults);

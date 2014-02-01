@@ -481,38 +481,5 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   });
 
 
-          if (_.isString(data)) {
-            render_panel_as_graphite_png();
-            return;
-          }
-          addAxisLabels();
-        }
-
-        function render_panel_as_graphite_png() {
-          data += '&width=' + elem.width();
-          data += '&height=' + elem.css('height').replace('px', '');
-          data += '&bgcolor=1f1f1f'; // @grayDarker & @kibanaPanelBackground
-          data += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
-          data += scope.panel.stack ? '&areaMode=stacked' : ''
-          data += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
-          data += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
-          data += scope.panel.steppedLine ? '&lineMode=staircase' : '';
-
-          switch(scope.panel.nullPointMode) {
-          case 'connected':
-            data += '&lineMode=connected';
-            break;
-          case 'null':
-            break; // graphite default lineMode
-          case 'null as zero':
-            data += "&drawNullAsZero=true";
-            break;
-          }
-
-          elem.html('<img src="' + data + '"></img>');
-        }
-
-        function addAxisLabels() {
-
 });
 
