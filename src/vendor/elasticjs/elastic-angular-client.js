@@ -13,7 +13,7 @@ be injected into your angular controllers.
 angular.module('elasticjs.service', [])
   .factory('ejsResource', ['$http', function ($http) {
 
-  return function (config) {
+  return function (config, basicAuth) {
 
     var
 
@@ -43,6 +43,12 @@ angular.module('elasticjs.service', [])
       config.server = '';
     }
 
+    // set authentication header
+    if (basicAuth || config.basicAuth) {
+      config.headers = angular.extend( config.headers||{}, {
+        "Authorization": "Basic " + (basicAuth||config.basicAuth)
+      });
+    }
     /* implement the elastic.js client interface for angular */
     ejs.client = {
       server: function (s) {

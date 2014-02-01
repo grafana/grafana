@@ -28,16 +28,19 @@ function (_, crypto) {
       settings[key] = typeof options[key] !== 'undefined' ? options[key]  : defaults[key];
     });
 
-    var url = settings.graphiteUrl;
-    var passwordAt = url.indexOf('@');
-    if (passwordAt > 0) {
-      var userStart = url.indexOf('//') + 2;
-      var userAndPassword = url.substring(userStart, passwordAt);
-      var bytes = crypto.charenc.Binary.stringToBytes(userAndPassword);
-      var base64 = crypto.util.bytesToBase64(bytes);
-      settings.graphiteBasicAuth = base64;
-    }
+    var basicAuth = function(url) {
+      var passwordAt = url.indexOf('@');
+      if (passwordAt > 0) {
+        var userStart = url.indexOf('//') + 2;
+        var userAndPassword = url.substring(userStart, passwordAt);
+        var bytes = crypto.charenc.Binary.stringToBytes(userAndPassword);
+        var base64 = crypto.util.bytesToBase64(bytes);
+        return base64;
+      }
+    };
 
+    settings.graphiteBasicAuth = basicAuth(settings.graphiteUrl);
+    settings.elasticsearchBasicAuth = basicAuth(settings.elasticsearch);
     return settings;
   };
 });

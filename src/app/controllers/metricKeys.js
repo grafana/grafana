@@ -10,7 +10,13 @@ function (angular, _, config) {
 
   module.controller('MetricKeysCtrl', function($scope, $http, $q) {
     var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_metrics_index + '/';
-
+    var httpOptions = {};
+    if (config.elasticsearchBasicAuth) {
+      options.withCredentials = true;
+      options.headers = {
+        "Authorization": "Basic " + config.elasticsearchBasicAuth
+      };
+    }
     $scope.init = function () {
       $scope.metricPath = "prod.apps.api.boobarella.*";
       $scope.metricCounter = 0;
@@ -77,7 +83,7 @@ function (angular, _, config) {
     function deleteIndex()
     {
       var deferred = $q.defer();
-      $http.delete(elasticSearchUrlForMetricIndex)
+      $http.delete(elasticSearchUrlForMetricIndex, httpOptions)
         .success(function() {
           deferred.resolve('ok');
         })
@@ -124,7 +130,7 @@ function (angular, _, config) {
             }
           }
         }
-      });
+      }, httpOptions);
     }
 
     function receiveMetric(result) {
