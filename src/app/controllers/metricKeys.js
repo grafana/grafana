@@ -12,8 +12,8 @@ function (angular, _, config) {
     var elasticSearchUrlForMetricIndex = config.elasticsearch + '/' + config.grafana_metrics_index + '/';
     var httpOptions = {};
     if (config.elasticsearchBasicAuth) {
-      options.withCredentials = true;
-      options.headers = {
+      httpOptions.withCredentials = true;
+      httpOptions.headers = {
         "Authorization": "Basic " + config.elasticsearchBasicAuth
       };
     }
