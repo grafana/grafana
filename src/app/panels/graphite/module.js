@@ -56,9 +56,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       ],
 
       menuItems: [
-        { text: 'View fullscreen', click: 'toggleFullscreen()' },
-        { text: 'Edit',            click: 'openConfigureModal()' },
-        { text: 'Duplicate',       click: 'duplicate()' },
+        { text: 'Edit',         click: 'openConfigureModal()' },
+        { text: 'Fullscreen',   click: 'toggleFullscreen()' },
+        { text: 'Duplicate',    click: 'duplicate()' },
         { text: 'Span', submenu: [
           { text: '1', click: 'updateColumnSpan(1)' },
           { text: '2', click: 'updateColumnSpan(2)' },

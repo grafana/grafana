@@ -72,6 +72,12 @@ function (angular, $, config, _) {
         $rootScope.fullscreen = false;
       });
 
+      $rootScope.$on('dashboard-saved', function() {
+        if ($rootScope.fullscreen) {
+          $rootScope.$emit('panel-fullscreen-exit');
+        }
+      });
+
       keyboardManager.bind('ctrl+f', function(evt) {
         $rootScope.$emit('open-search', evt);
       }, { inputDisabled: true });

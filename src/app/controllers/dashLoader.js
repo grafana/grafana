@@ -65,17 +65,18 @@ function (angular, _, moment) {
         type,
         ($scope.elasticsearch.title || dashboard.current.title),
         ($scope.loader.save_temp_ttl_enable ? ttl : false)
-      ).then(
-        function(result) {
-        if(!_.isUndefined(result._id)) {
-          alertSrv.set('Dashboard Saved','This dashboard has been saved to Elasticsearch as "' +
-            result._id + '"','success',5000);
-          if(type === 'temp') {
-            $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
-          }
-        } else {
+      ).then(function(result) {
+        if(_.isUndefined(result._id)) {
           alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
+          return;
         }
+
+        alertSrv.set('Dashboard Saved', 'This dashboard has been saved to Elasticsearch as "' + result._id + '"','success', 5000);
+        if(type === 'temp') {
+          $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
+        }
+
+        $rootScope.$emit('dashboard-saved');
       });
     };
 
