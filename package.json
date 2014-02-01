@@ -46,5 +46,12 @@
     "karma-expect": "~1.0.0",
     "grunt-cli": "~0.1.13"
   },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  },
+  "scripts": {
+    "test": "grunt"
+  },
   "license": "Apache License"
 }
