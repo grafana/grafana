@@ -338,7 +338,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var time_series = new timeSeries.ZeroFilled(tsOpts);
 
         _.each(targetData.datapoints, function(valueArray) {
-          if (valueArray[0]) {
+          if (valueArray[0] !== null) {
             time_series.addValue(valueArray[1] * 1000, valueArray[0]);
           }
         });

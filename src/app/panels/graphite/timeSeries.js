@@ -218,7 +218,7 @@ function (_, Interval) {
   ts.ZeroFilled.prototype._getNoZeroFlotPairs = function (result, time) {
 
     // add the current time
-    if(this._data[time]){
+    if(this._data[time] !== null){
       result.push([ time, this._data[time]]);
     }
 
