@@ -143,6 +143,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'nonNegativeDerivative',
+    category: categories.Transform,
+    params: [ { name: "max value or 0", type: "int", } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
     name: 'timeShift',
     category: categories.Transform,
     params: [ { name: "amount", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
