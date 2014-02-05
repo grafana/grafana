@@ -102,8 +102,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
             $location.path(config.default_route);
             alertSrv.set('Saving to browser storage has been replaced',' with saving to Elasticsearch.'+
               ' Click <a href="#/dashboard/local/deprecated">here</a> to load your old dashboard anyway.');
-          } else if(!(_.isUndefined(window.localStorage.kibanaDashboardDefault))) {
-            $location.path(window.localStorage.kibanaDashboardDefault);
+          } else if(!(_.isUndefined(window.localStorage.grafanaDashboardDefault))) {
+            $location.path(window.localStorage.grafanaDashboardDefault);
           } else {
             $location.path(config.default_route);
           }
@@ -197,7 +197,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         if(!_.isUndefined(window.localStorage['dashboard'])) {
           delete window.localStorage['dashboard'];
         }
-        window.localStorage.kibanaDashboardDefault = route;
+        window.localStorage.grafanaDashboardDefault = route;
         return true;
       } else {
         return false;
@@ -211,7 +211,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
           delete window.localStorage['dashboard'];
         }
-        delete window.localStorage.kibanaDashboardDefault;
+        delete window.localStorage.grafanaDashboardDefault;
         return true;
       } else {
         return false;
