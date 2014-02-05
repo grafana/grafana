@@ -370,6 +370,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.enterFullscreenMode({edit: true});
     };
 
+    $scope.otherPanelInFullscreenMode = function() {
+      return $rootScope.fullscreen && !$scope.fullscreen;
+    };
+
     $scope.render = function(data) {
       $scope.$emit('render', data);
     };

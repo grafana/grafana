@@ -19,9 +19,7 @@ function (angular, $, kbn, moment, _) {
         var hiddenData = {};
 
         scope.$on('refresh',function() {
-          if ($rootScope.fullscreen && !scope.fullscreen) {
-            return;
-          }
+          if (scope.otherPanelInFullscreenMode()) { return; }
 
           scope.get_data();
         });
@@ -58,11 +56,7 @@ function (angular, $, kbn, moment, _) {
         // Function for rendering panel
         function render_panel() {
           if (!data) { return; }
-
-          if ($rootScope.fullscreen && !scope.fullscreen) {
-            return;
-          }
-
+          if (scope.otherPanelInFullscreenMode()) { return; }
           if (!setElementHeight()) { return; }
 
           if (_.isString(data)) {
