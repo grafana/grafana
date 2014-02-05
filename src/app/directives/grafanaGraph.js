@@ -177,6 +177,8 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.legend ? '' : '&hideLegend=true';
           url += scope.panel.grid.min ? '&yMin=' + scope.panel.grid.min : '';
           url += scope.panel.grid.max ? '&yMax=' + scope.panel.grid.max : '';
+          url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
+          url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
           switch(scope.panel.nullPointMode) {
           case 'connected':
