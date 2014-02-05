@@ -19,12 +19,24 @@
   <ul class="dropdown-menu" id="grafana-search">
     <li ng-if="!showImport">
       <div class="grafana-search-panel">
-        <input  type="text"
-                placeholder="search dashboards, metrics, or graphs"
-                xng-focus="giveSearchFocus"
-                ng-keydown="keyDown($event)"
-                ng-model="elasticsearch.query"
-                ng-change="elasticsearch_dblist(elasticsearch.query)" />
+        <div class="search-field-wrapper">
+          <button class="btn btn-success pull-right" ng-click="toggleImport($event)">
+            <i class="icon-download-alt"></i>
+            Import
+          </button>
+          <button class="btn btn-success pull-right" ng-click="newDashboard()">
+            <i class="icon-th-large"></i>
+            New
+          </button>
+          <span>
+            <input  type="text"
+                    placeholder="search dashboards, metrics, or graphs"
+                    xng-focus="giveSearchFocus"
+                    ng-keydown="keyDown($event)"
+                    ng-model="elasticsearch.query"
+                    ng-change="elasticsearch_dblist(elasticsearch.query)" />
+          </span>
+        </div>
         <h6 ng-hide="search_results.dashboards.length || search_results.metrics.length">No dashboards or metrics matching your query found</h6>
         <table class="table table-condensed table-striped">
           <tr bindonce ng-repeat="row in search_results.metrics"
@@ -52,9 +64,6 @@
       </div>
     </li>
 
-    <li class="pull-right" style="margin: 5px;">
-      <a ng-click="toggleImport($event)">Import</a>
-    </li>
     <!-- ng-show="dashboard.current.loader.load_gist || dashboard.current.loader.load_local" -->
     <li ng-if="showImport" style="margin: 20px;">
       <div class="editor-row">

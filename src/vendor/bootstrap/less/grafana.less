@@ -12,10 +12,19 @@
 
 .grafana-search-panel {
   padding: 6px 10px;
-  input {
-    width: 100%;
-    .box-sizing(border-box);
-    padding: 15px;
+
+  .search-field-wrapper {
+    input {
+      width: 100%;
+    }
+    button {
+      margin: 0 2px 0 0;
+    }
+    > span {
+      display: block;
+      overflow: hidden;
+      padding-right: 25px;
+    }
   }
 
   .selected td, tr.selected:nth-child(odd)>td {

@@ -51,12 +51,6 @@ function (angular, _, config, $) {
       });
     };
 
-    $scope.toggleImport = function ($event) {
-      $event.stopPropagation();
-
-      $scope.showImport = !$scope.showImport;
-    };
-
     $scope.elasticsearch_dblist = function(queryStr) {
       $scope.showImport = false;
       $scope.selectedIndex = -1;
@@ -118,6 +112,15 @@ function (angular, _, config, $) {
           }
         ]
       });
+    };
+
+    $scope.toggleImport = function ($event) {
+      $event.stopPropagation();
+      $scope.showImport = !$scope.showImport;
+    };
+
+    $scope.newDashboard = function() {
+      $location.url('/dashboard/file/empty.json');
     };
 
   });
