@@ -82,7 +82,7 @@ function (angular, $, kbn, moment, _) {
           });
 
           // Set barwidth based on specified interval
-          var barwidth = kbn.interval_to_ms(scope.panel.interval);
+          var barwidth = kbn.interval_to_ms(scope.interval);
 
           var stack = scope.panel.stack ? true : null;
 
@@ -121,7 +121,7 @@ function (angular, $, kbn, moment, _) {
               mode: "time",
               min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
               max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
-              timeformat: time_format(scope.panel.interval),
+              timeformat: time_format(scope.interval),
               label: "Datetime",
               ticks: elem.width()/100
             },
@@ -139,21 +139,8 @@ function (angular, $, kbn, moment, _) {
 
           addAnnotations(options);
 
-          // when rendering stacked bars, we need to ensure each point that has data is zero-filled
-          // so that the stacking happens in the proper order
-          var required_times = [];
-          if (data.length > 1) {
-            required_times = Array.prototype.concat.apply([], _.map(data, function (query) {
-              return query.time_series.getOrderedTimes();
-            }));
-            required_times = _.uniq(required_times.sort(function (a, b) {
-              // decending numeric sort
-              return a-b;
-            }), true);
-          }
-
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].time_series.getFlotPairs(required_times, scope.panel.nullPointMode);
+            var _d = data[i].time_series.getFlotPairs(scope.panel.nullPointMode);
             data[i].yaxis = data[i].info.yaxis;
             data[i].data = _d;
             data[i].info.y_format = data[i].yaxis === 1 ? scope.panel.y_format : scope.panel.y2_format;

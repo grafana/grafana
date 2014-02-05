@@ -8,10 +8,6 @@
     <div class="editor-option">
       <label class="small">Y-Axis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
     </div>
-    <div class="editor-option" ng-show="panel.points">
-      <label class="small">Point Radius</label>
-      <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
-    </div>
     <div class="editor-option">
       <label class="small">Left Y Format <tip>Y-axis formatting</tip></label>
       <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>

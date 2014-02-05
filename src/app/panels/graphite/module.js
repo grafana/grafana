@@ -101,8 +101,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       /** @scratch /panels/histogram/3
        * y_format:: 'none','bytes','short '
        */
-      y_format    : 'none',
-      y2_format   : 'none',
+      y_format    : 'short',
+      y2_format   : 'short',
       /** @scratch /panels/histogram/5
        * grid object:: Min and max y-axis values
        * grid.min::: Minimum y-axis value
@@ -130,22 +130,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         sort        : ['_score','desc']
       },
       /** @scratch /panels/histogram/3
-       * ==== Interval options
-       * auto_int:: Automatically scale intervals?
-       */
-      auto_int      : true,
-      /** @scratch /panels/histogram/3
        * resolution:: If auto_int is true, shoot for this many bars.
        */
       resolution    : 100,
-      /** @scratch /panels/histogram/3
-       * interval:: If auto_int is set to false, use this as the interval.
-       */
-      interval      : '5m',
-      /** @scratch /panels/histogram/3
-       * interval:: Array of possible intervals in the *View* selector. Example [`auto',`1s',`5m',`3h']
-       */
-      intervals     : ['auto','1s','1m','5m','10m','30m','1h','3h','12h','1d','1w','1y'],
+
       /** @scratch /panels/histogram/3
        * ==== Drawing options
        * lines:: Show line chart
@@ -227,15 +215,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     };
 
-    $scope.set_interval = function(interval) {
-      if(interval !== 'auto') {
-        $scope.panel.auto_int = false;
-        $scope.panel.interval = interval;
-      } else {
-        $scope.panel.auto_int = true;
-      }
-    };
-
     $scope.remove_panel_from_row = function(row, panel) {
       if ($scope.fullscreen) {
         $rootScope.$emit('panel-fullscreen-exit');
@@ -250,24 +229,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.get_data();
     };
 
-    $scope.interval_label = function(interval) {
-      return $scope.panel.auto_int && interval === $scope.panel.interval ? interval+" (auto)" : interval;
-    };
-
     $scope.updateTimeRange = function () {
-      var range = filterSrv.timeRange();
-      var interval = filterSrv.timeRange();
+      $scope.range = filterSrv.timeRange();
+      $scope.interval = '10m';
 
-      if ($scope.panel.auto_int) {
-        if (range) {
-          interval = kbn.secondsToHms(
-            kbn.calculate_interval(range.from, range.to, $scope.panel.resolution, 0) / 1000
-          );
-        }
+      if ($scope.range) {
+        $scope.interval = kbn.secondsToHms(
+          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.panel.resolution, 0) / 1000
+        );
       }
-
-      $scope.interval = $scope.panel.interval = interval || '10m';
-      $scope.range = range;
     };
 
     $scope.colors = [
@@ -327,18 +297,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
         var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
-        var tsOpts = {
-          interval: $scope.interval,
+        var time_series = new timeSeries.ZeroFilled({
           start_date: $scope.range && $scope.range.from,
           end_date: $scope.range && $scope.range.to,
-        };
-
-        var time_series = new timeSeries.ZeroFilled(tsOpts);
-
-        _.each(targetData.datapoints, function(valueArray) {
-          if (valueArray[0] !== null) {
-            time_series.addValue(valueArray[1] * 1000, valueArray[0]);
-          }
+          datapoints: targetData.datapoints
         });
 
         var seriesInfo = {

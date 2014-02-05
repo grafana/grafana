@@ -33,197 +33,41 @@ function (_, Interval) {
    */
   ts.ZeroFilled = function (opts) {
     opts = _.defaults(opts, {
-      interval: '10m',
       start_date: null,
       end_date: null,
+      datapoints: []
     });
 
-    // the expected differenece between readings.
-    this.interval = new Interval(opts.interval);
-
-    // will keep all values here, keyed by their time
-    this._data = {};
     this.start_time = opts.start_date && getDatesTime(opts.start_date);
     this.end_time = opts.end_date && getDatesTime(opts.end_date);
     this.opts = opts;
+    this.datapoints = opts.datapoints;
   };
 
-  /**
-   * Add a row
-   * @param {int}  time  The time for the value, in
-   * @param {any}  value The value at this time
-   */
-  ts.ZeroFilled.prototype.addValue = function (time, value) {
-    if (time instanceof Date) {
-      time = getDatesTime(time);
-    } else {
-      time = base10Int(time);
-    }
-    if (!isNaN(time)) {
-      this._data[time] = (_.isUndefined(value) ? 0 : value);
-    }
-    this._cached_times = null;
-  };
+  ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle) {
+    var result = [];
 
-  /**
-   * Get an array of the times that have been explicitly set in the series
-   * @param  {array} include (optional) list of timestamps to include in the response
-   * @return {array} An array of integer times.
-   */
-  ts.ZeroFilled.prototype.getOrderedTimes = function (include) {
-    var times = _.map(_.keys(this._data), base10Int);
-    if (_.isArray(include)) {
-      times = times.concat(include);
-    }
-    return _.uniq(times.sort(function (a, b) {
-      // decending numeric sort
-      return a - b;
-    }), true);
-  };
-
-  /**
-   * return the rows in the format:
-   * [ [time, value], [time, value], ... ]
-   *
-   * Heavy lifting is done by _get(Min|Default|All)FlotPairs()
-   * @param  {array} required_times  An array of timestamps that must be in the resulting pairs
-   * @return {array}
-   */
-  ts.ZeroFilled.prototype.getFlotPairs = function (required_times, fillStyle) {
-    var times = this.getOrderedTimes(required_times),
-      strategy,
-      pairs;
-
-    if(fillStyle === 'null as zero') {
-      strategy = this._getAllFlotPairs;
-    } else if(fillStyle === 'null') {
-      strategy = this._getNullFlotPairs;
-    } else if(fillStyle === 'connected') {
-      strategy = this._getNoZeroFlotPairs;
-    } else {
-      strategy = this._getMinFlotPairs;
-    }
-
-    pairs = _.reduce(
-      times,    // what
-      strategy, // how
-      [],       // where
-      this      // context
-    );
-
-    // if the first or last pair is inside either the start or end time,
-    // add those times to the series with null values so the graph will stretch to contain them.
-    // Removing, flot 0.8.1's max/min params satisfy this
-    /*
-    if (this.start_time && (pairs.length === 0 || pairs[0][0] > this.start_time)) {
-      pairs.unshift([this.start_time, null]);
-    }
-    if (this.end_time && (pairs.length === 0 || pairs[pairs.length - 1][0] < this.end_time)) {
-      pairs.push([this.end_time, null]);
-    }
-    */
-
-    return pairs;
-  };
-
-  /**
-   * ** called as a reduce stragegy in getFlotPairs() **
-   * Fill zero's on either side of the current time, unless there is already a measurement there or
-   * we are looking at an edge.
-   * @return {array} An array of points to plot with flot
-   */
-  ts.ZeroFilled.prototype._getMinFlotPairs = function (result, time, i, times) {
-    var next, expected_next, prev, expected_prev;
-
-    // check for previous measurement
-    if (i > 0) {
-      prev = times[i - 1];
-      expected_prev = this.interval.before(time);
-      if (prev < expected_prev) {
-        result.push([expected_prev, 0]);
+    _.each(this.datapoints, function(valueArray) {
+      var currentTime = valueArray[1];
+      var currentValue = valueArray[0];
+      if (currentValue === null) {
+        if (fillStyle === 'connected') {
+          return;
+        }
+        if (fillStyle === 'null as zero') {
+          currentValue = 0;
+        }
+        if (fillStyle === 'null') {
+          // do nothing
+        }
       }
-    }
 
-    // add the current time
-    result.push([ time, this._data[time] || 0]);
-
-    // check for next measurement
-    if (times.length > i) {
-      next = times[i + 1];
-      expected_next = this.interval.after(time);
-      if (next > expected_next) {
-        result.push([expected_next, 0]);
-      }
-    }
+      result.push([currentTime * 1000, currentValue]);
+    });
 
     return result;
   };
 
-  /**
-   * ** called as a reduce stragegy in getFlotPairs() **
-   * Fill zero's to the right of each time, until the next measurement is reached or we are at the
-   * last measurement
-   * @return {array}  An array of points to plot with flot
-   */
-  ts.ZeroFilled.prototype._getAllFlotPairs = function (result, time, i, times) {
-    var next, expected_next;
-
-    result.push([ times[i], this._data[times[i]] || 0 ]);
-    next = times[i + 1];
-    expected_next = this.interval.after(time);
-    for(; times.length > i && next > expected_next; expected_next = this.interval.after(expected_next)) {
-      result.push([expected_next, 0]);
-    }
-
-    return result;
-  };
-
-  /**
-   * ** called as a reduce stragegy in getFlotPairs() **
-   * Same as min, but fills with nulls
-   * @return {array}  An array of points to plot with flot
-   */
-  ts.ZeroFilled.prototype._getNullFlotPairs = function (result, time, i, times) {
-    var next, expected_next, prev, expected_prev;
-
-    // check for previous measurement
-    if (i > 0) {
-      prev = times[i - 1];
-      expected_prev = this.interval.before(time);
-      if (prev < expected_prev) {
-        result.push([expected_prev, null]);
-      }
-    }
-
-    // add the current time
-    result.push([ time, this._data[time] || null]);
-
-    // check for next measurement
-    if (times.length > i) {
-      next = times[i + 1];
-      expected_next = this.interval.after(time);
-      if (next > expected_next) {
-        result.push([expected_next, null]);
-      }
-    }
-
-    return result;
-  };
-
-  /**
-   * ** called as a reduce stragegy in getFlotPairs() **
-   * Not fill zero's on either side of the current time, only the current time
-   * @return {array}  An array of points to plot with flot
-   */
-  ts.ZeroFilled.prototype._getNoZeroFlotPairs = function (result, time) {
-
-    // add the current time
-    if(this._data[time] !== null){
-      result.push([ time, this._data[time]]);
-    }
-
-    return result;
-  };
 
   return ts;
 });
