@@ -180,6 +180,18 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
+          switch(scope.panel.y_format) {
+          case 'bytes':
+            url += '&yUnitSystem=binary';
+            break;
+          case 'short':
+            url += '&yUnitSystem=si';
+            break;
+          case 'none':
+            url += '&yUnitSystem=none';
+            break;
+          }
+
           switch(scope.panel.nullPointMode) {
           case 'connected':
             url += '&lineMode=connected';
