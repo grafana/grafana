@@ -59,6 +59,10 @@ function (angular, $, kbn, moment, _) {
         function render_panel() {
           if (!data) { return; }
 
+          if ($rootScope.fullscreen && !scope.fullscreen) {
+            return;
+          }
+
           if (!setElementHeight()) { return; }
 
           if (_.isString(data)) {
