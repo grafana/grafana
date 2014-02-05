@@ -40,19 +40,19 @@
   <div class="section">
     <h5>Grid</h5>
     <div class="editor-option">
-      <label class="small">Min / <a href='' ng-click="panel.grid.min = _.toggle(panel.grid.min,null,0)">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.min)"></i></a></label>
-      <input type="number" class="input-small" ng-model="panel.grid.min"/>
+      <label class="small">Min / <a ng-click="toggleGridMinMax('min')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.min)"></i></a></label>
+      <input type="number" class="input-small" ng-model="panel.grid.min" ng-change="render()" ng-model-onblur />
     </div>
     <div class="editor-option">
-      <label class="small">Max / <a ref='' ng-click="panel.grid.max = _.toggle(panel.grid.max,null,0)">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.max)"></i></a></label>
-      <input type="number" class="input-small" ng-model="panel.grid.max"/>
+      <label class="small">Max / <a ng-click="toggleGridMinMax('max')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.max)"></i></a></label>
+      <input type="number" class="input-small" ng-model="panel.grid.max" ng-change="render()" ng-model-onblur />
     </div>
   </div>
 
   <div class="section">
     <h5>Legend</h5>
     <div class="editor-option">
-      <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend">
+      <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend" ng-change="render();">
     </div>
   </div>
 

@@ -174,6 +174,9 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.stack ? '&areaMode=stacked' : '';
           url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
           url += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
+          url += scope.panel.legend ? '' : '&hideLegend=true';
+          url += scope.panel.grid.min ? '&yMin=' + scope.panel.grid.min : '';
+          url += scope.panel.grid.max ? '&yMax=' + scope.panel.grid.max : '';
 
           switch(scope.panel.nullPointMode) {
           case 'connected':

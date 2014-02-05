@@ -46,11 +46,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/editor.html'
         },
         {
-          title:'Axis & Legends',
+          title:'Axes & Grid',
           src:'app/panels/graphite/axisEditor.html'
         },
         {
-          title:'Style',
+          title:'Display Styles',
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
@@ -462,6 +462,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.toggleYAxis = function(info) {
       info.yaxis = info.yaxis === 2 ? 1 : 2;
       $scope.panel.aliasYAxis[info.alias] = info.yaxis;
+      $scope.render();
+    };
+
+    $scope.toggleGridMinMax = function(key) {
+      $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
       $scope.render();
     };
 
