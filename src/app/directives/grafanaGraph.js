@@ -269,11 +269,11 @@ function (angular, $, kbn, moment, _) {
           if(_int >= 10000) {
             return "%Y-%m-%d";
           }
-          if(_int >= 60) {
+          if(_int >= 700) {
             return "%H:%M<br>%m-%d";
           }
 
-          return "%H:%M:%S";
+          return "%H:%M";
         }
 
         var $tooltip = $('<div>');
