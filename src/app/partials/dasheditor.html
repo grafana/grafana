@@ -18,7 +18,8 @@
           <label class="small">Style</label><select class="input-small" ng-model="dashboard.current.style" ng-options="f for f in ['dark','light']"></select>
         </div>
         <div class="editor-option">
-          <label class="small"> Editable </label><input type="checkbox" ng-model="dashboard.current.editable" ng-checked="dashboard.current.editable" />
+          <label class="small">Time correction</label>
+          <select ng-model="dashboard.current.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
         </div>
         <div class="editor-option">
           <label class="small"> Hints <tip>Show 'Add panel' hints in empty spaces</tip></label><input type="checkbox" ng-model="dashboard.current.panel_hints" ng-checked="dashboard.current.panel_hints" />

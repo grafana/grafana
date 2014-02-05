@@ -22,6 +22,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     var _dash = {
       title: "",
       style: "dark",
+      timezone: 'browser',
       editable: true,
       failover: false,
       panel_hints: true,

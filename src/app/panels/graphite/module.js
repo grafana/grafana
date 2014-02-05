@@ -181,9 +181,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       legend        : true,
       /** @scratch /panels/histogram/3
        * ==== Transformations
-       * timezone:: Correct for browser timezone?. Valid values: browser, utc
-       */
-      timezone      : 'browser', // browser or utc
       /** @scratch /panels/histogram/3
        * percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
        * queries
@@ -216,7 +213,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
 
     $scope.init = function() {
-
       // Hide view options by default
       $scope.fullscreen = false;
       $scope.options = false;
