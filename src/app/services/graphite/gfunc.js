@@ -187,6 +187,13 @@ function (_) {
     defaultParams: [25]
   });
 
+  addFuncDef({
+    name: 'highestCurrent',
+    category: categories.Filter,
+    params: [ { name: "count", type: "int" } ],
+    defaultParams: [5]
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
