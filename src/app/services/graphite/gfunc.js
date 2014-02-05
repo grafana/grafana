@@ -102,6 +102,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'sortByName',
+    category: categories.Special
+  });
+
+  addFuncDef({
     name: 'aliasByMetric',
     category: categories.Special,
   });
