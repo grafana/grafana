@@ -1,16 +1,10 @@
 define([
-  'underscore',
-  './interval'
+  'underscore'
 ],
-function (_, Interval) {
+function (_) {
   'use strict';
 
   var ts = {};
-
-  // map compatable parseInt
-  function base10Int(val) {
-    return parseInt(val, 10);
-  }
 
   // trim the ms off of a time, but return it with empty ms.
   function getDatesTime(date) {
@@ -56,9 +50,6 @@ function (_, Interval) {
         }
         if (fillStyle === 'null as zero') {
           currentValue = 0;
-        }
-        if (fillStyle === 'null') {
-          // do nothing
         }
       }
 
