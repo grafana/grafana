@@ -132,7 +132,7 @@ function (angular, _, $, config, kbn, moment) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
 
-      if (options.renderer === 'flot') {
+      if (options.renderer !== 'png') {
         options['format'] = 'json';
       }
 

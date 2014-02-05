@@ -46,7 +46,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/editor.html'
         },
         {
-          title:'Axis labels',
+          title:'Axis & Legends',
           src:'app/panels/graphite/axisEditor.html'
         },
         {

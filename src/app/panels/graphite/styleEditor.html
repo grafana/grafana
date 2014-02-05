@@ -4,9 +4,6 @@
   <div class="section">
     <h5>Chart Options</h5>
     <div class="editor-option">
-      <label class="small">Renderer</label><select class="input-mini" ng-model="panel.renderer" ng-options="f for f in ['flot', 'png']" ng-change="get_data()"></select>
-    </div>
-    <div class="editor-option">
       <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
     </div>
     <div class="editor-option">
@@ -16,27 +13,7 @@
       <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
     </div>
   </div>
-  <div class="section">
-    <h5>Axis</h5>
-    <div class="editor-option">
-      <label class="small">xAxis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
-    </div>
-    <div class="editor-option">
-      <label class="small">yAxis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
-    </div>
-    <div class="editor-option" ng-show="panel.points">
-      <label class="small">Point Radius</label>
-      <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
-    </div>
-    <div class="editor-option">
-      <label class="small">Left Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
-    </div>
-    <div class="editor-option">
-      <label class="small">Right Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
-    </div>
-  </div>
+
   <div class="section">
     <h5>Line options</h5>
     <div class="editor-option" ng-show="panel.lines">
@@ -70,23 +47,16 @@
     </div>
   </div>
 
-  <div class="section">
-    <h5>Legend<h5>
-    <div class="editor-option">
-      <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend">
-    </div>
-  </div>
 
   <div class="section">
-    <h5>Grid<h5>
+    <h5>Rendering</h5>
     <div class="editor-option">
-      <label class="small">Min / <a href='' ng-click="panel.grid.min = _.toggle(panel.grid.min,null,0)">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.min)"></i></a></label>
-      <input type="number" class="input-small" ng-model="panel.grid.min"/>
+      <label class="small">Flot <tip>client side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="flot" ng-change="get_data()" />
     </div>
     <div class="editor-option">
-      <label class="small">Max / <a ref='' ng-click="panel.grid.max = _.toggle(panel.grid.max,null,0)">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.max)"></i></a></label>
-      <input type="number" class="input-small" ng-model="panel.grid.max"/>
+      <label class="small">Graphite PNG <tip>server side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
     </div>
   </div>
-
 </div>

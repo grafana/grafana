@@ -24,9 +24,11 @@
         <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
         </div>
       </div>
+
       <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
         <div ng-include src="'app/partials/panelgeneral.html'"></div>
       </div>
+
       <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>
