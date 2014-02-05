@@ -130,14 +130,14 @@ function (angular, $, kbn, moment, _) {
               borderWidth: 0,
               hoverable: true,
               color: '#c8c8c8'
+            },
+            selection: {
+              mode: "x",
+              color: '#666'
             }
           };
 
           addAnnotations(options);
-
-          if(scope.panel.interactive) {
-            options.selection = { mode: "x", color: '#666' };
-          }
 
           // when rendering stacked bars, we need to ensure each point that has data is zero-filled
           // so that the stacking happens in the proper order

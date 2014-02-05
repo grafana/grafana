@@ -180,10 +180,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       legend        : true,
       /** @scratch /panels/histogram/3
-       * interactive:: Enable click-and-drag to zoom functionality
-       */
-      interactive   : true,
-      /** @scratch /panels/histogram/3
        * ==== Transformations
        * timezone:: Correct for browser timezone?. Valid values: browser, utc
        */
