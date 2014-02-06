@@ -260,13 +260,13 @@ function (angular, $, kbn, moment, _) {
             return "%Y-%m";
           }
           if(_int >= 10000) {
-            return "%Y-%m-%d";
+            return "%m/%d";
           }
           if(_int >= 3600) {
-            return "%m/%d %H:%M" //"%H:%M<br>%m-%d";
+            return "%m/%d %H:%M";
           }
           if(_int >= 700) {
-            return "%a %H:%M" //"%H:%M<br>%m-%d";
+            return "%a %H:%M";
           }
 
           return "%H:%M";

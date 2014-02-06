@@ -1,4 +1,4 @@
-<span ng-show="panel.legend"
+<span ng-show="panel.legend.show"
       ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
       ng-repeat='series in legend'
       class="histogram-legend">
@@ -9,8 +9,25 @@
     </i>
     <span class='small histogram-legend-item'>
       <a ng-click="toggleSeries(series)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
-        {{series.alias}} [max: {{series.max}}, min: {{series.min}}, total: {{series.total}}, avg: {{series.avg}}, current: {{series.current}}]
+        {{series.alias}}
       </a>
+      <span ng-if="panel.legend.values">
+        <span ng-show="panel.legend.current">
+          &nbsp;&nbsp;Current:  {{series.current}}&nbsp;
+        </span>
+        <span ng-show="panel.legend.min">
+          &nbsp;&nbsp;Min: {{series.min}}&nbsp;
+        </span>
+        <span ng-show="panel.legend.max">
+          &nbsp;&nbsp;Max: {{series.max}}&nbsp;
+        </span>
+        <span ng-show="panel.legend.total">
+          &nbsp;&nbsp;Total: {{series.total}}&nbsp;
+        </span>
+        <span ng-show="panel.legend.avg">
+          &nbsp;&nbsp;Avg: {{series.avg}}&nbsp;
+        </span>
+      </span>
     </span>
 </span>
 

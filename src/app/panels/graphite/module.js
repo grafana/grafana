@@ -153,7 +153,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       /** @scratch /panels/histogram/3
        * legend:: Display the legond
        */
-      legend        : true,
+      legend: {
+        show: true, // disable/enable legend
+        values: false, // disable/enable legend values
+        min: false,
+        max: false,
+        current: false,
+        total: false,
+        avg: false
+      },
       /** @scratch /panels/histogram/3
        * ==== Transformations
       /** @scratch /panels/histogram/3
@@ -182,11 +190,16 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     _.defaults($scope.panel,_d);
-    _.defaults($scope.panel.tooltip,_d.tooltip);
-    _.defaults($scope.panel.annotate,_d.annotate);
-    _.defaults($scope.panel.grid,_d.grid);
+    _.defaults($scope.panel.tooltip, _d.tooltip);
+    _.defaults($scope.panel.annotate, _d.annotate);
+    _.defaults($scope.panel.grid, _d.grid);
 
     // backward compatible stuff
+    if (_.isBoolean($scope.panel.legend)) {
+      $scope.panel.legend = { show: $scope.panel.legend };
+      _.defaults($scope.panel.legend, _d.legend);
+    }
+
     if ($scope.panel.y_format) {
       $scope.panel.y_formats[0] = $scope.panel.y_format;
       delete $scope.panel.y_format;

@@ -48,8 +48,35 @@
   <div class="section">
     <h5>Legend</h5>
     <div class="editor-option">
-      <label class="small">Legend</label><input type="checkbox" ng-model="panel.legend" ng-checked="panel.legend" ng-change="render();">
+      <label class="small">Show Legend</label><input type="checkbox" ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="render();">
     </div>
+    <div class="editor-option">
+      <label class="small">Include Values</label><input type="checkbox" ng-model="panel.legend.values" ng-checked="panel.legend.values" ng-change="render();">
+    </div>
+  </div>
+
+  <div class="section" ng-if="panel.legend.values">
+    <h5>Legend values</h5>
+    <div class="editor-option">
+      <label class="small">Min</label><input type="checkbox" ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Max</label><input type="checkbox" ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Current</label><input type="checkbox" ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Total</label><input type="checkbox" ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Avg</label><input type="checkbox" ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="render();">
+    </div>
+
   </div>
 
 </div>
