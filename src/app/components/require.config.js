@@ -5,7 +5,7 @@ require.config({
   baseUrl: 'app',
   // urlArgs: 'r=@REV@',
   paths: {
-    config:                   '../config',
+    config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',
 
