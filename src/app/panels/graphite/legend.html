@@ -9,7 +9,7 @@
     </i>
     <span class='small histogram-legend-item'>
       <a ng-click="toggleSeries(series)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
-        {{series.alias}}
+        {{series.alias}} [max: {{series.max}}, min: {{series.min}}, total: {{series.total}}, avg: {{series.avg}}, current: {{series.current}}]
       </a>
     </span>
 </span>

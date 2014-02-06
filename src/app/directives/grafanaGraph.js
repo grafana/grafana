@@ -64,11 +64,6 @@ function (angular, $, kbn, moment, _) {
             return;
           }
 
-          _.each(data, function(series) {
-            series.label = series.info.alias;
-            series.color = series.info.color;
-          });
-
           _.each(_.keys(scope.hiddenSeries), function(seriesAlias) {
             var dataSeries = _.find(data, function(series) {
               return series.info.alias === seriesAlias;
@@ -138,10 +133,8 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].time_series.getFlotPairs(scope.panel.nullPointMode);
-            data[i].yaxis = data[i].info.yaxis;
+            var _d = data[i].getFlotPairs(scope.panel.nullPointMode);
             data[i].data = _d;
-            data[i].info.y_format = data[i].yaxis === 1 ? scope.panel.y_format : scope.panel.y2_format;
           }
 
           configureAxisOptions(data, options);
@@ -165,7 +158,7 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
-          switch(scope.panel.y_format) {
+          switch(scope.panel.y_formats[0]) {
           case 'bytes':
             url += '&yUnitSystem=binary';
             break;
@@ -241,10 +234,10 @@ function (angular, $, kbn, moment, _) {
             var secondY = _.clone(defaults);
             secondY.position = 'right';
             options.yaxes.push(secondY);
-            configureAxisMode(options.yaxes[1], scope.panel.y2_format);
+            configureAxisMode(options.yaxes[1], scope.panel.y_formats[1]);
           }
 
-          configureAxisMode(options.yaxes[0], scope.panel.y_format);
+          configureAxisMode(options.yaxes[0], scope.panel.y_formats[0]);
         }
 
         function configureAxisMode(axis, format) {
@@ -293,10 +286,10 @@ function (angular, $, kbn, moment, _) {
               item.datapoint[1] - item.datapoint[2] :
               item.datapoint[1];
             if(item.series.info.y_format === 'bytes') {
-              value = kbn.byteFormat(value,2);
+              value = kbn.byteFormat(value, 2);
             }
             if(item.series.info.y_format === 'short') {
-              value = kbn.shortFormat(value,2);
+              value = kbn.shortFormat(value, 2);
             }
             if(item.series.info.y_format === 'ms') {
               value = kbn.msFormat(value);

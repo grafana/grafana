@@ -46,39 +46,12 @@
           "x-axis": true,
           "y-axis": true,
           "scale": 1,
-          "y_format": "none",
-          "y2_format": "none",
+          "y_formats": ["short", "short"],
           "grid": {
             "max": null,
             "min": 0
           },
-          "annotate": {
-            "enable": false,
-            "query": "*",
-            "size": 20,
-            "field": "_type",
-            "sort": [
-              "_score",
-              "desc"
-            ]
-          },
-          "auto_int": true,
           "resolution": 100,
-          "interval": "5m",
-          "intervals": [
-            "auto",
-            "1s",
-            "1m",
-            "5m",
-            "10m",
-            "30m",
-            "1h",
-            "3h",
-            "12h",
-            "1d",
-            "1w",
-            "1y"
-          ],
           "lines": true,
           "fill": 1,
           "linewidth": 2,
@@ -87,7 +60,6 @@
           "bars": false,
           "stack": true,
           "spyable": true,
-          "zoomlinks": false,
           "options": false,
           "legend": true,
           "interactive": true,

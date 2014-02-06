@@ -99,36 +99,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_format:: 'none','bytes','short '
+       * y_formats :: 'none','bytes','short', 'ms'
        */
-      y_format    : 'short',
-      y2_format   : 'short',
+      y_formats    : ['short', 'short'],
       /** @scratch /panels/histogram/5
        * grid object:: Min and max y-axis values
        * grid.min::: Minimum y-axis value
-       * grid.max::: Maximum y-axis value
+       * grid.ma1::: Maximum y-axis value
        */
       grid          : {
         max: null,
         min: 0
       },
-      /** @scratch /panels/histogram/3
-       * ==== Annotations
-       * annotate object:: A query can be specified, the results of which will be displayed as markers on
-       * the chart. For example, for noting code deploys.
-       * annotate.enable::: Should annotations, aka markers, be shown?
-       * annotate.query::: Lucene query_string syntax query to use for markers.
-       * annotate.size::: Max number of markers to show
-       * annotate.field::: Field from documents to show
-       * annotate.sort::: Sort array in format [field,order], For example [`@timestamp',`desc']
-       */
+
       annotate      : {
         enable      : false,
-        query       : "*",
-        size        : 20,
-        field       : '_type',
-        sort        : ['_score','desc']
       },
+
       /** @scratch /panels/histogram/3
        * resolution:: If auto_int is true, shoot for this many bars.
        */
@@ -199,6 +186,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.annotate,_d.annotate);
     _.defaults($scope.panel.grid,_d.grid);
 
+    // backward compatible stuff
+    if ($scope.panel.y_format) {
+      $scope.panel.y_formats[0] = $scope.panel.y_format;
+      delete $scope.panel.y_format;
+    }
+    if ($scope.panel.y2_format) {
+      $scope.panel.y_formats[1] = $scope.panel.y2_format;
+      delete $scope.panel.y2_format;
+    }
 
     $scope.init = function() {
       // Hide view options by default
@@ -284,6 +280,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.panelMeta.loading = false;
       $scope.legend = [];
 
+      // png renderer returns just a url
       if (_.isString(results)) {
         $scope.render(results);
         return;
@@ -297,26 +294,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
         var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
-        var time_series = new timeSeries.ZeroFilled({
-          start_date: $scope.range && $scope.range.from,
-          end_date: $scope.range && $scope.range.to,
-          datapoints: targetData.datapoints
-        });
-
         var seriesInfo = {
           alias: alias,
           color:  color,
           enable: true,
           yaxis: yaxis,
+          y_format: $scope.panel.y_formats[yaxis - 1]
         };
 
-        $scope.legend.push(seriesInfo);
-
-        data.push({
+        var series = new timeSeries.ZeroFilled({
+          datapoints: targetData.datapoints,
           info: seriesInfo,
-          time_series: time_series,
         });
 
+        $scope.legend.push(seriesInfo);
+        data.push(series);
       });
 
       $scope.render(data);

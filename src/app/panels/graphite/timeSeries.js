@@ -6,40 +6,20 @@ function (_) {
 
   var ts = {};
 
-  // trim the ms off of a time, but return it with empty ms.
-  function getDatesTime(date) {
-    return Math.floor(date.getTime() / 1000)*1000;
-  }
-
-  /**
-   * Certain graphs require 0 entries to be specified for them to render
-   * properly (like the line graph). So with this we will caluclate all of
-   * the expected time measurements, and fill the missing ones in with 0
-   * @param {object} opts  An object specifying some/all of the options
-   *
-   * OPTIONS:
-   * @opt   {string}   interval    The interval notion describing the expected spacing between
-   *                                each data point.
-   * @opt   {date}     start_date  (optional) The start point for the time series, setting this and the
-   *                                end_date will ensure that the series streches to resemble the entire
-   *                                expected result
-   * @opt   {date}     end_date    (optional) The end point for the time series, see start_date
-   */
   ts.ZeroFilled = function (opts) {
-    opts = _.defaults(opts, {
-      start_date: null,
-      end_date: null,
-      datapoints: []
-    });
-
-    this.start_time = opts.start_date && getDatesTime(opts.start_date);
-    this.end_time = opts.end_date && getDatesTime(opts.end_date);
-    this.opts = opts;
     this.datapoints = opts.datapoints;
+    this.info = opts.info;
+    this.label = opts.info.alias;
+    this.color = opts.info.color;
+    this.yaxis = opts.info.yaxis;
   };
 
   ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
+
+    this.info.total = 0;
+    this.info.max = null;
+    this.info.min = 212312321312;
 
     _.each(this.datapoints, function(valueArray) {
       var currentTime = valueArray[1];
@@ -53,8 +33,23 @@ function (_) {
         }
       }
 
+      if (_.isNumber(currentValue)) {
+        this.info.total += currentValue;
+      }
+
+      if (currentValue > this.info.max) {
+        this.info.max = currentValue;
+      }
+
+      if (currentValue < this.info.min) {
+        this.info.min = currentValue;
+      }
+
       result.push([currentTime * 1000, currentValue]);
-    });
+    }, this);
+
+    this.info.avg = this.info.total / result.length;
+    this.info.current = result[result.length-1][1];
 
     return result;
   };

@@ -1,7 +1,7 @@
 <div class="editor-row">
 
   <div class="section">
-    <h5>Axis</h5>
+    <h5>Axes</h5>
     <div class="editor-option">
       <label class="small">X-Axis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
     </div>
@@ -10,11 +10,11 @@
     </div>
     <div class="editor-option">
       <label class="small">Left Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
+      <select class="input-small" ng-model="panel.y_formats[1]" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
     </div>
     <div class="editor-option">
       <label class="small">Right Y Format <tip>Y-axis formatting</tip></label>
-      <select class="input-small" ng-model="panel.y2_format" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
+      <select class="input-small" ng-model="panel.y_formats[2]" ng-options="f for f in ['none','short','bytes', 'ms']" ng-change="render()"></select>
     </div>
 
     <div class="editor-option">
