@@ -172,7 +172,7 @@ define([
 
       return {
         type: 'number',
-        value: parseInt(this.consumeToken().value, 10)
+        value: parseFloat(this.consumeToken().value)
       };
     },
 
