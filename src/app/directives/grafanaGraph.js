@@ -87,8 +87,8 @@ function (angular, $, kbn, moment, _) {
               stack: scope.panel.percentage ? null : stack,
               lines:  {
                 show: scope.panel.lines,
-                // Silly, but fixes bug in stacked percentages
-                fill: scope.panel.fill === 0 ? 0.001 : scope.panel.fill/10,
+                zero: false,
+                fill: scope.panel.fill === 0 ? false : scope.panel.fill/10,
                 lineWidth: scope.panel.linewidth,
                 steps: scope.panel.steppedLine
               },
@@ -186,25 +186,26 @@ function (angular, $, kbn, moment, _) {
           elem.html('<img src="' + url + '"></img>');
         }
 
-
         function addAnnotations(options) {
-          if(scope.panel.annotate.enable) {
-            options.events = {
-              levels: 1,
-              data: scope.annotations,
-              types: {
-                'annotation': {
-                  level: 1,
-                  icon: {
-                    icon: "icon-tag icon-flip-vertical",
-                    size: 20,
-                    color: "#222",
-                    outline: "#bbb"
-                  }
+          if(!scope.panel.annotate.enable) {
+            return;
+          }
+
+          options.events = {
+            levels: 1,
+            data: scope.annotations,
+            types: {
+              'annotation': {
+                level: 1,
+                icon: {
+                  icon: "icon-tag icon-flip-vertical",
+                  size: 20,
+                  color: "#222",
+                  outline: "#bbb"
                 }
               }
-            };
-          }
+            }
+          };
         }
 
         function addAxisLabels() {
@@ -224,8 +225,8 @@ function (angular, $, kbn, moment, _) {
           var defaults = {
             position: 'left',
             show: scope.panel['y-axis'],
-            min: scope.panel.grid.min,
-            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
+            min: null,
+            max: null,
           };
 
           options.yaxes.push(defaults);
