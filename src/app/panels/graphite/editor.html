@@ -9,9 +9,9 @@
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
-          <li ng-if="target.yaxis">
-            <a class="pointer" ng-click="setYAxis()">
-              y&sup2;
+          <li ng-show="parserError">
+            <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+              <i class="icon-warning-sign"></i>
             </a>
           </li>
           <li>
@@ -42,16 +42,11 @@
         </ul>
 
         <ul class="grafana-target-controls-left">
-          <li ng-hide="parserError">
+          <li>
             <a  class="grafana-target-segment"
                 ng-click="target.hide = !target.hide; get_data();"
                 role="menuitem">
               <i class="icon-eye-open"></i>
-            </a>
-          </li>
-          <li ng-show="parserError">
-            <a class="grafana-target-segment" bs-tooltip="parserError" style="color: rgb(229, 189, 28)" ng-click="hideit()" role="menuitem">
-              <i class="icon-warning-sign"></i>
             </a>
           </li>
         </ul>
