@@ -10,12 +10,13 @@ function (_) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
-    this.color = opts.info.color;
-    this.yaxis = opts.info.yaxis;
   };
 
   ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
+
+    this.color = this.info.color;
+    this.yaxis = this.info.yaxis;
 
     this.info.total = 0;
     this.info.max = null;
