@@ -138,6 +138,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Cancel all timers
       timer.cancel_all();
 
+      // reset fullscreen flag
+      $rootScope.fullscreen = false;
+
       // Make sure the dashboard being loaded has everything required
       dashboard = dash_defaults(dashboard);
 
