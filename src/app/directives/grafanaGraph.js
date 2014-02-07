@@ -247,7 +247,7 @@ function (angular, $, kbn, moment, _) {
           }
           if (format === 'short') {
             axis.tickFormatter = function(val) {
-              return kbn.shortFormat(val,0);
+              return kbn.shortFormat(val, 1);
             };
           }
           if (format === 'ms') {
