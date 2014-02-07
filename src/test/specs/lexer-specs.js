@@ -21,6 +21,21 @@ define([
       expect(tokens[4].value).to.be('se1-server-*');
     });
 
+    it('should tokenize metric expression with dash2', function() {
+      var lexer = new Lexer('net.192-168-1-1.192-168-1-9.ping_value.*');
+      var tokens = lexer.tokenize();
+      expect(tokens[0].value).to.be('net');
+      expect(tokens[2].value).to.be('192-168-1-1');
+    });
+
+    it('simple function2', function() {
+      var lexer = new Lexer('offset(test.metric, -100)');
+      var tokens = lexer.tokenize();
+      expect(tokens[2].type).to.be('identifier');
+      expect(tokens[4].type).to.be('identifier');
+      expect(tokens[6].type).to.be('number');
+    });
+
     it('should tokenize metric expression with curly braces', function() {
       var lexer = new Lexer('metric.se1-{first, second}.count');
       var tokens = lexer.tokenize();

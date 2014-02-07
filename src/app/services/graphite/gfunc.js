@@ -131,10 +131,22 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'cactiStyle',
+    category: categories.Special,
+  });
+
+  addFuncDef({
     name: 'scale',
     category: categories.Transform,
     params: [ { name: "factor", type: "int", } ],
     defaultParams: [1]
+  });
+
+  addFuncDef({
+    name: 'offset',
+    category: categories.Transform,
+    params: [ { name: "amount", type: "int", } ],
+    defaultParams: [10]
   });
 
   addFuncDef({

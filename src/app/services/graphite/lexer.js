@@ -402,13 +402,20 @@ define([
           (ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z");
       }
 
+      // handle negative num literals
+      if (char === '-') {
+        value += char;
+        index += 1;
+        char = this.peek(index);
+      }
+
       // Numbers must start either with a decimal digit or a point.
       if (char !== "." && !isDecimalDigit(char)) {
         return null;
       }
 
       if (char !== ".") {
-        value = this.peek(index);
+        value += this.peek(index);
         index += 1;
         char = this.peek(index);
 
@@ -555,7 +562,7 @@ define([
 
       if (index < length) {
         char = this.peek(index);
-        if (isIdentifierStart(char)) {
+        if (!this.isPunctuator(char)) {
           return null;
         }
       }
@@ -569,9 +576,7 @@ define([
       };
     },
 
-    scanPunctuator: function () {
-      var ch1 = this.peek();
-
+    isPunctuator: function (ch1) {
       switch (ch1) {
       case ".":
       case "(":
@@ -579,6 +584,16 @@ define([
       case ",":
       case "{":
       case "}":
+        return true;
+      }
+
+      return false;
+    },
+
+    scanPunctuator: function () {
+      var ch1 = this.peek();
+
+      if (this.isPunctuator(ch1)) {
         return {
           type: ch1,
           value: ch1,
