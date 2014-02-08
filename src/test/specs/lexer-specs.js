@@ -1,5 +1,5 @@
 define([
-  'app/services/graphite/lexer'
+  'services/graphite/lexer'
 ], function(Lexer) {
 
   describe('when lexing graphite expression', function() {

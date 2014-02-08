@@ -1,5 +1,5 @@
 define([
-  'app/services/graphite/gfunc'
+  'services/graphite/gfunc'
 ], function(gfunc) {
 
   describe('when creating func instance from func names', function() {
