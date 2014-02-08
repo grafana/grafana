@@ -12,6 +12,8 @@ module.exports = function(config,grunt) {
         optimizeCss: 'none',
         optimizeAllPluginResources: false,
 
+        paths: { config: '../config.sample' }, // fix, fallbacks need to be specified
+
         removeCombined: true,
         findNestedDependencies: true,
         normalizeDirDefines: 'all',
