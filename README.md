@@ -33,6 +33,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Import & export dashboard (json file)
 - Import dashboard from Graphite
 - Templating
+- Scripted dashboards (generate from js script and url parameters)
 - Much more...
 
 # Requirements
