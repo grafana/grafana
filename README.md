@@ -13,7 +13,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Templating
 - Integrated function documentation (TODO)
 - Click &amp; drag functions to rearrange order (TODO)
-- Much more...
+- Native Graphite PNG render support
 
 ## Graphing
 - Fast rendering, even over large timespans.
@@ -34,7 +34,6 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Import dashboard from Graphite
 - Templating
 - [Scripted dashboards](https://github.com/torkelo/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
-- Much more...
 
 # Requirements
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
