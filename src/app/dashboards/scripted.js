@@ -34,14 +34,14 @@ dashboard.services.filter = {
 };
 
 var rows = 1;
-var name = 'argName';
+var seriesName = 'argName';
 
 if(!_.isUndefined(ARGS.rows)) {
   rows = parseInt(ARGS.rows, 10);
 }
 
 if(!_.isUndefined(ARGS.name)) {
-  name = ARGS.name;
+  seriesName = ARGS.name;
 }
 
 for (var i = 0; i < rows; i++) {
@@ -58,7 +58,7 @@ for (var i = 0; i < rows; i++) {
         linewidth: 2,
         targets: [
           {
-            'target': "randomWalk('" + name + "')"
+            'target': "randomWalk('" + seriesName + "')"
           },
           {
             'target': "randomWalk('random walk2')"
