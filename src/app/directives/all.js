@@ -9,5 +9,6 @@ define([
   './tip',
   './confirmClick',
   './configModal',
+  './spectrumPicker',
   './grafanaGraph'
 ], function () {});

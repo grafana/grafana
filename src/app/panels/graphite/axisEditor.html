@@ -46,6 +46,29 @@
   </div>
 
   <div class="section">
+    <h5>Grid thresholds</h5>
+    <div class="editor-option">
+      <label class="small">Level1</label>
+      <input type="number" class="input-small" ng-model="panel.grid.threshold1" ng-change="render()" ng-model-onblur />
+    </div>
+    <div class="editor-option">
+      <label class="small">Color</label>
+      <spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
+    </div>
+    <div class="editor-option">
+      <label class="small">Level2</label>
+      <input type="number" class="input-small" ng-model="panel.grid.threshold2" ng-change="render()" ng-model-onblur />
+    </div>
+    <div class="editor-option">
+      <label class="small">Color</label>
+      <spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
+    </div>
+    <div class="editor-option">
+      <label class="small">Line mode</label><input type="checkbox" ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render();">
+    </div>
+  </div>
+
+  <div class="section">
     <h5>Legend</h5>
     <div class="editor-option">
       <label class="small">Show Legend</label><input type="checkbox" ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="render();">

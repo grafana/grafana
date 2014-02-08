@@ -64,6 +64,8 @@ function (angular, $, kbn, moment, _) {
             return;
           }
 
+          var panel = scope.panel;
+
           _.each(_.keys(scope.hiddenSeries), function(seriesAlias) {
             var dataSeries = _.find(data, function(series) {
               return series.info.alias === seriesAlias;
@@ -77,40 +79,40 @@ function (angular, $, kbn, moment, _) {
           // Set barwidth based on specified interval
           var barwidth = kbn.interval_to_ms(scope.interval);
 
-          var stack = scope.panel.stack ? true : null;
+          var stack = panel.stack ? true : null;
 
           // Populate element
           var options = {
             legend: { show: false },
             series: {
-              stackpercent: scope.panel.stack ? scope.panel.percentage : false,
-              stack: scope.panel.percentage ? null : stack,
+              stackpercent: panel.stack ? panel.percentage : false,
+              stack: panel.percentage ? null : stack,
               lines:  {
-                show: scope.panel.lines,
+                show: panel.lines,
                 zero: false,
-                fill: scope.panel.fill === 0 ? false : scope.panel.fill/10,
-                lineWidth: scope.panel.linewidth,
-                steps: scope.panel.steppedLine
+                fill: panel.fill === 0 ? false : panel.fill/10,
+                lineWidth: panel.linewidth,
+                steps: panel.steppedLine
               },
               bars:   {
-                show: scope.panel.bars,
+                show: panel.bars,
                 fill: 1,
                 barWidth: barwidth/1.5,
                 zero: false,
                 lineWidth: 0
               },
               points: {
-                show: scope.panel.points,
+                show: panel.points,
                 fill: 1,
                 fillColor: false,
-                radius: scope.panel.pointradius
+                radius: panel.pointradius
               },
               shadowSize: 1
             },
             yaxes: [],
             xaxis: {
               timezone: dashboard.current.timezone,
-              show: scope.panel['x-axis'],
+              show: panel['x-axis'],
               mode: "time",
               min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
               max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
@@ -130,10 +132,27 @@ function (angular, $, kbn, moment, _) {
             }
           };
 
+          if (panel.grid.threshold1) {
+            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
+            options.grid.markings = [];
+            options.grid.markings.push({
+              yaxis: { from: panel.grid.threshold1, to: limit1 },
+              color: panel.grid.threshold1Color
+            });
+
+            if (panel.grid.threshold2) {
+              var limit2 = panel.grid.thresholdLine ? panel.grid.threshold2 : null;
+              options.grid.markings.push({
+                yaxis: { from: panel.grid.threshold2, to: limit2 },
+                color: panel.grid.threshold2Color
+              });
+            }
+          }
+
           addAnnotations(options);
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(scope.panel.nullPointMode);
+            var _d = data[i].getFlotPairs(panel.nullPointMode);
             data[i].data = _d;
           }
 

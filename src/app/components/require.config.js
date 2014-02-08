@@ -22,6 +22,7 @@ require.config({
     datepicker:               '../vendor/angular/datepicker',
     bindonce:                 '../vendor/angular/bindonce',
     crypto:                   '../vendor/crypto.min',
+    spectrum:                 '../vendor/spectrum',
 
     underscore:               'components/underscore.extended',
     'underscore-src':         '../vendor/underscore',
@@ -48,6 +49,10 @@ require.config({
   shim: {
     underscore: {
       exports: '_'
+    },
+
+    spectrum: {
+      deps: ['jquery']
     },
 
     crypto: {

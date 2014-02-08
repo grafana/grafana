@@ -109,7 +109,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       grid          : {
         max: null,
-        min: 0
+        min: 0,
+        threshold1: null,
+        threshold2: null,
+        threshold1Color: 'rgba(216, 200, 27, 0.27)',
+        threshold2Color: 'rgba(234, 112, 112, 0.22)'
       },
 
       annotate      : {
