@@ -225,7 +225,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.panel.tooltip.query_as_alias = true;
 
       $scope.get_data();
-
     };
 
     $scope.remove_panel_from_row = function(row, panel) {

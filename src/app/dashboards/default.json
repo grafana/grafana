@@ -42,7 +42,6 @@
           "span": 12,
           "editable": true,
           "type": "graphite",
-          "loadingEditor": false,
           "x-axis": true,
           "y-axis": true,
           "scale": 1,

@@ -27,7 +27,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [ { type: 'filtering' } ],
+      pulldowns: [ { type: 'filtering' },  { type: 'annotations' } ],
       nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {
@@ -126,6 +126,15 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       if (!filtering) {
         dashboard.pulldowns.push({
           type: 'filtering',
+          enable: false,
+          collapse: true
+        });
+      }
+
+      var annotations = _.findWhere(dashboard.pulldowns, {type: 'annotations'});
+      if (!annotations) {
+        dashboard.pulldowns.push({
+          type: 'annotations',
           enable: false,
           collapse: true
         });

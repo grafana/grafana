@@ -5,7 +5,6 @@
     }
     .filtering-container label {
       float: left;
-      font-size: inherit;
     }
     .filtering-container input[type=checkbox] {
       margin: 0;
@@ -13,11 +12,14 @@
     .filter-panel-filter {
       display:inline-block;
       vertical-align: top;
-      padding: 3px 10px 0px 10px;
+      padding: 4px 10px 3px 10px;
       border-right: 1px solid #202020;
     }
+    .filter-panel-filter:first-child {
+      padding-left: 0;
+    }
     .filter-panel-filter ul {
-      margin-bottom: 3px;
+      margin-bottom: 0px;
     }
 
     .filter-deselected {
@@ -25,12 +27,13 @@
     }
     .filter-action {
       float:right;
+      padding-right: 2px;
       margin-bottom: 0px !important;
-      margin-left: 3px;
+      margin-left: 0px;
       margin-top: 4px;
     }
     .add-filter-action {
-      padding: 3px 10px 0px 10px;
+      padding: 3px 10px 0px 5px;
       position: relative;
       top: 4px;
     }
@@ -78,7 +81,7 @@
             <input type='text' ng-model="filter.query">
           </li>
           <li>
-            <label for="includeAll">Include all</label>:
+            <label for="includeAll">Include all:</label>
             <input id="includeAll" type='checkbox' ng-model="filter.includeAll">
           </li>
         </ul>
