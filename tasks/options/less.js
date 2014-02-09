@@ -12,7 +12,7 @@ module.exports = function(config) {
     // Compile in place when not building
     src:{
       options: {
-        paths: ["<%= srcDir %>/vendor/bootstrap/less"],
+        paths: ["<%= srcDir %>/vendor/bootstrap/less", "<%= srcDir %>/css/less"],
         yuicompress:true
       },
       files: {

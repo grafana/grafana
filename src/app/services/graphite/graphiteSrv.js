@@ -20,13 +20,13 @@ function (angular, _, $, config, kbn, moment) {
           from: this.translateTime(options.range.from),
           until: this.translateTime(options.range.to),
           targets: options.targets,
-          renderer: options.renderer,
+          format: options.format,
           maxDataPoints: options.maxDataPoints
         };
 
         var params = buildGraphiteParams(graphOptions);
 
-        if (options.renderer === 'png') {
+        if (options.format === 'png') {
           return $q.when(graphiteRenderUrl + '?' + params.join('&'));
         }
 
@@ -132,7 +132,7 @@ function (angular, _, $, config, kbn, moment) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
 
-      if (options.renderer !== 'png') {
+      if (options.format !== 'png') {
         options['format'] = 'json';
       }
 

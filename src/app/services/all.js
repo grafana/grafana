@@ -6,5 +6,6 @@ define([
   './panelMove',
   './graphite/graphiteSrv',
   './keyboardManager',
+  './annotationsSrv',
 ],
 function () {});

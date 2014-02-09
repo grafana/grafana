@@ -34,7 +34,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv, graphiteSrv, $timeout) {
+  module.controller('graphite', function($scope, $rootScope, filterSrv, graphiteSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -243,6 +243,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.updateTimeRange = function () {
       $scope.range = filterSrv.timeRange();
+      $scope.rangeUnparsed = filterSrv.timeRange(false);
+
       $scope.interval = '10m';
 
       if ($scope.range) {
@@ -279,11 +281,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.updateTimeRange();
 
       var graphiteQuery = {
-        range: filterSrv.timeRange(false),
+        range: $scope.rangeUnparsed,
         targets: $scope.panel.targets,
-        renderer: $scope.panel.renderer,
+        format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.panel.span * 50
       };
+
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
 
       return graphiteSrv.query(graphiteQuery)
         .then($scope.receiveGraphiteData)
@@ -327,7 +331,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         data.push(series);
       });
 
-      $scope.render(data);
+      $scope.annotationsPromise
+        .then(function(annotations) {
+          data.annotations = annotations;
+          $scope.render(data);
+        }, function() {
+          $scope.render(data);
+        });
     };
 
     $scope.add_target = function() {

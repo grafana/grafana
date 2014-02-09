@@ -1,8 +1,13 @@
 <div ng-controller='AnnotationsCtrl' ng-init="init()">
 
-  <div class="submenu-toggle">
-    <label class="small" for="showAnnotations">Hide</label>
-    <input type="checkbox" id="showAnnotations"></label>
+ <!--  <div class="submenu-toggle" ng-class="{'annotation-disabled': panel.hideAll }">
+    <a ng-click="hideAll();" class="small">Hide All</a>
+    <i class="icon-ok"></i>
+  </div>
+ -->
+  <div class="submenu-toggle" ng-repeat="annotation in annotationList" ng-class="{'annotation-disabled': !annotation.enabled }">
+    <a ng-click="hide(annotation)" class="small">{{annotation.name}}</a>
+    <i class="icon-ok"></i>
   </div>
 
 </div>

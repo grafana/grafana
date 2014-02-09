@@ -206,13 +206,13 @@ function (angular, $, kbn, moment, _) {
         }
 
         function addAnnotations(options) {
-          if(!scope.panel.annotate.enable) {
+          if(!data.annotations || data.annotations.length === 0) {
             return;
           }
 
           options.events = {
             levels: 1,
-            data: scope.annotations,
+            data: data.annotations,
             types: {
               'annotation': {
                 level: 1,
