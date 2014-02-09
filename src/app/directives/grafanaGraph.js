@@ -141,7 +141,12 @@ function (angular, $, kbn, moment, _) {
             });
 
             if (panel.grid.threshold2) {
-              var limit2 = panel.grid.thresholdLine ? panel.grid.threshold2 : null;
+              var limit2;
+              if (panel.grid.thresholdLine) {
+                limit2 = panel.grid.threshold2;
+              } else {
+                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
+              }
               options.grid.markings.push({
                 yaxis: { from: panel.grid.threshold2, to: limit2 },
                 color: panel.grid.threshold2Color
