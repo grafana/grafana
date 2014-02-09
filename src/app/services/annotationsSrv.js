@@ -11,7 +11,7 @@ define([
 
     this.init = function() {
       this.annotationList = [
-        {
+       /* {
           type: 'graphite-target',
           enabled: false,
           target: 'metrics_data.mysite.dolph.counters.payment.cart_klarna_payment_completed.count',
@@ -22,7 +22,7 @@ define([
           enabled: true,
           target: 'metrics_data.mysite.dolph.counters.payment.cart_paypal_payment_completed.count',
           name: 'restarts',
-        }
+        }*/
       ];
     };
 
