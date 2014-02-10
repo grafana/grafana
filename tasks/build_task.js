@@ -4,7 +4,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'jshint:source',
     'clean:on_start',
-    'less:dist',
+    'less:src',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
     'cssmin:build',
