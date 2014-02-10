@@ -249,8 +249,8 @@ function (angular, $, kbn, moment, _) {
           var defaults = {
             position: 'left',
             show: scope.panel['y-axis'],
-            min: null,
-            max: null,
+            min: scope.panel.grid.min,
+            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
           };
 
           options.yaxes.push(defaults);
