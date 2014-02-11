@@ -90,7 +90,7 @@ function (angular, $, kbn, moment, _) {
               lines:  {
                 show: panel.lines,
                 zero: false,
-                fill: panel.fill === 0 ? false : panel.fill/10,
+                fill: panel.fill === 0 ? 0.001 : panel.fill/10,
                 lineWidth: panel.linewidth,
                 steps: panel.steppedLine
               },
