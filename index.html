@@ -77,7 +77,7 @@
               <ul class="nav navbar-nav">
                 <li class="active"><a href="#">Home</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="https://github.com/torkelo/grafana">Docs</a></li>
+                <li><a href="https://github.com/torkelo/grafana/wiki">Documentation</a></li>
               </ul>
             </div>
           </div>
@@ -111,8 +111,8 @@
                 <li>Bars, Lines, Points.</li>
                 <li>Smart Y-axis formating</li>
                 <li>Series toggles &amp; color selector</li>
-                <li>Axis labels</li>
-                <li>Fullscreen views and more...</li>
+                <li>Grid thresholds, axis labels, more...</li>
+                <li>Supports graphite png graphs</li>
               </ul>
             </div>
           </div><!-- /.col-lg-4 -->
@@ -129,7 +129,7 @@
                 <li>Import &amp; export dashboard (json file)</li>
                 <li>Import dashboard from Graphite</li>
                 <li>Templating</li>
-                <li>Much more...</li>
+                <li>Scripted dashboards</li>
               </ul>
             </div>
           </div>
@@ -152,6 +152,22 @@
           </div>
 
         </div>
+
+        <div class="container">
+          <div class="row">
+            <div class="sponsor">
+              <h4>Do you want to sponsor Grafana? Please contact: <span class="small"><a href="mailto:torkel.odegaard@grafana.org"></i>torkel@grafana.org</a></span></h4>
+              <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+                <input type="hidden" name="cmd" value="_s-xclick">
+                <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
+                ">
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+                and support continued developement!
+              </form>
+            </div>
+          </div>
+      </div>
       </div>
     </div>
 
@@ -296,9 +312,36 @@
 
     <div class="container">
       <footer>
-        <p>
-          &copy; 2013 Torkel Ödegaard  |  <a href="https://github.com/torkelo/grafana/issues">Github project</a> | <a href="https://github.com/torkelo/grafana/issues">Github issues.</a>
-        </p>
+        <div style="text-align: center;">
+          &copy; 2013 Torkel Ödegaard  |
+          <a href="https://github.com/torkelo/grafana/issues">Github project</a> |
+          <a href="https://github.com/torkelo/grafana/issues">Github issues</a> |
+          <a href="https://github.com/torkelo/grafana/releases">Download</a> |
+          <a href="https://github.com/torkelo/grafana/wiki">Documentation</a>
+        </div>
+        <div style="text-align: center">
+          <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=watch&amp;count=true"
+                  width="100"
+                  height="20"
+                  title="Star on GitHub"
+                  frameborder="false"
+                  scrolling="0"
+                  allowtransparency="true">
+          </iframe>
+
+          <iframe class="github-btn" src="http://ghbtns.com/github-btn.html?user=torkelo&amp;repo=grafana&amp;type=fork&amp;count=true"
+                  width="80"
+                  height="20"
+                  title="Fork on GitHub"
+                  frameborder="false"
+                  scrolling="0"
+                  allowtransparency="true"></iframe>
+
+          <a href="https://twitter.com/torkelo" class="twitter-follow-button" data-show-count="false">Follow @torkelo</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <a href="https://twitter.com/share" class="twitter-share-button" data-via="torkelo" data-hashtags="grafana">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+        </div>
       </footer>
     </div>
 

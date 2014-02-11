@@ -203,7 +203,7 @@ h2.lead {
 }
 
 footer {
-  margin-top: 20px;
+  margin-top: 0px;
 }
 
 footer p {
@@ -246,4 +246,19 @@ iframe {
   border-color: #080808;
   height: 30px;
   text-align: center;
+}
+
+.sponsor {
+  //margin: 20px 0;
+  padding: 1px 20px 15px 20px;
+  border-left: 4px solid #5cb85c;
+  border-right: 4px solid #5cb85c;
+  background: #272727;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.sponsor input[type=image] {
+  position: relative;
+  top: 5px;
 }
