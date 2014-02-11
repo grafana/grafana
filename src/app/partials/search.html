@@ -57,7 +57,12 @@
               ng-repeat="row in search_results.dashboards"
               ng-class="{'selected': $index === selectedIndex }">
             <td><a confirm-click="elasticsearch_delete(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
-            <td style="width:100%"><a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a></td>
+            <td style="width:100%">
+              <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
+            </td>
+            <td style="white-space: nowrap">
+              <span ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-info">{{tag}}</span>
+            </td>
             <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/partials/dashLoaderShare.html'"></i></a></td>
           </tr>
         </table>

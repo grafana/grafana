@@ -40,17 +40,23 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.elasticsearch_dashboards = function(queryStr) {
-      dashboard.elasticsearch_list(queryStr + '*', 50).then(function(results) {
-        if(_.isUndefined(results.hits)) {
-          $scope.search_results = { dashboards: [] };
-          return;
-        }
+    $scope.elasticsearch_dashboards = function(query) {
+      var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
+      // if elasticsearch has disabled _all field we need
+      // need to specifiy field here
+      var q = 'title:' + (query || '*');
 
-        var hits = _.sortBy(results.hits.hits, '_id');
+      return request.query($scope.ejs.QueryStringQuery(q)).size(50).doSearch()
+        .then(function(results) {
 
-        $scope.search_results = { dashboards: hits };
-      });
+          if(_.isUndefined(results.hits)) {
+            $scope.search_results = { dashboards: [] };
+            return;
+          }
+
+          var hits = _.sortBy(results.hits.hits, '_id');
+          $scope.search_results = { dashboards: hits };
+        });
     };
 
     $scope.elasticsearch_dblist = function(queryStr) {

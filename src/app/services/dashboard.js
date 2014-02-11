@@ -21,6 +21,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     var _dash = {
       title: "",
+      tags: [],
       style: "dark",
       timezone: 'browser',
       editable: true,
@@ -363,6 +364,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         user: 'guest',
         group: 'guest',
         title: save.title,
+        tags: save.tags,
         dashboard: angular.toJson(save)
       });
 
@@ -394,26 +396,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           return false;
         }
       );
-    };
-
-    this.elasticsearch_list = function(query, count) {
-      var request = ejs.Request().indices(config.grafana_index).types('dashboard');
-      // if elasticsearch has disabled _all field we need
-      // need to specifiy field here
-      var q = 'title:' + (query || '*');
-
-      return request.query(
-        ejs.QueryStringQuery(q)
-        ).size(count).doSearch(
-          // Success
-          function(result) {
-            return result;
-          },
-          // Failure
-          function() {
-            return false;
-          }
-        );
     };
 
     this.save_gist = function(title,dashboard) {
