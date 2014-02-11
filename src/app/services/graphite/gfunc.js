@@ -176,8 +176,8 @@ function (_) {
   addFuncDef({
     name: 'summarize',
     category: categories.Transform,
-    params: [ { name: "interval", type: "string" }],
-    defaultParams: ['1h']
+    params: [ { name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
+    defaultParams: ['1h', 'sum']
   });
 
   addFuncDef({
