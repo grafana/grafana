@@ -47,7 +47,9 @@ function (angular, _, config, $) {
           return;
         }
 
-        $scope.search_results = { dashboards: results.hits.hits };
+        var hits = _.sortBy(results.hits.hits, '_id');
+
+        $scope.search_results = { dashboards: hits };
       });
     };
 

@@ -103,16 +103,6 @@ function (angular, _, moment) {
       );
     };
 
-    $scope.elasticsearch_dblist = function(query) {
-      dashboard.elasticsearch_list(query,$scope.loader.load_elasticsearch_size).then(
-        function(result) {
-        if(!_.isUndefined(result.hits)) {
-          $scope.hits = result.hits.total;
-          $scope.elasticsearch.dashboards = result.hits.hits;
-        }
-      });
-    };
-
     $scope.save_gist = function() {
       dashboard.save_gist($scope.gist.title).then(
         function(link) {
