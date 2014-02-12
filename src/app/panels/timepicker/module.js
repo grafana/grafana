@@ -77,8 +77,8 @@ function (angular, app, _, moment, kbn) {
       $scope.temptime = cloneTime($scope.time);
 
       // Date picker needs the date to be at the start of the day
-      $scope.temptime.from.date.setHours(0,0,0,0);
-      $scope.temptime.to.date.setHours(0,0,0,0);
+      $scope.temptime.from.date.setHours(1,0,0,0);
+      $scope.temptime.to.date.setHours(1,0,0,0);
 
       $q.when(customTimeModal).then(function(modalEl) {
         modalEl.modal('show');
