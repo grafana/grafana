@@ -61,7 +61,7 @@
               <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
             </td>
             <td style="white-space: nowrap">
-              <span ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-info">{{tag}}</span>
+              <span ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-tag">{{tag}}</span>
             </td>
             <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/partials/dashLoaderShare.html'"></i></a></td>
           </tr>

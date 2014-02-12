@@ -33,7 +33,10 @@
      <div class="editor-row">
       <div class="section">
         <div class="editor-option">
-          <label class="small">Tags</label><input type="text" class="input-large" ng-model='dashboard.current.tags'></input>
+          <label class="small">Tags</label>
+          <bootstrap-tagsinput ng-model="dashboard.current.tags" tagclass="label label-tag" placeholder="add tags">
+          </bootstrap-tagsinput>
+          <tip>Press enter to a add tag</tip>
         </div>
       </div>
     </div>

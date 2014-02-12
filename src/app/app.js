@@ -12,7 +12,7 @@ define([
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce',
+  'bindonce'
 ],
 function (angular, $, _, appLevelRequire) {
 

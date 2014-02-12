@@ -45,6 +45,8 @@ require.config({
 
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
+
+    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
   },
   shim: {
     underscore: {
@@ -104,6 +106,7 @@ require.config({
 
     elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
 
+    'bootstrap-tagsinput':          ['jquery'],
   },
   waitSeconds: 60,
 });

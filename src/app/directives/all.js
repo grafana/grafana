@@ -10,5 +10,6 @@ define([
   './confirmClick',
   './configModal',
   './spectrumPicker',
-  './grafanaGraph'
+  './grafanaGraph',
+  './bootstrap-tagsinput'
 ], function () {});
