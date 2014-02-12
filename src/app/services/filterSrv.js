@@ -26,6 +26,7 @@ define([
 
       self.list = dashboard.current.services.filter.list;
       self.time = dashboard.current.services.filter.time;
+      self.filterTemplateData = undefined;
 
       self.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
