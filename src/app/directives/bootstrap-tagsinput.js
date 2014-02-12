@@ -66,9 +66,6 @@ function (angular, $) {
             }
           });
 
-          // create a shallow copy of model's current state, needed to determine
-          // diff when model changes
-          var prev = scope.model.slice();
           scope.$watch("model", function() {
             if (!angular.isArray(scope.model)) {
               scope.model = [];
