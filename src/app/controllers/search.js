@@ -12,10 +12,9 @@ function (angular, _, config, $) {
   module.controller('SearchCtrl', function($scope, $rootScope, dashboard, $element, $location) {
 
     $scope.init = function() {
-      $scope.elasticsearch = $scope.elasticsearch || {};
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
-
+      $scope.query = { query: 'title:' };
       $rootScope.$on('open-search', $scope.openSearch);
     };
 
@@ -42,11 +41,20 @@ function (angular, _, config, $) {
 
     $scope.elasticsearch_dashboards = function(query) {
       var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
-      // if elasticsearch has disabled _all field we need
-      // need to specifiy field here
-      var q = 'title:' + (query + '*' || '*');
 
-      return request.query($scope.ejs.QueryStringQuery(q)).size(50).doSearch()
+      if (query.length === 0) {
+        query = 'title:';
+      }
+
+      if (query[query.length - 1] !== '*') {
+        query += '*';
+      }
+
+      return request
+        .query($scope.ejs.QueryStringQuery(query))
+        .sort('_uid')
+        .facet($scope.ejs.TermsFacet("tags").field("tags").order('term').size(50))
+        .size(50).doSearch()
         .then(function(results) {
 
           if(_.isUndefined(results.hits)) {
@@ -54,18 +62,36 @@ function (angular, _, config, $) {
             return;
           }
 
-          var hits = _.sortBy(results.hits.hits, '_id');
-          $scope.search_results = { dashboards: hits };
+          $scope.search_results = { dashboards: results.hits.hits };
+          $scope.tags = results.facets.tags.terms;
         });
     };
 
-    $scope.elasticsearch_dblist = function(queryStr) {
+    $scope.filterByTag = function(tag, evt) {
+      $scope.query.query = "tags:" + tag + " AND title:";
+      $scope.search();
+      $scope.tagsOnly = false;
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      evt.stopPropagation();
+      evt.preventDefault();
+    };
+
+    $scope.showTags = function(evt) {
+      evt.stopPropagation();
+      $scope.tagsOnly = !$scope.tagsOnly;
+      $scope.query.query = $scope.tagsOnly ? "tags!" : "";
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      $scope.selectedIndex = -1;
+    };
+
+    $scope.search = function() {
       $scope.showImport = false;
       $scope.selectedIndex = -1;
 
-      queryStr = queryStr.toLowerCase();
+      var queryStr = $scope.query.query.toLowerCase();
 
       if (queryStr.indexOf('m:') !== 0) {
+        queryStr = queryStr.replace(' and ', ' AND ');
         $scope.elasticsearch_dashboards(queryStr);
         return;
       }
@@ -103,7 +129,8 @@ function (angular, _, config, $) {
       }
 
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.elasticsearch_dblist("");
+      $scope.query.query = 'title:';
+      $scope.search();
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
@@ -132,8 +159,6 @@ function (angular, _, config, $) {
     };
 
   });
-
-
 
   module.directive('xngFocus', function() {
     return function(scope, element, attrs) {

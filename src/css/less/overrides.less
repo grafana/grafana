@@ -555,7 +555,12 @@ div.flot-text {
 
 // Labels & Badges
 
-.label-tag, .label-tag:hover {
+.label-tag {
   background-color: @purple;
   color: @linkColor;
+}
+
+.label-tag:hover {
+  background-color: darken(@purple, 10%);
+  color: lighten(@linkColor, 5%);
 }

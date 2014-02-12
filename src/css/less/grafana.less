@@ -12,6 +12,8 @@
   }
 }
 
+// Search
+
 .grafana-search-panel {
   padding: 6px 10px;
 
@@ -36,6 +38,20 @@
     a {
       color: white;
     }
+  }
+
+  .selected-tag .label-tag {
+    background-color: @blue;
+  }
+}
+
+.search-tagview-switch {
+  position: absolute;
+  top: 15px;
+  right: 180px;
+  color: darken(@linkColor, 30%);
+  &.active {
+    color: @linkColor;
   }
 }
 
@@ -417,3 +433,5 @@ input[type=text].func-param {
 .sp-palette-container, .sp-picker-container {
   border: none;
 }
+
+

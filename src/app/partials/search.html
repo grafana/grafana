@@ -28,17 +28,35 @@
             <i class="icon-th-large"></i>
             New
           </button>
-          <span>
+          <span class="position: relative;">
             <input  type="text"
                     placeholder="search dashboards, metrics, or graphs"
                     xng-focus="giveSearchFocus"
                     ng-keydown="keyDown($event)"
-                    ng-model="elasticsearch.query"
-                    ng-change="elasticsearch_dblist(elasticsearch.query)" />
+                    ng-model="query.query" spellcheck='false'
+                    ng-change="search()" />
+            <a class="search-tagview-switch" href="javascript:void(0);"
+              ng-class="{'active': tagsOnly}"
+              ng-click="showTags($event)">Tags</a>
           </span>
         </div>
+
         <h6 ng-hide="search_results.dashboards.length || search_results.metrics.length">No dashboards or metrics matching your query found</h6>
-        <table class="table table-condensed table-striped">
+
+        <table class="table table-condensed table-striped" ng-if="tagsOnly">
+          <tr ng-repeat="tag in tags" ng-class="{'selected-tag': $index === selectedIndex }">
+            <td>
+              <a ng-click="filterByTag(tag.term, $event)" class="label label-tag">
+                {{tag.term}}
+              </a>
+            </td>
+            <td style="width:100%;">
+              {{tag.count}}
+            </td>
+          </tr>
+        </table>
+
+        <table class="table table-condensed table-striped" ng-if="!tagsOnly">
           <tr bindonce ng-repeat="row in search_results.metrics"
               class="grafana-search-metric-result"
               ng-class="{'selected': $index === selectedIndex }">
@@ -60,8 +78,10 @@
             <td style="width:100%">
               <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
             </td>
-            <td style="white-space: nowrap">
-              <span ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-tag">{{tag}}</span>
+            <td style="white-space: nowrap; text-align: right;">
+              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-tag">
+                {{tag}}
+              </a>
             </td>
             <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" bs-modal="'app/partials/dashLoaderShare.html'"></i></a></td>
           </tr>
