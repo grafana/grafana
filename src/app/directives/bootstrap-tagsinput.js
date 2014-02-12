@@ -53,10 +53,6 @@ function (angular, $) {
               scope.$parent[attrs.tagclass] : function() { return attrs.tagclass; }
           });
 
-          for (var i = 0; i < scope.model.length; i++) {
-            select.tagsinput('add', scope.model[i]);
-          }
-
           select.on('itemAdded', function(event) {
             if (scope.model.indexOf(event.item) === -1) {
               scope.model.push(event.item);
@@ -74,25 +70,16 @@ function (angular, $) {
           // diff when model changes
           var prev = scope.model.slice();
           scope.$watch("model", function() {
-
-            var added = scope.model.filter(function(i) {return prev.indexOf(i) === -1;}),
-                removed = prev.filter(function(i) {return scope.model.indexOf(i) === -1;}),
-                i;
-
-            prev = scope.model.slice();
-
-            // Remove tags no longer in binded model
-            for (i = 0; i < removed.length; i++) {
-              select.tagsinput('remove', removed[i]);
+            if (!angular.isArray(scope.model)) {
+              scope.model = [];
             }
 
-            // Refresh remaining tags
-            select.tagsinput('refresh');
+            select.tagsinput('removeAll');
 
-            // Add new items in model as tags
-            for (i = 0; i < added.length; i++) {
-              select.tagsinput('add', added[i]);
+            for (var i = 0; i < scope.model.length; i++) {
+              select.tagsinput('add', scope.model[i]);
             }
+
           }, true);
 
         }

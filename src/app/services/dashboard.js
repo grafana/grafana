@@ -120,7 +120,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     var dash_defaults = function(dashboard) {
-      _.defaults(dashboard,_dash);
+
+      _.defaults(dashboard, _dash);
       _.defaults(dashboard.loader,_dash.loader);
 
       var filtering = _.findWhere(dashboard.pulldowns, {type: 'filtering'});
@@ -153,7 +154,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       dashboard = dash_defaults(dashboard);
 
       // Set the current dashboard
-      self.current = _.clone(dashboard);
+      self.current = angular.copy(dashboard);
 
       // Delay this until we're sure that querySrv and filterSrv are ready
       $timeout(function() {
