@@ -44,7 +44,7 @@ function (angular, _, config, $) {
       var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
       // if elasticsearch has disabled _all field we need
       // need to specifiy field here
-      var q = 'title:' + (query || '*');
+      var q = 'title:' + (query + '*' || '*');
 
       return request.query($scope.ejs.QueryStringQuery(q)).size(50).doSearch()
         .then(function(results) {
