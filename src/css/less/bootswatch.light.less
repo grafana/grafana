@@ -356,6 +356,11 @@ div.subnav {
 	}
 }
 
+legend, label {
+	color: @textColor;
+	border-bottom: 0px solid #222;
+}
+
 // TABLES
 // -----------------------------------------------------
 
@@ -480,10 +485,6 @@ legend {
 }
 
 .label {
-	min-width: 80px;
-	.border-radius(0);
-	font-weight: 300;
-	text-shadow: none;
 
 	&-success {
 		background-color: @green;
@@ -503,27 +504,8 @@ legend {
 }
 
 .badge {
-
-	.border-radius(0);
-	font-weight: 300;
-	text-shadow: none;
-	color: @black;
-
-	&-success {
-		background-color: @green;
-	}
-
-	&-important {
-		background-color: @red;
-	}
-
-	&-info {
-		background-color: @purple;
-	}
-
-	&-inverse {
-		background-color: @black;
-	}
+	border-radius: 0;
+	font-weight: 200;
 }
 
 // MISC
@@ -567,7 +549,7 @@ a.thumbnail {
 
 .modal {
 	.border-radius(0);
-	background-color: @white;
+	background-color: @bodyBackground;
 	&-header {
 		border-bottom: none;
 	}

@@ -16,9 +16,9 @@ module.exports = function(config) {
         yuicompress:true
       },
       files: {
-        "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.dark.less",
-        "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/vendor/bootstrap/less/bootstrap.light.less",
-        "<%= srcDir %>/css/bootstrap-responsive.min.css": "<%= srcDir %>/vendor/bootstrap/less/grafana-responsive.less"
+        "<%= srcDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/css/less/bootstrap.dark.less",
+        "<%= srcDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/css/less/bootstrap.light.less",
+        "<%= srcDir %>/css/bootstrap-responsive.min.css": "<%= srcDir %>/css/less/grafana-responsive.less"
       }
     }
   };

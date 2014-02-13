@@ -113,10 +113,8 @@
   position: fixed;
   left: 0px;
   right: 0px;
-  top: 49px;
+  top: 54px;
   bottom: 0px;
-  outline: 1px solid #101214;
-  border-top: 1px solid #3e444c;
   padding: 0 10px;
   background: @kibanaPanelBackground;
 }
@@ -189,13 +187,14 @@
   min-height: 250px;
   margin-left: -10px;
   margin-right: -10px;
-  border-top: 1px solid black;
+  background-color: @fullEditBackground;
+  border-top: 1px solid @fullEditBorder;
 
   .tabs {
     .nav-tabs {
       margin: 0;
-      background: @grayDark;
-      border-top: 1px solid #555;
+      background: @fullEditTabsBackground;
+      border-top: 1px solid @fullEditTabsBorder;
     }
 
     .tab-content {
@@ -215,24 +214,21 @@
   }
 }
 
-/* Graphite Target Editor */
-@grafanaTargetColor:       #c8c8c8;
-@grafanaTargetColorHide:   darken(#c8c8c8, 25%);
-
-.grafana-target {
-}
 
 .grafana-target-inner-wrapper {
-  //border-top: 1px solid #444444;
   width: 100%;
 }
 
 .grafana-target-inner {
-  border-top: 2px solid black;
-  border-left: 2px solid black;
-  border-right: 2px solid black;
-  background: @grayDark;
+  border-top: 2px solid @grafanaTargetBorder;
+  border-left: 2px solid @grafanaTargetBorder;
+  border-right: 2px solid @grafanaTargetBorder;
+  background: @grafanaTargetBackground;
   width: 100%;
+}
+
+.grafana-target-inner:last-child {
+  border-bottom: 2px solid @grafanaTargetBorder;
 }
 
 .grafana-target-onoff {
@@ -255,7 +251,7 @@
   padding: 5px 7px;
   display: inline-block;
   font-weight: normal;
-  border-right: 2px solid #050505;
+  border-right: 2px solid @grafanaTargetSegmentBorder;
   color: @grafanaTargetColor;
   display: inline-block;
 
@@ -267,14 +263,14 @@
     text-decoration: none;
   }
   &:hover {
-    background: #444;
+    background: @grafanaTargetFuncBackground;
   }
 }
 
 .grafana-target-function {
-  background: #444;
+  background: @grafanaTargetFuncBackground;
   &:hover {
-    background: #555;
+    background: @grafanaTargetFuncHightlight;
   }
 }
 

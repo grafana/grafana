@@ -12,7 +12,7 @@
 @black:                 #000;
 @grayDarker:            lighten(#000, 13.5%); // #222
 @grayDark:              lighten(#000, 20%);   // #333
-@gray:                   lighten(#000, 33.5%); // #555
+@gray:                  lighten(#000, 33.5%); // #555
 @grayLight:             lighten(#000, 60%);   // #999
 @grayLighter:           lighten(#000, 93.5%); // #eee
 @white:                 #fff;
@@ -32,6 +32,26 @@
 // Kibana Variables
 // -------------------------
 @kibanaPanelBackground: @white;
+
+// Submenu
+@submenuBackground:     rgb(218, 217, 217);
+@submenuBorder:         @white;
+
+// Tabs
+@fullEditTabsBackground:  @white;
+@fullEditBorder:          @white;
+@fullEditBackground:      @navbarBackground;
+@fullEditTabsBorder:      @white;
+
+// Graphite Target Editor
+@grafanaTargetBorder:         @submenuBackground;
+@grafanaTargetBackground:     @white;
+@grafanaTargetColor:          @textColor;
+@grafanaTargetColorHide:      lighten(@textColor, 25%);
+@grafanaTargetSegmentBorder:  @submenuBackground;
+
+@grafanaTargetFuncBackground: darken(@grafanaTargetBackground, 5%);
+@grafanaTargetFuncHightlight: darken(@grafanaTargetBackground, 10%);
 
 // Scaffolding
 // -------------------------
@@ -113,7 +133,7 @@
 // Forms
 // -------------------------
 @inputBackground:               @white;
-@inputBorder:                   @gray;
+@inputBorder:                   @grayLight;
 @inputBorderRadius:             @baseBorderRadius;
 @inputDisabledBackground:       @grayLighter;
 @formActionsBackground:         #f5f5f5;
