@@ -10,21 +10,21 @@
 // Grays
 // -------------------------
 @black:                 #000;
-@grayDarker:            #080808;
-@grayDark:              #999;
-@gray:                  #bbb;
-@grayLight:             #dfdfdf;
-@grayLighter:           #eee;
+@grayDarker:            lighten(#000, 13.5%); // #222
+@grayDark:              lighten(#000, 20%);   // #333
+@gray:                   lighten(#000, 33.5%); // #555
+@grayLight:             lighten(#000, 60%);   // #999
+@grayLighter:           lighten(#000, 93.5%); // #eee
 @white:                 #fff;
 
 
 // Accent colors
 // -------------------------
-@blue:                  #007FFF;
-@blueDark:              #1F26B6;
-@green:                 #3FB618;
-@red:                   #FF0039;
-@yellow:                #FFA500;
+@blue:                  #158CBA;
+@blueDark:              #75CAEB;
+@green:                 #28B62C;
+@red:                   #FF4136;
+@yellow:                #FF851B;
 @orange:                #FF7518;
 @pink:                  #E671B8;
 @purple:                #9954BB;
@@ -184,16 +184,16 @@
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
 @navbarHeight:                    50px;
-@navbarBackgroundHighlight:       @grayDarker;
-@navbarBackground:                @grayDarker;
-@navbarBorder:                    transparent;
+@navbarBackgroundHighlight:       #f8f8f8;
+@navbarBackground:                #f8f8f8;
+@navbarBorder:                    darken(@navbarBackground, 6.5%);
 
-@navbarText:                      @white;
-@navbarLinkColor:                 @white;
-@navbarLinkColorHover:            @gray;
-@navbarLinkColorActive:           @white;
-@navbarLinkBackgroundHover:       rgba(0, 0, 0, 0.05);
-@navbarLinkBackgroundActive:      transparent;
+@navbarText:                      #666;
+@navbarLinkColor:                 #666;
+@navbarLinkColorHover:            #333;
+@navbarLinkColorActive:           #555;
+@navbarLinkBackgroundHover:       transparent;
+@navbarLinkBackgroundActive:      darken(@navbarBackground, 6.5%);
 
 @navbarBrandColor:                @navbarLinkColor;
 
