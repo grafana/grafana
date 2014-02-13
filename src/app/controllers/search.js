@@ -100,6 +100,7 @@ function (angular, _, config, $) {
       $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.selectedIndex = -1;
+      $scope.search();
     };
 
     $scope.search = function() {
