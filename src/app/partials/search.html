@@ -41,23 +41,23 @@
           </span>
         </div>
 
-        <h6 ng-hide="search_results.dashboards.length || search_results.metrics.length">No dashboards or metrics matching your query found</h6>
+        <h6 ng-hide="results.dashboards.length || results.metrics.length">No dashboards or metrics matching your query found</h6>
 
         <table class="table table-condensed table-striped" ng-if="tagsOnly">
-          <tr ng-repeat="tag in tags" ng-class="{'selected-tag': $index === selectedIndex }">
+          <tr ng-repeat="tag in results.tags" ng-class="{'selected-tag': $index === selectedIndex }">
             <td>
               <a ng-click="filterByTag(tag.term, $event)" class="label label-tag">
-                {{tag.term}}
+                {{tag.term}} &nbsp;({{tag.count}})
               </a>
             </td>
-            <td style="width:100%;">
-              {{tag.count}}
+            <td style="width:100%;padding-left: 10px;font-weight: bold;">
+
             </td>
           </tr>
         </table>
 
         <table class="table table-condensed table-striped" ng-if="!tagsOnly">
-          <tr bindonce ng-repeat="row in search_results.metrics"
+          <tr bindonce ng-repeat="row in results.metrics"
               class="grafana-search-metric-result"
               ng-class="{'selected': $index === selectedIndex }">
             <td><span class="label label-info">metric</span></td>
@@ -72,7 +72,7 @@
           </tr>
 
           <tr bindonce
-              ng-repeat="row in search_results.dashboards"
+              ng-repeat="row in results.dashboards"
               ng-class="{'selected': $index === selectedIndex }">
             <td><a confirm-click="elasticsearch_delete(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
             <td style="width:100%">

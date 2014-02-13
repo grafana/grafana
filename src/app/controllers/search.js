@@ -14,6 +14,7 @@ function (angular, _, config, $) {
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
+      $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
       $rootScope.$on('open-search', $scope.openSearch);
     };
@@ -29,7 +30,15 @@ function (angular, _, config, $) {
         $scope.selectedIndex--;
       }
       if (evt.keyCode === 13) {
-        var selectedDash = $scope.search_results.dashboards[$scope.selectedIndex];
+        if ($scope.tagsOnly) {
+          var tag = $scope.results.tags[$scope.selectedIndex];
+          if (tag) {
+            $scope.filterByTag(tag.term);
+          }
+          return;
+        }
+
+        var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.path("/dashboard/elasticsearch/" + encodeURIComponent(selectedDash._id));
           setTimeout(function(){
@@ -39,15 +48,21 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.elasticsearch_dashboards = function(query) {
+    $scope.searchDasboards = function(query) {
       var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
-
-      if (query.length === 0) {
-        query = 'title:';
+      var tagsOnly = query.indexOf('tags!:') === 0;
+      if (tagsOnly) {
+        var tagsQuery = query.substring(6, query.length);
+        query = 'tags:' + tagsQuery + '*';
       }
+      else {
+        if (query.length === 0) {
+          query = 'title:';
+        }
 
-      if (query[query.length - 1] !== '*') {
-        query += '*';
+        if (query[query.length - 1] !== '*') {
+          query += '*';
+        }
       }
 
       return request
@@ -58,28 +73,31 @@ function (angular, _, config, $) {
         .then(function(results) {
 
           if(_.isUndefined(results.hits)) {
-            $scope.search_results = { dashboards: [] };
+            $scope.results.dashboards = [];
+            $scope.results.tags = [];
             return;
           }
 
-          $scope.search_results = { dashboards: results.hits.hits };
-          $scope.tags = results.facets.tags.terms;
+          $scope.tagsOnly = tagsOnly;
+          $scope.results.dashboards = results.hits.hits;
+          $scope.results.tags = results.facets.tags.terms;
         });
     };
 
     $scope.filterByTag = function(tag, evt) {
       $scope.query.query = "tags:" + tag + " AND title:";
       $scope.search();
-      $scope.tagsOnly = false;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      evt.stopPropagation();
-      evt.preventDefault();
+      if (evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+      }
     };
 
     $scope.showTags = function(evt) {
       evt.stopPropagation();
       $scope.tagsOnly = !$scope.tagsOnly;
-      $scope.query.query = $scope.tagsOnly ? "tags!" : "";
+      $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.selectedIndex = -1;
     };
@@ -92,7 +110,7 @@ function (angular, _, config, $) {
 
       if (queryStr.indexOf('m:') !== 0) {
         queryStr = queryStr.replace(' and ', ' AND ');
-        $scope.elasticsearch_dashboards(queryStr);
+        $scope.searchDasboards(queryStr);
         return;
       }
 
@@ -115,10 +133,10 @@ function (angular, _, config, $) {
 
       results.then(function(results) {
         if (results && results.hits && results.hits.hits.length > 0) {
-          $scope.search_results = { metrics: results.hits.hits };
+          $scope.results.metrics = { metrics: results.hits.hits };
         }
         else {
-          $scope.search_results = { metric: [] };
+          $scope.results.metrics = { metric: [] };
         }
       });
     };
