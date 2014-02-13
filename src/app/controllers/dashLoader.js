@@ -25,6 +25,10 @@ function (angular, _, moment) {
       });
     };
 
+    $scope.exitFullscreen = function() {
+      $rootScope.$emit('panel-fullscreen-exit');
+    };
+
     $scope.showDropdown = function(type) {
       if(_.isUndefined(dashboard.current.loader)) {
         return true;
