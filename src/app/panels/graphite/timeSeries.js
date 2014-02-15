@@ -55,11 +55,11 @@ function (_, kbn) {
       this.info.current = result[result.length-1][1];
 
       var formater = getFormater(yFormats[this.yaxis - 1]);
-      this.info.avg = formater(this.info.avg);
-      this.info.current = formater(this.info.current);
-      this.info.min = formater(this.info.min);
-      this.info.max = formater(this.info.max);
-      this.info.total = formater(this.info.total);
+      this.info.avg = this.info.avg ? formater(this.info.avg) : null;
+      this.info.current = this.info.current ? formater(this.info.current) : null;
+      this.info.min = this.info.min ? formater(this.info.min) : null;
+      this.info.max = this.info.max ? formater(this.info.max) : null;
+      this.info.total = this.info.total ? formater(this.info.total) : null;
     }
 
     return result;
