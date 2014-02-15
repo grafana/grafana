@@ -156,7 +156,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       /** @scratch /panels/histogram/3
        * stack:: Stack multiple series
        */
-      stack         : true,
+      stack         : false,
       /** @scratch /panels/histogram/3
        * legend:: Display the legond
        */

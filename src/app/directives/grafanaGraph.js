@@ -132,35 +132,13 @@ function (angular, $, kbn, moment, _) {
             }
           };
 
-          if (panel.grid.threshold1) {
-            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
-            options.grid.markings = [];
-            options.grid.markings.push({
-              yaxis: { from: panel.grid.threshold1, to: limit1 },
-              color: panel.grid.threshold1Color
-            });
-
-            if (panel.grid.threshold2) {
-              var limit2;
-              if (panel.grid.thresholdLine) {
-                limit2 = panel.grid.threshold2;
-              } else {
-                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
-              }
-              options.grid.markings.push({
-                yaxis: { from: panel.grid.threshold2, to: limit2 },
-                color: panel.grid.threshold2Color
-              });
-            }
-          }
-
-          addAnnotations(options);
-
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(panel.nullPointMode);
+            var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
             data[i].data = _d;
           }
 
+          addGridThresholds(options, panel);
+          addAnnotations(options);
           configureAxisOptions(data, options);
 
           plot = $.plot(elem, data, options);
@@ -208,6 +186,30 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.steppedLine ? '&lineMode=staircase' : '';
 
           elem.html('<img src="' + url + '"></img>');
+        }
+
+        function addGridThresholds(options, panel) {
+          if (panel.grid.threshold1) {
+            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
+            options.grid.markings = [];
+            options.grid.markings.push({
+              yaxis: { from: panel.grid.threshold1, to: limit1 },
+              color: panel.grid.threshold1Color
+            });
+
+            if (panel.grid.threshold2) {
+              var limit2;
+              if (panel.grid.thresholdLine) {
+                limit2 = panel.grid.threshold2;
+              } else {
+                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
+              }
+              options.grid.markings.push({
+                yaxis: { from: panel.grid.threshold2, to: limit2 },
+                color: panel.grid.threshold2Color
+              });
+            }
+          }
         }
 
         function addAnnotations(options) {
