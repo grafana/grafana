@@ -173,7 +173,7 @@
   }
   .close {
     margin-right: 5px;
-    color: white;
+    color: @linkColor;
     opacity: 0.7;
     text-shadow: none;
   }
@@ -310,7 +310,7 @@
 
 input[type=text].grafana-target-text-input {
   padding: 5px 7px;
-  border: 1px solid #050505;
+  border: 1px solid @grafanaTargetSegmentBorder;
   margin: 0px;
   background: transparent;
   width: 80%;
@@ -341,9 +341,9 @@ input[type=text].func-param {
 .grafana-func-editor {
   min-width: 140px;
   .grafana-func-editor-header {
-    background: #41474c;
+    background: @grafanaTargetFuncHightlight;
     text-align: center;
-    border-bottom: 1px solid #353a3e;
+    border-bottom: 1px solid @grafanaTargetFuncBackground;
     padding: 3px 5px;
     white-space: nowrap;
   }
