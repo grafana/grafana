@@ -16,7 +16,7 @@ function (angular, _, $, config, kbn, moment) {
     this.$q = $q;
     this.filterSrv = filterSrv;
     this.$http = $http;
-  };
+  }
 
   GraphiteDatasource.prototype.query = function(options) {
     try {
@@ -31,7 +31,7 @@ function (angular, _, $, config, kbn, moment) {
       var params = this.buildGraphiteParams(graphOptions);
 
       if (options.format === 'png') {
-        return $q.when(graphiteRenderUrl + '?' + params.join('&'));
+        return this.$q.when(this.url + '/render' + '?' + params.join('&'));
       }
 
       return this.doGraphiteRequest({
@@ -79,7 +79,7 @@ function (angular, _, $, config, kbn, moment) {
       interpolated = this.filterSrv.applyFilterToTarget(query);
     }
     catch(err) {
-      return $q.reject(err);
+      return this.$q.reject(err);
     }
 
     return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })

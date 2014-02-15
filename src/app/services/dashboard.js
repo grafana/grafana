@@ -55,7 +55,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     // Store a reference to this
     var self = this;
     var filterSrv;
-    var graphiteSrv;
 
     this.current = _.clone(_dash);
     this.last = {};
