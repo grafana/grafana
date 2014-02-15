@@ -14,7 +14,12 @@ function (_, crypto) {
      */
     var defaults = {
       elasticsearch                 : "http://"+window.location.hostname+":9200",
-      graphiteUrl                   : "http://"+window.location.hostname+":8080",
+      datasources                   : {
+        default: {
+          url: "http://"+window.location.hostname+":8080",
+          default: true
+        }
+      },
       panel_names                   : [],
       default_route                 : '/dashboard/file/default.json',
       grafana_index                 : 'grafana-dash',
@@ -40,7 +45,22 @@ function (_, crypto) {
       }
     };
 
-    settings.graphiteBasicAuth = basicAuth(settings.graphiteUrl);
+    if (options.graphiteUrl) {
+      settings.datasources = {
+        graphite: {
+          name: 'default',
+          url: options.graphiteUrl,
+          default: true,
+          basicAuth: basicAuth(options.graphiteUrl)
+        }
+      };
+    }
+    else {
+      _.each(_.values(settings.datasources), function(source) {
+        source.basicAuth = basicAuth(source.url);
+      });
+    }
+
     settings.elasticsearchBasicAuth = basicAuth(settings.elasticsearch);
     return settings;
   };

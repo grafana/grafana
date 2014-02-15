@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, graphiteSrv, dashboard) {
+  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv, dashboard) {
 
     $scope.init = function() {
       console.log('hej!');
@@ -17,7 +17,7 @@ function (angular, app, _) {
     $scope.listAll = function(query) {
       delete $scope.error;
 
-      graphiteSrv.listDashboards(query)
+      datasourceSrv.default.listDashboards(query)
         .then(function(results) {
           $scope.dashboards = results;
         })
@@ -29,7 +29,7 @@ function (angular, app, _) {
     $scope.import = function(dashName) {
       delete $scope.error;
 
-      graphiteSrv.loadDashboard(dashName)
+      datasourceSrv.default.loadDashboard(dashName)
         .then(function(results) {
           if (!results.data || !results.data.state) {
             throw { message: 'no dashboard state received from graphite' };

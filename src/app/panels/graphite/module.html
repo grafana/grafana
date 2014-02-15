@@ -27,10 +27,20 @@
 
       <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
         <div ng-include src="'app/partials/panelgeneral.html'"></div>
+
+        <div class="editor-row" ng-show="datasources.length > 0">
+          <div class="section">
+            <div class="editor-option">
+              <label class="small">Datasource</label>
+              <select class="input-large" ng-options="obj.value as obj.name for obj in datasources" ng-model="panel.datasource" ng-change="datasourceChanged()" />
+          </div>
+          </div>
+        </div>
       </div>
 
       <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>
+
   </div>
 </div>

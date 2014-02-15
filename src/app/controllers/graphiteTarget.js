@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv, graphiteSrv) {
+  module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv) {
 
     $scope.init = function() {
       $scope.funcCategories = gfunc.getCategories();
@@ -121,7 +121,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return graphiteSrv.metricFindQuery(path)
+      return $scope.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
             $scope.segments = $scope.segments.splice(0, fromIndex);
@@ -158,7 +158,7 @@ function (angular, _, config, gfunc, Parser) {
       var query = index === 0 ?
         '*' : getSegmentPathUpTo(index) + '.*';
 
-      return graphiteSrv.metricFindQuery(query)
+      return $scope.datasource.metricFindQuery(query)
         .then(function(segments) {
           _.each(segments, function(segment) {
             segment.html = segment.val = segment.text;

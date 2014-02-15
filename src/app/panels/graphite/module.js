@@ -34,7 +34,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv, graphiteSrv, $timeout, annotationsSrv) {
+  module.controller('graphite', function($scope, $rootScope, filterSrv, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -82,6 +82,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     // Set and populate defaults
     var _d = {
+
+      datasource: null,
+
       /** @scratch /panels/histogram/3
        * renderer:: sets client side (flot) or native graphite png renderer (png)
        */
@@ -220,10 +223,19 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.editor = {index: 1};
       $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
       $scope.hiddenSeries = {};
+
+      $scope.datasources = datasourceSrv.listOptions();
+      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
+
       // Always show the query if an alias isn't set. Users can set an alias if the query is too
       // long
       $scope.panel.tooltip.query_as_alias = true;
 
+      $scope.get_data();
+    };
+
+    $scope.datasourceChanged = function() {
+      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
       $scope.get_data();
     };
 
@@ -284,12 +296,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         range: $scope.rangeUnparsed,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
-        maxDataPoints: $scope.panel.span * 50
+        maxDataPoints: $scope.panel.span * 50,
+        datasource: $scope.panel.datasource
       };
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
 
-      return graphiteSrv.query(graphiteQuery)
+      return $scope.datasource.query(graphiteQuery)
         .then($scope.receiveGraphiteData)
         .then(null, function(err) {
           $scope.panel.error = err.message || "Graphite HTTP Request Error";

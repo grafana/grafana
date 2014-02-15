@@ -160,7 +160,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       $timeout(function() {
         // Ok, now that we've setup the current dashboard, we can inject our services
         filterSrv = $injector.get('filterSrv');
-        graphiteSrv = $injector.get('graphiteSrv');
         filterSrv.init();
 
       },0).then(function() {

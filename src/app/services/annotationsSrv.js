@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, graphiteSrv, $q, alertSrv) {
+  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv) {
 
     this.init = function() {
       this.annotationList = [
@@ -43,7 +43,7 @@ define([
         maxDataPoints: 100
       };
 
-      return graphiteSrv.query(graphiteQuery)
+      return datasourceSrv.default.query(graphiteQuery)
         .then(function(results) {
           return _.reduce(results.data, function(list, target) {
             _.each(target.datapoints, function (values) {

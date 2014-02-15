@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, filterSrv, graphiteSrv, $rootScope, dashboard) {
+  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -35,7 +35,7 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      graphiteSrv.metricFindQuery(filter.query)
+      datasourceSrv.default.metricFindQuery(filter.query)
         .then(function (results) {
           filter.editing=undefined;
           filter.options = _.map(results, function(node) {
