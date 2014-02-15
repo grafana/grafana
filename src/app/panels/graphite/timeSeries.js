@@ -1,7 +1,8 @@
 define([
-  'underscore'
+  'underscore',
+  'kbn'
 ],
-function (_) {
+function (_, kbn) {
   'use strict';
 
   var ts = {};
@@ -12,7 +13,7 @@ function (_) {
     this.label = opts.info.alias;
   };
 
-  ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle) {
+  ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle, yFormats) {
     var result = [];
 
     this.color = this.info.color;
@@ -50,13 +51,39 @@ function (_) {
     }, this);
 
     if (result.length) {
-      this.info.avg = (this.info.total / result.length).toFixed(2);
+      this.info.avg = (this.info.total / result.length);
       this.info.current = result[result.length-1][1];
+
+      var formater = getFormater(yFormats[this.yaxis - 1]);
+      this.info.avg = formater(this.info.avg);
+      this.info.current = formater(this.info.current);
+      this.info.min = formater(this.info.min);
+      this.info.max = formater(this.info.max);
+      this.info.total = formater(this.info.total);
     }
 
     return result;
   };
 
+  function getFormater(yformat) {
+    switch(yformat) {
+    case 'bytes':
+      return kbn.byteFormat;
+    case 'short':
+      return kbn.shortFormat;
+    case 'ms':
+      return kbn.msFormat;
+    default:
+      return function(val) {
+        if (val % 1 === 0) {
+          return val;
+        }
+        else {
+          return val.toFixed(2);
+        }
+      };
+    }
+  }
 
   return ts;
 });
