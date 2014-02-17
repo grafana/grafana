@@ -51,7 +51,8 @@ To run from master:
  - grunt build
 
 When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
-an introduction on how to use Grafana.
+an introduction on how to use Grafana and/or watch [this video](https://www.youtube.com/watch?v=OUvJamHeMpw) for a guide in creating a new dashboard and for creating
+templated dashboards.
 
 # Graphite server config
 If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
