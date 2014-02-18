@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.annotations', []);
   app.useModule(module);
 
-  module.controller('AnnotationsCtrl', function($scope, dashboard, annotationsSrv, $rootScope) {
+  module.controller('AnnotationsCtrl', function($scope, dashboard, $rootScope) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -23,26 +23,46 @@ function (angular, app, _) {
 
     // Set and populate defaults
     var _d = {
+      annotations: []
+    };
+
+    var annotationDefaults = {
+      name: '',
+      type: 'graphite metric'
     };
 
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-      $scope.annotationList = annotationsSrv.annotationList;
+      $scope.currentAnnnotation = angular.copy(annotationDefaults);
+      $scope.currentIsNew = true;
     };
 
-    $scope.hideAll = function () {
-      $scope.panel.hideAll = !$scope.panel.hideAll;
+    $scope.getAnnotationInfo = function(annotation) {
+      return annotation.target;
+    };
 
-      _.each($scope.annotationList, function(annotation) {
-        annotation.enabled = !$scope.panel.hideAll;
-      });
+    $scope.edit = function(annotation) {
+      $scope.currentAnnnotation = annotation;
+      $scope.currentIsNew = false;
+    };
+
+    $scope.getInfo = function(annotation) {
+      return annotation.target;
+    };
+
+    $scope.update = function() {
+      $scope.currentAnnnotation = angular.copy(annotationDefaults);
+      $scope.currentIsNew = true;
+    };
+
+    $scope.add = function() {
+      $scope.panel.annotations.push($scope.currentAnnnotation);
+      $scope.currentAnnnotation = angular.copy(annotationDefaults);
     };
 
     $scope.hide = function (annotation) {
-      annotation.enabled = !annotation.enabled;
-      $scope.panel.hideAll = !annotation.enabled;
-
+      annotation.enable = !annotation.enable;
       $rootScope.$broadcast('refresh');
     };
 

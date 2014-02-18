@@ -10,8 +10,6 @@ function (angular, app, _) {
 
   module.controller('SubmenuCtrl', function($scope) {
       var _d = {
-        collapse: false,
-        notice: false,
         enable: true
       };
 

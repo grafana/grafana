@@ -7,27 +7,35 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv) {
+  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
+    var promiseCached;
+    var annotationPanel;
 
     this.init = function() {
-      this.annotationList = [
-       /* {
-          type: 'graphite-target',
-          enabled: false,
-          target: 'metrics_data.mysite.dolph.counters.payment.cart_klarna_payment_completed.count',
-          name: 'deploys',
-        },
-        {
-          type: 'graphite-target',
-          enabled: true,
-          target: 'metrics_data.mysite.dolph.counters.payment.cart_paypal_payment_completed.count',
-          name: 'restarts',
-        }*/
-      ];
+      $rootScope.$on('refresh', this.clearCache);
+      $rootScope.$on('dashboard-loaded', this.dashboardLoaded);
+
+      this.dashboardLoaded();
+    };
+
+    this.dashboardLoaded = function () {
+      annotationPanel = _.findWhere(dashboard.current.pulldowns, { type: 'annotations' });
+    };
+
+    this.clearCache = function() {
+      promiseCached = null;
     };
 
     this.getAnnotations = function(rangeUnparsed) {
-      var graphiteAnnotations = _.where(this.annotationList, { type: 'graphite-target', enabled: true });
+      if (!annotationPanel.enable) {
+        return $q.when(null);
+      }
+
+      if (promiseCached) {
+        return promiseCached;
+      }
+
+      var graphiteAnnotations = _.where(annotationPanel.annotations, { type: 'graphite metric', enable: true });
       var graphiteTargets = _.map(graphiteAnnotations, function(annotation) {
         return { target: annotation.target };
       });
@@ -43,7 +51,7 @@ define([
         maxDataPoints: 100
       };
 
-      return datasourceSrv.default.query(graphiteQuery)
+      promiseCached = datasourceSrv.default.query(graphiteQuery)
         .then(function(results) {
           return _.reduce(results.data, function(list, target) {
             _.each(target.datapoints, function (values) {
@@ -51,12 +59,13 @@ define([
                 return;
               }
 
+
               list.push({
                 min: values[1] * 1000,
                 max: values[1] * 1000,
                 eventType: "annotation",
                 title: null,
-                description: "<small><i class='icon-tag icon-flip-vertical'></i>test</small><br>"+
+                description: "<small>" + target.target + "</small><br>"+
                   moment(values[1] * 1000).format('YYYY-MM-DD HH:mm:ss'),
                 score: 1
               });
@@ -68,6 +77,8 @@ define([
         .then(null, function() {
           alertSrv.set('Annotations','Could not fetch annotations','error');
         });
+
+      return promiseCached;
     };
 
     // Now init

@@ -28,7 +28,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [ { type: 'filtering' },  /*{ type: 'annotations' }*/ ],
+      pulldowns: [ { type: 'filtering' },  { type: 'annotations' } ],
       nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {
@@ -131,13 +131,13 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         });
       }
 
-      /*var annotations = _.findWhere(dashboard.pulldowns, {type: 'annotations'});
+      var annotations = _.findWhere(dashboard.pulldowns, {type: 'annotations'});
       if (!annotations) {
         dashboard.pulldowns.push({
           type: 'annotations',
           enable: false
         });
-      }*/
+      }
 
       return dashboard;
     };
@@ -176,6 +176,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Take out any that we're not allowed to add from the gui.
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
+
+      $rootScope.$emit('dashboard-loaded');
 
       return true;
     };

@@ -1,0 +1,60 @@
+<div bindonce class="modal-body">
+  <div class="pull-right editor-title">Annotations</div>
+
+  <div class="editor-row">
+    <table class="table table-striped annotation-editor-table">
+      <thead>
+        <th width="1%">Type</th>
+        <th width="90%">Name</th>
+        <th width="1%"></th>
+        <th width="1%"></th>
+        <th width="1%"></th>
+        <th width="1%"></th>
+      </thead>
+      <tr ng-repeat="annotation in panel.annotations">
+        <td>{{annotation.type}}</td>
+        <td>{{annotation.name}}</td>
+        <td><i ng-click="_.move(panel.annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+        <td><i ng-click="_.move(panel.annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+        <td><i ng-click="panel.annotations = _.without(panel.annotations, annotation)" class="pointer icon-remove"></i></td>
+        <td><a ng-click="edit(annotation)"><i class="icon-pencil" /></a></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="editor-row">
+    <h4 ng-show="currentIsNew">Add Annotation</h4>
+    <h4 ng-show="!currentIsNew">Edit Annotation</h4>
+
+    <div class="editor-option">
+      <label class="small">Name</label>
+      <input type="text" class="input-medium" ng-model='currentAnnnotation.name' placeholder="name"></input>
+    </div>
+    <div class="editor-option">
+      <label class="small">Type</label>
+      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric']"></select>
+    </div>
+  </div>
+
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite metric'">
+    <div class="editor-option">
+      <label class="small">Graphite target expression</label>
+      <input type="text" class="span10" ng-model='currentAnnnotation.target' placeholder=""></input>
+    </div>
+  </div>
+
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite events'">
+    <div class="editor-option">
+      <label class="small">Graphite event tags</label>
+      <input type="text" ng-model='currentAnnnotation.tags' placeholder=""></input>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-footer">
+  <!-- close_edit() is provided here to allow for a scope to perform action on dismiss -->
+  <button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add annotation</button>
+  <button ng-show="!currentIsNew" type="button" class="btn btn-success" ng-click="update()">Update</button>
+  <button type="button" class="btn btn-danger" ng-click="editSave(panel);close_edit();dismiss()">Close</button>
+</div>

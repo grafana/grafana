@@ -43,7 +43,7 @@
   </div>
 
   <div ng-if="editor.index == 1">
-    <div class="row-fluid">
+    <div class="editor-row">
       <div class="span8">
         <h4>Rows</h4>
         <table class="table table-striped">
@@ -68,9 +68,6 @@
         <label class="small">Height</label>
         <input type="text" class="input-mini" ng-model='row.height'></input>
       </div>
-    </div>
-    <div class="row-fluid">
-
     </div>
   </div>
 
@@ -124,7 +121,7 @@
   <div ng-if="editor.index == 2">
     <div class="editor-row">
       <div class="section">
-        <h5>Pulldowns</h5>
+        <h5>Feature toggles</h5>
         <div class="editor-option" ng-repeat="pulldown in dashboard.current.pulldowns">
           <label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
         </div>
