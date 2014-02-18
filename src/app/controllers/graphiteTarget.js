@@ -168,11 +168,12 @@ function (angular, _, config, gfunc, Parser) {
             segments.unshift({
               type: 'template',
               html: '[[' + filter.name + ']]',
-              val: '[[' + filter.name + ']]'
+              val: '[[' + filter.name + ']]',
+              expandable: true,
             });
           });
 
-          segments.unshift({val: '*', html: '<i class="icon-asterisk"></i>' });
+          segments.unshift({val: '*', html: '<i class="icon-asterisk"></i>', expandable: true });
           $scope.altSegments = segments;
         })
         .then(null, function(err) {
@@ -192,6 +193,9 @@ function (angular, _, config, gfunc, Parser) {
             setSegmentFocus(segmentIndex + 1);
             $scope.targetChanged();
           });
+      }
+      else {
+        $scope.segments = $scope.segments.splice(0, segmentIndex + 1);
       }
 
       setSegmentFocus(segmentIndex + 1);
