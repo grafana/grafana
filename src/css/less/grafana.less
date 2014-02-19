@@ -114,10 +114,17 @@
   left: 0px;
   right: 0px;
   top: 54px;
-  bottom: 0px;
+  height: 100%;
   padding: 0 10px;
   background: @kibanaPanelBackground;
+  overflow-y: scroll;
+  height: 100%;
+
+  .panel-content {
+    padding-bottom: 130px;
+  }
 }
+
 
 .dashboard-fullscreen .container-fluid.main {
   height: 0px;
@@ -244,6 +251,11 @@
   >li {
     float: left;
   }
+}
+
+// fix for fixed positioned panel & scrolling
+.grafana-segment-dropdown-menu {
+  margin-bottom: 70px;
 }
 
 .grafana-target-segment {
