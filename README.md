@@ -1,6 +1,6 @@
 [Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/torkelo/grafana.png)](https://travis-ci.org/torkelo/grafana)
 =================
-A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots and an overview.
+A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots, videos and feature descriptions.
 
 ![](http://grafana.org/assets/img/edit_dashboards.png)
 
@@ -29,11 +29,12 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Create and edit dashboards
 - Drag and drop graphs to rearrange
 - Set column spans and row heights
-- Save & search dashboards (ElasticSearch)
+- Save & [search dashboards](https://github.com/torkelo/grafana/wiki/Search-features)
 - Import & export dashboard (json file)
 - Import dashboard from Graphite
 - Templating
 - [Scripted dashboards](https://github.com/torkelo/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
+- Flexible [time range controls](https://github.com/torkelo/grafana/wiki/Time-range-controls)
 
 # Requirements
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
