@@ -4,20 +4,20 @@
   <div class="editor-row">
     <table class="table table-striped annotation-editor-table">
       <thead>
+        <th width="1%"></th>
         <th width="1%">Type</th>
         <th width="90%">Name</th>
         <th width="1%"></th>
         <th width="1%"></th>
         <th width="1%"></th>
-        <th width="1%"></th>
       </thead>
       <tr ng-repeat="annotation in panel.annotations">
+        <td><a ng-click="edit(annotation)"><i class="icon-pencil" /></a></td>
         <td>{{annotation.type}}</td>
         <td>{{annotation.name}}</td>
         <td><i ng-click="_.move(panel.annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
         <td><i ng-click="_.move(panel.annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
         <td><i ng-click="panel.annotations = _.without(panel.annotations, annotation)" class="pointer icon-remove"></i></td>
-        <td><a ng-click="edit(annotation)"><i class="icon-pencil" /></a></td>
       </tr>
     </table>
   </div>
@@ -32,7 +32,7 @@
     </div>
     <div class="editor-option">
       <label class="small">Type</label>
-      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric']"></select>
+      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events']"></select>
     </div>
   </div>
 
@@ -53,8 +53,7 @@
 </div>
 
 <div class="modal-footer">
-  <!-- close_edit() is provided here to allow for a scope to perform action on dismiss -->
   <button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add annotation</button>
   <button ng-show="!currentIsNew" type="button" class="btn btn-success" ng-click="update()">Update</button>
-  <button type="button" class="btn btn-danger" ng-click="editSave(panel);close_edit();dismiss()">Close</button>
+  <button type="button" class="btn btn-danger" ng-click="close_edit();dismiss()">Close</button>
 </div>

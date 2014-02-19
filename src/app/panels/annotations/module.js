@@ -38,17 +38,9 @@ function (angular, app, _) {
       $scope.currentIsNew = true;
     };
 
-    $scope.getAnnotationInfo = function(annotation) {
-      return annotation.target;
-    };
-
     $scope.edit = function(annotation) {
       $scope.currentAnnnotation = annotation;
       $scope.currentIsNew = false;
-    };
-
-    $scope.getInfo = function(annotation) {
-      return annotation.target;
     };
 
     $scope.update = function() {

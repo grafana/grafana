@@ -19,7 +19,7 @@
         <div class="row-control">
           <div class="grafana-row" style="padding:0px;margin:0px;position:relative;">
             <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
-              <span class="row-button bgWarning" bs-modal="'app/partials/roweditor.html'" class="pointer">
+              <span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
                 <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
               </span>
               <span class="row-button bgPrimary" ng-click="toggle_row(row)" ng-show="row.collapsable">
@@ -33,7 +33,7 @@
                 <i bs-tooltip="'Collapse row'" data-placement="right"  class="icon-caret-right" ></i>
                 <br>
               </div>
-              <div bs-modal="'app/partials/roweditor.html'" class='row-tab bgWarning' ng-show="row.editable">
+              <div config-modal="app/partials/roweditor.html" class='row-tab bgWarning' ng-show="row.editable">
                 <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
                 <br>
               </div>
@@ -58,7 +58,7 @@
             <div ng-show="rowSpan(row) < 10 && dashboard.panelDragging" class="panel" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
             </div>
 
-            <span bs-modal="'app/partials/roweditor.html'" ng-show="!dashboard.panelDragging && !dashboard.current.hideControls">
+            <span config-modal="app/partials/roweditor.html" ng-show="!dashboard.panelDragging && !dashboard.current.hideControls">
               <i ng-hide="rowSpan(row) >= 10" class="pointer icon-plus-sign" ng-click="editor.index = 2" bs-tooltip="'Add a panel to this row'" data-placement="right"></i>
             </span>
 
@@ -70,7 +70,7 @@
 
       <div class="row-fluid" ng-show='dashboard.current.editable && dashboard.current.panel_hints'>
         <div class="span12" style="text-align:right;">
-          <span style="margin-left: 0px;" class="pointer btn btn-mini" bs-modal="'app/partials/dasheditor.html'">
+          <span style="margin-left: 0px;" class="pointer btn btn-mini" config-modal="app/partials/dasheditor.html">
             <span ng-click="editor.index = 1"><i class="icon-plus-sign"></i> ADD A ROW</span>
           </span>
         </div>
