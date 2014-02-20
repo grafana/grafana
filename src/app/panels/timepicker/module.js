@@ -40,15 +40,9 @@ function (angular, app, _, moment, kbn) {
       refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
     };
 
-    _.defaults($scope.panel,_d);
+    var customTimeModal = null;
 
-    var customTimeModal = $modal({
-      template: './app/panels/timepicker/custom.html',
-      persist: true,
-      show: false,
-      scope: $scope,
-      keyboard: false
-    });
+    _.defaults($scope.panel,_d);
 
     $scope.filterSrv = filterSrv;
 
@@ -72,6 +66,16 @@ function (angular, app, _, moment, kbn) {
     };
 
     $scope.customTime = function() {
+      if (!customTimeModal) {
+        customTimeModal = $modal({
+          template: './app/panels/timepicker/custom.html',
+          persist: true,
+          show: false,
+          scope: $scope,
+          keyboard: false
+        });
+      }
+
       // Assume the form is valid since we're setting it to something valid
       $scope.input.$setValidity("dummy", true);
       $scope.temptime = cloneTime($scope.time);
