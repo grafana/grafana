@@ -45,6 +45,7 @@
         <li ng-show="dashboard.current.loader.save_local">
           <a class="link" ng-click="dashboard.to_file()">Export schema</a>
         </li>
+        <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="elasticsearch_save('temp',dashboard.current.loader.save_temp_ttl)" bs-modal="'app/partials/dashLoaderShare.html'">Share temp copy</i></a></li>
 
         <li ng-show="dashboard.current.loader.save_gist" style="margin:10px">
           <h6>Gist</h6>
@@ -65,8 +66,6 @@
 
 
 <li><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/dashboard'><i class='icon-home'></i></a></li>
-
-<li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="elasticsearch_save('temp',dashboard.current.loader.save_temp_ttl)" bs-modal="'app/partials/dashLoaderShare.html'"><i class='icon-share'></i></a></li>
 
 <li ng-show="dashboard.current.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" config-modal="app/partials/dasheditor.html"><i class='icon-cog pointer'></i></a></li>
 
