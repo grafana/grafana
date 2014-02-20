@@ -35,6 +35,45 @@ define([
         return promiseCached;
       }
 
+      var graphiteMetrics = this.getGraphiteMetrics(rangeUnparsed);
+      var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
+
+      promiseCached = $q.all([graphiteMetrics, graphiteEvents])
+        .then(function(allAnnotations) {
+          var nonNull = _.filter(allAnnotations, function(value) { return value !== null; });
+          return _.flatten(nonNull);
+        });
+
+      return promiseCached;
+    };
+
+    this.getGraphiteEvents = function(rangeUnparsed) {
+      var annotations = _.where(annotationPanel.annotations, { type: 'graphite events', enable: true });
+      var tags = _.pluck(annotations, 'tags');
+
+      if (tags.length === 0) {
+        return $q.when(null);
+      }
+
+      var eventsQuery = {
+        range: rangeUnparsed,
+        tags: tags.join(' '),
+      };
+
+      return datasourceSrv.default.events(eventsQuery)
+        .then(function(results) {
+          var list = [];
+          _.each(results.data, function (event) {
+            list.push(createAnnotation(annotations[0], event.when * 1000, event.what, event.tags, event.data));
+          });
+          return list;
+        })
+        .then(null, function() {
+          alertSrv.set('Annotations','Could not fetch annotations','error');
+        });
+    };
+
+    this.getGraphiteMetrics = function(rangeUnparsed) {
       var graphiteAnnotations = _.where(annotationPanel.annotations, { type: 'graphite metric', enable: true });
       var graphiteTargets = _.map(graphiteAnnotations, function(annotation) {
         return { target: annotation.target };
@@ -51,7 +90,7 @@ define([
         maxDataPoints: 100
       };
 
-      promiseCached = datasourceSrv.default.query(graphiteQuery)
+      return datasourceSrv.default.query(graphiteQuery)
         .then(function(results) {
           return _.reduce(results.data, function(list, target) {
             _.each(target.datapoints, function (values) {
@@ -59,16 +98,7 @@ define([
                 return;
               }
 
-
-              list.push({
-                min: values[1] * 1000,
-                max: values[1] * 1000,
-                eventType: "annotation",
-                title: null,
-                description: "<small>" + target.target + "</small><br>"+
-                  moment(values[1] * 1000).format('YYYY-MM-DD HH:mm:ss'),
-                score: 1
-              });
+              list.push(createAnnotation(graphiteAnnotations[0], values[1] * 1000, target.target));
             });
 
             return list;
@@ -77,9 +107,29 @@ define([
         .then(null, function() {
           alertSrv.set('Annotations','Could not fetch annotations','error');
         });
-
-      return promiseCached;
     };
+
+    function createAnnotation(annotation, time, description, tags, data) {
+      var tooltip = "<small><b>" + description + "</b><br/>";
+      if (tags) {
+        tooltip += (tags || '') + '<br/>';
+      }
+      tooltip += '<i>' + moment(time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      if (data) {
+        tooltip += data;
+      }
+      tooltip += "</small>";
+
+      return {
+        annotation: annotation,
+        min: time,
+        max: time,
+        eventType: annotation.name,
+        title: null,
+        description: tooltip,
+        score: 1
+      };
+    }
 
     // Now init
     this.init();

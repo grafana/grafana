@@ -28,7 +28,12 @@ function (angular, app, _) {
 
     var annotationDefaults = {
       name: '',
-      type: 'graphite metric'
+      type: 'graphite metric',
+      showLine: true,
+      iconColor: '#E24D42',
+      lineColor: '#E24D42',
+      iconSize: 15,
+      enable: true
     };
 
     _.defaults($scope.panel,_d);

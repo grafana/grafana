@@ -37,11 +37,27 @@ function (angular, _, $, config, kbn, moment) {
       return this.doGraphiteRequest({
         method: 'POST',
         url: '/render',
-        datasource: options.datasource,
         data: params.join('&'),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         }
+      });
+    }
+    catch(err) {
+      return this.$q.reject(err);
+    }
+  };
+
+  GraphiteDatasource.prototype.events = function(options) {
+    try {
+      var tags = '';
+      if (options.tags) {
+        tags = '&tags=' + options.tags;
+      }
+
+      return this.doGraphiteRequest({
+        method: 'GET',
+        url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
       });
     }
     catch(err) {

@@ -20,7 +20,6 @@ function (angular, $, kbn, moment, _) {
 
         scope.$on('refresh',function() {
           if (scope.otherPanelInFullscreenMode()) { return; }
-
           scope.get_data();
         });
 
@@ -121,6 +120,7 @@ function (angular, $, kbn, moment, _) {
               ticks: elem.width()/100
             },
             grid: {
+              markings: [],
               backgroundColor: null,
               borderWidth: 0,
               hoverable: true,
@@ -191,7 +191,6 @@ function (angular, $, kbn, moment, _) {
         function addGridThresholds(options, panel) {
           if (panel.grid.threshold1) {
             var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
-            options.grid.markings = [];
             options.grid.markings.push({
               yaxis: { from: panel.grid.threshold1, to: limit1 },
               color: panel.grid.threshold1Color
@@ -217,20 +216,33 @@ function (angular, $, kbn, moment, _) {
             return;
           }
 
-          options.events = {
-            levels: 1,
-            data: data.annotations,
-            types: {
-              'annotation': {
-                level: 1,
+          var types = {};
+
+          _.each(data.annotations, function(event) {
+            if (!types[event.annotation.name]) {
+              types[event.annotation.name] = {
+                level: _.keys(types).length + 1,
                 icon: {
-                  icon: "icon-tag icon-flip-vertical",
-                  size: 20,
-                  color: "#222",
-                  outline: "#bbb"
+                  icon: "icon-chevron-up",
+                  size: event.annotation.iconSize,
+                  color: event.annotation.iconColor,
                 }
-              }
+              };
             }
+
+            if (event.annotation.showLine) {
+              options.grid.markings.push({
+                color: event.annotation.lineColor,
+                lineWidth: 1,
+                xaxis: { from: event.min, to: event.max }
+              });
+            }
+          });
+
+          options.events = {
+            levels: _.keys(types).length + 1,
+            data: data.annotations,
+            types: types
           };
         }
 
