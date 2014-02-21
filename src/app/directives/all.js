@@ -11,5 +11,6 @@ define([
   './configModal',
   './spectrumPicker',
   './grafanaGraph',
-  './bootstrap-tagsinput'
+  './bootstrap-tagsinput',
+  './bodyClass'
 ], function () {});

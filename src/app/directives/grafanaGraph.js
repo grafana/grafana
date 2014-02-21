@@ -223,7 +223,7 @@ function (angular, $, kbn, moment, _) {
               types[event.annotation.name] = {
                 level: _.keys(types).length + 1,
                 icon: {
-                  icon: "icon-chevron-up",
+                  icon: "icon-chevron-down",
                   size: event.annotation.iconSize,
                   color: event.annotation.iconColor,
                 }

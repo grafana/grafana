@@ -30,9 +30,9 @@ function (angular, app, _) {
       name: '',
       type: 'graphite metric',
       showLine: true,
-      iconColor: '#E24D42',
-      lineColor: '#E24D42',
-      iconSize: 15,
+      iconColor: '#C0C6BE',
+      lineColor: 'rgba(255, 96, 96, 0.592157)',
+      iconSize: 13,
       enable: true
     };
 

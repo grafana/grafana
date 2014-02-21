@@ -28,7 +28,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [ { type: 'filtering' },  { type: 'annotations' } ],
+      pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
       nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {

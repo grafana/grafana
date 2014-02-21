@@ -30,7 +30,7 @@ define([
 
     this.getAnnotations = function(rangeUnparsed) {
       if (!annotationPanel.enable) {
-        return $q.when([]);
+        return $q.when(null);
       }
 
       if (promiseCached) {
@@ -40,7 +40,7 @@ define([
       var graphiteMetrics = this.getGraphiteMetrics(rangeUnparsed);
       var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
 
-      promiseCached = $q.all([graphiteMetrics, graphiteEvents])
+      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
         .then(function() {
           return list;
         });
@@ -51,23 +51,27 @@ define([
     this.getGraphiteEvents = function(rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite events');
       if (annotations.length === 0) {
-        return $q.when(null);
+        return [];
       }
 
-      var tags = _.pluck(annotations, 'tags');
+      var promises = _.map(annotations, function(annotation) {
 
-      var eventsQuery = {
-        range: rangeUnparsed,
-        tags: tags.join(' '),
-      };
+        return datasourceSrv.default.events({ range: rangeUnparsed, tags: annotation.tags })
+          .then(function(results) {
+            _.each(results.data, function (event) {
+              addAnnotation({
+                annotation: annotation,
+                time: event.when * 1000,
+                description: event.what,
+                tags: event.tags,
+                data: event.data
+              });
+            });
+          })
+          .then(null, errorHandler);
+      });
 
-      return datasourceSrv.default.events(eventsQuery)
-        .then(function(results) {
-          _.each(results.data, function (event) {
-            list.push(createAnnotation(annotations[0], event.when * 1000, event.what, event.tags, event.data));
-          });
-        })
-        .then(null, errorHandler);
+      return promises;
     };
 
     this.getAnnotationsByType = function(type) {
@@ -80,7 +84,7 @@ define([
     this.getGraphiteMetrics = function(rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite metric');
       if (annotations.length === 0) {
-        return $q.when(null);
+        return [];
       }
 
       var promises = _.map(annotations, function(annotation) {
@@ -98,7 +102,7 @@ define([
           .then(null, errorHandler);
       });
 
-      return $q.all(promises);
+      return promises;
     };
 
     function errorHandler(err) {
@@ -114,28 +118,28 @@ define([
           var datapoint = target.datapoints[y];
 
           if (datapoint[0] !== null) {
-            list.push(createAnnotation({
+            addAnnotation({
               annotation: annotation,
               time: datapoint[1] * 1000,
               description: target.target
-            }));
+            });
           }
         }
       }
     }
 
-    function createAnnotation(options) {
+    function addAnnotation(options) {
       var tooltip = "<small><b>" + options.description + "</b><br/>";
       if (options.tags) {
         tooltip += (options.tags || '') + '<br/>';
       }
       tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
       if (options.data) {
-        tooltip += data;
+        tooltip += options.data;
       }
       tooltip += "</small>";
 
-      return {
+      list.push({
         annotation: options.annotation,
         min: options.time,
         max: options.time,
@@ -143,7 +147,7 @@ define([
         title: null,
         description: tooltip,
         score: 1
-      };
+      });
     }
 
     // Now init
