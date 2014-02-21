@@ -206,6 +206,13 @@ function (_) {
     defaultParams: [5]
   });
 
+  addFuncDef({
+    name: 'movingAverage',
+    category: categories.Filter,
+    params: [ { name: "window size", type: "int" } ],
+    defaultParams: [10]
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
