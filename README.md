@@ -23,7 +23,8 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Smart Y-axis formating
 - Series toggles & color selector
 - Axis labels
-- Fullscreen views and more...
+- Grid thresholds, axis labels
+- [Annotations] (https://github.com/torkelo/grafana/wiki/Annotations)
 
 ## Dashboards
 - Create and edit dashboards
