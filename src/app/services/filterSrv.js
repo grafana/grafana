@@ -8,7 +8,7 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('filterSrv', function(dashboard, $rootScope, $timeout) {
+  module.service('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
     // defaults
     var _d = {
       list: [],
@@ -26,16 +26,38 @@ define([
 
       self.list = dashboard.current.services.filter.list;
       self.time = dashboard.current.services.filter.time;
-      self.filterTemplateData = undefined;
 
       self.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
+
+      if (self.list.length) {
+        this.updateTemplateData(true);
+      }
     };
+
+    this.updateTemplateData = function(initial) {
+      self.filterTemplateData = {};
+
+      _.each(self.list, function(filter) {
+        if (initial) {
+          var urlValue = $routeParams[filter.name];
+          if (urlValue) {
+            filter.current = { text: urlValue, value: urlValue };
+          }
+        }
+
+        if (!filter.current || !filter.current.value) {
+          return;
+        }
+
+        self.filterTemplateData[filter.name] = filter.current.value;
+      });
+    }
 
     this.filterOptionSelected = function(filter, option) {
       filter.current = option;
-      self.filterTemplateData = undefined;
+      this.updateTemplateData();
       dashboard.refresh();
     };
 
@@ -46,16 +68,6 @@ define([
     this.applyFilterToTarget = function(target) {
       if (target.indexOf('[[') === -1) {
         return target;
-      }
-      if (!self.filterTemplateData) {
-        self.filterTemplateData = {};
-        _.each(self.list, function(filter) {
-          if (!filter.current || !filter.current.value) {
-            return;
-          }
-
-          self.filterTemplateData[filter.name] = filter.current.value;
-        });
       }
 
       return _.template(target, self.filterTemplateData, self.templateSettings);
