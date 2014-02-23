@@ -53,7 +53,7 @@ define([
 
         self.filterTemplateData[filter.name] = filter.current.value;
       });
-    }
+    };
 
     this.filterOptionSelected = function(filter, option) {
       filter.current = option;
