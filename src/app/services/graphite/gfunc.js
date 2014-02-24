@@ -200,6 +200,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: "exclude",
+    category: categories.Filter,
+    params: [ { name: "exclude", type: 'string' } ],
+    defaultParams: ['exclude']
+  });
+
+  addFuncDef({
     name: 'highestCurrent',
     category: categories.Filter,
     params: [ { name: "count", type: "int" } ],
