@@ -117,7 +117,7 @@ define([
         for (var y = 0; y < target.datapoints.length; y++) {
           var datapoint = target.datapoints[y];
 
-          if (datapoint[0] !== null) {
+          if (datapoint[0]) {
             addAnnotation({
               annotation: annotation,
               time: datapoint[1] * 1000,
