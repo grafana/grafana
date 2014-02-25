@@ -77,6 +77,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: "stacked",
+    category: categories.Special,
+    params: [ { name: "stack", type: 'string' } ],
+    defaultParams: ['stacked']
+  });
+
+  addFuncDef({
     name: "groupByNode",
     category: categories.Special,
     params: [
@@ -212,6 +219,13 @@ function (_) {
     params: [ { name: "count", type: "int" } ],
     defaultParams: [5]
   });
+
+  addFuncDef({
+    name: 'lowestCurrent',
+    category: categories.Filter,
+    params: [ { name: "count", type: "int" } ],
+    defaultParams: [5] 
+  }); 
 
   addFuncDef({
     name: 'movingAverage',
