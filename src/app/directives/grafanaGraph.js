@@ -300,6 +300,9 @@ function (angular, $, kbn, moment, _) {
           if (format === 'ms') {
             axis.tickFormatter = kbn.msFormat;
           }
+          if (format === 'µs') {
+            axis.tickFormatter = kbm.microsFormat;
+          }
         }
 
         function time_format(interval, ticks, min, max) {
