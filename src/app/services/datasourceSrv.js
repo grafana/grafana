@@ -1,15 +1,15 @@
 define([
   'angular',
   'underscore',
-  'config',
-  './graphite/graphiteDatasource'
+  'config'
 ],
-function (angular, _, config, GraphiteDatasource) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('kibana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http) {
+  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource) {
+
     var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
 
     this.default = new GraphiteDatasource(defaultDatasource, $q, filterSrv, $http);

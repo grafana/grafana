@@ -7,5 +7,6 @@ define([
   './datasourceSrv',
   './keyboardManager',
   './annotationsSrv',
+  './graphite/graphiteDatasource',
 ],
 function () {});
