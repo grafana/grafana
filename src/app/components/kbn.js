@@ -526,6 +526,7 @@ function($, _, moment) {
     }
     else {
       return (size / 1000000).toFixed(1) + " s";
+    }
   };
 
   return kbn;
