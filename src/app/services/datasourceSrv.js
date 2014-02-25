@@ -12,14 +12,14 @@ function (angular, _, config) {
 
     var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
 
-    this.default = new GraphiteDatasource(defaultDatasource, $q, filterSrv, $http);
+    this.default = new GraphiteDatasource(defaultDatasource);
 
     this.get = function(name) {
       if (!name) {
         return this.default;
       }
 
-      return new GraphiteDatasource(config.datasources[name], $q, filterSrv, $http);
+      return new GraphiteDatasource(config.datasources[name]);
     };
 
     this.listOptions = function() {

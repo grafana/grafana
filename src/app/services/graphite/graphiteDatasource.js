@@ -13,13 +13,10 @@ function (angular, _, $, config, kbn, moment) {
 
   module.factory('GraphiteDatasource', function(dashboard, $q, filterSrv, $http) {
 
-    function GraphiteDatasource(datasource, $q, filterSrv, $http) {
+    function GraphiteDatasource(datasource) {
       this.url = datasource.url;
       this.type = 'graphite';
       this.basicAuth = datasource.basicAuth;
-      this.$q = $q;
-      this.filterSrv = filterSrv;
-      this.$http = $http;
     }
 
     GraphiteDatasource.prototype.query = function(options) {
@@ -35,7 +32,7 @@ function (angular, _, $, config, kbn, moment) {
         var params = this.buildGraphiteParams(graphOptions);
 
         if (options.format === 'png') {
-          return this.$q.when(this.url + '/render' + '?' + params.join('&'));
+          return $q.when(this.url + '/render' + '?' + params.join('&'));
         }
 
         return this.doGraphiteRequest({
@@ -48,7 +45,7 @@ function (angular, _, $, config, kbn, moment) {
         });
       }
       catch(err) {
-        return this.$q.reject(err);
+        return $q.reject(err);
       }
     };
 
@@ -65,7 +62,7 @@ function (angular, _, $, config, kbn, moment) {
         });
       }
       catch(err) {
-        return this.$q.reject(err);
+        return $q.reject(err);
       }
     };
 
@@ -100,10 +97,10 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
-        interpolated = this.filterSrv.applyFilterToTarget(query);
+        interpolated = filterSrv.applyFilterToTarget(query);
       }
       catch(err) {
-        return this.$q.reject(err);
+        return $q.reject(err);
       }
 
       return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
@@ -137,7 +134,7 @@ function (angular, _, $, config, kbn, moment) {
 
       options.url = this.url + options.url;
 
-      return this.$http(options);
+      return $http(options);
     };
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
@@ -156,7 +153,7 @@ function (angular, _, $, config, kbn, moment) {
         if (key === "targets") {
           _.each(value, function (value) {
             if (!value.hide) {
-              var targetValue = this.filterSrv.applyFilterToTarget(value.target);
+              var targetValue = filterSrv.applyFilterToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           }, this);
