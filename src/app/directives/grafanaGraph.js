@@ -109,16 +109,7 @@ function (angular, $, kbn, moment, _) {
               shadowSize: 1
             },
             yaxes: [],
-            xaxis: {
-              timezone: dashboard.current.timezone,
-              show: panel['x-axis'],
-              mode: "time",
-              min: _.isUndefined(scope.range.from) ? null : scope.range.from.getTime(),
-              max: _.isUndefined(scope.range.to) ? null : scope.range.to.getTime(),
-              timeformat: time_format(scope.interval),
-              label: "Datetime",
-              ticks: elem.width()/100
-            },
+            xaxis: {},
             grid: {
               markings: [],
               backgroundColor: null,
@@ -137,6 +128,7 @@ function (angular, $, kbn, moment, _) {
             data[i].data = _d;
           }
 
+          addTimeAxis(options);
           addGridThresholds(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
@@ -144,6 +136,23 @@ function (angular, $, kbn, moment, _) {
           plot = $.plot(elem, data, options);
 
           addAxisLabels();
+        }
+
+        function addTimeAxis(options) {
+          var ticks = elem.width() / 100;
+          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.getTime();
+          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
+
+          options.xaxis = {
+            timezone: dashboard.current.timezone,
+            show: scope.panel['x-axis'],
+            mode: "time",
+            min: min,
+            max: max,
+            label: "Datetime",
+            ticks: ticks,
+            timeformat: time_format(scope.interval, ticks, min, max),
+          };
         }
 
         function render_panel_as_graphite_png(url) {
@@ -293,7 +302,7 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
-        function time_format(interval) {
+        function time_format(interval, ticks, min, max) {
           var _int = kbn.interval_to_seconds(interval);
           if(_int >= 2628000) {
             return "%Y-%m";
@@ -306,6 +315,13 @@ function (angular, $, kbn, moment, _) {
           }
           if(_int >= 700) {
             return "%a %H:%M";
+          }
+
+          if (min && max && ticks) {
+            var msPerTick = (max - min) / ticks;
+            if (msPerTick <= 45000) {
+              return "%H:%M:%S";
+            }
           }
 
           return "%H:%M";
