@@ -301,7 +301,7 @@ function (angular, $, kbn, moment, _) {
             axis.tickFormatter = kbn.msFormat;
           }
           if (format === 'µs') {
-            axis.tickFormatter = kbm.microsFormat;
+            axis.tickFormatter = kbn.microsFormat;
           }
         }
 
