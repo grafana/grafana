@@ -312,7 +312,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       results = results.data;
       var data = [];
 
+      $scope.datapointsWarning = false;
+      $scope.datapointsCount = 0;
+      $scope.datapointsOutside = false;
+
       _.each(results, function(targetData) {
+        var datapoints = targetData.datapoints;
         var alias = targetData.target;
         var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
         var yaxis = $scope.panel.aliasYAxis[alias] || 1;
@@ -326,13 +331,25 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         };
 
         var series = new timeSeries.ZeroFilled({
-          datapoints: targetData.datapoints,
+          datapoints: datapoints,
           info: seriesInfo,
         });
+
+        if (datapoints && datapoints.length > 0) {
+          var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
+          var from = moment.utc($scope.range.from);
+          if (last - from < -1000) {
+            $scope.datapointsOutside = true;
+          }
+        }
+
+        $scope.datapointsCount += datapoints.length;
 
         $scope.legend.push(seriesInfo);
         data.push(series);
       });
+
+      $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
 
       $scope.annotationsPromise
         .then(function(annotations) {

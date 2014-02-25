@@ -10,9 +10,16 @@
     </span>
   </div>
 
-  <center><img ng-show='panel.loading && _.isUndefined(data)' src="img/load_big.gif"></center>
+  <div style="position: relative">
 
-  <div grafana-graph class="pointer histogram-chart">
+    <div ng-if="datapointsWarning" class="datapoints-warning">
+      <span class="small" ng-show="!datapointsCount">No datapoints <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+      <span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+    </div>
+
+    <div grafana-graph class="pointer histogram-chart">
+    </div>
+
   </div>
 
   <div ng-if="panel.legend" class="grafana-legend-container">
