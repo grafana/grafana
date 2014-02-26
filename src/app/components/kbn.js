@@ -517,5 +517,17 @@ function($, _, moment) {
     }
   };
 
+  kbn.microsFormat = function(size) {
+    if (size < 1000) {
+      return size.toFixed(0) + " µs";
+    }
+    else if (size < 1000000) {
+      return (size / 1000).toFixed(1) + " ms";
+    }
+    else {
+      return (size / 1000000).toFixed(1) + " s";
+    }
+  };
+
   return kbn;
 });
