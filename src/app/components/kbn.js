@@ -505,27 +505,52 @@ function($, _, moment) {
     return (size.toFixed(decimals) + ext);
   };
 
-  kbn.msFormat = function(size) {
+  kbn.getFormatFunction = function(formatName, decimals) {
+    switch(formatName) {
+    case 'short':
+      return function(val) {
+        return kbn.shortFormat(val, decimals);
+      };
+    case 'bytes':
+      return function(val) {
+        return kbn.byteFormat(val, decimals);
+      };
+    case 'ms':
+      return function(val) {
+        return kbn.msFormat(val, decimals);
+      };
+    case 'µs':
+      return function(val) {
+        return kbn.microsFormat(val, decimals);
+      };
+    default:
+      return function(val) {
+        return val % 1 === 0 ? val : val.toFixed(decimals);
+      };
+    }
+  };
+
+  kbn.msFormat = function(size, decimals) {
     if (size < 1000) {
       return size.toFixed(0) + " ms";
     }
     else if (size < 60000) {
-      return (size / 1000).toFixed(1) + " s";
+      return (size / 1000).toFixed(decimals) + " s";
     }
     else {
-      return (size / 60000).toFixed(1) + " min";
+      return (size / 60000).toFixed(decimals) + " min";
     }
   };
 
-  kbn.microsFormat = function(size) {
+  kbn.microsFormat = function(size, decimals) {
     if (size < 1000) {
       return size.toFixed(0) + " µs";
     }
     else if (size < 1000000) {
-      return (size / 1000).toFixed(1) + " ms";
+      return (size / 1000).toFixed(decimals) + " ms";
     }
     else {
-      return (size / 1000000).toFixed(1) + " s";
+      return (size / 1000000).toFixed(decimals) + " s";
     }
   };
 

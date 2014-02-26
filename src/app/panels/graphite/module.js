@@ -326,8 +326,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           alias: alias,
           color:  color,
           enable: true,
-          yaxis: yaxis,
-          y_format: $scope.panel.y_formats[yaxis - 1]
+          yaxis: yaxis
         };
 
         var series = new timeSeries.ZeroFilled({
