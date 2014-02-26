@@ -14,17 +14,9 @@ function (angular, _, $, config, kbn, moment) {
   module.factory('GraphiteDatasource', function(dashboard, $q, filterSrv, $http) {
 
     function GraphiteDatasource(datasource) {
-      var passwordEnd = datasource.url.indexOf('@');
-      if(passwordEnd > 0) {
-        var userStart = datasource.url.indexOf('//') + 2;
-        var urlHead = datasource.url.substring(0,userStart);
-        this.url = urlHead + datasource.url.substring(passwordEnd);
-      }
-      else {
-        this.url = datasource.url;
-      }
       this.type = 'graphite';
       this.basicAuth = datasource.basicAuth;
+      this.url = datasource.url;
     }
 
     GraphiteDatasource.prototype.query = function(options) {
