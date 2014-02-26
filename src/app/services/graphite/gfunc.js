@@ -234,6 +234,20 @@ function (_) {
     defaultParams: [10]
   });
 
+  addFuncDef({
+    name: 'highestAverage',
+    category: categories.Filter,
+    params: [ { name: "count", type: "int" } ],
+    defaultParams: [5]
+  }); 
+
+  addFuncDef({
+    name: 'lowestAverage',
+    category: categories.Filter,
+    params: [ { name: "count", type: "int" } ],
+    defaultParams: [5]
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
