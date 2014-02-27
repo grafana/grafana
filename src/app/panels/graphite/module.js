@@ -38,15 +38,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.panelMeta = {
       modals : [],
+      editorTabs: [],
 
-      editorTabs : [
+      fullEditorTabs : [
         {
           title: 'General',
           src:'app/partials/panelgeneral.html'
         },
         {
-          title:'Targets',
-          src:'app/panels/graphite/editor.html'
+          title: 'Metrics',
         },
         {
           title:'Axes & Grid',
@@ -80,7 +80,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       ],
 
       status  : "Unstable",
-      description : "Graphite graphing panel <br /><br />"
+      description : "Graphs panel"
     };
 
     // Set and populate defaults
@@ -224,21 +224,18 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.fullscreen = false;
       $scope.options = false;
       $scope.editor = {index: 1};
-      $scope.editorTabs = _.pluck($scope.panelMeta.editorTabs,'title');
+      $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
       $scope.hiddenSeries = {};
 
       $scope.datasources = datasourceSrv.listOptions();
-      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
-
-      // Always show the query if an alias isn't set. Users can set an alias if the query is too
-      // long
-      $scope.panel.tooltip.query_as_alias = true;
+      $scope.datasourceChanged();
 
       $scope.get_data();
     };
 
     $scope.datasourceChanged = function() {
       $scope.datasource = datasourceSrv.get($scope.panel.datasource);
+      $scope.panelMeta.fullEditorTabs[1].src = $scope.datasource.editorSrc;
       $scope.get_data();
     };
 

@@ -27,27 +27,23 @@
   </div>
 
   <div class="panel-full-edit-tabs" ng-if="editMode">
-      <div ng-model="editor.index" bs-tabs>
-        <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
-        </div>
+    <div ng-model="editor.index" bs-tabs>
+      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
       </div>
+    </div>
 
-<!--       <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
-        <div ng-include src="'app/partials/panelgeneral.html'"></div>
+    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+      <div ng-include src="tab.src"></div>
 
-        <div class="editor-row" ng-show="datasources.length > 0">
-          <div class="section">
-            <div class="editor-option">
-              <label class="small">Datasource</label>
-              <select class="input-large" ng-options="obj.value as obj.name for obj in datasources" ng-model="panel.datasource" ng-change="datasourceChanged()"></select>
-            </div>
+      <div class="editor-row" ng-show="editor.index === 0">
+        <div class="section">
+          <h5>Datasource options</h5>
+          <div class="editor-option">
+            <label class="small">Datasource name</label>
+            <select class="input-large" ng-options="obj.value as obj.name for obj in datasources" ng-model="panel.datasource" ng-change="datasourceChanged()"></select>
           </div>
         </div>
       </div>
- -->
-      <div class="tab-content" ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
-        <div ng-include src="tab.src"></div>
-      </div>
-
+    </div>
   </div>
 </div>

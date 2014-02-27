@@ -289,7 +289,7 @@ function (angular, $, kbn, moment, _) {
             seriesInfo = item.series.info;
             format = scope.panel.y_formats[seriesInfo.yaxis - 1];
 
-            if (seriesInfo.alias || scope.panel.tooltip.query_as_alias) {
+            if (seriesInfo.alias) {
               group = '<small style="font-size:0.9em;">' +
                 '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
                 (seriesInfo.alias || seriesInfo.query)+

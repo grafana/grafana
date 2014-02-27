@@ -1,3 +1,4 @@
+
 <div class="editor-row">
 
 	<div  ng-repeat="target in panel.targets"
@@ -75,7 +76,7 @@
             </ul>
           </li>
           <li ng-repeat="func in functions">
-            <a class="grafana-target-segment grafana-target-function dropdown-toggle" bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="bottom">
+            <a class="grafana-target-segment grafana-target-function dropdown-toggle" bs-popover="'app/partials/graphite/funcEditor.html'" data-placement="bottom">
               {{func.text}}
             </a>
           </li>
