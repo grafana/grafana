@@ -38,9 +38,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
     $scope.panelMeta = {
       modals : [],
-      editorTabs: [],
 
-      fullEditorTabs : [
+      editorTabs : [
+        {
+          title: 'General',
+          src:'app/partials/panelgeneral.html'
+        },
         {
           title:'Targets',
           src:'app/panels/graphite/editor.html'
@@ -221,7 +224,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.fullscreen = false;
       $scope.options = false;
       $scope.editor = {index: 1};
-      $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
+      $scope.editorTabs = _.pluck($scope.panelMeta.editorTabs,'title');
       $scope.hiddenSeries = {};
 
       $scope.datasources = datasourceSrv.listOptions();

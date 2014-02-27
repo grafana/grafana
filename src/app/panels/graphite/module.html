@@ -32,7 +32,7 @@
         </div>
       </div>
 
-      <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
+<!--       <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
         <div ng-include src="'app/partials/panelgeneral.html'"></div>
 
         <div class="editor-row" ng-show="datasources.length > 0">
@@ -44,8 +44,8 @@
           </div>
         </div>
       </div>
-
-      <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+ -->
+      <div class="tab-content" ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
         <div ng-include src="tab.src"></div>
       </div>
 
