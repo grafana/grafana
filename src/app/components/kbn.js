@@ -534,11 +534,29 @@ function($, _, moment) {
     if (size < 1000) {
       return size.toFixed(0) + " ms";
     }
+    // Less than 1 min
     else if (size < 60000) {
       return (size / 1000).toFixed(decimals) + " s";
     }
-    else {
+    // Less than 1 hour, devide in minutes
+    else if (size < 3600000) {
       return (size / 60000).toFixed(decimals) + " min";
+    }
+    // Less than one day, devide in hours
+    else if (size < 86400000) {
+      return (size / 3600000).toFixed(decimals) + " hour";
+    }
+    // Less than one week, devide in days
+    else if (size < 604800000) {
+      return (size / 86400000).toFixed(decimals) + " day";
+    }
+    // Less than one month, devide in weeks
+    else if (size < 2.62974e9) {
+      return (size / 604800000).toFixed(decimals) + " week";
+    }
+    // Less than one year, devide in weeks
+    else if (size < 3.15569e10) {
+      return (size / 2.62974e9).toFixed(decimals) + " year";
     }
   };
 
