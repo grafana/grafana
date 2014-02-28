@@ -61,7 +61,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       menuItems: [
         { text: 'Edit',         click: 'openConfigureModal()' },
         { text: 'Fullscreen',   click: 'toggleFullscreen()' },
-        { text: 'Duplicate',    click: 'duplicate()' },
+        { text: 'Duplicate',    click: 'duplicatePanel(panel)' },
         { text: 'Span', submenu: [
           { text: '1', click: 'updateColumnSpan(1)' },
           { text: '2', click: 'updateColumnSpan(2)' },
@@ -266,15 +266,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
     };
 
-    /**
-     * Fetch the data for a chunk of a queries results. Multiple segments occur when several indicies
-     * need to be consulted (like timestamped logstash indicies)
-     *
-     * The results of this function are stored on the scope's data property. This property will be an
-     * array of objects with the properties info, time_series, and hits. These objects are used in the
-     * render_panel function to create the historgram.
-     *
-     */
     $scope.get_data = function() {
       delete $scope.panel.error;
 
@@ -381,10 +372,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           closeEditMode();
 
           $timeout(function() {
-            $scope.$emit('render');
-
             if (oldTimeRange !== $scope.range) {
               $scope.dashboard.refresh();
+            }
+            else {
+              $scope.$emit('render');
             }
           });
         });
@@ -419,27 +411,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       series.color = color;
       $scope.panel.aliasColors[series.alias] = series.color;
       $scope.render();
-    };
-
-    $scope.duplicate = function(addToRow) {
-      addToRow = addToRow || $scope.row;
-      var currentRowSpan = $scope.rowSpan(addToRow);
-      if (currentRowSpan <= 9) {
-        addToRow.panels.push(angular.copy($scope.panel));
-      }
-      else {
-        var rowsList = $scope.dashboard.current.rows;
-        var rowIndex = _.indexOf(rowsList, addToRow);
-        if (rowIndex === rowsList.length - 1) {
-          var newRow = angular.copy($scope.row);
-          newRow.panels = [];
-          $scope.dashboard.current.rows.push(newRow);
-          $scope.duplicate(newRow);
-        }
-        else {
-          $scope.duplicate(rowsList[rowIndex+1]);
-        }
-      }
     };
 
     $scope.toggleFullscreen = function() {
