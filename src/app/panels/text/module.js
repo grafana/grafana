@@ -24,7 +24,6 @@ function (angular, app, _, require) {
 
   module.controller('text', function($scope) {
     $scope.panelMeta = {
-      status  : "Stable",
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
     };
 
@@ -45,6 +44,7 @@ function (angular, app, _, require) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
+      $scope.initPanel($scope);
       $scope.ready = false;
     };
 

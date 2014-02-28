@@ -39,7 +39,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.panelMeta = {
       modals : [],
       editorTabs: [],
-
       fullEditorTabs : [
         {
           title: 'General',
@@ -57,30 +56,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
-
-      menuItems: [
-        { text: 'Edit',         click: 'openConfigureModal()' },
-        { text: 'Fullscreen',   click: 'toggleFullscreen()' },
-        { text: 'Duplicate',    click: 'duplicatePanel(panel)' },
-        { text: 'Span', submenu: [
-          { text: '1', click: 'updateColumnSpan(1)' },
-          { text: '2', click: 'updateColumnSpan(2)' },
-          { text: '3', click: 'updateColumnSpan(3)' },
-          { text: '4', click: 'updateColumnSpan(4)' },
-          { text: '5', click: 'updateColumnSpan(5)' },
-          { text: '6', click: 'updateColumnSpan(6)' },
-          { text: '7', click: 'updateColumnSpan(7)' },
-          { text: '8', click: 'updateColumnSpan(8)' },
-          { text: '9', click: 'updateColumnSpan(9)' },
-          { text: '10', click: 'updateColumnSpan(10)' },
-          { text: '11', click: 'updateColumnSpan(11)' },
-          { text: '12', click: 'updateColumnSpan(12)' },
-        ]},
-        { text: 'Remove',          click: 'remove_panel_from_row(row, panel)' }
-      ],
-
-      status  : "Unstable",
-      description : "Graphs panel"
+      fullscreenEdit: true,
+      fullscreenView: true,
+      description : "Graphing"
     };
 
     // Set and populate defaults
@@ -220,10 +198,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     }
 
     $scope.init = function() {
-      // Hide view options by default
+      $scope.initPanel($scope);
+
       $scope.fullscreen = false;
-      $scope.options = false;
-      $scope.editor = {index: 1};
+      $scope.editor = { index: 1 };
       $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
       $scope.hiddenSeries = {};
 
@@ -237,15 +215,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.datasource = datasourceSrv.get($scope.panel.datasource);
       $scope.panelMeta.fullEditorTabs[1].src = $scope.datasource.editorSrc;
       $scope.get_data();
-    };
-
-    $scope.remove_panel_from_row = function(row, panel) {
-      if ($scope.fullscreen) {
-        $rootScope.$emit('panel-fullscreen-exit');
-      }
-      else {
-        $scope.$parent.remove_panel_from_row(row, panel);
-      }
     };
 
     $scope.removeTarget = function (target) {
@@ -284,13 +253,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
 
       return $scope.datasource.query(graphiteQuery)
-        .then($scope.receiveGraphiteData)
+        .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
         });
     };
 
-    $scope.receiveGraphiteData = function(results) {
+    $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
       $scope.legend = [];
 
@@ -300,44 +269,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         return;
       }
 
-      results = results.data;
-      var data = [];
-
       $scope.datapointsWarning = false;
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;
 
-      _.each(results, function(targetData) {
-        var datapoints = targetData.datapoints;
-        var alias = targetData.target;
-        var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
-        var yaxis = $scope.panel.aliasYAxis[alias] || 1;
-
-        var seriesInfo = {
-          alias: alias,
-          color:  color,
-          enable: true,
-          yaxis: yaxis
-        };
-
-        var series = new timeSeries.ZeroFilled({
-          datapoints: datapoints,
-          info: seriesInfo,
-        });
-
-        if (datapoints && datapoints.length > 0) {
-          var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
-          var from = moment.utc($scope.range.from);
-          if (last - from < -1000) {
-            $scope.datapointsOutside = true;
-          }
-        }
-
-        $scope.datapointsCount += datapoints.length;
-
-        $scope.legend.push(seriesInfo);
-        data.push(series);
-      });
+      var data = _.map(results.data, $scope.seriesHandler);
 
       $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
 
@@ -350,53 +286,39 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
+    $scope.seriesHandler = function(seriesData, index) {
+      var datapoints = seriesData.datapoints;
+      var alias = seriesData.target;
+      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
+      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
+
+      var seriesInfo = {
+        alias: alias,
+        color:  color,
+        enable: true,
+        yaxis: yaxis
+      };
+
+      var series = new timeSeries.ZeroFilled({
+        datapoints: datapoints,
+        info: seriesInfo,
+      });
+
+      if (datapoints && datapoints.length > 0) {
+        var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
+        var from = moment.utc($scope.range.from);
+        if (last - from < -1000) {
+          $scope.datapointsOutside = true;
+        }
+      }
+
+      $scope.datapointsCount += datapoints.length;
+
+      return series;
+    };
+
     $scope.add_target = function() {
       $scope.panel.targets.push({target: ''});
-    };
-
-    $scope.enterFullscreenMode = function(options) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.3);
-      var fullscreenHeight = Math.floor(docHeight * 0.7);
-      var oldTimeRange = $scope.range;
-
-      $scope.height = options.edit ? editHeight : fullscreenHeight;
-      $scope.editMode = options.edit;
-
-      if (!$scope.fullscreen) {
-        var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
-          $scope.editMode = false;
-          $scope.fullscreen = false;
-          delete $scope.height;
-
-          closeEditMode();
-
-          $timeout(function() {
-            if (oldTimeRange !== $scope.range) {
-              $scope.dashboard.refresh();
-            }
-            else {
-              $scope.$emit('render');
-            }
-          });
-        });
-      }
-
-      $(window).scrollTop(0);
-
-      $scope.fullscreen = true;
-      $rootScope.$emit('panel-fullscreen-enter');
-
-      $timeout($scope.render);
-    };
-
-    $scope.openConfigureModal = function() {
-      if ($scope.editMode) {
-        $rootScope.$emit('panel-fullscreen-exit');
-        return;
-      }
-
-      $scope.enterFullscreenMode({edit: true});
     };
 
     $scope.otherPanelInFullscreenMode = function() {
@@ -411,15 +333,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       series.color = color;
       $scope.panel.aliasColors[series.alias] = series.color;
       $scope.render();
-    };
-
-    $scope.toggleFullscreen = function() {
-      if ($scope.fullscreen && !$scope.editMode) {
-        $rootScope.$emit('panel-fullscreen-exit');
-        return;
-      }
-
-      $scope.enterFullscreenMode({edit: false});
     };
 
     $scope.toggleSeries = function(info) {
@@ -442,11 +355,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.toggleGridMinMax = function(key) {
       $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
       $scope.render();
-    };
-
-    $scope.updateColumnSpan = function(span) {
-      $scope.panel.span = span;
-      $timeout($scope.render);
     };
 
   });

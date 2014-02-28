@@ -32,5 +32,4 @@ function (angular, app, _) {
         }
       };
     });
-
 });

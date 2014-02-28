@@ -2,13 +2,6 @@
       ng-init="init()"
       style="min-height:{{panel.height || row.height}}"
       ng-class="{'panel-fullscreen': fullscreen}">
-  <div>
-    <span ng-show='panel.options'>
-      <a class="link underline small" ng-show='panel.options' ng-click="options=!options">
-        <i ng-show="!options" class="icon-caret-right"></i><i ng-show="options" class="icon-caret-down"></i> View
-      </a> |&nbsp
-    </span>
-  </div>
 
   <div style="position: relative">
 
