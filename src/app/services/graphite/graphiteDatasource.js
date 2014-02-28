@@ -129,7 +129,7 @@ function (angular, _, $, config, kbn, moment) {
       if (this.basicAuth) {
         options.withCredentials = true;
         options.headers = options.headers || {};
-        options.headers.Authorization = 'Basic ' + config.graphiteBasicAuth;
+        options.headers.Authorization = 'Basic ' + this.basicAuth;
       }
 
       options.url = this.url + options.url;
