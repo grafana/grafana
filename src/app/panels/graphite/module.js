@@ -244,6 +244,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       var graphiteQuery = {
         range: $scope.rangeUnparsed,
+        interval: $scope.interval,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.panel.span * 50,
@@ -307,7 +308,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       if (datapoints && datapoints.length > 0) {
         var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
         var from = moment.utc($scope.range.from);
-        if (last - from < -1000) {
+        if (last - from < -10000) {
           $scope.datapointsOutside = true;
         }
       }

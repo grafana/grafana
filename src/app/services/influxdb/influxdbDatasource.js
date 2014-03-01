@@ -15,15 +15,30 @@ function (angular, _) {
       this.url = datasource.url;
       this.username = datasource.username;
       this.password = datasource.password;
+
+      this.templateSettings = {
+        interpolate : /\[\[([\s\S]+?)\]\]/g,
+      };
     }
 
-    InfluxDatasource.prototype.query = function() {
+    InfluxDatasource.prototype.query = function(options) {
+      var target = options.targets[0];
 
-      var q = "select value from request_count where time > now() - 1h group by time(1m)";
+      var template = "select [[func]]([[column]]) from [[series]] where [[timeFilter]] group by time([[interval]])";
+      var templateData = {
+        series: target.series,
+        column: target.column,
+        func: target.function,
+        timeFilter: getTimeFilter(options),
+        interval: options.interval
+      };
+
+      var query = _.template(template, templateData, this.templateSettings);
+      console.log(query);
 
       var output = { data: [] };
 
-      return this.doInfluxRequest(q).then(function(results) {
+      return this.doInfluxRequest(query).then(function(results) {
 
         _.each(results.data, function(series) {
           var timeCol = series.columns.indexOf('time');
@@ -38,10 +53,11 @@ function (angular, _) {
             var target = series.name + "." + column;
             var datapoints = [];
 
-            for(var i=0; i < series.points.length; i++) {
+            var i, y;
+            for(i = series.points.length - 1, y = 0; i >= 0; i--, y++) {
               var t = Math.floor(series.points[i][timeCol] / 1000);
               var v = series.points[i][index];
-              datapoints[i] = [v,t];
+              datapoints[y] = [v,t];
             }
 
             output.data.push({ target:target, datapoints:datapoints });
@@ -68,6 +84,10 @@ function (angular, _) {
 
       return $http(options);
     };
+
+    function getTimeFilter(options) {
+      return "time > now() - 6h";
+    }
 
 
     return InfluxDatasource;
