@@ -458,6 +458,53 @@ function($, _, moment) {
     return (size.toFixed(decimals) + ext);
   };
 
+  kbn.bitFormat = function(size, decimals) {
+    var ext, steps = 0;
+
+    if(_.isUndefined(decimals)) {
+      decimals = 2;
+    } else if (decimals === 0) {
+      decimals = undefined;
+    }
+
+    while (Math.abs(size) >= 1024) {
+      steps++;
+      size /= 1024;
+    }
+
+    switch (steps) {
+    case 0:
+      ext = " b";
+      break;
+    case 1:
+      ext = " Kb";
+      break;
+    case 2:
+      ext = " Mb";
+      break;
+    case 3:
+      ext = " Gb";
+      break;
+    case 4:
+      ext = " Tb";
+      break;
+    case 5:
+      ext = " Pb";
+      break;
+    case 6:
+      ext = " Eb";
+      break;
+    case 7:
+      ext = " Zb";
+      break;
+    case 8:
+      ext = " Yb";
+      break;
+    }
+
+    return (size.toFixed(decimals) + ext);
+  };
+
   kbn.shortFormat = function(size, decimals) {
     var ext, steps = 0;
 
@@ -514,6 +561,10 @@ function($, _, moment) {
     case 'bytes':
       return function(val) {
         return kbn.byteFormat(val, decimals);
+      };
+    case 'bits':
+      return function(val) {
+        return kbn.bitFormat(val, decimals);
       };
     case 'ms':
       return function(val) {
