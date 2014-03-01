@@ -207,8 +207,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.datasources = datasourceSrv.listOptions();
       $scope.datasourceChanged();
-
-      $scope.get_data();
     };
 
     $scope.datasourceChanged = function() {
@@ -225,12 +223,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.updateTimeRange = function () {
       $scope.range = filterSrv.timeRange();
       $scope.rangeUnparsed = filterSrv.timeRange(false);
+      $scope.resolution = ($(window).width() / ($scope.panel.span / 12)) / 2;
 
       $scope.interval = '10m';
 
       if ($scope.range) {
         $scope.interval = kbn.secondsToHms(
-          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.panel.resolution, 0) / 1000
+          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.resolution, 0) / 1000
         );
       }
     };
@@ -247,7 +246,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         interval: $scope.interval,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
-        maxDataPoints: $scope.panel.span * 50,
+        maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource
       };
 

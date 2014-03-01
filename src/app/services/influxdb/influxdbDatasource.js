@@ -86,7 +86,27 @@ function (angular, _) {
     };
 
     function getTimeFilter(options) {
-      return "time > now() - 6h";
+      var from = options.range.from;
+      var until = options.range.to;
+
+      if (_.isString(from)) {
+        return 'time > now() - ' + from.substring(4);
+      }
+      else {
+        from = to_utc_epoch_seconds(from);
+      }
+
+      if (until === 'now') {
+        return 'time > ' + from;
+      }
+      else {
+        until = to_utc_epoch_seconds(until);
+        return 'time > ' + from + ' and time < ' + until;
+      }
+    }
+
+    function to_utc_epoch_seconds(date) {
+      return (date.getTime() / 1000).toFixed(0) + 's';
     }
 
 
