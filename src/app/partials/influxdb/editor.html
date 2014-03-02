@@ -51,8 +51,11 @@
                    class="input-medium grafana-target-segment-input"
                    ng-model="target.series"
                    spellcheck='false'
+                   bs-typeahead="listSeries"
                    placeholder="series name"
-                   ng-model-onblur ng-change="get_data()" >
+                   data-min-length=0 data-items=100
+                   ng-blur="seriesBlur()"
+                   >
           </li>
           <li class="grafana-target-segment">
             select
