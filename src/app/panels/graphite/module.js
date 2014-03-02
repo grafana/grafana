@@ -213,6 +213,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.setDatasource = function(datasource) {
       $scope.panel.datasource = datasource;
       $scope.datasource = datasourceSrv.get(datasource);
+
+      if (!$scope.datasource) {
+        $scope.panel.error = "Cannot find datasource " + datasource;
+        return;
+      }
+
       $scope.get_data();
     };
 

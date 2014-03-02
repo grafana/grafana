@@ -75,9 +75,6 @@ function (angular, $, kbn, moment, _) {
             }
           });
 
-          // Set barwidth based on specified interval
-          var barwidth = kbn.interval_to_ms(scope.interval);
-
           var stack = panel.stack ? true : null;
 
           // Populate element
@@ -96,7 +93,7 @@ function (angular, $, kbn, moment, _) {
               bars:   {
                 show: panel.bars,
                 fill: 1,
-                barWidth: barwidth/1.5,
+                barWidth: 1,
                 zero: false,
                 lineWidth: 0
               },
@@ -126,6 +123,10 @@ function (angular, $, kbn, moment, _) {
           for (var i = 0; i < data.length; i++) {
             var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
             data[i].data = _d;
+          }
+
+          if (panel.bars && data.length && data[0].info.timeStep) {
+            options.series.bars.barWidth = data[0].info.timeStep / 1.5;
           }
 
           addTimeAxis(options);

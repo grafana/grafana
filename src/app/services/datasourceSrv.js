@@ -20,6 +20,9 @@ function (angular, _, config) {
       if (!name) { return this.default; }
 
       var ds = config.datasources[name];
+      if (!ds) {
+        return null;
+      }
 
       switch(ds.type) {
       case 'graphite':

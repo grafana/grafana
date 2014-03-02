@@ -50,7 +50,12 @@ function (_, kbn) {
       result.push([currentTime * 1000, currentValue]);
     }, this);
 
+    if (result.length > 2) {
+      this.info.timeStep = result[1][0] - result[0][0];
+    }
+
     if (result.length) {
+
       this.info.avg = (this.info.total / result.length);
       this.info.current = result[result.length-1][1];
 
