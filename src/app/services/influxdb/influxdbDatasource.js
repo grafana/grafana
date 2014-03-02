@@ -1,8 +1,9 @@
 define([
   'angular',
   'underscore',
+  'kbn'
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -15,6 +16,7 @@ function (angular, _) {
       this.url = datasource.url;
       this.username = datasource.username;
       this.password = datasource.password;
+      this.name = datasource.name;
 
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
@@ -22,49 +24,32 @@ function (angular, _) {
     }
 
     InfluxDatasource.prototype.query = function(options) {
-      var target = options.targets[0];
 
-      var template = "select [[func]]([[column]]) from [[series]] where [[timeFilter]] group by time([[interval]])";
-      var templateData = {
-        series: target.series,
-        column: target.column,
-        func: target.function,
-        timeFilter: getTimeFilter(options),
-        interval: options.interval
-      };
+      var promises = _.map(options.targets, function(target) {
+        if (!target.series || !target.column || target.hide) {
+          return [];
+        }
 
-      var query = _.template(template, templateData, this.templateSettings);
-      console.log(query);
+        var template = "select [[func]]([[column]]) from [[series]] where [[timeFilter]] group by time([[interval]]) order asc";
 
-      var output = { data: [] };
+        var templateData = {
+          series: target.series,
+          column: target.column,
+          func: target.function,
+          timeFilter: getTimeFilter(options),
+          interval: target.interval || options.interval
+        };
 
-      return this.doInfluxRequest(query).then(function(results) {
+        var query = _.template(template, templateData, this.templateSettings);
+        console.log(query);
 
-        _.each(results.data, function(series) {
-          var timeCol = series.columns.indexOf('time');
+        return this.doInfluxRequest(query).then(handleInfluxQueryResponse);
 
-          _.each(series.columns, function(column, index) {
-            if (column === "time" || column === "sequence_number") {
-              return;
-            }
+      }, this);
 
-            console.log("series:"+series.name + ": "+series.points.length + " points");
+      return $q.all(promises).then(function(results) {
 
-            var target = series.name + "." + column;
-            var datapoints = [];
-
-            var i, y;
-            for(i = series.points.length - 1, y = 0; i >= 0; i--, y++) {
-              var t = Math.floor(series.points[i][timeCol] / 1000);
-              var v = series.points[i][index];
-              datapoints[y] = [v,t];
-            }
-
-            output.data.push({ target:target, datapoints:datapoints });
-          });
-        });
-
-        return output;
+        return { data: _.flatten(results) };
       });
 
     };
@@ -85,24 +70,59 @@ function (angular, _) {
       return $http(options);
     };
 
+    function handleInfluxQueryResponse(results) {
+      var output = [];
+
+      _.each(results.data, function(series) {
+        var timeCol = series.columns.indexOf('time');
+
+        _.each(series.columns, function(column, index) {
+          if (column === "time" || column === "sequence_number") {
+            return;
+          }
+
+          console.log("series:"+series.name + ": "+series.points.length + " points");
+
+          var target = series.name + "." + column;
+          var datapoints = [];
+
+          for(var i = 0; i < series.points.length; i++) {
+            var t = Math.floor(series.points[i][timeCol] / 1000);
+            var v = series.points[i][index];
+            datapoints[i] = [v,t];
+          }
+
+          output.push({ target:target, datapoints:datapoints });
+        });
+      });
+
+      return output;
+    }
+
     function getTimeFilter(options) {
-      var from = options.range.from;
-      var until = options.range.to;
+      var from = getInfluxTime(options.range.from);
+      var until = getInfluxTime(options.range.to);
 
-      if (_.isString(from)) {
-        return 'time > now() - ' + from.substring(4);
-      }
-      else {
-        from = to_utc_epoch_seconds(from);
+      if (until === 'now()') {
+        return 'time > now() - ' + from;
       }
 
-      if (until === 'now') {
-        return 'time > ' + from;
+      return 'time > ' + from + ' and time < ' + until;
+    }
+
+    function getInfluxTime(date) {
+      if (_.isString(date)) {
+        if (date === 'now') {
+          return 'now()';
+        }
+        else if (date.indexOf('now') >= 0) {
+          return date.substring(4);
+        }
+
+        date = kbn.parseDate(date);
       }
-      else {
-        until = to_utc_epoch_seconds(until);
-        return 'time > ' + from + ' and time < ' + until;
-      }
+
+      return to_utc_epoch_seconds(date);
     }
 
     function to_utc_epoch_seconds(date) {

@@ -18,6 +18,7 @@ function (angular, _, $, config, kbn, moment) {
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.editorSrc = 'app/partials/graphite/editor.html';
+      this.name = datasource.name;
     }
 
     GraphiteDatasource.prototype.query = function(options) {

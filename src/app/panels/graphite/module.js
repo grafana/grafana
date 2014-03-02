@@ -46,6 +46,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         },
         {
           title: 'Metrics',
+          src:'app/partials/metrics.html'
         },
         {
           title:'Axes & Grid',
@@ -206,12 +207,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.hiddenSeries = {};
 
       $scope.datasources = datasourceSrv.listOptions();
-      $scope.datasourceChanged();
+      $scope.setDatasource($scope.panel.datasource);
     };
 
-    $scope.datasourceChanged = function() {
-      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
-      $scope.panelMeta.fullEditorTabs[1].src = $scope.datasource.editorSrc;
+    $scope.setDatasource = function(datasource) {
+      $scope.panel.datasource = datasource;
+      $scope.datasource = datasourceSrv.get(datasource);
       $scope.get_data();
     };
 
@@ -298,6 +299,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         enable: true,
         yaxis: yaxis
       };
+
+      $scope.legend.push(seriesInfo);
 
       var series = new timeSeries.ZeroFilled({
         datapoints: datapoints,

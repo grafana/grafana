@@ -1,6 +1,5 @@
-<h5>InfluxDB queries<h5>
 
-<div class="editor-row">
+<div class="editor-row" style="margin-top: 10px;">
 
   <div  ng-repeat="target in panel.targets"
         class="grafana-target"
@@ -44,10 +43,8 @@
         </ul>
 
         <ul class="grafana-segment-list" role="menu">
-          <li>
-            <a class="grafana-target-segment">
-              from series
-            </a>
+          <li class="grafana-target-segment">
+            from series
           </li>
           <li>
             <input type="text"
@@ -55,12 +52,10 @@
                    ng-model="target.series"
                    spellcheck='false'
                    placeholder="series name"
-                   ng-model-onblur ng-change="targetTextChanged()" >
+                   ng-model-onblur ng-change="get_data()" >
           </li>
-          <li>
-            <a class="grafana-target-segment">
-              select
-            </a>
+          <li class="grafana-target-segment">
+            select
           </li>
           <li>
             <input type="text"
@@ -68,18 +63,27 @@
                    ng-model="target.column"
                    placeholder="value column"
                    spellcheck='false'
-                   ng-model-onblur ng-change="targetTextChanged()" >
+                   ng-model-onblur ng-change="get_data()" >
+          </li>
+          <li class="grafana-target-segment">
+            function
           </li>
           <li>
-            <a class="grafana-target-segment">
-              function
-            </a>
+            <select class="input-medium grafana-target-segment-input"  ng-change="get_data()" ng-model="target.function" ng-options="f for f in ['mean', 'sum', 'min', 'max', 'median', 'derivative', 'stddev']" ></select>
+          </li>
+          <li class="grafana-target-segment">
+            group by time
           </li>
           <li>
-            <select class="input-small grafana-target-segment-input" ng-model="target.function" ng-options="f for f in ['mean', 'sum']" ></select>
+            <input type="text"
+                   class="input-mini grafana-target-segment-input"
+                   ng-model="target.interval"
+                   placeholder="{{interval}}"
+                   bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+                   spellcheck='false'
+                   ng-model-onblur ng-change="get_data()" >
           </li>
         </ul>
-
 
         <div class="clearfix"></div>
       </div>
@@ -87,6 +91,3 @@
   </div>
 </div>
 
-<div class="editor-row" style="margin-top: 20px" ng-show="editor.index == 1">
-  <button class="btn btn-success pull-right" ng-click="add_target(panel.target)">Add query</button>
-</div>

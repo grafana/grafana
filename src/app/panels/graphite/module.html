@@ -27,16 +27,6 @@
 
     <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
       <div ng-include src="tab.src"></div>
-
-      <div class="editor-row" ng-show="editor.index === 0">
-        <div class="section">
-          <h5>Datasource options</h5>
-          <div class="editor-option">
-            <label class="small">Datasource name</label>
-            <select class="input-large" ng-options="obj.value as obj.name for obj in datasources" ng-model="panel.datasource" ng-change="datasourceChanged()"></select>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
