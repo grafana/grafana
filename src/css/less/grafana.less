@@ -318,13 +318,30 @@
 
 input[type=text].grafana-target-text-input {
   padding: 5px 7px;
-  border: 1px solid @grafanaTargetSegmentBorder;
+  border: none;
   margin: 0px;
   background: transparent;
-  width: 80%;
   float: left;
   color: @grafanaTargetColor;
   border-radius: 0;
+}
+
+input[type=text].grafana-target-segment-input {
+  border: none;
+  border-right: 1px solid @grafanaTargetSegmentBorder;
+  margin: 0px;
+  border-radius: 0;
+  height: 22px;
+  line-height: 22px;
+}
+
+select.grafana-target-segment-input {
+  border: none;
+  border-right: 1px solid @grafanaTargetSegmentBorder;
+  margin: 0px;
+  border-radius: 0;
+  height: 30px;
+  line-height: 30px;
 }
 
 .grafana-target .dropdown {

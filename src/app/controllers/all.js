@@ -8,4 +8,5 @@ define([
   './metricKeys',
   './graphiteTarget',
   './graphiteImport',
+  './influxTargetCtrl',
 ], function () {});

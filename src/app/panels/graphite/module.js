@@ -39,11 +39,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.panelMeta = {
       modals : [],
       editorTabs: [],
-
       fullEditorTabs : [
         {
-          title:'Targets',
-          src:'app/panels/graphite/editor.html'
+          title: 'General',
+          src:'app/partials/panelgeneral.html'
+        },
+        {
+          title: 'Metrics',
+          src:'app/partials/metrics.html'
         },
         {
           title:'Axes & Grid',
@@ -54,30 +57,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
           src:'app/panels/graphite/styleEditor.html'
         }
       ],
-
-      menuItems: [
-        { text: 'Edit',         click: 'openConfigureModal()' },
-        { text: 'Fullscreen',   click: 'toggleFullscreen()' },
-        { text: 'Duplicate',    click: 'duplicate()' },
-        { text: 'Span', submenu: [
-          { text: '1', click: 'updateColumnSpan(1)' },
-          { text: '2', click: 'updateColumnSpan(2)' },
-          { text: '3', click: 'updateColumnSpan(3)' },
-          { text: '4', click: 'updateColumnSpan(4)' },
-          { text: '5', click: 'updateColumnSpan(5)' },
-          { text: '6', click: 'updateColumnSpan(6)' },
-          { text: '7', click: 'updateColumnSpan(7)' },
-          { text: '8', click: 'updateColumnSpan(8)' },
-          { text: '9', click: 'updateColumnSpan(9)' },
-          { text: '10', click: 'updateColumnSpan(10)' },
-          { text: '11', click: 'updateColumnSpan(11)' },
-          { text: '12', click: 'updateColumnSpan(12)' },
-        ]},
-        { text: 'Remove',          click: 'remove_panel_from_row(row, panel)' }
-      ],
-
-      status  : "Unstable",
-      description : "Graphite graphing panel <br /><br />"
+      fullscreenEdit: true,
+      fullscreenView: true,
+      description : "Graphing"
     };
 
     // Set and populate defaults
@@ -217,35 +199,27 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     }
 
     $scope.init = function() {
-      // Hide view options by default
+      $scope.initPanel($scope);
+
       $scope.fullscreen = false;
-      $scope.options = false;
-      $scope.editor = {index: 1};
-      $scope.editorTabs = _.union(['General'],_.pluck($scope.panelMeta.fullEditorTabs,'title'));
+      $scope.editor = { index: 1 };
+      $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
       $scope.hiddenSeries = {};
 
       $scope.datasources = datasourceSrv.listOptions();
-      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
-
-      // Always show the query if an alias isn't set. Users can set an alias if the query is too
-      // long
-      $scope.panel.tooltip.query_as_alias = true;
-
-      $scope.get_data();
+      $scope.setDatasource($scope.panel.datasource);
     };
 
-    $scope.datasourceChanged = function() {
-      $scope.datasource = datasourceSrv.get($scope.panel.datasource);
-      $scope.get_data();
-    };
+    $scope.setDatasource = function(datasource) {
+      $scope.panel.datasource = datasource;
+      $scope.datasource = datasourceSrv.get(datasource);
 
-    $scope.remove_panel_from_row = function(row, panel) {
-      if ($scope.fullscreen) {
-        $rootScope.$emit('panel-fullscreen-exit');
+      if (!$scope.datasource) {
+        $scope.panel.error = "Cannot find datasource " + datasource;
+        return;
       }
-      else {
-        $scope.$parent.remove_panel_from_row(row, panel);
-      }
+
+      $scope.get_data();
     };
 
     $scope.removeTarget = function (target) {
@@ -256,25 +230,17 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.updateTimeRange = function () {
       $scope.range = filterSrv.timeRange();
       $scope.rangeUnparsed = filterSrv.timeRange(false);
+      $scope.resolution = ($(window).width() / ($scope.panel.span / 12)) / 2;
 
       $scope.interval = '10m';
 
       if ($scope.range) {
         $scope.interval = kbn.secondsToHms(
-          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.panel.resolution, 0) / 1000
+          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.resolution, 0) / 1000
         );
       }
     };
 
-    /**
-     * Fetch the data for a chunk of a queries results. Multiple segments occur when several indicies
-     * need to be consulted (like timestamped logstash indicies)
-     *
-     * The results of this function are stored on the scope's data property. This property will be an
-     * array of objects with the properties info, time_series, and hits. These objects are used in the
-     * render_panel function to create the historgram.
-     *
-     */
     $scope.get_data = function() {
       delete $scope.panel.error;
 
@@ -284,22 +250,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       var graphiteQuery = {
         range: $scope.rangeUnparsed,
+        interval: $scope.interval,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
-        maxDataPoints: $scope.panel.span * 50,
+        maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource
       };
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
 
       return $scope.datasource.query(graphiteQuery)
-        .then($scope.receiveGraphiteData)
+        .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
         });
     };
 
-    $scope.receiveGraphiteData = function(results) {
+    $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
       $scope.legend = [];
 
@@ -309,44 +276,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         return;
       }
 
-      results = results.data;
-      var data = [];
-
       $scope.datapointsWarning = false;
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;
 
-      _.each(results, function(targetData) {
-        var datapoints = targetData.datapoints;
-        var alias = targetData.target;
-        var color = $scope.panel.aliasColors[alias] || $scope.colors[data.length];
-        var yaxis = $scope.panel.aliasYAxis[alias] || 1;
-
-        var seriesInfo = {
-          alias: alias,
-          color:  color,
-          enable: true,
-          yaxis: yaxis
-        };
-
-        var series = new timeSeries.ZeroFilled({
-          datapoints: datapoints,
-          info: seriesInfo,
-        });
-
-        if (datapoints && datapoints.length > 0) {
-          var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
-          var from = moment.utc($scope.range.from);
-          if (last - from < -1000) {
-            $scope.datapointsOutside = true;
-          }
-        }
-
-        $scope.datapointsCount += datapoints.length;
-
-        $scope.legend.push(seriesInfo);
-        data.push(series);
-      });
+      var data = _.map(results.data, $scope.seriesHandler);
 
       $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
 
@@ -359,52 +293,41 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
+    $scope.seriesHandler = function(seriesData, index) {
+      var datapoints = seriesData.datapoints;
+      var alias = seriesData.target;
+      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
+      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
+
+      var seriesInfo = {
+        alias: alias,
+        color:  color,
+        enable: true,
+        yaxis: yaxis
+      };
+
+      $scope.legend.push(seriesInfo);
+
+      var series = new timeSeries.ZeroFilled({
+        datapoints: datapoints,
+        info: seriesInfo,
+      });
+
+      if (datapoints && datapoints.length > 0) {
+        var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
+        var from = moment.utc($scope.range.from);
+        if (last - from < -10000) {
+          $scope.datapointsOutside = true;
+        }
+      }
+
+      $scope.datapointsCount += datapoints.length;
+
+      return series;
+    };
+
     $scope.add_target = function() {
       $scope.panel.targets.push({target: ''});
-    };
-
-    $scope.enterFullscreenMode = function(options) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.3);
-      var fullscreenHeight = Math.floor(docHeight * 0.7);
-      var oldTimeRange = $scope.range;
-
-      $scope.height = options.edit ? editHeight : fullscreenHeight;
-      $scope.editMode = options.edit;
-
-      if (!$scope.fullscreen) {
-        var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
-          $scope.editMode = false;
-          $scope.fullscreen = false;
-          delete $scope.height;
-
-          closeEditMode();
-
-          $timeout(function() {
-            $scope.$emit('render');
-
-            if (oldTimeRange !== $scope.range) {
-              $scope.dashboard.refresh();
-            }
-          });
-        });
-      }
-
-      $(window).scrollTop(0);
-
-      $scope.fullscreen = true;
-      $rootScope.$emit('panel-fullscreen-enter');
-
-      $timeout($scope.render);
-    };
-
-    $scope.openConfigureModal = function() {
-      if ($scope.editMode) {
-        $rootScope.$emit('panel-fullscreen-exit');
-        return;
-      }
-
-      $scope.enterFullscreenMode({edit: true});
     };
 
     $scope.otherPanelInFullscreenMode = function() {
@@ -419,36 +342,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       series.color = color;
       $scope.panel.aliasColors[series.alias] = series.color;
       $scope.render();
-    };
-
-    $scope.duplicate = function(addToRow) {
-      addToRow = addToRow || $scope.row;
-      var currentRowSpan = $scope.rowSpan(addToRow);
-      if (currentRowSpan <= 9) {
-        addToRow.panels.push(angular.copy($scope.panel));
-      }
-      else {
-        var rowsList = $scope.dashboard.current.rows;
-        var rowIndex = _.indexOf(rowsList, addToRow);
-        if (rowIndex === rowsList.length - 1) {
-          var newRow = angular.copy($scope.row);
-          newRow.panels = [];
-          $scope.dashboard.current.rows.push(newRow);
-          $scope.duplicate(newRow);
-        }
-        else {
-          $scope.duplicate(rowsList[rowIndex+1]);
-        }
-      }
-    };
-
-    $scope.toggleFullscreen = function() {
-      if ($scope.fullscreen && !$scope.editMode) {
-        $rootScope.$emit('panel-fullscreen-exit');
-        return;
-      }
-
-      $scope.enterFullscreenMode({edit: false});
     };
 
     $scope.toggleSeries = function(info) {
@@ -471,11 +364,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.toggleGridMinMax = function(key) {
       $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
       $scope.render();
-    };
-
-    $scope.updateColumnSpan = function(span) {
-      $scope.panel.span = span;
-      $timeout($scope.render);
     };
 
   });

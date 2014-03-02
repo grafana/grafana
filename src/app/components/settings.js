@@ -52,14 +52,17 @@ function (_, crypto) {
     if (options.graphiteUrl) {
       settings.datasources = {
         graphite: {
-          name: 'default',
+          type: 'graphite',
           url: options.graphiteUrl,
           default: true
         }
       };
     }
 
-    _.map(settings.datasources, parseBasicAuth);
+    _.each(settings.datasources, function(datasource, key) {
+      datasource.name = key;
+      parseBasicAuth(datasource);
+    });
 
     var elasticParsed = parseBasicAuth({ url: settings.elasticsearch });
     settings.elasticsearchBasicAuth = elasticParsed.basicAuth;

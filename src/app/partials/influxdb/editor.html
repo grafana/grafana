@@ -1,0 +1,93 @@
+
+<div class="editor-row" style="margin-top: 10px;">
+
+  <div  ng-repeat="target in panel.targets"
+        class="grafana-target"
+        ng-class="{'grafana-target-hidden': target.hide}"
+        ng-controller="InfluxTargetCtrl"
+        ng-init="init()">
+
+    <div class="grafana-target-inner-wrapper">
+      <div class="grafana-target-inner">
+        <ul class="grafana-target-controls">
+          <li class="dropdown">
+            <a  class="pointer dropdown-toggle"
+                data-toggle="dropdown"
+                tabindex="1">
+              <i class="icon-cog"></i>
+            </a>
+            <ul class="dropdown-menu pull-right" role="menu">
+              <li role="menuitem">
+                <a  tabindex="1"
+                    ng-click="duplicate()">
+                  Duplicate
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
+              <i class="icon-remove"></i>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="grafana-target-controls-left">
+          <li>
+            <a  class="grafana-target-segment"
+                ng-click="target.hide = !target.hide; get_data();"
+                role="menuitem">
+              <i class="icon-eye-open"></i>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="grafana-segment-list" role="menu">
+          <li class="grafana-target-segment">
+            from series
+          </li>
+          <li>
+            <input type="text"
+                   class="input-medium grafana-target-segment-input"
+                   ng-model="target.series"
+                   spellcheck='false'
+                   placeholder="series name"
+                   ng-model-onblur ng-change="get_data()" >
+          </li>
+          <li class="grafana-target-segment">
+            select
+          </li>
+          <li>
+            <input type="text"
+                   class="input-medium grafana-target-segment-input"
+                   ng-model="target.column"
+                   placeholder="value column"
+                   spellcheck='false'
+                   ng-model-onblur ng-change="get_data()" >
+          </li>
+          <li class="grafana-target-segment">
+            function
+          </li>
+          <li>
+            <select class="input-medium grafana-target-segment-input"  ng-change="get_data()" ng-model="target.function" ng-options="f for f in ['mean', 'sum', 'min', 'max', 'median', 'derivative', 'stddev']" ></select>
+          </li>
+          <li class="grafana-target-segment">
+            group by time
+          </li>
+          <li>
+            <input type="text"
+                   class="input-mini grafana-target-segment-input"
+                   ng-model="target.interval"
+                   placeholder="{{interval}}"
+                   bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+                   spellcheck='false'
+                   ng-model-onblur ng-change="get_data()" >
+          </li>
+        </ul>
+
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+</div>
+

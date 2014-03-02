@@ -2,13 +2,6 @@
       ng-init="init()"
       style="min-height:{{panel.height || row.height}}"
       ng-class="{'panel-fullscreen': fullscreen}">
-  <div>
-    <span ng-show='panel.options'>
-      <a class="link underline small" ng-show='panel.options' ng-click="options=!options">
-        <i ng-show="!options" class="icon-caret-right"></i><i ng-show="options" class="icon-caret-down"></i> View
-      </a> |&nbsp
-    </span>
-  </div>
 
   <div style="position: relative">
 
@@ -27,27 +20,13 @@
   </div>
 
   <div class="panel-full-edit-tabs" ng-if="editMode">
-      <div ng-model="editor.index" bs-tabs>
-        <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
-        </div>
+    <div ng-model="editor.index" bs-tabs>
+      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
       </div>
+    </div>
 
-      <div class="tab-content" ng-show="editorTabs[editor.index] == 'General'">
-        <div ng-include src="'app/partials/panelgeneral.html'"></div>
-
-        <div class="editor-row" ng-show="datasources.length > 0">
-          <div class="section">
-            <div class="editor-option">
-              <label class="small">Datasource</label>
-              <select class="input-large" ng-options="obj.value as obj.name for obj in datasources" ng-model="panel.datasource" ng-change="datasourceChanged()"></select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
-        <div ng-include src="tab.src"></div>
-      </div>
-
+    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+      <div ng-include src="tab.src"></div>
+    </div>
   </div>
 </div>

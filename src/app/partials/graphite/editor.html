@@ -1,4 +1,5 @@
-<div class="editor-row">
+
+<div class="editor-row" style="margin-top: 10px;">
 
 	<div  ng-repeat="target in panel.targets"
         class="grafana-target"
@@ -52,7 +53,7 @@
         </ul>
 
         <input  type="text"
-                class="grafana-target-text-input"
+                class="grafana-target-text-input span12"
                 ng-model="target.target"
                 focus-me="showTextEditor"
                 spellcheck='false'
@@ -75,7 +76,7 @@
             </ul>
           </li>
           <li ng-repeat="func in functions">
-            <a class="grafana-target-segment grafana-target-function dropdown-toggle" bs-popover="'app/panels/graphite/funcEditor.html'" data-placement="bottom">
+            <a class="grafana-target-segment grafana-target-function dropdown-toggle" bs-popover="'app/partials/graphite/funcEditor.html'" data-placement="bottom">
               {{func.text}}
             </a>
           </li>
@@ -111,6 +112,3 @@
   </div>
 </div>
 
-<div class="editor-row" style="margin-top: 20px" ng-show="editor.index == 1">
-  <button class="btn btn-success pull-right" ng-click="add_target(panel.target)">Add target</button>
-</div>

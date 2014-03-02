@@ -69,8 +69,7 @@
           "nullPointMode": "connected",
           "steppedLine": false,
           "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
+            "value_type": "cumulative"
           },
           "targets": [
             {
