@@ -12,7 +12,7 @@ function (angular, _, kbn) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
-      this.editorSrc = 'app/partials/influxDB/editor.html';
+      this.editorSrc = 'app/partials/influxdb/editor.html';
       this.url = datasource.url;
       this.username = datasource.username;
       this.password = datasource.password;
@@ -52,18 +52,6 @@ function (angular, _, kbn) {
         return { data: _.flatten(results) };
       });
 
-    };
-
-    InfluxDatasource.prototype.listSeries = function() {
-      return this.doInfluxRequest('list series').then(function(results) {
-        if (!results.data) {
-          return [];
-        }
-
-        return _.map(results.data, function(series) {
-          return series.name;
-        });
-      });
     };
 
     InfluxDatasource.prototype.doInfluxRequest = function(query) {
