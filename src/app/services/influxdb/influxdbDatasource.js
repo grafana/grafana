@@ -54,6 +54,18 @@ function (angular, _, kbn) {
 
     };
 
+    InfluxDatasource.prototype.listSeries = function() {
+      return this.doInfluxRequest('list series').then(function(results) {
+        if (!results.data) {
+          return [];
+        }
+
+        return _.map(results.data, function(series) {
+          return series.name;
+        });
+      });
+    };
+
     InfluxDatasource.prototype.doInfluxRequest = function(query) {
       var params = {
         u: this.username,
