@@ -13,7 +13,6 @@ function (angular, _, config, gfunc, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv) {
 
     $scope.init = function() {
-      $scope.funcCategories = gfunc.getCategories();
       parseTarget();
     };
 

@@ -393,7 +393,7 @@ angular.module('$strap.directives').directive('bsDropdown', [
       angular.forEach(items, function (item, index) {
         if (item.divider)
           return ul.splice(index + 1, 0, '<li class="divider"></li>');
-        var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' + '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? '" ng-click="' + item.click + '"' : '') + (item.target ? '" target="' + item.target + '"' : '') + (item.method ? '" data-method="' + item.method + '"' : '') + '>' + (item.text || '') + '</a>';
+        var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' + '<a tabindex="1" ng-href="' + (item.href || '') + '"' + (item.click ? '" ng-click="' + item.click + '"' : '') + (item.target ? '" target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') + '>' + (item.text || '') + '</a>';
         if (item.submenu && item.submenu.length)
           li += buildTemplate(item.submenu).join('\n');
         li += '</li>';

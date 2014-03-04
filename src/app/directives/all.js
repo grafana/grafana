@@ -12,5 +12,6 @@ define([
   './spectrumPicker',
   './grafanaGraph',
   './bootstrap-tagsinput',
-  './bodyClass'
+  './bodyClass',
+  './addGraphiteFunc'
 ], function () {});

@@ -245,8 +245,8 @@ function (_) {
     name: 'lowestCurrent',
     category: categories.Filter,
     params: [ { name: "count", type: "int" } ],
-    defaultParams: [5] 
-  }); 
+    defaultParams: [5]
+  });
 
   addFuncDef({
     name: 'movingAverage',
@@ -260,7 +260,7 @@ function (_) {
     category: categories.Filter,
     params: [ { name: "count", type: "int" } ],
     defaultParams: [5]
-  }); 
+  });
 
   addFuncDef({
     name: 'lowestAverage',
@@ -316,6 +316,10 @@ function (_) {
         funcDef = index[funcDef];
       }
       return new FuncInstance(funcDef);
+    },
+
+    getFuncDef: function(name) {
+      return index[name];
     },
 
     getCategories: function() {
