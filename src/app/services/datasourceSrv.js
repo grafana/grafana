@@ -12,18 +12,21 @@ function (angular, _, config) {
 
   module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource) {
 
-    var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
+    this.init = function() {
 
-    this.default = datasourceFactory(defaultDatasource);
+      var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
+      this.default = this.datasourceFactory(defaultDatasource);
 
-    function datasourceFactory(ds) {
+    };
+
+    this.datasourceFactory = function(ds) {
       switch(ds.type) {
       case 'graphite':
         return new GraphiteDatasource(ds);
       case 'influxdb':
         return new InfluxDatasource(ds);
       }
-    }
+    };
 
     this.get = function(name) {
       if (!name) { return this.default; }
@@ -33,7 +36,7 @@ function (angular, _, config) {
         return null;
       }
 
-      return datasourceFactory(ds);
+      return this.datasourceFactory(ds);
     };
 
     this.listOptions = function() {
@@ -44,5 +47,7 @@ function (angular, _, config) {
         };
       });
     };
+
+    this.init();
   });
 });
