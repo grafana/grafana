@@ -14,7 +14,16 @@ function (angular, _, config) {
 
     var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
 
-    this.default = new GraphiteDatasource(defaultDatasource);
+    this.default = datasourceFactory(defaultDatasource);
+
+    function datasourceFactory(ds) {
+      switch(ds.type) {
+      case 'graphite':
+        return new GraphiteDatasource(ds);
+      case 'influxdb':
+        return new InfluxDatasource(ds);
+      }
+    }
 
     this.get = function(name) {
       if (!name) { return this.default; }
@@ -24,12 +33,7 @@ function (angular, _, config) {
         return null;
       }
 
-      switch(ds.type) {
-      case 'graphite':
-        return new GraphiteDatasource(ds);
-      case 'influxdb':
-        return new InfluxDatasource(ds);
-      }
+      return datasourceFactory(ds);
     };
 
     this.listOptions = function() {
