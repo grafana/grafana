@@ -1,0 +1,84 @@
+# 1.4.0 (2013-02-21)
+###New Features
+- #44 Annotations! Required a lot of work to get right. Read wiki article for more info. Supported annotations data sources are graphite metrics and graphite events. Support for more will be added in the future!
+- #35 Support for multiple graphite servers! (Read wiki article for more)
+- #116 Back to dashboard link in top menu to easily exist full screen / edit mode.
+- #114, #97 Legend values now use the same y axes formatter
+- #77 Improvements and polish to the light theme
+
+### Changes
+- #98 Stack is no longer by default turned on in graph display settings.
+- Hide controls (Ctrl+h) now hides the sub menu row (where filtering, and annotations are). So if you had filtering enabled and hide controls enabled you will not see the filtering sub menu.
+
+### Fixes:
+- #94 Fix for bug that caused dashboard settings to sometimes not contain timepicker tab.
+- #110 Graph with many many metrics caused legend to push down graph editor below screen. You can now scroll in edit mode & full screen mode for graphs with lots of series & legends.
+- #104 Improvement to graphite target editor, select wildcard now gives you a "select metric" link for the next node.
+- #105 Added zero as a possible node value in groupByAlias function
+
+# 1.3.0 (2013-02-13)
+### New features or improvements
+- #86 Dashboard tags and search (see wiki article for details)
+- #54 Enhancement to filter / template. "Include All" improvement
+- #82 Dashboard search result sorted in alphabetical order
+
+### Fixes
+- #91 Custom date selector is one day behind
+- #89 Filter / template does not work after switching dashboard
+- #88 Closed / Minimized row css bug
+- #85 Added all parameters to summarize function
+- #83 Stack as percent should now work a lot better!
+
+# 1.2.0 (2013-02-10)
+### New features
+- #70 Grid Thresholds (warning and error regions or lines in graph)
+- #72 Added an example of a scripted dashboard and a short wiki article documenting scripted dashboards.
+
+### Fixes
+- #81 Grid min/max values are ignored bug
+- #80 "stacked as percent" graphs should always use "max" value of 100 bug
+- #73 Left Y format change did not work
+- #42 Fixes to grid min/max auto scaling
+- #69 Fixes to lexer/parser for metrics segments like "10-20".
+- #67 Allow decimal input for scale function
+- #68 Bug when trying to open dashboard while in edit mode
+
+# 1.1.0 (2013-02-06)
+### New features:
+
+- #22 Support for native graphite png renderer, does not support click and select zoom yet
+- #60 Support for legend values (cactiStyle, min, max, current, total, avg). The options for these are found in the new "Axes & Grid" tab for now.
+- #62 There is now a "New" button in the search/open dashboard view to quickly open a clean empty dashboard.
+- #55 Basic auth is now supported for elastic search as well
+- some new function definitions added (will focus more on this for next release).
+
+### Fixes
+- #45 zero values from graphite was handled as null.
+- #63 Kibana / Grafana on same host would use same localStorage keys, now fixed
+- #46 Impossible to edit graph without a name fixed.
+- #24 fix for dashboard search when elastic search is configured to disable _all field.
+- #38 Improvement to lexer / parser to support pure numeric literals in metric segments
+
+Thanks to everyone who contributed fixes and provided feedback :+1:
+
+# 1.0.4 (2013-01-24)
+- Fixes #28 - Relative time range caused 500 graphite error in some cases (thx rsommer for the fix)
+
+# 1.0.3 (2013-01-23)
+- #9 Add Y-axis format for milliseconds
+- #16 Add support for Basic Auth (use http://username:password@yourgraphitedomain.com)
+- #13 Relative time ranges now uses relative time ranges when issuing graphite query
+
+# 1.0.2 (2013-01-21)
+- Fixes #12, should now work ok without ElasticSearch
+
+# 1.0.1 (2013-01-21)
+- Resize fix
+- Improvements to drag & drop
+- Added a few graphite function definitions
+- Fixed duplicate panel bug
+- Updated default dashboard with welcome message and randomWalk graph
+
+# 1.0.0 (2013-01-19)
+
+First public release

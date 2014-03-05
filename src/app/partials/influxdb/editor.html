@@ -66,7 +66,9 @@
                    ng-model="target.column"
                    placeholder="value column"
                    spellcheck='false'
-                   ng-model-onblur ng-change="get_data()" >
+                   bs-typeahead="listColumns"
+                   data-min-length=0
+                   ng-blur="get_data()">
           </li>
           <li class="grafana-target-segment">
             function

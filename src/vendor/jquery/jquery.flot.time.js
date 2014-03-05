@@ -71,13 +71,13 @@ API.txt for details.
 				switch (c) {
 					case 'a': c = "" + dayNames[d.getDay()]; break;
 					case 'b': c = "" + monthNames[d.getMonth()]; break;
-					case 'd': c = leftPad(d.getDate()); break;
+					case 'd': c = leftPad(d.getDate(), ""); break;
 					case 'e': c = leftPad(d.getDate(), " "); break;
 					case 'h':	// For back-compat with 0.7; remove in 1.0
 					case 'H': c = leftPad(hours); break;
 					case 'I': c = leftPad(hours12); break;
 					case 'l': c = leftPad(hours12, " "); break;
-					case 'm': c = leftPad(d.getMonth() + 1); break;
+					case 'm': c = leftPad(d.getMonth() + 1, ""); break;
 					case 'M': c = leftPad(d.getMinutes()); break;
 					// quarters not in Open Group's strftime specification
 					case 'q':
@@ -158,7 +158,7 @@ API.txt for details.
 			return makeUtcWrapper(new Date(ts));
 		}
 	}
-	
+
 	// map of app. size of time units in milliseconds
 
 	var timeUnitSize = {
@@ -176,9 +176,9 @@ API.txt for details.
 
 	var baseSpec = [
 		[1, "second"], [2, "second"], [5, "second"], [10, "second"],
-		[30, "second"], 
+		[30, "second"],
 		[1, "minute"], [2, "minute"], [5, "minute"], [10, "minute"],
-		[30, "minute"], 
+		[30, "minute"],
 		[1, "hour"], [2, "hour"], [4, "hour"],
 		[8, "hour"], [12, "hour"],
 		[1, "day"], [2, "day"], [3, "day"],

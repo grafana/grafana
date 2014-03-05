@@ -257,25 +257,22 @@ function (angular, $, kbn, moment, _) {
         }
 
         function time_format(interval, ticks, min, max) {
-          var _int = kbn.interval_to_seconds(interval);
-          if(_int >= 2628000) {
-            return "%Y-%m";
-          }
-          if(_int >= 10000) {
-            return "%m/%d";
-          }
-          if(_int >= 3600) {
-            return "%m/%d %H:%M";
-          }
-          if(_int >= 700) {
-            return "%a %H:%M";
-          }
-
           if (min && max && ticks) {
-            var msPerTick = (max - min) / ticks;
-            if (msPerTick <= 45000) {
+            var secPerTick = ((max - min) / ticks) / 1000;
+
+            if (secPerTick <= 45) {
               return "%H:%M:%S";
             }
+            if (secPerTick <= 3600) {
+              return "%H:%M";
+            }
+            if (secPerTick <= 80000) {
+              return "%m/%d %H:%M";
+            }
+            if (secPerTick <= 2419200) {
+              return "%m/%d";
+            }
+            return "%Y-%m";
           }
 
           return "%H:%M";
