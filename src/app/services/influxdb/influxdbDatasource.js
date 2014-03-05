@@ -41,7 +41,6 @@ function (angular, _, kbn) {
         };
 
         var query = _.template(template, templateData, this.templateSettings);
-        console.log(query);
 
         return this.doInfluxRequest(query).then(handleInfluxQueryResponse);
 
@@ -52,6 +51,17 @@ function (angular, _, kbn) {
         return { data: _.flatten(results) };
       });
 
+    };
+
+    InfluxDatasource.prototype.listColumns = function(seriesName) {
+      return this.doInfluxRequest('select * from ' + seriesName + ' limit 1').then(function(results) {
+        console.log('response!');
+        if (!results.data) {
+          return [];
+        }
+
+        return results.data[0].columns;
+      });
     };
 
     InfluxDatasource.prototype.listSeries = function() {
@@ -79,6 +89,7 @@ function (angular, _, kbn) {
         params: params,
       };
 
+      console.log(query);
       return $http(options);
     };
 

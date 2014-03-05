@@ -15,14 +15,7 @@ function (angular) {
         $scope.target.function = 'mean';
       }
 
-      if (!seriesList) {
-        seriesList = [];
-        $scope.datasource.listSeries().then(function(series) {
-          seriesList = series;
-        });
-      }
-
-      $scope.oldSeris = $scope.target.series;
+      $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
         $timeout($scope.get_data);
       });
@@ -30,14 +23,38 @@ function (angular) {
 
     // Cannot use typeahead and ng-change on blur at the same time
     $scope.seriesBlur = function() {
-      if ($scope.oldSeris !== $scope.target.series) {
-        $scope.oldSeris = $scope.target.series;
+      if ($scope.oldSeries !== $scope.target.series) {
+        $scope.oldSeries = $scope.target.series;
         $scope.get_data();
       }
     };
 
-    $scope.listSeries = function() {
-      return seriesList;
+    // called outside of digest
+    $scope.listColumns = function(query, callback) {
+      if (!$scope.columnList) {
+        $scope.$apply(function() {
+          $scope.datasource.listColumns($scope.target.series).then(function(columns) {
+            $scope.columnList = columns;
+            callback(columns);
+          });
+        });
+      }
+      else {
+        return $scope.columnList;
+      }
+    };
+
+    $scope.listSeries = function(query, callback) {
+      if (!seriesList) {
+        seriesList = [];
+        $scope.datasource.listSeries().then(function(series) {
+          seriesList = series;
+          callback(seriesList);
+        });
+      }
+      else {
+        return seriesList;
+      }
     };
 
     $scope.duplicate = function() {
