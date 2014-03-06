@@ -222,11 +222,6 @@ function (angular, _, config, gfunc, Parser) {
       $scope.targetChanged();
     };
 
-    $scope.functionParamsChanged = function(func) {
-      func.updateText();
-      $scope.targetChanged();
-    };
-
     $scope.addFunction = function(funcDef) {
       $scope.functions.push(gfunc.createFuncInstance(funcDef));
 

@@ -89,12 +89,12 @@ function (_) {
     params: [
       {
         name: "node",
-        type: "select",
+        type: "int",
         options: [1,2,3,4,5,6,7,8,9,10,12]
       },
       {
         name: "function",
-        type: "select",
+        type: "string",
         options: ['sum', 'avg']
       }
     ],
@@ -104,7 +104,7 @@ function (_) {
   addFuncDef({
     name: 'aliasByNode',
     category: categories.Special,
-    params: [ { name: "node", type: "select", options: [0,1,2,3,4,5,6,7,8,9,10,12] } ],
+    params: [ { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] } ],
     defaultParams: [3]
   });
 
@@ -211,14 +211,14 @@ function (_) {
     category: categories.Filter,
     params: [ { name: "n", type: "int", } ],
     defaultParams: [25]
-  }); 
+  });
 
   addFuncDef({
     name: 'currentBelow',
     category: categories.Filter,
     params: [ { name: "n", type: "int", } ],
     defaultParams: [25]
-  }); 
+  });
 
   addFuncDef({
     name: "exclude",
@@ -279,7 +279,7 @@ function (_) {
     this.updateText();
   }
 
-  FuncInstance.prototype.render = function (metricExp) {
+  FuncInstance.prototype.render = function(metricExp) {
     var str = this.def.name + '(';
     var parameters = _.map(this.params, function(value) {
       return _.isString(value) ? "'" + value + "'" : value;
@@ -290,6 +290,21 @@ function (_) {
     }
 
     return str + parameters.join(',') + ')';
+  };
+
+  FuncInstance.prototype.updateParam = function(strValue, index) {
+    var oldValue = this.params[index];
+
+    if (this.def.params[index].type === 'int') {
+      this.params[index] = parseInt(strValue, 10);
+    }
+    else {
+      this.params[index] = strValue;
+    }
+
+    this.updateText();
+
+    return oldValue !== this.params[index];
   };
 
   FuncInstance.prototype.updateText = function () {

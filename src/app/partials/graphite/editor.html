@@ -76,19 +76,21 @@
             </ul>
           </li>
           <li ng-repeat="func in functions">
+            <span graphite-func-editor class="grafana-target-segment grafana-target-function">
+            </span>
             <!-- <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
                 bs-popover="'app/partials/graphite/funcEditor.html'"
                 data-placement="bottom">
               {{func.def.name}}
             </a> -->
-            <span class="grafana-target-segment grafana-target-function">
+            <!-- <span class="grafana-target-segment grafana-target-function">
               <span>{{func.def.name}}(</span><span ng-repeat="param in func.def.params">
                 <input  type="text"
                         class="input-mini grafana-function-param-input"
                         dynamic-width
                         ng-model="func.params[$index]"></input>
               </span><span>)</span>
-            </span>
+            </span> -->
           </li>
           <li class="dropdown" graphite-add-func>
 
@@ -101,4 +103,5 @@
     </div>
   </div>
 </div>
+
 

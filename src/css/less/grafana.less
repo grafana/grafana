@@ -269,15 +269,18 @@
   &:hover, &:focus {
     text-decoration: none;
   }
-  &:hover {
+  &a:hover {
     background: @grafanaTargetFuncBackground;
   }
 }
 
 .grafana-target-function {
   background: @grafanaTargetFuncBackground;
-  &:hover {
-    background: @grafanaTargetFuncHightlight;
+  > a {
+    color: @grafanaTargetColor;
+  }
+  > a:hover {
+    color: @linkColor;
   }
 }
 
