@@ -121,6 +121,13 @@ function (angular, _, $) {
           $('<span>)</span>').appendTo(elem);
 
           $compile(elem.contents())($scope);
+
+          if ($scope.func.added) {
+            $scope.func.added = false;
+            setTimeout(function() {
+              elem.find('a').click();
+            }, 10);
+          }
         }
       };
 

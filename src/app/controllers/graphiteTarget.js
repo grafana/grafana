@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv) {
+  module.controller('GraphiteTargetCtrl', function($scope, $http, filterSrv, $timeout) {
 
     $scope.init = function() {
       parseTarget();
@@ -223,7 +223,9 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.addFunction = function(funcDef) {
-      $scope.functions.push(gfunc.createFuncInstance(funcDef));
+      var newFunc = gfunc.createFuncInstance(funcDef);
+      newFunc.added = true;
+      $scope.functions.push(newFunc);
 
       var aliasFunc = _.find($scope.functions, function(func) {
         return func.def.name === 'alias';
@@ -234,7 +236,9 @@ function (angular, _, config, gfunc, Parser) {
         $scope.functions.push(aliasFunc);
       }
 
-      $scope.targetChanged();
+      if (!funcDef.params) {
+        $scope.targetChanged();
+      }
     };
 
     $scope.duplicate = function() {
