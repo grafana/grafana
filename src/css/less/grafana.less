@@ -221,10 +221,6 @@
   border-bottom: 1px solid @grafanaTargetBorder;
 }
 
-.grafana-target-inner-wrapper {
-  width: 100%;
-}
-
 .grafana-target-inner {
   border-top: 1px solid @grafanaTargetBorder;
   border-left: 1px solid @grafanaTargetBorder;
@@ -262,6 +258,10 @@
   color: @grafanaTargetColor;
   display: inline-block;
 
+  .has-open-function & {
+    padding-top: 25px;
+  }
+
   .grafana-target-hidden & {
     color: @grafanaTargetColorHide;
   }
@@ -269,16 +269,32 @@
   &:hover, &:focus {
     text-decoration: none;
   }
-  &:hover {
+  &a:hover {
     background: @grafanaTargetFuncBackground;
   }
 }
 
 .grafana-target-function {
   background: @grafanaTargetFuncBackground;
-  &:hover {
-    background: @grafanaTargetFuncHightlight;
+  > a {
+    color: @grafanaTargetColor;
   }
+  > a:hover {
+    color: @linkColor;
+  }
+
+  &.show-function-controls {
+    padding-top: 5px;
+    min-width: 100px;
+    text-align: center;
+  }
+}
+
+input[type=text].grafana-function-param-input {
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .grafana-target-controls-left {
@@ -348,13 +364,23 @@ select.grafana-target-segment-input {
   padding: 0; margin: 0;
 }
 
-input[type=text].func-param {
-  border: none;
-  background: inherit;
-  width: 30px;
-  border-radius: none;
-  padding: 0;
-  margin: 0;
+.graphite-func-controls {
+  display: none;
+  text-align: center;
+
+  .icon-arrow-left {
+    float: left;
+    position: relative;
+    top: 2px;
+  }
+  .icon-arrow-right {
+    float: right;
+    position: relative;
+    top: 2px;
+  }
+  .icon-remove {
+    margin-left: 10px;
+  }
 }
 
 .grafana-target {
@@ -363,19 +389,6 @@ input[type=text].func-param {
   }
 }
 
-.grafana-func-editor {
-  min-width: 140px;
-  .grafana-func-editor-header {
-    background: @grafanaTargetFuncHightlight;
-    text-align: center;
-    border-bottom: 1px solid @grafanaTargetFuncBackground;
-    padding: 3px 5px;
-    white-space: nowrap;
-  }
-  .editor-row {
-    padding: 5px;
-  }
-}
 
 .scrollable {
   max-height: 300px;

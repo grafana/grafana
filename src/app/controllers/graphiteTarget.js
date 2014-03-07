@@ -222,24 +222,44 @@ function (angular, _, config, gfunc, Parser) {
       $scope.targetChanged();
     };
 
-    $scope.functionParamsChanged = function(func) {
-      func.updateText();
-      $scope.targetChanged();
+    $scope.addFunction = function(funcDef) {
+      var newFunc = gfunc.createFuncInstance(funcDef);
+      newFunc.added = true;
+      $scope.functions.push(newFunc);
+
+      $scope.moveAliasFuncLast();
+      $scope.smartlyHandleNewAliasByNode(newFunc);
+
+      if (!funcDef.params && newFunc.added) {
+        $scope.targetChanged();
+      }
     };
 
-    $scope.addFunction = function(funcDef) {
-      $scope.functions.push(gfunc.createFuncInstance(funcDef));
-
+    $scope.moveAliasFuncLast = function() {
       var aliasFunc = _.find($scope.functions, function(func) {
-        return func.def.name === 'alias';
+        return func.def.name === 'alias' ||
+               func.def.name === 'aliasByNode' ||
+               func.def.name === 'aliasByMetric';
       });
 
       if (aliasFunc) {
         $scope.functions = _.without($scope.functions, aliasFunc);
         $scope.functions.push(aliasFunc);
       }
+    };
 
-      $scope.targetChanged();
+    $scope.smartlyHandleNewAliasByNode = function(func) {
+      if (func.def.name !== 'aliasByNode') {
+        return;
+      }
+      for(var i = 0; i < $scope.segments.length; i++) {
+        if ($scope.segments[i].val.indexOf('*') >= 0)  {
+          func.params[0] = i;
+          func.added = false;
+          $scope.targetChanged();
+          return;
+        }
+      }
     };
 
     $scope.duplicate = function() {
