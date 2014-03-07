@@ -221,16 +221,16 @@
   border-bottom: 1px solid @grafanaTargetBorder;
 }
 
-.grafana-target-inner-wrapper {
-  width: 100%;
-}
-
 .grafana-target-inner {
   border-top: 1px solid @grafanaTargetBorder;
   border-left: 1px solid @grafanaTargetBorder;
   border-right: 1px solid @grafanaTargetBorder;
   background: @grafanaTargetBackground;
   width: 100%;
+
+  &.has-open-function {
+    margin-top: 35px;
+  }
 }
 
 .grafana-target-onoff {
@@ -281,6 +281,11 @@
   }
   > a:hover {
     color: @linkColor;
+  }
+
+  &.show-function-controls {
+    min-width: 100px;
+    text-align: center;
   }
 }
 
@@ -356,6 +361,25 @@ select.grafana-target-segment-input {
 
 .grafana-target .dropdown {
   padding: 0; margin: 0;
+}
+
+.graphite-func-controls {
+  display: none;
+  text-align: center;
+
+  .icon-arrow-left {
+    float: left;
+    position: relative;
+    top: 2px;
+  }
+  .icon-arrow-right {
+    float: right;
+    position: relative;
+    top: 2px;
+  }
+  .icon-remove {
+    margin-left: 10px;
+  }
 }
 
 input[type=text].func-param {

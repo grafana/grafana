@@ -14,120 +14,201 @@ function (angular, _, $) {
       var paramTemplate = '<input type="text" style="display:none"' +
                           ' class="input-mini grafana-function-param-input"></input>';
 
-      var clickFuncParam = function(func, paramIndex) {
-        var $link = $(this);
-        var $input = $link.next();
-
-        $input.val(func.params[paramIndex]);
-        $input.css('width', ($link.width() + 16) + 'px');
-
-        $link.hide();
-        $input.show();
-        $input.focus();
-        $input.select();
-
-        var typeahead = $input.data('typeahead');
-        if (typeahead) {
-          $input.val('');
-          typeahead.lookup();
-        }
-      };
-
-      var inputBlur = function(scope, func, paramIndex) {
-        var $input = $(this);
-        var $link = $input.prev();
-
-        if ($input.val() !== '') {
-          $link.text($input.val());
-
-          if (func.updateParam($input.val(), paramIndex)) {
-            scope.$apply(function() {
-              scope.targetChanged();
-            });
-          }
-        }
-
-        $input.hide();
-        $link.show();
-      };
-
-      var inputKeyPress = function(scope, func, paramIndex, e) {
-        if(e.which === 13) {
-          inputBlur.call(this, scope, func, paramIndex);
-        }
-      };
-
-      var inputKeyDown = function() {
-        this.style.width = (3 + this.value.length) * 8 + 'px';
-      };
-
-      var addTypeahead = function($input, scope, func, paramIndex) {
-        $input.attr('data-provide', 'typeahead');
-
-        var options = func.def.params[paramIndex].options;
-        if (func.def.params[paramIndex].type === 'int') {
-          options = _.map(options, function(val) { return val.toString(); } );
-        }
-
-        $input.typeahead({
-          source: options,
-          minLength: 0,
-          items: 20,
-          updater: function (value) {
-            setTimeout(function() {
-              inputBlur.call($input[0], scope, func, paramIndex);
-            }, 0);
-            return value;
-          }
-        });
-
-        var typeahead = $input.data('typeahead');
-        typeahead.lookup = function () {
-          this.query = this.$element.val() || '';
-          return this.process(this.source);
-        };
-
-      };
+      var funcControlsTemplate =
+         '<span class="graphite-func-controls">' +
+           '<span class="pointer icon-arrow-left"></span>' +
+           '<span class="pointer icon-info-sign"></span>' +
+           '<span class="pointer icon-remove" ></span>' +
+           '<span class="pointer icon-arrow-right"></span>' +
+         '</span>';
 
       return {
         restrict: 'A',
         link: function postLink($scope, elem) {
           var $funcLink = $(funcSpanTemplate);
+          var $funcControls = $(funcControlsTemplate);
+          var func = $scope.func;
+          var funcDef = func.def;
 
-          $funcLink.appendTo(elem);
+          function clickFuncParam(paramIndex) {
+            /*jshint validthis:true */
 
-          _.each($scope.func.def.params, function(param, index) {
-            var $paramLink = $('<a ng-click="">' + $scope.func.params[index] + '</a>');
-            var $input = $(paramTemplate);
+            var $link = $(this);
+            var $input = $link.next();
 
-            $paramLink.appendTo(elem);
-            $input.appendTo(elem);
+            $input.val(func.params[paramIndex]);
+            $input.css('width', ($link.width() + 16) + 'px');
 
-            $input.blur(_.partial(inputBlur, $scope, $scope.func, index));
-            $input.keyup(inputKeyDown);
-            $input.keypress(_.partial(inputKeyPress, $scope, $scope.func, index));
-            $paramLink.click(_.partial(clickFuncParam, $scope.func, index));
+            $link.hide();
+            $input.show();
+            $input.focus();
+            $input.select();
 
-            if (index !== $scope.func.def.params.length - 1) {
-              $('<span>, </span>').appendTo(elem);
+            var typeahead = $input.data('typeahead');
+            if (typeahead) {
+              $input.val('');
+              typeahead.lookup();
+            }
+          }
+
+          function inputBlur(paramIndex) {
+            /*jshint validthis:true */
+
+            var $input = $(this);
+            var $link = $input.prev();
+
+            if ($input.val() !== '') {
+              $link.text($input.val());
+
+              if (func.updateParam($input.val(), paramIndex)) {
+                $scope.$apply(function() {
+                  $scope.targetChanged();
+                });
+              }
             }
 
-            if ($scope.func.def.params[index].options) {
-              addTypeahead($input, $scope, $scope.func, index);
+            $input.hide();
+            $link.show();
+          }
+
+          function inputKeyPress(paramIndex, e) {
+            /*jshint validthis:true */
+
+            if(e.which === 13) {
+              inputBlur.call(this, paramIndex);
+            }
+          }
+
+          function inputKeyDown() {
+            /*jshint validthis:true */
+            this.style.width = (3 + this.value.length) * 8 + 'px';
+          }
+
+          function addTypeahead($input, paramIndex) {
+            $input.attr('data-provide', 'typeahead');
+
+            var options = funcDef.params[paramIndex].options;
+            if (funcDef.params[paramIndex].type === 'int') {
+              options = _.map(options, function(val) { return val.toString(); } );
             }
 
-          });
+            $input.typeahead({
+              source: options,
+              minLength: 0,
+              items: 20,
+              updater: function (value) {
+                setTimeout(function() {
+                  inputBlur.call($input[0], paramIndex);
+                }, 0);
+                return value;
+              }
+            });
 
-          $('<span>)</span>').appendTo(elem);
+            var typeahead = $input.data('typeahead');
+            typeahead.lookup = function () {
+              this.query = this.$element.val() || '';
+              return this.process(this.source);
+            };
+          }
 
-          $compile(elem.contents())($scope);
+          function getPosition() {
+            var el = elem[0];
+            var pos = {};
+            if (typeof el.getBoundingClientRect === 'function') {
+              pos = el.getBoundingClientRect();
+            }
+            else {
+              pos = { width: el.offsetWidth, height: el.offsetHeight };
+            }
 
-          if ($scope.func.added) {
-            $scope.func.added = false;
+            return $.extend(pos, elem.offset());
+          }
+
+          function toggleFuncControls() {
+            var targetDiv = elem.closest('.grafana-target-inner');
+
+            if (elem.hasClass('show-function-controls')) {
+              elem.removeClass('show-function-controls');
+              targetDiv.removeClass('has-open-function');
+              $funcControls.hide();
+              return;
+            }
+
+            elem.addClass('show-function-controls');
+            targetDiv.addClass('has-open-function');
+
             setTimeout(function() {
-              elem.find('a').click();
+              var pos = getPosition();
+              $funcControls.css('position', 'absolute');
+              $funcControls.css('top', (pos.top - 78) + 'px');
+              $funcControls.css('left', pos.left + 'px');
+              $funcControls.css('width', pos.width + 'px');
+              console.log(pos);
+              $funcControls.show();
             }, 10);
           }
+
+          function addElementsAndCompile() {
+            $funcLink.appendTo(elem);
+
+            _.each(funcDef.params, function(param, index) {
+              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + func.params[index] + '</a>');
+              var $input = $(paramTemplate);
+
+              $paramLink.appendTo(elem);
+              $input.appendTo(elem);
+
+              $input.blur(_.partial(inputBlur, index));
+              $input.keyup(inputKeyDown);
+              $input.keypress(_.partial(inputKeyPress, index));
+              $paramLink.click(_.partial(clickFuncParam, index));
+
+              if (index !== funcDef.params.length - 1) {
+                $('<span>, </span>').appendTo(elem);
+              }
+
+              if (funcDef.params[index].options) {
+                addTypeahead($input, index);
+              }
+
+            });
+
+            $('<span>)</span>').appendTo(elem);
+
+            elem.append($funcControls);
+
+            $compile(elem.contents())($scope);
+          }
+
+          function ifJustAddedFocusFistParam() {
+            if ($scope.func.added) {
+              $scope.func.added = false;
+              setTimeout(function() {
+                elem.find('.graphite-func-param-link').first().click();
+              }, 10);
+            }
+          }
+
+          function registerFuncControlsToggle() {
+            $funcLink.click(toggleFuncControls);
+          }
+
+          function registerFuncControlsActions() {
+            $funcControls.click(function(e) {
+              var $target = $(e.target);
+              if ($target.hasClass('icon-remove')) {
+                toggleFuncControls();
+                $scope.$apply(function() {
+                  $scope.removeFunction($scope.func);
+                });
+              }
+            });
+          }
+
+          addElementsAndCompile();
+          ifJustAddedFocusFistParam();
+          registerFuncControlsToggle();
+          registerFuncControlsActions();
         }
       };
 
