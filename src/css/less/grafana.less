@@ -227,10 +227,6 @@
   border-right: 1px solid @grafanaTargetBorder;
   background: @grafanaTargetBackground;
   width: 100%;
-
-  &.has-open-function {
-    margin-top: 35px;
-  }
 }
 
 .grafana-target-onoff {
@@ -262,6 +258,10 @@
   color: @grafanaTargetColor;
   display: inline-block;
 
+  .has-open-function & {
+    padding-top: 25px;
+  }
+
   .grafana-target-hidden & {
     color: @grafanaTargetColorHide;
   }
@@ -284,6 +284,7 @@
   }
 
   &.show-function-controls {
+    padding-top: 5px;
     min-width: 100px;
     text-align: center;
   }

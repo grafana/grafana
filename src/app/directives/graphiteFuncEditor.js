@@ -15,12 +15,12 @@ function (angular, _, $) {
                           ' class="input-mini grafana-function-param-input"></input>';
 
       var funcControlsTemplate =
-         '<span class="graphite-func-controls">' +
+         '<div class="graphite-func-controls">' +
            '<span class="pointer icon-arrow-left"></span>' +
            '<span class="pointer icon-info-sign"></span>' +
            '<span class="pointer icon-remove" ></span>' +
            '<span class="pointer icon-arrow-right"></span>' +
-         '</span>';
+         '</div>';
 
       return {
         restrict: 'A',
@@ -111,19 +111,6 @@ function (angular, _, $) {
             };
           }
 
-          function getPosition() {
-            var el = elem[0];
-            var pos = {};
-            if (typeof el.getBoundingClientRect === 'function') {
-              pos = el.getBoundingClientRect();
-            }
-            else {
-              pos = { width: el.offsetWidth, height: el.offsetHeight };
-            }
-
-            return $.extend(pos, elem.offset());
-          }
-
           function toggleFuncControls() {
             var targetDiv = elem.closest('.grafana-target-inner');
 
@@ -137,18 +124,11 @@ function (angular, _, $) {
             elem.addClass('show-function-controls');
             targetDiv.addClass('has-open-function');
 
-            setTimeout(function() {
-              var pos = getPosition();
-              $funcControls.css('position', 'absolute');
-              $funcControls.css('top', (pos.top - 78) + 'px');
-              $funcControls.css('left', pos.left + 'px');
-              $funcControls.css('width', pos.width + 'px');
-              console.log(pos);
-              $funcControls.show();
-            }, 10);
+            $funcControls.show();
           }
 
           function addElementsAndCompile() {
+            $funcControls.appendTo(elem);
             $funcLink.appendTo(elem);
 
             _.each(funcDef.params, function(param, index) {
@@ -175,8 +155,6 @@ function (angular, _, $) {
 
             $('<span>)</span>').appendTo(elem);
 
-            elem.append($funcControls);
-
             $compile(elem.contents())($scope);
           }
 
@@ -201,6 +179,26 @@ function (angular, _, $) {
                 $scope.$apply(function() {
                   $scope.removeFunction($scope.func);
                 });
+                return;
+              }
+
+              if ($target.hasClass('icon-arrow-left')) {
+                $scope.$apply(function() {
+                  _.move($scope.functions, $scope.$index, $scope.$index - 1);
+                });
+                return;
+              }
+
+              if ($target.hasClass('icon-arrow-right')) {
+                $scope.$apply(function() {
+                  _.move($scope.functions, $scope.$index, $scope.$index + 1);
+                });
+                return;
+              }
+
+              if ($target.hasClass('icon-info-sign')) {
+                window.open("http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + funcDef.name,'_blank');
+                return;
               }
             });
           }
