@@ -227,17 +227,38 @@ function (angular, _, config, gfunc, Parser) {
       newFunc.added = true;
       $scope.functions.push(newFunc);
 
+      $scope.moveAliasFuncLast();
+      $scope.smartlyHandleNewAliasByNode(newFunc);
+
+      if (!funcDef.params && newFunc.added) {
+        $scope.targetChanged();
+      }
+    };
+
+    $scope.moveAliasFuncLast = function() {
       var aliasFunc = _.find($scope.functions, function(func) {
-        return func.def.name === 'alias';
+        return func.def.name === 'alias' ||
+               func.def.name === 'aliasByNode' ||
+               func.def.name === 'aliasByMetric';
       });
 
       if (aliasFunc) {
         $scope.functions = _.without($scope.functions, aliasFunc);
         $scope.functions.push(aliasFunc);
       }
+    };
 
-      if (!funcDef.params) {
-        $scope.targetChanged();
+    $scope.smartlyHandleNewAliasByNode = function(func) {
+      if (func.def.name !== 'aliasByNode') {
+        return;
+      }
+      for(var i = 0; i < $scope.segments.length; i++) {
+        if ($scope.segments[i].val.indexOf('*') >= 0)  {
+          func.params[0] = i;
+          func.added = false;
+          $scope.targetChanged();
+          return;
+        }
       }
     };
 
