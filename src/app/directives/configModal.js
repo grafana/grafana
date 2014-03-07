@@ -32,6 +32,8 @@ function (angular, _, $) {
             $q.when(panelModal).then(function(modalEl) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');
 
+              scope.$emit('modal-opened');
+
               $timeout(function () {
                 if (!modalEl.data('modal').isShown) {
                   modalEl.modal('show');

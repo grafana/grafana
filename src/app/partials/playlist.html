@@ -1,0 +1,38 @@
+<div ng-controller="PlaylistCtrl" ng-init="init()">
+	<div class="modal-header">
+	  <h3>Start playlist</h3>
+	</div>
+	<div class="modal-body">
+		<div class="editor-row">
+		  <div class="section span4">
+			  <div class="editor-option">
+	      	<label class="small">Dashboards</label>
+
+					<table class="table table-striped" style="width: 300px">
+						<tr ng-repeat="dashboard in favDashboards">
+						  <td>
+								{{dashboard.title}}
+						  </td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div class="section span4">
+				<label>
+					Timespan between change
+				</label>
+				<input type="text" class="input-small" ng-model="timespan" />
+			</div>
+			<div class="section">
+				<span>
+					Dashboards available in the playlist are only the once marked as favorites (stored in local browser storage).
+					To mark a dashboard as favorite, use save icon in the menu and in the dropdown select Favorites > Mark as favorite
+				</span>
+			</div>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-success" ng-click="start();dismiss();"><i class="icon-play"></i> Start</button>
+	  <button type="button" class="btn btn-primary" ng-click="dismiss();"><i class="icon-ban-circle"></i> Cancel</button>
+	</div>
+</div>

@@ -8,7 +8,7 @@ function (angular, _, moment) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, filterSrv) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, filterSrv, playlistSrv) {
     $scope.loader = dashboard.current.loader;
 
     $scope.init = function() {
@@ -152,6 +152,10 @@ function (angular, _, moment) {
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
       });
+    };
+
+    $scope.markAsFavorite = function() {
+      playlistSrv.markAsFavorite();
     };
 
   });
