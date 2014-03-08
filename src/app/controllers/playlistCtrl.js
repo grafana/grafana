@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'underscore'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
@@ -16,10 +17,20 @@ function (angular) {
 
     $scope.loadFavorites = function() {
       $scope.favDashboards = playlistSrv.getFavorites().dashboards;
+
+      _.each($scope.favDashboards, function(dashboard) {
+        dashboard.include = true;
+      });
+    };
+
+    $scope.removeAsFavorite = function(dashboard) {
+      playlistSrv.removeAsFavorite(dashboard);
+      $scope.loadFavorites();
     };
 
     $scope.start = function() {
-      playlistSrv.start($scope.favDashboards, $scope.timespan);
+      var included = _.where($scope.favDashboards, { include: true });
+      playlistSrv.start(included, $scope.timespan);
     };
 
   });

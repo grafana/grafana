@@ -9,29 +9,53 @@ function (angular, _, kbn) {
   var module = angular.module('kibana.services');
 
   module.service('playlistSrv', function(dashboard, $location, $rootScope) {
+    var timerInstance;
+    var favorites = { dashboards: [] };
 
-    this.markAsFavorite = function() {
-      var favorites = this.getFavorites();
-
-      var existing = _.findWhere(favorites.dashboards, { title: dashboard.current.title });
-
-      if (existing) {
-        favorites.dashboard = _.without(favorites.dashboards, existing);
-      }
-
-      favorites.dashboards.push({ url: $location.path(), title: dashboard.current.title });
-
-      window.localStorage["grafana-favorites"] = angular.toJson(favorites);
-    };
-
-    this.getFavorites = function() {
-
-      var favorites = { dashboards: [] };
+    this.init = function() {
       var existingJson = window.localStorage["grafana-favorites"];
       if (existingJson) {
         favorites = angular.fromJson(existingJson);
       }
+    };
 
+    this._save = function() {
+      window.localStorage["grafana-favorites"] = angular.toJson(favorites);
+    };
+
+    this._find = function(title) {
+      return _.findWhere(favorites.dashboards, { title: title });
+    };
+
+    this._remove = function(existing) {
+      if (existing) {
+        favorites.dashboards = _.without(favorites.dashboards, existing);
+      }
+    };
+
+    this.isCurrentFavorite = function() {
+      return this._find(dashboard.current.title) ? true : false;
+    };
+
+    this.markAsFavorite = function() {
+      var existing = this._find(dashboard.current.title);
+      this._remove(existing);
+
+      favorites.dashboards.push({
+        url: $location.path(),
+        title: dashboard.current.title
+      });
+
+      this._save();
+    };
+
+    this.removeAsFavorite = function(toRemove) {
+      var existing = this._find(toRemove.title);
+      this._remove(existing);
+      this._save();
+    };
+
+    this.getFavorites = function() {
       return favorites;
     };
 
@@ -40,15 +64,21 @@ function (angular, _, kbn) {
       var index = 0;
 
       $rootScope.playlist_active = true;
-      $rootScope.playlist_interval = interval;
 
-      setInterval(function() {
+      timerInstance = setInterval(function() {
         $rootScope.$apply(function() {
           $location.path(dashboards[index % dashboards.length].url);
           index++;
         });
       }, interval);
     };
+
+    this.stop = function() {
+      clearInterval(timerInstance);
+      $rootScope.playlist_active = false;
+    };
+
+    this.init();
 
   });
 

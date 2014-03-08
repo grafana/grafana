@@ -18,6 +18,7 @@ function (angular, _, $) {
           elem.bind('click',function() {
             if ($(id).length) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');
+              scope.$apply(function() { scope.$broadcast('modal-opened'); });
               return;
             }
 
@@ -31,8 +32,6 @@ function (angular, _, $) {
 
             $q.when(panelModal).then(function(modalEl) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');
-
-              scope.$emit('modal-opened');
 
               $timeout(function () {
                 if (!modalEl.data('modal').isShown) {

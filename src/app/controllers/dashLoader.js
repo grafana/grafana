@@ -154,8 +154,22 @@ function (angular, _, moment) {
       });
     };
 
+    $scope.openSaveDropdown = function() {
+      $scope.isFavorite = playlistSrv.isCurrentFavorite();
+    };
+
     $scope.markAsFavorite = function() {
       playlistSrv.markAsFavorite();
+      $scope.isFavorite = true;
+    };
+
+    $scope.removeAsFavorite = function() {
+      playlistSrv.removeAsFavorite(dashboard.current);
+      $scope.isFavorite = false;
+    };
+
+    $scope.stopPlaylist = function() {
+      playlistSrv.stop(1);
     };
 
   });
