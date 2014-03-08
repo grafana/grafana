@@ -25,13 +25,17 @@ function (angular, app, _) {
           }, true);
 
           $scope.$watch('dashboard.current.hideControls', function() {
-            var hideControls = $scope.dashboard.current.hideControls;
+            var hideControls = $scope.dashboard.current.hideControls || $scope.playlist_active;
 
             if (lastHideControlsVal !== hideControls) {
               elem.toggleClass('hide-controls', hideControls);
               lastHideControlsVal = hideControls;
             }
+          });
 
+          $scope.$watch('playlist_active', function() {
+            elem.toggleClass('hide-controls', $scope.playlist_active === true);
+            elem.toggleClass('playlist-active', $scope.playlist_active === true);
           });
         }
       };

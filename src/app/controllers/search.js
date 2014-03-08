@@ -69,7 +69,7 @@ function (angular, _, config, $) {
         .query($scope.ejs.QueryStringQuery(query))
         .sort('_uid')
         .facet($scope.ejs.TermsFacet("tags").field("tags").order('term').size(50))
-        .size(50).doSearch()
+        .size(20).doSearch()
         .then(function(results) {
 
           if(_.isUndefined(results.hits)) {

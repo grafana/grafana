@@ -18,6 +18,7 @@ function (angular, _, $) {
           elem.bind('click',function() {
             if ($(id).length) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');
+              scope.$apply(function() { scope.$broadcast('modal-opened'); });
               return;
             }
 

@@ -7,5 +7,6 @@ define([
   './datasourceSrv',
   './keyboardManager',
   './annotationsSrv',
+  './playlistSrv',
 ],
 function () {});
