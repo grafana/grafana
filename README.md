@@ -4,18 +4,18 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 
 ![](http://grafana.org/assets/img/edit_dashboards.png)
 
-# Features
-## Graphite Target Editor
+## Features
+### Graphite Target Editor
 - Graphite target expression parser
 - Quickly add / edit / remove function
 - Function parameters can be easily changed
 - Quickly navigate graphite metric structure
 - Templating
-- Integrated function documentation (TODO)
-- Click &amp; drag functions to rearrange order (TODO)
+- Integrated links to function documentation
+- Rearrange function order
 - Native Graphite PNG render support
 
-## Graphing
+### Graphing
 - Fast rendering, even over large timespans.
 - Click and drag to zoom.
 - Multiple Y-axis.
@@ -26,7 +26,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Grid thresholds, axis labels
 - [Annotations] (https://github.com/torkelo/grafana/wiki/Annotations)
 
-## Dashboards
+### Dashboards
 - Create and edit dashboards
 - Drag and drop graphs to rearrange
 - Set column spans and row heights
@@ -36,6 +36,10 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Templating
 - [Scripted dashboards](https://github.com/torkelo/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
 - Flexible [time range controls](https://github.com/torkelo/grafana/wiki/Time-range-controls)
+- [Dashboard playlists](https://github.com/torkelo/grafana/wiki/Dashboard-playlist)
+
+### InfluxDB
+- [Use InfluxDB](https://github.com/torkelo/grafana/wiki/InfluxDB) as metric datasource
 
 # Requirements
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
