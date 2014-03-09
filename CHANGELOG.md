@@ -1,3 +1,22 @@
+# 1.5.0 (2013-03-09)
+###New Features and improvements
+- New function editor [video demo](http://youtu.be/I90WHRwE1ZM) (Issue #178)
+- Links to function documentation from function editor (Issue #3)
+- Reorder functions (Issue #130)
+- [Initial support for InfluxDB](https://github.com/torkelo/grafana/wiki/InfluxDB) as metric datasource (#103), need feedback!
+- [Dashboard playlist](https://github.com/torkelo/grafana/wiki/Dashboard-playlist) (Issue #36)
+- When adding aliasByNode smartly set node number (Issue #175)
+- Support graphite identifiers with embedded colons (Issue #173)
+- Typeahead & autocomplete when adding new function (Issue #164)
+- More graphite function definitions
+- Make "ms" axis format include hour, day, weeks, month and year (Issue #149)
+- Microsecond axis format (Issue #146)
+- Specify template paramaters in URL (Issue #123)
+
+### Fixes
+- Basic Auth fix (Issue #152)
+- Fix to annotations with graphite source & null values (Issue #138)
+
 # 1.4.0 (2013-02-21)
 ###New Features
 - #44 Annotations! Required a lot of work to get right. Read wiki article for more info. Supported annotations data sources are graphite metrics and graphite events. Support for more will be added in the future!

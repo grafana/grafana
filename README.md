@@ -7,7 +7,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 ## Features
 ### Graphite Target Editor
 - Graphite target expression parser
-- Quickly add / edit / remove function
+- Quickly add / edit / remove function ([video demo](http://youtu.be/I90WHRwE1ZM))
 - Function parameters can be easily changed
 - Quickly navigate graphite metric structure
 - Templating
