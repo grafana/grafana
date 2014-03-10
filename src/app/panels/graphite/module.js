@@ -230,7 +230,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.updateTimeRange = function () {
       $scope.range = filterSrv.timeRange();
       $scope.rangeUnparsed = filterSrv.timeRange(false);
-      $scope.resolution = ($(window).width() * ($scope.panel.span / 12)) / 2;
+      $scope.resolution = Math.ceil(($(window).width() * ($scope.panel.span / 12)) / 2);
       $scope.interval = '10m';
 
       if ($scope.range) {
