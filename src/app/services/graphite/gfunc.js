@@ -63,6 +63,27 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'percentileOfSeries',
+    category: categories.Combine,
+    params: [ { name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] } ],
+    defaultParams: [95, "false"]
+  });
+
+  addFuncDef({
+    name: 'sumSeriesWithWildcards',
+    category: categories.Combine,
+    params: [ { name: "node", type: "int" } ],
+    defaultParams: [3]
+  });
+
+  addFuncDef({
+    name: 'averageSeriesWithWildcards',
+    category: categories.Combine,
+    params: [ { name: "node", type: "int" } ],
+    defaultParams: [3]
+  });
+
+  addFuncDef({
     name: "alias",
     category: categories.Special,
     params: [ { name: "alias", type: 'string' } ],
