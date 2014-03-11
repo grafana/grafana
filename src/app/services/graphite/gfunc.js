@@ -51,6 +51,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: "nPercentile",
+    category: categories.Calculate,
+    params: [ { name: "Nth percentile", type: 'int' } ],
+    defaultParams: [95]
+  });
+
+  addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
@@ -160,6 +167,11 @@ function (_) {
 
   addFuncDef({
     name: 'cactiStyle',
+    category: categories.Special,
+  });
+
+  addFuncDef({
+    name: 'keepLastValue',
     category: categories.Special,
   });
 
