@@ -211,10 +211,14 @@ function (angular, _, config, gfunc, Parser) {
         return;
       }
 
+      var oldTarget = $scope.target.target;
+
       var target = getSegmentPathUpTo($scope.segments.length);
-      target = _.reduce($scope.functions, wrapFunction, target);
-      $scope.target.target = target;
-      $scope.$parent.get_data();
+      $scope.target.target = _.reduce($scope.functions, wrapFunction, target);
+
+      if ($scope.target.target !== oldTarget) {
+        $scope.$parent.get_data();
+      }
     };
 
     $scope.removeFunction = function(func) {
