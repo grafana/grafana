@@ -36,11 +36,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        *
        *
        */
-      metric    : "", // 'html','markdown','text'
-      /** @scratch /panels/text/5
-       * threshold:: the threshold when, if exceeded, the metric is "down"
-       */
-      threshold : "",
+      metric1    : "maxSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.upper_95.total_max)" ,
+      threshold1 : "5000",
+      metric2    : "asPercent( sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.500.count_ps.total_sum), sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.count_ps.total_sum))" ,
+      threshold2 : "0.1",
       uptime: "",
       style: {},
     };
@@ -63,10 +62,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.get_data();
     };
 
+    /** this is the return value from the graphite data fetch */
     $scope.dataHandler = function(data) {
-        var sla = [ 5000,  0.1 ];
-
         // compute uptime from response data
+        var sla = [ $scope.panel.threshold1, $scope.panel.threshold2 ];
         var response = data.data;
         var timesegments_total = 0.0;
         var timesegments_out_of_sla = 0;
@@ -97,13 +96,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 timesegments_out_of_sla += 1;
                 out_of_sla = true;
             }
+            //console.log("sla check",i,metric0,sla[0],metric1,sla[1],out_of_sla);
             //console.log( results[i][0] + "=" + p95 + ":" + results[i][1] + "=" + error_percentage + ":" + out_of_sla);
         }
         var uptime = (1.0 - (timesegments_out_of_sla/timesegments_total)) * 100.0;
         // round to 2 decimals
         uptime = parseFloat(Math.round(uptime * 100) / 100).toFixed(2);
-        console.log("xxx gotdata computed uptime",timesegments_out_of_sla,"/",timesegments_total,"=",uptime);
-        $scope.uptime = uptime;
+        //console.log("xxx gotdata computed uptime",timesegments_out_of_sla,"/",timesegments_total,"=",uptime);
+        $scope.panel.uptime = uptime;
     }
 
     $scope.updateTimeRange = function () {
@@ -125,11 +125,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         range: $scope.rangeUnparsed,
         interval: $scope.interval,
         targets: [ 
-            { target: "maxSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.upper_95.total_max)" } ,
-            { target: "asPercent( sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.500.count_ps.total_sum), sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.count_ps.total_sum))" },
+            { target: $scope.panel.metric1 },
+            { target: $scope.panel.metric2 },
         ],
         format: "json",
-        maxDataPoints: 10000,
+        //maxDataPoints: 10000,
         datasource: $scope.datasource
       };
 
