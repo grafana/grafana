@@ -60,11 +60,8 @@ function (angular, _, $) {
             if ($input.val() !== '') {
               $link.text($input.val());
 
-              if (func.updateParam($input.val(), paramIndex)) {
-                $scope.$apply(function() {
-                  $scope.targetChanged();
-                });
-              }
+              func.updateParam($input.val(), paramIndex);
+              $scope.$apply($scope.targetChanged);
             }
 
             $input.hide();

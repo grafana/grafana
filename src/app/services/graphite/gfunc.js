@@ -314,8 +314,6 @@ function (_) {
   };
 
   FuncInstance.prototype.updateParam = function(strValue, index) {
-    var oldValue = this.params[index];
-
     if (this.def.params[index].type === 'int') {
       this.params[index] = parseInt(strValue, 10);
     }
@@ -324,8 +322,6 @@ function (_) {
     }
 
     this.updateText();
-
-    return oldValue !== this.params[index];
   };
 
   FuncInstance.prototype.updateText = function () {
