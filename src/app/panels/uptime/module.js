@@ -36,10 +36,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        *
        *
        */
-      metric1    : "maxSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.upper_95.total_max)" ,
-      threshold1 : "5000",
-      metric2    : "asPercent( sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.500.count_ps.total_sum), sumSeries(api-production-iad.timers.httpd.api._total_node_requests.*.*.count_ps.total_sum))" ,
-      threshold2 : "0.1",
+      metric1    : ""
+      threshold1 : "",
+      metric2    : ""
+      threshold2 : "",
       uptime: "",
       style: {},
     };
@@ -96,7 +96,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
                 timesegments_out_of_sla += 1;
                 out_of_sla = true;
             }
-            //console.log("sla check",i,metric0,sla[0],metric1,sla[1],out_of_sla);
+            //console.log("sla check",i,metric0,sla[0],eetric1,sla[1],out_of_sla);
             //console.log( results[i][0] + "=" + p95 + ":" + results[i][1] + "=" + error_percentage + ":" + out_of_sla);
         }
         var uptime = (1.0 - (timesegments_out_of_sla/timesegments_total)) * 100.0;
