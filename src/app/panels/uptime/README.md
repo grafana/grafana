@@ -2,7 +2,7 @@
 
 This panel renders a single percentage of "uptime" for a "service."
 
-At Lyft we define web services by two Key Performance Indicators
+At Lyft we define uptime for web services by two Key Performance Indicators
 (KPI's):  95th percentile response time in milliseconds, and error
 rate (rate of HTTP 500's).  A service is considered to be "up" when
 it is meeting a Service-Level Agreement (SLA) for both of it's
