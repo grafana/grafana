@@ -214,6 +214,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'hitcount',
+    category: categories.Transform,
+    params: [ { name: "interval", type: "string" }],
+    defaultParams: ['10s']
+  });
+
+  addFuncDef({
     name: 'averageAbove',
     category: categories.Filter,
     params: [ { name: "n", type: "int", } ],
