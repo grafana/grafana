@@ -19,12 +19,20 @@ Typically we use this as part of a row that contains the KPI graphs
 
 ## How to use this panel
 
-Add the panel to your dashboard, and specify targets and thresholds.
+Add "uptime" to your config.js:
+
+    panel_names: [
+      'text',
+      'graphite',
+      'uptime',
+    ]
+
+Add an uptime panel to your dashboard, and specify targets and thresholds.
 Targets are graphite functions, and thresholds are limits for the targets.
 
 ## TODO
 
-Due to my inexperience with angular, this component is pretty janky.
+Due to my inexperience with angular, this component is pretty inflexible.
 It would be nice if: 
 * the list of targets and thresholds was not hard-coded to two, but was adjustable
 * the target re-used the grafana target selection UI
