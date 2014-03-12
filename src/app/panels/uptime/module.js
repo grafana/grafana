@@ -36,9 +36,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        *
        *
        */
-      metric1    : ""
+      target1    : "",
       threshold1 : "",
-      metric2    : ""
+      target2    : "",
       threshold2 : "",
       uptime: "",
       style: {},
@@ -85,14 +85,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         // now scan and generate uptime
         for (i in results) {
             var metric0 = parseFloat(results[i][0]);
-            var metric1 = parseFloat(results[i][1]);
+            var target1 = parseFloat(results[i][1]);
             timesegments_total += 1;
             var out_of_sla = false;
             if (metric0 > sla[0])  {
                 timesegments_out_of_sla += 1;
                 out_of_sla = true;
             }
-            if (metric1 > sla[1]) {
+            if (target1 > sla[1]) {
                 timesegments_out_of_sla += 1;
                 out_of_sla = true;
             }
@@ -125,8 +125,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         range: $scope.rangeUnparsed,
         interval: $scope.interval,
         targets: [ 
-            { target: $scope.panel.metric1 },
-            { target: $scope.panel.metric2 },
+            { target: $scope.panel.target1 },
+            { target: $scope.panel.target2 },
         ],
         format: "json",
         //maxDataPoints: 10000,
