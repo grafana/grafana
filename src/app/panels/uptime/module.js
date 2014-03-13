@@ -16,17 +16,17 @@ define([
   'jquery',
   'underscore',
   'kbn',
-  '../graphite/timeSeries',
 ],
-function (angular, app, $, _, kbn, moment, timeSeries) {
+function (angular, app, $, _, kbn) {
   'use strict';
 
   var module = angular.module('kibana.panels.text', []);
   app.useModule(module);
 
-  module.controller('uptime', function($scope, $rootScope, filterSrv, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('uptime', function($scope, $rootScope, filterSrv, datasourceSrv) {
     $scope.panelMeta = {
-      description : "An text panel that displayed percent uptime, where uptime is the percent of time that a given metric is below a given threshold"
+      description : "An text panel that displayed percent uptime, where "
+      +"uptime is the percent of time that a given metric is below a given threshold"
     };
 
     // Set and populate defaults
@@ -72,39 +72,39 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         // convert the response, which is separate series, into one
         var results = {};
         for (var i in response) {
-            var datapoints = response[i].datapoints;
-            for (var j in datapoints) {
-                var value = datapoints[j][0];
-                var timestamp = datapoints[j][1];
-                if (!(timestamp in results)) {
-                    results[timestamp] = {};
-                }
-                results[timestamp][i] = value;
+          var datapoints = response[i].datapoints;
+          for (var j in datapoints) {
+            var value = datapoints[j][0];
+            var timestamp = datapoints[j][1];
+            if (!(timestamp in results)) {
+              results[timestamp] = {};
             }
+            results[timestamp][i] = value;
+          }
         }
         // now scan and generate uptime
         for (i in results) {
-            var metric0 = parseFloat(results[i][0]);
-            var target1 = parseFloat(results[i][1]);
-            timesegments_total += 1;
-            var out_of_sla = false;
-            if (metric0 > sla[0])  {
-                timesegments_out_of_sla += 1;
-                out_of_sla = true;
-            }
-            if (target1 > sla[1]) {
-                timesegments_out_of_sla += 1;
-                out_of_sla = true;
-            }
-            //console.log("sla check",i,metric0,sla[0],eetric1,sla[1],out_of_sla);
-            //console.log( results[i][0] + "=" + p95 + ":" + results[i][1] + "=" + error_percentage + ":" + out_of_sla);
+          var metric0 = parseFloat(results[i][0]);
+          var target1 = parseFloat(results[i][1]);
+          timesegments_total += 1;
+          var out_of_sla = false;
+          if (metric0 > sla[0])  {
+            timesegments_out_of_sla += 1;
+            out_of_sla = true;
+          }
+          if (target1 > sla[1]) {
+            timesegments_out_of_sla += 1;
+            out_of_sla = true;
+          }
+          //console.log("sla check",i,metric0,sla[0],eetric1,sla[1],out_of_sla);
+          //console.log( results[i][0] + "=" + p95 + ":" + results[i][1] + "=" + error_percentage + ":" + out_of_sla);
         }
         var uptime = (1.0 - (timesegments_out_of_sla/timesegments_total)) * 100.0;
         // round to 2 decimals
         uptime = parseFloat(Math.round(uptime * 100) / 100).toFixed(2);
         //console.log("xxx gotdata computed uptime",timesegments_out_of_sla,"/",timesegments_total,"=",uptime);
         $scope.panel.uptime = uptime;
-    }
+      };
 
     $scope.updateTimeRange = function () {
       $scope.range = filterSrv.timeRange();
@@ -127,19 +127,18 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         targets: [ 
             { target: $scope.panel.target1 },
             { target: $scope.panel.target2 },
-        ],
-        format: "json",
-        //maxDataPoints: 10000,
-        datasource: $scope.datasource
-      };
+          ],
+          format: "json",
+          datasource: $scope.datasource
+        };
 
       return $scope.datasource.query(graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
             console.log("datasource.query error:");
             console.log(err.stack);
-          $scope.panel.error = err.message || "Graphite HTTP Request Error";
-        });
+            $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          });
 
     };
 
@@ -154,7 +153,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   module.directive('uptime', function() {
     return {
       restrict: 'E',
-      link: function(scope, element) {
+      link: function(scope) {
 
         scope.$on('render', function() {
           render_panel();
