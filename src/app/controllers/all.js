@@ -10,4 +10,5 @@ define([
   './graphiteImport',
   './influxTargetCtrl',
   './playlistCtrl',
+  './opentsdbTargetCtrl',
 ], function () {});
