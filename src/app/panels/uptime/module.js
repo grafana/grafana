@@ -135,9 +135,14 @@ function (angular, app, $, _, kbn) {
       return $scope.datasource.query(graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
-            console.log("datasource.query error:");
+            console.log("datasource.query error:" + err.message);
             console.log(err.stack);
-            $scope.panel.error = err.message || "Graphite HTTP Request Error";
+            //$scope.panel.error = err.message || "Graphite HTTP Request Error";  
+            // we see this when one of the two graphs has no data points (e.g. no errors)
+            // This may be fixed by https://github.com/graphite-project/graphite-web/pull/646
+            // for now, let's try just fetching the first metric, see if that works
+            graphiteQuery.targets = [ { target: $scope.panel.target1 } ]
+            return $scope.datasource.query(graphiteQuery).then($scope.dataHandler);
           });
 
     };
