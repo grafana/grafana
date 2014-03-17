@@ -51,6 +51,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: "nPercentile",
+    category: categories.Calculate,
+    params: [ { name: "Nth percentile", type: 'int' } ],
+    defaultParams: [95]
+  });
+
+  addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
@@ -164,6 +171,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'keepLastValue',
+    category: categories.Special,
+  });
+
+  addFuncDef({
     name: 'scale',
     category: categories.Transform,
     params: [ { name: "factor", type: "int", } ],
@@ -211,6 +223,13 @@ function (_) {
   addFuncDef({
     name: 'absolute',
     category: categories.Transform,
+  });
+
+  addFuncDef({
+    name: 'hitcount',
+    category: categories.Transform,
+    params: [ { name: "interval", type: "string" }],
+    defaultParams: ['10s']
   });
 
   addFuncDef({
