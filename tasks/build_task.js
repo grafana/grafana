@@ -26,15 +26,11 @@ module.exports = function(grunt) {
         options: {
           replacements: [
             {
-              pattern: /(?:^|\/\/)(.*)@REV@/,
-              replacement: '$1'+desc.object
-            },
-            {
-              pattern: /@REV@/,
+              pattern: /@REV@/g,
               replacement: desc.object
             },
             {
-              pattern: /@grafanaVersion@/,
+              pattern: /@grafanaVersion@/g,
               replacement: 'v<%= pkg.version %>'
             }
           ]

@@ -26,7 +26,7 @@ function (angular, $, _, appLevelRequire) {
     // features if we define them after boot time
     register_fns = {};
 
-  // // This stores the Kibana revision number, @REV@ is replaced by grunt.
+  // This stores the grafana version number
   app.constant('grafanaVersion',"@grafanaVersion@");
 
   // Use this for cache busting partials
