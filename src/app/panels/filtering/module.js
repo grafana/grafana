@@ -27,15 +27,33 @@ function (angular, app, _) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-      $scope.filterSrv = filterSrv;
+      $scope.filterList = filterSrv.list;
     };
 
     $scope.remove = function(filter) {
       filterSrv.remove(filter);
     };
 
+    $scope.filterOptionSelected = function(filter, option) {
+      filterSrv.filterOptionSelected(filter, option);
+      $scope.applyFilterToOtherFilters(filter);
+    };
+
+    $scope.applyFilterToOtherFilters = function(updatedFilter) {
+      _.each($scope.filterList, function(filter) {
+        if (filter === updatedFilter) {
+          return;
+        }
+        if (filter.query.indexOf(updatedFilter.name) !== -1) {
+          $scope.applyFilter(filter);
+        }
+      });
+    };
+
     $scope.applyFilter = function(filter) {
-      datasourceSrv.default.metricFindQuery(filter.query)
+      var query = filterSrv.applyFilterToTarget(filter.query);
+
+      datasourceSrv.default.metricFindQuery(query)
         .then(function (results) {
           filter.editing=undefined;
           filter.options = _.map(results, function(node) {
