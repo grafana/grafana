@@ -51,7 +51,7 @@
     "npm": "1.2.x"
   },
   "scripts": {
-    "test": "grunt"
+    "test": "grunt test"
   },
   "license": "Apache License"
 }
