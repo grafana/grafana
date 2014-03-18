@@ -233,6 +233,14 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'log',
+    category: categories.Transform,
+    params: [ { name: "base", type: "int" }],
+    defaultParams: ['10']
+  });
+
+
+  addFuncDef({
     name: 'averageAbove',
     category: categories.Filter,
     params: [ { name: "n", type: "int", } ],
