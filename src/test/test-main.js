@@ -3,6 +3,7 @@ require.config({
 
   paths: {
     specs:                 '../test/specs',
+    mocks:                 '../test/mocks',
     config:                '../config.sample',
     kbn:                   'components/kbn',
 
@@ -102,10 +103,20 @@ require.config({
 });
 
 require([
-  'specs/lexer-specs',
-  'specs/parser-specs',
-  'specs/gfunc-specs',
-  'specs/ctrl-specs',
-], function () {
-  window.__karma__.start();
+  'angular',
+  'angularMocks',
+], function(angular) {
+
+  angular.module('kibana', []);
+  angular.module('kibana.services', []);
+
+  require([
+    'specs/lexer-specs',
+    'specs/parser-specs',
+    'specs/gfunc-specs',
+    'specs/filterSrv-specs',
+  ], function () {
+    window.__karma__.start();
+  });
+
 });
