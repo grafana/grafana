@@ -32,12 +32,12 @@ define([
       };
 
       if (self.list.length) {
-        this.updateTemplateData(true);
+        this._updateTemplateData(true);
       }
     };
 
-    this.updateTemplateData = function(initial) {
-      self.filterTemplateData = {};
+    this._updateTemplateData = function(initial) {
+      self._filterTemplateData = {};
 
       _.each(self.list, function(filter) {
         if (initial) {
@@ -46,18 +46,17 @@ define([
             filter.current = { text: urlValue, value: urlValue };
           }
         }
-
         if (!filter.current || !filter.current.value) {
           return;
         }
 
-        self.filterTemplateData[filter.name] = filter.current.value;
+        self._filterTemplateData[filter.name] = filter.current.value;
       });
     };
 
     this.filterOptionSelected = function(filter, option) {
       filter.current = option;
-      this.updateTemplateData();
+      this._updateTemplateData();
       dashboard.refresh();
     };
 
@@ -70,7 +69,7 @@ define([
         return target;
       }
 
-      return _.template(target, self.filterTemplateData, self.templateSettings);
+      return _.template(target, self._filterTemplateData, self.templateSettings);
     };
 
     this.remove = function(filter) {

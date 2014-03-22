@@ -14,8 +14,7 @@ module.exports = function(config) {
     ],
 
     // list of files to exclude
-    exclude: [
-    ],
+    exclude: [],
 
     reporters: ['progress'],
     port: 9876,
