@@ -74,7 +74,11 @@
             function
           </li>
           <li>
-            <select class="input-medium grafana-target-segment-input"  ng-change="get_data()" ng-model="target.function" ng-options="f for f in ['mean', 'sum', 'min', 'max', 'median', 'derivative', 'stddev']" ></select>
+            <select class="input-medium grafana-target-segment-input"
+                    ng-change="get_data()"
+                    ng-model="target.function"
+                    ng-options="f for f in functions" ></select>
+          </li>
           </li>
           <li class="grafana-target-segment">
             group by time
