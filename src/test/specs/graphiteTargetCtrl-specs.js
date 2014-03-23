@@ -9,11 +9,13 @@ define([
 
     beforeEach(module('kibana.services'));
     beforeEach(module(function($provide){
-      $provide.value('dashboard', dashboardMock.create());
+      $provide.value('filterSrv',{});
     }));
 
-    beforeEach(inject(function(filterSrv) {
-      _filterSrv = filterSrv;
+    beforeEach(inject(function($controller, $rootScope) {
+      _targetCtrl = $controller({
+        $scope: $rootScope.$new()
+      });
     }));
 
     describe('init', function() {
@@ -22,4 +24,5 @@ define([
         _filterSrv.init();
       });
     });
+  });
 });
