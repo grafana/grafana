@@ -28,7 +28,7 @@ define([
       });
     });
 
-    describe.only('filterOptionSelected', function() {
+    describe('filterOptionSelected', function() {
       beforeEach(function() {
         _filterSrv.add({ name: 'test' });
         _filterSrv.filterOptionSelected(_filterSrv.list[0], { value: 'muuuu' });
