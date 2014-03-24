@@ -88,6 +88,12 @@ define([
       expect(tokens[4].pos).to.be(20);
     });
 
+    it('should handle float parameters', function() {
+      var lexer = new Lexer("alias(metric, 0.002)");
+      var tokens = lexer.tokenize();      
+      expect(tokens[4].type).to.be('number');
+      expect(tokens[4].value).to.be('0.002');
+    });
 
   });
 
