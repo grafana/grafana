@@ -139,6 +139,13 @@ define([
       expect(rootNode.type).to.be('function');
     });
 
+     it('handle float function arguments', function() {
+      var parser = new Parser('scale(test, 0.002)');
+      var rootNode = parser.getAst();            
+      expect(rootNode.type).to.be('function');      
+      expect(rootNode.params[1].type).to.be('number');
+      expect(rootNode.params[1].value).to.be(0.002);
+    });
 
   });
 

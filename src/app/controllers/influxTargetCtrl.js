@@ -15,6 +15,7 @@ function (angular) {
         $scope.target.function = 'mean';
       }
 
+      $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last'];
       $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
         $timeout($scope.get_data);

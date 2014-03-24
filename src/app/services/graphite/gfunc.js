@@ -132,7 +132,10 @@ function (_) {
   addFuncDef({
     name: 'aliasByNode',
     category: categories.Special,
-    params: [ { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] } ],
+    params: [
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
     defaultParams: [3]
   });
 
@@ -340,13 +343,33 @@ function (_) {
     return str + parameters.join(',') + ')';
   };
 
-  FuncInstance.prototype.updateParam = function(strValue, index) {
-    if (this.def.params[index].type === 'int') {
-      this.params[index] = parseInt(strValue, 10);
+  FuncInstance.prototype._hasMultipleParamsInString = function(strValue, index) {
+    if (strValue.indexOf(',') === -1) {
+      return false;
+    }
+
+    return this.def.params[index + 1] && this.def.params[index + 1].optional;
+  };
+
+  FuncInstance.prototype.updateParam = function(strValue, index) {    
+    // handle optional parameters
+    // if string contains ',' and next param is optional, split and update both
+    if (this._hasMultipleParamsInString(strValue, index)) {      
+      _.each(strValue.split(','), function(partVal, idx) {
+        this.updateParam(partVal.trim(), idx);
+      }, this);      
+      return;
+    }
+
+    if (strValue === '' && this.def.params[index].optional) {                  
+      this.params.splice(index, 1);      
+    }
+    else if (this.def.params[index].type === 'int') {
+      this.params[index] = parseFloat(strValue, 10);
     }
     else {
       this.params[index] = strValue;
-    }
+    }    
 
     this.updateText();
   };
@@ -359,6 +382,10 @@ function (_) {
 
     var text = this.def.name + '(';
     _.each(this.def.params, function(param, index) {
+      if (param.optional && this.params[index] === undefined) {
+        return;
+      }
+
       text += this.params[index] + ', ';
     }, this);
     text = text.substring(0, text.length - 2);
