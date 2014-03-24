@@ -29,6 +29,8 @@ function (angular, _, $) {
           var $funcControls = $(funcControlsTemplate);
           var func = $scope.func;
           var funcDef = func.def;
+          var scheduledRelink = false;
+          var paramCountAtLink = 0;
 
           function clickFuncParam(paramIndex) {
             /*jshint validthis:true */
@@ -51,17 +53,33 @@ function (angular, _, $) {
             }
           }
 
+          function scheduledRelinkIfNeeded() {
+            if (paramCountAtLink === func.params.length) {
+              return;
+            }
+
+            if (!scheduledRelink) {
+              scheduledRelink = true;
+              setTimeout(function() {
+                relink();
+                scheduledRelink = false;
+              }, 200);
+            }
+          }
+
           function inputBlur(paramIndex) {
             /*jshint validthis:true */
 
             var $input = $(this);
             var $link = $input.prev();
 
-            if ($input.val() !== '') {
+            if ($input.val() !== '' || func.def.params[paramIndex].optional) {
               $link.text($input.val());
-
+              
               func.updateParam($input.val(), paramIndex);
-              $scope.$apply($scope.targetChanged);
+              scheduledRelinkIfNeeded();
+              
+              $scope.$apply($scope.targetChanged);              
             }
 
             $input.hide();
@@ -129,8 +147,18 @@ function (angular, _, $) {
             $funcLink.appendTo(elem);
 
             _.each(funcDef.params, function(param, index) {
+              if (param.optional && !func.params[index]) {
+                return;
+              }
+
+              if (index > 0) {
+                $('<span>, </span>').appendTo(elem);
+              }
+
               var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + func.params[index] + '</a>');
               var $input = $(paramTemplate);
+
+              paramCountAtLink++;
 
               $paramLink.appendTo(elem);
               $input.appendTo(elem);
@@ -139,10 +167,6 @@ function (angular, _, $) {
               $input.keyup(inputKeyDown);
               $input.keypress(_.partial(inputKeyPress, index));
               $paramLink.click(_.partial(clickFuncParam, index));
-
-              if (index !== funcDef.params.length - 1) {
-                $('<span>, </span>').appendTo(elem);
-              }
 
               if (funcDef.params[index].options) {
                 addTypeahead($input, index);
@@ -200,10 +224,16 @@ function (angular, _, $) {
             });
           }
 
-          addElementsAndCompile();
-          ifJustAddedFocusFistParam();
-          registerFuncControlsToggle();
-          registerFuncControlsActions();
+          function relink() {
+            elem.children().remove();
+
+            addElementsAndCompile();
+            ifJustAddedFocusFistParam();
+            registerFuncControlsToggle();
+            registerFuncControlsActions();            
+          }
+
+          relink();
         }
       };
 
