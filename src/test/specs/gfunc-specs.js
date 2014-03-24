@@ -71,7 +71,11 @@ define([
       expect(func.text).to.be('summarize(1h, sum)');
     });
 
-
+    it('should parse numbers as float', function() {
+      var func = gfunc.createFuncInstance('scale');
+      func.updateParam('0.001', 0);
+      expect(func.params[0]).to.be(0.001);      
+    });
   });
 
   describe('when updating func param with optional second parameter', function() {
