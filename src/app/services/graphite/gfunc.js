@@ -295,6 +295,27 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'maximumAbove',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
+    name: 'maximumBelow',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
+    name: 'minimumAbove',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
     name: "exclude",
     category: categories.Filter,
     params: [ { name: "exclude", type: 'string' } ],
