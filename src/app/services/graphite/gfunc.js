@@ -216,6 +216,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'transformNull',
+    category: categories.Transform,
+    params: [ { name: "amount", type: "int", } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
     name: 'integral',
     category: categories.Transform,
   });
