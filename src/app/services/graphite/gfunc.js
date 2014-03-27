@@ -112,6 +112,19 @@ function (_) {
   });
 
   addFuncDef({
+    name: "consolidateBy",
+    category: categories.Special,
+    params: [
+      {
+        name: 'function',
+        type: 'string',
+        options: ['sum', 'average', 'min', 'max']
+      }
+    ],
+    defaultParams: ['max']
+  });
+  
+  addFuncDef({
     name: "groupByNode",
     category: categories.Special,
     params: [
@@ -137,6 +150,16 @@ function (_) {
       { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
     ],
     defaultParams: [3]
+  });
+
+  addFuncDef({
+    name: 'substr',
+    category: categories.Special,
+    params: [
+      { name: "start", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "stop", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
+    ],
+    defaultParams: [0, 0]
   });
 
   addFuncDef({
@@ -269,6 +292,27 @@ function (_) {
     category: categories.Filter,
     params: [ { name: "n", type: "int", } ],
     defaultParams: [25]
+  });
+
+  addFuncDef({
+    name: 'maximumAbove',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
+    name: 'maximumBelow',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
+    name: 'minimumAbove',
+    category: categories.Filter,
+    params: [ { name: "value", type: "int" } ],
+    defaultParams: [0]
   });
 
   addFuncDef({
