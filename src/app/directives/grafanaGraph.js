@@ -336,6 +336,9 @@ function (angular, $, kbn, moment, _) {
           case 'bytes':
             url += '&yUnitSystem=binary';
             break;
+          case 'bits':
+            url += '&yUnitSystem=binary';
+            break;
           case 'short':
             url += '&yUnitSystem=si';
             break;
