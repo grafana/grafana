@@ -153,6 +153,16 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'substr',
+    category: categories.Special,
+    params: [
+      { name: "start", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "stop", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
+    ],
+    defaultParams: [0, 0]
+  });
+
+  addFuncDef({
     name: 'sortByName',
     category: categories.Special
   });
