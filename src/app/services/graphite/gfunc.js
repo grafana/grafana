@@ -112,6 +112,19 @@ function (_) {
   });
 
   addFuncDef({
+    name: "consolidateBy",
+    category: categories.Special,
+    params: [
+      {
+        name: 'function',
+        type: 'string',
+        options: ['sum', 'average', 'min', 'max']
+      }
+    ],
+    defaultParams: ['max']
+  });
+  
+  addFuncDef({
     name: "groupByNode",
     category: categories.Special,
     params: [
