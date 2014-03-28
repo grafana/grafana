@@ -168,6 +168,16 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'sortByMaxima',
+    category: categories.Special
+  });
+
+  addFuncDef({
+    name: 'sortByMinima',
+    category: categories.Special
+  });
+
+  addFuncDef({
     name: 'aliasByMetric',
     category: categories.Special,
   });
@@ -316,6 +326,20 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'limit',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
+    defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'mostDeviant',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
+    defaultParams: [10]
+  });
+
+  addFuncDef({
     name: "exclude",
     category: categories.Filter,
     params: [ { name: "exclude", type: 'string' } ],
@@ -348,6 +372,20 @@ function (_) {
     category: categories.Filter,
     params: [ { name: "window size", type: "int" } ],
     defaultParams: [10]
+  });
+
+  addFuncDef({
+    name: 'movingMedian',
+    category: categories.Filter,
+    params: [ { name: "windowSize", type: "select", options: ['1min', '5min', '15min', '30min', '1hour'] } ],
+    defaultParams: ['1min']
+  });
+
+  addFuncDef({
+    name: 'stdev',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" }, { name: "tolerance", type: "int" } ],
+    defaultParams: [5,0.1]
   });
 
   addFuncDef({
