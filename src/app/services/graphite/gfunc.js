@@ -84,6 +84,18 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'maxSeries',
+    shortName: 'max',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
+    name: 'minSeries',
+    shortName: 'min',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'averageSeriesWithWildcards',
     category: categories.Combine,
     params: [ { name: "node", type: "int" } ],
@@ -223,6 +235,13 @@ function (_) {
     category: categories.Transform,
     params: [ { name: "amount", type: "int", } ],
     defaultParams: [10]
+  });
+
+  addFuncDef({
+    name: 'transformNull',
+    category: categories.Transform,
+    params: [ { name: "amount", type: "int", } ],
+    defaultParams: [0]
   });
 
   addFuncDef({
