@@ -1,13 +1,18 @@
+# vNext
+- More graphite functions
+- Fix for Text panel, now changes take effect directly (Issue #251)
+
+
 # 1.5.2 (2013-03-24)
 ### New Features and improvements
 - Support for second optional params for functions like aliasByNode (Issue #167). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
 - More functions added to InfluxDB query editor (Issue #218)
 - Filters can now be used inside other filters (templated segments) (Issue #128)
-- More graphite functions added 
+- More graphite functions added
 
 ### Fixes
 - Float arguments now work for functions like scale (Issue #223)
-- Fix for graphite function editor, the graph & target was not updated after adding a function and leaving default params as is #191 
+- Fix for graphite function editor, the graph & target was not updated after adding a function and leaving default params as is #191
 
 The zip files now contains a sub folder with project name and version prefix. (Issue #209)
 
@@ -17,7 +22,7 @@ The zip files now contains a sub folder with project name and version prefix. (I
 
 For people who are find Grafana slow for large time spans or high resolution metrics. This is most likely due to graphite returning a large number of datapoints. The maxDataPoints parameter solves this issue. For maxDataPoints to work you need to run the latest graphite-web (some builds of 0.9.12 does not include this feature).
 
-Read this for more info: 
+Read this for more info:
 [Performance for large time spans](https://github.com/torkelo/grafana/wiki/Performance-for-large-time-spans)
 
 # 1.5.0 (2013-03-09)
