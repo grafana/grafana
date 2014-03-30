@@ -48,6 +48,10 @@ function (angular, app, _, require) {
       $scope.ready = false;
     };
 
+    $scope.render = function() {
+      $scope.$emit('render');
+    };
+
   });
 
   module.directive('markdown', function() {

@@ -318,7 +318,7 @@ function (angular, $, kbn, moment, _) {
           }
         });
 
-        function render_panel_as_graphite_png(url) {          
+        function render_panel_as_graphite_png(url) {
           url += '&width=' + elem.width();
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @kibanaPanelBackground

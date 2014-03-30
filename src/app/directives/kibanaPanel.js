@@ -73,7 +73,7 @@ function (angular, $, _) {
             elem.removeClass("ng-cloak");
           }
 
-          newScope.$on('$destroy',function(){
+          newScope.$on('$destroy',function() {
             elem.unbind();
             elem.remove();
           });
