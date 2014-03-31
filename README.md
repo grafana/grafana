@@ -46,7 +46,7 @@ Grafana is very easy to install. It is a client side web app with no backend. An
 
 # Installation
 - Download and extract the [latest release](https://github.com/torkelo/grafana/releases).
-- Edit config.js, then change graphiteUrl and elasticsearch to point to the correct urls. The urls entered here must be reachable by your browser.
+- Rename `config.sample.js` to `config.js`, then change `graphiteUrl` and `elasticsearch` to point to the correct urls. The urls entered here must be reachable by your browser.
 - Point your browser to the installation.
 
 To run from master:
