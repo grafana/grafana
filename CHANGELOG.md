@@ -1,7 +1,7 @@
 # vNext
 - More graphite functions
 - Fix for Text panel, now changes take effect directly (Issue #251)
-
+- Fix when adding functions without params that did not cause graph to update (issue #267)
 
 # 1.5.2 (2013-03-24)
 ### New Features and improvements
