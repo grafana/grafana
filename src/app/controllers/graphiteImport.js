@@ -12,12 +12,25 @@ function (angular, app, _) {
 
     $scope.init = function() {
       console.log('hej!');
+      $scope.datasources = datasourceSrv.listOptions();
+      $scope.setDatasource(datasourceSrv.default.value);
     };
+
+
+    $scope.setDatasource = function(datasource) {
+      $scope.datasource = datasourceSrv.get(datasource);
+
+      if (!$scope.datasource) {
+          $scope.error = "Cannot find datasource " + datasource;
+        return;
+      }
+    };
+
 
     $scope.listAll = function(query) {
       delete $scope.error;
 
-      datasourceSrv.default.listDashboards(query)
+      $scope.datasource.listDashboards(query)
         .then(function(results) {
           $scope.dashboards = results;
         })
@@ -29,7 +42,7 @@ function (angular, app, _) {
     $scope.import = function(dashName) {
       delete $scope.error;
 
-      datasourceSrv.default.loadDashboard(dashName)
+      $scope.datasource.loadDashboard(dashName)
         .then(function(results) {
           if (!results.data || !results.data.state) {
             throw { message: 'no dashboard state received from graphite' };
