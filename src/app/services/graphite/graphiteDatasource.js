@@ -205,11 +205,13 @@ function (angular, _, $, config, kbn, moment) {
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
       var clean_options = [];
-      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
+      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
 
       if (options.format !== 'png') {
         options['format'] = 'json';
       }
+
+      options['cacheTimeout'] = 1;
 
       _.each(options, function (value, key) {
         if ($.inArray(key, graphite_options) === -1) {
