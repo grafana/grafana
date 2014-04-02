@@ -21,7 +21,7 @@ function (angular, app, _) {
       $scope.datasource = datasourceSrv.get(datasource);
 
       if (!$scope.datasource) {
-          $scope.error = "Cannot find datasource " + datasource;
+        $scope.error = "Cannot find datasource " + datasource;
         return;
       }
     };
