@@ -70,6 +70,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'rangeOfSeries',
+    category: categories.Combine
+  });
+
+  addFuncDef({
     name: 'percentileOfSeries',
     category: categories.Combine,
     params: [ { name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] } ],
@@ -186,6 +191,11 @@ function (_) {
 
   addFuncDef({
     name: 'sortByMinima',
+    category: categories.Special
+  });
+
+  addFuncDef({
+    name: 'sortByTotal',
     category: categories.Special
   });
 
@@ -418,6 +428,34 @@ function (_) {
     name: 'lowestAverage',
     category: categories.Filter,
     params: [ { name: "count", type: "int" } ],
+    defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'removeAbovePercentile',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
+    defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'removeAboveValue',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
+    defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'removeBelowPercentile',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
+    defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'removeBelowValue',
+    category: categories.Filter,
+    params: [ { name: "n", type: "int" } ],
     defaultParams: [5]
   });
 
