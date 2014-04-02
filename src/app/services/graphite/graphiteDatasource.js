@@ -85,10 +85,6 @@ function (angular, _, $, config, kbn, moment) {
 
       date = moment.utc(date);
 
-      if (dashboard.current.timezone === 'browser') {
-        date = date.local();
-      }
-
       if (config.timezoneOffset) {
         date = date.zone(config.timezoneOffset);
       }
