@@ -430,28 +430,28 @@ function($, _, moment) {
       ext = " B";
       break;
     case 1:
-      ext = " KB";
+      ext = " KiB";
       break;
     case 2:
-      ext = " MB";
+      ext = " MiB";
       break;
     case 3:
-      ext = " GB";
+      ext = " GiB";
       break;
     case 4:
-      ext = " TB";
+      ext = " TiB";
       break;
     case 5:
-      ext = " PB";
+      ext = " PiB";
       break;
     case 6:
-      ext = " EB";
+      ext = " EiB";
       break;
     case 7:
-      ext = " ZB";
+      ext = " ZiB";
       break;
     case 8:
-      ext = " YB";
+      ext = " YiB";
       break;
     }
 
@@ -477,28 +477,28 @@ function($, _, moment) {
       ext = " b";
       break;
     case 1:
-      ext = " Kb";
+      ext = " Kib";
       break;
     case 2:
-      ext = " Mb";
+      ext = " Mib";
       break;
     case 3:
-      ext = " Gb";
+      ext = " Gib";
       break;
     case 4:
-      ext = " Tb";
+      ext = " Tib";
       break;
     case 5:
-      ext = " Pb";
+      ext = " Pib";
       break;
     case 6:
-      ext = " Eb";
+      ext = " Eib";
       break;
     case 7:
-      ext = " Zb";
+      ext = " Zib";
       break;
     case 8:
-      ext = " Yb";
+      ext = " Yib";
       break;
     }
 

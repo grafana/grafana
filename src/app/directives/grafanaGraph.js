@@ -248,10 +248,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          if (format === 'bytes') {
-            axis.mode = 'byte';
-          }
-          else if (format !== 'none') {
+          if (format !== 'none') {
             axis.tickFormatter = kbn.getFormatFunction(format, 1);
           }
         }
