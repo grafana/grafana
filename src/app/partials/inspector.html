@@ -1,14 +1,44 @@
-<div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>Last Elasticsearch Query</h3>
-</div>
-<div class="modal-body">
+<div class="modal-body" ng-controller="InspectCtrl" ng-init="init()">
+  <div class="pull-right editor-title">Inspector</div>
 
-  <div>
-    <pre>curl -XGET '{{config.elasticsearch}}/{{dashboard.indices|stringify}}/_search?pretty' -d '{{inspector}}'
-    </pre>
+  <div ng-model="editor.index" bs-tabs>
+    <div ng-repeat="tab in ['Request','Response']" data-title="{{tab}}">
+    </div>
   </div>
-  
+
+  <div class="editor-row" ng-if="editor.index == 0">
+
+    <table class="table table-striped">
+      <tr>
+        <td>Url</td>
+        <td>{{inspector_info.error.config.url}}</td>
+      </tr>
+      <tr>
+        <td>Method</td>
+        <td>{{inspector_info.error.config.method}}</td>
+      </tr>
+      <tr ng-repeat="(key, value) in inspector_info.error.config.headers">
+        <td>
+          {{key}}
+        </td>
+        <td>
+          {{value}}
+        </td>
+      </tr>
+      <tr>
+        <td>Data</td>
+        <td>{{inspector_info.error.config.data}}</td>
+      </tr>
+    </table>
+
+  </div>
+
+  <div class="editor-row" ng-if="editor.index == 1">
+    <div ng-if="response_html">
+      <div iframe-content="response_html"></div>
+    </div>
+  </div>
+
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-success" ng-click="dismiss()">Close</button>
