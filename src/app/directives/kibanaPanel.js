@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'underscore',
-  '../controllers/PanelBaseCtrl'
+  '../controllers/panelBaseCtrl'
 ],
 function (angular, $, _, PanelBaseCtrl) {
   'use strict';
