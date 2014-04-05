@@ -199,7 +199,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     }
 
     $scope.init = function() {
-      $scope.initPanel($scope);
+      $scope.initBaseController(this, $scope);
 
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };

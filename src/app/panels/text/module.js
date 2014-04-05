@@ -23,33 +23,33 @@ function (angular, app, _, require) {
   app.useModule(module);
 
   module.controller('text', function($scope) {
+
     $scope.panelMeta = {
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
     };
 
     // Set and populate defaults
     var _d = {
-      /** @scratch /panels/text/5
-       * === Parameters
-       *
-       * mode:: `html', `markdown' or `text'
-       */
-      mode    : "markdown", // 'html','markdown','text'
-      /** @scratch /panels/text/5
-       * content:: The content of your panel, written in the mark up specified in +mode+
-       */
+      mode    : "markdown", // 'html', 'markdown', 'text'
       content : "",
       style: {},
     };
+
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-      $scope.initPanel($scope);
+      $scope.initBaseController(this, $scope);
+
       $scope.ready = false;
     };
 
     $scope.render = function() {
       $scope.$emit('render');
+    };
+
+    $scope.openEditor = function() {
+      //$scope.$emit('open-modal','paneleditor');
+      console.log('scope id', $scope.$id);
     };
 
   });

@@ -46,10 +46,14 @@ function (angular, $, kbn, moment, _) {
         function setElementHeight() {
           try {
             var height = scope.height || scope.panel.height || scope.row.height;
-            height = height.replace('px', '') - 32; // subtract panel title bar
+            if (_.isString(height)) {
+              height = parseInt(height.replace('px', ''), 10);
+            }
+
+            height = height - 32; // subtract panel title bar
 
             if (scope.panel.legend.show) {
-              height = height - 35; // subtract one line legend
+              height = height - 21; // subtract one line legend
             }
 
             elem.css('height', height + 'px');
@@ -64,6 +68,7 @@ function (angular, $, kbn, moment, _) {
           if (!data) {
             return true;
           }
+
           if ($rootScope.fullscreen && !scope.fullscreen) {
             return true;
           }
