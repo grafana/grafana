@@ -30,7 +30,8 @@ function (angular, _, kbn) {
           return [];
         }
 
-        var template = "select [[func]]([[column]]) from [[series]] where [[timeFilter]] group by time([[interval]]) order asc";
+        var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] where [[timeFilter]]" + 
+          " group by time([[interval]]) order asc";
 
         var templateData = {
           series: target.series,
