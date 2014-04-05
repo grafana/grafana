@@ -124,6 +124,13 @@ function (angular, app, _) {
          */
         type    : type
       };
+
+      if (!$scope.row.height) {
+        $scope.row.height = "200px";
+      }
+      else if($scope.row.height.indexOf('px') === -1) {
+        $scope.row.height = $scope.row.height + 'px';
+      }
     };
 
     /** @scratch /panels/2

@@ -261,8 +261,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return $scope.datasource.query(graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
+          $scope.panelMeta.loading = false;
           $scope.inspector_info = { error: err };
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.render([]);
         });
     };
 
