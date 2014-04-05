@@ -7,26 +7,39 @@ function (angular) {
   var module = angular.module('kibana.controllers');
 
   module.controller('InspectCtrl', function($scope) {
+    var model = $scope.inspector;
+
+    function getParametersFromQueryString(queryString) {
+      var result = [];
+      var parameters = queryString.split("&");
+      for (var i = 0; i < parameters.length; i++) {
+        var keyValue = parameters[i].split("=");
+        if (keyValue[1].length > 0) {
+          result.push({ key: keyValue[0], value: window.unescape(keyValue[1]) });
+        }
+      }
+      return result;
+    }
 
     $scope.init = function () {
+      $scope.editor = { index: 0 };
 
-      if ($scope.inspector_info) {
-        $scope.init_model($scope.inspector_info);
+      if (!model.error)  {
+        return;
       }
 
-    };
+      if (model.error.stack) {
+        $scope.editor.index = 2;
+        $scope.stack_trace = model.error.stack;
+        $scope.message = model.error.message;
+      }
+      else if (model.error.config && model.error.config.data) {
+        $scope.editor.index = 1;
 
-    $scope.init_model = function(info) {
-      if (info.error) {
-        console.log(info.error);
-        if (info.error.config && info.error.config.data) {
-          $scope.request_parameters = info.error.config.data.split('&');
-        }
+        $scope.request_parameters = getParametersFromQueryString(model.error.config.data);
 
-        if (info.error.data) {
-          if (info.error.data.indexOf('DOCTYPE') !== -1) {
-            $scope.response_html = info.error.data;
-          }
+        if (model.error.data.indexOf('DOCTYPE') !== -1) {
+          $scope.response_html = model.error.data;
         }
       }
     };

@@ -16,7 +16,7 @@ function (angular, $, _) {
       var panelHeader =
       '<div class="panel-header">'+
         '<div class="row-fluid">' +
-          '<div class="span12 alert-error panel-error small" ng-if="panel.error">' +
+          '<div class="span12 alert-error panel-error small" ng-show="panel.error">' +
             '<a class="close" ng-click="panel.error=false">&times;</a>' +
             '<span><i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}} </span>' +
             '<span class="pointer panel-error-inspector-link" config-modal="app/partials/inspector.html">View details</span>' +
@@ -223,6 +223,7 @@ function (angular, $, _) {
               }
             ];
 
+            scope.inspector = {};
             scope.panelMeta.menu = _.where(menu, { condition: true });
           };
         }

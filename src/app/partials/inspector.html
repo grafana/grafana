@@ -2,22 +2,22 @@
   <div class="pull-right editor-title">Inspector</div>
 
   <div ng-model="editor.index" bs-tabs>
-    <div ng-repeat="tab in ['Request','Response']" data-title="{{tab}}">
+    <div ng-repeat="tab in ['Request', 'Response', 'JS Error']" data-title="{{tab}}">
     </div>
   </div>
 
-  <div class="editor-row" ng-if="editor.index == 0">
-
-    <table class="table table-striped">
+  <div ng-if="editor.index == 0">
+    <h5>Request details</h5>
+    <table class="table table-striped small inspector-request-table">
       <tr>
         <td>Url</td>
-        <td>{{inspector_info.error.config.url}}</td>
+        <td>{{inspector.error.config.url}}</td>
       </tr>
       <tr>
         <td>Method</td>
-        <td>{{inspector_info.error.config.method}}</td>
+        <td>{{inspector.error.config.method}}</td>
       </tr>
-      <tr ng-repeat="(key, value) in inspector_info.error.config.headers">
+      <tr ng-repeat="(key, value) in inspector.error.config.headers">
         <td>
           {{key}}
         </td>
@@ -25,21 +25,44 @@
           {{value}}
         </td>
       </tr>
-      <tr>
-        <td>Data</td>
-        <td>{{inspector_info.error.config.data}}</td>
-      </tr>
     </table>
 
+    <h5>Request parameters</h5>
+    <table class="table table-striped small inspector-request-table">
+        <tr ng-repeat="param in request_parameters">
+          <td>
+            {{param.key}}
+          </td>
+          <td>
+            {{param.value}}
+          </td>
+        </tr>
+    </table>
   </div>
 
-  <div class="editor-row" ng-if="editor.index == 1">
+  <div ng-if="editor.index == 1">
+
     <div ng-if="response_html">
       <div iframe-content="response_html"></div>
     </div>
+
+  </div>
+
+  <div ng-if="editor.index == 2">
+
+    <label>Message:</label>
+    <pre>
+      {{message}}
+    </pre>
+
+    <label>Stack trace:</label>
+    <pre>
+      {{stack_trace}}
+    </pre>
+
   </div>
 
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-success" ng-click="dismiss()">Close</button>
+  <button type="button" class="btn btn-info" ng-click="dismiss()">Close</button>
 </div>
