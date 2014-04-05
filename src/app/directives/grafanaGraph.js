@@ -45,7 +45,15 @@ function (angular, $, kbn, moment, _) {
 
         function setElementHeight() {
           try {
-            elem.css({ height: scope.height || scope.panel.height || scope.row.height });
+            var height = scope.height || scope.panel.height || scope.row.height;
+            height = height.replace('px', '') - 32; // subtract panel title bar
+
+            if (scope.panel.legend.show) {
+              height = height - 35; // subtract one line legend
+            }
+
+            elem.css('height', height + 'px');
+
             return true;
           } catch(e) { // IE throws errors sometimes
             return false;
