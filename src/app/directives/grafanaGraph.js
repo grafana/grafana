@@ -52,14 +52,25 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
-        // Function for rendering panel
-        function render_panel() {
-          if (!data) { return; }
-          if (scope.otherPanelInFullscreenMode()) { return; }
-          if (!setElementHeight()) { return; }
+        function shouldAbortRender() {
+          if (!data) {
+            return true;
+          }
+          if ($rootScope.fullscreen && !scope.fullscreen) {
+            return true;
+          }
+
+          if (!setElementHeight()) { return true; }
 
           if (_.isString(data)) {
             render_panel_as_graphite_png(data);
+            return true;
+          }
+        }
+
+        // Function for rendering panel
+        function render_panel() {
+          if (shouldAbortRender()) {
             return;
           }
 
