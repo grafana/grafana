@@ -24,7 +24,7 @@ function (angular, $, _, PanelBaseCtrl) {
           '</div>' +
         '</div>\n' +
 
-        '<div class="row-fluid panel-extra" ng-hide="panel.hide_title">' +
+        '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
 
             '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
