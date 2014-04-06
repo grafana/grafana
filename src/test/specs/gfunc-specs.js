@@ -20,8 +20,9 @@ define([
     });
 
     it('should return func instance from funcDef', function() {
-      var func = gfunc.createFuncInstance(func.def);
-      expect(func).to.be.ok();
+      var func = gfunc.createFuncInstance('sum');
+      var func2 = gfunc.createFuncInstance(func.def);
+      expect(func2).to.be.ok();
     });
 
     it('func instance should have text representation', function() {
