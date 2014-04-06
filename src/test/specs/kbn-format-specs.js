@@ -1,6 +1,7 @@
 define([
   'kbn'
 ], function(kbn) {
+  'use strict';
 
   describe('millisecond formating', function() {
 

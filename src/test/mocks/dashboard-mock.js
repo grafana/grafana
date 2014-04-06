@@ -1,5 +1,6 @@
 define([],
   function() {
+  'use strict';
 
   return {
     create: function() {
@@ -34,7 +35,7 @@ define([],
           },
           refresh: false
         }
-      }
+      };
     }
-  }
+  };
 });

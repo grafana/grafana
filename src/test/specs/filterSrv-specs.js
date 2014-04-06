@@ -3,6 +3,7 @@ define([
   'underscore',
   'services/filterSrv'
 ], function(dashboardMock, _) {
+  'use strict';
 
   describe('filterSrv', function() {
     var _filterSrv;

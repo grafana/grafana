@@ -1,6 +1,7 @@
 define([
   'services/graphite/lexer'
 ], function(Lexer) {
+  'use strict';
 
   describe('when lexing graphite expression', function() {
 
@@ -90,7 +91,7 @@ define([
 
     it('should handle float parameters', function() {
       var lexer = new Lexer("alias(metric, 0.002)");
-      var tokens = lexer.tokenize();      
+      var tokens = lexer.tokenize();
       expect(tokens[4].type).to.be('number');
       expect(tokens[4].value).to.be('0.002');
     });

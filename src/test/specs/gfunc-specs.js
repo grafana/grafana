@@ -1,6 +1,7 @@
 define([
   'services/graphite/gfunc'
 ], function(gfunc) {
+  'use strict';
 
   describe('when creating func instance from func names', function() {
 
@@ -19,7 +20,6 @@ define([
     });
 
     it('should return func instance from funcDef', function() {
-      var func = gfunc.createFuncInstance('sum');
       var func = gfunc.createFuncInstance(func.def);
       expect(func).to.be.ok();
     });
@@ -74,7 +74,7 @@ define([
     it('should parse numbers as float', function() {
       var func = gfunc.createFuncInstance('scale');
       func.updateParam('0.001', 0);
-      expect(func.params[0]).to.be(0.001);      
+      expect(func.params[0]).to.be(0.001);
     });
   });
 
@@ -100,7 +100,7 @@ define([
       expect(func.params[0]).to.be(4);
       expect(func.params[1]).to.be(undefined);
       expect(func.text).to.be('aliasByNode(4)');
-    });    
+    });
   });
 
 });
