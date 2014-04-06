@@ -6,6 +6,8 @@ define([
 function (angular, _, $) {
   'use strict';
 
+  // This function needs $inject annotations, update below
+  // when changing arguments to this function
   function PanelBaseCtrl($scope, $rootScope, $timeout) {
 
     var menu = [
@@ -124,6 +126,8 @@ function (angular, _, $) {
     };
 
   }
+
+  PanelBaseCtrl['$inject'] = ['$scope', '$rootScope', '$timeout'];
 
   return PanelBaseCtrl;
 
