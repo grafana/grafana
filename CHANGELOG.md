@@ -4,6 +4,8 @@
 - Fix when adding functions without params that did not cause graph to update (Issue #267)
 - Graphite errors are now much easier to see and troubleshoot with the new inspector (Issue #265)
 - Use influxdb aliases to distinguish between multiple columns (Issue #283)
+- Correction to ms axis formater, now formats days correctly. (Issue #189)
+- Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
 
 # 1.5.2 (2013-03-24)
 ### New Features and improvements
