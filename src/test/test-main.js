@@ -115,6 +115,7 @@ require([
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
+    'specs/kbn-format-specs',
   ], function () {
     window.__karma__.start();
   });

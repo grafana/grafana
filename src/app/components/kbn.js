@@ -597,18 +597,12 @@ function($, _, moment) {
     else if (size < 86400000) {
       return (size / 3600000).toFixed(decimals) + " hour";
     }
-    // Less than one week, devide in days
-    else if (size < 604800000) {
+    // Less than one year, devide in days
+    else if (size < 31536000000) {
       return (size / 86400000).toFixed(decimals) + " day";
     }
-    // Less than one month, devide in weeks
-    else if (size < 2.62974e9) {
-      return (size / 604800000).toFixed(decimals) + " week";
-    }
-    // Less than one year, devide in weeks
-    else if (size < 3.15569e10) {
-      return (size / 2.62974e9).toFixed(decimals) + " year";
-    }
+
+    return (size / 31536000000).toFixed(decimals) + " year";
   };
 
   kbn.microsFormat = function(size, decimals) {
