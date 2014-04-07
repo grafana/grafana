@@ -125,12 +125,17 @@ function (angular, app, _) {
         type    : type
       };
 
-      if (!$scope.row.height) {
-        $scope.row.height = "200px";
+      function fixRowHeight(height) {
+        if (!height) {
+          return '200px';
+        }
+        if (!_.isString(height)) {
+          return height + 'px';
+        }
+        return height;
       }
-      else if($scope.row.height.indexOf('px') === -1) {
-        $scope.row.height = $scope.row.height + 'px';
-      }
+
+      $scope.row.height = fixRowHeight($scope.row.height);
     };
 
     /** @scratch /panels/2
