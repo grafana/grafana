@@ -49,7 +49,7 @@ function (angular, _, moment) {
 
     $scope.set_default = function() {
       if(dashboard.set_default($location.path())) {
-        alertSrv.set('Home Set','This page has been set as your default Kibana dashboard','success',5000);
+        alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
       }
@@ -57,7 +57,7 @@ function (angular, _, moment) {
 
     $scope.purge_default = function() {
       if(dashboard.purge_default()) {
-        alertSrv.set('Local Default Clear','Your Kibana default dashboard has been reset to the default',
+        alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default',
           'success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
