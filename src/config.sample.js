@@ -38,6 +38,7 @@ function (Settings) {
     /**
      * If your graphite server has another timezone than you & users browsers specify the offset here
      * Example: "-0500" (for UTC - 5 hours)
+     * If your graphite server runs UTC, you can set this to "auto" and it will pick the right timezone for you
      */
     timezoneOffset: null,
 
