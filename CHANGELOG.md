@@ -1,5 +1,36 @@
+# vNext
+- More graphite functions
+- Fix for Text panel, now changes take effect directly (Issue #251)
+- Fix when adding functions without params that did not cause graph to update (Issue #267)
+- Graphite errors are now much easier to see and troubleshoot with the new inspector (Issue #265)
+- Use influxdb aliases to distinguish between multiple columns (Issue #283)
+- Correction to ms axis formater, now formats days correctly. (Issue #189)
+- Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
+
+# 1.5.2 (2013-03-24)
+### New Features and improvements
+- Support for second optional params for functions like aliasByNode (Issue #167). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
+- More functions added to InfluxDB query editor (Issue #218)
+- Filters can now be used inside other filters (templated segments) (Issue #128)
+- More graphite functions added
+
+### Fixes
+- Float arguments now work for functions like scale (Issue #223)
+- Fix for graphite function editor, the graph & target was not updated after adding a function and leaving default params as is #191
+
+The zip files now contains a sub folder with project name and version prefix. (Issue #209)
+
+# 1.5.1 (2013-03-10)
+### Fixes
+- maxDataPoints must be an integer #184 (thanks @frejsoya for fixing this)
+
+For people who are find Grafana slow for large time spans or high resolution metrics. This is most likely due to graphite returning a large number of datapoints. The maxDataPoints parameter solves this issue. For maxDataPoints to work you need to run the latest graphite-web (some builds of 0.9.12 does not include this feature).
+
+Read this for more info:
+[Performance for large time spans](https://github.com/torkelo/grafana/wiki/Performance-for-large-time-spans)
+
 # 1.5.0 (2013-03-09)
-###New Features and improvements
+### New Features and improvements
 - New function editor [video demo](http://youtu.be/I90WHRwE1ZM) (Issue #178)
 - Links to function documentation from function editor (Issue #3)
 - Reorder functions (Issue #130)
@@ -18,7 +49,7 @@
 - Fix to annotations with graphite source & null values (Issue #138)
 
 # 1.4.0 (2013-02-21)
-###New Features
+### New Features
 - #44 Annotations! Required a lot of work to get right. Read wiki article for more info. Supported annotations data sources are graphite metrics and graphite events. Support for more will be added in the future!
 - #35 Support for multiple graphite servers! (Read wiki article for more)
 - #116 Back to dashboard link in top menu to easily exist full screen / edit mode.

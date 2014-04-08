@@ -2,7 +2,7 @@
 
   <div class='filtering-container'>
 
-    <div ng-repeat="filter in filterSrv.list" class="small filter-panel-filter">
+    <div ng-repeat="filter in filterList" class="small filter-panel-filter">
       <div>
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
         <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true"></i>
@@ -17,7 +17,7 @@
             </a>
               <ul class="dropdown-menu">
                 <li ng-repeat="option in filter.options">
-                  <a ng-click="filterSrv.filterOptionSelected(filter, option)">{{option.text}}</a>
+                  <a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
                 </li>
               </ul>
           </li>
@@ -40,9 +40,8 @@
           </li>
         </ul>
         <div>
-          <input type="submit" value="Apply" ng-click="applyFilter(filter)" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Save and refresh'"/>
-
-          <button ng-click="filter.editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Save</button>
+          <input type="submit" value="Update" ng-click="applyFilter(filter)" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Update and refresh'"/>
+          <button ng-click="filter.editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Close</button>
         </div>
       </form>
     </div>

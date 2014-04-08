@@ -135,7 +135,7 @@ define([
       }
       tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
       if (options.data) {
-        tooltip += options.data;
+        tooltip += options.data.replace(/\n/g, '<br/>');
       }
       tooltip += "</small>";
 

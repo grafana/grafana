@@ -1,5 +1,6 @@
 define([
-], function() {
+  'underscore'
+], function(_) {
   'use strict';
 
   // This is auto generated from the unicode tables.
@@ -256,7 +257,7 @@ define([
         return (/^[0-9a-fA-F]$/).test(str);
       }
 
-      var readUnicodeEscapeSequence = function () {
+      var readUnicodeEscapeSequence = _.bind(function () {
         /*jshint validthis:true */
         index += 1;
 
@@ -282,9 +283,9 @@ define([
         }
 
         return null;
-      }.bind(this);
+      }, this);
 
-      var getIdentifierStart = function () {
+      var getIdentifierStart = _.bind(function () {
         /*jshint validthis:true */
         var chr = this.peek(index);
         var code = chr.charCodeAt(0);
@@ -313,9 +314,9 @@ define([
         }
 
         return null;
-      }.bind(this);
+      }, this);
 
-      var getIdentifierPart = function () {
+      var getIdentifierPart = _.bind(function () {
         /*jshint validthis:true */
         var chr = this.peek(index);
         var code = chr.charCodeAt(0);
@@ -339,7 +340,7 @@ define([
         }
 
         return null;
-      }.bind(this);
+      }, this);
 
       char = getIdentifierStart();
       if (char === null) {

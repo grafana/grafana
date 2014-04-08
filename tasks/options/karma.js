@@ -1,9 +1,19 @@
 module.exports = function(config) {
   return {
-    unit: {
+    dev: {
       configFile: 'src/test/karma.conf.js',
       singleRun: false,
+      browsers: ['PhantomJS']
+    },
+    debug: {
+      configFile: 'src/test/karma.conf.js',
+      singleRun: true,
       browsers: ['Chrome']
+    },
+    test: {
+      configFile: 'src/test/karma.conf.js',
+      singleRun: true,
+      browsers: ['PhantomJS']
     }
   };
 };

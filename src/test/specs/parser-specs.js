@@ -1,6 +1,7 @@
 define([
   'services/graphite/parser'
 ], function(Parser) {
+  'use strict';
 
   describe('when parsing', function() {
 
@@ -103,7 +104,7 @@ define([
       var parser = new Parser("sum(test.[[server]].count)");
       var rootNode = parser.getAst();
 
-      expect(rootNode.message).to.be(undefined)
+      expect(rootNode.message).to.be(undefined);
       expect(rootNode.params[0].type).to.be('metric');
       expect(rootNode.params[0].segments[1].type).to.be('template');
       expect(rootNode.params[0].segments[1].value).to.be('server');
@@ -139,6 +140,13 @@ define([
       expect(rootNode.type).to.be('function');
     });
 
+     it('handle float function arguments', function() {
+      var parser = new Parser('scale(test, 0.002)');
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('function');
+      expect(rootNode.params[1].type).to.be('number');
+      expect(rootNode.params[1].value).to.be(0.002);
+    });
 
   });
 

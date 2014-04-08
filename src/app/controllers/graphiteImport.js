@@ -12,12 +12,25 @@ function (angular, app, _) {
 
     $scope.init = function() {
       console.log('hej!');
+      $scope.datasources = datasourceSrv.listOptions();
+      $scope.setDatasource(null);
     };
+
+
+    $scope.setDatasource = function(datasource) {
+      $scope.datasource = datasourceSrv.get(datasource);
+
+      if (!$scope.datasource) {
+        $scope.error = "Cannot find datasource " + datasource;
+        return;
+      }
+    };
+
 
     $scope.listAll = function(query) {
       delete $scope.error;
 
-      datasourceSrv.default.listDashboards(query)
+      $scope.datasource.listDashboards(query)
         .then(function(results) {
           $scope.dashboards = results;
         })
@@ -29,20 +42,20 @@ function (angular, app, _) {
     $scope.import = function(dashName) {
       delete $scope.error;
 
-      datasourceSrv.default.loadDashboard(dashName)
+      $scope.datasource.loadDashboard(dashName)
         .then(function(results) {
           if (!results.data || !results.data.state) {
             throw { message: 'no dashboard state received from graphite' };
           }
 
-          graphiteToGrafanaTranslator(results.data.state);
+          graphiteToGrafanaTranslator(results.data.state, $scope.datasource.name);
         })
         .then(null, function(err) {
           $scope.error = err.message || 'Failed to import dashboard';
         });
     };
 
-    function graphiteToGrafanaTranslator(state) {
+    function graphiteToGrafanaTranslator(state, datasource) {
       var graphsPerRow = 2;
       var rowHeight = 300;
       var rowTemplate;
@@ -72,7 +85,8 @@ function (angular, app, _) {
           type: 'graphite',
           span: 12 / graphsPerRow,
           title: graph[1].title,
-          targets: []
+          targets: [],
+          datasource: datasource
         };
 
         _.each(graph[1].target, function(target) {

@@ -3,6 +3,7 @@ module.exports = function(config) {
     dev: {
       options: {
         port: 5601,
+        hostname: '*',
         base: config.srcDir,
         keepalive: true
       }

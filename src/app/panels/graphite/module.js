@@ -84,7 +84,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','short', 'ms'
+       * y_formats :: 'none','bytes','bits','short', 'ms'
        */
       y_formats    : ['short', 'short'],
       /** @scratch /panels/histogram/5
@@ -199,7 +199,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     }
 
     $scope.init = function() {
-      $scope.initPanel($scope);
+      $scope.initBaseController(this, $scope);
 
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
@@ -261,7 +261,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return $scope.datasource.query(graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
+          $scope.panelMeta.loading = false;
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.inspector.error = err;
+          $scope.render([]);
         });
     };
 
