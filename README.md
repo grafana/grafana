@@ -54,7 +54,9 @@ To run from master:
 - Start a web server in src folder
 - Or create a optimized & minified build:
  - npm install (requires nodejs)
- - grunt build
+ - grunt build (requires grunt-cli)
+
+If you use ansible for provisioning and deployment [ansible-grafana](https://github.com/bobrik/ansible-grafana) should get you started.
 
 When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
 an introduction on how to use Grafana and/or watch [this video](https://www.youtube.com/watch?v=OUvJamHeMpw) for a guide in creating a new dashboard and for creating
