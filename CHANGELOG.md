@@ -1,13 +1,14 @@
 # vNext
-- More graphite functions
+- Text panel now accepts html (for links to other dashboards, etc) (Issue #236)
 - Fix for Text panel, now changes take effect directly (Issue #251)
 - Fix when adding functions without params that did not cause graph to update (Issue #267)
 - Graphite errors are now much easier to see and troubleshoot with the new inspector (Issue #265)
 - Use influxdb aliases to distinguish between multiple columns (Issue #283)
 - Correction to ms axis formater, now formats days correctly. (Issue #189)
 - Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
+- More graphite functions
 
-# 1.5.2 (2013-03-24)
+# 1.5.2 (2014-03-24)
 ### New Features and improvements
 - Support for second optional params for functions like aliasByNode (Issue #167). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
 - More functions added to InfluxDB query editor (Issue #218)
@@ -20,7 +21,7 @@
 
 The zip files now contains a sub folder with project name and version prefix. (Issue #209)
 
-# 1.5.1 (2013-03-10)
+# 1.5.1 (2014-03-10)
 ### Fixes
 - maxDataPoints must be an integer #184 (thanks @frejsoya for fixing this)
 
@@ -29,7 +30,7 @@ For people who are find Grafana slow for large time spans or high resolution met
 Read this for more info:
 [Performance for large time spans](https://github.com/torkelo/grafana/wiki/Performance-for-large-time-spans)
 
-# 1.5.0 (2013-03-09)
+# 1.5.0 (2014-03-09)
 ### New Features and improvements
 - New function editor [video demo](http://youtu.be/I90WHRwE1ZM) (Issue #178)
 - Links to function documentation from function editor (Issue #3)
@@ -48,7 +49,7 @@ Read this for more info:
 - Basic Auth fix (Issue #152)
 - Fix to annotations with graphite source & null values (Issue #138)
 
-# 1.4.0 (2013-02-21)
+# 1.4.0 (2014-02-21)
 ### New Features
 - #44 Annotations! Required a lot of work to get right. Read wiki article for more info. Supported annotations data sources are graphite metrics and graphite events. Support for more will be added in the future!
 - #35 Support for multiple graphite servers! (Read wiki article for more)
@@ -66,7 +67,7 @@ Read this for more info:
 - #104 Improvement to graphite target editor, select wildcard now gives you a "select metric" link for the next node.
 - #105 Added zero as a possible node value in groupByAlias function
 
-# 1.3.0 (2013-02-13)
+# 1.3.0 (2014-02-13)
 ### New features or improvements
 - #86 Dashboard tags and search (see wiki article for details)
 - #54 Enhancement to filter / template. "Include All" improvement
@@ -79,7 +80,7 @@ Read this for more info:
 - #85 Added all parameters to summarize function
 - #83 Stack as percent should now work a lot better!
 
-# 1.2.0 (2013-02-10)
+# 1.2.0 (2014-02-10)
 ### New features
 - #70 Grid Thresholds (warning and error regions or lines in graph)
 - #72 Added an example of a scripted dashboard and a short wiki article documenting scripted dashboards.
@@ -93,7 +94,7 @@ Read this for more info:
 - #67 Allow decimal input for scale function
 - #68 Bug when trying to open dashboard while in edit mode
 
-# 1.1.0 (2013-02-06)
+# 1.1.0 (2014-02-06)
 ### New features:
 
 - #22 Support for native graphite png renderer, does not support click and select zoom yet
@@ -111,24 +112,24 @@ Read this for more info:
 
 Thanks to everyone who contributed fixes and provided feedback :+1:
 
-# 1.0.4 (2013-01-24)
+# 1.0.4 (2014-01-24)
 - Fixes #28 - Relative time range caused 500 graphite error in some cases (thx rsommer for the fix)
 
-# 1.0.3 (2013-01-23)
+# 1.0.3 (2014-01-23)
 - #9 Add Y-axis format for milliseconds
 - #16 Add support for Basic Auth (use http://username:password@yourgraphitedomain.com)
 - #13 Relative time ranges now uses relative time ranges when issuing graphite query
 
-# 1.0.2 (2013-01-21)
+# 1.0.2 (2014-01-21)
 - Fixes #12, should now work ok without ElasticSearch
 
-# 1.0.1 (2013-01-21)
+# 1.0.1 (2014-01-21)
 - Resize fix
 - Improvements to drag & drop
 - Added a few graphite function definitions
 - Fixed duplicate panel bug
 - Updated default dashboard with welcome message and randomWalk graph
 
-# 1.0.0 (2013-01-19)
+# 1.0.0 (2014-01-19)
 
 First public release

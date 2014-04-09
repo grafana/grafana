@@ -27,7 +27,7 @@ function (angular, app, _) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-      $scope.filterList = filterSrv.list;
+      $scope.filterSrv = filterSrv;
     };
 
     $scope.remove = function(filter) {
@@ -40,7 +40,7 @@ function (angular, app, _) {
     };
 
     $scope.applyFilterToOtherFilters = function(updatedFilter) {
-      _.each($scope.filterList, function(filter) {
+      _.each(filterSrv.list, function(filter) {
         if (filter === updatedFilter) {
           return;
         }
