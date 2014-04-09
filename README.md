@@ -67,6 +67,7 @@ Header set Access-Control-Allow-Origin "*"
 Header set Access-Control-Allow-Methods "GET, OPTIONS"
 Header set Access-Control-Allow-Headers "origin, authorization, accept"
 ```
+Note that using "\*" leaves your graphite instance quite open so you might want to consider using "http://my.graphite-dom.ain" in place of "\*"
 
 If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS, origin
 (no wildcards are allowed in this case) and add Access-Control-Allow-Credentials. This looks like the following for Apache:
