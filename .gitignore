@@ -4,3 +4,4 @@ dist
 web.config
 config.js
 *.sublime-workspace
+*~

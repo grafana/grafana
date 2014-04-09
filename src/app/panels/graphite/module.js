@@ -321,7 +321,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         if (last - from < -10000) {
           $scope.datapointsOutside = true;
         }
-
         $scope.datapointsCount += datapoints.length;
       }
 
