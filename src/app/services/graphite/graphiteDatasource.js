@@ -37,10 +37,13 @@ function (angular, _, $, config, kbn, moment) {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
         }
 
+        /// workaround for a graphite-web bug:  the format=json parameter is ignored when using POST
+        // -- bruce@lyft.com Thu Apr 10 14:48:14 PDT 2014
         return this.doGraphiteRequest({
-          method: 'POST',
-          url: '/render',
-          data: params.join('&'),
+          method: 'GET',
+          url: '/render?' + params.join('&'),
+          // method: 'POST',
+          //data: params.join('&'),
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           }
