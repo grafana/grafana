@@ -87,6 +87,16 @@ define([
     this.setTime = function(time) {
       _.extend(self.time, time);
 
+      // disable refresh if we have an absolute time
+      if (time.to !== 'now') {
+        self.old_refresh = dashboard.current.refresh;
+        dashboard.set_interval(false);
+      }
+      else if (self.old_refresh && self.old_refresh !== dashboard.current.refresh) {
+        dashboard.set_interval(self.old_refresh);
+        self.old_refresh = null;
+      }
+
       $timeout(function(){
         dashboard.refresh();
       },0);

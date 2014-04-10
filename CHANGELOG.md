@@ -7,6 +7,7 @@
 - Correction to ms axis formater, now formats days correctly. (Issue #189)
 - Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
 - Browser page title is now Grafana - {{dashboard title}} (Issue #294)
+- Disable auto refresh zooming in (every time you change to an absolute time range), refresh will be restored when you change time range back to relative (Issue #282)
 - More graphite functions
 
 # 1.5.2 (2014-03-24)
