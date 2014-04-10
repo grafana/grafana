@@ -6,6 +6,7 @@
 - Use influxdb aliases to distinguish between multiple columns (Issue #283)
 - Correction to ms axis formater, now formats days correctly. (Issue #189)
 - Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
+- Browser page title is now Grafana - {{dashboard title}} (Issue #294)
 - More graphite functions
 
 # 1.5.2 (2014-03-24)
