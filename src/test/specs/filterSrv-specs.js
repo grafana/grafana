@@ -7,10 +7,12 @@ define([
 
   describe('filterSrv', function() {
     var _filterSrv;
+    var _dashboard;
 
     beforeEach(module('kibana.services'));
     beforeEach(module(function($provide){
-      $provide.value('dashboard', dashboardMock.create());
+      _dashboard = dashboardMock.create();
+      $provide.value('dashboard', _dashboard);
     }));
 
     beforeEach(inject(function(filterSrv) {
@@ -53,6 +55,23 @@ define([
         var time = _filterSrv.timeRange(true);
         expect(_.isDate(time.from)).to.be(true);
         expect(_.isDate(time.to)).to.be(true);
+      });
+    });
+
+    describe('setTime', function() {
+      it('should return disable refresh for absolute times', function() {
+        _dashboard.current.refresh = true;
+
+        _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
+        expect(_dashboard.current.refresh).to.be(false);
+      });
+
+      it('should restore refresh after relative time range is set', function() {
+        _dashboard.current.refresh = true;
+        _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
+        expect(_dashboard.current.refresh).to.be(false);
+        _filterSrv.setTime({from: '2011-01-01', to: 'now' });
+        expect(_dashboard.current.refresh).to.be(true);
       });
     });
 
