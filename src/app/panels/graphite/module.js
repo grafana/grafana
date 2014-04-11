@@ -140,7 +140,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       stack         : false,
       /** @scratch /panels/histogram/3
-       * legend:: Display the legond
+       * legend:: Display the legend
        */
       legend: {
         show: true, // disable/enable legend
