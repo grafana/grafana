@@ -347,7 +347,7 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.stack ? '&areaMode=stacked' : '';
           url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
           url += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
-          url += scope.panel.legend ? '' : '&hideLegend=true';
+          url += scope.panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
           url += scope.panel.grid.min !== null ? '&yMin=' + scope.panel.grid.min : '';
           url += scope.panel.grid.max !== null ? '&yMax=' + scope.panel.grid.max : '';
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
