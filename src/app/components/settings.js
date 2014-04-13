@@ -24,7 +24,7 @@ function (_, crypto) {
       default_route                 : '/dashboard/file/default.json',
       grafana_index                 : 'grafana-dash',
       elasticsearch_all_disabled    : false,
-      timezoneOffset                : 'auto',
+      timezoneOffset                : null,
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
@@ -57,16 +57,6 @@ function (_, crypto) {
           default: true
         }
       };
-    }
-
-    if (settings.timezoneOffset === 'auto' )
-    {
-      //this hack is to deal with graphites poor tz support. It doesn't like
-      // DST, so we're gonna make a january (non-dst) date and get its offset
-      var nonDSTDate = new Date(new Date().getFullYear(),0,1);
-
-      //given "Tue Apr 08 2014 08:24:50 GMT-0400 (EDT)", get "-0400"
-      settings.timezoneOffset = nonDSTDate.toString().split(' ')[5].substring(3);
     }
 
     _.each(settings.datasources, function(datasource, key) {
