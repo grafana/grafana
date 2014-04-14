@@ -28,6 +28,9 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
+      _.each(filterSrv.list, function(filter) {
+        $scope.applyFilter(filter);
+      });
     };
 
     $scope.remove = function(filter) {
