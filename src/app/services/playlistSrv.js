@@ -67,6 +67,7 @@ function (angular, _, kbn) {
 
       timerInstance = setInterval(function() {
         $rootScope.$apply(function() {
+          angular.element(window).unbind('resize');
           $location.path(dashboards[index % dashboards.length].url);
           index++;
         });
