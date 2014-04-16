@@ -18,7 +18,8 @@ module.exports = function(config) {
         'dist/*',
         'sample/*',
         '<%= srcDir %>/vendor/*',
-        '<%= srcDir %>/app/panels/*/{lib,leaflet}/*'
+        '<%= srcDir %>/app/panels/*/{lib,leaflet}/*',
+        '<%= srcDir %>/app/dashboards/*'
       ]
     }
   };
