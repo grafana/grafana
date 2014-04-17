@@ -1,4 +1,5 @@
-# 1.5.3
+# 1.5.3 (2014-04-17)
+- Add support for async scripted dashboards (Issue #274)
 - Text panel now accepts html (for links to other dashboards, etc) (Issue #236)
 - Fix for Text panel, now changes take effect directly (Issue #251)
 - Fix when adding functions without params that did not cause graph to update (Issue #267)
