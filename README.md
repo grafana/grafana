@@ -95,7 +95,6 @@ Header set Access-Control-Allow-Credentials true
 - Use elasticsearch to search for metrics
 - Improve template support
 - Annotate graph by querying ElasticSearch for events (or other event sources)
-- Add support for other time series databases like InfluxDB
 
 # Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
