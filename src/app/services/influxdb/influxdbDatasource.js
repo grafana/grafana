@@ -13,7 +13,7 @@ function (angular, _, kbn) {
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
       this.editorSrc = 'app/partials/influxdb/editor.html';
-      this.url = datasource.url;
+      this.urls = datasource.urls;
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
@@ -26,78 +26,129 @@ function (angular, _, kbn) {
     InfluxDatasource.prototype.query = function(options) {
 
       var promises = _.map(options.targets, function(target) {
-        if (!target.series || !target.column || target.hide) {
+        var query;
+
+        if (target.hide || !((target.series && target.column) || target.query)) {
           return [];
         }
 
-        var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] where [[timeFilter]]" + 
-          " group by time([[interval]]) order asc";
+        var timeFilter = getTimeFilter(options);
 
-        var templateData = {
-          series: target.series,
-          column: target.column,
-          func: target.function,
-          timeFilter: getTimeFilter(options),
-          interval: target.interval || options.interval
-        };
+        if (target.rawQuery) {
+          query = target.query;
+          query = query.replace(";", "");
+          var queryElements = query.split(" ");
+          var lowerCaseQueryElements = query.toLowerCase().split(" ");
+          var whereIndex = lowerCaseQueryElements.indexOf("where");
+          var groupByIndex = lowerCaseQueryElements.indexOf("group");
+          var orderIndex = lowerCaseQueryElements.indexOf("order");
 
-        var query = _.template(template, templateData, this.templateSettings);
+          if (whereIndex !== -1) {
+            queryElements.splice(whereIndex+1, 0, timeFilter, "and");
+          }
+          else {
+            if (groupByIndex !== -1) {
+              queryElements.splice(groupByIndex, 0, "where", timeFilter);
+            }
+            else if (orderIndex !== -1) {
+              queryElements.splice(orderIndex, 0, "where", timeFilter);
+            }
+            else {
+              queryElements.push("where");
+              queryElements.push(timeFilter);
+            }
+          }
+
+          query = queryElements.join(" ");
+
+        }
+        else {
+          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] where [[timeFilter]]" +
+                         " group by time([[interval]]) order asc";
+
+          var templateData = {
+            series: target.series,
+            column: target.column,
+            func: target.function,
+            timeFilter: timeFilter,
+            interval: target.interval || options.interval
+          };
+
+          query = _.template(template, templateData, this.templateSettings);
+          target.query = query;
+        }
 
         return this.doInfluxRequest(query).then(handleInfluxQueryResponse);
 
       }, this);
 
       return $q.all(promises).then(function(results) {
-
         return { data: _.flatten(results) };
       });
 
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from ' + seriesName + ' limit 1').then(function(results) {
-        console.log('response!');
-        if (!results.data) {
+      return this.doInfluxRequest('select * from ' + seriesName + ' limit 1').then(function(data) {
+        if (!data) {
           return [];
         }
 
-        return results.data[0].columns;
+        return data[0].columns;
       });
     };
 
     InfluxDatasource.prototype.listSeries = function() {
-      return this.doInfluxRequest('list series').then(function(results) {
-        if (!results.data) {
-          return [];
-        }
-
-        return _.map(results.data, function(series) {
+      return this.doInfluxRequest('list series').then(function(data) {
+        return _.map(data, function(series) {
           return series.name;
         });
       });
     };
 
+    function retry(deferred, callback, delay) {
+      return callback().then(undefined, function(reason) {
+        if (reason.status !== 0) {
+          deferred.reject(reason);
+        }
+        setTimeout(function() {
+          return retry(deferred, callback, Math.min(delay * 2, 30000));
+        }, delay);
+      });
+    }
+
     InfluxDatasource.prototype.doInfluxRequest = function(query) {
-      var params = {
-        u: this.username,
-        p: this.password,
-        q: query
-      };
+      var _this = this;
+      var deferred = $q.defer();
 
-      var options = {
-        method: 'GET',
-        url:    this.url + '/series',
-        params: params,
-      };
+      retry(deferred, function() {
+        var currentUrl = _this.urls.shift();
+        _this.urls.push(currentUrl);
 
-      console.log(query);
-      return $http(options);
+        var params = {
+          u: _this.username,
+          p: _this.password,
+          q: query
+        };
+
+        var options = {
+          method: 'GET',
+          url:    currentUrl + '/series',
+          params: params,
+        };
+
+        return $http(options).success(function (data) {
+          deferred.resolve(data);
+        });
+      }, 10);
+
+      return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(results) {
+    function handleInfluxQueryResponse(data) {
       var output = [];
 
-      _.each(results.data, function(series) {
+      _.each(data, function(series) {
         var timeCol = series.columns.indexOf('time');
 
         _.each(series.columns, function(column, index) {
