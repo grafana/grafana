@@ -24,8 +24,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from),
-          until: this.translateTime(options.range.to),
+          from: this.translateTime(options.range.from, 'round-down'),
+          until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
           maxDataPoints: options.maxDataPoints,
@@ -68,7 +68,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date) {
+    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
@@ -84,6 +84,21 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       date = moment.utc(date);
+
+      if (rounding === 'round-up') {
+        if (date.get('s')) {
+          date.add('m', 1);
+        }
+      }
+      else if (rounding === 'round-down') {
+        // graphite' s from filter is exclusive
+        // here we step back one minute in order
+        // to guarantee that we get all the data that
+        // exists for the specified range
+        if (date.get('s')) {
+          date.subtract('m', 1);
+        }
+      }
 
       if (dashboard.current.timezone === 'browser') {
         date = date.local();
