@@ -32,7 +32,8 @@ function (angular, app, _, require) {
   module.controller('text', function($scope) {
 
     $scope.panelMeta = {
-      description : "A static text panel that can use plain text, markdown, or HTML. Additionally, it is possible to write grafana plug-ins."
+      description : "A static text panel that can use plain text, markdown, or HTML. " +
+        "Additionally, it is possible to write grafana plug-ins."
     };
 
     // Set and populate defaults
