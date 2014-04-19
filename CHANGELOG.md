@@ -1,6 +1,7 @@
 # vNext
 - Added rounding for graphites from and to time range filters
   for very short absolute ranges (Issue #320)
+- Added plugin mode to text panel
 
 # 1.5.3 (2014-04-17)
 - Add support for async scripted dashboards (Issue #274)
