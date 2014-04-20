@@ -11,17 +11,16 @@
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
           <li class="dropdown">
-            <a  class="pointer dropdown-toggle"
-                data-toggle="dropdown"
-                tabindex="1">
+            <a class="pointer dropdown-toggle"
+               data-toggle="dropdown"
+               tabindex="1">
               <i class="icon-cog"></i>
             </a>
             <ul class="dropdown-menu pull-right" role="menu">
               <li role="menuitem">
-                <a  tabindex="1"
-                    ng-click="duplicate()">
-                  Duplicate
-                </a>
+                <a tabindex="1" ng-click="duplicate()">Duplicate</a>
+                <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Show Query</a>
+                <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Hide Query</a>
               </li>
             </ul>
           </li>
@@ -34,19 +33,30 @@
 
         <ul class="grafana-target-controls-left">
           <li>
-            <a  class="grafana-target-segment"
-                ng-click="target.hide = !target.hide; get_data();"
-                role="menuitem">
+            <a class="grafana-target-segment"
+               ng-click="target.hide = !target.hide; get_data();"
+               role="menuitem">
               <i class="icon-eye-open"></i>
             </a>
           </li>
         </ul>
 
+
         <ul class="grafana-segment-list" role="menu">
-          <li class="grafana-target-segment">
+          <li ng-show="target.rawQuery">
+            <input type="text"
+                   class="input-large grafana-target-segment-input"
+                   style="width:843px;"
+                   ng-model="target.query"
+                   placeholder="select ..."
+                   data-min-length=0 data-items=100
+                   ng-blur="get_data()">
+          </li>
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             from series
           </li>
-          <li>
+
+          <li ng-hide="target.rawQuery">
             <input type="text"
                    class="input-medium grafana-target-segment-input"
                    ng-model="target.series"
@@ -54,13 +64,14 @@
                    bs-typeahead="listSeries"
                    placeholder="series name"
                    data-min-length=0 data-items=100
-                   ng-blur="seriesBlur()"
-                   >
+                   ng-blur="seriesBlur()">
           </li>
-          <li class="grafana-target-segment">
+
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             select
           </li>
-          <li>
+
+          <li ng-hide="target.rawQuery">
             <input type="text"
                    class="input-medium grafana-target-segment-input"
                    ng-model="target.column"
@@ -70,20 +81,23 @@
                    data-min-length=0
                    ng-blur="get_data()">
           </li>
-          <li class="grafana-target-segment">
+
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             function
           </li>
-          <li>
+
+          <li ng-hide="target.rawQuery">
             <select class="input-medium grafana-target-segment-input"
                     ng-change="get_data()"
                     ng-model="target.function"
                     ng-options="f for f in functions" ></select>
           </li>
-          </li>
-          <li class="grafana-target-segment">
+
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             group by time
           </li>
-          <li>
+
+          <li ng-hide="target.rawQuery">
             <input type="text"
                    class="input-mini grafana-target-segment-input"
                    ng-model="target.interval"
