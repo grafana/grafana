@@ -22,7 +22,7 @@
                 <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Show Query</a>
                 <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Hide Query</a>
               </li>
-            </ul>
+           </ul>
           </li>
           <li>
             <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
@@ -45,8 +45,7 @@
         <ul class="grafana-segment-list" role="menu">
           <li ng-show="target.rawQuery">
             <input type="text"
-                   class="input-large grafana-target-segment-input"
-                   style="width:843px;"
+                   class="input-large grafana-target-segment-input span10"
                    ng-model="target.query"
                    placeholder="select ..."
                    data-min-length=0 data-items=100

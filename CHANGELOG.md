@@ -1,4 +1,5 @@
 # vNext
+- InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
 - Added rounding for graphites from and to time range filters
   for very short absolute ranges (Issue #320)
 
