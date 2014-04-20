@@ -37,6 +37,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - [Scripted dashboards](https://github.com/torkelo/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
 - Flexible [time range controls](https://github.com/torkelo/grafana/wiki/Time-range-controls)
 - [Dashboard playlists](https://github.com/torkelo/grafana/wiki/Dashboard-playlist)
+- Write plug-ins inside the dashboard to augment grafana's functionality (see src/app/dashboards/plugin.json for a simple example)
 
 ### InfluxDB
 - [Use InfluxDB](https://github.com/torkelo/grafana/wiki/InfluxDB) as metric datasource

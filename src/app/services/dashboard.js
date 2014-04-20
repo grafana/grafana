@@ -245,7 +245,10 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     var renderTemplate = function(json,params) {
       var _r;
-      _.templateSettings = {interpolate : /\{\{(.+?)\}\}/g};
+      /* iterpolate with 3 curly braces so that it doesn't conflict with angular.js HTML placeholders
+       * (2 curly braces) when using the plugin mode of the text panel.
+       */
+      _.templateSettings = {interpolate : /\{\{\{(.+?)\}\}\}/g};
       var template = _.template(json);
       var rendered = template({ARGS:params});
       try {

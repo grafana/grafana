@@ -7,4 +7,6 @@
   </p>
   <p ng-show="panel.mode == 'html'" ng-bind-html-unsafe="panel.content">
   </p>
+  <p ng-show="panel.mode == 'plugin'" compile-data script="{{panel.script}}" template="{{panel.content}}">
+  </p>
 </div>
