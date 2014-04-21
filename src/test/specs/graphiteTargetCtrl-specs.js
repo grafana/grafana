@@ -1,11 +1,9 @@
 define([
-  'mocks/dashboard-mock',
-  'underscore',
-  'services/filterSrv'
-], function(dashboardMock, _) {
+], function() {
+  'use strict';
 
   describe('graphiteTargetCtrl', function() {
-    var _filterSrv;
+    var _targetCtrl;
 
     beforeEach(module('kibana.services'));
     beforeEach(module(function($provide){
@@ -20,8 +18,6 @@ define([
 
     describe('init', function() {
       beforeEach(function() {
-        _filterSrv.add({ name: 'test', current: { value: 'oogle' } });
-        _filterSrv.init();
       });
     });
   });

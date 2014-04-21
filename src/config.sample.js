@@ -36,9 +36,16 @@ function (Settings) {
     default_route: '/dashboard/file/default.json',
 
     /**
-     * If your graphite server has another timezone than you & users browsers specify the offset here
-     * Example: "-0500" (for UTC - 5 hours)
+     * If you experiance problems with zoom, it is probably caused by timezone diff between
+     * your browser and the graphite-web application. timezoneOffset setting can be used to have Grafana
+     * translate absolute time ranges to the graphite-web timezone.
+     * Example:
+     *   If TIME_ZONE in graphite-web config file local_settings.py is set to America/New_York, then set
+     *   timezoneOffset to "-0500" (for UTC - 5 hours)
+     * Example:
+     *   If TIME_ZONE is set to UTC, set this to "0000"
      */
+
     timezoneOffset: null,
 
     grafana_index: "grafana-dash",

@@ -9,9 +9,11 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
+          dest: '<%= pkg.name %>/',
         },
         {
           expand: true,
+          dest: '<%= pkg.name %>/',
           src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
         }
       ]
@@ -25,10 +27,12 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
+          dest: '<%= pkg.name %>/',
         },
         {
           expand: true,
           src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
+          dest: '<%= pkg.name %>/',
         }
       ]
     },
@@ -41,10 +45,12 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },
         {
           expand: true,
           src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         }
       ]
     },
@@ -57,10 +63,12 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= destDir %>',
           src: ['**/*'],
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },
         {
           expand: true,
           src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         }
       ]
     }

@@ -8,7 +8,6 @@ require.config({
     kbn:                   'components/kbn',
 
     settings:              'components/settings',
-    crypto:                '../vendor/crypto.min',
     underscore:            'components/underscore.extended',
     'underscore-src':      '../vendor/underscore',
 
@@ -29,7 +28,6 @@ require.config({
     jquery:                '../vendor/jquery/jquery-1.8.0',
 
     bootstrap:             '../vendor/bootstrap/bootstrap',
-    bindonce:              '../vendor/angular/bindonce',
 
     'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
 
@@ -106,6 +104,7 @@ require([
   'angular',
   'angularMocks',
 ], function(angular) {
+  'use strict';
 
   angular.module('kibana', []);
   angular.module('kibana.services', []);
@@ -115,6 +114,7 @@ require([
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
+    'specs/kbn-format-specs',
   ], function () {
     window.__karma__.start();
   });

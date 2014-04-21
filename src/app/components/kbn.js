@@ -430,28 +430,75 @@ function($, _, moment) {
       ext = " B";
       break;
     case 1:
-      ext = " KB";
+      ext = " KiB";
       break;
     case 2:
-      ext = " MB";
+      ext = " MiB";
       break;
     case 3:
-      ext = " GB";
+      ext = " GiB";
       break;
     case 4:
-      ext = " TB";
+      ext = " TiB";
       break;
     case 5:
-      ext = " PB";
+      ext = " PiB";
       break;
     case 6:
-      ext = " EB";
+      ext = " EiB";
       break;
     case 7:
-      ext = " ZB";
+      ext = " ZiB";
       break;
     case 8:
-      ext = " YB";
+      ext = " YiB";
+      break;
+    }
+
+    return (size.toFixed(decimals) + ext);
+  };
+
+  kbn.bitFormat = function(size, decimals) {
+    var ext, steps = 0;
+
+    if(_.isUndefined(decimals)) {
+      decimals = 2;
+    } else if (decimals === 0) {
+      decimals = undefined;
+    }
+
+    while (Math.abs(size) >= 1024) {
+      steps++;
+      size /= 1024;
+    }
+
+    switch (steps) {
+    case 0:
+      ext = " b";
+      break;
+    case 1:
+      ext = " Kib";
+      break;
+    case 2:
+      ext = " Mib";
+      break;
+    case 3:
+      ext = " Gib";
+      break;
+    case 4:
+      ext = " Tib";
+      break;
+    case 5:
+      ext = " Pib";
+      break;
+    case 6:
+      ext = " Eib";
+      break;
+    case 7:
+      ext = " Zib";
+      break;
+    case 8:
+      ext = " Yib";
       break;
     }
 
@@ -515,6 +562,10 @@ function($, _, moment) {
       return function(val) {
         return kbn.byteFormat(val, decimals);
       };
+    case 'bits':
+      return function(val) {
+        return kbn.bitFormat(val, decimals);
+      };
     case 'ms':
       return function(val) {
         return kbn.msFormat(val, decimals);
@@ -546,18 +597,12 @@ function($, _, moment) {
     else if (size < 86400000) {
       return (size / 3600000).toFixed(decimals) + " hour";
     }
-    // Less than one week, devide in days
-    else if (size < 604800000) {
+    // Less than one year, devide in days
+    else if (size < 31536000000) {
       return (size / 86400000).toFixed(decimals) + " day";
     }
-    // Less than one month, devide in weeks
-    else if (size < 2.62974e9) {
-      return (size / 604800000).toFixed(decimals) + " week";
-    }
-    // Less than one year, devide in weeks
-    else if (size < 3.15569e10) {
-      return (size / 2.62974e9).toFixed(decimals) + " year";
-    }
+
+    return (size / 31536000000).toFixed(decimals) + " year";
   };
 
   kbn.microsFormat = function(size, decimals) {

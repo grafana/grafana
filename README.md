@@ -46,7 +46,7 @@ Grafana is very easy to install. It is a client side web app with no backend. An
 
 # Installation
 - Download and extract the [latest release](https://github.com/torkelo/grafana/releases).
-- Edit config.js, then change graphiteUrl and elasticsearch to point to the correct urls. The urls entered here must be reachable by your browser.
+- Rename `config.sample.js` to `config.js`, then change `graphiteUrl` and `elasticsearch` to point to the correct urls. The urls entered here must be reachable by your browser.
 - Point your browser to the installation.
 
 To run from master:
@@ -54,7 +54,9 @@ To run from master:
 - Start a web server in src folder
 - Or create a optimized & minified build:
  - npm install (requires nodejs)
- - grunt build
+ - grunt build (requires grunt-cli)
+
+If you use ansible for provisioning and deployment [ansible-grafana](https://github.com/bobrik/ansible-grafana) should get you started.
 
 When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
 an introduction on how to use Grafana and/or watch [this video](https://www.youtube.com/watch?v=OUvJamHeMpw) for a guide in creating a new dashboard and for creating
@@ -67,6 +69,7 @@ Header set Access-Control-Allow-Origin "*"
 Header set Access-Control-Allow-Methods "GET, OPTIONS"
 Header set Access-Control-Allow-Headers "origin, authorization, accept"
 ```
+Note that using "\*" leaves your graphite instance quite open so you might want to consider using "http://my.graphite-dom.ain" in place of "\*"
 
 If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS, origin
 (no wildcards are allowed in this case) and add Access-Control-Allow-Credentials. This looks like the following for Apache:
@@ -92,7 +95,6 @@ Header set Access-Control-Allow-Credentials true
 - Use elasticsearch to search for metrics
 - Improve template support
 - Annotate graph by querying ElasticSearch for events (or other event sources)
-- Add support for other time series databases like InfluxDB
 
 # Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
