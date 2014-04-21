@@ -130,7 +130,7 @@ function (angular, _, kbn) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query, name) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, label) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -151,7 +151,7 @@ function (angular, _, kbn) {
         };
 
         return $http(options).success(function (data) {
-          data.label = name;
+          data.label = label;
           deferred.resolve(data);
         });
       }, 10);
