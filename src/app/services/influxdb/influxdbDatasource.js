@@ -72,17 +72,19 @@ function (angular, _, kbn) {
         }
         else {
           var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
-                         "where [[condition]] [[timeFilter]]" +
-                         " group by time([[interval]]) order asc";
-
-          target.condition_joined = (target.condition !== undefined ? target.condition + ' AND ' : '');
+                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
+                         "group by time([[interval]]) order asc";
 
           var templateData = {
             series: target.series,
             column: target.column,
             func: target.function,
             timeFilter: timeFilter,
-            interval: target.interval || options.interval
+            interval: target.interval || options.interval,
+            condition_add: target.condiction_filter ? target.condition_add : '',
+            condition_key: target.condiction_filter ? target.condition_key : '',
+            condition_op: target.condiction_filter ? target.condition_op : '',
+            condition_value: target.condiction_filter ? target.condition_value: ''
           };
 
           query = _.template(template, templateData, this.templateSettings);
@@ -158,12 +160,6 @@ function (angular, _, kbn) {
 
     function handleInfluxQueryResponse(data) {
       var output = [];
-
-      var getKey = function (str) {
-        var key1 = str.split(' where ');
-        var key2 = key1[1].split(' AND ');
-        return (key2[0] !== key1[1] ? '.' + key2[0] : '');
-      }
 
       _.each(data, function(series) {
         var timeCol = series.columns.indexOf('time');
