@@ -32,15 +32,6 @@ function (angular, _, kbn) {
           return [];
         }
 
-        var templateData = {
-          series: target.series,
-          column: target.column,
-          func: target.function,
-          condition: target.condition_joined,
-          timeFilter: getTimeFilter(options),
-          interval: target.interval || options.interval
-        };
-
         var timeFilter = getTimeFilter(options);
 
         if (target.rawQuery) {
