@@ -91,7 +91,7 @@ function (angular, _, kbn) {
           target.query = query;
         }
 
-        return this.doInfluxRequest(query).then(handleInfluxQueryResponse);
+        return this.doInfluxRequest(query, target.label).then(handleInfluxQueryResponse);
 
       }, this);
 
@@ -130,7 +130,7 @@ function (angular, _, kbn) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, name) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -151,6 +151,7 @@ function (angular, _, kbn) {
         };
 
         return $http(options).success(function (data) {
+          data.label = name;
           deferred.resolve(data);
         });
       }, 10);
@@ -169,9 +170,7 @@ function (angular, _, kbn) {
             return;
           }
 
-          console.log("series:"+series.name + ": "+series.points.length + " points");
-
-          var target = series.name + "." + column + getKey(results.config.params.q);
+          var target = data.label || series.name + "." + column;
           var datapoints = [];
 
           for(var i = 0; i < series.points.length; i++) {

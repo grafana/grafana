@@ -52,6 +52,18 @@
                    ng-blur="get_data()">
           </li>
           <li class="grafana-target-segment" ng-hide="target.rawQuery">
+            label
+          </li>
+
+          <li ng-hide="target.rawQuery">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.label"
+                   spellcheck='false'
+                   placeholder="label"
+                   ng-blur="seriesBlur()">
+          </li>
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             from series
           </li>
 
