@@ -18,6 +18,7 @@ function (angular) {
       $scope.rawQuery = false;
 
       $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last'];
+      $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
       $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
         $timeout($scope.get_data);
