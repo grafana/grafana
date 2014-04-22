@@ -52,12 +52,24 @@
                    ng-blur="get_data()">
           </li>
           <li class="grafana-target-segment" ng-hide="target.rawQuery">
+            label
+          </li>
+
+          <li ng-hide="target.rawQuery">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.label"
+                   spellcheck='false'
+                   placeholder="label"
+                   ng-blur="seriesBlur()">
+          </li>
+          <li class="grafana-target-segment" ng-hide="target.rawQuery">
             from series
           </li>
 
           <li ng-hide="target.rawQuery">
             <input type="text"
-                   class="input-medium grafana-target-segment-input"
+                   class="input-small grafana-target-segment-input"
                    ng-model="target.series"
                    spellcheck='false'
                    bs-typeahead="listSeries"
@@ -72,7 +84,7 @@
 
           <li ng-hide="target.rawQuery">
             <input type="text"
-                   class="input-medium grafana-target-segment-input"
+                   class="input-small grafana-target-segment-input"
                    ng-model="target.column"
                    placeholder="value column"
                    spellcheck='false'
@@ -84,14 +96,44 @@
           <li class="grafana-target-segment" ng-hide="target.rawQuery">
             function
           </li>
-
           <li ng-hide="target.rawQuery">
-            <select class="input-medium grafana-target-segment-input"
+            <select class="input-small grafana-target-segment-input"
                     ng-change="get_data()"
                     ng-model="target.function"
                     ng-options="f for f in functions" ></select>
           </li>
-
+          <li ng-hide="target.rawQuery">
+            <a class="grafana-target-segment"
+               ng-click="target.condiction_filter = !target.condiction_filter; get_data();"
+               role="menuitem">
+              <i class="icon-filter"></i>
+            </a>
+          </li>
+          <li ng-hide="target.rawQuery" ng-show="target.condiction_filter">
+            <select class="input-small grafana-target-segment-input"
+                    ng-change="get_data()"
+                    ng-model="target.condition_add"
+                    ng-options="f for f in ['and', 'or']" ></select>
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.condition_key"
+                   placeholder="key"
+                   spellcheck='false'
+                   bs-typeahead="listColumns"
+                   data-min-length=0
+                   ng-blur="get_data()">
+            <select class="input-small grafana-target-segment-input"
+                    ng-change="get_data()"
+                    ng-model="target.condition_op"
+                    ng-options="f for f in operators" ></select>
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.condition_value"
+                   placeholder="value"
+                   spellcheck='false'
+                   data-min-length=0
+                   ng-blur="get_data()">
+          </li>
           <li class="grafana-target-segment" ng-hide="target.rawQuery">
             group by time
           </li>
