@@ -60,25 +60,29 @@ function (angular, _, kbn) {
           }
 
           query = queryElements.join(" ");
-
         }
         else {
-          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] where [[timeFilter]]" +
-                         " group by time([[interval]]) order asc";
+          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
+                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
+                         "group by time([[interval]]) order asc";
 
           var templateData = {
             series: target.series,
             column: target.column,
             func: target.function,
             timeFilter: timeFilter,
-            interval: target.interval || options.interval
+            interval: target.interval || options.interval,
+            condition_add: target.condiction_filter ? target.condition_add : '',
+            condition_key: target.condiction_filter ? target.condition_key : '',
+            condition_op: target.condiction_filter ? target.condition_op : '',
+            condition_value: target.condiction_filter ? target.condition_value: ''
           };
 
           query = _.template(template, templateData, this.templateSettings);
           target.query = query;
         }
 
-        return this.doInfluxRequest(query).then(handleInfluxQueryResponse);
+        return this.doInfluxRequest(query, target.label).then(handleInfluxQueryResponse);
 
       }, this);
 
@@ -117,7 +121,7 @@ function (angular, _, kbn) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, label) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -138,6 +142,7 @@ function (angular, _, kbn) {
         };
 
         return $http(options).success(function (data) {
+          data.label = label;
           deferred.resolve(data);
         });
       }, 10);
@@ -156,9 +161,7 @@ function (angular, _, kbn) {
             return;
           }
 
-          console.log("series:"+series.name + ": "+series.points.length + " points");
-
-          var target = series.name + "." + column;
+          var target = data.label || series.name + "." + column;
           var datapoints = [];
 
           for(var i = 0; i < series.points.length; i++) {
