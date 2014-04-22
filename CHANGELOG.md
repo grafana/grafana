@@ -2,6 +2,8 @@
 - InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
 - Added rounding for graphites from and to time range filters
   for very short absolute ranges (Issue #320)
+- Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. (Closes #5)
+
 
 # 1.5.3 (2014-04-17)
 - Add support for async scripted dashboards (Issue #274)
