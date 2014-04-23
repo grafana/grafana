@@ -60,6 +60,12 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.last = {};
     this.availablePanels = [];
 
+    $rootScope.$on("$locationChangeStart", function(event, next, current) {
+      if (!self.confirm_dash_change()) {
+        event.preventDefault();
+      }
+    });
+
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
       self.current = {};
@@ -156,6 +162,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Set the current dashboard
       self.current = angular.copy(dashboard);
+      self.original = angular.copy(dashboard);
 
       // Delay this until we're sure that querySrv and filterSrv are ready
       $timeout(function() {
@@ -180,6 +187,22 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
 
       $rootScope.$emit('dashboard-loaded');
+
+      return true;
+    };
+
+   this.confirm_dash_change = function() {
+      if (!self.original) {
+        return true;
+      }
+
+      var current = angular.copy(self.current);
+      var currentJson = angular.toJson(current);
+      var originalJson = angular.toJson(self.original);
+
+      if (currentJson !== originalJson) {
+        return confirm('There are unsaved changes, are you sure you want to change dashboard?');
+      }
 
       return true;
     };
