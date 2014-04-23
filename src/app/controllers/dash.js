@@ -38,7 +38,7 @@ function (angular, $, config, _) {
       index: 0
     };
 
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'version: master' : grafanaVersion;
+    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
 
     // For moving stuff around the dashboard.
     $scope.panelMoveDrop = panelMove.onDrop;
