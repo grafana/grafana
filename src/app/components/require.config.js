@@ -47,6 +47,8 @@ require.config({
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
+
+    'aws':                    '../vendor/aws/s3'
   },
   shim: {
     underscore: {

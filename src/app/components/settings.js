@@ -25,6 +25,9 @@ function (_, crypto) {
       grafana_index                 : 'grafana-dash',
       elasticsearch_all_disabled    : false,
       timezoneOffset                : null,
+      s3_bucket                     : null,
+      aws_secret_key                : null,
+      aws_access_id                 : null
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

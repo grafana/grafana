@@ -32,6 +32,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {
+        save_s3:   false,
         save_gist: false,
         save_elasticsearch: true,
         save_local: true,

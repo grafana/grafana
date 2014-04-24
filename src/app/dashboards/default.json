@@ -1,90 +1,339 @@
 {
-  "title": "Welcome to Grafana!",
+  "title": "Production",
   "services": {
     "filter": {
       "list": [],
       "time": {
-        "from": "now-6h",
+        "from": "now-2d",
         "to": "now"
       }
     }
   },
   "rows": [
     {
-      "title": "Welcome to Grafana",
+      "title": "CPU",
       "height": "150px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
       "panels": [
         {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "loadingEditor": false,
-          "mode": "markdown",
-          "content": "####Thank you for trying out Grafana! \n\nGeneral documentation is found in the readme and in the wiki section of the [Github Project](https://github.com/torkelo/grafana). If you encounter any problem or have an idea for an improvement do not hesitate to open a github issue. \n\nTips: \n\n- Ctrl+S saves the current dashboard\n- Ctrl+F Opens the dashboard finder (searches elastic search)\n- Ctrl+H Hide/show row controls \n- Click and drag graph title to move panel (only works when row controls are enabled)\n\nIf you do not see a graph in the panel bellow the browser cannot access your graphite installation. Please make sure that the graphiteUrl property in config.js is correctly set and accessible.",
-          "style": {},
-          "title": "Welcome to Grafana"
-        }
-      ],
-      "notice": false
-    },
-    {
-      "title": "test",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "span": 12,
+          "span": 6,
           "editable": true,
           "type": "graphite",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
           "scale": 1,
-          "y_formats": ["short", "short"],
+          "y_formats": [
+            "short",
+            "short"
+          ],
           "grid": {
             "max": null,
-            "min": 0
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
           },
           "resolution": 100,
           "lines": true,
-          "fill": 1,
-          "linewidth": 2,
+          "fill": 0,
+          "linewidth": 1,
           "points": false,
           "pointradius": 5,
           "bars": false,
-          "stack": true,
-          "spyable": true,
-          "options": false,
-          "legend": true,
-          "interactive": true,
-          "legend_counts": true,
-          "timezone": "browser",
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
           "percentage": false,
           "zerofill": true,
           "nullPointMode": "connected",
           "steppedLine": false,
           "tooltip": {
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "query_as_alias": true
           },
           "targets": [
             {
-              "target": "randomWalk('random walk')"
-            },
-            {
-              "target": "randomWalk('random walk2')"
-            },
-            {
-              "target": "randomWalk('random walk3')"
+              "target": "stats.gauges.flow.production.*.processor.time"
             }
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "Graphite test"
+          "title": "CPU"
+        },
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "stats.gauges.flow.production.*.admin.errors"
+            },
+            {
+              "target": "stats.gauges.flow.production.web.admin.dotnet.*"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Errors"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Memory",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "stats.gauges.flow.production.*.memory.availableBytes"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Avail Memory"
+        },
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "stats.gauges.flow.production.*.memory.pagingFile.percentUsage"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Paging"
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "Disk",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "loadingEditor": false,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "stats.gauges.flow.production.*.disk.*.percentFreeSpace"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Disk Free %"
         }
       ],
       "notice": false
@@ -100,6 +349,11 @@
       "collapse": false,
       "notice": false,
       "enable": false
+    },
+    {
+      "type": "annotations",
+      "enable": false,
+      "annotations": []
     }
   ],
   "nav": [
@@ -136,6 +390,7 @@
     }
   ],
   "loader": {
+    "s3_save": true,
     "save_gist": false,
     "save_elasticsearch": true,
     "save_local": true,
@@ -143,11 +398,15 @@
     "save_temp": true,
     "save_temp_ttl_enable": true,
     "save_temp_ttl": "30d",
+    "load_s3": true,
     "load_gist": false,
     "load_elasticsearch": true,
     "load_elasticsearch_size": 20,
-    "load_local": false,
+    "load_local": true,
     "hide": false
   },
-  "refresh": false
+  "refresh": false,
+  "tags": [],
+  "timezone": "browser",
+  "hideControls": false
 }
