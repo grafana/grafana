@@ -19,6 +19,7 @@ function (angular, _, $, config, kbn, moment) {
       this.url = datasource.url;
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
+      this.render_method = datasource.render_method || 'POST';
     }
 
     GraphiteDatasource.prototype.query = function(options) {
@@ -37,14 +38,17 @@ function (angular, _, $, config, kbn, moment) {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
         }
 
-        return this.doGraphiteRequest({
-          method: 'POST',
-          url: '/render',
-          data: params.join('&'),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }
-        });
+        var httpOptions = { method: this.render_method, url: '/render' };
+
+        if (httpOptions.method === 'GET') {
+          httpOptions.url = httpOptions.url + '?' + params.join('&');
+        }
+        else {
+          httpOptions.data = params.join('&');
+          httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        }
+
+        return this.doGraphiteRequest(httpOptions);
       }
       catch(err) {
         return $q.reject(err);

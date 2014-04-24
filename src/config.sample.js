@@ -25,12 +25,21 @@ function (Settings) {
     graphiteUrl: "http://"+window.location.hostname+":8080",
 
     /**
-     * Multiple graphite servers? Comment out graphiteUrl and replace with
-     *
-     *  datasources: {
-     *    data_center_us: { type: 'graphite',  url: 'http://<graphite_url>',  default: true },
-     *    data_center_eu: { type: 'graphite',  url: 'http://<graphite_url>' }
-     *  }
+     * Multiple graphite servers? Comment out graphiteUrl and replace with something like this:
+
+      datasources: {
+        data_center_us: {
+          type: 'graphite',
+          url: 'http://<graphite_url>',
+          default: true
+        },
+        data_center_eu: {
+          type: 'graphite',
+          url: 'http://<graphite_url>',
+          render_method: 'GET' // optional, use this to change render calls from POST to GET
+        }
+      },
+
      */
 
     default_route: '/dashboard/file/default.json',

@@ -4,6 +4,7 @@
   for very short absolute ranges (Issue #320)
 - Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. (Closes #5)
 - Improvement to influxdb query editor, can now add where clause and alias (Issue #331, thanks @mavimo)
+- New config setting for graphite datasource to control if json render request is POST or GET (Issue #345)
 
 # 1.5.3 (2014-04-17)
 - Add support for async scripted dashboards (Issue #274)
