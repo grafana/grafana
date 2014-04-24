@@ -471,6 +471,30 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       }
     };
 
+    this.save_s3 = function(title, dashboard) {
+      var promise = new Promise(function(resolve, reject) {
+        var save = _.clone(dashboard || self.current);
+        save.title = title || self.current.title;
+        var s3Client = AWS.S3();
+        var params = {
+          Bucket: config.s3_bucket, 
+          Key: save.title,
+          ContentType: "text/javascript",
+          Body: angular.toJson(save, true)
+        };
+        s3Client.putObject(params, function(err, data)
+          {
+            if (err)
+            {
+              reject(err);
+            }
+            else 
+            {
+              resolve();
+            }
+          });
+      });
+    };
 
   });
 

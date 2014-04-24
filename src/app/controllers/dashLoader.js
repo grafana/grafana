@@ -120,6 +120,19 @@ function (angular, _, moment) {
       });
     };
 
+    $scope.save_s3 = function() {
+      dashboard.save_s3($scope.s3.title).then(
+        function() {
+          alertSrv.set('Saved to S3', 'You will be able to access your exported dashboard file in S3','success');
+        },
+        function() {
+          if (err)
+          {
+            alertSrv.set('Save failed', 'Dashboard could not be saved in S3', 'error', 5000);
+          }
+        });
+    };
+
     $scope.gist_dblist = function(id) {
       dashboard.gist_list(id).then(
         function(files) {
