@@ -66,6 +66,7 @@
     }
   ],
   "loader": {
+    "save_s3":   false,
     "save_gist": false,
     "save_elasticsearch": true,
     "save_local": true,
