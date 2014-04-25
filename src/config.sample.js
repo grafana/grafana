@@ -50,6 +50,11 @@ function (Settings) {
 
     grafana_index: "grafana-dash",
 
+    s3_bucket:  "",
+    aws_access_id: "",
+    aws_secret_key: "",
+
+
     panel_names: [
       'text',
       'graphite'
