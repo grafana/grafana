@@ -500,7 +500,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       var url = s3Client.getSignedUrl('getObject', params);
       return $http({url: url, method: "GET"}).then(
         function(result) {
-          self.dash_load(result.data);
+          self.dash_load(dash_defaults(result.data));
         })
     };
 
