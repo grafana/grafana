@@ -1,3 +1,6 @@
+/* global AWS: false */
+/* global Promise: false */
+
 define([
   'angular',
   'jquery',
@@ -32,6 +35,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       nav: [ { type: 'timepicker' } ],
       services: {},
       loader: {
+        save_s3:   false,
         save_gist: false,
         save_elasticsearch: true,
         save_local: true,
@@ -39,6 +43,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         save_temp: true,
         save_temp_ttl_enable: true,
         save_temp_ttl: '30d',
+        load_s3:   false,
         load_gist: false,
         load_elasticsearch: true,
         load_elasticsearch_size: 20,
@@ -88,6 +93,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           break;
         case('local'):
           self.local_load();
+          break;
+        case('s3'):
+          self.load_s3(_id);
           break;
         default:
           $location.path(config.default_route);
@@ -470,6 +478,61 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       }
     };
 
+    this.save_s3 = function(title, dashboard) {
+      var save = _.clone(dashboard || self.current);
+      save.title = title || self.current.title;
+      AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
+      var s3Client = new AWS.S3();
+      var dashJson = angular.toJson(save,true);
+      var params = {
+        Bucket: config.s3_bucket, 
+        Key: save.title,
+        ContentType: "application/json"
+      };
+      var url = s3Client.getSignedUrl('putObject', params);
+      return $http({method: "PUT", url: url, data: dashJson, headers: {"Content-Type": "application/json"}});      
+    };
+
+    this.load_s3 = function(title) {
+      AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
+      var s3Client = new AWS.S3();
+      var params = {
+        Bucket: config.s3_bucket, 
+        Key: title
+      };
+      var url = s3Client.getSignedUrl('getObject', params);
+      return $http({url: url, method: "GET"}).then(
+        function(result) {
+          self.dash_load(dash_defaults(result.data));
+        });
+    };
+
+    // Using the standard $http for this request causes AWS to return XML.
+    // By using the s3Client to make the request, we get back json.
+    // That means we need to wrap it in our own Promise.
+    this.list_s3 = function() {
+      return new Promise(function(resolve, reject) {
+        AWS.config.update({
+          accessKeyId: config.aws_access_id, 
+          secretAccessKey: config.aws_secret_key
+        });
+        var s3Client = new AWS.S3();
+        var params = {
+          Bucket: config.s3_bucket
+        };
+        s3Client.listObjects(params, function(err, data) {
+          if (err) {
+            reject(err);
+          } else {
+            var files = [];
+            _.each(data.Contents, function(f) {
+              files.push(f.Key);
+            });
+            resolve(files);
+          }
+        });
+       });
+    };
 
   });
 

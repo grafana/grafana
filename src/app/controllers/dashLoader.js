@@ -16,6 +16,8 @@ function (angular, _, moment) {
       $scope.gist = $scope.gist || {};
       $scope.elasticsearch = $scope.elasticsearch || {};
 
+      $scope.s3 = $scope.s3 || {};
+
       $rootScope.$on('save-dashboard', function() {
         $scope.elasticsearch_save('dashboard', false);
       });
@@ -118,6 +120,38 @@ function (angular, _, moment) {
           alertSrv.set('Save failed','Gist could not be saved','error',5000);
         }
       });
+    };
+
+    $scope.save_s3 = function() {
+      dashboard.save_s3($scope.s3.title).then(
+        function() {
+          alertSrv.set('Saved to S3', 'You will be able to access your exported dashboard file in S3','success');
+        },
+        function(err) {
+          if (err)
+          {
+            alertSrv.set('Save failed', 'Dashboard could not be saved in S3', 'error', 5000);
+          }
+        });
+    };
+
+    $scope.load_s3 = function(title) {
+      dashboard.load_s3(title).then(
+        function() { },
+        function(err) {
+          if (err) {
+            alertSrv.set('Load failed', 'Dashboard could not be loaded from S3', 'error', 5000);
+          }
+        });
+    };
+
+    $scope.list_s3 = function() {
+      dashboard.list_s3().then(
+        function(files) { 
+          $scope.$apply(function() {
+            $scope.s3.files = files;
+          });
+        });
     };
 
     $scope.gist_dblist = function(id) {

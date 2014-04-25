@@ -12,7 +12,8 @@ define([
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce'
+  'bindonce',
+  'aws'
 ],
 function (angular, $, _, appLevelRequire) {
 

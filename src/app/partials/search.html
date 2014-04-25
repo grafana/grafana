@@ -119,4 +119,21 @@
           </table>
         </form>
       </div>
+
+      <div class="editor-row" ng-show='dashboard.current.loader.load_s3'>
+        <h5>S3 <tip>Enter a dashboard title</tip></h5>
+        <form class="input-append">
+          <input type="text" class="input-medium" ng-model="s3.title" placeholder="Dashboard title">
+          <button class="btn" ng-click="load_s3(s3.title)" data-toggle="tooltip" title="Load from S3"><i class="icon-cloud"></i></button>
+        </form>
+        <form>
+          <button class="btn" ng-click="list_s3()" data-toggle="tooltip" title="List available S3 Dashboards"><i class="icon-list"></i></button>
+          <h6 ng-show="s3.files.length">Dashboards in S3: <small>click to load</small></h6>
+          <table class="table table-condensed table-striped">
+            <tr ng-repeat="file in s3.files">
+              <td><a href="#/dashboard/s3/{{file}}">{{file}}</a></td>
+            </tr>
+          </table>
+        </form>
+      </div>
     </li>

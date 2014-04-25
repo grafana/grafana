@@ -59,6 +59,11 @@ function (Settings) {
 
     grafana_index: "grafana-dash",
 
+    s3_bucket:  "my_grafana_bucket",
+    aws_access_id: "ACCESS_ID",
+    aws_secret_key: "SECRET_KEY",
+
+
     panel_names: [
       'text',
       'graphite'
