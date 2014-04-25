@@ -130,7 +130,7 @@
           <h6 ng-hide="s3.files.length">No S3 dashboards found</h6>
           <table class="table table-condensed table-striped">
             <tr ng-repeat="file in s3.files">
-              <td><a ng-click="load_s3(file)">{{file}}</a></td>
+              <td><a href="#/dashboard/s3/{{file}}">{{file}}</a></td>
             </tr>
           </table>
         </form>

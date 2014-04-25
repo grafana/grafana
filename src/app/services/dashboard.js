@@ -91,6 +91,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         case('local'):
           self.local_load();
           break;
+        case('s3'):
+          self.load_s3(_id);
+          break;
         default:
           $location.path(config.default_route);
         }
