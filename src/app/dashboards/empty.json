@@ -74,6 +74,7 @@
     "save_temp": true,
     "save_temp_ttl_enable": true,
     "save_temp_ttl": "30d",
+    "load_s3": false,
     "load_gist": false,
     "load_elasticsearch": true,
     "load_elasticsearch_size": 20,
