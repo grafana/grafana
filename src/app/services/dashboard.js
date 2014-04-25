@@ -481,7 +481,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         var params = {
           Bucket: config.s3_bucket, 
           Key: save.title,
-          ContentType: "text/javascript",
+          ContentType: "application/json",
           Body: angular.toJson(save, true)
         };
         s3Client.putObject(params, function(err, data)
@@ -506,15 +506,39 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
             Bucket: config.s3_bucket, 
             Key: title
           };
-          s3Client.getObject(params, function(err, data) {
-            if (err) {
-              reject(err);
-            } else {
-              self.dash_load(data.Body);
-              resolve();
-            }
+          s3Client.getSignedUrl('getObject', params, function (err, url) {
+            return $http({url: url, method: "GET"}).then(
+              function(result) {
+                self.dash_load(result.data);
+                resolve();
+              })
           });
         });
+    };
+
+    this.list_s3 = function() {
+      return new Promise(function(resolve, reject) {
+        AWS.config.update({
+          accessKeyId: config.aws_access_id, 
+          secretAccessKey: config.aws_secret_key
+        });
+        var s3Client = new AWS.S3();
+        var params = {
+          Bucket: config.s3_bucket
+        };
+        s3Client.listObjects(params, function(err, data) {
+          if (err) {
+            reject(err);
+          } else {
+            var files = [];
+            _.each(data.Contents, function(f) {
+              files.push(f.Key);
+            });
+            resolve(files);
+          }
+
+        });
+       });
     };
 
   });

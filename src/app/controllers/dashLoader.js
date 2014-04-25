@@ -135,12 +135,26 @@ function (angular, _, moment) {
         });
     };
 
-    $scope.load_s3 = function() {
-      dashboard.load_s3($scope.s3.title).then(
+    $scope.load_s3 = function(title) {
+      dashboard.load_s3(title).then(
         function() { },
         function(err) {
           if (err) {
             alertSrv.set('Load failed', 'Dashboard could not be loaded from S3', 'error', 5000);
+          }
+        });
+    };
+
+    $scope.list_s3 = function() {
+      dashboard.list_s3().then(
+        function(files) { 
+          $scope.$apply(function() {
+            $scope.s3.files = files;
+          });
+        },
+        function(err) {
+          if (err) {
+            alertSrv.set('List failed', 'Could not retrieve list from S3', 'error', 5000);
           }
         });
     };
