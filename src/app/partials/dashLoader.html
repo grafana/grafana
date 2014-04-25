@@ -58,6 +58,15 @@
       <small ng-show="gist.last">Last gist: <a target="_blank" href="{{gist.last}}">{{gist.last}}</a></small>
     </li>
 
+    <li ng-show="dashboard.current.loader.save_s3" style="margin:10px">
+      <h6>S3</h6>
+      <form class="input-append">
+        <input class='input-medium' placeholder='Title' type="text" ng-model="s3.title"/>
+        <button class="btn" ng-click="save_s3()"><i class="icon-github-alt"></i></button>
+      </form><br>
+      <!-- <small ng-show="gist.last">Last gist: <a target="_blank" href="{{gist.last}}">{{gist.last}}</a></small> -->
+    </li>
+
   </ul>
 </li>
 

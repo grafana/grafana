@@ -16,6 +16,8 @@ function (angular, _, moment) {
       $scope.gist = $scope.gist || {};
       $scope.elasticsearch = $scope.elasticsearch || {};
 
+      $scope.s3 = $scope.s3 || {};
+
       $rootScope.$on('save-dashboard', function() {
         $scope.elasticsearch_save('dashboard', false);
       });
