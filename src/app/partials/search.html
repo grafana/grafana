@@ -129,8 +129,7 @@
         <form>
           <button class="btn" ng-click="list_s3()" data-toggle="tooltip" title="List available S3 Dashboards"><i class="icon-list"></i></button>
           <h6 ng-show="s3.files.length">Dashboards in S3: <small>click to load</small></h6>
-<!--           <h6 ng-hide="s3.files.length">No S3 dashboards found</h6>
- -->          <table class="table table-condensed table-striped">
+          <table class="table table-condensed table-striped">
             <tr ng-repeat="file in s3.files">
               <td><a href="#/dashboard/s3/{{file}}">{{file}}</a></td>
             </tr>
