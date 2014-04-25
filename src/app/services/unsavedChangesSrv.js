@@ -52,7 +52,13 @@ function (angular, _) {
 
     modalScope.ignore = function() {
       dashboard.original = null;
-      $location.path(self.next)
+      var baseLen = $location.absUrl().length - $location.url().length;
+      var nextUrl = self.next.substring(baseLen);
+      $location.url(nextUrl);
+    };
+
+    modalScope.save = function() {
+
     };
 
   });

@@ -1,12 +1,16 @@
 <div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-  <h3>{{modal.title}}</h3>
 </div>
 <div class="modal-body">
 
-  <div ng-bind-html='modal.body'></div>
+  <h3 class="text-center"><i class="icon-warning-sign"></i> Unsaved changes</h3>
+  <div class="row-fluid">
+	<span class="span3"></span>
+	<button type="button" class="btn btn-info span2" ng-click="dismiss()">Cancel</button>
+	<button type="button" class="btn btn-success span2" ng-click="save()">Save Changes</button>
+	<button type="button" class="btn btn-warning span2" ng-click="ignore();dismiss();">Ignore changes</button>
+	<span class="span3"></span>
+  </div>
 
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" ng-click="dismiss()">Close</button>
 </div>
