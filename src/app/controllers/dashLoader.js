@@ -127,10 +127,20 @@ function (angular, _, moment) {
         function() {
           alertSrv.set('Saved to S3', 'You will be able to access your exported dashboard file in S3','success');
         },
-        function() {
+        function(err) {
           if (err)
           {
             alertSrv.set('Save failed', 'Dashboard could not be saved in S3', 'error', 5000);
+          }
+        });
+    };
+
+    $scope.load_s3 = function() {
+      dashboard.load_s3($scope.s3.title).then(
+        function() { },
+        function(err) {
+          if (err) {
+            alertSrv.set('Load failed', 'Dashboard could not be loaded from S3', 'error', 5000);
           }
         });
     };

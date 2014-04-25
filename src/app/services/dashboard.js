@@ -40,6 +40,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         save_temp: true,
         save_temp_ttl_enable: true,
         save_temp_ttl: '30d',
+        load_s3:   false,
         load_gist: false,
         load_elasticsearch: true,
         load_elasticsearch_size: 20,
@@ -495,6 +496,25 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
             }
           });
       });
+    };
+
+    this.load_s3 = function(title) {
+        return new Promise(function(resolve, reject) {
+          AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
+          var s3Client = new AWS.S3();
+          var params = {
+            Bucket: config.s3_bucket, 
+            Key: title
+          };
+          s3Client.getObject(params, function(err, data) {
+            if (err) {
+              reject(err);
+            } else {
+              self.dash_load(data.Body);
+              resolve();
+            }
+          });
+        });
     };
 
   });

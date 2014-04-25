@@ -119,4 +119,20 @@
           </table>
         </form>
       </div>
+
+      <div class="editor-row" ng-show='dashboard.current.loader.load_s3'>
+        <h5>S3 <tip>Enter a dashboard title</tip></h5>
+        <form>
+          <input type="text" ng-model="s3.title" placeholder="Dashboard title"><br>
+          <button class="btn" ng-click="load_s3(s3.title)"><i class="icon-cloud"></i></button>
+          <!-- <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-cloud"></i> Get dashboard:{{s3.title}}</button> -->
+<!--           <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
+          <h6 ng-hide="gist.files.length || !gist.url.length">No gist dashboards found</h6>
+          <table class="table table-condensed table-striped">
+            <tr ng-repeat="file in gist.files">
+              <td><a ng-click="dashboard.dash_load(file)">{{file.title}}</a></td>
+            </tr>
+          </table>
+ -->        </form>
+      </div>
     </li>
