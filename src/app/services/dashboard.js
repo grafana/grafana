@@ -1,3 +1,5 @@
+/* global AWS: false */
+
 define([
   'angular',
   'jquery',
@@ -6,7 +8,8 @@ define([
   'config',
   'moment',
   'modernizr',
-  'filesaver'
+  'filesaver',
+  'AWS'
 ],
 function (angular, $, kbn, _, config, moment, Modernizr) {
   'use strict';
@@ -501,7 +504,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       return $http({url: url, method: "GET"}).then(
         function(result) {
           self.dash_load(dash_defaults(result.data));
-        })
+        });
     };
 
     this.list_s3 = function() {
