@@ -476,47 +476,32 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     };
 
     this.save_s3 = function(title, dashboard) {
-      return new Promise(function(resolve, reject) {        
-        var save = _.clone(dashboard || self.current);
-        save.title = title || self.current.title;
-        AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
-        var s3Client = new AWS.S3();
-        var params = {
-          Bucket: config.s3_bucket, 
-          Key: save.title,
-          ContentType: "application/json",
-          Body: angular.toJson(save, true)
-        };
-        s3Client.putObject(params, function(err, data)
-          {
-            if (err)
-            {
-              reject(err);
-            }
-            else 
-            {
-              resolve();
-            }
-          });
-      });
+      var save = _.clone(dashboard || self.current);
+      save.title = title || self.current.title;
+      AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
+      var s3Client = new AWS.S3();
+      var dashJson = angular.toJson(save,true);
+      var params = {
+        Bucket: config.s3_bucket, 
+        Key: save.title,
+        ContentType: "application/json"
+      };
+      var url = s3Client.getSignedUrl('putObject', params);
+      return $http({method: "PUT", url: url, data: dashJson, headers: {"Content-Type": "application/json"}});      
     };
 
     this.load_s3 = function(title) {
-        return new Promise(function(resolve, reject) {
-          AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
-          var s3Client = new AWS.S3();
-          var params = {
-            Bucket: config.s3_bucket, 
-            Key: title
-          };
-          s3Client.getSignedUrl('getObject', params, function (err, url) {
-            return $http({url: url, method: "GET"}).then(
-              function(result) {
-                self.dash_load(result.data);
-                resolve();
-              })
-          });
-        });
+      AWS.config.update({accessKeyId: config.aws_access_id, secretAccessKey: config.aws_secret_key});
+      var s3Client = new AWS.S3();
+      var params = {
+        Bucket: config.s3_bucket, 
+        Key: title
+      };
+      var url = s3Client.getSignedUrl('getObject', params);
+      return $http({url: url, method: "GET"}).then(
+        function(result) {
+          self.dash_load(result.data);
+        })
     };
 
     this.list_s3 = function() {
@@ -539,7 +524,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
             });
             resolve(files);
           }
-
         });
        });
     };
