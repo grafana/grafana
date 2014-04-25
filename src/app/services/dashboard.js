@@ -1,4 +1,5 @@
 /* global AWS: false */
+/* global Promise: false */
 
 define([
   'angular',
@@ -8,8 +9,7 @@ define([
   'config',
   'moment',
   'modernizr',
-  'filesaver',
-  'AWS'
+  'filesaver'
 ],
 function (angular, $, kbn, _, config, moment, Modernizr) {
   'use strict';
@@ -507,6 +507,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         });
     };
 
+    // Using the standard $http for this request causes AWS to return XML.
+    // By using the s3Client to make the request, we get back json.
+    // That means we need to wrap it in our own Promise.
     this.list_s3 = function() {
       return new Promise(function(resolve, reject) {
         AWS.config.update({

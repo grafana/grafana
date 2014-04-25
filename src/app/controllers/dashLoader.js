@@ -151,11 +151,6 @@ function (angular, _, moment) {
           $scope.$apply(function() {
             $scope.s3.files = files;
           });
-        },
-        function(err) {
-          if (err) {
-            alertSrv.set('List failed', 'Could not retrieve list from S3', 'error', 5000);
-          }
         });
     };
 
