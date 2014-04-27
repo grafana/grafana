@@ -57,7 +57,16 @@ function (Settings) {
 
     timezoneOffset: null,
 
+    /**
+     * Elasticsearch index for storing dashboards
+     *
+     */
     grafana_index: "grafana-dash",
+
+    /**
+     * set to false to disable unsaved changes warning
+     */
+    unsaved_changes_warning: true,
 
     panel_names: [
       'text',

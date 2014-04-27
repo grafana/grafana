@@ -8,5 +8,6 @@ define([
   './keyboardManager',
   './annotationsSrv',
   './playlistSrv',
+  './unsavedChangesSrv',
 ],
 function () {});
