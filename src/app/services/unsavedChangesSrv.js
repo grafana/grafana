@@ -16,6 +16,12 @@ function (angular, _, config) {
     var self = this;
     var modalScope = $rootScope.$new();
 
+    window.onbeforeunload = function () {
+      if (self.has_unsaved_changes()) {
+        return "There are unsaved changes to this dashboard";
+      }
+    };
+
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
         if (self.has_unsaved_changes()) {
