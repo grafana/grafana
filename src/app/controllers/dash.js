@@ -31,7 +31,7 @@ function (angular, $, config, _) {
 
   module.controller('DashCtrl', function(
     $scope, $rootScope, ejsResource, dashboard,
-    alertSrv, panelMove, keyboardManager, grafanaVersion, unsavedChangesSrv) {
+    alertSrv, panelMove, keyboardManager, grafanaVersion) {
 
     $scope.requiredElasticSearchVersion = ">=0.90.3";
 

@@ -1,26 +1,32 @@
 define([
   'angular',
-  'underscore'
+  'underscore',
+  'config',
 ],
-function (angular, _) {
+function (angular, _, config) {
   'use strict';
+
+  if (!config.unsaved_changes_warning) {
+    return;
+  }
 
   var module = angular.module('kibana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location, $timeout) {
     var self = this;
-
     var modalScope = $rootScope.$new();
 
-    $rootScope.$on("$locationChangeStart", function(event, next, current) {
-      if (self.has_unsaved_changes()) {
-        event.preventDefault();
-        self.next = next;
-        self.open_modal();
-      }
-    });
+    this.init = function() {
+      $rootScope.$on("$locationChangeStart", function(event, next) {
+        if (self.has_unsaved_changes()) {
+          event.preventDefault();
+          self.next = next;
+          self.open_modal();
+        }
+      });
+    };
 
-    this.open_modal = function() {
+    this.open_modal = function () {
       var confirmModal = $modal({
           template: './app/partials/unsaved-changes.html',
           persist: true,
@@ -34,32 +40,57 @@ function (angular, _) {
       });
     };
 
-    this.has_unsaved_changes = function() {
+    this.has_unsaved_changes = function () {
       if (!dashboard.original) {
         return false;
       }
 
       var current = angular.copy(dashboard.current);
+      var original = dashboard.original;
+
+      // ignore timespan changes
+      current.services.filter.time = original.services.filter.time = {};
+      current.refresh = original.refresh;
+
+      var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
+      var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
+
+      if (currentTimepicker && originalTimepicker) {
+        currentTimepicker.now = originalTimepicker.now;
+      }
+
       var currentJson = angular.toJson(current);
-      var originalJson = angular.toJson(dashboard.original);
+      var originalJson = angular.toJson(original);
 
       if (currentJson !== originalJson) {
-        return true; //confirm('There are unsaved changes, are you sure you want to change dashboard?');
+        return true;
       }
 
       return false;
     };
 
-    modalScope.ignore = function() {
-      dashboard.original = null;
+    this.goto_next = function () {
       var baseLen = $location.absUrl().length - $location.url().length;
       var nextUrl = self.next.substring(baseLen);
       $location.url(nextUrl);
     };
 
-    modalScope.save = function() {
-
+    modalScope.ignore = function() {
+      dashboard.original = null;
+      self.goto_next();
     };
 
+    modalScope.save = function() {
+      var unregister = $rootScope.$on('dashboard-saved', function() {
+        self.goto_next();
+      });
+
+      $timeout(unregister, 2000);
+
+      $rootScope.$emit('save-dashboard');
+    };
+
+  }).run(function(unsavedChangesSrv) {
+    unsavedChangesSrv.init();
   });
 });

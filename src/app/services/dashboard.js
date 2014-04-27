@@ -63,6 +63,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
       self.current = {};
+      self.original = null;
       self.indices = [];
       route();
     });
@@ -156,18 +157,9 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Set the current dashboard
       self.current = angular.copy(dashboard);
-      self.original = angular.copy(dashboard);
 
-      // Delay this until we're sure that querySrv and filterSrv are ready
-      $timeout(function() {
-        // Ok, now that we've setup the current dashboard, we can inject our services
-        filterSrv = $injector.get('filterSrv');
-        filterSrv.init();
-
-      },0).then(function() {
-        // Call refresh to calculate the indices and notify the panels that we're ready to roll
-        self.refresh();
-      });
+      filterSrv = $injector.get('filterSrv');
+      filterSrv.init();
 
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
@@ -181,6 +173,10 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
 
       $rootScope.$emit('dashboard-loaded');
+
+      $timeout(function() {
+        self.original = angular.copy(self.current);
+      }, 500);
 
       return true;
     };

@@ -25,6 +25,7 @@ function (_, crypto) {
       grafana_index                 : 'grafana-dash',
       elasticsearch_all_disabled    : false,
       timezoneOffset                : null,
+      unsaved_changes_warning       : true
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
