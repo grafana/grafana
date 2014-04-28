@@ -6,7 +6,7 @@
 - Improvement to influxdb query editor, can now add where clause and alias (Issue #331, thanks @mavimo)
 - New config setting for graphite datasource to control if json render request is POST or GET (Issue #345)
 - Unsaved changes warning feature (Issue #324)
-
+- Fixes to filters and "All" option. It now never uses "*" as value, but all options in a {node1, node2, node3} expression (Issue #228, #359)
 
 # 1.5.3 (2014-04-17)
 - Add support for async scripted dashboards (Issue #274)
