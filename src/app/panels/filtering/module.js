@@ -90,13 +90,5 @@ function (angular, app, _) {
       $rootScope.$broadcast('render');
     };
 
-    function endsWithWildcard(query) {
-      if (query.length === 0) {
-        return false;
-      }
-
-      return query[query.length - 1] === '*';
-    }
-
   });
 });
