@@ -60,6 +60,7 @@ function (angular, _, kbn) {
           }
 
           query = queryElements.join(" ");
+          query = filterSrv.applyFilterToTarget(query);
         }
         else {
           var template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
@@ -79,6 +80,7 @@ function (angular, _, kbn) {
           };
 
           query = _.template(template, templateData, this.templateSettings);
+          query = filterSrv.applyFilterToTarget(query);
           target.query = query;
         }
 
