@@ -52,14 +52,16 @@ function (angular, _, config) {
     $scope.loadAll = function() {
       $scope.infoText = "Fetching all metrics from graphite...";
 
-      return $http.get(config.graphiteUrl + "/metrics/index.json")
-        .then(saveMetricsArray)
-        .then(function () {
+      return $q.all( _.map( config.datasources, function( datasource ) {
+          if ( datasource.type = 'graphite' ) {
+              return $http.get( datasource.url + "/metrics/index.json" )
+                    .then( saveMetricsArray );
+          } 
+      } ) ).then( function() {
           $scope.infoText = "Indexing complete!";
-        })
-        .then(null, function(err) {
+      }).then(null, function(err) {
           $scope.errorText = err;
-        });
+      });
     };
 
     function saveMetricsArray(data, currentIndex)
@@ -155,6 +157,7 @@ function (angular, _, config) {
     function saveMetricKey(metricId) {
 
       // Create request with id as title. Rethink this.
+      console.log( config.grafana_metrics_index, metricId );
       var request = $scope.ejs.Document(config.grafana_metrics_index, 'metricKey', metricId).source({
         metricPath: metricId
       });
