@@ -11,15 +11,19 @@
       <div ng-hide="filter.editing" style="margin-right: 45px;">
         <ul class="unstyled">
           <li ng-if="filter.name" class="dropdown">
-            {{filter.name}} :
-            <a class="dropdown-toggle" data-toggle="dropdown">
-              {{filter.current.text}}
-            </a>
-              <ul class="dropdown-menu">
-                <li ng-repeat="option in filter.options">
-                  <a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
-                </li>
-              </ul>
+            <input type="text"
+                   class="grafana-target-segment-input"
+                   style="height: 16px;"
+                   data-toggle="dropdown"
+                   placeholder="{{filter.name}}"
+                   ng-model="selected"
+                   spellcheck="false"
+                   typeahead="item as item.text for item in filter.options"/>
+            <ul class="dropdown-menu scrollable">
+              <li ng-repeat="option in filter.options | filter:selected">
+                <a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
+              </li>
+            </ul>
           </li>
         </ul>
       </div>
