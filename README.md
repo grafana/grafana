@@ -1,4 +1,4 @@
-[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/torkelo/grafana.png)](https://travis-ci.org/torkelo/grafana)
+[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana)
 =================
 A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots, videos and feature descriptions.
 
@@ -24,28 +24,28 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Series toggles & color selector
 - Axis labels
 - Grid thresholds, axis labels
-- [Annotations] (https://github.com/torkelo/grafana/wiki/Annotations)
+- [Annotations] (https://github.com/grafana/grafana/wiki/Annotations)
 
 ### Dashboards
 - Create and edit dashboards
 - Drag and drop graphs to rearrange
 - Set column spans and row heights
-- Save & [search dashboards](https://github.com/torkelo/grafana/wiki/Search-features)
+- Save & [search dashboards](https://github.com/grafana/grafana/wiki/Search-features)
 - Import & export dashboard (json file)
 - Import dashboard from Graphite
 - Templating
-- [Scripted dashboards](https://github.com/torkelo/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
-- Flexible [time range controls](https://github.com/torkelo/grafana/wiki/Time-range-controls)
-- [Dashboard playlists](https://github.com/torkelo/grafana/wiki/Dashboard-playlist)
+- [Scripted dashboards](https://github.com/grafana/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
+- Flexible [time range controls](https://github.com/grafana/grafana/wiki/Time-range-controls)
+- [Dashboard playlists](https://github.com/grafana/grafana/wiki/Dashboard-playlist)
 
 ### InfluxDB
-- [Use InfluxDB](https://github.com/torkelo/grafana/wiki/InfluxDB) as metric datasource
+- [Use InfluxDB](https://github.com/grafana/grafana/wiki/InfluxDB) as metric datasource
 
 # Requirements
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
 
 # Installation
-- Download and extract the [latest release](https://github.com/torkelo/grafana/releases).
+- Download and extract the [latest release](https://github.com/grafana/grafana/releases).
 - Rename `config.sample.js` to `config.js`, then change `graphiteUrl` and `elasticsearch` to point to the correct urls. The urls entered here must be reachable by your browser.
 - Point your browser to the installation.
 
@@ -58,7 +58,7 @@ To run from master:
 
 If you use ansible for provisioning and deployment [ansible-grafana](https://github.com/bobrik/ansible-grafana) should get you started.
 
-When you have Grafana up an running, read the [Getting started](https://github.com/torkelo/grafana/wiki/Getting-started) guide for
+When you have Grafana up an running, read the [Getting started](https://github.com/grafana/grafana/wiki/Getting-started) guide for
 an introduction on how to use Grafana and/or watch [this video](https://www.youtube.com/watch?v=OUvJamHeMpw) for a guide in creating a new dashboard and for creating
 templated dashboards.
 
