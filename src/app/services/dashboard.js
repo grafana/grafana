@@ -176,7 +176,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       $timeout(function() {
         self.original = angular.copy(self.current);
-      }, 500);
+      }, 1000);
 
       return true;
     };

@@ -346,15 +346,53 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
-    $scope.toggleSeries = function(info) {
-      if ($scope.hiddenSeries[info.alias]) {
-        delete $scope.hiddenSeries[info.alias];
+    $scope.toggleSeries = function(serie, event) {
+      if ($scope.hiddenSeries[serie.alias]) {
+        delete $scope.hiddenSeries[serie.alias];
       }
       else {
-        $scope.hiddenSeries[info.alias] = true;
+        $scope.hiddenSeries[serie.alias] = true;
       }
 
-      $scope.$emit('toggleLegend', info.alias);
+      if (event.ctrlKey) {
+        $scope.toggleSeriesExclusiveMode(serie);
+      }
+
+      $scope.$emit('toggleLegend', $scope.legend);
+    };
+
+    $scope.toggleSeriesExclusiveMode = function(serie) {
+      var hidden = $scope.hiddenSeries;
+
+      if (hidden[serie.alias]) {
+        delete hidden[serie.alias];
+      }
+
+      // check if every other series is hidden
+      var alreadyExclusive = _.every($scope.legend, function(value) {
+        if (value.alias === serie.alias) {
+          return true;
+        }
+
+        return hidden[value.alias];
+      });
+
+      if (alreadyExclusive) {
+        // remove all hidden series
+        _.each($scope.legend, function(value) {
+          delete $scope.hiddenSeries[value.alias];
+        });
+      }
+      else {
+        // hide all but this serie
+        _.each($scope.legend, function(value) {
+          if (value.alias === serie.alias) {
+            return;
+          }
+
+          $scope.hiddenSeries[value.alias] = true;
+        });
+      }
     };
 
     $scope.toggleYAxis = function(info) {

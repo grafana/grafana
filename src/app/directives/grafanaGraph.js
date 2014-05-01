@@ -23,11 +23,13 @@ function (angular, $, kbn, moment, _) {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function(e, alias) {
-          if (hiddenData[alias]) {
-            data.push(hiddenData[alias]);
-            delete hiddenData[alias];
-          }
+        scope.$on('toggleLegend', function(e, series) {
+          _.each(series, function(serie) {
+            if (hiddenData[serie.alias]) {
+              data.push(hiddenData[serie.alias]);
+              delete hiddenData[serie.alias];
+            }
+          });
 
           render_panel();
         });
