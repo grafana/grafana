@@ -179,6 +179,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       aliasColors: {},
       aliasYAxis: {},
+
+      /** @scratch /panels/histogram/3
+       * cacheTimeout:: cacheTimeout option sent to graphite. null means the option is not sent.
+       */
+      cacheTimeout: null,
     };
 
     _.defaults($scope.panel,_d);
@@ -270,6 +275,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         interval: $scope.interval,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
+        cacheTimeout: $scope.panel.cacheTimeout,
         maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource,
       };

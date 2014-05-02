@@ -62,5 +62,9 @@
       <label class="small">Graphite PNG <tip>server side</tip></label>
       <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
     </div>
+    <div class="editor-option">
+      <label class="small">cacheTimeout option</label>
+      <input type="number" class="input-small" ng-model="panel.cacheTimeout" ng-checked="panel.cacheTimeout" ng-change="get_data()" />
+    </div>
   </div>
 </div>
