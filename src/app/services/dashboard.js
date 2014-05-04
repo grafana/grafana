@@ -123,6 +123,15 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       _.defaults(dashboard, _dash);
       _.defaults(dashboard.loader,_dash.loader);
 
+      // Global override for the datasource
+      var datasource = _.findWhere(dashboard.pulldowns, {type: 'datasource'});
+      if (!datasource) {
+        dashboard.pulldowns.unshift({
+          type: 'datasource',
+          enable: false
+        });
+      }
+
       var filtering = _.findWhere(dashboard.pulldowns, {type: 'filtering'});
       if (!filtering) {
         dashboard.pulldowns.push({

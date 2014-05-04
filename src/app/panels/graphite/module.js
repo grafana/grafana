@@ -206,8 +206,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
       $scope.hiddenSeries = {};
 
-      $scope.datasources = datasourceSrv.listOptions();
-      $scope.setDatasource($scope.panel.datasource);
+      var globalDatasource = datasourceSrv.getGlobalDatasource();
+      if (globalDatasource) { // If there is a global datasource, it should always be used.
+        $scope.setDatasource(globalDatasource);
+        $scope.datasources = [$scope.datasource];
+      } else {
+        $scope.datasources = datasourceSrv.listOptions();
+        $scope.setDatasource($scope.panel.datasource);
+      }
     };
 
     $scope.setDatasource = function(datasource) {
@@ -241,6 +247,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.get_data = function() {
+      var globalDatasource = datasourceSrv.getGlobalDatasource();
+      if (globalDatasource) {
+        if (globalDatasource !== $scope.panel.datasource) {
+          console.log("Panel datasource '"+$scope.panel.datasource+"' is different from global datasource '"+globalDatasource+
+            "', updating to match...");
+          $scope.setDatasource(globalDatasource);
+          $scope.datasources = [$scope.datasource];
+          return;
+        }
+      } else { // If the global override was disabled, we need to reset the list of options.
+        if ($scope.datasources.length === 1 && datasourceSrv.getCount() > 1) {
+          $scope.datasources = datasourceSrv.listOptions();
+        }
+      }
+
       delete $scope.panel.error;
 
       $scope.panelMeta.loading = true;
