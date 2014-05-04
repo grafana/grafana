@@ -15,7 +15,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
   module.service('dashboard', function(
     $routeParams, $http, $rootScope, $injector, $location, $timeout,
-    ejsResource, timer, alertSrv
+    ejsResource, timer, alertSrv, $q
   ) {
     // A hash of defaults to use when loading a dashboard
 
@@ -63,6 +63,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
       self.current = {};
+      self.original = null;
       self.indices = [];
       route();
     });
@@ -166,16 +167,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Set the current dashboard
       self.current = angular.copy(dashboard);
 
-      // Delay this until we're sure that querySrv and filterSrv are ready
-      $timeout(function() {
-        // Ok, now that we've setup the current dashboard, we can inject our services
-        filterSrv = $injector.get('filterSrv');
-        filterSrv.init();
-
-      },0).then(function() {
-        // Call refresh to calculate the indices and notify the panels that we're ready to roll
-        self.refresh();
-      });
+      filterSrv = $injector.get('filterSrv');
+      filterSrv.init();
 
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
@@ -189,6 +182,10 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
 
       $rootScope.$emit('dashboard-loaded');
+
+      $timeout(function() {
+        self.original = angular.copy(self.current);
+      }, 1000);
 
       return true;
     };
@@ -341,13 +338,27 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.script_load = function(file) {
       return $http({
         url: "app/dashboards/"+file.replace(/\.(?!js)/,"/"),
-        method: "GET",
-        transformResponse: function(response) {
-          /*jshint -W054 */
-          var _f = new Function('ARGS','kbn','_','moment','window','document','angular','require','define','$','jQuery',response);
-          return _f($routeParams,kbn,_,moment);
+        method: "GET"
+      })
+      .then(function(result) {
+        /*jshint -W054 */
+        var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', result.data);
+        var script_result = script_func($routeParams,kbn,_,moment, window, document, $, $);
+
+        // Handle async dashboard scripts
+        if (_.isFunction(script_result)) {
+          var deferred = $q.defer();
+          script_result(function(dashboard) {
+            $rootScope.$apply(function() {
+              deferred.resolve({ data: dashboard });
+            });
+          });
+          return deferred.promise;
         }
-      }).then(function(result) {
+
+        return { data: script_result };
+      })
+      .then(function(result) {
         if(!result) {
           return false;
         }
@@ -388,6 +399,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           if(type === 'dashboard') {
             $location.path('/dashboard/elasticsearch/'+title);
           }
+          self.original = angular.copy(self.current);
           return result;
         },
         // Failure

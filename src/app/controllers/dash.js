@@ -30,7 +30,8 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, $route, ejsResource, dashboard, alertSrv, panelMove, keyboardManager, grafanaVersion) {
+    $scope, $rootScope, ejsResource, dashboard,
+    alertSrv, panelMove, keyboardManager, grafanaVersion) {
 
     $scope.requiredElasticSearchVersion = ">=0.90.3";
 
@@ -38,7 +39,7 @@ function (angular, $, config, _) {
       index: 0
     };
 
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'version: master' : grafanaVersion;
+    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
 
     // For moving stuff around the dashboard.
     $scope.panelMoveDrop = panelMove.onDrop;

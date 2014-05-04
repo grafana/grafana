@@ -14,5 +14,6 @@ define([
   './bootstrap-tagsinput',
   './bodyClass',
   './addGraphiteFunc',
-  './graphiteFuncEditor'
+  './graphiteFuncEditor',
+  './grafanaVersionCheck'
 ], function () {});

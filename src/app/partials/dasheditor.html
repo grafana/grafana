@@ -148,11 +148,12 @@
 </div>
 
 <div class="modal-footer">
-  <div class="pull-left" style="padding-top: 15px;" ng-if="editor.index == 0">
+  <div class="pull-left grafana-version-footer" ng-if="editor.index == 0">
     <span class="editor-option small">
-      Grafana {{grafanaVersion}}
+      Grafana version: {{grafanaVersion}}
     </span>
-    (<a class="small" href="https://github.com/torkelo/grafana/releases" target="_blank">check for updates</a>)
+    <div class="small" grafana-version-check>
+    </div>
   </div>
 
   <button ng-click="add_row(dashboard.current,row); reset_row();" class="btn btn-success" ng-show="editor.index == 1">Create Row</button>
