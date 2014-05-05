@@ -94,7 +94,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       grid          : {
         max: null,
-        min: 0,
+        min: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
