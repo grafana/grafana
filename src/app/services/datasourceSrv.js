@@ -82,6 +82,18 @@ function (angular, _, config) {
       return _.size(config.datasources);
     };
 
+    /**
+     * Sets the datasource with the given name as the default.
+     * @param name the datasource name
+     */
+    this.setDefault = function(name) {
+      var ds = this.get(name);
+      if (!ds) {
+        return;
+      }
+      this.default = this.datasourceFactory(ds);
+    };
+
     this.init();
   });
 });

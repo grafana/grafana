@@ -28,6 +28,7 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
+      $rootScope.$on('datasourceUpdated', $scope.refreshFilters);
     };
 
     $scope.remove = function(filter) {
@@ -51,11 +52,21 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      var query = filterSrv.applyFilterToTarget(filter.query);
+      $scope.refreshFilter(filter, true);
+    };
 
+    /**
+     * Refresh the options for the given filter.
+     * @param filter the filter
+     * @param selectFirst if true, set the first option in the filter as the selected option
+     */
+    $scope.refreshFilter = function(filter, selectFirst) {
+      var query = filterSrv.applyFilterToTarget(filter.query);
       datasourceSrv.default.metricFindQuery(query)
         .then(function (results) {
           filter.editing=undefined;
+          var originalOptions = filter.options;
+          var allExprChanged = false;
           filter.options = _.map(results, function(node) {
             return { text: node.text, value: node.text };
           });
@@ -67,10 +78,29 @@ function (angular, app, _) {
             });
             allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
             filter.options.unshift({text: 'All', value: allExpr});
+
+            if (originalOptions && originalOptions.length > 0 && originalOptions[0].text === 'All'
+              && originalOptions[0].value !== allExpr) {
+              allExprChanged = true;
+            }
           }
 
-          filterSrv.filterOptionSelected(filter, filter.options[0]);
+          if (selectFirst) {
+            filterSrv.filterOptionSelected(filter, filter.options[0]);
+          } else if (filter.includeAll && (filter.current.text === 'All') && allExprChanged) {
+            // If the selected option is "All" and the All expression has changed, re-select it to re-query the chart data.
+            filterSrv.filterOptionSelected(filter, filter.options[0]);
+          }
         });
+    };
+
+    /**
+     * Refresh the options for all the filters in the dashboard
+     */
+    $scope.refreshFilters = function() {
+      _.each(filterSrv.list, function(filter) {
+        $scope.refreshFilter(filter, false);
+      });
     };
 
     $scope.add = function() {

@@ -38,6 +38,8 @@ function (angular, app, _) {
           $scope.panel.error = "Cannot find datasource " + datasource;
           return;
       }
+      datasourceSrv.setDefault(datasource);
+      $rootScope.$broadcast('datasourceUpdated');
       dashboard.refresh();
     };
 
