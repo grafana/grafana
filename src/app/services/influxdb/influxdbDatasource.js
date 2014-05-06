@@ -93,7 +93,7 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from ' + seriesName + ' limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
         if (!data) {
           return [];
         }
