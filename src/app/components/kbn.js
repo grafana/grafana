@@ -574,6 +574,10 @@ function($, _, moment) {
       return function(val) {
         return kbn.microsFormat(val, decimals);
       };
+    case 'ns':
+      return function(val) {
+        return kbn.nanosFormat(val, decimals);
+      };
     default:
       return function(val) {
         return val % 1 === 0 ? val : val.toFixed(decimals);
@@ -614,6 +618,24 @@ function($, _, moment) {
     }
     else {
       return (size / 1000000).toFixed(decimals) + " s";
+    }
+  };
+
+  kbn.nanosFormat = function(size, decimals) {
+    if (size < 1000) {
+      return size.toFixed(0) + " ns";
+    }
+    else if (size < 1000000) {
+      return (size / 1000).toFixed(decimals) + " µs";
+    }
+    else if (size < 1000000000) {
+      return (size / 1000000).toFixed(decimals) + " ms";
+    }
+    else if (size < 60000000000){
+      return (size / 1000000000).toFixed(decimals) + " s";
+    }
+    else {
+      return (size / 60000000000).toFixed(decimals) + " m";
     }
   };
 
