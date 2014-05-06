@@ -12,7 +12,8 @@ require.config({
     'underscore-src':      '../vendor/underscore',
 
     moment:                '../vendor/moment',
-    chromath:                 '../vendor/chromath',
+    chromath:              '../vendor/chromath',
+    filesaver:             '../vendor/filesaver',
 
     angular:               '../vendor/angular/angular',
     angularMocks:          '../vendor/angular/angular-mocks',
@@ -103,18 +104,27 @@ require.config({
 require([
   'angular',
   'angularMocks',
+  'jquery',
+  'underscore',
+  'elasticjs',
+  'bootstrap',
+  'angular-sanitize',
+  'angular-strap',
+  'angular-dragdrop',
+  'extend-jquery',
+  'bindonce'
 ], function(angular) {
   'use strict';
 
   angular.module('kibana', []);
-  angular.module('kibana.services', []);
+  angular.module('kibana.services', ['$strap.directives']);
 
   require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
-    'specs/kbn-format-specs',
+    'specs/kbn-format-specs'
   ], function () {
     window.__karma__.start();
   });

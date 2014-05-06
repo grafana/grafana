@@ -1,4 +1,17 @@
 # vNext
+- InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
+- Added rounding for graphites from and to time range filters
+  for very short absolute ranges (Issue #320)
+- Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. (Closes #5)
+- Improvement to influxdb query editor, can now add where clause and alias (Issue #331, thanks @mavimo)
+- New config setting for graphite datasource to control if json render request is POST or GET (Issue #345)
+- Unsaved changes warning feature (Issue #324)
+- Fixes to filters and "All" option. It now never uses "*" as value, but all options in a {node1, node2, node3} expression (Issue #228, #359)
+- Fix for InfluxDB query generation with columns containing dots or dashes (Issue #369, #348) - Thanks to @jbripley
+- Improvement to series toggling, CTRL+MouseClick on series name will now hide all others (Issue #350)
+
+# 1.5.3 (2014-04-17)
+- Add support for async scripted dashboards (Issue #274)
 - Text panel now accepts html (for links to other dashboards, etc) (Issue #236)
 - Fix for Text panel, now changes take effect directly (Issue #251)
 - Fix when adding functions without params that did not cause graph to update (Issue #267)
@@ -6,6 +19,8 @@
 - Use influxdb aliases to distinguish between multiple columns (Issue #283)
 - Correction to ms axis formater, now formats days correctly. (Issue #189)
 - Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
+- Browser page title is now Grafana - {{dashboard title}} (Issue #294)
+- Disable auto refresh zooming in (every time you change to an absolute time range), refresh will be restored when you change time range back to relative (Issue #282)
 - More graphite functions
 
 # 1.5.2 (2014-03-24)

@@ -32,7 +32,7 @@ module.exports = function(grunt) {
             },
             {
               pattern: /@grafanaVersion@/g,
-              replacement: 'v<%= pkg.version %>'
+              replacement: '<%= pkg.version %>'
             }
           ]
         }

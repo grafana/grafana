@@ -140,7 +140,7 @@ function (_) {
     ],
     defaultParams: ['max']
   });
-  
+
   addFuncDef({
     name: "groupByNode",
     category: categories.Special,
@@ -280,6 +280,13 @@ function (_) {
 
   addFuncDef({
     name: 'summarize',
+    category: categories.Transform,
+    params: [ { name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
+    defaultParams: ['1h', 'sum']
+  });
+
+  addFuncDef({
+    name: 'smartSummarize',
     category: categories.Transform,
     params: [ { name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
     defaultParams: ['1h', 'sum']
@@ -490,25 +497,25 @@ function (_) {
     return this.def.params[index + 1] && this.def.params[index + 1].optional;
   };
 
-  FuncInstance.prototype.updateParam = function(strValue, index) {    
+  FuncInstance.prototype.updateParam = function(strValue, index) {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
-    if (this._hasMultipleParamsInString(strValue, index)) {      
+    if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
         this.updateParam(partVal.trim(), idx);
-      }, this);      
+      }, this);
       return;
     }
 
-    if (strValue === '' && this.def.params[index].optional) {                  
-      this.params.splice(index, 1);      
+    if (strValue === '' && this.def.params[index].optional) {
+      this.params.splice(index, 1);
     }
     else if (this.def.params[index].type === 'int') {
       this.params[index] = parseFloat(strValue, 10);
     }
     else {
       this.params[index] = strValue;
-    }    
+    }
 
     this.updateText();
   };

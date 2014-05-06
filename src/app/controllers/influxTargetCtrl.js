@@ -15,11 +15,22 @@ function (angular) {
         $scope.target.function = 'mean';
       }
 
+      $scope.rawQuery = false;
+
       $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last'];
+      $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
       $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
         $timeout($scope.get_data);
       });
+    };
+
+    $scope.showQuery = function () {
+      $scope.target.rawQuery = true;
+    };
+
+    $scope.hideQuery = function () {
+      $scope.target.rawQuery = false;
     };
 
     // Cannot use typeahead and ng-change on blur at the same time

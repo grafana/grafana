@@ -6,6 +6,7 @@ define([],
     create: function() {
       return {
         refresh: function() {},
+        set_interval: function(value) { this.current.refresh = value; },
 
         current: {
           title: "",
@@ -33,7 +34,7 @@ define([],
             load_local: false,
             hide: false
           },
-          refresh: false
+          refresh: true
         }
       };
     }

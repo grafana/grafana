@@ -19,13 +19,14 @@ function (angular, _, $, config, kbn, moment) {
       this.url = datasource.url;
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
+      this.render_method = datasource.render_method || 'POST';
     }
 
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from),
-          until: this.translateTime(options.range.to),
+          from: this.translateTime(options.range.from, 'round-down'),
+          until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
           maxDataPoints: options.maxDataPoints,
@@ -37,17 +38,17 @@ function (angular, _, $, config, kbn, moment) {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
         }
 
-        /// workaround for a graphite-web bug:  the format=json parameter is ignored when using POST
-        // -- bruce@lyft.com Thu Apr 10 14:48:14 PDT 2014
-        return this.doGraphiteRequest({
-          method: 'GET',
-          url: '/render?' + params.join('&'),
-          // method: 'POST',
-          //data: params.join('&'),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }
-        });
+        var httpOptions = { method: this.render_method, url: '/render' };
+
+        if (httpOptions.method === 'GET') {
+          httpOptions.url = httpOptions.url + '?' + params.join('&');
+        }
+        else {
+          httpOptions.data = params.join('&');
+          httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        }
+
+        return this.doGraphiteRequest(httpOptions);
       }
       catch(err) {
         return $q.reject(err);
@@ -71,7 +72,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date) {
+    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
@@ -87,6 +88,21 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       date = moment.utc(date);
+
+      if (rounding === 'round-up') {
+        if (date.get('s')) {
+          date.add('m', 1);
+        }
+      }
+      else if (rounding === 'round-down') {
+        // graphite' s from filter is exclusive
+        // here we step back one minute in order
+        // to guarantee that we get all the data that
+        // exists for the specified range
+        if (date.get('s')) {
+          date.subtract('m', 1);
+        }
+      }
 
       if (dashboard.current.timezone === 'browser') {
         date = date.local();

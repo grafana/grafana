@@ -61,17 +61,12 @@ function (angular, app, _) {
           });
 
           if (filter.includeAll) {
-            if(endsWithWildcard(filter.query)) {
-              filter.options.unshift({text: 'All', value: '*'});
-            }
-            else {
-              var allExpr = '{';
-              _.each(filter.options, function(option) {
-                allExpr += option.text + ',';
-              });
-              allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
-              filter.options.unshift({text: 'All', value: allExpr});
-            }
+            var allExpr = '{';
+            _.each(filter.options, function(option) {
+              allExpr += option.text + ',';
+            });
+            allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
+            filter.options.unshift({text: 'All', value: allExpr});
           }
 
           filterSrv.filterOptionSelected(filter, filter.options[0]);
@@ -94,14 +89,6 @@ function (angular, app, _) {
     $scope.render = function() {
       $rootScope.$broadcast('render');
     };
-
-    function endsWithWildcard(query) {
-      if (query.length === 0) {
-        return false;
-      }
-
-      return query[query.length - 1] === '*';
-    }
 
   });
 });
