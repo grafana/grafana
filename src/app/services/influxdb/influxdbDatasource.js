@@ -138,6 +138,7 @@ function (angular, _, kbn) {
         var params = {
           u: _this.username,
           p: _this.password,
+          time_precision: 's',
           q: query
         };
 
@@ -171,9 +172,7 @@ function (angular, _, kbn) {
           var datapoints = [];
 
           for(var i = 0; i < series.points.length; i++) {
-            var t = Math.floor(series.points[i][timeCol] / 1000);
-            var v = series.points[i][index];
-            datapoints[i] = [v,t];
+            datapoints[i] = [series.points[i][index], series.points[i][timeCol]];
           }
 
           output.push({ target:target, datapoints:datapoints });
