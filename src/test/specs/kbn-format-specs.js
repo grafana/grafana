@@ -21,4 +21,33 @@ define([
     });
 
   });
+
+  describe('nanosecond formatting', function () {
+
+    it('should translate 25 to 25 ns', function () {
+      var str = kbn.nanosFormat(25, 2);
+      expect(str).to.be("25 ns");
+    });
+
+    it('should translate 2558 to 2.56 µs', function () {
+      var str = kbn.nanosFormat(2558, 2);
+      expect(str).to.be("2.56 µs");
+    });
+
+    it('should translate 2558000 to 2.56 ms', function () {
+      var str = kbn.nanosFormat(2558000, 2);
+      expect(str).to.be("2.56 ms");
+    });
+
+    it('should translate 2019962000 to 2.02 s', function () {
+      var str = kbn.nanosFormat(2049962000, 2);
+      expect(str).to.be("2.05 s");
+    });
+
+    it('should translate 95199620000 to 1.59 m', function () {
+      var str = kbn.nanosFormat(95199620000, 2);
+      expect(str).to.be("1.59 m");
+    });
+
+  });
 });
