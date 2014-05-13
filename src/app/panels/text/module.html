@@ -5,6 +5,6 @@
   </markdown>
   <p ng-show="panel.mode == 'text'" ng-style='panel.style' ng-bind-html-unsafe="panel.content | striphtml | newlines">
   </p>
-  <p ng-show="panel.mode == 'html'" ng-bind-html-unsafe="panel.content">
+  <p ng-show="panel.mode == 'html'" ng-bind-html-unsafe="panel.content | applyfilters">
   </p>
 </div>
