@@ -14,7 +14,8 @@ define([
   'angular',
   'app',
   'underscore',
-  'require'
+  'require',
+  'services/filterSrv'
 ],
 function (angular, app, _, require) {
   'use strict';
@@ -96,6 +97,12 @@ function (angular, app, _, require) {
         .replace(/&/g, '&amp;')
         .replace(/>/g, '&gt;')
         .replace(/</g, '&lt;');
+    };
+  });
+
+  module.filter('applyfilters', function(filterSrv){
+    return function (input) {
+      return filterSrv.applyFilterToTarget(input)
     };
   });
 });
