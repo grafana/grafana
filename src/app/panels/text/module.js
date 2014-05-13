@@ -102,7 +102,7 @@ function (angular, app, _, require) {
 
   module.filter('applyfilters', function(filterSrv){
     return function (input) {
-      return filterSrv.applyFilterToTarget(input)
+      return filterSrv.applyFilterToTarget(input);
     };
   });
 });
