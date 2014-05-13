@@ -1,4 +1,4 @@
-# 1.5.4 (2014-04-13)
+# 1.5.4 (2014-05-13)
 ### New features and improvements
 - InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
 - Added rounding for graphites from and to time range filters
