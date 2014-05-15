@@ -52,15 +52,22 @@ function (angular, _, config) {
     $scope.loadAll = function() {
       $scope.infoText = "Fetching all metrics from graphite...";
 
-      return $http.get(config.graphiteUrl + "/metrics/index.json")
-        .then(saveMetricsArray)
-        .then(function () {
+      getFromEachGraphite( '/metrics/index.json', saveMetricsArray )
+        .then( function() {
           $scope.infoText = "Indexing complete!";
-        })
-        .then(null, function(err) {
+        }).then(null, function(err) {
           $scope.errorText = err;
         });
     };
+
+    function getFromEachGraphite( request, data_callback, error_callback ) {
+      return $q.all( _.map( config.datasources, function( datasource ) {
+        if ( datasource.type = 'graphite' ) {
+          return $http.get( datasource.url + request )
+            .then( data_callback, error_callback );
+        } 
+      } ) );
+    }
 
     function saveMetricsArray(data, currentIndex)
     {
@@ -80,6 +87,7 @@ function (angular, _, config) {
         });
     }
 
+    
     function deleteIndex()
     {
       var deferred = $q.defer();
@@ -172,7 +180,7 @@ function (angular, _, config) {
 
     function loadMetricsRecursive(metricPath)
     {
-      return $http.get(config.graphiteUrl + '/metrics/find/?query=' + metricPath).then(receiveMetric);
+      return getFromEachGraphite( '/metrics/find/?query=' + metricPath, receiveMetric );
     }
 
   });
