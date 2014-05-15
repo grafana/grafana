@@ -64,6 +64,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'asPercent',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'averageSeries',
     shortName: 'avg',
     category: categories.Combine,
@@ -256,6 +261,11 @@ function (_) {
 
   addFuncDef({
     name: 'integral',
+    category: categories.Transform,
+  });
+
+  addFuncDef({
+    name: 'perSecond',
     category: categories.Transform,
   });
 
