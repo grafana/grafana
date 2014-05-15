@@ -19,6 +19,9 @@ define([
   'kbn',
   'moment',
   './timeSeries',
+  'services/filterSrv',
+  'services/annotationsSrv',
+  'services/datasourceSrv',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -94,7 +97,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       grid          : {
         max: null,
-        min: 0,
+        min: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',

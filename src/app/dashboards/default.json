@@ -48,7 +48,7 @@
           "y_formats": ["short", "short"],
           "grid": {
             "max": null,
-            "min": 0
+            "min": null
           },
           "resolution": 100,
           "lines": true,

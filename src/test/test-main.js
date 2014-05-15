@@ -26,9 +26,10 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                '../vendor/jquery/jquery-1.8.0',
+    jquery:                   '../vendor/jquery/jquery-1.8.0',
 
-    bootstrap:             '../vendor/bootstrap/bootstrap',
+    bootstrap:                '../vendor/bootstrap/bootstrap',
+    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
     'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
 
@@ -94,6 +95,9 @@ require.config({
     'bindonce':             ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
 
+    'bootstrap-tagsinput':          ['jquery'],
+
+
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
 
@@ -118,13 +122,15 @@ require([
 
   angular.module('kibana', []);
   angular.module('kibana.services', ['$strap.directives']);
+  angular.module('kibana.panels', []);
+  angular.module('kibana.filters', []);
 
   require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
-    'specs/kbn-format-specs'
+    'specs/kbn-format-specs',
   ], function () {
     window.__karma__.start();
   });

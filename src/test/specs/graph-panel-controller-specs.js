@@ -1,5 +1,5 @@
 /*define([
-  //'services/all'
+  'panels/graphite/module'
 ], function() {
   'use strict';
 
@@ -26,5 +26,6 @@
       });
     });
   });
+
 });
 */
