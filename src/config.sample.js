@@ -42,10 +42,15 @@ function (Settings) {
     // Example: "1m", "1h"
     playlist_timespan: "1m",
 
-    // Add your own custom pannels
     plugins: {
       panels: []
-    }
+    },
 
+    /**
+     * Default value for cacheTimeout option sent to graphite
+     * null means grafana will not send the option
+     * refer to graphite documentation for more information
+     */
+    cacheTimeout: null
   });
 });

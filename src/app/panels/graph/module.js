@@ -21,6 +21,7 @@ define([
   './timeSeries',
   'services/annotationsSrv',
   'services/datasourceSrv',
+  'config',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -28,7 +29,7 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries) {
+function (angular, app, $, _, kbn, moment, timeSeries, config) {
 
   'use strict';
 
@@ -183,7 +184,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       /** @scratch /panels/histogram/3
        * cacheTimeout:: cacheTimeout option sent to graphite. null means the option is not sent.
        */
-      cacheTimeout: null,
+      cacheTimeout: config.cacheTimout,
     };
 
     _.defaults($scope.panel,_d);

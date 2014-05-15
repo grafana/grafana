@@ -31,9 +31,13 @@ function (angular, _, $, config, kbn, moment) {
           until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
-          cacheTimeout: options.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
+
+        if (options.cacheTimeout != null) {
+          console.log("in");
+          graphOptions['cacheTimeout'] = options.cacheTimeout;
+        }
 
         var params = this.buildGraphiteParams(filterSrv, graphOptions);
 
@@ -210,10 +214,6 @@ function (angular, _, $, config, kbn, moment) {
 
       if (options.format !== 'png') {
         options['format'] = 'json';
-      }
-
-      if (options.cacheTimeout !== null) {
-        options['cacheTimeout'] = options.cacheTimeout;
       }
 
       _.each(options, function (value, key) {
