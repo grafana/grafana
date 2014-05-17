@@ -39,8 +39,10 @@ function (angular, app, _) {
           return;
       }
       datasourceSrv.setDefault(datasource);
-      $rootScope.$broadcast('datasourceUpdated');
-      dashboard.refresh();
+      var event = $rootScope.$broadcast('datasourceUpdated');
+      if (!event.defaultPrevented) {
+        dashboard.refresh();
+      }
     };
 
     $scope.render = function() {

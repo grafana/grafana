@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard) {
+  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard, $q) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -28,7 +28,12 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
-      $rootScope.$on('datasourceUpdated', $scope.refreshFilters);
+      $rootScope.$on('datasourceUpdated', function(event) {
+        $scope.refreshFilters();
+        // Prevent the default dashboard refresh, since we'll call "refresh" ourselves once
+        // the filters have been updated.
+        event.preventDefault();
+      });
     };
 
     $scope.remove = function(filter) {
@@ -59,10 +64,11 @@ function (angular, app, _) {
      * Refresh the options for the given filter.
      * @param filter the filter
      * @param selectFirst if true, set the first option in the filter as the selected option
+     * @return the promise for the async refresh action
      */
     $scope.refreshFilter = function(filter, selectFirst) {
       var query = filterSrv.applyFilterToTarget(filter.query);
-      datasourceSrv.default.metricFindQuery(query)
+      return datasourceSrv.default.metricFindQuery(query)
         .then(function (results) {
           filter.editing=undefined;
           var originalOptions = filter.options;
@@ -98,8 +104,13 @@ function (angular, app, _) {
      * Refresh the options for all the filters in the dashboard
      */
     $scope.refreshFilters = function() {
-      _.each(filterSrv.list, function(filter) {
-        $scope.refreshFilter(filter, false);
+      var refreshPromises = _.map(filterSrv.list, function(filter) {
+        return $scope.refreshFilter(filter, false);
+      });
+
+      // Reload the dashboard once all the filters have the updated options.
+      $q.all(refreshPromises).then(function() {
+        dashboard.refresh();
       });
     };
 
