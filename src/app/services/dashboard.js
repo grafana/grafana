@@ -54,7 +54,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     // Store a reference to this
     var self = this;
-    var filterSrv;
 
     this.current = _.clone(_dash);
     this.last = {};
@@ -157,10 +156,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Set the current dashboard
       self.current = angular.copy(dashboard);
-
-      filterSrv = $injector.get('filterSrv');
-      filterSrv.init();
-
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
       }
@@ -467,8 +462,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         timer.cancel(self.refresh_timer);
       }
     };
-
-
   });
 
 });

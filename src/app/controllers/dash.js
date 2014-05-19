@@ -31,7 +31,7 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, ejsResource, dashboard, dashboardKeybindings,
+    $scope, $rootScope, $timeout, ejsResource, dashboard, filterSrv, dashboardKeybindings,
     alertSrv, panelMove, keyboardManager, grafanaVersion) {
 
     $scope.requiredElasticSearchVersion = ">=0.90.3";
@@ -57,6 +57,19 @@ function (angular, $, config, _) {
       $scope.dashboard = dashboard;
       $scope.dashAlerts = alertSrv;
 
+      $scope.filter = filterSrv;
+      console.log( "dash controller -> init -> current dashboard", dashboard.current );
+      $scope.filter.init( dashboard.current );
+
+      $scope.$watch('dashboard.current', function(newValue, oldValue) {
+          $scope.filter.init( newValue );
+      });
+
+      console.log( "Scope I watch on", $scope );
+      $scope.$watch('filter.time', function(newValue, oldValue) {
+          console.log( "Hai" );
+          $scope.dashboard.refresh();
+      }, true);
       // Clear existing alerts
       alertSrv.clearAll();
 

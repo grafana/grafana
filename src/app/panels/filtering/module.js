@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard) {
+  module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout, dashboard) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -28,19 +28,29 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
+      console.log( "Filtering panel " + $scope.dashboard );
+      $scope.filterSrv.init( $scope.dashboard );
     };
 
     $scope.remove = function(filter) {
-      filterSrv.remove(filter);
+        this.filter.removeFilter(filter);
+        
+        // TODO hkraemer: check if this makes sense like this
+        if(!$rootScope.$$phase) {
+            $rootScope.$apply();
+        }
+        $timeout(function(){
+            this.dashboard.refresh();
+        },0);
     };
 
     $scope.filterOptionSelected = function(filter, option) {
-      filterSrv.filterOptionSelected(filter, option);
-      $scope.applyFilterToOtherFilters(filter);
+      this.filter.filterOptionSelected(option);
+      this.applyFilterToOtherFilters(filter);
     };
 
     $scope.applyFilterToOtherFilters = function(updatedFilter) {
-      _.each(filterSrv.list, function(filter) {
+      _.each(this.filter.list, function(filter) {
         if (filter === updatedFilter) {
           return;
         }
@@ -51,9 +61,9 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      var query = filterSrv.applyFilterToTarget(filter.query);
+      var query = this.filter.applyFilterToTarget(filter.query);
 
-      datasourceSrv.default.metricFindQuery(query)
+      datasourceSrv.default.metricFindQuery($scope, query)
         .then(function (results) {
           filter.editing=undefined;
           filter.options = _.map(results, function(node) {
@@ -69,12 +79,12 @@ function (angular, app, _) {
             filter.options.unshift({text: 'All', value: allExpr});
           }
 
-          filterSrv.filterOptionSelected(filter, filter.options[0]);
+          this.filterSrv.filterOptionSelected(filter, filter.options[0]);
         });
     };
 
     $scope.add = function() {
-      filterSrv.add({
+      this.filter.add({
         type      : 'filter',
         name      : 'filter name',
         editing   : true,
@@ -83,7 +93,7 @@ function (angular, app, _) {
     };
 
     $scope.refresh = function() {
-      dashboard.refresh();
+      this.dashboard.refresh();
     };
 
     $scope.render = function() {

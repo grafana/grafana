@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('kibana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, filterSrv, $http) {
+  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -22,7 +22,7 @@ function (angular, _, $, config, kbn, moment) {
       this.render_method = datasource.render_method || 'POST';
     }
 
-    GraphiteDatasource.prototype.query = function(options) {
+    GraphiteDatasource.prototype.query = function(filterSrv, options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -32,7 +32,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(graphOptions);
+        var params = this.buildGraphiteParams(filterSrv, graphOptions);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -115,7 +115,7 @@ function (angular, _, $, config, kbn, moment) {
       return date.format('HH:mm_YYYYMMDD');
     };
 
-    GraphiteDatasource.prototype.metricFindQuery = function(query) {
+    GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
       var interpolated;
       try {
         interpolated = filterSrv.applyFilterToTarget(query);
@@ -158,7 +158,7 @@ function (angular, _, $, config, kbn, moment) {
       return $http(options);
     };
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
+    GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
 
