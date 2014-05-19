@@ -1,10 +1,9 @@
 define([
     'angular',
     'jquery',
-    'underscore',
     'services/all'
 ],
-function( angular, $, _ ) {
+function( angular, $ ) {
     "use strict";
 
     var module = angular.module('kibana.services.dashboard');
