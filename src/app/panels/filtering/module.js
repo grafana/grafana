@@ -75,8 +75,27 @@ function (angular, app, _) {
           var originalOptions = filter.options;
           var allExprChanged = false;
           filter.options = _.map(results, function(node) {
-            return { text: node.text, value: node.text };
+            var value = node.text;
+            try {
+              if (filter.regex && filter.regex.trim().length > 0) {
+                var match = new RegExp(filter.regex).exec(value);
+                if (match) {
+                  value = match[0];
+                } else {
+                  return null;
+                }
+              }
+            } catch (e) {
+              console.error("Regex error: "+e, e);
+            }
+            return { text: value, value: value };
           });
+
+          // Return sorted, unique options.
+          var getLowerCaseText = function(option) {
+            return option.text.toLowerCase();
+          };
+          filter.options = _.uniq(_.sortBy(_.without(filter.options, null), getLowerCaseText), true, getLowerCaseText);
 
           if (filter.includeAll) {
             var allExpr = '{';
