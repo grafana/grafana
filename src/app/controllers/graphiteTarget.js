@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteTargetCtrl', function($scope, $http) {
+  module.controller('GraphiteTargetCtrl', function($scope) {
 
     $scope.init = function() {
       parseTarget();
