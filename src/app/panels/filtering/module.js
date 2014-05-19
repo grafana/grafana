@@ -28,12 +28,14 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
-      var me = $scope;
-      $rootScope.$on('datasourceUpdated', function(event) {
-        me.refreshFilters();
+      var cleanUpDSListener = $rootScope.$on('datasourceUpdated', function(event) {
+        $scope.refreshFilters();
         // Prevent the default dashboard refresh, since we'll call "refresh" ourselves once
         // the filters have been updated.
         event.preventDefault();
+      });
+      $scope.$on("$destroy", function() {
+        cleanUpDSListener();
       });
     };
 
