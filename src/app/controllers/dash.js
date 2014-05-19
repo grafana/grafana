@@ -61,13 +61,12 @@ function (angular, $, config, _) {
       console.log( "dash controller -> init -> current dashboard", dashboard.current );
       $scope.filter.init( dashboard.current );
 
-      $scope.$watch('dashboard.current', function(newValue, oldValue) {
+      $scope.$watch('dashboard.current', function(newValue) {
           $scope.filter.init( newValue );
       });
 
       console.log( "Scope I watch on", $scope );
-      $scope.$watch('filter.time', function(newValue, oldValue) {
-          console.log( "Hai" );
+      $scope.$watch('filter.time', function() {
           $scope.dashboard.refresh();
       }, true);
       // Clear existing alerts
@@ -80,7 +79,7 @@ function (angular, $, config, _) {
       $scope.bindKeyboardShortcuts();
     };
 
-    $scope.bindKeyboardShortcuts = dashboardKeybindings.shortcuts
+    $scope.bindKeyboardShortcuts = dashboardKeybindings.shortcuts;
 
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
