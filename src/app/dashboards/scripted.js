@@ -51,6 +51,11 @@ if(!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
 }
 
+if (!_.isUndefined(ARGS.viewOnly) && ARGS.viewOnly === "true") {
+  $( document ).ready(function() {
+    $("html").addClass("view-only");
+  });
+}
 for (var i = 0; i < rows; i++) {
 
   dashboard.rows.push({

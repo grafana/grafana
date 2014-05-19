@@ -30,6 +30,36 @@
   }
 }
 
+/**
+ * Sets the whole dashboard to view-only mode, for use in scripted dashboards
+ **/
+.view-only {
+  // Disable toolbar buttons
+  .grafana-menu-zoom-out,
+  .grafana-menu-save,
+  .grafana-menu-load,
+  .add-row-panel-hint,
+  .grafana-menu-home,
+  .grafana-menu-refresh,
+  .grafana-menu-edit {
+    display: none;
+  }
+
+  // Don't allow the user to edit the row
+  padding: 0;
+  .grafana-row {
+    display: none;
+  }
+  .add-row-panel-hint {
+    display: none;
+  }
+
+  // Don't allow the user to edit the panel
+  .panel .dropdown-menu {
+    display: none;
+  }
+}
+
 // Search
 
 .grafana-search-panel {
