@@ -86,7 +86,7 @@ define([
             }
         },
 
-        removeFilter : function( filter, dashboard ) {
+        removeFilter : function( filter ) {
             this.list = _.without(this.list, filter);
         },
         init : function( dashboard ) {
