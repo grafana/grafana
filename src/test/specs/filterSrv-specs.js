@@ -31,13 +31,14 @@ define([
       });
     });
 
-    describe('filterOptionSelected', function() {
+    describe('templateOptionSelected', function() {
       beforeEach(function() {
-        _filterSrv.add({ name: 'test' });
-        _filterSrv.filterOptionSelected(_filterSrv.list[0], { value: 'muuuu' });
+        _filterSrv.init();
+        _filterSrv.addTemplateParameter({ name: 'test' });
+        _filterSrv.templateOptionSelected(_filterSrv.templateParameters[0], { value: 'muuuu' });
       });
       it('should set current value and update template data', function() {
-        var target = _filterSrv.applyFilterToTarget('this.[[test]].filters');
+        var target = _filterSrv.applyTemplateToTarget('this.[[test]].filters');
         expect(target).to.be('this.muuuu.filters');
       });
     });

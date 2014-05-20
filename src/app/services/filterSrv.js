@@ -34,8 +34,8 @@ define([
             this._templateData = _templateData;
         },
 
-        templateOptionSelected : function(option) {
-            this.current = option;
+        templateOptionSelected : function(templateParameter, option) {
+            templateParameter.current = option;
             this._updateTemplateData();
         },
 
