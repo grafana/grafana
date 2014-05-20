@@ -120,7 +120,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return $scope.datasource.metricFindQuery($scope.filterSrv, path)
+      return $scope.datasource.metricFindQuery($scope.filter, path)
         .then(function(segments) {
           if (segments.length === 0) {
             $scope.segments = $scope.segments.splice(0, fromIndex);
@@ -157,17 +157,17 @@ function (angular, _, config, gfunc, Parser) {
       var query = index === 0 ?
         '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery($scope.filterSrv, query)
+      return $scope.datasource.metricFindQuery($scope.filter, query)
         .then(function(segments) {
           _.each(segments, function(segment) {
             segment.html = segment.val = segment.text;
           });
 
-          _.each($scope.filter.list, function(filter) {
+          _.each($scope.filter.templateParameters, function( templateParameter ) {
             segments.unshift({
               type: 'template',
-              html: '[[' + filter.name + ']]',
-              val: '[[' + filter.name + ']]',
+              html: '[[' + templateParameter.name + ']]',
+              val: '[[' + templateParameter.name + ']]',
               expandable: true,
             });
           });

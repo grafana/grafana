@@ -11,43 +11,43 @@ define([
   module.factory('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
     // defaults
     var _d = {
-      list: [],
+      templateParameters: [],
       time: {}
     };
 
     var result = {
         _updateTemplateData : function( initial ) {
-            this._filterTemplateData = {};
-            _.each(this.list, function(filter) {
-            if (initial) {
-                var urlValue = $routeParams[filter.name];
-                if (urlValue) {
-                    filter.current = { text: urlValue, value: urlValue };
+            this._templateData = {};
+            _.each(this.templateParameters, function( templateParameter ) {
+                if (initial) {
+                    var urlValue = $routeParams[ templateParameter.name ];
+                    if (urlValue) {
+                        templateParameter.current = { text: urlValue, value: urlValue };
+                    }
                 }
-            }
-            if (!filter.current || !filter.current.value) {
-                return;
-            }
+                if (!templateParameter.current || !templateParameter.current.value) {
+                    return;
+                }
 
-            this._filterTemplateData[filter.name] = filter.current.value;
+                this._templateData[ templateParameter.name ] = templateParameter.current.value;
             });
         },
 
-        filterOptionSelected : function(option) {
+        templateOptionSelected : function(option) {
             this.current = option;
             this._updateTemplateData();
         },
 
-        add : function(filter) {
-            this.list.push(filter);
+        addTemplateParameter : function( templateParameter ) {
+            this.templateParameters.push( templateParameter );
         },
 
-        applyFilterToTarget : function(target) {
+        applyTemplateToTarget : function(target) {
             if (target.indexOf('[[') === -1) {
                 return target;
             }
 
-            return _.template(target, this._filterTemplateData, this.templateSettings);
+            return _.template(target, this._templateData, this.templateSettings);
         },
 
         setTime : function(time) {
@@ -86,9 +86,10 @@ define([
             }
         },
 
-        removeFilter : function( filter ) {
-            this.list = _.without(this.list, filter);
+        removeTemplateParameter : function( templateParameter ) {
+            this.templateParameters = _.without( this.templateParameters, templateParameter );
         },
+
         init : function( dashboard ) {
             _.defaults(this, _d);
             this.dashboard = dashboard;

@@ -258,7 +258,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         datasource: $scope.panel.datasource
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filterSrv, $scope.rangeUnparsed);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
 
       return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)

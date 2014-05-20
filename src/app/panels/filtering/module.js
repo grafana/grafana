@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout, dashboard) {
+  module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -27,13 +27,11 @@ function (angular, app, _) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-      $scope.filterSrv = filterSrv;
-      console.log( "Filtering panel " + $scope.dashboard );
-      $scope.filterSrv.init( $scope.dashboard );
+        // empty. Don't know if I need the function then.
     };
 
-    $scope.remove = function(filter) {
-        this.filter.removeFilter(filter);
+    $scope.remove = function( templateParameter ) {
+        this.filter.removeTemplateParameter( templateParameter );
         
         // TODO hkraemer: check if this makes sense like this
         if(!$rootScope.$$phase) {
@@ -44,24 +42,24 @@ function (angular, app, _) {
         },0);
     };
 
-    $scope.filterOptionSelected = function(filter, option) {
-      this.filter.filterOptionSelected(option);
-      this.applyFilterToOtherFilters(filter);
+    $scope.filterOptionSelected = function( templateParameter, option ) {
+      this.filter.templateOptionSelected(option);
+      this.applyFilterToOtherFilters(templateParameter);
     };
 
     $scope.applyFilterToOtherFilters = function(updatedFilter) {
-      _.each(this.filter.list, function(filter) {
-        if (filter === updatedFilter) {
+      _.each(this.filter.templateParameters, function( templateParameter ) {
+        if (templateParameter === updatedFilter) {
           return;
         }
-        if (filter.query.indexOf(updatedFilter.name) !== -1) {
-          $scope.applyFilter(filter);
+        if (templateParameter.query.indexOf(updatedFilter.name) !== -1) {
+          $scope.applyFilter(templateParameter);
         }
       });
     };
 
     $scope.applyFilter = function(filter) {
-      var query = this.filter.applyFilterToTarget(filter.query);
+      var query = this.filter.applyTemplateToTarget(filter.query);
 
       datasourceSrv.default.metricFindQuery($scope, query)
         .then(function (results) {
@@ -79,12 +77,12 @@ function (angular, app, _) {
             filter.options.unshift({text: 'All', value: allExpr});
           }
 
-          this.filterSrv.filterOptionSelected(filter, filter.options[0]);
+          this.filter.templateOptionSelected(filter, filter.options[0]);
         });
     };
 
     $scope.add = function() {
-      this.filter.add({
+      this.filter.addTemplateParameter({
         type      : 'filter',
         name      : 'filter name',
         editing   : true,
