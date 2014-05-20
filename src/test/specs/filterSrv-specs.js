@@ -53,6 +53,7 @@ define([
       });
 
       it('should return parsed when parse is true', function() {
+        _filterSrv.init( _dashboard );
         _filterSrv.setTime({from: 'now', to: 'now-1h' });
         var time = _filterSrv.timeRange(true);
         expect(_.isDate(time.from)).to.be(true);
