@@ -17,7 +17,7 @@ define([
 
     var result = {
         _updateTemplateData : function( initial ) {
-            this._templateData = {};
+            var _templateData = {};
             _.each(this.templateParameters, function( templateParameter ) {
                 if (initial) {
                     var urlValue = $routeParams[ templateParameter.name ];
@@ -29,8 +29,9 @@ define([
                     return;
                 }
 
-                this._templateData[ templateParameter.name ] = templateParameter.current.value;
+                _templateData[ templateParameter.name ] = templateParameter.current.value;
             });
+            this._templateData = _templateData;
         },
 
         templateOptionSelected : function(option) {
@@ -40,6 +41,7 @@ define([
 
         addTemplateParameter : function( templateParameter ) {
             this.templateParameters.push( templateParameter );
+            this._updateTemplateData();
         },
 
         applyTemplateToTarget : function(target) {

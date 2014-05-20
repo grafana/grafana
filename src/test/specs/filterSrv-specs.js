@@ -21,12 +21,12 @@ define([
 
     describe('init', function() {
       beforeEach(function() {
-        _filterSrv.add({ name: 'test', current: { value: 'oogle' } });
         _filterSrv.init();
+        _filterSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
       });
 
       it('should initialize template data', function() {
-        var target = _filterSrv.applyFilterToTarget('this.[[test]].filters');
+        var target = _filterSrv.applyTemplateToTarget('this.[[test]].filters');
         expect(target).to.be('this.oogle.filters');
       });
     });
