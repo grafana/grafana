@@ -58,14 +58,12 @@ function (angular, $, config, _) {
       $scope.dashAlerts = alertSrv;
 
       $scope.filter = filterSrv;
-      console.log( "dash controller -> init -> current dashboard", dashboard.current );
       $scope.filter.init( dashboard.current );
 
       $scope.$watch('dashboard.current', function(newValue) {
           $scope.filter.init( newValue );
       });
 
-      console.log( "Scope I watch on", $scope );
       $scope.$watch('filter.time', function() {
           $scope.dashboard.refresh();
       }, true);

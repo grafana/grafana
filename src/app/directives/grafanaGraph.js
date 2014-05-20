@@ -388,7 +388,6 @@ function (angular, $, kbn, moment, _) {
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply( function() {
-              console.log( "Scope I call filter.setTime on", scope );
               scope.filter.setTime({
                 from  : moment.utc(ranges.xaxis.from).toDate(),
                 to    : moment.utc(ranges.xaxis.to).toDate(),
