@@ -118,7 +118,7 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
       var interpolated;
       try {
-        interpolated = filterSrv.applyFilterToTarget(query);
+        interpolated = filterSrv.applyTemplateToTarget(query);
       }
       catch(err) {
         return $q.reject(err);
@@ -174,7 +174,7 @@ function (angular, _, $, config, kbn, moment) {
         if (key === "targets") {
           _.each(value, function (value) {
             if (!value.hide) {
-              var targetValue = filterSrv.applyFilterToTarget(value.target);
+              var targetValue = filterSrv.applyTemplateToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           }, this);
