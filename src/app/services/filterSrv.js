@@ -16,7 +16,7 @@ define([
     };
 
     var result = {
-        _updateTemplateData : function( initial ) {
+        _updateTemplateData : function(initial) {
             var _templateData = {};
             _.each(this.templateParameters, function( templateParameter ) {
                 if (initial) {
@@ -29,7 +29,7 @@ define([
                     return;
                 }
 
-                _templateData[ templateParameter.name ] = templateParameter.current.value;
+                _templateData[templateParameter.name] = templateParameter.current.value;
             });
             this._templateData = _templateData;
         },
@@ -92,17 +92,19 @@ define([
             this.templateParameters = _.without( this.templateParameters, templateParameter );
         },
 
-        init : function( dashboard ) {
+        init: function(dashboard) {
             _.defaults(this, _d);
             this.dashboard = dashboard;
             this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-            if( dashboard && dashboard.services && dashboard.services.filter ) {
-                // compatiblity hack
+
+            if(dashboard.services && dashboard.services.filter) {
                 this.time = dashboard.services.filter.time;
+                this.templateParameters = dashboard.services.filter.list || [];
+                this._updateTemplateData(true);
             }
 
         }
-    }; 
+    };
     return result;
   });
 
