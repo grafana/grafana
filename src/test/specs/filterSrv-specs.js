@@ -19,9 +19,12 @@ define([
       _filterSrv = filterSrv;
     }));
 
+    beforeEach(function() {
+        _filterSrv.init( _dashboard.current );
+    });
+
     describe('init', function() {
       beforeEach(function() {
-        _filterSrv.init( _dashboard.current );
         _filterSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
       });
 
@@ -33,7 +36,6 @@ define([
 
     describe('templateOptionSelected', function() {
       beforeEach(function() {
-        _filterSrv.init( _dashboard.current );
         _filterSrv.addTemplateParameter({ name: 'test' });
         _filterSrv.templateOptionSelected(_filterSrv.templateParameters[0], { value: 'muuuu' });
       });
@@ -45,7 +47,6 @@ define([
 
     describe('timeRange', function() {
       it('should return unparsed when parse is false', function() {
-        _filterSrv.init( _dashboard.current );
         _filterSrv.setTime({from: 'now', to: 'now-1h' });
         var time = _filterSrv.timeRange(false);
         expect(time.from).to.be('now');
@@ -53,7 +54,6 @@ define([
       });
 
       it('should return parsed when parse is true', function() {
-        _filterSrv.init( _dashboard.current );
         _filterSrv.setTime({from: 'now', to: 'now-1h' });
         var time = _filterSrv.timeRange(true);
         expect(_.isDate(time.from)).to.be(true);
@@ -63,7 +63,6 @@ define([
 
     describe('setTime', function() {
       it('should return disable refresh for absolute times', function() {
-        _filterSrv.init( _dashboard.current );
         _dashboard.current.refresh = true;
 
         _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
@@ -71,7 +70,6 @@ define([
       });
 
       it('should restore refresh after relative time range is set', function() {
-        _filterSrv.init( _dashboard.current );
         _dashboard.current.refresh = true;
         _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
         expect(_dashboard.current.refresh).to.be(false);
