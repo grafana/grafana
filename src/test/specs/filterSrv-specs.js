@@ -21,7 +21,7 @@ define([
 
     describe('init', function() {
       beforeEach(function() {
-        _filterSrv.init();
+        _filterSrv.init( _dashboard );
         _filterSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
       });
 
@@ -33,7 +33,7 @@ define([
 
     describe('templateOptionSelected', function() {
       beforeEach(function() {
-        _filterSrv.init();
+        _filterSrv.init( _dashboard );
         _filterSrv.addTemplateParameter({ name: 'test' });
         _filterSrv.templateOptionSelected(_filterSrv.templateParameters[0], { value: 'muuuu' });
       });
@@ -45,6 +45,7 @@ define([
 
     describe('timeRange', function() {
       it('should return unparsed when parse is false', function() {
+        _filterSrv.init( _dashboard );
         _filterSrv.setTime({from: 'now', to: 'now-1h' });
         var time = _filterSrv.timeRange(false);
         expect(time.from).to.be('now');
