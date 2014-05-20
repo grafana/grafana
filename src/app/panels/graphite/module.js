@@ -19,7 +19,6 @@ define([
   'kbn',
   'moment',
   './timeSeries',
-  'services/filterSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
   'jquery.flot',
@@ -37,7 +36,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graphite', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -231,8 +230,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = filterSrv.timeRange();
-      $scope.rangeUnparsed = filterSrv.timeRange(false);
+      $scope.range = this.filter.timeRange();
+      $scope.rangeUnparsed = this.filter.timeRange(false);
       $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
       $scope.interval = '10m';
 
@@ -259,9 +258,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         datasource: $scope.panel.datasource
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
 
-      return $scope.datasource.query(graphiteQuery)
+      return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;

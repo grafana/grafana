@@ -56,6 +56,7 @@ function (angular, _, config) {
 
       // ignore timespan changes
       current.services.filter.time = original.services.filter.time = {};
+
       current.refresh = original.refresh;
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });

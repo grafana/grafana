@@ -28,7 +28,7 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(rangeUnparsed) {
+    this.getAnnotations = function(filterSrv, rangeUnparsed) {
       if (!annotationPanel.enable) {
         return $q.when(null);
       }
@@ -37,7 +37,7 @@ define([
         return promiseCached;
       }
 
-      var graphiteMetrics = this.getGraphiteMetrics(rangeUnparsed);
+      var graphiteMetrics = this.getGraphiteMetrics(filterSrv, rangeUnparsed);
       var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
 
       promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
@@ -81,7 +81,7 @@ define([
       });
     };
 
-    this.getGraphiteMetrics = function(rangeUnparsed) {
+    this.getGraphiteMetrics = function(filterSrv, rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite metric');
       if (annotations.length === 0) {
         return [];
@@ -97,7 +97,7 @@ define([
 
         var receiveFunc = _.partial(receiveGraphiteMetrics, annotation);
 
-        return datasourceSrv.default.query(graphiteQuery)
+        return datasourceSrv.default.query(filterSrv, graphiteQuery)
           .then(receiveFunc)
           .then(null, errorHandler);
       });

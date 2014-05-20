@@ -25,7 +25,7 @@ function (angular, app, _, moment, kbn) {
   var module = angular.module('kibana.panels.timepicker', []);
   app.useModule(module);
 
-  module.controller('timepicker', function($scope, $modal, $q, filterSrv) {
+  module.controller('timepicker', function($scope, $modal, $q) {
     $scope.panelMeta = {
       status  : "Stable",
       description : "A panel for controlling the time range filters. If you have time based data, "+
@@ -44,8 +44,6 @@ function (angular, app, _, moment, kbn) {
 
     _.defaults($scope.panel,_d);
 
-    $scope.filterSrv = filterSrv;
-
     // ng-pattern regexs
     $scope.patterns = {
       date: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
@@ -58,9 +56,9 @@ function (angular, app, _, moment, kbn) {
     $scope.$on('refresh', function(){$scope.init();});
 
     $scope.init = function() {
-      var time = filterSrv.timeRange();
+      var time = this.filter.timeRange( true );
       if(time) {
-        $scope.panel.now = filterSrv.timeRange(false).to === "now" ? true : false;
+        $scope.panel.now = this.filter.timeRange(false).to === "now" ? true : false;
         $scope.time = getScopeTimeObj(time.from,time.to);
       }
     };
@@ -135,7 +133,7 @@ function (angular, app, _, moment, kbn) {
       }
 
       // Set the filter
-      $scope.panel.filter_id = filterSrv.setTime(_filter);
+      $scope.panel.filter_id = $scope.filter.setTime(_filter);
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
@@ -149,7 +147,7 @@ function (angular, app, _, moment, kbn) {
         to: "now"
       };
 
-      filterSrv.setTime(_filter);
+      this.filter.setTime(_filter);
 
       $scope.time = getScopeTimeObj(kbn.parseDate(_filter.from),new Date());
     };

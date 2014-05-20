@@ -1,0 +1,4 @@
+define([
+  './dashboardKeyBindings',
+],
+function () {});

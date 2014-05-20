@@ -10,7 +10,7 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('grafanaGraph', function(filterSrv, $rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope, dashboard) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -387,9 +387,11 @@ function (angular, $, kbn, moment, _) {
         }
 
         elem.bind("plotselected", function (event, ranges) {
-          filterSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from).toDate(),
-            to    : moment.utc(ranges.xaxis.to).toDate(),
+          scope.$apply( function() {
+              scope.filter.setTime({
+                from  : moment.utc(ranges.xaxis.from).toDate(),
+                to    : moment.utc(ranges.xaxis.to).toDate(),
+              });
           });
         });
       }
