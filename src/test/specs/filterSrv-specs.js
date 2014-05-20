@@ -63,6 +63,7 @@ define([
 
     describe('setTime', function() {
       it('should return disable refresh for absolute times', function() {
+        _filterSrv.init( _dashboard );
         _dashboard.current.refresh = true;
 
         _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
