@@ -87,7 +87,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','bits','short', 'ms'
+       * y_formats :: 'none','bytes','bits','short', 's', 'ms'
        */
       y_formats    : ['short', 'short'],
       /** @scratch /panels/histogram/5

@@ -1,3 +1,6 @@
+vNext
+- New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
+
 # 1.5.4 (2014-05-13)
 ### New features and improvements
 - InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
