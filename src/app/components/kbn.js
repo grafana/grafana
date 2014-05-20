@@ -566,6 +566,10 @@ function($, _, moment) {
       return function(val) {
         return kbn.bitFormat(val, decimals);
       };
+    case 's':
+      return function(val) {
+        return kbn.sFormat(val, decimals);
+      };
     case 'ms':
       return function(val) {
         return kbn.msFormat(val, decimals);
@@ -607,6 +611,27 @@ function($, _, moment) {
     }
 
     return (size / 31536000000).toFixed(decimals) + " year";
+  };
+
+  kbn.sFormat = function(size, decimals) {
+    // Less than 10 min, use seconds
+    if (size < 600) {
+      return size.toFixed(decimals) + " s";
+    }
+    // Less than 1 hour, devide in minutes
+    else if (size < 3600) {
+      return (size / 60).toFixed(decimals) + " min";
+    }
+    // Less than one day, devide in hours
+    else if (size < 86400) {
+      return (size / 3600).toFixed(decimals) + " hour";
+    }
+    // Less than one week, devide in days
+    else if (size < 604800) {
+      return (size / 86400).toFixed(decimals) + " day";
+    }
+
+    return (size / 3.15569e7).toFixed(decimals) + " year";
   };
 
   kbn.microsFormat = function(size, decimals) {
