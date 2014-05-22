@@ -162,20 +162,29 @@ function (angular, _, kbn) {
 
       _.each(data, function(series) {
         var timeCol = series.columns.indexOf('time');
+        var groupByColumn = series.columns.indexOf('host');
 
         _.each(series.columns, function(column, index) {
-          if (column === "time" || column === "sequence_number") {
+          if (column === "time" || column === "sequence_number" || column === "host") {
             return;
           }
 
           var target = data.alias || series.name + "." + column;
-          var datapoints = [];
-
-          for(var i = 0; i < series.points.length; i++) {
-            datapoints[i] = [series.points[i][index], series.points[i][timeCol]];
-          }
-
-          output.push({ target:target, datapoints:datapoints });
+          var datapoints = _.groupBy(series.points, function (point) { 
+            if (groupByColumn == -1 ) return null; 
+            else return point[groupByColumn];
+          });
+          datapoints = _.map(_.pairs(datapoints), function(values) {
+            return [values[0], _.map(values[1], function (point) { return [point[index], point[timeCol]]; }) ];
+          });
+          
+          _.each(datapoints, function(values) {
+            if (values[0] == null) {
+              output.push({ target: target, datapoints: values[1]});
+            } else {
+              output.push({ target: values[0] + "-" + target, datapoints: values[1] });
+            }
+          });
         });
       });
 
