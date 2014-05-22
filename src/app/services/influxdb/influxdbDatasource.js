@@ -194,7 +194,8 @@ function (angular, _, kbn) {
             });
             
             _.each(datapoints, function(values) {
-              if (values[0] == null) {
+              // this gets stringified on its way out of _.pair... sigh
+              if (values[0] == "null") {
                 output.push({ target: target, datapoints: values[1]});
               } else {
                 output.push({ target: values[0] + "-" + target, datapoints: values[1] });
