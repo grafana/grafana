@@ -95,6 +95,7 @@
           <li>
             <a class="grafana-target-segment"
                ng-click="target.condition_filter = !target.condition_filter; get_data();"
+               bs-tooltip="'Add a where clause'"
                role="menuitem">
               <i class="icon-filter"></i>
             </a>
@@ -140,6 +141,7 @@
           <li>
             <a class="grafana-target-segment"
                ng-click="target.groupby_field_add = !target.groupby_field_add; get_data();"
+               bs-tooltip="'Add a group by column'"
                role="menuitem">
               <i class="icon-plus"></i>
             </a>
