@@ -43,16 +43,13 @@ function (angular, _, kbn) {
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
           
-          var afterGroup = _.rest(lowerCaseQueryElements, groupByIndex);
-          for (var i = 0; i < afterGroup.length; i++) {
-            var el = afterGroup[i];
-            if (el === "order") break;
-            if ( /,$/.test(el) && 
-                _.size(afterGroup) > i && 
-                ! /^time\(/.test(afterGroup[i + 1])) {
-              additionalGroups.push(queryElements[groupByIndex + i + 1]);
-            }
-          }
+          additionalGroups = lowerCaseQueryElements.slice(groupByIndex + 1,
+            orderIndex ? orderIndex : lowerCaseQueryElements.length).filter(function(w) {
+            return ! /time\(/.test(w);
+          });
+          additionalGroups = _.map(additionalGroups, function(w) {
+            return w.replace(",","");
+          });
 
           if (whereIndex !== -1) {
             queryElements.splice(whereIndex+1, 0, timeFilter, "and");
@@ -73,14 +70,14 @@ function (angular, _, kbn) {
           query = queryElements.join(" ");
         }
         else {
-          var template = "select [[group]][[group_add]] [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
+          var template = "select [[group]][[group_comma]] [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]])[[group_add]] [[group]] order asc";
+                         "group by time([[interval]])[[group_comma]] [[group]] order asc";
 
           if (target.column.indexOf('-') !== -1 || target.column.indexOf('.') !== -1) {
-            template = "select [[group]][[group_add]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
+            template = "select [[group]][[group_comma]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]])[[group_add]] [[group]] order asc";
+                         "group by time([[interval]])[[group_comma]] [[group]] order asc";
           }
 
           var templateData = {
@@ -93,7 +90,7 @@ function (angular, _, kbn) {
             condition_key: target.condition_filter ? target.condition_key : '',
             condition_op: target.condition_filter ? target.condition_op : '',
             condition_value: target.condition_filter ? target.condition_value : '',
-            group_add: target.groupby_field_add && target.groupby_field ? ',' : '',
+            group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
             group: target.groupby_field_add ? target.groupby_field : '',
           };
 
