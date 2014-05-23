@@ -188,8 +188,11 @@ function (angular, _, kbn) {
 
             var target = data.alias || series.name + "." + column;
             var datapoints = _.groupBy(series.points, function (point) { 
-              if (groupByColumn == undefined) return null; 
-              else return point[groupByColumn];
+              if (groupByColumn === undefined) {
+                return null;
+              } else {
+                return point[groupByColumn];
+              }
             });
             datapoints = _.map(_.pairs(datapoints), function(values) {
               return [values[0], _.map(values[1], function (point) { return [point[index], point[timeCol]]; }) ];
@@ -207,7 +210,7 @@ function (angular, _, kbn) {
         });
 
         return output;
-      }
+      };
     }
 
     function getTimeFilter(options) {
