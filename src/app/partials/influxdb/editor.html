@@ -76,7 +76,7 @@
             <input type="text"
                    class="input-small grafana-target-segment-input"
                    ng-model="target.column"
-                   placeholder="value column"
+                   placeholder="value"
                    spellcheck='false'
                    bs-typeahead="listColumns"
                    data-min-length=0
@@ -136,6 +136,24 @@
                    bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
                    spellcheck='false'
                    ng-model-onblur ng-change="get_data()" >
+          </li>
+          <li>
+            <a class="grafana-target-segment"
+               ng-click="target.groupby_field_add = !target.groupby_field_add; get_data();"
+               role="menuitem">
+              <i class="icon-plus"></i>
+            </a>
+          </li>
+
+          <li ng-show="target.groupby_field_add">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.groupby_field"
+                   placeholder="column"
+                   spellcheck="false"
+                   bs-typeahead="listColumns"
+                   data-min-length=0
+                   ng-blur="get_data()">
           </li>
 
           <li class="grafana-target-segment">

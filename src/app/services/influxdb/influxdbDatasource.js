@@ -73,14 +73,14 @@ function (angular, _, kbn) {
           query = queryElements.join(" ");
         }
         else {
-          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
+          var template = "select [[group]][[group_add]] [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
+                         "group by time([[interval]])[[group_add]] [[group]] order asc";
 
           if (target.column.indexOf('-') !== -1 || target.column.indexOf('.') !== -1) {
-            template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
+            template = "select [[group]][[group_add]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
+                         "group by time([[interval]])[[group_add]] [[group]] order asc";
           }
 
           var templateData = {
@@ -92,9 +92,14 @@ function (angular, _, kbn) {
             condition_add: target.condiction_filter ? target.condition_add : '',
             condition_key: target.condiction_filter ? target.condition_key : '',
             condition_op: target.condiction_filter ? target.condition_op : '',
-            condition_value: target.condiction_filter ? target.condition_value: ''
+            condition_value: target.condiction_filter ? target.condition_value : '',
+            group_add: target.groupby_field_add && target.groupby_field ? ',' : '',
+            group: target.groupby_field_add ? target.groupby_field : '',
           };
 
+          if (target.groupby_field_add) {
+            additionalGroups.push(target.groupby_field);
+          }
           query = _.template(template, templateData, this.templateSettings);
           target.query = query;
         }
