@@ -44,7 +44,7 @@ function (angular, _, kbn) {
           var orderIndex = lowerCaseQueryElements.indexOf("order");
           
           additionalGroups = lowerCaseQueryElements.slice(groupByIndex + 1,
-            orderIndex ? orderIndex : lowerCaseQueryElements.length).filter(function(w) {
+            orderIndex >= 0 ? orderIndex : lowerCaseQueryElements.length).filter(function(w) {
             return ! /time\(/.test(w);
           });
           additionalGroups = _.map(additionalGroups, function(w) {
