@@ -94,12 +94,12 @@
           </li>
           <li>
             <a class="grafana-target-segment"
-               ng-click="target.condiction_filter = !target.condiction_filter; get_data();"
+               ng-click="target.condition_filter = !target.condition_filter; get_data();"
                role="menuitem">
               <i class="icon-filter"></i>
             </a>
           </li>
-          <li ng-show="target.condiction_filter">
+          <li ng-show="target.condition_filter">
             <select class="input-small grafana-target-segment-input"
                     ng-change="get_data()"
                     ng-model="target.condition_add"
