@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard) {
+  module.controller('filtering', function($scope, filterSrv, datasourceSrv, $rootScope, dashboard, $q) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -28,6 +28,15 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.filterSrv = filterSrv;
+      var cleanUpDSListener = $rootScope.$on('datasourceUpdated', function(event) {
+        $scope.refreshFilters();
+        // Prevent the default dashboard refresh, since we'll call "refresh" ourselves once
+        // the filters have been updated.
+        event.preventDefault();
+      });
+      $scope.$on("$destroy", function() {
+        cleanUpDSListener();
+      });
     };
 
     $scope.remove = function(filter) {
@@ -51,14 +60,44 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      var query = filterSrv.applyFilterToTarget(filter.query);
+      $scope.refreshFilter(filter, true);
+    };
 
-      datasourceSrv.default.metricFindQuery(query)
+    /**
+     * Refresh the options for the given filter.
+     * @param filter the filter
+     * @param selectFirst if true, set the first option in the filter as the selected option
+     * @return the promise for the async refresh action
+     */
+    $scope.refreshFilter = function(filter, selectFirst) {
+      var query = filterSrv.applyFilterToTarget(filter.query);
+      return datasourceSrv.default.metricFindQuery(query)
         .then(function (results) {
           filter.editing=undefined;
+          var originalOptions = filter.options;
+          var allExprChanged = false;
           filter.options = _.map(results, function(node) {
-            return { text: node.text, value: node.text };
+            var value = node.text;
+            try {
+              if (filter.regex && filter.regex.trim().length > 0) {
+                var match = new RegExp(filter.regex).exec(value);
+                if (match) {
+                  value = match[0];
+                } else {
+                  return null;
+                }
+              }
+            } catch (e) {
+              console.error("Regex error: "+e, e);
+            }
+            return { text: value, value: value };
           });
+
+          // Return sorted, unique options.
+          var getLowerCaseText = function(option) {
+            return option.text.toLowerCase();
+          };
+          filter.options = _.uniq(_.sortBy(_.without(filter.options, null), getLowerCaseText), true, getLowerCaseText);
 
           if (filter.includeAll) {
             var allExpr = '{';
@@ -67,10 +106,34 @@ function (angular, app, _) {
             });
             allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
             filter.options.unshift({text: 'All', value: allExpr});
+
+            if (originalOptions && originalOptions.length > 0 && originalOptions[0].text === 'All'
+              && originalOptions[0].value !== allExpr) {
+              allExprChanged = true;
+            }
           }
 
-          filterSrv.filterOptionSelected(filter, filter.options[0]);
+          if (selectFirst) {
+            filterSrv.filterOptionSelected(filter, filter.options[0]);
+          } else if (filter.includeAll && (filter.current.text === 'All') && allExprChanged) {
+            // If the selected option is "All" and the All expression has changed, re-select it to re-query the chart data.
+            filterSrv.filterOptionSelected(filter, filter.options[0]);
+          }
         });
+    };
+
+    /**
+     * Refresh the options for all the filters in the dashboard
+     */
+    $scope.refreshFilters = function() {
+      var refreshPromises = _.map(filterSrv.list, function(filter) {
+        return $scope.refreshFilter(filter, false);
+      });
+
+      // Reload the dashboard once all the filters have the updated options.
+      $q.all(refreshPromises).then(function() {
+        dashboard.refresh();
+      });
     };
 
     $scope.add = function() {

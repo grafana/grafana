@@ -1,0 +1,12 @@
+<div ng-controller='datasource' ng-init="init()">
+
+    <div class="btn-group " style="margin-right: 10px;">
+        <button class="btn btn-info dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Global datasource override'">{{datasource.name}} <span class="caret"></span></button>
+
+        <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="datasource in datasources" role="menuitem">
+                <a ng-click="setDatasource(datasource.value);">{{datasource.name}}</a>
+            </li>
+        </ul>
+    </div>
+</div>
