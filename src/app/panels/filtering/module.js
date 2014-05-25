@@ -30,25 +30,25 @@ function (angular, app, _) {
         // empty. Don't know if I need the function then.
     };
 
-    $scope.remove = function( templateParameter ) {
-        this.filter.removeTemplateParameter( templateParameter );
-        
+    $scope.remove = function(templateParameter) {
+        $scope.filter.removeTemplateParameter(templateParameter);
+
         // TODO hkraemer: check if this makes sense like this
         if(!$rootScope.$$phase) {
             $rootScope.$apply();
         }
         $timeout(function(){
-            this.dashboard.refresh();
+            $scope.dashboard.refresh();
         },0);
     };
 
-    $scope.filterOptionSelected = function( templateParameter, option ) {
-      this.filter.templateOptionSelected(option);
-      this.applyFilterToOtherFilters(templateParameter);
+    $scope.filterOptionSelected = function(templateParameter, option) {
+      $scope.filter.templateOptionSelected(templateParameter, option);
+      $scope.applyFilterToOtherFilters(templateParameter);
     };
 
     $scope.applyFilterToOtherFilters = function(updatedFilter) {
-      _.each(this.filter.templateParameters, function( templateParameter ) {
+      _.each($scope.filter.templateParameters, function(templateParameter) {
         if (templateParameter === updatedFilter) {
           return;
         }
@@ -59,9 +59,8 @@ function (angular, app, _) {
     };
 
     $scope.applyFilter = function(filter) {
-      var query = this.filter.applyTemplateToTarget(filter.query);
 
-      datasourceSrv.default.metricFindQuery($scope, query)
+      datasourceSrv.default.metricFindQuery($scope.filter, filter.query)
         .then(function (results) {
           filter.editing=undefined;
           filter.options = _.map(results, function(node) {
@@ -77,12 +76,12 @@ function (angular, app, _) {
             filter.options.unshift({text: 'All', value: allExpr});
           }
 
-          this.filter.templateOptionSelected(filter, filter.options[0]);
+          $scope.filter.templateOptionSelected(filter, filter.options[0]);
         });
     };
 
     $scope.add = function() {
-      this.filter.addTemplateParameter({
+      $scope.filter.addTemplateParameter({
         type      : 'filter',
         name      : 'filter name',
         editing   : true,
@@ -91,7 +90,7 @@ function (angular, app, _) {
     };
 
     $scope.refresh = function() {
-      this.dashboard.refresh();
+      $scope.dashboard.refresh();
     };
 
     $scope.render = function() {

@@ -52,21 +52,23 @@ function (angular, $, config, _) {
 
     $scope.init = function() {
       $scope.config = config;
+
       // Make stuff, including underscore.js available to views
       $scope._ = _;
       $scope.dashboard = dashboard;
       $scope.dashAlerts = alertSrv;
 
       $scope.filter = filterSrv;
-      $scope.filter.init( dashboard.current );
+      $scope.filter.init(dashboard.current);
 
       $scope.$watch('dashboard.current', function(newValue) {
-          $scope.filter.init( newValue );
+        $scope.filter.init(newValue);
       });
 
       $scope.$watch('filter.time', function() {
-          $scope.dashboard.refresh();
+        $scope.dashboard.refresh();
       }, true);
+
       // Clear existing alerts
       alertSrv.clearAll();
 
@@ -87,7 +89,7 @@ function (angular, $, config, _) {
       }
     };
 
-    $scope.add_row = function(dash,row) {
+    $scope.add_row = function(dash, row) {
       dash.rows.push(row);
     };
 
