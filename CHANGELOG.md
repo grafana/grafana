@@ -1,5 +1,6 @@
 vNext
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
+- Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements
