@@ -62,15 +62,9 @@ function (angular, _, kbn) {
           query = queryElements.join(" ");
         }
         else {
-          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
+          var template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
                          "group by time([[interval]]) order asc";
-
-          if (target.column.indexOf('-') !== -1 || target.column.indexOf('.') !== -1) {
-            template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
-                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
-          }
 
           var templateData = {
             series: target.series,
@@ -99,7 +93,7 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from ' + seriesName + ' limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
         if (!data) {
           return [];
         }
