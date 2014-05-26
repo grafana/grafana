@@ -14,6 +14,7 @@ function (Settings) {
      * For Basic authentication use: http://username:password@domain.com:9200
      */
     elasticsearch: "http://"+window.location.hostname+":9200",
+    playlistTimespan: "15s",
 
     /**
      * graphite-web url:
