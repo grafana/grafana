@@ -69,6 +69,7 @@ function (_, crypto) {
       datasource.name = key;
       parseBasicAuth(datasource);
       if (datasource.type === 'influxdb') { parseMultipleHosts(datasource); }
+      if (datasource.type === 'influxdb' || datasource.type === 'mon') { parseMultipleHosts(datasource); }
     });
 
     var elasticParsed = parseBasicAuth({ url: settings.elasticsearch });

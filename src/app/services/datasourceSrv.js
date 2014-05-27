@@ -4,13 +4,14 @@ define([
   'config',
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
+  './mon/monDatasource'
 ],
 function (angular, _, config) {
   'use strict';
 
   var module = angular.module('kibana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource) {
+  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, MonDatasource) {
 
     this.init = function() {
       var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
@@ -18,12 +19,14 @@ function (angular, _, config) {
     };
 
     this.datasourceFactory = function(ds) {
-      switch(ds.type) {
-      case 'graphite':
-        return new GraphiteDatasource(ds);
-      case 'influxdb':
-        return new InfluxDatasource(ds);
-      }
+        switch (ds.type) {
+            case 'graphite':
+                return new GraphiteDatasource(ds);
+            case 'influxdb':
+                return new InfluxDatasource(ds);
+            case 'mon':
+                return new MonDatasource(ds);
+        }
     };
 
     this.get = function(name) {
