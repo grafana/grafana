@@ -34,61 +34,19 @@ function (angular, _, kbn) {
         var timeFilter = getTimeFilter(options);
 
         if (target.rawQuery) {
-          query = target.query;
-          query = query.replace(";", "");
-          var queryElements = query.split(" ");
-          var lowerCaseQueryElements = query.toLowerCase().split(" ");
-          var whereIndex = lowerCaseQueryElements.indexOf("where");
-          var groupByIndex = lowerCaseQueryElements.indexOf("group");
-          var orderIndex = lowerCaseQueryElements.indexOf("order");
-
-          if (whereIndex !== -1) {
-            queryElements.splice(whereIndex+1, 0, timeFilter, "and");
-          }
-          else {
-            if (groupByIndex !== -1) {
-              queryElements.splice(groupByIndex, 0, "where", timeFilter);
-            }
-            else if (orderIndex !== -1) {
-              queryElements.splice(orderIndex, 0, "where", timeFilter);
-            }
-            else {
-              queryElements.push("where");
-              queryElements.push(timeFilter);
-            }
-          }
-
-          query = queryElements.join(" ");
+            alert("Raw queries not supported")
+            return [];
         }
         else {
-          var template = "select [[func]]([[column]]) as [[column]]_[[func]] from [[series]] " +
-                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
-
-          if (target.column.indexOf('-') !== -1 || target.column.indexOf('.') !== -1) {
-            template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
-                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
-          }
-
-          var templateData = {
-            series: target.series,
-            column: target.column,
-            func: target.function,
-            timeFilter: timeFilter,
-            interval: target.interval || options.interval,
-            condition_add: target.condiction_filter ? target.condition_add : '',
-            condition_key: target.condiction_filter ? target.condition_key : '',
-            condition_op: target.condiction_filter ? target.condition_op : '',
-            condition_value: target.condiction_filter ? target.condition_value: ''
+          var query = {
+                name: target.series,
+                //dimensions: target.column,
+                statistics: target.function,
+                start_time: '2014-04-30T11:00:00Z'
           };
-
-          query = _.template(template, templateData, this.templateSettings);
-          target.query = query;
+          return this.doMonRequest(query, target.alias).then(handleMonQueryResponse);
         }
-
-        return this.doMonRequest(query, target.alias).then(handleMonQueryResponse);
-
+        return [];
       }, this);
 
       return $q.all(promises).then(function(results) {
@@ -139,16 +97,12 @@ function (angular, _, kbn) {
             'Content-Type': 'application/json'
         };
 
-        var params = {
-          name: 'cpu_user_perc',
-          dimensions: 'hostname:mini-mon',
-          start_time: '2014-04-30T11:00:00Z'
-        };
+        //var params = query;
 
         var options = {
           method: 'GET',
-          url:    currentUrl + '/metrics/measurements',
-          params: params,
+          url:    currentUrl + '/metrics/statistics',
+          params: query,
           headers: headers
         };
 
@@ -175,10 +129,10 @@ function (angular, _, kbn) {
           var target = data.alias || series.name + "." + column;
           var datapoints = [];
 
-          for(var i = 0; i < series.measurements.length; i++) {
-            var myDate = new Date(series.measurements[i][timeCol]);
+          for(var i = 0; i < series.statistics.length; i++) {
+            var myDate = new Date(series.statistics[i][timeCol]);
             var result = myDate.getTime() / 1000;
-            datapoints[i] = [series.measurements[i][index], result];
+            datapoints[i] = [series.statistics[i][index], result];
           }
 
           output.push({ target:target, datapoints:datapoints });
