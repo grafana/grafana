@@ -16,7 +16,8 @@ define([
   };
 
   var result = {
-    _updateTemplateData: function(initial) {
+
+    updateTemplateData: function(initial) {
       var _templateData = {};
       _.each(this.templateParameters, function(templateParameter) {
         if (initial) {
@@ -34,15 +35,9 @@ define([
       this._templateData = _templateData;
     },
 
-    templateOptionSelected: function(templateParameter, option) {
-      templateParameter.current = option;
-      this._updateTemplateData();
-      dashboard.refresh();
-    },
-
     addTemplateParameter: function(templateParameter) {
       this.templateParameters.push(templateParameter);
-      this._updateTemplateData();
+      this.updateTemplateData();
     },
 
     applyTemplateToTarget: function(target) {
@@ -105,7 +100,7 @@ define([
       if(dashboard.services && dashboard.services.filter) {
         this.time = dashboard.services.filter.time;
         this.templateParameters = dashboard.services.filter.list || [];
-        this._updateTemplateData(true);
+        this.updateTemplateData(true);
       }
 
     }

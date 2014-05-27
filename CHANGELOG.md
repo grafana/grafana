@@ -3,6 +3,12 @@ vNext
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
 
+# Fixes
+- Filter option loading when having muliple nested filters now works better.
+  Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
+  After an option is changed and a nested template param is also reloaded, if the current value
+  exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
+
 # 1.5.4 (2014-05-13)
 ### New features and improvements
 - InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)

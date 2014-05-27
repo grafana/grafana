@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.filtering', []);
   app.useModule(module);
 
-  module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout) {
+  module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout, $q) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -27,56 +27,67 @@ function (angular, app, _) {
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
-        // empty. Don't know if I need the function then.
+      // empty. Don't know if I need the function then.
     };
 
     $scope.remove = function(templateParameter) {
-        $scope.filter.removeTemplateParameter(templateParameter);
+      $scope.filter.removeTemplateParameter(templateParameter);
+    };
 
-        // TODO hkraemer: check if this makes sense like this
-        if(!$rootScope.$$phase) {
-            $rootScope.$apply();
-        }
-        $timeout(function(){
+    $scope.filterOptionSelected = function(templateParameter, option, recursive) {
+      templateParameter.current = option;
+
+      $scope.filter.updateTemplateData();
+
+      return $scope.applyFilterToOtherFilters(templateParameter)
+        .then(function() {
+          // only refresh in the outermost call
+          if (!recursive) {
             $scope.dashboard.refresh();
-        },0);
+          }
+        });
     };
 
-    $scope.filterOptionSelected = function(templateParameter, option) {
-      $scope.filter.templateOptionSelected(templateParameter, option);
-      $scope.applyFilterToOtherFilters(templateParameter);
-    };
-
-    $scope.applyFilterToOtherFilters = function(updatedFilter) {
-      _.each($scope.filter.templateParameters, function(templateParameter) {
-        if (templateParameter === updatedFilter) {
+    $scope.applyFilterToOtherFilters = function(updatedTemplatedParam) {
+      var promises = _.map($scope.filter.templateParameters, function(templateParam) {
+        if (templateParam === updatedTemplatedParam) {
           return;
         }
-        if (templateParameter.query.indexOf(updatedFilter.name) !== -1) {
-          $scope.applyFilter(templateParameter);
+        if (templateParam.query.indexOf(updatedTemplatedParam.name) !== -1) {
+          return $scope.applyFilter(templateParam);
         }
       });
+
+      return $q.all(promises);
     };
 
-    $scope.applyFilter = function(filter) {
-
-      datasourceSrv.default.metricFindQuery($scope.filter, filter.query)
+    $scope.applyFilter = function(templateParam) {
+      return datasourceSrv.default.metricFindQuery($scope.filter, templateParam.query)
         .then(function (results) {
-          filter.editing=undefined;
-          filter.options = _.map(results, function(node) {
+          templateParam.editing = undefined;
+          templateParam.options = _.map(results, function(node) {
             return { text: node.text, value: node.text };
           });
 
-          if (filter.includeAll) {
+          if (templateParam.includeAll) {
             var allExpr = '{';
-            _.each(filter.options, function(option) {
+            _.each(templateParam.options, function(option) {
               allExpr += option.text + ',';
             });
             allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
-            filter.options.unshift({text: 'All', value: allExpr});
+            templateParam.options.unshift({text: 'All', value: allExpr});
           }
 
-          $scope.filter.templateOptionSelected(filter, filter.options[0]);
+          // if parameter has current value
+          // if it exists in options array keep value
+          if (templateParam.current) {
+            var currentExists = _.findWhere(templateParam.options, { value: templateParam.current.value });
+            if (currentExists) {
+              return $scope.filterOptionSelected(templateParam, templateParam.current, true);
+            }
+          }
+
+          return $scope.filterOptionSelected(templateParam, templateParam.options[0], true);
         });
     };
 
@@ -87,14 +98,6 @@ function (angular, app, _) {
         editing   : true,
         query     : 'metric.path.query.*',
       });
-    };
-
-    $scope.refresh = function() {
-      $scope.dashboard.refresh();
-    };
-
-    $scope.render = function() {
-      $rootScope.$broadcast('render');
     };
 
   });
