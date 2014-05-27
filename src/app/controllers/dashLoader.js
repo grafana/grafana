@@ -77,7 +77,7 @@ function (angular, _, moment) {
             $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
           }
 
-          $rootScope.$emit('dashboard-saved');
+          $rootScope.$emit('dashboard-saved', dashboard.current);
         });
     };
 

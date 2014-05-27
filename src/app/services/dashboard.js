@@ -62,7 +62,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
       self.current = {};
-      self.original = null;
       self.indices = [];
       route();
     });
@@ -168,10 +167,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
 
       $rootScope.$emit('dashboard-loaded', self.current);
-
-      $timeout(function() {
-        self.original = angular.copy(self.current);
-      }, 1000);
 
       return true;
     };
@@ -385,7 +380,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           if(type === 'dashboard') {
             $location.path('/dashboard/elasticsearch/'+title);
           }
-          self.original = angular.copy(self.current);
           return result;
         },
         // Failure
