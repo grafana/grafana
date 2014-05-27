@@ -27,20 +27,24 @@ define([
                         return [];
                     }
 
-                    var timeFilter = getTimeFilter(options);
+                    var startTime = getMonTime(options.range.from);
+                    var endTime = getMonTime(options.range.to);
 
                     if (target.rawQuery) {
                         alert("Raw queries not supported")
                         return [];
                     }
                     else {
-                        var query = {
-                            name: target.series,
+                        var params = {
                             //dimensions: target.column,
                             statistics: target.function,
-                            start_time: '2014-04-30T11:00:00Z'
+                            start_time: startTime,
+                            //end_time: endTime
                         };
-                        return this.doGetStatisticsRequest(query, target.alias).then(handleGetStatisticsResponse);
+                        if (target.series !== '') {
+                            params.name = target.series;
+                        }
+                        return this.doGetStatisticsRequest(params, target.alias).then(handleGetStatisticsResponse);
                     }
                     return [];
                 }, this);
@@ -95,7 +99,7 @@ define([
                 });
             }
 
-            MonDatasource.prototype.doGetStatisticsRequest = function (query, alias) {
+            MonDatasource.prototype.doGetStatisticsRequest = function (params, alias) {
                 var _this = this;
                 var deferred = $q.defer();
 
@@ -108,16 +112,14 @@ define([
                         'Content-Type': 'application/json'
                     };
 
-                    //var params = query;
-
                     var options = {
                         method: 'GET',
                         url: currentUrl + '/metrics/statistics',
-                        params: query,
+                        params: params,
                         headers: headers
                     };
 
-                    if ('statistics' in query) {
+                    if ('statistics' in params) {
                         options.url = currentUrl + '/metrics/statistics'
                     }
 
@@ -191,52 +193,21 @@ define([
                 return output;
             }
 
-            function handleGetMetricsResponse(data) {
-                var output = [];
-
-                _.each(data, function (metricDefinition) {
-                    var dimension;
-                    for (dimension in metricDefinition.dimensions)
-                        output.push({ target: metricDefinition.name + "." + dimension, datapoints: [
-                            [0, 0]
-                        ] });
-                });
-                return output;
-            }
-
-            function getTimeFilter(options) {
-                var from = getMonTime(options.range.from);
-                var until = getMonTime(options.range.to);
-
-                if (until === 'now()') {
-                    return 'time > now() - ' + from;
-                }
-
-                return 'time > ' + from + ' and time < ' + until;
-            }
-
             function getMonTime(date) {
                 if (_.isString(date)) {
                     if (date === 'now') {
-                        return 'now()';
+                        var date = new Date();
+                        return date.toISOString().slice(0, -5) + 'Z';
                     }
                     else if (date.indexOf('now') >= 0) {
-                        return date.substring(4);
+                        return kbn.parseDate(date).toISOString().slice(0,-5) + 'Z';
                     }
-
-                    date = kbn.parseDate(date);
+                    date = kbn.parseDate(date).toISOString().slice(0,-15) + 'Z';
                 }
-
-                return to_utc_epoch_seconds(date);
+                return date.toISOString().slice(0,-5) + 'Z';
             }
-
-            function to_utc_epoch_seconds(date) {
-                return (date.getTime() / 1000).toFixed(0) + 's';
-            }
-
 
             return MonDatasource;
-
         });
 
     });
