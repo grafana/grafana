@@ -53,10 +53,12 @@ function (angular, app, _, moment, kbn) {
       millisecond: /^[0-9]*$/
     };
 
-    $scope.$on('refresh', function(){$scope.init();});
+    $scope.$on('refresh', function() {
+      $scope.init();
+    });
 
     $scope.init = function() {
-      var time = this.filter.timeRange( true );
+      var time = this.filter.timeRange(true);
       if(time) {
         $scope.panel.now = this.filter.timeRange(false).to === "now" ? true : false;
         $scope.time = getScopeTimeObj(time.from,time.to);

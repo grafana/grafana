@@ -18,7 +18,7 @@ define([
   var result = {
     _updateTemplateData: function(initial) {
       var _templateData = {};
-      _.each(this.templateParameters, function( templateParameter ) {
+      _.each(this.templateParameters, function(templateParameter) {
         if (initial) {
           var urlValue = $routeParams[ templateParameter.name ];
           if (urlValue) {
@@ -40,8 +40,8 @@ define([
       dashboard.refresh();
     },
 
-    addTemplateParameter: function( templateParameter ) {
-      this.templateParameters.push( templateParameter );
+    addTemplateParameter: function(templateParameter) {
+      this.templateParameters.push(templateParameter);
       this._updateTemplateData();
     },
 

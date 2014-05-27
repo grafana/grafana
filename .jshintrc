@@ -18,12 +18,12 @@
   "noempty": true,
   "undef": true,
   "boss": true,
-  "trailing": false,
+  "trailing": true,
   "laxbreak": true,
   "laxcomma": true,
   "sub": true,
   "unused": true,
-
+  "maxdepth": 5,
   "maxlen": 140,
 
   "globals": {
