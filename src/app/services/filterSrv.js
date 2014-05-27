@@ -55,17 +55,20 @@ define([
 
     setTime: function(time) {
       _.extend(this.time, time);
+
       // disable refresh if we have an absolute time
       if (time.to !== 'now') {
         this.old_refresh = this.dashboard.refresh;
         dashboard.set_interval(false);
-        return;
       }
-
-      if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
+      else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
         dashboard.set_interval(this.old_refresh);
         this.old_refresh = null;
       }
+
+      $timeout(function(){
+        dashboard.refresh();
+      },0);
     },
 
     timeRange: function(parse) {

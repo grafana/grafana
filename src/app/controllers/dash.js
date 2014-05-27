@@ -61,13 +61,9 @@ function (angular, $, config, _) {
       $scope.filter = filterSrv;
       $scope.filter.init(dashboard.current);
 
-      $scope.$watch('dashboard.current', function(newValue) {
-        $scope.filter.init(newValue);
+      $rootScope.$on("dashboard-loaded", function(event, dashboard) {
+        $scope.filter.init(dashboard);
       });
-
-      $scope.$watch('filter.time', function() {
-        $scope.dashboard.refresh();
-      }, true);
 
       // Clear existing alerts
       alertSrv.clearAll();
