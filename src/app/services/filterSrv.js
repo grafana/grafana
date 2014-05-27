@@ -29,7 +29,6 @@ define([
         if (!templateParameter.current || !templateParameter.current.value) {
           return;
         }
-
         _templateData[templateParameter.name] = templateParameter.current.value;
       });
       this._templateData = _templateData;

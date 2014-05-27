@@ -20,7 +20,7 @@ define([
     }));
 
     beforeEach(function() {
-        _filterSrv.init( _dashboard.current );
+      _filterSrv.init(_dashboard.current);
     });
 
     describe('init', function() {
@@ -34,10 +34,15 @@ define([
       });
     });
 
-    describe('templateOptionSelected', function() {
+    describe('updateTemplateData', function() {
       beforeEach(function() {
-        _filterSrv.addTemplateParameter({ name: 'test' });
-        _filterSrv.templateOptionSelected(_filterSrv.templateParameters[0], { value: 'muuuu' });
+        _filterSrv.addTemplateParameter({
+          name: 'test',
+          value: 'muuu',
+          current: { value: 'muuuu' }
+        });
+
+        _filterSrv.updateTemplateData();
       });
       it('should set current value and update template data', function() {
         var target = _filterSrv.applyTemplateToTarget('this.[[test]].filters');
