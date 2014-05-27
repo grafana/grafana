@@ -93,7 +93,8 @@ define([
     },
 
     removeTemplateParameter: function(templateParameter) {
-      this.templateParameters = _.without( this.templateParameters, templateParameter );
+      this.templateParameters = _.without(this.templateParameters, templateParameter);
+      this.dashboard.services.filter.list = this.templateParameters;
     },
 
     init: function(dashboard) {
