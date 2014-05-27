@@ -12,14 +12,10 @@ function (angular, _, kbn) {
 
     function MonDatasource(datasource) {
       this.type = 'mon';
-      this.editorSrc = 'app/partials/influxdb/editor.html';
+      this.editorSrc = 'app/partials/mon/editor.html';
       this.urls = datasource.urls;
       this.access_token = datasource.access_token;
       this.name = datasource.name;
-
-      this.templateSettings = {
-        interpolate : /\[\[([\s\S]+?)\]\]/g,
-      };
     }
 
     MonDatasource.prototype.query = function(options) {
@@ -44,7 +40,7 @@ function (angular, _, kbn) {
                 statistics: target.function,
                 start_time: '2014-04-30T11:00:00Z'
           };
-          return this.doMonRequest(query, target.alias).then(handleMonQueryResponse);
+          return this.doGetStatisticsRequest(query, target.alias).then(handleGetStatisticsResponse);
         }
         return [];
       }, this);
@@ -52,25 +48,40 @@ function (angular, _, kbn) {
       return $q.all(promises).then(function(results) {
         return { data: _.flatten(results) };
       });
-
     };
 
     MonDatasource.prototype.listColumns = function(seriesName) {
-      return this.doMonRequest('select * from ' + seriesName + ' limit 1').then(function(data) {
-        if (!data) {
-          return [];
-        }
-
-        return data[0].columns;
-      });
+        return this.doGetMetricsRequest(seriesName).then(function(data) {
+            if (!data) {
+                return [];
+            }
+            var columns = []
+            for (var i = 0; i < data.length; i++) {
+                var dimensions = data[i].dimensions;
+                for (var dimension in dimensions) {
+                    if (columns.indexOf(dimension) == -1) {
+                        columns.push(dimension);
+                    }
+                }
+            }
+            return columns;
+        });
     };
 
     MonDatasource.prototype.listSeries = function() {
-      return this.doMonRequest('list series').then(function(data) {
-        return _.map(data, function(series) {
-          return series.name;
+        return this.doGetMetricsRequest(null).then(function(data) {
+            if (!data) {
+                return [];
+            }
+            var names = []
+            for (var i = 0; i < data.length; i++) {
+                var name = data[i].name;
+                if (names.indexOf(name) == -1) {
+                    names.push(name);
+                }
+            }
+            return names;
         });
-      });
     };
 
     function retry(deferred, callback, delay) {
@@ -84,7 +95,7 @@ function (angular, _, kbn) {
       });
     }
 
-    MonDatasource.prototype.doMonRequest = function(query, alias) {
+    MonDatasource.prototype.doGetStatisticsRequest = function(query, alias) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -106,6 +117,10 @@ function (angular, _, kbn) {
           headers: headers
         };
 
+        if ('statistics' in query) {
+          options.url = currentUrl + '/metrics/statistics'
+        }
+
         return $http(options).success(function (data) {
           data.alias = alias;
           deferred.resolve(data);
@@ -115,7 +130,41 @@ function (angular, _, kbn) {
       return deferred.promise;
     };
 
-    function handleMonQueryResponse(data) {
+      MonDatasource.prototype.doGetMetricsRequest = function(metricName, alias) {
+          var _this = this;
+          var deferred = $q.defer();
+          var seriesName = metricName;
+
+          retry(deferred, function() {
+              var currentUrl = _this.urls.shift();
+              _this.urls.push(currentUrl);
+
+              var headers = {
+                  'X-Auth-Token': _this.access_token,
+                  'Content-Type': 'application/json'
+              };
+
+              var params = {
+                  name: seriesName
+              };
+
+              var options = {
+                  method: 'GET',
+                  url:    currentUrl + '/metrics',
+                  params: params,
+                  headers: headers
+              };
+
+              return $http(options).success(function (data) {
+                  data.alias = alias;
+                  deferred.resolve(data);
+              });
+          }, 10);
+
+          return deferred.promise;
+      };
+
+    function handleGetStatisticsResponse(data) {
       var output = [];
 
       _.each(data, function(series) {
@@ -141,6 +190,17 @@ function (angular, _, kbn) {
 
       return output;
     }
+
+      function handleGetMetricsResponse(data) {
+          var output = [];
+
+          _.each(data, function(metricDefinition) {
+              var dimension;
+              for (dimension in metricDefinition.dimensions)
+                  output.push({ target:metricDefinition.name + "." + dimension, datapoints:[[0, 0]] });
+          });
+          return output;
+      }
 
     function getTimeFilter(options) {
       var from = getMonTime(options.range.from);
