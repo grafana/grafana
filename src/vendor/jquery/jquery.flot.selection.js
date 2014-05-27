@@ -1,6 +1,6 @@
 /* Flot plugin for selecting regions of a plot.
 
-Copyright (c) 2007-2013 IOLA and Ole Laursen.
+Copyright (c) 2007-2014 IOLA and Ole Laursen.
 Licensed under the MIT license.
 
 The plugin supports these options:
