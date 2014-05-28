@@ -36,13 +36,17 @@ define([
                     }
                     else {
                         var params = {
-                            //dimensions: target.column,
                             statistics: target.function,
                             start_time: startTime,
                             //end_time: endTime
                         };
                         if (target.series !== '') {
                             params.name = target.series;
+                        }
+                        if (target.condition_key && target.condition_value) {
+                            var key = target.condition_key;
+                            var value = target.condition_value;
+                            params.dimensions = key + ':' + value;
                         }
                         return this.doGetStatisticsRequest(params, target.alias).then(handleGetStatisticsResponse);
                     }
