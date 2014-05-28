@@ -54,7 +54,17 @@
 
                 <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
                     <li class="grafana-target-segment">
-                        from series
+                        function
+                    </li>
+                    <li>
+                        <select class="input-small grafana-target-segment-input"
+                                ng-change="get_data()"
+                                ng-model="target.function"
+                                ng-options="f for f in functions" ></select>
+                    </li>
+
+                    <li class="grafana-target-segment">
+                        metric name
                     </li>
 
                     <li>
@@ -68,30 +78,6 @@
                                ng-blur="seriesBlur()">
                     </li>
 
-                    <li class="grafana-target-segment">
-                        select
-                    </li>
-
-                    <li>
-                        <input type="text"
-                               class="input-small grafana-target-segment-input"
-                               ng-model="target.column"
-                               placeholder="value column"
-                               spellcheck='false'
-                               bs-typeahead="listColumns"
-                               data-min-length=0
-                               ng-blur="get_data()">
-                    </li>
-
-                    <li class="grafana-target-segment">
-                        function
-                    </li>
-                    <li>
-                        <select class="input-small grafana-target-segment-input"
-                                ng-change="get_data()"
-                                ng-model="target.function"
-                                ng-options="f for f in functions" ></select>
-                    </li>
                     <li>
                         <a class="grafana-target-segment"
                            ng-click="target.condiction_filter = !target.condiction_filter; get_data();"
@@ -100,10 +86,7 @@
                         </a>
                     </li>
                     <li ng-show="target.condiction_filter">
-                        <select class="input-small grafana-target-segment-input"
-                                ng-change="get_data()"
-                                ng-model="target.condition_add"
-                                ng-options="f for f in ['and', 'or']" ></select>
+                        dimensions
                         <input type="text"
                                class="input-small grafana-target-segment-input"
                                ng-model="target.condition_key"
@@ -112,14 +95,11 @@
                                bs-typeahead="listColumns"
                                data-min-length=0
                                ng-blur="get_data()">
-                        <select class="input-mini grafana-target-segment-input"
-                                ng-change="get_data()"
-                                ng-model="target.condition_op"
-                                ng-options="f for f in operators" ></select>
                         <input type="text"
                                class="input-small grafana-target-segment-input"
                                ng-model="target.condition_value"
                                placeholder="value"
+                               bs-typeahead="listValues"
                                spellcheck='false'
                                data-min-length=0
                                ng-blur="get_data()">

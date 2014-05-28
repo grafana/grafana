@@ -12,7 +12,10 @@ define([
 
             $scope.init = function() {
                 if (!$scope.target.function) {
-                    $scope.target.function = 'mean';
+                    $scope.target.function = 'avg';
+                }
+                if (!$scope.target.column) {
+                    $scope.target.column = 'value';
                 }
 
                 $scope.rawQuery = false;
@@ -53,6 +56,21 @@ define([
                 }
                 else {
                     return $scope.columnList;
+                }
+            };
+
+            // called outside of digest
+            $scope.listValues = function(query, callback) {
+                if (!$scope.valueList) {
+                    $scope.$apply(function() {
+                        $scope.datasource.listValues($scope.target.series).then(function(values) {
+                            $scope.valueList = values;
+                            callback(values);
+                        });
+                    });
+                }
+                else {
+                    return $scope.valueList;
                 }
             };
 

@@ -72,6 +72,24 @@ define([
                 });
             };
 
+            MonDatasource.prototype.listValues = function (seriesName) {
+                return this.doGetMetricsRequest(seriesName).then(function (data) {
+                    if (!data) {
+                        return [];
+                    }
+                    var values = []
+                    for (var i = 0; i < data.length; i++) {
+                        var dimensions = data[i].dimensions;
+                        for (var dimension in dimensions) {
+                            if (values.indexOf(dimensions[dimension]) == -1) {
+                                values.push(dimensions[dimension]);
+                            }
+                        }
+                    }
+                    return values;
+                });
+            };
+
             MonDatasource.prototype.listSeries = function () {
                 return this.doGetMetricsRequest(null).then(function (data) {
                     if (!data) {
@@ -99,6 +117,12 @@ define([
                 });
             }
 
+            /**
+             * Gets the statics for the supplied params
+             * @param params
+             * @param alias
+             * @returns {promise}
+             */
             MonDatasource.prototype.doGetStatisticsRequest = function (params, alias) {
                 var _this = this;
                 var deferred = $q.defer();
@@ -114,7 +138,7 @@ define([
 
                     var options = {
                         method: 'GET',
-                        url: currentUrl + '/metrics/statistics',
+                        url: currentUrl + '/metrics/measurements',
                         params: params,
                         headers: headers
                     };
@@ -132,6 +156,12 @@ define([
                 return deferred.promise;
             };
 
+            /**
+             * Gets the metric definitions for the supplied metric name.
+             * @param metricName
+             * @param alias
+             * @returns {promise}
+             */
             MonDatasource.prototype.doGetMetricsRequest = function (metricName, alias) {
                 var _this = this;
                 var deferred = $q.defer();
