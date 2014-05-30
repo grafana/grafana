@@ -19,7 +19,6 @@ function (angular, _, kbn) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-      
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
@@ -82,7 +81,6 @@ function (angular, _, kbn) {
           query = _.template(template, templateData, this.templateSettings);
           target.query = query;
         }
-
 	return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
       }, this);
 
@@ -187,6 +185,7 @@ function (angular, _, kbn) {
           output.push({ target:target, datapoints:datapoints });
         });
       });
+
       return output;
     }
 
