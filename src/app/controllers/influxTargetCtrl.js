@@ -17,7 +17,10 @@ function (angular) {
 
       $scope.rawQuery = false;
 
-      $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last', 'difference'];
+      $scope.functions = ['count', 'mean', 'sum', 'min',
+                          'max', 'mode', 'distinct', 'median',
+                          'derivative', 'stddev', 'first', 'last',
+                          'difference'];
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
       $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
