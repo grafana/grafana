@@ -19,7 +19,6 @@ function (angular, _, kbn) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-      this.avoid_empty_data = datasource.avoid_empty_data;
       
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
@@ -122,7 +121,7 @@ function (angular, _, kbn) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query, alias, influxUrl) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, alias) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -163,7 +162,6 @@ function (angular, _, kbn) {
           deferred.resolve(data);
         });
       }, 10);
-
 
       return deferred.promise;
     };
