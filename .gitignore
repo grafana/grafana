@@ -6,6 +6,8 @@ dist
 web.config
 config.js
 
+gin-bin
+
 # Editor junk
 *.sublime-workspace
 *.swp
