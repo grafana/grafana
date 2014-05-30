@@ -11,7 +11,7 @@ function (angular, _, config) {
   module.controller('PlaylistCtrl', function($scope, playlistSrv) {
 
     $scope.init = function() {
-      $scope.timespan = config.playlistTimespan;
+      $scope.timespan = config.playlist_timespan;
       $scope.loadFavorites();
       $scope.$on('modal-opened', $scope.loadFavorites);
     };

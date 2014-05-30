@@ -14,7 +14,6 @@ function (Settings) {
      * For Basic authentication use: http://username:password@domain.com:9200
      */
     elasticsearch: "http://"+window.location.hostname+":9200",
-    playlistTimespan: "15s",
 
     /**
      * graphite-web url:
@@ -68,6 +67,12 @@ function (Settings) {
      * set to false to disable unsaved changes warning
      */
     unsaved_changes_warning: true,
+
+    /**
+     * set the default timespan for the playlist feature
+     * Example: "1m", "1h"
+     */
+    playlist_timespan: "1m",
 
     panel_names: [
       'text',

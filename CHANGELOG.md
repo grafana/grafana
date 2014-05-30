@@ -2,6 +2,7 @@ vNext
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
+- New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.

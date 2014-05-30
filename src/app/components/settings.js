@@ -25,7 +25,7 @@ function (_, crypto) {
       grafana_index                 : 'grafana-dash',
       elasticsearch_all_disabled    : false,
       timezoneOffset                : null,
-      playlistTimespan              : "15s",
+      playlist_timespan             : "1m",
       unsaved_changes_warning       : true
     };
 
