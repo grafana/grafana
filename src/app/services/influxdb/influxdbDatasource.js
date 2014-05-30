@@ -14,10 +14,12 @@ function (angular, _, kbn) {
       this.type = 'influxDB';
       this.editorSrc = 'app/partials/influxdb/editor.html';
       this.urls = datasource.urls;
+      this.urls_lb = datasource.urls;
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-
+      this.avoid_empty_data = datasource.avoid_empty_data;
+      
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
@@ -81,8 +83,25 @@ function (angular, _, kbn) {
           target.query = query;
         }
 
-        return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
-
+	if (this.avoid_empty_data) {
+		var lastResponse   = null;
+		var influxResponse = null;
+		for(var i = 0; i < this.urls.length; i++) {
+			var url 	   = this.urls[i];
+			var totalResults   = 0;
+			influxResponse = this.doInfluxRequest(query, target.alias, url).then(handleInfluxQueryResponse).then(function(data) {
+					totalResults = data.length;
+					lastResponse = data;
+					return data;
+					});
+			if (totalResults > 0) {
+				return influxResponse;
+			}
+		}
+		return influxResponse;
+	} else {
+		return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
+	}
       }, this);
 
       return $q.all(promises).then(function(results) {
@@ -120,14 +139,18 @@ function (angular, _, kbn) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query, alias) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, alias, influxUrl) {
       var _this = this;
       var deferred = $q.defer();
 
       retry(deferred, function() {
-        var currentUrl = _this.urls.shift();
-        _this.urls.push(currentUrl);
-
+	var currentUrl = null;
+	if (influxUrl) {
+		currentUrl = influxUrl;
+	} else {
+		currentUrl = _this.urls_lb.shift();
+		_this.urls_lb.push(currentUrl);
+	}
         var params = {
           u: _this.username,
           p: _this.password,
@@ -171,7 +194,6 @@ function (angular, _, kbn) {
           output.push({ target:target, datapoints:datapoints });
         });
       });
-
       return output;
     }
 
