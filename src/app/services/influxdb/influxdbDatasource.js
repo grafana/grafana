@@ -14,7 +14,8 @@ function (angular, _, kbn) {
       this.type = 'influxDB';
       this.editorSrc = 'app/partials/influxdb/editor.html';
       this.urls = datasource.urls;
-      this.urls_lb = datasource.urls;
+      this.urls_rr_lb = datasource.urls;
+      this.urls_hash_lb = datasource.lb_hashing;
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
@@ -83,25 +84,7 @@ function (angular, _, kbn) {
           target.query = query;
         }
 
-	if (this.avoid_empty_data) {
-		var lastResponse   = null;
-		var influxResponse = null;
-		for(var i = 0; i < this.urls.length; i++) {
-			var url 	   = this.urls[i];
-			var totalResults   = 0;
-			influxResponse = this.doInfluxRequest(query, target.alias, url).then(handleInfluxQueryResponse).then(function(data) {
-					totalResults = data.length;
-					lastResponse = data;
-					return data;
-					});
-			if (totalResults > 0) {
-				return influxResponse;
-			}
-		}
-		return influxResponse;
-	} else {
-		return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
-	}
+	return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
       }, this);
 
       return $q.all(promises).then(function(results) {
@@ -145,11 +128,22 @@ function (angular, _, kbn) {
 
       retry(deferred, function() {
 	var currentUrl = null;
-	if (influxUrl) {
-		currentUrl = influxUrl;
-	} else {
-		currentUrl = _this.urls_lb.shift();
-		_this.urls_lb.push(currentUrl);
+	/* Should we use RR load-balancing or hashing? */
+	if (_this.urls_hash_lb) {
+		for (var i=0; i<_this.urls_hash_lb.length; i++) {
+			var matches = query.match(_this.urls_hash_lb[i].regexp);
+			if (matches) {
+				var index = _this.urls_hash_lb[i].url_index;
+				currentUrl = _this.urls[index];
+				if (currentUrl) {
+					break;
+				}
+			}
+		}
+	}
+	if (!currentUrl) {
+		currentUrl = _this.urls_rr_lb.shift();
+		_this.urls_rr_lb.push(currentUrl);
 	}
         var params = {
           u: _this.username,
@@ -169,6 +163,7 @@ function (angular, _, kbn) {
           deferred.resolve(data);
         });
       }, 10);
+
 
       return deferred.promise;
     };
