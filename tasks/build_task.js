@@ -9,6 +9,7 @@ module.exports = function(grunt) {
     'concat:css',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
+    'ngtemplates:app',
     'cssmin:build',
     'ngmin:build',
     'requirejs:build',
