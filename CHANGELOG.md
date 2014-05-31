@@ -3,6 +3,7 @@ vNext
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
 - New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
+- New InfluxDB function difference add to function dropdown (PR #455)
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.
