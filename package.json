@@ -55,6 +55,8 @@
   },
   "license": "Apache License",
   "dependencies": {
-    "grunt-contrib-concat": "^0.4.0"
+    "grunt-contrib-concat": "^0.4.0",
+    "grunt-filerev": "^0.2.1",
+    "grunt-usemin": "^2.1.1"
   }
 }
