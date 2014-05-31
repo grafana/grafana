@@ -23,8 +23,7 @@ function (angular, _, kbn) {
       };
     }
 
-    InfluxDatasource.prototype.query = function(options) {
-
+    InfluxDatasource.prototype.query = function(filterSrv, options) {
       var promises = _.map(options.targets, function(target) {
         var query;
 
