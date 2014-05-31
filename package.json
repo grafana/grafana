@@ -53,5 +53,8 @@
   "scripts": {
     "test": "grunt test"
   },
-  "license": "Apache License"
+  "license": "Apache License",
+  "dependencies": {
+    "grunt-contrib-concat": "^0.4.0"
+  }
 }
