@@ -10,5 +10,13 @@ module.exports = function(config) {
       ],
       dest: '<%= srcDir %>/css/default.min.css'
     },
+    js: {
+      src: [
+        '<%= destDir %>/vendor/require/require.js',
+        '<%= destDir %>/app/components/require.config.js',
+        '<%= destDir %>/app/app.js',
+      ],
+      dest: '<%= destDir %>/app/app.js'
+    },
   };
 };

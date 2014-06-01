@@ -6,8 +6,12 @@ module.exports = function(config) {
       length: 8,
     },
     css: {
-      src: '<%= srcDir %>/css/default.min.css',
+      src: '<%= destDir %>/css/default.min.css',
       dest: '<%= destDir %>/css'
+    },
+    js: {
+      src: '<%= destDir %>/app/app.js',
+      dest: '<%= destDir %>/app'
     }
   };
 };

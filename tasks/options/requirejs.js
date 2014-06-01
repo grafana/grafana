@@ -60,7 +60,10 @@ module.exports = function(config,grunt) {
         'directives/all',
         'jquery.flot.pie',
         'angular-sanitize',
-        'angular-dragdrop'
+        'angular-dragdrop',
+        'panels/graphite/module',
+        'panels/text/module',
+        'panels/timepicker/module'
       ]
     }
   ];
@@ -75,7 +78,8 @@ module.exports = function(config,grunt) {
         requireModules.push({
           name: 'panels/'+panelName+'/'+subName+'/module',
           exclude: ['app']
-        });      })
+        });
+      })
     } else {
       requireModules.push({
         name: 'panels/'+panelName+'/module',
