@@ -231,6 +231,8 @@ function (_) {
   addFuncDef({
     name: 'keepLastValue',
     category: categories.Special,
+    params: [ { name: "n", type: "int", } ],
+    defaultParams: [100]
   });
 
   addFuncDef({

@@ -4,6 +4,7 @@ vNext
 - Refactoring of filterSrv (Issue #428), thx @Tetha
 - New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
 - New InfluxDB function difference add to function dropdown (PR #455)
+- Added parameter to keepLastValue graphite function definition (default 100), Closes #459
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.
