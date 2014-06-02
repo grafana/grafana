@@ -70,6 +70,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'isNonNull',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'rangeOfSeries',
     category: categories.Combine
   });
