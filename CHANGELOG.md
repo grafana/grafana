@@ -5,6 +5,8 @@ vNext
 - New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
 - New InfluxDB function difference add to function dropdown (PR #455)
 - Added parameter to keepLastValue graphite function definition (default 100), Closes #459
+- improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
+  to the browser cache when upgrading grafana and improve load performance (Fixes #418)
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.

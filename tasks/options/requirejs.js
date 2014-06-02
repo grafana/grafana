@@ -61,9 +61,6 @@ module.exports = function(config,grunt) {
         'jquery.flot.pie',
         'angular-sanitize',
         'angular-dragdrop',
-        'panels/graphite/module',
-        'panels/text/module',
-        'panels/timepicker/module'
       ]
     }
   ];
@@ -73,19 +70,8 @@ module.exports = function(config,grunt) {
 
   // create a module for each directory in src/app/panels/
   fs.readdirSync(panelPath).forEach(function (panelName) {
-    if(!grunt.file.exists(panelPath+'/'+panelName+'/module.js')) {
-      fs.readdirSync(panelPath+"/"+panelName).forEach(function (subName) {
-        requireModules.push({
-          name: 'panels/'+panelName+'/'+subName+'/module',
-          exclude: ['app']
-        });
-      })
-    } else {
-      requireModules.push({
-        name: 'panels/'+panelName+'/module',
-        exclude: ['app']
-      });
-    }
+    requireModules[0].include.push('panels/'+panelName+'/module');
+    requireModules[0].include.push('text!panels/'+panelName+'/module.html');
   });
 
   // exclude the literal config definition from all modules
