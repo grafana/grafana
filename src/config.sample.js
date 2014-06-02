@@ -22,23 +22,7 @@ function (Settings) {
      * in nginx or apache for cross origin domain sharing to work (CORS).
      * Check install documentation on github
      */
-    //graphiteUrl: "http://"+window.location.hostname+":8080",
-
-    datasources: {
-          influx: {
-              default: true,
-              type: 'influxdb',
-              url: 'http://127.0.0.1:8086/db/monmetrics',
-              //username: 'test',
-              //password: 'test',
-          },
-          mon: {
-            default: true,
-            type: 'mon',
-            url: 'http://192.168.10.4:8080/v2.0',
-            access_token: '82510970543135'
-          }
-    },
+    graphiteUrl: "http://"+window.location.hostname+":8080",
 
     /**
      * Multiple graphite servers? Comment out graphiteUrl and replace with something like this:
@@ -53,6 +37,12 @@ function (Settings) {
           type: 'graphite',
           url: 'http://<graphite_url>',
           render_method: 'GET' // optional, use this to change render calls from POST to GET
+        },
+        mon: {
+          default: true,
+          type: 'mon',
+          url: 'http://192.168.10.4:8080/v2.0',
+          access_token: '82510970543135'
         }
       },
 
