@@ -131,12 +131,14 @@ function (angular, _, kbn) {
 
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function(reason) {
-        if (reason.status !== 0) {
+        if (reason.status !== 0 || reason.status >= 300) {
           deferred.reject(reason);
+        } 
+        else {
+          setTimeout(function() {
+            return retry(deferred, callback, Math.min(delay * 2, 30000));
+          }, delay);
         }
-        setTimeout(function() {
-          return retry(deferred, callback, Math.min(delay * 2, 30000));
-        }, delay);
       });
     }
 
