@@ -22,7 +22,17 @@ function (Settings) {
      * in nginx or apache for cross origin domain sharing to work (CORS).
      * Check install documentation on github
      */
-    graphiteUrl: "http://"+window.location.hostname+":8080",
+    //graphiteUrl: "http://"+window.location.hostname+":8080",
+
+    datasources: {
+          influx: {
+              default: true,
+              type: 'influxdb',
+              url: 'http://127.0.0.1:8086/db/monmetrics',
+              //username: 'test',
+              //password: 'test',
+          }
+    },
 
     /**
      * Multiple graphite servers? Comment out graphiteUrl and replace with something like this:
