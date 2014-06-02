@@ -31,6 +31,12 @@ function (Settings) {
               url: 'http://127.0.0.1:8086/db/monmetrics',
               //username: 'test',
               //password: 'test',
+          },
+          mon: {
+            default: true,
+            type: 'mon',
+            url: 'http://192.168.10.4:8080/v2.0',
+            access_token: '82510970543135'
           }
     },
 
