@@ -70,6 +70,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'isNonNull',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'rangeOfSeries',
     category: categories.Combine
   });
@@ -231,6 +236,8 @@ function (_) {
   addFuncDef({
     name: 'keepLastValue',
     category: categories.Special,
+    params: [ { name: "n", type: "int", } ],
+    defaultParams: [100]
   });
 
   addFuncDef({
