@@ -18,7 +18,7 @@ define([
                 this.name = datasource.name;
             }
 
-            MonDatasource.prototype.query = function (options) {
+            MonDatasource.prototype.query = function (filterSrv, options) {
 
                 var promises = _.map(options.targets, function (target) {
                     var query;
