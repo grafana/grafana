@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('kibana.services');
 
-  module.factory('InfluxDatasource', function($q, $http) {
+  module.factory('InfluxDatasource', function($q, $http, filterSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
@@ -59,6 +59,7 @@ function (angular, _, kbn) {
           }
 
           query = queryElements.join(" ");
+          query = filterSrv.applyFilterToTarget(query);
         }
         else {
           var template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
@@ -78,6 +79,7 @@ function (angular, _, kbn) {
           };
 
           query = _.template(template, templateData, this.templateSettings);
+          query = filterSrv.applyFilterToTarget(query);
           target.query = query;
         }
 
@@ -107,6 +109,26 @@ function (angular, _, kbn) {
           return series.name;
         });
       });
+    };
+
+    InfluxDatasource.prototype.metricFindQuery = function (query) {
+      var interpolated;
+      try {
+        interpolated = filterSrv.applyFilterToTarget(query);
+      }
+      catch(err) {
+        return $q.reject(err);
+      }
+
+      return this.doInfluxRequest(query, 'filters')
+        .then(function (results) {
+          return _.map(results[0].points, function (metric) {
+            return {
+              text: metric[1],
+              expandable: false
+            };
+          });
+        });
     };
 
     function retry(deferred, callback, delay) {
