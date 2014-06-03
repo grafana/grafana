@@ -15,7 +15,7 @@ function (angular, $, kbn, moment, _) {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, plot;
+        var data, plot, annotations;
         var hiddenData = {};
 
         scope.$on('refresh',function() {
@@ -35,8 +35,9 @@ function (angular, $, kbn, moment, _) {
         });
 
         // Receive render events
-        scope.$on('render',function(event, d) {
-          data = d || data;
+        scope.$on('render',function(event, renderData) {
+          data = renderData || data;
+          annotations = renderData.annotations;
           render_panel();
         });
 
@@ -206,13 +207,13 @@ function (angular, $, kbn, moment, _) {
         }
 
         function addAnnotations(options) {
-          if(!data.annotations || data.annotations.length === 0) {
+          if(!annotations || annotations.length === 0) {
             return;
           }
 
           var types = {};
 
-          _.each(data.annotations, function(event) {
+          _.each(annotations, function(event) {
             if (!types[event.annotation.name]) {
               types[event.annotation.name] = {
                 level: _.keys(types).length + 1,
@@ -235,7 +236,7 @@ function (angular, $, kbn, moment, _) {
 
           options.events = {
             levels: _.keys(types).length + 1,
-            data: data.annotations,
+            data: annotations,
             types: types
           };
         }
