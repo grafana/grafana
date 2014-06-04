@@ -22,7 +22,8 @@ define([
   'jquery',
   'config',
   'underscore',
-  'services/all'
+  'services/all',
+  'services/dashboard/all'
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -30,7 +31,7 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, ejsResource, dashboard,
+    $scope, $rootScope, $timeout, ejsResource, dashboard, filterSrv, dashboardKeybindings,
     alertSrv, panelMove, keyboardManager, grafanaVersion) {
 
     $scope.requiredElasticSearchVersion = ">=0.90.3";
@@ -51,10 +52,18 @@ function (angular, $, config, _) {
 
     $scope.init = function() {
       $scope.config = config;
+
       // Make stuff, including underscore.js available to views
       $scope._ = _;
       $scope.dashboard = dashboard;
       $scope.dashAlerts = alertSrv;
+
+      $scope.filter = filterSrv;
+      $scope.filter.init(dashboard.current);
+
+      $rootScope.$on("dashboard-loaded", function(event, dashboard) {
+        $scope.filter.init(dashboard);
+      });
 
       // Clear existing alerts
       alertSrv.clearAll();
@@ -66,68 +75,7 @@ function (angular, $, config, _) {
       $scope.bindKeyboardShortcuts();
     };
 
-    $scope.bindKeyboardShortcuts = function() {
-      $rootScope.$on('panel-fullscreen-enter', function() {
-        $rootScope.fullscreen = true;
-      });
-
-      $rootScope.$on('panel-fullscreen-exit', function() {
-        $rootScope.fullscreen = false;
-      });
-
-      $rootScope.$on('dashboard-saved', function() {
-        if ($rootScope.fullscreen) {
-          $rootScope.$emit('panel-fullscreen-exit');
-        }
-      });
-
-      keyboardManager.bind('ctrl+f', function(evt) {
-        $rootScope.$emit('open-search', evt);
-      }, { inputDisabled: true });
-
-      keyboardManager.bind('ctrl+h', function() {
-        var current = dashboard.current.hideControls;
-        dashboard.current.hideControls = !current;
-        dashboard.current.panel_hints = current;
-      }, { inputDisabled: true });
-
-      keyboardManager.bind('ctrl+s', function(evt) {
-        $rootScope.$emit('save-dashboard', evt);
-      }, { inputDisabled: true });
-
-      keyboardManager.bind('ctrl+r', function() {
-        dashboard.refresh();
-      }, { inputDisabled: true });
-
-      keyboardManager.bind('ctrl+z', function(evt) {
-        $rootScope.$emit('zoom-out', evt);
-      }, { inputDisabled: true });
-
-      keyboardManager.bind('esc', function() {
-        var popups = $('.popover.in');
-        if (popups.length > 0) {
-          return;
-        }
-        $rootScope.$emit('panel-fullscreen-exit');
-      }, { inputDisabled: true });
-    };
-
-    $scope.countWatchers = function (scopeStart) {
-      var q = [scopeStart || $rootScope], watchers = 0, scope;
-      while (q.length > 0) {
-        scope = q.pop();
-        if (scope.$$watchers) {
-          watchers += scope.$$watchers.length;
-        }
-        if (scope.$$childHead) {
-          q.push(scope.$$childHead);
-        }
-        if (scope.$$nextSibling) {
-          q.push(scope.$$nextSibling);
-        }
-      }
-      window.console.log(watchers);
-    };
+    $scope.bindKeyboardShortcuts = dashboardKeybindings.shortcuts;
 
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
@@ -137,7 +85,7 @@ function (angular, $, config, _) {
       }
     };
 
-    $scope.add_row = function(dash,row) {
+    $scope.add_row = function(dash, row) {
       dash.rows.push(row);
     };
 

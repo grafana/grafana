@@ -294,121 +294,12 @@ function($, _, moment) {
     return dateTime.toDate();
   };
 
-  // LOL. hahahahaha. DIE.
-  kbn.flatten_json = function(object,root,array) {
-    if (typeof array === 'undefined') {
-      array = {};
-    }
-    if (typeof root === 'undefined') {
-      root = '';
-    }
-    for(var index in object) {
-      var obj = object[index];
-      var rootname = root.length === 0 ? index : root + '.' + index;
-      if(typeof obj === 'object' ) {
-        if(_.isArray(obj)) {
-          if(obj.length > 0 && typeof obj[0] === 'object') {
-            var strval = '';
-            for (var objidx = 0, objlen = obj.length; objidx < objlen; objidx++) {
-              if (objidx > 0) {
-                strval = strval + ', ';
-              }
-
-              strval = strval + JSON.stringify(obj[objidx]);
-            }
-            array[rootname] = strval;
-          } else if(obj.length === 1 && _.isNumber(obj[0])) {
-            array[rootname] = parseFloat(obj[0]);
-          } else {
-            array[rootname] = typeof obj === 'undefined' ? null : obj;
-          }
-        } else {
-          kbn.flatten_json(obj,rootname,array);
-        }
-      } else {
-        array[rootname] = typeof obj === 'undefined' ? null : obj;
-      }
-    }
-    return kbn.sortObj(array);
-  };
-
-  kbn.xmlEnt = function(value) {
-    if(_.isString(value)) {
-      var stg1 = value.replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\r\n/g, '<br/>')
-        .replace(/\r/g, '<br/>')
-        .replace(/\n/g, '<br/>')
-        .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
-        .replace(/  /g, '&nbsp;&nbsp;')
-        .replace(/&lt;del&gt;/g, '<del>')
-        .replace(/&lt;\/del&gt;/g, '</del>');
-      return stg1;
-    } else {
-      return value;
-    }
-  };
-
-  kbn.sortObj = function(arr) {
-    // Setup Arrays
-    var sortedKeys = [];
-    var sortedObj = {};
-    var i;
-    // Separate keys and sort them
-    for (i in arr) {
-      sortedKeys.push(i);
-    }
-    sortedKeys.sort();
-
-    // Reconstruct sorted obj based on keys
-    for (i in sortedKeys) {
-      sortedObj[sortedKeys[i]] = arr[sortedKeys[i]];
-    }
-    return sortedObj;
-  };
-
   kbn.query_color_dot = function (color, diameter) {
     return '<div class="icon-circle" style="' + [
         'display:inline-block',
         'color:' + color,
         'font-size:' + diameter + 'px',
       ].join(';') + '"></div>';
-  };
-
-  kbn.colorSteps = function(col,steps) {
-
-    var _d = steps > 5 ? 1.6/steps : 0.25, // distance between steps
-      _p = []; // adjustment percentage
-
-    // Create a range of numbers between -0.8 and 0.8
-    for(var i = 1; i<steps+1; i+=1) {
-      _p.push(i%2 ? ((i-1)*_d*-1)/2 : i*_d/2);
-    }
-
-    // Create the color range
-    return _.map(_p.sort(function(a,b){return a-b;}),function(v) {
-      return v<0 ? Chromath.darken(col,v*-1).toString() : Chromath.lighten(col,v).toString();
-    });
-  };
-
-  // Find the smallest missing number in an array
-  kbn.smallestMissing = function(arr,start,end) {
-    start = start || 0;
-    end = end || arr.length-1;
-
-    if(start > end) {
-      return end + 1;
-    }
-    if(start !== arr[start]) {
-      return start;
-    }
-    var middle = Math.floor((start + end) / 2);
-
-    if (arr[middle] > middle) {
-      return kbn.smallestMissing(arr, start, middle);
-    } else {
-      return kbn.smallestMissing(arr, middle + 1, end);
-    }
   };
 
   kbn.byteFormat = function(size, decimals) {

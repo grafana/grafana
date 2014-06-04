@@ -1,5 +1,15 @@
 vNext
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
+- Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
+- Refactoring of filterSrv (Issue #428), thx @Tetha
+- New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
+- New InfluxDB function difference add to function dropdown (PR #455)
+
+# Fixes
+- Filter option loading when having muliple nested filters now works better.
+  Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
+  After an option is changed and a nested template param is also reloaded, if the current value
+  exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements

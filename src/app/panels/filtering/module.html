@@ -2,7 +2,7 @@
 
   <div class='filtering-container'>
 
-    <div ng-repeat="filter in filterSrv.list" class="small filter-panel-filter">
+    <div ng-repeat="filter in filter.templateParameters" class="small filter-panel-filter">
       <div>
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
         <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true"></i>

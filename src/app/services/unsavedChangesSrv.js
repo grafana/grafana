@@ -16,6 +16,18 @@ function (angular, _, config) {
     var self = this;
     var modalScope = $rootScope.$new();
 
+    $rootScope.$on("dashboard-loaded", function(event, newDashboard ) {
+      self.original = angular.copy(newDashboard);
+    });
+
+    $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
+      self.original = angular.copy(savedDashboard);
+    });
+
+    $rootScope.$on("$routeChangeSuccess", function() {
+      self.original = null;
+    });
+
     window.onbeforeunload = function () {
       if (self.has_unsaved_changes()) {
         return "There are unsaved changes to this dashboard";
@@ -47,15 +59,16 @@ function (angular, _, config) {
     };
 
     this.has_unsaved_changes = function () {
-      if (!dashboard.original) {
+      if (!self.original) {
         return false;
       }
 
       var current = angular.copy(dashboard.current);
-      var original = dashboard.original;
+      var original = self.original;
 
       // ignore timespan changes
       current.services.filter.time = original.services.filter.time = {};
+
       current.refresh = original.refresh;
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
@@ -82,7 +95,7 @@ function (angular, _, config) {
     };
 
     modalScope.ignore = function() {
-      dashboard.original = null;
+      self.original = null;
       self.goto_next();
     };
 

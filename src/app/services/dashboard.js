@@ -54,7 +54,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
     // Store a reference to this
     var self = this;
-    var filterSrv;
 
     this.current = _.clone(_dash);
     this.last = {};
@@ -63,7 +62,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     $rootScope.$on('$routeChangeSuccess',function(){
       // Clear the current dashboard to prevent reloading
       self.current = {};
-      self.original = null;
       self.indices = [];
       route();
     });
@@ -157,10 +155,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
 
       // Set the current dashboard
       self.current = angular.copy(dashboard);
-
-      filterSrv = $injector.get('filterSrv');
-      filterSrv.init();
-
       if(dashboard.refresh) {
         self.set_interval(dashboard.refresh);
       }
@@ -172,11 +166,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       // Take out any that we're not allowed to add from the gui.
       self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
 
-      $rootScope.$emit('dashboard-loaded');
-
-      $timeout(function() {
-        self.original = angular.copy(self.current);
-      }, 1000);
+      $rootScope.$emit('dashboard-loaded', self.current);
 
       return true;
     };
@@ -390,7 +380,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
           if(type === 'dashboard') {
             $location.path('/dashboard/elasticsearch/'+title);
           }
-          self.original = angular.copy(self.current);
           return result;
         },
         // Failure
@@ -467,8 +456,6 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         timer.cancel(self.refresh_timer);
       }
     };
-
-
   });
 
 });

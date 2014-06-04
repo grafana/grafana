@@ -68,6 +68,12 @@ function (Settings) {
      */
     unsaved_changes_warning: true,
 
+    /**
+     * set the default timespan for the playlist feature
+     * Example: "1m", "1h"
+     */
+    playlist_timespan: "1m",
+
     panel_names: [
       'text',
       'graphite'
