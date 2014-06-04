@@ -16,6 +16,7 @@ vNext
   exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
 - Legend Current value did not display when value was zero, Fixes #460
 - Fix to series toggling bug that caused annotations to be hidden when toggling (hiding) series. Fixes #328
+- Fix for graphite function selection menu that some times draws outside screen. It now displays upward (Fixes #293)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements
