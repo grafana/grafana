@@ -26,7 +26,18 @@ function (_, crypto) {
       elasticsearch_all_disabled    : false,
       timezoneOffset                : null,
       playlist_timespan             : "1m",
-      unsaved_changes_warning       : true
+      unsaved_changes_warning       : true,
+
+      time_formats : {
+        formats : [
+          { maxSecPerTick : 45, format : "%H:%M:%S" },
+          { maxSecPerTick : 3600, format : "%H:%M" },
+          { maxSecPerTick : 80000, format : "%m/%d %H:%M" },
+          { maxSecPerTick : 2419200, format : "%m/%d" },
+        ],
+        fallbackForLargeTimespans : "%Y-%m",
+        fallbackForUndefinedSecPerTick : "%H:%M"
+      }
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
@@ -76,6 +87,7 @@ function (_, crypto) {
     settings.elasticsearchBasicAuth = elasticParsed.basicAuth;
     settings.elasticsearch = elasticParsed.url;
 
+    settings.time_formats.formats = _.sortBy( settings.time_formats.formats, function( format ) { return format.maxSecPerTick; } );
     return settings;
   };
 });

@@ -3,9 +3,10 @@ define([
   'jquery',
   'kbn',
   'moment',
-  'underscore'
+  'underscore',
+  'config'
 ],
-function (angular, $, kbn, moment, _) {
+function (angular, $, kbn, moment, _, config) {
   'use strict';
 
   var module = angular.module('kibana.directives');
@@ -281,25 +282,21 @@ function (angular, $, kbn, moment, _) {
         }
 
         function time_format(interval, ticks, min, max) {
-          if (min && max && ticks) {
-            var secPerTick = ((max - min) / ticks) / 1000;
-
-            if (secPerTick <= 45) {
-              return "%H:%M:%S";
-            }
-            if (secPerTick <= 3600) {
-              return "%H:%M";
-            }
-            if (secPerTick <= 80000) {
-              return "%m/%d %H:%M";
-            }
-            if (secPerTick <= 2419200) {
-              return "%m/%d";
-            }
-            return "%Y-%m";
+          if ( !(min && max && ticks) ) {
+            return config.time_formats.fallbackForUndefinedSecPerTick;
           }
 
-          return "%H:%M";
+          var secPerTick = ((max-min) / ticks) / 1000;
+
+          // grab that format with the smallest maxSecPerTick which is 
+          // bigger than secPerTick
+          var candidateFormats = _.filter( config.time_formats.formats,
+                                           function( format ) { return secPerTick <= format.maxSecPerTick; });
+          if ( _.size( candidateFormats ) === 0 ) {
+            return config.time_formats.fallbackForLargeTimespans;
+          } else {
+            return _.first( candidateFormats ).format;
+          } 
         }
 
         var $tooltip = $('<div>');
