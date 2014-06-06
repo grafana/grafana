@@ -3,10 +3,12 @@ vNext
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
 - New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
+- New graphite function definition added isNonNull (PR #461), - thx @tmonk42
 - New InfluxDB function difference add to function dropdown (PR #455)
 - Added parameter to keepLastValue graphite function definition (default 100), Closes #459
 - improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
   to the browser cache when upgrading grafana and improve load performance (Fixes #418)
+- Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.
@@ -14,6 +16,8 @@ vNext
   After an option is changed and a nested template param is also reloaded, if the current value
   exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
 - Legend Current value did not display when value was zero, Fixes #460
+- Fix to series toggling bug that caused annotations to be hidden when toggling (hiding) series. Fixes #328
+- Fix for graphite function selection menu that some times draws outside screen. It now displays upward (Fixes #293)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements
