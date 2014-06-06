@@ -11,13 +11,15 @@ function (angular) {
   module.controller('InfluxTargetCtrl', function($scope, $timeout) {
 
     $scope.init = function() {
-      if (!$scope.target.function) {
-        $scope.target.function = 'mean';
-      }
+      $scope.target.function = $scope.target.function || 'mean';
+      $scope.target.column = $scope.target.column || 'value';
 
       $scope.rawQuery = false;
 
-      $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last'];
+      $scope.functions = ['count', 'mean', 'sum', 'min',
+                          'max', 'mode', 'distinct', 'median',
+                          'derivative', 'stddev', 'first', 'last',
+                          'difference'];
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
       $scope.oldSeries = $scope.target.series;
       $scope.$on('typeahead-updated', function(){
@@ -39,6 +41,11 @@ function (angular) {
         $scope.oldSeries = $scope.target.series;
         $scope.get_data();
       }
+    };
+
+    $scope.changeFunction = function(func) {
+      $scope.target.function = func;
+      $scope.get_data();
     };
 
     // called outside of digest

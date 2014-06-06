@@ -19,7 +19,6 @@ define([
   'kbn',
   'moment',
   './timeSeries',
-  'services/filterSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
   'jquery.flot',
@@ -34,10 +33,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   'use strict';
 
-  var module = angular.module('kibana.panels.graphite', []);
+  var module = angular.module('kibana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -53,11 +52,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         },
         {
           title:'Axes & Grid',
-          src:'app/panels/graphite/axisEditor.html'
+          src:'app/panels/graph/axisEditor.html'
         },
         {
           title:'Display Styles',
-          src:'app/panels/graphite/styleEditor.html'
+          src:'app/panels/graph/styleEditor.html'
         }
       ],
       fullscreenEdit: true,
@@ -211,6 +210,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.datasources = datasourceSrv.listOptions();
       $scope.setDatasource($scope.panel.datasource);
+
+      if ($scope.panel.targets.length === 0) {
+        $scope.panel.targets.push({});
+      }
     };
 
     $scope.setDatasource = function(datasource) {
@@ -231,8 +234,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = filterSrv.timeRange();
-      $scope.rangeUnparsed = filterSrv.timeRange(false);
+      $scope.range = this.filter.timeRange();
+      $scope.rangeUnparsed = this.filter.timeRange(false);
       $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
       $scope.interval = '10m';
 
@@ -259,13 +262,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         datasource: $scope.panel.datasource
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
 
-      return $scope.datasource.query(graphiteQuery)
+      return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.panel.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
           $scope.render([]);
         });
@@ -357,7 +360,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         $scope.hiddenSeries[serie.alias] = true;
       }
 
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 

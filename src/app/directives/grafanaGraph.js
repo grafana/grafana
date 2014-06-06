@@ -10,12 +10,12 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('grafanaGraph', function(filterSrv, $rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope, dashboard) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, plot;
+        var data, plot, annotations;
         var hiddenData = {};
 
         scope.$on('refresh',function() {
@@ -35,8 +35,9 @@ function (angular, $, kbn, moment, _) {
         });
 
         // Receive render events
-        scope.$on('render',function(event, d) {
-          data = d || data;
+        scope.$on('render',function(event, renderData) {
+          data = renderData || data;
+          annotations = data.annotations;
           render_panel();
         });
 
@@ -206,13 +207,13 @@ function (angular, $, kbn, moment, _) {
         }
 
         function addAnnotations(options) {
-          if(!data.annotations || data.annotations.length === 0) {
+          if(!annotations || annotations.length === 0) {
             return;
           }
 
           var types = {};
 
-          _.each(data.annotations, function(event) {
+          _.each(annotations, function(event) {
             if (!types[event.annotation.name]) {
               types[event.annotation.name] = {
                 level: _.keys(types).length + 1,
@@ -235,7 +236,7 @@ function (angular, $, kbn, moment, _) {
 
           options.events = {
             levels: _.keys(types).length + 1,
-            data: data.annotations,
+            data: annotations,
             types: types
           };
         }
@@ -313,7 +314,7 @@ function (angular, $, kbn, moment, _) {
             if (seriesInfo.alias) {
               group = '<small style="font-size:0.9em;">' +
                 '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-                (seriesInfo.alias || seriesInfo.query)+
+                (decodeURIComponent(seriesInfo.alias)) +
               '</small><br>';
             } else {
               group = kbn.query_color_dot(item.series.color, 15) + ' ';
@@ -387,9 +388,11 @@ function (angular, $, kbn, moment, _) {
         }
 
         elem.bind("plotselected", function (event, ranges) {
-          filterSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from).toDate(),
-            to    : moment.utc(ranges.xaxis.to).toDate(),
+          scope.$apply( function() {
+              scope.filter.setTime({
+                from  : moment.utc(ranges.xaxis.from).toDate(),
+                to    : moment.utc(ranges.xaxis.to).toDate(),
+              });
           });
         });
       }

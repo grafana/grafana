@@ -23,26 +23,59 @@
                 <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
               </span>
               <span class="row-button bgPrimary" ng-click="toggle_row(row)" ng-show="row.collapsable">
-                <i bs-tooltip="'Expand row'" data-placement="right" ng-show="row.editable" class="icon-caret-left pointer" ></i>
+                <i bs-tooltip="'Expand row'" data-placement="right" class="icon-caret-left pointer" ></i>
               </span>
               <span class="row-button row-text" ng-click="toggle_row(row)" ng-class="{'pointer':row.collapsable}">{{row.title || 'Row '+$index}}</span>
             </div>
-
-            <div style="text-align:center" class="row-open" ng-show="!row.collapse">
+            <div class="row-open" ng-show="!row.collapse">
               <div ng-show="row.collapsable" class='row-tab bgPrimary' ng-click="toggle_row(row)">
-                <i bs-tooltip="'Collapse row'" data-placement="right"  class="icon-caret-right" ></i>
-                <br>
+                <span class="row-tab-button">
+                  <i class="icon-caret-right" ></i>
+                </span>
               </div>
-              <div config-modal="app/partials/roweditor.html" class='row-tab bgWarning' ng-show="row.editable">
-                <i bs-tooltip="'Configure row'" data-placement="right"  class="icon-cog pointer"></i>
-                <br>
-              </div>
-              <div ng-show="rowSpan(row) > 12" class='row-tab bgDanger'>
-                <i bs-tooltip="'Total span > 12. This row may format poorly'" data-placement="right" class="icon-warning-sign"></i>
-                <br>
+              <div class='row-tab bgSuccess dropdown' ng-show="row.editable">
+                <span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
+                  <i class="icon-th-list"></i>
+                </span>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
+                  <li class="dropdown-submenu">
+                    <a href="#">Add Panel</a>
+                    <ul class="dropdown-menu">
+                      <li><a ng-click="add_panel_default('graph')">Graph</li></a>
+                      <li><a ng-click="add_panel_default('text')">Text</li></a>
+                    </ul>
+                  </li>
+                  <li class="dropdown-submenu">
+                    <a href="#">Set height</a>
+                    <ul class="dropdown-menu">
+                      <li><a ng-click="set_height('100px')">100 px</li></a>
+                      <li><a ng-click="set_height('150px')">150 px</li></a>
+                      <li><a ng-click="set_height('200px')">200 px</li></a>
+                      <li><a ng-click="set_height('250px')">250 px</li></a>
+                      <li><a ng-click="set_height('300px')">300 px</li></a>
+                      <li><a ng-click="set_height('350px')">350 px</li></a>
+                      <li><a ng-click="set_height('450px')">450 px</li></a>
+                      <li><a ng-click="set_height('500px')">500 px</li></a>
+                      <li><a ng-click="set_height('600px')">600 px</li></a>
+                      <li><a ng-click="set_height('700px')">700 px</li></a>
+                    </ul>
+                  </li>
+                  <li class="dropdown-submenu">
+                    <a href="#">Move</a>
+                    <ul class="dropdown-menu">
+                      <li><a ng-click="move_row(-1)">Up</li></a>
+                      <li><a ng-click="move_row(1)">Down</li></a>
+                    </ul>
+                  </li>
+                  <li>
+                    <a config-modal="app/partials/roweditor.html">Row editor</a>
+                  </li>
+                  <li>
+                    <a ng-click="delete_row()">Delete row</a>
+                  </li>
+                </ul>
               </div>
             </div>
-
           </div>
 
           <div style="padding-top:0px" ng-if="!row.collapse">
@@ -58,10 +91,6 @@
             <div ng-show="rowSpan(row) < 10 && dashboard.panelDragging" class="panel" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
             </div>
 
-            <span config-modal="app/partials/roweditor.html" ng-show="!dashboard.panelDragging && !dashboard.current.hideControls">
-              <i ng-hide="rowSpan(row) >= 10" class="pointer icon-plus-sign" ng-click="editor.index = 2" bs-tooltip="'Add a panel to this row'" data-placement="right"></i>
-            </span>
-
             <div class="clearfix"></div>
             </div>
           </div>
@@ -70,8 +99,8 @@
 
       <div ng-show='dashboard.current.editable && dashboard.current.panel_hints' class="row-fluid add-row-panel-hint">
         <div class="span12" style="text-align:right;">
-          <span style="margin-left: 0px;" class="pointer btn btn-mini" config-modal="app/partials/dasheditor.html">
-            <span ng-click="editor.index = 1"><i class="icon-plus-sign"></i> ADD A ROW</span>
+          <span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-mini">
+            <span><i class="icon-plus-sign"></i> ADD A ROW</span>
           </span>
         </div>
       </div>

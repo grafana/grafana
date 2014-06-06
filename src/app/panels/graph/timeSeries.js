@@ -60,11 +60,11 @@ function (_, kbn) {
       this.info.current = result[result.length-1][1];
 
       var formater = kbn.getFormatFunction(yFormats[this.yaxis - 1], 2);
-      this.info.avg = this.info.avg ? formater(this.info.avg) : null;
-      this.info.current = this.info.current ? formater(this.info.current) : null;
-      this.info.min = this.info.min ? formater(this.info.min) : null;
-      this.info.max = this.info.max ? formater(this.info.max) : null;
-      this.info.total = this.info.total ? formater(this.info.total) : null;
+      this.info.avg = this.info.avg != null ? formater(this.info.avg) : null;
+      this.info.current = this.info.current != null ? formater(this.info.current) : null;
+      this.info.min = this.info.min != null ? formater(this.info.min) : null;
+      this.info.max = this.info.max != null ? formater(this.info.max) : null;
+      this.info.total = this.info.total != null ? formater(this.info.total) : null;
     }
 
     return result;

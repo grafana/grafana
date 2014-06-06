@@ -44,7 +44,11 @@
     "karma-mocha": "~0.1.1",
     "karma-expect": "~1.0.0",
     "grunt-cli": "~0.1.13",
-    "jshint-stylish": "~0.1.5"
+    "jshint-stylish": "~0.1.5",
+    "grunt-contrib-concat": "^0.4.0",
+    "grunt-angular-templates": "^0.5.5",
+    "grunt-usemin": "^2.1.1",
+    "grunt-filerev": "^0.2.1"
   },
   "engines": {
     "node": "0.10.x",
@@ -53,5 +57,8 @@
   "scripts": {
     "test": "grunt test"
   },
-  "license": "Apache License"
+  "license": "Apache License",
+  "dependencies": {
+
+  }
 }

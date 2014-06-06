@@ -6,11 +6,16 @@ module.exports = function(grunt) {
     'jshint:tests',
     'clean:on_start',
     'less:src',
+    'concat:css',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
+    'ngtemplates',
     'cssmin:build',
     'ngmin:build',
     'requirejs:build',
+    'concat:js',
+    'filerev',
+    'usemin',
     'clean:temp',
     'build:write_revision',
     'uglify:dest'
@@ -19,6 +24,7 @@ module.exports = function(grunt) {
   // run a string replacement on the require config, using the latest revision number as the cache buster
   grunt.registerTask('build:write_revision', function() {
     grunt.event.once('git-describe', function (desc) {
+
       grunt.config('string-replace.config', {
         files: {
           '<%= destDir %>/app/components/require.config.js': '<%= destDir %>/app/components/require.config.js',

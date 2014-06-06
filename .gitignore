@@ -1,7 +1,11 @@
 node_modules
 .aws-config.json
 dist
+
+# locally required config files
 web.config
 config.js
+
+# Editor junk
 *.sublime-workspace
 *.swp
