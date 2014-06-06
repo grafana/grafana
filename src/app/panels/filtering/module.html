@@ -17,7 +17,7 @@
             </a>
               <ul class="dropdown-menu">
                 <li ng-repeat="option in filter.options">
-                  <a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
+                  <a ng-click="filterOptionSelected(filter, option)">{{option.text | urlDecode}}</a>
                 </li>
               </ul>
           </li>

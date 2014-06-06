@@ -33,10 +33,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   'use strict';
 
-  var module = angular.module('kibana.panels.graphite', []);
+  var module = angular.module('kibana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -52,11 +52,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         },
         {
           title:'Axes & Grid',
-          src:'app/panels/graphite/axisEditor.html'
+          src:'app/panels/graph/axisEditor.html'
         },
         {
           title:'Display Styles',
-          src:'app/panels/graphite/styleEditor.html'
+          src:'app/panels/graph/styleEditor.html'
         }
       ],
       fullscreenEdit: true,
@@ -264,7 +264,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.panel.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
           $scope.render([]);
         });
@@ -356,7 +356,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         $scope.hiddenSeries[serie.alias] = true;
       }
 
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
