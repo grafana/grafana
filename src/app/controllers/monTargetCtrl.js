@@ -12,7 +12,7 @@ define([
 
             $scope.init = function() {
                 if (!$scope.target.function) {
-                    $scope.target.function = 'avg';
+                    $scope.target.function = 'none';
                 }
                 if (!$scope.target.column) {
                     $scope.target.column = 'value';
@@ -20,7 +20,7 @@ define([
 
                 $scope.rawQuery = false;
 
-                $scope.functions = ['count', 'avg', 'sum', 'min', 'max'];
+                $scope.functions = ['none', 'count', 'avg', 'sum', 'min', 'max'];
                 $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
                 $scope.oldSeries = $scope.target.series;
                 $scope.$on('typeahead-updated', function(){

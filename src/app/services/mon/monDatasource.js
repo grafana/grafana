@@ -36,10 +36,12 @@ define([
                     }
                     else {
                         var params = {
-                            statistics: target.function,
-                            start_time: startTime,
+                            start_time: startTime
                             //end_time: endTime
                         };
+                        if (target.function !== 'none') {
+                            params.statistics = target.function;
+                        }
                         if (target.series !== '') {
                             params.name = target.series;
                         }
@@ -214,10 +216,18 @@ define([
                         var target = data.alias || series.name + "." + column;
                         var datapoints = [];
 
-                        for (var i = 0; i < series.statistics.length; i++) {
-                            var myDate = new Date(series.statistics[i][timeCol]);
-                            var result = myDate.getTime() / 1000;
-                            datapoints[i] = [series.statistics[i][index], result];
+                        if ('statistics' in series) {
+                            for (var i = 0; i < series.statistics.length; i++) {
+                                var myDate = new Date(series.statistics[i][timeCol]);
+                                var result = myDate.getTime() / 1000;
+                                datapoints[i] = [series.statistics[i][index], result];
+                            }
+                        } else {
+                            for (var i = 0; i < series.measurements.length; i++) {
+                                var myDate = new Date(series.measurements[i][timeCol]);
+                                var result = myDate.getTime() / 1000;
+                                datapoints[i] = [series.measurements[i][index], result];
+                            }
                         }
 
                         output.push({ target: target, datapoints: datapoints });
