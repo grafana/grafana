@@ -1,25 +1,46 @@
 package main
 
-import "github.com/go-martini/martini"
+import (
+	"github.com/gorilla/mux"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+)
+
+type App struct {
+}
+
+type IndexViewModel struct {
+	Title string
+}
 
 func main() {
-	server := CreateServer()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
 
-	server.Run()
+	log.Println("Starting Grafana-Pro v.1-alpha, listening on port " + port)
+
+	router := mux.NewRouter()
+	router.HandleFunc("/", handler)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
+
+	http.Handle("/", router)
+	http.ListenAndServe(":"+port, nil)
 }
 
-type GrafanaServer struct {
-	*martini.Martini
-	martini.Router
-}
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET /")
 
-func CreateServer() *GrafanaServer {
-	r := martini.NewRouter()
-	m := martini.New()
-	m.Use(martini.Logger())
-	m.Use(martini.Recovery())
-	m.Use(martini.Static("public"))
-	m.MapTo(r, (*martini.Routes)(nil))
-	m.Action(r.Handle)
-	return &GrafanaServer{m, r}
+	view := template.New("viewTemplate")
+	view.Delims("[[", "]]")
+
+	t, err := view.ParseFiles("./views/index.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t.ExecuteTemplate(w, "index.html", &IndexViewModel{Title: "hello from go"})
 }
