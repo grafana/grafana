@@ -1,0 +1,66 @@
+
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Chart Options</h5>
+    <div class="editor-option">
+      <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
+    </div>
+    <div class="editor-option">
+      <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
+    </div>
+    <div class="editor-option">
+      <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
+    </div>
+  </div>
+
+  <div class="section">
+    <h5>Line options</h5>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Fill</label>
+      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Width</label>
+      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.points">
+      <label class="small">Point Radius</label>
+      <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Null point mode <tip>Define how null values should be drawn</tip></label>
+      <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Staircase line</label><input type="checkbox" ng-model="panel.steppedLine" ng-checked="panel.steppedLine" ng-change="render()">
+    </div>
+  </div>
+  <div class="section">
+    <h5>Multiple Series</h5>
+    <div class="editor-option">
+      <label class="small">Stack</label><input type="checkbox" ng-model="panel.stack" ng-checked="panel.stack" ng-change="render()">
+    </div>
+    <div class="editor-option" ng-show="panel.stack">
+      <label style="white-space:nowrap" class="small">Percent <tip>Stack as a percentage of total</tip></label>
+      <input type="checkbox"  ng-model="panel.percentage" ng-checked="panel.percentage" ng-change="render()">
+    </div>
+    <div class="editor-option" ng-show="panel.stack">
+      <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
+      <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
+    </div>
+  </div>
+
+
+  <div class="section">
+    <h5>Rendering</h5>
+    <div class="editor-option">
+      <label class="small">Flot <tip>client side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="flot" ng-change="get_data()" />
+    </div>
+    <div class="editor-option">
+      <label class="small">Graphite PNG <tip>server side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
+    </div>
+  </div>
+</div>

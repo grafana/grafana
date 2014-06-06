@@ -1,0 +1,118 @@
+.submenu-controls {
+  background: @submenuBackground;
+  font-size: inherit;
+  label {
+    margin: 0;
+    padding-right: 4px;
+    display: inline;
+  }
+  input[type=checkbox] {
+    margin: 0;
+  }
+}
+
+.submenu-controls-visible:not(.hide-controls) {
+  .panel-fullscreen {
+    top: 82px;
+  }
+}
+
+.submenu-panel {
+  padding: 0 4px 0 8px;
+  border-right: 1px solid @submenuBorder;
+  float: left;
+}
+
+.submenu-panel:first-child {
+  padding-left: 17px;
+}
+
+.submenu-panel-title {
+  float: left;
+  text-transform: uppercase;
+  padding: 4px 10px 3px 0;
+}
+
+.submenu-panel-wrapper {
+  float: left;
+}
+
+.submenu-toggle {
+  padding: 4px 0 3px 8px;
+  float: left;
+  .annotation-color-icon {
+    position: relative;
+    top: 2px;
+  }
+}
+
+.submenu-toggle:first-child {
+  padding-left: 0;
+}
+
+.submenu-control-edit {
+  padding: 4px 4px 3px 8px;
+  float: right;
+  border-left: 1px solid @submenuBorder;
+  margin-left: 8px;
+}
+
+.annotation-disabled, .annotation-disabled a {
+  color: darken(@textColor, 25%);
+}
+
+
+// Filter submenu
+.filtering-container {
+  float: left;
+}
+
+.filtering-container label {
+  float: left;
+}
+
+.filtering-container input[type=checkbox] {
+  margin: 0;
+}
+
+.filter-panel-filter {
+  display:inline-block;
+  vertical-align: top;
+  padding: 4px 10px 3px 10px;
+  border-right: 1px solid @submenuBorder;
+}
+
+.filter-panel-filter:first-child {
+  padding-left: 0;
+}
+
+.filter-panel-filter ul {
+  margin-bottom: 0px;
+}
+
+.filter-deselected {
+  opacity: 0.5;
+}
+
+.filtering-container .filter-action {
+  float:right;
+  padding-right: 2px;
+  margin-bottom: 0px !important;
+  margin-left: 0px;
+  margin-top: 4px;
+}
+
+.add-filter-action {
+  padding: 3px 5px 0px 5px;
+  position: relative;
+  top: 4px;
+}
+
+.filter-mandate {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.filter-apply {
+  float:right;
+}

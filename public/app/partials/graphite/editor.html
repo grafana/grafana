@@ -1,0 +1,105 @@
+
+<div class="editor-row" style="margin-top: 10px;">
+
+	<div  ng-repeat="target in panel.targets"
+        class="grafana-target"
+        ng-class="{'grafana-target-hidden': target.hide}"
+        ng-controller="GraphiteTargetCtrl"
+        ng-init="init()">
+
+    <div class="grafana-target-inner">
+      <ul class="grafana-target-controls">
+        <li ng-show="parserError">
+          <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+            <i class="icon-warning-sign"></i>
+          </a>
+        </li>
+        <li>
+          <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
+            <i class="icon-pencil"></i>
+          </a>
+        </li>
+        <li class="dropdown">
+          <a  class="pointer dropdown-toggle"
+              data-toggle="dropdown"
+              tabindex="1">
+            <i class="icon-cog"></i>
+          </a>
+          <ul class="dropdown-menu pull-right" role="menu">
+            <li role="menuitem">
+              <a  tabindex="1"
+                  ng-click="duplicate()">
+                Duplicate
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
+            <i class="icon-remove"></i>
+          </a>
+        </li>
+      </ul>
+
+      <ul class="grafana-target-controls-left">
+        <li>
+          <a  class="grafana-target-segment"
+              ng-click="target.hide = !target.hide; get_data();"
+              role="menuitem">
+            <i class="icon-eye-open"></i>
+          </a>
+        </li>
+      </ul>
+
+      <input  type="text"
+              class="grafana-target-text-input span10"
+              ng-model="target.target"
+              focus-me="showTextEditor"
+              spellcheck='false'
+              ng-model-onblur ng-change="targetTextChanged()"
+              ng-show="showTextEditor" />
+
+      <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
+        <li class="dropdown" ng-repeat="segment in segments" role="menuitem">
+          <a  tabindex="1"
+              class="grafana-target-segment dropdown-toggle"
+              data-toggle="dropdown"
+              ng-click="getAltSegments($index)"
+              focus-me="segment.focus"
+              ng-bind-html-unsafe="segment.html">
+          </a>
+          <ul class="dropdown-menu scrollable grafana-segment-dropdown-menu" role="menu">
+            <li ng-repeat="altSegment in altSegments" role="menuitem">
+              <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html"></a>
+            </li>
+          </ul>
+        </li>
+        <li ng-repeat="func in functions">
+          <span graphite-func-editor class="grafana-target-segment grafana-target-function">
+          </span>
+          <!-- <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
+              bs-popover="'app/partials/graphite/funcEditor.html'"
+              data-placement="bottom">
+            {{func.def.name}}
+          </a> -->
+          <!-- <span class="grafana-target-segment grafana-target-function">
+            <span>{{func.def.name}}(</span><span ng-repeat="param in func.def.params">
+              <input  type="text"
+                      class="input-mini grafana-function-param-input"
+                      dynamic-width
+                      ng-model="func.params[$index]"></input>
+            </span><span>)</span>
+          </span> -->
+        </li>
+        <li class="dropdown" graphite-add-func>
+
+        </li>
+      </ul>
+
+
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
+
+

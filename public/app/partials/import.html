@@ -1,0 +1,31 @@
+<div ng-controller="GraphiteImportCtrl" ng-init="init()" style="height: 400px">
+  <h5>Import dashboards from graphite web</h5>
+
+  <div class="editor-row">
+    <div class="section">
+      <div class="btn-group">
+        <button class="btn btn-info dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Datasource'">{{datasource.name}} <span class="caret"></span></button>
+
+        <ul class="dropdown-menu" role="menu">
+          <li ng-repeat="datasource in datasources" role="menuitem">
+            <a ng-click="setDatasource(datasource.value);">{{datasource.name}}</a>
+          </li>
+        </ul>
+      </div>
+      <button ng-click="listAll()" class="btn btn-primary">List all dashboards</button>
+    </div>
+  </div>
+
+  <div class="editor-row" style="margin-top: 10px;">
+    <table class="table table-condensed table-striped">
+      <tr ng-repeat="dash in dashboards">
+        <td style="padding-right: 20px;"><button class="btn btn-success" ng-click="import(dash.name)">Import</button>
+        <td style="width: 100%; vertical-align: middle;">{{dash.name}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div ng-show="error" style="margin-top: 20px" class="alert alert-error">
+    {{error}}
+  </div>
+</div>

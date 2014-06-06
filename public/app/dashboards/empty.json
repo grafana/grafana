@@ -1,0 +1,83 @@
+{
+  "title": "New Dashboard",
+  "services": {
+    "filter": {
+      "list": [],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      }
+    }
+  },
+  "rows": [
+    {
+      "title": "Row1",
+      "height": "250px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [],
+      "notice": false
+    }
+  ],
+  "editable": true,
+  "failover": false,
+  "panel_hints": true,
+  "style": "dark",
+  "pulldowns": [
+    {
+      "type": "filtering",
+      "collapse": false,
+      "notice": false,
+      "enable": false
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "enable": true,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "now": true
+    }
+  ],
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": false,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": false,
+    "hide": false
+  },
+  "refresh": false
+}

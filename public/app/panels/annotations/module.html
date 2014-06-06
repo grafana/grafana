@@ -1,0 +1,12 @@
+<div ng-controller='AnnotationsCtrl' ng-init="init()">
+
+  <div class="submenu-toggle" ng-repeat="annotation in panel.annotations" ng-class="{'annotation-disabled': !annotation.enable }">
+    <i class="annotation-color-icon icon-minus"></i>
+    <a ng-click="hide(annotation)" class="small">{{annotation.name}}</a>
+  </div>
+
+  <div class="submenu-control-edit">
+    <i class="icon-cog pointer" config-modal="app/panels/annotations/editor.html" bs-tooltip="'Edit annotations'" ></i>
+  </div>
+
+</div>
