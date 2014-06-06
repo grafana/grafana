@@ -13,6 +13,8 @@ function (angular, _, config, gfunc, Parser) {
   module.controller('GraphiteTargetCtrl', function($scope) {
 
     $scope.init = function() {
+      $scope.target.target = $scope.target.target || '';
+
       parseTarget();
     };
 

@@ -13,9 +13,14 @@
 - Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
 - Improvement to InfluxDB query editor and function/value column selection (Issue #473)
 - Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
+- Row editing and adding new panel is now a lot quicker and easier with the new
+  row menu (Issue #475)
 
 #### Changes
 - Graphite panel is now renamed graph (Existing dashboards will still work)
+- Add panel icon and Row edit button is replaced by the Row edit menu (Issue #475)
+- New graphs now have a default empty query
+- Add Row button now creates a row with default height of 250px (no longer opens dashboard settings modal)
 
 #### Fixes
 - Filter option loading when having muliple nested filters now works better.

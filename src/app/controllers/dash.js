@@ -89,6 +89,12 @@ function (angular, $, config, _) {
       dash.rows.push(row);
     };
 
+    $scope.add_row_default = function() {
+      $scope.reset_row();
+      $scope.row.title = 'New row';
+      $scope.add_row(dashboard.current, $scope.row);
+    };
+
     $scope.reset_row = function() {
       $scope.row = {
         title: '',
