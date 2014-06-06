@@ -20,6 +20,8 @@ vNext
 - Legend Current value did not display when value was zero, Fixes #460
 - Fix to series toggling bug that caused annotations to be hidden when toggling (hiding) series. Fixes #328
 - Fix for graphite function selection menu that some times draws outside screen. It now displays upward (Fixes #293)
+- Fix for exclusive series toggling (hold down CTRL, SHIFT or META key) and left click a series for exclusive toggling
+  CTRL does not work on MAC OSX but SHIFT or META should (depending on browser) (Closes #350, Fixes #472)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements

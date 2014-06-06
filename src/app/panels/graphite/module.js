@@ -264,7 +264,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.panel.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
           $scope.render([]);
         });
@@ -356,7 +356,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         $scope.hiddenSeries[serie.alias] = true;
       }
 
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
