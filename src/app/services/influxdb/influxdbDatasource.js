@@ -26,6 +26,7 @@ function (angular, _, kbn) {
     InfluxDatasource.prototype.query = function(filterSrv, options) {
       var promises = _.map(options.targets, function(target) {
         var query;
+        var alias = '';
 
         if (target.hide || !((target.series && target.column) || target.query)) {
           return [];
@@ -80,10 +81,15 @@ function (angular, _, kbn) {
 
           query = _.template(template, templateData, this.templateSettings);
           query = filterSrv.applyTemplateToTarget(query);
+
+          if (target.alias) {
+            alias = filterSrv.applyTemplateToTarget(target.alias);
+          }
+
           target.query = query;
         }
 
-        return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
+        return this.doInfluxRequest(query, alias).then(handleInfluxQueryResponse);
 
       }, this);
 
@@ -185,9 +191,11 @@ function (angular, _, kbn) {
 
           var target = data.alias || series.name + "." + column;
           var datapoints = [];
+          var value;
 
           for(var i = 0; i < series.points.length; i++) {
-            datapoints[i] = [series.points[i][index], series.points[i][timeCol]];
+            value = isNaN(series.points[i][index]) ? null : series.points[i][index];
+            datapoints[i] = [value, series.points[i][timeCol]];
           }
 
           output.push({ target:target, datapoints:datapoints });

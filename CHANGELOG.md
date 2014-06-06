@@ -9,6 +9,8 @@ vNext
 - improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
   to the browser cache when upgrading grafana and improve load performance (Fixes #418)
 - Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
+- Improvement to InfluxDB query editor and function/value column selection (Issue #473)
+- Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.
