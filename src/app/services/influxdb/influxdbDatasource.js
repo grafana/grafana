@@ -218,7 +218,9 @@ function (angular, _, kbn) {
               }
             });
             datapoints = _.map(_.pairs(datapoints), function(values) {
-              return [values[0], _.map(values[1], function (point) { return [isNaN(point[index]) ? null : point[index], point[timeCol]]; }) ];
+              return [values[0], _.map(values[1], function (point) { 
+                return [isNaN(point[index]) ? null : point[index], point[timeCol]]; 
+              })];
             });
             
             _.each(datapoints, function(values) {
