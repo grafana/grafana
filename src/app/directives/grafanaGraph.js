@@ -314,7 +314,7 @@ function (angular, $, kbn, moment, _) {
             if (seriesInfo.alias) {
               group = '<small style="font-size:0.9em;">' +
                 '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-                (seriesInfo.alias || seriesInfo.query)+
+                (decodeURIComponent(seriesInfo.alias) || seriesInfo.query)+
               '</small><br>';
             } else {
               group = kbn.query_color_dot(item.series.color, 15) + ' ';
