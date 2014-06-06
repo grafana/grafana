@@ -118,7 +118,7 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
       var interpolated;
       try {
-        interpolated = filterSrv.applyTemplateToTarget(query);
+        interpolated = encodeURIComponent(filterSrv.applyTemplateToTarget(query));
       }
       catch(err) {
         return $q.reject(err);

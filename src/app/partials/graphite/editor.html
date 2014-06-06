@@ -70,7 +70,7 @@
           </a>
           <ul class="dropdown-menu scrollable grafana-segment-dropdown-menu" role="menu">
             <li ng-repeat="altSegment in altSegments" role="menuitem">
-              <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html | urlDecode"></a>
+              <a href="javascript:void(0)" tabindex="1" ng-click="setSegment($index, $parent.$index)" ng-bind-html-unsafe="altSegment.html"></a>
             </li>
           </ul>
         </li>

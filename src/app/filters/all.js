@@ -118,6 +118,6 @@ define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, m
     return function(input) {
       return decodeURIComponent(input);
     };
- });
+  });
 
 });

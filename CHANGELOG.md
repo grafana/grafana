@@ -8,6 +8,7 @@ vNext
 - Added parameter to keepLastValue graphite function definition (default 100), Closes #459
 - improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
   to the browser cache when upgrading grafana and improve load performance (Fixes #418)
+- Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
 
 # Fixes
 - Filter option loading when having muliple nested filters now works better.
