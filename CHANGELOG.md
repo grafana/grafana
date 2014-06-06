@@ -1,4 +1,6 @@
-vNext
+# vNext
+
+#### New features or improvements
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
@@ -12,7 +14,10 @@ vNext
 - Improvement to InfluxDB query editor and function/value column selection (Issue #473)
 - Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
 
-# Fixes
+#### Changes
+- Graphite panel is now renamed graph (Existing dashboards will still work)
+
+#### Fixes
 - Filter option loading when having muliple nested filters now works better.
   Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
   After an option is changed and a nested template param is also reloaded, if the current value

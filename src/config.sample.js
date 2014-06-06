@@ -76,7 +76,7 @@ function (Settings) {
 
     panel_names: [
       'text',
-      'graphite'
+      'graph'
     ]
   });
 });

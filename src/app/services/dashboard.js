@@ -138,6 +138,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         });
       }
 
+      _.each(dashboard.rows, function(row) {
+        _.each(row.panels, function(panel) {
+          if (panel.type === 'graphite') {
+            panel.type = 'graph';
+          }
+        });
+      });
+
       return dashboard;
     };
 
