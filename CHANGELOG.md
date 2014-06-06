@@ -21,6 +21,8 @@
 - Add panel icon and Row edit button is replaced by the Row edit menu (Issue #475)
 - New graphs now have a default empty query
 - Add Row button now creates a row with default height of 250px (no longer opens dashboard settings modal)
+- Clean up of config.sample.js, graphiteUrl removed (still works, but depricated, removed in future)
+  Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
 
 #### Fixes
 - Filter option loading when having muliple nested filters now works better.
