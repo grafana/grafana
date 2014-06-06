@@ -92,7 +92,7 @@ function (angular, $, config, _) {
     $scope.reset_row = function() {
       $scope.row = {
         title: '',
-        height: '150px',
+        height: '250px',
         editable: true,
       };
     };
