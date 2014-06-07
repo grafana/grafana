@@ -10,13 +10,14 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('grafanaGraph', function($rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
         var data, plot, annotations;
         var hiddenData = {};
+        var dashboard = scope.dashboard;
 
         scope.$on('refresh',function() {
           if (scope.otherPanelInFullscreenMode()) { return; }
@@ -172,7 +173,7 @@ function (angular, $, kbn, moment, _) {
           var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
 
           options.xaxis = {
-            timezone: dashboard.current.timezone,
+            timezone: dashboard.timezone,
             show: scope.panel['x-axis'],
             mode: "time",
             min: min,
@@ -329,7 +330,7 @@ function (angular, $, kbn, moment, _) {
 
             value = kbn.getFormatFunction(format, 2)(value);
 
-            timestamp = dashboard.current.timezone === 'browser' ?
+            timestamp = dashboard.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
               moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
             $tooltip

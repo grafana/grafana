@@ -6,15 +6,16 @@ define([
   'jquery',
   'underscore',
   'require',
+  'config',
   'elasticjs',
   'bootstrap',
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce'
+  'bindonce',
 ],
-function (angular, $, _, appLevelRequire) {
+function (angular, $, _, appLevelRequire, config) {
 
   "use strict";
 
@@ -67,19 +68,7 @@ function (angular, $, _, appLevelRequire) {
 
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
-    $routeProvider
-      .when('/dashboard', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId/:params', {
-        templateUrl: 'app/partials/dashboard.html'
-      })
-      .otherwise({
-        redirectTo: 'dashboard'
-      });
+    $routeProvider.otherwise({ redirectTo: config.default_route });
 
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
@@ -98,7 +87,7 @@ function (angular, $, _, appLevelRequire) {
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'services.dashboard', 'filters'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
     var module_name = 'kibana.'+type;
@@ -120,6 +109,7 @@ function (angular, $, _, appLevelRequire) {
     'directives/all',
     'filters/all',
     'components/partials',
+    'routes/dashboard-loader',
   ], function () {
 
     // bootstrap the app

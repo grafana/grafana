@@ -31,10 +31,8 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, $timeout, ejsResource, dashboard, filterSrv, dashboardKeybindings,
+    $scope, $rootScope, $timeout, ejsResource, filterSrv, dashboardKeybindings,
     alertSrv, panelMove, keyboardManager, grafanaVersion) {
-
-    $scope.requiredElasticSearchVersion = ">=0.90.3";
 
     $scope.editor = {
       index: 0
@@ -54,15 +52,7 @@ function (angular, $, config, _) {
 
       // Make stuff, including underscore.js available to views
       $scope._ = _;
-      $scope.dashboard = dashboard;
       $scope.dashAlerts = alertSrv;
-
-      $scope.filter = filterSrv;
-      $scope.filter.init(dashboard.current);
-
-      $rootScope.$on("dashboard-loaded", function(event, dashboard) {
-        $scope.filter.init(dashboard);
-      });
 
       // Clear existing alerts
       alertSrv.clearAll();

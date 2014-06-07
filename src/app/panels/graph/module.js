@@ -259,10 +259,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
-        datasource: $scope.panel.datasource
+        datasource: $scope.panel.datasource,
+        timezone: $scope.dashboard.timezone
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed, $scope.dashboard);
 
       return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)

@@ -7,20 +7,12 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
-    var annotationPanel;
     var list = [];
 
     this.init = function() {
       $rootScope.$on('refresh', this.clearCache);
-      $rootScope.$on('dashboard-loaded', this.dashboardLoaded);
-
-      this.dashboardLoaded();
-    };
-
-    this.dashboardLoaded = function () {
-      annotationPanel = _.findWhere(dashboard.current.pulldowns, { type: 'annotations' });
     };
 
     this.clearCache = function() {
@@ -28,7 +20,8 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed) {
+    this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
+      var annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
       if (!annotationPanel.enable) {
         return $q.when(null);
       }

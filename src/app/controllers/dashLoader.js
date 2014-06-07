@@ -8,8 +8,7 @@ function (angular, _, moment) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, playlistSrv) {
-    $scope.loader = dashboard.current.loader;
+  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv) {
 
     $scope.init = function() {
       $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
@@ -23,6 +22,10 @@ function (angular, _, moment) {
       $rootScope.$on('zoom-out', function() {
         $scope.zoom(2);
       });
+
+      $rootScope.$on('dashboard-loaded', function(event, dashboard) {
+        $scope.loader = dashboard.loader;
+      });
     };
 
     $scope.exitFullscreen = function() {
@@ -30,11 +33,11 @@ function (angular, _, moment) {
     };
 
     $scope.showDropdown = function(type) {
-      if(_.isUndefined(dashboard.current.loader)) {
+      if(_.isUndefined($scope.loader)) {
         return true;
       }
 
-      var _l = dashboard.current.loader;
+      var _l = $scope.loader;
       if(type === 'load') {
         return (_l.load_elasticsearch || _l.load_gist || _l.load_local);
       }
@@ -129,7 +132,7 @@ function (angular, _, moment) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = this.filter.timeRange();
+      var _range = $scope.filter.timeRange();
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
       var _center = _range.to.valueOf() - _timespan/2;
 
@@ -143,7 +146,7 @@ function (angular, _, moment) {
         _to = Date.now();
       }
 
-      this.filter.setTime({
+      $scope.filter.setTime({
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
       });

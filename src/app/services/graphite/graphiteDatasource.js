@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('kibana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
+  module.factory('GraphiteDatasource', function($q, $http) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -25,8 +25,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(filterSrv, options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, 'round-down'),
-          until: this.translateTime(options.range.to, 'round-up'),
+          from: this.translateTime(options.range.from, options.timezone, 'round-down'),
+          until: this.translateTime(options.range.to, options.timezone, 'round-up'),
           targets: options.targets,
           format: options.format,
           maxDataPoints: options.maxDataPoints,
@@ -72,7 +72,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
+    GraphiteDatasource.prototype.translateTime = function(date, timezone, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
@@ -104,7 +104,7 @@ function (angular, _, $, config, kbn, moment) {
         }
       }
 
-      if (dashboard.current.timezone === 'browser') {
+      if (timezone === 'browser') {
         date = date.local();
       }
 

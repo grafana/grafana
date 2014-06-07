@@ -6,7 +6,7 @@ define([
 function(angular, $) {
   "use strict";
 
-  var module = angular.module('kibana.services.dashboard');
+  var module = angular.module('kibana.services');
 
   module.service('dashboardKeybindings', function($rootScope, keyboardManager, dashboard) {
     this.shortcuts = function() {
