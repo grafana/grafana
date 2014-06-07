@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv, dashboard) {
+  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       console.log('hej!');
@@ -68,7 +68,7 @@ function (angular, app, _) {
 
       currentRow = angular.copy(rowTemplate);
 
-      var newDashboard = angular.copy(dashboard.current);
+      var newDashboard = angular.copy($scope.dashboard);
       newDashboard.rows = [];
       newDashboard.title = state.name;
       newDashboard.rows.push(currentRow);

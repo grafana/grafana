@@ -9,6 +9,7 @@ define([
 
   module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
+    var annotationPanel;
     var list = [];
 
     this.init = function() {
@@ -21,7 +22,7 @@ define([
     };
 
     this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
-      var annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
+      annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
       if (!annotationPanel.enable) {
         return $q.when(null);
       }

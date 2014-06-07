@@ -39,7 +39,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+r', function() {
-        dashboard.refresh();
+        dashboard.emit_refresh();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+z', function(evt) {

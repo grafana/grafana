@@ -76,12 +76,12 @@ function (angular, app, _) {
 
     $scope.delete_row = function() {
       if (confirm("Are you sure you want to delete this row?")) {
-        $scope.dashboard.current.rows = _.without($scope.dashboard.current.rows, $scope.row);
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
       }
     };
 
     $scope.move_row = function(direction) {
-      var rowsList = $scope.dashboard.current.rows;
+      var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);
       var newIndex = rowIndex + direction;
       if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
@@ -116,12 +116,12 @@ function (angular, app, _) {
         row.panels.push(angular.copy(panel));
       }
       else {
-        var rowsList = $scope.dashboard.current.rows;
+        var rowsList = $scope.dashboard.rows;
         var rowIndex = _.indexOf(rowsList, row);
         if (rowIndex === rowsList.length - 1) {
           var newRow = angular.copy($scope.row);
           newRow.panels = [];
-          $scope.dashboard.current.rows.push(newRow);
+          $scope.dashboard.rows.push(newRow);
           $scope.duplicatePanel(panel, newRow);
         }
         else {

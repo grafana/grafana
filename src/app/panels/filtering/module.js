@@ -43,7 +43,7 @@ function (angular, app, _) {
         .then(function() {
           // only refresh in the outermost call
           if (!recursive) {
-            $scope.dashboard.refresh();
+            $scope.dashboard.emit_refresh();
           }
         });
     };

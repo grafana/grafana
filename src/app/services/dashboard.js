@@ -63,7 +63,7 @@ function (angular, $, kbn, _) {
 
     var p = DashboardModel.prototype;
 
-    p.refresh = function() {
+    p.emit_refresh = function() {
       $rootScope.$broadcast('refresh');
     };
 

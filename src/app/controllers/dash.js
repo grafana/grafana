@@ -32,20 +32,13 @@ function (angular, $, config, _) {
 
   module.controller('DashCtrl', function(
     $scope, $rootScope, $timeout, ejsResource, filterSrv, dashboardKeybindings,
-    alertSrv, panelMove, keyboardManager, grafanaVersion) {
+    alertSrv, keyboardManager, grafanaVersion) {
 
     $scope.editor = {
       index: 0
     };
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-
-    // For moving stuff around the dashboard.
-    $scope.panelMoveDrop = panelMove.onDrop;
-    $scope.panelMoveStart = panelMove.onStart;
-    $scope.panelMoveStop = panelMove.onStop;
-    $scope.panelMoveOver = panelMove.onOver;
-    $scope.panelMoveOut = panelMove.onOut;
 
     $scope.init = function() {
       $scope.config = config;
@@ -81,7 +74,7 @@ function (angular, $, config, _) {
     $scope.add_row_default = function() {
       $scope.reset_row();
       $scope.row.title = 'New row';
-      $scope.add_row(dashboard.current, $scope.row);
+      $scope.add_row($scope.dashboard, $scope.row);
     };
 
     $scope.reset_row = function() {

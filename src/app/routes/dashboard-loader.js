@@ -17,7 +17,8 @@ function (angular, $, config, _) {
       });
   });
 
-  module.controller('DashFromFileProvider', function($scope, $rootScope, $http, $routeParams, alertSrv, dashboard, filterSrv) {
+  module.controller('DashFromFileProvider', function(
+    $scope, $rootScope, $http, $routeParams, alertSrv, dashboard, filterSrv, panelMoveSrv) {
 
     $scope.init = function() {
       console.log('DashFromFileProvider->init()')
@@ -27,6 +28,14 @@ function (angular, $, config, _) {
           $scope.dashboard = dashboard.create(data);
           $scope.filter = filterSrv;
           $scope.filter.init($scope.dashboard);
+
+          var panelMove = panelMoveSrv.create($scope.dashboard);
+          // For moving stuff around the dashboard.
+          $scope.panelMoveDrop = panelMove.onDrop;
+          $scope.panelMoveStart = panelMove.onStart;
+          $scope.panelMoveStop = panelMove.onStop;
+          $scope.panelMoveOver = panelMove.onOver;
+          $scope.panelMoveOut = panelMove.onOut;
 
           $rootScope.$emit("dashboard-loaded", $scope.dashboard);
         });

@@ -60,7 +60,7 @@ define([
           this.old_refresh = null;
         }
 
-        $timeout(this.dashboard.refresh, 0);
+        $timeout(this.dashboard.emit_refresh, 0);
       },
 
       timeRange: function(parse) {

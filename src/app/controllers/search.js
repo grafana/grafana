@@ -153,7 +153,7 @@ function (angular, _, config, $) {
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
-      dashboard.current.rows.push({
+      dashboard.rows.push({
         title: '',
         height: '250px',
         editable: true,
