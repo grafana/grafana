@@ -41,7 +41,6 @@ require.config({
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
     'jquery.flot.byte':       '../vendor/jquery/jquery.flot.byte',
 
-
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
 

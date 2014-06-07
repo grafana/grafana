@@ -111,7 +111,6 @@ function (angular, $, _, PanelBaseCtrl) {
             });
           });
 
-
         }
       };
     });

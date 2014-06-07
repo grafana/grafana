@@ -70,6 +70,5 @@ function (_, kbn) {
     return result;
   };
 
-
   return ts;
 });

@@ -3,7 +3,7 @@ define([
   'underscore',
   'config',
 ],
-function (angular, _, config) {
+function(angular, _, config) {
   'use strict';
 
   if (!config.unsaved_changes_warning) {
@@ -16,7 +16,7 @@ function (angular, _, config) {
     var self = this;
     var modalScope = $rootScope.$new();
 
-    $rootScope.$on("dashboard-loaded", function(event, newDashboard ) {
+    $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
       self.original = angular.copy(newDashboard);
     });
 
@@ -28,7 +28,7 @@ function (angular, _, config) {
       self.original = null;
     });
 
-    window.onbeforeunload = function () {
+    window.onbeforeunload = function() {
       if (self.has_unsaved_changes()) {
         return "There are unsaved changes to this dashboard";
       }
@@ -44,7 +44,7 @@ function (angular, _, config) {
       });
     };
 
-    this.open_modal = function () {
+    this.open_modal = function() {
       var confirmModal = $modal({
           template: './app/partials/unsaved-changes.html',
           persist: true,
@@ -58,7 +58,7 @@ function (angular, _, config) {
       });
     };
 
-    this.has_unsaved_changes = function () {
+    this.has_unsaved_changes = function() {
       if (!self.original) {
         return false;
       }
@@ -88,7 +88,7 @@ function (angular, _, config) {
       return false;
     };
 
-    this.goto_next = function () {
+    this.goto_next = function() {
       var baseLen = $location.absUrl().length - $location.url().length;
       var nextUrl = self.next.substring(baseLen);
       $location.url(nextUrl);

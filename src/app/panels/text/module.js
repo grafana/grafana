@@ -84,7 +84,7 @@ function (angular, app, _, require) {
     };
   });
 
-  module.filter('newlines', function(){
+  module.filter('newlines', function() {
     return function (input) {
       return input.replace(/\n/g, '<br/>');
     };

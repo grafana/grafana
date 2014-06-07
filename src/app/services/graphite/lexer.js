@@ -157,7 +157,7 @@ define([
     tokenize: function() {
       var list = [];
       var token;
-      while(token = this.next()) {
+      while (token = this.next()) {
         list.push(token);
       }
       return list;
@@ -721,5 +721,3 @@ define([
   return Lexer;
 
 });
-
-

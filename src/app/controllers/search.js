@@ -41,7 +41,7 @@ function (angular, _, config, $) {
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.path("/dashboard/elasticsearch/" + encodeURIComponent(selectedDash._id));
-          setTimeout(function(){
+          setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
         }
@@ -162,7 +162,7 @@ function (angular, _, config, $) {
             type: 'graphite',
             title: 'test',
             span: 12,
-            targets: [ { target: metricId } ]
+            targets: [{ target: metricId }]
           }
         ]
       });

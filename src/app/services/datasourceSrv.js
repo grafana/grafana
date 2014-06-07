@@ -13,7 +13,7 @@ function (angular, _, config) {
   module.service('datasourceSrv', function($q, $http, GraphiteDatasource, InfluxDatasource) {
 
     this.init = function() {
-      var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
+      var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
       this.default = this.datasourceFactory(defaultDatasource);
     };
 

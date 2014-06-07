@@ -44,7 +44,7 @@ function (angular, _, kbn) {
           var orderIndex = lowerCaseQueryElements.indexOf("order");
 
           if (whereIndex !== -1) {
-            queryElements.splice(whereIndex+1, 0, timeFilter, "and");
+            queryElements.splice(whereIndex + 1, 0, timeFilter, "and");
           }
           else {
             if (groupByIndex !== -1) {
@@ -122,7 +122,7 @@ function (angular, _, kbn) {
       try {
         interpolated = filterSrv.applyTemplateToTarget(query);
       }
-      catch(err) {
+      catch (err) {
         return $q.reject(err);
       }
 
@@ -193,12 +193,12 @@ function (angular, _, kbn) {
           var datapoints = [];
           var value;
 
-          for(var i = 0; i < series.points.length; i++) {
+          for (var i = 0; i < series.points.length; i++) {
             value = isNaN(series.points[i][index]) ? null : series.points[i][index];
             datapoints[i] = [value, series.points[i][timeCol]];
           }
 
-          output.push({ target:target, datapoints:datapoints });
+          output.push({ target: target, datapoints: datapoints });
         });
       });
 
@@ -234,7 +234,6 @@ function (angular, _, kbn) {
     function to_utc_epoch_seconds(date) {
       return (date.getTime() / 1000).toFixed(0) + 's';
     }
-
 
     return InfluxDatasource;
 

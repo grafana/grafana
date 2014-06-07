@@ -165,7 +165,7 @@ function (angular, _, config, gfunc, Parser) {
             segment.html = segment.val = segment.text;
           });
 
-          _.each($scope.filter.templateParameters, function( templateParameter ) {
+          _.each($scope.filter.templateParameters, function(templateParameter) {
             segments.unshift({
               type: 'template',
               html: '[[' + templateParameter.name + ']]',

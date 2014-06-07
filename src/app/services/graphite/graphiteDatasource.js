@@ -186,7 +186,6 @@ function (angular, _, $, config, kbn, moment) {
       return clean_options;
     };
 
-
     return GraphiteDatasource;
 
   });

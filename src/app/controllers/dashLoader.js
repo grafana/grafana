@@ -105,12 +105,11 @@ function (angular, _, moment) {
     };
 
     $scope.save_gist = function() {
-      dashboard.save_gist($scope.gist.title).then(
-        function(link) {
-        if(!_.isUndefined(link)) {
+      dashboard.save_gist($scope.gist.title).then(function(link) {
+        if (!_.isUndefined(link)) {
           $scope.gist.last = link;
           alertSrv.set('Gist saved','You will be able to access your exported dashboard file at '+
-            '<a href="'+link+'">'+link+'</a> in a moment','success');
+          '<a href="'+link+'">'+link+'</a> in a moment','success');
         } else {
           alertSrv.set('Save failed','Gist could not be saved','error',5000);
         }
@@ -118,9 +117,8 @@ function (angular, _, moment) {
     };
 
     $scope.gist_dblist = function(id) {
-      dashboard.gist_list(id).then(
-        function(files) {
-        if(files && files.length > 0) {
+      dashboard.gist_list(id).then(function(files) {
+        if (files && files.length > 0) {
           $scope.gist.files = files;
         } else {
           alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);

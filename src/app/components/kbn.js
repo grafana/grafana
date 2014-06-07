@@ -78,7 +78,7 @@ function($, _, moment) {
     }
   };
 
-  kbn.secondsToHms = function(seconds){
+  kbn.secondsToHms = function(seconds) {
     var numyears = Math.floor(seconds / 31536000);
     if(numyears){
       return numyears + 'y';
@@ -191,7 +191,7 @@ function($, _, moment) {
 
   kbn.parseDateMath = function(mathString, time, roundUp) {
     var dateTime = moment(time);
-    for (var i = 0; i < mathString.length; ) {
+    for (var i = 0; i < mathString.length;) {
       var c = mathString.charAt(i++),
         type,
         num,
@@ -296,10 +296,10 @@ function($, _, moment) {
 
   kbn.query_color_dot = function (color, diameter) {
     return '<div class="icon-circle" style="' + [
-        'display:inline-block',
-        'color:' + color,
-        'font-size:' + diameter + 'px',
-      ].join(';') + '"></div>';
+      'display:inline-block',
+      'color:' + color,
+      'font-size:' + diameter + 'px',
+    ].join(';') + '"></div>';
   };
 
   kbn.byteFormat = function(size, decimals) {

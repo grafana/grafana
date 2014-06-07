@@ -133,5 +133,4 @@ function (angular, _, $) {
 
     });
 
-
 });

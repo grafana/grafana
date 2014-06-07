@@ -20,7 +20,7 @@ define([
       try {
         return this.functionCall() || this.metricExpression();
       }
-      catch(e) {
+      catch (e) {
         return {
           type: 'error',
           message: e.message,
@@ -34,7 +34,7 @@ define([
 
         var curlySegment = "";
 
-        while(!this.match('') && !this.match('}')) {
+        while (!this.match('') && !this.match('}')) {
           curlySegment += this.consumeToken().value;
         }
 
@@ -108,7 +108,7 @@ define([
 
       node.segments.push(this.metricSegment());
 
-      while(this.match('.')) {
+      while (this.match('.')) {
         this.consumeToken();
 
         var segment = this.metricSegment();
@@ -204,7 +204,7 @@ define([
     // returns token value and incre
     consumeToken: function() {
       this.index++;
-      return this.tokens[this.index-1];
+      return this.tokens[this.index - 1];
     },
 
     matchToken: function(type, index) {

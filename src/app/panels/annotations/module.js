@@ -63,6 +63,5 @@ function (angular, app, _) {
       $rootScope.$broadcast('refresh');
     };
 
-
   });
 });

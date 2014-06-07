@@ -21,7 +21,7 @@ function (angular, _) {
           severity: severity || 'info',
         },
         _ca = angular.toJson(_a),
-        _clist = _.map(self.list,function(alert){return angular.toJson(alert);});
+        _clist = _.map(self.list,function(alert) {return angular.toJson(alert);});
 
       // If we already have this alert, remove it and add a new one
       // Why do this instead of skipping the add because it resets the timer
