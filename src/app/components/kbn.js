@@ -521,6 +521,10 @@ function($, _, moment) {
     else if (size < 604800) {
       return (size / 86400).toFixed(decimals) + " day";
     }
+    // Less than one year, devide in week
+    else if (size < 31536000) {
+      return (size / 604800).toFixed(decimals) + " week";
+    }
 
     return (size / 3.15569e7).toFixed(decimals) + " year";
   };
