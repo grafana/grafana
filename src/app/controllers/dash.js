@@ -31,21 +31,24 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, alertSrv) {
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, alertSrv, timer) {
 
     $scope.editor = { index: 0 };
 
     $scope.init = function() {
-      $scope.reset_row();
-      dashboardKeybindings.shortcuts();
+      $scope.availablePanels = config.panels;
 
-      // Clear existing alerts
-      alertSrv.clearAll();
+      dashboardKeybindings.shortcuts();
 
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard, $scope);
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
+      timer.cancel_all();
+      alertSrv.clearAll();
+
+      $rootScope.fullscreen = false;
+
       $scope.dashboard = dashboard.create(dashboardData);
       $scope.filter = filterSrv;
       $scope.filter.init($scope.dashboard);
@@ -57,6 +60,8 @@ function (angular, $, config, _) {
       $scope.panelMoveStop = panelMove.onStop;
       $scope.panelMoveOver = panelMove.onOver;
       $scope.panelMoveOut = panelMove.onOut;
+
+      window.document.title = 'Grafana - ' + $scope.dashboard.title;
 
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };

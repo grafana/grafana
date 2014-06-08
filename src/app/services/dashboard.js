@@ -16,6 +16,7 @@ function (angular, $, kbn, _) {
   module.service('dashboard', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
+
       if (!data) {
         data = {};
       }
@@ -77,18 +78,22 @@ function (angular, $, kbn, _) {
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
         timer.cancel(this.refresh_timer);
-        var dashboard_reference = this;
+        var self = this;
 
         this.refresh_timer = timer.register($timeout(function() {
-          dashboard_reference.set_interval(interval);
-          dashboard_reference.full_refresh();
+          self.set_interval(interval);
+          self.emit_refresh();
         },_i));
-        this.full_refresh();
+        this.emit_refresh();
       } else {
         timer.cancel(this.refresh_timer);
       }
     };
 
+    // An elasticJS client to use
+    /*var ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
+    var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
+*/
     return {
       create: function(dashboard) {
         return new DashboardModel(dashboard);
