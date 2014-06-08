@@ -108,12 +108,6 @@ function (angular, $, _, appLevelRequire) {
     apps_deps.push(module_name);
   });
 
-  app.panel_helpers = {
-    partial: function (name) {
-      return 'app/partials/'+name+'.html';
-    }
-  };
-
   // load the core components
   require([
     'controllers/all',
