@@ -15,9 +15,6 @@ function (angular, config, _) {
     $scope.init = function() {
       $scope._ = _;
       $scope.dashAlerts = alertSrv;
-
-      // Clear existing alerts
-      alertSrv.clearAll();
     };
 
     $scope.onAppEvent = function(name, callback, scope) {

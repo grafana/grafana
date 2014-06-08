@@ -31,13 +31,16 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv) {
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, alertSrv) {
 
     $scope.editor = { index: 0 };
 
     $scope.init = function() {
       $scope.reset_row();
       dashboardKeybindings.shortcuts();
+
+      // Clear existing alerts
+      alertSrv.clearAll();
 
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard, $scope);
     };

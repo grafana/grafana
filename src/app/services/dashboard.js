@@ -16,6 +16,10 @@ function (angular, $, kbn, _) {
   module.service('dashboard', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
+      if (!data) {
+        data = {};
+      };
+
       this.title = data.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
@@ -25,7 +29,7 @@ function (angular, $, kbn, _) {
       this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
       this.services = data.services || {};
-      this.loader = data.loader;
+      this.loader = data.loader || {};
 
       _.defaults(this.loader, {
         save_gist: false,

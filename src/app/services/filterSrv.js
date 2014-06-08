@@ -94,14 +94,22 @@ define([
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
 
-        if(dashboard.services && dashboard.services.filter) {
-          this.time = dashboard.services.filter.time;
-          this.templateParameters = dashboard.services.filter.list || [];
-          this.updateTemplateData(true);
+/*        if (!this.dashboard.services.filter) {
+          this.dashboard.services.filter = {
+            list: [],
+            time: {
+              from: '1h',
+              to: 'now'
+            }
+          };
         }
-
+*/
+        this.time = dashboard.services.filter.time;
+        this.templateParameters = dashboard.services.filter.list || [];
+        this.updateTemplateData(true);
       }
     };
+
     return result;
   });
 
