@@ -1,10 +1,9 @@
 define([
   'angular',
   'jquery',
-  'config',
-  'underscore'
+  'config'
 ],
-function (angular, $, config, _) {
+function (angular, $, config) {
   "use strict";
 
   var module = angular.module('kibana.routes');

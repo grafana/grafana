@@ -18,7 +18,7 @@ function (angular, $, kbn, _) {
     function DashboardModel (data) {
       if (!data) {
         data = {};
-      };
+      }
 
       this.title = data.title;
       this.tags = data.tags || [];
