@@ -72,7 +72,7 @@ function (angular, _) {
       create: function(dashboard) {
         return new PanelMoveSrv(dashboard);
       }
-    }
+    };
 
   });
 

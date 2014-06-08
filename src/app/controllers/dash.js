@@ -30,34 +30,14 @@ function (angular, $, config, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('DashCtrl', function(
-    $scope, $rootScope, $timeout, ejsResource, filterSrv, dashboardKeybindings,
-    alertSrv, keyboardManager, grafanaVersion) {
+  module.controller('DashCtrl', function($scope, $rootScope, dashboardKeybindings) {
 
-    $scope.editor = {
-      index: 0
-    };
-
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
+    $scope.editor = { index: 0 };
 
     $scope.init = function() {
-      $scope.config = config;
-
-      // Make stuff, including underscore.js available to views
-      $scope._ = _;
-      $scope.dashAlerts = alertSrv;
-
-      // Clear existing alerts
-      alertSrv.clearAll();
-
       $scope.reset_row();
-
-      $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
-
-      $scope.bindKeyboardShortcuts();
+      dashboardKeybindings.shortcuts();
     };
-
-    $scope.bindKeyboardShortcuts = dashboardKeybindings.shortcuts;
 
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {

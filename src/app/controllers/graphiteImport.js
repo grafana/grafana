@@ -96,7 +96,7 @@ function (angular, app, _) {
         currentRow.panels.push(panel);
       });
 
-      dashboard.dash_load(newDashboard);
+      $scope.dashboard.dash_load(newDashboard);
     }
 
   });

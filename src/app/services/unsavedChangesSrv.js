@@ -12,16 +12,19 @@ function(angular, _, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+
     var self = this;
     var modalScope = $rootScope.$new();
 
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
       self.original = angular.copy(newDashboard);
+      self.current = newDashboard;
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
+      self.current = savedDashboard;
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
@@ -63,7 +66,7 @@ function(angular, _, config) {
         return false;
       }
 
-      var current = angular.copy(dashboard.current);
+      var current = angular.copy(self.current);
       var original = self.original;
 
       // ignore timespan changes

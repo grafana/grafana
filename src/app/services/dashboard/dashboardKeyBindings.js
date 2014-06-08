@@ -9,7 +9,15 @@ function(angular, $) {
   var module = angular.module('kibana.services');
 
   module.service('dashboardKeybindings', function($rootScope, keyboardManager, dashboard) {
+    this.hasRegistered = false;
+
     this.shortcuts = function() {
+      if (this.hasRegistered) {
+        return;
+      }
+
+      this.hasRegistered = true;
+
       $rootScope.$on('panel-fullscreen-enter', function() {
         $rootScope.fullscreen = true;
       });

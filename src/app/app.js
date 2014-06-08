@@ -49,23 +49,6 @@ function (angular, $, _, appLevelRequire, config) {
     return module;
   };
 
-  app.safeApply = function ($scope, fn) {
-    switch($scope.$$phase) {
-    case '$apply':
-      // $digest hasn't started, we should be good
-      $scope.$eval(fn);
-      break;
-    case '$digest':
-      // waiting to $apply the changes
-      setTimeout(function () { app.safeApply($scope, fn); }, 10);
-      break;
-    default:
-      // clear to begin an $apply $$phase
-      $scope.$apply(fn);
-      break;
-    }
-  };
-
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
     $routeProvider.otherwise({ redirectTo: config.default_route });
@@ -97,12 +80,6 @@ function (angular, $, _, appLevelRequire, config) {
     apps_deps.push(module_name);
   });
 
-  app.panel_helpers = {
-    partial: function (name) {
-      return 'app/partials/'+name+'.html';
-    }
-  };
-
   // load the core components
   require([
     'controllers/all',
@@ -116,7 +93,6 @@ function (angular, $, _, appLevelRequire, config) {
     angular
       .element(document)
       .ready(function() {
-        $('body').attr('ng-controller', 'DashCtrl');
         angular.bootstrap(document, apps_deps)
           .invoke(['$rootScope', function ($rootScope) {
             _.each(pre_boot_modules, function (module) {

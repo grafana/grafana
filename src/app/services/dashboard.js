@@ -13,7 +13,7 @@ function (angular, $, kbn, _) {
 
   var module = angular.module('kibana.services');
 
-  module.service('dashboard', function(timer, $rootScope) {
+  module.service('dashboard', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
       this.title = data.title;

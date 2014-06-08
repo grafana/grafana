@@ -9,14 +9,15 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, dashboard, $element, $location) {
+  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, ejsResource) {
 
     $scope.init = function() {
+      $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
-      $rootScope.$on('open-search', $scope.openSearch);
+      $scope.$onRootScope('open-search', $scope.openSearch, $scope);
     };
 
     $scope.keyDown = function (evt) {
@@ -153,7 +154,7 @@ function (angular, _, config, $) {
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
-      dashboard.rows.push({
+      $scope.dashboard.rows.push({
         title: '',
         height: '250px',
         editable: true,

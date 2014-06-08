@@ -21,24 +21,22 @@ function (angular, $, config, _) {
     $scope, $rootScope, $http, $routeParams, alertSrv, dashboard, filterSrv, panelMoveSrv) {
 
     $scope.init = function() {
-      console.log('DashFromFileProvider->init()')
 
-      file_load($routeParams.jsonFile)
-        .then(function(data) {
-          $scope.dashboard = dashboard.create(data);
-          $scope.filter = filterSrv;
-          $scope.filter.init($scope.dashboard);
+      file_load($routeParams.jsonFile).then(function(data) {
+        $scope.dashboard = dashboard.create(data);
+        $scope.filter = filterSrv;
+        $scope.filter.init($scope.dashboard);
 
-          var panelMove = panelMoveSrv.create($scope.dashboard);
-          // For moving stuff around the dashboard.
-          $scope.panelMoveDrop = panelMove.onDrop;
-          $scope.panelMoveStart = panelMove.onStart;
-          $scope.panelMoveStop = panelMove.onStop;
-          $scope.panelMoveOver = panelMove.onOver;
-          $scope.panelMoveOut = panelMove.onOut;
+        var panelMove = panelMoveSrv.create($scope.dashboard);
+        // For moving stuff around the dashboard.
+        $scope.panelMoveDrop = panelMove.onDrop;
+        $scope.panelMoveStart = panelMove.onStart;
+        $scope.panelMoveStop = panelMove.onStop;
+        $scope.panelMoveOver = panelMove.onOver;
+        $scope.panelMoveOut = panelMove.onOut;
 
-          $rootScope.$emit("dashboard-loaded", $scope.dashboard);
-        });
+        $rootScope.$emit("dashboard-loaded", $scope.dashboard);
+      });
     };
 
     var renderTemplate = function(json,params) {
