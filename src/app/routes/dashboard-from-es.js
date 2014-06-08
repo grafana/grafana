@@ -11,10 +11,53 @@ function (angular, $, config, _) {
 
   module.config(function($routeProvider) {
     $routeProvider
+      .when('/dashboard/elasticsearch/:id', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromElasticProvider',
+      })
       .when('/dashboard/file/:jsonFile', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromFileProvider',
       });
+  });
+
+  module.controller('DashFromElasticProvider', function($scope, $rootScope, $http, $routeParams, alertSrv) {
+
+    var elasticsearch_load = function(id) {
+      var url = config.elasticsearch + "/" + config.grafana_index + "/dashboard/" + id;
+
+      var options = {
+        url: url +'?' + new Date().getTime(),
+        method: "GET",
+        transformResponse: function(response) {
+          var dashJson = angular.fromJson(response)._source.dashboard;
+          return angular.fromJson(dashJson);
+        }
+      };
+
+      if (config.elasticsearchBasicAuth) {
+        options.withCredentials = true;
+        options.headers = {
+          "Authorization": "Basic " + config.elasticsearchBasicAuth
+        };
+      }
+
+      return $http(options)
+        .error(function(data, status) {
+          if(status === 0) {
+            alertSrv.set('Error',"Could not contact Elasticsearch at " +
+              config.elasticsearch + ". Please ensure that Elasticsearch is reachable from your browser.",'error');
+          } else {
+            alertSrv.set('Error',"Could not find dashboard " + id, 'error');
+          }
+          return false;
+        });
+    };
+
+    elasticsearch_load($routeParams.id).then(function(result) {
+      $scope.emitAppEvent('setup-dashboard', result.data);
+    });
+
   });
 
   module.controller('DashFromFileProvider', function(

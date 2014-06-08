@@ -30,13 +30,32 @@ function (angular, $, config, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('DashCtrl', function($scope, $rootScope, dashboardKeybindings) {
+  module.controller('DashCtrl', function(
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv) {
 
     $scope.editor = { index: 0 };
 
     $scope.init = function() {
       $scope.reset_row();
       dashboardKeybindings.shortcuts();
+
+      $scope.onAppEvent('setup-dashboard', $scope.setupDashboard, $scope);
+    };
+
+    $scope.setupDashboard = function(event, dashboardData) {
+      $scope.dashboard = dashboard.create(dashboardData);
+      $scope.filter = filterSrv;
+      $scope.filter.init($scope.dashboard);
+
+      var panelMove = panelMoveSrv.create($scope.dashboard);
+
+      $scope.panelMoveDrop = panelMove.onDrop;
+      $scope.panelMoveStart = panelMove.onStart;
+      $scope.panelMoveStop = panelMove.onStop;
+      $scope.panelMoveOver = panelMove.onOver;
+      $scope.panelMoveOut = panelMove.onOut;
+
+      $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };
 
     $scope.isPanel = function(obj) {

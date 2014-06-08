@@ -86,7 +86,7 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/dashboard-loader',
+    'routes/all',
   ], function () {
 
     // bootstrap the app
