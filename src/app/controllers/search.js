@@ -9,7 +9,7 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, ejsResource) {
+  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, ejsResource, elasticClient) {
 
     $scope.init = function() {
       $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
@@ -49,30 +49,31 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.searchDasboards = function(query) {
-      var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
-      var tagsOnly = query.indexOf('tags!:') === 0;
+    $scope.searchDasboards = function(queryString) {
+      var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
-        var tagsQuery = query.substring(6, query.length);
-        query = 'tags:' + tagsQuery + '*';
+        var tagsQuery = queryString.substring(6, queryString.length);
+        queryString = 'tags:' + tagsQuery + '*';
       }
       else {
-        if (query.length === 0) {
-          query = 'title:';
+        if (queryString.length === 0) {
+          queryString = 'title:';
         }
 
-        if (query[query.length - 1] !== '*') {
-          query += '*';
+        if (queryString[queryString.length - 1] !== '*') {
+          queryString += '*';
         }
       }
 
-      return request
-        .query($scope.ejs.QueryStringQuery(query))
-        .sort('_uid')
-        .facet($scope.ejs.TermsFacet("tags").field("tags").order('term').size(50))
-        .size(20).doSearch()
-        .then(function(results) {
+      var query = {
+        query: { query_string: { query: queryString } },
+        facets: { tags: { terms: { field: "tags", order: "term", size: 50 } } },
+        size: 20,
+        sort: ["_uid"]
+      };
 
+      return elasticClient.post('dashboard/_search', query)
+        .then(function(results) {
           if(_.isUndefined(results.hits)) {
             $scope.results.dashboards = [];
             $scope.results.tags = [];
@@ -115,32 +116,6 @@ function (angular, _, config, $) {
         $scope.searchDasboards(queryStr);
         return;
       }
-
-      queryStr = queryStr.substring(2, queryStr.length);
-
-      var words = queryStr.split(' ');
-      var query = $scope.ejs.BoolQuery();
-      var terms = _.map(words, function(word) {
-        return $scope.ejs.MatchQuery('metricPath_ng', word).boost(1.2);
-      });
-
-      var ngramQuery = $scope.ejs.BoolQuery();
-      ngramQuery.must(terms);
-
-      var fieldMatchQuery = $scope.ejs.FieldQuery('metricPath', queryStr + "*").boost(1.2);
-      query.should([ngramQuery, fieldMatchQuery]);
-
-      var request = $scope.ejs.Request().indices(config.grafana_index).types('metricKey');
-      var results = request.query(query).size(20).doSearch();
-
-      results.then(function(results) {
-        if (results && results.hits && results.hits.hits.length > 0) {
-          $scope.results.metrics = { metrics: results.hits.hits };
-        }
-        else {
-          $scope.results.metrics = { metric: [] };
-        }
-      });
     };
 
     $scope.openSearch = function (evt) {

@@ -9,6 +9,6 @@ define([
   './annotationsSrv',
   './playlistSrv',
   './unsavedChangesSrv',
-  './elasticsearch/es-client2',
+  './elasticsearch/es-client',
 ],
 function () {});
