@@ -8,7 +8,7 @@ function (angular, _, moment) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, elastic) {
 
     $scope.init = function() {
       $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
@@ -64,20 +64,22 @@ function (angular, _, moment) {
       }
     };
 
-    $scope.elasticsearch_save = function(type,ttl) {
-      $scope.dashboard.elasticsearch_save(type, $scope.dashboard.title, ttl)
+    $scope.elasticsearch_save = function(type, ttl) {
+      elastic.saveDashboard($scope.dashboard, $scope.dashboard.title)
         .then(function(result) {
-          if(_.isUndefined(result._id)) {
-            alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
-            return;
-          }
+          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result.title + '"','success', 5000);
 
-          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result._id + '"','success', 5000);
           if(type === 'temp') {
-            $scope.share = $scope.dashboard.share_link($scope.dashboard.title,'temp',result._id);
+            $scope.share = $scope.dashboard.share_link($scope.dashboard.title, 'temp', result.title);
+          }
+          else {
+            $location.path(result.url);
           }
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
+
+        }, function(err) {
+          alertSrv.set('Save failed', err, 'error',5000);
         });
     };
 
@@ -150,11 +152,11 @@ function (angular, _, moment) {
     };
 
     $scope.openSaveDropdown = function() {
-      $scope.isFavorite = playlistSrv.isCurrentFavorite();
+      $scope.isFavorite = playlistSrv.isCurrentFavorite($scope.dashboard);
     };
 
     $scope.markAsFavorite = function() {
-      playlistSrv.markAsFavorite();
+      playlistSrv.markAsFavorite($scope.dashboard);
       $scope.isFavorite = true;
     };
 
