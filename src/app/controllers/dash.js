@@ -45,7 +45,6 @@ function (angular, $, config, _) {
 
     $scope.setupDashboard = function(event, dashboardData) {
       timer.cancel_all();
-      alertSrv.clearAll();
 
       $rootScope.fullscreen = false;
 

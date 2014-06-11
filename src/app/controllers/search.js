@@ -48,6 +48,15 @@ function (angular, _, config, $) {
       }
     };
 
+    $scope.shareDashboard = function(title, id) {
+      var baseUrl = window.location.href.replace(window.location.hash,'');
+
+      $scope.share = {
+        title: title,
+        url: baseUrl + '#dashboard/elasticsearch/' + encodeURIComponent(id)
+      };
+    };
+
     $scope.searchDasboards = function(queryString) {
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
@@ -71,7 +80,7 @@ function (angular, _, config, $) {
         sort: ["_uid"]
       };
 
-      return elastic.post('dashboard/_search', query)
+      return elastic.post('/dashboard/_search', query)
         .then(function(results) {
           if(_.isUndefined(results.hits)) {
             $scope.results.dashboards = [];

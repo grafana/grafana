@@ -64,17 +64,23 @@ function (angular, _, moment) {
       }
     };
 
-    $scope.elasticsearch_save = function(type, ttl) {
+    $scope.saveForSharing = function() {
+      elastic.saveForSharing($scope.dashboard)
+        .then(function(result) {
+
+          $scope.share = { url: result.url, title: result.title };
+
+        }, function(err) {
+          alertSrv.set('Save for sharing failed', err, 'error',5000);
+        });
+    };
+
+    $scope.saveDashboard = function() {
       elastic.saveDashboard($scope.dashboard, $scope.dashboard.title)
         .then(function(result) {
           alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result.title + '"','success', 5000);
 
-          if(type === 'temp') {
-            $scope.share = $scope.dashboard.share_link($scope.dashboard.title, 'temp', result.title);
-          }
-          else {
-            $location.path(result.url);
-          }
+          $location.path(result.url);
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
 
