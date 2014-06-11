@@ -9,10 +9,9 @@ function (angular, _, config, $) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, ejsResource, elasticClient) {
+  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, elastic) {
 
     $scope.init = function() {
-      $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
@@ -72,7 +71,7 @@ function (angular, _, config, $) {
         sort: ["_uid"]
       };
 
-      return elasticClient.post('dashboard/_search', query)
+      return elastic.post('dashboard/_search', query)
         .then(function(results) {
           if(_.isUndefined(results.hits)) {
             $scope.results.dashboards = [];
