@@ -18,8 +18,11 @@ function(angular, _, config) {
     var modalScope = $rootScope.$new();
 
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
-      self.original = angular.copy(newDashboard);
-      self.current = newDashboard;
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() {
+        self.original = angular.copy(newDashboard);
+        self.current = newDashboard;
+      }, 1000);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
@@ -42,19 +45,20 @@ function(angular, _, config) {
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;
-          self.open_modal();
+
+          $timeout(self.open_modal);
         }
       });
     };
 
     this.open_modal = function() {
       var confirmModal = $modal({
-          template: './app/partials/unsaved-changes.html',
-          persist: true,
-          show: false,
-          scope: modalScope,
-          keyboard: false
-        });
+        template: './app/partials/unsaved-changes.html',
+        persist: true,
+        show: false,
+        scope: modalScope,
+        keyboard: false
+      });
 
       $q.when(confirmModal).then(function(modalEl) {
         modalEl.modal('show');

@@ -9,7 +9,6 @@ function(angular, $) {
   var module = angular.module('kibana.services');
 
   module.service('dashboardKeybindings', function($rootScope, keyboardManager) {
-    this.hasRegistered = false;
 
     this.shortcuts = function(scope) {
 
@@ -28,7 +27,6 @@ function(angular, $) {
       });
 
       scope.$on('$destroy', function() {
-        console.log('unbind keyboardManager');
         keyboardManager.unbind('ctrl+f');
         keyboardManager.unbind('ctrl+h');
         keyboardManager.unbind('ctrl+s');
