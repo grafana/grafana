@@ -14,6 +14,16 @@ function (angular, $, config, _) {
       .when('/dashboard/file/:jsonFile', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromFileProvider',
+      })
+      .when('/', {
+        redirectTo: function() {
+          if (window.localStorage && window.localStorage.grafanaDashboardDefault) {
+            return window.localStorage.grafanaDashboardDefault;
+          }
+          else {
+            return config.default_route;
+          }
+        }
       });
   });
 

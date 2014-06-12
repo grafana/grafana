@@ -23,7 +23,6 @@ define([
   'config',
   'underscore',
   'services/all',
-  'services/dashboard/all'
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -117,12 +116,6 @@ function (angular, $, config, _) {
         $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
       }
       return $scope.editorTabs;
-    };
-
-    // This is whoafully incomplete, but will do for now
-    $scope.parse_error = function(data) {
-      var _error = data.match("nested: (.*?);");
-      return _.isNull(_error) ? data : _error[1];
     };
 
     $scope.colors = [

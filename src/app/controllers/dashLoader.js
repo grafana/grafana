@@ -48,20 +48,13 @@ function (angular, _, moment) {
     };
 
     $scope.set_default = function() {
-      if($scope.dashboard.set_default($location.path())) {
-        alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
-      } else {
-        alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
-      }
+      window.localStorage.grafanaDashboardDefault = $location.path();
+      alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
     };
 
     $scope.purge_default = function() {
-      if($scope.dashboard.purge_default()) {
-        alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default',
-          'success',5000);
-      } else {
-        alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
-      }
+      delete window.localStorage.grafanaDashboardDefault;
+      alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default','success', 5000);
     };
 
     $scope.saveForSharing = function() {

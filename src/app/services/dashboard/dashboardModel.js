@@ -90,10 +90,6 @@ function (angular, $, kbn, _) {
       }
     };
 
-    // An elasticJS client to use
-    /*var ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
-    var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
-*/
     return {
       create: function(dashboard) {
         return new DashboardModel(dashboard);
