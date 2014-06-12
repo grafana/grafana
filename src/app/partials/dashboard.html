@@ -1,4 +1,4 @@
-<div ng-controller="DashCtrl">
+<div ng-controller="DashCtrl" body-class>
 
   <div class="navbar navbar-static-top">
     <div class="navbar-inner">
@@ -42,7 +42,7 @@
               <div class="row-open" ng-show="!row.collapse">
                 <div ng-show="row.collapsable" class='row-tab bgPrimary' ng-click="toggle_row(row)">
                   <span class="row-tab-button">
-                    <i class="icon-caret-right" ></i>
+                    <i class="icon-caret-right"></i>
                   </span>
                 </div>
                 <div class='row-tab bgSuccess dropdown' ng-show="row.editable">
@@ -110,7 +110,7 @@
         </div>
 
 
-      <div ng-show='dashboard.editable && dashboard.panel_hints' class="row-fluid add-row-panel-hint">
+      <div ng-show='dashboard.editable' class="row-fluid add-row-panel-hint">
         <div class="span12" style="text-align:right;">
           <span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-mini">
             <span><i class="icon-plus-sign"></i> ADD A ROW</span>

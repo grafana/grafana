@@ -92,7 +92,6 @@
   ],
   "editable": true,
   "failover": false,
-  "panel_hints": true,
   "style": "dark",
   "pulldowns": [
     {

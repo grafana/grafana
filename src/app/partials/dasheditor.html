@@ -22,10 +22,7 @@
           <select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
         </div>
         <div class="editor-option">
-          <label class="small"> Hints <tip>Show 'Add panel' hints in empty spaces</tip></label><input type="checkbox" ng-model="dashboard.panel_hints" ng-checked="dashboard.panel_hints" />
-        </div>
-        <div class="editor-option">
-          <label class="small">Hide controls</label>
+          <label class="small">Hide controls (CTRL+H)</label>
           <input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
         </div>
       </div>

@@ -16,7 +16,7 @@ function (angular, _, config, $) {
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
-      $scope.onAppEvent('open-search', $scope.openSearch, $scope);
+      $scope.onAppEvent('open-search', $scope.openSearch);
     };
 
     $scope.keyDown = function (evt) {
