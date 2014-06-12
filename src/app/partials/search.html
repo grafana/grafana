@@ -77,7 +77,7 @@
           <tr bindonce
               ng-repeat="row in results.dashboards"
               ng-class="{'selected': $index === selectedIndex }">
-            <td><a confirm-click="elasticsearch_delete(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
+            <td><a confirm-click="deleteDashboard(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
             <td style="width:100%">
               <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
             </td>

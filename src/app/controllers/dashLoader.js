@@ -15,18 +15,18 @@ function (angular, _, moment) {
       $scope.gist = $scope.gist || {};
       $scope.elasticsearch = $scope.elasticsearch || {};
 
-      $rootScope.$on('save-dashboard', function() {
+      $scope.onAppEvent('save-dashboard', function() {
         $scope.elasticsearch_save('dashboard', false);
       });
 
-      $rootScope.$on('zoom-out', function() {
+      $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
 
     };
 
     $scope.exitFullscreen = function() {
-      $rootScope.$emit('panel-fullscreen-exit');
+      $scope.emitAppEvent('panel-fullscreen-exit');
     };
 
     $scope.showDropdown = function(type) {
@@ -82,27 +82,16 @@ function (angular, _, moment) {
         });
     };
 
-    $scope.elasticsearch_delete = function(id) {
+    $scope.deleteDashboard = function(id) {
       if (!confirm('Are you sure you want to delete dashboard?')) {
         return;
       }
 
-      $scope.dashboard.elasticsearch_delete(id).then(
-        function(result) {
-          if(!_.isUndefined(result)) {
-            if(result.found) {
-              alertSrv.set('Dashboard Deleted',id+' has been deleted','success',5000);
-              // Find the deleted dashboard in the cached list and remove it
-              var toDelete = _.where($scope.elasticsearch.dashboards,{_id:id})[0];
-              $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,toDelete);
-            } else {
-              alertSrv.set('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000);
-            }
-          } else {
-            alertSrv.set('Dashboard Not Deleted','An error occurred deleting the dashboard','error',5000);
-          }
-        }
-      );
+      elastic.deleteDashboard(id).then(function(id) {
+        alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
+      }, function() {
+        alertSrv.set('Dashboard Not Deleted', 'An error occurred deleting the dashboard', 'error', 5000);
+      });
     };
 
     $scope.save_gist = function() {

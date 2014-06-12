@@ -39,6 +39,15 @@ function(angular, config) {
         });
     };
 
+    this.deleteDashboard = function(id) {
+      return this._request('DELETE', '/dashboard/' + id)
+        .then(function(result) {
+          return result.data._id;
+        }, function(err) {
+          throw err.data;
+        });
+    };
+
     this.saveForSharing = function(dashboard) {
       var data = {
         user: 'guest',
