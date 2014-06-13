@@ -2,11 +2,7 @@ define([
   'angular',
   'jquery',
   'kbn',
-  'underscore',
-  'config',
-  'moment',
-  'modernizr',
-  'filesaver'
+  'underscore'
 ],
 function (angular, $, kbn, _) {
   'use strict';
@@ -41,7 +37,6 @@ function (angular, $, kbn, _) {
         save_temp_ttl: '30d',
         load_gist: false,
         load_elasticsearch: true,
-        load_elasticsearch_size: 20,
         hide: false
       });
 
@@ -96,137 +91,9 @@ function (angular, $, kbn, _) {
       }
     };
 
-    /*// A hash of defaults to use when loading a dashboard
-
-    var _dash = {
-
-    };
-
-    // An elasticJS client to use
-    var ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
+    /*
     var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
 
-    // Store a reference to this
-    var self = this;
-
-    this.current = _.clone(_dash);
-    this.last = {};
-    this.availablePanels = [];
-
-    $rootScope.$on('$routeChangeSuccess',function() {
-      // Clear the current dashboard to prevent reloading
-      self.current = {};
-      self.indices = [];
-      route();
-    });
-
-    var route = function() {
-      // Is there a dashboard type and id in the URL?
-      if(!(_.isUndefined($routeParams.kbnType)) && !(_.isUndefined($routeParams.kbnId))) {
-        var _type = $routeParams.kbnType;
-        var _id = $routeParams.kbnId;
-
-        switch(_type) {
-        case ('elasticsearch'):
-          self.elasticsearch_load('dashboard',_id);
-          break;
-        case ('temp'):
-          self.elasticsearch_load('temp',_id);
-          break;
-        case ('file'):
-          self.file_load(_id);
-          break;
-        case('script'):
-          self.script_load(_id);
-          break;
-        case('local'):
-          self.local_load();
-          break;
-        default:
-          $location.path(config.default_route);
-        }
-      // No dashboard in the URL
-      } else {
-        // Check if browser supports localstorage, and if there's an old dashboard. If there is,
-        // inform the user that they should save their dashboard to Elasticsearch and then set that
-        // as their default
-        if (Modernizr.localstorage) {
-          if(!(_.isUndefined(window.localStorage['dashboard'])) && window.localStorage['dashboard'] !== '') {
-            $location.path(config.default_route);
-            alertSrv.set('Saving to browser storage has been replaced',' with saving to Elasticsearch.'+
-              ' Click <a href="#/dashboard/local/deprecated">here</a> to load your old dashboard anyway.');
-          } else if(!(_.isUndefined(window.localStorage.grafanaDashboardDefault))) {
-            $location.path(window.localStorage.grafanaDashboardDefault);
-          } else {
-            $location.path(config.default_route);
-          }
-        // No? Ok, grab the default route, its all we have now
-        } else {
-          $location.path(config.default_route);
-        }
-      }
-    };
-
-    this.refresh = function() {
-      $rootScope.$broadcast('refresh');
-    };
-
-    var dash_defaults = function(dashboard) {
-
-      _.defaults(dashboard, _dash);
-      _.defaults(dashboard.loader,_dash.loader);
-
-      var filtering = _.findWhere(dashboard.pulldowns, {type: 'filtering'});
-      if (!filtering) {
-        dashboard.pulldowns.push({
-          type: 'filtering',
-          enable: false
-        });
-      }
-
-      var annotations = _.findWhere(dashboard.pulldowns, {type: 'annotations'});
-      if (!annotations) {
-        dashboard.pulldowns.push({
-          type: 'annotations',
-          enable: false
-        });
-      }
-
-      _.each(dashboard.rows, function(row) {
-        _.each(row.panels, function(panel) {
-          if (panel.type === 'graphite') {
-            panel.type = 'graph';
-          }
-        });
-      });
-
-      return dashboard;
-    };
-
-    this.dash_load = function(dashboard) {
-      // Cancel all timers
-      timer.cancel_all();
-
-      // reset fullscreen flag
-      $rootScope.fullscreen = false;
-
-      // Make sure the dashboard being loaded has everything required
-      dashboard = dash_defaults(dashboard);
-
-      window.document.title = 'Grafana - ' + dashboard.title;
-
-      // Set the current dashboard
-      self.current = angular.copy(dashboard);
-      if(dashboard.refresh) {
-        self.set_interval(dashboard.refresh);
-      }
-
-      self.availablePanels = config.panels;
-
-      $rootScope.$emit('dashboard-loaded', self.current);
-
-      return true;
-    };
 
     this.gist_id = function(string) {
       if(self.is_gist(string)) {

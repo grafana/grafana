@@ -1,7 +1,8 @@
 define([
   'angular',
   'underscore',
-  'moment'
+  'moment',
+  'filesaver'
 ],
 function (angular, _, moment) {
   'use strict';
@@ -36,13 +37,10 @@ function (angular, _, moment) {
 
       var _l = $scope.dashboard.loader;
       if(type === 'load') {
-        return (_l.load_elasticsearch || _l.load_gist || _l.load_local);
+        return (_l.load_elasticsearch || _l.load_gist);
       }
       if(type === 'save') {
-        return (_l.save_elasticsearch || _l.save_gist || _l.save_local || _l.save_default);
-      }
-      if(type === 'share') {
-        return (_l.save_temp);
+        return (_l.save_elasticsearch || _l.save_gist);
       }
       return false;
     };
@@ -92,6 +90,11 @@ function (angular, _, moment) {
       }, function() {
         alertSrv.set('Dashboard Not Deleted', 'An error occurred deleting the dashboard', 'error', 5000);
       });
+    };
+
+    $scope.exportDashboard = function() {
+      var blob = new Blob([angular.toJson($scope.dashboard, true)], { type: "application/json;charset=utf-8" });
+      window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
     $scope.save_gist = function() {

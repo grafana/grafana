@@ -45,7 +45,7 @@
       <a class="link" ng-click="removeAsFavorite()">Remove as favorite</a>
     </li>
     <li ng-show="dashboard.loader.save_local">
-      <a class="link" ng-click="dashboard.to_file()">Export dashboard</a>
+      <a class="link" ng-click="exportDashboard()">Export dashboard</a>
     </li>
     <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="saveForSharing()" config-modal="app/partials/dashLoaderShare.html">Share temp copy</i></a></li>
 
