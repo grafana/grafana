@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn) {
   var module = angular.module('kibana.panels.text', []);
   app.useModule(module);
 
-  module.controller('uptime', function($scope, $rootScope, filterSrv, datasourceSrv) {
+  module.controller('uptime', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
     $scope.panelMeta = {
       description : "An text panel that displayed percent uptime, where "
       +"uptime is the percent of time that a given metric is below a given threshold"
@@ -107,8 +107,8 @@ function (angular, app, $, _, kbn) {
       };
 
     $scope.updateTimeRange = function () {
-      $scope.range = filterSrv.timeRange();
-      $scope.rangeUnparsed = filterSrv.timeRange(false);
+      $scope.range = this.filter.timeRange();
+      $scope.rangeUnparsed = this.filter.timeRange(false);
       $scope.resolution = Math.ceil(($(window).width() * ($scope.panel.span / 12)) / 2);
       $scope.interval = '10m';
       if ($scope.range) {
@@ -132,7 +132,7 @@ function (angular, app, $, _, kbn) {
           datasource: $scope.datasource
         };
 
-      return $scope.datasource.query(graphiteQuery)
+      return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
             console.log("datasource.query error:" + err.message);
