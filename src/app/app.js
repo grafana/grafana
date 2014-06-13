@@ -7,7 +7,6 @@ define([
   'underscore',
   'require',
   'config',
-  'elasticjs',
   'bootstrap',
   'angular-sanitize',
   'angular-strap',
@@ -62,7 +61,6 @@ function (angular, $, _, appLevelRequire, config) {
   });
 
   var apps_deps = [
-    'elasticjs.service',
     '$strap.directives',
     'ngSanitize',
     'ngDragDrop',
