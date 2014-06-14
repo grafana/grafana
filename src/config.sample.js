@@ -18,8 +18,8 @@ function (Settings) {
       },
       influxdb: {
         type: 'influxdb',
-        url: "http://my_influxdb_server:8080/db/database_name",
-        user: 'admin',
+        url: "http://my_influxdb_server:8086/db/database_name",
+        username: 'admin',
         password: 'admin'
       },
     },

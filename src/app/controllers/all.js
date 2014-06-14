@@ -12,4 +12,5 @@ define([
   './influxTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
+  './opentsdbTargetCtrl',
 ], function () {});
