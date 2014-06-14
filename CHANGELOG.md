@@ -16,6 +16,7 @@
 - Row editing and adding new panel is now a lot quicker and easier with the new row menu (Issue #475)
 - New datasource! Initial support for OpenTSDB (PR #211) - thx @mpage
 - Improvement and polish to the OpenTSDB query editor (Issue #492)
+- Influxdb group by support (Issue #441) thx @piis3
 
 
 #### Changes

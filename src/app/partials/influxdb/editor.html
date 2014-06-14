@@ -75,16 +75,13 @@
 
           <li>
             <a class="grafana-target-segment"
-               ng-click="target.condiction_filter = !target.condiction_filter; get_data();"
+               ng-click="target.condition_filter = !target.condition_filter; get_data();"
+               bs-tooltip="'Add a where clause'"
                role="menuitem">
               <i class="icon-filter"></i>
             </a>
           </li>
-          <li ng-show="target.condiction_filter">
-            <select class="input-small grafana-target-segment-input"
-                    ng-change="get_data()"
-                    ng-model="target.condition_add"
-                    ng-options="f for f in ['and', 'or']" ></select>
+          <li ng-show="target.condition_filter">
             <input type="text"
                    class="input-small grafana-target-segment-input"
                    ng-model="target.condition_key"
@@ -117,6 +114,25 @@
                    bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
                    spellcheck='false'
                    ng-model-onblur ng-change="get_data()" >
+          </li>
+          <li>
+            <a class="grafana-target-segment"
+               ng-click="target.groupby_field_add = !target.groupby_field_add; get_data();"
+               bs-tooltip="'Add a group by column'"
+               role="menuitem">
+              <i class="icon-plus"></i>
+            </a>
+          </li>
+
+          <li ng-show="target.groupby_field_add">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-model="target.groupby_field"
+                   placeholder="column"
+                   spellcheck="false"
+                   bs-typeahead="listColumns"
+                   data-min-length=0
+                   ng-blur="get_data()">
           </li>
 
           <li class="grafana-target-segment">
