@@ -1,0 +1,176 @@
+<div class="editor-row" style="margin-top: 10px;">
+  <div  ng-repeat="target in panel.targets"
+        class="grafana-target"
+        ng-class="{'grafana-target-hidden': target.hide}"
+        ng-controller="OpenTSDBTargetCtrl"
+        ng-init="init()">
+
+    <div class="grafana-target-inner-wrapper">
+      <div class="grafana-target-inner">
+        <ul class="grafana-target-controls">
+          <li class="dropdown">
+            <a  class="pointer dropdown-toggle"
+                data-toggle="dropdown"
+                tabindex="1">
+              <i class="icon-cog"></i>
+            </a>
+            <ul class="dropdown-menu pull-right" role="menu">
+              <li role="menuitem">
+                <a  tabindex="1"
+                    ng-click="duplicate()">
+                  Duplicate
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
+              <i class="icon-remove"></i>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="grafana-target-controls-left">
+          <li>
+            <a  class="grafana-target-segment"
+                ng-click="target.hide = !target.hide; get_data();"
+                role="menuitem">
+              <i class="icon-eye-open"></i>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="grafana-segment-list" role="menu">
+          <li>
+            <input type="text"
+                   class="input-xxlarge grafana-target-segment-input"
+                   ng-model="target.metric"
+                   spellcheck='false'
+                   bs-typeahead="suggestMetrics"
+                   placeholder="metric name"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                   >
+            <a bs-tooltip="target.errors.metric"
+               style="color: rgb(229, 189, 28)"
+               ng-show="target.errors.metric">
+              <i class="icon-warning-sign"></i>
+            </a>
+          </li>
+          <li class="grafana-target-segment">
+            Aggregator
+          <li>
+            <select ng-model="target.aggregator"
+                    class="grafana-target-segment-input input-small"
+                    ng-options="agg for agg in aggregators"
+                    ng-change="targetBlur()">
+            </select>
+            <a bs-tooltip="target.errors.aggregator"
+               style="color: rgb(229, 189, 28)"
+               ng-show="target.errors.aggregator">
+              <i class="icon-warning-sign"></i>
+            </a>
+          </li>
+
+          <li class="grafana-target-segment">
+              Rate:
+              <input type="checkbox"
+                     class="grafana-target-option-checkbox"
+                     ng-model="target.shouldComputeRate"
+                     ng-change="targetBlur()"
+                     >
+          </li>
+          <li class="grafana-target-segment" ng-hide="!target.shouldComputeRate">
+            Counter:
+            <input type="checkbox"
+                   class="grafana-target-option-checkbox"
+                   ng-disabled="!target.shouldComputeRate"
+                   ng-model="target.isCounter"
+                   ng-change="targetBlur()">
+          </li>
+        </ul>
+
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="grafana-target-inner">
+        <ul class="grafana-segment-list" role="menu">
+
+          <li class="grafana-target-segment">
+            Downsample:
+            <input type="checkbox"
+                   class="grafana-target-option-checkbox"
+                   ng-model="target.shouldDownsample"
+                   ng-change="targetBlur(target)"
+                   >
+          </li>
+
+          <li ng-hide="!target.shouldDownsample">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-disabled="!target.shouldDownsample"
+                   ng-model="target.downsampleInterval"
+                   ng-change="targetBlur()"
+                   placeholder="interval"
+                   >
+          </li>
+
+          <li class="grafana-target-segment" ng-hide="!target.shouldDownsample">
+            Aggregator
+          </li>
+
+          <li ng-hide="!target.shouldDownsample">
+            <select ng-model="target.downsampleAggregator"
+                    class="grafana-target-segment-input input-small"
+                    ng-options="agg for agg in aggregators"
+                    ng-change="targetBlur()">
+            </select>
+          </li>
+
+          <li class="grafana-target-segment">
+              Tags:
+          </li>
+          <li ng-repeat="(key, value) in target.tags track by $index" class="grafana-target-segment">
+            {{key}}&nbsp;=&nbsp;{{value}}
+            <a ng-click="removeTag(key)">
+              <i class="icon-remove"></i>
+            </a>
+          </li>
+
+          <li class="grafana-target-segment" ng-hide="addTagMode">
+            <a ng-click="addTag()">
+              <i class="icon-plus-sign"></i>
+            </a>
+          </li>
+
+          <li ng-show="addTagMode">
+              <input type="text"
+                     class="input-small grafana-target-segment-input"
+                     spellcheck='false'
+                     bs-typeahead="suggestTagKeys"
+                     data-min-length=0 data-items=100
+                     ng-model="target.currentTagKey"
+                     placeholder="key">
+              <input type="text"
+                     class="input-small grafana-target-segment-input"
+                     spellcheck='false'
+                     bs-typeahead="suggestTagValues"
+                     data-min-length=0 data-items=100
+                     ng-model="target.currentTagValue"
+                     placeholder="value">
+              <a ng-click="addTag()">
+                <i class="icon-plus-sign"></i>
+              </a>
+              <a bs-tooltip="target.errors.tags"
+                 style="color: rgb(229, 189, 28)"
+                 ng-show="target.errors.tags">
+                <i class="icon-warning-sign"></i>
+              </a>
+          </li>
+        </ul>
+
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+</div>
