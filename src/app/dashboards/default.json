@@ -90,7 +90,7 @@
       "notice": false
     }
   ],
-  "editable": false,
+  "editable": true,
   "failover": false,
   "panel_hints": true,
   "style": "dark",

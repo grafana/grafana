@@ -3,7 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
-  // urlArgs: 'r=@REV@',
+
   paths: {
     config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
