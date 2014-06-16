@@ -28,6 +28,7 @@
   Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
 
 #### Fixes
+- Graphite query lexer change, can now handle regex parameters for aliasSub function (Fixes #126)
 - Filter option loading when having muliple nested filters now works better.
   Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
   After an option is changed and a nested template param is also reloaded, if the current value
