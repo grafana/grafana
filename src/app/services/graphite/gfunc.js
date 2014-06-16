@@ -127,6 +127,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: "secondYAxis",
+    category: categories.Special,
+  });
+
+  addFuncDef({
     name: "stacked",
     category: categories.Special,
     params: [{ name: "stack", type: 'string' }],
@@ -290,6 +295,13 @@ function (_) {
     category: categories.Transform,
     params: [{ name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
     defaultParams: ['1h', 'sum']
+  });
+
+  addFuncDef({
+    name: 'movingAverage',
+    category: categories.Transform,
+    params: [ { name: "interval", type: "string" } ],
+    defaultParams: ['7d']
   });
 
   addFuncDef({
