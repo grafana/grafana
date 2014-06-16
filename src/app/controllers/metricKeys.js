@@ -53,7 +53,7 @@ function (angular, _, config) {
       $scope.infoText = "Fetching all metrics from graphite...";
 
       getFromEachGraphite('/metrics/index.json', saveMetricsArray)
-        .then( function() {
+        .then(function() {
           $scope.infoText = "Indexing complete!";
         }).then(null, function(err) {
           $scope.errorText = err;
@@ -61,12 +61,12 @@ function (angular, _, config) {
     };
 
     function getFromEachGraphite(request, data_callback, error_callback) {
-      return $q.all( _.map( config.datasources, function( datasource ) {
-        if ( datasource.type = 'graphite' ) {
-          return $http.get( datasource.url + request )
-            .then( data_callback, error_callback );
+      return $q.all(_.map(config.datasources, function(datasource) {
+        if (datasource.type = 'graphite') {
+          return $http.get(datasource.url + request)
+            .then(data_callback, error_callback);
         }
-      } ) );
+      }));
     }
 
     function saveMetricsArray(data, currentIndex) {
@@ -85,7 +85,6 @@ function (angular, _, config) {
           return saveMetricsArray(data, currentIndex + 1);
         });
     }
-
 
     function deleteIndex()
     {
@@ -119,7 +118,7 @@ function (angular, _, config) {
                 type : "nGram",
                 min_gram : "3",
                 max_gram : "8",
-                token_chars: [ "letter", "digit", "punctuation", "symbol"]
+                token_chars: ["letter", "digit", "punctuation", "symbol"]
               }
             }
           }
@@ -179,7 +178,7 @@ function (angular, _, config) {
 
     function loadMetricsRecursive(metricPath)
     {
-      return getFromEachGraphite( '/metrics/find/?query=' + metricPath, receiveMetric );
+      return getFromEachGraphite('/metrics/find/?query=' + metricPath, receiveMetric);
     }
 
   });

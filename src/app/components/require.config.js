@@ -3,7 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
-  // urlArgs: 'r=@REV@',
+
   paths: {
     config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
@@ -40,7 +40,6 @@ require.config({
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
     'jquery.flot.byte':       '../vendor/jquery/jquery.flot.byte',
-
 
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',

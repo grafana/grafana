@@ -24,7 +24,7 @@ function (angular, _) {
     };
 
     this.cancel_all = function() {
-      _.each(timers, function(t){
+      _.each(timers, function(t) {
         $timeout.cancel(t);
       });
       timers = [];

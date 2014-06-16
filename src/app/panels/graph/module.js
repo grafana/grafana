@@ -210,6 +210,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.datasources = datasourceSrv.listOptions();
       $scope.setDatasource($scope.panel.datasource);
+
+      if ($scope.panel.targets.length === 0) {
+        $scope.panel.targets.push({});
+      }
     };
 
     $scope.setDatasource = function(datasource) {
@@ -410,6 +414,4 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   });
 
-
 });
-

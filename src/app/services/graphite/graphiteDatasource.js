@@ -173,7 +173,7 @@ function (angular, _, $, config, kbn, moment) {
 
         if (key === "targets") {
           _.each(value, function (value) {
-            if (!value.hide) {
+            if (value.target && !value.hide) {
               var targetValue = filterSrv.applyTemplateToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
@@ -185,7 +185,6 @@ function (angular, _, $, config, kbn, moment) {
       }, this);
       return clean_options;
     };
-
 
     return GraphiteDatasource;
 

@@ -12,4 +12,5 @@ define([
   './monTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
+  './opentsdbTargetCtrl',
 ], function () {});

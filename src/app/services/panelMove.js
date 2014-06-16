@@ -34,12 +34,11 @@ function (angular, _) {
         dragIndex = data.dragSettings.index,
         dropIndex =  data.dropSettings.index;
 
-
       // Remove panel from source row
       dragRow.splice(dragIndex,1);
 
       // Add to destination row
-      if(!_.isUndefined(dropRow)) {
+      if (!_.isUndefined(dropRow)) {
         dropRow.splice(dropIndex,0,data.dragItem);
       }
 

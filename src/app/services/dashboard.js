@@ -28,8 +28,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
-      nav: [ { type: 'timepicker' } ],
+      pulldowns: [{ type: 'templating' },  { type: 'annotations' }],
+      nav: [{ type: 'timepicker' }],
       services: {},
       loader: {
         save_gist: false,
@@ -59,7 +59,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.last = {};
     this.availablePanels = [];
 
-    $rootScope.$on('$routeChangeSuccess',function(){
+    $rootScope.$on('$routeChangeSuccess',function() {
       // Clear the current dashboard to prevent reloading
       self.current = {};
       self.indices = [];
@@ -167,12 +167,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         self.set_interval(dashboard.refresh);
       }
 
-      // Set the available panels for the "Add Panel" drop down
-      self.availablePanels = _.difference(config.panel_names,
-        _.pluck(_.union(self.current.nav,self.current.pulldowns),'type'));
-
-      // Take out any that we're not allowed to add from the gui.
-      self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
+      self.availablePanels = config.panels;
 
       $rootScope.$emit('dashboard-loaded', self.current);
 

@@ -13,11 +13,22 @@
 - Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
 - Improvement to InfluxDB query editor and function/value column selection (Issue #473)
 - Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
+- Row editing and adding new panel is now a lot quicker and easier with the new row menu (Issue #475)
+- New datasource! Initial support for OpenTSDB (PR #211) - thx @mpage
+- Improvement and polish to the OpenTSDB query editor (Issue #492)
+- Influxdb group by support (Issue #441) thx @piis3
+
 
 #### Changes
 - Graphite panel is now renamed graph (Existing dashboards will still work)
+- Add panel icon and Row edit button is replaced by the Row edit menu (Issue #475)
+- New graphs now have a default empty query
+- Add Row button now creates a row with default height of 250px (no longer opens dashboard settings modal)
+- Clean up of config.sample.js, graphiteUrl removed (still works, but depricated, removed in future)
+  Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
 
 #### Fixes
+- Graphite query lexer change, can now handle regex parameters for aliasSub function (Fixes #126)
 - Filter option loading when having muliple nested filters now works better.
   Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
   After an option is changed and a nested template param is also reloaded, if the current value

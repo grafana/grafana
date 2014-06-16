@@ -16,7 +16,6 @@ function (angular, app, _) {
       $scope.setDatasource(null);
     };
 
-
     $scope.setDatasource = function(datasource) {
       $scope.datasource = datasourceSrv.get(datasource);
 
@@ -25,7 +24,6 @@ function (angular, app, _) {
         return;
       }
     };
-
 
     $scope.listAll = function(query) {
       delete $scope.error;
