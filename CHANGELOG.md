@@ -1,4 +1,10 @@
-# vNext
+vNext
+
+**Fixes**
+
+- Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
+
+# 1.6.0 (2014-06-16)
 
 #### New features or improvements
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi

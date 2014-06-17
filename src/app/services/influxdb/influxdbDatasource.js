@@ -87,7 +87,7 @@ function (angular, _, kbn) {
           };
 
           if(!templateData.series.match('^/.*/')) {
-                  templateData.series = '"' + templateData.series + '"';
+            templateData.series = '"' + templateData.series + '"';
           }
 
           query = _.template(template, templateData, this.templateSettings);
