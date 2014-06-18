@@ -14,7 +14,8 @@ define([
   'angular',
   'app',
   'underscore',
-  'require'
+  'require',
+  'services/filterSrv'
 ],
 function (angular, app, _, require) {
   'use strict';
@@ -96,6 +97,27 @@ function (angular, app, _, require) {
         .replace(/&/g, '&amp;')
         .replace(/>/g, '&gt;')
         .replace(/</g, '&lt;');
+    };
+  });
+
+  module.filter('applytemplate', function(filterSrv) {
+    return function (input) {
+      return filterSrv.applyTemplateToTarget(input);
+    };
+  });
+
+  module.filter('applymarkdown', function() {
+    return function (input) {
+      if(require.defined('./lib/showdown')) {
+        var Showdown = require('./lib/showdown');
+        var converter = new Showdown.converter();
+        var text = input.replace(/&/g, '&amp;')
+           .replace(/>/g, '&gt;')
+           .replace(/</g, '&lt;');
+        return converter.makeHtml(text);
+      } else {
+        return input;
+      }
     };
   });
 });
