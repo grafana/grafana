@@ -95,6 +95,8 @@ Header set Access-Control-Allow-Credentials true
 ```
 And in nginx:
 ```
+auth_basic            "Restricted";
+auth_basic_user_file  /path/to/my/htpasswd/file;
 if ($http_origin ~* (https?://[^/]*\.somedomain\.com(:[0-9]+)?)) {  #Test if request is from allowed domain, you can use multiple if
     set $cors "true";                                               #statements to allow multiple domains, simply setting $cors to true in each one.
 }
