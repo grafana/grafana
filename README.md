@@ -71,14 +71,7 @@ Header set Access-Control-Allow-Headers "origin, authorization, accept"
 ```
 Note that using "\*" leaves your graphite instance quite open so you might want to consider using "http://my.graphite-dom.ain" in place of "\*"
 
-Here is the same thing, in nginx format:
-```
-add_header  "Access-Control-Allow-Origin" "*"; 
-add_header  "Access-Control-Allow-Credentials" "true";
-add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
-add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
-```
-If your Graphite web is protected by basic authentication, you have to enable the HTTP verb OPTIONS, origin
+If your Graphite web is proteced by basic authentication, you have to enable the HTTP verb OPTIONS, origin
 (no wildcards are allowed in this case) and add Access-Control-Allow-Credentials. This looks like the following for Apache:
 ```
 Header set Access-Control-Allow-Origin "http://mygrafana.com:5656"
@@ -93,18 +86,7 @@ Header set Access-Control-Allow-Credentials true
     </LimitExcept>
 </Location>
 ```
-And in nginx:
-```
-if ($http_origin ~* (https?://[^/]*\.somedomain\.com(:[0-9]+)?)) {  #Test if request is from allowed domain, you can use multiple if
-    set $cors "true";                                               #statements to allow multiple domains, simply setting $cors to true in each one.
-}
-if ($cors = 'true') {
-    add_header  Access-Control-Allow-Origin $http_origin;
-    add_header  "Access-Control-Allow-Credentials" "true";
-    add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
-    add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
-}
-```
+
 # Roadmap
 - Improve and refine the target parser and editing
 - Improve graphite import feature
