@@ -95,8 +95,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        * grid.ma1::: Maximum y-axis value
        */
       grid          : {
-        max: null,
-        min: null,
+        leftMax: null,
+        rightMax: null,
+        leftMin: null,
+        rightMin: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
