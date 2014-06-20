@@ -99,8 +99,8 @@ if ($http_origin ~* (https?://[^/]*\.somedomain\.com(:[0-9]+)?)) {  #Test if req
     set $cors "true";                                               #statements to allow multiple domains, simply setting $cors to true in each one.
 }
 if ($cors = 'true') {
-    add_header  Access-Control-Allow-Origin $http_origin;
-    add_header  "Access-Control-Allow-Credentials" "true";
+    add_header  Access-Control-Allow-Origin $http_origin;           #this mirrors back whatever domain the request came from as authorized, as
+    add_header  "Access-Control-Allow-Credentials" "true";          #as long as it matches one of your if statements
     add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
     add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
 }
