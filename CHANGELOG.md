@@ -6,6 +6,7 @@ vNext
 **Fixes**
 
 - Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
+- Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names (Fixes #506)
 
 # 1.6.0 (2014-06-16)
 
