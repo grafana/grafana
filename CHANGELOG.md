@@ -1,5 +1,8 @@
 vNext
 
+**New features or improvements**
+- Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
+
 **Fixes**
 
 - Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
