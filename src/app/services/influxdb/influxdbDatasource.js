@@ -43,7 +43,7 @@ function (angular, _, kbn) {
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
 
-          if (lowerCaseQueryElements[1].indexOf(',')) {
+          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
             groupByField = lowerCaseQueryElements[1].replace(',', '');
           }
 
