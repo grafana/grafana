@@ -120,7 +120,7 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
-
+        return data[0].columns;
       });
     };
 
