@@ -232,7 +232,7 @@ function (angular, _, kbn) {
             datapoints[i] = [metricValue, groupPoints[i][timeCol]];
           }
 
-          seriesName = alias ? alias : series.name;
+          seriesName = alias ? alias : (series.name + '.' + key);
 
           // if mulitple groups append key to alias
           if (alias && groupByField) {
