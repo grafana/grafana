@@ -68,7 +68,7 @@ function (angular, _, kbn) {
         }
         else {
 
-          var template = "select [[group]][[group_comma]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from [[series]] " +
+          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
                          "group by time([[interval]])[[group_comma]] [[group]] order asc";
 

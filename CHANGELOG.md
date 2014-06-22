@@ -9,6 +9,7 @@ vNext
 - Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names (Fixes #506)
 - Series names and column name typeahead cache fix (Fixes #522)
 - Fixed influxdb issue with raw query that caused wrong value column detection (Fixes #504)
+- Default property that marks which datasource is default in config.js is now optional (Fixes #526)
 
 # 1.6.0 (2014-06-16)
 
