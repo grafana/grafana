@@ -43,7 +43,7 @@ function (angular, _, kbn) {
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
 
-          if (lowerCaseQueryElements[1].indexOf(',')) {
+          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
             groupByField = lowerCaseQueryElements[1].replace(',', '');
           }
 
@@ -68,7 +68,7 @@ function (angular, _, kbn) {
         }
         else {
 
-          var template = "select [[group]][[group_comma]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
+          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
                          "group by time([[interval]])[[group_comma]] [[group]] order asc";
 
@@ -85,6 +85,10 @@ function (angular, _, kbn) {
             group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
             group: target.groupby_field_add ? target.groupby_field : '',
           };
+
+          if(!templateData.series.match('^/.*/')) {
+            templateData.series = '"' + templateData.series + '"';
+          }
 
           query = _.template(template, templateData, this.templateSettings);
           query = filterSrv.applyTemplateToTarget(query);
@@ -112,11 +116,10 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from /' + seriesName + '/ limit 1').then(function(data) {
         if (!data) {
           return [];
         }
-
         return data[0].columns;
       });
     };
@@ -229,7 +232,7 @@ function (angular, _, kbn) {
             datapoints[i] = [metricValue, groupPoints[i][timeCol]];
           }
 
-          seriesName = alias ? alias : key;
+          seriesName = alias ? alias : (series.name + '.' + key);
 
           // if mulitple groups append key to alias
           if (alias && groupByField) {

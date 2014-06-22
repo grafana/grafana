@@ -114,10 +114,4 @@ define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, m
     };
   });
 
-  module.filter('urlDecode', function() {
-    return function(input) {
-      return decodeURIComponent(input);
-    };
-  });
-
 });
