@@ -13,7 +13,7 @@
           <li ng-if="filter.name" class="dropdown">
             {{filter.name}} :
             <a class="dropdown-toggle" data-toggle="dropdown">
-              {{filter.current.text}}
+              {{filter.current.text | urlDecode}}
             </a>
               <ul class="dropdown-menu">
                 <li ng-repeat="option in filter.options">
