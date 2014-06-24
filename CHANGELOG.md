@@ -1,4 +1,4 @@
-vNext
+# 1.6.1 (2014-06-24)
 
 **New features or improvements**
 - Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
