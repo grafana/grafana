@@ -1,3 +1,8 @@
+vNext
+
+**Changes**
+- Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
+
 # 1.6.1 (2014-06-24)
 
 **New features or improvements**
