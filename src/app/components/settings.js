@@ -20,7 +20,7 @@ function (_, crypto) {
           default: true
         }
       },
-      panels                        : ['graph', 'text'],
+      panels                        : ['graph', 'text', 'navigation'],
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
       grafana_index                 : 'grafana-dash',
