@@ -1,0 +1,21 @@
+<div ng-controller='navigation' ng-init="init()" style="min-height:{{panel.height || row.height}}" ng-dblclick="openEditor()">
+  <ul class="nav nav-pills">
+    <li class="dropdown" bindonce ng-repeat="mainMenu in results.dashboards | filter: { _source.tags : 'L1' }:true">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#">{{mainMenu._id}} <b class="caret"></b></a>
+      <ul class="dropdown-menu">
+        <li class="dropdown-submenu" bindonce ng-repeat="subMenu in results.dashboards | filter : { _source.tags : 'L2'}:true | filter : { _source.tags : mainMenu._id  }:true">
+          <a tabindex="-1" href="#">{{subMenu._id}}</a>
+          <ul class="dropdown-menu">
+            <li bindonce ng-repeat="subDashboard in results.dashboards | filter : { _source.tags : subMenu._id}:true">
+              <a href="#/dashboard/elasticsearch/{{subDashboard._id}}">{{subDashboard._id}}</a>
+            </li>
+          </ul>
+        </li>
+        <li class="divider"></li>
+        <li bindonce ng-repeat="mainDashboard in results.dashboards | filter : { _source.tags: mainMenu._id }:true | filter : { _source.tags : '!L2' }">
+          <a href="#/dashboard/elasticsearch/{{mainDashboard._id}}">{{mainDashboard._id}}</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
