@@ -22,6 +22,12 @@ function (Settings) {
         username: 'admin',
         password: 'admin'
       },
+      mon: {
+        type: 'mon',
+        url: "http://192.168.10.4:8080/v2.0",
+        access_token: '82510970543135',
+        default: true
+      }
     },
 
     // elasticsearch url

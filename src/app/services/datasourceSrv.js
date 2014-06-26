@@ -4,8 +4,8 @@ define([
   'config',
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
-  './mon/monDatasource'
-  './opentsdb/opentsdbDatasource',
+  './mon/monDatasource',
+  './opentsdb/opentsdbDatasource'
 ],
 function (angular, _, config) {
   'use strict';
