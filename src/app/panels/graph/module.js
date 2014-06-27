@@ -259,7 +259,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
     };
 
-    $scope.get_data = function() {
+    $scope.get_data = function(pngurl) {
       delete $scope.panel.error;
 
       $scope.panelMeta.loading = true;
@@ -274,11 +274,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource
       };
-
+      if(pngurl === true){
+        graphiteQuery.format = 'png';
+      }
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
 
       return $scope.datasource.query($scope.filter, graphiteQuery)
-        .then($scope.dataHandler)
+        .then(function stuff(results){
+          $scope.dataHandler(results, pngurl);
+        })
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
           $scope.panel.error = err.message || "Timeseries data request error";
@@ -287,12 +291,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
-    $scope.dataHandler = function(results) {
+    $scope.dataHandler = function(results, pngurl) {
       $scope.panelMeta.loading = false;
       $scope.legend = [];
-
       // png renderer returns just a url
       if (_.isString(results)) {
+        if(pngurl){
+          window.open(results+'&width=1632&height=189');
+          return;
+        }
         $scope.render(results);
         return;
       }

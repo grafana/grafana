@@ -21,6 +21,7 @@ function (angular, $, _, PanelBaseCtrl) {
             '<a class="close" ng-click="panel.error=false">&times;</a>' +
             '<span><i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}} </span>' +
             '<span class="pointer panel-error-inspector-link" config-modal="app/partials/inspector.html">View details</span>' +
+            
           '</div>' +
         '</div>\n' +
 

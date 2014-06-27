@@ -4,7 +4,20 @@
       ng-class="{'panel-fullscreen': fullscreen}">
 
   <div style="position: relative">
-
+    <style>
+      #pngButton34578 {
+        position: absolute; 
+        cursor: pointer; 
+        width: 25px; 
+        top:-13%; 
+        right:0%;
+      }
+      #pngButton34578:hover {
+        width: 30px;
+      }
+    </style>
+    <img src="http://a.dryicons.com/images/icon_sets/wysiwyg_sapphire/png/128x128/insert_link.png" id="pngButton34578" class="input-small ng-valid ng-dirty" ng-model="panel.renderer" value="png" ng-click="get_data(true)" name="03A">
+  
     <div ng-if="datapointsWarning" class="datapoints-warning">
       <span class="small" ng-show="!datapointsCount">No datapoints <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
       <span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
