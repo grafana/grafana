@@ -149,6 +149,12 @@ define([
                                         target+= key+"="+value+" ";
                                     });
                                 }
+                                else if(element.name==="value"){
+                                    target+= 'value_group='+element.group.group_number+" ";
+                                }
+                                else if(element.name==="time"){
+                                    target+= 'time_group='+element.group.group_number+" ";
+                                }
                             });
                             target+= ") ";
                         }
