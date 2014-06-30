@@ -297,7 +297,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       // png renderer returns just a url
       if (_.isString(results)) {
         if(pngurl){
-          window.open(results+'&width=1632&height=189');
+          $scope.render(results+'PNGCLICKED');
+          pngurl = false;
           return;
         }
         $scope.render(results);

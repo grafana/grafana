@@ -1,0 +1,10 @@
+#pngButton34578 {
+    position: absolute; 
+    cursor: pointer; 
+    width: 25px; 
+    top:-13%; 
+    right:0%;
+  }
+  #pngButton34578:hover {
+    width: 28px;
+  }

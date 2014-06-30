@@ -36,9 +36,13 @@ function (angular, $, kbn, moment, _) {
 
         // Receive render events
         scope.$on('render',function(event, renderData) {
+          var tempdata = data;
           data = renderData || data;
           annotations = data.annotations;
           render_panel();
+          if(_.isString(renderData)){
+            data = tempdata;
+          }
         });
 
         // Re-render if the window is resized
@@ -345,6 +349,12 @@ function (angular, $, kbn, moment, _) {
         });
 
         function render_panel_as_graphite_png(url) {
+          var openWindow = false;
+          if(url.indexOf("PNGCLICKED") != -1){
+            openWindow = true;
+            url = url.replace("PNGCLICKED", "");
+            data= data.replace("PNGCLICKED", "");
+          }
           url += '&width=' + elem.width();
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @kibanaPanelBackground
@@ -383,9 +393,11 @@ function (angular, $, kbn, moment, _) {
             url += "&drawNullAsZero=true";
             break;
           }
-
           url += scope.panel.steppedLine ? '&lineMode=staircase' : '';
-
+          if(openWindow){
+            window.open(url);
+            return;
+          }
           elem.html('<img src="' + url + '"></img>');
         }
 
