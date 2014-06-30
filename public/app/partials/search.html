@@ -77,7 +77,7 @@
           <tr bindonce
               ng-repeat="row in results.dashboards"
               ng-class="{'selected': $index === selectedIndex }">
-            <td><a confirm-click="elasticsearch_delete(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
+            <td><a confirm-click="deleteDashboard(row._id)" confirmation="Are you sure you want to delete the {{row._id}} dashboard"><i class="icon-remove"></i></a></td>
             <td style="width:100%">
               <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
             </td>
@@ -86,7 +86,7 @@
                 {{tag}}
               </a>
             </td>
-            <td><a><i class="icon-share" ng-click="share = dashboard.share_link(row._id,'elasticsearch',row._id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
+            <td><a><i class="icon-share" ng-click="shareDashboard(row._id, row._id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
           </tr>
         </table>
       </div>
@@ -104,19 +104,5 @@
           </div>
         </div>
       </div>
-
-      <div class="editor-row" ng-show='dashboard.loader.load_gist'>
-        <h5>Gist <tip>Enter a gist number or url</tip></h5>
-        <form>
-          <input type="text" ng-model="gist.url" placeholder="Gist number or URL"><br>
-          <button class="btn" ng-click="gist_dblist(dashboard.gist_id(gist.url))" ng-show="dashboard.is_gist(gist.url)"><i class="icon-github-alt"></i> Get gist:{{gist.url | gistid}}</button>
-          <h6 ng-show="gist.files.length">Dashboards in gist:{{gist.url | gistid}} <small>click to load</small></h6>
-          <h6 ng-hide="gist.files.length || !gist.url.length">No gist dashboards found</h6>
-          <table class="table table-condensed table-striped">
-            <tr ng-repeat="file in gist.files">
-              <td><a ng-click="dashboard.dash_load(file)">{{file.title}}</a></td>
-            </tr>
-          </table>
-        </form>
-      </div>
     </li>
+  </ul>

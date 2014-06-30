@@ -9,7 +9,7 @@
     </i>
     <span class='small histogram-legend-item'>
       <a ng-click="toggleSeries(series, $event)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
-        {{series.alias | urlDecode}}
+        {{series.alias}}
       </a>
       <span ng-if="panel.legend.values">
         <span ng-show="panel.legend.current">

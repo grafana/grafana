@@ -13,36 +13,31 @@ function (angular, $, config) {
       .when('/dashboard/elasticsearch/:id', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromElasticProvider',
+      })
+      .when('/dashboard/temp/:id', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromElasticProvider',
       });
   });
 
-  module.controller('DashFromElasticProvider', function($scope, $rootScope, $http, $routeParams, alertSrv) {
+  module.controller('DashFromElasticProvider', function($scope, $rootScope, elastic, $routeParams, alertSrv) {
 
     var elasticsearch_load = function(id) {
-      var url = config.elasticsearch + "/" + config.grafana_index + "/dashboard/" + id;
+      var url = '/dashboard/' + id;
 
-      var options = {
-        url: url +'?' + new Date().getTime(),
-        method: "GET",
-        transformResponse: function(response) {
-          var esResponse = angular.fromJson(response);
-          if (esResponse._source && esResponse._source.dashboard) {
-            return angular.fromJson(esResponse._source.dashboard);
+      // hack to check if it is a temp dashboard
+      if (window.location.href.indexOf('dashboard/temp') > 0) {
+        url = '/temp/' + id;
+      }
+
+      return elastic.get(url)
+        .then(function(result) {
+          if (result._source && result._source.dashboard) {
+            return angular.fromJson(result._source.dashboard);
           } else {
             return false;
           }
-        }
-      };
-
-      if (config.elasticsearchBasicAuth) {
-        options.withCredentials = true;
-        options.headers = {
-          "Authorization": "Basic " + config.elasticsearchBasicAuth
-        };
-      }
-
-      return $http(options)
-        .error(function(data, status) {
+        }, function(data, status) {
           if(status === 0) {
             alertSrv.set('Error',"Could not contact Elasticsearch at " +
               config.elasticsearch + ". Please ensure that Elasticsearch is reachable from your browser.",'error');
@@ -53,8 +48,8 @@ function (angular, $, config) {
         });
     };
 
-    elasticsearch_load($routeParams.id).then(function(result) {
-      $scope.emitAppEvent('setup-dashboard', result.data);
+    elasticsearch_load($routeParams.id).then(function(dashboard) {
+      $scope.emitAppEvent('setup-dashboard', dashboard);
     });
 
   });

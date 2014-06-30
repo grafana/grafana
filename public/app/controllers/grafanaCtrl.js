@@ -15,14 +15,17 @@ function (angular, config, _) {
     $scope.init = function() {
       $scope._ = _;
       $scope.dashAlerts = alertSrv;
+      $scope.grafana = {
+        style: 'dark'
+      };
     };
 
-    $scope.onAppEvent = function(name, callback, scope) {
+    $rootScope.onAppEvent = function(name, callback) {
       var unbind = $rootScope.$on(name, callback);
-      scope.$on('$destroy', unbind);
+      this.$on('$destroy', unbind);
     };
 
-    $scope.emitAppEvent = function(name, payload) {
+    $rootScope.emitAppEvent = function(name, payload) {
       $rootScope.$emit(name, payload);
     };
 

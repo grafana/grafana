@@ -23,7 +23,6 @@ define([
   'config',
   'underscore',
   'services/all',
-  'services/dashboard/all'
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -31,25 +30,23 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, alertSrv, timer) {
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
 
     $scope.init = function() {
       $scope.availablePanels = config.panels;
-
-      dashboardKeybindings.shortcuts();
-
-      $scope.onAppEvent('setup-dashboard', $scope.setupDashboard, $scope);
+      $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
       timer.cancel_all();
-      alertSrv.clearAll();
 
       $rootScope.fullscreen = false;
 
       $scope.dashboard = dashboard.create(dashboardData);
+      $scope.grafana.style = $scope.dashboard.style;
+
       $scope.filter = filterSrv;
       $scope.filter.init($scope.dashboard);
 
@@ -62,6 +59,8 @@ function (angular, $, config, _) {
       $scope.panelMoveOut = panelMove.onOut;
 
       window.document.title = 'Grafana - ' + $scope.dashboard.title;
+
+      dashboardKeybindings.shortcuts($scope);
 
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };
@@ -119,12 +118,6 @@ function (angular, $, config, _) {
         $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
       }
       return $scope.editorTabs;
-    };
-
-    // This is whoafully incomplete, but will do for now
-    $scope.parse_error = function(data) {
-      var _error = data.match("nested: (.*?);");
-      return _.isNull(_error) ? data : _error[1];
     };
 
     $scope.colors = [
