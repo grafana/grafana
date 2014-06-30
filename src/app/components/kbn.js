@@ -26,52 +26,52 @@ function($, _, moment) {
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
-    case (Math.abs(interval) <= 500):
+    case (interval <= 500):
       return 100;       // 0.1s
     // 5s
-    case (Math.abs(interval) <= 5000):
+    case (interval <= 5000):
       return 1000;      // 1s
     // 7.5s
-    case (Math.abs(interval) <= 7500):
+    case (interval <= 7500):
       return 5000;      // 5s
     // 15s
-    case (Math.abs(interval) <= 15000):
+    case (interval <= 15000):
       return 10000;     // 10s
     // 45s
-    case (Math.abs(interval) <= 45000):
+    case (interval <= 45000):
       return 30000;     // 30s
     // 3m
-    case (Math.abs(interval) <= 180000):
+    case (interval <= 180000):
       return 60000;     // 1m
     // 9m
-    case (Math.abs(interval) <= 450000):
+    case (interval <= 450000):
       return 300000;    // 5m
     // 20m
-    case (Math.abs(interval) <= 1200000):
+    case (interval <= 1200000):
       return 600000;    // 10m
     // 45m
-    case (Math.abs(interval) <= 2700000):
+    case (interval <= 2700000):
       return 1800000;   // 30m
     // 2h
-    case (Math.abs(interval) <= 7200000):
+    case (interval <= 7200000):
       return 3600000;   // 1h
     // 6h
-    case (Math.abs(interval) <= 21600000):
+    case (interval <= 21600000):
       return 10800000;  // 3h
     // 24h
-    case (Math.abs(interval) <= 86400000):
+    case (interval <= 86400000):
       return 43200000;  // 12h
     // 48h
-    case (Math.abs(interval) <= 172800000):
+    case (interval <= 172800000):
       return 86400000;  // 24h
     // 1w
-    case (Math.abs(interval) <= 604800000):
+    case (interval <= 604800000):
       return 86400000;  // 24h
     // 3w
-    case (Math.abs(interval) <= 1814400000):
+    case (interval <= 1814400000):
       return 604800000; // 1w
     // 2y
-    case (Math.abs(interval) < 3628800000):
+    case (interval < 3628800000):
       return 2592000000; // 30d
     default:
       return 31536000000; // 1y
