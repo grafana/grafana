@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('dashUpload', function(timer, dashboard, alertSrv){
+  module.directive('dashUpload', function(timer, dashboard, alertSrv) {
     return {
       restrict: 'A',
       link: function(scope) {

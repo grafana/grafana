@@ -8,14 +8,13 @@ function (angular, app, _) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv, dashboard) {
+  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       console.log('hej!');
       $scope.datasources = datasourceSrv.listOptions();
       $scope.setDatasource(null);
     };
-
 
     $scope.setDatasource = function(datasource) {
       $scope.datasource = datasourceSrv.get(datasource);
@@ -25,7 +24,6 @@ function (angular, app, _) {
         return;
       }
     };
-
 
     $scope.listAll = function(query) {
       delete $scope.error;
@@ -70,7 +68,7 @@ function (angular, app, _) {
 
       currentRow = angular.copy(rowTemplate);
 
-      var newDashboard = angular.copy(dashboard.current);
+      var newDashboard = angular.copy($scope.dashboard);
       newDashboard.rows = [];
       newDashboard.title = state.name;
       newDashboard.rows.push(currentRow);
@@ -98,7 +96,7 @@ function (angular, app, _) {
         currentRow.panels.push(panel);
       });
 
-      dashboard.dash_load(newDashboard);
+      $scope.dashboard.dash_load(newDashboard);
     }
 
   });

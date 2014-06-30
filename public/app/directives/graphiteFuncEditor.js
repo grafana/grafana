@@ -75,11 +75,11 @@ function (angular, _, $) {
 
             if ($input.val() !== '' || func.def.params[paramIndex].optional) {
               $link.text($input.val());
-              
+
               func.updateParam($input.val(), paramIndex);
               scheduledRelinkIfNeeded();
-              
-              $scope.$apply($scope.targetChanged);              
+
+              $scope.$apply($scope.targetChanged);
             }
 
             $input.hide();
@@ -104,7 +104,7 @@ function (angular, _, $) {
 
             var options = funcDef.params[paramIndex].options;
             if (funcDef.params[paramIndex].type === 'int') {
-              options = _.map(options, function(val) { return val.toString(); } );
+              options = _.map(options, function(val) { return val.toString(); });
             }
 
             $input.typeahead({
@@ -230,7 +230,7 @@ function (angular, _, $) {
             addElementsAndCompile();
             ifJustAddedFocusFistParam();
             registerFuncControlsToggle();
-            registerFuncControlsActions();            
+            registerFuncControlsActions();
           }
 
           relink();
@@ -238,6 +238,5 @@ function (angular, _, $) {
       };
 
     });
-
 
 });

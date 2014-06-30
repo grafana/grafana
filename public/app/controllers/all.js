@@ -1,4 +1,5 @@
 define([
+  './grafanaCtrl',
   './dash',
   './dashLoader',
   './row',
@@ -11,4 +12,5 @@ define([
   './influxTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
+  './opentsdbTargetCtrl',
 ], function () {});

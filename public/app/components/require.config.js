@@ -3,7 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
-  // urlArgs: 'r=@REV@',
+
   paths: {
     config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
@@ -13,7 +13,6 @@ require.config({
     text:                     '../vendor/require/text',
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
-    chromath:                 '../vendor/chromath',
     angular:                  '../vendor/angular/angular',
     'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
@@ -42,9 +41,7 @@ require.config({
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
     'jquery.flot.byte':       '../vendor/jquery/jquery.flot.byte',
 
-
     modernizr:                '../vendor/modernizr-2.6.1',
-    elasticjs:                '../vendor/elasticjs/elastic-angular-client',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
@@ -104,8 +101,6 @@ require.config({
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
-
-    elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
 
     'bootstrap-tagsinput':          ['jquery'],
   },

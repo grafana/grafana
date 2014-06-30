@@ -18,7 +18,7 @@ type IndexViewModel struct {
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "3838"
 	}
 
 	log.Println("Starting Grafana-Pro v.1-alpha, listening on port " + port)

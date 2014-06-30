@@ -48,7 +48,7 @@
   <div class="row-fluid" ng-if="editor.index == 2">
     <h4>Select Panel Type</h4>
     <form class="form-inline">
-      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in dashboard.availablePanels|stringSort"></select>
+      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in availablePanels|stringSort"></select>
       <small ng-show="rowSpan(row) > 11">
         Note: This row is full, new panels will wrap to a new line. You should add another row.
       </small>
@@ -61,6 +61,6 @@
 </div>
 <div class="modal-footer">
   <button ng-show="editor.index == 1" ng-click="editor.index = 2;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
-  <button ng-show="panel.type && editor.index == 2" ng-click="add_panel(row,panel); reset_panel(); editor.index = 1;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
+  <button ng-show="panel.type && editor.index == 2" ng-click="add_panel(panel); reset_panel(); editor.index = 1;" class="btn btn-success" ng-disabled="panel.loadingEditor">Add Panel</button>
   <button type="button" class="btn btn-info" ng-click="editor.index=0;dismiss();reset_panel();close_edit()">Close</button>
 </div>

@@ -10,13 +10,14 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('grafanaGraph', function($rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
         var data, plot, annotations;
         var hiddenData = {};
+        var dashboard = scope.dashboard;
 
         scope.$on('refresh',function() {
           if (scope.otherPanelInFullscreenMode()) { return; }
@@ -172,7 +173,7 @@ function (angular, $, kbn, moment, _) {
           var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
 
           options.xaxis = {
-            timezone: dashboard.current.timezone,
+            timezone: dashboard.timezone,
             show: scope.panel['x-axis'],
             mode: "time",
             min: min,
@@ -258,8 +259,8 @@ function (angular, $, kbn, moment, _) {
           var defaults = {
             position: 'left',
             show: scope.panel['y-axis'],
-            min: scope.panel.grid.min,
-            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.max,
+            min: scope.panel.grid.leftMin,
+            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
           };
 
           options.yaxes.push(defaults);
@@ -267,6 +268,8 @@ function (angular, $, kbn, moment, _) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.position = 'right';
+            secondY.min = scope.panel.grid.rightMin;
+            secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
             options.yaxes.push(secondY);
             configureAxisMode(options.yaxes[1], scope.panel.y_formats[1]);
           }
@@ -329,7 +332,7 @@ function (angular, $, kbn, moment, _) {
 
             value = kbn.getFormatFunction(format, 2)(value);
 
-            timestamp = dashboard.current.timezone === 'browser' ?
+            timestamp = dashboard.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
               moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
             $tooltip
@@ -388,11 +391,11 @@ function (angular, $, kbn, moment, _) {
         }
 
         elem.bind("plotselected", function (event, ranges) {
-          scope.$apply( function() {
-              scope.filter.setTime({
-                from  : moment.utc(ranges.xaxis.from).toDate(),
-                to    : moment.utc(ranges.xaxis.to).toDate(),
-              });
+          scope.$apply(function() {
+            scope.filter.setTime({
+              from  : moment.utc(ranges.xaxis.from).toDate(),
+              to    : moment.utc(ranges.xaxis.to).toDate(),
+            });
           });
         });
       }

@@ -1,0 +1,33 @@
+<div  ng-controller='graph'
+      ng-init="init()"
+      style="min-height:{{panel.height || row.height}}"
+      ng-class="{'panel-fullscreen': fullscreen}">
+
+  <div style="position: relative">
+
+    <div ng-if="datapointsWarning" class="datapoints-warning">
+      <span class="small" ng-show="!datapointsCount">No datapoints <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+      <span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+    </div>
+
+    <div grafana-graph class="pointer histogram-chart">
+    </div>
+
+  </div>
+
+  <div ng-if="panel.legend" class="grafana-legend-container">
+    <div ng-include="'app/panels/graph/legend.html'"></div>
+  </div>
+  <div class="clearfix"></div>
+
+  <div class="panel-full-edit-tabs" ng-if="editMode">
+    <div ng-model="editor.index" bs-tabs>
+      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
+      </div>
+    </div>
+
+    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+      <div ng-include src="tab.src"></div>
+    </div>
+  </div>
+</div>

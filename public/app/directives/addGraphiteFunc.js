@@ -8,7 +8,6 @@ define([
 function (angular, app, _, $, gfunc) {
   'use strict';
 
-
   angular
     .module('kibana.directives')
     .directive('graphiteAddFunc', function($compile) {

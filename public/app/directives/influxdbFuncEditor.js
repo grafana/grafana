@@ -114,10 +114,10 @@ function (angular, _, $) {
             $paramLink.appendTo(elem);
             $input.appendTo(elem);
 
-            $input.blur(_.partial(inputBlur));
+            $input.blur(inputBlur);
             $input.keyup(inputKeyDown);
-            $input.keypress(_.partial(inputKeyPress));
-            $paramLink.click(_.partial(clickFuncParam));
+            $input.keypress(inputKeyPress);
+            $paramLink.click(clickFuncParam);
 
             addTypeahead($input);
 
@@ -132,6 +132,5 @@ function (angular, _, $) {
       };
 
     });
-
 
 });

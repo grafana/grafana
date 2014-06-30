@@ -47,10 +47,6 @@
     "version":"2.1.8",
     "license":"MIT"
   },
-  "chromath": {
-    "version":"0.0.5",
-    "license":"MIT"
-  },
   "filesaver": {
     "version":"2013-01-23",
     "license":"MIT"

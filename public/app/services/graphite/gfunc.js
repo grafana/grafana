@@ -27,7 +27,7 @@ function (_) {
   addFuncDef({
     name: 'scaleToSeconds',
     category: categories.Transform,
-    params: [ { name: 'seconds', type: 'int' } ],
+    params: [{ name: 'seconds', type: 'int' }],
     defaultParams: [1],
   });
 
@@ -39,27 +39,32 @@ function (_) {
   addFuncDef({
     name: "holtWintersConfidenceBands",
     category: categories.Calculate,
-    params: [ { name: "delta", type: 'int' } ],
+    params: [{ name: "delta", type: 'int' }],
     defaultParams: [3]
   });
 
   addFuncDef({
     name: "holtWintersAberration",
     category: categories.Calculate,
-    params: [ { name: "delta", type: 'int' } ],
+    params: [{ name: "delta", type: 'int' }],
     defaultParams: [3]
   });
 
   addFuncDef({
     name: "nPercentile",
     category: categories.Calculate,
-    params: [ { name: "Nth percentile", type: 'int' } ],
+    params: [{ name: "Nth percentile", type: 'int' }],
     defaultParams: [95]
   });
 
   addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
+    name: 'diffSeries',
     category: categories.Combine,
   });
 
@@ -82,14 +87,14 @@ function (_) {
   addFuncDef({
     name: 'percentileOfSeries',
     category: categories.Combine,
-    params: [ { name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] } ],
+    params: [{ name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] }],
     defaultParams: [95, "false"]
   });
 
   addFuncDef({
     name: 'sumSeriesWithWildcards',
     category: categories.Combine,
-    params: [ { name: "node", type: "int" } ],
+    params: [{ name: "node", type: "int" }],
     defaultParams: [3]
   });
 
@@ -108,28 +113,28 @@ function (_) {
   addFuncDef({
     name: 'averageSeriesWithWildcards',
     category: categories.Combine,
-    params: [ { name: "node", type: "int" } ],
+    params: [{ name: "node", type: "int" }],
     defaultParams: [3]
   });
 
   addFuncDef({
     name: "alias",
     category: categories.Special,
-    params: [ { name: "alias", type: 'string' } ],
+    params: [{ name: "alias", type: 'string' }],
     defaultParams: ['alias']
   });
 
   addFuncDef({
     name: "aliasSub",
     category: categories.Special,
-    params: [ { name: "search", type: 'string' }, { name: "replace", type: 'string' } ],
+    params: [{ name: "search", type: 'string' }, { name: "replace", type: 'string' }],
     defaultParams: ['', '']
   });
 
   addFuncDef({
     name: "stacked",
     category: categories.Special,
-    params: [ { name: "stack", type: 'string' } ],
+    params: [{ name: "stack", type: 'string' }],
     defaultParams: ['stacked']
   });
 
@@ -212,7 +217,7 @@ function (_) {
   addFuncDef({
     name: 'randomWalk',
     category: categories.Special,
-    params: [ { name: "name", type: "string", } ],
+    params: [{ name: "name", type: "string", }],
     defaultParams: ['randomWalk']
   });
 
@@ -224,7 +229,7 @@ function (_) {
   addFuncDef({
     name: 'constantLine',
     category: categories.Special,
-    params: [ { name: "value", type: "int", } ],
+    params: [{ name: "value", type: "int", }],
     defaultParams: [10]
   });
 
@@ -236,28 +241,28 @@ function (_) {
   addFuncDef({
     name: 'keepLastValue',
     category: categories.Special,
-    params: [ { name: "n", type: "int", } ],
+    params: [{ name: "n", type: "int", }],
     defaultParams: [100]
   });
 
   addFuncDef({
     name: 'scale',
     category: categories.Transform,
-    params: [ { name: "factor", type: "int", } ],
+    params: [{ name: "factor", type: "int", }],
     defaultParams: [1]
   });
 
   addFuncDef({
     name: 'offset',
     category: categories.Transform,
-    params: [ { name: "amount", type: "int", } ],
+    params: [{ name: "amount", type: "int", }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'transformNull',
     category: categories.Transform,
-    params: [ { name: "amount", type: "int", } ],
+    params: [{ name: "amount", type: "int", }],
     defaultParams: [0]
   });
 
@@ -274,28 +279,28 @@ function (_) {
   addFuncDef({
     name: 'nonNegativeDerivative',
     category: categories.Transform,
-    params: [ { name: "max value or 0", type: "int", } ],
+    params: [{ name: "max value or 0", type: "int", }],
     defaultParams: [0]
   });
 
   addFuncDef({
     name: 'timeShift',
     category: categories.Transform,
-    params: [ { name: "amount", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
+    params: [{ name: "amount", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
     defaultParams: ['1d']
   });
 
   addFuncDef({
     name: 'summarize',
     category: categories.Transform,
-    params: [ { name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
+    params: [{ name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
     defaultParams: ['1h', 'sum']
   });
 
   addFuncDef({
     name: 'smartSummarize',
     category: categories.Transform,
-    params: [ { name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
+    params: [{ name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
     defaultParams: ['1h', 'sum']
   });
 
@@ -307,169 +312,168 @@ function (_) {
   addFuncDef({
     name: 'hitcount',
     category: categories.Transform,
-    params: [ { name: "interval", type: "string" }],
+    params: [{ name: "interval", type: "string" }],
     defaultParams: ['10s']
   });
 
   addFuncDef({
     name: 'log',
     category: categories.Transform,
-    params: [ { name: "base", type: "int" }],
+    params: [{ name: "base", type: "int" }],
     defaultParams: ['10']
   });
-
 
   addFuncDef({
     name: 'averageAbove',
     category: categories.Filter,
-    params: [ { name: "n", type: "int", } ],
+    params: [{ name: "n", type: "int", }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'averageBelow',
     category: categories.Filter,
-    params: [ { name: "n", type: "int", } ],
+    params: [{ name: "n", type: "int", }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'currentAbove',
     category: categories.Filter,
-    params: [ { name: "n", type: "int", } ],
+    params: [{ name: "n", type: "int", }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'currentBelow',
     category: categories.Filter,
-    params: [ { name: "n", type: "int", } ],
+    params: [{ name: "n", type: "int", }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'maximumAbove',
     category: categories.Filter,
-    params: [ { name: "value", type: "int" } ],
+    params: [{ name: "value", type: "int" }],
     defaultParams: [0]
   });
 
   addFuncDef({
     name: 'maximumBelow',
     category: categories.Filter,
-    params: [ { name: "value", type: "int" } ],
+    params: [{ name: "value", type: "int" }],
     defaultParams: [0]
   });
 
   addFuncDef({
     name: 'minimumAbove',
     category: categories.Filter,
-    params: [ { name: "value", type: "int" } ],
+    params: [{ name: "value", type: "int" }],
     defaultParams: [0]
   });
 
   addFuncDef({
     name: 'limit',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'mostDeviant',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: "exclude",
     category: categories.Filter,
-    params: [ { name: "exclude", type: 'string' } ],
+    params: [{ name: "exclude", type: 'string' }],
     defaultParams: ['exclude']
   });
 
   addFuncDef({
     name: 'highestCurrent',
     category: categories.Filter,
-    params: [ { name: "count", type: "int" } ],
+    params: [{ name: "count", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'highestMax',
     category: categories.Filter,
-    params: [ { name: "count", type: "int" } ],
+    params: [{ name: "count", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'lowestCurrent',
     category: categories.Filter,
-    params: [ { name: "count", type: "int" } ],
+    params: [{ name: "count", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'movingAverage',
     category: categories.Filter,
-    params: [ { name: "window size", type: "int" } ],
+    params: [{ name: "window size", type: "int" }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'movingMedian',
     category: categories.Filter,
-    params: [ { name: "windowSize", type: "select", options: ['1min', '5min', '15min', '30min', '1hour'] } ],
+    params: [{ name: "windowSize", type: "select", options: ['1min', '5min', '15min', '30min', '1hour'] }],
     defaultParams: ['1min']
   });
 
   addFuncDef({
     name: 'stdev',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" }, { name: "tolerance", type: "int" } ],
+    params: [{ name: "n", type: "int" }, { name: "tolerance", type: "int" }],
     defaultParams: [5,0.1]
   });
 
   addFuncDef({
     name: 'highestAverage',
     category: categories.Filter,
-    params: [ { name: "count", type: "int" } ],
+    params: [{ name: "count", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'lowestAverage',
     category: categories.Filter,
-    params: [ { name: "count", type: "int" } ],
+    params: [{ name: "count", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'removeAbovePercentile',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'removeAboveValue',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'removeBelowPercentile',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [5]
   });
 
   addFuncDef({
     name: 'removeBelowValue',
     category: categories.Filter,
-    params: [ { name: "n", type: "int" } ],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [5]
   });
 

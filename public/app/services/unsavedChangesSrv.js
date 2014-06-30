@@ -3,7 +3,7 @@ define([
   'underscore',
   'config',
 ],
-function (angular, _, config) {
+function(angular, _, config) {
   'use strict';
 
   if (!config.unsaved_changes_warning) {
@@ -12,23 +12,29 @@ function (angular, _, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+
     var self = this;
     var modalScope = $rootScope.$new();
 
-    $rootScope.$on("dashboard-loaded", function(event, newDashboard ) {
-      self.original = angular.copy(newDashboard);
+    $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() {
+        self.original = angular.copy(newDashboard);
+        self.current = newDashboard;
+      }, 1000);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
+      self.current = savedDashboard;
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
       self.original = null;
     });
 
-    window.onbeforeunload = function () {
+    window.onbeforeunload = function() {
       if (self.has_unsaved_changes()) {
         return "There are unsaved changes to this dashboard";
       }
@@ -39,31 +45,32 @@ function (angular, _, config) {
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;
-          self.open_modal();
+
+          $timeout(self.open_modal);
         }
       });
     };
 
-    this.open_modal = function () {
+    this.open_modal = function() {
       var confirmModal = $modal({
-          template: './app/partials/unsaved-changes.html',
-          persist: true,
-          show: false,
-          scope: modalScope,
-          keyboard: false
-        });
+        template: './app/partials/unsaved-changes.html',
+        persist: true,
+        show: false,
+        scope: modalScope,
+        keyboard: false
+      });
 
       $q.when(confirmModal).then(function(modalEl) {
         modalEl.modal('show');
       });
     };
 
-    this.has_unsaved_changes = function () {
+    this.has_unsaved_changes = function() {
       if (!self.original) {
         return false;
       }
 
-      var current = angular.copy(dashboard.current);
+      var current = angular.copy(self.current);
       var original = self.original;
 
       // ignore timespan changes
@@ -88,7 +95,7 @@ function (angular, _, config) {
       return false;
     };
 
-    this.goto_next = function () {
+    this.goto_next = function() {
       var baseLen = $location.absUrl().length - $location.url().length;
       var nextUrl = self.next.substring(baseLen);
       $location.url(nextUrl);

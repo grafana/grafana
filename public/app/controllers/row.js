@@ -53,8 +53,54 @@ function (angular, app, _) {
       $scope.$broadcast('render');
     };
 
-    $scope.add_panel = function(row,panel) {
+    $scope.add_panel = function(panel) {
+      var rowSpan = $scope.rowSpan($scope.row);
+      var panelCount = $scope.row.panels.length;
+      var space = (12 - rowSpan) - panel.span;
+
+      // try to make room of there is no space left
+      if (space <= 0) {
+        if (panelCount === 1) {
+          $scope.row.panels[0].span = 6;
+          panel.span = 6;
+        }
+        else if (panelCount === 2) {
+          $scope.row.panels[0].span = 4;
+          $scope.row.panels[1].span = 4;
+          panel.span = 4;
+        }
+      }
+
       $scope.row.panels.push(panel);
+    };
+
+    $scope.delete_row = function() {
+      if (confirm("Are you sure you want to delete this row?")) {
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+      }
+    };
+
+    $scope.move_row = function(direction) {
+      var rowsList = $scope.dashboard.rows;
+      var rowIndex = _.indexOf(rowsList, $scope.row);
+      var newIndex = rowIndex + direction;
+      if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
+        _.move(rowsList, rowIndex, rowIndex + direction);
+      }
+    };
+
+    $scope.add_panel_default = function(type) {
+      $scope.reset_panel(type);
+      $scope.add_panel($scope.panel);
+
+      $timeout(function() {
+        $scope.$broadcast('render');
+      });
+    };
+
+    $scope.set_height = function(height) {
+      $scope.row.height = height;
+      $scope.$broadcast('render');
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
@@ -70,12 +116,12 @@ function (angular, app, _) {
         row.panels.push(angular.copy(panel));
       }
       else {
-        var rowsList = $scope.dashboard.current.rows;
+        var rowsList = $scope.dashboard.rows;
         var rowIndex = _.indexOf(rowsList, row);
         if (rowIndex === rowsList.length - 1) {
           var newRow = angular.copy($scope.row);
           newRow.panels = [];
-          $scope.dashboard.current.rows.push(newRow);
+          $scope.dashboard.rows.push(newRow);
           $scope.duplicatePanel(panel, newRow);
         }
         else {

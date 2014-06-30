@@ -15,8 +15,12 @@ function (angular, app, _) {
           var lastPulldownVal;
           var lastHideControlsVal;
 
-          $scope.$watch('dashboard.current.pulldowns', function() {
-            var panel = _.find($scope.dashboard.current.pulldowns, function(pulldown) { return pulldown.enable; });
+          $scope.$watch('dashboard.pulldowns', function() {
+            if (!$scope.dashboard) {
+              return;
+            }
+
+            var panel = _.find($scope.dashboard.pulldowns, function(pulldown) { return pulldown.enable; });
             var panelEnabled = panel ? panel.enable : false;
             if (lastPulldownVal !== panelEnabled) {
               elem.toggleClass('submenu-controls-visible', panelEnabled);
@@ -24,8 +28,12 @@ function (angular, app, _) {
             }
           }, true);
 
-          $scope.$watch('dashboard.current.hideControls', function() {
-            var hideControls = $scope.dashboard.current.hideControls || $scope.playlist_active;
+          $scope.$watch('dashboard.hideControls', function() {
+            if (!$scope.dashboard) {
+              return;
+            }
+
+            var hideControls = $scope.dashboard.hideControls || $scope.playlist_active;
 
             if (lastHideControlsVal !== hideControls) {
               elem.toggleClass('hide-controls', hideControls);
