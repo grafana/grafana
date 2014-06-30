@@ -1,5 +1,8 @@
 vNext
 
+**New features or improvements**
+- Allow [[..]] filter notation in all text panels (markdown/html/text) (Issue #511)
+
 **Changes**
 - Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
 

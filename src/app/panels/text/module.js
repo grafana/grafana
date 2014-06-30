@@ -23,7 +23,7 @@ function (angular, app, _, require) {
   var module = angular.module('kibana.panels.text', []);
   app.useModule(module);
 
-  module.controller('text', function($scope) {
+  module.controller('text', function($scope, filterSrv) {
 
     $scope.panelMeta = {
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
@@ -40,84 +40,58 @@ function (angular, app, _, require) {
 
     $scope.init = function() {
       $scope.initBaseController(this, $scope);
-
       $scope.ready = false;
+      $scope.$on('refresh', $scope.render);
+      $scope.render();
     };
 
     $scope.render = function() {
-      $scope.$emit('render');
+      if ($scope.panel.mode === 'markdown') {
+        $scope.renderMarkdown($scope.panel.content);
+      }
+      else if ($scope.panel.mode === 'html') {
+        $scope.updateContent($scope.panel.content);
+      }
+      else if ($scope.panel.mode === 'text') {
+        $scope.renderText($scope.panel.content);
+      }
+    };
+
+    $scope.renderText = function(content) {
+      content = content
+        .replace(/&/g, '&amp;')
+        .replace(/>/g, '&gt;')
+        .replace(/</g, '&lt;')
+        .replace(/\n/g, '<br/>');
+
+      $scope.updateContent(content);
+    };
+
+    $scope.renderMarkdown = function(content) {
+      require(['./lib/showdown'], function (Showdown) {
+        var converter = new Showdown.converter();
+        var text = content
+          .replace(/&/g, '&amp;')
+          .replace(/>/g, '&gt;')
+          .replace(/</g, '&lt;');
+
+        $scope.updateContent(converter.makeHtml(text));
+      });
+    };
+
+    $scope.updateContent = function(html) {
+      try {
+        $scope.content = filterSrv.applyTemplateToTarget(html);
+
+        if(!$scope.$$phase) {
+          $scope.$apply();
+        }
+      } catch(e) {
+      }
     };
 
     $scope.openEditor = function() {
-      //$scope.$emit('open-modal','paneleditor');
-      console.log('scope id', $scope.$id);
     };
 
-  });
-
-  module.directive('markdown', function() {
-    return {
-      restrict: 'E',
-      link: function(scope, element) {
-        scope.$on('render', function() {
-          render_panel();
-        });
-
-        function render_panel() {
-          require(['./lib/showdown'], function (Showdown) {
-            scope.ready = true;
-            var converter = new Showdown.converter();
-            var text = scope.panel.content.replace(/&/g, '&amp;')
-              .replace(/>/g, '&gt;')
-              .replace(/</g, '&lt;');
-            var htmlText = converter.makeHtml(text);
-            element.html(htmlText);
-            // For whatever reason, this fixes chrome. I don't like it, I think
-            // it makes things slow?
-            if(!scope.$$phase) {
-              scope.$apply();
-            }
-          });
-        }
-
-        render_panel();
-      }
-    };
-  });
-
-  module.filter('newlines', function() {
-    return function (input) {
-      return input.replace(/\n/g, '<br/>');
-    };
-  });
-
-  module.filter('striphtml', function () {
-    return function(text) {
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/>/g, '&gt;')
-        .replace(/</g, '&lt;');
-    };
-  });
-
-  module.filter('applytemplate', function(filterSrv) {
-    return function (input) {
-      return filterSrv.applyTemplateToTarget(input);
-    };
-  });
-
-  module.filter('applymarkdown', function() {
-    return function (input) {
-      if(require.defined('./lib/showdown')) {
-        var Showdown = require('./lib/showdown');
-        var converter = new Showdown.converter();
-        var text = input.replace(/&/g, '&amp;')
-           .replace(/>/g, '&gt;')
-           .replace(/</g, '&lt;');
-        return converter.makeHtml(text);
-      } else {
-        return input;
-      }
-    };
   });
 });
