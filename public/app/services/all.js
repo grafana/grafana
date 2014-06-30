@@ -1,5 +1,6 @@
 define([
   './alertSrv',
+  './dashboard',
   './datasourceSrv',
   './filterSrv',
   './timer',
@@ -8,8 +9,5 @@ define([
   './annotationsSrv',
   './playlistSrv',
   './unsavedChangesSrv',
-  './elasticsearch/es-client',
-  './dashboard/dashboardKeyBindings',
-  './dashboard/dashboardModel',
 ],
 function () {});

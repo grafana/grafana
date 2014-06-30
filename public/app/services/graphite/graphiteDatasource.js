@@ -104,7 +104,15 @@ function (angular, _, $, config, kbn, moment) {
         }
       }
 
-      return date.unix();
+      if (timezone === 'browser') {
+        date = date.local();
+      }
+
+      if (config.timezoneOffset) {
+        date = date.zone(config.timezoneOffset);
+      }
+
+      return date.format('HH:mm_YYYYMMDD');
     };
 
     GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {

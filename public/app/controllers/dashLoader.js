@@ -1,33 +1,32 @@
 define([
   'angular',
   'underscore',
-  'moment',
-  'filesaver'
+  'moment'
 ],
 function (angular, _, moment) {
   'use strict';
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, elastic) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv) {
 
     $scope.init = function() {
       $scope.gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
       $scope.gist = $scope.gist || {};
       $scope.elasticsearch = $scope.elasticsearch || {};
 
-      $scope.onAppEvent('save-dashboard', function() {
-        $scope.saveDashboard();
+      $rootScope.$on('save-dashboard', function() {
+        $scope.elasticsearch_save('dashboard', false);
       });
 
-      $scope.onAppEvent('zoom-out', function() {
+      $rootScope.$on('zoom-out', function() {
         $scope.zoom(2);
       });
 
     };
 
     $scope.exitFullscreen = function() {
-      $scope.emitAppEvent('panel-fullscreen-exit');
+      $rootScope.$emit('panel-fullscreen-exit');
     };
 
     $scope.showDropdown = function(type) {
@@ -37,64 +36,94 @@ function (angular, _, moment) {
 
       var _l = $scope.dashboard.loader;
       if(type === 'load') {
-        return (_l.load_elasticsearch || _l.load_gist);
+        return (_l.load_elasticsearch || _l.load_gist || _l.load_local);
       }
       if(type === 'save') {
-        return (_l.save_elasticsearch || _l.save_gist);
+        return (_l.save_elasticsearch || _l.save_gist || _l.save_local || _l.save_default);
+      }
+      if(type === 'share') {
+        return (_l.save_temp);
       }
       return false;
     };
 
     $scope.set_default = function() {
-      window.localStorage.grafanaDashboardDefault = $location.path();
-      alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
+      if($scope.dashboard.set_default($location.path())) {
+        alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
+      } else {
+        alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
+      }
     };
 
     $scope.purge_default = function() {
-      delete window.localStorage.grafanaDashboardDefault;
-      alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default','success', 5000);
+      if($scope.dashboard.purge_default()) {
+        alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default',
+          'success',5000);
+      } else {
+        alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
+      }
     };
 
-    $scope.saveForSharing = function() {
-      elastic.saveForSharing($scope.dashboard)
+    $scope.elasticsearch_save = function(type,ttl) {
+      $scope.dashboard.elasticsearch_save(type, $scope.dashboard.title, ttl)
         .then(function(result) {
+          if(_.isUndefined(result._id)) {
+            alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
+            return;
+          }
 
-          $scope.share = { url: result.url, title: result.title };
-
-        }, function(err) {
-          alertSrv.set('Save for sharing failed', err, 'error',5000);
-        });
-    };
-
-    $scope.saveDashboard = function() {
-      elastic.saveDashboard($scope.dashboard, $scope.dashboard.title)
-        .then(function(result) {
-          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result.title + '"','success', 5000);
-
-          $location.path(result.url);
+          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result._id + '"','success', 5000);
+          if(type === 'temp') {
+            $scope.share = $scope.dashboard.share_link($scope.dashboard.title,'temp',result._id);
+          }
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
-
-        }, function(err) {
-          alertSrv.set('Save failed', err, 'error',5000);
         });
     };
 
-    $scope.deleteDashboard = function(id) {
+    $scope.elasticsearch_delete = function(id) {
       if (!confirm('Are you sure you want to delete dashboard?')) {
         return;
       }
 
-      elastic.deleteDashboard(id).then(function(id) {
-        alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
-      }, function() {
-        alertSrv.set('Dashboard Not Deleted', 'An error occurred deleting the dashboard', 'error', 5000);
+      $scope.dashboard.elasticsearch_delete(id).then(
+        function(result) {
+          if(!_.isUndefined(result)) {
+            if(result.found) {
+              alertSrv.set('Dashboard Deleted',id+' has been deleted','success',5000);
+              // Find the deleted dashboard in the cached list and remove it
+              var toDelete = _.where($scope.elasticsearch.dashboards,{_id:id})[0];
+              $scope.elasticsearch.dashboards = _.without($scope.elasticsearch.dashboards,toDelete);
+            } else {
+              alertSrv.set('Dashboard Not Found','Could not find '+id+' in Elasticsearch','warning',5000);
+            }
+          } else {
+            alertSrv.set('Dashboard Not Deleted','An error occurred deleting the dashboard','error',5000);
+          }
+        }
+      );
+    };
+
+    $scope.save_gist = function() {
+      $scope.dashboard.save_gist($scope.gist.title).then(function(link) {
+        if (!_.isUndefined(link)) {
+          $scope.gist.last = link;
+          alertSrv.set('Gist saved','You will be able to access your exported dashboard file at '+
+          '<a href="'+link+'">'+link+'</a> in a moment','success');
+        } else {
+          alertSrv.set('Save failed','Gist could not be saved','error',5000);
+        }
       });
     };
 
-    $scope.exportDashboard = function() {
-      var blob = new Blob([angular.toJson($scope.dashboard, true)], { type: "application/json;charset=utf-8" });
-      window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
+    $scope.gist_dblist = function(id) {
+      $scope.dashboard.gist_list(id).then(function(files) {
+        if (files && files.length > 0) {
+          $scope.gist.files = files;
+        } else {
+          alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
+        }
+      });
     };
 
     // function $scope.zoom
@@ -120,16 +149,12 @@ function (angular, _, moment) {
       });
     };
 
-    $scope.styleUpdated = function() {
-      $scope.grafana.style = $scope.dashboard.style;
-    };
-
     $scope.openSaveDropdown = function() {
-      $scope.isFavorite = playlistSrv.isCurrentFavorite($scope.dashboard);
+      $scope.isFavorite = playlistSrv.isCurrentFavorite();
     };
 
     $scope.markAsFavorite = function() {
-      playlistSrv.markAsFavorite($scope.dashboard);
+      playlistSrv.markAsFavorite();
       $scope.isFavorite = true;
     };
 

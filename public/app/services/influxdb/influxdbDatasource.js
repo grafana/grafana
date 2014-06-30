@@ -17,6 +17,7 @@ function (angular, _, kbn) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
+
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
@@ -32,7 +33,6 @@ function (angular, _, kbn) {
         }
 
         var timeFilter = getTimeFilter(options);
-        var groupByField;
 
         if (target.rawQuery) {
           query = target.query;
@@ -42,10 +42,6 @@ function (angular, _, kbn) {
           var whereIndex = lowerCaseQueryElements.indexOf("where");
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
-
-          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
-            groupByField = lowerCaseQueryElements[1].replace(',', '');
-          }
 
           if (whereIndex !== -1) {
             queryElements.splice(whereIndex + 1, 0, timeFilter, "and");
@@ -67,10 +63,9 @@ function (angular, _, kbn) {
           query = filterSrv.applyTemplateToTarget(query);
         }
         else {
-
-          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
+          var template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]])[[group_comma]] [[group]] order asc";
+                         "group by time([[interval]]) order asc";
 
           var templateData = {
             series: target.series,
@@ -78,17 +73,11 @@ function (angular, _, kbn) {
             func: target.function,
             timeFilter: timeFilter,
             interval: target.interval || options.interval,
-            condition_add: target.condition_filter ? 'and' : '',
-            condition_key: target.condition_filter ? target.condition_key : '',
-            condition_op: target.condition_filter ? target.condition_op : '',
-            condition_value: target.condition_filter ? target.condition_value : '',
-            group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
-            group: target.groupby_field_add ? target.groupby_field : '',
+            condition_add: target.condiction_filter ? target.condition_add : '',
+            condition_key: target.condiction_filter ? target.condition_key : '',
+            condition_op: target.condiction_filter ? target.condition_op : '',
+            condition_value: target.condiction_filter ? target.condition_value: ''
           };
-
-          if(!templateData.series.match('^/.*/')) {
-            templateData.series = '"' + templateData.series + '"';
-          }
 
           query = _.template(template, templateData, this.templateSettings);
           query = filterSrv.applyTemplateToTarget(query);
@@ -97,15 +86,10 @@ function (angular, _, kbn) {
             alias = filterSrv.applyTemplateToTarget(target.alias);
           }
 
-          if (target.groupby_field_add) {
-            groupByField = target.groupby_field;
-          }
-
           target.query = query;
         }
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
-        return this.doInfluxRequest(query, alias).then(handleResponse);
+        return this.doInfluxRequest(query, alias).then(handleInfluxQueryResponse);
 
       }, this);
 
@@ -116,10 +100,11 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from /' + seriesName + '/ limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
         if (!data) {
           return [];
         }
+
         return data[0].columns;
       });
     };
@@ -141,7 +126,7 @@ function (angular, _, kbn) {
         return $q.reject(err);
       }
 
-      return this.doInfluxRequest(query)
+      return this.doInfluxRequest(query, 'filters')
         .then(function (results) {
           return _.map(results[0].points, function (metric) {
             return {
@@ -154,18 +139,16 @@ function (angular, _, kbn) {
 
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function(reason) {
-        if (reason.status !== 0 || reason.status >= 300) {
+        if (reason.status !== 0) {
           deferred.reject(reason);
         }
-        else {
-          setTimeout(function() {
-            return retry(deferred, callback, Math.min(delay * 2, 30000));
-          }, delay);
-        }
+        setTimeout(function() {
+          return retry(deferred, callback, Math.min(delay * 2, 30000));
+        }, delay);
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query, alias) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -187,6 +170,7 @@ function (angular, _, kbn) {
         };
 
         return $http(options).success(function (data) {
+          data.alias = alias;
           deferred.resolve(data);
         });
       }, 10);
@@ -194,54 +178,28 @@ function (angular, _, kbn) {
       return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(alias, groupByField, data) {
+    function handleInfluxQueryResponse(data) {
       var output = [];
 
       _.each(data, function(series) {
-        var seriesName;
         var timeCol = series.columns.indexOf('time');
-        var valueCol = 1;
-        var groupByCol = -1;
 
-        if (groupByField) {
-          groupByCol = series.columns.indexOf(groupByField);
-        }
-
-        // find value column
         _.each(series.columns, function(column, index) {
-          if (column !== 'time' && column !== 'sequence_number' && column !== groupByField) {
-            valueCol = index;
+          if (column === "time" || column === "sequence_number") {
+            return;
           }
-        });
 
-        var groups = {};
-
-        if (groupByField) {
-          groups = _.groupBy(series.points, function (point) {
-            return point[groupByCol];
-          });
-        }
-        else {
-          groups[series.columns[valueCol]] = series.points;
-        }
-
-        _.each(groups, function(groupPoints, key) {
+          var target = data.alias || series.name + "." + column;
           var datapoints = [];
-          for (var i = 0; i < groupPoints.length; i++) {
-            var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-            datapoints[i] = [metricValue, groupPoints[i][timeCol]];
+          var value;
+
+          for (var i = 0; i < series.points.length; i++) {
+            value = isNaN(series.points[i][index]) ? null : series.points[i][index];
+            datapoints[i] = [value, series.points[i][timeCol]];
           }
 
-          seriesName = alias ? alias : (series.name + '.' + key);
-
-          // if mulitple groups append key to alias
-          if (alias && groupByField) {
-            seriesName += key;
-          }
-
-          output.push({ target: seriesName, datapoints: datapoints });
+          output.push({ target: target, datapoints: datapoints });
         });
-
       });
 
       return output;

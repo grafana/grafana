@@ -8,33 +8,33 @@ define([
   'modernizr',
   'filesaver'
 ],
-function (angular, $, kbn, _, config, moment, Modernizr) {
+function (angular, $, kbn, _) {
   'use strict';
 
   var module = angular.module('kibana.services');
 
-  module.service('dashboard', function(
-    $routeParams, $http, $rootScope, $injector, $location, $timeout,
-    ejsResource, timer, alertSrv, $q
-  ) {
-    // A hash of defaults to use when loading a dashboard
+  module.service('dashboard', function(timer, $rootScope, $timeout) {
 
-    var _dash = {
-      title: "",
-      tags: [],
-      style: "dark",
-      timezone: 'browser',
-      editable: true,
-      failover: false,
-      panel_hints: true,
-      rows: [],
-      pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
-      nav: [ { type: 'timepicker' } ],
-      services: {},
-      loader: {
+    function DashboardModel (data) {
+
+      if (!data) {
+        data = {};
+      }
+
+      this.title = data.title;
+      this.tags = data.tags || [];
+      this.style = data.style || "dark";
+      this.timezone = data.browser || 'browser';
+      this.editable = data.editble || true;
+      this.rows = data.rows || [];
+      this.pulldowns = data.pulldowns || [];
+      this.nav = data.nav || [];
+      this.services = data.services || {};
+      this.loader = data.loader || {};
+
+      _.defaults(this.loader, {
         save_gist: false,
         save_elasticsearch: true,
-        save_local: true,
         save_default: true,
         save_temp: true,
         save_temp_ttl_enable: true,
@@ -42,10 +42,68 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         load_gist: false,
         load_elasticsearch: true,
         load_elasticsearch_size: 20,
-        load_local: false,
         hide: false
-      },
-      refresh: false
+      });
+
+      if (this.nav.length === 0) {
+        this.nav.push({ type: 'timepicker' });
+      }
+
+      if (!_.findWhere(this.pulldowns, {type: 'filtering'})) {
+        this.pulldowns.push({ type: 'filtering', enable: false });
+      }
+
+      if (!_.findWhere(this.pulldowns, {type: 'annotations'})) {
+        this.pulldowns.push({ type: 'annotations', enable: false });
+      }
+
+      _.each(this.rows, function(row) {
+        _.each(row.panels, function(panel) {
+          if (panel.type === 'graphite') {
+            panel.type = 'graph';
+          }
+        });
+      });
+    }
+
+    var p = DashboardModel.prototype;
+
+    p.emit_refresh = function() {
+      $rootScope.$broadcast('refresh');
+    };
+
+    p.set_interval = function(interval) {
+      this.refresh = interval;
+
+      if (interval) {
+        var _i = kbn.interval_to_ms(interval);
+        timer.cancel(this.refresh_timer);
+        var self = this;
+
+        this.refresh_timer = timer.register($timeout(function() {
+          self.set_interval(interval);
+          self.emit_refresh();
+        },_i));
+        this.emit_refresh();
+      } else {
+        timer.cancel(this.refresh_timer);
+      }
+    };
+
+    // An elasticJS client to use
+    /*var ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
+    var gist_pattern = /(^\d{5,}$)|(^[a-z0-9]{10,}$)|(gist.github.com(\/*.*)\/[a-z0-9]{5,}\/*$)/;
+*/
+    return {
+      create: function(dashboard) {
+        return new DashboardModel(dashboard);
+      }
+    };
+
+    /*// A hash of defaults to use when loading a dashboard
+
+    var _dash = {
+
     };
 
     // An elasticJS client to use
@@ -59,7 +117,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.last = {};
     this.availablePanels = [];
 
-    $rootScope.$on('$routeChangeSuccess',function(){
+    $rootScope.$on('$routeChangeSuccess',function() {
       // Clear the current dashboard to prevent reloading
       self.current = {};
       self.indices = [];
@@ -138,6 +196,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         });
       }
 
+      _.each(dashboard.rows, function(row) {
+        _.each(row.panels, function(panel) {
+          if (panel.type === 'graphite') {
+            panel.type = 'graph';
+          }
+        });
+      });
+
       return dashboard;
     };
 
@@ -159,12 +225,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         self.set_interval(dashboard.refresh);
       }
 
-      // Set the available panels for the "Add Panel" drop down
-      self.availablePanels = _.difference(config.panel_names,
-        _.pluck(_.union(self.current.nav,self.current.pulldowns),'type'));
-
-      // Take out any that we're not allowed to add from the gui.
-      self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
+      self.availablePanels = config.panels;
 
       $rootScope.$emit('dashboard-loaded', self.current);
 
@@ -323,6 +384,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       })
       .then(function(result) {
         /*jshint -W054 */
+/*
         var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', result.data);
         var script_result = script_func($routeParams,kbn,_,moment, window, document, $, $);
 
@@ -456,6 +518,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         timer.cancel(self.refresh_timer);
       }
     };
-  });
+  */
 
+  });
 });

@@ -94,7 +94,7 @@ define([
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
 
-        if (!this.dashboard.services.filter) {
+/*        if (!this.dashboard.services.filter) {
           this.dashboard.services.filter = {
             list: [],
             time: {
@@ -103,7 +103,7 @@ define([
             }
           };
         }
-
+*/
         this.time = dashboard.services.filter.time;
         this.templateParameters = dashboard.services.filter.list || [];
         this.updateTemplateData(true);

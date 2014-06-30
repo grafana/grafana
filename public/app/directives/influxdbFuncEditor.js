@@ -114,10 +114,10 @@ function (angular, _, $) {
             $paramLink.appendTo(elem);
             $input.appendTo(elem);
 
-            $input.blur(inputBlur);
+            $input.blur(_.partial(inputBlur));
             $input.keyup(inputKeyDown);
-            $input.keypress(inputKeyPress);
-            $paramLink.click(clickFuncParam);
+            $input.keypress(_.partial(inputKeyPress));
+            $paramLink.click(_.partial(clickFuncParam));
 
             addTypeahead($input);
 

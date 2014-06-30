@@ -646,6 +646,62 @@ define([
         var jump = 1; // A length of a jump, after we're done
                       // parsing this character.
 
+        // Special treatment for some escaped characters.
+        if (char === "\\") {
+          this.skip();
+          char = this.peek();
+
+          switch (char) {
+          case "'":
+            break;
+          case "b":
+            char = "\b";
+            break;
+          case "f":
+            char = "\f";
+            break;
+          case "n":
+            char = "\n";
+            break;
+          case "r":
+            char = "\r";
+            break;
+          case "t":
+            char = "\t";
+            break;
+          case "0":
+            char = "\0";
+            break;
+          case "u":
+            char = String.fromCharCode(parseInt(this.input.substr(1, 4), 16));
+            jump = 5;
+            break;
+          case "v":
+            char = "\v";
+            break;
+          case "x":
+            var x = parseInt(this.input.substr(1, 2), 16);
+            char = String.fromCharCode(x);
+            jump = 3;
+            break;
+          case "\\":
+          case "\"":
+          case "/":
+            break;
+          case "":
+            char = "";
+            break;
+          case "!":
+            if (value.slice(value.length - 2) === "<") {
+              break;
+            }
+
+            /*falls through */
+          default:
+            // Weird escaping.
+          }
+        }
+
         value += char;
         this.skip(jump);
       }
