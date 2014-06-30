@@ -1,6 +1,18 @@
 vNext
 
 **New features or improvements**
+- Allow [[..]] filter notation in all text panels (markdown/html/text) (Issue #511)
+
+**Changes**
+- Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
+
+**Fixes**
+- Fix formatting negative values (PR #545)
+
+
+# 1.6.1 (2014-06-24)
+
+**New features or improvements**
 - Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
 
 **Fixes**

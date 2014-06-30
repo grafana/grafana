@@ -24,7 +24,7 @@
           "type": "text",
           "loadingEditor": false,
           "mode": "markdown",
-          "content": "####Thank you for trying out Grafana! \n\nGeneral documentation is found in the readme and in the wiki section of the [Github Project](https://github.com/torkelo/grafana). If you encounter any problem or have an idea for an improvement do not hesitate to open a github issue. \n\nTips: \n\n- Ctrl+S saves the current dashboard\n- Ctrl+F Opens the dashboard finder (searches elastic search)\n- Ctrl+H Hide/show row controls \n- Click and drag graph title to move panel (only works when row controls are enabled)\n\nIf you do not see a graph in the panel bellow the browser cannot access your graphite installation. Please make sure that the graphiteUrl property in config.js is correctly set and accessible.",
+          "content": "####Thank you for trying out Grafana! \n\nGeneral documentation is found in the readme and in the wiki section of the [Github Project](https://github.com/torkelo/grafana). If you encounter any problem or have an idea for an improvement do not hesitate to open a github issue. \n\nTips: \n\n- Ctrl+S saves the current dashboard\n- Ctrl+F Opens the dashboard finder (searches elastic search)\n- Ctrl+H Hide/show row controls \n- Click and drag graph title to move panel (only works when row controls are enabled)\n\nIf you do not see a graph in the panel below the browser cannot access your graphite installation. Please make sure that datasources property in config.js is correctly set and that any urls accessible from your browser.",
           "style": {},
           "title": "Welcome to Grafana"
         }
@@ -41,7 +41,7 @@
         {
           "span": 12,
           "editable": true,
-          "type": "graphite",
+          "type": "graph",
           "x-axis": true,
           "y-axis": true,
           "scale": 1,
