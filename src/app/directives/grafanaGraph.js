@@ -40,9 +40,7 @@ function (angular, $, kbn, moment, _) {
           data = renderData || data;
           annotations = data.annotations;
           render_panel();
-          if(_.isString(renderData)){
-            data = tempdata;
-          }
+          data = tempdata;
         });
 
         // Re-render if the window is resized
