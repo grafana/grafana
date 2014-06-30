@@ -9,3 +9,4 @@ config.js
 # Editor junk
 *.sublime-workspace
 *.swp
+.idea
