@@ -26,52 +26,52 @@ function($, _, moment) {
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
-    case (interval <= 500):
+    case (Math.abs(interval) <= 500):
       return 100;       // 0.1s
     // 5s
-    case (interval <= 5000):
+    case (Math.abs(interval) <= 5000):
       return 1000;      // 1s
     // 7.5s
-    case (interval <= 7500):
+    case (Math.abs(interval) <= 7500):
       return 5000;      // 5s
     // 15s
-    case (interval <= 15000):
+    case (Math.abs(interval) <= 15000):
       return 10000;     // 10s
     // 45s
-    case (interval <= 45000):
+    case (Math.abs(interval) <= 45000):
       return 30000;     // 30s
     // 3m
-    case (interval <= 180000):
+    case (Math.abs(interval) <= 180000):
       return 60000;     // 1m
     // 9m
-    case (interval <= 450000):
+    case (Math.abs(interval) <= 450000):
       return 300000;    // 5m
     // 20m
-    case (interval <= 1200000):
+    case (Math.abs(interval) <= 1200000):
       return 600000;    // 10m
     // 45m
-    case (interval <= 2700000):
+    case (Math.abs(interval) <= 2700000):
       return 1800000;   // 30m
     // 2h
-    case (interval <= 7200000):
+    case (Math.abs(interval) <= 7200000):
       return 3600000;   // 1h
     // 6h
-    case (interval <= 21600000):
+    case (Math.abs(interval) <= 21600000):
       return 10800000;  // 3h
     // 24h
-    case (interval <= 86400000):
+    case (Math.abs(interval) <= 86400000):
       return 43200000;  // 12h
     // 48h
-    case (interval <= 172800000):
+    case (Math.abs(interval) <= 172800000):
       return 86400000;  // 24h
     // 1w
-    case (interval <= 604800000):
+    case (Math.abs(interval) <= 604800000):
       return 86400000;  // 24h
     // 3w
-    case (interval <= 1814400000):
+    case (Math.abs(interval) <= 1814400000):
       return 604800000; // 1w
     // 2y
-    case (interval < 3628800000):
+    case (Math.abs(interval) < 3628800000):
       return 2592000000; // 30d
     default:
       return 31536000000; // 1y
@@ -481,23 +481,23 @@ function($, _, moment) {
   };
 
   kbn.msFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ms";
     }
     // Less than 1 min
-    else if (size < 60000) {
+    else if (Math.abs(size) < 60000) {
       return (size / 1000).toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600000) {
+    else if (Math.abs(size) < 3600000) {
       return (size / 60000).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400000) {
+    else if (Math.abs(size) < 86400000) {
       return (size / 3600000).toFixed(decimals) + " hour";
     }
     // Less than one year, devide in days
-    else if (size < 31536000000) {
+    else if (Math.abs(size) < 31536000000) {
       return (size / 86400000).toFixed(decimals) + " day";
     }
 
@@ -506,23 +506,23 @@ function($, _, moment) {
 
   kbn.sFormat = function(size, decimals) {
     // Less than 10 min, use seconds
-    if (size < 600) {
+    if (Math.abs(size) < 600) {
       return size.toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600) {
+    else if (Math.abs(size) < 3600) {
       return (size / 60).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400) {
+    else if (Math.abs(size) < 86400) {
       return (size / 3600).toFixed(decimals) + " hour";
     }
     // Less than one week, devide in days
-    else if (size < 604800) {
+    else if (Math.abs(size) < 604800) {
       return (size / 86400).toFixed(decimals) + " day";
     }
     // Less than one year, devide in week
-    else if (size < 31536000) {
+    else if (Math.abs(size) < 31536000) {
       return (size / 604800).toFixed(decimals) + " week";
     }
 
@@ -530,10 +530,10 @@ function($, _, moment) {
   };
 
   kbn.microsFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " µs";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " ms";
     }
     else {
@@ -542,16 +542,16 @@ function($, _, moment) {
   };
 
   kbn.nanosFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ns";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " µs";
     }
-    else if (size < 1000000000) {
+    else if (Math.abs(size) < 1000000000) {
       return (size / 1000000).toFixed(decimals) + " ms";
     }
-    else if (size < 60000000000){
+    else if (Math.abs(size) < 60000000000){
       return (size / 1000000000).toFixed(decimals) + " s";
     }
     else {
