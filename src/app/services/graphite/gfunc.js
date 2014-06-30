@@ -64,6 +64,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'diffSeries',
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'averageSeries',
     shortName: 'avg',
     category: categories.Combine,
