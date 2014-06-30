@@ -353,8 +353,10 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
           url += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
           url += scope.panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-          url += scope.panel.grid.min !== null ? '&yMin=' + scope.panel.grid.min : '';
-          url += scope.panel.grid.max !== null ? '&yMax=' + scope.panel.grid.max : '';
+          url += scope.panel.grid.leftMin !== null ? '&yMin=' + scope.panel.grid.leftMin : '';
+          url += scope.panel.grid.leftMax !== null ? '&yMax=' + scope.panel.grid.leftMax : '';
+          url += scope.panel.grid.rightMin !== null ? '&yMin=' + scope.panel.grid.rightMin : '';
+          url += scope.panel.grid.rightMax !== null ? '&yMax=' + scope.panel.grid.rightMax : '';
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
