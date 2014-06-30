@@ -97,28 +97,6 @@ function (angular, _, moment) {
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
-    $scope.save_gist = function() {
-      $scope.dashboard.save_gist($scope.gist.title).then(function(link) {
-        if (!_.isUndefined(link)) {
-          $scope.gist.last = link;
-          alertSrv.set('Gist saved','You will be able to access your exported dashboard file at '+
-          '<a href="'+link+'">'+link+'</a> in a moment','success');
-        } else {
-          alertSrv.set('Save failed','Gist could not be saved','error',5000);
-        }
-      });
-    };
-
-    $scope.gist_dblist = function(id) {
-      $scope.dashboard.gist_list(id).then(function(files) {
-        if (files && files.length > 0) {
-          $scope.gist.files = files;
-        } else {
-          alertSrv.set('Gist Failed','Could not retrieve dashboard list from gist','error',5000);
-        }
-      });
-    };
-
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
