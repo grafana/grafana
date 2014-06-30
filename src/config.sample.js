@@ -32,6 +32,9 @@ function (Settings) {
     // default start dashboard
     default_route: '/dashboard/file/default.json',
 
+    // Elasticsearch index for storing dashboards
+    grafana_index: "grafana-dash",
+
     // timezoneOFfset:
     // If you experiance problems with zoom, it is probably caused by timezone diff between
     // your browser and the graphite-web application. timezoneOffset setting can be used to have Grafana
@@ -44,16 +47,12 @@ function (Settings) {
     //
     timezoneOffset: null,
 
-    // Elasticsearch index for storing dashboards
-    grafana_index: "grafana-dash",
-
     // set to false to disable unsaved changes warning
     unsaved_changes_warning: true,
 
     // set the default timespan for the playlist feature
     // Example: "1m", "1h"
     playlist_timespan: "1m",
-
 
     // Add your own custom pannels
     plugins: {

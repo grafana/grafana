@@ -42,6 +42,7 @@ function (angular) {
     $scope.seriesBlur = function() {
       if ($scope.oldSeries !== $scope.target.series) {
         $scope.oldSeries = $scope.target.series;
+        $scope.columnList = null;
         $scope.get_data();
       }
     };
@@ -67,7 +68,7 @@ function (angular) {
     };
 
     $scope.listSeries = function(query, callback) {
-      if (!seriesList) {
+      if (!seriesList || query === '') {
         seriesList = [];
         $scope.datasource.listSeries().then(function(series) {
           seriesList = series;

@@ -17,7 +17,7 @@ function (angular, _, moment) {
       $scope.elasticsearch = $scope.elasticsearch || {};
 
       $scope.onAppEvent('save-dashboard', function() {
-        $scope.elasticsearch_save('dashboard', false);
+        $scope.saveDashboard();
       });
 
       $scope.onAppEvent('zoom-out', function() {
@@ -140,6 +140,10 @@ function (angular, _, moment) {
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
       });
+    };
+
+    $scope.styleUpdated = function() {
+      $scope.grafana.style = $scope.dashboard.style;
     };
 
     $scope.openSaveDropdown = function() {

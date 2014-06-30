@@ -15,6 +15,9 @@ function (angular, config, _) {
     $scope.init = function() {
       $scope._ = _;
       $scope.dashAlerts = alertSrv;
+      $scope.grafana = {
+        style: 'dark'
+      };
     };
 
     $rootScope.onAppEvent = function(name, callback) {

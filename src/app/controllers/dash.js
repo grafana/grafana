@@ -45,6 +45,8 @@ function (angular, $, config, _) {
       $rootScope.fullscreen = false;
 
       $scope.dashboard = dashboard.create(dashboardData);
+      $scope.grafana.style = $scope.dashboard.style;
+
       $scope.filter = filterSrv;
       $scope.filter.init($scope.dashboard);
 

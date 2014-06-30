@@ -67,21 +67,25 @@ function (angular, $, kbn, _) {
       $rootScope.$broadcast('refresh');
     };
 
-    p.set_interval = function(interval) {
-      this.refresh = interval;
+    p.start_scheduled_refresh = function (after_ms) {
+      this.cancel_scheduled_refresh();
+      this.refresh_timer = timer.register($timeout(function () {
+        this.start_scheduled_refresh(after_ms);
+        this.emit_refresh();
+      }.bind(this), after_ms));
+    };
 
+    p.cancel_scheduled_refresh = function () {
+      timer.cancel(this.refresh_timer);
+    };
+
+    p.set_interval = function (interval) {
+      this.refresh = interval;
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
-        timer.cancel(this.refresh_timer);
-        var self = this;
-
-        this.refresh_timer = timer.register($timeout(function() {
-          self.set_interval(interval);
-          self.emit_refresh();
-        },_i));
-        this.emit_refresh();
+        this.start_scheduled_refresh(_i);
       } else {
-        timer.cancel(this.refresh_timer);
+        this.cancel_scheduled_refresh();
       }
     };
 

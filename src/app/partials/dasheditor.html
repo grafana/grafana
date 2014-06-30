@@ -15,7 +15,7 @@
           <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.title'></input>
         </div>
         <div class="editor-option">
-          <label class="small">Style</label><select class="input-small" ng-model="dashboard.style" ng-options="f for f in ['dark','light']"></select>
+          <label class="small">Theme</label><select class="input-small" ng-model="dashboard.style" ng-options="f for f in ['dark','light']" ng-change="styleUpdated()"></select>
         </div>
         <div class="editor-option">
           <label class="small">Time correction</label>

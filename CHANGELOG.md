@@ -1,4 +1,18 @@
-# vNext
+vNext
+
+**New features or improvements**
+- Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
+
+**Fixes**
+
+- Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
+- Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names (Fixes #506)
+- Series names and column name typeahead cache fix (Fixes #522)
+- Fixed influxdb issue with raw query that caused wrong value column detection (Fixes #504)
+- Default property that marks which datasource is default in config.js is now optional (Fixes #526)
+- Auto-refresh caused 2 refreshes (and hence mulitple queries) each time (at least in firefox) (Fixes #342)
+
+# 1.6.0 (2014-06-16)
 
 #### New features or improvements
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
@@ -28,6 +42,7 @@
   Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
 
 #### Fixes
+- Graphite query lexer change, can now handle regex parameters for aliasSub function (Fixes #126)
 - Filter option loading when having muliple nested filters now works better.
   Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
   After an option is changed and a nested template param is also reloaded, if the current value
