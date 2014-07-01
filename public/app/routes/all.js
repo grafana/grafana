@@ -1,7 +1,5 @@
 define([
-  './dashboard-from-es',
-  './dashboard-from-file',
-  './dashboard-from-script',
+  './dashboard-from-backend',
   './dashboard-default',
 ],
 function () {});

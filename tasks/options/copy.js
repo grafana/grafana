@@ -10,7 +10,13 @@ module.exports = function(config) {
     oss: {
     	cwd: 'grafana/src',
     	expand: true,
-    	src: ['**/*', '!config.js', '!app/app.js', '!index.html'],
+    	src: [
+        '**/*',
+        '!app/routes/**',
+        '!config.js',
+        '!app/app.js',
+        '!index.html'
+      ],
     	dest: 'public'
     }
   };
