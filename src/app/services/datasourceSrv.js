@@ -12,7 +12,8 @@ function (angular, _, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, OpenTSDBDatasource, KairosDBDatasource) {
+  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource,
+                                           OpenTSDBDatasource, KairosDBDatasource) {
 
     this.init = function() {
       var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
