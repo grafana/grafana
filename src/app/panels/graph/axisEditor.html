@@ -103,6 +103,9 @@
   <div class="section">
     <h5>Show Axes</h5>
     <div class="editor-option">
+      <label class="small">Logarithmic Y-axis (base 10)</label><input type="checkbox" ng-model="panel.logBase" ng-checked="panel.logBase" ng-change="render();">
+    </div>
+    <div class="editor-option">
       <label class="small">X-Axis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
     </div>
     <div class="editor-option">

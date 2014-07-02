@@ -262,6 +262,28 @@ function (angular, $, kbn, moment, _) {
             max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
           };
 
+          if (scope.panel.logBase) {
+            //assume base = 10 for now
+            var base = 10;
+            defaults['transform']         = function (v) { return Math.log(v) / Math.LN10; };
+            defaults['inverseTransform']  = function (v) { return Math.pow(base,v); };
+
+            //somehow info.max is a string. Thank you unityped prog language.
+            var max_data = _.max(data,function(d) { return parseFloat(d.info.max); });
+            var min_data = _.min(data,function(d) { return d.info.min; });
+            defaults['min']  = min_data.info.min;
+            defaults['max']  = max_data.info.max;
+
+            //Quick solution for ticks.
+            var ticks = [];
+            var tick =  min_data.info.min;
+            while(tick < max_data.info.max)  {
+              ticks.push(tick);
+              tick = tick*base;
+            }
+            defaults['ticks'] = ticks;
+          }
+
           options.yaxes.push(defaults);
 
           if (_.findWhere(data, {yaxis: 2})) {
@@ -359,6 +381,7 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.grid.rightMax !== null ? '&yMax=' + scope.panel.grid.rightMax : '';
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
+          url += scope.panel.logBase   ? '&logBase=10' : '';
 
           switch(scope.panel.y_formats[0]) {
           case 'bytes':

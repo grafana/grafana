@@ -50,6 +50,7 @@
             "max": null,
             "min": null
           },
+          "logBase" : false,
           "resolution": 100,
           "lines": true,
           "fill": 1,
@@ -73,15 +74,17 @@
           },
           "targets": [
             {
-              "target": "randomWalk('random walk')"
+                "target" : "offset(absolute(randomWalk('1000')),1000)"
             },
             {
-              "target": "randomWalk('random walk2')"
+                "target" : "offset(absolute(randomWalk('100')),100)"
             },
             {
-              "target": "randomWalk('random walk3')"
+              "target" : "offset(absolute(randomWalk('10')),10)"
             }
-          ],
+
+
+            ],
           "aliasColors": {},
           "aliasYAxis": {},
           "title": "Graphite test"
