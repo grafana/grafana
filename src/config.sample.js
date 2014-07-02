@@ -11,6 +11,7 @@ function (Settings) {
 
     // datasources, you can add multiple
     datasources: {
+        /*
       graphite: {
         type: 'graphite',
         url: "http://my.graphite.server.com:8080",
@@ -22,10 +23,10 @@ function (Settings) {
         username: 'admin',
         password: 'admin'
       },
+      */
       mon: {
         type: 'mon',
         url: "http://192.168.10.4:8080/v2.0",
-        access_token: '82510970543135',
         default: true
       }
     },

@@ -7,15 +7,24 @@ define([
         'use strict';
 
         var module = angular.module('kibana.services');
+        module.config(['$httpProvider', function ($httpProvider) {
+            $httpProvider.defaults.useXDomain = true;
+        }])
 
         module.factory('MonDatasource', function ($q, $http) {
-
             function MonDatasource(datasource) {
                 this.type = 'mon';
                 this.editorSrc = 'app/partials/mon/editor.html';
                 this.urls = datasource.urls;
-                this.access_token = datasource.access_token;
                 this.name = datasource.name;
+                var query = window.location.href.split('?')[1];
+                var vars = query.split("&");
+                for (var i=0;i<vars.length;i++) {
+                    var pair = vars[i].split("=");
+                    if (pair[0] === "token") {
+                        this.access_token = pair[1];
+                    }
+                }
             }
 
             MonDatasource.prototype.query = function (filterSrv, options) {
@@ -146,6 +155,7 @@ define([
                         method: 'GET',
                         url: currentUrl + '/metrics/measurements',
                         params: params,
+                        withCredentials: true,
                         headers: headers
                     };
 
@@ -190,6 +200,7 @@ define([
                         method: 'GET',
                         url: currentUrl + '/metrics',
                         params: params,
+                        withCredentials: true,
                         headers: headers
                     };
 
