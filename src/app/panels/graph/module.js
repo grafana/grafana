@@ -25,7 +25,6 @@ define([
   'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
-  'jquery.flot.byte',
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
