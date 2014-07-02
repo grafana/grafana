@@ -52,10 +52,10 @@ function (_) {
           datapoints[i] = [metricValue, groupPoints[i][timeCol]];
         }
 
-        seriesName = series.name + '.' + key;
+        seriesName = series.name;
 
         if (self.alias) {
-          seriesName = self.createNameForSeries(series.name, series.columns[valueCol], key);
+          seriesName = self.createNameForSeries(series.name, key);
         }
 
         output.push({ target: seriesName, datapoints: datapoints });
@@ -65,10 +65,9 @@ function (_) {
     return output;
   };
 
-  p.createNameForSeries = function(seriesName, columnName, groupByColValue) {
+  p.createNameForSeries = function(seriesName, groupByColValue) {
     var name = this.alias
-      .replace('$s', seriesName)
-      .replace('$c', columnName);
+      .replace('$s', seriesName);
 
     var segments = seriesName.split('.');
     for (var i = 0; i < segments.length; i++) {
