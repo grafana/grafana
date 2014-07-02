@@ -128,8 +128,10 @@ require([
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
+    'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();
   });
 
 });
+

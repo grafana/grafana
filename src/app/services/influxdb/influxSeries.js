@@ -15,6 +15,7 @@ function (_) {
   p.getTimeSeries = function() {
     var output = [];
     var self = this;
+    var i;
 
     _.each(self.seriesList, function(series) {
       var seriesName;
@@ -46,16 +47,15 @@ function (_) {
 
       _.each(groups, function(groupPoints, key) {
         var datapoints = [];
-        for (var i = 0; i < groupPoints.length; i++) {
+        for (i = 0; i < groupPoints.length; i++) {
           var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
           datapoints[i] = [metricValue, groupPoints[i][timeCol]];
         }
 
-        seriesName = self.alias ? self.alias : (series.name + '.' + key);
+        seriesName = series.name + '.' + key;
 
-        // if mulitple groups append key to alias
-        if (self.alias && self.groupByField) {
-          seriesName += key;
+        if (self.alias) {
+          seriesName = self.createNameForSeries(series.name, series.columns[valueCol], key);
         }
 
         output.push({ target: seriesName, datapoints: datapoints });
@@ -63,6 +63,25 @@ function (_) {
     });
 
     return output;
+  };
+
+  p.createNameForSeries = function(seriesName, columnName, groupByColValue) {
+    var name = this.alias
+      .replace('$s', seriesName)
+      .replace('$c', columnName);
+
+    var segments = seriesName.split('.');
+    for (var i = 0; i < segments.length; i++) {
+      if (segments[i].length > 0) {
+        name = name.replace('$' + i, segments[i]);
+      }
+    }
+
+    if (this.groupByField) {
+      name = name.replace('$g', groupByColValue);
+    }
+
+    return name;
   };
 
   return InfluxSeries;
