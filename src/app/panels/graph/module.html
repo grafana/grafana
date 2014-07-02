@@ -15,9 +15,9 @@
 
   </div>
 
-  <div ng-if="panel.legend" class="grafana-legend-container">
-    <div ng-include="'app/panels/graph/legend.html'"></div>
+  <div ng-if="panel.legend.show" ng-include="'app/panels/graph/legend.html'">
   </div>
+
   <div class="clearfix"></div>
 
   <div class="panel-full-edit-tabs" ng-if="editMode">

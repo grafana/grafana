@@ -1,4 +1,5 @@
 @import "submenu.less";
+@import "legend.less";
 @import "bootstrap-tagsinput.less";
 
 .hide-controls {
@@ -123,12 +124,6 @@
   font-size: 12px;
 }
 
-.hidden-series {
-  a {
-    color: darken(@linkColor, 45%);
-  }
-}
-
 .panel-fullscreen {
   z-index: 100;
   display: block !important;
@@ -154,55 +149,8 @@
   right: -10000px;
 }
 
-// Graphite Graph Legends
-
-.grafana-legend-container {
-  margin: 0 15px;
-  text-align: left;
-  position: relative;
-  top: 2px;
-}
-
-.grafana-legend-container .popover-content {
-  padding: 0;
-}
-
-.histogram-legend {
-  display:inline-block;
-  padding: 0 4px;
-  i {
-    position: relative;
-    top: 2px;
-  }
-}
-
-.histogram-legend-item {
-  display:inline-block;
-}
-
 .histogram-chart {
   position:relative;
-}
-
-.histogram-legend-popover {
-  width: 200px;
-  label {
-    display: inline-block;
-  }
-  .btn {
-    padding: 1px 3px;
-    margin-right: 0px;
-    line-height: initial;
-  }
-  .close {
-    margin-right: 5px;
-    color: @linkColor;
-    opacity: 0.7;
-    text-shadow: none;
-  }
-  .editor-row {
-    padding: 5px;
-  }
 }
 
 .panel-full-edit-tabs {
