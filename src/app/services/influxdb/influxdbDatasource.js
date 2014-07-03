@@ -1,9 +1,10 @@
 define([
   'angular',
   'underscore',
-  'kbn'
+  'kbn',
+  './influxSeries'
 ],
-function (angular, _, kbn) {
+function (angular, _, kbn, InfluxSeries) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -194,57 +195,14 @@ function (angular, _, kbn) {
       return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(alias, groupByField, data) {
-      var output = [];
-
-      _.each(data, function(series) {
-        var seriesName;
-        var timeCol = series.columns.indexOf('time');
-        var valueCol = 1;
-        var groupByCol = -1;
-
-        if (groupByField) {
-          groupByCol = series.columns.indexOf(groupByField);
-        }
-
-        // find value column
-        _.each(series.columns, function(column, index) {
-          if (column !== 'time' && column !== 'sequence_number' && column !== groupByField) {
-            valueCol = index;
-          }
-        });
-
-        var groups = {};
-
-        if (groupByField) {
-          groups = _.groupBy(series.points, function (point) {
-            return point[groupByCol];
-          });
-        }
-        else {
-          groups[series.columns[valueCol]] = series.points;
-        }
-
-        _.each(groups, function(groupPoints, key) {
-          var datapoints = [];
-          for (var i = 0; i < groupPoints.length; i++) {
-            var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-            datapoints[i] = [metricValue, groupPoints[i][timeCol]];
-          }
-
-          seriesName = alias ? alias : (series.name + '.' + key);
-
-          // if mulitple groups append key to alias
-          if (alias && groupByField) {
-            seriesName += key;
-          }
-
-          output.push({ target: seriesName, datapoints: datapoints });
-        });
-
+    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
+      var influxSeries = new InfluxSeries({
+        seriesList: seriesList,
+        alias: alias,
+        groupByField: groupByField
       });
 
-      return output;
+      return influxSeries.getTimeSeries();
     }
 
     function getTimeFilter(options) {
