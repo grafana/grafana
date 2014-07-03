@@ -19,6 +19,7 @@
 .graph-legend-alias,
 .graph-legend-value {
   display: inline-block;
+  white-space: nowrap;
 }
 
 .graph-legend-series {
@@ -58,6 +59,41 @@
     display: table-cell;
     white-space: nowrap;
     padding-left: 15px;
+  }
+}
+
+
+.graph-legend-rightside {
+
+  &.graph-wrapper {
+    display: table;
+    width: 100%;
+  }
+
+  .graph-canvas-wrapper {
+    display: table-cell;
+    width: 100%;
+    position: relative;
+  }
+
+  .graph-legend-wrapper {
+    display: table-cell;
+    vertical-align: top;
+    position: relative;
+    left: -4px;
+  }
+
+  .graph-legend {
+    margin: 0;
+  }
+
+  .graph-legend-series {
+    display: block;
+    padding-left: 0px;
+  }
+
+  .graph-legend-table .graph-legend-series {
+    display: table-row;
   }
 }
 

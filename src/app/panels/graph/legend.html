@@ -1,35 +1,3 @@
-<!-- <span ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
-      ng-repeat='series in legend'
-      class="histogram-legend">
-    <i  class='icon-minus pointer'
-        ng-style="{color: series.color}"
-        bs-popover="'colorPopup.html'"
-        >
-    </i>
-    <span class='small histogram-legend-item'>
-      <a ng-click="toggleSeries(series, $event)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
-        {{series.alias}}
-      </a>
-      <span ng-if="panel.legend.values">
-        <span ng-show="panel.legend.current">
-          &nbsp;&nbsp;Current:  {{series.current}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.min">
-          &nbsp;&nbsp;Min: {{series.min}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.max">
-          &nbsp;&nbsp;Max: {{series.max}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.total">
-          &nbsp;&nbsp;Total: {{series.total}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.avg">
-          &nbsp;&nbsp;Avg: {{series.avg}}&nbsp;
-        </span>
-      </span>
-    </span>
-</span> -->
-
 <section class="graph-legend" ng-class="{'graph-legend-table': panel.legend.alignAsTable}">
 
   <div class="graph-legend-series"

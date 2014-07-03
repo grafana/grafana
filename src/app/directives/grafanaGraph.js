@@ -17,6 +17,7 @@ function (angular, $, kbn, moment, _) {
       link: function(scope, elem) {
         var data, plot, annotations;
         var hiddenData = {};
+        var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
           if (scope.otherPanelInFullscreenMode()) { return; }
@@ -55,7 +56,7 @@ function (angular, $, kbn, moment, _) {
 
             height = height - 32; // subtract panel title bar
 
-            if (scope.panel.legend.show) {
+            if (scope.panel.legend.show && !scope.panel.legend.rightSide) {
               height = height - 21; // subtract one line legend
             }
 
@@ -135,6 +136,7 @@ function (angular, $, kbn, moment, _) {
             yaxes: [],
             xaxis: {},
             grid: {
+              minBorderMargin: 0,
               markings: [],
               backgroundColor: null,
               borderWidth: 0,
@@ -161,9 +163,30 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
-          plot = $.plot(elem, data, options);
+          // if legend is to the right delay plot draw a few milliseconds
+          // so the legend width calculation can be done
+          if (shouldDelayDraw(panel)) {
+            console.log('delay');
+            legendSideLastValue = panel.legend.rightSide;
+            setTimeout(function() {
+              plot = $.plot(elem, data, options);
+              addAxisLabels();
+            }, 50);
+          }
+          else {
+            plot = $.plot(elem, data, options);
+            addAxisLabels();
+          }
+        }
 
-          addAxisLabels();
+        function shouldDelayDraw(panel) {
+          if (panel.legend.rightSide) {
+            return true;
+          }
+          if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
+            return true;
+          }
+          return false;
         }
 
         function addTimeAxis(options) {
