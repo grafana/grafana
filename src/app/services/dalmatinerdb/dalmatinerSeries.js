@@ -15,7 +15,6 @@ define([
         var i;
 
         _.each(self.seriesList, function(series) {
-            console.log("series", series);
             var seriesName = series.n;
             var seriesData = series.v;
             var seriesResolution = series.r;
@@ -68,7 +67,6 @@ define([
             output.push({ target: series.n, datapoints: seriesData });
 
         });
-        console.log(output);
         return output;
     };
 

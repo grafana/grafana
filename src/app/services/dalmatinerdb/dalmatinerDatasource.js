@@ -22,7 +22,6 @@ define([
                }
 
                DalmatinerDatasource.prototype.query = function(filterSrv, options) {
-                   console.log("query", filterSrv, options);
                    var promises = _.map(options.targets, function(target) {
                        var query = "SELECT ";
                        var alias = '';
@@ -42,8 +41,7 @@ define([
                            query = query + " AS " + target.alias;
                        if (query != "SELECT ") {
                            query = query + timeFilter;
-                           console.log("query", query)
-                           //target.query = query;
+                           target.query = query;
 
                            var handleResponse = _.partial(handleDalmatinerQueryResponse);
                            return this.doDalmatinerRequest(query, alias).then(handleResponse);
@@ -159,14 +157,12 @@ define([
 
 
                function handleDalmatinerQueryResponse(seriesList) {
-                   console.log("handleDalmatinerQueryResponse", seriesList.d);
                    var dalmatinerSeries = new DalmatinerSeries(seriesList.d);
 
                    return dalmatinerSeries.getTimeSeries();
                }
 
                function getTimeFilter(options) {
-                   console.log("getTimeFilter", options);
                    var from = getDalmatinerTime(options.range.from);
                    var until = getDalmatinerTime(options.range.to);
 
