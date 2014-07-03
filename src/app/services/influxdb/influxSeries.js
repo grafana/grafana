@@ -52,7 +52,7 @@ function (_) {
           datapoints[i] = [metricValue, groupPoints[i][timeCol]];
         }
 
-        seriesName = series.name;
+        seriesName = series.name + '.' + key;
 
         if (self.alias) {
           seriesName = self.createNameForSeries(series.name, key);
