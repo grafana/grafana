@@ -9,6 +9,7 @@ define([
   './graphiteTarget',
   './graphiteImport',
   './influxTargetCtrl',
+  './dalmatinerTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
   './opentsdbTargetCtrl',

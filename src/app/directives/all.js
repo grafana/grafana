@@ -16,5 +16,6 @@ define([
   './addGraphiteFunc',
   './graphiteFuncEditor',
   './grafanaVersionCheck',
-  './influxdbFuncEditor'
+  './influxdbFuncEditor',
+  './dalmatinerdbFuncEditor'
 ], function () {});
