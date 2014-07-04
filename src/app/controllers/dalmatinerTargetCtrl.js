@@ -16,7 +16,7 @@ define([
             $scope.rawQuery = false;
 
             $scope.functions = [
-                'avg', 'sum', 'min', 'max', 'derivate'
+                'avg', 'sum', 'min', 'max', 'derivate', 'divide', 'multiply'
             ];
 
             $scope.oldSeries = $scope.target.series;
@@ -52,6 +52,9 @@ define([
             console.log("change", $scope.target);
             if (func == "derivate") {
                 val = undefined
+            }
+            if (func == "divide" || func == "multiply") {
+                val = 1
             }
             $scope.target.aggrs.push({name: func, val: val});
             $scope.get_data();
