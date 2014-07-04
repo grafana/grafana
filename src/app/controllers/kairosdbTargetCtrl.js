@@ -21,7 +21,7 @@ define([
 
       $scope.targetBlur = function() {
         $scope.target.errors = validateTarget($scope.target);
-        if (!_.isEqual($scope.oldTarget, $scope.target) && hasNoError($scope.target.errors)) {
+        if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
           $scope.oldTarget = angular.copy($scope.target);
           $scope.get_data();
         }
@@ -184,17 +184,18 @@ define([
       };
 
       $scope.validateGroupBy = function() {
-        $scope.target.errors.groupBy = {};
+        delete $scope.target.errors.groupBy;
+        var errors = {};
         $scope.isGroupByValid = true;
         if($scope.isTagGroupBy) {
           if(!$scope.target.groupBy.tagKey) {
             $scope.isGroupByValid = false;
-            $scope.target.errors.groupBy.tagKey = 'You must supply a tag name';
+            errors.tagKey = 'You must supply a tag name';
           }
         }
         if($scope.isValueGroupBy) {
           if(!$scope.target.groupBy.valueRange || !isInt($scope.target.groupBy.valueRange)) {
-            $scope.target.errors.groupBy.valueRange = "Range must be an integer";
+            errors.valueRange = "Range must be an integer";
             $scope.isGroupByValid = false;
           }
         }
@@ -202,14 +203,17 @@ define([
           try {
             $scope.datasource.convertToKairosInterval($scope.target.groupBy.timeInterval);
           } catch(err) {
-            $scope.target.errors.groupBy.timeInterval = err.message;
+            errors.timeInterval = err.message;
             $scope.isGroupByValid = false;
           }
           if(!$scope.target.groupBy.groupCount || !isInt($scope.target.groupBy.groupCount)) {
-            $scope.target.errors.groupBy.groupCount = "Group count must be an integer";
+            errors.groupCount = "Group count must be an integer";
             $scope.isGroupByValid = false;
           }
+        }
 
+        if(!_.isEmpty(errors)) {
+          $scope.target.errors.groupBy = errors;
         }
       };
 
@@ -274,23 +278,24 @@ define([
       };
 
       $scope.validateHorizontalAggregator = function() {
-        $scope.target.errors.horAggregator = {};
+        delete $scope.target.errors.horAggregator;
+        var errors = {};
         $scope.isAggregatorValid = true;
         if($scope.hasSamplingRate) {
           try {
             $scope.datasource.convertToKairosInterval($scope.target.horAggregator.samplingRate);
           } catch(err) {
-            $scope.target.errors.horAggregator.samplingRate = err.message;
+            errors.samplingRate = err.message;
             $scope.isAggregatorValid = false;
           }
         }
         if($scope.hasFactor) {
           if(!$scope.target.horAggregator.factor) {
-            $scope.target.errors.horAggregator.factor = 'You must supply a numeric value for this aggregator';
+            errors.factor = 'You must supply a numeric value for this aggregator';
             $scope.isAggregatorValid = false;
           }
           else if(parseInt($scope.target.horAggregator.factor)===0 && $scope.target.currentHorizontalAggregatorName==='div') {
-            $scope.target.errors.horAggregator.factor = 'Cannot divide by 0';
+            errors.factor = 'Cannot divide by 0';
             $scope.isAggregatorValid = false;
           }
         }
@@ -298,10 +303,18 @@ define([
           if(!$scope.target.horAggregator.percentile ||
             $scope.target.horAggregator.percentile<=0 ||
             $scope.target.horAggregator.percentile>1) {
-            $scope.target.errors.horAggregator.percentile = 'Percentile must be between 0 and 1';
+            errors.percentile = 'Percentile must be between 0 and 1';
             $scope.isAggregatorValid = false;
           }
         }
+
+        if(!_.isEmpty(errors)) {
+          $scope.target.errors.horAggregator = errors;
+        }
+      };
+
+      $scope.alert = function(message) {
+        alert(message);
       };
 
       //////////////////////////////
@@ -324,11 +337,6 @@ define([
         }
 
         return errs;
-      }
-
-      function hasNoError() {
-        return _.isEmpty(_.omit($scope.target.errors,['horAggregator','groupBy'])) &&
-          _.isEmpty($scope.target.errors.horAggregator)&& _.isEmpty($scope.target.errors.groupBy);
       }
 
     });

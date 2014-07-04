@@ -9,7 +9,8 @@
 <div class="grafana-target-inner">
     <ul class="grafana-target-controls">
         <li>
-            <a bs-tooltip="'Group by\'s are always executed before aggregations!'">
+            <a bs-tooltip="'Group by\'s are always executed before aggregations!'"
+               ng-click="alert('Group by\'s are always executed before aggregations!')">
                 <i class="icon-info"></i>
             </a>
         </li>
@@ -45,10 +46,7 @@
         </li>
     </ul>
 
-
-
     <!-- USEFUL STUFF -->
-
 
     <ul class="grafana-segment-list" role="menu">
 
@@ -276,7 +274,11 @@
     Aggregation:
 </li>
 <li ng-repeat="aggregatorObject in target.horizontalAggregators track by $index" class="grafana-target-segment">
-    {{_.values(aggregatorObject)}}
+    {{aggregatorObject.name}}&#40;
+    <span ng-repeat="aggKey in _.keys(_.omit(aggregatorObject,'name'))" bs-tooltip="aggKey">
+        {{$last?aggregatorObject[aggKey]:aggregatorObject[aggKey]+","}}
+    </span>
+    &#41;
     <a ng-click="removeHorizontalAggregator($index)">
         <i class="icon-remove"></i>
     </a>
@@ -321,11 +323,6 @@
             ng-model="target.horAggregator.unit"
             ng-init="target.horAggregator.unit='millisecond'"
             ng-options="f for f in ['millisecond','second','minute','hour','day','week','month','year']"></select>
-    <a bs-tooltip="target.errors.horAggregator.unit"
-       style="color: rgb(229, 189, 28)"
-       ng-show="target.errors.horAggregator.unit">
-        <i class="icon-warning-sign"></i>
-    </a>
 </li>
 
 <li ng-show="hasFactor" class="grafana-target-segment">
@@ -368,15 +365,9 @@
         <i ng-show="isAggregatorValid" class="icon-plus-sign"></i>
     </a>
 </li>
-
 </ul>
-
-
 <div class="clearfix"></div>
 </div>
-
-
-
 
 
 </div>

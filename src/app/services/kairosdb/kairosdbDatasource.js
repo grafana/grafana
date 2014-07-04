@@ -22,14 +22,14 @@ define([
       KairosDBDatasource.prototype.query = function(filterSrv,options) {
         var start = options.range.from;
         var end = options.range.to;
-        var queries = _.compact(_.map(options.targets,  _.partial(convertTargetToQuery,options)));
+        var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
         // No valid targets, return the empty result to save a round trip.
         if (_.isEmpty(queries)) {
           var d = $q.defer();
           d.resolve({ data: [] });
           return d.promise;
         }
-        return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponse);
+        return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponse,handleQueryError);
       };
 
       ///////////////////////////////////////////////////////////////////////
@@ -40,6 +40,7 @@ define([
         var reqBody = {
           metrics: queries
         };
+        reqBody.cache_time=0;
         convertToKairosTime(start,reqBody,'start');
         convertToKairosTime(end,reqBody,'end');
         var options = {
@@ -113,9 +114,25 @@ define([
         return [];
       }
 
+      /**
+       * Requires a verion of KairosDB with every CORS defects fixed
+       * @param results
+       * @returns {*}
+       */
+      function handleQueryError(results) {
+        if(results.data.errors && !_.isEmpty(results.data.errors)) {
+          var errors = {
+            message: results.data.errors[0]
+          };
+          return $q.reject(errors);
+        }
+        else{
+          return $q.reject(results);
+        }
+      }
+
       function handleKairosDBQueryResponse(results) {
         var output = [];
-
         _.each(results.data.queries, function (series) {
           var sample_size = series.sample_size;
           console.log("sample_size:" + sample_size + " samples");
@@ -147,7 +164,6 @@ define([
               var v = result.values[i][1];
               datapoints[i] = [v, t];
             }
-            console.log("result:" + target + ": " + datapoints.length + " points", datapoints);
             output.push({ target: target, datapoints: datapoints });
           });
         });
@@ -170,6 +186,7 @@ define([
           query.aggregators.push({
             name: target.downsampling,
             align_sampling: true,
+            align_start_time: true,
             sampling: KairosDBDatasource.prototype.convertToKairosInterval(target.sampling || options.interval)
           });
         }
@@ -181,6 +198,7 @@ define([
             if(chosenAggregator.sampling_rate) {
               returnedAggregator.sampling = KairosDBDatasource.prototype.convertToKairosInterval(chosenAggregator.sampling_rate);
               returnedAggregator.align_sampling = true;
+              returnedAggregator.align_start_time=true;
             }
             if(chosenAggregator.unit) {
               returnedAggregator.unit = chosenAggregator.unit+'s';
