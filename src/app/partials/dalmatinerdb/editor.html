@@ -22,7 +22,7 @@
                 <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Show Query</a>
                 <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Hide Query</a>
               </li>
-           </ul>
+            </ul>
           </li>
           <li>
             <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
@@ -75,28 +75,38 @@
                    ng-blur="seriesBlur()">
           </li>
 
-          <li class="grafana-target-segment">
-            select
+          <li  class="dropdown" ng-repeat="aggr in target.aggrs">
+            <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function"></span>
+            <!-- <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
+                 bs-popover="'app/partials/graphite/funcEditor.html'"
+                 data-placement="bottom">
+                 {{func.def.name}}
+                 </a> -->
+            <!-- <span class="grafana-target-segment grafana-target-function">
+                 <span>{{func.def.name}}(</span><span ng-repeat="param in func.def.params">
+                   <input  type="text"
+                           class="input-mini grafana-function-param-input"
+                           dynamic-width
+                           ng-model="func.params[$index]"></input>
+                 </span><span>)</span>
+            </span> -->
           </li>
+          <li class="dropdown" dalmatiner-add-func>
 
-          <li class="dropdown">
-            <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function">
-            </span>
           </li>
+          <!--li class="dropdown">
+              <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function">
+              </span>
+</li>
 
-          <li class="grafana-target-segment">
-            over
-          </li>
-
-          <li>
-            <input type="text"
-                   class="input-mini grafana-target-segment-input"
-                   ng-model="target.interval"
-                   placeholder="{{interval}}"
-                   bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
-                   spellcheck='false'
-                   ng-model-onblur ng-change="get_data()" >
-          </li>
+<li>
+  <a class="grafana-target-segment"
+     ng-click="target.condition_filter = !target.condition_filter; get_data();"
+     bs-tooltip="'Add a aggregation"
+     role="menuitem">
+    <i class="icon-filter"></i>
+  </a>
+          </li-->
 
           <li class="grafana-target-segment">
             as
@@ -118,4 +128,3 @@
   </div>
 
 </div>
-

@@ -30,13 +30,15 @@ define([
 
                        var timeFilter = getTimeFilter(options);
                        var groupByField;
-
-                       if (target.interval && target.function) {
-                           query = query + target.function + "(" + target.metric + " BUCKET " + target.bucket + ", " +
-                               target.interval + ")";
-                       } else {
-                           query = query + target.metric + " BUCKET " + target.bucket;
-                       }
+                       var src = target.metric + " BUCKET " + target.bucket;
+                       target.aggrs.forEach(function(aggr) {
+                           src = aggr.name + "(" + src
+                           if (aggr.val) {
+                               src = src + ", " + aggr.val;
+                           }
+                           src = src + ")";
+                       })
+                       query = query + src;
                        if (target.alias)
                            query = query + " AS " + target.alias;
                        if (query != "SELECT ") {
