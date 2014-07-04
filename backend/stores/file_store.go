@@ -37,7 +37,8 @@ func NewFileStore(dataDir string) *fileStore {
 }
 
 func (store *fileStore) GetById(id string) (*models.Dashboard, error) {
-	filename := filepath.Join(store.dashDir, id) + ".json"
+	filename := store.getFilePathForDashboard(id)
+
 	log.Debug("Opening dashboard file %v", filename)
 
 	configFile, err := os.Open(filename)
@@ -48,17 +49,22 @@ func (store *fileStore) GetById(id string) (*models.Dashboard, error) {
 	return models.NewFromJson(configFile)
 }
 
-func (store *fileStore) Save(dashboard *models.Dashboard) error {
-	filename := filepath.Join(store.dashDir, dashboard.Title())
-	log.Debug("Saving dashboard %v to %v", dashboard.Title(), filename)
+func (store *fileStore) Save(dash *models.Dashboard) error {
+	filename := store.getFilePathForDashboard(dash.Title())
+
+	log.Debug("Saving dashboard %v to %v", dash.Title(), filename)
 
 	var err error
 	var data []byte
-	if data, err = json.Marshal(dashboard); err != nil {
+	if data, err = json.Marshal(dash); err != nil {
 		return err
 	}
 
 	return writeFile(filename, data)
+}
+
+func (store *fileStore) getFilePathForDashboard(id string) string {
+	return filepath.Join(store.dashDir, id) + ".json"
 }
 
 func dirDoesNotExist(dir string) bool {

@@ -26,8 +26,7 @@ func TestFileStore(t *testing.T) {
 		Convey("should be saved to disk", func() {
 			So(err, ShouldBeNil)
 
-			savedPath := filepath.Join(dashDir, "hello")
-			_, err = os.Stat(savedPath)
+			_, err = os.Stat(store.getFilePathForDashboard("hello"))
 			So(err, ShouldBeNil)
 		})
 
