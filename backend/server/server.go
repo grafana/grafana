@@ -7,14 +7,16 @@ import (
 
 type Server struct {
 	HttpServer *httpApi.HttpServer
+	Store      stores.Store
 }
 
 func NewServer(port string) (*Server, error) {
-	httpServer := httpApi.NewHttpServer(port)
-	dashStore := stores.New()
+	store := stores.New()
+	httpServer := httpApi.NewHttpServer(port, store)
 
 	return &Server{
 		HttpServer: httpServer,
+		Store:      store,
 	}, nil
 }
 

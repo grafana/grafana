@@ -15,11 +15,11 @@ func TestFileStore(t *testing.T) {
 	dashDir := filepath.Join(tempDir, "dashboards")
 	defer os.RemoveAll(tempDir)
 
-	store := newFileStore(tempDir)
+	store := NewFileStore(tempDir)
 
 	Convey("When saving a dashboard", t, func() {
 
-		dashboard := &models.Dashboard{}
+		dashboard := models.NewDashboard("hello")
 
 		err = store.Save(dashboard)
 

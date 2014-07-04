@@ -14,7 +14,7 @@ type fileStore struct {
 	dashDir string
 }
 
-func newFileStore(dataDir string) *fileStore {
+func NewFileStore(dataDir string) *fileStore {
 
 	if dirDoesNotExist(dataDir) {
 		log.Crashf("FileStore failed to initialize, dataDir does not exist %v", dataDir)
@@ -45,14 +45,7 @@ func (store *fileStore) GetById(id string) (*models.Dashboard, error) {
 		return nil, err
 	}
 
-	var dash models.Dashboard
-
-	jsonParser := json.NewDecoder(configFile)
-	if err = jsonParser.Decode(&dash); err != nil {
-		return nil, err
-	}
-
-	return &dash, nil
+	return models.NewFromJson(configFile)
 }
 
 func (store *fileStore) Save(dashboard *models.Dashboard) error {

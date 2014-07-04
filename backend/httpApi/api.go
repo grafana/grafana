@@ -14,9 +14,11 @@ type HttpServer struct {
 	store    stores.Store
 }
 
-func NewHttpServer(port string) *HttpServer {
+func NewHttpServer(port string, store stores.Store) *HttpServer {
 	self := &HttpServer{}
 	self.port = port
+	self.store = store
+
 	return self
 }
 
@@ -34,6 +36,7 @@ func (self *HttpServer) ListenAndServe() {
 	r.GET("/api/dashboards/:id", self.getDashboard)
 	r.ServeFiles("/public/*filepath", http.Dir("./public"))
 	r.ServeFiles("/app/*filepath", http.Dir("./public/app"))
+	r.ServeFiles("/img/*filepath", http.Dir("./public/img"))
 
 	err := http.ListenAndServe(":"+self.port, r)
 	if err != nil {
@@ -49,14 +52,17 @@ func (self *HttpServer) index(c *gin.Context) {
 	c.HTML(200, "index.html", &IndexViewModel{Title: "hello from go"})
 }
 
-type DashboardModel struct {
-	Title string `json:"title"`
+type ErrorRsp struct {
+	Message string `json:"message"`
 }
 
 func (self *HttpServer) getDashboard(c *gin.Context) {
-	dashboard := &DashboardModel{
-		Title: "hej från gå",
+	id := c.Params.ByName("id")
+
+	dash, err := self.store.GetById(id)
+	if err != nil {
+		c.JSON(404, &ErrorRsp{Message: "Dashboard not found"})
 	}
 
-	c.JSON(200, dashboard)
+	c.JSON(200, dash.Data)
 }
