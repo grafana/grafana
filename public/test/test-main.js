@@ -42,7 +42,6 @@ require.config({
     'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
-    'jquery.flot.byte':       '../vendor/jquery/jquery.flot.byte',
 
     modernizr:                '../vendor/modernizr-2.6.1',
   },
@@ -75,7 +74,6 @@ require.config({
 
     'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
-    'jquery.flot.byte':     ['jquery', 'jquery.flot'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.events':   ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],
@@ -95,7 +93,6 @@ require.config({
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
 
     'bootstrap-tagsinput':          ['jquery'],
-
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
@@ -128,8 +125,10 @@ require([
     'specs/gfunc-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
+    'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();
   });
 
 });
+

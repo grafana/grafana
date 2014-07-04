@@ -3,15 +3,15 @@ package httpApi
 import (
 	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
-	"github.com/torkelo/grafana-pro/backend/dashboards"
+	"github.com/torkelo/grafana-pro/backend/stores"
 	"html/template"
 	"net/http"
 )
 
 type HttpServer struct {
-	port            string
-	shutdown        chan bool
-	dashboardFinder dashboards.DashboardFinder
+	port     string
+	shutdown chan bool
+	store    stores.Store
 }
 
 func NewHttpServer(port string) *HttpServer {
