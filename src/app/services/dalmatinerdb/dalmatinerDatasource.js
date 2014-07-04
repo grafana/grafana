@@ -31,6 +31,9 @@ define([
                        var timeFilter = getTimeFilter(options);
                        var groupByField;
                        var src = target.metric + " BUCKET " + target.bucket;
+                       if (target.mget && target.mget != 'none') {
+                           src = target.mget + "(" + src + ")";
+                       }
                        target.aggrs.forEach(function(aggr) {
                            src = aggr.name + "(" + src
                            if (aggr.val) {

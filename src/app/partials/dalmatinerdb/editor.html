@@ -53,6 +53,9 @@
                ng-show="target.rawQuery">
 
         <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
+          <li class="dropdown">
+            <span dalmatinerdb-mget-editor class="grafana-target-segment grafana-target-mget"></span>
+          </li>
           <li>
             <input type="text"
                    class="input-large grafana-target-segment-input"
@@ -77,36 +80,8 @@
 
           <li  class="dropdown" ng-repeat="aggr in target.aggrs">
             <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function"></span>
-            <!-- <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
-                 bs-popover="'app/partials/graphite/funcEditor.html'"
-                 data-placement="bottom">
-                 {{func.def.name}}
-                 </a> -->
-            <!-- <span class="grafana-target-segment grafana-target-function">
-                 <span>{{func.def.name}}(</span><span ng-repeat="param in func.def.params">
-                   <input  type="text"
-                           class="input-mini grafana-function-param-input"
-                           dynamic-width
-                           ng-model="func.params[$index]"></input>
-                 </span><span>)</span>
-            </span> -->
           </li>
-          <li class="dropdown" dalmatiner-add-func>
-
-          </li>
-          <!--li class="dropdown">
-              <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function">
-              </span>
-</li>
-
-<li>
-  <a class="grafana-target-segment"
-     ng-click="target.condition_filter = !target.condition_filter; get_data();"
-     bs-tooltip="'Add a aggregation"
-     role="menuitem">
-    <i class="icon-filter"></i>
-  </a>
-          </li-->
+          <li class="dropdown" dalmatiner-add-func></li>
 
           <li class="grafana-target-segment">
             as

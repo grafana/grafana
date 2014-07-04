@@ -12,11 +12,14 @@ define([
 
         $scope.init = function() {
             $scope.target.aggrs = $scope.target.aggrs || [];
-
+            $scope.target.mget = $scope.target.mget || 'none';
             $scope.rawQuery = false;
 
             $scope.functions = [
                 'avg', 'sum', 'min', 'max', 'derivate', 'divide', 'multiply'
+            ];
+            $scope.mgets = [
+                'none', 'avg', 'sum'
             ];
 
             $scope.oldSeries = $scope.target.series;
@@ -47,6 +50,12 @@ define([
             $scope.target.function = func;
             $scope.get_data();
         };
+        $scope.changeMGet = function(func) {
+            console.log("change", $scope.target);
+            $scope.target.mget = func;
+            $scope.get_data();
+        };
+
         $scope.addFunction = function(func) {
             var val = "1s"
             console.log("change", $scope.target);
