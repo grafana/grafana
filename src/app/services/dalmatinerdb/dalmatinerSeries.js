@@ -1,88 +1,73 @@
 define([
-    'underscore',
+  'underscore',
 ], function (_) {
-    'use strict';
+  'use strict';
 
-    function DalmatinerSeries(seriesList) {
-        this.seriesList = seriesList;
-    }
+  function DalmatinerSeries(seriesList) {
+    this.seriesList = seriesList;
+  }
 
-    var p = DalmatinerSeries.prototype;
+  var p = DalmatinerSeries.prototype;
 
-    p.getTimeSeries = function() {
-        var output = [];
-        var self = this;
-        var i;
+  p.getTimeSeries = function() {
+    var output = [];
+    var self = this;
 
-        _.each(self.seriesList, function(series) {
-            var seriesName = series.n;
-            var seriesData = series.v;
-            var seriesResolution = series.r;
-            var t = (new Date().getTime()/1000) - (seriesData.length * seriesResolution);
-            seriesData = seriesData.map(function(e, i) {
-                return [e, t+(i*seriesResolution)];
-            })
-            /*      var timeCol = series.columns.indexOf('time');
-                    var valueCol = 1;
-                    var groupByCol = -1;
+    _.each(self.seriesList, function(series) {
+      var seriesName = series.n;
+      var seriesData = series.v;
+      var seriesResolution = series.r;
+      var t = (new Date().getTime()/1000) - (seriesData.length * seriesResolution);
+      seriesData = seriesData.map(function(e, i) {
+        return [e, t+(i*seriesResolution)];
+      });
+      /*      var timeCol = series.columns.indexOf('time');
+              var valueCol = 1;
+              var groupByCol = -1;
 
-                    if (self.groupByField) {
-                    groupByCol = series.columns.indexOf(self.groupByField);
-                    }
+              if (self.groupByField) {
+              groupByCol = series.columns.indexOf(self.groupByField);
+              }
 
-                    // find value column
-                    _.each(series.columns, function(column, index) {
-                    if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
-                    valueCol = index;
-                    }
-                    });
+              // find value column
+              _.each(series.columns, function(column, index) {
+              if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
+              valueCol = index;
+              }
+              });
 
-                    var groups = {};
+              var groups = {};
 
-                    if (self.groupByField) {
-                    groups = _.groupBy(series.points, function (point) {
-                    return point[groupByCol];
-                    });
-                    }
-                    else {
-                    groups[series.columns[valueCol]] = series.points;
-                    }
+              if (self.groupByField) {
+              groups = _.groupBy(series.points, function (point) {
+              return point[groupByCol];
+              });
+              }
+              else {
+              groups[series.columns[valueCol]] = series.points;
+              }
 
-                    _.each(groups, function(groupPoints, key) {
-                    var datapoints = [];
-                    for (i = 0; i < groupPoints.length; i++) {
-                    var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-                    datapoints[i] = [metricValue, groupPoints[i][timeCol]];
-                    }
+              _.each(groups, function(groupPoints, key) {
+              var datapoints = [];
+              for (i = 0; i < groupPoints.length; i++) {
+              var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
+              datapoints[i] = [metricValue, groupPoints[i][timeCol]];
+              }
 
-                    seriesName = series.name + '.' + key;
+              seriesName = series.name + '.' + key;
 
-                    if (self.alias) {
-                    seriesName = self.createNameForSeries(series.name, key);
-                    }
+              if (self.alias) {
+              seriesName = self.createNameForSeries(series.name, key);
+              }
 
-                    });
-            */
+              });
+      */
 
-            output.push({ target: series.n, datapoints: seriesData });
+      output.push({ target: seriesName, datapoints: seriesData });
 
-        });
-        return output;
-    };
+    });
+    return output;
+  };
 
-    p.createNameForSeries = function(seriesName, groupByColValue) {
-        var name = this.alias
-            .replace('$s', seriesName);
-
-        var segments = seriesName.split('.');
-        for (var i = 0; i < segments.length; i++) {
-            if (segments[i].length > 0) {
-                name = name.replace('$' + i, segments[i]);
-            }
-        }
-
-        return name;
-    };
-
-    return DalmatinerSeries;
+  return DalmatinerSeries;
 });

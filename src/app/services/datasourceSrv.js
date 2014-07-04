@@ -11,8 +11,9 @@ function (angular, _, config) {
   'use strict';
 
   var module = angular.module('kibana.services');
-
-    module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, DalmatinerDatasource, OpenTSDBDatasource) {
+  module.service('datasourceSrv', function($q, filterSrv, $http,
+                                           GraphiteDatasource, InfluxDatasource,
+                                           DalmatinerDatasource, OpenTSDBDatasource) {
 
     this.init = function() {
       var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
