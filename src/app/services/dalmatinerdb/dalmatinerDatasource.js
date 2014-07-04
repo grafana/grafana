@@ -41,6 +41,7 @@ define([
                            query = query + " AS " + target.alias;
                        if (query != "SELECT ") {
                            query = query + timeFilter;
+                           query = filterSrv.applyTemplateToTarget(query);
                            target.query = query;
 
                            var handleResponse = _.partial(handleDalmatinerQueryResponse);
@@ -104,16 +105,20 @@ define([
                    catch (err) {
                        return $q.reject(err);
                    }
-
-                   return this.doDalmatinerRequest(query)
-                       .then(function (results) {
-                           return _.map(results[0].points, function (metric) {
-                               return {
-                                   text: metric[1],
-                                   expandable: false
-                               };
-                           });
+                   var parts = interpolated.split(/\//);
+                   var bucket = parts[0];
+                   var metric = parts[1] || "";
+                   return this.listMetrics(bucket).then(function(metrics){
+                       metrics = metrics.filter(function(e) {
+                           return e.match(metric);
                        });
+                       return _.map(metrics, function(e) {
+                           return {
+                               text: e.match(metric)[1],
+                               expandable: false
+                           };
+                       });
+                   })
                };
 
                function retry(deferred, callback, delay) {
