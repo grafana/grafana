@@ -1,36 +1,15 @@
 {
-  "title": "Grafana Play Home",
+  "title": "White theme",
   "services": {
     "filter": {
       "list": [],
       "time": {
-        "from": "now-15m",
+        "from": "now-1h",
         "to": "now"
       }
     }
   },
   "rows": [
-    {
-      "title": "test",
-      "height": "190px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "loadingEditor": false,
-          "mode": "html",
-          "content": "<h3 class=\"text-center\">Welcome to grafana demo, playground and interactive tutorial site.</h2>\n\n<div class=\"row-fluid\">\n\t<div class=\"span4\">\n\t\t<h4>Feature showcases</h2>\n\t\t<ul>\n\t\t\t<li>\n\t\t\t\t<a href=\"#/dashboard/file/graph-styles.json\">Graphs styles</a>\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\t<a href=\"#/dashboard/file/templated-graphs.json\">Templated graphs</a>\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\t<a href=\"#/dashboard/file/templated-graphs-nested.json\">Templated graphs nested</a>\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\t<a href=\"#/dashboard/file/annotations.json\">Annotations</a>\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\t<a href=\"#/dashboard/file/white-theme.json\">White theme</a>\n\t\t\t</li>\n\t\t</ul>\n\t</div>\n\t<div class=\"span4\">\n\t\t<h4>Graphite tutorials</h2>\n\t\t<ul>\n\t\t\t<li>\n\t\t\t\tGraphite introduction (TODO)\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\tBasic functions (TODO)\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\tAdvanced functions (TODO)\n\t\t\t</li>\n\t\t\t<li>\n\t\t\t\tTips and tricks (TODO)\n\t\t\t</li>\n\t\t</ul>\n\t</div>\n\t<div class=\"span4\">\n\t\t<h4>InfluxDB examples</h2>\n\t\t<ul>\n\t\t\t<li>\n\t\t\t\tTODO\n\t\t\t</li>\n\t\t</ul>\n\t</div>\n</div>\n\n<script type=\"text/javascript\">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\n(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\nm=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n})(window,document,'script','//www.google-analytics.com/analytics.js','ga');\n\nga('create', 'UA-47280256-1', 'grafana.org');\nga('send', 'pageview');</script>",
-          "style": {},
-          "title": "Grafana demo site"
-        }
-      ],
-      "notice": false
-    },
     {
       "title": "test",
       "height": "250px",
@@ -132,17 +111,17 @@
           "points": false,
           "pointradius": 5,
           "bars": false,
-          "stack": false,
+          "stack": true,
           "spyable": true,
           "options": false,
           "legend": {
             "show": true,
             "values": true,
-            "min": true,
-            "max": true,
-            "current": true,
+            "min": false,
+            "max": false,
+            "current": false,
             "total": false,
-            "avg": false
+            "avg": true
           },
           "interactive": true,
           "legend_counts": true,
@@ -157,10 +136,7 @@
           },
           "targets": [
             {
-              "target": "alias(scaleToSeconds(apps.fakesite.web_server_01.counters.requests.count,1),'logins')"
-            },
-            {
-              "target": "alias(timeShift(scaleToSeconds(apps.fakesite.web_server_01.counters.requests.count,1),'1h'),'logins (-1 hour)')"
+              "target": "aliasByNode(movingAverage(scaleToSeconds(apps.fakesite.*.counters.request_status.code_302.count,1),4),2)"
             }
           ],
           "aliasColors": {
@@ -239,7 +215,7 @@
               "target": "alias(scale(scaleToSeconds(apps.fakesite.web_server_01.counters.requests.count,1),1000000),'memory')"
             },
             {
-              "target": "alias(scaleToSeconds(apps.fakesite.web_server_01.counters.request_status.code_302.count,1),'cpu')"
+              "target": "alias(scaleToSeconds(apps.fakesite.web_server_02.counters.requests.count,1),'cpu')"
             }
           ],
           "aliasColors": {
@@ -331,14 +307,153 @@
       "editable": true,
       "collapse": false,
       "collapsable": true,
-      "panels": [],
+      "panels": [
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 2,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "spyable": true,
+          "options": false,
+          "legend": {
+            "show": true,
+            "values": true,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": true
+          },
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "browser",
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(movingAverage(scaleToSeconds(apps.fakesite.*.counters.request_status.code_302.count,1),4),2)"
+            }
+          ],
+          "aliasColors": {
+            "logins": "#7EB26D",
+            "logins (-1 day)": "#447EBC",
+            "web_server_03": "#1F78C1",
+            "web_server_02": "#6ED0E0",
+            "web_server_01": "#64B0C8"
+          },
+          "aliasYAxis": {},
+          "title": "logins",
+          "datasource": null,
+          "renderer": "flot",
+          "annotate": {
+            "enable": false
+          }
+        },
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 2,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "spyable": true,
+          "options": false,
+          "legend": {
+            "show": true,
+            "values": true,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": true
+          },
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "browser",
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(movingAverage(scaleToSeconds(apps.fakesite.*.counters.request_status.code_302.count,1),4),2)"
+            }
+          ],
+          "aliasColors": {
+            "logins": "#7EB26D",
+            "logins (-1 day)": "#447EBC",
+            "web_server_03": "#E24D42",
+            "web_server_02": "#EF843C",
+            "web_server_01": "#EAB839"
+          },
+          "aliasYAxis": {},
+          "title": "logins",
+          "datasource": null,
+          "renderer": "flot",
+          "annotate": {
+            "enable": false
+          }
+        }
+      ],
       "notice": false
     }
   ],
   "editable": true,
   "failover": false,
   "panel_hints": true,
-  "style": "dark",
+  "style": "light",
   "pulldowns": [
     {
       "type": "filtering",
@@ -399,11 +514,6 @@
     "hide": false
   },
   "refresh": false,
-  "tags": [
-    "showcase",
-    "startpage",
-    "home",
-    "default"
-  ],
+  "tags": [],
   "timezone": "browser"
 }

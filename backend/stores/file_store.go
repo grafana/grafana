@@ -7,11 +7,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type fileStore struct {
 	dataDir string
 	dashDir string
+	cache   map[string]*models.Dashboard
 }
 
 func NewFileStore(dataDir string) *fileStore {
@@ -30,23 +32,58 @@ func NewFileStore(dataDir string) *fileStore {
 		}
 	}
 
-	return &fileStore{
-		dataDir: dataDir,
-		dashDir: dashDir,
+	store := &fileStore{}
+	store.dataDir = dataDir
+	store.dashDir = dashDir
+	store.cache = make(map[string]*models.Dashboard)
+
+	return store
+}
+
+func (store *fileStore) scanFiles() {
+	visitor := func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if f.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(f.Name(), ".json") {
+			err = store.loadDashboardIntoCache(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	err := filepath.Walk(store.dashDir, visitor)
+	if err != nil {
+		log.Error("FileStore::updateCache failed %v", err)
 	}
 }
 
-func (store *fileStore) GetById(id string) (*models.Dashboard, error) {
-	filename := store.getFilePathForDashboard(id)
-
-	log.Debug("Opening dashboard file %v", filename)
-
-	configFile, err := os.Open(filename)
+func (store fileStore) loadDashboardIntoCache(filename string) error {
+	log.Info("Loading dashboard file %v into cache", filename)
+	dash, err := loadDashboardFromFile(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return models.NewFromJson(configFile)
+	store.cache[dash.Title()] = dash
+
+	return nil
+}
+
+func (store *fileStore) Close() {
+
+}
+
+func (store *fileStore) GetById(id string) (*models.Dashboard, error) {
+	log.Debug("FileStore::GetById id = %v", id)
+	filename := store.getFilePathForDashboard(id)
+
+	return loadDashboardFromFile(filename)
 }
 
 func (store *fileStore) Save(dash *models.Dashboard) error {
@@ -61,6 +98,31 @@ func (store *fileStore) Save(dash *models.Dashboard) error {
 	}
 
 	return writeFile(filename, data)
+}
+
+func (store *fileStore) Query(query string) ([]*models.SearchResult, error) {
+	results := make([]*models.SearchResult, 0, 50)
+
+	for _, dash := range store.cache {
+		item := &models.SearchResult{
+			Id:   dash.Title(),
+			Type: "dashboard",
+		}
+		results = append(results, item)
+	}
+
+	return results, nil
+}
+
+func loadDashboardFromFile(filename string) (*models.Dashboard, error) {
+	log.Debug("FileStore::loading dashboard from file %v", filename)
+
+	configFile, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewFromJson(configFile)
 }
 
 func (store *fileStore) getFilePathForDashboard(id string) string {

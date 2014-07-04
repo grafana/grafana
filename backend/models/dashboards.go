@@ -9,6 +9,11 @@ type Dashboard struct {
 	Data map[string]interface{}
 }
 
+type SearchResult struct {
+	Type string
+	Id   string
+}
+
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = make(map[string]interface{})

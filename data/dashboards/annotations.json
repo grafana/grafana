@@ -1,0 +1,269 @@
+{
+  "title": "Annotations",
+  "services": {
+    "filter": {
+      "list": [],
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      }
+    }
+  },
+  "rows": [
+    {
+      "title": "Welcome to Grafana",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "type": "graphite",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "spyable": true,
+          "options": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "browser",
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(apps.fakesite.web_server_02.counters.requests.count,2)"
+            },
+            {
+              "target": "aliasByNode(apps.fakesite.web_server_01.counters.requests.count,2)"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Amnotations example",
+          "datasource": null,
+          "renderer": "flot",
+          "annotate": {
+            "enable": false
+          }
+        }
+      ],
+      "notice": false
+    },
+    {
+      "title": "test",
+      "height": "350px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graphite",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": 0,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "spyable": true,
+          "options": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "browser",
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "target": "aliasByNode(apps.fakesite.web_server_02.counters.request_status.code_304.count,5)"
+            }
+          ],
+          "aliasColors": {
+            "web_server_01": "#1F78C1",
+            "web_server_02": "#6ED0E0"
+          },
+          "aliasYAxis": {},
+          "title": "Annotations example",
+          "datasource": null,
+          "renderer": "flot",
+          "annotate": {
+            "enable": false
+          }
+        },
+        {
+          "error": false,
+          "span": 6,
+          "editable": true,
+          "type": "text",
+          "loadingEditor": false,
+          "mode": "markdown",
+          "content": "### Annotations\n\n- Annotation is a feature that must be enabled in the dashboards settings / Controls tab / Feature toggles\n- Annotation bar is then visible at the top. \n- Click on the cog to open the Annotations dialog \n- In this dialog you can add or edit annotations \n- Currently only Graphite metrics and Graphite events are supported sources of annotations\n- More datasource options for annotations will be added \n- Click on the annotation name in the bar to toggle the annotation on or off\n\n",
+          "style": {},
+          "title": "Description"
+        }
+      ],
+      "notice": false
+    }
+  ],
+  "editable": true,
+  "failover": false,
+  "panel_hints": true,
+  "style": "dark",
+  "pulldowns": [
+    {
+      "type": "filtering",
+      "collapse": false,
+      "notice": false,
+      "enable": false
+    },
+    {
+      "type": "annotations",
+      "enable": true,
+      "annotations": [
+        {
+          "name": "deploys",
+          "type": "graphite metric",
+          "showLine": true,
+          "iconColor": "#C0C6BE",
+          "lineColor": "rgba(253, 54, 54, 0.77)",
+          "iconSize": 13,
+          "enable": true,
+          "target": "alias(apps.fakesite.web_server_01.counters.request_status.code_500.count, 'deployed v1.3')"
+        },
+        {
+          "name": "puppet apply",
+          "type": "graphite metric",
+          "showLine": true,
+          "iconColor": "#C0C6BE",
+          "lineColor": "rgba(255, 96, 96, 0.592157)",
+          "iconSize": 13,
+          "enable": false,
+          "target": "alias(apps.fakesite.web_server_02.counters.request_status.code_403.count,'puppet apply')"
+        }
+      ]
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "enable": true,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "now": true
+    }
+  ],
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": false,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": false,
+    "hide": false
+  },
+  "refresh": false,
+  "tags": [
+    "annotations",
+    "graphite",
+    "showcase"
+  ],
+  "timezone": "browser"
+}
