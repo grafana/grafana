@@ -2,12 +2,13 @@ package stores
 
 import (
 	"encoding/json"
-	log "github.com/alecthomas/log4go"
-	"github.com/torkelo/grafana-pro/backend/models"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	log "github.com/alecthomas/log4go"
+	"github.com/torkelo/grafana-pro/backend/models"
 )
 
 type fileStore struct {

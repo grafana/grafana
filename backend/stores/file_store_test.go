@@ -44,7 +44,7 @@ func TestFileStore(t *testing.T) {
 		copyDashboardToTempData("graph-styles.json", store.dashDir)
 		store.scanFiles()
 
-		Convey("should generate index of all dashboards", func() {
+		Convey("scan should generate index of all dashboards", func() {
 			result, err := store.Query("*")
 			So(err, ShouldBeNil)
 			So(len(result), ShouldEqual, 3)
