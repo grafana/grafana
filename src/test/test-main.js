@@ -104,7 +104,6 @@ require([
   'angularMocks',
   'jquery',
   'underscore',
-  'elasticjs',
   'bootstrap',
   'angular-sanitize',
   'angular-strap',
