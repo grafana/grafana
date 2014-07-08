@@ -10,7 +10,7 @@ define([
     var _dashboard;
 
     beforeEach(module('kibana.services'));
-    beforeEach(module(function($provide){
+    beforeEach(module(function(){
       _dashboard = dashboardMock.create();
     }));
 
