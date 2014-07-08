@@ -172,11 +172,22 @@ define([
     function getTimeFilter(options) {
       var from = getDalmatinerTime(options.range.from);
       var until = getDalmatinerTime(options.range.to);
+      console.log(options.range)
 
-      if (until === 'now') {
+      if (_.isString(from) && until == "now") {
         return " LAST " + from;
       }
-      return ' BETWEEN ' + from + ' AND ' + until + " AGO";
+      if (_.isString(from)) {
+        from = from + "AGO"
+      }
+      if (until == "now"){
+        return ' BETWEEN ' + from + ' AND ' + until;
+      }
+      if (_.isString(until)) {
+        from = from + "AGO"
+      }
+      return ' BETWEEN ' + from + ' AND ' + until;
+
     }
 
     function getDalmatinerTime(date) {
@@ -195,7 +206,7 @@ define([
     }
 
     function to_utc_epoch_seconds(date) {
-      return (date.getTime() / 1000).toFixed(0) + 's';
+      return parseInt((date.getTime() / 1000).toFixed(0));
     }
 
     return DalmatinerDatasource;
