@@ -75,7 +75,12 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.translateTime = function(date, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
-          return 'now';
+          if (config.now_delay_minutes > 0) {
+            return '-' + config.now_delay_minutes + 'minutes';
+          }
+          else {
+            return 'now';
+          }
         }
         else if (date.indexOf('now') >= 0) {
           date = date.substring(3);
