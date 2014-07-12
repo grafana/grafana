@@ -1,5 +1,72 @@
-# 1.5.0 (2013-03-09)
-###New Features and improvements
+vNext
+- New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
+- Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
+- Refactoring of filterSrv (Issue #428), thx @Tetha
+- New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
+- New InfluxDB function difference add to function dropdown (PR #455)
+
+# Fixes
+- Filter option loading when having muliple nested filters now works better.
+  Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
+  After an option is changed and a nested template param is also reloaded, if the current value
+  exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
+
+# 1.5.4 (2014-05-13)
+### New features and improvements
+- InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
+- Added rounding for graphites from and to time range filters
+  for very short absolute ranges (Issue #320)
+- Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. (Closes #5)
+- Improvement to influxdb query editor, can now add where clause and alias (Issue #331, thanks @mavimo)
+- New config setting for graphite datasource to control if json render request is POST or GET (Issue #345)
+- Unsaved changes warning feature (Issue #324)
+- Improvement to series toggling, CTRL+MouseClick on series name will now hide all others (Issue #350)
+
+### Changes
+- Graph default setting for Y-Min changed from zero to auto scalling (will not effect existing dashboards). (Issue #386) - thx @kamaradclimber
+
+### Fixes
+- Fixes to filters and "All" option. It now never uses "*" as value, but all options in a {node1, node2, node3} expression (Issue #228, #359)
+- Fix for InfluxDB query generation with columns containing dots or dashes (Issue #369, #348) - Thanks to @jbripley
+
+
+# 1.5.3 (2014-04-17)
+- Add support for async scripted dashboards (Issue #274)
+- Text panel now accepts html (for links to other dashboards, etc) (Issue #236)
+- Fix for Text panel, now changes take effect directly (Issue #251)
+- Fix when adding functions without params that did not cause graph to update (Issue #267)
+- Graphite errors are now much easier to see and troubleshoot with the new inspector (Issue #265)
+- Use influxdb aliases to distinguish between multiple columns (Issue #283)
+- Correction to ms axis formater, now formats days correctly. (Issue #189)
+- Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
+- Browser page title is now Grafana - {{dashboard title}} (Issue #294)
+- Disable auto refresh zooming in (every time you change to an absolute time range), refresh will be restored when you change time range back to relative (Issue #282)
+- More graphite functions
+
+# 1.5.2 (2014-03-24)
+### New Features and improvements
+- Support for second optional params for functions like aliasByNode (Issue #167). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
+- More functions added to InfluxDB query editor (Issue #218)
+- Filters can now be used inside other filters (templated segments) (Issue #128)
+- More graphite functions added
+
+### Fixes
+- Float arguments now work for functions like scale (Issue #223)
+- Fix for graphite function editor, the graph & target was not updated after adding a function and leaving default params as is #191
+
+The zip files now contains a sub folder with project name and version prefix. (Issue #209)
+
+# 1.5.1 (2014-03-10)
+### Fixes
+- maxDataPoints must be an integer #184 (thanks @frejsoya for fixing this)
+
+For people who are find Grafana slow for large time spans or high resolution metrics. This is most likely due to graphite returning a large number of datapoints. The maxDataPoints parameter solves this issue. For maxDataPoints to work you need to run the latest graphite-web (some builds of 0.9.12 does not include this feature).
+
+Read this for more info:
+[Performance for large time spans](https://github.com/torkelo/grafana/wiki/Performance-for-large-time-spans)
+
+# 1.5.0 (2014-03-09)
+### New Features and improvements
 - New function editor [video demo](http://youtu.be/I90WHRwE1ZM) (Issue #178)
 - Links to function documentation from function editor (Issue #3)
 - Reorder functions (Issue #130)
@@ -17,8 +84,8 @@
 - Basic Auth fix (Issue #152)
 - Fix to annotations with graphite source & null values (Issue #138)
 
-# 1.4.0 (2013-02-21)
-###New Features
+# 1.4.0 (2014-02-21)
+### New Features
 - #44 Annotations! Required a lot of work to get right. Read wiki article for more info. Supported annotations data sources are graphite metrics and graphite events. Support for more will be added in the future!
 - #35 Support for multiple graphite servers! (Read wiki article for more)
 - #116 Back to dashboard link in top menu to easily exist full screen / edit mode.
@@ -35,7 +102,7 @@
 - #104 Improvement to graphite target editor, select wildcard now gives you a "select metric" link for the next node.
 - #105 Added zero as a possible node value in groupByAlias function
 
-# 1.3.0 (2013-02-13)
+# 1.3.0 (2014-02-13)
 ### New features or improvements
 - #86 Dashboard tags and search (see wiki article for details)
 - #54 Enhancement to filter / template. "Include All" improvement
@@ -48,7 +115,7 @@
 - #85 Added all parameters to summarize function
 - #83 Stack as percent should now work a lot better!
 
-# 1.2.0 (2013-02-10)
+# 1.2.0 (2014-02-10)
 ### New features
 - #70 Grid Thresholds (warning and error regions or lines in graph)
 - #72 Added an example of a scripted dashboard and a short wiki article documenting scripted dashboards.
@@ -62,7 +129,7 @@
 - #67 Allow decimal input for scale function
 - #68 Bug when trying to open dashboard while in edit mode
 
-# 1.1.0 (2013-02-06)
+# 1.1.0 (2014-02-06)
 ### New features:
 
 - #22 Support for native graphite png renderer, does not support click and select zoom yet
@@ -80,24 +147,24 @@
 
 Thanks to everyone who contributed fixes and provided feedback :+1:
 
-# 1.0.4 (2013-01-24)
+# 1.0.4 (2014-01-24)
 - Fixes #28 - Relative time range caused 500 graphite error in some cases (thx rsommer for the fix)
 
-# 1.0.3 (2013-01-23)
+# 1.0.3 (2014-01-23)
 - #9 Add Y-axis format for milliseconds
 - #16 Add support for Basic Auth (use http://username:password@yourgraphitedomain.com)
 - #13 Relative time ranges now uses relative time ranges when issuing graphite query
 
-# 1.0.2 (2013-01-21)
+# 1.0.2 (2014-01-21)
 - Fixes #12, should now work ok without ElasticSearch
 
-# 1.0.1 (2013-01-21)
+# 1.0.1 (2014-01-21)
 - Resize fix
 - Improvements to drag & drop
 - Added a few graphite function definitions
 - Fixed duplicate panel bug
 - Updated default dashboard with welcome message and randomWalk graph
 
-# 1.0.0 (2013-01-19)
+# 1.0.0 (2014-01-19)
 
 First public release

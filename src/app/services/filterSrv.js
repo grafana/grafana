@@ -8,94 +8,66 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
-    // defaults
-    var _d = {
-      list: [],
-      time: {}
-    };
+  module.factory('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
+  // defaults
+  var _d = {
+    templateParameters: [],
+    time: {}
+  };
 
-    // Save a reference to this
-    var self = this;
+  var result = {
 
-    // Call this whenever we need to reload the important stuff
-    this.init = function() {
-      dashboard.current.services.filter = dashboard.current.services.filter || {};
-
-      _.defaults(dashboard.current.services.filter, _d);
-
-      self.list = dashboard.current.services.filter.list;
-      self.time = dashboard.current.services.filter.time;
-
-      self.templateSettings = {
-        interpolate : /\[\[([\s\S]+?)\]\]/g,
-      };
-
-      if (self.list.length) {
-        this._updateTemplateData(true);
-      }
-    };
-
-    this._updateTemplateData = function(initial) {
-      self._filterTemplateData = {};
-
-      _.each(self.list, function(filter) {
+    updateTemplateData: function(initial) {
+      var _templateData = {};
+      _.each(this.templateParameters, function(templateParameter) {
         if (initial) {
-          var urlValue = $routeParams[filter.name];
+          var urlValue = $routeParams[ templateParameter.name ];
           if (urlValue) {
-            filter.current = { text: urlValue, value: urlValue };
+            templateParameter.current = { text: urlValue, value: urlValue };
           }
         }
-        if (!filter.current || !filter.current.value) {
+        if (!templateParameter.current || !templateParameter.current.value) {
           return;
         }
-
-        self._filterTemplateData[filter.name] = filter.current.value;
+        _templateData[templateParameter.name] = templateParameter.current.value;
       });
-    };
+      this._templateData = _templateData;
+    },
 
-    this.filterOptionSelected = function(filter, option) {
-      filter.current = option;
-      this._updateTemplateData();
-      dashboard.refresh();
-    };
+    addTemplateParameter: function(templateParameter) {
+      this.templateParameters.push(templateParameter);
+      this.updateTemplateData();
+    },
 
-    this.add = function(filter) {
-      self.list.push(filter);
-    };
-
-    this.applyFilterToTarget = function(target) {
+    applyTemplateToTarget: function(target) {
       if (target.indexOf('[[') === -1) {
         return target;
       }
 
-      return _.template(target, self._filterTemplateData, self.templateSettings);
-    };
+      return _.template(target, this._templateData, this.templateSettings);
+    },
 
-    this.remove = function(filter) {
-      self.list = dashboard.current.services.filter.list = _.without(self.list, filter);
+    setTime: function(time) {
+      _.extend(this.time, time);
 
-      if(!$rootScope.$$phase) {
-        $rootScope.$apply();
+      // disable refresh if we have an absolute time
+      if (time.to !== 'now') {
+        this.old_refresh = this.dashboard.refresh;
+        dashboard.set_interval(false);
+      }
+      else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
+        dashboard.set_interval(this.old_refresh);
+        this.old_refresh = null;
       }
 
       $timeout(function(){
         dashboard.refresh();
       },0);
-    };
+    },
 
-    this.setTime = function(time) {
-      _.extend(self.time, time);
-
-      $timeout(function(){
-        dashboard.refresh();
-      },0);
-    };
-
-    this.timeRange = function(parse) {
-      var _t = self.time;
-
-      if(_.isUndefined(_t)) {
+    timeRange: function(parse) {
+      var _t = this.time;
+      if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
         return false;
       }
       if(parse === false) {
@@ -104,19 +76,35 @@ define([
           to: _t.to
         };
       } else {
-        var
-          _from = _t.from,
-          _to = _t.to || new Date();
+        var _from = _t.from;
+        var _to = _t.to || new Date();
 
         return {
           from : kbn.parseDate(_from),
           to : kbn.parseDate(_to)
         };
       }
-    };
+    },
 
-    // Now init
-    self.init();
+    removeTemplateParameter: function(templateParameter) {
+      this.templateParameters = _.without(this.templateParameters, templateParameter);
+      this.dashboard.services.filter.list = this.templateParameters;
+    },
+
+    init: function(dashboard) {
+      _.defaults(this, _d);
+      this.dashboard = dashboard;
+      this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
+
+      if(dashboard.services && dashboard.services.filter) {
+        this.time = dashboard.services.filter.time;
+        this.templateParameters = dashboard.services.filter.list || [];
+        this.updateTemplateData(true);
+      }
+
+    }
+  };
+  return result;
   });
 
 });

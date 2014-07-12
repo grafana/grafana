@@ -130,7 +130,7 @@
 }
 
 .panel-fullscreen {
-  z-index: 1500;
+  z-index: 100;
   display: block !important;
   position: fixed;
   left: 0px;
@@ -147,7 +147,6 @@
   }
 }
 
-
 .dashboard-fullscreen .container-fluid.main {
   height: 0px;
   width: 0px;
@@ -158,8 +157,10 @@
 // Graphite Graph Legends
 
 .grafana-legend-container {
-  margin: 4px 15px;
+  margin: 0 15px;
   text-align: left;
+  position: relative;
+  top: 2px;
 }
 
 .grafana-legend-container .popover-content {
@@ -509,4 +510,9 @@ select.grafana-target-segment-input {
   cursor: auto;
   //background: rgba(50,50,50,0.8);
   padding: 10px;
+}
+
+.grafana-version-footer {
+  padding-top: 15px;
+  text-align: left;
 }

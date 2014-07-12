@@ -45,7 +45,7 @@
       <a class="link" ng-click="removeAsFavorite()">Remove as favorite</a>
     </li>
     <li ng-show="dashboard.current.loader.save_local">
-      <a class="link" ng-click="dashboard.to_file()">Export schema</a>
+      <a class="link" ng-click="dashboard.to_file()">Export dashboard</a>
     </li>
     <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="elasticsearch_save('temp',dashboard.current.loader.save_temp_ttl)" config-modal="app/partials/dashLoaderShare.html">Share temp copy</i></a></li>
 

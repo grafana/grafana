@@ -1,6 +1,7 @@
 define([
   'services/graphite/gfunc'
 ], function(gfunc) {
+  'use strict';
 
   describe('when creating func instance from func names', function() {
 
@@ -20,8 +21,8 @@ define([
 
     it('should return func instance from funcDef', function() {
       var func = gfunc.createFuncInstance('sum');
-      var func = gfunc.createFuncInstance(func.def);
-      expect(func).to.be.ok();
+      var func2 = gfunc.createFuncInstance(func.def);
+      expect(func2).to.be.ok();
     });
 
     it('func instance should have text representation', function() {
@@ -57,12 +58,51 @@ define([
   });
 
   describe('when requesting function categories', function() {
-
     it('should return function categories', function() {
       var catIndex = gfunc.getCategories();
       expect(catIndex.Special.length).to.be.greaterThan(8);
     });
+  });
 
+  describe('when updating func param', function() {
+    it('should update param value and update text representation', function() {
+      var func = gfunc.createFuncInstance('summarize');
+      func.updateParam('1h', 0);
+      expect(func.params[0]).to.be('1h');
+      expect(func.text).to.be('summarize(1h, sum)');
+    });
+
+    it('should parse numbers as float', function() {
+      var func = gfunc.createFuncInstance('scale');
+      func.updateParam('0.001', 0);
+      expect(func.params[0]).to.be(0.001);
+    });
+  });
+
+  describe('when updating func param with optional second parameter', function() {
+    it('should update value and text', function() {
+      var func = gfunc.createFuncInstance('aliasByNode');
+      func.updateParam('1', 0);
+      expect(func.params[0]).to.be(1);
+    });
+
+    it('should slit text and put value in second param', function() {
+      var func = gfunc.createFuncInstance('aliasByNode');
+      func.updateParam('4,-5', 0);
+      expect(func.params[0]).to.be(4);
+      expect(func.params[1]).to.be(-5);
+      expect(func.text).to.be('aliasByNode(4, -5)');
+    });
+
+    it('should remove second param when empty string is set', function() {
+      var func = gfunc.createFuncInstance('aliasByNode');
+      func.updateParam('4,-5', 0);
+      func.updateParam('', 1);
+      expect(func.params[0]).to.be(4);
+      expect(func.params[1]).to.be(undefined);
+      expect(func.text).to.be('aliasByNode(4)');
+    });
   });
 
 });
+

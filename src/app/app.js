@@ -98,7 +98,7 @@ function (angular, $, _, appLevelRequire) {
     'pasvaz.bindonce'
   ];
 
-  _.each('controllers directives factories services filters'.split(' '),
+  _.each('controllers directives factories services services.dashboard filters'.split(' '),
   function (type) {
     var module_name = 'kibana.'+type;
     // create the module

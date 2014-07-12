@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('kibana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, filterSrv, $http) {
+  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -19,32 +19,36 @@ function (angular, _, $, config, kbn, moment) {
       this.url = datasource.url;
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
+      this.render_method = datasource.render_method || 'POST';
     }
 
-    GraphiteDatasource.prototype.query = function(options) {
+    GraphiteDatasource.prototype.query = function(filterSrv, options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from),
-          until: this.translateTime(options.range.to),
+          from: this.translateTime(options.range.from, 'round-down'),
+          until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(graphOptions);
+        var params = this.buildGraphiteParams(filterSrv, graphOptions);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
         }
 
-        return this.doGraphiteRequest({
-          method: 'POST',
-          url: '/render',
-          data: params.join('&'),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }
-        });
+        var httpOptions = { method: this.render_method, url: '/render' };
+
+        if (httpOptions.method === 'GET') {
+          httpOptions.url = httpOptions.url + '?' + params.join('&');
+        }
+        else {
+          httpOptions.data = params.join('&');
+          httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        }
+
+        return this.doGraphiteRequest(httpOptions);
       }
       catch(err) {
         return $q.reject(err);
@@ -68,7 +72,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date) {
+    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
@@ -85,6 +89,21 @@ function (angular, _, $, config, kbn, moment) {
 
       date = moment.utc(date);
 
+      if (rounding === 'round-up') {
+        if (date.get('s')) {
+          date.add('m', 1);
+        }
+      }
+      else if (rounding === 'round-down') {
+        // graphite' s from filter is exclusive
+        // here we step back one minute in order
+        // to guarantee that we get all the data that
+        // exists for the specified range
+        if (date.get('s')) {
+          date.subtract('m', 1);
+        }
+      }
+
       if (dashboard.current.timezone === 'browser') {
         date = date.local();
       }
@@ -96,10 +115,10 @@ function (angular, _, $, config, kbn, moment) {
       return date.format('HH:mm_YYYYMMDD');
     };
 
-    GraphiteDatasource.prototype.metricFindQuery = function(query) {
+    GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
       var interpolated;
       try {
-        interpolated = filterSrv.applyFilterToTarget(query);
+        interpolated = filterSrv.applyTemplateToTarget(query);
       }
       catch(err) {
         return $q.reject(err);
@@ -139,7 +158,7 @@ function (angular, _, $, config, kbn, moment) {
       return $http(options);
     };
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
+    GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
 
@@ -155,7 +174,7 @@ function (angular, _, $, config, kbn, moment) {
         if (key === "targets") {
           _.each(value, function (value) {
             if (!value.hide) {
-              var targetValue = filterSrv.applyFilterToTarget(value.target);
+              var targetValue = filterSrv.applyTemplateToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           }, this);

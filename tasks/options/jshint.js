@@ -1,19 +1,25 @@
 module.exports = function(config) {
   return {
-    // just lint the source dir
     source: {
       files: {
-        src: ['Gruntfile.js', '<%= srcDir %>/app/**/*.js']
+        src: ['Gruntfile.js', '<%= srcDir %>/app/**/*.js'],
+      }
+    },
+    tests: {
+      files: {
+        src: ['<%= srcDir %>/test/**/*.js'],
       }
     },
     options: {
-      jshintrc: '<%= baseDir %>/.jshintrc',
+      jshintrc: true,
+      reporter: require('jshint-stylish'),
       ignores: [
         'node_modules/*',
         'dist/*',
         'sample/*',
         '<%= srcDir %>/vendor/*',
-        '<%= srcDir %>/app/panels/*/{lib,leaflet}/*'
+        '<%= srcDir %>/app/panels/*/{lib,leaflet}/*',
+        '<%= srcDir %>/app/dashboards/*'
       ]
     }
   };

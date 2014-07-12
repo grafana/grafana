@@ -77,7 +77,7 @@ code, pre {
 }
 
 .panel-content {
-  padding: 0px 10px 10px 10px;
+  padding: 0px 10px 5px 10px;
 }
 
 .panel-title {
@@ -112,7 +112,12 @@ code, pre {
 
 .panel-error {
   color: @white;
-  padding: 3px 10px 0px 10px;
+  padding: 5px 10px 0px 10px;
+}
+
+.panel-error-inspector-link {
+  float: right;
+  margin-right: 10px;
 }
 
 
@@ -582,4 +587,22 @@ div.flot-text {
 
 .save-dashboard-dropdown-save-form {
   margin-bottom: 5px;
+}
+
+
+// inspector
+.inspector-request-table {
+  td {
+     padding: 5px;
+  }
+
+  td:first-child {
+    white-space: nowrap;
+  }
+}
+
+// pre
+code, pre {
+  background-color: @kibanaPanelBackground;
+  color: @textColor;
 }

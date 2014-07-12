@@ -7,7 +7,7 @@ module.exports = function(config) {
     },
     debug: {
       configFile: 'src/test/karma.conf.js',
-      singleRun: true,
+      singleRun: false,
       browsers: ['Chrome']
     },
     test: {

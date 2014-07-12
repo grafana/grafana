@@ -124,6 +124,18 @@ function (angular, app, _) {
          */
         type    : type
       };
+
+      function fixRowHeight(height) {
+        if (!height) {
+          return '200px';
+        }
+        if (!_.isString(height)) {
+          return height + 'px';
+        }
+        return height;
+      }
+
+      $scope.row.height = fixRowHeight($scope.row.height);
     };
 
     /** @scratch /panels/2

@@ -1,6 +1,5 @@
 {
   "browser": true,
-
   "bitwise":false,
   "curly": true,
   "eqnull": true,
@@ -18,18 +17,22 @@
   "noempty": true,
   "undef": true,
   "boss": true,
-  "trailing": true,
+  "trailing": false,
   "laxbreak": true,
   "laxcomma": true,
   "sub": true,
   "unused": true,
-  "maxdepth": 5,
   "maxlen": 140,
 
   "globals": {
+    "expect": true,
+    "it": true,
+    "describe": true,
     "define": true,
+    "module": true,
+    "beforeEach": true,
+    "inject": true,
     "require": true,
-    "Chromath": false,
     "setImmediate": true
   }
 }

@@ -10,7 +10,7 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('grafanaGraph', function(filterSrv, $rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope, dashboard) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -23,11 +23,13 @@ function (angular, $, kbn, moment, _) {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function(e, alias) {
-          if (hiddenData[alias]) {
-            data.push(hiddenData[alias]);
-            delete hiddenData[alias];
-          }
+        scope.$on('toggleLegend', function(e, series) {
+          _.each(series, function(serie) {
+            if (hiddenData[serie.alias]) {
+              data.push(hiddenData[serie.alias]);
+              delete hiddenData[serie.alias];
+            }
+          });
 
           render_panel();
         });
@@ -45,21 +47,45 @@ function (angular, $, kbn, moment, _) {
 
         function setElementHeight() {
           try {
-            elem.css({ height: scope.height || scope.panel.height || scope.row.height });
+            var height = scope.height || scope.panel.height || scope.row.height;
+            if (_.isString(height)) {
+              height = parseInt(height.replace('px', ''), 10);
+            }
+
+            height = height - 32; // subtract panel title bar
+
+            if (scope.panel.legend.show) {
+              height = height - 21; // subtract one line legend
+            }
+
+            elem.css('height', height + 'px');
+
             return true;
           } catch(e) { // IE throws errors sometimes
             return false;
           }
         }
 
-        // Function for rendering panel
-        function render_panel() {
-          if (!data) { return; }
-          if (scope.otherPanelInFullscreenMode()) { return; }
-          if (!setElementHeight()) { return; }
+        function shouldAbortRender() {
+          if (!data) {
+            return true;
+          }
+
+          if ($rootScope.fullscreen && !scope.fullscreen) {
+            return true;
+          }
+
+          if (!setElementHeight()) { return true; }
 
           if (_.isString(data)) {
             render_panel_as_graphite_png(data);
+            return true;
+          }
+        }
+
+        // Function for rendering panel
+        function render_panel() {
+          if (shouldAbortRender()) {
             return;
           }
 
@@ -248,10 +274,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          if (format === 'bytes') {
-            axis.mode = 'byte';
-          }
-          else if (format !== 'none') {
+          if (format !== 'none') {
             axis.tickFormatter = kbn.getFormatFunction(format, 1);
           }
         }
@@ -326,14 +349,17 @@ function (angular, $, kbn, moment, _) {
           url += scope.panel.stack ? '&areaMode=stacked' : '';
           url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
           url += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
-          url += scope.panel.legend ? '' : '&hideLegend=true';
-          url += scope.panel.grid.min ? '&yMin=' + scope.panel.grid.min : '';
-          url += scope.panel.grid.max ? '&yMax=' + scope.panel.grid.max : '';
+          url += scope.panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
+          url += scope.panel.grid.min !== null ? '&yMin=' + scope.panel.grid.min : '';
+          url += scope.panel.grid.max !== null ? '&yMax=' + scope.panel.grid.max : '';
           url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
           switch(scope.panel.y_formats[0]) {
           case 'bytes':
+            url += '&yUnitSystem=binary';
+            break;
+          case 'bits':
             url += '&yUnitSystem=binary';
             break;
           case 'short':
@@ -361,9 +387,11 @@ function (angular, $, kbn, moment, _) {
         }
 
         elem.bind("plotselected", function (event, ranges) {
-          filterSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from).toDate(),
-            to    : moment.utc(ranges.xaxis.to).toDate(),
+          scope.$apply( function() {
+              scope.filter.setTime({
+                from  : moment.utc(ranges.xaxis.from).toDate(),
+                to    : moment.utc(ranges.xaxis.to).toDate(),
+              });
           });
         });
       }

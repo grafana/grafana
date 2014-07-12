@@ -8,7 +8,7 @@ function (angular, _, moment) {
 
   var module = angular.module('kibana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, filterSrv, playlistSrv) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, dashboard, alertSrv, $location, playlistSrv) {
     $scope.loader = dashboard.current.loader;
 
     $scope.init = function() {
@@ -49,7 +49,7 @@ function (angular, _, moment) {
 
     $scope.set_default = function() {
       if(dashboard.set_default($location.path())) {
-        alertSrv.set('Home Set','This page has been set as your default Kibana dashboard','success',5000);
+        alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
       }
@@ -57,7 +57,7 @@ function (angular, _, moment) {
 
     $scope.purge_default = function() {
       if(dashboard.purge_default()) {
-        alertSrv.set('Local Default Clear','Your Kibana default dashboard has been reset to the default',
+        alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default',
           'success',5000);
       } else {
         alertSrv.set('Incompatible Browser','Sorry, your browser is too old for this feature','error',5000);
@@ -65,23 +65,20 @@ function (angular, _, moment) {
     };
 
     $scope.elasticsearch_save = function(type,ttl) {
-      dashboard.elasticsearch_save(
-        type,
-        ($scope.elasticsearch.title || dashboard.current.title),
-        ($scope.loader.save_temp_ttl_enable ? ttl : false)
-      ).then(function(result) {
-        if(_.isUndefined(result._id)) {
-          alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
-          return;
-        }
+      dashboard.elasticsearch_save(type, dashboard.current.title, ttl)
+        .then(function(result) {
+          if(_.isUndefined(result._id)) {
+            alertSrv.set('Save failed','Dashboard could not be saved to Elasticsearch','error',5000);
+            return;
+          }
 
-        alertSrv.set('Dashboard Saved', 'This dashboard has been saved to Elasticsearch as "' + result._id + '"','success', 5000);
-        if(type === 'temp') {
-          $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
-        }
+          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result._id + '"','success', 5000);
+          if(type === 'temp') {
+            $scope.share = dashboard.share_link(dashboard.current.title,'temp',result._id);
+          }
 
-        $rootScope.$emit('dashboard-saved');
-      });
+          $rootScope.$emit('dashboard-saved', dashboard.current);
+        });
     };
 
     $scope.elasticsearch_delete = function(id) {
@@ -134,7 +131,7 @@ function (angular, _, moment) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = filterSrv.timeRange();
+      var _range = this.filter.timeRange();
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
       var _center = _range.to.valueOf() - _timespan/2;
 
@@ -148,7 +145,7 @@ function (angular, _, moment) {
         _to = Date.now();
       }
 
-      filterSrv.setTime({
+      this.filter.setTime({
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
       });

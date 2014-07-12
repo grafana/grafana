@@ -19,6 +19,8 @@ define([
   'kbn',
   'moment',
   './timeSeries',
+  'services/annotationsSrv',
+  'services/datasourceSrv',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',
@@ -34,7 +36,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('kibana.panels.graphite', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, filterSrv, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graphite', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -84,7 +86,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','short', 'ms'
+       * y_formats :: 'none','bytes','bits','short', 's', 'ms'
        */
       y_formats    : ['short', 'short'],
       /** @scratch /panels/histogram/5
@@ -94,7 +96,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       grid          : {
         max: null,
-        min: 0,
+        min: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -140,7 +142,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       stack         : false,
       /** @scratch /panels/histogram/3
-       * legend:: Display the legond
+       * legend:: Display the legend
        */
       legend: {
         show: true, // disable/enable legend
@@ -199,7 +201,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     }
 
     $scope.init = function() {
-      $scope.initPanel($scope);
+      $scope.initBaseController(this, $scope);
 
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
@@ -228,9 +230,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = filterSrv.timeRange();
-      $scope.rangeUnparsed = filterSrv.timeRange(false);
-      $scope.resolution = Math.ceil(($(window).width() * ($scope.panel.span / 12)) / 2);
+      $scope.range = this.filter.timeRange();
+      $scope.rangeUnparsed = this.filter.timeRange(false);
+      $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
       $scope.interval = '10m';
 
       if ($scope.range) {
@@ -256,12 +258,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         datasource: $scope.panel.datasource
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed);
 
-      return $scope.datasource.query(graphiteQuery)
+      return $scope.datasource.query($scope.filter, graphiteQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
+          $scope.panelMeta.loading = false;
           $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.inspector.error = err;
+          $scope.render([]);
         });
     };
 
@@ -318,9 +323,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         if (last - from < -10000) {
           $scope.datapointsOutside = true;
         }
-      }
 
-      $scope.datapointsCount += datapoints.length;
+        $scope.datapointsCount += datapoints.length;
+      }
 
       return series;
     };
@@ -343,15 +348,53 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
-    $scope.toggleSeries = function(info) {
-      if ($scope.hiddenSeries[info.alias]) {
-        delete $scope.hiddenSeries[info.alias];
+    $scope.toggleSeries = function(serie, event) {
+      if ($scope.hiddenSeries[serie.alias]) {
+        delete $scope.hiddenSeries[serie.alias];
       }
       else {
-        $scope.hiddenSeries[info.alias] = true;
+        $scope.hiddenSeries[serie.alias] = true;
       }
 
-      $scope.$emit('toggleLegend', info.alias);
+      if (event.ctrlKey) {
+        $scope.toggleSeriesExclusiveMode(serie);
+      }
+
+      $scope.$emit('toggleLegend', $scope.legend);
+    };
+
+    $scope.toggleSeriesExclusiveMode = function(serie) {
+      var hidden = $scope.hiddenSeries;
+
+      if (hidden[serie.alias]) {
+        delete hidden[serie.alias];
+      }
+
+      // check if every other series is hidden
+      var alreadyExclusive = _.every($scope.legend, function(value) {
+        if (value.alias === serie.alias) {
+          return true;
+        }
+
+        return hidden[value.alias];
+      });
+
+      if (alreadyExclusive) {
+        // remove all hidden series
+        _.each($scope.legend, function(value) {
+          delete $scope.hiddenSeries[value.alias];
+        });
+      }
+      else {
+        // hide all but this serie
+        _.each($scope.legend, function(value) {
+          if (value.alias === serie.alias) {
+            return;
+          }
+
+          $scope.hiddenSeries[value.alias] = true;
+        });
+      }
     };
 
     $scope.toggleYAxis = function(info) {
