@@ -33,7 +33,7 @@
     </div>
     <div class="editor-option">
       <label class="small">Type</label>
-      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events']"></select>
+      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events', 'influxdb events']"></select>
     </div>
     <div class="editor-option">
       <label class="small">Icon color</label>
@@ -67,6 +67,12 @@
     </div>
   </div>
 
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'influxdb events'">
+    <div class="editor-option">
+      <label class="small">InfluxDB</label>
+      <input type="text" class="span10" ng-model='currentAnnnotation.query' placeholder=""></input>
+    </div>
+  </div>
 </div>
 
 <div class="modal-footer">

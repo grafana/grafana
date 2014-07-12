@@ -1,8 +1,9 @@
 define([
   'angular',
   'underscore',
-  'moment'
-], function (angular, _, moment) {
+  'moment',
+  'kbn'
+], function (angular, _, moment, kbn) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -39,6 +40,7 @@ define([
 
       var graphiteMetrics = this.getGraphiteMetrics(rangeUnparsed);
       var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
+      var graphiteEvents = this.getInfluxdbEvents(rangeUnparsed);
 
       promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
         .then(function() {
@@ -46,6 +48,50 @@ define([
         });
 
       return promiseCached;
+    };
+
+    this.getInfluxdbEvents = function(rangeUnparsed) {
+      var annotations = this.getAnnotationsByType('influxdb events');
+      if (annotations.length === 0) {
+        return [];
+      }
+
+      var parseDate = function (date) {
+        var time = kbn.parseDate(date)
+        return (time.getTime() / 1000).toFixed(0) + 's';
+      };
+
+      var timerange = ' time > ' + parseDate(rangeUnparsed.from) + ' and time < ' + parseDate(rangeUnparsed.to);
+
+      var promises = _.map(annotations, function (annotation) {
+        var where_pos = angular.lowercase(annotation.query).indexOf(' where ');
+        var group_pos = angular.lowercase(annotation.query).indexOf(' group ');
+        var query = annotation.query;
+
+        if (where_pos > 0) {
+          query = [annotation.query.slice(0, where_pos), timerange, ' and ', annotation.query.slice(where_pos)].join('');
+        }
+        else if (group_pos > 0) {
+          query = [annotation.query.slice(0, group_pos), ' where ', timerange, annotation.query.slice(group_pos)].join('');
+        }
+
+        return datasourceSrv.default
+          .doInfluxRequest(query)
+          .then(function (results) {
+              _.each(results.data, function (series) {
+                _.each(series.points, function (point) {
+                  addAnnotation({
+                    annotation: annotation,
+                    time: point[0],
+                    description: "Result " + point[1]
+                  });
+                });
+              });
+            })
+          .then(null, errorHandler);
+      });
+
+      return promises;
     };
 
     this.getGraphiteEvents = function(rangeUnparsed) {
