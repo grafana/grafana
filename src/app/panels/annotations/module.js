@@ -14,7 +14,7 @@ function (angular, app, _) {
   var module = angular.module('kibana.panels.annotations', []);
   app.useModule(module);
 
-  module.controller('AnnotationsCtrl', function($scope, dashboard, $rootScope) {
+  module.controller('AnnotationsCtrl', function($scope, datasourceSrv, $rootScope) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -41,14 +41,20 @@ function (angular, app, _) {
     $scope.init = function() {
       $scope.currentAnnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
+      $scope.datasources = datasourceSrv.getAnnotationSources();
+      if ($scope.datasources.length > 0) {
+        $scope.currentDatasource = $scope.datasources[0];
+      }
     };
 
     $scope.edit = function(annotation) {
       $scope.currentAnnnotation = annotation;
       $scope.currentIsNew = false;
+      $scope.currentDatasource = datasourceSrv.get(annotation.datasource);
     };
 
     $scope.update = function() {
+      $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
       $scope.currentAnnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
     };

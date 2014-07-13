@@ -20,6 +20,8 @@ function (angular, _, $, config, kbn, moment) {
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
       this.render_method = datasource.render_method || 'POST';
+      this.supportAnnotations = true;
+      this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
     }
 
     GraphiteDatasource.prototype.query = function(filterSrv, options) {

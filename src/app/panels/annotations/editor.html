@@ -32,8 +32,8 @@
       <input type="text" class="input-medium" ng-model='currentAnnnotation.name' placeholder="name"></input>
     </div>
     <div class="editor-option">
-      <label class="small">Type</label>
-      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events']"></select>
+      <label class="small">Datasource</label>
+      <select ng-model="currentDatasource" ng-options="f.name for f in datasources" ng-change="setDatasource()"></select>
     </div>
     <div class="editor-option">
       <label class="small">Icon color</label>
@@ -53,18 +53,7 @@
     </div>
   </div>
 
-  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite metric'">
-    <div class="editor-option">
-      <label class="small">Graphite target expression</label>
-      <input type="text" class="span10" ng-model='currentAnnnotation.target' placeholder=""></input>
-    </div>
-  </div>
-
-  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite events'">
-    <div class="editor-option">
-      <label class="small">Graphite event tags</label>
-      <input type="text" ng-model='currentAnnnotation.tags' placeholder=""></input>
-    </div>
+  <div ng-include src="currentDatasource.editorSrc">
   </div>
 
 </div>

@@ -21,6 +21,9 @@ function (angular, _, kbn, InfluxSeries) {
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
+
+      this.supportAnnotations = true;
+      this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
     }
 
     InfluxDatasource.prototype.query = function(filterSrv, options) {
