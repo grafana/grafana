@@ -78,16 +78,16 @@ define([
         return datasourceSrv.default
           .doInfluxRequest(query)
           .then(function (results) {
-              _.each(results.data, function (series) {
-                _.each(series.points, function (point) {
-                  addAnnotation({
-                    annotation: annotation,
-                    time: point[0],
-                    description: "Result " + point[1]
-                  });
+            _.each(results, function (series) {
+              _.each(series.points, function (point) {
+                addAnnotation({
+                  annotation: annotation,
+                  time: point[0],
+                  description: annotation.message
                 });
               });
-            })
+            });
+          })
           .then(null, errorHandler);
       });
 
