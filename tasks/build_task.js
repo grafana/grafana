@@ -6,39 +6,32 @@ module.exports = function(grunt) {
     'jshint:tests',
     'clean:on_start',
     'less:src',
+    'concat:css',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
+    'ngtemplates',
     'cssmin:build',
+    'build:grafanaVersion',
     'ngmin:build',
     'requirejs:build',
+    'concat:js',
+    'filerev',
+    'usemin',
     'clean:temp',
-    'build:write_revision',
     'uglify:dest'
   ]);
 
-  // run a string replacement on the require config, using the latest revision number as the cache buster
-  grunt.registerTask('build:write_revision', function() {
-    grunt.event.once('git-describe', function (desc) {
-      grunt.config('string-replace.config', {
-        files: {
-          '<%= destDir %>/app/components/require.config.js': '<%= destDir %>/app/components/require.config.js',
-          '<%= destDir %>/app/app.js': '<%= destDir %>/app/app.js'
-        },
-        options: {
-          replacements: [
-            {
-              pattern: /@REV@/g,
-              replacement: desc.object
-            },
-            {
-              pattern: /@grafanaVersion@/g,
-              replacement: '<%= pkg.version %>'
-            }
-          ]
-        }
-      });
-      grunt.task.run('string-replace:config');
+
+  grunt.registerTask('build:grafanaVersion', function() {
+    grunt.config('string-replace.config', {
+      files: {
+        '<%= tempDir %>/app/app.js': '<%= tempDir %>/app/app.js'
+      },
+      options: {
+        replacements: [{ pattern: /@grafanaVersion@/g,  replacement: '<%= pkg.version %>' }]
+      }
     });
-    grunt.task.run('git-describe');
+    grunt.task.run('string-replace:config');
   });
+
 };

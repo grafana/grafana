@@ -32,7 +32,6 @@ function (angular, app, _, moment, kbn) {
         " or if you're using time stamped indices, you need one of these"
     };
 
-
     // Set and populate defaults
     var _d = {
       status        : "Stable",
@@ -156,7 +155,7 @@ function (angular, app, _, moment, kbn) {
 
     var pad = function(n, width, z) {
       z = z || '0';
-      n = n + '';
+      n = n.toString();
       return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
     };
 
@@ -193,7 +192,6 @@ function (angular, app, _, moment, kbn) {
       date = moment(date).clone().toDate();
       return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).toDate();
     };
-
 
   });
 });

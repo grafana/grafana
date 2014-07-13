@@ -49,7 +49,6 @@ function (angular, $, config, _) {
     $scope.panelMoveOver = panelMove.onOver;
     $scope.panelMoveOut = panelMove.onOut;
 
-
     $scope.init = function() {
       $scope.config = config;
 
@@ -89,10 +88,16 @@ function (angular, $, config, _) {
       dash.rows.push(row);
     };
 
+    $scope.add_row_default = function() {
+      $scope.reset_row();
+      $scope.row.title = 'New row';
+      $scope.add_row(dashboard.current, $scope.row);
+    };
+
     $scope.reset_row = function() {
       $scope.row = {
         title: '',
-        height: '150px',
+        height: '250px',
         editable: true,
       };
     };

@@ -28,8 +28,8 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       failover: false,
       panel_hints: true,
       rows: [],
-      pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
-      nav: [ { type: 'timepicker' } ],
+      pulldowns: [{ type: 'templating' },  { type: 'annotations' }],
+      nav: [{ type: 'timepicker' }],
       services: {},
       loader: {
         save_gist: false,
@@ -59,7 +59,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
     this.last = {};
     this.availablePanels = [];
 
-    $rootScope.$on('$routeChangeSuccess',function(){
+    $rootScope.$on('$routeChangeSuccess',function() {
       // Clear the current dashboard to prevent reloading
       self.current = {};
       self.indices = [];
@@ -138,6 +138,14 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         });
       }
 
+      _.each(dashboard.rows, function(row) {
+        _.each(row.panels, function(panel) {
+          if (panel.type === 'graphite') {
+            panel.type = 'graph';
+          }
+        });
+      });
+
       return dashboard;
     };
 
@@ -159,12 +167,7 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
         self.set_interval(dashboard.refresh);
       }
 
-      // Set the available panels for the "Add Panel" drop down
-      self.availablePanels = _.difference(config.panel_names,
-        _.pluck(_.union(self.current.nav,self.current.pulldowns),'type'));
-
-      // Take out any that we're not allowed to add from the gui.
-      self.availablePanels = _.difference(self.availablePanels,config.hidden_panels);
+      self.availablePanels = config.panels;
 
       $rootScope.$emit('dashboard-loaded', self.current);
 
@@ -442,20 +445,28 @@ function (angular, $, kbn, _, config, moment, Modernizr) {
       });
     };
 
+    this.start_scheduled_refresh = function (after_ms) {
+      this.cancel_scheduled_refresh();
+      self.refresh_timer = timer.register($timeout(function () {
+        self.start_scheduled_refresh(after_ms);
+        self.refresh();
+      }, after_ms));
+    };
+
+    this.cancel_scheduled_refresh = function () {
+      timer.cancel(self.refresh_timer);
+    };
+
     this.set_interval = function (interval) {
       self.current.refresh = interval;
-      if(interval) {
+      if (interval) {
         var _i = kbn.interval_to_ms(interval);
-        timer.cancel(self.refresh_timer);
-        self.refresh_timer = timer.register($timeout(function() {
-          self.set_interval(interval);
-          self.refresh();
-        },_i));
-        self.refresh();
+        this.start_scheduled_refresh(_i);
       } else {
-        timer.cancel(self.refresh_timer);
+        this.cancel_scheduled_refresh();
       }
     };
+
   });
 
 });

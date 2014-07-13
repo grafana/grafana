@@ -87,13 +87,12 @@ function (angular, $) {
     .module('kibana.directives')
     .directive('gfDropdown', function ($parse, $compile, $timeout) {
 
-      function buildTemplate(items, ul) {
-        if (!ul) {
-          ul = [
-            '<ul class="dropdown-menu" role="menu" aria-labelledby="drop1">',
-            '</ul>'
-          ];
-        }
+      function buildTemplate(items, placement) {
+        var upclass = placement === 'top' ? 'dropup' : '';
+        var ul = [
+          '<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">',
+          '</ul>'
+        ];
 
         angular.forEach(items, function (item, index) {
           if (item.divider) {
@@ -122,10 +121,12 @@ function (angular, $) {
         link: function postLink(scope, iElement, iAttrs) {
           var getter = $parse(iAttrs.gfDropdown), items = getter(scope);
           $timeout(function () {
-            var dropdown = angular.element(buildTemplate(items).join(''));
+            var placement = iElement.data('placement');
+            var dropdown = angular.element(buildTemplate(items, placement).join(''));
             dropdown.insertAfter(iElement);
             $compile(iElement.next('ul.dropdown-menu'))(scope);
           });
+
           iElement.addClass('dropdown-toggle').attr('data-toggle', 'dropdown');
         }
       };

@@ -1,4 +1,4 @@
-define(['jquery','underscore','moment','chromath'],
+define(['jquery','underscore','moment'],
 function($, _, moment) {
   'use strict';
 
@@ -78,7 +78,7 @@ function($, _, moment) {
     }
   };
 
-  kbn.secondsToHms = function(seconds){
+  kbn.secondsToHms = function(seconds) {
     var numyears = Math.floor(seconds / 31536000);
     if(numyears){
       return numyears + 'y';
@@ -191,7 +191,7 @@ function($, _, moment) {
 
   kbn.parseDateMath = function(mathString, time, roundUp) {
     var dateTime = moment(time);
-    for (var i = 0; i < mathString.length; ) {
+    for (var i = 0; i < mathString.length;) {
       var c = mathString.charAt(i++),
         type,
         num,
@@ -296,10 +296,10 @@ function($, _, moment) {
 
   kbn.query_color_dot = function (color, diameter) {
     return '<div class="icon-circle" style="' + [
-        'display:inline-block',
-        'color:' + color,
-        'font-size:' + diameter + 'px',
-      ].join(';') + '"></div>';
+      'display:inline-block',
+      'color:' + color,
+      'font-size:' + diameter + 'px',
+    ].join(';') + '"></div>';
   };
 
   kbn.byteFormat = function(size, decimals) {
@@ -481,23 +481,23 @@ function($, _, moment) {
   };
 
   kbn.msFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ms";
     }
     // Less than 1 min
-    else if (size < 60000) {
+    else if (Math.abs(size) < 60000) {
       return (size / 1000).toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600000) {
+    else if (Math.abs(size) < 3600000) {
       return (size / 60000).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400000) {
+    else if (Math.abs(size) < 86400000) {
       return (size / 3600000).toFixed(decimals) + " hour";
     }
     // Less than one year, devide in days
-    else if (size < 31536000000) {
+    else if (Math.abs(size) < 31536000000) {
       return (size / 86400000).toFixed(decimals) + " day";
     }
 
@@ -506,30 +506,34 @@ function($, _, moment) {
 
   kbn.sFormat = function(size, decimals) {
     // Less than 10 min, use seconds
-    if (size < 600) {
+    if (Math.abs(size) < 600) {
       return size.toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600) {
+    else if (Math.abs(size) < 3600) {
       return (size / 60).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400) {
+    else if (Math.abs(size) < 86400) {
       return (size / 3600).toFixed(decimals) + " hour";
     }
     // Less than one week, devide in days
-    else if (size < 604800) {
+    else if (Math.abs(size) < 604800) {
       return (size / 86400).toFixed(decimals) + " day";
+    }
+    // Less than one year, devide in week
+    else if (Math.abs(size) < 31536000) {
+      return (size / 604800).toFixed(decimals) + " week";
     }
 
     return (size / 3.15569e7).toFixed(decimals) + " year";
   };
 
   kbn.microsFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " µs";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " ms";
     }
     else {
@@ -538,16 +542,16 @@ function($, _, moment) {
   };
 
   kbn.nanosFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ns";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " µs";
     }
-    else if (size < 1000000000) {
+    else if (Math.abs(size) < 1000000000) {
       return (size / 1000000).toFixed(decimals) + " ms";
     }
-    else if (size < 60000000000){
+    else if (Math.abs(size) < 60000000000){
       return (size / 1000000000).toFixed(decimals) + " s";
     }
     else {

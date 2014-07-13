@@ -8,7 +8,7 @@ module.exports = function(config) {
       expand: true,
       cwd: '<%= tempDir %>',
       src: [
-        'index.html',
+        //'index.html',
         'app/panels/**/*.html',
         'app/partials/**/*.html'
       ],

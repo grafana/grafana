@@ -1,4 +1,5 @@
 @import "submenu.less";
+@import "graph.less";
 @import "bootstrap-tagsinput.less";
 
 .hide-controls {
@@ -123,12 +124,6 @@
   font-size: 12px;
 }
 
-.hidden-series {
-  a {
-    color: darken(@linkColor, 45%);
-  }
-}
-
 .panel-fullscreen {
   z-index: 100;
   display: block !important;
@@ -154,55 +149,8 @@
   right: -10000px;
 }
 
-// Graphite Graph Legends
-
-.grafana-legend-container {
-  margin: 0 15px;
-  text-align: left;
-  position: relative;
-  top: 2px;
-}
-
-.grafana-legend-container .popover-content {
-  padding: 0;
-}
-
-.histogram-legend {
-  display:inline-block;
-  padding: 0 4px;
-  i {
-    position: relative;
-    top: 2px;
-  }
-}
-
-.histogram-legend-item {
-  display:inline-block;
-}
-
 .histogram-chart {
   position:relative;
-}
-
-.histogram-legend-popover {
-  width: 200px;
-  label {
-    display: inline-block;
-  }
-  .btn {
-    padding: 1px 3px;
-    margin-right: 0px;
-    line-height: initial;
-  }
-  .close {
-    margin-right: 5px;
-    color: @linkColor;
-    opacity: 0.7;
-    text-shadow: none;
-  }
-  .editor-row {
-    padding: 5px;
-  }
 }
 
 .panel-full-edit-tabs {
@@ -271,7 +219,7 @@
 }
 
 .grafana-target-segment {
-  padding: 5px 7px;
+  padding: 8px 7px;
   display: inline-block;
   font-weight: normal;
   border-right: 1px solid @grafanaTargetSegmentBorder;
@@ -337,10 +285,11 @@ input[type=text].grafana-function-param-input {
   }
 
   a {
-    padding: 5px 7px;
+    padding: 8px 7px;
     position: relative;
-    top: 5px;
+    top: 8px;
     color: @grafanaTargetColor;
+    font-size: 16px;
 
     .grafana-target-hidden & {
       color: @grafanaTargetColorHide;
@@ -353,7 +302,7 @@ input[type=text].grafana-function-param-input {
 }
 
 input[type=text].grafana-target-text-input {
-  padding: 5px 7px;
+  padding: 8px 7px;
   border: none;
   margin: 0px;
   background: transparent;
@@ -367,8 +316,11 @@ input[type=text].grafana-target-segment-input {
   border-right: 1px solid @grafanaTargetSegmentBorder;
   margin: 0px;
   border-radius: 0;
-  height: 22px;
-  line-height: 22px;
+  padding: 8px 4px;
+}
+
+input[type=checkbox].grafana-target-option-checkbox {
+  margin: 0;
 }
 
 select.grafana-target-segment-input {
@@ -376,8 +328,8 @@ select.grafana-target-segment-input {
   border-right: 1px solid @grafanaTargetSegmentBorder;
   margin: 0px;
   border-radius: 0;
-  height: 30px;
-  line-height: 30px;
+  height: 36px;
+  padding: 8px 5px;
 }
 
 .grafana-target .dropdown {
@@ -515,4 +467,11 @@ select.grafana-target-segment-input {
 .grafana-version-footer {
   padding-top: 15px;
   text-align: left;
+}
+
+
+.metrics-editor-help:hover {
+  .hide {
+    display: block;
+  }
 }

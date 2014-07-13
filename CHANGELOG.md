@@ -1,15 +1,72 @@
 vNext
+
+**New features or improvements**
+- Allow [[..]] filter notation in all text panels (markdown/html/text) (Issue #511)
+- New legend display option "Align as table" (Issue #136)
+- New legend display option "Right side", will show legend to the right of the graph (Issue #556)
+- Enhanced InfluxDB series aliasing (legend names) with pattern replacements (Issue #525)
+
+**Changes**
+- Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
+
+**Fixes**
+- Fix formatting negative values (PR #545)
+- Fix for Max legend value when max value is zero (Issue #460)
+
+# 1.6.1 (2014-06-24)
+
+**New features or improvements**
+- Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
+
+**Fixes**
+
+- Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
+- Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names (Fixes #506)
+- Series names and column name typeahead cache fix (Fixes #522)
+- Fixed influxdb issue with raw query that caused wrong value column detection (Fixes #504)
+- Default property that marks which datasource is default in config.js is now optional (Fixes #526)
+- Auto-refresh caused 2 refreshes (and hence mulitple queries) each time (at least in firefox) (Fixes #342)
+
+# 1.6.0 (2014-06-16)
+
+#### New features or improvements
 - New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
 - Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
 - Refactoring of filterSrv (Issue #428), thx @Tetha
 - New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
+- New graphite function definition added isNonNull (PR #461), - thx @tmonk42
 - New InfluxDB function difference add to function dropdown (PR #455)
+- Added parameter to keepLastValue graphite function definition (default 100), Closes #459
+- improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
+  to the browser cache when upgrading grafana and improve load performance (Fixes #418)
+- Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
+- Improvement to InfluxDB query editor and function/value column selection (Issue #473)
+- Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
+- Row editing and adding new panel is now a lot quicker and easier with the new row menu (Issue #475)
+- New datasource! Initial support for OpenTSDB (PR #211) - thx @mpage
+- Improvement and polish to the OpenTSDB query editor (Issue #492)
+- Influxdb group by support (Issue #441) thx @piis3
 
-# Fixes
+
+#### Changes
+- Graphite panel is now renamed graph (Existing dashboards will still work)
+- Add panel icon and Row edit button is replaced by the Row edit menu (Issue #475)
+- New graphs now have a default empty query
+- Add Row button now creates a row with default height of 250px (no longer opens dashboard settings modal)
+- Clean up of config.sample.js, graphiteUrl removed (still works, but depricated, removed in future)
+  Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
+
+#### Fixes
+- Graphite query lexer change, can now handle regex parameters for aliasSub function (Fixes #126)
 - Filter option loading when having muliple nested filters now works better.
   Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
   After an option is changed and a nested template param is also reloaded, if the current value
   exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
+- Legend Current value did not display when value was zero, Fixes #460
+- Fix to series toggling bug that caused annotations to be hidden when toggling (hiding) series. Fixes #328
+- Fix for graphite function selection menu that some times draws outside screen. It now displays upward (Fixes #293)
+- Fix for exclusive series toggling (hold down CTRL, SHIFT or META key) and left click a series for exclusive toggling
+  CTRL does not work on MAC OSX but SHIFT or META should (depending on browser) (Closes #350, Fixes #472)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements

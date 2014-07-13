@@ -1,0 +1,114 @@
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Left Y Axis</h5>
+       <div class="editor-option">
+        <label class="small">Format <tip>Y-axis formatting</tip></label>
+        <select class="input-small" ng-model="panel.y_formats[0]" ng-options="f for f in ['none','short','bytes', 'bits', 's', 'ms', 'µs', 'ns']" ng-change="render()"></select>
+      </div>
+      <div class="editor-option">
+        <label class="small">Min / <a ng-click="toggleGridMinMax('leftMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.leftMin)"></i></a></label>
+        <input type="number" class="input-small" ng-model="panel.grid.leftMin" ng-change="render()" ng-model-onblur />
+      </div>
+      <div class="editor-option">
+        <label class="small">Max / <a ng-click="toggleGridMinMax('leftMax')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.leftMax)"></i></a></label>
+        <input type="number" class="input-small" ng-model="panel.grid.leftMax" ng-change="render()" ng-model-onblur />
+      </div>
+      <div class="editor-option">
+        <label class="small">Label</label>
+        <input ng-change="get_data()" ng-model-onblur placeholder="" type="text" class="input-medium" ng-model="panel.leftYAxisLabel">
+      </div>
+  </div>
+  <div class="section">
+    <h5>Right Y Axis</h5>
+       <div class="editor-option">
+        <label class="small">Format <tip>Y-axis formatting</tip></label>
+        <select class="input-small" ng-model="panel.y_formats[1]" ng-options="f for f in ['none','short','bytes', 'bits', 's', 'ms', 'µs', 'ns']" ng-change="render()"></select>
+      </div>
+      <div class="editor-option">
+        <label class="small">Min / <a ng-click="toggleGridMinMax('rightMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.rightMin)"></i></a></label>
+        <input type="number" class="input-small" ng-model="panel.grid.rightMin" ng-change="render()" ng-model-onblur />
+      </div>
+      <div class="editor-option">
+        <label class="small">Max / <a ng-click="toggleGridMinMax('rightMax')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.rightMax)"></i></a></label>
+        <input type="number" class="input-small" ng-model="panel.grid.rightMax" ng-change="render()" ng-model-onblur />
+      </div>
+  </div>
+</div>
+
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Legend styles</h5>
+    <div class="editor-option">
+      <label class="small">Show Legend</label><input type="checkbox" ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="render();">
+    </div>
+    <div class="editor-option">
+      <label class="small">Include Values</label><input type="checkbox" ng-model="panel.legend.values" ng-checked="panel.legend.values" ng-change="render();">
+    </div>
+    <div class="editor-option">
+      <label class="small">Align as table</label><input type="checkbox" ng-model="panel.legend.alignAsTable" ng-checked="panel.legend.alignAsTable">
+    </div>
+    <div class="editor-option">
+      <label class="small">Right side</label><input type="checkbox" ng-model="panel.legend.rightSide" ng-change="render();" ng-checked="panel.legend.rightSide">
+    </div>
+  </div>
+
+  <div class="section" ng-if="panel.legend.values">
+    <h5>Legend values</h5>
+    <div class="editor-option">
+      <label class="small">Min</label><input type="checkbox" ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Max</label><input type="checkbox" ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Current</label><input type="checkbox" ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Total</label><input type="checkbox" ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="render();">
+    </div>
+
+    <div class="editor-option">
+      <label class="small">Avg</label><input type="checkbox" ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="render();">
+    </div>
+
+  </div>
+
+  <div class="section">
+    <h5>Grid thresholds</h5>
+    <div class="editor-option">
+      <label class="small">Level1</label>
+      <input type="number" class="input-small" ng-model="panel.grid.threshold1" ng-change="render()" ng-model-onblur />
+    </div>
+    <div class="editor-option">
+      <label class="small">Color</label>
+      <spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
+    </div>
+    <div class="editor-option">
+      <label class="small">Level2</label>
+      <input type="number" class="input-small" ng-model="panel.grid.threshold2" ng-change="render()" ng-model-onblur />
+    </div>
+    <div class="editor-option">
+      <label class="small">Color</label>
+      <spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
+    </div>
+    <div class="editor-option">
+      <label class="small">Line mode</label><input type="checkbox" ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render();">
+    </div>
+  </div>
+
+  <div class="section">
+    <h5>Show Axes</h5>
+    <div class="editor-option">
+      <label class="small">X-Axis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
+    </div>
+    <div class="editor-option">
+      <label class="small">Y-Axis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
+    </div>
+  </div>
+
+</div>

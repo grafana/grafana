@@ -11,16 +11,21 @@ function (angular) {
   module.controller('InfluxTargetCtrl', function($scope, $timeout) {
 
     $scope.init = function() {
-      if (!$scope.target.function) {
-        $scope.target.function = 'mean';
-      }
+      $scope.target.function = $scope.target.function || 'mean';
+      $scope.target.column = $scope.target.column || 'value';
 
       $scope.rawQuery = false;
 
-      $scope.functions = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median', 'derivative', 'stddev', 'first', 'last'];
+      $scope.functions = [
+        'count', 'mean', 'sum', 'min',
+        'max', 'mode', 'distinct', 'median',
+        'derivative', 'stddev', 'first', 'last',
+        'difference'
+      ];
+
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
       $scope.oldSeries = $scope.target.series;
-      $scope.$on('typeahead-updated', function(){
+      $scope.$on('typeahead-updated', function() {
         $timeout($scope.get_data);
       });
     };
@@ -37,8 +42,14 @@ function (angular) {
     $scope.seriesBlur = function() {
       if ($scope.oldSeries !== $scope.target.series) {
         $scope.oldSeries = $scope.target.series;
+        $scope.columnList = null;
         $scope.get_data();
       }
+    };
+
+    $scope.changeFunction = function(func) {
+      $scope.target.function = func;
+      $scope.get_data();
     };
 
     // called outside of digest
@@ -57,7 +68,7 @@ function (angular) {
     };
 
     $scope.listSeries = function(query, callback) {
-      if (!seriesList) {
+      if (!seriesList || query === '') {
         seriesList = [];
         $scope.datasource.listSeries().then(function(series) {
           seriesList = series;

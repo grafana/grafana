@@ -7,24 +7,20 @@
     <meta name="viewport" content="width=device-width">
 
     <title>Grafana</title>
-    <link rel="stylesheet" href="css/bootstrap.dark.min.css" title="Light">
-    <link rel="stylesheet" href="css/timepicker.css">
-    <link rel="stylesheet" href="css/spectrum.css">
-    <link rel="stylesheet" href="css/animate.min.css">
-    <link rel="stylesheet" href="css/normalize.min.css">
-    <!-- load the root require context -->
+    <link rel="stylesheet" href="css/default.min.css" title="Dark">
+
+    <!-- build:js app/app.js -->
     <script src="vendor/require/require.js"></script>
     <script src="app/components/require.config.js"></script>
+    <!-- endbuild -->
+
     <script>require(['app'], function () {})</script>
-    <style>
-    </style>
 
   </head>
 
   <body ng-cloak body-class>
 
-    <!--<link rel="stylesheet" ng-href="css/bootstrap.{{dashboard.current.style||'dark'}}.min.css">-->
-    <link rel="stylesheet" ng-href="css/bootstrap.{{dashboard.current.style||'dark'}}.min.css">
+    <link rel="stylesheet" href="css/bootstrap.light.min.css" ng-if="dashboard.current.style === 'light'">
     <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
 

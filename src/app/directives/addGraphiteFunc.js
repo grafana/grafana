@@ -8,7 +8,6 @@ define([
 function (angular, app, _, $, gfunc) {
   'use strict';
 
-
   angular
     .module('kibana.directives')
     .directive('graphiteAddFunc', function($compile) {
@@ -18,7 +17,7 @@ function (angular, app, _, $, gfunc) {
 
       var buttonTemplate = '<a  class="grafana-target-segment grafana-target-function dropdown-toggle"' +
                               ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown"' +
-                              ' data-placement="bottom"><i class="icon-plus"></i></a>';
+                              ' data-placement="top"><i class="icon-plus"></i></a>';
 
       return {
         link: function($scope, elem) {

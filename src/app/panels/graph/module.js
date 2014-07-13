@@ -25,7 +25,6 @@ define([
   'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
-  'jquery.flot.byte',
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
@@ -33,10 +32,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   'use strict';
 
-  var module = angular.module('kibana.panels.graphite', []);
+  var module = angular.module('kibana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graphite', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -52,11 +51,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         },
         {
           title:'Axes & Grid',
-          src:'app/panels/graphite/axisEditor.html'
+          src:'app/panels/graph/axisEditor.html'
         },
         {
           title:'Display Styles',
-          src:'app/panels/graphite/styleEditor.html'
+          src:'app/panels/graph/styleEditor.html'
         }
       ],
       fullscreenEdit: true,
@@ -95,8 +94,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        * grid.ma1::: Maximum y-axis value
        */
       grid          : {
-        max: null,
-        min: null,
+        leftMax: null,
+        rightMax: null,
+        leftMin: null,
+        rightMin: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -191,10 +192,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       _.defaults($scope.panel.legend, _d.legend);
     }
 
+    if ($scope.panel.grid.min) {
+      $scope.panel.grid.leftMin = $scope.panel.grid.min;
+      delete $scope.panel.grid.min;
+    }
+
+    if ($scope.panel.grid.max) {
+      $scope.panel.grid.leftMax = $scope.panel.grid.max;
+      delete $scope.panel.grid.max;
+    }
+
     if ($scope.panel.y_format) {
       $scope.panel.y_formats[0] = $scope.panel.y_format;
       delete $scope.panel.y_format;
     }
+
     if ($scope.panel.y2_format) {
       $scope.panel.y_formats[1] = $scope.panel.y2_format;
       delete $scope.panel.y2_format;
@@ -210,6 +222,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.datasources = datasourceSrv.listOptions();
       $scope.setDatasource($scope.panel.datasource);
+
+      if ($scope.panel.targets.length === 0) {
+        $scope.panel.targets.push({});
+      }
     };
 
     $scope.setDatasource = function(datasource) {
@@ -264,7 +280,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Graphite HTTP Request Error";
+          $scope.panel.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
           $scope.render([]);
         });
@@ -356,7 +372,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         $scope.hiddenSeries[serie.alias] = true;
       }
 
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
@@ -410,6 +426,4 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   });
 
-
 });
-

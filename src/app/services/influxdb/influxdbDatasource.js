@@ -1,9 +1,10 @@
 define([
   'angular',
   'underscore',
-  'kbn'
+  'kbn',
+  './influxSeries'
 ],
-function (angular, _, kbn) {
+function (angular, _, kbn, InfluxSeries) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -17,22 +18,22 @@ function (angular, _, kbn) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
     }
 
-    InfluxDatasource.prototype.query = function(options) {
-
+    InfluxDatasource.prototype.query = function(filterSrv, options) {
       var promises = _.map(options.targets, function(target) {
         var query;
+        var alias = '';
 
         if (target.hide || !((target.series && target.column) || target.query)) {
           return [];
         }
 
         var timeFilter = getTimeFilter(options);
+        var groupByField;
 
         if (target.rawQuery) {
           query = target.query;
@@ -43,8 +44,12 @@ function (angular, _, kbn) {
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
 
+          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
+            groupByField = lowerCaseQueryElements[1].replace(',', '');
+          }
+
           if (whereIndex !== -1) {
-            queryElements.splice(whereIndex+1, 0, timeFilter, "and");
+            queryElements.splice(whereIndex + 1, 0, timeFilter, "and");
           }
           else {
             if (groupByIndex !== -1) {
@@ -60,11 +65,13 @@ function (angular, _, kbn) {
           }
 
           query = queryElements.join(" ");
+          query = filterSrv.applyTemplateToTarget(query);
         }
         else {
-          var template = "select [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
+
+          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]]) order asc";
+                         "group by time([[interval]])[[group_comma]] [[group]] order asc";
 
           var templateData = {
             series: target.series,
@@ -72,17 +79,34 @@ function (angular, _, kbn) {
             func: target.function,
             timeFilter: timeFilter,
             interval: target.interval || options.interval,
-            condition_add: target.condiction_filter ? target.condition_add : '',
-            condition_key: target.condiction_filter ? target.condition_key : '',
-            condition_op: target.condiction_filter ? target.condition_op : '',
-            condition_value: target.condiction_filter ? target.condition_value: ''
+            condition_add: target.condition_filter ? 'and' : '',
+            condition_key: target.condition_filter ? target.condition_key : '',
+            condition_op: target.condition_filter ? target.condition_op : '',
+            condition_value: target.condition_filter ? target.condition_value : '',
+            group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
+            group: target.groupby_field_add ? target.groupby_field : '',
           };
 
+          if(!templateData.series.match('^/.*/')) {
+            templateData.series = '"' + templateData.series + '"';
+          }
+
           query = _.template(template, templateData, this.templateSettings);
+          query = filterSrv.applyTemplateToTarget(query);
+
+          if (target.alias) {
+            alias = filterSrv.applyTemplateToTarget(target.alias);
+          }
+
+          if (target.groupby_field_add) {
+            groupByField = target.groupby_field;
+          }
+
           target.query = query;
         }
 
-        return this.doInfluxRequest(query, target.alias).then(handleInfluxQueryResponse);
+        var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
+        return this.doInfluxRequest(query, alias).then(handleResponse);
 
       }, this);
 
@@ -93,11 +117,10 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from /' + seriesName + '/ limit 1').then(function(data) {
         if (!data) {
           return [];
         }
-
         return data[0].columns;
       });
     };
@@ -110,18 +133,40 @@ function (angular, _, kbn) {
       });
     };
 
+    InfluxDatasource.prototype.metricFindQuery = function (filterSrv, query) {
+      var interpolated;
+      try {
+        interpolated = filterSrv.applyTemplateToTarget(query);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      return this.doInfluxRequest(query)
+        .then(function (results) {
+          return _.map(results[0].points, function (metric) {
+            return {
+              text: metric[1],
+              expandable: false
+            };
+          });
+        });
+    };
+
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function(reason) {
-        if (reason.status !== 0) {
+        if (reason.status !== 0 || reason.status >= 300) {
           deferred.reject(reason);
         }
-        setTimeout(function() {
-          return retry(deferred, callback, Math.min(delay * 2, 30000));
-        }, delay);
+        else {
+          setTimeout(function() {
+            return retry(deferred, callback, Math.min(delay * 2, 30000));
+          }, delay);
+        }
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query, alias) {
+    InfluxDatasource.prototype.doInfluxRequest = function(query) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -143,7 +188,6 @@ function (angular, _, kbn) {
         };
 
         return $http(options).success(function (data) {
-          data.alias = alias;
           deferred.resolve(data);
         });
       }, 10);
@@ -151,29 +195,14 @@ function (angular, _, kbn) {
       return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(data) {
-      var output = [];
-
-      _.each(data, function(series) {
-        var timeCol = series.columns.indexOf('time');
-
-        _.each(series.columns, function(column, index) {
-          if (column === "time" || column === "sequence_number") {
-            return;
-          }
-
-          var target = data.alias || series.name + "." + column;
-          var datapoints = [];
-
-          for(var i = 0; i < series.points.length; i++) {
-            datapoints[i] = [series.points[i][index], series.points[i][timeCol]];
-          }
-
-          output.push({ target:target, datapoints:datapoints });
-        });
+    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
+      var influxSeries = new InfluxSeries({
+        seriesList: seriesList,
+        alias: alias,
+        groupByField: groupByField
       });
 
-      return output;
+      return influxSeries.getTimeSeries();
     }
 
     function getTimeFilter(options) {
@@ -205,7 +234,6 @@ function (angular, _, kbn) {
     function to_utc_epoch_seconds(date) {
       return (date.getTime() / 1000).toFixed(0) + 's';
     }
-
 
     return InfluxDatasource;
 

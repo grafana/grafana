@@ -104,21 +104,13 @@ function (angular, _, $, config, kbn, moment) {
         }
       }
 
-      if (dashboard.current.timezone === 'browser') {
-        date = date.local();
-      }
-
-      if (config.timezoneOffset) {
-        date = date.zone(config.timezoneOffset);
-      }
-
-      return date.format('HH:mm_YYYYMMDD');
+      return date.unix();
     };
 
     GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
       var interpolated;
       try {
-        interpolated = filterSrv.applyTemplateToTarget(query);
+        interpolated = encodeURIComponent(filterSrv.applyTemplateToTarget(query));
       }
       catch(err) {
         return $q.reject(err);
@@ -173,7 +165,7 @@ function (angular, _, $, config, kbn, moment) {
 
         if (key === "targets") {
           _.each(value, function (value) {
-            if (!value.hide) {
+            if (value.target && !value.hide) {
               var targetValue = filterSrv.applyTemplateToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
@@ -185,7 +177,6 @@ function (angular, _, $, config, kbn, moment) {
       }, this);
       return clean_options;
     };
-
 
     return GraphiteDatasource;
 
