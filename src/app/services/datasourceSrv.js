@@ -52,11 +52,11 @@ function (angular, _, config) {
           results.push({
             name: key,
             editorSrc: value.annotationEditorSrc
-          }); 
-        } 
+          });
+        }
       });
       return results;
-    }; 
+    };
 
     this.listOptions = function() {
       return _.map(config.datasources, function(value, key) {
