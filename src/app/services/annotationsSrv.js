@@ -108,7 +108,7 @@ define([
               _.each(series.points, function (point) {
                 addAnnotation({
                   annotation: annotation,
-                  time: point[0],
+                  time: point[0] * 1000,
                   description: annotation.message
                 });
               });
