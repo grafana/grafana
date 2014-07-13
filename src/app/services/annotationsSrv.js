@@ -40,9 +40,9 @@ define([
 
       var graphiteMetrics = this.getGraphiteMetrics(filterSrv, rangeUnparsed);
       var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
-      var graphiteEvents = this.getInfluxdbEvents(rangeUnparsed);
+      var influxdbEvents = this.getInfluxdbEvents(rangeUnparsed);
 
-      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
+      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents).concat(influxdbEvents))
         .then(function() {
           return list;
         });
