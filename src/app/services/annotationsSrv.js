@@ -69,7 +69,7 @@ define([
         var query = annotation.query;
 
         if (where_pos > 0) {
-          query = [annotation.query.slice(0, where_pos), timerange, ' and ', annotation.query.slice(where_pos)].join('');
+          query = [annotation.query.slice(0, where_pos + 7), timerange, ' and ', annotation.query.slice(where_pos + 7)].join('');
         }
         else if (group_pos > 0) {
           query = [annotation.query.slice(0, group_pos), ' where ', timerange, annotation.query.slice(group_pos)].join('');
