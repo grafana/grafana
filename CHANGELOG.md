@@ -11,7 +11,7 @@ vNext
 
 **Fixes**
 - Fix formatting negative values (PR #545)
-
+- Fix for Max legend value when max value is zero (Issue #460)
 
 # 1.6.1 (2014-06-24)
 
