@@ -8,12 +8,39 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function (dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
     var annotationPanel;
     var list = [];
 
-    this.init = function() {
+    var errorHandler = function (err) {
+      console.log('Annotation error: ', err);
+      alertSrv.set('Annotations', 'Could not fetch annotations', 'error');
+    };
+
+    var addAnnotation = function (options) {
+      var tooltip = "<small><b>" + options.description + "</b><br/>";
+      if (options.tags) {
+        tooltip += (options.tags || '') + '<br/>';
+      }
+      tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      if (options.data) {
+        tooltip += options.data.replace(/\n/g, '<br/>');
+      }
+      tooltip += "</small>";
+
+      list.push({
+        annotation: options.annotation,
+        min: options.time,
+        max: options.time,
+        eventType: options.annotation.name,
+        title: null,
+        description: tooltip,
+        score: 1
+      });
+    };
+
+    this.init = function () {
       $rootScope.$on('refresh', this.clearCache);
       $rootScope.$on('dashboard-loaded', this.dashboardLoaded);
 
@@ -24,12 +51,12 @@ define([
       annotationPanel = _.findWhere(dashboard.current.pulldowns, { type: 'annotations' });
     };
 
-    this.clearCache = function() {
+    this.clearCache = function () {
       promiseCached = null;
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed) {
+    this.getAnnotations = function (filterSrv, rangeUnparsed) {
       if (!annotationPanel.enable) {
         return $q.when(null);
       }
@@ -43,21 +70,21 @@ define([
       var influxdbEvents = this.getInfluxdbEvents(rangeUnparsed);
 
       promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents).concat(influxdbEvents))
-        .then(function() {
+        .then(function () {
           return list;
         });
 
       return promiseCached;
     };
 
-    this.getInfluxdbEvents = function(rangeUnparsed) {
+    this.getInfluxdbEvents = function (rangeUnparsed) {
       var annotations = this.getAnnotationsByType('influxdb events');
       if (annotations.length === 0) {
         return [];
       }
 
       var parseDate = function (date) {
-        var time = kbn.parseDate(date)
+        var time = kbn.parseDate(date);
         return (time.getTime() / 1000).toFixed(0) + 's';
       };
 
@@ -70,8 +97,7 @@ define([
 
         if (where_pos > 0) {
           query = [annotation.query.slice(0, where_pos + 7), timerange, ' and ', annotation.query.slice(where_pos + 7)].join('');
-        }
-        else if (group_pos > 0) {
+        } else if (group_pos > 0) {
           query = [annotation.query.slice(0, group_pos), ' where ', timerange, annotation.query.slice(group_pos)].join('');
         }
 
@@ -94,16 +120,16 @@ define([
       return promises;
     };
 
-    this.getGraphiteEvents = function(rangeUnparsed) {
+    this.getGraphiteEvents = function (rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite events');
       if (annotations.length === 0) {
         return [];
       }
 
-      var promises = _.map(annotations, function(annotation) {
+      var promises = _.map(annotations, function (annotation) {
 
         return datasourceSrv.default.events({ range: rangeUnparsed, tags: annotation.tags })
-          .then(function(results) {
+          .then(function (results) {
             _.each(results.data, function (event) {
               addAnnotation({
                 annotation: annotation,
@@ -120,20 +146,39 @@ define([
       return promises;
     };
 
-    this.getAnnotationsByType = function(type) {
+    this.getAnnotationsByType = function (type) {
       return _.where(annotationPanel.annotations, {
         type: type,
         enable: true
       });
     };
 
-    this.getGraphiteMetrics = function(filterSrv, rangeUnparsed) {
+    var receiveGraphiteMetrics = function (annotation, results) {
+      var i, y, target, datapoint;
+      for (i = 0; i < results.data.length; i++) {
+        target = results.data[i];
+
+        for (y = 0; y < target.datapoints.length; y++) {
+          datapoint = target.datapoints[y];
+
+          if (datapoint[0]) {
+            addAnnotation({
+              annotation: annotation,
+              time: datapoint[1] * 1000,
+              description: target.target
+            });
+          }
+        }
+      }
+    };
+
+    this.getGraphiteMetrics = function (filterSrv, rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite metric');
       if (annotations.length === 0) {
         return [];
       }
 
-      var promises = _.map(annotations, function(annotation) {
+      var promises = _.map(annotations, function (annotation) {
         var graphiteQuery = {
           range: rangeUnparsed,
           targets: [{ target: annotation.target }],
@@ -150,51 +195,6 @@ define([
 
       return promises;
     };
-
-    function errorHandler(err) {
-      console.log('Annotation error: ', err);
-      alertSrv.set('Annotations','Could not fetch annotations','error');
-    }
-
-    function receiveGraphiteMetrics(annotation, results) {
-      for (var i = 0; i < results.data.length; i++) {
-        var target = results.data[i];
-
-        for (var y = 0; y < target.datapoints.length; y++) {
-          var datapoint = target.datapoints[y];
-
-          if (datapoint[0]) {
-            addAnnotation({
-              annotation: annotation,
-              time: datapoint[1] * 1000,
-              description: target.target
-            });
-          }
-        }
-      }
-    }
-
-    function addAnnotation(options) {
-      var tooltip = "<small><b>" + options.description + "</b><br/>";
-      if (options.tags) {
-        tooltip += (options.tags || '') + '<br/>';
-      }
-      tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
-      if (options.data) {
-        tooltip += options.data.replace(/\n/g, '<br/>');
-      }
-      tooltip += "</small>";
-
-      list.push({
-        annotation: options.annotation,
-        min: options.time,
-        max: options.time,
-        eventType: options.annotation.name,
-        title: null,
-        description: tooltip,
-        score: 1
-      });
-    }
 
     // Now init
     this.init();
