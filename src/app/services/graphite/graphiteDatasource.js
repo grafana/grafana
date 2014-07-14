@@ -57,6 +57,37 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
+    GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+      var graphiteQuery = {
+        range: rangeUnparsed,
+        targets: [{ target: annotation.target }],
+        format: 'json',
+        maxDataPoints: 100
+      };
+
+      return this.query(filterSrv, graphiteQuery)
+        .then(function(result) {
+          var list = [];
+
+          for (var i = 0; i < result.data.length; i++) {
+            var target = result.data[i];
+
+            for (var y = 0; y < target.datapoints.length; y++) {
+              var datapoint = target.datapoints[y];
+              if (!datapoint[0]) { continue; }
+
+              list.push({
+                annotation: annotation,
+                time: datapoint[1] * 1000,
+                description: target.target
+              });
+            }
+          }
+
+          return list;
+        });
+    };
+
     GraphiteDatasource.prototype.events = function(options) {
       try {
         var tags = '';

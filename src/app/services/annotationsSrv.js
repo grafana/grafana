@@ -31,15 +31,35 @@ define([
         return promiseCached;
       }
 
-      var graphiteMetrics = this.getGraphiteMetrics(filterSrv, rangeUnparsed);
-      var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
+      var annotations = _.where(annotationPanel.annotations, { enable: true });
 
-      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
+      var promises  = _.map(annotations, function(annotation) {
+        var datasource = datasourceSrv.get(annotation.datasource);
+        return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
+          .then(this.receiveAnnotationResults)
+          .then(null, errorHandler);
+      }, this);
+
+      promiseCached = $q.all(promises)
         .then(function() {
           return list;
         });
 
       return promiseCached;
+    };
+
+    this.receiveAnnotationResults = function(results) {
+      console.log('Annotation result!', results);
+      for (var i = 0; i < results.length; i++) {
+        var data = results[i];
+        addAnnotation({
+          annotation: data.annotation,
+          time: data.time,
+          description: data.description,
+          tags: data.tags,
+          data: data.text
+        });
+      }
     };
 
     this.getGraphiteEvents = function(rangeUnparsed) {
