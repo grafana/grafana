@@ -129,7 +129,7 @@ function (angular, _, kbn, InfluxSeries) {
     };
 
     InfluxDatasource.prototype.listSeries = function() {
-      return this.doInfluxRequest('list series').then(function(data) {
+      return this.doInfluxRequest('select * from /.*/ limit 1').then(function(data) {
         return _.map(data, function(series) {
           return series.name;
         });
