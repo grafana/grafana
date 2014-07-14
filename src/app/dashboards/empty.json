@@ -16,6 +16,7 @@
       "editable": true,
       "collapse": false,
       "collapsable": true,
+      "displayTitleWhenRowIsVisible": false,
       "panels": [],
       "notice": false
     }
