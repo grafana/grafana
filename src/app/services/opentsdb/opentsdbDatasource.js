@@ -123,9 +123,20 @@ function (angular, _, kbn) {
 
       if (target.shouldComputeRate) {
         query.rate = true;
-        query.rateOptions = {
-          counter: !!target.isCounter
-        };
+
+        if (target.isCounter) {
+          query.rateOptions = {
+            counter: !!target.isCounter,
+          };
+
+          if (target.resetValue) {
+            query.rateOptions.resetValue = target.resetValue;
+          }
+
+          if (target.counterMax) {
+            query.rateOptions.counterMax = target.counterMax;
+          }
+        }
       }
 
       if (target.shouldDownsample) {
@@ -133,7 +144,6 @@ function (angular, _, kbn) {
       }
 
       query.tags = angular.copy(target.tags);
-
       return query;
     }
 
