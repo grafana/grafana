@@ -6,6 +6,7 @@ vNext
 - New legend display option "Right side", will show legend to the right of the graph (Issue #556)
 - InfluxDB: Enhanced series aliasing (legend names) with pattern replacements (Issue #525)
 - InfluxDB: Add continuous query in series results (series typeahead). #581
+- InfluxDB: Support for alias & alias patterns when using raw query mode, #584
 
 **Changes**
 - Graphite: Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
