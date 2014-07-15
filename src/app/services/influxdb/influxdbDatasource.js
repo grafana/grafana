@@ -94,15 +94,15 @@ function (angular, _, kbn, InfluxSeries) {
           query = _.template(template, templateData, this.templateSettings);
           query = filterSrv.applyTemplateToTarget(query);
 
-          if (target.alias) {
-            alias = filterSrv.applyTemplateToTarget(target.alias);
-          }
-
           if (target.groupby_field_add) {
             groupByField = target.groupby_field;
           }
 
           target.query = query;
+        }
+
+        if (target.alias) {
+          alias = filterSrv.applyTemplateToTarget(target.alias);
         }
 
         var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);

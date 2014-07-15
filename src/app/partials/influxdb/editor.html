@@ -19,8 +19,8 @@
             <ul class="dropdown-menu pull-right" role="menu">
               <li role="menuitem">
                 <a tabindex="1" ng-click="duplicate()">Duplicate</a>
-                <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Show Query</a>
-                <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Hide Query</a>
+                <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a>
+                <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a>
               </li>
            </ul>
           </li>
@@ -41,17 +41,35 @@
           </li>
         </ul>
 
-        <input type="text"
-               class="grafana-target-text-input span10"
+				<!-- Raw Query mode  -->
+				<ul class="grafana-segment-list" ng-show="target.rawQuery">
+					<li>
+						<input type="text"
+               class="grafana-target-segment-input span8"
                ng-model="target.query"
                placeholder="select ..."
                focus-me="target.rawQuery"
                spellcheck='false'
                data-min-length=0 data-items=100
                ng-model-onblur
-               ng-blur="get_data()"
-               ng-show="target.rawQuery">
+							 ng-blur="get_data()">
+					</li>
 
+					<li class="grafana-target-segment">
+            as
+          </li>
+
+          <li>
+            <input type="text"
+                   class="input-medium grafana-target-segment-input"
+                   ng-model="target.alias"
+                   spellcheck='false'
+                   placeholder="alias"
+                   ng-blur="get_data()">
+          </li>
+				</ul>
+
+				<!-- Query editor mode -->
         <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
           <li>
             <input type="text"
