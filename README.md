@@ -1,8 +1,14 @@
-[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana)
-=================
-A beautiful, easy to use and feature rich Graphite dashboard replacement and graph editor. Visit [grafana.org](http://grafana.org) for screenshots, videos and feature descriptions.
+[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana) [![Gittip](http://img.shields.io/gittip/torkelo.svg)](https://www.gittip.com/torkelo)
+================
+[Website](http://grafana.org) |
+[Twitter](http://twitter.com/grafana) |
+[IRC](http://webchat.freenode.net/?channels=grafana) |
+[Email](mailto:contact@grafana.org)
 
-![](http://grafana.org/assets/img/edit_dashboards.png)
+Grafana is An open source, feature rich metrics dashboard and graph editor for
+Graphite, InfluxDB & OpenTSDB.
+
+![](http://grafana.org/assets/img/start_page_bg.png)
 
 ## Features
 ### Graphite Target Editor
@@ -22,7 +28,7 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 - Bars, Lines, Points.
 - Smart Y-axis formating
 - Series toggles & color selector
-- Axis labels
+- Legend values, and formating options
 - Grid thresholds, axis labels
 - [Annotations] (https://github.com/grafana/grafana/wiki/Annotations)
 
@@ -40,6 +46,10 @@ A beautiful, easy to use and feature rich Graphite dashboard replacement and gra
 
 ### InfluxDB
 - [Use InfluxDB](https://github.com/grafana/grafana/wiki/InfluxDB) as metric datasource
+- Query editor with series and column typeahead, easy group by and function selection
+
+### OpenTSDB
+- Query editor with metric name typeahead and tag filtering
 
 # Requirements
 Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
@@ -73,7 +83,7 @@ Note that using "\*" leaves your graphite instance quite open so you might want 
 
 Here is the same thing, in nginx format:
 ```
-add_header  "Access-Control-Allow-Origin" "*"; 
+add_header  "Access-Control-Allow-Origin" "*";
 add_header  "Access-Control-Allow-Credentials" "true";
 add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
 add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
