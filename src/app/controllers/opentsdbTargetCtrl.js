@@ -50,7 +50,8 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      callback($scope.aggregateTags);
+
+      callback($scope.aggregateTags[$scope.target.metric]);
     };
 
     $scope.suggestTagValues = function(query, callback) {

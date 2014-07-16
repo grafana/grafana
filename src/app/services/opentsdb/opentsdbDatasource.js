@@ -106,7 +106,7 @@ function (angular, _, kbn) {
         }
       }
 
-      return { target: target, datapoints: dps, aggregateTags: md.aggregateTags };
+      return {metric: md.metric, target: target, datapoints: dps, aggregateTags: md.aggregateTags };
     }
 
     function convertTargetToQuery(target) {

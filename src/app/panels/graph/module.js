@@ -313,6 +313,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     
+
+    $scope.aggregateTags = $scope.aggregateTags || {} ;
+
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
@@ -326,7 +329,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         yaxis: yaxis
       };
       
-      $scope.aggregateTags = seriesData.aggregateTags;
+      if (!$scope.aggregateTags[seriesData.metric]) {
+        $scope.aggregateTags[seriesData.metric] = seriesData.aggregateTags;
+      }
       $scope.legend.push(seriesInfo);
 
       var series = new timeSeries.ZeroFilled({
