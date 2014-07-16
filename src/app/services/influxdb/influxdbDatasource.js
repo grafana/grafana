@@ -142,7 +142,7 @@ function (angular, _, kbn, InfluxSeries) {
         return $q.reject(err);
       }
 
-      return this.doInfluxRequest(query)
+      return this.doInfluxRequest(interpolated)
         .then(function (results) {
           return _.map(results[0].points, function (metric) {
             return {
