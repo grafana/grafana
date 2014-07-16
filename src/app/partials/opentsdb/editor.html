@@ -4,7 +4,7 @@
         ng-class="{'grafana-target-hidden': target.hide}"
         ng-controller="OpenTSDBTargetCtrl"
         ng-init="init()">
-
+    <input type="hidden" ng-class="aggregateTags">
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">

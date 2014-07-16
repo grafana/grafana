@@ -15,6 +15,7 @@ function (angular, _, kbn) {
       this.editorSrc = 'app/partials/opentsdb/editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
+      this.tagNames = [];
     }
 
     // Called once per panel (graph)
@@ -36,6 +37,7 @@ function (angular, _, kbn) {
           groupByTags[key] = true;
         });
       });
+
 
       return this.performTimeSeriesQuery(queries, start, end)
         .then(function(response) {
@@ -104,7 +106,7 @@ function (angular, _, kbn) {
         }
       }
 
-      return { target: target, datapoints: dps };
+      return { target: target, datapoints: dps, aggregateTags: md.aggregateTags };
     }
 
     function convertTargetToQuery(target) {

@@ -6,6 +6,7 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
+
   var module = angular.module('kibana.controllers');
 
   module.controller('OpenTSDBTargetCtrl', function($scope, $timeout) {
@@ -49,9 +50,7 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'tagk')
-        .then(callback);
+      callback($scope.aggregateTags);
     };
 
     $scope.suggestTagValues = function(query, callback) {
@@ -113,6 +112,11 @@ function (angular, _, kbn) {
       return errs;
     }
 
+
+
+
   });
 
+
 });
+

@@ -299,7 +299,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.datapointsWarning = false;
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;
-
       var data = _.map(results.data, $scope.seriesHandler);
 
       $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
@@ -313,6 +312,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
+    
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
@@ -325,7 +325,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         enable: true,
         yaxis: yaxis
       };
-
+      
+      $scope.aggregateTags = seriesData.aggregateTags;
       $scope.legend.push(seriesInfo);
 
       var series = new timeSeries.ZeroFilled({
