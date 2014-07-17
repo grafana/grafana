@@ -49,16 +49,8 @@ define([
     };
 
     this.receiveAnnotationResults = function(results) {
-      console.log('Annotation result!', results);
       for (var i = 0; i < results.length; i++) {
-        var data = results[i];
-        addAnnotation({
-          annotation: data.annotation,
-          time: data.time,
-          description: data.description,
-          tags: data.tags,
-          data: data.text
-        });
+        addAnnotation(results[i]);
       }
     };
 
@@ -143,14 +135,17 @@ define([
     }
 
     function addAnnotation(options) {
-      var tooltip = "<small><b>" + options.description + "</b><br/>";
+      var tooltip = "<small><b>" + options.title + "</b><br/>";
       if (options.tags) {
         tooltip += (options.tags || '') + '<br/>';
       }
+
       tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+
       if (options.data) {
         tooltip += options.data.replace(/\n/g, '<br/>');
       }
+
       tooltip += "</small>";
 
       list.push({

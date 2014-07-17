@@ -79,7 +79,7 @@ function (angular, _, $, config, kbn, moment) {
               list.push({
                 annotation: annotation,
                 time: datapoint[1] * 1000,
-                description: target.target
+                title: target.target
               });
             }
           }

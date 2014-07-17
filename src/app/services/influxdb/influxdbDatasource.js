@@ -121,46 +121,11 @@ function (angular, _, kbn, InfluxSeries) {
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
-      var query = _.template(annotation.query, {
-        timeFilter: timeFilter
-      }, this.templateSettings);
+      var query = _.template(annotation.query, { timeFilter: timeFilter }, this.templateSettings);
 
-      return this.doInfluxRequest(query)
-        .then(function (results) {
-          var list = [];
-          _.each(results, function (series) {
-            var descriptionCol = 0;
-            var tagsCol = 0;
-            _.each(series.columns, function(column, index) {
-              if (column === 'time' || column === 'sequence_number') {
-                return;
-              }
-
-              if (!descriptionCol) {
-                descriptionCol = index;
-              }
-              else {
-                tagsCol = index;
-              }
-            });
-
-            _.each(series.points, function (point) {
-              var data = {
-                annotation: annotation,
-                time: point[0] * 1000,
-                description: point[descriptionCol]
-              };
-
-              if (tagsCol) {
-                data.tags = point[tagsCol];
-              }
-
-              list.push(data);
-            });
-          });
-
-          return list;
-        });
+      return this.doInfluxRequest(query).then(function(results) {
+        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+      });
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {

@@ -139,4 +139,38 @@ define([
 
   });
 
+  describe("when creating annotations from influxdb response", function() {
+    describe('given two series', function() {
+      var series = new InfluxSeries({
+        seriesList: [
+          {
+            columns: ['time', 'text', 'sequence_number'],
+            name: 'events1',
+            points: [[1402596000, 'some text', 1], [1402596001, 'asd', 2]]
+          },
+          {
+            columns: ['time', 'tags', 'text'],
+            name: 'events2',
+            points: [[1402596000, 'tag1, tag2', 'mu']]
+          }
+        ],
+        annotation: {query: 'select'}
+      });
+
+      var result = series.getAnnotations();
+
+      it(' should generate 4 annnotations ', function() {
+        expect(result.length).to.be(3);
+        expect(result[0].annotation.query).to.be('select');
+        expect(result[0].title).to.be('some text');
+        expect(result[0].time).to.be(1402596000000);
+        expect(result[1].title).to.be('asd');
+        //expect(result[2].tags).to.be('tag1, tag2');
+        //expect(result[2].title).to.be('mu');
+      });
+
+    });
+
+  });
+
 });
