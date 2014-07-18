@@ -17,15 +17,15 @@ function (angular, $, kbn, _, config) {
       //TODO be smart on size parameter
     this.query = function(esQuery) {
       var url = config.elasticsearch + "/" + esQuery.index + "/_search";
+      var range = {};
+      range[esQuery.timestampField] = {
+        "from": esQuery.range.from,
+        "to": esQuery.range.to
+      };
       var filter = {
         "bool": {
           "must": [{
-            "range": {
-              "@timestamp": {
-                "from": esQuery.range.from,
-                "to": esQuery.range.to
-              }
-            }
+            "range": range
           }]
         }
       };
@@ -45,7 +45,7 @@ function (angular, $, kbn, _, config) {
             "filter": filter
           }
         },
-        "size" : 100
+        "size" : esQuery.maxResults
       };
       var options = {
       };

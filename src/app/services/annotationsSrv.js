@@ -89,10 +89,22 @@ define([
         return [];
       }
       var promises = _.map(annotations, function(annotation) {
+        if (!annotation.timestampField) {
+          annotation.timestampField = "@timestamp";
+        }
+        if (!annotation.messageField) {
+          annotation.messageField = "message";
+        }
+        if (!annotation.maxResults) {
+          annotation.maxResultts = 100;
+        }
         var esQuery = {
           index: annotation.index,
           query: annotation.query,
-          range: rangeUnparsed
+          range: rangeUnparsed,
+          timestampField: annotation.timestampField,
+          messageField: annotation.messageField,
+          maxResults: annotation.maxResults
         };
 
         var receiveFunc = _.partial(receiveESMetrics, annotation);
@@ -105,13 +117,16 @@ define([
     };
 
     function receiveESMetrics(annotation, results) {
+      var availableResults = results['data']['hits']['total'];
+      if (availableResults > annotation.maxResults) {
+        alertSrv.set('Annotations','More available annotations ('+availableResults+') than displayed ('+annotation.maxResults+')','info');
+      }
       results['data']['hits']['hits'].forEach (function(result) {
         var source = result['_source'];
-        //TODO make fields configurable
         addAnnotation({
           annotation: annotation,
-          time: moment(source['@timestamp']).valueOf(),
-          description: source['message']
+          time: moment(source[annotation.timestampField]).valueOf(),
+          description: source[annotation.messageField]
         });
       });
     }
