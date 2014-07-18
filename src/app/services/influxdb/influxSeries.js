@@ -71,27 +71,27 @@ function (_) {
     var self = this;
 
     _.each(this.seriesList, function (series) {
-      var titleCol = 0;
-      var tagsCol = 0;
+      var titleCol = null;
+      var timeCol = null;
+      var tagsCol = null;
+      var textCol = null;
 
       _.each(series.columns, function(column, index) {
-        if (column === 'time' || column === 'sequence_number') {
-          return;
-        }
-
-        if (!titleCol && column !== 'tags') {
-          titleCol = index;
-        }
-        else {
-          tagsCol = index;
-        }
+        if (column === 'time') { timeCol = index; return; }
+        if (column === 'sequence_number') { return; }
+        if (!titleCol) { titleCol = index; }
+        if (column === self.annotation.titleColumn) { titleCol = index; return; }
+        if (column === self.annotation.tagsColumn) { tagsCol = index; return; }
+        if (column === self.annotation.textColumn) { textCol = index; return; }
       });
 
       _.each(series.points, function (point) {
         var data = {
           annotation: self.annotation,
-          time: point[0] * 1000,
-          title: point[titleCol]
+          time: point[timeCol] * 1000,
+          title: point[titleCol],
+          tags: point[tagsCol],
+          text: point[textCol]
         };
 
         if (tagsCol) {
