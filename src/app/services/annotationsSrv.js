@@ -83,7 +83,7 @@ define([
       });
     };
 
-    this.getESAnnotations = function() {
+    this.getESAnnotations = function(rangeUnparsed) {
       var annotations = this.getAnnotationsByType('es annotations');
       if (annotations.length === 0) {
         return [];
@@ -91,7 +91,8 @@ define([
       var promises = _.map(annotations, function(annotation) {
         var esQuery = {
           index: annotation.index,
-          query: annotation.query
+          query: annotation.query,
+          range: rangeUnparsed
         };
 
         var receiveFunc = _.partial(receiveESMetrics, annotation);

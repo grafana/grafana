@@ -17,22 +17,36 @@ function (angular, $, kbn, _, config) {
       //TODO be smart on size parameter
     this.query = function(esQuery) {
       var url = config.elasticsearch + "/" + esQuery.index + "/_search";
-      var data = {
-        "query": {
-          "filtered": {
-            "query": {
-              "bool": {
-                "should": [{
-                  "query_string": {
-                    "query": esQuery.query
-                  }
-                }]
+      var filter = {
+        "bool": {
+          "must": [{
+            "range": {
+              "@timestamp": {
+                "from": esQuery.range.from,
+                "to": esQuery.range.to
               }
             }
+          }]
+        }
+      };
+      var query = {
+        "bool": {
+          "should": [{
+            "query_string": {
+              "query": esQuery.query
+            }
+          }]
+        }
+      };
+      var data = {
+        "query" : {
+          "filtered": {
+            "query" : query,
+            "filter": filter
           }
         },
-        "size": 100
-      }
+        "size" : 100
+      };
       var options = {
       };
       if (config.elasticsearchBasicAuth) {
