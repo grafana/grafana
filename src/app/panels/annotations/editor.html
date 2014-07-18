@@ -76,6 +76,8 @@
       <label class="small">Elasticsearch query</label>
       <input type="text" ng-model='currentAnnnotation.query' placeholder=""></input>
     </div>
+  </div>
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'es annotations'">
     <div class="editor-option">
       <label class="small">Elasticsearch timestamp field</label>
       <input type="text" ng-model='currentAnnnotation.timestampField' placeholder="@timestamp"></input>
