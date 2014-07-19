@@ -58,34 +58,54 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
-      var graphiteQuery = {
-        range: rangeUnparsed,
-        targets: [{ target: annotation.target }],
-        format: 'json',
-        maxDataPoints: 100
-      };
+      // Graphite metric as annotation
+      if (annotation.target) {
+        var graphiteQuery = {
+          range: rangeUnparsed,
+          targets: [{ target: annotation.target }],
+          format: 'json',
+          maxDataPoints: 100
+        };
 
-      return this.query(filterSrv, graphiteQuery)
-        .then(function(result) {
-          var list = [];
+        return this.query(filterSrv, graphiteQuery)
+          .then(function(result) {
+            var list = [];
 
-          for (var i = 0; i < result.data.length; i++) {
-            var target = result.data[i];
+            for (var i = 0; i < result.data.length; i++) {
+              var target = result.data[i];
 
-            for (var y = 0; y < target.datapoints.length; y++) {
-              var datapoint = target.datapoints[y];
-              if (!datapoint[0]) { continue; }
+              for (var y = 0; y < target.datapoints.length; y++) {
+                var datapoint = target.datapoints[y];
+                if (!datapoint[0]) { continue; }
 
+                list.push({
+                  annotation: annotation,
+                  time: datapoint[1] * 1000,
+                  title: target.target
+                });
+              }
+            }
+
+            return list;
+          });
+      }
+      // Graphite event as annotation
+      else if (annotation.tags) {
+        return this.events({ range: rangeUnparsed, tags: annotation.tags })
+          .then(function(results) {
+            var list = [];
+            for (var i = 0; i < results.data; i++) {
               list.push({
                 annotation: annotation,
-                time: datapoint[1] * 1000,
-                title: target.target
+                time: event.when * 1000,
+                title: event.what,
+                tags: event.tags,
+                text: event.data
               });
             }
-          }
-
-          return list;
-        });
+            return list;
+          });
+      }
     };
 
     GraphiteDatasource.prototype.events = function(options) {
