@@ -15,12 +15,16 @@ function (angular, _, config) {
 
     this.init = function() {
       var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true } );
-      this.default = this.datasourceFactory(defaultDatasource);
-      $rootScope.$on('dashboard-loaded', this.dashboardLoaded);
+      this.systemDefault = this.datasourceFactory(defaultDatasource);
+      this.default = this.systemDefault;
+      $rootScope.$on('dashboard-loaded', angular.bind(this, this.dashboardLoaded));
       this.dashboardLoaded();
     };
 
     this.dashboardLoaded = function () {
+      // Reset to the system default whenever we load a new dashboard, since it might not have a dashboard-level data source.
+      this.default = this.systemDefault;
+
       datasourcePanel = _.findWhere(dashboard.current.pulldowns, { type: 'datasource' });
     };
 
