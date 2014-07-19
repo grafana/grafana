@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('kibana.directives');
 
-  module.directive('dashUpload', function(timer, dashboard, alertSrv) {
+  module.directive('dashUpload', function(timer, alertSrv) {
     return {
       restrict: 'A',
       link: function(scope) {
@@ -14,7 +14,8 @@ function (angular) {
           var files = evt.target.files; // FileList object
           var readerOnload = function() {
             return function(e) {
-              dashboard.dash_load(JSON.parse(e.target.result));
+              var dashboard = JSON.parse(e.target.result);
+              scope.emitAppEvent('setup-dashboard', dashboard);
               scope.$apply();
             };
           };
