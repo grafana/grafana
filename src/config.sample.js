@@ -71,6 +71,11 @@ function (Settings) {
     panel_names: [
       'text',
       'graphite'
-    ]
+    ],
+
+    /**
+     * Specifies the maximum number of results to show in the Dashboards "search" dropdown
+     */
+    dashboards_max_results: 20
   });
 });
