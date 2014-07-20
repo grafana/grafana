@@ -1,119 +1,117 @@
-vNext
+# 1.7.0 (unreleased)
 
 **New features or improvements**
-- Allow [[..]] filter notation in all text panels (markdown/html/text) (Issue #511)
-- New legend display option "Align as table" (Issue #136)
-- New legend display option "Right side", will show legend to the right of the graph (Issue #556)
-- InfluxDB: Enhanced series aliasing (legend names) with pattern replacements (Issue #525)
-- InfluxDB: Add continuous query in series results (series typeahead). #581
-- InfluxDB: Support for alias & alias patterns when using raw query mode, #584
+- [Issue #511](https://github.com/grafana/grafana/issues/511). Allow [[..]] filter notation in all text panels (markdown/html/text)
+- [Issue #136](https://github.com/grafana/grafana/issues/136). New legend display option "Align as table"
+- [Issue #556](https://github.com/grafana/grafana/issues/556). New legend display option "Right side", will show legend to the right of the graph
+- [Issue #525](https://github.com/grafana/grafana/issues/525). InfluxDB: Enhanced series aliasing (legend names) with pattern replacements
+- [Issue #581](https://github.com/grafana/grafana/issues/581). InfluxDB: Add continuous query in series results (series typeahead).
+- [Issue #584](https://github.com/grafana/grafana/issues/584). InfluxDB: Support for alias & alias patterns when using raw query mode
 
 **Changes**
-- Graphite: Use unix epoch for Graphite from/to for absolute time ranges (Closes #536)
+- [Issue #536](https://github.com/grafana/grafana/issues/536). Graphite: Use unix epoch for Graphite from/to for absolute time ranges
 
 **Fixes**
-- Fix formatting negative values (PR #545)
-- Fix for Max legend value when max value is zero (Issue #460)
+- [Issue #545](https://github.com/grafana/grafana/issues/545). Fix formatting negative values
+- [Issue #460](https://github.com/grafana/grafana/issues/460). fix for max legend value when max value is zero
 
 # 1.6.1 (2014-06-24)
 
 **New features or improvements**
-- Ability to set y min/max for right y-axis (RR #519, Closes #360) - thx @acedrew
+- [Issue #360](https://github.com/grafana/grafana/issues/360). Ability to set y min/max for right y-axis (RR #519)
 
 **Fixes**
 
-- Fixes regex InfluxDB queries intoduced in 1.6.0 (PR #500)
-- Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names (Fixes #506)
-- Series names and column name typeahead cache fix (Fixes #522)
-- Fixed influxdb issue with raw query that caused wrong value column detection (Fixes #504)
-- Default property that marks which datasource is default in config.js is now optional (Fixes #526)
-- Auto-refresh caused 2 refreshes (and hence mulitple queries) each time (at least in firefox) (Fixes #342)
+- [Issue #500](https://github.com/grafana/grafana/issues/360). Fixes regex InfluxDB queries intoduced in 1.6.0
+- [Issue #506](https://github.com/grafana/grafana/issues/506). Bug in when using % sign in legends (aliases), fixed by removing url decoding of metric names
+- [Issue #522](https://github.com/grafana/grafana/issues/522). Series names and column name typeahead cache fix
+- [Issue #504](https://github.com/grafana/grafana/issues/504). Fixed influxdb issue with raw query that caused wrong value column detection
+- [Issue #526](https://github.com/grafana/grafana/issues/526). Default property that marks which datasource is default in config.js is now optional
+- [Issue #342](https://github.com/grafana/grafana/issues/342). Auto-refresh caused 2 refreshes (and hence mulitple queries) each time (at least in firefox)
 
 # 1.6.0 (2014-06-16)
 
 #### New features or improvements
-- New Y-axis formater for metric values that represent seconds (Issue #427) - thx @jippi
-- Allow special characters in serie names (influxdb datasource), PR #390 - thx  @majst01
-- Refactoring of filterSrv (Issue #428), thx @Tetha
-- New config for playlist feature. Set playlist_timespan to set default playlist interval (Issue #445) - thx @rmca
-- New graphite function definition added isNonNull (PR #461), - thx @tmonk42
-- New InfluxDB function difference add to function dropdown (PR #455)
-- Added parameter to keepLastValue graphite function definition (default 100), Closes #459
+- [Issue #427](https://github.com/grafana/grafana/issues/427). New Y-axis formater for metric values that represent seconds, Thanks @jippi
+- [Issue #390](https://github.com/grafana/grafana/issues/390). Allow special characters in serie names (influxdb datasource), Thanks @majst01
+- [Issue #428](https://github.com/grafana/grafana/issues/428). Refactoring of filterSrv, Thanks @Tetha
+- [Issue #445](https://github.com/grafana/grafana/issues/445). New config for playlist feature. Set playlist_timespan to set default playlist interval, Thanks @rmca
+- [Issue #461](https://github.com/grafana/grafana/issues/461). New graphite function definition added isNonNull,  Thanks @tmonk42
+- [Issue #455](https://github.com/grafana/grafana/issues/455). New InfluxDB function difference add to function dropdown
+- [Issue #459](https://github.com/grafana/grafana/issues/459). Added parameter to keepLastValue graphite function definition (default 100)
+  [Issue #418](https://github.com/grafana/grafana/issues/418). to the browser cache when upgrading grafana and improve load performance
+- [Issue #327](https://github.com/grafana/grafana/issues/327). Partial support for url encoded metrics when using Graphite datasource. Thanks @axe-felix
+- [Issue #473](https://github.com/grafana/grafana/issues/473). Improvement to InfluxDB query editor and function/value column selection
+- [Issue #375](https://github.com/grafana/grafana/issues/375). Initial support for filtering (templated queries) for InfluxDB. Thanks @mavimo
+- [Issue #475](https://github.com/grafana/grafana/issues/475). Row editing and adding new panel is now a lot quicker and easier with the new row menu
+- [Issue #211](https://github.com/grafana/grafana/issues/211). New datasource! Initial support for OpenTSDB, Thanks @mpage
+- [Issue #492](https://github.com/grafana/grafana/issues/492). Improvement and polish to the OpenTSDB query editor
+- [Issue #441](https://github.com/grafana/grafana/issues/441). Influxdb group by support, Thanks @piis3
 - improved asset (css/js) build pipeline, added revision to css and js. Will remove issues related
-  to the browser cache when upgrading grafana and improve load performance (Fixes #418)
-- Partial support for url encoded metrics when using Graphite datasource (PR #327) - thx @axe-felix
-- Improvement to InfluxDB query editor and function/value column selection (Issue #473)
-- Initial support for filtering (templated queries) for InfluxDB (PR #375) - thx @mavimo
-- Row editing and adding new panel is now a lot quicker and easier with the new row menu (Issue #475)
-- New datasource! Initial support for OpenTSDB (PR #211) - thx @mpage
-- Improvement and polish to the OpenTSDB query editor (Issue #492)
-- Influxdb group by support (Issue #441) thx @piis3
 
 
 #### Changes
-- Graphite panel is now renamed graph (Existing dashboards will still work)
-- Add panel icon and Row edit button is replaced by the Row edit menu (Issue #475)
+- [Issue #475](https://github.com/grafana/grafana/issues/475). Add panel icon and Row edit button is replaced by the Row edit menu
 - New graphs now have a default empty query
 - Add Row button now creates a row with default height of 250px (no longer opens dashboard settings modal)
 - Clean up of config.sample.js, graphiteUrl removed (still works, but depricated, removed in future)
   Use datasources config instead. panel_names removed from config.js. Use plugins.panels to add custom panels
+- Graphite panel is now renamed graph (Existing dashboards will still work)
 
 #### Fixes
-- Graphite query lexer change, can now handle regex parameters for aliasSub function (Fixes #126)
-- Filter option loading when having muliple nested filters now works better.
-  Options are now reloaded correctly and there are no multiple renders/refresh inbetween (#447),
-  After an option is changed and a nested template param is also reloaded, if the current value
-  exists after the options are reloaded the current selected value is kept (Closes #447, Closes #412)
-- Legend Current value did not display when value was zero, Fixes #460
-- Fix to series toggling bug that caused annotations to be hidden when toggling (hiding) series. Fixes #328
-- Fix for graphite function selection menu that some times draws outside screen. It now displays upward (Fixes #293)
-- Fix for exclusive series toggling (hold down CTRL, SHIFT or META key) and left click a series for exclusive toggling
-  CTRL does not work on MAC OSX but SHIFT or META should (depending on browser) (Closes #350, Fixes #472)
+- [Issue #126](https://github.com/grafana/grafana/issues/126). Graphite query lexer change, can now handle regex parameters for aliasSub function
+- [Issue #447](https://github.com/grafana/grafana/issues/447). Filter option loading when having muliple nested filters now works better. Options are now reloaded correctly and there are no multiple renders/refresh inbetween.
+- [Issue #412](https://github.com/grafana/grafana/issues/412). After a filter option is changed and a nested template param is reloaded, if the current value exists after the options are reloaded the current selected value is kept.
+- [Issue #460](https://github.com/grafana/grafana/issues/460). Legend Current value did not display when value was zero
+- [Issue #328](https://github.com/grafana/grafana/issues/328). Fix to series toggling bug that caused annotations to be hidden when toggling/hiding series.
+- [Issue #293](https://github.com/grafana/grafana/issues/293). Fix for graphite function selection menu that some times draws outside screen. It now displays upward
+- [Issue #350](https://github.com/grafana/grafana/issues/350). Fix for exclusive series toggling (hold down CTRL, SHIFT or META key) and left click a series for exclusive toggling
+- [Issue #472](https://github.com/grafana/grafana/issues/472). CTRL does not work on MAC OSX but SHIFT or META should (depending on browser)
 
 # 1.5.4 (2014-05-13)
 ### New features and improvements
-- InfluxDB enhancement: support for multiple hosts (with retries) and raw queries (Issue #318, thx @toddboom)
+- InfluxDB enhancement: support for multiple hosts (with retries) and raw queries ([Issue #318](https://github.com/grafana/grafana/issues/318), thx @toddboom)
 - Added rounding for graphites from and to time range filters
-  for very short absolute ranges (Issue #320)
-- Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. (Closes #5)
-- Improvement to influxdb query editor, can now add where clause and alias (Issue #331, thanks @mavimo)
-- New config setting for graphite datasource to control if json render request is POST or GET (Issue #345)
-- Unsaved changes warning feature (Issue #324)
-- Improvement to series toggling, CTRL+MouseClick on series name will now hide all others (Issue #350)
+  for very short absolute ranges ([Issue #320](https://github.com/grafana/grafana/issues/320))
+- Increased resolution for graphite datapoints (maxDataPoints), now equal to panel pixel width. ([Issue #5](https://github.com/grafana/grafana/issues/5))
+- Improvement to influxdb query editor, can now add where clause and alias ([Issue #331](https://github.com/grafana/grafana/issues/331), thanks @mavimo)
+- New config setting for graphite datasource to control if json render request is POST or GET ([Issue #345](https://github.com/grafana/grafana/issues/345))
+- Unsaved changes warning feature ([Issue #324](https://github.com/grafana/grafana/issues/324))
+- Improvement to series toggling, CTRL+MouseClick on series name will now hide all others ([Issue #350](https://github.com/grafana/grafana/issues/350))
 
 ### Changes
-- Graph default setting for Y-Min changed from zero to auto scalling (will not effect existing dashboards). (Issue #386) - thx @kamaradclimber
+- Graph default setting for Y-Min changed from zero to auto scalling (will not effect existing dashboards). ([Issue #386](https://github.com/grafana/grafana/issues/386)) - thx @kamaradclimber
 
 ### Fixes
-- Fixes to filters and "All" option. It now never uses "*" as value, but all options in a {node1, node2, node3} expression (Issue #228, #359)
-- Fix for InfluxDB query generation with columns containing dots or dashes (Issue #369, #348) - Thanks to @jbripley
+- Fixes to filters and "All" option. It now never uses "*" as value, but all options in a {node1, node2, node3} expression ([Issue #228](https://github.com/grafana/grafana/issues/228), #359)
+- Fix for InfluxDB query generation with columns containing dots or dashes ([Issue #369](https://github.com/grafana/grafana/issues/369), #348) - Thanks to @jbripley
 
 
 # 1.5.3 (2014-04-17)
-- Add support for async scripted dashboards (Issue #274)
-- Text panel now accepts html (for links to other dashboards, etc) (Issue #236)
-- Fix for Text panel, now changes take effect directly (Issue #251)
-- Fix when adding functions without params that did not cause graph to update (Issue #267)
-- Graphite errors are now much easier to see and troubleshoot with the new inspector (Issue #265)
-- Use influxdb aliases to distinguish between multiple columns (Issue #283)
-- Correction to ms axis formater, now formats days correctly. (Issue #189)
-- Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode (Issue #106)
-- Browser page title is now Grafana - {{dashboard title}} (Issue #294)
-- Disable auto refresh zooming in (every time you change to an absolute time range), refresh will be restored when you change time range back to relative (Issue #282)
+- Add support for async scripted dashboards ([Issue #274](https://github.com/grafana/grafana/issues/274))
+- Text panel now accepts html (for links to other dashboards, etc) ([Issue #236](https://github.com/grafana/grafana/issues/236))
+- Fix for Text panel, now changes take effect directly ([Issue #251](https://github.com/grafana/grafana/issues/251))
+- Fix when adding functions without params that did not cause graph to update ([Issue #267](https://github.com/grafana/grafana/issues/267))
+- Graphite errors are now much easier to see and troubleshoot with the new inspector ([Issue #265](https://github.com/grafana/grafana/issues/265))
+- Use influxdb aliases to distinguish between multiple columns ([Issue #283](https://github.com/grafana/grafana/issues/283))
+- Correction to ms axis formater, now formats days correctly. ([Issue #189](https://github.com/grafana/grafana/issues/189))
+- Css fix for Firefox and using top menu dropdowns in panel fullscren / edit mode ([Issue #106](https://github.com/grafana/grafana/issues/106))
+- Browser page title is now Grafana - {{dashboard title}} ([Issue #294](https://github.com/grafana/grafana/issues/294))
+- Disable auto refresh zooming in (every time you change to an absolute time range), refresh will be restored when you change time range back to relative ([Issue #282](https://github.com/grafana/grafana/issues/282))
 - More graphite functions
 
 # 1.5.2 (2014-03-24)
 ### New Features and improvements
-- Support for second optional params for functions like aliasByNode (Issue #167). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
-- More functions added to InfluxDB query editor (Issue #218)
-- Filters can now be used inside other filters (templated segments) (Issue #128)
+- Support for second optional params for functions like aliasByNode ([Issue #167](https://github.com/grafana/grafana/issues/167)). Read the wiki on the [Function Editor](https://github.com/torkelo/grafana/wiki/Graphite-Function-Editor) for more info.
+- More functions added to InfluxDB query editor ([Issue #218](https://github.com/grafana/grafana/issues/218))
+- Filters can now be used inside other filters (templated segments) ([Issue #128](https://github.com/grafana/grafana/issues/128))
 - More graphite functions added
 
 ### Fixes
-- Float arguments now work for functions like scale (Issue #223)
+- Float arguments now work for functions like scale ([Issue #223](https://github.com/grafana/grafana/issues/223))
 - Fix for graphite function editor, the graph & target was not updated after adding a function and leaving default params as is #191
 
-The zip files now contains a sub folder with project name and version prefix. (Issue #209)
+The zip files now contains a sub folder with project name and version prefix. ([Issue #209](https://github.com/grafana/grafana/issues/209))
 
 # 1.5.1 (2014-03-10)
 ### Fixes
@@ -126,22 +124,22 @@ Read this for more info:
 
 # 1.5.0 (2014-03-09)
 ### New Features and improvements
-- New function editor [video demo](http://youtu.be/I90WHRwE1ZM) (Issue #178)
-- Links to function documentation from function editor (Issue #3)
-- Reorder functions (Issue #130)
+- New function editor [video demo](http://youtu.be/I90WHRwE1ZM) ([Issue #178](https://github.com/grafana/grafana/issues/178))
+- Links to function documentation from function editor ([Issue #3](https://github.com/grafana/grafana/issues/3))
+- Reorder functions ([Issue #130](https://github.com/grafana/grafana/issues/130))
 - [Initial support for InfluxDB](https://github.com/torkelo/grafana/wiki/InfluxDB) as metric datasource (#103), need feedback!
-- [Dashboard playlist](https://github.com/torkelo/grafana/wiki/Dashboard-playlist) (Issue #36)
-- When adding aliasByNode smartly set node number (Issue #175)
-- Support graphite identifiers with embedded colons (Issue #173)
-- Typeahead & autocomplete when adding new function (Issue #164)
+- [Dashboard playlist](https://github.com/torkelo/grafana/wiki/Dashboard-playlist) ([Issue #36](https://github.com/grafana/grafana/issues/36))
+- When adding aliasByNode smartly set node number ([Issue #175](https://github.com/grafana/grafana/issues/175))
+- Support graphite identifiers with embedded colons ([Issue #173](https://github.com/grafana/grafana/issues/173))
+- Typeahead & autocomplete when adding new function ([Issue #164](https://github.com/grafana/grafana/issues/164))
 - More graphite function definitions
-- Make "ms" axis format include hour, day, weeks, month and year (Issue #149)
-- Microsecond axis format (Issue #146)
-- Specify template paramaters in URL (Issue #123)
+- Make "ms" axis format include hour, day, weeks, month and year ([Issue #149](https://github.com/grafana/grafana/issues/149))
+- Microsecond axis format ([Issue #146](https://github.com/grafana/grafana/issues/146))
+- Specify template paramaters in URL ([Issue #123](https://github.com/grafana/grafana/issues/123))
 
 ### Fixes
-- Basic Auth fix (Issue #152)
-- Fix to annotations with graphite source & null values (Issue #138)
+- Basic Auth fix ([Issue #152](https://github.com/grafana/grafana/issues/152))
+- Fix to annotations with graphite source & null values ([Issue #138](https://github.com/grafana/grafana/issues/138))
 
 # 1.4.0 (2014-02-21)
 ### New Features
@@ -207,7 +205,7 @@ Read this for more info:
 Thanks to everyone who contributed fixes and provided feedback :+1:
 
 # 1.0.4 (2014-01-24)
-- Fixes #28 - Relative time range caused 500 graphite error in some cases (thx rsommer for the fix)
+- [Issue #28](https://github.com/grafana/grafana/issues/28) - Relative time range caused 500 graphite error in some cases (thx rsommer for the fix)
 
 # 1.0.3 (2014-01-23)
 - #9 Add Y-axis format for milliseconds
@@ -215,7 +213,7 @@ Thanks to everyone who contributed fixes and provided feedback :+1:
 - #13 Relative time ranges now uses relative time ranges when issuing graphite query
 
 # 1.0.2 (2014-01-21)
-- Fixes #12, should now work ok without ElasticSearch
+- [Issue #12](https://github.com/grafana/grafana/issues/12), should now work ok without ElasticSearch
 
 # 1.0.1 (2014-01-21)
 - Resize fix
