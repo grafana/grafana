@@ -24,6 +24,7 @@ function (angular, _, config) {
 
       if (!this.default) {
         this.default = datasources[_.keys(datasources)[0]];
+        this.default.default = true;
       }
     };
 
@@ -51,7 +52,7 @@ function (angular, _, config) {
         if (value.supportAnnotations) {
           results.push({
             name: key,
-            editorSrc: value.annotationEditorSrc
+            editorSrc: value.annotationEditorSrc,
           });
         }
       });

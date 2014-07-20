@@ -42,6 +42,10 @@ function (angular, app, _) {
       $scope.currentAnnotation = annotation;
       $scope.currentIsNew = false;
       $scope.currentDatasource = _.findWhere($scope.datasources, { name: annotation.datasource });
+
+      if (!$scope.currentDatasource) {
+        $scope.currentDatasource = $scope.datasources[0];
+      }
     };
 
     $scope.update = function() {

@@ -27,7 +27,7 @@ function (angular, app, _) {
       annotations: []
     };
 
-    _.defaults($scope.panel,_d);
+    _.defaults($scope.panel, _d);
 
     $scope.hide = function (annotation) {
       annotation.enable = !annotation.enable;
