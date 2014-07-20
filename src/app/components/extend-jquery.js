@@ -10,7 +10,7 @@ function ($) {
   $.fn.place_tt = (function () {
     var defaults = {
       offset: 5,
-   };
+    };
 
     return function (x, y, opts) {
       opts = $.extend(true, {}, defaults, opts);
