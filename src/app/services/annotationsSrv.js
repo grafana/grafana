@@ -32,7 +32,7 @@ define([
         return promiseCached;
       }
 
-      var timezone = dashboard,timezone;
+      timezone = dashboard.timezone;
       var annotations = _.where(annotationPanel.annotations, { enable: true });
 
       var promises  = _.map(annotations, function(annotation) {
