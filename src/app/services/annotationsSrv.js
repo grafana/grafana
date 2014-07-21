@@ -11,6 +11,7 @@ define([
     var promiseCached;
     var annotationPanel;
     var list = [];
+    var timezone;
 
     this.init = function() {
       $rootScope.$on('refresh', this.clearCache);
@@ -31,6 +32,7 @@ define([
         return promiseCached;
       }
 
+      var timezone = dashboard,timezone;
       var annotations = _.where(annotationPanel.annotations, { enable: true });
 
       var promises  = _.map(annotations, function(annotation) {
@@ -65,7 +67,12 @@ define([
         tooltip += (options.tags || '') + '<br/>';
       }
 
-      tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      if (timezone === 'browser') {
+        tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      }
+      else {
+        tooltip += '<i>' + moment.utc(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      }
 
       if (options.text) {
         tooltip += options.text.replace(/\n/g, '<br/>');

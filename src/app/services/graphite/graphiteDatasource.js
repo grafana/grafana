@@ -27,8 +27,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(filterSrv, options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, options.timezone, 'round-down'),
-          until: this.translateTime(options.range.to, options.timezone, 'round-up'),
+          from: this.translateTime(options.range.from, 'round-down'),
+          until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
           maxDataPoints: options.maxDataPoints,
@@ -125,7 +125,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, timezone, rounding) {
+    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';

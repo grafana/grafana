@@ -20,7 +20,7 @@ function (angular, $, kbn, _) {
       this.title = data.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
-      this.timezone = data.browser || 'browser';
+      this.timezone = data.timezone || 'browser';
       this.editable = data.editble || true;
       this.rows = data.rows || [];
       this.pulldowns = data.pulldowns || [];

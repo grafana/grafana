@@ -272,7 +272,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource,
-        timezone: $scope.dashboard.timezone
       };
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed, $scope.dashboard);
