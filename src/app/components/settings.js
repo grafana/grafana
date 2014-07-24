@@ -27,7 +27,8 @@ function (_, crypto) {
       elasticsearch_all_disabled    : false,
       timezoneOffset                : null,
       playlist_timespan             : "1m",
-      unsaved_changes_warning       : true
+      unsaved_changes_warning       : true,
+      now_delay_minutes             : 0
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
