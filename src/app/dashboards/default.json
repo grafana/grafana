@@ -16,6 +16,7 @@
       "editable": true,
       "collapse": false,
       "collapsable": true,
+      "displayTitleWhenRowIsVisible": false,
       "panels": [
         {
           "error": false,
@@ -37,6 +38,7 @@
       "editable": true,
       "collapse": false,
       "collapsable": true,
+      "displayTitleWhenRowIsVisible": false,
       "panels": [
         {
           "span": 12,

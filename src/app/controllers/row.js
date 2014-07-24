@@ -14,6 +14,7 @@ function (angular, app, _) {
       height: "150px",
       collapse: false,
       collapsable: true,
+      displayTitleWhenRowIsVisible: false,
       editable: true,
       panels: [],
       notice: false
