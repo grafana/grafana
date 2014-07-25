@@ -25,7 +25,6 @@ define([
   'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
-  'jquery.flot.byte',
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
@@ -86,7 +85,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        */
       scale         : 1,
       /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','bits','short', 's', 'ms'
+       * y_formats :: 'none','bytes','bits','bps','short', 's', 'ms'
        */
       y_formats    : ['short', 'short'],
       /** @scratch /panels/histogram/5
@@ -95,8 +94,10 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
        * grid.ma1::: Maximum y-axis value
        */
       grid          : {
-        max: null,
-        min: null,
+        leftMax: null,
+        rightMax: null,
+        leftMin: null,
+        rightMin: null,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -191,10 +192,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       _.defaults($scope.panel.legend, _d.legend);
     }
 
+    if ($scope.panel.grid.min) {
+      $scope.panel.grid.leftMin = $scope.panel.grid.min;
+      delete $scope.panel.grid.min;
+    }
+
+    if ($scope.panel.grid.max) {
+      $scope.panel.grid.leftMax = $scope.panel.grid.max;
+      delete $scope.panel.grid.max;
+    }
+
     if ($scope.panel.y_format) {
       $scope.panel.y_formats[0] = $scope.panel.y_format;
       delete $scope.panel.y_format;
     }
+
     if ($scope.panel.y2_format) {
       $scope.panel.y_formats[1] = $scope.panel.y2_format;
       delete $scope.panel.y2_format;

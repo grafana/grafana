@@ -396,6 +396,53 @@ function($, _, moment) {
     return (size.toFixed(decimals) + ext);
   };
 
+  kbn.bpsFormat = function(size, decimals) {
+    var ext, steps = 0;
+
+    if(_.isUndefined(decimals)) {
+      decimals = 2;
+    } else if (decimals === 0) {
+      decimals = undefined;
+    }
+
+    while (Math.abs(size) >= 1000) {
+      steps++;
+      size /= 1000;
+    }
+
+    switch (steps) {
+    case 0:
+      ext = " bps";
+      break;
+    case 1:
+      ext = " Kbps";
+      break;
+    case 2:
+      ext = " Mbps";
+      break;
+    case 3:
+      ext = " Gbps";
+      break;
+    case 4:
+      ext = " Tbps";
+      break;
+    case 5:
+      ext = " Pbps";
+      break;
+    case 6:
+      ext = " Ebps";
+      break;
+    case 7:
+      ext = " Zbps";
+      break;
+    case 8:
+      ext = " Ybps";
+      break;
+    }
+
+    return (size.toFixed(decimals) + ext);
+  };
+
   kbn.shortFormat = function(size, decimals) {
     var ext, steps = 0;
 
@@ -457,6 +504,10 @@ function($, _, moment) {
       return function(val) {
         return kbn.bitFormat(val, decimals);
       };
+    case 'bps':
+      return function(val) {
+        return kbn.bpsFormat(val, decimals);
+      };
     case 's':
       return function(val) {
         return kbn.sFormat(val, decimals);
@@ -481,23 +532,23 @@ function($, _, moment) {
   };
 
   kbn.msFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ms";
     }
     // Less than 1 min
-    else if (size < 60000) {
+    else if (Math.abs(size) < 60000) {
       return (size / 1000).toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600000) {
+    else if (Math.abs(size) < 3600000) {
       return (size / 60000).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400000) {
+    else if (Math.abs(size) < 86400000) {
       return (size / 3600000).toFixed(decimals) + " hour";
     }
     // Less than one year, devide in days
-    else if (size < 31536000000) {
+    else if (Math.abs(size) < 31536000000) {
       return (size / 86400000).toFixed(decimals) + " day";
     }
 
@@ -506,23 +557,23 @@ function($, _, moment) {
 
   kbn.sFormat = function(size, decimals) {
     // Less than 10 min, use seconds
-    if (size < 600) {
+    if (Math.abs(size) < 600) {
       return size.toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
-    else if (size < 3600) {
+    else if (Math.abs(size) < 3600) {
       return (size / 60).toFixed(decimals) + " min";
     }
     // Less than one day, devide in hours
-    else if (size < 86400) {
+    else if (Math.abs(size) < 86400) {
       return (size / 3600).toFixed(decimals) + " hour";
     }
     // Less than one week, devide in days
-    else if (size < 604800) {
+    else if (Math.abs(size) < 604800) {
       return (size / 86400).toFixed(decimals) + " day";
     }
     // Less than one year, devide in week
-    else if (size < 31536000) {
+    else if (Math.abs(size) < 31536000) {
       return (size / 604800).toFixed(decimals) + " week";
     }
 
@@ -530,10 +581,10 @@ function($, _, moment) {
   };
 
   kbn.microsFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " µs";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " ms";
     }
     else {
@@ -542,16 +593,16 @@ function($, _, moment) {
   };
 
   kbn.nanosFormat = function(size, decimals) {
-    if (size < 1000) {
+    if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ns";
     }
-    else if (size < 1000000) {
+    else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " µs";
     }
-    else if (size < 1000000000) {
+    else if (Math.abs(size) < 1000000000) {
       return (size / 1000000).toFixed(decimals) + " ms";
     }
-    else if (size < 60000000000){
+    else if (Math.abs(size) < 60000000000){
       return (size / 1000000000).toFixed(decimals) + " s";
     }
     else {

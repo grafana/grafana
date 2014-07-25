@@ -33,9 +33,7 @@ function (angular, _, kbn) {
       var groupByTags = {};
       _.each(queries, function(query) {
         _.each(query.tags, function(val, key) {
-          if (val === "*") {
-            groupByTags[key] = true;
-          }
+          groupByTags[key] = true;
         });
       });
 

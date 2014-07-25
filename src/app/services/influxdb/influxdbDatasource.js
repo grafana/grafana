@@ -1,9 +1,10 @@
 define([
   'angular',
   'underscore',
-  'kbn'
+  'kbn',
+  './influxSeries'
 ],
-function (angular, _, kbn) {
+function (angular, _, kbn, InfluxSeries) {
   'use strict';
 
   var module = angular.module('kibana.services');
@@ -43,7 +44,7 @@ function (angular, _, kbn) {
           var groupByIndex = lowerCaseQueryElements.indexOf("group");
           var orderIndex = lowerCaseQueryElements.indexOf("order");
 
-          if (lowerCaseQueryElements[1].indexOf(',')) {
+          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
             groupByField = lowerCaseQueryElements[1].replace(',', '');
           }
 
@@ -68,7 +69,7 @@ function (angular, _, kbn) {
         }
         else {
 
-          var template = "select [[group]][[group_comma]] [[func]](\"[[column]]\") as \"[[column]]_[[func]]\" from \"[[series]]\" " +
+          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
                          "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
                          "group by time([[interval]])[[group_comma]] [[group]] order asc";
 
@@ -86,18 +87,22 @@ function (angular, _, kbn) {
             group: target.groupby_field_add ? target.groupby_field : '',
           };
 
+          if(!templateData.series.match('^/.*/')) {
+            templateData.series = '"' + templateData.series + '"';
+          }
+
           query = _.template(template, templateData, this.templateSettings);
           query = filterSrv.applyTemplateToTarget(query);
-
-          if (target.alias) {
-            alias = filterSrv.applyTemplateToTarget(target.alias);
-          }
 
           if (target.groupby_field_add) {
             groupByField = target.groupby_field;
           }
 
           target.query = query;
+        }
+
+        if (target.alias) {
+          alias = filterSrv.applyTemplateToTarget(target.alias);
         }
 
         var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
@@ -112,20 +117,30 @@ function (angular, _, kbn) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from "' + seriesName + '" limit 1').then(function(data) {
+      return this.doInfluxRequest('select * from /' + seriesName + '/ limit 1').then(function(data) {
         if (!data) {
           return [];
         }
-
         return data[0].columns;
       });
     };
 
     InfluxDatasource.prototype.listSeries = function() {
       return this.doInfluxRequest('list series').then(function(data) {
-        return _.map(data, function(series) {
-          return series.name;
-        });
+        if (!data || data.length === 0) {
+          return [];
+        }
+        // influxdb >= 1.8
+        if (data[0].columns) {
+          return _.map(data[0].points, function(point) {
+            return point[1];
+          });
+        }
+        else { // influxdb <= 1.7
+          return _.map(data, function(series) {
+            return series.name; // influxdb < 1.7
+          });
+        }
       });
     };
 
@@ -138,7 +153,7 @@ function (angular, _, kbn) {
         return $q.reject(err);
       }
 
-      return this.doInfluxRequest(query)
+      return this.doInfluxRequest(interpolated)
         .then(function (results) {
           return _.map(results[0].points, function (metric) {
             return {
@@ -191,57 +206,14 @@ function (angular, _, kbn) {
       return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(alias, groupByField, data) {
-      var output = [];
-
-      _.each(data, function(series) {
-        var seriesName;
-        var timeCol = series.columns.indexOf('time');
-        var valueCol = 1;
-        var groupByCol = -1;
-
-        if (groupByField) {
-          groupByCol = series.columns.indexOf(groupByField);
-        }
-
-        // find value column
-        _.each(series.columns, function(column, index) {
-          if (column !== 'time' && column !== 'sequence_number' && column !== groupByField) {
-            valueCol = index;
-          }
-        });
-
-        var groups = {};
-
-        if (groupByField) {
-          groups = _.groupBy(series.points, function (point) {
-            return point[groupByCol];
-          });
-        }
-        else {
-          groups[series.columns[valueCol]] = series.points;
-        }
-
-        _.each(groups, function(groupPoints, key) {
-          var datapoints = [];
-          for (var i = 0; i < groupPoints.length; i++) {
-            var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-            datapoints[i] = [metricValue, groupPoints[i][timeCol]];
-          }
-
-          seriesName = alias ? alias : key;
-
-          // if mulitple groups append key to alias
-          if (alias && groupByField) {
-            seriesName += key;
-          }
-
-          output.push({ target: seriesName, datapoints: datapoints });
-        });
-
+    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
+      var influxSeries = new InfluxSeries({
+        seriesList: seriesList,
+        alias: alias,
+        groupByField: groupByField
       });
 
-      return output;
+      return influxSeries.getTimeSeries();
     }
 
     function getTimeFilter(options) {

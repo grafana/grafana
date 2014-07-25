@@ -39,7 +39,6 @@ require.config({
     'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
-    'jquery.flot.byte':       '../vendor/jquery/jquery.flot.byte',
 
     modernizr:                '../vendor/modernizr-2.6.1',
     elasticjs:                '../vendor/elasticjs/elastic-angular-client',
@@ -81,7 +80,6 @@ require.config({
     //
     'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
-    'jquery.flot.byte':     ['jquery', 'jquery.flot'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.events':   ['jquery', 'jquery.flot'],
     'jquery.flot.selection':['jquery', 'jquery.flot'],

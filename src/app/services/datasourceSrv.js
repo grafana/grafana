@@ -16,6 +16,9 @@ function (angular, _, config) {
 
     this.init = function() {
       var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
+      if (!defaultDatasource) {
+        defaultDatasource = config.datasources[_.keys(config.datasources)[0]];
+      }
       this.default = this.datasourceFactory(defaultDatasource);
     };
 

@@ -1,38 +1,40 @@
-<span ng-show="panel.legend.show"
-      ng-class="{'pull-right': series.yaxis === 2, 'hidden-series': hiddenSeries[series.alias]}"
-      ng-repeat='series in legend'
-      class="histogram-legend">
-    <i  class='icon-minus pointer'
-        ng-style="{color: series.color}"
-        bs-popover="'colorPopup.html'"
-        >
-    </i>
-    <span class='small histogram-legend-item'>
+<section class="graph-legend" ng-class="{'graph-legend-table': panel.legend.alignAsTable}">
+
+  <div class="graph-legend-series"
+       ng-repeat='series in legend'
+       ng-class="{'pull-right': series.yaxis === 2, 'graph-legend-series-hidden': hiddenSeries[series.alias]}"
+       >
+    <div class="graph-legend-icon">
+      <i class='icon-minus pointer' ng-style="{color: series.color}" bs-popover="'colorPopup.html'">
+      </i>
+    </div>
+    <div class="graph-legend-alias small">
       <a ng-click="toggleSeries(series, $event)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
-        {{series.alias | urlDecode}}
+        {{series.alias}}
       </a>
-      <span ng-if="panel.legend.values">
-        <span ng-show="panel.legend.current">
-          &nbsp;&nbsp;Current:  {{series.current}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.min">
-          &nbsp;&nbsp;Min: {{series.min}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.max">
-          &nbsp;&nbsp;Max: {{series.max}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.total">
-          &nbsp;&nbsp;Total: {{series.total}}&nbsp;
-        </span>
-        <span ng-show="panel.legend.avg">
-          &nbsp;&nbsp;Avg: {{series.avg}}&nbsp;
-        </span>
-      </span>
-    </span>
-</span>
+    </div>
+    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.current">
+      Current: {{series.current}}
+    </div>
+    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.min">
+      Min: {{series.min}}
+    </div>
+    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.max">
+      Max: {{series.max}}
+    </div>
+    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.total">
+      Total: {{series.total}}
+    </div>
+    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.avg">
+      Avg: {{series.avg}}
+    </div>
+  </div>
+
+</section>
+
 
 <script type="text/ng-template" id="colorPopup.html">
-  <div class="histogram-legend-popover">
+  <div class="graph-legend-popover">
     <a class="close" ng-click="dismiss();" href="">×</a>
 
     <div class="editor-row small" style="padding-bottom: 0;">

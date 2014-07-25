@@ -20,17 +20,21 @@ function (_, kbn) {
     this.yaxis = this.info.yaxis;
 
     this.info.total = 0;
-    this.info.max = null;
+    this.info.max = -212312321312;
     this.info.min = 212312321312;
 
-    _.each(this.datapoints, function(valueArray) {
-      var currentTime = valueArray[1];
-      var currentValue = valueArray[0];
+    var ignoreNulls = fillStyle === 'connected';
+    var nullAsZero = fillStyle === 'null as zero';
+    var currentTime;
+    var currentValue;
+
+    for (var i = 0; i < this.datapoints.length; i++) {
+      currentValue = this.datapoints[i][0];
+      currentTime = this.datapoints[i][1];
+
       if (currentValue === null) {
-        if (fillStyle === 'connected') {
-          return;
-        }
-        if (fillStyle === 'null as zero') {
+        if (ignoreNulls) { continue; }
+        if (nullAsZero) {
           currentValue = 0;
         }
       }
@@ -48,7 +52,7 @@ function (_, kbn) {
       }
 
       result.push([currentTime * 1000, currentValue]);
-    }, this);
+    }
 
     if (result.length > 2) {
       this.info.timeStep = result[1][0] - result[0][0];
