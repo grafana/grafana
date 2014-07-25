@@ -33,7 +33,7 @@
     </div>
     <div class="editor-option">
       <label class="small">Type</label>
-      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events']"></select>
+      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events', 'es annotations']"></select>
     </div>
     <div class="editor-option">
       <label class="small">Icon color</label>
@@ -64,6 +64,31 @@
     <div class="editor-option">
       <label class="small">Graphite event tags</label>
       <input type="text" ng-model='currentAnnnotation.tags' placeholder=""></input>
+    </div>
+  </div>
+
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'es annotations'">
+    <div class="editor-option">
+      <label class="small">Elasticsearch index</label>
+      <input type="text" ng-model='currentAnnnotation.index' placeholder=""></input>
+    </div>
+    <div class="editor-option">
+      <label class="small">Elasticsearch query</label>
+      <input type="text" ng-model='currentAnnnotation.query' placeholder=""></input>
+    </div>
+  </div>
+  <div class="editor-row" ng-if="currentAnnnotation.type === 'es annotations'">
+    <div class="editor-option">
+      <label class="small">Elasticsearch timestamp field</label>
+      <input type="text" ng-model='currentAnnnotation.timestampField' placeholder="@timestamp"></input>
+    </div>
+    <div class="editor-option">
+      <label class="small">Elasticsearch message field</label>
+      <input type="text" ng-model='currentAnnnotation.messageField' placeholder="message"></input>
+    </div>
+    <div class="editor-option">
+      <label class="small">Elasticsearch max results</label>
+      <input type="text" ng-model='currentAnnnotation.maxResults' placeholder="100"></input>
     </div>
   </div>
 

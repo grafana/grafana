@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function(dashboard, datasourceSrv, elasticSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
     var annotationPanel;
     var list = [];
@@ -40,7 +40,9 @@ define([
       var graphiteMetrics = this.getGraphiteMetrics(filterSrv, rangeUnparsed);
       var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
 
-      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
+      var esAnnotations = this.getESAnnotations(rangeUnparsed);
+
+      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents).concat(esAnnotations))
         .then(function() {
           return list;
         });
@@ -80,6 +82,54 @@ define([
         enable: true
       });
     };
+
+    this.getESAnnotations = function(rangeUnparsed) {
+      var annotations = this.getAnnotationsByType('es annotations');
+      if (annotations.length === 0) {
+        return [];
+      }
+      var promises = _.map(annotations, function(annotation) {
+        if (!annotation.timestampField) {
+          annotation.timestampField = "@timestamp";
+        }
+        if (!annotation.messageField) {
+          annotation.messageField = "message";
+        }
+        if (!annotation.maxResults) {
+          annotation.maxResultts = 100;
+        }
+        var esQuery = {
+          index: annotation.index,
+          query: annotation.query,
+          range: rangeUnparsed,
+          timestampField: annotation.timestampField,
+          messageField: annotation.messageField,
+          maxResults: annotation.maxResults
+        };
+
+        var receiveFunc = _.partial(receiveESMetrics, annotation);
+        return elasticSrv.query(esQuery)
+        .then(receiveFunc)
+        .then(null, errorHandler);
+      });
+
+      return promises;
+    };
+
+    function receiveESMetrics(annotation, results) {
+      var availableResults = results['data']['hits']['total'];
+      if (availableResults > annotation.maxResults) {
+        alertSrv.set('Annotations','More available annotations ('+availableResults+') than displayed ('+annotation.maxResults+')','info');
+      }
+      results['data']['hits']['hits'].forEach (function(result) {
+        var source = result['_source'];
+        addAnnotation({
+          annotation: annotation,
+          time: moment(source[annotation.timestampField]).valueOf(),
+          description: source[annotation.messageField]
+        });
+      });
+    }
 
     this.getGraphiteMetrics = function(filterSrv, rangeUnparsed) {
       var annotations = this.getAnnotationsByType('graphite metric');
