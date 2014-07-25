@@ -1,0 +1,105 @@
+
+<div class="editor-row" style="margin-top: 10px;">
+
+  <div  ng-repeat="target in panel.targets"
+        class="grafana-target"
+        ng-class="{'grafana-target-hidden': target.hide}"
+        ng-controller="DalmatinerTargetCtrl"
+        ng-init="init()">
+
+    <div class="grafana-target-inner-wrapper">
+      <div class="grafana-target-inner">
+        <ul class="grafana-target-controls">
+          <li class="dropdown">
+            <a class="pointer dropdown-toggle"
+               data-toggle="dropdown"
+               tabindex="1">
+              <i class="icon-cog"></i>
+            </a>
+            <ul class="dropdown-menu pull-right" role="menu">
+              <li role="menuitem">
+                <a tabindex="1" ng-click="duplicate()">Duplicate</a>
+                <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Show Query</a>
+                <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Hide Query</a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
+              <i class="icon-remove"></i>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="grafana-target-controls-left">
+          <li>
+            <a class="grafana-target-segment"
+               ng-click="target.hide = !target.hide; get_data();"
+               role="menuitem">
+              <i class="icon-eye-open"></i>
+            </a>
+          </li>
+        </ul>
+
+        <input type="text"
+               class="grafana-target-text-input span10"
+               ng-model="target.query"
+               placeholder="select ..."
+               focus-me="target.rawQuery"
+               spellcheck='false'
+               data-min-length=0 data-items=100
+               ng-model-onblur
+               ng-blur="get_data()"
+               ng-show="target.rawQuery">
+
+        <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
+          <li class="dropdown">
+            <span dalmatinerdb-mget-editor class="grafana-target-segment grafana-target-mget"></span>
+          </li>
+          <li>
+            <input type="text"
+                   class="input-large grafana-target-segment-input"
+                   ng-model="target.bucket"
+                   spellcheck='false'
+                   bs-typeahead="listBuckets"
+                   placeholder="bucket name"
+                   data-min-length=0 data-items=100
+                   ng-blur="seriesBlur()">
+          </li>
+
+          <li>
+            <input type="text"
+                   class="input-large grafana-target-segment-input"
+                   ng-model="target.metric"
+                   spellcheck='false'
+                   bs-typeahead="listMetrics"
+                   placeholder="metric name"
+                   data-min-length=0 data-items=100
+                   ng-blur="seriesBlur()">
+          </li>
+
+          <li  class="dropdown" ng-repeat="aggr in target.aggrs">
+            <span dalmatinerdb-func-editor class="grafana-target-segment grafana-target-function"></span>
+          </li>
+          <li class="dropdown" dalmatiner-add-func></li>
+
+          <li class="grafana-target-segment">
+            as
+          </li>
+
+          <li>
+            <input type="text"
+                   class="input-medium grafana-target-segment-input"
+                   ng-model="target.alias"
+                   spellcheck='false'
+                   placeholder="alias"
+                   ng-blur="get_data()">
+          </li>
+        </ul>
+
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+
+</div>

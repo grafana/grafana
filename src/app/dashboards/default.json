@@ -4,7 +4,7 @@
     "filter": {
       "list": [],
       "time": {
-        "from": "now-6h",
+        "from": "now-5m",
         "to": "now"
       }
     }
@@ -73,14 +73,13 @@
           },
           "targets": [
             {
-              "target": "randomWalk('random walk')"
-            },
-            {
-              "target": "randomWalk('random walk2')"
-            },
-            {
-              "target": "randomWalk('random walk3')"
+              "query": "SELECT tachyon.messages.send BUCKET tachyon LAST 5m",
+              "aggrs": [
+              ],
+              "bucket": "tachyon",
+              "metric": "tachyon.messages.send"
             }
+
           ],
           "aliasColors": {},
           "aliasYAxis": {},
