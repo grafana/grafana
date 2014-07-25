@@ -5,21 +5,23 @@
     <div ng-repeat="filter in filter.templateParameters" class="small filter-panel-filter">
       <div>
         <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
-        <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true"></i>
+        <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true; filter.picking=false"></i>
       </div>
 
       <div ng-hide="filter.editing" style="margin-right: 45px;">
         <ul class="unstyled">
           <li ng-if="filter.name" class="dropdown">
-            {{filter.name}} :
-            <a class="dropdown-toggle" data-toggle="dropdown">
-              {{filter.current.text}}
-            </a>
-              <ul class="dropdown-menu">
-                <li ng-repeat="option in filter.options">
-                  <a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
-                </li>
-              </ul>
+            {{filter.name}}:
+            <a ng-hide="filter.picking" ng-click="filterPick(filter, $event)">{{filter.current.text}}</a>
+            <span ng-show="filter.picking">
+              <input type="text" class="filter-small" autocomplete="off" spellcheck="false" data-items="30" min-length="0" ng-model="selectedFilter" bs-typeahead="textFilter($index)" focus-me="filter.picking" ng-keypress="$event.keyCode == 13 ? filterApply(filter, selectedFilter) : null" />
+              <button type="button" class="btn btn-success btn-micro" ng-click="filterApply(filter, selectedFilter);selectedFilter=''">
+                <span class="icon-play"></span>
+              </button>
+              <button type="button" class="btn btn-info btn-micro" ng-click="filterPick(filter);selectedFilter=''">
+                <span class="icon-remove"></span>
+              </button>
+            </span>
           </li>
         </ul>
       </div>
