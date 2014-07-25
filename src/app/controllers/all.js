@@ -12,4 +12,5 @@ define([
   './playlistCtrl',
   './inspectCtrl',
   './opentsdbTargetCtrl',
+  './kairosdbTargetCtrl',
 ], function () {});
