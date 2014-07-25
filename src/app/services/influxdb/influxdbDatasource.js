@@ -138,10 +138,21 @@ function (angular, _, kbn, InfluxSeries) {
     };
 
     InfluxDatasource.prototype.listSeries = function() {
-      return this.doInfluxRequest('select * from /.*/ limit 1').then(function(data) {
-        return _.map(data, function(series) {
-          return series.name;
-        });
+      return this.doInfluxRequest('list series').then(function(data) {
+        if (!data || data.length === 0) {
+          return [];
+        }
+        // influxdb >= 1.8
+        if (data[0].columns) {
+          return _.map(data[0].points, function(point) {
+            return point[1];
+          });
+        }
+        else { // influxdb <= 1.7
+          return _.map(data, function(series) {
+            return series.name; // influxdb < 1.7
+          });
+        }
       });
     };
 

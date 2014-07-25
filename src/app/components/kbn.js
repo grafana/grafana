@@ -396,6 +396,53 @@ function($, _, moment) {
     return (size.toFixed(decimals) + ext);
   };
 
+  kbn.bpsFormat = function(size, decimals) {
+    var ext, steps = 0;
+
+    if(_.isUndefined(decimals)) {
+      decimals = 2;
+    } else if (decimals === 0) {
+      decimals = undefined;
+    }
+
+    while (Math.abs(size) >= 1000) {
+      steps++;
+      size /= 1000;
+    }
+
+    switch (steps) {
+    case 0:
+      ext = " bps";
+      break;
+    case 1:
+      ext = " Kbps";
+      break;
+    case 2:
+      ext = " Mbps";
+      break;
+    case 3:
+      ext = " Gbps";
+      break;
+    case 4:
+      ext = " Tbps";
+      break;
+    case 5:
+      ext = " Pbps";
+      break;
+    case 6:
+      ext = " Ebps";
+      break;
+    case 7:
+      ext = " Zbps";
+      break;
+    case 8:
+      ext = " Ybps";
+      break;
+    }
+
+    return (size.toFixed(decimals) + ext);
+  };
+
   kbn.shortFormat = function(size, decimals) {
     var ext, steps = 0;
 
@@ -456,6 +503,10 @@ function($, _, moment) {
     case 'bits':
       return function(val) {
         return kbn.bitFormat(val, decimals);
+      };
+    case 'bps':
+      return function(val) {
+        return kbn.bpsFormat(val, decimals);
       };
     case 's':
       return function(val) {
