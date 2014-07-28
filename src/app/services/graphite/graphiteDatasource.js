@@ -225,7 +225,7 @@ function (angular, _, $, config, kbn, moment) {
             }
           }, this);
         }
-        else if (value !== null) {
+        else if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
       }, this);
