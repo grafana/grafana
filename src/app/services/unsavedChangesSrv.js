@@ -10,7 +10,7 @@ function(angular, _, config) {
     return;
   }
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
 

@@ -7,7 +7,7 @@ define([
 function (angular, $, config, _) {
   "use strict";
 
-  var module = angular.module('kibana.routes');
+  var module = angular.module('grafana.routes');
 
   module.config(function($routeProvider) {
     $routeProvider

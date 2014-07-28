@@ -6,7 +6,7 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('RowCtrl', function($scope, $rootScope, $timeout) {
     var _d = {
@@ -136,12 +136,12 @@ function (angular, app, _) {
      *
      * [partintro]
      * --
-     * *Kibana* dashboards are made up of blocks called +panels+. Panels are organized into rows
+     * *grafana* dashboards are made up of blocks called +panels+. Panels are organized into rows
      * and can serve many purposes, though most are designed to provide the results of a query or
      * multiple queries as a visualization. Other panels may show collections of documents or
      * allow you to insert instructions for your users.
      *
-     * Panels can be configured easily via the Kibana web interface. For more advanced usage, such
+     * Panels can be configured easily via the grafana web interface. For more advanced usage, such
      * as templated or scripted dashboards, documentation of panel properties is available in this
      * section. You may find settings here which are not exposed via the web interface.
      *

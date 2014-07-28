@@ -9,7 +9,7 @@ define([
 function (angular, $, config, _, kbn, moment) {
   "use strict";
 
-  var module = angular.module('kibana.routes');
+  var module = angular.module('grafana.routes');
 
   module.config(function($routeProvider) {
     $routeProvider

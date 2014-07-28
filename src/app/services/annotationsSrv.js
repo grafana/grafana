@@ -5,7 +5,7 @@ define([
 ], function (angular, _, moment) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;

@@ -6,7 +6,7 @@
   describe('Graph panel controller', function() {
     var _graphPanelCtrl;
 
-    beforeEach(module('kibana.panels.graphite'));
+    beforeEach(module('grafana.panels.graphite'));
     beforeEach(module(function($provide){
       $provide.value('filterSrv',{});
     }));

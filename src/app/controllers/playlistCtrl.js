@@ -6,7 +6,7 @@ define([
 function (angular, _, config) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('PlaylistCtrl', function($scope, playlistSrv) {
 

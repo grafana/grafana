@@ -9,7 +9,7 @@ define([
     var _filterSrv;
     var _dashboard;
 
-    beforeEach(module('kibana.services'));
+    beforeEach(module('grafana.services'));
     beforeEach(module(function(){
       _dashboard = dashboardMock.create();
     }));

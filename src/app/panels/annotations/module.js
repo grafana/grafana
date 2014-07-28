@@ -12,7 +12,7 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.panels.annotations', []);
+  var module = angular.module('grafana.panels.annotations', []);
   app.useModule(module);
 
   module.controller('AnnotationsCtrl', function($scope, datasourceSrv, $rootScope) {

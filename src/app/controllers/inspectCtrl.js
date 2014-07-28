@@ -4,7 +4,7 @@ define([
 function (angular) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
@@ -47,7 +47,7 @@ function (angular) {
   });
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('iframeContent', function($parse) {
       return {
         restrict: 'A',

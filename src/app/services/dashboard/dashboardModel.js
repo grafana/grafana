@@ -7,7 +7,7 @@ define([
 function (angular, $, kbn, _) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('dashboard', function(timer, $rootScope, $timeout) {
 

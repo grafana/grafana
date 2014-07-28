@@ -6,7 +6,7 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
 

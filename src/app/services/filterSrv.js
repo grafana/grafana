@@ -6,7 +6,7 @@ define([
 ], function (angular, _, config, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.factory('filterSrv', function($rootScope, $timeout, $routeParams) {
     // defaults

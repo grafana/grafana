@@ -113,10 +113,10 @@ require([
 ], function(angular) {
   'use strict';
 
-  angular.module('kibana', []);
-  angular.module('kibana.services', ['$strap.directives']);
-  angular.module('kibana.panels', []);
-  angular.module('kibana.filters', []);
+  angular.module('grafana', []);
+  angular.module('grafana.services', ['$strap.directives']);
+  angular.module('grafana.panels', []);
+  angular.module('grafana.filters', []);
 
   require([
     'specs/lexer-specs',

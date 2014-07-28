@@ -6,7 +6,7 @@ define([
 function (angular, config, _) {
   "use strict";
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
 

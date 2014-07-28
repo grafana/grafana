@@ -32,7 +32,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
   'use strict';
 
-  var module = angular.module('kibana.panels.graph', []);
+  var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
   module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {

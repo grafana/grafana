@@ -9,7 +9,7 @@ function (angular, app, _, $, gfunc) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('graphiteAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
                             ' class="grafana-target-segment-input input-medium grafana-target-segment-input"' +

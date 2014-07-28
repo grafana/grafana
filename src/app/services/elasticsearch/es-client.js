@@ -5,7 +5,7 @@ define([
 function(angular, config) {
   "use strict";
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('elastic', function($http) {
 

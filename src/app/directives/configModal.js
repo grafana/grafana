@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('configModal', function($modal, $q, $timeout) {
       return {
         restrict: 'A',

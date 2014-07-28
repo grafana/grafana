@@ -6,7 +6,7 @@ function (angular) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('spectrumPicker', function() {
       return {
         restrict: 'E',

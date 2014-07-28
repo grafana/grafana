@@ -6,7 +6,7 @@ function (angular, kbn) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('tip', function($compile) {
       return {
         restrict: 'E',

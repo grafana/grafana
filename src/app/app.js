@@ -18,7 +18,7 @@ function (angular, $, _, appLevelRequire, config) {
 
   "use strict";
 
-  var app = angular.module('kibana', []),
+  var app = angular.module('grafana', []),
     // we will keep a reference to each module defined before boot, so that we can
     // go back and allow it to define new features later. Once we boot, this will be false
     pre_boot_modules = [],
@@ -64,14 +64,14 @@ function (angular, $, _, appLevelRequire, config) {
     '$strap.directives',
     'ngSanitize',
     'ngDragDrop',
-    'kibana',
+    'grafana',
     'pasvaz.bindonce'
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
-    var module_name = 'kibana.'+type;
+    var module_name = 'grafana.'+type;
     // create the module
     app.useModule(angular.module(module_name, []));
     // push it into the apps dependencies

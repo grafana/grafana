@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('influxdbFuncEditor', function($compile) {
 
       var funcSpanTemplate = '<a gf-dropdown="functionMenu" class="dropdown-toggle" ' +

@@ -7,7 +7,7 @@ define([
 function (angular, _, moment) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, elastic) {
 

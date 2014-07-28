@@ -6,7 +6,7 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('playlistSrv', function($location, $rootScope) {
     var timerInstance;

@@ -16,7 +16,7 @@
         <span class="small"><strong>{{pulldown.type}}:</strong></span>
       </div>
       <div class="submenu-panel-wrapper">
-        <kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel>
+        <grafana-simple-panel type="pulldown.type" ng-cloak></grafana-simple-panel>
       </div>
     </div>
     <div class="clearfix"></div>
@@ -27,7 +27,7 @@
     <div>
       <div class="grafana-container container">
         <!-- Rows -->
-        <div class="kibana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" ng-style="row_style(row)">
+        <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" ng-style="row_style(row)">
           <div class="row-control">
             <div class="grafana-row" style="padding:0px;margin:0px;position:relative;">
               <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
@@ -96,7 +96,7 @@
               <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.hide" class="panel nospace" ng-style="{'width':!panel.span?'100%':(panel.span/1.2)*10+'%'}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}" ng-class="{'dragInProgress':dashboard.panelDragging}">
                 <!-- Content Panel -->
                 <div style="position:relative">
-                  <kibana-panel type="panel.type" ng-cloak></kibana-panel>
+                  <grafana-panel type="panel.type" ng-cloak></grafana-panel>
                 </div>
               </div>
 

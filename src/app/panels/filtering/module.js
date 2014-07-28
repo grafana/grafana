@@ -11,7 +11,7 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.panels.filtering', []);
+  var module = angular.module('grafana.panels.filtering', []);
   app.useModule(module);
 
   module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout, $q) {

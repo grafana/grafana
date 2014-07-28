@@ -22,7 +22,7 @@ define([
 function (angular, app, _, moment, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.panels.timepicker', []);
+  var module = angular.module('grafana.panels.timepicker', []);
   app.useModule(module);
 
   module.controller('timepicker', function($scope, $modal, $q) {

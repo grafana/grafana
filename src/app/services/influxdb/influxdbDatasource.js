@@ -7,7 +7,7 @@ define([
 function (angular, _, kbn, InfluxSeries) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.factory('InfluxDatasource', function($q, $http) {
 

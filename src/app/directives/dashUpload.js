@@ -4,7 +4,7 @@ define([
 function (angular) {
   'use strict';
 
-  var module = angular.module('kibana.directives');
+  var module = angular.module('grafana.directives');
 
   module.directive('dashUpload', function(timer, alertSrv) {
     return {

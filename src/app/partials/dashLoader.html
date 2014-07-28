@@ -16,7 +16,7 @@
   </a>
 </li>
 
-<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable"><kibana-simple-panel type="pulldown.type" ng-cloak></kibana-simple-panel></li>
+<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable"><grafana-simple-panel type="pulldown.type" ng-cloak></grafana-simple-panel></li>
 
 <li class="dropdown grafana-menu-save" ng-show="showDropdown('save')">
   <a href="#"  bs-tooltip="'Save'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="openSaveDropdown()">

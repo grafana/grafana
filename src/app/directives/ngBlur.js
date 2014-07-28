@@ -5,7 +5,7 @@ function (angular) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('ngBlur', ['$parse', function($parse) {
       return function(scope, element, attr) {
         var fn = $parse(attr['ngBlur']);

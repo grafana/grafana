@@ -8,7 +8,7 @@ define([
 function (angular, _, config, gfunc, Parser) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('GraphiteTargetCtrl', function($scope) {
 
