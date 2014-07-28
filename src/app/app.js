@@ -6,15 +6,15 @@ define([
   'jquery',
   'underscore',
   'require',
-  'elasticjs',
+  'config',
   'bootstrap',
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce'
+  'bindonce',
 ],
-function (angular, $, _, appLevelRequire) {
+function (angular, $, _, appLevelRequire, config) {
 
   "use strict";
 
@@ -48,38 +48,9 @@ function (angular, $, _, appLevelRequire) {
     return module;
   };
 
-  app.safeApply = function ($scope, fn) {
-    switch($scope.$$phase) {
-    case '$apply':
-      // $digest hasn't started, we should be good
-      $scope.$eval(fn);
-      break;
-    case '$digest':
-      // waiting to $apply the changes
-      setTimeout(function () { app.safeApply($scope, fn); }, 10);
-      break;
-    default:
-      // clear to begin an $apply $$phase
-      $scope.$apply(fn);
-      break;
-    }
-  };
-
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
-    $routeProvider
-      .when('/dashboard', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId/:params', {
-        templateUrl: 'app/partials/dashboard.html'
-      })
-      .otherwise({
-        redirectTo: 'dashboard'
-      });
+    $routeProvider.otherwise({ redirectTo: config.default_route });
 
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
@@ -90,7 +61,6 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var apps_deps = [
-    'elasticjs.service',
     '$strap.directives',
     'ngSanitize',
     'ngDragDrop',
@@ -98,7 +68,7 @@ function (angular, $, _, appLevelRequire) {
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'services.dashboard', 'filters'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
     var module_name = 'kibana.'+type;
@@ -114,13 +84,13 @@ function (angular, $, _, appLevelRequire) {
     'directives/all',
     'filters/all',
     'components/partials',
+    'routes/all',
   ], function () {
 
     // bootstrap the app
     angular
       .element(document)
       .ready(function() {
-        $('body').attr('ng-controller', 'DashCtrl');
         angular.bootstrap(document, apps_deps)
           .invoke(['$rootScope', function ($rootScope) {
             _.each(pre_boot_modules, function (module) {

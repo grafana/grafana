@@ -7,20 +7,14 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.service('annotationsSrv', function(dashboard, datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
     var annotationPanel;
     var list = [];
+    var timezone;
 
     this.init = function() {
       $rootScope.$on('refresh', this.clearCache);
-      $rootScope.$on('dashboard-loaded', this.dashboardLoaded);
-
-      this.dashboardLoaded();
-    };
-
-    this.dashboardLoaded = function () {
-      annotationPanel = _.findWhere(dashboard.current.pulldowns, { type: 'annotations' });
     };
 
     this.clearCache = function() {
@@ -28,7 +22,8 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed) {
+    this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
+      annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
       if (!annotationPanel.enable) {
         return $q.when(null);
       }
@@ -37,10 +32,17 @@ define([
         return promiseCached;
       }
 
-      var graphiteMetrics = this.getGraphiteMetrics(filterSrv, rangeUnparsed);
-      var graphiteEvents = this.getGraphiteEvents(rangeUnparsed);
+      timezone = dashboard.timezone;
+      var annotations = _.where(annotationPanel.annotations, { enable: true });
 
-      promiseCached = $q.all(graphiteMetrics.concat(graphiteEvents))
+      var promises  = _.map(annotations, function(annotation) {
+        var datasource = datasourceSrv.get(annotation.datasource);
+        return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
+          .then(this.receiveAnnotationResults)
+          .then(null, errorHandler);
+      }, this);
+
+      promiseCached = $q.all(promises)
         .then(function() {
           return list;
         });
@@ -48,61 +50,10 @@ define([
       return promiseCached;
     };
 
-    this.getGraphiteEvents = function(rangeUnparsed) {
-      var annotations = this.getAnnotationsByType('graphite events');
-      if (annotations.length === 0) {
-        return [];
+    this.receiveAnnotationResults = function(results) {
+      for (var i = 0; i < results.length; i++) {
+        addAnnotation(results[i]);
       }
-
-      var promises = _.map(annotations, function(annotation) {
-
-        return datasourceSrv.default.events({ range: rangeUnparsed, tags: annotation.tags })
-          .then(function(results) {
-            _.each(results.data, function (event) {
-              addAnnotation({
-                annotation: annotation,
-                time: event.when * 1000,
-                description: event.what,
-                tags: event.tags,
-                data: event.data
-              });
-            });
-          })
-          .then(null, errorHandler);
-      });
-
-      return promises;
-    };
-
-    this.getAnnotationsByType = function(type) {
-      return _.where(annotationPanel.annotations, {
-        type: type,
-        enable: true
-      });
-    };
-
-    this.getGraphiteMetrics = function(filterSrv, rangeUnparsed) {
-      var annotations = this.getAnnotationsByType('graphite metric');
-      if (annotations.length === 0) {
-        return [];
-      }
-
-      var promises = _.map(annotations, function(annotation) {
-        var graphiteQuery = {
-          range: rangeUnparsed,
-          targets: [{ target: annotation.target }],
-          format: 'json',
-          maxDataPoints: 100
-        };
-
-        var receiveFunc = _.partial(receiveGraphiteMetrics, annotation);
-
-        return datasourceSrv.default.query(filterSrv, graphiteQuery)
-          .then(receiveFunc)
-          .then(null, errorHandler);
-      });
-
-      return promises;
     };
 
     function errorHandler(err) {
@@ -110,33 +61,23 @@ define([
       alertSrv.set('Annotations','Could not fetch annotations','error');
     }
 
-    function receiveGraphiteMetrics(annotation, results) {
-      for (var i = 0; i < results.data.length; i++) {
-        var target = results.data[i];
-
-        for (var y = 0; y < target.datapoints.length; y++) {
-          var datapoint = target.datapoints[y];
-
-          if (datapoint[0]) {
-            addAnnotation({
-              annotation: annotation,
-              time: datapoint[1] * 1000,
-              description: target.target
-            });
-          }
-        }
-      }
-    }
-
     function addAnnotation(options) {
-      var tooltip = "<small><b>" + options.description + "</b><br/>";
+      var tooltip = "<small><b>" + options.title + "</b><br/>";
       if (options.tags) {
         tooltip += (options.tags || '') + '<br/>';
       }
-      tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
-      if (options.data) {
-        tooltip += options.data.replace(/\n/g, '<br/>');
+
+      if (timezone === 'browser') {
+        tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
       }
+      else {
+        tooltip += '<i>' + moment.utc(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
+      }
+
+      if (options.text) {
+        tooltip += options.text.replace(/\n/g, '<br/>');
+      }
+
       tooltip += "</small>";
 
       list.push({

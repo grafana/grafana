@@ -139,4 +139,61 @@ define([
 
   });
 
+  describe("when creating annotations from influxdb response", function() {
+    describe('given column mapping for all columns', function() {
+      var series = new InfluxSeries({
+        seriesList: [
+          {
+            columns: ['time', 'text', 'sequence_number', 'title', 'tags'],
+            name: 'events1',
+            points: [[1402596000, 'some text', 1, 'Hello', 'B'], [1402596001, 'asd', 2, 'Hello2', 'B']]
+          }
+        ],
+        annotation: {
+          query: 'select',
+          titleColumn: 'title',
+          tagsColumn: 'tags',
+          textColumn: 'text',
+        }
+      });
+
+      var result = series.getAnnotations();
+
+      it(' should generate 2 annnotations ', function() {
+        expect(result.length).to.be(2);
+        expect(result[0].annotation.query).to.be('select');
+        expect(result[0].title).to.be('Hello');
+        expect(result[0].time).to.be(1402596000000);
+        expect(result[0].tags).to.be('B');
+        expect(result[0].text).to.be('some text');
+      });
+
+    });
+
+    describe('given no column mapping', function() {
+      var series = new InfluxSeries({
+        seriesList: [
+          {
+            columns: ['time', 'text', 'sequence_number'],
+            name: 'events1',
+            points: [[1402596000, 'some text', 1]]
+          }
+        ],
+        annotation: { query: 'select' }
+      });
+
+      var result = series.getAnnotations();
+
+      it('should generate 1 annnotation', function() {
+        expect(result.length).to.be(1);
+        expect(result[0].title).to.be('some text');
+        expect(result[0].time).to.be(1402596000000);
+        expect(result[0].tags).to.be(undefined);
+        expect(result[0].text).to.be(undefined);
+      });
+
+    });
+
+  });
+
 });

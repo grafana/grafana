@@ -1,4 +1,5 @@
 define([
+  './grafanaCtrl',
   './dash',
   './dashLoader',
   './row',

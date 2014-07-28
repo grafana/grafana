@@ -44,7 +44,6 @@ require.config({
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
 
     modernizr:                '../vendor/modernizr-2.6.1',
-    elasticjs:                '../vendor/elasticjs/elastic-angular-client',
   },
 
   shim: {
@@ -97,8 +96,6 @@ require.config({
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
-
-    elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
   }
 });
 
@@ -107,7 +104,6 @@ require([
   'angularMocks',
   'jquery',
   'underscore',
-  'elasticjs',
   'bootstrap',
   'angular-sanitize',
   'angular-strap',

@@ -21,6 +21,9 @@ function (angular, _, kbn, InfluxSeries) {
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
+
+      this.supportAnnotations = true;
+      this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
     }
 
     InfluxDatasource.prototype.query = function(filterSrv, options) {
@@ -114,6 +117,15 @@ function (angular, _, kbn, InfluxSeries) {
         return { data: _.flatten(results) };
       });
 
+    };
+
+    InfluxDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+      var timeFilter = getTimeFilter({ range: rangeUnparsed });
+      var query = _.template(annotation.query, { timeFilter: timeFilter }, this.templateSettings);
+
+      return this.doInfluxRequest(query).then(function(results) {
+        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+      });
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {

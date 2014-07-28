@@ -23,7 +23,6 @@ define([
   'config',
   'underscore',
   'services/all',
-  'services/dashboard/all'
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -31,50 +30,40 @@ function (angular, $, config, _) {
   var module = angular.module('kibana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, $timeout, ejsResource, dashboard, filterSrv, dashboardKeybindings,
-    alertSrv, panelMove, keyboardManager, grafanaVersion) {
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, timer) {
 
-    $scope.requiredElasticSearchVersion = ">=0.90.3";
-
-    $scope.editor = {
-      index: 0
-    };
-
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-
-    // For moving stuff around the dashboard.
-    $scope.panelMoveDrop = panelMove.onDrop;
-    $scope.panelMoveStart = panelMove.onStart;
-    $scope.panelMoveStop = panelMove.onStop;
-    $scope.panelMoveOver = panelMove.onOver;
-    $scope.panelMoveOut = panelMove.onOut;
+    $scope.editor = { index: 0 };
 
     $scope.init = function() {
-      $scope.config = config;
-
-      // Make stuff, including underscore.js available to views
-      $scope._ = _;
-      $scope.dashboard = dashboard;
-      $scope.dashAlerts = alertSrv;
-
-      $scope.filter = filterSrv;
-      $scope.filter.init(dashboard.current);
-
-      $rootScope.$on("dashboard-loaded", function(event, dashboard) {
-        $scope.filter.init(dashboard);
-      });
-
-      // Clear existing alerts
-      alertSrv.clearAll();
-
-      $scope.reset_row();
-
-      $scope.ejs = ejsResource(config.elasticsearch, config.elasticsearchBasicAuth);
-
-      $scope.bindKeyboardShortcuts();
+      $scope.availablePanels = config.panels;
+      $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
     };
 
-    $scope.bindKeyboardShortcuts = dashboardKeybindings.shortcuts;
+    $scope.setupDashboard = function(event, dashboardData) {
+      timer.cancel_all();
+
+      $rootScope.fullscreen = false;
+
+      $scope.dashboard = dashboard.create(dashboardData);
+      $scope.grafana.style = $scope.dashboard.style;
+
+      $scope.filter = filterSrv;
+      $scope.filter.init($scope.dashboard);
+
+      var panelMove = panelMoveSrv.create($scope.dashboard);
+
+      $scope.panelMoveDrop = panelMove.onDrop;
+      $scope.panelMoveStart = panelMove.onStart;
+      $scope.panelMoveStop = panelMove.onStop;
+      $scope.panelMoveOver = panelMove.onOver;
+      $scope.panelMoveOut = panelMove.onOut;
+
+      window.document.title = 'Grafana - ' + $scope.dashboard.title;
+
+      dashboardKeybindings.shortcuts($scope);
+
+      $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
+    };
 
     $scope.isPanel = function(obj) {
       if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
@@ -91,7 +80,7 @@ function (angular, $, config, _) {
     $scope.add_row_default = function() {
       $scope.reset_row();
       $scope.row.title = 'New row';
-      $scope.add_row(dashboard.current, $scope.row);
+      $scope.add_row($scope.dashboard, $scope.row);
     };
 
     $scope.reset_row = function() {
@@ -129,12 +118,6 @@ function (angular, $, config, _) {
         $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
       }
       return $scope.editorTabs;
-    };
-
-    // This is whoafully incomplete, but will do for now
-    $scope.parse_error = function(data) {
-      var _error = data.match("nested: (.*?);");
-      return _.isNull(_error) ? data : _error[1];
     };
 
     $scope.colors = [

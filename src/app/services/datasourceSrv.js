@@ -12,13 +12,20 @@ function (angular, _, config) {
   var module = angular.module('kibana.services');
 
   module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, OpenTSDBDatasource) {
+    var datasources = {};
 
     this.init = function() {
-      var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
-      if (!defaultDatasource) {
-        defaultDatasource = config.datasources[_.keys(config.datasources)[0]];
+      _.each(config.datasources, function(value, key) {
+        datasources[key] = this.datasourceFactory(value);
+        if (value.default) {
+          this.default = datasources[key];
+        }
+      }, this);
+
+      if (!this.default) {
+        this.default = datasources[_.keys(datasources)[0]];
+        this.default.default = true;
       }
-      this.default = this.datasourceFactory(defaultDatasource);
     };
 
     this.datasourceFactory = function(ds) {
@@ -34,13 +41,22 @@ function (angular, _, config) {
 
     this.get = function(name) {
       if (!name) { return this.default; }
+      if (datasources[name]) { return datasources[name]; }
 
-      var ds = config.datasources[name];
-      if (!ds) {
-        return null;
-      }
+      throw "Unable to find datasource: " + name;
+    };
 
-      return this.datasourceFactory(ds);
+    this.getAnnotationSources = function() {
+      var results = [];
+      _.each(datasources, function(value, key) {
+        if (value.supportAnnotations) {
+          results.push({
+            name: key,
+            editorSrc: value.annotationEditorSrc,
+          });
+        }
+      });
+      return results;
     };
 
     this.listOptions = function() {

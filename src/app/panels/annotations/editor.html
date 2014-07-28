@@ -1,4 +1,5 @@
-<div bindonce class="modal-body">
+<div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
+	<div class="modal-body">
   <div class="pull-right editor-title">Annotations</div>
 
   <div class="editor-row">
@@ -29,42 +30,31 @@
 
     <div class="editor-option">
       <label class="small">Name</label>
-      <input type="text" class="input-medium" ng-model='currentAnnnotation.name' placeholder="name"></input>
+      <input type="text" class="input-medium" ng-model='currentAnnotation.name' placeholder="name"></input>
     </div>
     <div class="editor-option">
-      <label class="small">Type</label>
-      <select ng-model="currentAnnnotation.type" ng-options="f for f in ['graphite metric', 'graphite events']"></select>
+      <label class="small">Datasource</label>
+      <select ng-model="currentDatasource" ng-options="f.name for f in datasources" ng-change="setDatasource()"></select>
     </div>
     <div class="editor-option">
       <label class="small">Icon color</label>
-       <spectrum-picker ng-model="currentAnnnotation.iconColor"></spectrum-picker>
+       <spectrum-picker ng-model="currentAnnotation.iconColor"></spectrum-picker>
     </div>
      <div class="editor-option">
       <label class="small">Icon size</label>
-      <select class="input-mini" ng-model="currentAnnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
+      <select class="input-mini" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
     </div>
     <div class="editor-option">
       <label class="small">Grid line</label>
-      <input type="checkbox" ng-model="currentAnnnotation.showLine" ng-checked="currentAnnnotation.showLine">
+      <input type="checkbox" ng-model="currentAnnotation.showLine" ng-checked="currentAnnotation.showLine">
     </div>
     <div class="editor-option">
       <label class="small">Line color</label>
-       <spectrum-picker ng-model="currentAnnnotation.lineColor"></spectrum-picker>
+       <spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
     </div>
   </div>
 
-  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite metric'">
-    <div class="editor-option">
-      <label class="small">Graphite target expression</label>
-      <input type="text" class="span10" ng-model='currentAnnnotation.target' placeholder=""></input>
-    </div>
-  </div>
-
-  <div class="editor-row" ng-if="currentAnnnotation.type === 'graphite events'">
-    <div class="editor-option">
-      <label class="small">Graphite event tags</label>
-      <input type="text" ng-model='currentAnnnotation.tags' placeholder=""></input>
-    </div>
+  <div ng-include src="currentDatasource.editorSrc">
   </div>
 
 </div>
@@ -73,4 +63,5 @@
   <button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add annotation</button>
   <button ng-show="!currentIsNew" type="button" class="btn btn-success" ng-click="update()">Update</button>
   <button type="button" class="btn btn-danger" ng-click="close_edit();dismiss();dashboard.refresh();">Close</button>
+</div>
 </div>

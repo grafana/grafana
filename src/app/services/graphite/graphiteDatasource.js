@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('kibana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
+  module.factory('GraphiteDatasource', function($q, $http) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -20,6 +20,8 @@ function (angular, _, $, config, kbn, moment) {
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
       this.render_method = datasource.render_method || 'POST';
+      this.supportAnnotations = true;
+      this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
     }
 
     GraphiteDatasource.prototype.query = function(filterSrv, options) {
@@ -52,6 +54,57 @@ function (angular, _, $, config, kbn, moment) {
       }
       catch(err) {
         return $q.reject(err);
+      }
+    };
+
+    GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+      // Graphite metric as annotation
+      if (annotation.target) {
+        var graphiteQuery = {
+          range: rangeUnparsed,
+          targets: [{ target: annotation.target }],
+          format: 'json',
+          maxDataPoints: 100
+        };
+
+        return this.query(filterSrv, graphiteQuery)
+          .then(function(result) {
+            var list = [];
+
+            for (var i = 0; i < result.data.length; i++) {
+              var target = result.data[i];
+
+              for (var y = 0; y < target.datapoints.length; y++) {
+                var datapoint = target.datapoints[y];
+                if (!datapoint[0]) { continue; }
+
+                list.push({
+                  annotation: annotation,
+                  time: datapoint[1] * 1000,
+                  title: target.target
+                });
+              }
+            }
+
+            return list;
+          });
+      }
+      // Graphite event as annotation
+      else if (annotation.tags) {
+        return this.events({ range: rangeUnparsed, tags: annotation.tags })
+          .then(function(results) {
+            var list = [];
+            for (var i = 0; i < results.data; i++) {
+              list.push({
+                annotation: annotation,
+                time: event.when * 1000,
+                title: event.what,
+                tags: event.tags,
+                text: event.data
+              });
+            }
+            return list;
+          });
       }
     };
 

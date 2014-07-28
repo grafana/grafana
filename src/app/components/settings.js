@@ -25,7 +25,6 @@ function (_, crypto) {
       default_route                 : '/dashboard/file/default.json',
       grafana_index                 : 'grafana-dash',
       elasticsearch_all_disabled    : false,
-      timezoneOffset                : null,
       playlist_timespan             : "1m",
       unsaved_changes_warning       : true
     };

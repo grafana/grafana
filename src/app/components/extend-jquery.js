@@ -10,18 +10,6 @@ function ($) {
   $.fn.place_tt = (function () {
     var defaults = {
       offset: 5,
-      css: {
-        position : 'absolute',
-        top : -1000,
-        left : 0,
-        color : "#c8c8c8",
-        padding : '10px',
-        'font-size': '11pt',
-        'font-weight' : 200,
-        'background-color': '#1f1f1f',
-        'border-radius': '5px',
-        'z-index': 9999
-      }
     };
 
     return function (x, y, opts) {
@@ -29,7 +17,8 @@ function ($) {
       return this.each(function () {
         var $tooltip = $(this), width, height;
 
-        $tooltip.css(opts.css);
+        $tooltip.addClass('grafana-tooltip');
+
         if (!$.contains(document.body, $tooltip[0])) {
           $tooltip.appendTo(document.body);
         }

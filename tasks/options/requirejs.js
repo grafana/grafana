@@ -49,7 +49,6 @@ module.exports = function(config,grunt) {
         'settings',
         'bootstrap',
         'modernizr',
-        'elasticjs',
         'timepicker',
         'datepicker',
         'underscore',

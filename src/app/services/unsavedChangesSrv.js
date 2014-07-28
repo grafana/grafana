@@ -12,16 +12,22 @@ function(angular, _, config) {
 
   var module = angular.module('kibana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+
     var self = this;
     var modalScope = $rootScope.$new();
 
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
-      self.original = angular.copy(newDashboard);
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() {
+        self.original = angular.copy(newDashboard);
+        self.current = newDashboard;
+      }, 1000);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
+      self.current = savedDashboard;
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
@@ -39,19 +45,20 @@ function(angular, _, config) {
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;
-          self.open_modal();
+
+          $timeout(self.open_modal);
         }
       });
     };
 
     this.open_modal = function() {
       var confirmModal = $modal({
-          template: './app/partials/unsaved-changes.html',
-          persist: true,
-          show: false,
-          scope: modalScope,
-          keyboard: false
-        });
+        template: './app/partials/unsaved-changes.html',
+        persist: true,
+        show: false,
+        scope: modalScope,
+        keyboard: false
+      });
 
       $q.when(confirmModal).then(function(modalEl) {
         modalEl.modal('show');
@@ -63,7 +70,7 @@ function(angular, _, config) {
         return false;
       }
 
-      var current = angular.copy(dashboard.current);
+      var current = angular.copy(self.current);
       var original = self.original;
 
       // ignore timespan changes

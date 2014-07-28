@@ -8,7 +8,7 @@ define([
 
   var module = angular.module('kibana.services');
 
-  module.factory('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
+  module.factory('filterSrv', function($rootScope, $timeout, $routeParams) {
     // defaults
     var _d = {
       templateParameters: [],
@@ -53,16 +53,14 @@ define([
         // disable refresh if we have an absolute time
         if (time.to !== 'now') {
           this.old_refresh = this.dashboard.refresh;
-          dashboard.set_interval(false);
+          this.dashboard.set_interval(false);
         }
         else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
-          dashboard.set_interval(this.old_refresh);
+          this.dashboard.set_interval(this.old_refresh);
           this.old_refresh = null;
         }
 
-        $timeout(function() {
-          dashboard.refresh();
-        },0);
+        $timeout(this.dashboard.emit_refresh, 0);
       },
 
       timeRange: function(parse) {
@@ -96,14 +94,22 @@ define([
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
 
-        if(dashboard.services && dashboard.services.filter) {
-          this.time = dashboard.services.filter.time;
-          this.templateParameters = dashboard.services.filter.list || [];
-          this.updateTemplateData(true);
+        if (!this.dashboard.services.filter) {
+          this.dashboard.services.filter = {
+            list: [],
+            time: {
+              from: '1h',
+              to: 'now'
+            }
+          };
         }
 
+        this.time = dashboard.services.filter.time;
+        this.templateParameters = dashboard.services.filter.list || [];
+        this.updateTemplateData(true);
       }
     };
+
     return result;
   });
 
