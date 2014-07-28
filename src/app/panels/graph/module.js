@@ -265,18 +265,19 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.updateTimeRange();
 
-      var graphiteQuery = {
+      var metricsQuery = {
         range: $scope.rangeUnparsed,
         interval: $scope.interval,
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
         datasource: $scope.panel.datasource,
+        cacheTimeout: $scope.panel.cacheTimeout
       };
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query($scope.filter, graphiteQuery)
+      return $scope.datasource.query($scope.filter, metricsQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;

@@ -268,6 +268,13 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
 
+    $scope.toggleMetricOptions = function() {
+      $scope.panel.metricOptionsEnabled = !$scope.panel.metricOptionsEnabled;
+      if (!$scope.panel.metricOptionsEnabled) {
+        delete $scope.panel.cacheTimeout;
+      }
+    };
+
     $scope.duplicate = function() {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);

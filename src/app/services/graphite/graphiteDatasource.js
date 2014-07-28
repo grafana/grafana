@@ -31,6 +31,7 @@ function (angular, _, $, config, kbn, moment) {
           until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
+          cacheTimeout: options.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
 
@@ -205,7 +206,7 @@ function (angular, _, $, config, kbn, moment) {
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
       var clean_options = [];
-      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
+      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
 
       if (options.format !== 'png') {
         options['format'] = 'json';
