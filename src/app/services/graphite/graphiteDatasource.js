@@ -22,6 +22,7 @@ function (angular, _, $, config, kbn, moment) {
       this.render_method = datasource.render_method || 'POST';
       this.supportAnnotations = true;
       this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
+      this.cacheTimeout = datasource.cacheTimeout;
     }
 
     GraphiteDatasource.prototype.query = function(filterSrv, options) {
@@ -31,7 +32,7 @@ function (angular, _, $, config, kbn, moment) {
           until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
-          cacheTimeout: options.cacheTimeout,
+          cacheTimeout: options.cacheTimeout || this.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
 
