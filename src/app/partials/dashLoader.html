@@ -49,15 +49,6 @@
     </li>
     <li ng-show="showDropdown('share')"><a bs-tooltip="'Share'" data-placement="bottom" ng-click="saveForSharing()" config-modal="app/partials/dashLoaderShare.html">Share temp copy</i></a></li>
 
-    <li ng-show="dashboard.loader.save_gist" style="margin:10px">
-      <h6>Gist</h6>
-      <form class="input-append">
-        <input class='input-medium' placeholder='Title' type="text" ng-model="gist.title"/>
-        <button class="btn" ng-click="save_gist()"><i class="icon-github-alt"></i></button>
-      </form><br>
-      <small ng-show="gist.last">Last gist: <a target="_blank" href="{{gist.last}}">{{gist.last}}</a></small>
-    </li>
-
   </ul>
 </li>
 

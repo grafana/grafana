@@ -7,7 +7,7 @@ function(angular, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('elastic', function($http) {
+  module.service('elastic', function($http, $q) {
 
     this._request = function(method, url, data) {
       var options = {
@@ -40,6 +40,8 @@ function(angular, config) {
     };
 
     this.deleteDashboard = function(id) {
+      if (!this.isAdmin()) { return $q.reject("Invalid admin password"); }
+
       return this._request('DELETE', '/dashboard/' + id)
         .then(function(result) {
           return result.data._id;
@@ -72,7 +74,25 @@ function(angular, config) {
         });
     };
 
+    this.passwordCache = function(pwd) {
+      if (!window.sessionStorage) { return null; }
+      if (!pwd) { return window.sessionStorage["grafanaAdminPassword"]; }
+      window.sessionStorage["grafanaAdminPassword"] = pwd;
+    };
+
+    this.isAdmin = function() {
+      if (!config.admin || !config.admin.password) { return true; }
+      if (this.passwordCache() === config.admin.password) { return true; }
+
+      var password = window.prompt("Admin password", "");
+      this.passwordCache(password);
+
+      return password === config.admin.password;
+    };
+
     this.saveDashboard = function(dashboard, title) {
+      if (!this.isAdmin()) { return $q.reject("Invalid admin password"); }
+
       var dashboardClone = angular.copy(dashboard);
       title = dashboardClone.title = title ? title : dashboard.title;
 

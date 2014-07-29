@@ -1,23 +1,24 @@
 # 1.7.0 (unreleased)
 
 **New features or improvements**
-- [Issue #511](https://github.com/grafana/grafana/issues/511). Allow [[..]] filter notation in all text panels (markdown/html/text)
-- [Issue #136](https://github.com/grafana/grafana/issues/136). New legend display option "Align as table"
-- [Issue #556](https://github.com/grafana/grafana/issues/556). New legend display option "Right side", will show legend to the right of the graph
+- [Issue #511](https://github.com/grafana/grafana/issues/511). Text panel: Allow [[..]] filter notation in all text panels (markdown/html/text)
+- [Issue #136](https://github.com/grafana/grafana/issues/136). Chart: New legend display option "Align as table"
+- [Issue #556](https://github.com/grafana/grafana/issues/556). Chart: New legend display option "Right side", will show legend to the right of the graph
+- [Issue #604](https://github.com/grafana/grafana/issues/604). Chart: New axis format, 'bps' (SI unit in steps of 1000) useful for network gear metics
 - [Issue #525](https://github.com/grafana/grafana/issues/525). InfluxDB: Enhanced series aliasing (legend names) with pattern replacements
 - [Issue #581](https://github.com/grafana/grafana/issues/581). InfluxDB: Add continuous query in series results (series typeahead).
 - [Issue #584](https://github.com/grafana/grafana/issues/584). InfluxDB: Support for alias & alias patterns when using raw query mode
 - [Issue #394](https://github.com/grafana/grafana/issues/394). InfluxDB: Annotation support
 - [Issue #610](https://github.com/grafana/grafana/issues/610). InfluxDB: Support for InfluxdB v0.8 list series response schemea (series typeahead)
-- [Issue #604](https://github.com/grafana/grafana/issues/604). Chart: New axis format, 'bps' (SI unit in steps of 1000) useful for network gear metics
 - [Issue #266](https://github.com/grafana/grafana/issues/266). Graphite: New option cacheTimeout to override graphite default memcache timeout
+- [Issue #606](https://github.com/grafana/grafana/issues/606). General: New global option in config.js to specify admin password (useful to hinder users from accidentally make changes)
 
 **Changes**
 - [Issue #536](https://github.com/grafana/grafana/issues/536). Graphite: Use unix epoch for Graphite from/to for absolute time ranges
 
 **Fixes**
-- [Issue #545](https://github.com/grafana/grafana/issues/545). Fix formatting negative values
-- [Issue #460](https://github.com/grafana/grafana/issues/460). fix for max legend value when max value is zero
+- [Issue #545](https://github.com/grafana/grafana/issues/545). Chart: Fix formatting negative values (axis formats, legend values)
+- [Issue #460](https://github.com/grafana/grafana/issues/460). Chart: fix for max legend value when max value is zero
 
 # 1.6.1 (2014-06-24)
 
