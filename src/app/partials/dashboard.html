@@ -29,7 +29,7 @@
         <!-- Rows -->
         <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" ng-style="row_style(row)">
           <div class="row-control">
-            <div class="grafana-row" style="padding:0px;margin:0px;position:relative;">
+            <div class="row-control-inner" style="padding:0px;margin:0px;position:relative;">
               <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
                 <span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
                   <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
