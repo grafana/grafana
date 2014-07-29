@@ -64,7 +64,7 @@ define([
     function addAnnotation(options) {
       var tooltip = "<small><b>" + options.title + "</b><br/>";
       if (options.tags) {
-        tooltip += (options.tags || '') + '<br/>';
+        tooltip += '<span class="tag label label-tag">' + (options.tags || '') + '</span><br/>';
       }
 
       if (timezone === 'browser') {

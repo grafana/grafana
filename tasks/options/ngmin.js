@@ -12,7 +12,6 @@ module.exports = function(config) {
         'app/routes/**/*.js',
         'app/app.js',
         'vendor/angular/**/*.js',
-        'vendor/elasticjs/elastic-angular-client.js'
       ],
       dest: '<%= tempDir %>'
     }
