@@ -12,8 +12,6 @@ function (angular, _, moment) {
   module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, elastic) {
 
     $scope.init = function() {
-      $scope.elasticsearch = $scope.elasticsearch || {};
-
       $scope.onAppEvent('save-dashboard', function() {
         $scope.saveDashboard();
       });
@@ -35,10 +33,10 @@ function (angular, _, moment) {
 
       var _l = $scope.dashboard.loader;
       if(type === 'load') {
-        return (_l.load_elasticsearch || _l.load_gist);
+        return (_l.load_elasticsearch);
       }
       if(type === 'save') {
-        return (_l.save_elasticsearch || _l.save_gist);
+        return (_l.save_elasticsearch);
       }
       return false;
     };

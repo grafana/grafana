@@ -56,12 +56,7 @@ function (angular, app, _) {
     $scope.add = function() {
       $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
       $scope.panel.annotations.push($scope.currentAnnotation);
-      $scope.currentAnnnotation = angular.copy(annotationDefaults);
-    };
-
-    $scope.hide = function (annotation) {
-      annotation.enable = !annotation.enable;
-      $rootScope.$broadcast('refresh');
+      $scope.currentAnnotation = angular.copy(annotationDefaults);
     };
 
   });

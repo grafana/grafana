@@ -167,7 +167,6 @@ function (angular, $, kbn, moment, _) {
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {
-            console.log('delay');
             legendSideLastValue = panel.legend.rightSide;
             setTimeout(function() {
               plot = $.plot(elem, data, options);

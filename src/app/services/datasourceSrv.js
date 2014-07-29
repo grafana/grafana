@@ -5,13 +5,14 @@ define([
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
   './opentsdb/opentsdbDatasource',
+  './elasticsearch/es-datasource',
 ],
 function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, OpenTSDBDatasource) {
+  module.service('datasourceSrv', function($q, filterSrv, $http, $injector) {
     var datasources = {};
 
     this.init = function() {
@@ -29,14 +30,22 @@ function (angular, _, config) {
     };
 
     this.datasourceFactory = function(ds) {
+      var Datasource = null;
       switch(ds.type) {
       case 'graphite':
-        return new GraphiteDatasource(ds);
+        Datasource = $injector.get('GraphiteDatasource');
+        break;
       case 'influxdb':
-        return new InfluxDatasource(ds);
+        Datasource = $injector.get('InfluxDatasource');
+        break;
       case 'opentsdb':
-        return new OpenTSDBDatasource(ds);
+        Datasource = $injector.get('OpenTSDBDatasource');
+        break;
+      case 'elasticsearch':
+        Datasource = $injector.get('ElasticDatasource');
+        break;
       }
+      return new Datasource(ds);
     };
 
     this.get = function(name) {
