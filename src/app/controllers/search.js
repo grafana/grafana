@@ -9,6 +9,27 @@ function (angular, _, config, $) {
 
   var module = angular.module('grafana.controllers');
 
+  function djb2(str) {
+      var hash = 5381;
+      for (var i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
+      }
+      return hash;
+  }
+
+
+  module.filter("hashStringToColor", function() {
+      return function(value) {
+        var hash = djb2(value);
+        var r = (hash & 0xFF0000) >> 16;
+        var g = (hash & 0x00FF00) >> 8;
+        var b = hash & 0x0000FF;
+        return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+      }
+  });
+
+
+
   module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
 
     $scope.init = function() {

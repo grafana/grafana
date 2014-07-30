@@ -82,7 +82,7 @@
               <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
             </td>
             <td style="white-space: nowrap; text-align: right;">
-              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-tag">
+              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row._source.tags" style="margin-right: 5px; background-color:{{tag | hashStringToColor}}" class="label label-tag">
                 {{tag}}
               </a>
             </td>
