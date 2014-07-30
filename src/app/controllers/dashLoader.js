@@ -2,16 +2,18 @@ define([
   'angular',
   'underscore',
   'moment',
+  'config',
   'filesaver'
 ],
-function (angular, _, moment) {
+function (angular, _, moment, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, elastic) {
+  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, datasourceSrv) {
 
     $scope.init = function() {
+      $scope.db = datasourceSrv.getGrafanaDB();
       $scope.onAppEvent('save-dashboard', function() {
         $scope.saveDashboard();
       });
@@ -19,7 +21,6 @@ function (angular, _, moment) {
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
-
     };
 
     $scope.exitFullscreen = function() {
@@ -38,6 +39,9 @@ function (angular, _, moment) {
       if(type === 'save') {
         return (_l.save_elasticsearch);
       }
+      if(type === 'share') {
+        return (_l.save_temp);
+      }
       return false;
     };
 
@@ -52,7 +56,7 @@ function (angular, _, moment) {
     };
 
     $scope.saveForSharing = function() {
-      elastic.saveForSharing($scope.dashboard)
+      $scope.db.saveDashboardTemp($scope.dashboard)
         .then(function(result) {
 
           $scope.share = { url: result.url, title: result.title };
@@ -62,10 +66,32 @@ function (angular, _, moment) {
         });
     };
 
+    $scope.passwordCache = function(pwd) {
+      if (!window.sessionStorage) { return null; }
+      if (!pwd) { return window.sessionStorage["grafanaAdminPassword"]; }
+      window.sessionStorage["grafanaAdminPassword"] = pwd;
+    };
+
+    $scope.isAdmin = function() {
+      if (!config.admin || !config.admin.password) { return true; }
+      if (this.passwordCache() === config.admin.password) { return true; }
+
+      var password = window.prompt("Admin password", "");
+      this.passwordCache(password);
+
+      if (password === config.admin.password) { return true; }
+
+      alertSrv.set('Save failed', 'Password incorrect', 'error');
+
+      return false;
+    };
+
     $scope.saveDashboard = function() {
-      elastic.saveDashboard($scope.dashboard, $scope.dashboard.title)
+      if (!this.isAdmin()) { return false; }
+
+      $scope.db.saveDashboard($scope.dashboard, $scope.dashboard.title)
         .then(function(result) {
-          alertSrv.set('Dashboard Saved', 'Dashboard has been saved to Elasticsearch as "' + result.title + '"','success', 5000);
+          alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
 
           $location.path(result.url);
 
@@ -81,7 +107,9 @@ function (angular, _, moment) {
         return;
       }
 
-      elastic.deleteDashboard(id).then(function(id) {
+      if (!this.isAdmin()) { return false; }
+
+      $scope.db.deleteDashboard(id).then(function(id) {
         alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
       }, function() {
         alertSrv.set('Dashboard Not Deleted', 'An error occurred deleting the dashboard', 'error', 5000);

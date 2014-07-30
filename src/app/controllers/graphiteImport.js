@@ -11,8 +11,7 @@ function (angular, app, _) {
   module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
 
     $scope.init = function() {
-      console.log('hej!');
-      $scope.datasources = datasourceSrv.listOptions();
+      $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource(null);
     };
 
@@ -96,7 +95,8 @@ function (angular, app, _) {
         currentRow.panels.push(panel);
       });
 
-      $scope.dashboard.dash_load(newDashboard);
+      $scope.emitAppEvent('setup-dashboard', newDashboard);
+      $scope.dismiss();
     }
 
   });

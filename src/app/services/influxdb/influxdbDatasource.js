@@ -23,6 +23,7 @@ function (angular, _, kbn, InfluxSeries) {
       };
 
       this.supportAnnotations = true;
+      this.supportMetrics = true;
       this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
     }
 

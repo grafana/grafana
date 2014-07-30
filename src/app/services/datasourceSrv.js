@@ -14,6 +14,9 @@ function (angular, _, config) {
 
   module.service('datasourceSrv', function($q, filterSrv, $http, $injector) {
     var datasources = {};
+    var metricSources = [];
+    var annotationSources = [];
+    var grafanaDB = {};
 
     this.init = function() {
       _.each(config.datasources, function(value, key) {
@@ -27,6 +30,26 @@ function (angular, _, config) {
         this.default = datasources[_.keys(datasources)[0]];
         this.default.default = true;
       }
+
+      // create list of different source types
+      _.each(datasources, function(value, key) {
+        if (value.supportMetrics) {
+          metricSources.push({
+            name: value.name,
+            value: value.default ? null : key,
+          });
+        }
+        if (value.supportAnnotations) {
+          annotationSources.push({
+            name: key,
+            editorSrc: value.annotationEditorSrc,
+          });
+        }
+        if (value.grafanaDB) {
+          grafanaDB = value;
+        }
+      });
+
     };
 
     this.datasourceFactory = function(ds) {
@@ -56,25 +79,15 @@ function (angular, _, config) {
     };
 
     this.getAnnotationSources = function() {
-      var results = [];
-      _.each(datasources, function(value, key) {
-        if (value.supportAnnotations) {
-          results.push({
-            name: key,
-            editorSrc: value.annotationEditorSrc,
-          });
-        }
-      });
-      return results;
+      return annotationSources;
     };
 
-    this.listOptions = function() {
-      return _.map(config.datasources, function(value, key) {
-        return {
-          name: value.default ? key + ' (default)' : key,
-          value: value.default ? null : key
-        };
-      });
+    this.getMetricSources = function() {
+      return metricSources;
+    };
+
+    this.getGrafanaDB = function() {
+      return grafanaDB;
     };
 
     this.init();

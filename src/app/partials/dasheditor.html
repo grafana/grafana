@@ -2,7 +2,7 @@
   <div class="pull-right editor-title">Dashboard settings</div>
 
   <div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-    <div ng-repeat="tab in ['General', 'Rows','Controls', 'Metrics', 'Import']" data-title="{{tab}}">
+    <div ng-repeat="tab in ['General', 'Rows','Controls', 'Import']" data-title="{{tab}}">
     </div>
     <div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
     </div>
@@ -111,11 +111,7 @@
     </div>
   </div>
 
-  <div ng-if="editor.index == 3">
-    <ng-include src="'app/partials/loadmetrics.html'"></ng-include>
-  </div>
-
-  <div ng-if="editor.index == 4">
+	<div ng-if="editor.index == 3">
     <ng-include src="'app/partials/import.html'"></ng-include>
   </div>
 

@@ -37,6 +37,7 @@ define([
 
       var promises  = _.map(annotations, function(annotation) {
         var datasource = datasourceSrv.get(annotation.datasource);
+
         return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
           .then(this.receiveAnnotationResults)
           .then(null, errorHandler);
@@ -64,7 +65,7 @@ define([
     function addAnnotation(options) {
       var tooltip = "<small><b>" + options.title + "</b><br/>";
       if (options.tags) {
-        tooltip += (options.tags || '') + '<br/>';
+        tooltip += '<span class="tag label label-tag">' + (options.tags || '') + '</span><br/>';
       }
 
       if (timezone === 'browser') {

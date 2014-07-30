@@ -21,6 +21,7 @@ function (angular, _, $, config, kbn, moment) {
       this.name = datasource.name;
       this.render_method = datasource.render_method || 'POST';
       this.supportAnnotations = true;
+      this.supportMetrics = true;
       this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
       this.cacheTimeout = datasource.cacheTimeout;
     }

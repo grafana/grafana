@@ -12,7 +12,7 @@ function (angular, app, _) {
   var module = angular.module('grafana.panels.annotations', []);
   app.useModule(module);
 
-  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv, $rootScope) {
+  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv) {
 
     var annotationDefaults = {
       name: '',
