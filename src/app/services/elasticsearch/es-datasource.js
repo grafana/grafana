@@ -31,10 +31,10 @@ function (angular, _, $, config, kbn, moment) {
         method: method,
         data: data
       };
-      // TODO: fix basic auth
-      if (config.elasticsearchBasicAuth) {
+
+      if (this.basicAuth) {
         options.headers = {
-          "Authorization": "Basic " + config.elasticsearchBasicAuth
+          "Authorization": "Basic " + this.basicAuth
         };
       }
 
@@ -117,8 +117,8 @@ function (angular, _, $, config, kbn, moment) {
           } else {
             return false;
           }
-        }, function(data, status) {
-          if(status === 0) {
+        }, function(data) {
+          if(data.status === 0) {
             throw "Could not contact Elasticsearch. Please ensure that Elasticsearch is reachable from your browser.";
           } else {
             throw "Could not find dashboard " + id;

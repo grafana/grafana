@@ -37,6 +37,7 @@ define([
 
       var promises  = _.map(annotations, function(annotation) {
         var datasource = datasourceSrv.get(annotation.datasource);
+
         return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
           .then(this.receiveAnnotationResults)
           .then(null, errorHandler);
