@@ -8,7 +8,6 @@ define([
   './annotationsSrv',
   './playlistSrv',
   './unsavedChangesSrv',
-  './elasticsearch/es-client',
   './dashboard/dashboardKeyBindings',
   './dashboard/dashboardModel',
 ],

@@ -16,6 +16,7 @@ function (angular, _, config) {
     var datasources = {};
     var metricSources = [];
     var annotationSources = [];
+    var grafanaDB = {};
 
     this.init = function() {
       _.each(config.datasources, function(value, key) {
@@ -43,6 +44,9 @@ function (angular, _, config) {
             name: key,
             editorSrc: value.annotationEditorSrc,
           });
+        }
+        if (value.grafanaDB) {
+          grafanaDB = value;
         }
       });
 
@@ -80,6 +84,10 @@ function (angular, _, config) {
 
     this.getMetricSources = function() {
       return metricSources;
+    };
+
+    this.getGrafanaDB = function() {
+      return grafanaDB;
     };
 
     this.init();
