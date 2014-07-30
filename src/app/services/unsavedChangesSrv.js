@@ -22,7 +22,7 @@ function(angular, _, config) {
       $timeout(function() {
         self.original = angular.copy(newDashboard);
         self.current = newDashboard;
-      }, 1000);
+      }, 1200);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {

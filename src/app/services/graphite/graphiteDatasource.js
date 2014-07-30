@@ -63,9 +63,10 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
       // Graphite metric as annotation
       if (annotation.target) {
+        var target = filterSrv.applyTemplateToTarget(annotation.target);
         var graphiteQuery = {
           range: rangeUnparsed,
-          targets: [{ target: annotation.target }],
+          targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
         };
@@ -93,17 +94,19 @@ function (angular, _, $, config, kbn, moment) {
           });
       }
       // Graphite event as annotation
-      else if (annotation.tags) {
-        return this.events({ range: rangeUnparsed, tags: annotation.tags })
+      else {
+        var tags = filterSrv.applyTemplateToTarget(annotation.tags);
+        return this.events({ range: rangeUnparsed, tags: tags })
           .then(function(results) {
             var list = [];
-            for (var i = 0; i < results.data; i++) {
+            for (var i = 0; i < results.data.length; i++) {
+              var e = results.data[i];
               list.push({
                 annotation: annotation,
-                time: event.when * 1000,
-                title: event.what,
-                tags: event.tags,
-                text: event.data
+                time: e.when * 1000,
+                title: e.what,
+                tags: e.tags,
+                text: e.data
               });
             }
             return list;

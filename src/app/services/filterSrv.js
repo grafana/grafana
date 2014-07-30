@@ -40,7 +40,7 @@ define([
       },
 
       applyTemplateToTarget: function(target) {
-        if (target.indexOf('[[') === -1) {
+        if (!target || target.indexOf('[[') === -1) {
           return target;
         }
 
