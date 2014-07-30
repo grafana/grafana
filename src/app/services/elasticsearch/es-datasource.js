@@ -19,6 +19,7 @@ function (angular, _, $, config, kbn, moment) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportAnnotations = true;
+      this.supportMetrics = false;
       this.index = datasource.index;
       this.annotationEditorSrc = 'app/partials/elasticsearch/annotation_editor.html';
     }

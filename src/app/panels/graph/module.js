@@ -220,7 +220,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
       $scope.hiddenSeries = {};
 
-      $scope.datasources = datasourceSrv.listOptions();
+      $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
 
       if ($scope.panel.targets.length === 0) {
