@@ -181,6 +181,8 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     ElasticDatasource.prototype.searchDashboards = function(queryString) {
+      queryString = queryString.toLowerCase().replace(' and ', ' AND ');
+
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
         var tagsQuery = queryString.substring(6, queryString.length);
