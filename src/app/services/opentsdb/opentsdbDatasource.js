@@ -15,6 +15,7 @@ function (angular, _, kbn) {
       this.editorSrc = 'app/partials/opentsdb/editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
+      this.supportMetrics = true;
     }
 
     // Called once per panel (graph)
@@ -105,8 +106,8 @@ function (angular, _, kbn) {
     }
 
     function createMetricLabel(metric, tagData, options) {
-      if (options.chartLabel) {
-        return options.chartLabel;
+      if (options.alias) {
+        return options.alias;
       }
 
       if (!_.isEmpty(tagData)) {
