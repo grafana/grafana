@@ -43,7 +43,7 @@
         <ul class="grafana-segment-list" role="menu">
           <li>
             <input type="text"
-                   class="input-xxlarge grafana-target-segment-input"
+                   class="grafana-target-segment-input"
                    ng-model="target.metric"
                    spellcheck='false'
                    bs-typeahead="suggestMetrics"
@@ -56,6 +56,16 @@
                ng-show="target.errors.metric">
               <i class="icon-warning-sign"></i>
             </a>
+          </li>
+          <li>
+            <input type="text"
+                   class="grafana-target-segment-input"
+                   ng-model="target.chartLabel"
+                   spellcheck='false'
+                   placeholder="chart label(optional)"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                   />
           </li>
           <li class="grafana-target-segment">
             Aggregator
