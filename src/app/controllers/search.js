@@ -61,7 +61,7 @@ function (angular, _, config, $) {
     $scope.searchDashboards = function(queryString) {
       return $scope.db.searchDashboards(queryString)
         .then(function(results) {
-          $scope.tagsOnly = results.dashboards.length === 0 && results.tags.length > 0;
+          $scope.tagsOnly = results.tagsOnly;
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
         });

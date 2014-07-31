@@ -282,11 +282,12 @@ function (angular, _, kbn, InfluxSeries) {
       }
 
       return this._seriesQuery(influxQuery).then(function(results) {
+        var hits = { dashboards: [], tags: [], tagsOnly: false };
+
         if (!results || !results.length) {
-          return { dashboards: [], tags: [] };
+          return hits;
         }
 
-        var dashList = [];
         var dashCol = _.indexOf(results[0].columns, 'title');
         var tagsCol = _.indexOf(results[0].columns, 'tags');
 
@@ -296,9 +297,9 @@ function (angular, _, kbn, InfluxSeries) {
             tags: results[i].points[0][tagsCol].split(",")
           };
           hit.tags = hit.tags[0] ? hit.tags : [];
-          dashList.push(hit);
+          hits.dashboards.push(hit);
         }
-        return { dashboards: dashList, tags: [] };
+        return hits;
       });
     };
 

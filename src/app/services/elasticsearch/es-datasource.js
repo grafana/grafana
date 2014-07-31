@@ -211,7 +211,17 @@ function (angular, _, $, config, kbn, moment) {
             return { dashboards: [], tags: [] };
           }
 
-          return { dashboards: results.hits.hits, tags: results.facets.terms || [] };
+          var hits = { dashboards: [], tags: results.facets.tags.terms || [] };
+
+          for (var i = 0; i < results.hits.hits.length; i++) {
+            hits.dashboards.push({
+              id: results.hits.hits[i]._id,
+              tags: results.hits.hits[i]._source.tags
+            });
+          }
+
+          hits.tagsOnly = tagsOnly;
+          return hits;
         });
     };
 
