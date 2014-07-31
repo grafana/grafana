@@ -10,8 +10,8 @@ function (Settings) {
   return new Settings({
 
     // datasources
-    // Delete the ones you do not want
-    // grafanaDB: true marks the datasource for use as dashboard storage
+    // Delete the ones you do not want, you can add multiple of the same type
+    // grafanaDB: true marks the datasource for use as dashboard storage (only supported by elasticsearch and influxdb datasources)
     datasources: {
       graphite: {
         type: 'graphite',
@@ -28,7 +28,7 @@ function (Settings) {
       // For Basic authentication use: http://username:password@domain.com:9200
       elasticsearch: {
         type: 'elasticsearch',
-        url: "http://"+window.location.hostname+":9200"
+        url: "http://"+window.location.hostname+":9200",
         index: 'grafana-dash',  // index for storing dashboards
         grafanaDB: true,
       }
