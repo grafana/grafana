@@ -65,11 +65,11 @@
               ng-class="{'selected': $index === selectedIndex }">
             <td><span class="label label-info">metric</span></td>
             <td class="grafana-search-metric-name">
-              {{row._id}}
+              {{row.id}}
             </td>
             <td style="width:100%;">
               <div class="grafana-search-metric-actions">
-                <a ng-click="addMetricToCurrentDashboard(row._id)"><i class="icon-plus-sign"></i> Add to dashboard</a>
+                <a ng-click="addMetricToCurrentDashboard(row.id)"><i class="icon-plus-sign"></i> Add to dashboard</a>
               </div>
             </td>
           </tr>
@@ -77,16 +77,16 @@
           <tr bindonce
               ng-repeat="row in results.dashboards"
               ng-class="{'selected': $index === selectedIndex }">
-            <td><a ng-click="deleteDashboard(row._id)"><i class="icon-remove"></i></a></td>
+            <td><a ng-click="deleteDashboard(row.id)"><i class="icon-remove"></i></a></td>
             <td style="width:100%">
-              <a href="#/dashboard/elasticsearch/{{row._id}}" bo-text="row._id"></a>
+              <a href="#/dashboard/elasticsearch/{{row.id}}" bo-text="row.id"></a>
             </td>
             <td style="white-space: nowrap; text-align: right;">
-              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row._source.tags" style="margin-right: 5px;" class="label label-tag">
+              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag">
                 {{tag}}
               </a>
             </td>
-            <td><a><i class="icon-share" ng-click="shareDashboard(row._id, row._id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
+            <td><a><i class="icon-share" ng-click="shareDashboard(row.id, row.id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
           </tr>
         </table>
       </div>

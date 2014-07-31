@@ -237,7 +237,7 @@ function (angular, _, kbn, InfluxSeries) {
       title = dashboardClone.title = title ? title : dashboard.title;
 
       var data = [{
-        name: 'grafana_dashboards',
+        name: 'grafana.dashboard_' + btoa(title),
         columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard'],
         points: [[1, 1, title, tags, angular.toJson(dashboardClone)]]
       }];
@@ -250,7 +250,7 @@ function (angular, _, kbn, InfluxSeries) {
     };
 
     InfluxDatasource.prototype.getDashboard = function(id) {
-      return this._seriesQuery("select dashboard from grafana_dashboards where title='" + id + "'").then(function(results) {
+      return this._seriesQuery('select dashboard from "grafana.dashboard_' + btoa(id) + '"').then(function(results) {
         if (!results || !results.length) {
           throw "Dashboard not found";
         }
@@ -259,6 +259,46 @@ function (angular, _, kbn, InfluxSeries) {
         return angular.fromJson(dashJson);
       }, function(err) {
         return "Could not load dashboard, " + err.data;
+      });
+    };
+
+    InfluxDatasource.prototype.searchDashboards = function(queryString) {
+      var influxQuery = 'select title, tags from /grafana.dashboard_.*/ where ';
+
+      var tagsOnly = queryString.indexOf('tags!:') === 0;
+      if (tagsOnly) {
+        var tagsQuery = queryString.substring(6, queryString.length);
+        influxQuery = influxQuery + 'tags =~ /.*' + tagsQuery + '.*/i';
+      }
+      else {
+        var titleOnly = queryString.indexOf('title:') === 0;
+        if (titleOnly) {
+          var titleQuery = queryString.substring(6, queryString.length);
+          influxQuery = influxQuery + ' title =~ /.*' + titleQuery + '.*/i';
+        }
+        else {
+          influxQuery = influxQuery + '(tags =~ /.*' + queryString + '.*/i or title =~ /.*' + queryString + '.*/i)';
+        }
+      }
+
+      return this._seriesQuery(influxQuery).then(function(results) {
+        if (!results || !results.length) {
+          return { dashboards: [], tags: [] };
+        }
+
+        var dashList = [];
+        var dashCol = _.indexOf(results[0].columns, 'title');
+        var tagsCol = _.indexOf(results[0].columns, 'tags');
+
+        for (var i = 0; i < results.length; i++) {
+          var hit =  {
+            id: results[i].points[0][dashCol],
+            tags: results[i].points[0][tagsCol].split(",")
+          };
+          hit.tags = hit.tags[0] ? hit.tags : [];
+          dashList.push(hit);
+        }
+        return { dashboards: dashList, tags: [] };
       });
     };
 
