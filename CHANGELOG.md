@@ -16,6 +16,7 @@
 - [Issue #556](https://github.com/grafana/grafana/issues/556). Chart: New legend display option "Right side", will show legend to the right of the graph
 - [Issue #604](https://github.com/grafana/grafana/issues/604). Chart: New axis format, 'bps' (SI unit in steps of 1000) useful for network gear metics
 - [Issue #626](https://github.com/grafana/grafana/issues/626). Chart: Downscale y axis to more precise unit, value of 0.1 for seconds format will be formated as 100 ms. Thanks @kamaradclimber
+- [Issue #618](https://github.com/grafana/grafana/issues/618). OpenTSDB: Series alias option to override metric name returned from opentsdb. Thanks @heldr
 
 **Changes**
 - [Issue #536](https://github.com/grafana/grafana/issues/536). Graphite: Use unix epoch for Graphite from/to for absolute time ranges
