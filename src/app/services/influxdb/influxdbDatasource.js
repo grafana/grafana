@@ -253,7 +253,7 @@ function (angular, _, kbn, InfluxSeries) {
       var dashboardClone = angular.copy(dashboard);
       var tags = dashboardClone.tags.join(',');
       title = dashboardClone.title = title ? title : dashboard.title;
-      var ttl = dashboard.loader.save_temp_ttl
+      var ttl = dashboard.loader.save_temp_ttl;
       var ttlLength = ttl.substring(0, ttl.length-1);
       var ttlTerm = ttl.substring(ttl.length-1, ttl.length).toLowerCase();
       var expires = Date.now();
@@ -266,6 +266,7 @@ function (angular, _, kbn, InfluxSeries) {
           break;
         case "w":
           expires += ttlLength * 604800000;
+          break;
         default:
           throw "Unknown ttl duration format";
       }
