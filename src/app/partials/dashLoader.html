@@ -18,24 +18,24 @@
 
 <li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable"><grafana-simple-panel type="pulldown.type" ng-cloak></grafana-simple-panel></li>
 
-<li class="dropdown grafana-menu-save" ng-show="showDropdown('save')">
+<li class="dropdown grafana-menu-save">
   <a href="#"  bs-tooltip="'Save'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="openSaveDropdown()">
     <i class='icon-save'></i>
   </a>
 
   <ul class="save-dashboard-dropdown dropdown-menu">
 
-    <li ng-show="dashboard.loader.save_elasticsearch">
+    <li>
       <form class="input-prepend nomargin save-dashboard-dropdown-save-form">
         <input class='input-medium' ng-model="dashboard.title" type="text" />
         <button class="btn" ng-click="saveDashboard()"><i class="icon-save"></i></button>
       </form>
     </li>
 
-    <li ng-show="dashboard.loader.save_default">
+    <li>
       <a class="link" ng-click="set_default()">Save as Home</a>
     </li>
-    <li ng-show="dashboard.loader.save_default">
+    <li>
       <a class="link" ng-click="purge_default()">Reset Home</a>
     </li>
     <li ng-show="!isFavorite">
@@ -44,10 +44,10 @@
     <li ng-show="isFavorite">
       <a class="link" ng-click="removeAsFavorite()">Remove as favorite</a>
     </li>
-    <li ng-show="dashboard.loader.save_local">
+    <li>
       <a class="link" ng-click="exportDashboard()">Export dashboard</a>
     </li>
-		<li ng-show="showDropdown('share')">
+		<li ng-show="dashboard.loader.save_temp">
 			<a bs-tooltip="'Share'" data-placement="bottom" ng-click="saveForSharing()" config-modal="app/partials/dashLoaderShare.html">
 				Share temp copy
 			</a>
@@ -55,7 +55,7 @@
   </ul>
 </li>
 
-<li class="dropdown grafana-menu-load" ng-show="showDropdown('load')" ng-controller="SearchCtrl" ng-init="init()" ng-include="'app/partials/search.html'">
+<li class="dropdown grafana-menu-load" ng-controller="SearchCtrl" ng-init="init()" ng-include="'app/partials/search.html'">
 
 </li>
 
