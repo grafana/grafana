@@ -9,7 +9,9 @@ function (Settings) {
 
   return new Settings({
 
-    // datasources, you can add multiple
+    // datasources
+    // Delete the ones you do not want
+    // grafanaDB: true marks the datasource for use as dashboard storage
     datasources: {
       graphite: {
         type: 'graphite',
@@ -22,18 +24,22 @@ function (Settings) {
         username: 'admin',
         password: 'admin'
       },
+      // elasticsearch, used for storing and loading dashboards, annotations
+      // For Basic authentication use: http://username:password@domain.com:9200
+      elasticsearch: {
+        type: 'elasticsearch',
+        url: "http://"+window.location.hostname+":9200"
+        index: 'grafana-dash',  // index for storing dashboards
+        grafanaDB: true,
+      }
     },
 
-    // elasticsearch url
-    // used for storing and loading dashboards, optional
-    // For Basic authentication use: http://username:password@domain.com:9200
-    elasticsearch: "http://"+window.location.hostname+":9200",
+    search: {
+      max_results: 20
+    },
 
     // default start dashboard
     default_route: '/dashboard/file/default.json',
-
-    // Elasticsearch index for storing dashboards
-    grafana_index: "grafana-dash",
 
     // set to false to disable unsaved changes warning
     unsaved_changes_warning: true,

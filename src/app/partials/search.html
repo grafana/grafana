@@ -60,6 +60,7 @@
         </table>
 
         <table class="table table-condensed table-striped" ng-if="!tagsOnly">
+					<tbody style="max-height: 570px; overflow: auto; display: block">
           <tr bindonce ng-repeat="row in results.metrics"
               class="grafana-search-metric-result"
               ng-class="{'selected': $index === selectedIndex }">
@@ -88,6 +89,7 @@
             </td>
             <td><a><i class="icon-share" ng-click="shareDashboard(row._id, row._id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
           </tr>
+					</tbody>
         </table>
       </div>
     </li>

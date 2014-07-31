@@ -23,6 +23,7 @@ function (angular, _, $, config, kbn, moment) {
       this.index = datasource.index;
       this.grafanaDB = datasource.grafanaDB;
       this.annotationEditorSrc = 'app/partials/elasticsearch/annotation_editor.html';
+      this.searchMaxResults = config.search.max_results || 20;
     }
 
     ElasticDatasource.prototype._request = function(method, url, index, data) {
@@ -198,7 +199,7 @@ function (angular, _, $, config, kbn, moment) {
       var query = {
         query: { query_string: { query: queryString } },
         facets: { tags: { terms: { field: "tags", order: "term", size: 50 } } },
-        size: 20,
+        size: this.searchMaxResults,
         sort: ["_uid"]
       };
 
@@ -208,7 +209,7 @@ function (angular, _, $, config, kbn, moment) {
             return { dashboards: [], tags: [] };
           }
 
-          return { dashboards: results.hits.hits, tags: results.facets.terms };
+          return { dashboards: results.hits.hits, tags: results.facets.terms || [] };
         });
     };
 
