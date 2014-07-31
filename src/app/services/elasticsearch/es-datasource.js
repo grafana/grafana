@@ -141,7 +141,7 @@ function (angular, _, $, config, kbn, moment) {
 
       return this._request('PUT', '/dashboard/' + encodeURIComponent(title), this.index, data)
         .then(function() {
-          return { title: title, url: '/dashboard/elasticsearch/' + title };
+          return { title: title, url: '/dashboard/db/' + title };
         }, function(err) {
           throw 'Failed to save to elasticsearch ' + err.data;
         });

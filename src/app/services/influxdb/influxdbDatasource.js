@@ -243,7 +243,7 @@ function (angular, _, kbn, InfluxSeries) {
       }];
 
       return this._influxRequest('POST', '/series', data).then(function() {
-        return { title: title, url: '/dashboard/elasticsearch/' + title };
+        return { title: title, url: '/dashboard/db/' + title };
       }, function(err) {
         throw 'Failed to save dashboard to InfluxDB: ' + err.data;
       });

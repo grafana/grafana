@@ -8,17 +8,21 @@ function (angular) {
 
   module.config(function($routeProvider) {
     $routeProvider
+      .when('/dashboard/db/:id', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromDBProvider',
+      })
       .when('/dashboard/elasticsearch/:id', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromElasticProvider',
+        controller : 'DashFromDBProvider',
       })
       .when('/dashboard/temp/:id', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromElasticProvider',
+        controller : 'DashFromDBProvider',
       });
   });
 
-  module.controller('DashFromElasticProvider', function($scope, $rootScope, datasourceSrv, $routeParams, alertSrv) {
+  module.controller('DashFromDBProvider', function($scope, $rootScope, datasourceSrv, $routeParams, alertSrv) {
 
     var db = datasourceSrv.getGrafanaDB();
     db.getDashboard($routeParams.id)

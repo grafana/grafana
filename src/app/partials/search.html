@@ -80,7 +80,7 @@
               ng-class="{'selected': $index === selectedIndex }">
             <td><a ng-click="deleteDashboard(row.id)"><i class="icon-remove"></i></a></td>
             <td style="width:100%">
-              <a href="#/dashboard/elasticsearch/{{row.id}}" bo-text="row.id"></a>
+              <a href="#/dashboard/db/{{row.id}}" bo-text="row.id"></a>
             </td>
             <td style="white-space: nowrap; text-align: right;">
               <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag">

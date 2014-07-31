@@ -1,5 +1,5 @@
 define([
-  './dashboard-from-es',
+  './dashboard-from-db',
   './dashboard-from-file',
   './dashboard-from-script',
   './dashboard-default',

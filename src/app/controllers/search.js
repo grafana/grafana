@@ -41,7 +41,7 @@ function (angular, _, config, $) {
 
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
-          $location.path("/dashboard/elasticsearch/" + selectedDash.id);
+          $location.path("/dashboard/db/" + selectedDash.id);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
@@ -54,7 +54,7 @@ function (angular, _, config, $) {
 
       $scope.share = {
         title: title,
-        url: baseUrl + '#dashboard/elasticsearch/' + encodeURIComponent(id)
+        url: baseUrl + '#dashboard/db/' + encodeURIComponent(id)
       };
     };
 
