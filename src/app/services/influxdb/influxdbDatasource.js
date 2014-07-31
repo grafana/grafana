@@ -267,7 +267,7 @@ function (angular, _, kbn, InfluxSeries) {
         case "w":
           expires += ttlLength * 604800000;
         default:
-         throw "Unknown ttl duration format";
+          throw "Unknown ttl duration format";
       }
 
       var data = [{
@@ -298,7 +298,7 @@ function (angular, _, kbn, InfluxSeries) {
         var expiresCol = _.indexOf(results[0].columns, 'expires');
         var expiresTime = results[0].points[0][expiresCol];
         if (Date.now() > expiresTime && isTemp) {
-            throw "Dashboard has expired";
+          throw "Dashboard has expired";
         }
         var dashCol = _.indexOf(results[0].columns, 'dashboard');
         var dashJson = results[0].points[0][dashCol];
