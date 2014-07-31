@@ -262,6 +262,17 @@ function (angular, _, kbn, InfluxSeries) {
       });
     };
 
+    InfluxDatasource.prototype.deleteDashboard = function(id) {
+      return this._seriesQuery('drop series "grafana.dashboard_' + btoa(id) + '"').then(function(results) {
+        if (!results) {
+          throw "Could not delete dashboard";
+        }
+        return id;
+      }, function(err) {
+        return "Could not delete dashboard, " + err.data;
+      });
+    };
+
     InfluxDatasource.prototype.searchDashboards = function(queryString) {
       var influxQuery = 'select title, tags from /grafana.dashboard_.*/ where ';
 
