@@ -24,7 +24,7 @@ function (angular, _, config, $) {
       var g = (hash & 0x00FF00) >> 8;
       var b = hash & 0x0000FF;
       return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
-    }
+    };
   });
 
   module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
