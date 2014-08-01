@@ -9,31 +9,77 @@ function (Settings) {
 
   return new Settings({
 
-    // datasources, you can add multiple
+    /* Data sources
+    * ========================================================
+    * Datasources are used to fetch metrics, annotations, and serve as dashboard storage
+    *  - You can have multiple of the same type.
+    *  - grafanaDB: true    marks it for use for dashboard storage
+    *  - default: true      marks the datasource as the default metric source (if you have multiple)
+    *  - basic authentication: use url syntax http://username:password@domain:port
+    */
+
+    // InfluxDB example setup (the InfluxDB databases specified need to exist)
+    /*
     datasources: {
-      graphite: {
-        type: 'graphite',
-        url: "http://my.graphite.server.com:8080",
-        default: true
-      },
       influxdb: {
         type: 'influxdb',
         url: "http://my_influxdb_server:8086/db/database_name",
         username: 'admin',
-        password: 'admin'
+        password: 'admin',
+      },
+      grafana: {
+        type: 'influxdb',
+        url: "http://my_influxdb_server:8086/db/grafana",
+        username: 'admin',
+        password: 'admin',
+        grafanaDB: true
       },
     },
+    */
 
-    // elasticsearch url
-    // used for storing and loading dashboards, optional
-    // For Basic authentication use: http://username:password@domain.com:9200
-    elasticsearch: "http://"+window.location.hostname+":9200",
+    // Graphite & Elasticsearch example setup
+    /*
+    datasources: {
+      graphite: {
+        type: 'graphite',
+        url: "http://my.graphite.server.com:8080",
+      },
+      elasticsearch: {
+        type: 'elasticsearch',
+        url: "http://my.elastic.server.com:9200",
+        index: 'grafana-dash',
+        grafanaDB: true,
+      }
+    },
+    */
+
+    // OpenTSDB & Elasticsearch example setup
+    /*
+    datasources: {
+      opentsdb: {
+        type: 'opentsdb',
+        url: "http://opentsdb.server:4242",
+      },
+      elasticsearch: {
+        type: 'elasticsearch',
+        url: "http://my.elastic.server.com:9200",
+        index: 'grafana-dash',
+        grafanaDB: true,
+      }
+    },
+    */
+
+    /* Global configuration options
+    * ========================================================
+    */
+
+    // specify the limit for dashboard search results
+    search: {
+      max_results: 20
+    },
 
     // default start dashboard
     default_route: '/dashboard/file/default.json',
-
-    // Elasticsearch index for storing dashboards
-    grafana_index: "grafana-dash",
 
     // set to false to disable unsaved changes warning
     unsaved_changes_warning: true,

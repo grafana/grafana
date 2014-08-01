@@ -19,7 +19,8 @@ function (_, crypto) {
       default_route                 : '/dashboard/file/default.json',
       playlist_timespan             : "1m",
       unsaved_changes_warning       : true,
-      admin: {}
+      search                        : { max_results: 20 },
+      admin                         : {}
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

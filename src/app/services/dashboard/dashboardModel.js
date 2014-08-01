@@ -29,13 +29,9 @@ function (angular, $, kbn, _) {
       this.loader = data.loader || {};
 
       _.defaults(this.loader, {
-        save_elasticsearch: true,
-        save_default: true,
         save_temp: true,
         save_temp_ttl_enable: true,
         save_temp_ttl: '30d',
-        load_elasticsearch: true,
-        hide: false
       });
 
       if (this.nav.length === 0) {

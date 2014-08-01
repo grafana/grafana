@@ -532,8 +532,12 @@ function($, _, moment) {
   };
 
   kbn.msFormat = function(size, decimals) {
-    if (Math.abs(size) < 1000) {
-      return size.toFixed(0) + " ms";
+    // Less than 1 milli, downscale to micro
+    if (Math.abs(size) < 1) {
+      return kbn.microsFormat(size * 1000,decimals);
+    }
+    else if (Math.abs(size) < 1000) {
+      return size.toFixed(decimals) + " ms";
     }
     // Less than 1 min
     else if (Math.abs(size) < 60000) {
@@ -556,8 +560,12 @@ function($, _, moment) {
   };
 
   kbn.sFormat = function(size, decimals) {
+    // Less than 1 sec, downscale to milli
+    if (Math.abs(size) < 1) {
+      return kbn.msFormat(size * 1000, decimals);
+    }
     // Less than 10 min, use seconds
-    if (Math.abs(size) < 600) {
+    else if (Math.abs(size) < 600) {
       return size.toFixed(decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
@@ -581,8 +589,12 @@ function($, _, moment) {
   };
 
   kbn.microsFormat = function(size, decimals) {
-    if (Math.abs(size) < 1000) {
-      return size.toFixed(0) + " µs";
+    // Less than 1 micro, downscale to nano
+    if (Math.abs(size) < 1) {
+      return kbn.nanosFormat(size * 1000, decimals);
+    }
+    else if (Math.abs(size) < 1000) {
+      return size.toFixed(decimals) + " µs";
     }
     else if (Math.abs(size) < 1000000) {
       return (size / 1000).toFixed(decimals) + " ms";
@@ -593,7 +605,10 @@ function($, _, moment) {
   };
 
   kbn.nanosFormat = function(size, decimals) {
-    if (Math.abs(size) < 1000) {
+    if (Math.abs(size) < 1) {
+      return size.toFixed(decimals) + " ns";
+    }
+    else if (Math.abs(size) < 1000) {
       return size.toFixed(0) + " ns";
     }
     else if (Math.abs(size) < 1000000) {

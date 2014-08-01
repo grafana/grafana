@@ -62,7 +62,7 @@ function (angular, _, config, $) {
 
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
-          $location.path("/dashboard/elasticsearch/" + encodeURIComponent(selectedDash._id));
+          $location.path("/dashboard/db/" + selectedDash.id);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
@@ -75,14 +75,14 @@ function (angular, _, config, $) {
 
       $scope.share = {
         title: title,
-        url: baseUrl + '#dashboard/elasticsearch/' + encodeURIComponent(id)
+        url: baseUrl + '#dashboard/db/' + encodeURIComponent(id)
       };
     };
 
     $scope.searchDashboards = function(queryString) {
       return $scope.db.searchDashboards(queryString)
         .then(function(results) {
-          $scope.tagsOnly = results.dashboards.length === 0 && results.tags.length > 0;
+          $scope.tagsOnly = results.tagsOnly;
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
         });
@@ -111,10 +111,7 @@ function (angular, _, config, $) {
       $scope.showImport = false;
       $scope.selectedIndex = -1;
 
-      var queryStr = $scope.query.query.toLowerCase();
-      queryStr = queryStr.replace(' and ', ' AND ');
-
-      $scope.searchDashboards(queryStr);
+      $scope.searchDashboards($scope.query.query);
     };
 
     $scope.openSearch = function (evt) {
