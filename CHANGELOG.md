@@ -25,6 +25,7 @@
 - [Issue #545](https://github.com/grafana/grafana/issues/545). Chart: Fix formatting negative values (axis formats, legend values)
 - [Issue #460](https://github.com/grafana/grafana/issues/460). Chart: fix for max legend value when max value is zero
 - [Issue #628](https://github.com/grafana/grafana/issues/628). Filtering: Fix for nested filters, changing a child filter could result in infinite recursion in some cases
+- [Issue #528](https://github.com/grafana/grafana/issues/528). Graphite: Fix for graphite expressions parser failure when metric expressions starts with curly brace segment
 
 # 1.6.1 (2014-06-24)
 

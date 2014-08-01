@@ -97,7 +97,10 @@ define([
     },
 
     metricExpression: function() {
-      if (!this.match('templateStart') && !this.match('identifier') && !this.match('number')) {
+      if (!this.match('templateStart') &&
+          !this.match('identifier') &&
+          !this.match('number') &&
+          !this.match('{')) {
         return null;
       }
 

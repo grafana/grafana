@@ -140,12 +140,20 @@ define([
       expect(rootNode.type).to.be('function');
     });
 
-     it('handle float function arguments', function() {
+    it('handle float function arguments', function() {
       var parser = new Parser('scale(test, 0.002)');
       var rootNode = parser.getAst();
       expect(rootNode.type).to.be('function');
       expect(rootNode.params[1].type).to.be('number');
       expect(rootNode.params[1].value).to.be(0.002);
+    });
+
+    it('handle curly brace pattern at start', function() {
+      var parser = new Parser('{apps}.test');
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('metric');
+      expect(rootNode.segments[0].value).to.be('{apps}');
+      expect(rootNode.segments[1].value).to.be('test');
     });
 
   });
