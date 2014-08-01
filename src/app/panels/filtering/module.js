@@ -53,7 +53,7 @@ function (angular, app, _) {
         if (templateParam === updatedTemplatedParam) {
           return;
         }
-        if (templateParam.query.indexOf(updatedTemplatedParam.name) !== -1) {
+        if (templateParam.query.indexOf('[[' + updatedTemplatedParam.name + ']]') !== -1) {
           return $scope.applyFilter(templateParam);
         }
       });
