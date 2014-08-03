@@ -26,13 +26,6 @@ function (angular, $, kbn, _) {
       this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
       this.services = data.services || {};
-      this.loader = data.loader || {};
-
-      _.defaults(this.loader, {
-        save_temp: true,
-        save_temp_ttl_enable: true,
-        save_temp_ttl: '30d',
-      });
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });

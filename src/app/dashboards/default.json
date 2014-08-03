@@ -134,10 +134,5 @@
       "now": true
     }
   ],
-  "loader": {
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d"
-  },
   "refresh": false
 }

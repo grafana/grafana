@@ -22,6 +22,9 @@ function (angular, _, kbn, InfluxSeries) {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
 
+      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
+      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
+
       this.grafanaDB = datasource.grafanaDB;
       this.supportAnnotations = true;
       this.supportMetrics = true;
@@ -231,31 +234,47 @@ function (angular, _, kbn, InfluxSeries) {
       return deferred.promise;
     };
 
-    InfluxDatasource.prototype.saveDashboard = function(dashboard, title) {
-      var dashboardClone = angular.copy(dashboard);
-      var tags = dashboardClone.tags.join(',');
-      title = dashboardClone.title = title ? title : dashboard.title;
+    InfluxDatasource.prototype.saveDashboard = function(dashboard) {
+      var tags = dashboard.tags.join(',');
+      var title = dashboard.title;
+      var temp = dashboard.temp;
+      if (temp) { delete dashboard.temp; }
 
       var data = [{
         name: 'grafana.dashboard_' + btoa(title),
         columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard'],
-        points: [[1, 1, title, tags, angular.toJson(dashboardClone)]]
+        points: [[1000000000000, 1, title, tags, angular.toJson(dashboard)]]
       }];
 
+      if (temp) {
+        return this._saveDashboardTemp(data, title);
+      }
+      else {
+        return this._influxRequest('POST', '/series', data).then(function() {
+          return { title: title, url: '/dashboard/db/' + title };
+        }, function(err) {
+          throw 'Failed to save dashboard to InfluxDB: ' + err.data;
+        });
+      }
+    };
+
+    InfluxDatasource.prototype._saveDashboardTemp = function(data, title) {
+      data[0].name = 'grafana.dashboard_temp_' + btoa(title);
+      data[0].columns.push('expires');
+      data[0].points[0].push(this._getTempDashboardExpiresDate());
+
       return this._influxRequest('POST', '/series', data).then(function() {
-        return { title: title, url: '/dashboard/db/' + title };
+        var baseUrl = window.location.href.replace(window.location.hash,'');
+        var url = baseUrl + "#dashboard/temp/" + title;
+        return { title: title, url: url };
       }, function(err) {
-        throw 'Failed to save dashboard to InfluxDB: ' + err.data;
+        throw 'Failed to save shared dashboard to InfluxDB: ' + err.data;
       });
     };
 
-    InfluxDatasource.prototype.saveDashboardTemp = function(dashboard, title) {
-      var dashboardClone = angular.copy(dashboard);
-      var tags = dashboardClone.tags.join(',');
-      title = dashboardClone.title = title ? title : dashboard.title;
-      var ttl = dashboard.loader.save_temp_ttl;
-      var ttlLength = ttl.substring(0, ttl.length-1);
-      var ttlTerm = ttl.substring(ttl.length-1, ttl.length).toLowerCase();
+    InfluxDatasource.prototype._getTempDashboardExpiresDate = function() {
+      var ttlLength = this.saveTempTTL.substring(0, this.saveTempTTL.length - 1);
+      var ttlTerm = this.saveTempTTL.substring(this.saveTempTTL.length - 1, this.saveTempTTL.length).toLowerCase();
       var expires = Date.now();
       switch(ttlTerm) {
         case "m":
@@ -270,39 +289,24 @@ function (angular, _, kbn, InfluxSeries) {
         default:
           throw "Unknown ttl duration format";
       }
-
-      var data = [{
-        name: 'grafana.dashboard_' + btoa(title),
-        columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard', 'expires'],
-        points: [[1, 1, title, tags, angular.toJson(dashboardClone), expires]]
-      }];
-
-      return this._influxRequest('POST', '/series', data).then(function() {
-        var baseUrl = window.location.href.replace(window.location.hash,'');
-        var url = baseUrl + "#dashboard/temp/" + title;
-        return { title: title, url: url };
-      }, function(err) {
-        throw 'Failed to save shared dashboard to InfluxDB: ' + err.data;
-      });
+      return expires;
     };
-    InfluxDatasource.prototype.getDashboard = function(id) {
+
+    InfluxDatasource.prototype.getDashboard = function(id, isTemp) {
       var queryString = 'select dashboard from "grafana.dashboard_' + btoa(id) + '"';
-      // hack to check if it is a temp dashboard
-      if (window.location.href.indexOf('dashboard/temp') > 0) {
-        var isTemp = true;
-        queryString = 'select dashboard, expires from "grafana.dashboard_' + btoa(id) + '"';
+
+      if (isTemp) {
+        queryString = 'select dashboard from "grafana.dashboard_temp_' + btoa(id) + '"';
       }
+
       return this._seriesQuery(queryString).then(function(results) {
         if (!results || !results.length) {
           throw "Dashboard not found";
         }
-        var expiresCol = _.indexOf(results[0].columns, 'expires');
-        var expiresTime = results[0].points[0][expiresCol];
-        if (Date.now() > expiresTime && isTemp) {
-          throw "Dashboard has expired";
-        }
+
         var dashCol = _.indexOf(results[0].columns, 'dashboard');
         var dashJson = results[0].points[0][dashCol];
+
         return angular.fromJson(dashJson);
       }, function(err) {
         return "Could not load dashboard, " + err.data;

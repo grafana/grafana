@@ -2,7 +2,7 @@
   <div class="pull-right editor-title">Dashboard settings</div>
 
   <div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-    <div ng-repeat="tab in ['General', 'Rows','Controls', 'Import']" data-title="{{tab}}">
+    <div ng-repeat="tab in ['General', 'Rows', 'Controls', 'Import']" data-title="{{tab}}">
     </div>
     <div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
     </div>
@@ -77,18 +77,6 @@
 				</div>
 				<div class="editor-option" ng-repeat="pulldown in dashboard.nav">
 					<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
-				</div>
-			</div>
-      <div class="section">
-				<h5>Sharing</h5>
-				<div class="editor-option" >
-					<label class="small">Allow Sharing <tip>Allow generating adhoc links to dashboards</tip></label><input type="checkbox" ng-model="dashboard.loader.save_temp" ng-checked="dashboard.loader.save_temp">
-				</div>
-				<div class="editor-option" ng-show="dashboard.loader.save_temp">
-					<label class="small">TTL <tip>Expire temp urls</tip></label><input type="checkbox" ng-model="dashboard.loader.save_temp_ttl_enable">
-				</div>
-				<div class="editor-option" ng-show="dashboard.loader.save_temp &amp;&amp; dashboard.loader.save_temp_ttl_enable">
-					<label class="small">TTL Duration <tip>Elasticsearch date math, eg: 1m,1d,1w,30d  </tip></label><input class="input-small" type="text" ng-model="dashboard.loader.save_temp_ttl">
 				</div>
 			</div>
 		</div>

@@ -38,7 +38,9 @@ function (angular, _, moment, config) {
     };
 
     $scope.saveForSharing = function() {
-      $scope.db.saveDashboardTemp($scope.dashboard)
+      var clone = angular.copy($scope.dashboard);
+      clone.temp = true;
+      $scope.db.saveDashboard(clone)
         .then(function(result) {
 
           $scope.share = { url: result.url, title: result.title };
@@ -71,7 +73,8 @@ function (angular, _, moment, config) {
     $scope.saveDashboard = function() {
       if (!this.isAdmin()) { return false; }
 
-      $scope.db.saveDashboard($scope.dashboard, $scope.dashboard.title)
+      var clone = angular.copy($scope.dashboard);
+      $scope.db.saveDashboard(clone)
         .then(function(result) {
           alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
 

@@ -47,7 +47,7 @@
     <li>
       <a class="link" ng-click="exportDashboard()">Export dashboard</a>
     </li>
-		<li ng-show="dashboard.loader.save_temp">
+		<li ng-show="db.saveTemp">
 			<a bs-tooltip="'Share'" data-placement="bottom" ng-click="saveForSharing()" config-modal="app/partials/dashLoaderShare.html">
 				Share temp copy
 			</a>
