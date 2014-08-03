@@ -259,7 +259,7 @@ function (angular, _, kbn, InfluxSeries) {
     };
 
     InfluxDatasource.prototype._saveDashboardTemp = function(data, title) {
-      data[0].name = 'grafana.dashboard_temp_' + btoa(title);
+      data[0].name = 'grafana.temp_dashboard_' + btoa(title);
       data[0].columns.push('expires');
       data[0].points[0].push(this._getTempDashboardExpiresDate());
 
@@ -296,7 +296,7 @@ function (angular, _, kbn, InfluxSeries) {
       var queryString = 'select dashboard from "grafana.dashboard_' + btoa(id) + '"';
 
       if (isTemp) {
-        queryString = 'select dashboard from "grafana.dashboard_temp_' + btoa(id) + '"';
+        queryString = 'select dashboard from "grafana.temp_dashboard_' + btoa(id) + '"';
       }
 
       return this._seriesQuery(queryString).then(function(results) {
