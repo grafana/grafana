@@ -130,28 +130,9 @@ function (angular, app, _) {
       }
     };
 
-    /** @scratch /panels/0
-     * [[panels]]
-     * = Panels
-     *
-     * [partintro]
-     * --
-     * *grafana* dashboards are made up of blocks called +panels+. Panels are organized into rows
-     * and can serve many purposes, though most are designed to provide the results of a query or
-     * multiple queries as a visualization. Other panels may show collections of documents or
-     * allow you to insert instructions for your users.
-     *
-     * Panels can be configured easily via the grafana web interface. For more advanced usage, such
-     * as templated or scripted dashboards, documentation of panel properties is available in this
-     * section. You may find settings here which are not exposed via the web interface.
-     *
-     * Each panel type has its own properties, hover there are several that are shared.
-     *
-    */
-
     $scope.reset_panel = function(type) {
       var
-        defaultSpan = 4,
+        defaultSpan = 12,
         _as = 12-$scope.rowSpan($scope.row);
 
       $scope.panel = {

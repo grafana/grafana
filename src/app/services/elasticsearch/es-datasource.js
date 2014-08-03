@@ -18,12 +18,16 @@ function (angular, _, $, config, kbn, moment) {
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.name = datasource.name;
-      this.supportAnnotations = true;
-      this.supportMetrics = false;
       this.index = datasource.index;
       this.grafanaDB = datasource.grafanaDB;
-      this.annotationEditorSrc = 'app/partials/elasticsearch/annotation_editor.html';
       this.searchMaxResults = config.search.max_results || 20;
+
+      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
+      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
+
+      this.annotationEditorSrc = 'app/partials/elasticsearch/annotation_editor.html';
+      this.supportAnnotations = true;
+      this.supportMetrics = false;
     }
 
     ElasticDatasource.prototype._request = function(method, url, index, data) {
@@ -103,11 +107,10 @@ function (angular, _, $, config, kbn, moment) {
       });
     };
 
-    ElasticDatasource.prototype.getDashboard = function(id) {
+    ElasticDatasource.prototype.getDashboard = function(id, isTemp) {
       var url = '/dashboard/' + id;
 
-      // hack to check if it is a temp dashboard
-      if (window.location.href.indexOf('dashboard/temp') > 0) {
+      if (isTemp) {
         url = '/temp/' + id;
       }
 
@@ -127,44 +130,40 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
-    ElasticDatasource.prototype.saveDashboard = function(dashboard, title) {
-      var dashboardClone = angular.copy(dashboard);
-      title = dashboardClone.title = title ? title : dashboard.title;
+    ElasticDatasource.prototype.saveDashboard = function(dashboard) {
+      var title = dashboard.title;
+      var temp = dashboard.temp;
+      if (temp) { delete dashboard.temp; }
 
       var data = {
         user: 'guest',
         group: 'guest',
         title: title,
-        tags: dashboardClone.tags,
-        dashboard: angular.toJson(dashboardClone)
-      };
-
-      return this._request('PUT', '/dashboard/' + encodeURIComponent(title), this.index, data)
-        .then(function() {
-          return { title: title, url: '/dashboard/db/' + title };
-        }, function(err) {
-          throw 'Failed to save to elasticsearch ' + err.data;
-        });
-    };
-
-    ElasticDatasource.prototype.saveDashboardTemp = function(dashboard) {
-      var data = {
-        user: 'guest',
-        group: 'guest',
-        title: dashboard.title,
         tags: dashboard.tags,
         dashboard: angular.toJson(dashboard)
       };
 
-      var ttl = dashboard.loader.save_temp_ttl;
+      if (temp) {
+        return this._saveTempDashboard(data);
+      }
+      else {
+        return this._request('PUT', '/dashboard/' + encodeURIComponent(title), this.index, data)
+          .then(function() {
+            return { title: title, url: '/dashboard/db/' + title };
+          }, function(err) {
+            throw 'Failed to save to elasticsearch ' + err.data;
+          });
+      }
+    };
 
-      return this._request('POST', '/temp/?ttl=' + ttl, this.index, data)
+    ElasticDatasource.prototype._saveTempDashboard = function(data) {
+      return this._request('POST', '/temp/?ttl=' + this.saveTempTTL, this.index, data)
         .then(function(result) {
 
           var baseUrl = window.location.href.replace(window.location.hash,'');
           var url = baseUrl + "#dashboard/temp/" + result.data._id;
 
-          return { title: dashboard.title, url: url };
+          return { title: data.title, url: url };
 
         }, function(err) {
           throw "Failed to save to temp dashboard to elasticsearch " + err.data;
