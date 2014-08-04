@@ -86,7 +86,7 @@
     <ng-include src="'app/partials/import.html'"></ng-include>
   </div>
 
-  <div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 5+$index">
+  <div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 4+$index">
     <ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
     <button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
   </div>
