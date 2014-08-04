@@ -39,7 +39,7 @@ function (angular, $, kbn, moment, _) {
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
-          annotations = data.annotations;
+          annotations = data.annotations || annotations;
           render_panel();
         });
 
