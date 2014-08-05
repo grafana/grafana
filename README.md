@@ -14,7 +14,7 @@ Graphite, InfluxDB & OpenTSDB.
 ### Graphite Target Editor
 - Graphite target expression parser
 - Feature rich query composer
-- Quickly add and edit function parameters
+- Quickly add and edit functions & parameters
 - Templated queries
 - [See it in action](http://grafana.org/docs/features/graphite)
 
