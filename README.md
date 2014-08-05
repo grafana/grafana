@@ -16,7 +16,7 @@ Graphite, InfluxDB & OpenTSDB.
 - Feature rich query composer
 - Quickly add and edit function parameters
 - Templated queries
-- [See it in action](http//grafana.org/docs/features/graphite)
+- [See it in action](http://grafana.org/docs/features/graphite)
 
 ### Graphing
 - Fast rendering, even over large timespans.
@@ -63,14 +63,13 @@ read the [troubleshooting guide](http://grafana.org/docs/troubleshooting).
 Be sure to read the [getting started guide](http://grafana.org/docs/features/intro) and the other
 feature guides.
 
-
-```
 # Roadmap
 - Improve graphite query editor to handle all types of queries
 - Refine and simplify common tasks
 - More panel types (not just graphs)
 - Improve templating support
 - Alerting
+- Optional backend component
 - Much much more! (what ever gets votes on github issues!)
 
 # Contribute
