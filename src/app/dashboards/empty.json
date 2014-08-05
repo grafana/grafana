@@ -1,13 +1,11 @@
 {
   "title": "New Dashboard",
-  "services": {
-    "filter": {
-      "list": [],
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      }
-    }
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
   },
   "rows": [
     {
@@ -15,9 +13,7 @@
       "height": "250px",
       "editable": true,
       "collapse": false,
-      "collapsable": true,
-      "panels": [],
-      "notice": false
+      "panels": []
     }
   ],
   "editable": true,
@@ -65,10 +61,5 @@
       "now": true
     }
   ],
-  "loader": {
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d",
-  },
   "refresh": false
 }

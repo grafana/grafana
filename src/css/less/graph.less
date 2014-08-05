@@ -15,14 +15,15 @@
 
 .graph-legend-icon {
   position: relative;
-  top: 2px;
+  padding-right: 4px;
+  top: 1px;
 }
 
 .graph-legend-series,
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
-  display: inline-block;
+  float: left;
   white-space: nowrap;
 }
 
@@ -39,6 +40,7 @@
 
   .graph-legend-series {
     display: table-row;
+    float: none;
     padding-left: 0;
     &.pull-right {
       float: none;
@@ -49,17 +51,21 @@
   }
 
   .graph-legend-alias {
+    float: none;
     display: table-cell;
     white-space: nowrap;
   }
 
   .graph-legend-icon {
     display: table-cell;
+    float: none;
     white-space: nowrap;
     padding: 0 4px;
+    top: 2px;
   }
 
   .graph-legend-value  {
+    float: none;
     display: table-cell;
     white-space: nowrap;
     padding-left: 15px;

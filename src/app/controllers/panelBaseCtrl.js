@@ -10,6 +10,10 @@ function (angular, _, $) {
   // when changing arguments to this function
   function PanelBaseCtrl($scope, $rootScope, $timeout) {
 
+    if (!$scope.panel.span) {
+      $scope.panel.span = 12;
+    }
+
     var menu = [
       {
         text: 'Edit',

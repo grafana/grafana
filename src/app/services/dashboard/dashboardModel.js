@@ -2,7 +2,8 @@ define([
   'angular',
   'jquery',
   'kbn',
-  'underscore'
+  'underscore',
+  '../timer',
 ],
 function (angular, $, kbn, _) {
   'use strict';
@@ -17,7 +18,7 @@ function (angular, $, kbn, _) {
         data = {};
       }
 
-      this.title = data.title;
+      this.title = data.title || 'No Title';
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
@@ -25,14 +26,8 @@ function (angular, $, kbn, _) {
       this.rows = data.rows || [];
       this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
-      this.services = data.services || {};
-      this.loader = data.loader || {};
-
-      _.defaults(this.loader, {
-        save_temp: true,
-        save_temp_ttl_enable: true,
-        save_temp_ttl: '30d',
-      });
+      this.time = data.time || { from: 'now-6h', to: 'now' };
+      this.templating = data.templating || { list: [] };
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -46,13 +41,7 @@ function (angular, $, kbn, _) {
         this.pulldowns.push({ type: 'annotations', enable: false });
       }
 
-      _.each(this.rows, function(row) {
-        _.each(row.panels, function(panel) {
-          if (panel.type === 'graphite') {
-            panel.type = 'graph';
-          }
-        });
-      });
+      this.updateSchema(data);
     }
 
     var p = DashboardModel.prototype;
@@ -81,6 +70,64 @@ function (angular, $, kbn, _) {
       } else {
         this.cancel_scheduled_refresh();
       }
+    };
+
+    p.updateSchema = function(old) {
+      var i, j, row, panel;
+      var isChanged = false;
+
+      if (this.version === 2) {
+        return;
+      }
+
+      if (old.services) {
+        if (old.services.filter) {
+          this.time = old.services.filter.time;
+          this.templating.list = old.services.filter.list;
+        }
+        delete this.services;
+      }
+
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (panel.type === 'graphite') {
+            panel.type = 'graph';
+            isChanged = true;
+          }
+
+          if (panel.type === 'graph') {
+            if (_.isBoolean(panel.legend)) {
+              panel.legend = { show: panel.legend };
+            }
+
+            if (panel.grid) {
+              if (panel.grid.min) {
+                panel.grid.leftMin = panel.grid.min;
+                delete panel.grid.min;
+              }
+
+              if (panel.grid.max) {
+                panel.grid.leftMax = panel.grid.max;
+                delete panel.grid.max;
+              }
+            }
+
+            if (panel.y_format) {
+              panel.y_formats[0] = panel.y_format;
+              delete panel.y_format;
+            }
+
+            if (panel.y2_format) {
+              panel.y_formats[1] = panel.y2_format;
+              delete panel.y2_format;
+            }
+          }
+        }
+      }
+
+      this.version = 2;
     };
 
     return {

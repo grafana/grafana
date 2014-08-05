@@ -9,12 +9,6 @@ define([
   var module = angular.module('grafana.services');
 
   module.factory('filterSrv', function($rootScope, $timeout, $routeParams) {
-    // defaults
-    var _d = {
-      templateParameters: [],
-      time: {}
-    };
-
     var result = {
 
       updateTemplateData: function(initial) {
@@ -86,26 +80,14 @@ define([
 
       removeTemplateParameter: function(templateParameter) {
         this.templateParameters = _.without(this.templateParameters, templateParameter);
-        this.dashboard.services.filter.list = this.templateParameters;
+        this.dashboard.templating.list = this.templateParameters;
       },
 
       init: function(dashboard) {
-        _.defaults(this, _d);
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-
-        if (!this.dashboard.services.filter) {
-          this.dashboard.services.filter = {
-            list: [],
-            time: {
-              from: '1h',
-              to: 'now'
-            }
-          };
-        }
-
-        this.time = dashboard.services.filter.time;
-        this.templateParameters = dashboard.services.filter.list || [];
+        this.time = dashboard.time;
+        this.templateParameters = dashboard.templating.list;
         this.updateTemplateData(true);
       }
     };

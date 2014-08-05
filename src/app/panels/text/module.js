@@ -36,7 +36,7 @@ function (angular, app, _, require) {
       style: {},
     };
 
-    _.defaults($scope.panel,_d);
+    _.defaults($scope.panel, _d);
 
     $scope.init = function() {
       $scope.initBaseController(this, $scope);

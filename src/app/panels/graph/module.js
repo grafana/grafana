@@ -185,32 +185,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.tooltip, _d.tooltip);
     _.defaults($scope.panel.annotate, _d.annotate);
     _.defaults($scope.panel.grid, _d.grid);
-
-    // backward compatible stuff
-    if (_.isBoolean($scope.panel.legend)) {
-      $scope.panel.legend = { show: $scope.panel.legend };
-      _.defaults($scope.panel.legend, _d.legend);
-    }
-
-    if ($scope.panel.grid.min) {
-      $scope.panel.grid.leftMin = $scope.panel.grid.min;
-      delete $scope.panel.grid.min;
-    }
-
-    if ($scope.panel.grid.max) {
-      $scope.panel.grid.leftMax = $scope.panel.grid.max;
-      delete $scope.panel.grid.max;
-    }
-
-    if ($scope.panel.y_format) {
-      $scope.panel.y_formats[0] = $scope.panel.y_format;
-      delete $scope.panel.y_format;
-    }
-
-    if ($scope.panel.y2_format) {
-      $scope.panel.y_formats[1] = $scope.panel.y2_format;
-      delete $scope.panel.y2_format;
-    }
+    _.defaults($scope.panel.legend, _d.legend);
 
     $scope.init = function() {
       $scope.initBaseController(this, $scope);
