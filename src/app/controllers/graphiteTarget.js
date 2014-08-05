@@ -188,6 +188,10 @@ function (angular, _, config, gfunc, Parser) {
       $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
       $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
+      if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
+        $scope.functions = [];
+      }
+
       if ($scope.altSegments[altIndex].expandable) {
         return checkOtherSegments(segmentIndex + 1)
           .then(function () {

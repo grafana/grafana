@@ -34,13 +34,13 @@
                 <span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
                   <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
                 </span>
-                <span class="row-button bgPrimary" ng-click="toggle_row(row)" ng-show="row.collapsable">
+                <span class="row-button bgPrimary" ng-click="toggle_row(row)">
                   <i bs-tooltip="'Expand row'" data-placement="right" class="icon-caret-left pointer" ></i>
                 </span>
-                <span class="row-button row-text" ng-click="toggle_row(row)" ng-class="{'pointer':row.collapsable}">{{row.title || 'Row '+$index}}</span>
+                <span class="row-button row-text" ng-click="toggle_row(row)">{{row.title || 'Row '+$index}}</span>
               </div>
               <div class="row-open" ng-show="!row.collapse">
-                <div ng-show="row.collapsable" class='row-tab bgPrimary' ng-click="toggle_row(row)">
+                <div class='row-tab bgPrimary' ng-click="toggle_row(row)">
                   <span class="row-tab-button">
                     <i class="icon-caret-right"></i>
                   </span>

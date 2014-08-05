@@ -1,13 +1,11 @@
 {
   "title": "Welcome to Grafana!",
-  "services": {
-    "filter": {
-      "list": [],
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      }
-    }
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
   },
   "rows": [
     {
@@ -15,7 +13,6 @@
       "height": "150px",
       "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
           "error": false,
@@ -28,15 +25,13 @@
           "style": {},
           "title": "Welcome to Grafana"
         }
-      ],
-      "notice": false
+      ]
     },
     {
       "title": "test",
       "height": "250px",
       "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
           "span": 12,
@@ -86,8 +81,7 @@
           "aliasYAxis": {},
           "title": "Graphite test"
         }
-      ],
-      "notice": false
+      ]
     }
   ],
   "editable": true,

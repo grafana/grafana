@@ -74,7 +74,7 @@ function(angular, _, config) {
       var original = self.original;
 
       // ignore timespan changes
-      current.services.filter.time = original.services.filter.time = {};
+      current.time = original.time = {};
 
       current.refresh = original.refresh;
 

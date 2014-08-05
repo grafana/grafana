@@ -18,11 +18,9 @@ define([],
         rows: [],
         pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
         nav: [ { type: 'timepicker' } ],
-        services: {
-          filter: {
-            time: {},
-            list: []
-          }
+        time: {},
+        templating: {
+          list: []
         },
         refresh: true
       };

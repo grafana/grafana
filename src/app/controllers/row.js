@@ -13,10 +13,8 @@ function (angular, app, _) {
       title: "Row",
       height: "150px",
       collapse: false,
-      collapsable: true,
       editable: true,
       panels: [],
-      notice: false
     };
 
     _.defaults($scope.row,_d);
@@ -26,16 +24,11 @@ function (angular, app, _) {
     };
 
     $scope.toggle_row = function(row) {
-      if(!row.collapsable) {
-        return;
-      }
       row.collapse = row.collapse ? false : true;
       if (!row.collapse) {
         $timeout(function() {
           $scope.$broadcast('render');
         });
-      } else {
-        row.notice = false;
       }
     };
 
