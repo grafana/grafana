@@ -13,10 +13,10 @@
 - [Issue #344](https://github.com/grafana/grafana/issues/344). Annotations: Annotations can now be fetched from non default datasources
 - [Issue #631](https://github.com/grafana/grafana/issues/631). Search: max_results config.js option & scroll in search results (To show more or all dashboards)
 - [Issue #511](https://github.com/grafana/grafana/issues/511). Text panel: Allow [[..]] filter notation in all text panels (markdown/html/text)
-- [Issue #136](https://github.com/grafana/grafana/issues/136). Chart: New legend display option "Align as table"
-- [Issue #556](https://github.com/grafana/grafana/issues/556). Chart: New legend display option "Right side", will show legend to the right of the graph
-- [Issue #604](https://github.com/grafana/grafana/issues/604). Chart: New axis format, 'bps' (SI unit in steps of 1000) useful for network gear metics
-- [Issue #626](https://github.com/grafana/grafana/issues/626). Chart: Downscale y axis to more precise unit, value of 0.1 for seconds format will be formated as 100 ms. Thanks @kamaradclimber
+- [Issue #136](https://github.com/grafana/grafana/issues/136). Graph: New legend display option "Align as table"
+- [Issue #556](https://github.com/grafana/grafana/issues/556). Graph: New legend display option "Right side", will show legend to the right of the graph
+- [Issue #604](https://github.com/grafana/grafana/issues/604). Graph: New axis format, 'bps' (SI unit in steps of 1000) useful for network gear metics
+- [Issue #626](https://github.com/grafana/grafana/issues/626). Graph: Downscale y axis to more precise unit, value of 0.1 for seconds format will be formated as 100 ms. Thanks @kamaradclimber
 - [Issue #618](https://github.com/grafana/grafana/issues/618). OpenTSDB: Series alias option to override metric name returned from opentsdb. Thanks @heldr
 
 **Documentation**
@@ -29,8 +29,8 @@
 - [Issue #532](https://github.com/grafana/grafana/issues/532). Schema: Dashboard schema changes, "Unsaved changes" should not appear for schema changes. All changes are backward compatible with old schema.
 
 **Fixes**
-- [Issue #545](https://github.com/grafana/grafana/issues/545). Chart: Fix formatting negative values (axis formats, legend values)
-- [Issue #460](https://github.com/grafana/grafana/issues/460). Chart: fix for max legend value when max value is zero
+- [Issue #545](https://github.com/grafana/grafana/issues/545). Graph: Fix formatting negative values (axis formats, legend values)
+- [Issue #460](https://github.com/grafana/grafana/issues/460). Graph: fix for max legend value when max value is zero
 - [Issue #628](https://github.com/grafana/grafana/issues/628). Filtering: Fix for nested filters, changing a child filter could result in infinite recursion in some cases
 - [Issue #528](https://github.com/grafana/grafana/issues/528). Graphite: Fix for graphite expressions parser failure when metric expressions starts with curly brace segment
 
