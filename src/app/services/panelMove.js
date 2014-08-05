@@ -18,7 +18,7 @@ function (angular, _) {
 
     /* each of these can take event,ui,data parameters */
     p.onStart = function() {
-      this.dashboard.panelDragging =  true;
+      this.dashboard.$$panelDragging =  true;
       $rootScope.$apply();
     };
 
@@ -48,7 +48,7 @@ function (angular, _) {
         dropRow.splice(dropIndex,0,data.dragItem);
       }
 
-      this.dashboard.panelDragging = false;
+      this.dashboard.$$panelDragging = false;
       // Cleanup nulls/undefined left behind
       this.cleanup();
       $rootScope.$apply();
@@ -56,7 +56,7 @@ function (angular, _) {
     };
 
     p.onStop = function() {
-      this.dashboard.panelDragging = false;
+      this.dashboard.$$panelDragging = false;
       this.cleanup();
       $rootScope.$apply();
     };
