@@ -6,7 +6,6 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
-
   var module = angular.module('kibana.controllers');
 
   module.controller('OpenTSDBTargetCtrl', function($scope, $timeout) {
@@ -113,11 +112,6 @@ function (angular, _, kbn) {
       return errs;
     }
 
-
-
-
   });
 
-
 });
-

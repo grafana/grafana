@@ -38,7 +38,6 @@ function (angular, _, kbn) {
         });
       });
 
-
       return this.performTimeSeriesQuery(queries, start, end)
         .then(function(response) {
           var result = _.map(response.data, function(metricData) {
@@ -84,7 +83,6 @@ function (angular, _, kbn) {
 
     function transformMetricData(md, groupByTags) {
       var dps = [];
-
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
       _.each(md.dps, function (v, k) {
@@ -105,8 +103,8 @@ function (angular, _, kbn) {
           target = target + "{" + tagData.join(", ") + "}";
         }
       }
-
-      return {metric: md.metric, target: target, datapoints: dps, aggregateTags: md.aggregateTags };
+      var candTags = md.aggregateTags.concat(Object.keys(md.tags));
+      return {metric: md.metric, target: target, datapoints: dps, aggregateTags: candTags };
     }
 
     function convertTargetToQuery(target) {

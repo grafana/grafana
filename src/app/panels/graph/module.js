@@ -312,8 +312,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         });
     };
 
-    
-
     $scope.aggregateTags = $scope.aggregateTags || {} ;
 
     $scope.seriesHandler = function(seriesData, index) {
@@ -326,9 +324,9 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         alias: alias,
         color:  color,
         enable: true,
-        yaxis: yaxis
+        yaxis: yaxis,
       };
-      
+
       if (!$scope.aggregateTags[seriesData.metric]) {
         $scope.aggregateTags[seriesData.metric] = seriesData.aggregateTags;
       }
