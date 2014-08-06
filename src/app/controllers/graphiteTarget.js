@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GraphiteTargetCtrl', function($scope) {
+  module.controller('GraphiteTargetCtrl', function($scope, $sce) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';
@@ -90,19 +90,7 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          var node = {
-            type: segment.type,
-            val: segment.value,
-            html: segment.value
-          };
-          if (segment.value === '*') {
-            node.html = '<i class="icon-asterisk"><i>';
-          }
-          if (segment.type === 'template') {
-            node.val = node.html = '[[' + segment.value + ']]';
-            node.html = "<span style='color: #ECEC09'>" + node.html + "</span>";
-          }
-          return node;
+          return new MetricSegment(segment);
         });
       }
     }
@@ -111,13 +99,13 @@ function (angular, _, config, gfunc, Parser) {
       var arr = $scope.segments.slice(0, index);
 
       return _.reduce(arr, function(result, segment) {
-        return result ? (result + "." + segment.val) : segment.val;
+        return result ? (result + "." + segment.value) : segment.value;
       }, "");
     }
 
     function checkOtherSegments(fromIndex) {
       if (fromIndex === 0) {
-        $scope.segments.push({html: 'select metric'});
+        $scope.segments.push(new MetricSegment('select metric'));
         return;
       }
 
@@ -126,12 +114,12 @@ function (angular, _, config, gfunc, Parser) {
         .then(function(segments) {
           if (segments.length === 0) {
             $scope.segments = $scope.segments.splice(0, fromIndex);
-            $scope.segments.push({html: 'select metric'});
+            $scope.segments.push(new MetricSegment('select metric'));
             return;
           }
           if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
-              $scope.segments.push({html: 'select metric'});
+              $scope.segments.push(new MetricSegment('select metric'));
             }
             else {
               return checkOtherSegments(fromIndex + 1);
@@ -161,21 +149,19 @@ function (angular, _, config, gfunc, Parser) {
 
       return $scope.datasource.metricFindQuery($scope.filter, query)
         .then(function(segments) {
-          _.each(segments, function(segment) {
-            segment.html = segment.val = segment.text;
+          $scope.altSegments = _.map(segments, function(segment) {
+            return new MetricSegment({ value: segment.text, expandable: segment.expandable });
           });
 
           _.each($scope.filter.templateParameters, function(templateParameter) {
-            segments.unshift({
+            $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
-              html: '[[' + templateParameter.name + ']]',
-              val: '[[' + templateParameter.name + ']]',
+              value: '[[' + templateParameter.name + ']]',
               expandable: true,
-            });
+            }));
           });
 
-          segments.unshift({val: '*', html: '<i class="icon-asterisk"></i>', expandable: true });
-          $scope.altSegments = segments;
+          $scope.altSegments.unshift(new MetricSegment('*'));
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
@@ -185,7 +171,7 @@ function (angular, _, config, gfunc, Parser) {
     $scope.setSegment = function (altIndex, segmentIndex) {
       delete $scope.parserError;
 
-      $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
+      $scope.segments[segmentIndex].value = $scope.altSegments[altIndex].value;
       $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
@@ -283,6 +269,33 @@ function (angular, _, config, gfunc, Parser) {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);
     };
+
+    function MetricSegment(options) {
+      if (options === '*' || options.value === '*') {
+        this.value = '*';
+        this.html = $sce.trustAsHtml('<i class="icon-asterisk"><i>');
+        this.expandable = true;
+        return;
+      }
+
+      if (_.isString(options)) {
+        this.value = options;
+        this.html = $sce.trustAsHtml(this.value);
+        return;
+      }
+
+      this.value = options.value;
+      this.type = options.type;
+      this.expandable = options.expandable;
+
+      if (options.type === 'template') {
+        this.value = '[[' + options.value + ']]';
+        this.html = $sce.trustAsHtml("<span style='color: #ECEC09'>" + this.value + "</span>");
+      }
+      else {
+        this.html = $sce.trustAsHtml(this.value);
+      }
+    }
 
   });
 
