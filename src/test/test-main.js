@@ -16,10 +16,10 @@ require.config({
     filesaver:             '../vendor/filesaver',
 
     angular:               '../vendor/angular/angular',
+    'angular-route':       '../vendor/angular/angular-route',
     angularMocks:          '../vendor/angular/angular-mocks',
     'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
-    'angular-sanitize':       '../vendor/angular/angular-sanitize',
     timepicker:               '../vendor/angular/timepicker',
     datepicker:               '../vendor/angular/datepicker',
     bindonce:                 '../vendor/angular/bindonce',
@@ -81,7 +81,7 @@ require.config({
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
 
-    'angular-sanitize':     ['angular'],
+    'angular-route':        ['angular'],
     'angular-cookies':      ['angular'],
     'angular-dragdrop':     ['jquery','jquery-ui','angular'],
     'angular-loader':       ['angular'],
@@ -101,11 +101,11 @@ require.config({
 
 require([
   'angular',
+  'angular-route',
   'angularMocks',
   'jquery',
   'underscore',
   'bootstrap',
-  'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
@@ -113,8 +113,8 @@ require([
 ], function(angular) {
   'use strict';
 
-  angular.module('grafana', []);
-  angular.module('grafana.services', ['$strap.directives']);
+  angular.module('grafana', ['ngRoute']);
+  angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
 
