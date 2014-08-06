@@ -1,0 +1,20 @@
+<div	ng-controller='OverviewCtrl'
+			style="min-height:{{panel.height || row.height}}"
+			ng-class="{'panel-fullscreen': fullscreen}">
+
+	<h2>hello</h2>
+
+  <div class="clearfix"></div>
+
+  <div class="panel-full-edit-tabs" ng-if="editMode">
+    <div ng-model="editor.index" bs-tabs>
+      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
+      </div>
+    </div>
+
+    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+      <div ng-include src="tab.src"></div>
+    </div>
+  </div>
+
+</div>
