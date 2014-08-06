@@ -31,16 +31,20 @@
 
         <ul class="dropdown-menu">
           <!-- Relative time options -->
-          <li ng-repeat='timespan in panel.time_options track by $index'>
-            <a ng-click="setRelativeFilter(timespan)">Last {{timespan}}</a>
+          <li bindonce ng-repeat='timespan in panel.time_options track by $index'>
+            <a ng-click="setRelativeFilter(timespan)" bo-text="'Last ' + timespan"></a>
           </li>
 
           <!-- Auto refresh submenu -->
           <li class="dropdown-submenu">
             <a href="#">Auto-Refresh</a>
             <ul class="dropdown-menu">
-              <li><a ng-click="dashboard.set_interval(false)">Off</a></li>
-              <li ng-repeat="interval in panel.refresh_intervals track by $index"><a ng-click="dashboard.set_interval(interval)">Every {{interval}}</a></li>
+              <li>
+                <a ng-click="dashboard.set_interval(false)">Off</a>
+              </li>
+              <li bindonce ng-repeat="interval in panel.refresh_intervals track by $index">
+                <a ng-click="dashboard.set_interval(interval)" bo-text="'Every ' + interval"></a>
+              </li>
             </ul>
           </li>
           <li><a ng-click="customTime()">Custom</a></li>

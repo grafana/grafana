@@ -14,6 +14,7 @@ function (angular, $, config, _) {
     $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
+    $scope.panelNames = config.panels;
 
     $scope.init = function() {
       $scope.availablePanels = config.panels;
