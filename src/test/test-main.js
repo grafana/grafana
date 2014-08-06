@@ -1,9 +1,3 @@
-for (var file in window.__karma__.files) {
-  if (/spec\.js$/.test(file)) {
-    tests.push(file.replace(/^\/base\//, 'http://localhost:9876/base/'));
-  }
-}
-
 require.config({
   baseUrl: 'http://localhost:9876/base/app',
 
@@ -93,7 +87,6 @@ require.config({
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],
-    'angular-route':        ['angular'],
     'angular-touch':        ['angular'],
     'bindonce':             ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
@@ -111,6 +104,13 @@ require([
   'app',
 ], function(angular) {
   'use strict';
+
+  for (var file in window.__karma__.files) {
+    if (/spec\.js$/.test(file)) {
+      window.tests.push(file.replace(/^\/base\//, 'http://localhost:9876/base/'));
+    }
+  }
+
 
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
