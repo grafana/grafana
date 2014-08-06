@@ -23,7 +23,7 @@ function (angular, app, _, require) {
   var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
 
-  module.controller('text', function($scope, filterSrv) {
+  module.controller('text', function($scope, filterSrv, $sce) {
 
     $scope.panelMeta = {
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
@@ -81,7 +81,7 @@ function (angular, app, _, require) {
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = filterSrv.applyTemplateToTarget(html);
+        $scope.content = $sce.trustAsHtml(filterSrv.applyTemplateToTarget(html));
 
         if(!$scope.$$phase) {
           $scope.$apply();
