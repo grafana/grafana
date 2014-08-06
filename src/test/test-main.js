@@ -1,5 +1,11 @@
+for (var file in window.__karma__.files) {
+  if (/spec\.js$/.test(file)) {
+    tests.push(file.replace(/^\/base\//, 'http://localhost:9876/base/'));
+  }
+}
+
 require.config({
-  baseUrl: 'base/app',
+  baseUrl: 'http://localhost:9876/base/app',
 
   paths: {
     specs:                 '../test/specs',
@@ -101,15 +107,8 @@ require.config({
 
 require([
   'angular',
-  'angular-route',
   'angularMocks',
-  'jquery',
-  'underscore',
-  'bootstrap',
-  'angular-strap',
-  'angular-dragdrop',
-  'extend-jquery',
-  'bindonce'
+  'app',
 ], function(angular) {
   'use strict';
 

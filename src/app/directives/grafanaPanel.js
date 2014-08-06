@@ -2,14 +2,13 @@ define([
   'angular',
   'jquery',
   'underscore',
-  '../controllers/panelBaseCtrl'
 ],
-function (angular, $, _, PanelBaseCtrl) {
+function (angular, $) {
   'use strict';
 
   angular
     .module('grafana.directives')
-    .directive('grafanaPanel', function($compile, $timeout, $rootScope, $injector) {
+    .directive('grafanaPanel', function($compile) {
 
       var container = '<div class="panel-container"></div>';
       var content = '<div class="panel-content"></div>';
@@ -79,10 +78,6 @@ function (angular, $, _, PanelBaseCtrl) {
             elem.unbind();
             elem.remove();
           });
-
-          newScope.initBaseController = function(self, scope) {
-            $injector.invoke(PanelBaseCtrl, self, { $scope: scope });
-          };
 
           $scope.$watch(attr.type, function (name) {
             elem.addClass("ng-cloak");

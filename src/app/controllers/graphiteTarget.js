@@ -289,8 +289,7 @@ function (angular, _, config, gfunc, Parser) {
       this.expandable = options.expandable;
 
       if (options.type === 'template') {
-        this.value = '[[' + options.value + ']]';
-        this.html = $sce.trustAsHtml("<span style='color: #ECEC09'>" + this.value + "</span>");
+        this.html = $sce.trustAsHtml("<span style='color: #ECEC09'>" + options.value + "</span>");
       }
       else {
         this.html = $sce.trustAsHtml(this.value);

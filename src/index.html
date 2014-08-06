@@ -14,7 +14,7 @@
     <script src="app/components/require.config.js"></script>
     <!-- endbuild -->
 
-    <script>require(['app'], function () {})</script>
+    <script>require(['app'], function (app) { app.boot(); })</script>
 
   </head>
 

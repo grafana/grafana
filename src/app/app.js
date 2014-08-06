@@ -78,42 +78,43 @@ function (angular, $, _, appLevelRequire, config) {
     apps_deps.push(module_name);
   });
 
-  // load the core components
-  require([
-    'controllers/all',
-    'directives/all',
-    'filters/all',
-    'components/partials',
-    'routes/all',
-  ], function () {
+  app.boot = function() {
+    require([
+      'controllers/all',
+      'directives/all',
+      'filters/all',
+      'components/partials',
+      'routes/all',
+    ], function () {
 
-    // bootstrap the app
-    angular
-      .element(document)
-      .ready(function() {
-        angular.bootstrap(document, apps_deps)
-          .invoke(['$rootScope', function ($rootScope) {
-            _.each(pre_boot_modules, function (module) {
-              _.extend(module, register_fns);
-            });
-            pre_boot_modules = false;
-
-            $rootScope.requireContext = appLevelRequire;
-            $rootScope.require = function (deps, fn) {
-              var $scope = this;
-              $scope.requireContext(deps, function () {
-                var deps = _.toArray(arguments);
-                // Check that this is a valid scope.
-                if($scope.$id) {
-                  $scope.$apply(function () {
-                    fn.apply($scope, deps);
-                  });
-                }
+      // bootstrap the app
+      angular
+        .element(document)
+        .ready(function() {
+          angular.bootstrap(document, apps_deps)
+            .invoke(['$rootScope', function ($rootScope) {
+              _.each(pre_boot_modules, function (module) {
+                _.extend(module, register_fns);
               });
-            };
-          }]);
-      });
-  });
+              pre_boot_modules = false;
+
+              $rootScope.requireContext = appLevelRequire;
+              $rootScope.require = function (deps, fn) {
+                var $scope = this;
+                $scope.requireContext(deps, function () {
+                  var deps = _.toArray(arguments);
+                  // Check that this is a valid scope.
+                  if($scope.$id) {
+                    $scope.$apply(function () {
+                      fn.apply($scope, deps);
+                    });
+                  }
+                });
+              };
+            }]);
+        });
+    });
+  };
 
   return app;
 });

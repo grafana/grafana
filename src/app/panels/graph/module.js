@@ -35,7 +35,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('graph', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -175,7 +175,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         query_as_alias: true
       },
 
-      targets: [],
+      targets: [{}],
 
       aliasColors: {},
       aliasYAxis: {},
@@ -188,35 +188,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.legend, _d.legend);
 
     $scope.init = function() {
-      $scope.initBaseController(this, $scope);
-
-      $scope.fullscreen = false;
-      $scope.editor = { index: 1 };
-      $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
+      panelSrv.init($scope);
       $scope.hiddenSeries = {};
-
-      $scope.datasources = datasourceSrv.getMetricSources();
-      $scope.setDatasource($scope.panel.datasource);
-
-      if ($scope.panel.targets.length === 0) {
-        $scope.panel.targets.push({});
-      }
-    };
-
-    $scope.setDatasource = function(datasource) {
-      $scope.panel.datasource = datasource;
-      $scope.datasource = datasourceSrv.get(datasource);
-
-      if (!$scope.datasource) {
-        $scope.panel.error = "Cannot find datasource " + datasource;
-        return;
-      }
-
-      $scope.get_data();
-    };
-
-    $scope.removeTarget = function (target) {
-      $scope.panel.targets = _.without($scope.panel.targets, target);
       $scope.get_data();
     };
 
@@ -246,7 +219,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
-        datasource: $scope.panel.datasource,
         cacheTimeout: $scope.panel.cacheTimeout
       };
 
@@ -320,10 +292,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       return series;
-    };
-
-    $scope.add_target = function() {
-      $scope.panel.targets.push({target: ''});
     };
 
     $scope.otherPanelInFullscreenMode = function() {
@@ -400,6 +368,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
+    $scope.init();
   });
 
 });
