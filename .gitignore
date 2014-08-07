@@ -4,6 +4,7 @@ coverage/
 dist
 
 public
+gin-bin
 # locally required config files
 web.config
 config.js
