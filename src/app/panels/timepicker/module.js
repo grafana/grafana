@@ -78,6 +78,7 @@ function (angular, app, _, moment, kbn) {
       // Assume the form is valid since we're setting it to something valid
       $scope.input.$setValidity("dummy", true);
       $scope.temptime = cloneTime($scope.time);
+      $scope.tempnow = $scope.panel.now;
 
       // Date picker needs the date to be at the start of the day
       $scope.temptime.from.date.setHours(1,0,0,0);
@@ -129,7 +130,7 @@ function (angular, app, _, moment, kbn) {
       // Create filter object
       var _filter = _.clone(time);
 
-      if($scope.panel.now) {
+      if($scope.tempnow) {
         _filter.to = "now";
       }
 

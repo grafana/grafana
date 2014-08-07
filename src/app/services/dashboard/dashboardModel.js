@@ -28,6 +28,7 @@ function (angular, $, kbn, _) {
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.templating = data.templating || { list: [] };
+      this.refresh = data.refresh;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
