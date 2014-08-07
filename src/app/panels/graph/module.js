@@ -19,6 +19,7 @@ define([
   'kbn',
   'moment',
   './timeSeries',
+  'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
   'jquery.flot',
@@ -35,7 +36,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graph', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -190,12 +191,14 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.init = function() {
       panelSrv.init($scope);
       $scope.hiddenSeries = {};
-      $scope.get_data();
+      if (!$scope.skipDataOnInit) {
+        $scope.get_data();
+      }
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = this.filter.timeRange();
-      $scope.rangeUnparsed = this.filter.timeRange(false);
+      $scope.range = $scope.filter.timeRange();
+      $scope.rangeUnparsed = $scope.filter.timeRange(false);
       $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
       $scope.interval = '10m';
 
