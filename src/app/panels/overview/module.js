@@ -37,7 +37,9 @@ function (angular, app, _) {
     $scope.init = function() {
       panelSrv.init(this);
 
-      $scope.get_data();
+      if (!$scope.skipDataOnInit) {
+        $scope.get_data();
+      }
       //$scope.$on('refresh', $scope.render);
       //$scope.render();
     };
