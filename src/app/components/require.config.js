@@ -2,7 +2,7 @@
  * Bootstrap require with the needed config, then load the app.js module.
  */
 require.config({
-  baseUrl: 'app',
+  baseUrl: 'public/app',
 
   paths: {
     config:                   ['../config', '../config.sample'],

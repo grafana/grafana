@@ -3,6 +3,7 @@ define([
   'lodash',
   'config',
   './graphite/graphiteDatasource',
+  './grafana/grafanaDatasource',
   './influxdb/influxdbDatasource',
   './opentsdb/opentsdbDatasource',
   './elasticsearch/es-datasource',
@@ -64,8 +65,8 @@ function (angular, _, config) {
       case 'opentsdb':
         Datasource = $injector.get('OpenTSDBDatasource');
         break;
-      case 'elasticsearch':
-        Datasource = $injector.get('ElasticDatasource');
+      case 'grafana':
+        Datasource = $injector.get('GrafanaDatasource');
         break;
       }
       return new Datasource(ds);
