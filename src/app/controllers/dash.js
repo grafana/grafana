@@ -42,6 +42,11 @@ function (angular, $, config, _) {
 
       window.document.title = 'Grafana - ' + $scope.dashboard.title;
 
+      // start auto refresh
+      if($scope.dashboard.refresh) {
+        $scope.dashboard.set_interval($scope.dashboard.refresh);
+      }
+
       dashboardKeybindings.shortcuts($scope);
 
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
