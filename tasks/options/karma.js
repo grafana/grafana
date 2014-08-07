@@ -3,7 +3,6 @@ module.exports = function(config) {
     dev: {
       configFile: 'src/test/karma.conf.js',
       singleRun: false,
-      browsers: ['PhantomJS']
     },
     debug: {
       configFile: 'src/test/karma.conf.js',
@@ -12,8 +11,17 @@ module.exports = function(config) {
     },
     test: {
       configFile: 'src/test/karma.conf.js',
-      singleRun: true,
-      browsers: ['PhantomJS']
+    },
+    coveralls: {
+      configFile: 'src/test/karma.conf.js',
+      reporters: ['dots','coverage','coveralls'],
+      preprocessors: {
+        'src/app/**/*.js': ['coverage']
+      },
+      coverageReporter: {
+        type: 'lcov',
+        dir: 'coverage/'
+      }
     }
   };
 };
