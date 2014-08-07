@@ -8,5 +8,13 @@ module.exports = function(config) {
         keepalive: true
       }
     },
+    dist: {
+      options: {
+        port: 5605,
+        hostname: '*',
+        base: config.destDir,
+        keepalive: true
+      }
+    },
   }
 };

@@ -49,7 +49,6 @@ module.exports = function(config,grunt) {
         'settings',
         'bootstrap',
         'modernizr',
-        'elasticjs',
         'timepicker',
         'datepicker',
         'underscore',
@@ -59,27 +58,19 @@ module.exports = function(config,grunt) {
         'angular-strap',
         'directives/all',
         'jquery.flot.pie',
-        'angular-sanitize',
         'angular-dragdrop',
       ]
     }
   ];
 
   var fs = require('fs');
-  var panelPath = config.srcDir + '/app/panels';
+  var panelPath = config.srcDir+'/app/panels'
 
-  if (fs.existsSync(panelPath)) {
-
-    // create a module for each directory in src/app/panels/
-    fs.readdirSync(panelPath).forEach(function (panelName) {
-      requireModules[0].include.push('panels/'+panelName+'/module');
-      requireModules[0].include.push('text!panels/'+panelName+'/module.html');
-    });
-
-  }
-  else {
-    console.log("Warning ould not find panel path");
-  }
+  // create a module for each directory in src/app/panels/
+  fs.readdirSync(panelPath).forEach(function (panelName) {
+    requireModules[0].include.push('panels/'+panelName+'/module');
+    requireModules[0].include.push('text!panels/'+panelName+'/module.html');
+  });
 
   // exclude the literal config definition from all modules
   requireModules

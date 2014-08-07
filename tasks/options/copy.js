@@ -6,18 +6,6 @@ module.exports = function(config) {
       expand: true,
       src: ['**/*', '!**/*.less', '!config.js'],
       dest: '<%= tempDir %>'
-    },
-    oss: {
-    	cwd: 'grafana/src',
-    	expand: true,
-    	src: [
-        '**/*',
-        '!app/routes/**',
-        '!config.js',
-        '!app/app.js',
-        '!index.html'
-      ],
-    	dest: 'public'
     }
   };
 };
