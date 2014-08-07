@@ -4,7 +4,7 @@ module.exports = function(config) {
   config.set({
     basePath: '../',
 
-    frameworks: ['mocha', 'requirejs', 'expect'],
+    frameworks: ['mocha', 'requirejs', 'expect', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
@@ -25,6 +25,6 @@ module.exports = function(config) {
     autoWatch: true,
     browsers: ['Chrome'],
     captureTimeout: 60000,
-    singleRun: false
+    singleRun: false,
   });
 };
