@@ -3,7 +3,12 @@
 			ng-class="{'panel-fullscreen': fullscreen}">
 
 	<h2>hello</h2>
-
+	<div class="overview-series-list">
+		<div class="overview-series-item" ng-repeat="series in series">
+      <h2>{{series.info.alias}}</h2>
+      <strong>{{series.info.avg}} Avg</strong>
+		</div>
+	</div>
   <div class="clearfix"></div>
 
   <div class="panel-full-edit-tabs" ng-if="editMode">

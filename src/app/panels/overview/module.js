@@ -2,9 +2,10 @@ define([
   'angular',
   'app',
   'underscore',
-  'services/panelSrv'
+  '../graph/timeSeries',
+  'services/panelSrv',
 ],
-function (angular, app, _) {
+function (angular, app, _, timeSeries) {
   'use strict';
 
   var module = angular.module('grafana.panels.overview', []);
@@ -69,39 +70,26 @@ function (angular, app, _) {
 
     $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
-      var data = _.map(results.data, $scope.seriesHandler);
-      $scope.render(data);
+      $scope.series = _.map(results.data, $scope.seriesHandler);
+
+      console.log($scope.series);
     };
 
-    $scope.seriesHandler = function(seriesData, index) {
+    $scope.seriesHandler = function(seriesData) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
-      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
       var seriesInfo = {
         alias: alias,
-        color:  color,
         enable: true,
-        yaxis: yaxis
       };
-
-      $scope.legend.push(seriesInfo);
 
       var series = new timeSeries.ZeroFilled({
         datapoints: datapoints,
         info: seriesInfo,
       });
 
-      if (datapoints && datapoints.length > 0) {
-        var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
-        var from = moment.utc($scope.range.from);
-        if (last - from < -10000) {
-          $scope.datapointsOutside = true;
-        }
-
-        $scope.datapointsCount += datapoints.length;
-      }
+      series.points = series.getFlotPairs('connected', 'short');
 
       return series;
     };
