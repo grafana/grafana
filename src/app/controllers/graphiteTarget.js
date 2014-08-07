@@ -249,7 +249,7 @@ function (angular, _, config, gfunc, Parser) {
         return;
       }
       for(var i = 0; i < $scope.segments.length; i++) {
-        if ($scope.segments[i].val.indexOf('*') >= 0)  {
+        if ($scope.segments[i].value.indexOf('*') >= 0)  {
           func.params[0] = i;
           func.added = false;
           $scope.targetChanged();
