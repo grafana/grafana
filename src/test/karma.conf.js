@@ -4,7 +4,7 @@ module.exports = function(config) {
   config.set({
     basePath: '../',
 
-    frameworks: ['mocha', 'requirejs', 'expect'],
+    frameworks: ['mocha', 'requirejs', 'expect', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [

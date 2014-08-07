@@ -58,6 +58,8 @@
   },
   "license": "Apache License",
   "dependencies": {
-    "grunt-jscs-checker": "^0.4.4"
+    "grunt-jscs-checker": "^0.4.4",
+    "karma-sinon": "^1.0.3",
+    "sinon": "^1.10.3"
   }
 }

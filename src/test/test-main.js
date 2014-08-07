@@ -121,6 +121,7 @@ require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
+    'specs/graphiteTargetCtrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardModel-specs',
