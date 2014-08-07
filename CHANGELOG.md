@@ -1,3 +1,8 @@
+# 1.7.0 (unreleased)
+
+**Fixes**
+- [Issue #655](https://github.com/grafana/grafana/issues/655). General: Auto refresh not initiated / started after dashboard loading
+
 # 1.7.0-rc1 (2014-08-05)
 
 **New features or improvements**
