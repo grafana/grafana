@@ -327,7 +327,7 @@ function (angular, $, kbn, moment, _) {
           return "%H:%M";
         }
 
-        var $tooltip = $('<div>');
+        var $tooltip = $('<div id="tooltip">');
 
         elem.bind("plothover", function (event, pos, item) {
           var group, value, timestamp, seriesInfo, format;
@@ -357,11 +357,8 @@ function (angular, $, kbn, moment, _) {
             timestamp = dashboard.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
               moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
-            $tooltip
-              .html(
-                group + value + " @ " + timestamp
-              )
-              .place_tt(pos.pageX, pos.pageY);
+
+            $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
           } else {
             $tooltip.detach();
           }

@@ -19,9 +19,8 @@ function ($) {
 
         $tooltip.addClass('grafana-tooltip');
 
-        if (!$.contains(document.body, $tooltip[0])) {
-          $tooltip.appendTo(document.body);
-        }
+        $("#tooltip").remove();
+        $tooltip.appendTo(document.body);
 
         width = $tooltip.outerWidth(true);
         height = $tooltip.outerHeight(true);

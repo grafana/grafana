@@ -61,6 +61,12 @@ function(angular, $) {
         if (popups.length > 0) {
           return;
         }
+        // close modals
+        var modalData = $(".modal").data();
+        if (modalData && modalData.$scope && modalData.$scope.dismiss) {
+          modalData.$scope.dismiss();
+        }
+
         scope.emitAppEvent('panel-fullscreen-exit');
       }, { inputDisabled: true });
     };
