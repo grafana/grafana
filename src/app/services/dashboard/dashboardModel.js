@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'kbn',
-  'underscore',
+  'lodash',
   '../timer',
 ],
 function (angular, $, kbn, _) {

@@ -1,7 +1,7 @@
 define([
   'angular',
   'config',
-  'underscore',
+  'lodash',
 ],
 function (angular, config, _) {
   "use strict";

@@ -8,8 +8,8 @@ require.config({
     kbn:                   'components/kbn',
 
     settings:              'components/settings',
-    underscore:            'components/underscore.extended',
-    'underscore-src':      '../vendor/underscore',
+    lodash:                'components/lodash.extended',
+    'lodash-src':          '../vendor/lodash',
 
     moment:                '../vendor/moment',
     chromath:              '../vendor/chromath',
@@ -47,10 +47,6 @@ require.config({
   },
 
   shim: {
-    underscore: {
-      exports: '_'
-    },
-
     bootstrap: {
       deps: ['jquery']
     },

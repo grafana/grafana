@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'moment',
   'config',
   'filesaver'

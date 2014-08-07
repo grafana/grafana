@@ -1,5 +1,5 @@
 define([
-  'underscore',
+  'lodash',
   'kbn'
 ],
 function (_, kbn) {

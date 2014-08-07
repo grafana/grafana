@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'config',
-  'underscore',
+  'lodash',
   'services/all',
 ],
 function (angular, $, config, _) {

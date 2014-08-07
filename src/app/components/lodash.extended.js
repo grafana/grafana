@@ -1,5 +1,5 @@
 define([
-  'underscore-src'
+  'lodash-src'
 ],
 function () {
   'use strict';

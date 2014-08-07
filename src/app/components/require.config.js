@@ -23,8 +23,8 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    underscore:               'components/underscore.extended',
-    'underscore-src':         '../vendor/underscore',
+    lodash:                   'components/lodash.extended',
+    'lodash-src':             '../vendor/lodash',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
     jquery:                   '../vendor/jquery/jquery-1.8.0',
@@ -46,9 +46,6 @@ require.config({
 
   },
   shim: {
-    underscore: {
-      exports: '_'
-    },
 
     spectrum: {
       deps: ['jquery']

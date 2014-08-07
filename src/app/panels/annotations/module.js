@@ -6,7 +6,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   './editor'
 ],
 function (angular, app, _) {

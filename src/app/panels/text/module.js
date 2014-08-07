@@ -13,7 +13,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'require',
   'services/filterSrv'
 ],

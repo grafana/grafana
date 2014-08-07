@@ -4,7 +4,7 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'lodash'
 ],
 function (angular, app, _) {
   'use strict';
