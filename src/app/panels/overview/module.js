@@ -1,7 +1,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   '../graph/timeSeries',
   'services/panelSrv',
 ],
