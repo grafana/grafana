@@ -1,0 +1,3 @@
+[submodule "grafana"]
+	path = grafana
+	url = git@github.com:torkelo/grafana-private.git
