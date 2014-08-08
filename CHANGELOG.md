@@ -6,6 +6,7 @@
 - [Issue #655](https://github.com/grafana/grafana/issues/655). General: Auto refresh not initiated / started after dashboard loading
 - [Issue #657](https://github.com/grafana/grafana/issues/657). General: Fix for refresh icon in IE browsers
 - [Issue #661](https://github.com/grafana/grafana/issues/661). Annotations: Elasticsearch querystring with filter template replacements was not interpolated
+- [Issue #660](https://github.com/grafana/grafana/issues/660). OpenTSDB: fix opentsdb queries that returned more than one series
 
 # 1.7.0-rc1 (2014-08-05)
 
