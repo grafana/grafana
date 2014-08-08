@@ -5,6 +5,7 @@
 - [Issue #450](https://github.com/grafana/grafana/issues/450). Graph: Tooltip does not disappear sometimes and would get stuck
 - [Issue #655](https://github.com/grafana/grafana/issues/655). General: Auto refresh not initiated / started after dashboard loading
 - [Issue #657](https://github.com/grafana/grafana/issues/657). General: Fix for refresh icon in IE browsers
+- [Issue #661](https://github.com/grafana/grafana/issues/661). Annotations: Elasticsearch querystring with filter template replacements was not interpolated
 
 # 1.7.0-rc1 (2014-08-05)
 
