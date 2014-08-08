@@ -73,8 +73,9 @@ function (angular, _, $, config, kbn, moment) {
         to: rangeUnparsed.to,
       };
 
+      var queryInterpolated = filterSrv.applyTemplateToTarget(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
-      var query = { "bool": { "should": [{ "query_string": { "query": queryString } }] } };
+      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
       var data = { "query" : { "filtered": { "query" : query, "filter": filter } }, "size": 100 };
 
       return this._request('POST', '/_search', annotation.index, data).then(function(results) {
