@@ -121,7 +121,7 @@ require([
     'specs/graph-ctrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
-    'specs/dashboardModel-specs',
+    'specs/dashboardSrv-specs',
     'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();

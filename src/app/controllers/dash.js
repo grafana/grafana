@@ -11,7 +11,7 @@ function (angular, $, config, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboard, panelMoveSrv, timer) {
+    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -26,7 +26,7 @@ function (angular, $, config, _) {
 
       $rootScope.fullscreen = false;
 
-      $scope.dashboard = dashboard.create(dashboardData);
+      $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.grafana.style = $scope.dashboard.style;
 
       $scope.filter = filterSrv;
