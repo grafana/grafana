@@ -37,8 +37,8 @@ define([
           }
         };
 
-        self.scope.colors = [];
-        for (var i = 0; i < 50; i++) { self.scope.colors.push('#' + i); }
+        $rootScope.colors = [];
+        for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }
 
         self.$q = $q;
         self.scope.skipDataOnInit = true;

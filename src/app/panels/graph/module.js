@@ -267,7 +267,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
+      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
       var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
       var seriesInfo = {
