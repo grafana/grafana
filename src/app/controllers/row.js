@@ -6,17 +6,15 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('RowCtrl', function($scope, $rootScope, $timeout) {
     var _d = {
       title: "Row",
       height: "150px",
       collapse: false,
-      collapsable: true,
       editable: true,
       panels: [],
-      notice: false
     };
 
     _.defaults($scope.row,_d);
@@ -26,16 +24,11 @@ function (angular, app, _) {
     };
 
     $scope.toggle_row = function(row) {
-      if(!row.collapsable) {
-        return;
-      }
       row.collapse = row.collapse ? false : true;
       if (!row.collapse) {
         $timeout(function() {
           $scope.$broadcast('render');
         });
-      } else {
-        row.notice = false;
       }
     };
 
@@ -76,12 +69,12 @@ function (angular, app, _) {
 
     $scope.delete_row = function() {
       if (confirm("Are you sure you want to delete this row?")) {
-        $scope.dashboard.current.rows = _.without($scope.dashboard.current.rows, $scope.row);
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
       }
     };
 
     $scope.move_row = function(direction) {
-      var rowsList = $scope.dashboard.current.rows;
+      var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);
       var newIndex = rowIndex + direction;
       if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
@@ -116,12 +109,12 @@ function (angular, app, _) {
         row.panels.push(angular.copy(panel));
       }
       else {
-        var rowsList = $scope.dashboard.current.rows;
+        var rowsList = $scope.dashboard.rows;
         var rowIndex = _.indexOf(rowsList, row);
         if (rowIndex === rowsList.length - 1) {
           var newRow = angular.copy($scope.row);
           newRow.panels = [];
-          $scope.dashboard.current.rows.push(newRow);
+          $scope.dashboard.rows.push(newRow);
           $scope.duplicatePanel(panel, newRow);
         }
         else {
@@ -130,28 +123,9 @@ function (angular, app, _) {
       }
     };
 
-    /** @scratch /panels/0
-     * [[panels]]
-     * = Panels
-     *
-     * [partintro]
-     * --
-     * *Kibana* dashboards are made up of blocks called +panels+. Panels are organized into rows
-     * and can serve many purposes, though most are designed to provide the results of a query or
-     * multiple queries as a visualization. Other panels may show collections of documents or
-     * allow you to insert instructions for your users.
-     *
-     * Panels can be configured easily via the Kibana web interface. For more advanced usage, such
-     * as templated or scripted dashboards, documentation of panel properties is available in this
-     * section. You may find settings here which are not exposed via the web interface.
-     *
-     * Each panel type has its own properties, hover there are several that are shared.
-     *
-    */
-
     $scope.reset_panel = function(type) {
       var
-        defaultSpan = 4,
+        defaultSpan = 12,
         _as = 12-$scope.rowSpan($scope.row);
 
       $scope.panel = {

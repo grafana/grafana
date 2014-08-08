@@ -6,9 +6,9 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.service('playlistSrv', function(dashboard, $location, $rootScope) {
+  module.service('playlistSrv', function($location, $rootScope) {
     var timerInstance;
     var favorites = { dashboards: [] };
 
@@ -33,17 +33,17 @@ function (angular, _, kbn) {
       }
     };
 
-    this.isCurrentFavorite = function() {
-      return this._find(dashboard.current.title) ? true : false;
+    this.isCurrentFavorite = function(dashboard) {
+      return this._find(dashboard.title) ? true : false;
     };
 
-    this.markAsFavorite = function() {
-      var existing = this._find(dashboard.current.title);
+    this.markAsFavorite = function(dashboard) {
+      var existing = this._find(dashboard.title);
       this._remove(existing);
 
       favorites.dashboards.push({
         url: $location.path(),
-        title: dashboard.current.title
+        title: dashboard.title
       });
 
       this._save();

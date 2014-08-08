@@ -13,21 +13,14 @@ function (_, crypto) {
      * @type {Object}
      */
     var defaults = {
-      elasticsearch                 : "http://"+window.location.hostname+":9200",
-      datasources                   : {
-        default: {
-          url: "http://"+window.location.hostname+":8080",
-          default: true
-        }
-      },
+      datasources                   : {},
       panels                        : ['graph', 'text'],
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
-      grafana_index                 : 'grafana-dash',
-      elasticsearch_all_disabled    : false,
-      timezoneOffset                : null,
       playlist_timespan             : "1m",
-      unsaved_changes_warning       : true
+      unsaved_changes_warning       : true,
+      search                        : { max_results: 20 },
+      admin                         : {}
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to
@@ -57,13 +50,21 @@ function (_, crypto) {
       return datasource;
     };
 
+    // backward compatible with old config
     if (options.graphiteUrl) {
-      settings.datasources = {
-        graphite: {
-          type: 'graphite',
-          url: options.graphiteUrl,
-          default: true
-        }
+      settings.datasources.graphite = {
+        type: 'graphite',
+        url: options.graphiteUrl,
+        default: true
+      };
+    }
+
+    if (options.elasticsearch) {
+      settings.datasources.elasticsearch = {
+        type: 'elasticsearch',
+        url: options.elasticsearch,
+        index: options.grafana_index,
+        grafanaDB: true
       };
     }
 
@@ -72,10 +73,6 @@ function (_, crypto) {
       parseBasicAuth(datasource);
       if (datasource.type === 'influxdb' || datasource.type === 'mon') { parseMultipleHosts(datasource); }
     });
-
-    var elasticParsed = parseBasicAuth({ url: settings.elasticsearch });
-    settings.elasticsearchBasicAuth = elasticParsed.basicAuth;
-    settings.elasticsearch = elasticParsed.url;
 
     if (settings.plugins.panels) {
       settings.panels = _.union(settings.panels, settings.plugins.panels);

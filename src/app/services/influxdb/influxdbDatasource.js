@@ -7,7 +7,7 @@ define([
 function (angular, _, kbn, InfluxSeries) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.factory('InfluxDatasource', function($q, $http) {
 
@@ -21,6 +21,14 @@ function (angular, _, kbn, InfluxSeries) {
       this.templateSettings = {
         interpolate : /\[\[([\s\S]+?)\]\]/g,
       };
+
+      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
+      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
+
+      this.grafanaDB = datasource.grafanaDB;
+      this.supportAnnotations = true;
+      this.supportMetrics = true;
+      this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
     }
 
     InfluxDatasource.prototype.query = function(filterSrv, options) {
@@ -106,7 +114,7 @@ function (angular, _, kbn, InfluxSeries) {
         }
 
         var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
-        return this.doInfluxRequest(query, alias).then(handleResponse);
+        return this._seriesQuery(query).then(handleResponse);
 
       }, this);
 
@@ -116,8 +124,17 @@ function (angular, _, kbn, InfluxSeries) {
 
     };
 
+    InfluxDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+      var timeFilter = getTimeFilter({ range: rangeUnparsed });
+      var query = _.template(annotation.query, { timeFilter: timeFilter }, this.templateSettings);
+
+      return this._seriesQuery(query).then(function(results) {
+        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+      });
+    };
+
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      return this.doInfluxRequest('select * from /' + seriesName + '/ limit 1').then(function(data) {
+      return this._seriesQuery('select * from /' + seriesName + '/ limit 1').then(function(data) {
         if (!data) {
           return [];
         }
@@ -126,12 +143,12 @@ function (angular, _, kbn, InfluxSeries) {
     };
 
     InfluxDatasource.prototype.listSeries = function() {
-      return this.doInfluxRequest('list series').then(function(data) {
+      return this._seriesQuery('list series').then(function(data) {
         if (!data || data.length === 0) {
           return [];
         }
         // influxdb >= 1.8
-        if (data[0].columns) {
+        if (data[0].points.length > 0) {
           return _.map(data[0].points, function(point) {
             return point[1];
           });
@@ -153,7 +170,7 @@ function (angular, _, kbn, InfluxSeries) {
         return $q.reject(err);
       }
 
-      return this.doInfluxRequest(interpolated)
+      return this._seriesQuery(interpolated)
         .then(function (results) {
           return _.map(results[0].points, function (metric) {
             return {
@@ -177,7 +194,14 @@ function (angular, _, kbn, InfluxSeries) {
       });
     }
 
-    InfluxDatasource.prototype.doInfluxRequest = function(query) {
+    InfluxDatasource.prototype._seriesQuery = function(query) {
+      return this._influxRequest('GET', '/series', {
+        q: query,
+        time_precision: 's',
+      });
+    };
+
+    InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -188,14 +212,18 @@ function (angular, _, kbn, InfluxSeries) {
         var params = {
           u: _this.username,
           p: _this.password,
-          time_precision: 's',
-          q: query
         };
 
+        if (method === 'GET') {
+          _.extend(params, data);
+          data = null;
+        }
+
         var options = {
-          method: 'GET',
-          url:    currentUrl + '/series',
+          method: method,
+          url:    currentUrl + url,
           params: params,
+          data:   data
         };
 
         return $http(options).success(function (data) {
@@ -204,6 +232,137 @@ function (angular, _, kbn, InfluxSeries) {
       }, 10);
 
       return deferred.promise;
+    };
+
+    InfluxDatasource.prototype.saveDashboard = function(dashboard) {
+      var tags = dashboard.tags.join(',');
+      var title = dashboard.title;
+      var temp = dashboard.temp;
+      if (temp) { delete dashboard.temp; }
+
+      var data = [{
+        name: 'grafana.dashboard_' + btoa(title),
+        columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard'],
+        points: [[1000000000000, 1, title, tags, angular.toJson(dashboard)]]
+      }];
+
+      if (temp) {
+        return this._saveDashboardTemp(data, title);
+      }
+      else {
+        return this._influxRequest('POST', '/series', data).then(function() {
+          return { title: title, url: '/dashboard/db/' + title };
+        }, function(err) {
+          throw 'Failed to save dashboard to InfluxDB: ' + err.data;
+        });
+      }
+    };
+
+    InfluxDatasource.prototype._saveDashboardTemp = function(data, title) {
+      data[0].name = 'grafana.temp_dashboard_' + btoa(title);
+      data[0].columns.push('expires');
+      data[0].points[0].push(this._getTempDashboardExpiresDate());
+
+      return this._influxRequest('POST', '/series', data).then(function() {
+        var baseUrl = window.location.href.replace(window.location.hash,'');
+        var url = baseUrl + "#dashboard/temp/" + title;
+        return { title: title, url: url };
+      }, function(err) {
+        throw 'Failed to save shared dashboard to InfluxDB: ' + err.data;
+      });
+    };
+
+    InfluxDatasource.prototype._getTempDashboardExpiresDate = function() {
+      var ttlLength = this.saveTempTTL.substring(0, this.saveTempTTL.length - 1);
+      var ttlTerm = this.saveTempTTL.substring(this.saveTempTTL.length - 1, this.saveTempTTL.length).toLowerCase();
+      var expires = Date.now();
+      switch(ttlTerm) {
+        case "m":
+          expires += ttlLength * 60000;
+          break;
+        case "d":
+          expires += ttlLength * 86400000;
+          break;
+        case "w":
+          expires += ttlLength * 604800000;
+          break;
+        default:
+          throw "Unknown ttl duration format";
+      }
+      return expires;
+    };
+
+    InfluxDatasource.prototype.getDashboard = function(id, isTemp) {
+      var queryString = 'select dashboard from "grafana.dashboard_' + btoa(id) + '"';
+
+      if (isTemp) {
+        queryString = 'select dashboard from "grafana.temp_dashboard_' + btoa(id) + '"';
+      }
+
+      return this._seriesQuery(queryString).then(function(results) {
+        if (!results || !results.length) {
+          throw "Dashboard not found";
+        }
+
+        var dashCol = _.indexOf(results[0].columns, 'dashboard');
+        var dashJson = results[0].points[0][dashCol];
+
+        return angular.fromJson(dashJson);
+      }, function(err) {
+        return "Could not load dashboard, " + err.data;
+      });
+    };
+
+    InfluxDatasource.prototype.deleteDashboard = function(id) {
+      return this._seriesQuery('drop series "grafana.dashboard_' + btoa(id) + '"').then(function(results) {
+        if (!results) {
+          throw "Could not delete dashboard";
+        }
+        return id;
+      }, function(err) {
+        return "Could not delete dashboard, " + err.data;
+      });
+    };
+
+    InfluxDatasource.prototype.searchDashboards = function(queryString) {
+      var influxQuery = 'select title, tags from /grafana.dashboard_.*/ where ';
+
+      var tagsOnly = queryString.indexOf('tags!:') === 0;
+      if (tagsOnly) {
+        var tagsQuery = queryString.substring(6, queryString.length);
+        influxQuery = influxQuery + 'tags =~ /.*' + tagsQuery + '.*/i';
+      }
+      else {
+        var titleOnly = queryString.indexOf('title:') === 0;
+        if (titleOnly) {
+          var titleQuery = queryString.substring(6, queryString.length);
+          influxQuery = influxQuery + ' title =~ /.*' + titleQuery + '.*/i';
+        }
+        else {
+          influxQuery = influxQuery + '(tags =~ /.*' + queryString + '.*/i or title =~ /.*' + queryString + '.*/i)';
+        }
+      }
+
+      return this._seriesQuery(influxQuery).then(function(results) {
+        var hits = { dashboards: [], tags: [], tagsOnly: false };
+
+        if (!results || !results.length) {
+          return hits;
+        }
+
+        var dashCol = _.indexOf(results[0].columns, 'title');
+        var tagsCol = _.indexOf(results[0].columns, 'tags');
+
+        for (var i = 0; i < results.length; i++) {
+          var hit =  {
+            id: results[i].points[0][dashCol],
+            tags: results[i].points[0][tagsCol].split(",")
+          };
+          hit.tags = hit.tags[0] ? hit.tags : [];
+          hits.dashboards.push(hit);
+        }
+        return hits;
+      });
     };
 
     function handleInfluxQueryResponse(alias, groupByField, seriesList) {

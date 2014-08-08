@@ -8,15 +8,16 @@ define([
 function (angular, $, kbn, moment, _) {
   'use strict';
 
-  var module = angular.module('kibana.directives');
+  var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope, dashboard) {
+  module.directive('grafanaGraph', function($rootScope) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
         var data, plot, annotations;
         var hiddenData = {};
+        var dashboard = scope.dashboard;
         var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
@@ -38,7 +39,7 @@ function (angular, $, kbn, moment, _) {
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
-          annotations = data.annotations;
+          annotations = data.annotations || annotations;
           render_panel();
         });
 
@@ -166,7 +167,6 @@ function (angular, $, kbn, moment, _) {
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {
-            console.log('delay');
             legendSideLastValue = panel.legend.rightSide;
             setTimeout(function() {
               plot = $.plot(elem, data, options);
@@ -195,7 +195,7 @@ function (angular, $, kbn, moment, _) {
           var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
 
           options.xaxis = {
-            timezone: dashboard.current.timezone,
+            timezone: dashboard.timezone,
             show: scope.panel['x-axis'],
             mode: "time",
             min: min,
@@ -327,7 +327,7 @@ function (angular, $, kbn, moment, _) {
           return "%H:%M";
         }
 
-        var $tooltip = $('<div>');
+        var $tooltip = $('<div id="tooltip">');
 
         elem.bind("plothover", function (event, pos, item) {
           var group, value, timestamp, seriesInfo, format;
@@ -354,14 +354,11 @@ function (angular, $, kbn, moment, _) {
 
             value = kbn.getFormatFunction(format, 2)(value);
 
-            timestamp = dashboard.current.timezone === 'browser' ?
+            timestamp = dashboard.timezone === 'browser' ?
               moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
               moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
-            $tooltip
-              .html(
-                group + value + " @ " + timestamp
-              )
-              .place_tt(pos.pageX, pos.pageY);
+
+            $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
           } else {
             $tooltip.detach();
           }
@@ -370,7 +367,7 @@ function (angular, $, kbn, moment, _) {
         function render_panel_as_graphite_png(url) {
           url += '&width=' + elem.width();
           url += '&height=' + elem.css('height').replace('px', '');
-          url += '&bgcolor=1f1f1f'; // @grayDarker & @kibanaPanelBackground
+          url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
           url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
           url += scope.panel.stack ? '&areaMode=stacked' : '';
           url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';

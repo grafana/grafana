@@ -32,6 +32,12 @@
                 Duplicate
               </a>
             </li>
+            <li role="menuitem">
+              <a  tabindex="1"
+                  ng-click="toggleMetricOptions()">
+                Toggle request options
+              </a>
+            </li>
           </ul>
         </li>
         <li>
@@ -77,29 +83,32 @@
         <li ng-repeat="func in functions">
           <span graphite-func-editor class="grafana-target-segment grafana-target-function">
           </span>
-          <!-- <a  class="grafana-target-segment grafana-target-function dropdown-toggle"
-              bs-popover="'app/partials/graphite/funcEditor.html'"
-              data-placement="bottom">
-            {{func.def.name}}
-          </a> -->
-          <!-- <span class="grafana-target-segment grafana-target-function">
-            <span>{{func.def.name}}(</span><span ng-repeat="param in func.def.params">
-              <input  type="text"
-                      class="input-mini grafana-function-param-input"
-                      dynamic-width
-                      ng-model="func.params[$index]"></input>
-            </span><span>)</span>
-          </span> -->
         </li>
         <li class="dropdown" graphite-add-func>
-
         </li>
       </ul>
-
-
       <div class="clearfix"></div>
     </div>
   </div>
+
+	<div class="grafana-target grafana-metric-options" ng-if="panel.metricOptionsEnabled">
+		<div class="grafana-target-inner">
+			<ul class="grafana-segment-list">
+				<li class="grafana-target-segment">
+					cacheTimeout <tip>Graphite parameter to overwride memcache default timeout (unit is seconds)</tip>
+				</li>
+				<li>
+					<input type="text"
+								class="input-large grafana-target-segment-input"
+								ng-model="panel.cacheTimeout"
+								spellcheck='false'
+								placeholder="60">
+				</li>
+			</ul>
+      <div class="clearfix"></div>
+		</div>
+	</div>
+
 </div>
 
 

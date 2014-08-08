@@ -6,7 +6,7 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.factory('OpenTSDBDatasource', function($q, $http) {
 
@@ -15,6 +15,7 @@ function (angular, _, kbn) {
       this.editorSrc = 'app/partials/opentsdb/editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
+      this.supportMetrics = true;
     }
 
     // Called once per panel (graph)
@@ -38,12 +39,12 @@ function (angular, _, kbn) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end)
-        .then(function(response) {
-          var result = _.map(response.data, function(metricData) {
-            return transformMetricData(metricData, groupByTags);
-          });
+        .then(_.bind(function(response) {
+          var result = _.map(response.data, _.bind(function(metricData, index) {
+            return transformMetricData(metricData, groupByTags, this.targets[index]);
+          }, this));
           return { data: result };
-        });
+        }, options));
     };
 
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
@@ -80,8 +81,20 @@ function (angular, _, kbn) {
       });
     };
 
-    function transformMetricData(md, groupByTags) {
-      var dps = [];
+    function transformMetricData(md, groupByTags, options) {
+      var dps = [],
+          tagData = [],
+          metricLabel = null;
+
+      if (!_.isEmpty(md.tags)) {
+        _.each(_.pairs(md.tags), function(tag) {
+          if (_.has(groupByTags, tag[0])) {
+            tagData.push(tag[0] + "=" + tag[1]);
+          }
+        });
+      }
+
+      metricLabel = createMetricLabel(md.metric, tagData, options);
 
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
@@ -89,22 +102,19 @@ function (angular, _, kbn) {
         dps.push([v, k]);
       });
 
-      var target = md.metric;
-      if (!_.isEmpty(md.tags)) {
-        var tagData = [];
+      return { target: metricLabel, datapoints: dps };
+    }
 
-        _.each(_.pairs(md.tags), function(tag) {
-          if (_.has(groupByTags, tag[0])) {
-            tagData.push(tag[0] + "=" + tag[1]);
-          }
-        });
-
-        if (!_.isEmpty(tagData)) {
-          target = target + "{" + tagData.join(", ") + "}";
-        }
+    function createMetricLabel(metric, tagData, options) {
+      if (!_.isUndefined(options) && options.alias) {
+        return options.alias;
       }
 
-      return { target: target, datapoints: dps };
+      if (!_.isEmpty(tagData)) {
+        metric += "{" + tagData.join(", ") + "}";
+      }
+
+      return metric;
     }
 
     function convertTargetToQuery(target) {

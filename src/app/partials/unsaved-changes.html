@@ -4,7 +4,10 @@
 
   <h3 class="text-center"><i class="icon-warning-sign"></i> Unsaved changes</h3>
   <div class="row-fluid">
-	<span class="span3"></span>
+		<span class="span3">
+			{{changes}}
+
+		</span>
 	<button type="button" class="btn btn-success span2" ng-click="dismiss()">Cancel</button>
 	<button type="button" class="btn btn-success span2" ng-click="save();dismiss();">Save</button>
 	<button type="button" class="btn btn-warning span2" ng-click="ignore();dismiss();">Ignore</button>

@@ -25,7 +25,7 @@
             <span class="pointer" ng-show="panel.now">{{time.to.date | moment:'ago'}}</span>
           </span>
           <span ng-hide="filter.time">Time filter</span>
-          <span ng-show="dashboard.current.refresh" class="text-warning">refreshed every {{dashboard.current.refresh}} </span>
+          <span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
           <i class="icon-caret-down"></i>
         </a>
 
@@ -47,8 +47,8 @@
         </ul>
 
       </li>
-      <li ng-show="!dashboard.current.refresh" class="grafana-menu-refresh">
-        <a class="icon-refresh" ng-click="dashboard.refresh()"></a>
+      <li ng-show="!dashboard.refresh" class="grafana-menu-refresh">
+        <a ng-click="dashboard.emit_refresh()"><i class="icon-refresh"></i></a>
       </li>
     </ul>
 

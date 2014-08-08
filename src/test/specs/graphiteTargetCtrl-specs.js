@@ -5,7 +5,7 @@ define([
   describe('graphiteTargetCtrl', function() {
     var _targetCtrl;
 
-    beforeEach(module('kibana.services'));
+    beforeEach(module('grafana.services'));
     beforeEach(module(function($provide){
       $provide.value('filterSrv',{});
     }));

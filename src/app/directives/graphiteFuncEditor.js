@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('graphiteFuncEditor', function($compile) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';

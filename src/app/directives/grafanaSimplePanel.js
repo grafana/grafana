@@ -6,8 +6,8 @@ function (angular, _) {
   'use strict';
 
   angular
-    .module('kibana.directives')
-    .directive('kibanaSimplePanel', function($compile) {
+    .module('grafana.directives')
+    .directive('grafanaSimplePanel', function($compile) {
       var panelLoading = '<span ng-show="panelMeta.loading == true">' +
         '<span style="font-size:72px;font-weight:200">'+
           '<i class="icon-spinner icon-spin"></i> loading ...' +

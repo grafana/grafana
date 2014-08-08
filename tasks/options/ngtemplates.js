@@ -7,7 +7,7 @@ module.exports = function(config) {
       options: {
         bootstrap: function(module, script) {
           return "define('components/partials', ['angular'], function(angular) { \n" +
-            "angular.module('kibana').run(['$templateCache', function($templateCache) { \n" +
+            "angular.module('grafana').run(['$templateCache', function($templateCache) { \n" +
                 script +
             '\n}]);' +
           '\n});';

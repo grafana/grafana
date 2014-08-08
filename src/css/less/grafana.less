@@ -4,7 +4,7 @@
 
 .hide-controls {
   padding: 0;
-  .grafana-row {
+  .row-control-inner {
     display: none;
   }
   .submenu-controls {
@@ -133,7 +133,7 @@
   top: 54px;
   height: 100%;
   padding: 0 10px;
-  background: @kibanaPanelBackground;
+  background: @grafanaPanelBackground;
   overflow-y: scroll;
   height: 100%;
 
@@ -210,6 +210,13 @@
   margin-left: 30px;
   >li {
     float: left;
+  }
+}
+
+.grafana-metric-options {
+  margin-top: 35px;
+  .grafana-segment-list {
+    margin-left: 0;
   }
 }
 
@@ -460,7 +467,6 @@ select.grafana-target-segment-input {
   width: 200px;
   text-align: center;
   cursor: auto;
-  //background: rgba(50,50,50,0.8);
   padding: 10px;
 }
 
@@ -474,4 +480,17 @@ select.grafana-target-segment-input {
   .hide {
     display: block;
   }
+}
+
+.grafana-tooltip {
+  position : absolute;
+  top: -1000;
+  left: 0;
+  color: #c8c8c8;
+  padding: 10px;
+  font-size: 11pt;
+  font-weight : 200;
+  background-color: rgb(58, 57, 57);
+  border-radius: 5px;
+  z-index: 9999;
 }

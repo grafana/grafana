@@ -1,7 +1,7 @@
 define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, moment) {
   'use strict';
 
-  var module = angular.module('kibana.filters');
+  var module = angular.module('grafana.filters');
 
   module.filter('stringSort', function() {
     return function(input) {

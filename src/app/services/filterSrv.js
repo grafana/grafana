@@ -6,15 +6,9 @@ define([
 ], function (angular, _, config, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.factory('filterSrv', function(dashboard, $rootScope, $timeout, $routeParams) {
-    // defaults
-    var _d = {
-      templateParameters: [],
-      time: {}
-    };
-
+  module.factory('filterSrv', function($rootScope, $timeout, $routeParams) {
     var result = {
 
       updateTemplateData: function(initial) {
@@ -40,7 +34,7 @@ define([
       },
 
       applyTemplateToTarget: function(target) {
-        if (target.indexOf('[[') === -1) {
+        if (!target || target.indexOf('[[') === -1) {
           return target;
         }
 
@@ -53,16 +47,14 @@ define([
         // disable refresh if we have an absolute time
         if (time.to !== 'now') {
           this.old_refresh = this.dashboard.refresh;
-          dashboard.set_interval(false);
+          this.dashboard.set_interval(false);
         }
         else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
-          dashboard.set_interval(this.old_refresh);
+          this.dashboard.set_interval(this.old_refresh);
           this.old_refresh = null;
         }
 
-        $timeout(function() {
-          dashboard.refresh();
-        },0);
+        $timeout(this.dashboard.emit_refresh, 0);
       },
 
       timeRange: function(parse) {
@@ -88,22 +80,18 @@ define([
 
       removeTemplateParameter: function(templateParameter) {
         this.templateParameters = _.without(this.templateParameters, templateParameter);
-        this.dashboard.services.filter.list = this.templateParameters;
+        this.dashboard.templating.list = this.templateParameters;
       },
 
       init: function(dashboard) {
-        _.defaults(this, _d);
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-
-        if(dashboard.services && dashboard.services.filter) {
-          this.time = dashboard.services.filter.time;
-          this.templateParameters = dashboard.services.filter.list || [];
-          this.updateTemplateData(true);
-        }
-
+        this.time = dashboard.time;
+        this.templateParameters = dashboard.templating.list;
+        this.updateTemplateData(true);
       }
     };
+
     return result;
   });
 

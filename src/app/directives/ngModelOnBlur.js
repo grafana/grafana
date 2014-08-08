@@ -3,7 +3,7 @@ function (angular) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('ngModelOnblur', function() {
       return {
         restrict: 'A',

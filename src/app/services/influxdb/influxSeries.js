@@ -8,6 +8,7 @@ function (_) {
     this.seriesList = options.seriesList;
     this.alias = options.alias;
     this.groupByField = options.groupByField;
+    this.annotation = options.annotation;
   }
 
   var p = InfluxSeries.prototype;
@@ -63,6 +64,45 @@ function (_) {
     });
 
     return output;
+  };
+
+  p.getAnnotations = function () {
+    var list = [];
+    var self = this;
+
+    _.each(this.seriesList, function (series) {
+      var titleCol = null;
+      var timeCol = null;
+      var tagsCol = null;
+      var textCol = null;
+
+      _.each(series.columns, function(column, index) {
+        if (column === 'time') { timeCol = index; return; }
+        if (column === 'sequence_number') { return; }
+        if (!titleCol) { titleCol = index; }
+        if (column === self.annotation.titleColumn) { titleCol = index; return; }
+        if (column === self.annotation.tagsColumn) { tagsCol = index; return; }
+        if (column === self.annotation.textColumn) { textCol = index; return; }
+      });
+
+      _.each(series.points, function (point) {
+        var data = {
+          annotation: self.annotation,
+          time: point[timeCol] * 1000,
+          title: point[titleCol],
+          tags: point[tagsCol],
+          text: point[textCol]
+        };
+
+        if (tagsCol) {
+          data.tags = point[tagsCol];
+        }
+
+        list.push(data);
+      });
+    });
+
+    return list;
   };
 
   p.createNameForSeries = function(seriesName, groupByColValue) {

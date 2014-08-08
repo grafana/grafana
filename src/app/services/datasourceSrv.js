@@ -5,54 +5,93 @@ define([
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
   './mon/monDatasource',
-  './opentsdb/opentsdbDatasource'
+  './opentsdb/opentsdbDatasource',
+  './elasticsearch/es-datasource',
 ],
 function (angular, _, config) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, GraphiteDatasource, InfluxDatasource, OpenTSDBDatasource, MonDatasource) {
+  module.service('datasourceSrv', function($q, filterSrv, $http, $injector) {
+    var datasources = {};
+    var metricSources = [];
+    var annotationSources = [];
+    var grafanaDB = {};
 
     this.init = function() {
-      var defaultDatasource = _.findWhere(_.values(config.datasources), { default: true });
-      if (!defaultDatasource) {
-        defaultDatasource = config.datasources[_.keys(config.datasources)[0]];
+      _.each(config.datasources, function(value, key) {
+        datasources[key] = this.datasourceFactory(value);
+        if (value.default) {
+          this.default = datasources[key];
+        }
+      }, this);
+
+      if (!this.default) {
+        this.default = datasources[_.keys(datasources)[0]];
+        this.default.default = true;
       }
-      this.default = this.datasourceFactory(defaultDatasource);
+
+      // create list of different source types
+      _.each(datasources, function(value, key) {
+        if (value.supportMetrics) {
+          metricSources.push({
+            name: value.name,
+            value: value.default ? null : key,
+          });
+        }
+        if (value.supportAnnotations) {
+          annotationSources.push({
+            name: key,
+            editorSrc: value.annotationEditorSrc,
+          });
+        }
+        if (value.grafanaDB) {
+          grafanaDB = value;
+        }
+      });
+
     };
 
     this.datasourceFactory = function(ds) {
-        switch (ds.type) {
-            case 'graphite':
-                return new GraphiteDatasource(ds);
-            case 'influxdb':
-                return new InfluxDatasource(ds);
-            case 'opentsdb':
-              return new OpenTSDBDatasource(ds);
-            case 'mon':
-                return new MonDatasource(ds);
-        }
+      var Datasource = null;
+      switch(ds.type) {
+      case 'graphite':
+        Datasource = $injector.get('GraphiteDatasource');
+        break;
+      case 'influxdb':
+        Datasource = $injector.get('InfluxDatasource');
+        break;
+      case 'opentsdb':
+        Datasource = $injector.get('OpenTSDBDatasource');
+        break;
+      case 'elasticsearch':
+        Datasource = $injector.get('ElasticDatasource');
+        break;
+      case 'mon':
+        Datasource = $injector.get('MonDatasource');
+        break;
+      }
+      return new Datasource(ds);
     };
 
     this.get = function(name) {
       if (!name) { return this.default; }
+      if (datasources[name]) { return datasources[name]; }
 
-      var ds = config.datasources[name];
-      if (!ds) {
-        return null;
-      }
-
-      return this.datasourceFactory(ds);
+      throw "Unable to find datasource: " + name;
     };
 
-    this.listOptions = function() {
-      return _.map(config.datasources, function(value, key) {
-        return {
-          name: value.default ? key + ' (default)' : key,
-          value: value.default ? null : key
-        };
-      });
+    this.getAnnotationSources = function() {
+      return annotationSources;
+    };
+
+    this.getMetricSources = function() {
+      return metricSources;
+    };
+
+    this.getGrafanaDB = function() {
+      return grafanaDB;
     };
 
     this.init();

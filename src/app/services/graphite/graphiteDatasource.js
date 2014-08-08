@@ -9,9 +9,9 @@ define([
 function (angular, _, $, config, kbn, moment) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
+  module.factory('GraphiteDatasource', function($q, $http) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -20,6 +20,10 @@ function (angular, _, $, config, kbn, moment) {
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
       this.render_method = datasource.render_method || 'POST';
+      this.supportAnnotations = true;
+      this.supportMetrics = true;
+      this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
+      this.cacheTimeout = datasource.cacheTimeout;
     }
 
     GraphiteDatasource.prototype.query = function(filterSrv, options) {
@@ -29,6 +33,7 @@ function (angular, _, $, config, kbn, moment) {
           until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
+          cacheTimeout: options.cacheTimeout || this.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
 
@@ -52,6 +57,60 @@ function (angular, _, $, config, kbn, moment) {
       }
       catch(err) {
         return $q.reject(err);
+      }
+    };
+
+    GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+      // Graphite metric as annotation
+      if (annotation.target) {
+        var target = filterSrv.applyTemplateToTarget(annotation.target);
+        var graphiteQuery = {
+          range: rangeUnparsed,
+          targets: [{ target: target }],
+          format: 'json',
+          maxDataPoints: 100
+        };
+
+        return this.query(filterSrv, graphiteQuery)
+          .then(function(result) {
+            var list = [];
+
+            for (var i = 0; i < result.data.length; i++) {
+              var target = result.data[i];
+
+              for (var y = 0; y < target.datapoints.length; y++) {
+                var datapoint = target.datapoints[y];
+                if (!datapoint[0]) { continue; }
+
+                list.push({
+                  annotation: annotation,
+                  time: datapoint[1] * 1000,
+                  title: target.target
+                });
+              }
+            }
+
+            return list;
+          });
+      }
+      // Graphite event as annotation
+      else {
+        var tags = filterSrv.applyTemplateToTarget(annotation.tags);
+        return this.events({ range: rangeUnparsed, tags: tags })
+          .then(function(results) {
+            var list = [];
+            for (var i = 0; i < results.data.length; i++) {
+              var e = results.data[i];
+              list.push({
+                annotation: annotation,
+                time: e.when * 1000,
+                title: e.what,
+                tags: e.tags,
+                text: e.data
+              });
+            }
+            return list;
+          });
       }
     };
 
@@ -152,7 +211,7 @@ function (angular, _, $, config, kbn, moment) {
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
       var clean_options = [];
-      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
+      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
 
       if (options.format !== 'png') {
         options['format'] = 'json';
@@ -171,7 +230,7 @@ function (angular, _, $, config, kbn, moment) {
             }
           }, this);
         }
-        else if (value !== null) {
+        else if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
       }, this);

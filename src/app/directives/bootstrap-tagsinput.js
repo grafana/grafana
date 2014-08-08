@@ -7,7 +7,7 @@ function (angular, $) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('bootstrapTagsinput', function() {
 
       function getItemProperty(scope, property) {
@@ -84,7 +84,7 @@ function (angular, $) {
     });
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('gfDropdown', function ($parse, $compile, $timeout) {
 
       function buildTemplate(items, placement) {

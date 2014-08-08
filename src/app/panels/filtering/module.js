@@ -11,7 +11,7 @@ define([
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.panels.filtering', []);
+  var module = angular.module('grafana.panels.filtering', []);
   app.useModule(module);
 
   module.controller('filtering', function($scope, datasourceSrv, $rootScope, $timeout, $q) {
@@ -43,7 +43,7 @@ function (angular, app, _) {
         .then(function() {
           // only refresh in the outermost call
           if (!recursive) {
-            $scope.dashboard.refresh();
+            $scope.dashboard.emit_refresh();
           }
         });
     };
@@ -53,7 +53,7 @@ function (angular, app, _) {
         if (templateParam === updatedTemplatedParam) {
           return;
         }
-        if (templateParam.query.indexOf(updatedTemplatedParam.name) !== -1) {
+        if (templateParam.query.indexOf('[[' + updatedTemplatedParam.name + ']]') !== -1) {
           return $scope.applyFilter(templateParam);
         }
       });

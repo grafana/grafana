@@ -36,7 +36,7 @@
         <tr ng-repeat="panel in row.panels">
           <td>{{panel.title}}</td>
           <td>{{panel.type}}</td>
-          <td><select ng-hide="panel.sizeable == false" class="input-mini" ng-model="panel.span" ng-options="size for size in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select></td>
+          <td><select ng-hide="panel.sizeable == false" class="input-mini" ng-model="panel.span" ng-options="size for size in [1,2,3,4,5,6,7,8,9,10,11,12]"></select></td>
           <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
@@ -48,7 +48,7 @@
   <div class="row-fluid" ng-if="editor.index == 2">
     <h4>Select Panel Type</h4>
     <form class="form-inline">
-      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in dashboard.availablePanels|stringSort"></select>
+      <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in availablePanels|stringSort"></select>
       <small ng-show="rowSpan(row) > 11">
         Note: This row is full, new panels will wrap to a new line. You should add another row.
       </small>

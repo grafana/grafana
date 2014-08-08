@@ -10,6 +10,10 @@ function (angular, _, $) {
   // when changing arguments to this function
   function PanelBaseCtrl($scope, $rootScope, $timeout) {
 
+    if (!$scope.panel.span) {
+      $scope.panel.span = 12;
+    }
+
     var menu = [
       {
         text: 'Edit',
@@ -86,7 +90,7 @@ function (angular, _, $) {
 
           $timeout(function() {
             if (oldTimeRange !== $scope.range) {
-              $scope.dashboard.refresh();
+              $scope.dashboard.emit_refresh();
             }
             else {
               $scope.$emit('render');

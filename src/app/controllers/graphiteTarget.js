@@ -8,7 +8,7 @@ define([
 function (angular, _, config, gfunc, Parser) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('GraphiteTargetCtrl', function($scope) {
 
@@ -188,6 +188,10 @@ function (angular, _, config, gfunc, Parser) {
       $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
       $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
+      if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
+        $scope.functions = [];
+      }
+
       if ($scope.altSegments[altIndex].expandable) {
         return checkOtherSegments(segmentIndex + 1)
           .then(function () {
@@ -265,6 +269,13 @@ function (angular, _, config, gfunc, Parser) {
           $scope.targetChanged();
           return;
         }
+      }
+    };
+
+    $scope.toggleMetricOptions = function() {
+      $scope.panel.metricOptionsEnabled = !$scope.panel.metricOptionsEnabled;
+      if (!$scope.panel.metricOptionsEnabled) {
+        delete $scope.panel.cacheTimeout;
       }
     };
 

@@ -20,7 +20,7 @@ define([
 function (angular, app, _, require) {
   'use strict';
 
-  var module = angular.module('kibana.panels.text', []);
+  var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
 
   module.controller('text', function($scope, filterSrv) {
@@ -36,7 +36,7 @@ function (angular, app, _, require) {
       style: {},
     };
 
-    _.defaults($scope.panel,_d);
+    _.defaults($scope.panel, _d);
 
     $scope.init = function() {
       $scope.initBaseController(this, $scope);

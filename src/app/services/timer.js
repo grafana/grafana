@@ -5,7 +5,7 @@ define([
 function (angular, _) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.service('timer', function($timeout) {
     // This service really just tracks a list of $timeout promises to give us a

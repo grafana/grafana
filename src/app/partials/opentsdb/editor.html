@@ -43,7 +43,7 @@
         <ul class="grafana-segment-list" role="menu">
           <li>
             <input type="text"
-                   class="input-xxlarge grafana-target-segment-input"
+                   class="grafana-target-segment-input"
                    ng-model="target.metric"
                    spellcheck='false'
                    bs-typeahead="suggestMetrics"
@@ -57,8 +57,9 @@
               <i class="icon-warning-sign"></i>
             </a>
           </li>
-          <li class="grafana-target-segment">
+					<li class="grafana-target-segment">
             Aggregator
+          </li>
           <li>
             <select ng-model="target.aggregator"
                     class="grafana-target-segment-input input-small"
@@ -88,6 +89,20 @@
                    ng-model="target.isCounter"
                    ng-change="targetBlur()">
           </li>
+          <li class="grafana-target-segment">
+            Alias:
+          </li>
+					<li>
+						<input type="text"
+                   class="grafana-target-segment-input input-medium"
+                   ng-model="target.alias"
+                   spellcheck='false'
+                   placeholder="series alias"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                   />
+          </li>
+
         </ul>
 
         <div class="clearfix"></div>

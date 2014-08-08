@@ -8,8 +8,8 @@ function (angular, $, _, PanelBaseCtrl) {
   'use strict';
 
   angular
-    .module('kibana.directives')
-    .directive('kibanaPanel', function($compile, $timeout, $rootScope, $injector) {
+    .module('grafana.directives')
+    .directive('grafanaPanel', function($compile, $timeout, $rootScope, $injector) {
 
       var container = '<div class="panel-container"></div>';
       var content = '<div class="panel-content"></div>';

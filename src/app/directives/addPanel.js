@@ -7,7 +7,7 @@ function (angular, app, _) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('addPanel', function($compile) {
       return {
         restrict: 'A',

@@ -7,16 +7,17 @@ define([
 function (angular, _, config, $) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, dashboard, $element, $location) {
+  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
-      $rootScope.$on('open-search', $scope.openSearch);
+      $scope.db = datasourceSrv.getGrafanaDB();
+      $scope.onAppEvent('open-search', $scope.openSearch);
     };
 
     $scope.keyDown = function (evt) {
@@ -40,7 +41,7 @@ function (angular, _, config, $) {
 
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
-          $location.path("/dashboard/elasticsearch/" + encodeURIComponent(selectedDash._id));
+          $location.path("/dashboard/db/" + selectedDash.id);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
@@ -48,39 +49,21 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.searchDasboards = function(query) {
-      var request = $scope.ejs.Request().indices(config.grafana_index).types('dashboard');
-      var tagsOnly = query.indexOf('tags!:') === 0;
-      if (tagsOnly) {
-        var tagsQuery = query.substring(6, query.length);
-        query = 'tags:' + tagsQuery + '*';
-      }
-      else {
-        if (query.length === 0) {
-          query = 'title:';
-        }
+    $scope.shareDashboard = function(title, id) {
+      var baseUrl = window.location.href.replace(window.location.hash,'');
 
-        if (query[query.length - 1] !== '*') {
-          query += '*';
-        }
-      }
+      $scope.share = {
+        title: title,
+        url: baseUrl + '#dashboard/db/' + encodeURIComponent(id)
+      };
+    };
 
-      return request
-        .query($scope.ejs.QueryStringQuery(query))
-        .sort('_uid')
-        .facet($scope.ejs.TermsFacet("tags").field("tags").order('term').size(50))
-        .size(20).doSearch()
+    $scope.searchDashboards = function(queryString) {
+      return $scope.db.searchDashboards(queryString)
         .then(function(results) {
-
-          if(_.isUndefined(results.hits)) {
-            $scope.results.dashboards = [];
-            $scope.results.tags = [];
-            return;
-          }
-
-          $scope.tagsOnly = tagsOnly;
-          $scope.results.dashboards = results.hits.hits;
-          $scope.results.tags = results.facets.tags.terms;
+          $scope.tagsOnly = results.tagsOnly;
+          $scope.results.dashboards = results.dashboards;
+          $scope.results.tags = results.tags;
         });
     };
 
@@ -107,39 +90,7 @@ function (angular, _, config, $) {
       $scope.showImport = false;
       $scope.selectedIndex = -1;
 
-      var queryStr = $scope.query.query.toLowerCase();
-
-      if (queryStr.indexOf('m:') !== 0) {
-        queryStr = queryStr.replace(' and ', ' AND ');
-        $scope.searchDasboards(queryStr);
-        return;
-      }
-
-      queryStr = queryStr.substring(2, queryStr.length);
-
-      var words = queryStr.split(' ');
-      var query = $scope.ejs.BoolQuery();
-      var terms = _.map(words, function(word) {
-        return $scope.ejs.MatchQuery('metricPath_ng', word).boost(1.2);
-      });
-
-      var ngramQuery = $scope.ejs.BoolQuery();
-      ngramQuery.must(terms);
-
-      var fieldMatchQuery = $scope.ejs.FieldQuery('metricPath', queryStr + "*").boost(1.2);
-      query.should([ngramQuery, fieldMatchQuery]);
-
-      var request = $scope.ejs.Request().indices(config.grafana_index).types('metricKey');
-      var results = request.query(query).size(20).doSearch();
-
-      results.then(function(results) {
-        if (results && results.hits && results.hits.hits.length > 0) {
-          $scope.results.metrics = { metrics: results.hits.hits };
-        }
-        else {
-          $scope.results.metrics = { metric: [] };
-        }
-      });
+      $scope.searchDashboards($scope.query.query);
     };
 
     $scope.openSearch = function (evt) {
@@ -153,7 +104,7 @@ function (angular, _, config, $) {
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
-      dashboard.current.rows.push({
+      $scope.dashboard.rows.push({
         title: '',
         height: '250px',
         editable: true,

@@ -41,7 +41,6 @@ require.config({
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
 
     modernizr:                '../vendor/modernizr-2.6.1',
-    elasticjs:                '../vendor/elasticjs/elastic-angular-client',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
@@ -100,8 +99,6 @@ require.config({
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
-
-    elasticjs:              ['angular', '../vendor/elasticjs/elastic'],
 
     'bootstrap-tagsinput':          ['jquery'],
   },

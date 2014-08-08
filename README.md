@@ -1,7 +1,6 @@
 This project is a fork of the [Grafana](http://grafana.org) project focused on adding support for the hpcloud-mon monitoring API as a new data source. Currently, this is working.
 
-[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana) [![Gittip](http://img.shields.io/gittip/torkelo.svg)](https://www.gittip.com/torkelo)
-
+[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png?branch=develop)](https://coveralls.io/r/grafana/grafana?branch=develop)
 [Website](http://grafana.org) |
 [Twitter](http://twitter.com/grafana) |
 [IRC](http://webchat.freenode.net/?channels=grafana) |
@@ -15,13 +14,10 @@ Graphite, InfluxDB & OpenTSDB.
 ## Features
 ### Graphite Target Editor
 - Graphite target expression parser
-- Quickly add / edit / remove function ([video demo](http://youtu.be/I90WHRwE1ZM))
-- Function parameters can be easily changed
-- Quickly navigate graphite metric structure
-- Templating
-- Integrated links to function documentation
-- Rearrange function order
-- Native Graphite PNG render support
+- Feature rich query composer
+- Quickly add and edit functions & parameters
+- Templated queries
+- [See it in action](http://grafana.org/docs/features/graphite)
 
 ### Graphing
 - Fast rendering, even over large timespans.
@@ -32,101 +28,50 @@ Graphite, InfluxDB & OpenTSDB.
 - Series toggles & color selector
 - Legend values, and formating options
 - Grid thresholds, axis labels
-- [Annotations] (https://github.com/grafana/grafana/wiki/Annotations)
+- [Annotations](http://grafana.org/docs/features/annotations)
 
 ### Dashboards
-- Create and edit dashboards
-- Drag and drop graphs to rearrange
-- Set column spans and row heights
-- Save & [search dashboards](https://github.com/grafana/grafana/wiki/Search-features)
+- Create, edit, save & search dashboards
+- Change column spans and row heights
+- Drag and drop panels to rearrange
+- Use InfluxDB or Elasticsearch as dashboard storage
 - Import & export dashboard (json file)
 - Import dashboard from Graphite
 - Templating
-- [Scripted dashboards](https://github.com/grafana/grafana/wiki/Scripted-dashboards) (generate from js script and url parameters)
-- Flexible [time range controls](https://github.com/grafana/grafana/wiki/Time-range-controls)
-- [Dashboard playlists](https://github.com/grafana/grafana/wiki/Dashboard-playlist)
+- [Scripted dashboards](http://grafana.org/docs/features/scripted_dashboards)
+- [Dashboard playlists](http://grafana.org/docs/docs/features/playlist)
+- [Time range controls](http://grafana.org/docs/features/time_range)
 
 ### InfluxDB
-- [Use InfluxDB](https://github.com/grafana/grafana/wiki/InfluxDB) as metric datasource
+- Use InfluxDB as a metric data source, annotation source and for dashboard storage
 - Query editor with series and column typeahead, easy group by and function selection
 
 ### OpenTSDB
+- Use as metric data source
 - Query editor with metric name typeahead and tag filtering
 
 # Requirements
-Grafana is very easy to install. It is a client side web app with no backend. Any webserver will do. Optionally you will need ElasticSearch if you want to be able to save and load dashboards quickly instead of json files or local storage.
+There are no dependencies, Grafana is a client side application that runs in your browser. It only needs a time series store where it can fetch metrics. If you use InfluxDB Grafana can use it to store dashboards. If you use Graphite or OpenTSDB you can use Elasticsearch to store dashboards or just use json files stored on disk.
 
 # Installation
-- Download and extract the [latest release](https://github.com/grafana/grafana/releases).
-- Rename `config.sample.js` to `config.js`, then change `graphiteUrl` and `elasticsearch` to point to the correct urls. The urls entered here must be reachable by your browser.
-- Point your browser to the installation.
+Head to [grafana.org](http://grafana.org) and [download](http://grafana.org/download/)
+the latest release.
 
-To run from master:
-- Clone this repository
-- Start a web server in src folder
-- Or create a optimized & minified build:
- - npm install (requires nodejs)
- - grunt build (requires grunt-cli)
+Then follow the quick [setup & config guide](http://grafana.org/docs/). If you have any problems please
+read the [troubleshooting guide](http://grafana.org/docs/troubleshooting).
 
-If you use ansible for provisioning and deployment [ansible-grafana](https://github.com/bobrik/ansible-grafana) should get you started.
+# Documentation & Support
+Be sure to read the [getting started guide](http://grafana.org/docs/features/intro) and the other
+feature guides.
 
-When you have Grafana up an running, read the [Getting started](https://github.com/grafana/grafana/wiki/Getting-started) guide for
-an introduction on how to use Grafana and/or watch [this video](https://www.youtube.com/watch?v=OUvJamHeMpw) for a guide in creating a new dashboard and for creating
-templated dashboards.
-
-# Graphite server config
-If you haven't used an alternative dashboard for graphite before you need to enable cross-domain origin request. For Apache 2.x:
-```
-Header set Access-Control-Allow-Origin "*"
-Header set Access-Control-Allow-Methods "GET, OPTIONS"
-Header set Access-Control-Allow-Headers "origin, authorization, accept"
-```
-Note that using "\*" leaves your graphite instance quite open so you might want to consider using "http://my.graphite-dom.ain" in place of "\*"
-
-Here is the same thing, in nginx format:
-```
-add_header  "Access-Control-Allow-Origin" "*";
-add_header  "Access-Control-Allow-Credentials" "true";
-add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
-add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
-```
-If your Graphite web is protected by basic authentication, you have to enable the HTTP verb OPTIONS, origin
-(no wildcards are allowed in this case) and add Access-Control-Allow-Credentials. This looks like the following for Apache:
-```
-Header set Access-Control-Allow-Origin "http://mygrafana.com:5656"
-Header set Access-Control-Allow-Credentials true
-
-<Location />
-    AuthName "graphs restricted"
-    AuthType Basic
-    AuthUserFile /etc/apache2/htpasswd
-    <LimitExcept OPTIONS>
-      require valid-user
-    </LimitExcept>
-</Location>
-```
-And in nginx:
-```
-auth_basic            "Restricted";
-auth_basic_user_file  /path/to/my/htpasswd/file;
-if ($http_origin ~* (https?://[^/]*\.somedomain\.com(:[0-9]+)?)) {  #Test if request is from allowed domain, you can use multiple if
-    set $cors "true";                                               #statements to allow multiple domains, simply setting $cors to true in each one.
-}
-if ($cors = 'true') {
-    add_header  Access-Control-Allow-Origin $http_origin;           #this mirrors back whatever domain the request came from as authorized, as
-    add_header  "Access-Control-Allow-Credentials" "true";          #as long as it matches one of your if statements
-    add_header  "Access-Control-Allow-Methods" "GET, OPTIONS";
-    add_header  "Access-Control-Allow-Headers" "Authorization, origin, accept";
-}
-```
 # Roadmap
-- Improve and refine the target parser and editing
-- Improve graphite import feature
+- Improve graphite query editor to handle all types of queries
 - Refine and simplify common tasks
 - More panel types (not just graphs)
-- Use elasticsearch to search for metrics
-- Improve template support
-- Annotate graph by querying ElasticSearch for events (or other event sources)
+- Improve templating support
+- Alerting
+- Optional backend component
+- Much much more! (what ever gets votes on github issues!)
 
 # Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
@@ -135,9 +80,10 @@ Clone repository:
 - npm install
 - grunt server (starts development web server in src folder)
 - grunt (runs jshint and less -> css compilation)
+- npm test runs jshint, and unit tests
 
-# Notice
-This software is based on the great log dashboard [kibana](https://github.com/elasticsearch/kibana).
+Before submitting a PR be sure that there are no jshint or unit test failures.
+And [sign the CLA](http://grafana.org/docs/contributing/cla.html)
 
 # License
 Grafana is distributed under Apache 2.0 License.

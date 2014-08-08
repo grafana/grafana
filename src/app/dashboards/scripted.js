@@ -28,16 +28,13 @@ timspan = '1d';
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
   rows : [],
-  services : {}
 };
 
 // Set a title
 dashboard.title = 'Scripted dash';
-dashboard.services.filter = {
-  time: {
-    from: "now-" + (ARGS.from || timspan),
-    to: "now"
-  }
+dashboard.time = {
+  from: "now-" + (ARGS.from || timspan),
+  to: "now"
 };
 
 var rows = 1;
@@ -59,7 +56,7 @@ for (var i = 0; i < rows; i++) {
     panels: [
       {
         title: 'Events',
-        type: 'graphite',
+        type: 'graph',
         span: 12,
         fill: 1,
         linewidth: 2,
