@@ -106,7 +106,7 @@ function (angular, _, kbn) {
     }
 
     function createMetricLabel(metric, tagData, options) {
-      if (options.alias) {
+      if (!_.isUndefined(options) && options.alias) {
         return options.alias;
       }
 
