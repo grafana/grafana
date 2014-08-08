@@ -1,11 +1,12 @@
 package httpApi
 
 import (
+	"html/template"
+
 	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
+	"github.com/torkelo/grafana-pro/backend/models"
 	"github.com/torkelo/grafana-pro/backend/stores"
-	"html/template"
-	"net/http"
 )
 
 type HttpServer struct {
@@ -22,26 +23,36 @@ func NewHttpServer(port string, store stores.Store) *HttpServer {
 	return self
 }
 
+func CacheHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Add("Cache-Control", "max-age=0, public, must-revalidate, proxy-revalidate")
+	}
+}
+
 func (self *HttpServer) ListenAndServe() {
 	log.Info("Starting Http Listener on port %v", self.port)
 
 	defer func() { self.shutdown <- true }()
 
 	r := gin.Default()
-	r.HTMLTemplates = template.New("templates")
-	r.HTMLTemplates.Delims("[[", "]]")
-	r.HTMLTemplates.ParseFiles("./views/index.html")
+	r.Use(CacheHeadersMiddleware())
+
+	templates := template.New("templates")
+	templates.Delims("[[", "]]")
+	templates.ParseFiles("./views/index.html")
+
+	r.SetHTMLTemplate(templates)
 
 	r.GET("/", self.index)
 	r.GET("/api/dashboards/:id", self.getDashboard)
-	r.ServeFiles("/public/*filepath", http.Dir("./public"))
-	r.ServeFiles("/app/*filepath", http.Dir("./public/app"))
-	r.ServeFiles("/img/*filepath", http.Dir("./public/img"))
+	r.GET("/api/search/", self.search)
+	r.POST("/api/dashboard", self.postDashboard)
 
-	err := http.ListenAndServe(":"+self.port, r)
-	if err != nil {
-		log.Error("Listen: ", err)
-	}
+	r.Static("/public", "./public")
+	r.Static("/app", "./public/app")
+	r.Static("/img", "./public/img")
+
+	r.Run(":" + self.port)
 }
 
 type IndexViewModel struct {
@@ -62,7 +73,34 @@ func (self *HttpServer) getDashboard(c *gin.Context) {
 	dash, err := self.store.GetById(id)
 	if err != nil {
 		c.JSON(404, &ErrorRsp{Message: "Dashboard not found"})
+		return
 	}
 
 	c.JSON(200, dash.Data)
+}
+
+func (self *HttpServer) search(c *gin.Context) {
+	query := c.Params.ByName("q")
+
+	results, err := self.store.Query(query)
+	if err != nil {
+		c.JSON(500, &ErrorRsp{Message: "Search error"})
+		return
+	}
+
+	c.JSON(200, results)
+}
+
+func (self *HttpServer) postDashboard(c *gin.Context) {
+	var command saveDashboardCommand
+
+	if c.EnsureBody(&command) {
+		err := self.store.Save(&models.Dashboard{Data: command.Dashboard})
+		if err == nil {
+			c.JSON(200, gin.H{"status": "saved"})
+			return
+		}
+	}
+
+	c.JSON(500, gin.H{"error": "bad request"})
 }

@@ -37,6 +37,7 @@ func NewFileStore(dataDir string) *fileStore {
 	store.dataDir = dataDir
 	store.dashDir = dashDir
 	store.cache = make(map[string]*models.Dashboard)
+	go store.scanFiles()
 
 	return store
 }
@@ -94,7 +95,7 @@ func (store *fileStore) Save(dash *models.Dashboard) error {
 
 	var err error
 	var data []byte
-	if data, err = json.Marshal(dash); err != nil {
+	if data, err = json.Marshal(dash.Data); err != nil {
 		return err
 	}
 
@@ -127,6 +128,8 @@ func loadDashboardFromFile(filename string) (*models.Dashboard, error) {
 }
 
 func (store *fileStore) getFilePathForDashboard(id string) string {
+	id = strings.ToLower(id)
+	id = strings.Replace(id, " ", "-", -1)
 	return filepath.Join(store.dashDir, id) + ".json"
 }
 

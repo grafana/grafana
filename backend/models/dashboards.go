@@ -10,8 +10,9 @@ type Dashboard struct {
 }
 
 type SearchResult struct {
-	Type string
-	Id   string
+	Type  string `json:"title"`
+	Id    string `json:"id"`
+	Title string `json:"title"`
 }
 
 func NewDashboard(title string) *Dashboard {
@@ -40,8 +41,7 @@ type DashboardServicesFilter struct {
 }
 
 type DashboardServicesFilterTime struct {
-	From string `json:"title"`
-	To	string
+	From string 	To	string
 }*/
 
 func (dash *Dashboard) GetString(prop string) string {
