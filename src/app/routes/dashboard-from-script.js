@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'config',
-  'underscore',
+  'lodash',
   'kbn',
   'moment'
 ],

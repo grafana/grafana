@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',

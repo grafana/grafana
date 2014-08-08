@@ -1,7 +1,7 @@
 define([
   'angular',
   'jquery',
-  'underscore',
+  'lodash',
 ],
 function (angular, $) {
   'use strict';

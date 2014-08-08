@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
   '../services/graphite/gfunc',
   '../services/graphite/parser'

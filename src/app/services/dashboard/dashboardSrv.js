@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'kbn',
-  'underscore',
+  'lodash',
   '../timer',
 ],
 function (angular, $, kbn, _) {
@@ -10,7 +10,7 @@ function (angular, $, kbn, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('dashboard', function(timer, $rootScope, $timeout) {
+  module.service('dashboardSrv', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
 

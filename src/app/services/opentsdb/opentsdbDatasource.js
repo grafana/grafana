@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'kbn'
 ],
 function (angular, _, kbn) {

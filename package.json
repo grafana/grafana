@@ -36,6 +36,8 @@
     "karma": "~0.12.16",
     "karma-chrome-launcher": "~0.1.4",
     "karma-coffee-preprocessor": "~0.1.2",
+    "karma-coverage": "^0.2.5",
+    "karma-coveralls": "^0.1.4",
     "karma-expect": "~1.1.0",
     "karma-firefox-launcher": "~0.1.3",
     "karma-html2js-preprocessor": "~0.1.0",
@@ -54,7 +56,8 @@
     "npm": "1.2.x"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
   "license": "Apache License",
   "dependencies": {

@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: 'http://localhost:9876/base/app',
+  baseUrl: 'http://localhost:9876/base/src/app',
 
   paths: {
     specs:                 '../test/specs',
@@ -8,8 +8,8 @@ require.config({
     kbn:                   'components/kbn',
 
     settings:              'components/settings',
-    underscore:            'components/underscore.extended',
-    'underscore-src':      '../vendor/underscore',
+    lodash:                'components/lodash.extended',
+    'lodash-src':          '../vendor/lodash',
 
     moment:                '../vendor/moment',
     chromath:              '../vendor/chromath',
@@ -47,10 +47,6 @@ require.config({
   },
 
   shim: {
-    underscore: {
-      exports: '_'
-    },
-
     bootstrap: {
       deps: ['jquery']
     },
@@ -122,11 +118,12 @@ require([
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/graph-ctrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
-    'specs/dashboardModel-specs',
+    'specs/dashboardSrv-specs',
+    'specs/influxSeries-specs',
     'specs/overview-ctrl-specs',
-    'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();
   });

@@ -1,4 +1,4 @@
-define(['angular', 'jquery', 'underscore', 'moment'], function (angular, $, _, moment) {
+define(['angular', 'jquery', 'lodash', 'moment'], function (angular, $, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.filters');

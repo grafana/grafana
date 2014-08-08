@@ -4,7 +4,7 @@
 define([
   'angular',
   'jquery',
-  'underscore',
+  'lodash',
   'require',
   'config',
   'bootstrap',
