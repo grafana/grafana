@@ -41,6 +41,26 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
+    GrafanaDatasource.prototype.saveDashboard = function(dashboard) {
+      return $http.post('/api/dashboard/', { dashboard: dashboard })
+        .then(function() {
+            return { title: dashboard.title, url: '/dashboard/db/' + dashboard.title };
+        }, function(data) {
+          throw "Failed to search: " + data;
+        });
+    };
+
+    GrafanaDatasource.prototype.searchDashboards = function(query) {
+      return $http.get('/api/search/', { params: { q: query } })
+        .then(function(results) {
+          var hits = { dashboards: [], tags: [] };
+          hits.dashboards = results.data;
+          return hits;
+        }, function(data) {
+          throw "Failed to search: " + data;
+        });
+    };
+
     return GrafanaDatasource;
 
   });
