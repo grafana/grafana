@@ -118,10 +118,12 @@ require([
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/graph-ctrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
-    'specs/dashboardModel-specs',
-    'specs/influxSeries-specs'
+    'specs/dashboardSrv-specs',
+    'specs/influxSeries-specs',
+    'specs/overview-ctrl-specs',
   ], function () {
     window.__karma__.start();
   });

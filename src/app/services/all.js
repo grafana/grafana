@@ -10,6 +10,6 @@ define([
   './playlistSrv',
   './unsavedChangesSrv',
   './dashboard/dashboardKeyBindings',
-  './dashboard/dashboardModel',
+  './dashboard/dashboardSrv',
 ],
 function () {});
