@@ -118,6 +118,7 @@ require([
     'specs/parser-specs',
     'specs/gfunc-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',

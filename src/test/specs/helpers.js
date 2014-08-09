@@ -6,7 +6,6 @@ define([
   function ControllerTestContext() {
     var self = this;
 
-    this.timeRange = { from:'now-1h', to: 'now'};
     this.datasource = {};
     this.annotationsSrv = {};
     this.datasourceSrv = {
@@ -25,18 +24,7 @@ define([
       return inject(function($controller, $rootScope, $q) {
         self.scope = $rootScope.$new();
         self.scope.panel = {};
-        self.scope.filter = {
-          timeRange: function(parse) {
-            if (!parse) {
-              return self.timeRange;
-            }
-            return {
-              from : kbn.parseDate(self.timeRange.from),
-              to : kbn.parseDate(self.timeRange.to)
-            };
-          }
-        };
-
+        self.scope.filter = new FilterSrvStub();
         $rootScope.colors = [];
         for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }
 
@@ -50,9 +38,42 @@ define([
     };
   }
 
+  function ServiceTestContext() {
+    var self = this;
+
+    this.createService = function(name) {
+      return inject([name, '$q', '$rootScope', '$httpBackend', function(InfluxDatasource, $q, $rootScope, $httpBackend) {
+        self.service = InfluxDatasource;
+        self.$q = $q;
+        self.$rootScope = $rootScope;
+        self.filterSrv = new FilterSrvStub();
+        self.$httpBackend =  $httpBackend;
+      }]);
+    };
+  }
+
+  function FilterSrvStub() {
+    this.time = { from:'now-1h', to: 'now'};
+    this.timeRange = function(parse) {
+      if (!parse) {
+        return this.time;
+      }
+      return {
+        from : kbn.parseDate(this.time.from),
+             to : kbn.parseDate(this.time.to)
+      };
+    };
+
+    this.applyTemplateToTarget = function(target) {
+      return target;
+    };
+  }
+
 
   return {
-    ControllerTestContext: ControllerTestContext
+    ControllerTestContext: ControllerTestContext,
+    FilterSrvStub: FilterSrvStub,
+    ServiceTestContext: ServiceTestContext
   };
 
 });
