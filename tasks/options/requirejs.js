@@ -51,7 +51,7 @@ module.exports = function(config,grunt) {
         'modernizr',
         'timepicker',
         'datepicker',
-        'underscore',
+        'lodash',
         'filters/all',
         'jquery.flot',
         'services/all',
