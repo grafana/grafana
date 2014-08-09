@@ -10,7 +10,7 @@ define([
     beforeEach(module('grafana.services'));
     beforeEach(ctx.createService('InfluxDatasource'));
 
-    describe('query with 2 targets', function() {
+    describe('When querying influxdb with one target using query editor target spec', function() {
       var results;
       var urlExpected = "/series?p=mupp&q=select++mean(value)+from+%22test%22"+
                         "+where++time+%3E+now()+-+1h+++++group+by+time()++order+asc&time_precision=s";
@@ -43,6 +43,32 @@ define([
       });
 
     });
+
+    describe('When querying influxdb with one raw query', function() {
+      var results;
+      var urlExpected = "/series?p=mupp&q=select+value+from+series"+
+                        "+where+time+%3E+now()+-+1h+and+time+%3E+1&time_precision=s";
+      var query = {
+        range: { from: 'now-1h', to: 'now' },
+        targets: [{ query: "select value from series where time > 1", rawQuery: true }]
+      };
+
+      var response = [];
+
+      beforeEach(function() {
+        var ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
+
+        ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+        ds.query(ctx.filterSrv, query).then(function(data) { results = data; });
+        ctx.$httpBackend.flush();
+      });
+
+      it('should generate the correct query', function() {
+        ctx.$httpBackend.verifyNoOutstandingExpectation();
+      });
+
+    });
+
   });
 
 });
