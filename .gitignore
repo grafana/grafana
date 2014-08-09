@@ -2,7 +2,7 @@ node_modules
 coverage/
 .aws-config.json
 dist
-
+data/png
 public
 gin-bin
 # locally required config files
