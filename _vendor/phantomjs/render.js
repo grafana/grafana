@@ -20,7 +20,7 @@ page.viewportSize = {
 };
 
 page.open(params.url, function (status) {
-  console.log('Loading a web page');
+  console.log('Loading a web page: ' + params.url);
 
   setTimeout(function() {
     console.log('rendering panel to ' + params.png);

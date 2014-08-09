@@ -5,6 +5,7 @@ import (
 
 	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
+	"github.com/torkelo/grafana-pro/backend/components"
 	"github.com/torkelo/grafana-pro/backend/models"
 	"github.com/torkelo/grafana-pro/backend/stores"
 )
@@ -13,12 +14,14 @@ type HttpServer struct {
 	port     string
 	shutdown chan bool
 	store    stores.Store
+	renderer *components.PhantomRenderer
 }
 
 func NewHttpServer(port string, store stores.Store) *HttpServer {
 	self := &HttpServer{}
 	self.port = port
 	self.store = store
+	self.renderer = &components.PhantomRenderer{ImagesDir: "data/png", PhantomDir: "_vendor/phantomjs"}
 
 	return self
 }
@@ -47,6 +50,8 @@ func (self *HttpServer) ListenAndServe() {
 	r.GET("/api/dashboards/:id", self.getDashboard)
 	r.GET("/api/search/", self.search)
 	r.POST("/api/dashboard", self.postDashboard)
+
+	r.GET("/api/render", self.renderToPng)
 
 	r.Static("/public", "./public")
 	r.Static("/app", "./public/app")
@@ -77,6 +82,17 @@ func (self *HttpServer) getDashboard(c *gin.Context) {
 	}
 
 	c.JSON(200, dash.Data)
+}
+
+func (self *HttpServer) renderToPng(c *gin.Context) {
+	qs := c.Request.URL.Query()
+	url := qs["url"][0]
+	pngPath, err := self.renderer.RenderToPng(url)
+	if err != nil {
+		c.HTML(500, "error.html", nil)
+	}
+
+	c.File(pngPath)
 }
 
 func (self *HttpServer) search(c *gin.Context) {
