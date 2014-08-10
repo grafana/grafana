@@ -2,10 +2,10 @@ module.exports = function(config) {
   return {
     css: {
       src: [
-        '<%= srcDir %>/css/normalize.min.css',
-        '<%= srcDir %>/css/timepicker.css',
-        '<%= srcDir %>/css/spectrum.css',
-        '<%= srcDir %>/css/animate.min.css',
+        '<%= srcDir %>/vendor/normalize.min.css',
+        '<%= srcDir %>/vendor/timepicker.css',
+        '<%= srcDir %>/vendor/spectrum.css',
+        '<%= srcDir %>/vendor/animate.min.css',
         '<%= srcDir %>/css/bootstrap.dark.min.css'
       ],
       dest: '<%= srcDir %>/css/default.min.css'
