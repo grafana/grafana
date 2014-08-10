@@ -1,5 +1,5 @@
 define([
-  'underscore'
+  'lodash'
 ], function(_) {
   'use strict';
 

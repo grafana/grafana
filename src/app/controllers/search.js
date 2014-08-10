@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
   'jquery'
 ],
@@ -113,7 +113,7 @@ function (angular, _, config, $) {
 
     $scope.openSearch = function (evt) {
       if (evt) {
-        $element.find('.dropdown-toggle').dropdown('toggle');
+        $element.next().find('.dropdown-toggle').dropdown('toggle');
       }
 
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;

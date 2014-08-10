@@ -15,7 +15,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'moment',
   'kbn'
 ],

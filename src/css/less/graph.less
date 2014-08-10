@@ -25,6 +25,21 @@
 .graph-legend-value {
   float: left;
   white-space: nowrap;
+  &.current:before {
+    content: "Current: "
+  }
+  &.max:before {
+    content: "Max: "
+  }
+  &.min:before {
+    content: "Min: "
+  }
+  &.total:before {
+    content: "Total: "
+  }
+  &.avg:before {
+    content: "Avg: "
+  }
 }
 
 .graph-legend-series {

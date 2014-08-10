@@ -14,17 +14,17 @@ require.config({
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
     angular:                  '../vendor/angular/angular',
+    'angular-route':          '../vendor/angular/angular-route',
     'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
-    'angular-sanitize':       '../vendor/angular/angular-sanitize',
     timepicker:               '../vendor/angular/timepicker',
     datepicker:               '../vendor/angular/datepicker',
     bindonce:                 '../vendor/angular/bindonce',
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    underscore:               'components/underscore.extended',
-    'underscore-src':         '../vendor/underscore',
+    lodash:                   'components/lodash.extended',
+    'lodash-src':             '../vendor/lodash',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
     jquery:                   '../vendor/jquery/jquery-1.8.0',
@@ -46,9 +46,6 @@ require.config({
 
   },
   shim: {
-    underscore: {
-      exports: '_'
-    },
 
     spectrum: {
       deps: ['jquery']
@@ -85,8 +82,6 @@ require.config({
     'jquery.flot.stack':    ['jquery', 'jquery.flot'],
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
-
-    'angular-sanitize':     ['angular'],
     'angular-cookies':      ['angular'],
     'angular-dragdrop':     ['jquery','jquery-ui','angular'],
     'angular-loader':       ['angular'],

@@ -1,6 +1,6 @@
 define([
   'mocks/dashboard-mock',
-  'underscore',
+  'lodash',
   'services/filterSrv'
 ], function(dashboardMock, _) {
   'use strict';
@@ -10,7 +10,7 @@ define([
     var _dashboard;
 
     beforeEach(module('grafana.services'));
-    beforeEach(module(function(){
+    beforeEach(module(function() {
       _dashboard = dashboardMock.create();
     }));
 

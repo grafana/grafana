@@ -1,5 +1,5 @@
 define([
-  'services/dashboard/dashboardModel'
+  'services/dashboard/dashboardSrv'
 ], function() {
   'use strict';
 
@@ -8,8 +8,8 @@ define([
 
     beforeEach(module('grafana.services'));
 
-    beforeEach(inject(function(dashboard) {
-      model = dashboard.create({});
+    beforeEach(inject(function(dashboardSrv) {
+      model = dashboardSrv.create({});
     }));
 
     it('should have title', function() {
@@ -30,8 +30,8 @@ define([
 
     beforeEach(module('grafana.services'));
 
-    beforeEach(inject(function(dashboard) {
-      model = dashboard.create({
+    beforeEach(inject(function(dashboardSrv) {
+      model = dashboardSrv.create({
         services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [1] }},
         rows: [
           {

@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: 'base/app',
+  baseUrl: 'http://localhost:9876/base/src/app',
 
   paths: {
     specs:                 '../test/specs',
@@ -8,18 +8,18 @@ require.config({
     kbn:                   'components/kbn',
 
     settings:              'components/settings',
-    underscore:            'components/underscore.extended',
-    'underscore-src':      '../vendor/underscore',
+    lodash:                'components/lodash.extended',
+    'lodash-src':          '../vendor/lodash',
 
     moment:                '../vendor/moment',
     chromath:              '../vendor/chromath',
     filesaver:             '../vendor/filesaver',
 
     angular:               '../vendor/angular/angular',
+    'angular-route':       '../vendor/angular/angular-route',
     angularMocks:          '../vendor/angular/angular-mocks',
     'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
-    'angular-sanitize':       '../vendor/angular/angular-sanitize',
     timepicker:               '../vendor/angular/timepicker',
     datepicker:               '../vendor/angular/datepicker',
     bindonce:                 '../vendor/angular/bindonce',
@@ -47,10 +47,6 @@ require.config({
   },
 
   shim: {
-    underscore: {
-      exports: '_'
-    },
-
     bootstrap: {
       deps: ['jquery']
     },
@@ -81,13 +77,12 @@ require.config({
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
 
-    'angular-sanitize':     ['angular'],
+    'angular-route':        ['angular'],
     'angular-cookies':      ['angular'],
     'angular-dragdrop':     ['jquery','jquery-ui','angular'],
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],
-    'angular-route':        ['angular'],
     'angular-touch':        ['angular'],
     'bindonce':             ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
@@ -102,19 +97,19 @@ require.config({
 require([
   'angular',
   'angularMocks',
-  'jquery',
-  'underscore',
-  'bootstrap',
-  'angular-sanitize',
-  'angular-strap',
-  'angular-dragdrop',
-  'extend-jquery',
-  'bindonce'
+  'app',
 ], function(angular) {
   'use strict';
 
-  angular.module('grafana', []);
-  angular.module('grafana.services', ['$strap.directives']);
+  for (var file in window.__karma__.files) {
+    if (/spec\.js$/.test(file)) {
+      window.tests.push(file.replace(/^\/base\//, 'http://localhost:9876/base/'));
+    }
+  }
+
+
+  angular.module('grafana', ['ngRoute']);
+  angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
 
@@ -122,9 +117,12 @@ require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
+    'specs/graphiteTargetCtrl-specs',
+    'specs/influxdb-datasource-specs',
+    'specs/graph-ctrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
-    'specs/dashboardModel-specs',
+    'specs/dashboardSrv-specs',
     'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();

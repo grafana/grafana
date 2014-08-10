@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'config',
-  'underscore'
+  'lodash'
 ],
 function (angular, $, config, _) {
   "use strict";

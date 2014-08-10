@@ -3,7 +3,7 @@ define([
   'jquery',
   'kbn',
   'moment',
-  'underscore'
+  'lodash'
 ],
 function (angular, $, kbn, moment, _) {
   'use strict';

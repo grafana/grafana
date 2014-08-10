@@ -15,10 +15,11 @@ define([
   'angular',
   'app',
   'jquery',
-  'underscore',
+  'lodash',
   'kbn',
   'moment',
   './timeSeries',
+  'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
   'jquery.flot',
@@ -35,7 +36,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
@@ -175,7 +176,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         query_as_alias: true
       },
 
-      targets: [],
+      targets: [{}],
 
       aliasColors: {},
       aliasYAxis: {},
@@ -188,41 +189,16 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.legend, _d.legend);
 
     $scope.init = function() {
-      $scope.initBaseController(this, $scope);
-
-      $scope.fullscreen = false;
-      $scope.editor = { index: 1 };
-      $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
+      panelSrv.init($scope);
       $scope.hiddenSeries = {};
-
-      $scope.datasources = datasourceSrv.getMetricSources();
-      $scope.setDatasource($scope.panel.datasource);
-
-      if ($scope.panel.targets.length === 0) {
-        $scope.panel.targets.push({});
+      if (!$scope.skipDataOnInit) {
+        $scope.get_data();
       }
-    };
-
-    $scope.setDatasource = function(datasource) {
-      $scope.panel.datasource = datasource;
-      $scope.datasource = datasourceSrv.get(datasource);
-
-      if (!$scope.datasource) {
-        $scope.panel.error = "Cannot find datasource " + datasource;
-        return;
-      }
-
-      $scope.get_data();
-    };
-
-    $scope.removeTarget = function (target) {
-      $scope.panel.targets = _.without($scope.panel.targets, target);
-      $scope.get_data();
     };
 
     $scope.updateTimeRange = function () {
-      $scope.range = this.filter.timeRange();
-      $scope.rangeUnparsed = this.filter.timeRange(false);
+      $scope.range = $scope.filter.timeRange();
+      $scope.rangeUnparsed = $scope.filter.timeRange(false);
       $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
       $scope.interval = '10m';
 
@@ -246,7 +222,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
-        datasource: $scope.panel.datasource,
         cacheTimeout: $scope.panel.cacheTimeout
       };
 
@@ -292,7 +267,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
+      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
       var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
       var seriesInfo = {
@@ -320,10 +295,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       return series;
-    };
-
-    $scope.add_target = function() {
-      $scope.panel.targets.push({target: ''});
     };
 
     $scope.otherPanelInFullscreenMode = function() {
@@ -400,6 +371,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
+    $scope.init();
   });
 
 });

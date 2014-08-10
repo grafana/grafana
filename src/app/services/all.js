@@ -2,6 +2,7 @@ define([
   './alertSrv',
   './datasourceSrv',
   './filterSrv',
+  './panelSrv',
   './timer',
   './panelMove',
   './keyboardManager',
@@ -9,6 +10,6 @@ define([
   './playlistSrv',
   './unsavedChangesSrv',
   './dashboard/dashboardKeyBindings',
-  './dashboard/dashboardModel',
+  './dashboard/dashboardSrv',
 ],
 function () {});

@@ -13,7 +13,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'require',
   'services/filterSrv'
 ],
@@ -23,7 +23,7 @@ function (angular, app, _, require) {
   var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
 
-  module.controller('text', function($scope, filterSrv) {
+  module.controller('text', function($scope, filterSrv, $sce, panelSrv) {
 
     $scope.panelMeta = {
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
@@ -39,7 +39,7 @@ function (angular, app, _, require) {
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
-      $scope.initBaseController(this, $scope);
+      panelSrv.init(this);
       $scope.ready = false;
       $scope.$on('refresh', $scope.render);
       $scope.render();
@@ -81,17 +81,20 @@ function (angular, app, _, require) {
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = filterSrv.applyTemplateToTarget(html);
-
-        if(!$scope.$$phase) {
-          $scope.$apply();
-        }
+        $scope.content = $sce.trustAsHtml(filterSrv.applyTemplateToTarget(html));
       } catch(e) {
+        console.log('Text panel error: ', e);
+        $scope.content = $sce.trustAsHtml(html);
+      }
+
+      if(!$scope.$$phase) {
+        $scope.$apply();
       }
     };
 
     $scope.openEditor = function() {
     };
 
+    $scope.init();
   });
 });

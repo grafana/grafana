@@ -1,7 +1,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'jquery',
   '../services/graphite/gfunc',
 ],
