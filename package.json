@@ -26,6 +26,7 @@
     "grunt-contrib-less": "~0.7.0",
     "grunt-contrib-requirejs": "~0.4.1",
     "grunt-contrib-uglify": "~0.2.4",
+    "grunt-contrib-watch": "^0.6.1",
     "grunt-filerev": "^0.2.1",
     "grunt-git-describe": "~2.3.2",
     "grunt-karma": "~0.8.3",

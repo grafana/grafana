@@ -223,7 +223,8 @@ function (angular, _, kbn, InfluxSeries) {
           method: method,
           url:    currentUrl + url,
           params: params,
-          data:   data
+          data:   data,
+          inspect: { type: 'influxdb' },
         };
 
         return $http(options).success(function (data) {

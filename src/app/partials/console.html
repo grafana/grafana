@@ -1,0 +1,14 @@
+<div class="grafana-console" ng-controller="ConsoleCtrl">
+	<div class="grafana-console-header">
+		<span class="grafana-console-title large"><i class="icon-terminal"></i></span>
+	</div>
+	<div class="grafana-console-body">
+		<div class="grafana-console-item" ng-repeat="item in events">
+			<span class="grafana-console-time" ng-bind="item.time"></span>
+			<span class="grafana-console-type">
+				<span class="label label-info" ng-bind="item.type"></span>
+			</span>
+			<span class="grafana-console-title" ng-bind="item.title"></span>
+		</div>
+	</div>
+</div>

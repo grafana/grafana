@@ -1,0 +1,48 @@
+.grafana-console {
+  position: fixed;
+  width: 100%;
+  bottom: 0px;
+  height: 300px;
+  background: @grafanaPanelBackground;
+  border-top: 1px solid @fullEditBorder;
+}
+
+.grafana-console-header {
+  background: @fullEditTabsBackground;
+  border-top: @fullEditTabsBorder;
+  padding: 2px 5px;
+}
+
+.grafana-console-item {
+  .icon-caret-right {
+    font-size: 14px;
+    color: @blue;
+  }
+  margin: 2px 0;
+}
+
+.grafana-console-body {
+  overflow-y: auto;
+  padding-left: 3px;
+}
+
+.grafana-console-type {
+  margin: 0 3px;
+  min-width: 75px;
+  display: inline-block;
+}
+
+.grafana-console-time:before {
+  content: '(';
+  color: rgb(106, 253, 81);
+}
+
+.grafana-console-time:after {
+  content: ')';
+  color: rgb(106, 253, 81);
+}
+
+.grafana-console-time {
+  color: rgb(162, 196, 253);
+}
+
