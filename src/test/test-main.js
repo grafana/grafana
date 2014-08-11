@@ -117,6 +117,7 @@ require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
+    'specs/row-ctrl-specs',
     'specs/graphiteTargetCtrl-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
