@@ -8,6 +8,9 @@
 - [Issue #661](https://github.com/grafana/grafana/issues/661). Annotations: Elasticsearch querystring with filter template replacements was not interpolated
 - [Issue #660](https://github.com/grafana/grafana/issues/660). OpenTSDB: fix opentsdb queries that returned more than one series
 
+**Change**
+- [Issue #660](https://github.com/grafana/grafana/issues/660). Dashboard: The panel error bar has been replaced with a small error indicator, this indicator does not change panel height and is a lot less intrusive. Hover over it for short details, click on it for more details.
+
 # 1.7.0-rc1 (2014-08-05)
 
 **New features or improvements**

@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'underscore'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -26,6 +27,16 @@ function (angular) {
 
       if (!model.error)  {
         return;
+      }
+
+      if (_.isString(model.error.data)) {
+        $scope.response = model.error.data;
+      }
+
+      if (model.error.config && model.error.config.params) {
+        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
+          return { key: key, value: value};
+        });
       }
 
       if (model.error.stack) {

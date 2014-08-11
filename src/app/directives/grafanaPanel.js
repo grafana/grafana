@@ -16,16 +16,12 @@ function (angular, $, _, PanelBaseCtrl) {
 
       var panelHeader =
       '<div class="panel-header">'+
-        '<div class="row-fluid">' +
-          '<div class="span12 alert-error panel-error small" ng-show="panel.error">' +
-            '<a class="close" ng-click="panel.error=false">&times;</a>' +
-            '<span><i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}} </span>' +
-            '<span class="pointer panel-error-inspector-link" config-modal="app/partials/inspector.html">View details</span>' +
-          '</div>' +
-        '</div>\n' +
-
-        '<div class="row-fluid panel-extra">' +
+       '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
+            '<span class="alert-error panel-error small pointer"' +
+                  'config-modal="app/partials/inspector.html" ng-show="panel.error" bs-tooltip="panel.error">' +
+              '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
+            '</span>' +
 
             '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
               '<i class="icon-spinner icon-spin icon-large"></i>' +
