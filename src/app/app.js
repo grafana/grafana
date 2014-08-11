@@ -51,13 +51,13 @@ function (angular, $, _, appLevelRequire, config) {
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
     $routeProvider.otherwise({ redirectTo: config.default_route });
-
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
+
   });
 
   var apps_deps = [

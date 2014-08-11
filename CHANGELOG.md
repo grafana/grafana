@@ -1,4 +1,16 @@
-# 1.7.0 (unreleased)
+# 1.8.0 (unreleased)
+
+**New features and improvements**
+
+- [Issue #578](https://github.com/grafana/grafana/issues/578). Dashboard: Row option to display row title even when the row is visible
+
+**Tech**
+- Upgraded from angularjs 1.1.5 to 1.3 beta 17;
+- Switch from underscore to lodash
+- helpers to easily unit test angularjs controllers and services
+- Test coverage through coveralls
+
+# 1.7.0 (2014-08-11)
 
 **Fixes**
 - [Issue #652](https://github.com/grafana/grafana/issues/652). Timepicker: Entering custom date range impossible when refresh is low (now is constantly reset)
@@ -7,6 +19,9 @@
 - [Issue #657](https://github.com/grafana/grafana/issues/657). General: Fix for refresh icon in IE browsers
 - [Issue #661](https://github.com/grafana/grafana/issues/661). Annotations: Elasticsearch querystring with filter template replacements was not interpolated
 - [Issue #660](https://github.com/grafana/grafana/issues/660). OpenTSDB: fix opentsdb queries that returned more than one series
+
+**Change**
+- [Issue #681](https://github.com/grafana/grafana/issues/681). Dashboard: The panel error bar has been replaced with a small error indicator, this indicator does not change panel height and is a lot less intrusive. Hover over it for short details, click on it for more details.
 
 # 1.7.0-rc1 (2014-08-05)
 

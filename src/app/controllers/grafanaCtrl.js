@@ -18,6 +18,13 @@ function (angular, config, _) {
       $scope.grafana = {
         style: 'dark'
       };
+
+      $scope.consoleEnabled = (window.localStorage && window.localStorage.grafanaConsole === 'true');
+    };
+
+    $scope.toggleConsole = function() {
+      $scope.consoleEnabled = !$scope.consoleEnabled;
+      window.localStorage.grafanaConsole = $scope.consoleEnabled ? 'true' : 'false';
     };
 
     $rootScope.onAppEvent = function(name, callback) {

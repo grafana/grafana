@@ -797,7 +797,8 @@ angular.module('$strap.directives').directive('bsTooltip', [
           title: function () {
             return angular.isFunction(value) ? value.apply(null, arguments) : value;
           },
-          html: true
+          html: true,
+          container: 'body', // Grafana change
         });
         var tooltip = element.data('tooltip');
         tooltip.show = function () {

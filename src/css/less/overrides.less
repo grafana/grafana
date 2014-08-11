@@ -112,14 +112,26 @@ code, pre {
 
 .panel-error {
   color: @white;
-  padding: 5px 10px 0px 10px;
+  //padding: 5px 10px 0px 10px;
+  position: absolute;
+  left: 5px;
+  padding: 0px 17px 6px 5px;
+  top: 0;
+  i {
+    position: relative;
+    top: -2px;
+  }
 }
-
-.panel-error-inspector-link {
-  float: right;
-  margin-right: 10px;
+.panel-error-arrow {
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-left: 31px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 27px solid @grafanaPanelBackground;
+  left: 0;
+  bottom: 0;
 }
-
 
 div.editor-row {
   vertical-align: top;
@@ -223,9 +235,9 @@ form input.ng-invalid {
 
 .row-button {
   width: 30px;
-  text-align: center;
   float: left;
   cursor: pointer;
+  line-height: 31px;
 }
 
 .row-text {
@@ -233,15 +245,20 @@ form input.ng-invalid {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.9em;
-  margin: 0px 10px;
+  text-align: center;
+  line-height: 31px;
 }
 
 .row-close {
   padding: 0px;
   margin: 0px;
-  min-height: 30px !important;
-  line-height: 30px;
   background: @grafanaPanelBackground;
+  text-align: center;
+}
+
+.row-close-buttons {
+  position: absolute;
+  left: 0;
 }
 
 .row-open {
