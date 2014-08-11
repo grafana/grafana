@@ -24,7 +24,9 @@ define([
       return inject(function($controller, $rootScope, $q) {
         self.scope = $rootScope.$new();
         self.scope.panel = {};
+        self.scope.row = { panels:[] };
         self.scope.filter = new FilterSrvStub();
+
         $rootScope.colors = [];
         for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }
 
