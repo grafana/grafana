@@ -4,7 +4,7 @@ define([
     function (angular) {
         'use strict';
 
-        var module = angular.module('kibana.controllers');
+        var module = angular.module('grafana.controllers');
 
         var seriesList = null;
 

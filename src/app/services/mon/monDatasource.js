@@ -6,7 +6,7 @@ define([
     function (angular, _, kbn) {
         'use strict';
 
-        var module = angular.module('kibana.services');
+        var module = angular.module('grafana.services');
         module.config(['$httpProvider', function ($httpProvider) {
             $httpProvider.defaults.useXDomain = true;
         }])
@@ -225,6 +225,9 @@ define([
                         }
 
                         var target = data.alias || series.name + "." + column;
+                        for (var dimension in series.dimensions) {
+                            target += dimension;
+                        }
                         var datapoints = [];
 
                         if ('statistics' in series) {
