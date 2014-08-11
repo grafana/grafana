@@ -40,7 +40,7 @@ function (angular, $, config, _) {
       $scope.panelMoveOver = panelMove.onOver;
       $scope.panelMoveOut = panelMove.onOut;
 
-      window.document.title = 'Grafana - ' + $scope.dashboard.title;
+      window.document.title = (config.title ? config.title : '') + $scope.dashboard.title;
 
       // start auto refresh
       if($scope.dashboard.refresh) {
