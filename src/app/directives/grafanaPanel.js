@@ -18,7 +18,7 @@ function (angular, $) {
        '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
             '<span class="alert-error panel-error small pointer"' +
-                  'config-modal="app/partials/inspector.html" ng-show="panel.error" bs-tooltip="panel.error">' +
+                  'config-modal="app/partials/inspector.html" ng-show="panel.error" data-placement="right" bs-tooltip="panel.error">' +
               '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
             '</span>' +
 
