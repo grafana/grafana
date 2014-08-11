@@ -1,18 +1,18 @@
 package server
 
 import (
-	"github.com/torkelo/grafana-pro/backend/httpApi"
+	"github.com/torkelo/grafana-pro/backend/api"
 	"github.com/torkelo/grafana-pro/backend/stores"
 )
 
 type Server struct {
-	HttpServer *httpApi.HttpServer
+	HttpServer *api.HttpServer
 	Store      stores.Store
 }
 
 func NewServer(port string) (*Server, error) {
 	store := stores.New()
-	httpServer := httpApi.NewHttpServer(port, store)
+	httpServer := api.NewHttpServer(port, store)
 
 	return &Server{
 		HttpServer: httpServer,
