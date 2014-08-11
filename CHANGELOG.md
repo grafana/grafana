@@ -1,4 +1,4 @@
-# 1.7.0 (unreleased)
+# 1.7.0 (2014-08-11)
 
 **Fixes**
 - [Issue #652](https://github.com/grafana/grafana/issues/652). Timepicker: Entering custom date range impossible when refresh is low (now is constantly reset)
