@@ -1,3 +1,15 @@
+# 1.8.0 (unreleased)
+
+**New features and improvements**
+
+- [Issue #578](https://github.com/grafana/grafana/issues/578). Dashboard: Row option to display row title even when the row is visible
+
+**Tech**
+- Upgraded from angularjs 1.1.5 to 1.3 beta 17;
+- Switch from underscore to lodash
+- helpers to easily unit test angularjs controllers and services
+- Test coverage through coveralls
+
 # 1.7.0 (2014-08-11)
 
 **Fixes**

@@ -31,13 +31,15 @@
           <div class="row-control">
             <div class="row-control-inner" style="padding:0px;margin:0px;position:relative;">
               <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
-                <span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
-                  <i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
-                </span>
-                <span class="row-button bgPrimary" ng-click="toggle_row(row)">
-                  <i bs-tooltip="'Expand row'" data-placement="right" class="icon-caret-left pointer" ></i>
-                </span>
-                <span class="row-button row-text" ng-click="toggle_row(row)">{{row.title || 'Row '+$index}}</span>
+								<div class="row-close-buttons">
+									<span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
+										<i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
+									</span>
+									<span class="row-button bgPrimary" ng-click="toggle_row(row)">
+										<i bs-tooltip="'Expand row'" data-placement="right" class="icon-caret-left pointer" ></i>
+									</span>
+								</div>
+                <span class="row-text pointer" ng-click="toggle_row(row)" ng-bind="row.title"></span>
               </div>
               <div class="row-open" ng-show="!row.collapse">
                 <div class='row-tab bgPrimary' ng-click="toggle_row(row)">
@@ -92,6 +94,8 @@
             </div>
 
             <div style="padding-top:0px" ng-if="!row.collapse">
+							<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
+							</div>
 
               <!-- Panels -->
               <div ng-repeat="(name, panel) in row.panels|filter:isPanel" ng-hide="panel.hide" class="panel nospace" ng-style="{'width':(panel.span/1.2)*10+'%'}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}" ng-class="{'dragInProgress':dashboard.$$panelDragging}">

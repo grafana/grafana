@@ -33,11 +33,8 @@ function (angular, app, _) {
     };
 
     $scope.rowSpan = function(row) {
-      var panels = _.filter(row.panels, function(p) {
-        return $scope.isPanel(p);
-      });
-      return _.reduce(_.pluck(panels,'span'), function(p,v) {
-        return p+v;
+      return _.reduce(row.panels, function(p,v) {
+        return p + v.span;
       },0);
     };
 

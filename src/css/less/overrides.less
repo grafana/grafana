@@ -235,9 +235,9 @@ form input.ng-invalid {
 
 .row-button {
   width: 30px;
-  text-align: center;
   float: left;
   cursor: pointer;
+  line-height: 31px;
 }
 
 .row-text {
@@ -245,15 +245,20 @@ form input.ng-invalid {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.9em;
-  margin: 0px 10px;
+  text-align: center;
+  line-height: 31px;
 }
 
 .row-close {
   padding: 0px;
   margin: 0px;
-  min-height: 30px !important;
-  line-height: 30px;
   background: @grafanaPanelBackground;
+  text-align: center;
+}
+
+.row-close-buttons {
+  position: absolute;
+  left: 0;
 }
 
 .row-open {
