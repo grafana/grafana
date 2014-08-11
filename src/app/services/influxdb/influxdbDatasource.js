@@ -227,7 +227,7 @@ function (angular, _, kbn, InfluxSeries) {
           data:   data
         };
 
-        return $http(options).then(function (data) {
+        return $http(options).success(function (data) {
           deferred.resolve(data);
         });
       }, 10);
