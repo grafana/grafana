@@ -21,15 +21,11 @@ function (Settings) {
     // InfluxDB example setup (the InfluxDB databases specified need to exist)
     /*
     datasources: {
-<<<<<<< HEAD
-        /*
       graphite: {
         type: 'graphite',
         url: "http://my.graphite.server.com:8080",
         default: true
       },
-=======
->>>>>>> 966ba97b2cda6694074be1e224a6b8b19d600295
       influxdb: {
         type: 'influxdb',
         url: "http://my_influxdb_server:8086/db/database_name",
@@ -63,28 +59,25 @@ function (Settings) {
     */
 
     // OpenTSDB & Elasticsearch example setup
-    /*
     datasources: {
+    /*
       opentsdb: {
         type: 'opentsdb',
         url: "http://opentsdb.server:4242",
       },
-<<<<<<< HEAD
-      */
-      mon: {
-        type: 'mon',
-        url: "http://192.168.10.4:8080/v2.0",
-        default: true
-=======
       elasticsearch: {
         type: 'elasticsearch',
         url: "http://my.elastic.server.com:9200",
         index: 'grafana-dash',
         grafanaDB: true,
->>>>>>> 966ba97b2cda6694074be1e224a6b8b19d600295
+      }
+      */
+      mon: {
+        type: 'mon',
+        url: "http://192.168.10.4:8080/v2.0",
+        default: true
       }
     },
-    */
 
     /* Global configuration options
     * ========================================================
