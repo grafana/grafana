@@ -6,14 +6,14 @@ define([
   'kbn',
   'moment'
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
   module.factory('GrafanaDatasource', function($q, $http) {
 
-    function GrafanaDatasource(datasource) {
+    function GrafanaDatasource() {
       this.type = 'grafana';
       this.grafanaDB = true;
     }
@@ -44,7 +44,7 @@ function (angular, _, $, config, kbn, moment) {
     GrafanaDatasource.prototype.saveDashboard = function(dashboard) {
       return $http.post('/api/dashboard/', { dashboard: dashboard })
         .then(function() {
-            return { title: dashboard.title, url: '/dashboard/db/' + dashboard.title };
+          return { title: dashboard.title, url: '/dashboard/db/' + dashboard.title };
         }, function(data) {
           throw "Failed to search: " + data;
         });
