@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width">
 
     <title>Grafana</title>
-    <link rel="stylesheet" href="css/default.min.css" title="Dark">
+    <link rel="stylesheet" href="css/grafana.dark.min.css" title="Dark">
 
     <!-- build:js app/app.js -->
     <script src="vendor/require/require.js"></script>
@@ -20,9 +20,7 @@
 
   <body ng-cloak ng-controller="GrafanaCtrl">
 
-    <link rel="stylesheet" href="css/bootstrap.light.min.css" ng-if="grafana.style === 'light'">
-    <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
-    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
     <div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
       <button type="button" class="close" ng-click="dashAlerts.clear(alert)" style="padding-right:50px">&times;</button>

@@ -41,6 +41,7 @@
   </div>
 
   <div ng-if="editor.index == 1">
+		<h5 ng-if="response" ng-bind="response"></h5>
 
     <div ng-if="response_html">
       <div iframe-content="response_html"></div>

@@ -25,7 +25,7 @@
           <label class="small">Hide controls (CTRL+H)</label>
           <input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
         </div>
-      </div>
+     </div>
     </div>
      <div class="editor-row">
       <div class="section">
@@ -98,6 +98,7 @@
     <span class="editor-option small">
       Grafana version: {{grafanaVersion}}
     </span>
+		<span> | <a ng-click="toggleConsole()" ng-show="!consoleEnabled">enable console</a> <a ng-click="toggleConsole()" ng-show="consoleEnabled">disable console</a></span>
     <div class="small" grafana-version-check>
     </div>
   </div>

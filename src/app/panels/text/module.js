@@ -82,11 +82,13 @@ function (angular, app, _, require) {
     $scope.updateContent = function(html) {
       try {
         $scope.content = $sce.trustAsHtml(filterSrv.applyTemplateToTarget(html));
-
-        if(!$scope.$$phase) {
-          $scope.$apply();
-        }
       } catch(e) {
+        console.log('Text panel error: ', e);
+        $scope.content = $sce.trustAsHtml(html);
+      }
+
+      if(!$scope.$$phase) {
+        $scope.$apply();
       }
     };
 

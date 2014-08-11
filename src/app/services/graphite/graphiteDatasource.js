@@ -205,6 +205,7 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       options.url = this.url + options.url;
+      options.inspect = { type: 'graphite' };
 
       return $http(options);
     };

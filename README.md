@@ -1,4 +1,4 @@
-[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.png)](https://travis-ci.org/grafana/grafana) [![Gittip](http://img.shields.io/gittip/torkelo.svg)](https://www.gittip.com/torkelo)
+[Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.svg)](https://travis-ci.org/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png?branch=develop)](https://coveralls.io/r/grafana/grafana?branch=develop)
 ================
 [Website](http://grafana.org) |
 [Twitter](http://twitter.com/grafana) |
