@@ -228,7 +228,7 @@ function (angular, _, kbn, InfluxSeries) {
           inspect: { type: 'influxdb' },
         };
 
-        return $http(options).then(function (data) {
+        return $http(options).success(function (data) {
           deferred.resolve(data);
         });
       }, 10);
