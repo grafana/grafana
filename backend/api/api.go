@@ -39,7 +39,10 @@ func (self *HttpServer) ListenAndServe() {
 
 	self.router = gin.Default()
 	self.router.Use(CacheHeadersMiddleware())
-	self.router.Use(self.AuthMiddleware())
+
+	self.router.Static("/public", "./public")
+	self.router.Static("/app", "./public/app")
+	self.router.Static("/img", "./public/img")
 
 	// register & parse templates
 	templates := template.New("templates")
@@ -47,15 +50,14 @@ func (self *HttpServer) ListenAndServe() {
 	templates.ParseFiles("./views/index.html")
 	self.router.SetHTMLTemplate(templates)
 
-	// register default route
-	self.router.GET("/", self.index)
 	for _, fn := range routeHandlers {
 		fn(self)
 	}
 
-	self.router.Static("/public", "./public")
-	self.router.Static("/app", "./public/app")
-	self.router.Static("/img", "./public/img")
+	// register default route
+	self.router.GET("/", self.AuthMiddleware(), self.index)
+	self.router.GET("/login/*_", self.index)
+	self.router.GET("/dashboard/*_", self.index)
 
 	self.router.Run(":" + self.port)
 }
@@ -64,9 +66,17 @@ func (self *HttpServer) index(c *gin.Context) {
 	c.HTML(200, "index.html", &indexViewModel{title: "hello from go"})
 }
 
+func (self *HttpServer) login(c *gin.Context) {
+	c.HTML(200, "login.html", &indexViewModel{title: "hello from go"})
+}
+
 func (self *HttpServer) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, _ := sessionStore.Get(c.Request, "grafana-session")
+		// if session.Values["login"] == nil {
+		// 	c.Writer.Header().Set("Location", "/login/login#login")
+		// 	c.Abort(302)
+		// }
 		session.Values["asd"] = 1
 		session.Save(c.Request, c.Writer)
 	}
