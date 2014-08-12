@@ -1,9 +1,7 @@
 define([
   'angular',
-  'app',
-  'lodash'
 ],
-function (angular, app) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -17,7 +15,7 @@ function (angular, app) {
         return;
       }
 
-      $http.post('/login', $scope.loginModel).then(function(results) {
+      $http.post('/login', $scope.loginModel).then(function() {
         $location.path('/');
       }, function(err) {
         if (err.status === 401) {
