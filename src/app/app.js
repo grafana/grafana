@@ -48,16 +48,14 @@ function (angular, $, _, appLevelRequire, config) {
     return module;
   };
 
-  app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
-
-    $routeProvider.otherwise({ redirectTo: config.default_route });
+  app.config(function ($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
+    $locationProvider.html5Mode(true);
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
-
   });
 
   var apps_deps = [
@@ -84,7 +82,7 @@ function (angular, $, _, appLevelRequire, config) {
       'directives/all',
       'filters/all',
       'components/partials',
-      'routes/all',
+      'routes/p_all',
     ], function () {
 
       // bootstrap the app
