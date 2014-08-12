@@ -49,6 +49,10 @@ function (angular, $, config, _) {
 
       dashboardKeybindings.shortcuts($scope);
 
+      if ($scope.dashboard.$state.panelId) {
+        $rootScope.fullscreen = true;
+      }
+
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };
 

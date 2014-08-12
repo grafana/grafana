@@ -153,6 +153,10 @@ function (angular, _, $) {
         $scope.enterFullscreenMode({ edit: false });
       };
 
+      $scope.otherPanelInFullscreenMode = function() {
+        return $rootScope.fullscreen && !$scope.fullscreen;
+      };
+
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
@@ -162,6 +166,25 @@ function (angular, _, $) {
 
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
+
+//       if ($scope.dashboard.$state.panelId === $scope.panel.id) {
+//         $scope.enterFullscreenMode({edit: false});
+//       }
+
+      if ($scope.get_data) {
+        var panel_get_data = $scope.get_data;
+        $scope.get_data = function() {
+          if ($scope.otherPanelInFullscreenMode()) { return; }
+
+          delete $scope.panel.error;
+          $scope.panelMeta.loading = true;
+
+          panel_get_data();
+        };
+        if (!$scope.skipDataOnInit) {
+          $scope.get_data();
+        }
+      }
     };
   });
 

@@ -73,7 +73,7 @@ define([
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.version).to.be(2);
+      expect(model.version).to.be(3);
     });
 
   });

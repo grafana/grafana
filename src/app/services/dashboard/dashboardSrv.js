@@ -29,6 +29,8 @@ function (angular, $, kbn, _) {
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.templating = data.templating || { list: [] };
       this.refresh = data.refresh;
+      this.version = data.version || 0;
+      this.$state = data.$state;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -75,12 +77,30 @@ function (angular, $, kbn, _) {
 
     p.updateSchema = function(old) {
       var i, j, row, panel;
-      var isChanged = false;
+      var oldVersion = this.version;
+      this.version = 3;
 
-      if (this.version === 2) {
+      if (oldVersion === 3) {
         return;
       }
 
+      // Version 3 schema changes
+      // ensure panel ids
+      var panelId = 1;
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          panel.id = panelId;
+          panelId += 1;
+        }
+      }
+
+      if (oldVersion === 2) {
+        return;
+      }
+
+      // Version 2 schema changes
       if (old.services) {
         if (old.services.filter) {
           this.time = old.services.filter.time;
@@ -95,7 +115,6 @@ function (angular, $, kbn, _) {
           panel = row.panels[j];
           if (panel.type === 'graphite') {
             panel.type = 'graph';
-            isChanged = true;
           }
 
           if (panel.type === 'graph') {
@@ -128,7 +147,7 @@ function (angular, $, kbn, _) {
         }
       }
 
-      this.version = 2;
+      this.version = 3;
     };
 
     return {
