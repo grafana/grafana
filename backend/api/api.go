@@ -5,6 +5,7 @@ import (
 
 	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
 	"github.com/torkelo/grafana-pro/backend/components"
 	"github.com/torkelo/grafana-pro/backend/stores"
 )
@@ -17,6 +18,12 @@ type HttpServer struct {
 	router   *gin.Engine
 }
 
+var sessionStore = sessions.NewCookieStore([]byte("something-very-secret"))
+
+// var hashKey = []byte("very-secret")
+// var blockKey = []byte("a-lot-secret")
+// var s = securecookie.New(hashKey, blockKey)
+
 func NewHttpServer(port string, store stores.Store) *HttpServer {
 	self := &HttpServer{}
 	self.port = port
@@ -26,18 +33,13 @@ func NewHttpServer(port string, store stores.Store) *HttpServer {
 	return self
 }
 
-func CacheHeadersMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Add("Cache-Control", "max-age=0, public, must-revalidate, proxy-revalidate")
-	}
-}
-
 func (self *HttpServer) ListenAndServe() {
 	log.Info("Starting Http Listener on port %v", self.port)
 	defer func() { self.shutdown <- true }()
 
 	self.router = gin.Default()
 	self.router.Use(CacheHeadersMiddleware())
+	self.router.Use(self.AuthMiddleware())
 
 	// register & parse templates
 	templates := template.New("templates")
@@ -60,6 +62,20 @@ func (self *HttpServer) ListenAndServe() {
 
 func (self *HttpServer) index(c *gin.Context) {
 	c.HTML(200, "index.html", &indexViewModel{title: "hello from go"})
+}
+
+func (self *HttpServer) AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session, _ := sessionStore.Get(c.Request, "grafana-session")
+		session.Values["asd"] = 1
+		session.Save(c.Request, c.Writer)
+	}
+}
+
+func CacheHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Add("Cache-Control", "max-age=0, public, must-revalidate, proxy-revalidate")
+	}
 }
 
 // Api Handler Registration
