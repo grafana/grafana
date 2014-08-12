@@ -72,17 +72,24 @@ feature guides.
 - Optional backend component
 - Much much more! (what ever gets votes on github issues!)
 
+# Run from master
+Grafana uses nodejs and grunt for asset management (css & javascript), unit test runner and javascript syntax verification.
+- clone repository
+- install nodejs
+- npm install (in project root)
+- npm install -g grunt-cli
+- grunt   (runt default task that will generate css files)
+- grunt build (creates optimized & minified release)
+- grunt release (same as grunt build but will also create tar & zip package)
+- grunt test (executes jshint and unit tests)
+
 # Contribute
-If you have any idea for an improvement or found a bug do not hesitate to open an issue. And if you have time clone this repo and submit a pull request and help me make Grafana the kickass metrics & devops dashboard we all dream about!
+If you have any idea for an improvement or found a bug do not hesitate to open an issue.
+And if you have time clone this repo and submit a pull request and help me make Grafana
+the kickass metrics & devops dashboard we all dream about!
 
-Clone repository:
-- npm install
-- grunt server (starts development web server in src folder)
-- grunt (runs jshint and less -> css compilation)
-- npm test runs jshint, and unit tests
-
-Before submitting a PR be sure that there are no jshint or unit test failures.
-And [sign the CLA](http://grafana.org/docs/contributing/cla.html)
+Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
+please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
 
 # License
 Grafana is distributed under Apache 2.0 License.
