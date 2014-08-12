@@ -31,7 +31,7 @@ dashboard = {
 };
 
 // Set a title
-dashboard.title = 'Scripted dash';
+dashboard.title = 'Alarm drilldown';
 dashboard.time = {
   from: "now-" + (ARGS.from || timspan),
   to: "now"
