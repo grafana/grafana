@@ -41,7 +41,7 @@ func (self *HttpServer) postDashboard(c *gin.Context) {
 	var command saveDashboardCommand
 
 	if c.EnsureBody(&command) {
-		err := self.store.Save(&models.Dashboard{Data: command.dashboard})
+		err := self.store.Save(&models.Dashboard{Data: command.Dashboard})
 		if err == nil {
 			c.JSON(200, gin.H{"status": "saved"})
 			return

@@ -1,13 +1,13 @@
 package api
 
 type saveDashboardCommand struct {
-	id        string `json:"id"`
-	title     string `json:"title"`
-	dashboard map[string]interface{}
+	Id        string `json:"id"`
+	Title     string `json:"title"`
+	Dashboard map[string]interface{}
 }
 
 type errorResponse struct {
-	message string `json:"message"`
+	Message string `json:"message"`
 }
 
 type indexViewModel struct {
@@ -15,5 +15,5 @@ type indexViewModel struct {
 }
 
 func newErrorResponse(message string) *errorResponse {
-	return &errorResponse{message: message}
+	return &errorResponse{Message: message}
 }

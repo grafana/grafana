@@ -55,31 +55,14 @@ func (self *HttpServer) ListenAndServe() {
 	}
 
 	// register default route
-	self.router.GET("/", self.AuthMiddleware(), self.index)
-	self.router.GET("/login/*_", self.index)
-	self.router.GET("/dashboard/*_", self.index)
+	self.router.GET("/", self.authMiddleware(), self.index)
+	self.router.GET("/dashboard/*_", self.authMiddleware(), self.index)
 
 	self.router.Run(":" + self.port)
 }
 
 func (self *HttpServer) index(c *gin.Context) {
 	c.HTML(200, "index.html", &indexViewModel{title: "hello from go"})
-}
-
-func (self *HttpServer) login(c *gin.Context) {
-	c.HTML(200, "login.html", &indexViewModel{title: "hello from go"})
-}
-
-func (self *HttpServer) AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		session, _ := sessionStore.Get(c.Request, "grafana-session")
-		// if session.Values["login"] == nil {
-		// 	c.Writer.Header().Set("Location", "/login/login#login")
-		// 	c.Abort(302)
-		// }
-		session.Values["asd"] = 1
-		session.Save(c.Request, c.Writer)
-	}
 }
 
 func CacheHeadersMiddleware() gin.HandlerFunc {
