@@ -49,30 +49,21 @@ Graphite, InfluxDB & OpenTSDB.
 - Use as metric data source
 - Query editor with metric name typeahead and tag filtering
 
-# Requirements
+## Requirements
 There are no dependencies, Grafana is a client side application that runs in your browser. It only needs a time series store where it can fetch metrics. If you use InfluxDB Grafana can use it to store dashboards. If you use Graphite or OpenTSDB you can use Elasticsearch to store dashboards or just use json files stored on disk.
 
-# Installation
+## Installation
 Head to [grafana.org](http://grafana.org) and [download](http://grafana.org/download/)
 the latest release.
 
 Then follow the quick [setup & config guide](http://grafana.org/docs/). If you have any problems please
 read the [troubleshooting guide](http://grafana.org/docs/troubleshooting).
 
-# Documentation & Support
+## Documentation & Support
 Be sure to read the [getting started guide](http://grafana.org/docs/features/intro) and the other
 feature guides.
 
-# Roadmap
-- Improve graphite query editor to handle all types of queries
-- Refine and simplify common tasks
-- More panel types (not just graphs)
-- Improve templating support
-- Alerting
-- Optional backend component
-- Much much more! (what ever gets votes on github issues!)
-
-# Run from master
+## Run from master
 Grafana uses nodejs and grunt for asset management (css & javascript), unit test runner and javascript syntax verification.
 - clone repository
 - install nodejs
@@ -83,7 +74,7 @@ Grafana uses nodejs and grunt for asset management (css & javascript), unit test
 - grunt release (same as grunt build but will also create tar & zip package)
 - grunt test (executes jshint and unit tests)
 
-# Contribute
+## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
@@ -91,5 +82,5 @@ the kickass metrics & devops dashboard we all dream about!
 Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
 please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
 
-# License
+## License
 Grafana is distributed under Apache 2.0 License.
