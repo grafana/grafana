@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/alecthomas/log4go"
-	"github.com/torkelo/grafana-pro/backend/server"
+	"github.com/torkelo/grafana-pro/pkg/server"
 )
 
 func main() {

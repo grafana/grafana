@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/torkelo/grafana-pro/backend/api"
-	"github.com/torkelo/grafana-pro/backend/stores"
+	"github.com/torkelo/grafana-pro/pkg/api"
+	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
 type Server struct {

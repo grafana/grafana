@@ -1,7 +1,7 @@
 package stores
 
 import (
-	"github.com/torkelo/grafana-pro/backend/models"
+	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
 type Store interface {

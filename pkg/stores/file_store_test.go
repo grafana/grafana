@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/torkelo/grafana-pro/backend/models"
+	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
 func TestFileStore(t *testing.T) {
