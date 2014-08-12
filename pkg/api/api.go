@@ -6,8 +6,8 @@ import (
 	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
-	"github.com/torkelo/grafana-pro/backend/components"
-	"github.com/torkelo/grafana-pro/backend/stores"
+	"github.com/torkelo/grafana-pro/pkg/components"
+	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
 type HttpServer struct {

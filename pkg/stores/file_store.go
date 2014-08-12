@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	log "github.com/alecthomas/log4go"
-	"github.com/torkelo/grafana-pro/backend/models"
+	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
 type fileStore struct {
