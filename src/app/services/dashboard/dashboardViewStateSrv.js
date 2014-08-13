@@ -25,6 +25,7 @@ function (angular, _, $) {
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
+        console.log("route updated!");
         if (self.needsSync(urlState)) {
           self.update(urlState, true);
         }

@@ -75,6 +75,7 @@ function (angular, _, moment, config) {
         .then(function(result) {
           alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
 
+          $location.search({});
           $location.path(result.url);
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);

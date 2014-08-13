@@ -28,10 +28,12 @@ function(angular, _, config) {
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
       self.current = savedDashboard;
+      self.orignalPath = $location.path();
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
       self.original = null;
+      self.originalPath = $location.path();
     });
 
     window.onbeforeunload = function() {
@@ -42,6 +44,11 @@ function(angular, _, config) {
 
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
+        if (self.originalPath === $location.path()) {
+          console.log("skipping");
+          return;
+        }
+
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;

@@ -52,11 +52,11 @@ function (angular, $, kbn, _) {
     p.getNextPanelId = function() {
       var i, j, row, panel, max = 0;
       for (i = 0; i < this.rows.length; i++) {
-       row = this.rows[i];
-       for (j = 0; j < row.panels.length; j++) {
-         panel = row.panels[j];
-         if (panel.id > max) { max = panel.id; }
-       }
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (panel.id > max) { max = panel.id; }
+        }
       }
       return max + 1;
     };
