@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $location) {
 
     this.init = function($scope) {
       if (!$scope.panel.span) {
@@ -106,6 +106,7 @@ function (angular, _, $) {
         $rootScope.$emit('panel-fullscreen-enter');
 
         $timeout(function() {
+          $location.search({panelId: $scope.panel.id, mode: $scope.editMode ? 'edit' : 'full' });
           $scope.$emit('render');
         });
 

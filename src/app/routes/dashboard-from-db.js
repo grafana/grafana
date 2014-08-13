@@ -8,9 +8,10 @@ function (angular) {
 
   module.config(function($routeProvider) {
     $routeProvider
-      .when('/dashboard/db/:id/:panelId?', {
+      .when('/dashboard/db/:id', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
+        reloadOnSearch: false,
       })
       .when('/dashboard/elasticsearch/:id', {
         templateUrl: 'app/partials/dashboard.html',

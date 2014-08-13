@@ -8,10 +8,7 @@ define([
 function (angular, $, config, _) {
   "use strict";
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
+  module.controller('DashCtrl', function($scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -48,10 +45,6 @@ function (angular, $, config, _) {
       }
 
       dashboardKeybindings.shortcuts($scope);
-
-      if ($scope.dashboard.$state.panelId) {
-        $rootScope.fullscreen = true;
-      }
 
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };
