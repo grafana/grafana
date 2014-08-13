@@ -12,16 +12,12 @@ function(angular, $) {
 
     this.shortcuts = function(scope) {
 
-      scope.onAppEvent('panel-fullscreen-enter', function() {
-        $rootScope.fullscreen = true;
-      });
-
       scope.onAppEvent('panel-fullscreen-exit', function() {
-        $rootScope.fullscreen = false;
+        scope.dashboardViewState.update({ fullscreen: false });
       });
 
       scope.onAppEvent('dashboard-saved', function() {
-        if ($rootScope.fullscreen) {
+        if (scope.dashboardViewState.fullscreen) {
           scope.emitAppEvent('panel-fullscreen-exit');
         }
       });

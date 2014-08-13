@@ -26,6 +26,7 @@ define([
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.filter = new FilterSrvStub();
+        self.scope.dashboardViewState = { update: function() {} };
 
         $rootScope.colors = [];
         for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }

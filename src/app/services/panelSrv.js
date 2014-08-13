@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $location) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
 
     this.init = function($scope) {
       if (!$scope.panel.span) {
@@ -101,12 +101,11 @@ function (angular, _, $) {
 
         $(window).scrollTop(0);
 
+        $scope.dashboardViewState.update({ fullscreen: true, edit: $scope.editMode, panelId: $scope.panel.id });
+
         $scope.fullscreen = true;
 
-        $rootScope.$emit('panel-fullscreen-enter');
-
         $timeout(function() {
-          $location.search({panelId: $scope.panel.id, mode: $scope.editMode ? 'edit' : 'full' });
           $scope.$emit('render');
         });
 
@@ -155,7 +154,7 @@ function (angular, _, $) {
       };
 
       $scope.otherPanelInFullscreenMode = function() {
-        return $rootScope.fullscreen && !$scope.fullscreen;
+        return $scope.dashboardViewState.fullscreen && !$scope.fullscreen;
       };
 
       // Post init phase
@@ -168,9 +167,9 @@ function (angular, _, $) {
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
 
-//       if ($scope.dashboard.$state.panelId === $scope.panel.id) {
-//         $scope.enterFullscreenMode({edit: false});
-//       }
+      if ($scope.dashboardViewState.panelId === $scope.panel.id) {
+        $scope.enterFullscreenMode({edit: $scope.dashboardViewState.edit});
+      }
 
       if ($scope.get_data) {
         var panel_get_data = $scope.get_data;

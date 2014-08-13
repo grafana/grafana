@@ -14,6 +14,7 @@ function (angular, _, moment, config) {
 
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
+
       $scope.onAppEvent('save-dashboard', function() {
         $scope.saveDashboard();
       });

@@ -8,6 +8,8 @@ define([
 function (angular, $, config, _) {
   "use strict";
 
+  var module = angular.module('grafana.controllers');
+
   module.controller('DashCtrl', function($scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
@@ -21,9 +23,9 @@ function (angular, $, config, _) {
     $scope.setupDashboard = function(event, dashboardData) {
       timer.cancel_all();
 
-      $rootScope.fullscreen = false;
-
       $scope.dashboard = dashboardSrv.create(dashboardData);
+      $scope.dashboardViewState = dashboardSrv.createViewState();
+
       $scope.grafana.style = $scope.dashboard.style;
 
       $scope.filter = filterSrv;

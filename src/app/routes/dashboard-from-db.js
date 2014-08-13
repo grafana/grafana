@@ -30,13 +30,7 @@ function (angular) {
 
     db.getDashboard($routeParams.id, isTemp)
       .then(function(dashboard) {
-
-        dashboard.$state = {
-          panelId: parseInt($routeParams.panelId)
-        };
-
         $scope.emitAppEvent('setup-dashboard', dashboard);
-
       }).then(null, function(error) {
         alertSrv.set('Error', error, 'error');
       });
