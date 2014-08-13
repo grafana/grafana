@@ -54,6 +54,10 @@ define([
       expect(model.title).to.be('No Title');
     });
 
+    it('should have panel id', function() {
+      expect(graph.id).to.be(1);
+    });
+
     it('should move time and filtering list', function() {
       expect(model.time.from).to.be('now-1d');
       expect(model.templating.list[0]).to.be(1);
@@ -74,36 +78,6 @@ define([
 
     it('dashboard schema version should be set to latest', function() {
       expect(model.version).to.be(3);
-    });
-
-  });
-
-  describe('when updating view state', function() {
-    var viewState, location;
-
-    beforeEach(module('grafana.services'));
-
-    beforeEach(inject(function(dashboardSrv, $location) {
-      viewState = dashboardSrv.createViewState();
-      location = $location;
-    }));
-
-    describe('to fullscreen true and edit true', function() {
-      it('should update querystring and view state', function() {
-        var updateState = { fullscreen: true, edit: true, panelId: 1 };
-        viewState.update(updateState);
-        expect(location.search()).to.eql(updateState);
-        expect(viewState).to.eql(updateState);
-      });
-    });
-
-    describe('to fullscreen false', function() {
-      it('should remove params from query string', function() {
-        viewState.update({fullscreen: true, panelId: 1, edit: true});
-        viewState.update({fullscreen: false});
-        expect(location.search()).to.eql({});
-        expect(viewState).to.eql({});
-      });
     });
 
   });
