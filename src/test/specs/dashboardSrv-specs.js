@@ -7,7 +7,6 @@ define([
     var model;
 
     beforeEach(module('grafana.services'));
-
     beforeEach(inject(function(dashboardSrv) {
       model = dashboardSrv.create({});
     }));
@@ -24,12 +23,71 @@ define([
 
   });
 
+  describe('when getting next panel id', function() {
+    var model;
+
+    beforeEach(module('grafana.services'));
+    beforeEach(inject(function(dashboardSrv) {
+      model = dashboardSrv.create({
+        rows: [{ panels: [{ id: 5 }]}]
+      });
+    }));
+
+    it('should return max id + 1', function() {
+      expect(model.getNextPanelId()).to.be(6);
+    });
+  });
+
+  describe('row and panel manipulation', function() {
+    var dashboard;
+
+    beforeEach(module('grafana.services'));
+    beforeEach(inject(function(dashboardSrv) {
+      dashboard = dashboardSrv.create({});
+    }));
+
+    it('row span should sum spans', function() {
+      var spanLeft = dashboard.rowSpan({ panels: [{ span: 2 }, { span: 3 }] });
+      expect(spanLeft).to.be(5);
+    });
+
+    it('adding default should split span in half', function() {
+      dashboard.rows = [{ panels: [{ span: 12, id: 7 }] }];
+      dashboard.add_panel({span: 4}, dashboard.rows[0]);
+
+      expect(dashboard.rows[0].panels[0].span).to.be(6);
+      expect(dashboard.rows[0].panels[1].span).to.be(6);
+      expect(dashboard.rows[0].panels[1].id).to.be(8);
+    });
+
+    it('duplicate panel should try to add it to same row', function() {
+      var panel = { span: 4, attr: '123', id: 10 };
+      dashboard.rows = [{ panels: [panel] }];
+      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+
+      expect(dashboard.rows[0].panels[0].span).to.be(4);
+      expect(dashboard.rows[0].panels[1].span).to.be(4);
+      expect(dashboard.rows[0].panels[1].attr).to.be('123');
+      expect(dashboard.rows[0].panels[1].id).to.be(11);
+    });
+
+    it('duplicate should add row if there is no space left', function() {
+      var panel = { span: 12, attr: '123' };
+      dashboard.rows = [{ panels: [panel] }];
+      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+
+      expect(dashboard.rows[0].panels[0].span).to.be(12);
+      expect(dashboard.rows[0].panels.length).to.be(1);
+      expect(dashboard.rows[1].panels[0].attr).to.be('123');
+    });
+
+  });
+
   describe('when creating dashboard with old schema', function() {
     var model;
     var graph;
 
     beforeEach(module('grafana.services'));
-
     beforeEach(inject(function(dashboardSrv) {
       model = dashboardSrv.create({
         services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [1] }},

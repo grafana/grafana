@@ -26,6 +26,7 @@ define([
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.filter = new FilterSrvStub();
+        self.scope.dashboard = {};
         self.scope.dashboardViewState = new DashboardViewStateStub();
 
         $rootScope.colors = [];

@@ -49,6 +49,65 @@ function (angular, $, kbn, _) {
 
     var p = DashboardModel.prototype;
 
+    p.getNextPanelId = function() {
+      var i, j, row, panel, max = 0;
+      for (i = 0; i < this.rows.length; i++) {
+       row = this.rows[i];
+       for (j = 0; j < row.panels.length; j++) {
+         panel = row.panels[j];
+         if (panel.id > max) { max = panel.id; }
+       }
+      }
+      return max + 1;
+    };
+
+    p.rowSpan = function(row) {
+      return _.reduce(row.panels, function(p,v) {
+        return p + v.span;
+      },0);
+    };
+
+    p.add_panel = function(panel, row) {
+      var rowSpan = this.rowSpan(row);
+      var panelCount = row.panels.length;
+      var space = (12 - rowSpan) - panel.span;
+      panel.id = this.getNextPanelId();
+
+      // try to make room of there is no space left
+      if (space <= 0) {
+        if (panelCount === 1) {
+          row.panels[0].span = 6;
+          panel.span = 6;
+        }
+        else if (panelCount === 2) {
+          row.panels[0].span = 4;
+          row.panels[1].span = 4;
+          panel.span = 4;
+        }
+      }
+
+      row.panels.push(panel);
+    };
+
+    p.duplicatePanel = function(panel, row) {
+      var rowIndex = _.indexOf(this.rows, row);
+      var newPanel = angular.copy(panel);
+      newPanel.id = this.getNextPanelId();
+
+      while(rowIndex < this.rows.length) {
+        var currentRow = this.rows[rowIndex];
+        if (this.rowSpan(currentRow) <= 9) {
+          currentRow.panels.push(newPanel);
+          return;
+        }
+        rowIndex++;
+      }
+
+      var newRow = angular.copy(row);
+      newRow.panels = [newPanel];
+      this.rows.push(newRow);
+    };
+
     p.emit_refresh = function() {
       $rootScope.$broadcast('refresh');
     };
@@ -86,13 +145,15 @@ function (angular, $, kbn, _) {
 
       // Version 3 schema changes
       // ensure panel ids
-      var panelId = 1;
+      var maxId = this.getNextPanelId();
       for (i = 0; i < this.rows.length; i++) {
         row = this.rows[i];
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
-          panel.id = panelId;
-          panelId += 1;
+          if (!panel.id) {
+            panel.id = maxId;
+            maxId += 1;
+          }
         }
       }
 
