@@ -13,6 +13,7 @@
 - Switch from underscore to lodash
 - helpers to easily unit test angularjs controllers and services
 - Test coverage through coveralls
+- Upgrade from jquery 1.8.0 to 2.1.1 (**Removes support for IE7 & IE8**)
 
 # 1.7.0 (2014-08-11)
 
