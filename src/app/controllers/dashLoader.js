@@ -22,6 +22,17 @@ function (angular, _, moment, config) {
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
+
+      var count = 0;
+      $scope.$watch(function() {
+        console.log(1);
+        count++;
+      }, function(n, o) {
+      });
+
+      setTimeout(function() {
+       console.log("Total count:" + count);
+      }, 4000);
     };
 
     $scope.set_default = function() {

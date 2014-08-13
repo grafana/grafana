@@ -88,7 +88,7 @@ function (angular, app, _, require) {
       }
 
       if(!$scope.$$phase) {
-        $scope.$apply();
+        $scope.$digest();
       }
     };
 
