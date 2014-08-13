@@ -1,4 +1,4 @@
-<div ng-controller="DashCtrl" body-class>
+<div ng-controller="DashCtrl" body-class ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
 
   <div class="navbar navbar-static-top">
     <div class="navbar-inner">
@@ -105,7 +105,7 @@
                 </div>
               </div>
 
-              <div ng-show="rowSpan(row) < 10 && dashboard.$$panelDragging" class="panel" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
+              <div ng-show="dashboard.rowSpan(row) < 10 && dashboard.$$panelDragging" class="panel" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
               </div>
 
               <div class="clearfix"></div>

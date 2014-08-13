@@ -124,6 +124,7 @@ require([
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
+    'specs/dashboardViewStateSrv-specs',
     'specs/influxSeries-specs'
   ], function () {
     window.__karma__.start();

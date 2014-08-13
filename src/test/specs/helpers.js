@@ -26,6 +26,8 @@ define([
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.filter = new FilterSrvStub();
+        self.scope.dashboard = {};
+        self.scope.dashboardViewState = new DashboardViewStateStub();
 
         $rootScope.colors = [];
         for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }
@@ -51,6 +53,11 @@ define([
         self.filterSrv = new FilterSrvStub();
         self.$httpBackend =  $httpBackend;
       }]);
+    };
+  }
+
+  function DashboardViewStateStub() {
+    this.registerPanel = function() {
     };
   }
 

@@ -27,7 +27,7 @@
         <thead>
           <th>Title</th>
           <th>Type</th>
-          <th>Span <span class="small">({{rowSpan(row)}}/12)</span></th>
+          <th>Span <span class="small">({{dashboard.rowSpan(row)}}/12)</span></th>
           <th>Delete</th>
           <th>Move</th>
           <th></th>
@@ -49,7 +49,7 @@
     <h4>Select Panel Type</h4>
     <form class="form-inline">
       <select class="input-medium" ng-model="panel.type" ng-options="panelType for panelType in availablePanels|stringSort"></select>
-      <small ng-show="rowSpan(row) > 11">
+      <small ng-show="dashboard.rowSpan(row) > 11">
         Note: This row is full, new panels will wrap to a new line. You should add another row.
       </small>
     </form>

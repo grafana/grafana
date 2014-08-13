@@ -10,7 +10,7 @@ function (angular, $, kbn, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('dashboardSrv', function(timer, $rootScope, $timeout) {
+  module.factory('dashboardSrv', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
 
@@ -29,6 +29,8 @@ function (angular, $, kbn, _) {
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.templating = data.templating || { list: [] };
       this.refresh = data.refresh;
+      this.version = data.version || 0;
+      this.$state = data.$state;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -46,6 +48,65 @@ function (angular, $, kbn, _) {
     }
 
     var p = DashboardModel.prototype;
+
+    p.getNextPanelId = function() {
+      var i, j, row, panel, max = 0;
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (panel.id > max) { max = panel.id; }
+        }
+      }
+      return max + 1;
+    };
+
+    p.rowSpan = function(row) {
+      return _.reduce(row.panels, function(p,v) {
+        return p + v.span;
+      },0);
+    };
+
+    p.add_panel = function(panel, row) {
+      var rowSpan = this.rowSpan(row);
+      var panelCount = row.panels.length;
+      var space = (12 - rowSpan) - panel.span;
+      panel.id = this.getNextPanelId();
+
+      // try to make room of there is no space left
+      if (space <= 0) {
+        if (panelCount === 1) {
+          row.panels[0].span = 6;
+          panel.span = 6;
+        }
+        else if (panelCount === 2) {
+          row.panels[0].span = 4;
+          row.panels[1].span = 4;
+          panel.span = 4;
+        }
+      }
+
+      row.panels.push(panel);
+    };
+
+    p.duplicatePanel = function(panel, row) {
+      var rowIndex = _.indexOf(this.rows, row);
+      var newPanel = angular.copy(panel);
+      newPanel.id = this.getNextPanelId();
+
+      while(rowIndex < this.rows.length) {
+        var currentRow = this.rows[rowIndex];
+        if (this.rowSpan(currentRow) <= 9) {
+          currentRow.panels.push(newPanel);
+          return;
+        }
+        rowIndex++;
+      }
+
+      var newRow = angular.copy(row);
+      newRow.panels = [newPanel];
+      this.rows.push(newRow);
+    };
 
     p.emit_refresh = function() {
       $rootScope.$broadcast('refresh');
@@ -75,12 +136,32 @@ function (angular, $, kbn, _) {
 
     p.updateSchema = function(old) {
       var i, j, row, panel;
-      var isChanged = false;
+      var oldVersion = this.version;
+      this.version = 3;
 
-      if (this.version === 2) {
+      if (oldVersion === 3) {
         return;
       }
 
+      // Version 3 schema changes
+      // ensure panel ids
+      var maxId = this.getNextPanelId();
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (!panel.id) {
+            panel.id = maxId;
+            maxId += 1;
+          }
+        }
+      }
+
+      if (oldVersion === 2) {
+        return;
+      }
+
+      // Version 2 schema changes
       if (old.services) {
         if (old.services.filter) {
           this.time = old.services.filter.time;
@@ -95,7 +176,6 @@ function (angular, $, kbn, _) {
           panel = row.panels[j];
           if (panel.type === 'graphite') {
             panel.type = 'graph';
-            isChanged = true;
           }
 
           if (panel.type === 'graph') {
@@ -128,7 +208,7 @@ function (angular, $, kbn, _) {
         }
       }
 
-      this.version = 2;
+      this.version = 3;
     };
 
     return {

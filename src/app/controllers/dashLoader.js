@@ -14,6 +14,7 @@ function (angular, _, moment, config) {
 
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
+
       $scope.onAppEvent('save-dashboard', function() {
         $scope.saveDashboard();
       });
@@ -21,10 +22,6 @@ function (angular, _, moment, config) {
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
-    };
-
-    $scope.exitFullscreen = function() {
-      $scope.emitAppEvent('panel-fullscreen-exit');
     };
 
     $scope.set_default = function() {
@@ -78,6 +75,7 @@ function (angular, _, moment, config) {
         .then(function(result) {
           alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
 
+          $location.search({});
           $location.path(result.url);
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
