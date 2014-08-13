@@ -5,6 +5,9 @@
 - [Issue #578](https://github.com/grafana/grafana/issues/578). Dashboard: Row option to display row title even when the row is visible
 - [Issue #672](https://github.com/grafana/grafana/issues/672). Dashboard: panel fullscreen & edit state is present in url, can now link to graph in edit & fullscreen mode.
 
+**Fixes**
+- [Issue #691](https://github.com/grafana/grafana/issues/691). Dashboard: tooltip fixes, sometimes they would not show, and sometimes they would get stuck.
+
 **Tech**
 - Upgraded from angularjs 1.1.5 to 1.3 beta 17;
 - Switch from underscore to lodash

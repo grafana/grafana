@@ -87,6 +87,9 @@ function (angular, $, _, appLevelRequire, config) {
       'routes/all',
     ], function () {
 
+      // disable tool tip animation
+      $.fn.tooltip.defaults.animation = false;
+
       // bootstrap the app
       angular
         .element(document)
