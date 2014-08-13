@@ -10,7 +10,7 @@ function (angular, $, kbn, _) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(timer, $rootScope, $timeout, $location) {
+  module.factory('dashboardSrv', function(timer, $rootScope, $timeout) {
 
     function DashboardModel (data) {
 

@@ -1,9 +1,8 @@
 define([
   'angular',
   'lodash',
-  'jquery',
 ],
-function (angular, _, $) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -71,46 +70,6 @@ function (angular, _, $) {
         });
       };
 
-      $scope.enterFullscreenMode = function(options) {
-        var docHeight = $(window).height();
-        var editHeight = Math.floor(docHeight * 0.3);
-        var fullscreenHeight = Math.floor(docHeight * 0.7);
-        var oldTimeRange = $scope.range;
-
-        $scope.height = options.edit ? editHeight : fullscreenHeight;
-        $scope.editMode = options.edit;
-
-        if (!$scope.fullscreen) {
-          var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
-            $scope.editMode = false;
-            $scope.fullscreen = false;
-            delete $scope.height;
-
-            closeEditMode();
-
-            $timeout(function() {
-              if (oldTimeRange !== $scope.range) {
-                $scope.dashboard.emit_refresh();
-              }
-              else {
-                $scope.$emit('render');
-              }
-            });
-          });
-        }
-
-        $(window).scrollTop(0);
-
-        $scope.dashboardViewState.update({ fullscreen: true, edit: $scope.editMode, panelId: $scope.panel.id });
-
-        $scope.fullscreen = true;
-
-        $timeout(function() {
-          $scope.$emit('render');
-        });
-
-      };
-
       $scope.addDataQuery = function() {
         $scope.panel.targets.push({target: ''});
       };
@@ -165,6 +124,7 @@ function (angular, _, $) {
 
           panel_get_data();
         };
+
         if (!$scope.skipDataOnInit) {
           $scope.get_data();
         }

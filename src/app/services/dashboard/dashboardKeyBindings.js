@@ -12,16 +12,6 @@ function(angular, $) {
 
     this.shortcuts = function(scope) {
 
-      scope.onAppEvent('panel-fullscreen-exit', function() {
-        scope.dashboardViewState.update({ fullscreen: false });
-      });
-
-      scope.onAppEvent('dashboard-saved', function() {
-        if (scope.dashboardViewState.fullscreen) {
-          scope.emitAppEvent('panel-fullscreen-exit');
-        }
-      });
-
       scope.$on('$destroy', function() {
         keyboardManager.unbind('ctrl+f');
         keyboardManager.unbind('ctrl+h');
@@ -63,7 +53,7 @@ function(angular, $) {
           modalData.$scope.dismiss();
         }
 
-        scope.emitAppEvent('panel-fullscreen-exit');
+        scope.exitFullscreen();
       }, { inputDisabled: true });
     };
   });

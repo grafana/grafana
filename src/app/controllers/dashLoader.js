@@ -24,10 +24,6 @@ function (angular, _, moment, config) {
       });
     };
 
-    $scope.exitFullscreen = function() {
-      $scope.emitAppEvent('panel-fullscreen-exit');
-    };
-
     $scope.set_default = function() {
       window.localStorage.grafanaDashboardDefault = $location.path();
       alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);

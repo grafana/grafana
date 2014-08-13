@@ -15,6 +15,14 @@ function (angular, _, $) {
     function DashboardViewState($scope) {
       var self = this;
 
+      $scope.exitFullscreen = function() {
+        self.update({ fullscreen: false });
+      };
+
+      $scope.onAppEvent('dashboard-saved', function() {
+        self.update({ fullscreen: false });
+      });
+
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
         if (self.needsSync(urlState)) {
@@ -45,9 +53,8 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.update = function(state, skipUrlSync) {
-      console.log('viewstate update: ', state);
-
       _.extend(this, state);
+
       if (!this.fullscreen) {
         this.panelId = null;
         this.edit = false;
