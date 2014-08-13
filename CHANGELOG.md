@@ -3,6 +3,7 @@
 **New features and improvements**
 
 - [Issue #578](https://github.com/grafana/grafana/issues/578). Dashboard: Row option to display row title even when the row is visible
+- [Issue #672](https://github.com/grafana/grafana/issues/672). Dashboard: panel fullscreen & edit state is present in url, can now link to graph in edit & fullscreen mode.
 
 **Tech**
 - Upgraded from angularjs 1.1.5 to 1.3 beta 17;
