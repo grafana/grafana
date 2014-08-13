@@ -22,12 +22,12 @@ function (angular, _, $) {
         },
         {
           text: 'Edit',
-          click: "toggleFullscreenEdit()",
+          click: "toggleFullscreen(true)",
           condition: $scope.panelMeta.fullscreenEdit
         },
         {
           text: "Fullscreen",
-          click: 'toggleFullscreen()',
+          click: 'toggleFullscreen(false)',
           condition: $scope.panelMeta.fullscreenView
         },
         {
@@ -135,22 +135,8 @@ function (angular, _, $) {
         $scope.get_data();
       };
 
-      $scope.toggleFullscreenEdit = function() {
-        if ($scope.editMode) {
-          $rootScope.$emit('panel-fullscreen-exit');
-          return;
-        }
-
-        $scope.enterFullscreenMode({edit: true});
-      };
-
-      $scope.toggleFullscreen = function() {
-        if ($scope.fullscreen && !$scope.editMode) {
-          $rootScope.$emit('panel-fullscreen-exit');
-          return;
-        }
-
-        $scope.enterFullscreenMode({ edit: false });
+      $scope.toggleFullscreen = function(edit) {
+        $scope.dashboardViewState.update({ fullscreen: true, edit: edit, panelId: $scope.panel.id });
       };
 
       $scope.otherPanelInFullscreenMode = function() {
@@ -168,9 +154,6 @@ function (angular, _, $) {
       $scope.setDatasource($scope.panel.datasource);
 
       $scope.dashboardViewState.registerPanel($scope);
-      if ($scope.dashboardViewState.panelId === $scope.panel.id) {
-        $scope.enterFullscreenMode({edit: $scope.dashboardViewState.edit});
-      }
 
       if ($scope.get_data) {
         var panel_get_data = $scope.get_data;
