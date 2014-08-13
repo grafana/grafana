@@ -10,7 +10,10 @@ function (angular, $, config, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashCtrl', function($scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
+  module.controller('DashCtrl', function(
+      $scope, $rootScope, dashboardKeybindings,
+      filterSrv, dashboardSrv, dashboardViewStateSrv,
+      panelMoveSrv, timer) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -24,7 +27,7 @@ function (angular, $, config, _) {
       timer.cancel_all();
 
       $scope.dashboard = dashboardSrv.create(dashboardData);
-      $scope.dashboardViewState = dashboardSrv.createViewState();
+      $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
       $scope.grafana.style = $scope.dashboard.style;
 

@@ -150,35 +150,9 @@ function (angular, $, kbn, _) {
       this.version = 3;
     };
 
-    // represents the transient view state
-    // like fullscreen panel & edit
-    function DashboardViewState() {
-      var queryParams = $location.search();
-      this.update({
-        panelId: parseInt(queryParams.panelId),
-        fullscreen: queryParams.fullscreen ? true : false,
-        edit: queryParams.edit ? true : false
-      });
-    }
-
-    DashboardViewState.prototype.update = function(state) {
-      _.extend(this, state);
-      if (!this.fullscreen) {
-        delete this.fullscreen;
-        delete this.panelId;
-        delete this.edit;
-      }
-      if (!this.edit) { delete this.edit; }
-
-      $location.search(this);
-    };
-
     return {
       create: function(dashboard) {
         return new DashboardModel(dashboard);
-      },
-      createViewState: function(state) {
-        return new DashboardViewState(state);
       }
     };
 

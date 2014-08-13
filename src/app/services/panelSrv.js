@@ -167,6 +167,7 @@ function (angular, _, $) {
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
 
+      $scope.dashboardViewState.registerPanel($scope);
       if ($scope.dashboardViewState.panelId === $scope.panel.id) {
         $scope.enterFullscreenMode({edit: $scope.dashboardViewState.edit});
       }
