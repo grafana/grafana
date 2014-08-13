@@ -45,7 +45,6 @@ function(angular, _, config) {
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
         if (self.originalPath === $location.path()) {
-          console.log("skipping");
           return;
         }
 
