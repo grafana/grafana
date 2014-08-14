@@ -133,8 +133,7 @@ function (angular, _) {
       if ($rootScope.profilingEnabled) {
         $rootScope.performance.panelsInitialized++;
         if ($rootScope.performance.panelsInitialized === $scope.dashboard.rows.length) {
-          var timeTaken = new Date().getTime() - $scope.performance.dashboardLoadStart;
-          console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+          $rootScope.performance.allPanelsInitialized = new Date().getTime();
         }
       }
     };

@@ -78,17 +78,27 @@ function (angular, config, _, $) {
 
     $scope.initProfiling = function() {
       var count = 0;
+      console.log("registering digest counter");
+
       $scope.$watch(function() {
         console.log(1);
         count++;
       }, function() {
       });
 
-      setTimeout(function() {
-        console.log("Dashboard::Performance Total Digests: " + count);
-        console.log("Dashboard::Performance Total Watchers: " + $scope.getTotalWatcherCount());
-        console.log("Dashboard::Performance Total ScopeCount: " + $scope.performance.scopeCount);
-      }, 3000);
+      $scope.onAppEvent('setup-dashboard', function() {
+        count = 0;
+
+        setTimeout(function() {
+          console.log("Dashboard::Performance Total Digests: " + count);
+          console.log("Dashboard::Performance Total Watchers: " + $scope.getTotalWatcherCount());
+          console.log("Dashboard::Performance Total ScopeCount: " + $rootScope.performance.scopeCount);
+
+          var timeTaken = $rootScope.performance.allPanelsInitialized - $rootScope.performance.dashboardLoadStart;
+          console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+        }, 3000);
+
+      });
 
     };
 
