@@ -129,6 +129,12 @@ function (angular, _) {
           $scope.get_data();
         }
       }
+
+      $scope.performance.panelsInitialized++;
+      if ($scope.performance.panelsInitialized === $scope.dashboard.rows.length) {
+        var timeTaken = new Date().getTime() - $scope.performance.dashboardLoadStart;
+        console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+      }
     };
   });
 

@@ -31,7 +31,6 @@
           <th>Delete</th>
           <th>Move</th>
           <th></th>
-          <th>Hide</th>
         </thead>
         <tr ng-repeat="panel in row.panels">
           <td>{{panel.title}}</td>
@@ -40,7 +39,6 @@
           <td><i ng-click="row.panels = _.without(row.panels,panel)" class="pointer icon-remove"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
           <td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
-          <td><input type="checkbox" ng-model="panel.hide" ng-checked="panel.hide"></td>
         </tr>
       </table>
     </div>

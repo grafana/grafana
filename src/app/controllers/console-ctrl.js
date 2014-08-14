@@ -15,20 +15,6 @@ function (angular, _, moment) {
 
   var events = [];
 
-  var oldLog = console.log;
-  console.log = function (message) {
-    try {
-      if (_.isObject(message)) {
-        message = angular.toJson(message);
-        if (message.length > 50) {
-          message = message.substring(0, 50);
-        }
-      }
-      events.push(new ConsoleEvent('log', message, {}));
-      oldLog.apply(console, arguments);
-    } catch (e) { }
-  };
-
   function ConsoleEvent(type, title, data) {
     this.type = type;
     this.title = title;
@@ -111,6 +97,7 @@ function (angular, _, moment) {
 
     $httpProvider.interceptors.push('mupp');
   });
+
 
   module.controller('ConsoleCtrl', function($scope) {
 

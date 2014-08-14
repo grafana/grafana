@@ -26,6 +26,10 @@ function (angular, $, config, _) {
     $scope.setupDashboard = function(event, dashboardData) {
       timer.cancel_all();
 
+      $scope.performance.dashboardLoadStart = new Date().getTime();
+      $scope.performance.panelsInitialized = 0;
+      $scope.performance.panelsRendered= 0;
+
       $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
