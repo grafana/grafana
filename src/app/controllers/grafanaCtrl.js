@@ -12,29 +12,21 @@ function (angular, config, _, $) {
   module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope.performance = { loadStart: new Date().getTime() };
+    $scope.consoleEnabled = (window.localStorage && window.localStorage.grafanaConsole === 'true');
 
-    var count = 0;
-    $scope.$watch(function() {
-      console.log(1);
-      count++;
-    }, function() {
-    });
-
-    setTimeout(function() {
-      console.log("Dashboard::Performance Total Digests: " + count);
-      console.log("Dashboard::Performance Total Watchers: " + $scope.getTotalWatcherCount());
-      console.log("Dashboard::Performance Total ScopeCount: " + $scope.performance.scopeCount);
-    }, 3000);
+    $rootScope.profilingEnabled = (window.localStorage && window.localStorage.profilingEnabled === 'true');
+    $rootScope.performance = { loadStart: new Date().getTime() };
 
     $scope.init = function() {
       $scope._ = _;
+      if ($rootScope.profilingEnabled) {
+        $scope.initProfiling();
+      }
+
       $scope.dashAlerts = alertSrv;
       $scope.grafana = {
         style: 'dark'
       };
-
-      $scope.consoleEnabled = (window.localStorage && window.localStorage.grafanaConsole === 'true');
     };
 
     $scope.toggleConsole = function() {
@@ -80,8 +72,24 @@ function (angular, config, _, $) {
       };
 
       f(root);
-      $scope.performance.scopeCount = scopes;
+      $rootScope.performance.scopeCount = scopes;
       return count;
+    };
+
+    $scope.initProfiling = function() {
+      var count = 0;
+      $scope.$watch(function() {
+        console.log(1);
+        count++;
+      }, function() {
+      });
+
+      setTimeout(function() {
+        console.log("Dashboard::Performance Total Digests: " + count);
+        console.log("Dashboard::Performance Total Watchers: " + $scope.getTotalWatcherCount());
+        console.log("Dashboard::Performance Total ScopeCount: " + $scope.performance.scopeCount);
+      }, 3000);
+
     };
 
     $scope.init();

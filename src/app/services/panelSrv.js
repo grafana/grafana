@@ -130,10 +130,12 @@ function (angular, _) {
         }
       }
 
-      $scope.performance.panelsInitialized++;
-      if ($scope.performance.panelsInitialized === $scope.dashboard.rows.length) {
-        var timeTaken = new Date().getTime() - $scope.performance.dashboardLoadStart;
-        console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+      if ($rootScope.profilingEnabled) {
+        $rootScope.performance.panelsInitialized++;
+        if ($rootScope.performance.panelsInitialized === $scope.dashboard.rows.length) {
+          var timeTaken = new Date().getTime() - $scope.performance.dashboardLoadStart;
+          console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+        }
       }
     };
   });

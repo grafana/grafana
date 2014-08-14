@@ -98,7 +98,6 @@ function (angular, _, moment) {
     $httpProvider.interceptors.push('mupp');
   });
 
-
   module.controller('ConsoleCtrl', function($scope) {
 
     $scope.events = events;
