@@ -1,15 +1,3 @@
-/** @scratch /panels/5
- * include::panels/text.asciidoc[]
- */
-
-/** @scratch /panels/text/0
- * == text
- * Status: *Stable*
- *
- * The text panel is used for displaying static text formated as markdown, sanitized html or as plain
- * text.
- *
- */
 define([
   'angular',
   'app',
@@ -22,6 +10,8 @@ function (angular, app, _, require) {
 
   var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
+
+  var converter;
 
   module.controller('text', function($scope, filterSrv, $sce, panelSrv) {
 
@@ -68,15 +58,21 @@ function (angular, app, _, require) {
     };
 
     $scope.renderMarkdown = function(content) {
-      require(['./lib/showdown'], function (Showdown) {
-        var converter = new Showdown.converter();
-        var text = content
-          .replace(/&/g, '&amp;')
-          .replace(/>/g, '&gt;')
-          .replace(/</g, '&lt;');
+      var text = content
+        .replace(/&/g, '&amp;')
+        .replace(/>/g, '&gt;')
+        .replace(/</g, '&lt;');
 
+      if (converter) {
+        console.log("markdown render cached");
         $scope.updateContent(converter.makeHtml(text));
-      });
+      }
+      else {
+        require(['./lib/showdown'], function (Showdown) {
+          converter = new Showdown.converter();
+          $scope.updateContent(converter.makeHtml(text));
+        });
+      }
     };
 
     $scope.updateContent = function(html) {

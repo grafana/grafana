@@ -172,10 +172,20 @@ function (angular, app, _, moment, kbn) {
     };
 
     var getScopeTimeObj = function(from,to) {
-      return {
+      var model = {
         from: getTimeObj(from),
-        to: getTimeObj(to)
+        to: getTimeObj(to),
       };
+
+      if (model.from.date) {
+        model.tooltip = moment(model.from.date).format('YYYY-MM-DD HH:mm:ss') + ' <br>to<br>';
+        model.tooltip += moment(model.to.date).format('YYYY-MM-DD HH:mm:ss');
+      }
+      else {
+        model.tooltip = 'Click to set time filter';
+      }
+
+      return model;
     };
 
     var getTimeObj = function(date) {

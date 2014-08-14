@@ -15,8 +15,7 @@
     <ul class="nav nav-pills timepicker-dropdown">
       <li class="dropdown">
 
-        <a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="time.from.date ? (time.from.date | date:'yyyy-MM-dd HH:mm:ss.sss') + ' <br>to<br>' +(time.to.date | date:'yyyy-MM-dd HH:mm:ss.sss') : 'Click to set a time filter'" data-placement="bottom" ng-click="dismiss();">
-
+        <a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="dismiss();">
           <span ng-show="filter.time">
             <span class="pointer" ng-hide="panel.now">{{time.from.date | date:'MMM d, y HH:mm:ss'}}</span>
             <span class="pointer" ng-show="panel.now">{{time.from.date | moment:'ago'}}</span>
