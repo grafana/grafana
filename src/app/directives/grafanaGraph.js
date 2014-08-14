@@ -303,9 +303,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          if (format !== 'none') {
-            axis.tickFormatter = kbn.getFormatFunction(format, 1);
-          }
+          axis.tickFormatter = kbn.getFormatFunction(format, 1);
         }
 
         function time_format(interval, ticks, min, max) {
