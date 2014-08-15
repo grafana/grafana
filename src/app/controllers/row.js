@@ -124,6 +124,4 @@ function (angular, app, _) {
     };
   });
 
-
-
 });
