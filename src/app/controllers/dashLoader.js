@@ -134,6 +134,7 @@ function (angular, _, moment, config) {
 
     $scope.openSaveDropdown = function() {
       $scope.isFavorite = playlistSrv.isCurrentFavorite($scope.dashboard);
+      $scope.saveDropdownOpened = true;
     };
 
     $scope.markAsFavorite = function() {

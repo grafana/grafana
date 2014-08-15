@@ -99,6 +99,7 @@ function (angular, _, config, $) {
         $element.next().find('.dropdown-toggle').dropdown('toggle');
       }
 
+      $scope.searchOpened = true;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.query.query = 'title:';
       $scope.search();
