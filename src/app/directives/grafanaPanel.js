@@ -69,6 +69,14 @@ function (angular, $) {
             /* jshint indent:false */
             $compile(elem.contents())(newScope);
             elem.removeClass("ng-cloak");
+
+            var panelCtrlElem = $(elem.children()[0]);
+            var panelCtrlScope = panelCtrlElem.data().$scope;
+
+            panelCtrlScope.$watchGroup(['fullscreen', 'panel.height', 'row.height'], function() {
+              panelCtrlElem.css({ minHeight: panelCtrlScope.panel.height || panelCtrlScope.row.height });
+              panelCtrlElem.toggleClass('panel-fullscreen', panelCtrlScope.fullscreen ? true : false);
+            });
           }
 
           newScope.$on('$destroy',function() {

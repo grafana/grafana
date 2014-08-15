@@ -95,9 +95,12 @@ function (angular, config, _, $) {
           var timeTaken = $rootScope.performance.allPanelsInitialized - $rootScope.performance.dashboardLoadStart;
           console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
 
+          // measure digest performance
           var rootDigestStart = window.performance.now();
-          $rootScope.$apply();
-          console.log("Dashboard::Performance Root Digest " + (window.performance.now() - rootDigestStart));
+          for (var i = 0; i < 30; i++) {
+            $rootScope.$apply();
+          }
+          console.log("Dashboard::Performance Root Digest " + ((window.performance.now() - rootDigestStart) / 30));
 
         }, 3000);
 
