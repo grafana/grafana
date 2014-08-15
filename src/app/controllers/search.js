@@ -59,6 +59,7 @@ function (angular, _, config, $) {
 
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
+          $location.search({});
           $location.path("/dashboard/db/" + selectedDash.id);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
@@ -116,6 +117,7 @@ function (angular, _, config, $) {
         $element.next().find('.dropdown-toggle').dropdown('toggle');
       }
 
+      $scope.searchOpened = true;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.query.query = 'title:';
       $scope.search();

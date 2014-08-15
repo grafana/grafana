@@ -21,7 +21,6 @@ function (angular, $, kbn, moment, _) {
         var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
-          if (scope.otherPanelInFullscreenMode()) { return; }
           scope.get_data();
         });
 
@@ -39,6 +38,10 @@ function (angular, $, kbn, moment, _) {
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
+          if (!data) {
+            scope.get_data();
+            return;
+          }
           annotations = data.annotations || annotations;
           render_panel();
         });
@@ -300,9 +303,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          if (format !== 'none') {
-            axis.tickFormatter = kbn.getFormatFunction(format, 1);
-          }
+          axis.tickFormatter = kbn.getFormatFunction(format, 1);
         }
 
         function time_format(interval, ticks, min, max) {

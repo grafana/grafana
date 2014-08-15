@@ -11,6 +11,7 @@ function (angular) {
       .when('/dashboard/db/:id', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
+        reloadOnSearch: false,
       })
       .when('/dashboard/elasticsearch/:id', {
         templateUrl: 'app/partials/dashboard.html',

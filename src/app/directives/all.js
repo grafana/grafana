@@ -1,5 +1,4 @@
 define([
-  './addPanel',
   './arrayJoin',
   './dashUpload',
   './grafanaPanel',

@@ -22,6 +22,20 @@ define([
 
   });
 
+  describe('high negative exponent, issue #696', function() {
+    it('should ignore decimal correction if exponent', function() {
+      var str = kbn.getFormatFunction('')(2.75e-10, { tickDecimals: 12 });
+      expect(str).to.be('2.75e-10');
+    });
+  });
+
+  describe('none format tests', function() {
+    it('should translate 2 as 2.0000 if axis decimals is 4', function() {
+      var str = kbn.getFormatFunction('')(2, { tickDecimals: 4 });
+      expect(str).to.be('2.0000');
+    });
+  });
+
   describe('nanosecond formatting', function () {
 
     it('should translate 25 to 25 ns', function () {

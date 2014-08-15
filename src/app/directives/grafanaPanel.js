@@ -8,7 +8,7 @@ function (angular, $) {
 
   angular
     .module('grafana.directives')
-    .directive('grafanaPanel', function($compile) {
+    .directive('grafanaPanel', function($compile, $parse) {
 
       var container = '<div class="panel-container"></div>';
       var content = '<div class="panel-content"></div>';
@@ -18,11 +18,13 @@ function (angular, $) {
        '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
             '<span class="alert-error panel-error small pointer"' +
-                  'config-modal="app/partials/inspector.html" ng-show="panel.error" data-placement="right" bs-tooltip="panel.error">' +
+                  'config-modal="app/partials/inspector.html" ng-if="panel.error">' +
+              '<span data-placement="right" bs-tooltip="panel.error">' +
               '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
+              '</span>' +
             '</span>' +
 
-            '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
+            '<span class="panel-loading" ng-show="panelMeta.loading">' +
               '<i class="icon-spinner icon-spin icon-large"></i>' +
             '</span>' +
 
@@ -36,7 +38,7 @@ function (angular, $) {
                 'index:{{$index}},'+
                 'onStart:\'panelMoveStart\','+
                 'onStop:\'panelMoveStop\''+
-                '}"  ng-model="row.panels" ' +
+                '}"  ng-model="panel" ' +
                 '>' +
                 '{{panel.title || "No title"}}' +
               '</span>' +
@@ -49,8 +51,7 @@ function (angular, $) {
       return {
         restrict: 'E',
         link: function($scope, elem, attr) {
-          // once we have the template, scan it for controllers and
-          // load the module.js if we have any
+          var getter = $parse(attr.type), panelType = getter($scope);
           var newScope = $scope.$new();
 
           $scope.kbnJqUiDraggableOptions = {
@@ -68,6 +69,14 @@ function (angular, $) {
             /* jshint indent:false */
             $compile(elem.contents())(newScope);
             elem.removeClass("ng-cloak");
+
+            var panelCtrlElem = $(elem.children()[0]);
+            var panelCtrlScope = panelCtrlElem.data().$scope;
+
+            panelCtrlScope.$watchGroup(['fullscreen', 'panel.height', 'row.height'], function() {
+              panelCtrlElem.css({ minHeight: panelCtrlScope.panel.height || panelCtrlScope.row.height });
+              panelCtrlElem.toggleClass('panel-fullscreen', panelCtrlScope.fullscreen ? true : false);
+            });
           }
 
           newScope.$on('$destroy',function() {
@@ -75,31 +84,17 @@ function (angular, $) {
             elem.remove();
           });
 
-          $scope.$watch(attr.type, function (name) {
-            elem.addClass("ng-cloak");
-            // load the panels module file, then render it in the dom.
-            var nameAsPath = name.replace(".", "/");
-            $scope.require([
-              'jquery',
-              'text!panels/'+nameAsPath+'/module.html'
-            ], function ($, moduleTemplate) {
-              var $module = $(moduleTemplate);
-              // top level controllers
-              var $controllers = $module.filter('ngcontroller, [ng-controller], .ng-controller');
-              // add child controllers
-              $controllers = $controllers.add($module.find('ngcontroller, [ng-controller], .ng-controller'));
+          elem.addClass('ng-cloak');
 
-              if ($controllers.length) {
-                $controllers.first().prepend(panelHeader);
-                $controllers.first().find('.panel-header').nextAll().wrapAll(content);
-
-                $scope.require(['panels/' + nameAsPath + '/module'], function() {
-                  loadModule($module);
-                });
-              } else {
-                loadModule($module);
-              }
-            });
+          $scope.require([
+            'jquery',
+            'text!panels/'+panelType+'/module.html',
+            'panels/' + panelType + "/module",
+          ], function ($, moduleTemplate) {
+            var $module = $(moduleTemplate);
+            $module.prepend(panelHeader);
+            $module.first().find('.panel-header').nextAll().wrapAll(content);
+            loadModule($module);
           });
 
         }

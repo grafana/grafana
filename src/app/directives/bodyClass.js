@@ -15,7 +15,7 @@ function (angular, app, _) {
           var lastPulldownVal;
           var lastHideControlsVal;
 
-          $scope.$watch('dashboard.pulldowns', function() {
+          $scope.$watchCollection('dashboard.pulldowns', function() {
             if (!$scope.dashboard) {
               return;
             }
@@ -26,7 +26,7 @@ function (angular, app, _) {
               elem.toggleClass('submenu-controls-visible', panelEnabled);
               lastPulldownVal = panelEnabled;
             }
-          }, true);
+          });
 
           $scope.$watch('dashboard.hideControls', function() {
             if (!$scope.dashboard) {
