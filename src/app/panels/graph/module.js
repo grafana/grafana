@@ -243,7 +243,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       var data = _.map(results.data, $scope.seriesHandler);
 
-      $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
+      $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;
 
       $scope.annotationsPromise
         .then(function(annotations) {

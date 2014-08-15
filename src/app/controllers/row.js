@@ -124,4 +124,17 @@ function (angular, app, _) {
     };
   });
 
+  module.directive('panelDropZone', function() {
+    return function(scope, element) {
+      scope.$watch('dashboard.$$panelDragging', function(newVal) {
+        if (newVal && scope.dashboard.rowSpan(scope.row) < 10) {
+          element.show();
+        }
+        else {
+          element.hide();
+        }
+      });
+    };
+  });
+
 });
