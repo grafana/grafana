@@ -172,10 +172,7 @@ function (angular, app, _, moment, kbn) {
     };
 
     var getScopeTimeObj = function(from,to) {
-      var model = {
-        from: getTimeObj(from),
-        to: getTimeObj(to),
-      };
+      var model = { from: getTimeObj(from), to: getTimeObj(to), };
 
       if (model.from.date) {
         model.tooltip = moment(model.from.date).format('YYYY-MM-DD HH:mm:ss') + ' <br>to<br>';
@@ -183,6 +180,17 @@ function (angular, app, _, moment, kbn) {
       }
       else {
         model.tooltip = 'Click to set time filter';
+      }
+
+      if ($scope.filter.time) {
+        if ($scope.panel.now) {
+          model.rangeString = moment(model.from.date).fromNow() + ' to ' +
+            moment(model.to.date).fromNow();
+        }
+        else {
+          model.rangeString = moment(model.from.date).format('MMM D, YYYY hh:mm:ss') + ' to ' +
+            moment(model.to.date).format('MMM D, YYYY hh:mm:ss');
+        }
       }
 
       return model;

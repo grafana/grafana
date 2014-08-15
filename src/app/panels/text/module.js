@@ -64,7 +64,6 @@ function (angular, app, _, require) {
         .replace(/</g, '&lt;');
 
       if (converter) {
-        console.log("markdown render cached");
         $scope.updateContent(converter.makeHtml(text));
       }
       else {
