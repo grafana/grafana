@@ -84,10 +84,6 @@ function (angular, $, config, _) {
       };
     };
 
-    $scope.row_style = function(row) {
-      return { 'min-height': row.collapse ? '5px' : row.height };
-    };
-
     $scope.panel_path =function(type) {
       if(type) {
         return 'app/panels/'+type.replace(".","/");

@@ -32,7 +32,7 @@ function (angular, app, _) {
       }
     };
 
-     // This can be overridden by individual panels
+    // This can be overridden by individual panels
     $scope.close_edit = function() {
       $scope.$broadcast('render');
     };
@@ -106,6 +106,14 @@ function (angular, app, _) {
 
     $scope.init();
 
+  });
+
+  module.directive('rowHeight', function() {
+    return function(scope, element) {
+      scope.$watchGroup(['row.collapse', 'row.height'], function() {
+        element[0].style.minHeight = scope.row.collapse ? '5px' : scope.row.height;
+      });
+    };
   });
 
 });

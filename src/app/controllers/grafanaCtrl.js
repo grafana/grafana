@@ -78,10 +78,8 @@ function (angular, config, _, $) {
 
     $scope.initProfiling = function() {
       var count = 0;
-      console.log("registering digest counter");
 
       $scope.$watch(function digestCounter() {
-        console.log(1);
         count++;
       }, function() {
       });
@@ -96,6 +94,11 @@ function (angular, config, _, $) {
 
           var timeTaken = $rootScope.performance.allPanelsInitialized - $rootScope.performance.dashboardLoadStart;
           console.log("Dashboard::Performance - All panels initialized in " + timeTaken + " ms");
+
+          var rootDigestStart = window.performance.now();
+          $rootScope.$apply();
+          console.log("Dashboard::Performance Root Digest " + (window.performance.now() - rootDigestStart));
+
         }, 3000);
 
       });
