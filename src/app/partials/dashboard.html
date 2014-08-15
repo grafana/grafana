@@ -101,8 +101,8 @@
 							<div ng-repeat="(name, panel) in row.panels"
 									 class="panel nospace"
 									 style="position:relative"
-									 ng-style="{'width':(panel.span/1.2)*10+'%'}"
 									 data-drop="true"
+									 panel-width
 									 ng-model="panel"
 									 data-jqyoui-options
 									 jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}"

@@ -116,4 +116,14 @@ function (angular, app, _) {
     };
   });
 
+  module.directive('panelWidth', function() {
+    return function(scope, element) {
+      scope.$watch('panel.span', function() {
+        element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
+      });
+    };
+  });
+
+
+
 });
