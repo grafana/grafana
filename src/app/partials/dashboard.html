@@ -98,11 +98,16 @@
 							</div>
 
               <!-- Panels -->
-              <div ng-repeat="(name, panel) in row.panels" class="panel nospace" ng-style="{'width':(panel.span/1.2)*10+'%'}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}" ng-class="{'dragInProgress':dashboard.$$panelDragging}">
-                <!-- Content Panel -->
-                <div style="position:relative">
-                  <grafana-panel type="panel.type" ng-cloak></grafana-panel>
-                </div>
+							<div ng-repeat="(name, panel) in row.panels"
+									 class="panel nospace"
+									 style="position:relative"
+									 ng-style="{'width':(panel.span/1.2)*10+'%'}"
+									 data-drop="true"
+									 ng-model="panel"
+									 data-jqyoui-options
+									 jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}"
+									 ng-class="{'dragInProgress':dashboard.$$panelDragging}">
+                <grafana-panel type="panel.type" ng-cloak></grafana-panel>
               </div>
 
               <div ng-show="dashboard.rowSpan(row) < 10 && dashboard.$$panelDragging" class="panel" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-class="{'dragInProgress':dashboard.panelDragging}" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">

@@ -38,7 +38,7 @@ function (angular, $) {
                 'index:{{$index}},'+
                 'onStart:\'panelMoveStart\','+
                 'onStop:\'panelMoveStop\''+
-                '}"  ng-model="row.panels" ' +
+                '}"  ng-model="panel" ' +
                 '>' +
                 '{{panel.title || "No title"}}' +
               '</span>' +

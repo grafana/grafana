@@ -80,7 +80,7 @@ function (angular, config, _, $) {
       var count = 0;
       console.log("registering digest counter");
 
-      $scope.$watch(function() {
+      $scope.$watch(function digestCounter() {
         console.log(1);
         count++;
       }, function() {
