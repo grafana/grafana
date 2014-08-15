@@ -18,13 +18,13 @@ function (angular, $) {
        '<div class="row-fluid panel-extra">' +
           '<div class="panel-extra-container">' +
             '<span class="alert-error panel-error small pointer"' +
-                  'config-modal="app/partials/inspector.html" ng-show="panel.error">' +
+                  'config-modal="app/partials/inspector.html" ng-if="panel.error">' +
               '<span data-placement="right" bs-tooltip="panel.error">' +
               '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
               '</span>' +
             '</span>' +
 
-            '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
+            '<span class="panel-loading" ng-show="panelMeta.loading">' +
               '<i class="icon-spinner icon-spin icon-large"></i>' +
             '</span>' +
 
