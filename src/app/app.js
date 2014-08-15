@@ -78,14 +78,20 @@ function (angular, $, _, appLevelRequire, config) {
     apps_deps.push(module_name);
   });
 
+  var preBootRequires = [
+    'controllers/all',
+    'directives/all',
+    'filters/all',
+    'components/partials',
+    'routes/all',
+  ];
+
+  _.each(config.plugins.dependencies, function(dep) {
+    preBootRequires.push('../plugins/' + dep);
+  });
+
   app.boot = function() {
-    require([
-      'controllers/all',
-      'directives/all',
-      'filters/all',
-      'components/partials',
-      'routes/all',
-    ], function () {
+    require(preBootRequires, function () {
 
       // disable tool tip animation
       $.fn.tooltip.defaults.animation = false;
