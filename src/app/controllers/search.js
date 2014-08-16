@@ -20,7 +20,7 @@ function (angular, _, config, $) {
   module.directive('tagColorFromName', function() {
     return function (scope, element) {
       var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
-      var hash = djb2(name);
+      var hash = djb2(name.toLowerCase());
       var r = (hash & 0xB00000) >> 16;
       var g = (hash & 0x00B000) >> 8;
       var b = hash & 0x0000B0;
