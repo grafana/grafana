@@ -2,9 +2,17 @@ define([
   'angular',
 ],
 function (angular) {
-  'use strict';
+  "use strict";
 
-  var module = angular.module('grafana.controllers');
+  var module = angular.module('grafana.routes');
+
+  module.config(function($routeProvider) {
+    $routeProvider
+      .when('/login', {
+        templateUrl: 'app/partials/pro/login.html',
+        controller : 'LoginCtrl',
+      });
+  });
 
   module.controller('LoginCtrl', function($scope, $http, $location, $routeParams, alertSrv) {
     $scope.loginModel = {};
@@ -17,10 +25,8 @@ function (angular) {
 
     $scope.logout = function() {
       $http.post('/logout').then(function() {
-
         alertSrv.set('Logged out!', '', 'success', 3000);
         $scope.emitAppEvent('logged-out');
-
       }, function() {
         alertSrv.set('Logout failed:', 'Unexpected error', 'error', 3000);
       });

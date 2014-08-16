@@ -3,8 +3,9 @@ define([
   'config',
   'lodash',
   'jquery',
+  'store',
 ],
-function (angular, config, _, $) {
+function (angular, config, _, $, store) {
   "use strict";
 
   var module = angular.module('grafana.controllers');
@@ -12,30 +13,37 @@ function (angular, config, _, $) {
   module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope.consoleEnabled = (window.localStorage && window.localStorage.grafanaConsole === 'true');
+    $scope.consoleEnabled = store.getBool('grafanaConsole');
+    $scope.showProSideMenu = store.getBool('grafanaProSideMenu');
 
-    $rootScope.profilingEnabled = (window.localStorage && window.localStorage.profilingEnabled === 'true');
+    $rootScope.profilingEnabled = store.getBool('profilingEnabled');
     $rootScope.performance = { loadStart: new Date().getTime() };
 
     $scope.init = function() {
       $scope._ = _;
-      if ($rootScope.profilingEnabled) {
-        $scope.initProfiling();
-      }
+
+      if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana = {
-        style: 'dark'
-      };
+      $scope.grafana = { style: 'dark' };
+
+      $scope.onAppEvent('logged-out', function() {
+        $scope.showProSideMenu = false;
+      });
+
+      $scope.onAppEvent('logged-in', function() {
+        $scope.showProSideMenu = store.getBool('grafanaProSideMenu');
+      });
     };
 
     $scope.toggleProSideMenu = function() {
       $scope.showProSideMenu = !$scope.showProSideMenu;
+      store.set('grafanaProSideMenu', $scope.showProSideMenu);
     };
 
     $scope.toggleConsole = function() {
       $scope.consoleEnabled = !$scope.consoleEnabled;
-      window.localStorage.grafanaConsole = $scope.consoleEnabled ? 'true' : 'false';
+      store.set('grafanaConsole', $scope.consoleEnabled);
     };
 
     $rootScope.onAppEvent = function(name, callback) {

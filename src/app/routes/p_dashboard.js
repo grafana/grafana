@@ -1,6 +1,5 @@
 define([
   'angular',
-  'controllers/p_loginCtrl'
 ],
 function (angular) {
   "use strict";
@@ -23,10 +22,6 @@ function (angular) {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
-      })
-      .when('/login', {
-        templateUrl: '/app/partials/p_login.html',
-        controller : 'LoginCtrl',
       });
   });
 
