@@ -27,8 +27,6 @@ function (angular, _, config, $) {
 
       var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
 
-      console.log(color);
-
       element.css("background-color", color);
     };
   });
