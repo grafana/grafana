@@ -50,7 +50,7 @@
         <table class="table table-condensed table-striped" ng-if="tagsOnly">
           <tr ng-repeat="tag in results.tags" ng-class="{'selected-tag': $index === selectedIndex }">
             <td>
-              <a ng-click="filterByTag(tag.term, $event)" class="label label-tag">
+              <a ng-click="filterByTag(tag.term, $event)" class="label label-tag" tag-color-from-name>
                 {{tag.term}} &nbsp;({{tag.count}})
               </a>
             </td>
@@ -61,19 +61,6 @@
 
         <table class="table table-condensed table-striped" ng-if="!tagsOnly">
 					<tbody style="max-height: 570px; overflow: auto; display: block">
-          <tr bindonce ng-repeat="row in results.metrics"
-              class="grafana-search-metric-result"
-              ng-class="{'selected': $index === selectedIndex }">
-            <td><span class="label label-info">metric</span></td>
-            <td class="grafana-search-metric-name">
-              {{row.id}}
-            </td>
-            <td style="width:100%;">
-              <div class="grafana-search-metric-actions">
-                <a ng-click="addMetricToCurrentDashboard(row.id)"><i class="icon-plus-sign"></i> Add to dashboard</a>
-              </div>
-            </td>
-          </tr>
 
           <tr bindonce
               ng-repeat="row in results.dashboards"
@@ -83,7 +70,7 @@
               <a href="#/dashboard/db/{{row.id}}" bo-text="row.id"></a>
             </td>
             <td style="white-space: nowrap; text-align: right;">
-              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px; background-color:{{tag | hashStringToColor}}" class="label label-tag">
+              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" class="label label-tag" style="margin-left: 5px;" tag-color-from-name>
                 {{tag}}
               </a>
             </td>

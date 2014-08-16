@@ -17,13 +17,19 @@ function (angular, _, config, $) {
     return hash;
   }
 
-  module.filter("hashStringToColor", function() {
-    return function(value) {
-      var hash = djb2(value);
-      var r = (hash & 0xFF0000) >> 16;
-      var g = (hash & 0x00FF00) >> 8;
-      var b = hash & 0x0000FF;
-      return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+  module.directive('tagColorFromName', function() {
+    return function (scope, element) {
+      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
+      var hash = djb2(name);
+      var r = (hash & 0x900000) >> 16;
+      var g = (hash & 0x009000) >> 8;
+      var b = hash & 0x000090;
+
+      var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+
+      console.log(color);
+
+      element.css("background-color", color);
     };
   });
 
