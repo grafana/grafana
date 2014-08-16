@@ -6,6 +6,7 @@ func init() {
 	addRoutes(func(self *HttpServer) {
 		self.router.GET("/login/*_", self.index)
 		self.router.POST("/login", self.loginPost)
+		self.router.POST("/logout", self.logoutPost)
 	})
 }
 
@@ -30,6 +31,14 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 			c.JSON(401, gin.H{"status": "unauthorized"})
 		}
 	}
+}
+
+func (self *HttpServer) logoutPost(c *gin.Context) {
+	session, _ := sessionStore.Get(c.Request, "grafana-session")
+	session.Values["login"] = nil
+	session.Save(c.Request, c.Writer)
+
+	c.JSON(200, gin.H{"status": "logged out"})
 }
 
 func (self *HttpServer) authMiddleware() gin.HandlerFunc {
