@@ -1,16 +1,9 @@
-<div ng-controller="DashCtrl" body-class ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
+<div ng-controller="DashboardCtrl" body-class ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
 
-  <div class="navbar navbar-static-top">
-    <div class="navbar-inner">
-      <div class="container-fluid">
-        <span class="brand"><img src="img/small.png" bs-tooltip="'Grafana'" data-placement="bottom"> {{dashboard.title}}</span>
-        <ul class="nav pull-right" ng-controller='dashLoader' ng-init="init()" ng-include="'app/partials/dashLoader.html'">
-        </ul>
-      </div>
-    </div>
-  </div>
+	<div ng-include="'app/partials/dashboard_topnav.html'">
+	</div>
 
-  <div class="submenu-controls">
+	<div class="submenu-controls">
     <div class="submenu-panel" ng-controller="SubmenuCtrl" ng-repeat="pulldown in dashboard.pulldowns | filter:{ enable: true }">
       <div class="submenu-panel-title">
         <span class="small"><strong>{{pulldown.type}}:</strong></span>

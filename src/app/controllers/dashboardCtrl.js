@@ -10,7 +10,7 @@ function (angular, $, config, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashCtrl', function(
+  module.controller('DashboardCtrl', function(
       $scope, $rootScope, dashboardKeybindings,
       filterSrv, dashboardSrv, dashboardViewStateSrv,
       panelMoveSrv, timer) {
