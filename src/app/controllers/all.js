@@ -1,5 +1,5 @@
 define([
-  './grafanaCtrl',
+  './p_grafanaCtrl',
   './dashboardCtrl',
   './dashboardNavCtrl',
   './row',

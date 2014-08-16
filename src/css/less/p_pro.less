@@ -1,3 +1,29 @@
+.pro-sidemenu {
+  display: none;
+}
+
+.pro-sidemenu-open {
+  .pro-sidemenu {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    background: @grafanaPanelBackground;
+    border-right: 2px solid black;
+    min-height: 100%;
+    z-index: 101;
+  }
+
+  .pro-main-view {
+    padding-left: 200px;
+  }
+
+  .panel-fullscreen {
+    left: 200px;
+  }
+}
+
 .login-box {
   width: 700px;
   margin: 100px auto 0 auto;
