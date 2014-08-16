@@ -5,6 +5,7 @@ require.config({
   baseUrl: '/public/app',
 
   paths: {
+    app: 'p_app',
     config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',
@@ -27,7 +28,7 @@ require.config({
     'lodash-src':             '../vendor/lodash',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
-    jquery:                   '../vendor/jquery/jquery-1.8.0',
+    jquery:                   '../vendor/jquery/jquery-2.1.1.min',
     'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
 
     'extend-jquery':          'components/extend-jquery',

@@ -12,14 +12,17 @@ function (angular) {
       .when('/', {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
+        reloadOnSearch: false,
       })
       .when('/dashboard/db/:id', {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
+        reloadOnSearch: false,
       })
       .when('/dashboard/temp/:id', {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
+        reloadOnSearch: false,
       })
       .when('/login', {
         templateUrl: '/app/partials/p_login.html',

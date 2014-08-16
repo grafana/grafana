@@ -56,7 +56,6 @@ function (angular, $, _, appLevelRequire, config) {
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
-
   });
 
   var apps_deps = [
@@ -82,7 +81,7 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/all',
+    'routes/p_all',
   ];
 
   _.each(config.plugins.dependencies, function(dep) {

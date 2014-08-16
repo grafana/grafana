@@ -188,13 +188,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
-    $scope.init = function() {
-      panelSrv.init($scope);
-      $scope.hiddenSeries = {};
-      if (!$scope.skipDataOnInit) {
-        $scope.get_data();
-      }
-    };
+    $scope.hiddenSeries = {};
 
     $scope.updateTimeRange = function () {
       $scope.range = $scope.filter.timeRange();
@@ -210,10 +204,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.get_data = function() {
-      delete $scope.panel.error;
-
-      $scope.panelMeta.loading = true;
-
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -253,7 +243,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       var data = _.map(results.data, $scope.seriesHandler);
 
-      $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
+      $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;
 
       $scope.annotationsPromise
         .then(function(annotations) {
@@ -295,10 +285,6 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       return series;
-    };
-
-    $scope.otherPanelInFullscreenMode = function() {
-      return $rootScope.fullscreen && !$scope.fullscreen;
     };
 
     $scope.render = function(data) {
@@ -371,7 +357,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
-    $scope.init();
+    panelSrv.init($scope);
   });
 
 });

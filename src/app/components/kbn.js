@@ -525,10 +525,33 @@ function($, _, moment) {
         return kbn.nanosFormat(val, decimals);
       };
     default:
-      return function(val) {
-        return val % 1 === 0 ? val : val.toFixed(decimals);
+      return function(val, axis) {
+        return kbn.noneFormat(val, axis ? axis.tickDecimals : decimals);
       };
     }
+  };
+
+  kbn.noneFormat = function(value, decimals) {
+    var factor = decimals ? Math.pow(10, decimals) : 1;
+    var formatted = String(Math.round(value * factor) / factor);
+
+    // if exponent return directly
+    if (formatted.indexOf('e') !== -1) {
+      return formatted;
+    }
+
+    // If tickDecimals was specified, ensure that we have exactly that
+    // much precision; otherwise default to the value's own precision.
+
+    if (decimals != null) {
+      var decimalPos = formatted.indexOf(".");
+      var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+      if (precision < decimals) {
+        return (precision ? formatted : formatted + ".") + (String(factor)).substr(1, decimals - precision);
+      }
+    }
+
+    return formatted;
   };
 
   kbn.msFormat = function(size, decimals) {

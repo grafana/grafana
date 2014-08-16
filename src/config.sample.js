@@ -96,7 +96,11 @@ function (Settings) {
 
     // Add your own custom pannels
     plugins: {
-      panels: []
+      // list of plugin panels
+      panels: [],
+      // requirejs modules in plugins folder that should be loaded
+      // for example custom datasources
+      dependencies: [],
     }
 
   });

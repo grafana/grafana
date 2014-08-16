@@ -68,6 +68,8 @@ function (angular, _, config) {
       case 'grafana':
         Datasource = $injector.get('GrafanaDatasource');
         break;
+      default:
+        Datasource = $injector.get(ds.type);
       }
       return new Datasource(ds);
     };
