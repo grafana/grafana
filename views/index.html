@@ -23,12 +23,20 @@
 
     <link rel="stylesheet" href="/public/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
-    <div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
-      <button type="button" class="close" ng-click="dashAlerts.clear(alert)" style="padding-right:50px">&times;</button>
-      <strong>{{alert.title}}</strong> <span ng-bind-html='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
-    </div>
+		<div class="pro-container" ng-class="{'pro-sidemenu-open': showProSideMenu}">
 
-    <div ng-view ng-class="{'dashboard-fullscreen': fullscreen}"></div>
+			<aside class="pro-sidemenu" ng-if="showProSideMenu">
+				<div ng-include="'app/partials/pro/sidemenu.html'"></div>
+			</aside>
+
+			<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
+				<button type="button" class="close" ng-click="dashAlerts.clear(alert)" style="padding-right:50px">&times;</button>
+				<strong>{{alert.title}}</strong> <span ng-bind-html='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
+			</div>
+
+			<div ng-view class="pro-main-view" ng-class="{'dashboard-fullscreen': fullscreen}"></div>
+
+		</div>
 
   </body>
 </html>
