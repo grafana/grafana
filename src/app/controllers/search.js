@@ -21,9 +21,9 @@ function (angular, _, config, $) {
     return function (scope, element) {
       var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
       var hash = djb2(name);
-      var r = (hash & 0x900000) >> 16;
-      var g = (hash & 0x009000) >> 8;
-      var b = hash & 0x000090;
+      var r = (hash & 0xB00000) >> 16;
+      var g = (hash & 0x00B000) >> 8;
+      var b = hash & 0x0000B0;
 
       var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
 
