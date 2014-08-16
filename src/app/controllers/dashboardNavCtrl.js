@@ -3,9 +3,10 @@ define([
   'lodash',
   'moment',
   'config',
+  'store',
   'filesaver'
 ],
-function (angular, _, moment, config) {
+function (angular, _, moment, config, store) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -26,12 +27,12 @@ function (angular, _, moment, config) {
     };
 
     $scope.set_default = function() {
-      window.localStorage.grafanaDashboardDefault = $location.path();
+      store.set('grafanaDashboardDefault', $location.path());
       alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
     };
 
     $scope.purge_default = function() {
-      delete window.localStorage.grafanaDashboardDefault;
+      store.delete('grafanaDashboardDefault');
       alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default','success', 5000);
     };
 

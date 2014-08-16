@@ -9,6 +9,7 @@ require.config({
     config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',
+    store:                    'components/store',
 
     css:                      '../vendor/require/css',
     text:                     '../vendor/require/text',

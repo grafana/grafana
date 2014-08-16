@@ -2,12 +2,13 @@ define([
   'angular',
   'lodash',
   'moment',
+  'store'
 ],
-function (angular, _, moment) {
+function (angular, _, moment, store) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var consoleEnabled = window.localStorage && window.localStorage.grafanaConsole === 'true';
+  var consoleEnabled = store.getBool('grafanaConsole');
 
   if (!consoleEnabled) {
     return;
