@@ -526,7 +526,7 @@ function($, _, moment) {
       };
     default:
       return function(val, axis) {
-        return kbn.noneFormat(val, axis ? axis.tickDecimals : decimals);
+        return kbn.noneFormat(val, axis ? axis.tickDecimals : null);
       };
     }
   };

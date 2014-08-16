@@ -1,7 +1,7 @@
 define([
   './grafanaCtrl',
-  './dash',
-  './dashLoader',
+  './dashboardCtrl',
+  './dashboardNavCtrl',
   './row',
   './submenuCtrl',
   './pulldown',

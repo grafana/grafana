@@ -10,7 +10,7 @@ function (angular, _, moment, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('dashLoader', function($scope, $rootScope, $http, alertSrv, $location, playlistSrv, datasourceSrv) {
+  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv) {
 
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
