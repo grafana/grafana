@@ -20,10 +20,6 @@ type HttpServer struct {
 
 var sessionStore = sessions.NewCookieStore([]byte("something-very-secret"))
 
-// var hashKey = []byte("very-secret")
-// var blockKey = []byte("a-lot-secret")
-// var s = securecookie.New(hashKey, blockKey)
-
 func NewHttpServer(port string, store stores.Store) *HttpServer {
 	self := &HttpServer{}
 	self.port = port
