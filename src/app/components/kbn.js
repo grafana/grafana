@@ -536,7 +536,7 @@ function($, _, moment) {
     var formatted = String(Math.round(value * factor) / factor);
 
     // if exponent return directly
-    if (formatted.indexOf('e') !== -1) {
+    if (formatted.indexOf('e') !== -1 || value === 0) {
       return formatted;
     }
 
