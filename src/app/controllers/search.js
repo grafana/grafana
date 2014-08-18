@@ -50,7 +50,12 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.shareDashboard = function(title, id) {
+    $scope.goToDashboard = function(id) {
+      $location.path("/dashboard/db/" + id);
+    };
+
+    $scope.shareDashboard = function(title, id, $event) {
+      $event.stopPropagation();
       var baseUrl = window.location.href.replace(window.location.hash,'');
 
       $scope.share = {

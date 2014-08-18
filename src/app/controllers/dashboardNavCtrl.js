@@ -87,7 +87,9 @@ function (angular, _, moment, config, store) {
         });
     };
 
-    $scope.deleteDashboard = function(id) {
+    $scope.deleteDashboard = function(id, $event) {
+      $event.stopPropagation();
+
       if (!confirm('Are you sure you want to delete dashboard?')) {
         return;
       }
