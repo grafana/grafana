@@ -354,10 +354,7 @@ function (angular, $, kbn, moment, _) {
             }
 
             value = kbn.getFormatFunction(format, 2)(value);
-
-            timestamp = dashboard.timezone === 'browser' ?
-              moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
-              moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
+            timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
           } else {
