@@ -9,6 +9,32 @@ function (angular, _, config, $) {
 
   var module = angular.module('grafana.controllers');
 
+  function djb2(str) {
+    var hash = 5381;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
+    }
+    return hash;
+  }
+
+  module.directive('tagColorFromName', function() {
+    return function (scope, element) {
+      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
+      var hash = djb2(name.toLowerCase());
+      var colors = [
+        "#E24D42","#1F78C1","#BA43A9","#705DA0",
+        "#508642","#447EBC","#C15C17","#890F02",
+        "#0A437C","#6D1F62","#584477","#629E51",
+        "#BF1B00","#EA6460","#D683CE","#806EB7",
+        "#3F6833","#2F575E","#99440A","#E0752D",
+        "#58140C","#052B51","#511749","#3F2B5B",
+      ];
+      var color = colors[Math.abs(hash % colors.length)];
+      console.log("namei "  + name + " color: " + color, hash % 4);
+      element.css("background-color", color);
+    };
+  });
+
   module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
 
     $scope.init = function() {
