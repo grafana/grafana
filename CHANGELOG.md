@@ -6,7 +6,8 @@
 - [Issue #672](https://github.com/grafana/grafana/issues/672). Dashboard: panel fullscreen & edit state is present in url, can now link to graph in edit & fullscreen mode.
 
 **Fixes**
-- [Issue #696](https://github.com/grafana/grafana/issues/696). Graph: fix for y-axis format 'none' when values are in scientific notation (ex 2.3e-13)
+- [Issue #696](https://github.com/grafana/grafana/issues/696). Graph: Fix for y-axis format 'none' when values are in scientific notation (ex 2.3e-13)
+- [Issue #697](https://github.com/grafana/grafana/issues/697). Graphite: Fix for Glob syntax in graphite queries ([1-9] and ?) that made the query editor / parser bail and fallback to a text box.
 
 **Tech**
 - Upgraded from angularjs 1.1.5 to 1.3 beta 17;
