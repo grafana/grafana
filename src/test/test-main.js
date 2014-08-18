@@ -6,6 +6,7 @@ require.config({
     mocks:                 '../test/mocks',
     config:                '../config.sample',
     kbn:                   'components/kbn',
+    store:                 'components/store',
 
     settings:              'components/settings',
     lodash:                'components/lodash.extended',

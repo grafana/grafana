@@ -27,6 +27,10 @@ define([
       var str = kbn.getFormatFunction('')(2.75e-10, { tickDecimals: 12 });
       expect(str).to.be('2.75e-10');
     });
+    it('should format 0 correctly', function() {
+      var str = kbn.getFormatFunction('')(0.0, { tickDecimals: 12 });
+      expect(str).to.be('0');
+    });
   });
 
   describe('none format tests', function() {

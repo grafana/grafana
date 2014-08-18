@@ -3,9 +3,10 @@ define([
   'jquery',
   'kbn',
   'lodash',
+  'moment',
   '../timer',
 ],
-function (angular, $, kbn, _) {
+function (angular, $, kbn, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -106,6 +107,14 @@ function (angular, $, kbn, _) {
       var newRow = angular.copy(row);
       newRow.panels = [newPanel];
       this.rows.push(newRow);
+    };
+
+    p.formatDate = function(date, format) {
+      format = format || 'YYYY-MM-DD HH:mm:ss';
+
+      return this.timezone === 'browser' ?
+              moment(date).format(format) :
+              moment.utc(date).format(format);
     };
 
     p.emit_refresh = function() {

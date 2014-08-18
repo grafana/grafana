@@ -47,37 +47,46 @@
 
         <h6 ng-hide="results.dashboards.length || results.metrics.length">No dashboards or metrics matching your query found</h6>
 
-        <table class="table table-condensed table-striped" ng-if="tagsOnly">
-          <tr ng-repeat="tag in results.tags" ng-class="{'selected-tag': $index === selectedIndex }">
-            <td>
-              <a ng-click="filterByTag(tag.term, $event)" class="label label-tag" tag-color-from-name>
-                {{tag.term}} &nbsp;({{tag.count}})
-              </a>
-            </td>
-            <td style="width:100%;padding-left: 10px;font-weight: bold;">
-            </td>
-          </tr>
-        </table>
+        <div class="search-results-container" ng-if="tagsOnly">
+					<div ng-repeat="tag in results.tags"
+						   class="search-result-item pointer"
+							 ng-class="{'selected': $index === selectedIndex }"
+							 ng-click="filterByTag(tag.term, $event)" >
+						<a class="search-result-link">
+							<i class="icon icon-tag"></i>
+							<span class="label label-tag">{{tag.term}} &nbsp;({{tag.count}})</span>
+						</a>
+          </div>
+        </div>
 
-        <table class="table table-condensed table-striped" ng-if="!tagsOnly">
-					<tbody style="max-height: 570px; overflow: auto; display: block">
+				<div class="search-results-container" ng-if="!tagsOnly">
+					<div class="search-result-item pointer"
+							bindonce ng-repeat="row in results.dashboards"
+							ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
 
-          <tr bindonce
-              ng-repeat="row in results.dashboards"
-              ng-class="{'selected': $index === selectedIndex }">
-            <td><a ng-click="deleteDashboard(row.id)"><i class="icon-remove"></i></a></td>
-            <td style="width:100%">
-              <a href="#/dashboard/db/{{row.id}}" bo-text="row.id"></a>
-            </td>
-            <td style="white-space: nowrap; text-align: right;">
-              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" class="label label-tag" style="margin-left: 5px;" tag-color-from-name>
-                {{tag}}
-              </a>
-            </td>
-            <td><a><i class="icon-share" ng-click="shareDashboard(row.id, row.id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
-          </tr>
-					</tbody>
-        </table>
+							<a class="search-result-link" href="#/dashboard/db/{{row.id}}">
+								<i class="icon icon-th-large"></i>
+								<span bo-text="row.id"></span>
+							</a>
+
+							<div class="search-result-actions">
+								<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
+									<i class="icon-share"></i> share &nbsp;&nbsp;&nbsp;
+								</a>
+								<a ng-click="deleteDashboard(row.id, $event)">
+									<i class="icon-remove"></i> delete
+								</a>
+							</div>
+
+							<div class="search-result-tags">
+								<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag">
+									{{tag}}
+								</a>
+							</div>
+
+					</div>
+				</div>
+
       </div>
     </li>
 

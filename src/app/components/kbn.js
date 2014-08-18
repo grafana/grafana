@@ -1,4 +1,8 @@
-define(['jquery','lodash','moment'],
+define([
+  'jquery',
+  'lodash',
+  'moment'
+],
 function($, _, moment) {
   'use strict';
 
@@ -526,7 +530,7 @@ function($, _, moment) {
       };
     default:
       return function(val, axis) {
-        return kbn.noneFormat(val, axis ? axis.tickDecimals : decimals);
+        return kbn.noneFormat(val, axis ? axis.tickDecimals : null);
       };
     }
   };
@@ -536,7 +540,7 @@ function($, _, moment) {
     var formatted = String(Math.round(value * factor) / factor);
 
     // if exponent return directly
-    if (formatted.indexOf('e') !== -1) {
+    if (formatted.indexOf('e') !== -1 || value === 0) {
       return formatted;
     }
 
