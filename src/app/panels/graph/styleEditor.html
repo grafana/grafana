@@ -1,5 +1,3 @@
-
-
 <div class="editor-row">
   <div class="section">
     <h5>Chart Options</h5>
@@ -63,4 +61,41 @@
       <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
     </div>
   </div>
+</div>
+
+<div class="editor-row">
+  <div class="section">
+		<h5>Series specific overrides</h5>
+		<table class="table table-striped">
+			<tr>
+				<th>Series alias/regex</th>
+				<th>Bars</th>
+				<th>Lines</th>
+				<th>Points</th>
+				<th>Fill</th>
+				<th>Width</th>
+				<th>Radius</th>
+				<th>Staircase</th>
+				<th>Stack</th>
+				<th>Y-axis</th>
+				<th>Z-index</th>
+				<th>Color</th>
+			</tr>
+			<tr ng-repeat="override in panel.seriesOverrides">
+				<td>
+					<input type="text" class="input input-medium">
+				</td>
+				<td>
+					<series-override-option data-options="[true, false]" data-attr="override.bars">
+					</series-override-option>
+				</td>
+				<td>
+					<series-override-option data-options="[1,2,3,4,5]">
+					</series-override-option>
+				</td>
+			</tr>
+		</table>
+		<button class="btn btn-success" ng-click="addSeriesOverride()">Add</button>
+
+	</div>
 </div>

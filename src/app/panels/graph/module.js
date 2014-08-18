@@ -180,6 +180,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       aliasColors: {},
       aliasYAxis: {},
+
+      seriesOverrides: [],
     };
 
     _.defaults($scope.panel,_d);
@@ -357,7 +359,53 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
+    $scope.addSeriesOverride = function() {
+      $scope.panel.seriesOverrides.push({});
+    };
+
     panelSrv.init($scope);
   });
+
+  angular
+    .module('grafana.directives')
+    .directive('seriesOverrideOption', function($compile) {
+      var template =
+          '<div class="dropdown"> ' +
+             '<a  class="dropdown-toggle" gf-dropdown="options" data-toggle="dropdown">' +
+                '<i class="icon-minus"></i></a>' +
+          '</div>';
+
+      return {
+        scope: true,
+        link: function($scope, elem, attrs) {
+          var $template = $(template);
+          elem.append($template);
+          var $link = $(elem).find('a');
+
+          $scope.options = $scope.$eval(attrs.options);
+          $scope.options.unshift(null);
+
+          $scope.options = _.map($scope.options, function(option, index) {
+            return {
+              text: option === null ? '<i class="icon-minus"></i>' : String(option),
+              value: option,
+              click: 'setValue(' + index + ')'
+            };
+          });
+
+          $scope.setValue = function(index) {
+            var value = $scope.options[index].value;
+            if (value === null) {
+              $link.html('<i class="icon-minus"></i>');
+            }
+            else {
+              $link.html(value);
+            }
+          };
+
+          $compile(elem.contents())($scope);
+        }
+      };
+    });
 
 });
