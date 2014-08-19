@@ -74,23 +74,41 @@ define([
 
     });
 
-    graphScenario('series option fill override', function(ctx) {
+    graphScenario('series option overrides, fill & points', function(ctx) {
       ctx.setup(function(scope, data) {
         scope.panel.lines = true;
         scope.panel.fill = 5;
         scope.panel.seriesOverrides = [
-          { alias: 'test', fill: 0 }
+          { alias: 'test', fill: 0, points: true }
         ];
 
         data[1].info.alias = 'test';
       });
 
-      it('should match second series and set line fill', function() {
+      it('should match second series and fill zero, and enable points', function() {
         expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
         expect(ctx.plotData[1].lines.fill).to.be(0.001);
+        expect(ctx.plotData[1].points.show).to.be(true);
+      });
+    });
+
+    graphScenario('series option overrides, bars, true & lines false', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.lines = true;
+        scope.panel.seriesOverrides = [
+          { alias: 'test', bars: true, lines: false }
+        ];
+
+        data[1].info.alias = 'test';
       });
 
+      it('should match second series and disable lines, and enable bars', function() {
+        expect(ctx.plotOptions.series.lines.show).to.be(true);
+        expect(ctx.plotData[1].lines.show).to.be(false);
+        expect(ctx.plotData[1].bars.show).to.be(true);
+      });
     });
+
   });
 });
 

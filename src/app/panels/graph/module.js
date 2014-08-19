@@ -352,6 +352,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
 
     $scope.removeSeriesOverride = function(override) {
       $scope.panel.seriesOverrides = _.without($scope.panel.seriesOverrides, override);
+      $scope.render();
     };
 
     panelSrv.init($scope);

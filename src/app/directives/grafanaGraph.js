@@ -184,16 +184,24 @@ function (angular, $, kbn, moment, _) {
         }
 
         function applySeriesOverrideOptions(series) {
+          series.lines = {};
+          series.points = {};
+          series.bars = {};
+
           for (var i = 0; i < scope.panel.seriesOverrides.length; i++) {
             var override = scope.panel.seriesOverrides[i];
-            if (override.alias === series.info.alias) {
-              if (!_.isUndefined(override.fill)) {
-                series.lines = {
-                  fill: override.fill === 0 ? 0.001 : override.fill/10
-                };
-              }
+            if (override.alias !== series.info.alias) {
+              continue;
             }
+            if (override.lines !== void 0) { series.lines.show = override.lines; }
+            if (override.points !== void 0) { series.points.show = override.points; }
+            if (override.bars !== void 0) { series.bars.show = override.bars; }
+            if (override.fill !== void 0) { series.lines.fill = translateFillOption(override.fill); }
           }
+        }
+
+        function translateFillOption(fill) {
+          return fill === 0 ? 0.001 : fill/10;
         }
 
         function shouldDelayDraw(panel) {
