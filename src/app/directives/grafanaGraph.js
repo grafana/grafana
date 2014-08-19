@@ -156,7 +156,7 @@ function (angular, $, kbn, moment, _) {
           for (var i = 0; i < data.length; i++) {
             var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
             data[i].data = _d;
-            data[0].lines = { show: false };
+            data[0].lines = { show: false, dashes: true };
             data[0].bars = { show: true  };
           }
 

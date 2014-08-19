@@ -122,6 +122,8 @@ require([
     'specs/graphiteTargetCtrl-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
+    'specs/grafanaGraph-specs',
+    'specs/seriesOverridesCtrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',

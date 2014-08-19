@@ -1,16 +1,3 @@
-/** @scratch /panels/5
- * include::panels/histogram.asciidoc[]
- */
-
-/** @scratch /panels/histogram/0
- * == Histogram
- * Status: *Stable*
- *
- * The histogram panel allow for the display of time charts. It includes several modes and tranformations
- * to display event counts, mean, min, max and total of numeric fields, and derivatives of counter
- * fields.
- *
- */
 define([
   'angular',
   'app',
@@ -19,6 +6,7 @@ define([
   'kbn',
   'moment',
   './timeSeries',
+  './seriesOverridesCtrl',
   'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
@@ -30,10 +18,9 @@ define([
   'jquery.flot.stackpercent'
 ],
 function (angular, app, $, _, kbn, moment, timeSeries) {
-
   'use strict';
 
-  var module = angular.module('grafana.panels.graph', []);
+  var module = angular.module('grafana.panels.graph');
   app.useModule(module);
 
   module.controller('GraphCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
@@ -363,49 +350,11 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.panel.seriesOverrides.push({});
     };
 
+    $scope.removeSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides = _.without($scope.panel.seriesOverrides, override);
+    };
+
     panelSrv.init($scope);
   });
-
-  angular
-    .module('grafana.directives')
-    .directive('seriesOverrideOption', function($compile) {
-      var template =
-          '<div class="dropdown"> ' +
-             '<a  class="dropdown-toggle" gf-dropdown="options" data-toggle="dropdown">' +
-                '<i class="icon-minus"></i></a>' +
-          '</div>';
-
-      return {
-        scope: true,
-        link: function($scope, elem, attrs) {
-          var $template = $(template);
-          elem.append($template);
-          var $link = $(elem).find('a');
-
-          $scope.options = $scope.$eval(attrs.options);
-          $scope.options.unshift(null);
-
-          $scope.options = _.map($scope.options, function(option, index) {
-            return {
-              text: option === null ? '<i class="icon-minus"></i>' : String(option),
-              value: option,
-              click: 'setValue(' + index + ')'
-            };
-          });
-
-          $scope.setValue = function(index) {
-            var value = $scope.options[index].value;
-            if (value === null) {
-              $link.html('<i class="icon-minus"></i>');
-            }
-            else {
-              $link.html(value);
-            }
-          };
-
-          $compile(elem.contents())($scope);
-        }
-      };
-    });
 
 });

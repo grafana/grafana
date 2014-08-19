@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
+    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-if="editorTabs[editor.index] == tab.title">
       <div ng-include src="tab.src"></div>
     </div>
   </div>
