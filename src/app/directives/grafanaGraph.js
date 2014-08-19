@@ -154,10 +154,9 @@ function (angular, $, kbn, moment, _) {
           };
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
-            data[i].data = _d;
-            data[0].lines = { show: false, dashes: true };
-            data[0].bars = { show: true  };
+            var series = data[i];
+            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+            applySeriesOverrideOptions(series);
           }
 
           if (data.length && data[0].info.timeStep) {
@@ -181,6 +180,19 @@ function (angular, $, kbn, moment, _) {
           else {
             plot = $.plot(elem, data, options);
             addAxisLabels();
+          }
+        }
+
+        function applySeriesOverrideOptions(series) {
+          for (var i = 0; i < scope.panel.seriesOverrides.length; i++) {
+            var override = scope.panel.seriesOverrides[i];
+            if (override.alias === series.info.alias) {
+              if (!_.isUndefined(override.fill)) {
+                series.lines = {
+                  fill: override.fill === 0 ? 0.001 : override.fill/10
+                };
+              }
+            }
           }
         }
 

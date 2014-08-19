@@ -2,8 +2,9 @@ define([
   './helpers',
   'angular',
   'jquery',
+  'components/timeSeries',
   'directives/grafanaGraph'
-], function(helpers, angular, $) {
+], function(helpers, angular, $, TimeSeries) {
   'use strict';
 
   describe('grafanaGraph', function() {
@@ -22,21 +23,31 @@ define([
             scope.panel = {
               legend: {},
               grid: {},
-              y_formats: []
+              y_formats: [],
+              seriesOverrides: []
             };
             scope.dashboard = { timezone: 'browser' };
             scope.range = {
               from: new Date('2014-08-09 10:00:00'),
               to: new Date('2014-09-09 13:00:00')
             };
+            ctx.data = [];
+            ctx.data.push(new TimeSeries({
+              datapoints: [[1,1],[2,2]],
+              info: { alias: 'series1', enable: true }
+            }));
+            ctx.data.push(new TimeSeries({
+              datapoints: [[1,1],[2,2]],
+              info: { alias: 'series2', enable: true }
+            }));
 
-            setupFunc(scope);
+            setupFunc(scope, ctx.data);
 
             $compile(element)(scope);
             scope.$digest();
             $.plot = ctx.plotSpy = sinon.spy();
 
-            scope.$emit('render', []);
+            scope.$emit('render', ctx.data);
             ctx.plotData = ctx.plotSpy.getCall(0).args[1];
             ctx.plotOptions = ctx.plotSpy.getCall(0).args[2];
           }));
@@ -63,6 +74,23 @@ define([
 
     });
 
+    graphScenario('series option fill override', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.lines = true;
+        scope.panel.fill = 5;
+        scope.panel.seriesOverrides = [
+          { alias: 'test', fill: 0 }
+        ];
+
+        data[1].info.alias = 'test';
+      });
+
+      it('should match second series and set line fill', function() {
+        expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
+        expect(ctx.plotData[1].lines.fill).to.be(0.001);
+      });
+
+    });
   });
 });
 

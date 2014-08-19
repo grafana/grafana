@@ -12,6 +12,9 @@ define([
 
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('SeriesOverridesCtrl'));
+    beforeEach(function() {
+      ctx.scope.render = function() {};
+    });
 
     describe('Controller should init overrideMenu', function() {
       it('click should include option and value index', function() {

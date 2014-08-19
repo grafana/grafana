@@ -35,6 +35,7 @@ define([
       var value = option.values[valueIndex];
       $scope.override[option.propertyName] = value;
       $scope.updateCurrentOverrides();
+      $scope.render();
     };
 
     $scope.removeOverride = function(option) {

@@ -5,15 +5,13 @@ define([
 function (_, kbn) {
   'use strict';
 
-  var ts = {};
-
-  ts.ZeroFilled = function (opts) {
+  function TimeSeries(opts) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
-  };
+  }
 
-  ts.ZeroFilled.prototype.getFlotPairs = function (fillStyle, yFormats) {
+  TimeSeries.prototype.getFlotPairs = function (fillStyle, yFormats) {
     var result = [];
 
     this.color = this.info.color;
@@ -74,5 +72,6 @@ function (_, kbn) {
     return result;
   };
 
-  return ts;
+  return TimeSeries;
+
 });

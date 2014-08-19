@@ -5,7 +5,7 @@ define([
   'lodash',
   'kbn',
   'moment',
-  './timeSeries',
+  'components/timeSeries',
   './seriesOverridesCtrl',
   'services/panelSrv',
   'services/annotationsSrv',
@@ -17,7 +17,7 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries) {
+function (angular, app, $, _, kbn, moment, TimeSeries) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -258,7 +258,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       $scope.legend.push(seriesInfo);
 
-      var series = new timeSeries.ZeroFilled({
+      var series = new TimeSeries({
         datapoints: datapoints,
         info: seriesInfo,
       });
