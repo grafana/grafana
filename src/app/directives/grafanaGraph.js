@@ -187,6 +187,7 @@ function (angular, $, kbn, moment, _) {
           series.lines = {};
           series.points = {};
           series.bars = {};
+          delete series.stack;
 
           for (var i = 0; i < scope.panel.seriesOverrides.length; i++) {
             var override = scope.panel.seriesOverrides[i];
@@ -197,6 +198,10 @@ function (angular, $, kbn, moment, _) {
             if (override.points !== void 0) { series.points.show = override.points; }
             if (override.bars !== void 0) { series.bars.show = override.bars; }
             if (override.fill !== void 0) { series.lines.fill = translateFillOption(override.fill); }
+            if (override.stack !== void 0) { series.stack = override.stack; }
+            if (override.linewidth !== void 0) { series.lines.lineWidth = override.linewidth; }
+            if (override.pointradius !== void 0) { series.points.radius = override.pointradius; }
+            if (override.steppedLine !== void 0) { series.lines.steps = override.steppedLine; }
           }
         }
 

@@ -109,6 +109,42 @@ define([
       });
     });
 
+    graphScenario('series option overrides, linewidth, stack', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.lines = true;
+        scope.panel.stack = true;
+        scope.panel.linewidth = 2;
+        scope.panel.seriesOverrides = [
+          { alias: 'test', linewidth: 5, stack: false }
+        ];
+
+        data[1].info.alias = 'test';
+      });
+
+      it('should match second series and disable stack, and set lineWidth', function() {
+        expect(ctx.plotOptions.series.stack).to.be(true);
+        expect(ctx.plotData[1].stack).to.be(false);
+        expect(ctx.plotData[1].lines.lineWidth).to.be(5);
+      });
+    });
+
+    graphScenario('series option overrides, pointradius, steppedLine', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.seriesOverrides = [
+          { alias: 'test', pointradius: 5, steppedLine: true }
+        ];
+
+        data[1].info.alias = 'test';
+      });
+
+      it('should match second series and set pointradius, and set steppedLine', function() {
+        expect(ctx.plotData[1].points.radius).to.be(5);
+        expect(ctx.plotData[1].lines.steps).to.be(true);
+      });
+    });
+
+
+
   });
 });
 
