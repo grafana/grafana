@@ -92,8 +92,8 @@ define([
     });
 
     graphScenario('should order series order according to zindex', function(ctx) {
-      ctx.setup(function(scope, data) {
-        data[0].zindex = 2;
+      ctx.setup(function(scope) {
+        scope.panel.seriesOverrides = [{ alias: 'series1', zindex: 2 }];
       });
 
       it('should move zindex 2 last', function() {

@@ -168,19 +168,19 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
-          data = _.sortBy(data, function(series) { return series.zindex; });
+          var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {
             legendSideLastValue = panel.legend.rightSide;
             setTimeout(function() {
-              plot = $.plot(elem, data, options);
+              plot = $.plot(elem, sortedSeries, options);
               addAxisLabels();
             }, 50);
           }
           else {
-            plot = $.plot(elem, data, options);
+            plot = $.plot(elem, sortedSeries, options);
             addAxisLabels();
           }
         }

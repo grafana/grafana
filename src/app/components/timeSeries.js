@@ -9,7 +9,6 @@ function (_, kbn) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
-    this.zindex = 0;
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -31,6 +30,7 @@ function (_, kbn) {
     this.points = {};
     this.bars = {};
     this.info.yaxis = 1;
+    this.zindex = 0;
     delete this.stack;
 
     for (var i = 0; i < overrides.length; i++) {

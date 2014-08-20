@@ -101,8 +101,8 @@ define([
 
         it('should set yaxis', function() {
           expect(series.info.yaxis).to.be(2);
-
         });
+
         it('should set zindex', function() {
           expect(series.zindex).to.be(2);
         });
