@@ -1,5 +1,3 @@
-
-
 <div class="editor-row">
   <div class="section">
     <h5>Chart Options</h5>
@@ -63,4 +61,50 @@
       <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
     </div>
   </div>
+</div>
+
+<div class="editor-row">
+  <div class="section">
+		<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
+		<div>
+		<div class="grafana-target" ng-repeat="override in panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
+			<div class="grafana-target-inner-wrapper">
+				<div class="grafana-target-inner">
+
+					<ul class="grafana-target-controls-left">
+						<li class="grafana-target-segment">
+							<i class="icon-remove pointer" ng-click="removeSeriesOverride(override)"></i>
+						</li>
+					</ul>
+
+					<ul class="grafana-segment-list">
+						<li class="grafana-target-segment">
+							alias or regex
+						</li>
+						<li>
+							<input type="text"
+										ng-model="override.alias"
+                    bs-typeahead="getSeriesNames"
+										ng-blur="render()"
+										data-min-length=0 data-items=100
+										class="input-medium grafana-target-segment-input" >
+						</li>
+						<li class="grafana-target-segment" ng-repeat="option in currentOverrides">
+							<i class="pointer icon-remove" ng-click="removeOverride(option)"></i>
+							{{option.name}}: {{option.value}}
+						</li>
+						<li class="dropdown">
+							<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown" gf-dropdown="overrideMenu" bs-tooltip="'set option to override'">
+								<i class="icon-plus"></i>
+							</a>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+		</div>
+
+		<button class="btn btn-success" style="margin-top: 20px" ng-click="addSeriesOverride()">Add series override rule</button>
+	</div>
 </div>

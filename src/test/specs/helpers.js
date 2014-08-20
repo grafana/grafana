@@ -69,7 +69,7 @@ define([
       }
       return {
         from : kbn.parseDate(this.time.from),
-             to : kbn.parseDate(this.time.to)
+        to : kbn.parseDate(this.time.to)
       };
     };
 

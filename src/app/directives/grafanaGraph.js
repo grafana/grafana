@@ -118,7 +118,7 @@ function (angular, $, kbn, moment, _) {
               lines:  {
                 show: panel.lines,
                 zero: false,
-                fill: panel.fill === 0 ? 0.001 : panel.fill/10,
+                fill: translateFillOption(panel.fill),
                 lineWidth: panel.linewidth,
                 steps: panel.steppedLine
               },
@@ -154,11 +154,12 @@ function (angular, $, kbn, moment, _) {
           };
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
-            data[i].data = _d;
+            var series = data[i];
+            series.applySeriesOverrides(panel.seriesOverrides);
+            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
           }
 
-          if (panel.bars && data.length && data[0].info.timeStep) {
+          if (data.length && data[0].info.timeStep) {
             options.series.bars.barWidth = data[0].info.timeStep / 1.5;
           }
 
@@ -167,19 +168,25 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
+          var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {
             legendSideLastValue = panel.legend.rightSide;
             setTimeout(function() {
-              plot = $.plot(elem, data, options);
+              plot = $.plot(elem, sortedSeries, options);
               addAxisLabels();
             }, 50);
           }
           else {
-            plot = $.plot(elem, data, options);
+            plot = $.plot(elem, sortedSeries, options);
             addAxisLabels();
           }
+        }
+
+        function translateFillOption(fill) {
+          return fill === 0 ? 0.001 : fill/10;
         }
 
         function shouldDelayDraw(panel) {
