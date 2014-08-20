@@ -11,6 +11,46 @@ function (_, kbn) {
     this.label = opts.info.alias;
   }
 
+  function matchSeriesOverride(aliasOrRegex, seriesAlias) {
+    if (aliasOrRegex[0] === '/') {
+      var match = aliasOrRegex.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+      var regex = new RegExp(match[1], match[2]);
+      return seriesAlias.match(regex) != null;
+    }
+
+    return aliasOrRegex === seriesAlias;
+  }
+
+  function translateFillOption(fill) {
+    return fill === 0 ? 0.001 : fill/10;
+  }
+
+  TimeSeries.prototype.applySeriesOverrides = function(overrides) {
+    this.lines = {};
+    this.points = {};
+    this.bars = {};
+    this.info.yaxis = 1;
+    delete this.stack;
+
+    for (var i = 0; i < overrides.length; i++) {
+      var override = overrides[i];
+      if (!matchSeriesOverride(override.alias, this.info.alias)) {
+        continue;
+      }
+      if (override.lines !== void 0) { this.lines.show = override.lines; }
+      if (override.points !== void 0) { this.points.show = override.points; }
+      if (override.bars !== void 0) { this.bars.show = override.bars; }
+      if (override.fill !== void 0) { this.lines.fill = translateFillOption(override.fill); }
+      if (override.stack !== void 0) { this.stack = override.stack; }
+      if (override.linewidth !== void 0) { this.lines.lineWidth = override.linewidth; }
+      if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
+      if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
+      if (override.yaxis !== void 0) {
+        this.info.yaxis = override.yaxis;
+      }
+    }
+  };
+
   TimeSeries.prototype.getFlotPairs = function (fillStyle, yFormats) {
     var result = [];
 
