@@ -64,7 +64,7 @@ define([
   function FilterSrvStub() {
     this.time = { from:'now-1h', to: 'now'};
     this.timeRange = function(parse) {
-      if (!parse) {
+      if (parse === false) {
         return this.time;
       }
       return {
