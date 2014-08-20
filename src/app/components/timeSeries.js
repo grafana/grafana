@@ -12,6 +12,8 @@ function (_, kbn) {
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
+    if (!aliasOrRegex) { return false; }
+
     if (aliasOrRegex[0] === '/') {
       var match = aliasOrRegex.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
       var regex = new RegExp(match[1], match[2]);

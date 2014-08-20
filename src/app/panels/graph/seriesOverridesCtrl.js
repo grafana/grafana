@@ -44,6 +44,12 @@ define([
       $scope.render();
     };
 
+    $scope.getSeriesNames = function() {
+      return _.map($scope.legend, function(info) {
+        return info.alias;
+      });
+    };
+
     $scope.updateCurrentOverrides = function() {
       $scope.currentOverrides = [];
       _.each($scope.overrideMenu, function(option) {

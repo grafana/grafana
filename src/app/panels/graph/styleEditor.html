@@ -72,8 +72,8 @@
 				<div class="grafana-target-inner">
 
 					<ul class="grafana-target-controls-left">
-						<li class="grafana-target-segment>"
-							<i class="icon-remove" ng-click="removeSeriesOverride(override)"></i>
+						<li class="grafana-target-segment">
+							<i class="icon-remove pointer" ng-click="removeSeriesOverride(override)"></i>
 						</li>
 					</ul>
 
@@ -84,7 +84,9 @@
 						<li>
 							<input type="text"
 										ng-model="override.alias"
-										ng-model-onblur ng-change="render()"
+                    bs-typeahead="getSeriesNames"
+										ng-blur="render()"
+										data-min-length=0 data-items=100
 										class="input-medium grafana-target-segment-input" >
 						</li>
 						<li class="grafana-target-segment" ng-repeat="option in currentOverrides">
