@@ -97,6 +97,7 @@ define([
               {
                 type: 'graphite',
                 legend: true,
+                aliasYAxis: { test: 2 },
                 grid: { min: 1, max: 10 }
               }
             ]
@@ -134,8 +135,13 @@ define([
       expect(graph.grid.leftMax).to.be(10);
     });
 
+    it('move aliasYAxis to series override', function() {
+      expect(graph.seriesOverrides[0].alias).to.be("test");
+      expect(graph.seriesOverrides[0].yaxis).to.be(2);
+    });
+
     it('dashboard schema version should be set to latest', function() {
-      expect(model.version).to.be(3);
+      expect(model.version).to.be(4);
     });
 
   });

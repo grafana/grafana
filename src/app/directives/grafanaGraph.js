@@ -212,6 +212,10 @@ function (angular, $, kbn, moment, _) {
             if (override.linewidth !== void 0) { series.lines.lineWidth = override.linewidth; }
             if (override.pointradius !== void 0) { series.points.radius = override.pointradius; }
             if (override.steppedLine !== void 0) { series.lines.steps = override.steppedLine; }
+            if (override.yaxis !== void 0) {
+              series.yaxis = override.yaxis;
+              series.info.yaxis = override.yaxis;
+            }
           }
         }
 

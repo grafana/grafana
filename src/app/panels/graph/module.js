@@ -166,7 +166,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       targets: [{}],
 
       aliasColors: {},
-      aliasYAxis: {},
 
       seriesOverrides: [],
     };
@@ -247,13 +246,10 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
       var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
-      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
       var seriesInfo = {
         alias: alias,
         color:  color,
-        enable: true,
-        yaxis: yaxis
       };
 
       $scope.legend.push(seriesInfo);
@@ -336,8 +332,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     };
 
     $scope.toggleYAxis = function(info) {
-      info.yaxis = info.yaxis === 2 ? 1 : 2;
-      $scope.panel.aliasYAxis[info.alias] = info.yaxis;
+      var override = _.findWhere($scope.panel.seriesOverrides, { alias: info.alias });
+      if (!override) {
+        override = { alias: info.alias };
+        $scope.panel.seriesOverrides.push(override);
+      }
+      override.yaxis = info.yaxis === 2 ? 1 : 2;
       $scope.render();
     };
 

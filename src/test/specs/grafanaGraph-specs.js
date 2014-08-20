@@ -153,9 +153,24 @@ define([
         data[1].info.alias = 'test_01';
       });
 
-      it('should match second series and set pointradius, and set steppedLine', function() {
+      it('should match second series', function() {
         expect(ctx.plotData[0].lines.show).to.be(undefined);
         expect(ctx.plotData[1].lines.show).to.be(false);
+      });
+    });
+
+    graphScenario('override series y-axis', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.lines = true;
+        scope.panel.seriesOverrides = [
+          { alias: 'test', yaxis: 2 }
+        ];
+
+        data[1].info.alias = 'test';
+      });
+
+      it('should match second series and set yaxis', function() {
+        expect(ctx.plotData[1].yaxis).to.be(2);
       });
     });
 
