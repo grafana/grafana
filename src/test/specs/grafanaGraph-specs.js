@@ -71,7 +71,6 @@ define([
         expect(ctx.plotOptions.series.lines.lineWidth).to.be(3);
         expect(ctx.plotOptions.series.lines.steps).to.be(true);
       });
-
     });
 
     graphScenario('series option overrides, fill & points', function(ctx) {
@@ -89,6 +88,17 @@ define([
         expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
         expect(ctx.plotData[1].lines.fill).to.be(0.001);
         expect(ctx.plotData[1].points.show).to.be(true);
+      });
+    });
+
+    graphScenario('should order series order according to zindex', function(ctx) {
+      ctx.setup(function(scope, data) {
+        data[0].zindex = 2;
+      });
+
+      it('should move zindex 2 last', function() {
+        expect(ctx.plotData[0].info.alias).to.be('series2');
+        expect(ctx.plotData[1].info.alias).to.be('series1');
       });
     });
 

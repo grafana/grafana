@@ -93,14 +93,18 @@ define([
         });
       });
 
-      describe('override series y-axis', function() {
+      describe('override series y-axis, and z-index', function() {
         beforeEach(function() {
           series.info.alias = 'test';
-          series.applySeriesOverrides([{ alias: 'test', yaxis: 2 }]);
+          series.applySeriesOverrides([{ alias: 'test', yaxis: 2, zindex: 2 }]);
         });
 
         it('should set yaxis', function() {
           expect(series.info.yaxis).to.be(2);
+
+        });
+        it('should set zindex', function() {
+          expect(series.zindex).to.be(2);
         });
       });
 

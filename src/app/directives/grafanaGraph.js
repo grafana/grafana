@@ -168,6 +168,8 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
+          data = _.sortBy(data, function(series) { return series.zindex; });
+
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {

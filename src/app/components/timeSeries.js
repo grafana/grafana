@@ -9,6 +9,7 @@ function (_, kbn) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
+    this.zindex = 0;
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -45,6 +46,7 @@ function (_, kbn) {
       if (override.linewidth !== void 0) { this.lines.lineWidth = override.linewidth; }
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
+      if (override.zindex !== void 0) { this.zindex = override.zindex; }
       if (override.yaxis !== void 0) {
         this.info.yaxis = override.yaxis;
       }
