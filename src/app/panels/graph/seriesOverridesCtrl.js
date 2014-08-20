@@ -47,13 +47,13 @@ define([
     $scope.updateCurrentOverrides = function() {
       $scope.currentOverrides = [];
       _.each($scope.overrideMenu, function(option) {
-        if (!_.isUndefined($scope.override[option.propertyName])) {
-          $scope.currentOverrides.push({
-            name: option.text,
-            propertyName: option.propertyName,
-            value: String($scope.override[option.propertyName])
-          });
-        }
+        var value = $scope.override[option.propertyName];
+        if (_.isUndefined(value)) { return; }
+        $scope.currentOverrides.push({
+          name: option.text,
+          propertyName: option.propertyName,
+          value: String(value)
+        });
       });
     };
 

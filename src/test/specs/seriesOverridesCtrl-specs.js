@@ -37,6 +37,14 @@ define([
       });
     });
 
+    describe('When removing overide', function() {
+      it('click should include option and value index', function() {
+        ctx.scope.setOverride(1,0);
+        ctx.scope.removeOverride({ propertyName: 'lines' });
+        expect(ctx.scope.currentOverrides.length).to.be(0);
+      });
+    });
+
   });
 
 });
