@@ -46,11 +46,6 @@ function (angular, $, kbn, moment, _) {
           render_panel();
         });
 
-        // Re-render if the window is resized
-        angular.element(window).bind('resize', function() {
-          render_panel();
-        });
-
         function setElementHeight() {
           try {
             var height = scope.height || scope.panel.height || scope.row.height;

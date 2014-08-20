@@ -64,11 +64,6 @@
 							bindonce ng-repeat="row in results.dashboards"
 							ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
 
-							<a class="search-result-link" href="#/dashboard/db/{{row.id}}">
-								<i class="icon icon-th-large"></i>
-								<span bo-text="row.id"></span>
-							</a>
-
 							<div class="search-result-actions">
 								<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
 									<i class="icon-share"></i> share &nbsp;&nbsp;&nbsp;
@@ -83,6 +78,11 @@
 									{{tag}}
 								</a>
 							</div>
+
+							<a class="search-result-link" href="#/dashboard/db/{{row.id}}">
+								<i class="icon icon-th-large"></i>
+								<span bo-text="row.id"></span>
+							</a>
 
 					</div>
 				</div>
