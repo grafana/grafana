@@ -104,7 +104,7 @@ function (angular, _) {
 
       // Post init phase
       $scope.fullscreen = false;
-      $scope.editor = { index: 3 };
+      $scope.editor = { index: 1 };
       if ($scope.panelMeta.fullEditorTabs) {
         $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs, 'title');
       }
