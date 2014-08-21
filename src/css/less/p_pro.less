@@ -1,0 +1,72 @@
+.pro-sidemenu {
+  display: none;
+}
+
+.pro-sidemenu-open {
+  .pro-sidemenu {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    background: @bodyBackground;
+    border-right: 2px solid black;
+    min-height: 100%;
+    z-index: 101;
+  }
+
+  .dashboard-notice {
+    margin-left: 200px;
+    width: auto;
+  }
+
+  .pro-main-view {
+    padding-left: 200px;
+  }
+
+  .panel-fullscreen {
+    left: 200px;
+  }
+}
+
+.pro-sidemenu-items {
+}
+
+.pro-sidemenu-link {
+  font-size: 1.0rem;
+  padding: 14px 10px 14px 20px;
+  display: block;
+  background: @grafanaPanelBackground;
+  color: @grayLight;
+  i {
+    padding-right: 15px;
+  }
+  border-bottom: 1px solid black;
+}
+
+.pro-sidemenu-link:first-child {
+ // border-top: 1px solid black;
+}
+
+.pro-side-menu-user {
+  padding-left: 5px;
+  img {
+    width: 49px;
+    padding-right: 10px;
+  }
+}
+
+.login-box {
+  width: 700px;
+  margin: 100px auto 0 auto;
+
+  button.btn {
+    margin-top: 19px;
+    padding: 12px 30px;
+  }
+}
+.login-box-logo {
+  text-align: center;
+  padding-bottom: 50px;
+}
+

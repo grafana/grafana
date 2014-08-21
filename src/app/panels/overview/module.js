@@ -36,19 +36,9 @@ function (angular, app, _, timeSeries) {
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
-      panelSrv.init(this);
-
-      if (!$scope.skipDataOnInit) {
-        $scope.get_data();
-      }
-      //$scope.$on('refresh', $scope.render);
-      //$scope.render();
     };
 
     $scope.get_data = function() {
-      delete $scope.panel.error;
-      $scope.panelMeta.loading = true;
-
       $scope.rangeUnparsed = $scope.filter.timeRange(false);
 
       var metricsQuery = {
@@ -101,7 +91,7 @@ function (angular, app, _, timeSeries) {
     $scope.openEditor = function() {
     };
 
-    $scope.init();
+    panelSrv.init($scope);
 
   });
 });
