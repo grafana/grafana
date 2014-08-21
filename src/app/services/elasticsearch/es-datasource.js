@@ -216,6 +216,7 @@ function (angular, _, $, config, kbn, moment) {
           for (var i = 0; i < results.hits.hits.length; i++) {
             hits.dashboards.push({
               id: results.hits.hits[i]._id,
+              title: results.hits.hits[i]._id,
               tags: results.hits.hits[i]._source.tags
             });
           }
