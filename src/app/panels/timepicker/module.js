@@ -193,8 +193,8 @@ function (angular, app, _, moment, kbn) {
             moment(model.to.date).fromNow();
         }
         else {
-          model.rangeString = $scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY hh:mm:ss') + ' to ' +
-            $scope.dashboard.formatDate(model.to.date, 'MMM D, YYYY hh:mm:ss');
+          model.rangeString = $scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +
+            $scope.dashboard.formatDate(model.to.date, 'MMM D, YYYY HH:mm:ss');
         }
       }
 

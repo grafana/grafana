@@ -358,6 +358,7 @@ function (angular, _, kbn, InfluxSeries) {
         for (var i = 0; i < results.length; i++) {
           var hit =  {
             id: results[i].points[0][dashCol],
+            title: results[i].points[0][dashCol],
             tags: results[i].points[0][tagsCol].split(",")
           };
           hit.tags = hit.tags[0] ? hit.tags : [];
