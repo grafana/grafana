@@ -1,6 +1,7 @@
 package api
 
 import (
+	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
 	"github.com/torkelo/grafana-pro/pkg/models"
 )
@@ -16,7 +17,7 @@ func init() {
 func (self *HttpServer) getDashboard(c *gin.Context) {
 	id := c.Params.ByName("id")
 
-	dash, err := self.store.GetById(id)
+	dash, err := self.store.GetDashboardByTitle(id, "test")
 	if err != nil {
 		c.JSON(404, newErrorResponse("Dashboard not found"))
 		return
@@ -30,6 +31,7 @@ func (self *HttpServer) search(c *gin.Context) {
 
 	results, err := self.store.Query(query)
 	if err != nil {
+		log.Error("Store query error: %v", err)
 		c.JSON(500, newErrorResponse("Failed"))
 		return
 	}
@@ -41,9 +43,17 @@ func (self *HttpServer) postDashboard(c *gin.Context) {
 	var command saveDashboardCommand
 
 	if c.EnsureBody(&command) {
-		err := self.store.Save(&models.Dashboard{Data: command.Dashboard})
+		dashboard := models.NewDashboard("test")
+		dashboard.Data = command.Dashboard
+		dashboard.Title = dashboard.Data["title"].(string)
+
+		if dashboard.Data["id"] != nil {
+			dashboard.Id = dashboard.Data["id"].(string)
+		}
+
+		err := self.store.SaveDashboard(dashboard)
 		if err == nil {
-			c.JSON(200, gin.H{"status": "saved"})
+			c.JSON(200, gin.H{"status": "success", "id": dashboard.Id})
 			return
 		}
 	}
