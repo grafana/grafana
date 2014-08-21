@@ -14,6 +14,7 @@ function (angular, $, config, _) {
       .when('/dashboard/file/:jsonFile', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromFileProvider',
+        reloadOnSearch: false,
       });
   });
 
