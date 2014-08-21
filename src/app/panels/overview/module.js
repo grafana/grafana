@@ -2,7 +2,7 @@ define([
   'angular',
   'app',
   'lodash',
-  '../graph/timeSeries',
+  'components/timeSeries',
   'services/panelSrv',
 ],
 function (angular, app, _, timeSeries) {
