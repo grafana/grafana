@@ -45,7 +45,7 @@
           </span>
         </div>
 
-        <h6 ng-hide="results.dashboards.length || results.metrics.length">No dashboards or metrics matching your query found</h6>
+        <h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 
         <div class="search-results-container" ng-if="tagsOnly">
 					<div ng-repeat="tag in results.tags"
@@ -81,7 +81,7 @@
 
 							<a class="search-result-link">
 								<i class="icon icon-th-large"></i>
-								<span bo-text="row.id"></span>
+								<span bo-text="row.title"></span>
 							</a>
 
 					</div>

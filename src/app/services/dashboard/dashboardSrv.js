@@ -19,7 +19,9 @@ function (angular, $, kbn, _, moment) {
         data = {};
       }
 
+      this.id = data.id || null;
       this.title = data.title || 'No Title';
+      this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
@@ -31,7 +33,6 @@ function (angular, $, kbn, _, moment) {
       this.templating = data.templating || { list: [] };
       this.refresh = data.refresh;
       this.version = data.version || 0;
-      this.$state = data.$state;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
