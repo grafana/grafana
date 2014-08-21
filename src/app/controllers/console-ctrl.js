@@ -2,32 +2,19 @@ define([
   'angular',
   'lodash',
   'moment',
+  'store'
 ],
-function (angular, _, moment) {
+function (angular, _, moment, store) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var consoleEnabled = window.localStorage && window.localStorage.grafanaConsole === 'true';
+  var consoleEnabled = store.getBool('grafanaConsole');
 
   if (!consoleEnabled) {
     return;
   }
 
   var events = [];
-
-  var oldLog = console.log;
-  console.log = function (message) {
-    try {
-      if (_.isObject(message)) {
-        message = angular.toJson(message);
-        if (message.length > 50) {
-          message = message.substring(0, 50);
-        }
-      }
-      events.push(new ConsoleEvent('log', message, {}));
-      oldLog.apply(console, arguments);
-    } catch (e) { }
-  };
 
   function ConsoleEvent(type, title, data) {
     this.type = type;

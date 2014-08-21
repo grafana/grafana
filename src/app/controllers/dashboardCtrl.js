@@ -10,8 +10,10 @@ function (angular, $, config, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashCtrl', function(
-    $scope, $rootScope, dashboardKeybindings, filterSrv, dashboardSrv, panelMoveSrv, timer) {
+  module.controller('DashboardCtrl', function(
+      $scope, $rootScope, dashboardKeybindings,
+      filterSrv, dashboardSrv, dashboardViewStateSrv,
+      panelMoveSrv, timer, $timeout) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -19,14 +21,25 @@ function (angular, $, config, _) {
     $scope.init = function() {
       $scope.availablePanels = config.panels;
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
+
+      angular.element(window).bind('resize', function() {
+        $timeout(function() {
+          $scope.$broadcast('render');
+        });
+      });
+
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
       timer.cancel_all();
 
-      $rootScope.fullscreen = false;
+      $rootScope.performance.dashboardLoadStart = new Date().getTime();
+      $rootScope.performance.panelsInitialized = 0;
+      $rootScope.performance.panelsRendered= 0;
 
       $scope.dashboard = dashboardSrv.create(dashboardData);
+      $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+
       $scope.grafana.style = $scope.dashboard.style;
 
       $scope.filter = filterSrv;
@@ -76,10 +89,6 @@ function (angular, $, config, _) {
         height: '250px',
         editable: true,
       };
-    };
-
-    $scope.row_style = function(row) {
-      return { 'min-height': row.collapse ? '5px' : row.height };
     };
 
     $scope.panel_path =function(type) {

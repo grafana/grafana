@@ -1,9 +1,8 @@
 define([
   'angular',
   'lodash',
-  'jquery',
 ],
-function (angular, _, $) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -22,12 +21,12 @@ function (angular, _, $) {
         },
         {
           text: 'Edit',
-          click: "toggleFullscreenEdit()",
+          click: "toggleFullscreen(true)",
           condition: $scope.panelMeta.fullscreenEdit
         },
         {
           text: "Fullscreen",
-          click: 'toggleFullscreen()',
+          click: 'toggleFullscreen(false)',
           condition: $scope.panelMeta.fullscreenView
         },
         {
@@ -71,46 +70,6 @@ function (angular, _, $) {
         });
       };
 
-      $scope.enterFullscreenMode = function(options) {
-        var docHeight = $(window).height();
-        var editHeight = Math.floor(docHeight * 0.3);
-        var fullscreenHeight = Math.floor(docHeight * 0.7);
-        var oldTimeRange = $scope.range;
-
-        $scope.height = options.edit ? editHeight : fullscreenHeight;
-        $scope.editMode = options.edit;
-
-        if (!$scope.fullscreen) {
-          var closeEditMode = $rootScope.$on('panel-fullscreen-exit', function() {
-            $scope.editMode = false;
-            $scope.fullscreen = false;
-            delete $scope.height;
-
-            closeEditMode();
-
-            $timeout(function() {
-              if (oldTimeRange !== $scope.range) {
-                $scope.dashboard.emit_refresh();
-              }
-              else {
-                $scope.$emit('render');
-              }
-            });
-          });
-        }
-
-        $(window).scrollTop(0);
-
-        $scope.fullscreen = true;
-
-        $rootScope.$emit('panel-fullscreen-enter');
-
-        $timeout(function() {
-          $scope.$emit('render');
-        });
-
-      };
-
       $scope.addDataQuery = function() {
         $scope.panel.targets.push({target: ''});
       };
@@ -135,22 +94,12 @@ function (angular, _, $) {
         $scope.get_data();
       };
 
-      $scope.toggleFullscreenEdit = function() {
-        if ($scope.editMode) {
-          $rootScope.$emit('panel-fullscreen-exit');
-          return;
-        }
-
-        $scope.enterFullscreenMode({edit: true});
+      $scope.toggleFullscreen = function(edit) {
+        $scope.dashboardViewState.update({ fullscreen: true, edit: edit, panelId: $scope.panel.id });
       };
 
-      $scope.toggleFullscreen = function() {
-        if ($scope.fullscreen && !$scope.editMode) {
-          $rootScope.$emit('panel-fullscreen-exit');
-          return;
-        }
-
-        $scope.enterFullscreenMode({ edit: false });
+      $scope.otherPanelInFullscreenMode = function() {
+        return $scope.dashboardViewState.fullscreen && !$scope.fullscreen;
       };
 
       // Post init phase
@@ -162,6 +111,31 @@ function (angular, _, $) {
 
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
+
+      $scope.dashboardViewState.registerPanel($scope);
+
+      if ($scope.get_data) {
+        var panel_get_data = $scope.get_data;
+        $scope.get_data = function() {
+          if ($scope.otherPanelInFullscreenMode()) { return; }
+
+          delete $scope.panel.error;
+          $scope.panelMeta.loading = true;
+
+          panel_get_data();
+        };
+
+        if (!$scope.skipDataOnInit) {
+          $scope.get_data();
+        }
+      }
+
+      if ($rootScope.profilingEnabled) {
+        $rootScope.performance.panelsInitialized++;
+        if ($rootScope.performance.panelsInitialized === $scope.dashboard.rows.length) {
+          $rootScope.performance.allPanelsInitialized = new Date().getTime();
+        }
+      }
     };
   });
 

@@ -106,8 +106,8 @@ define([
 
       expect(rootNode.message).to.be(undefined);
       expect(rootNode.params[0].type).to.be('metric');
-      expect(rootNode.params[0].segments[1].type).to.be('template');
-      expect(rootNode.params[0].segments[1].value).to.be('server');
+      expect(rootNode.params[0].segments[1].type).to.be('segment');
+      expect(rootNode.params[0].segments[1].value).to.be('[[server]]');
     });
 
     it('invalid metric expression', function() {

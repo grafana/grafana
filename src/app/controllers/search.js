@@ -41,6 +41,7 @@ function (angular, _, config, $) {
 
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
+          $location.search({});
           $location.path("/dashboard/db/" + selectedDash.id);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
@@ -49,7 +50,12 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.shareDashboard = function(title, id) {
+    $scope.goToDashboard = function(id) {
+      $location.path("/dashboard/db/" + id);
+    };
+
+    $scope.shareDashboard = function(title, id, $event) {
+      $event.stopPropagation();
       var baseUrl = window.location.href.replace(window.location.hash,'');
 
       $scope.share = {
@@ -98,6 +104,7 @@ function (angular, _, config, $) {
         $element.next().find('.dropdown-toggle').dropdown('toggle');
       }
 
+      $scope.searchOpened = true;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.query.query = 'title:';
       $scope.search();

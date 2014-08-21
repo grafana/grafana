@@ -1,9 +1,10 @@
 define([
   'angular',
   'lodash',
-  'kbn'
+  'kbn',
+  'store'
 ],
-function (angular, _, kbn) {
+function (angular, _, kbn, store) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -13,14 +14,14 @@ function (angular, _, kbn) {
     var favorites = { dashboards: [] };
 
     this.init = function() {
-      var existingJson = window.localStorage["grafana-favorites"];
+      var existingJson = store.get("grafana-favorites");
       if (existingJson) {
         favorites = angular.fromJson(existingJson);
       }
     };
 
     this._save = function() {
-      window.localStorage["grafana-favorites"] = angular.toJson(favorites);
+      store.set('grafana-favorites', angular.toJson(favorites));
     };
 
     this._find = function(title) {
@@ -68,6 +69,7 @@ function (angular, _, kbn) {
       timerInstance = setInterval(function() {
         $rootScope.$apply(function() {
           angular.element(window).unbind('resize');
+          $location.search({});
           $location.path(dashboards[index % dashboards.length].url);
           index++;
         });

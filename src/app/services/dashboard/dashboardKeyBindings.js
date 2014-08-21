@@ -12,28 +12,14 @@ function(angular, $) {
 
     this.shortcuts = function(scope) {
 
-      scope.onAppEvent('panel-fullscreen-enter', function() {
-        $rootScope.fullscreen = true;
-      });
-
-      scope.onAppEvent('panel-fullscreen-exit', function() {
-        $rootScope.fullscreen = false;
-      });
-
-      scope.onAppEvent('dashboard-saved', function() {
-        if ($rootScope.fullscreen) {
-          scope.emitAppEvent('panel-fullscreen-exit');
-        }
-      });
-
       scope.$on('$destroy', function() {
         keyboardManager.unbind('ctrl+f');
         keyboardManager.unbind('ctrl+h');
         keyboardManager.unbind('ctrl+s');
         keyboardManager.unbind('ctrl+r');
         keyboardManager.unbind('ctrl+z');
-        keyboardManager.unbind('esc');
       });
+      keyboardManager.unbind('esc');
 
       keyboardManager.bind('ctrl+f', function(evt) {
         scope.emitAppEvent('open-search', evt);
@@ -67,7 +53,7 @@ function(angular, $) {
           modalData.$scope.dismiss();
         }
 
-        scope.emitAppEvent('panel-fullscreen-exit');
+        scope.exitFullscreen();
       }, { inputDisabled: true });
     };
   });

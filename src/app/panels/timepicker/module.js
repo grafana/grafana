@@ -80,9 +80,14 @@ function (angular, app, _, moment, kbn) {
       $scope.temptime = cloneTime($scope.time);
       $scope.tempnow = $scope.panel.now;
 
+      $scope.temptime.from.date.setHours(0,0,0,0);
+      $scope.temptime.to.date.setHours(0,0,0,0);
+
       // Date picker needs the date to be at the start of the day
-      $scope.temptime.from.date.setHours(1,0,0,0);
-      $scope.temptime.to.date.setHours(1,0,0,0);
+      if(new Date().getTimezoneOffset() < 0) {
+        $scope.temptime.from.date = moment($scope.temptime.from.date).add('days',1).toDate();
+        $scope.temptime.to.date = moment($scope.temptime.to.date).add('days',1).toDate();
+      }
 
       $q.when(customTimeModal).then(function(modalEl) {
         modalEl.modal('show');
@@ -172,10 +177,28 @@ function (angular, app, _, moment, kbn) {
     };
 
     var getScopeTimeObj = function(from,to) {
-      return {
-        from: getTimeObj(from),
-        to: getTimeObj(to)
-      };
+      var model = { from: getTimeObj(from), to: getTimeObj(to), };
+
+      if (model.from.date) {
+        model.tooltip = $scope.dashboard.formatDate(model.from.date) + ' <br>to<br>';
+        model.tooltip += $scope.dashboard.formatDate(model.to.date);
+      }
+      else {
+        model.tooltip = 'Click to set time filter';
+      }
+
+      if ($scope.filter.time) {
+        if ($scope.panel.now) {
+          model.rangeString = moment(model.from.date).fromNow() + ' to ' +
+            moment(model.to.date).fromNow();
+        }
+        else {
+          model.rangeString = $scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +
+            $scope.dashboard.formatDate(model.to.date, 'MMM D, YYYY HH:mm:ss');
+        }
+      }
+
+      return model;
     };
 
     var getTimeObj = function(date) {

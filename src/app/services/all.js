@@ -11,5 +11,6 @@ define([
   './unsavedChangesSrv',
   './dashboard/dashboardKeyBindings',
   './dashboard/dashboardSrv',
+  './dashboard/dashboardViewStateSrv',
 ],
 function () {});

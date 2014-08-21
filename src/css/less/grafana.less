@@ -35,9 +35,8 @@
 // Search
 
 .grafana-search-panel {
-  padding: 6px 10px;
-
   .search-field-wrapper {
+    padding: 6px 10px;
     input {
       width: 100%;
     }
@@ -50,25 +49,58 @@
       padding-right: 25px;
     }
   }
+}
 
-  .selected td, tr.selected:nth-child(odd)>td {
-    background: @blue;
-    color: white;
-    text-shadow: -1px -1px 1px rgba(0,0,0,0.3);
-    a {
-      color: white;
+.search-results-container {
+  max-height: 600px;
+  overflow: auto;
+  display: block;
+  .search-result-item a {
+  }
+
+  .search-result-item:hover, .search-result-item.selected {
+    .search-result-link, .icon {
+      color: @grafanaListHighlight;
+    }
+    .search-result-link .label {
+      background-color: @blue;
     }
   }
 
-  .selected-tag .label-tag {
-    background-color: @blue;
+
+  .search-result-link {
+    color: @grafanaListMainLinkColor;
+    .icon {
+      padding-right: 10px;
+      color: @grafanaListHighlightContrast;
+    }
+  }
+
+  .search-result-item:nth-child(odd) {
+    background-color: @grafanaListAccent;
+  }
+
+  .search-result-item {
+    padding: 6px 10px;
+    white-space: nowrap;
+    border-top: 1px solid @grafanaListBorderTop;
+    border-bottom: 1px solid @grafanaListBorderBottom;
+  }
+
+  .search-result-tags {
+    float: right;
+  }
+
+  .search-result-actions {
+    float: right;
+    padding-left: 10px;
   }
 }
 
 .search-tagview-switch {
   position: absolute;
   top: 15px;
-  right: 263px;
+  right: 266px;
   color: darken(@linkColor, 30%);
   &.active {
     color: @linkColor;
@@ -155,7 +187,7 @@
 }
 
 .panel-full-edit-tabs {
-  margin-top: 10px;
+  margin-top: 30px;
   min-height: 250px;
   margin-left: -10px;
   margin-right: -10px;

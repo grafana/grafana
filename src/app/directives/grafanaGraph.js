@@ -21,7 +21,6 @@ function (angular, $, kbn, moment, _) {
         var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
-          if (scope.otherPanelInFullscreenMode()) { return; }
           scope.get_data();
         });
 
@@ -39,12 +38,11 @@ function (angular, $, kbn, moment, _) {
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
+          if (!data) {
+            scope.get_data();
+            return;
+          }
           annotations = data.annotations || annotations;
-          render_panel();
-        });
-
-        // Re-render if the window is resized
-        angular.element(window).bind('resize', function() {
           render_panel();
         });
 
@@ -115,7 +113,7 @@ function (angular, $, kbn, moment, _) {
               lines:  {
                 show: panel.lines,
                 zero: false,
-                fill: panel.fill === 0 ? 0.001 : panel.fill/10,
+                fill: translateFillOption(panel.fill),
                 lineWidth: panel.linewidth,
                 steps: panel.steppedLine
               },
@@ -151,11 +149,12 @@ function (angular, $, kbn, moment, _) {
           };
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
-            data[i].data = _d;
+            var series = data[i];
+            series.applySeriesOverrides(panel.seriesOverrides);
+            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
           }
 
-          if (panel.bars && data.length && data[0].info.timeStep) {
+          if (data.length && data[0].info.timeStep) {
             options.series.bars.barWidth = data[0].info.timeStep / 1.5;
           }
 
@@ -164,19 +163,25 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
+          var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+
           // if legend is to the right delay plot draw a few milliseconds
           // so the legend width calculation can be done
           if (shouldDelayDraw(panel)) {
             legendSideLastValue = panel.legend.rightSide;
             setTimeout(function() {
-              plot = $.plot(elem, data, options);
+              plot = $.plot(elem, sortedSeries, options);
               addAxisLabels();
             }, 50);
           }
           else {
-            plot = $.plot(elem, data, options);
+            plot = $.plot(elem, sortedSeries, options);
             addAxisLabels();
           }
+        }
+
+        function translateFillOption(fill) {
+          return fill === 0 ? 0.001 : fill/10;
         }
 
         function shouldDelayDraw(panel) {
@@ -300,9 +305,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          if (format !== 'none') {
-            axis.tickFormatter = kbn.getFormatFunction(format, 1);
-          }
+          axis.tickFormatter = kbn.getFormatFunction(format, 1);
         }
 
         function time_format(interval, ticks, min, max) {
@@ -353,10 +356,7 @@ function (angular, $, kbn, moment, _) {
             }
 
             value = kbn.getFormatFunction(format, 2)(value);
-
-            timestamp = dashboard.timezone === 'browser' ?
-              moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
-              moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
+            timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
           } else {

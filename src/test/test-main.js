@@ -6,6 +6,7 @@ require.config({
     mocks:                 '../test/mocks',
     config:                '../config.sample',
     kbn:                   'components/kbn',
+    store:                 'components/store',
 
     settings:              'components/settings',
     lodash:                'components/lodash.extended',
@@ -26,7 +27,7 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                   '../vendor/jquery/jquery-1.8.0',
+    jquery:                   '../vendor/jquery/jquery-2.1.1.min',
 
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
@@ -117,14 +118,18 @@ require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
+    'specs/timeSeries-specs',
     'specs/row-ctrl-specs',
     'specs/graphiteTargetCtrl-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
+    'specs/grafanaGraph-specs',
+    'specs/seriesOverridesCtrl-specs',
     'specs/filterSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/influxSeries-specs',
+    'specs/dashboardViewStateSrv-specs',
     'specs/overview-ctrl-specs',
   ], function () {
     window.__karma__.start();

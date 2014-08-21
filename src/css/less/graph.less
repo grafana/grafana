@@ -4,7 +4,7 @@
 
 .graph-legend {
   margin: 0 20px;
-  text-align: left;
+  text-align: center;
   position: relative;
   top: 2px;
 
@@ -25,6 +25,7 @@
 .graph-legend-value {
   float: left;
   white-space: nowrap;
+  text-align: left;
   &.current:before {
     content: "Current: "
   }
@@ -44,6 +45,7 @@
 
 .graph-legend-series {
   padding-left: 10px;
+  padding-top: 2px;
 }
 
 .graph-legend-value {
@@ -151,4 +153,18 @@
 
 .annotation-tags {
   color: @purple;
+}
+
+.graph-series-override {
+  input {
+    float: left;
+    margin-right: 10px;
+  }
+  .graph-series-override-option {
+    float: left;
+    padding: 2px 6px;
+  }
+  .graph-series-override-selector {
+    float: left;
+  }
 }
