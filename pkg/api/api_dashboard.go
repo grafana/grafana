@@ -17,7 +17,7 @@ func init() {
 func (self *HttpServer) getDashboard(c *gin.Context) {
 	id := c.Params.ByName("id")
 
-	dash, err := self.store.GetDashboardByTitle(id, "test")
+	dash, err := self.store.GetDashboard(id, 1)
 	if err != nil {
 		c.JSON(404, newErrorResponse("Dashboard not found"))
 		return
@@ -46,6 +46,8 @@ func (self *HttpServer) postDashboard(c *gin.Context) {
 		dashboard := models.NewDashboard("test")
 		dashboard.Data = command.Dashboard
 		dashboard.Title = dashboard.Data["title"].(string)
+		dashboard.AccountId = 1
+		dashboard.UpdateSlug()
 
 		if dashboard.Data["id"] != nil {
 			dashboard.Id = dashboard.Data["id"].(string)
@@ -53,7 +55,7 @@ func (self *HttpServer) postDashboard(c *gin.Context) {
 
 		err := self.store.SaveDashboard(dashboard)
 		if err == nil {
-			c.JSON(200, gin.H{"status": "success", "id": dashboard.Id})
+			c.JSON(200, gin.H{"status": "success", "slug": dashboard.Slug})
 			return
 		}
 	}
