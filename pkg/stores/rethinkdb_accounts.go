@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	r "github.com/dancannon/gorethink"
+	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
 func (self *rethinkStore) getNextAccountId() (int, error) {
@@ -22,24 +23,40 @@ func (self *rethinkStore) getNextAccountId() (int, error) {
 	return int(resp.NewValue.(map[string]interface{})["NextAccountId"].(float64)), nil
 }
 
-func (self *rethinkStore) createAccount() (*Account, error) {
+func (self *rethinkStore) SaveUserAccount(account *models.UserAccount) error {
 	accountId, err := self.getNextAccountId()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	account := &Account{Id: accountId, NextDashboardId: 0}
+	account.DatabaseId = accountId
 
 	resp, err := r.Table("accounts").Insert(account).RunWrite(self.session)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if resp.Inserted == 0 {
-		return nil, errors.New("Failed to insert acccount")
+		return errors.New("Failed to insert acccount")
 	}
 
-	return account, nil
+	return nil
+}
+
+func (self *rethinkStore) GetUserAccountLogin(emailOrName string) (*models.UserAccount, error) {
+	resp, err := r.Table("accounts").GetAllByIndex("AccountLogin", []interface{}{emailOrName}).Run(self.session)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var account models.UserAccount
+	err = resp.One(&account)
+	if err != nil {
+		return nil, errors.New("Not found")
+	}
+
+	return &account, nil
 }
 
 func (self *rethinkStore) getNextDashboardNumber(accountId int) (int, error) {

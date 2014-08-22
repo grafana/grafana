@@ -39,8 +39,13 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 	r.Db(config.DatabaseName).TableCreate("dashboards").Exec(session)
 	r.Db(config.DatabaseName).TableCreate("accounts").Exec(session)
 	r.Db(config.DatabaseName).TableCreate("master").Exec(session)
+
 	r.Db(config.DatabaseName).Table("dashboards").IndexCreateFunc("AccountIdSlug", func(row r.Term) interface{} {
 		return []interface{}{row.Field("AccountId"), row.Field("Slug")}
+	}).Exec(session)
+
+	r.Db(config.DatabaseName).Table("accounts").IndexCreateFunc("AccountLogin", func(row r.Term) interface{} {
+		return []interface{}{row.Field("Login")}
 	}).Exec(session)
 
 	_, err = r.Table("master").Insert(map[string]interface{}{"id": "ids", "NextAccountId": 0}).RunWrite(session)
