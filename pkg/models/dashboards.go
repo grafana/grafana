@@ -3,12 +3,15 @@ package models
 import (
 	"encoding/json"
 	"io"
+	"regexp"
+	"strings"
 	"time"
 )
 
 type Dashboard struct {
 	Id                   string `gorethink:"id,omitempty"`
-	AccountId            string
+	Slug                 string
+	AccountId            int
 	LastModifiedByUserId string
 	LastModifiedByDate   time.Time
 	CreatedDate          time.Time
@@ -26,18 +29,19 @@ type UserContext struct {
 type SearchResult struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
+	Slug  string `json:"slug"`
 }
 
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
 	dash.Id = ""
-	dash.AccountId = "test"
 	dash.LastModifiedByDate = time.Now()
 	dash.CreatedDate = time.Now()
 	dash.LastModifiedByUserId = "123"
-	dash.Title = title
 	dash.Data = make(map[string]interface{})
 	dash.Data["title"] = title
+	dash.Title = title
+	dash.UpdateSlug()
 
 	return dash
 }
@@ -50,11 +54,16 @@ func NewFromJson(reader io.Reader) (*Dashboard, error) {
 		return nil, err
 	}
 
-	dash.Title = dash.Data["title"].(string)
-
 	return dash, nil
 }
 
 func (dash *Dashboard) GetString(prop string) string {
 	return dash.Data[prop].(string)
+}
+
+func (dash *Dashboard) UpdateSlug() {
+	title := strings.ToLower(dash.Data["title"].(string))
+	re := regexp.MustCompile("[^\\w ]+")
+	re2 := regexp.MustCompile("\\s")
+	dash.Slug = re2.ReplaceAllString(re.ReplaceAllString(title, ""), "-")
 }

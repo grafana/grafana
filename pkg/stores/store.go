@@ -5,7 +5,7 @@ import (
 )
 
 type Store interface {
-	GetDashboardByTitle(id string, accountId string) (*models.Dashboard, error)
+	GetDashboard(title string, accountId int) (*models.Dashboard, error)
 	SaveDashboard(dash *models.Dashboard) error
 	Query(query string) ([]*models.SearchResult, error)
 	Close()

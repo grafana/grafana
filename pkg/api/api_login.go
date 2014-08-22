@@ -5,6 +5,7 @@ import "github.com/gin-gonic/gin"
 func init() {
 	addRoutes(func(self *HttpServer) {
 		self.router.GET("/login/*_", self.index)
+		self.router.GET("/register/*_", self.index)
 		self.router.POST("/login", self.loginPost)
 		self.router.POST("/logout", self.logoutPost)
 	})

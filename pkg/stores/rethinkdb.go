@@ -16,6 +16,11 @@ type RethinkCfg struct {
 	DatabaseName string
 }
 
+type Account struct {
+	Id              int `gorethink:"id"`
+	NextDashboardId int
+}
+
 func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 	log.Info("Initializing rethink storage")
 
@@ -32,9 +37,16 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 
 	r.DbCreate(config.DatabaseName).Exec(session)
 	r.Db(config.DatabaseName).TableCreate("dashboards").Exec(session)
-	r.Db(config.DatabaseName).Table("dashboards").IndexCreateFunc("AccountIdTitle", func(row r.Term) interface{} {
-		return []interface{}{row.Field("AccountId"), row.Field("Title")}
+	r.Db(config.DatabaseName).TableCreate("accounts").Exec(session)
+	r.Db(config.DatabaseName).TableCreate("master").Exec(session)
+	r.Db(config.DatabaseName).Table("dashboards").IndexCreateFunc("AccountIdSlug", func(row r.Term) interface{} {
+		return []interface{}{row.Field("AccountId"), row.Field("Slug")}
 	}).Exec(session)
+
+	_, err = r.Table("master").Insert(map[string]interface{}{"id": "ids", "NextAccountId": 0}).RunWrite(session)
+	if err != nil {
+		log.Error("Failed to insert master ids row", err)
+	}
 
 	return &rethinkStore{
 		session: session,
@@ -42,7 +54,7 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 }
 
 func (self *rethinkStore) SaveDashboard(dash *models.Dashboard) error {
-	resp, err := r.Table("dashboards").Insert(dash).RunWrite(self.session)
+	resp, err := r.Table("dashboards").Insert(dash, r.InsertOpts{Upsert: true}).RunWrite(self.session)
 	if err != nil {
 		return err
 	}
@@ -56,8 +68,8 @@ func (self *rethinkStore) SaveDashboard(dash *models.Dashboard) error {
 	return nil
 }
 
-func (self *rethinkStore) GetDashboardByTitle(title string, accountId string) (*models.Dashboard, error) {
-	resp, err := r.Table("dashboards").GetAllByIndex("AccountIdTitle", []interface{}{accountId, title}).Run(self.session)
+func (self *rethinkStore) GetDashboard(slug string, accountId int) (*models.Dashboard, error) {
+	resp, err := r.Table("dashboards").GetAllByIndex("AccountIdSlug", []interface{}{accountId, slug}).Run(self.session)
 	if err != nil {
 		return nil, err
 	}
@@ -81,10 +93,9 @@ func (self *rethinkStore) Query(query string) ([]*models.SearchResult, error) {
 	results := make([]*models.SearchResult, 0, 50)
 	var dashboard models.Dashboard
 	for docs.Next(&dashboard) {
-		log.Info("title: ", dashboard.Title)
 		results = append(results, &models.SearchResult{
 			Title: dashboard.Title,
-			Id:    dashboard.Id,
+			Id:    dashboard.Slug,
 		})
 	}
 
