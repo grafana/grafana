@@ -11,8 +11,46 @@ function (angular) {
       .when('/login', {
         templateUrl: 'app/partials/pro/login.html',
         controller : 'LoginCtrl',
+      })
+      .when('/register', {
+        templateUrl: 'app/partials/pro/register.html',
+        controller : 'RegisterCtrl',
       });
   });
+
+  module.controller('RegisterCtrl', function($scope, $http, $location, $routeParams) {
+    $scope.loginModel = {};
+
+    $scope.init = function() {
+      if ($routeParams.logout) {
+        $scope.logout();
+      }
+    };
+
+    $scope.register = function() {
+      delete $scope.registerError;
+
+      if (!$scope.loginForm.$valid) {
+        return;
+      }
+
+      $http.post('/api/register/user', $scope.loginModel).then(function() {
+        $scope.emitAppEvent('logged-in');
+        $location.path('/');
+      }, function(err) {
+        if (err.status === 401) {
+          $scope.registerError = "Username or password is incorrect";
+        }
+        else {
+          $scope.loginError = "Unexpected error";
+        }
+      });
+    };
+
+    $scope.init();
+
+  });
+
 
   module.controller('LoginCtrl', function($scope, $http, $location, $routeParams, alertSrv) {
     $scope.loginModel = {};

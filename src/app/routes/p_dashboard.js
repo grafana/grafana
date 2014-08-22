@@ -13,7 +13,7 @@ function (angular) {
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
-      .when('/dashboard/:id', {
+      .when('/dashboard/db/:id', {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,

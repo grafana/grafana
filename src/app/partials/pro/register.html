@@ -5,6 +5,7 @@
 
 		<div class="login-box-logo">
 			<img src="/img/logo_transparent_200x75.png">
+			<h3>Grafana account registration</32>
 		</div>
 
 		<form name="loginForm" class="form-horizontal">
@@ -23,17 +24,16 @@
 						</div>
 					</div>
 					<div class="control-group">
+						<label class="control-label" for="inputPassword2">Confirm password</label>
 						<div class="controls">
-							<label class="checkbox">
-								<input type="checkbox" ng-model="loginModel.remember" ng-checked="login.remember"> Remember me
-							</label>
+							<input type="password" required ng-model="loginModel.password2" id="password2" placeholder="Confirm password">
 						</div>
 					</div>
 				</div>
 				<div class="span4">
 					<button type="submit" ng-click="login()" class="btn btn-success btn-large">
 						<i class="icon-lock"></i>
-						Sign in
+						Sign up
 					</button>
 				</div>
 			</div>
@@ -42,12 +42,6 @@
 				<strong>Login failed:</strong> {{loginError}}
 			</div>
 		</form>
-
-		<div class="register-box text-center">
-			<h3>If you do not already have an account<h3>
-			</a> <a href="/register" class="btn btn-info btn-large">Sign up now!</a>
-		</div>
-
 	</div>
 
 
