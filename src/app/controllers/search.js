@@ -19,15 +19,20 @@ function (angular, _, config, $) {
 
   module.directive('tagColorFromName', function() {
     return function (scope, element) {
-      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
-      var hash = djb2(name.toLowerCase());
-      var r = (hash & 0xB00000) >> 16;
-      var g = (hash & 0x00B000) >> 8;
-      var b = hash & 0x0000B0;
 
-      var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+      if (config.colored_pills)
+      {
+        var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
+        var hash = djb2(name.toLowerCase());
+        var r = (hash & 0xA00000) >> 16;
+        var g = (hash & 0x00A000) >> 8;
+        var b = hash & 0x0000A0;
 
-      element.css("background-color", color);
+        var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+
+        element.css("background-color", color);
+      }
+
     };
   });
 
