@@ -30,20 +30,16 @@ function (angular) {
     $scope.register = function() {
       delete $scope.registerError;
 
-      if (!$scope.loginForm.$valid) {
+      if (!$scope.loginForm.$valid) { return; }
+      if ($scope.loginModel.password !== $scope.loginModel.password2) {
+        $scope.registerError = "Passwords do not match";
         return;
       }
 
       $http.post('/api/register/user', $scope.loginModel).then(function() {
-        $scope.emitAppEvent('logged-in');
-        $location.path('/');
+        $location.path('/login');
       }, function(err) {
-        if (err.status === 401) {
-          $scope.registerError = "Username or password is incorrect";
-        }
-        else {
-          $scope.loginError = "Unexpected error";
-        }
+        $scope.registerError = "Unexpected error: " + err;
       });
     };
 
