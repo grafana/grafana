@@ -52,9 +52,9 @@
 						   class="search-result-item pointer"
 							 ng-class="{'selected': $index === selectedIndex }"
 							 ng-click="filterByTag(tag.term, $event)">
-						<a class="search-result-link" >
+						<a class="search-result-tag label label-tag" tag-color-from-name>
 							<i class="icon icon-tag"></i>
-							<span class="label label-tag" tag-color-from-name>{{tag.term}} &nbsp;({{tag.count}})</span>
+							<span>{{tag.term}} &nbsp;({{tag.count}})</span>
 						</a>
           </div>
         </div>
@@ -64,7 +64,7 @@
 							bindonce ng-repeat="row in results.dashboards"
 							ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
 
-							<div class="search-result-actions">
+							<div class="search-result-actions small">
 								<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
 									<i class="icon-share"></i> share &nbsp;&nbsp;&nbsp;
 								</a>

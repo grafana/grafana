@@ -589,14 +589,20 @@ div.flot-text {
 .label-tag {
   background-color: @purple;
   color: darken(@white, 5%);
+  border-radius: 2px;
   text-shadow: none;
   font-size: 13px;
-  padding: 3px 6px;
+  padding: 4px 6px;
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
 }
 
 .label-tag:hover {
+  opacity: 0.85;
   background-color: darken(@purple, 10%);
-  color: @white;
 }
 
 .annotation-editor-table {

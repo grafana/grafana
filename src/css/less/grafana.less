@@ -55,18 +55,17 @@
   max-height: 600px;
   overflow: auto;
   display: block;
-  .search-result-item a {
-  }
+  line-height: 28px;
 
   .search-result-item:hover, .search-result-item.selected {
-    .search-result-link, .icon {
+    .search-result-link, .search-result-link > .icon {
       color: @grafanaListHighlight;
     }
-    .search-result-link .label {
-      background-color: @blue;
+    .search-result-tag {
+      opacity: 0.70;
+      color: white;
     }
   }
-
 
   .search-result-link {
     color: @grafanaListMainLinkColor;
@@ -81,7 +80,7 @@
   }
 
   .search-result-item {
-    padding: 6px 10px;
+    padding: 0px 10px;
     white-space: nowrap;
     border-top: 1px solid @grafanaListBorderTop;
     border-bottom: 1px solid @grafanaListBorderBottom;
@@ -89,14 +88,16 @@
 
   .search-result-tags {
     float: right;
-    .label {
+    .label-tag {
       margin-left: 6px;
+      font-size: 11px;
+      padding: 2px 6px;
     }
   }
 
   .search-result-actions {
     float: right;
-    padding-left: 10px;
+    padding-left: 20px;
   }
 }
 
