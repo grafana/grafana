@@ -48,8 +48,8 @@ function (angular) {
       }
 
       return $http.post('/api/dashboard/', { dashboard: dashboard })
-        .then(function() {
-          return { title: dashboard.title, url: '/dashboard/db/' + dashboard.title };
+        .then(function(result) {
+          return { title: dashboard.title, url: '/dashboard/' + result.data.slug };
         }, function(data) {
           throw "Failed to search: " + data;
         });

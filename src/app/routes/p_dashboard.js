@@ -13,7 +13,7 @@ function (angular) {
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
-      .when('/dashboard/db/:id', {
+      .when('/dashboard/:id', {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
@@ -38,6 +38,7 @@ function (angular) {
         $scope.emitAppEvent('setup-dashboard', dashboard);
       }).then(null, function(error) {
         alertSrv.set('Error', error, 'error');
+        $scope.emitAppEvent('setup-dashboard', {});
       });
 
   });
