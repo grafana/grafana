@@ -74,6 +74,7 @@ code, pre {
   padding: 0px 0px 0px 0px;
   background: @grafanaPanelBackground;
   margin: 5px;
+  position: relative;
 }
 
 .panel-content {
@@ -112,9 +113,8 @@ code, pre {
 
 .panel-error {
   color: @white;
-  //padding: 5px 10px 0px 10px;
   position: absolute;
-  left: 5px;
+  left: 0;
   padding: 0px 17px 6px 5px;
   top: 0;
   i {
@@ -585,7 +585,6 @@ div.flot-text {
 
 
 // Labels & Badges
-
 .label-tag {
   background-color: @purple;
   color: darken(@white, 5%);
@@ -603,7 +602,6 @@ div.flot-text {
 }
 
 // Top menu
-
 .save-dashboard-dropdown {
   padding: 10px;
   li>a {
