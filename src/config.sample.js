@@ -94,6 +94,9 @@ function (Settings) {
       password: ''
     },
 
+    // use colored insteaf of monochrome tag pills in the dashboard & tag lists
+    colored_pills:true,
+
     // Add your own custom pannels
     plugins: {
       // list of plugin panels

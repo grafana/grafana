@@ -51,10 +51,10 @@
 					<div ng-repeat="tag in results.tags"
 						   class="search-result-item pointer"
 							 ng-class="{'selected': $index === selectedIndex }"
-							 ng-click="filterByTag(tag.term, $event)">
-						<a class="search-result-link" >
+							 ng-click="filterByTag(tag.term, $event)" >
+						<a class="search-result-link">
 							<i class="icon icon-tag"></i>
-							<span class="label label-tag">{{tag.term}} &nbsp;({{tag.count}})</span>
+							<span class="label label-tag" tag-color-from-name>{{tag.term}} &nbsp;({{tag.count}})</span>
 						</a>
           </div>
         </div>
@@ -74,7 +74,7 @@
 							</div>
 
 							<div class="search-result-tags">
-								<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag">
+								<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag" tag-color-from-name>
 									{{tag}}
 								</a>
 							</div>

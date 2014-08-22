@@ -9,6 +9,33 @@ function (angular, _, config, $) {
 
   var module = angular.module('grafana.controllers');
 
+  function djb2(str) {
+    var hash = 5381;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
+    }
+    return hash;
+  }
+
+  module.directive('tagColorFromName', function() {
+    return function (scope, element) {
+
+      if (config.colored_pills)
+      {
+        var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
+        var hash = djb2(name.toLowerCase());
+        var r = (hash & 0xA00000) >> 16;
+        var g = (hash & 0x00A000) >> 8;
+        var b = hash & 0x0000A0;
+
+        var color = "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+
+        element.css("background-color", color);
+      }
+
+    };
+  });
+
   module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
 
     $scope.init = function() {
