@@ -8,16 +8,17 @@ import (
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.router.GET("/api/dashboards/:id", self.getDashboard)
-		self.router.GET("/api/search/", self.search)
-		self.router.POST("/api/dashboard", self.postDashboard)
+		self.router.GET("/api/dashboards/:id", self.auth(), self.getDashboard)
+		self.router.GET("/api/search/", self.auth(), self.search)
+		self.router.POST("/api/dashboard", self.auth(), self.postDashboard)
 	})
 }
 
 func (self *HttpServer) getDashboard(c *gin.Context) {
 	id := c.Params.ByName("id")
+	accountId, err := c.Get("accountId")
 
-	dash, err := self.store.GetDashboard(id, 1)
+	dash, err := self.store.GetDashboard(id, accountId.(int))
 	if err != nil {
 		c.JSON(404, newErrorResponse("Dashboard not found"))
 		return
