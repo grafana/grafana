@@ -231,36 +231,36 @@ function($, _, moment) {
         if (type === 0) {
           roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
         } else if (type === 1) {
-          dateTime.add('years',num);
+          dateTime.add(num, 'years');
         } else if (type === 2) {
-          dateTime.subtract('years',num);
+          dateTime.subtract(num, 'years');
         }
         break;
       case 'M':
         if (type === 0) {
           roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
         } else if (type === 1) {
-          dateTime.add('months',num);
+          dateTime.add(num, 'months');
         } else if (type === 2) {
-          dateTime.subtract('months',num);
+          dateTime.subtract(num, 'months');
         }
         break;
       case 'w':
         if (type === 0) {
           roundUp ? dateTime.endOf('week') : dateTime.startOf('week');
         } else if (type === 1) {
-          dateTime.add('weeks',num);
+          dateTime.add(num, 'weeks');
         } else if (type === 2) {
-          dateTime.subtract('weeks',num);
+          dateTime.subtract(num, 'weeks');
         }
         break;
       case 'd':
         if (type === 0) {
           roundUp ? dateTime.endOf('day') : dateTime.startOf('day');
         } else if (type === 1) {
-          dateTime.add('days',num);
+          dateTime.add(num, 'days');
         } else if (type === 2) {
-          dateTime.subtract('days',num);
+          dateTime.subtract(num, 'days');
         }
         break;
       case 'h':
@@ -268,27 +268,27 @@ function($, _, moment) {
         if (type === 0) {
           roundUp ? dateTime.endOf('hour') : dateTime.startOf('hour');
         } else if (type === 1) {
-          dateTime.add('hours',num);
+          dateTime.add(num, 'hours');
         } else if (type === 2) {
-          dateTime.subtract('hours',num);
+          dateTime.subtract(num,'hours');
         }
         break;
       case 'm':
         if (type === 0) {
           roundUp ? dateTime.endOf('minute') : dateTime.startOf('minute');
         } else if (type === 1) {
-          dateTime.add('minutes',num);
+          dateTime.add(num, 'minutes');
         } else if (type === 2) {
-          dateTime.subtract('minutes',num);
+          dateTime.subtract(num, 'minutes');
         }
         break;
       case 's':
         if (type === 0) {
           roundUp ? dateTime.endOf('second') : dateTime.startOf('second');
         } else if (type === 1) {
-          dateTime.add('seconds',num);
+          dateTime.add(num, 'seconds');
         } else if (type === 2) {
-          dateTime.subtract('seconds',num);
+          dateTime.subtract(num, 'seconds');
         }
         break;
       default:

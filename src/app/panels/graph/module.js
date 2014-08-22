@@ -1,16 +1,3 @@
-/** @scratch /panels/5
- * include::panels/histogram.asciidoc[]
- */
-
-/** @scratch /panels/histogram/0
- * == Histogram
- * Status: *Stable*
- *
- * The histogram panel allow for the display of time charts. It includes several modes and tranformations
- * to display event counts, mean, min, max and total of numeric fields, and derivatives of counter
- * fields.
- *
- */
 define([
   'angular',
   'app',
@@ -18,7 +5,8 @@ define([
   'lodash',
   'kbn',
   'moment',
-  './timeSeries',
+  'components/timeSeries',
+  './seriesOverridesCtrl',
   'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
@@ -29,11 +17,10 @@ define([
   'jquery.flot.stack',
   'jquery.flot.stackpercent'
 ],
-function (angular, app, $, _, kbn, moment, timeSeries) {
-
+function (angular, app, $, _, kbn, moment, TimeSeries) {
   'use strict';
 
-  var module = angular.module('grafana.panels.graph', []);
+  var module = angular.module('grafana.panels.graph');
   app.useModule(module);
 
   module.controller('GraphCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
@@ -179,7 +166,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       targets: [{}],
 
       aliasColors: {},
-      aliasYAxis: {},
+
+      seriesOverrides: [],
     };
 
     _.defaults($scope.panel,_d);
@@ -258,18 +246,15 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
       var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
-      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
 
       var seriesInfo = {
         alias: alias,
         color:  color,
-        enable: true,
-        yaxis: yaxis
       };
 
       $scope.legend.push(seriesInfo);
 
-      var series = new timeSeries.ZeroFilled({
+      var series = new TimeSeries({
         datapoints: datapoints,
         info: seriesInfo,
       });
@@ -347,13 +332,26 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.toggleYAxis = function(info) {
-      info.yaxis = info.yaxis === 2 ? 1 : 2;
-      $scope.panel.aliasYAxis[info.alias] = info.yaxis;
+      var override = _.findWhere($scope.panel.seriesOverrides, { alias: info.alias });
+      if (!override) {
+        override = { alias: info.alias };
+        $scope.panel.seriesOverrides.push(override);
+      }
+      override.yaxis = info.yaxis === 2 ? 1 : 2;
       $scope.render();
     };
 
     $scope.toggleGridMinMax = function(key) {
       $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
+      $scope.render();
+    };
+
+    $scope.addSeriesOverride = function() {
+      $scope.panel.seriesOverrides.push({});
+    };
+
+    $scope.removeSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides = _.without($scope.panel.seriesOverrides, override);
       $scope.render();
     };
 

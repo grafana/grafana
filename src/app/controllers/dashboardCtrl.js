@@ -13,7 +13,7 @@ function (angular, $, config, _) {
   module.controller('DashboardCtrl', function(
       $scope, $rootScope, dashboardKeybindings,
       filterSrv, dashboardSrv, dashboardViewStateSrv,
-      panelMoveSrv, timer) {
+      panelMoveSrv, timer, $timeout) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -21,6 +21,13 @@ function (angular, $, config, _) {
     $scope.init = function() {
       $scope.availablePanels = config.panels;
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
+
+      angular.element(window).bind('resize', function() {
+        $timeout(function() {
+          $scope.$broadcast('render');
+        });
+      });
+
     };
 
     $scope.setupDashboard = function(event, dashboardData) {

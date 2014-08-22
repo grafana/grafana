@@ -19,7 +19,9 @@ function (angular, $, kbn, _, moment) {
         data = {};
       }
 
+      this.id = data.id || null;
       this.title = data.title || 'No Title';
+      this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
@@ -31,7 +33,6 @@ function (angular, $, kbn, _, moment) {
       this.templating = data.templating || { list: [] };
       this.refresh = data.refresh;
       this.version = data.version || 0;
-      this.$state = data.$state;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -144,80 +145,97 @@ function (angular, $, kbn, _, moment) {
     };
 
     p.updateSchema = function(old) {
-      var i, j, row, panel;
       var oldVersion = this.version;
-      this.version = 3;
+      var panelUpgrades = [];
+      this.version = 4;
 
-      if (oldVersion === 3) {
+      if (oldVersion === 4) {
         return;
       }
 
-      // Version 3 schema changes
-      // ensure panel ids
-      var maxId = this.getNextPanelId();
-      for (i = 0; i < this.rows.length; i++) {
-        row = this.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          panel = row.panels[j];
-          if (!panel.id) {
-            panel.id = maxId;
-            maxId += 1;
+      // version 2 schema changes
+      if (oldVersion < 2) {
+
+        if (old.services) {
+          if (old.services.filter) {
+            this.time = old.services.filter.time;
+            this.templating.list = old.services.filter.list;
           }
+          delete this.services;
         }
-      }
 
-      if (oldVersion === 2) {
-        return;
-      }
-
-      // Version 2 schema changes
-      if (old.services) {
-        if (old.services.filter) {
-          this.time = old.services.filter.time;
-          this.templating.list = old.services.filter.list;
-        }
-        delete this.services;
-      }
-
-      for (i = 0; i < this.rows.length; i++) {
-        row = this.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          panel = row.panels[j];
+        panelUpgrades.push(function(panel) {
+          // rename panel type
           if (panel.type === 'graphite') {
             panel.type = 'graph';
           }
 
-          if (panel.type === 'graph') {
-            if (_.isBoolean(panel.legend)) {
-              panel.legend = { show: panel.legend };
+          if (panel.type !== 'graph') {
+            return;
+          }
+
+          if (_.isBoolean(panel.legend)) { panel.legend = { show: panel.legend }; }
+
+          if (panel.grid) {
+            if (panel.grid.min) {
+              panel.grid.leftMin = panel.grid.min;
+              delete panel.grid.min;
             }
 
-            if (panel.grid) {
-              if (panel.grid.min) {
-                panel.grid.leftMin = panel.grid.min;
-                delete panel.grid.min;
-              }
-
-              if (panel.grid.max) {
-                panel.grid.leftMax = panel.grid.max;
-                delete panel.grid.max;
-              }
+            if (panel.grid.max) {
+              panel.grid.leftMax = panel.grid.max;
+              delete panel.grid.max;
             }
+          }
 
-            if (panel.y_format) {
-              panel.y_formats[0] = panel.y_format;
-              delete panel.y_format;
-            }
+          if (panel.y_format) {
+            panel.y_formats[0] = panel.y_format;
+            delete panel.y_format;
+          }
 
-            if (panel.y2_format) {
-              panel.y_formats[1] = panel.y2_format;
-              delete panel.y2_format;
-            }
+          if (panel.y2_format) {
+            panel.y_formats[1] = panel.y2_format;
+            delete panel.y2_format;
+          }
+        });
+      }
+
+      // schema version 3 changes
+      if (oldVersion < 3) {
+        // ensure panel ids
+        var maxId = this.getNextPanelId();
+        panelUpgrades.push(function(panel) {
+          if (!panel.id) {
+            panel.id = maxId;
+            maxId += 1;
+          }
+        });
+      }
+
+      // schema version 4 changes
+      if (oldVersion < 4) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'graph') { return; }
+          _.each(panel.aliasYAxis, function(value, key) {
+            panel.seriesOverrides = [{ alias: key, yaxis: value }];
+          });
+          delete panel.aliasYAxis;
+        });
+      }
+
+      if (panelUpgrades.length === 0) {
+        return;
+      }
+
+      for (var i = 0; i < this.rows.length; i++) {
+        var row = this.rows[i];
+        for (var j = 0; j < row.panels.length; j++) {
+          for (var k = 0; k < panelUpgrades.length; k++) {
+            panelUpgrades[k](row.panels[j]);
           }
         }
       }
-
-      this.version = 3;
     };
 
     return {
