@@ -17,18 +17,20 @@ function (angular, $, config, _) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
+    var resizeEventTimeout;
 
     $scope.init = function() {
       $scope.availablePanels = config.panels;
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
-
-      angular.element(window).bind('resize', function() {
-        $timeout(function() {
-          $scope.$broadcast('render');
-        });
-      });
-
       $scope.reset_row();
+      $scope.registerWindowResizeEvent();
+    };
+
+    $scope.registerWindowResizeEvent = function() {
+      angular.element(window).bind('resize', function() {
+        $timeout.cancel(resizeEventTimeout);
+        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
+      });
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
