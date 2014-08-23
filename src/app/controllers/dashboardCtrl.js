@@ -28,6 +28,7 @@ function (angular, $, config, _) {
         });
       });
 
+      $scope.reset_row();
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
