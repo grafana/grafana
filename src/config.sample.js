@@ -73,23 +73,12 @@ function (Settings) {
     * ========================================================
     */
 
-    /* title:
-    * The global page title prefix that is prepended before the specific dashboard titles.
-    * Defaults to 'Grafana - '.
-    *
-    * title: undefined, // default prefix, page title = 'Grafana - <dashboard title>'
-    * title: null, // no prefix, page title = <dashboard title>
-    * title: '', // no prefix, page title = <dashboard title>
-    * title: 'Custom | ', // custom prefix, page title = 'Custom | <dashboard title>'
-    */
-    title: undefined,
-
     // specify the limit for dashboard search results
     search: {
       max_results: 20
     },
 
-    // default start dashboard
+    // default home dashboard
     default_route: '/dashboard/file/default.json',
 
     // set to false to disable unsaved changes warning
@@ -104,6 +93,9 @@ function (Settings) {
     admin: {
       password: ''
     },
+
+    // Change window title prefix from 'Grafana - <dashboard title>'
+    window_title_prefix: 'Grafana - ',
 
     // Add your own custom pannels
     plugins: {
