@@ -5,29 +5,40 @@
 
 					<ul class="grafana-target-controls-left">
 						<li class="grafana-target-segment">
-							<i class="icon-remove pointer"></i>
+							<div class="dropdown">
+								<a class="pointer" data-toggle="dropdown">
+									<i class="icon-cog"></i>
+								</a>
+								<ul class="dropdown-menu">
+									<li><a class="pointer" config-modal="app/partials/templating_editor.html">Edit replacements</a></li>
+									<li><a class="pointer" config-modal="app/partials/annotations_editor.html">Edit annotations</a></li>
+								</ul>
+							</div>
 						</li>
 					</ul>
 
 					<ul class="grafana-segment-list">
-						<li ng-repeat="filter in filter.templateParameters" class="grafana-target-segment">
-								<div class="dropdown">
-								{{filter.name}} =
-								<a class="dropdown-toggle" data-toggle="dropdown">
-									{{filter.current.text}}
-								</a>
-								<ul class="dropdown-menu">
-									<li ng-repeat="option in filter.options">
-										<a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
-									</li>
-								</ul>
-								</div>
-						</li>
-						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment" ng-class="{'annotation-disabled': !annotation.enable }">
-							<i class="annotation-color-icon icon-minus"></i>
-							<a ng-click="hide(annotation)" class="small">{{annotation.name}}</a>
+						<li ng-repeat-start="param in filter.templateParameters" class="grafana-target-segment template-param-name">
+							{{param.name}}:
 						</li>
 
+						<li ng-repeat-end>
+							<div class="dropdown">
+								<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown">
+									{{param.current.text}}
+								</a>
+								<ul class="dropdown-menu">
+									<li ng-repeat="option in param.options">
+										<a ng-click="filterOptionSelected(param, option)">{{option.text}}</a>
+									</li>
+								</ul>
+							</div>
+						</li>
+
+						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable }">
+							<i class="annotation-color-icon icon-bolt"></i>
+							<a ng-click="hide(annotation)">{{annotation.name}}</a>
+						</li>
 
 					</ul>
 

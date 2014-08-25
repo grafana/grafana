@@ -13,5 +13,5 @@ define([
   './playlistCtrl',
   './inspectCtrl',
   './opentsdbTargetCtrl',
-  './console-ctrl',
+  './annotationsEditorCtrl',
 ], function () {});

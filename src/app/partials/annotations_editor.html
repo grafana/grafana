@@ -10,16 +10,16 @@
         <th width="1%"></th>
         <th width="1%"></th>
       </thead>
-      <tr ng-repeat="annotation in panel.annotations">
+      <tr ng-repeat="annotation in annotations">
         <td>
           <a ng-click="edit(annotation)" bs-tooltip="'Click to edit'">
             <i class="icon-cog"></i>
             {{annotation.name}}
           </a>
         </td>
-        <td><i ng-click="_.move(panel.annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-        <td><i ng-click="_.move(panel.annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
-        <td><i ng-click="panel.annotations = _.without(panel.annotations, annotation)" class="pointer icon-remove"></i></td>
+        <td><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+        <td><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+        <td><i ng-click="removeAnnotation(annotation)" class="pointer icon-remove"></i></td>
       </tr>
     </table>
   </div>

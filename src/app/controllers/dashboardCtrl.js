@@ -48,8 +48,7 @@ function (angular, $, config, _) {
       $scope.filter = filterSrv;
       $scope.filter.init($scope.dashboard);
 
-      $scope.submenuEnabled = $scope.dashboard.templating.enable ||
-        $scope.dashboard.annotations.enable;
+      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
 
       var panelMove = panelMoveSrv.create($scope.dashboard);
 
