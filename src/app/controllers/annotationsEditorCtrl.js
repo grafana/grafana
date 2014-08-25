@@ -61,4 +61,18 @@ function (angular, app, _) {
     };
 
   });
+
+  module.controller('EditViewCtrl', function($scope) {
+    //$scope.editPanelSrc = 'app/partials/test.html';
+
+    $scope.onAppEvent('show-edit-panel', function(evt, payload) {
+      $scope.editPanelSrc = payload.src;
+    });
+
+    $scope.dismiss = function() {
+      $scope.editPanelSrc = null;
+    };
+
+  });
+
 });

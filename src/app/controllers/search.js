@@ -173,7 +173,6 @@ function (angular, _, config, $) {
         "#58140C","#052B51","#511749","#3F2B5B",
       ];
       var color = colors[Math.abs(hash % colors.length)];
-      console.log("namei "  + name + " color: " + color, hash % 4);
       element.css("background-color", color);
     };
 

@@ -16,6 +16,12 @@ function (angular, _, $) {
           var id = '#' + partial.replace('.html', '').replace(/[\/|\.|:]/g, '-') + '-' + scope.$id;
 
           elem.bind('click',function() {
+            $timeout(function() {
+              scope.exitFullscreen();
+              scope.emitAppEvent('show-edit-panel', {src: partial});
+            });
+            return;
+
             if ($(id).length) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');
               scope.$apply(function() { scope.$broadcast('modal-opened'); });

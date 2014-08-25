@@ -8,8 +8,12 @@
 
   <div class="clearfix"></div>
 
+	<div ng-controller="EditViewCtrl">
+		<div ng-if="editPanelSrc" ng-include="editPanelSrc">
+		</div>
+	</div>
+
 	<div class="main-view-container">
-		<!-- Rows -->
 		<div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
 			<div class="row-control">
 				<div class="row-control-inner" style="padding:0px;margin:0px;position:relative;">
@@ -100,14 +104,15 @@
 				</div>
 			</div>
 		</div>
-	</div>
 
-	<div ng-show='dashboard.editable' class="row-fluid add-row-panel-hint">
-		<div class="span12" style="text-align:right;">
-			<span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-mini">
-				<span><i class="icon-plus-sign"></i> ADD A ROW</span>
-			</span>
+		<div ng-show='dashboard.editable' class="row-fluid add-row-panel-hint">
+			<div class="span12" style="text-align:right;">
+				<span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-mini">
+					<span><i class="icon-plus-sign"></i> ADD A ROW</span>
+				</span>
+			</div>
 		</div>
+
 	</div>
 
 	<div ng-include="'app/partials/console.html'" ng-if="consoleEnabled">
