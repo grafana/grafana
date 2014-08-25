@@ -10,8 +10,8 @@
 									<i class="icon-cog"></i>
 								</a>
 								<ul class="dropdown-menu">
-									<li><a class="pointer" config-modal="app/partials/templating_editor.html">Edit replacements</a></li>
-									<li><a class="pointer" config-modal="app/partials/annotations_editor.html">Edit annotations</a></li>
+									<li><a class="pointer" config-modal="app/partials/templating_editor.html">Templating</a></li>
+									<li><a class="pointer" config-modal="app/partials/annotations_editor.html">Annotations</a></li>
 								</ul>
 							</div>
 						</li>
@@ -35,7 +35,7 @@
 							</div>
 						</li>
 
-						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable }">
+						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 							<i class="annotation-color-icon icon-bolt"></i>
 							<a ng-click="hide(annotation)">{{annotation.name}}</a>
 						</li>
