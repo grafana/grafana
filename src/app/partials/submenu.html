@@ -1,0 +1,38 @@
+<div class="submenu-controls" ng-controller="SubmenuCtrl">
+		<div class="grafana-target">
+			<div class="grafana-target-inner-wrapper">
+				<div class="grafana-target-inner">
+
+					<ul class="grafana-target-controls-left">
+						<li class="grafana-target-segment">
+							<i class="icon-remove pointer"></i>
+						</li>
+					</ul>
+
+					<ul class="grafana-segment-list">
+						<li ng-repeat="filter in filter.templateParameters" class="grafana-target-segment">
+								<div class="dropdown">
+								{{filter.name}} =
+								<a class="dropdown-toggle" data-toggle="dropdown">
+									{{filter.current.text}}
+								</a>
+								<ul class="dropdown-menu">
+									<li ng-repeat="option in filter.options">
+										<a ng-click="filterOptionSelected(filter, option)">{{option.text}}</a>
+									</li>
+								</ul>
+								</div>
+						</li>
+						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment" ng-class="{'annotation-disabled': !annotation.enable }">
+							<i class="annotation-color-icon icon-minus"></i>
+							<a ng-click="hide(annotation)" class="small">{{annotation.name}}</a>
+						</li>
+
+
+					</ul>
+
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
