@@ -12,20 +12,14 @@ function (angular, app, _) {
       return {
         link: function($scope, elem) {
 
-          var lastPulldownVal;
           var lastHideControlsVal;
 
-          $scope.$watchCollection('dashboard.pulldowns', function() {
+          $scope.$watch('submenuEnabled', function() {
             if (!$scope.dashboard) {
               return;
             }
 
-            var panel = _.find($scope.dashboard.pulldowns, function(pulldown) { return pulldown.enable; });
-            var panelEnabled = panel ? panel.enable : false;
-            if (lastPulldownVal !== panelEnabled) {
-              elem.toggleClass('submenu-controls-visible', panelEnabled);
-              lastPulldownVal = panelEnabled;
-            }
+            elem.toggleClass('submenu-controls-visible', $scope.submenuEnabled);
           });
 
           $scope.$watch('dashboard.hideControls', function() {
