@@ -63,9 +63,13 @@ function (angular, app, _) {
   });
 
   module.controller('EditViewCtrl', function($scope) {
-    //$scope.editPanelSrc = 'app/partials/test.html';
+    $scope.editPanelSrc = 'app/partials/dasheditor.html';
 
     $scope.onAppEvent('show-edit-panel', function(evt, payload) {
+      if (payload.src === $scope.editPanelSrc) {
+        $scope.dismiss();
+        return;
+      }
       $scope.editPanelSrc = payload.src;
     });
 

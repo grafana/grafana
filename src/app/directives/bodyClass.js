@@ -3,7 +3,7 @@ define([
   'app',
   'lodash'
 ],
-function (angular, app, _) {
+function (angular) {
   'use strict';
 
   angular

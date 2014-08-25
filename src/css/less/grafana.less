@@ -203,15 +203,23 @@
       margin: 0;
       background: @fullEditTabsBackground;
       border-top: 1px solid @fullEditTabsBorder;
+      border-bottom: 1px solid @fullEditTabsBorder
     }
 
     .tab-content {
       display: none;
     }
   }
+
   .tab-content {
     overflow: visible;
     padding: 15px;
+    background-color: @grafanaPanelBackground;
+    border-top: 1px solid @fullEditBorder;
+  }
+
+  .nav-tabs > li {
+    margin-bottom: 0;
   }
 
   .nav-tabs > li > a {
@@ -544,5 +552,45 @@ select.grafana-target-segment-input {
 }
 .tooltip-inner {
   max-width: 400px;
+}
+
+.dashboard-edit-view {
+  padding: 20px;
+  background-color: @grafanaPanelBackground;
+}
+
+.dashboard-editor-body {
+  padding: 20px 10px;
+  min-height: 100px;
+  overflow: hidden;
+}
+.dashboard-editor-footer {
+  overflow: hidden;
+}
+
+.dashboard-editor-header {
+  overflow: hidden;
+  border-bottom: 1px solid @fullEditBorder;
+  .tabs {
+    float: left;
+  }
+
+  .nav {
+    margin: 0;
+  }
+}
+
+.dashboard-editor-title {
+  padding-right: 20px;
+  float: left;
+  color: @linkColor;
+  font-size: 20px;
+  font-weight: normal;
+  line-height: 34px;
+  margin: 0;
+  .icon {
+    padding: 0 8px 0 5px;
+    color: @textColor;
+  }
 }
 

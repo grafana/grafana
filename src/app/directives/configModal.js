@@ -20,7 +20,7 @@ function (angular, _, $) {
               scope.exitFullscreen();
               scope.emitAppEvent('show-edit-panel', {src: partial});
             });
-            return;
+            //return;
 
             if ($(id).length) {
               elem.attr('data-target', id).attr('data-toggle', 'modal');

@@ -1,15 +1,51 @@
-<div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
-	<div class="modal-body">
-		<div class="pull-right editor-title">Templating</div>
+<div class="dashboard-editor-header">
+	<div class="dashboard-editor-title">
+		<i class="icon icon-cogs"></i>
+		Dashboard settings
+	</div>
 
-		<div class="editor-row">
+	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+		<div ng-repeat="tab in ['General', 'Rows', 'Controls', 'Import']" data-title="{{tab}}">
+		</div>
+	</div>
+
+</div>
+
+<div class="dashboard-editor-body">
+
+		<div ng-if="editor.index == 0">
+			<div class="editor-row">
+				<div class="section">
+					<div class="editor-option">
+						<label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.title'></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Theme</label><select class="input-small" ng-model="dashboard.style" ng-options="f for f in ['dark','light']" ng-change="styleUpdated()"></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Time correction</label>
+						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Hide controls (CTRL+H)</label>
+						<input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
+					</div>
+				</div>
+			</div>
+			<div class="editor-row">
+				<div class="section">
+					<div class="editor-option">
+						<label class="small">Tags</label>
+						<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+						</bootstrap-tagsinput>
+						<tip>Press enter to a add tag</tip>
+					</div>
+				</div>
+			</div>
 		</div>
 
-	</div>
+</div>
 
-	<div class="modal-footer">
-		<button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add annotation</button>
-		<button ng-show="!currentIsNew" type="button" class="btn btn-success" ng-click="update()">Update</button>
-		<button type="button" class="btn btn-danger" ng-click="close_edit();dismiss();dashboard.refresh();">Close</button>
-	</div>
+<div class="dashboard-editor-footer">
+		<button type="button" class="btn btn-info" ng-click="editor.index=0;dismiss();">Close</button>
 </div>
