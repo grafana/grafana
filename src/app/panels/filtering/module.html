@@ -1,14 +1,6 @@
 <div ng-controller='filtering' ng-init="init()">
 
-  <div class='filtering-container'>
-
     <div ng-repeat="filter in filter.templateParameters" class="small filter-panel-filter">
-      <div>
-        <i class="filter-action pointer icon-remove" bs-tooltip="'Remove'" ng-click="remove(filter)"></i>
-        <i class="filter-action pointer icon-edit" ng-hide="filter.editing" bs-tooltip="'Edit'" ng-click="filter.editing = true"></i>
-      </div>
-
-      <div ng-hide="filter.editing" style="margin-right: 45px;">
         <ul class="unstyled">
           <li ng-if="filter.name" class="dropdown">
             {{filter.name}} :
@@ -22,29 +14,35 @@
               </ul>
           </li>
         </ul>
-      </div>
+		</div>
 
-      <form ng-show="filter.editing">
-        <ul class="unstyled">
-          <li>
-            <strong>name</strong>:<br/>
-            <input type='text' ng-model="filter.name">
-          </li>
-          <li>
-            <strong>filter.query</strong>:<br/>
-            <input type='text' ng-model="filter.query">
-          </li>
-          <li>
-            <label for="includeAll">Include all:</label>
-            <input id="includeAll" type='checkbox' ng-model="filter.includeAll">
-          </li>
-        </ul>
-        <div>
-          <input type="submit" value="Update" ng-click="applyFilter(filter)" class="filter-apply btn btn-success btn-mini" bs-tooltip="'Update and refresh'"/>
-          <button ng-click="filter.editing=undefined" class="filter-apply btn btn-mini" bs-tooltip="'Save without refresh'">Close</button>
-        </div>
-      </form>
-    </div>
-    <i class="pointer icon-plus-sign add-filter-action" ng-click="add()" bs-tooltip="'Add metric filter / param'" data-placement="right"></i>
-  </div>
+		<div class="submenu-control-edit">
+			<i class="icon-cog pointer" config-modal="app/panels/filtering/editor.html" bs-tooltip="'Edit'" ></i>
+		</div>
+
+</div>
+
+  <!--     <form ng&#45;show="filter.editing"> -->
+  <!--       <ul class="unstyled"> -->
+  <!--         <li> -->
+  <!--           <strong>name</strong>:<br/> -->
+  <!--           <input type='text' ng&#45;model="filter.name"> -->
+  <!--         </li> -->
+  <!--         <li> -->
+  <!--           <strong>filter.query</strong>:<br/> -->
+  <!--           <input type='text' ng&#45;model="filter.query"> -->
+  <!--         </li> -->
+  <!--         <li> -->
+  <!--           <label for="includeAll">Include all:</label> -->
+  <!--           <input id="includeAll" type='checkbox' ng&#45;model="filter.includeAll"> -->
+  <!--         </li> -->
+  <!--       </ul> -->
+  <!--       <div> -->
+  <!--         <input type="submit" value="Update" ng&#45;click="applyFilter(filter)" class="filter&#45;apply btn btn&#45;success btn&#45;mini" bs&#45;tooltip="'Update and refresh'"/> -->
+  <!--         <button ng&#45;click="filter.editing=undefined" class="filter&#45;apply btn btn&#45;mini" bs&#45;tooltip="'Save without refresh'">Close</button> -->
+  <!--       </div> -->
+  <!--     </form> -->
+  <!--   </div> -->
+  <!--   <i class="pointer icon&#45;plus&#45;sign add&#45;filter&#45;action" ng&#45;click="add()" bs&#45;tooltip="'Add metric filter / param'" data&#45;placement="right"></i> -->
+  <!-- </div> -->
 </div>

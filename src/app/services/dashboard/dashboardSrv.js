@@ -27,23 +27,15 @@ function (angular, $, kbn, _, moment) {
       this.timezone = data.timezone || 'browser';
       this.editable = data.editble || true;
       this.rows = data.rows || [];
-      this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
-      this.templating = data.templating || { list: [] };
+      this.templating = data.templating || { list: [], enable: false };
+      this.annotations = data.annotations || { list: [], enable: false};
       this.refresh = data.refresh;
       this.version = data.version || 0;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'filtering'})) {
-        this.pulldowns.push({ type: 'filtering', enable: false });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'annotations'})) {
-        this.pulldowns.push({ type: 'annotations', enable: false });
       }
 
       this.updateSchema(data);
@@ -147,9 +139,9 @@ function (angular, $, kbn, _, moment) {
     p.updateSchema = function(old) {
       var oldVersion = this.version;
       var panelUpgrades = [];
-      this.version = 4;
+      this.version = 5;
 
-      if (oldVersion === 4) {
+      if (oldVersion === 5) {
         return;
       }
 
@@ -222,6 +214,21 @@ function (angular, $, kbn, _, moment) {
           });
           delete panel.aliasYAxis;
         });
+      }
+
+      if (oldVersion < 5) {
+        // move pulldowns to new schema
+        var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
+        var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
+        if (filtering) {
+          this.templating.enable = filtering.enable;
+        }
+        if (annotations) {
+          this.annotations = {
+            list: annotations.annotations,
+            enable: annotations.enable
+          };
+        }
       }
 
       if (panelUpgrades.length === 0) {
