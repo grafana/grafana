@@ -65,20 +65,10 @@ function (angular, app, _, moment, kbn) {
     };
 
     $scope.customTime = function() {
-      if (!customTimeModal) {
-        customTimeModal = $modal({
-          template: './app/panels/timepicker/custom.html',
-          persist: true,
-          show: false,
-          scope: $scope,
-          keyboard: false
-        });
-      }
-
       // Assume the form is valid since we're setting it to something valid
       $scope.input.$setValidity("dummy", true);
       $scope.temptime = cloneTime($scope.time);
-      $scope.tempnow = $scope.panel.now;
+      $scope.temptime.now = $scope.panel.now;
 
       $scope.temptime.from.date.setHours(0,0,0,0);
       $scope.temptime.to.date.setHours(0,0,0,0);
@@ -89,9 +79,7 @@ function (angular, app, _, moment, kbn) {
         $scope.temptime.to.date = moment($scope.temptime.to.date).add('days',1).toDate();
       }
 
-      $q.when(customTimeModal).then(function(modalEl) {
-        modalEl.modal('show');
-      });
+      $scope.emitAppEvent('show-dash-editor', {src: 'app/panels/timepicker/custom.html', scope: $scope });
     };
 
     // Constantly validate the input of the fields. This function does not change any date variables
@@ -118,7 +106,7 @@ function (angular, app, _, moment, kbn) {
         return false;
       }
 
-      return {from:_from,to:_to};
+      return { from: _from, to:_to, now: time.now};
     };
 
     $scope.setNow = function() {
@@ -135,7 +123,7 @@ function (angular, app, _, moment, kbn) {
       // Create filter object
       var _filter = _.clone(time);
 
-      if($scope.tempnow) {
+      if(time.now) {
         _filter.to = "now";
       }
 

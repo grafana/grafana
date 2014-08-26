@@ -37,7 +37,7 @@
 
 						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 							<i class="annotation-color-icon icon-bolt"></i>
-							<a ng-click="hide(annotation)">{{annotation.name}}</a>
+							<a ng-click="disableAnnotation(annotation)">{{annotation.name}}</a>
 						</li>
 
 					</ul>

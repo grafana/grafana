@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SubmenuCtrl', function($scope, $q, datasourceSrv) {
+  module.controller('SubmenuCtrl', function($scope, $q, $rootScope, datasourceSrv) {
     var _d = {
       enable: true
     };
@@ -75,6 +75,11 @@ function (angular, app, _) {
 
           return $scope.filterOptionSelected(templateParam, templateParam.options[0], true);
         });
+    };
+
+    $scope.disableAnnotation = function (annotation) {
+      annotation.enable = !annotation.enable;
+      $rootScope.$broadcast('refresh');
     };
 
     $scope.init();
