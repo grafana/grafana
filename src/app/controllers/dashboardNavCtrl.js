@@ -23,7 +23,6 @@ function (angular, _, moment, config, store) {
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
-
     };
 
     $scope.set_default = function() {

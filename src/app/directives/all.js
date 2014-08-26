@@ -4,6 +4,7 @@ define([
   './grafanaPanel',
   './grafanaSimplePanel',
   './ngBlur',
+  './dashEditLink',
   './ngModelOnBlur',
   './tip',
   './confirmClick',

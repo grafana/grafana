@@ -8,9 +8,7 @@
 
   <div class="clearfix"></div>
 
-	<div ng-controller="EditViewCtrl">
-		<div class="dashboard-edit-view" ng-if="editPanelSrc" ng-include="editPanelSrc">
-		</div>
+	<div dash-editor-view>
 	</div>
 
 	<div class="main-view-container">
@@ -19,7 +17,7 @@
 				<div class="row-control-inner" style="padding:0px;margin:0px;position:relative;">
 					<div class="row-close" ng-show="row.collapse" data-placement="bottom" >
 						<div class="row-close-buttons">
-							<span class="row-button bgWarning" config-modal="app/partials/roweditor.html" class="pointer">
+							<span class="row-button bgWarning" dash-editor-link="app/partials/roweditor.html" class="pointer">
 								<i bs-tooltip="'Configure row'" data-placement="right" ng-show="row.editable" class="icon-cog pointer"></i>
 							</span>
 							<span class="row-button bgPrimary" ng-click="toggle_row(row)">
@@ -70,7 +68,7 @@
 									</ul>
 								</li>
 								<li>
-									<a config-modal="app/partials/roweditor.html">Row editor</a>
+									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
 								</li>
 								<li>
 									<a ng-click="delete_row()">Delete row</a>

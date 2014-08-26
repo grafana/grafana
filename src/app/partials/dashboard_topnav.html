@@ -62,7 +62,7 @@
 
 				<li class="grafana-menu-home"><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/'><i class='icon-home'></i></a></li>
 
-				<li class="grafana-menu-edit" ng-show="dashboard.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" config-modal="app/partials/dasheditor.html"><i class='icon-cog pointer'></i></a></li>
+				<li class="grafana-menu-edit" ng-show="dashboard.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" dash-editor-link="app/partials/dasheditor.html"><i class='icon-cog pointer'></i></a></li>
 
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>

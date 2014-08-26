@@ -63,7 +63,7 @@ function (angular, app, _) {
   });
 
   module.controller('EditViewCtrl', function($scope) {
-    $scope.editPanelSrc = 'app/partials/dasheditor.html';
+    $scope.editPanelSrc = null;
 
     $scope.onAppEvent('show-edit-panel', function(evt, payload) {
       if (payload.src === $scope.editPanelSrc) {
