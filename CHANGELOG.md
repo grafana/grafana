@@ -14,6 +14,7 @@
 - [Issue #697](https://github.com/grafana/grafana/issues/697). Graphite: Fix for Glob syntax in graphite queries ([1-9] and ?) that made the query editor / parser bail and fallback to a text box.
 - [Issue #277](https://github.com/grafana/grafana/issues/277). Dashboard: Fix for timepicker date & tooltip when UTC timezone selected.
 - [Issue #699](https://github.com/grafana/grafana/issues/699). Dashboard: Fix for bug when adding rows from dashboard settings dialog.
+- [Issue #723](https://github.com/grafana/grafana/issues/723). Dashboard: Fix for hide controls setting not used/initialized on dashboard load
 
 **Tech**
 - Upgraded from angularjs 1.1.5 to 1.3 beta 17;
@@ -25,7 +26,7 @@
 # 1.7.1 (unreleased)
 
 **Fixes**
-- [Issue #691](https://github.com/grafana/grafana/issues/691). Dashboard: tooltip fixes, sometimes they would not show, and sometimes they would get stuck.
+- [Issue #691](https://github.com/grafana/grafana/issues/691). Dashboard: Tooltip fixes, sometimes they would not show, and sometimes they would get stuck.
 - [Issue #695](https://github.com/grafana/grafana/issues/695). Dashboard: Tooltip on goto home menu icon would get stuck after clicking on it
 
 # 1.7.0 (2014-08-11)

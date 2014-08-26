@@ -25,7 +25,8 @@ function (angular, $, kbn, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editble || true;
+      this.editable = data.editable || true;
+      this.hideControls = data.hideControls || false;
       this.rows = data.rows || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
