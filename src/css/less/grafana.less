@@ -190,46 +190,6 @@
   position:relative;
 }
 
-.panel-full-edit-tabs {
-  margin-top: 30px;
-  min-height: 250px;
-  margin-left: -10px;
-  margin-right: -10px;
-  background-color: @fullEditBackground;
-  border-top: 1px solid @fullEditBorder;
-
-  .tabs {
-    .nav-tabs {
-      margin: 0;
-      background: @fullEditTabsBackground;
-      border-top: 1px solid @fullEditTabsBorder;
-      border-bottom: 1px solid @fullEditTabsBorder
-    }
-
-    .tab-content {
-      display: none;
-    }
-  }
-
-  .tab-content {
-    overflow: visible;
-    padding: 15px;
-    background-color: @grafanaPanelBackground;
-    border-top: 1px solid @fullEditBorder;
-  }
-
-  .nav-tabs > li {
-    margin-bottom: 0;
-  }
-
-  .nav-tabs > li > a {
-    line-height: 15px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    font-size: 0.8rem;
-  }
-}
-
 .grafana-target:last-child {
   border-bottom: 1px solid @grafanaTargetBorder;
 }
@@ -344,10 +304,13 @@ input[type=text].grafana-function-param-input {
     white-space: nowrap;
   }
 
-  a {
-    padding: 8px 7px;
+  .icon {
     position: relative;
     top: 8px;
+  }
+
+  a {
+    padding: 8px 7px;
     color: @grafanaTargetColor;
     font-size: 16px;
 
@@ -572,17 +535,8 @@ select.grafana-target-segment-input {
   }
 }
 
-// .panel-fullscreen {
-//   .dashboard-editor-header {
-//     margin-left: -20px;
-//     margin-right: -20px;
-//     background: @grayDark;
-//     padding-left: 20px;
-//   }
-// }
-
 .dashboard-editor-title {
-  border-bottom: 1px solid @grayDark;
+  border-bottom: 1px solid @fullEditBorder;
   padding-right: 20px;
   float: left;
   color: @linkColor;
