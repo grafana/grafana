@@ -59,22 +59,6 @@
 						</tr>
 					</table>
 				</div>
-				<div class="span4">
-					<div class="editor-row">
-						<div class="section">
-							<h5>Add Row</h5>
-							<div class="editor-option">
-								<label class="small">Title</label>
-								<input type="text" class="input-normal" ng-model='row.title' placeholder="New row"></input>
-							</div>
-							<div class="editor-option">
-								<label class="small">Height</label>
-								<input type="text" class="input-mini" ng-model='row.height'></input>
-							</div>
-						</div>
-						<button ng-click="add_row(dashboard,row); reset_row();" class="btn btn-success">Create Row</button>
-					</div>
-				</div>
 			</div>
 		</div>
 
@@ -107,8 +91,8 @@
 </div>
 
 <div class="dashboard-editor-footer">
-	<div class="pull-left grafana-version-footer" ng-if="editor.index == 0">
-		<span class="editor-option small">
+	<div class="pull-left" ng-if="editor.index == 0">
+		<span class="editor-option small" style="line-height: 20px;">
 			Grafana version: {{grafanaVersion}}
 		</span>
 		<span> | <a ng-click="toggleConsole()" ng-show="!consoleEnabled">enable console</a> <a ng-click="toggleConsole()" ng-show="consoleEnabled">disable console</a></span>
