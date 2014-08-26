@@ -32,11 +32,14 @@ function (angular, $) {
           var editorScope;
           var lastEditor;
 
-
           scope.onAppEvent('show-dash-editor', function(evt, payload) {
             if (lastEditor === payload.src) {
               editorScope.dismiss();
               return;
+            }
+
+            if (lastEditor) {
+              editorScope.dismiss();
             }
 
             lastEditor = payload.src;

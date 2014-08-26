@@ -49,30 +49,31 @@
 		<div ng-if="editor.index == 1">
 			<div class="editor-row">
 				<div class="span8">
-					<h4>Rows</h4>
+					<h5>Rows</h5>
 					<table class="table table-striped">
-						<thead>
-							<th width="1%"></th>
-							<th width="1%"></th>
-							<th width="1%"></th>
-							<th width="97%">Title</th>
-						</thead>
 						<tr ng-repeat="row in dashboard.rows">
 							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
 							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
 							<td><i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer icon-remove"></i></td>
-							<td>{{row.title}}</td>
+							<td style="width: 97%">{{row.title}}</td>
 						</tr>
 					</table>
 				</div>
 				<div class="span4">
-					<h4>Add Row</h4>
-					<label class="small">Title</label>
-					<input type="text" class="input-normal" ng-model='row.title' placeholder="New row"></input>
-					<label class="small">Height</label>
-					<input type="text" class="input-mini" ng-model='row.height'></input>
-					<br>
-					<button ng-click="add_row(dashboard,row); reset_row();" class="btn btn-success">Create Row</button>
+					<div class="editor-row">
+						<div class="section">
+							<h5>Add Row</h5>
+							<div class="editor-option">
+								<label class="small">Title</label>
+								<input type="text" class="input-normal" ng-model='row.title' placeholder="New row"></input>
+							</div>
+							<div class="editor-option">
+								<label class="small">Height</label>
+								<input type="text" class="input-mini" ng-model='row.height'></input>
+							</div>
+						</div>
+						<button ng-click="add_row(dashboard,row); reset_row();" class="btn btn-success">Create Row</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -115,5 +116,5 @@
 		</div>
 	</div>
 
-	<button type="button" class="btn btn-info pull-right" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>
+	<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>
 </div>

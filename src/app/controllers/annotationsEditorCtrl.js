@@ -1,14 +1,15 @@
 define([
   'angular',
   'app',
-  'lodash'
+  'lodash',
+  'jquery'
 ],
-function (angular, app, _) {
+function (angular, app, _, $) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv) {
+  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv, $timeout) {
     var annotationDefaults = {
       name: '',
       datasource: null,
@@ -22,12 +23,20 @@ function (angular, app, _) {
     $scope.init = function() {
       $scope.currentAnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
+      $scope.editor = { index: 0 };
       $scope.datasources = datasourceSrv.getAnnotationSources();
       $scope.annotations = $scope.dashboard.annotations.list;
 
       if ($scope.datasources.length > 0) {
         $scope.currentDatasource = $scope.datasources[0];
       }
+
+      $scope.$watch('editor.index', function(newVal) {
+        console.log("value", newVal);
+        if (newVal !== 2) {
+          $scope.reset();
+        }
+      });
     };
 
     $scope.setDatasource = function() {
@@ -42,9 +51,12 @@ function (angular, app, _) {
       if (!$scope.currentDatasource) {
         $scope.currentDatasource = $scope.datasources[0];
       }
+
+      $scope.editor.index = 2;
+      $(".tooltip.in").remove();
     };
 
-    $scope.update = function() {
+    $scope.reset = function() {
       $scope.currentAnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
     };
@@ -58,23 +70,6 @@ function (angular, app, _) {
     $scope.removeAnnotation = function(annotation) {
       var index = _.indexOf($scope.annotations, annotation);
       $scope.annotations.splice(index, 1);
-    };
-
-  });
-
-  module.controller('EditViewCtrl', function($scope) {
-    $scope.editPanelSrc = null;
-
-    $scope.onAppEvent('show-edit-panel', function(evt, payload) {
-      if (payload.src === $scope.editPanelSrc) {
-        $scope.dismiss();
-        return;
-      }
-      $scope.editPanelSrc = payload.src;
-    });
-
-    $scope.dismiss = function() {
-      $scope.editPanelSrc = null;
     };
 
   });
