@@ -7,14 +7,14 @@
           <span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
         </div>
 
-        <div grafana-graph class="pointer histogram-chart">
+        <div grafana-heatmap class="pointer histogram-chart">
         </div>
 
       </div>
 
       <div class="graph-legend-wrapper"
            ng-if="panel.legend.show"
-           ng-include="'app/panels/graph/legend.html'">
+           ng-include="'app/panels/heatmap/legend.html'">
       </div>
   </div>
 

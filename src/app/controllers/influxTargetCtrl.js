@@ -20,7 +20,7 @@ function (angular) {
         'count', 'mean', 'sum', 'min',
         'max', 'mode', 'distinct', 'median',
         'derivative', 'stddev', 'first', 'last',
-        'difference'
+        'difference', 'histogram'
       ];
 
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];

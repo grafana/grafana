@@ -13,6 +13,21 @@ function (_) {
 
   var p = InfluxSeries.prototype;
 
+  function compare(x, y) {
+    if (x === y) {
+      return 0;
+    }
+    return x > y ? 1 : -1;
+  }
+
+  function histogramSort(firstCol, secondCol, x, y) {
+    var result = compare(x[firstCol], y[firstCol]);
+    if (result != 0) {
+      return;
+    }
+    return compare(x[secondCol], y[secondCol]);
+  };
+
   p.getTimeSeries = function() {
     var output = [];
     var self = this;
@@ -22,6 +37,8 @@ function (_) {
       var seriesName;
       var timeCol = series.columns.indexOf('time');
       var valueCol = 1;
+      var valueColBucketStart = -1;
+      var valueColCount = -1;
       var groupByCol = -1;
 
       if (self.groupByField) {
@@ -32,9 +49,15 @@ function (_) {
       _.each(series.columns, function(column, index) {
         if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
           valueCol = index;
+          if (column.contains('bucket_start')) {
+            valueColBucketStart = index;
+          } else if (column.contains('count')) {
+            valueColCount = index;
+          }
         }
       });
 
+      var isHistogram = valueColBucketStart >= 0 && valueColCount >= 0;
       var groups = {};
 
       if (self.groupByField) {
@@ -43,14 +66,25 @@ function (_) {
         });
       }
       else {
-        groups[series.columns[valueCol]] = series.points;
+        if (isHistogram) {
+          series.points.sort(histogramSort.bind(this, timeCol, valueColBucketStart));
+          groups['histogram'] = series.points;
+        } else {
+          groups[series.columns[valueCol]] = series.points;
+        }
       }
 
       _.each(groups, function(groupPoints, key) {
         var datapoints = [];
         for (i = 0; i < groupPoints.length; i++) {
-          var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-          datapoints[i] = [metricValue, groupPoints[i][timeCol]];
+          if (isHistogram) {
+            var metricBucketStart = isNaN(groupPoints[i][valueColBucketStart]) ? null : groupPoints[i][valueColBucketStart];
+            var metricCount = isNaN(groupPoints[i][valueColCount]) ? null : groupPoints[i][valueColCount];
+            datapoints[i] = [metricBucketStart, metricCount, groupPoints[i][timeCol]];
+          } else {
+            var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
+            datapoints[i] = [metricValue, groupPoints[i][timeCol]];
+          }
         }
 
         seriesName = series.name + '.' + key;
@@ -59,7 +93,7 @@ function (_) {
           seriesName = self.createNameForSeries(series.name, key);
         }
 
-        output.push({ target: seriesName, datapoints: datapoints });
+        output.push({ target: seriesName, datapoints: datapoints, isHistogram: isHistogram });
       });
     });
 

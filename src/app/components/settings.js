@@ -14,7 +14,7 @@ function (_, crypto) {
      */
     var defaults = {
       datasources                   : {},
-      panels                        : ['graph', 'text'],
+      panels                        : ['graph', 'text', 'heatmap'],
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
       playlist_timespan             : "1m",

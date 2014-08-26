@@ -10,6 +10,7 @@ define([
   './configModal',
   './spectrumPicker',
   './grafanaGraph',
+  './grafanaHeatmap',
   './bootstrap-tagsinput',
   './bodyClass',
   './addGraphiteFunc',
