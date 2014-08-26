@@ -32,7 +32,6 @@ function (angular, app, _, $) {
       }
 
       $scope.$watch('editor.index', function(newVal) {
-        console.log("value", newVal);
         if (newVal !== 2) {
           $scope.reset();
         }

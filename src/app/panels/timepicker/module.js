@@ -25,7 +25,7 @@ function (angular, app, _, moment, kbn) {
   var module = angular.module('grafana.panels.timepicker', []);
   app.useModule(module);
 
-  module.controller('timepicker', function($scope, $modal, $q) {
+  module.controller('timepicker', function($scope) {
     $scope.panelMeta = {
       status  : "Stable",
       description : "A panel for controlling the time range filters. If you have time based data, "+
@@ -38,8 +38,6 @@ function (angular, app, _, moment, kbn) {
       time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
       refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
     };
-
-    var customTimeModal = null;
 
     _.defaults($scope.panel,_d);
 
