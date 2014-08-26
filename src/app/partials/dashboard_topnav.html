@@ -57,7 +57,10 @@
 					</ul>
 				</li>
 
-				<li class="dropdown grafana-menu-load" ng-controller="SearchCtrl" ng-init="init()" ng-include="'app/partials/search.html'">
+				<li class="dropdown grafana-menu-load">
+					<a bs-tooltip="'Search'" ng-click="openSearch()">
+						<i class='icon-folder-open'></i>
+					</a>
 				</li>
 
 				<li class="grafana-menu-home"><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/'><i class='icon-home'></i></a></li>

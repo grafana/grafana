@@ -9,7 +9,7 @@ function (angular, _, config, $) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv) {
+  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv, $timeout) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
@@ -17,7 +17,13 @@ function (angular, _, config, $) {
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
       $scope.db = datasourceSrv.getGrafanaDB();
-      $scope.onAppEvent('open-search', $scope.openSearch);
+
+      $timeout(function() {
+        $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+        $scope.query.query = 'title:';
+        $scope.search();
+      }, 100);
+
     };
 
     $scope.keyDown = function (evt) {
@@ -94,20 +100,9 @@ function (angular, _, config, $) {
 
     $scope.search = function() {
       $scope.showImport = false;
-      $scope.selectedIndex = -1;
+      $scope.selectedIndex = 0;
 
       $scope.searchDashboards($scope.query.query);
-    };
-
-    $scope.openSearch = function (evt) {
-      if (evt) {
-        $element.next().find('.dropdown-toggle').dropdown('toggle');
-      }
-
-      $scope.searchOpened = true;
-      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.query.query = 'title:';
-      $scope.search();
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {

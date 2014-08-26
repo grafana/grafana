@@ -15,7 +15,6 @@ function (angular, $) {
 
           elem.bind('click',function() {
             $timeout(function() {
-              scope.exitFullscreen();
               scope.emitAppEvent('show-dash-editor', { src: partial, scope: scope });
             });
           });
@@ -32,22 +31,31 @@ function (angular, $) {
           var editorScope;
           var lastEditor;
 
+          scope.onAppEvent('hide-dash-editor', function() {
+            if (editorScope) {
+              editorScope.dismiss();
+            }
+          });
+
           scope.onAppEvent('show-dash-editor', function(evt, payload) {
             if (lastEditor === payload.src) {
               editorScope.dismiss();
               return;
             }
 
-            if (lastEditor) {
+            if (editorScope) {
               editorScope.dismiss();
             }
 
+            scope.exitFullscreen();
+
             lastEditor = payload.src;
-            editorScope = payload.scope.$new();
+            editorScope = payload.scope ? payload.scope.$new() : scope.$new();
             editorScope.dismiss = function() {
               editorScope.$destroy();
               elem.empty();
               lastEditor = null;
+              editorScope = null;
             };
 
             var src = "'" + payload.src + "'";

@@ -16,7 +16,9 @@ function (angular, _, $) {
       var self = this;
 
       $scope.exitFullscreen = function() {
-        self.update({ fullscreen: false });
+        if (self.fullscreen) {
+          self.update({ fullscreen: false });
+        }
       };
 
       $scope.onAppEvent('dashboard-saved', function() {

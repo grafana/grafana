@@ -32,8 +32,11 @@
   }
 }
 
-// Search
+body {
+  overflow-y: hidden;
+}
 
+// Search
 .grafana-search-panel {
   .search-field-wrapper {
     padding: 6px 10px;
@@ -52,7 +55,7 @@
 }
 
 .search-results-container {
-  max-height: 600px;
+  height: 500px;
   overflow: auto;
   display: block;
   line-height: 28px;
@@ -76,14 +79,15 @@
   }
 
   .search-result-item:nth-child(odd) {
-    background-color: @grafanaListAccent;
+    background-color: lighten(@grayDarker, 2%);
   }
 
   .search-result-item {
     padding: 0px 10px;
     white-space: nowrap;
-    border-top: 1px solid @grafanaListBorderTop;
     border-bottom: 1px solid @grafanaListBorderBottom;
+    border-top: 1px solid @grafanaListBorderTop;
+    border-left: 1px solid @grafanaListBorderBottom;
   }
 
   .search-result-tags {
@@ -103,8 +107,8 @@
 
 .search-tagview-switch {
   position: absolute;
-  top: 15px;
-  right: 272px;
+  top: 6px;
+  right: 24px;
   color: darken(@linkColor, 30%);
   &.active {
     color: @linkColor;

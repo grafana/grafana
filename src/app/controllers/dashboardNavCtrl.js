@@ -68,6 +68,10 @@ function (angular, _, moment, config, store) {
       return false;
     };
 
+    $scope.openSearch = function() {
+      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
+    };
+
     $scope.saveDashboard = function() {
       if (!this.isAdmin()) { return false; }
 
