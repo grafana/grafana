@@ -20,10 +20,12 @@ function (angular, _, config) {
 
     this.init = function() {
       _.each(config.datasources, function(value, key) {
-        datasources[key] = this.datasourceFactory(value);
+        var ds = this.datasourceFactory(value);
         if (value.default) {
-          this.default = datasources[key];
+          this.default = ds;
+          ds.default = true;
         }
+        datasources[key] = ds;
       }, this);
 
       if (!this.default) {
@@ -37,6 +39,7 @@ function (angular, _, config) {
           metricSources.push({
             name: value.name,
             value: value.default ? null : key,
+            default: value.default,
           });
         }
         if (value.supportAnnotations) {

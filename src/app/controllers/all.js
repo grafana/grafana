@@ -14,4 +14,5 @@ define([
   './inspectCtrl',
   './opentsdbTargetCtrl',
   './annotationsEditorCtrl',
+  './templateEditorCtrl',
 ], function () {});

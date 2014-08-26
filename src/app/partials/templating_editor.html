@@ -1,23 +1,86 @@
-<div class="dashboard-editor-header">
-	<div class="dashboard-editor-title">
-		<i class="icon icon-code"></i>
-		Templating
-	</div>
-
-	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+<div ng-controller="TemplateEditorCtrl" ng-init="init()"> <div class="dashboard-editor-header">
+		<div class="dashboard-editor-title">
+			<i class="icon icon-code"></i>
+			Templating
 		</div>
+
+		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+			</div>
+		</div>
+
 	</div>
 
-</div>
-
-<div class="dashboard-editor-body">
+	<div class="dashboard-editor-body">
 
 		<div ng-if="editor.index == 0">
+
+			<div class="editor-row">
+				<div class="span4">
+					<div ng-if="templateParameters.length === 0">
+						<em>No replacements defined</em>
+					</div>
+					<table class="table table-striped">
+						<tr ng-repeat="templateParam in templateParameters">
+							<td>{{templateParam.name}}</td>
+							<td>{{templateParam.query}}</td>
+							<td>
+								<a ng-click="asd">
+									Edit
+								</a>
+							</td>
+							<td>
+								<a ng-click="removeTemplateParam(templateParam)">
+									Remove
+								</a>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+
 		</div>
 
+		<div ng-if="editor.index == 1">
+			<div class="editor-row">
+				<div class="editor-option">
+					<label class="small">Replacement name</label>
+					<input type="text" class="input-medium" ng-model='current.name' placeholder="name"></input>
+				</div>
+				<div class="editor-option">
+					<label class="small">Type</label>
+					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['metric query', 'custom']"></select>
+				</div>
+				<div class="editor-option">
+					<label class="small">Datasource</label>
+					<select ng-model="currentDatasource" ng-options="f.name for f in datasources" ng-change="setDatasource()"></select>
+				</div>
+			</div>
+
+			<div class="editor-row">
+				<div class="editor-option">
+					<label class="small">Metric query</label>
+					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="query"></input>
+				</div>
+			</div>
+
+			<button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add template replacement</button>
+		</div>
+
+	</div>
+
+	<div class="dashboard-editor-footer">
+		<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();">Close</button>
+	</div>
 </div>
 
-<div class="dashboard-editor-footer">
-		<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();">Close</button>
-</div>
+<!-- <div class="span4"> -->
+	<!-- 	<tip class="info&#45;box"> -->
+	<!-- 	<i class="icon&#45;question&#45;sign"></i> -->
+	<!-- 	The templating feature in Grafana lets easily create and manage templated queries. Templated queries use [[replacement]] syntax -->
+	<!-- 	to replace a part of your metric key or query. By using this feature you can make your dashboards more generic. You can for example create -->
+	<!-- 	a query replacement for your cluster name or server name. Then use that replacement in your metric queries and change -->
+	<!-- 	it globably for all graphs on the dashboard. -->
+	<!-- 	<br/><br/> -->
+	<!-- 	</tip> -->
+	<!-- </div> -->

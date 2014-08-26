@@ -1,10 +1,9 @@
 define([
   'angular',
-  'app',
   'lodash',
   'jquery'
 ],
-function (angular, app, _, $) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -63,7 +62,8 @@ function (angular, app, _, $) {
     $scope.add = function() {
       $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
       $scope.annotations.push($scope.currentAnnotation);
-      $scope.currentAnnotation = angular.copy(annotationDefaults);
+      $scope.reset();
+      $scope.editor.index = 0;
     };
 
     $scope.removeAnnotation = function(annotation) {

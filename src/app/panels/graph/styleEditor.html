@@ -67,8 +67,7 @@
   <div class="section">
 		<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
 		<div>
-		<div class="grafana-target" ng-repeat="override in panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
-			<div class="grafana-target-inner-wrapper">
+			<div class="grafana-target" ng-repeat="override in panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
 				<div class="grafana-target-inner">
 
 					<ul class="grafana-target-controls-left">
@@ -83,11 +82,11 @@
 						</li>
 						<li>
 							<input type="text"
-										ng-model="override.alias"
-                    bs-typeahead="getSeriesNames"
-										ng-blur="render()"
-										data-min-length=0 data-items=100
-										class="input-medium grafana-target-segment-input" >
+							ng-model="override.alias"
+							bs-typeahead="getSeriesNames"
+							ng-blur="render()"
+							data-min-length=0 data-items=100
+							class="input-medium grafana-target-segment-input" >
 						</li>
 						<li class="grafana-target-segment" ng-repeat="option in currentOverrides">
 							<i class="pointer icon-remove" ng-click="removeOverride(option)"></i>
@@ -102,7 +101,6 @@
 					<div class="clearfix"></div>
 				</div>
 			</div>
-		</div>
 		</div>
 
 		<button class="btn btn-success" style="margin-top: 20px" ng-click="addSeriesOverride()">Add series override rule</button>
