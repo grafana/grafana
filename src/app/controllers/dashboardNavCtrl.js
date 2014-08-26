@@ -111,23 +111,23 @@ function (angular, _, moment, config, store) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = $scope.filter.timeRange();
-      var _timespan = (_range.to.valueOf() - _range.from.valueOf());
-      var _center = _range.to.valueOf() - _timespan/2;
+      var range = $scope.filter.timeRange();
 
-      var _to = (_center + (_timespan*factor)/2);
-      var _from = (_center - (_timespan*factor)/2);
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
 
-      // If we're not already looking into the future, don't.
-      if(_to > Date.now() && _range.to < Date.now()) {
-        var _offset = _to - Date.now();
-        _from = _from - _offset;
-        _to = Date.now();
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if(to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
       }
 
       $scope.filter.setTime({
-        from:moment.utc(_from).toDate(),
-        to:moment.utc(_to).toDate(),
+        from:moment.utc(from).toDate(),
+        to:moment.utc(to).toDate(),
       });
     };
 
