@@ -9,7 +9,7 @@ function (angular, app, _, $) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv, $timeout) {
+  module.controller('AnnotationsEditorCtrl', function($scope, datasourceSrv) {
     var annotationDefaults = {
       name: '',
       datasource: null,
