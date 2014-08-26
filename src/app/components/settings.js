@@ -14,6 +14,7 @@ function (_, crypto) {
      */
     var defaults = {
       datasources                   : {},
+      window_title_prefix           : 'Grafana - ',
       panels                        : ['graph', 'text'],
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
