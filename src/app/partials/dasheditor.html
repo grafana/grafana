@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Controls', 'Import']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows', 'Features', 'Import']" data-title="{{tab}}">
 		</div>
 		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
@@ -42,6 +42,7 @@
 						</bootstrap-tagsinput>
 						<tip>Press enter to a add tag</tip>
 					</div>
+
 				</div>
 			</div>
 		</div>
@@ -91,13 +92,12 @@
 </div>
 
 <div class="dashboard-editor-footer">
-	<div class="pull-left" ng-if="editor.index == 0">
-		<span class="editor-option small" style="line-height: 20px;">
-			Grafana version: {{grafanaVersion}}
+	<div class="grafana-version-info" ng-show="editor.index === 0">
+		<span class="editor-option small">
+			Grafana version: {{grafanaVersion}} &nbsp;&nbsp;
 		</span>
-		<span> | <a ng-click="toggleConsole()" ng-show="!consoleEnabled">enable console</a> <a ng-click="toggleConsole()" ng-show="consoleEnabled">disable console</a></span>
-		<div class="small" grafana-version-check>
-		</div>
+		<span grafana-version-check>
+		</span>
 	</div>
 
 	<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>

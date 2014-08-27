@@ -31,6 +31,16 @@ function (angular, $) {
           var editorScope;
           var lastEditor;
 
+          function hideScrollbars(value) {
+            if (value) {
+              document.documentElement.style.overflow = 'hidden';  // firefox, chrome
+              document.body.scroll = "no"; // ie only
+            } else {
+              document.documentElement.style.overflow = 'auto';
+              document.body.scroll = "yes";
+            }
+          }
+
           scope.onAppEvent('hide-dash-editor', function() {
             if (editorScope) {
               editorScope.dismiss();
@@ -56,7 +66,11 @@ function (angular, $) {
               elem.empty();
               lastEditor = null;
               editorScope = null;
+              hideScrollbars(false);
             };
+
+            // hide page scrollbars while edit pane is visible
+            hideScrollbars(true);
 
             var src = "'" + payload.src + "'";
             var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');

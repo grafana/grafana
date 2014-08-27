@@ -28,7 +28,7 @@ function (angular, _, config, $) {
 
     $scope.keyDown = function (evt) {
       if (evt.keyCode === 27) {
-        $element.find('.dropdown-toggle').dropdown('toggle');
+        $scope.emitAppEvent('hide-dash-editor');
       }
       if (evt.keyCode === 40) {
         $scope.selectedIndex++;
@@ -134,13 +134,18 @@ function (angular, _, config, $) {
 
   module.directive('xngFocus', function() {
     return function(scope, element, attrs) {
-      $(element).click(function(e) {
+      element.click(function(e) {
         e.stopPropagation();
       });
 
       scope.$watch(attrs.xngFocus,function (newValue) {
+        if (!newValue) {
+          return;
+        }
         setTimeout(function() {
-          newValue && element.focus();
+          element.focus();
+          var pos = element.val().length * 2;
+          element[0].setSelectionRange(pos, pos);
         }, 200);
       },true);
     };
