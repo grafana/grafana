@@ -18,13 +18,9 @@ define([
       _templateSrv = templateSrv;
     }));
 
-    beforeEach(function() {
-      _templateSrv.init(_dashboard);
-    });
-
     describe('init', function() {
       beforeEach(function() {
-        _templateSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
+        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
       });
 
       it('should initialize template data', function() {
@@ -35,11 +31,11 @@ define([
 
     describe('updateTemplateData', function() {
       beforeEach(function() {
-        _templateSrv.addTemplateParameter({
+        _templateSrv.init([{
           name: 'test',
           value: 'muuu',
           current: { value: 'muuuu' }
-        });
+        }]);
 
         _templateSrv.updateTemplateData();
       });

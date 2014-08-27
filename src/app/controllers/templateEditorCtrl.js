@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -21,7 +21,7 @@ function (angular, _) {
       $scope.editor = { index: 0 };
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.currentDatasource = _.findWhere($scope.datasources, { default: true });
-      $scope.templateParameters = $scope.filter.templateParameters;
+      $scope.templateParameters = templateSrv.templateParameters;
       $scope.reset();
 
       _.each($scope.templateParameters, function(param) {
@@ -46,7 +46,7 @@ function (angular, _) {
     };
 
     $scope.runQuery = function() {
-      $scope.filter.refreshTemplateParameter($scope.current);
+      templateValuesSrv.updateValuesFor($scope.current);
     };
 
     $scope.edit = function(param) {
@@ -69,6 +69,13 @@ function (angular, _) {
     $scope.reset = function() {
       $scope.currentIsNew = true;
       $scope.current = angular.copy(replacementDefaults);
+    };
+
+    $scope.typeChanged = function () {
+      if ($scope.current.type === 'time period') {
+        $scope.current.options = ['auto', '1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d'];
+        $scope.current.auto_count = 10;
+      }
     };
 
     $scope.removeTemplateParam = function(templateParam) {

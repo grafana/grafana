@@ -11,10 +11,9 @@ function (angular, _) {
 
   module.service('templateSrv', function($q, $routeParams) {
 
-    this.init = function(dashboard) {
-      this.dashboard = dashboard;
+    this.init = function(templateParameters) {
       this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-      this.templateParameters = dashboard.templating.list;
+      this.templateParameters = templateParameters;
       this.updateTemplateData(true);
     };
 
@@ -33,11 +32,6 @@ function (angular, _) {
         _templateData[templateParameter.name] = templateParameter.current.value;
       });
       this._templateData = _templateData;
-    };
-
-    this.addTemplateParameter = function(templateParameter) {
-      this.templateParameters.push(templateParameter);
-      this.updateTemplateData();
     };
 
     this.replace = function(target) {

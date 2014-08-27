@@ -54,38 +54,61 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Type</label>
-					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'custom']"></select>
+					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'time period']" ng-change="typeChanged()"></select>
 				</div>
-				<div class="editor-option">
+				<div class="editor-option" ng-show="current.type === 'query'">
 					<label class="small">Datasource</label>
 					<select ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
 				</div>
-			</div>
-
-			<div class="editor-row">
-				<div class="editor-option form-inline">
-					<label class="small">Metric name query</label>
-					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
-					<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+				<div class="editor-option text-center" ng-show="current.type === 'query'">
+					<label class="small">Refresh on load <tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time.</tip></label>
+					<input type="checkbox" ng-model="current.refresh" ng-checked="refresh">
 				</div>
 			</div>
 
-			<div class="editor-row" style="margin-top: 10px;">
-				<div class="editor-option form-inline">
-					<label class="small">Regex (optional, if you want to extract part of a series name or metric node segment)</label>
-					<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
-					<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+			<div ng-show="current.type === 'time period'">
+				<div class="editor-option">
+					<label class="small">Values</label>
+					<input type="text" class="input-xxlarge" array-join ng-model='current.options' ng-change="csvValuesChanged()" ng-model-onblur placeholder="name"></input>
 				</div>
+				<div class="editor-option">
+					<label class="small">Auto period count <tip>The number you want to divide the time range in</tip></label>
+					<select class="input-small" ng-model="current.auto_count" ng-options="f for f in [5,6,7,8,9,10,15,20,30,40,50,70,90,100]"></select>
+				</div>
+				<p class="small">
+					<br>
+					<i class="icon-info-sign"></i>
+					This special type of template replacement is useful as the auto word will be calculated depending on the time range divided by
+					the number of periods you wish.
+				</p>
 			</div>
 
-			<div class="editor-row" style="margin-top: 10px;">
-				<div class="editor-option form-inline">
-					<label class="small">Current replacement values</label>
-					<ul>
-						<li ng-repeat="option in current.options">
-							{{option.text}}
-						</li>
-					</ul>
+			<div ng-show="current.type === 'query'">
+				<div class="editor-row">
+					<div class="editor-option form-inline">
+						<label class="small">Metric name query</label>
+						<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
+						<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+					</div>
+				</div>
+
+				<div class="editor-row" style="margin-top: 10px;">
+					<div class="editor-option form-inline">
+						<label class="small">Regex (optional, if you want to extract part of a series name or metric node segment)</label>
+						<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
+						<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+					</div>
+				</div>
+
+				<div class="editor-row" style="margin-top: 10px;">
+					<div class="editor-option form-inline">
+						<label class="small">Current replacement values</label>
+						<ul>
+							<li ng-repeat="option in current.options">
+								{{option.text}}
+							</li>
+						</ul>
+					</div>
 				</div>
 			</div>
 

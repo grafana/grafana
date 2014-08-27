@@ -12,6 +12,19 @@ function (angular, _) {
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $routeParams, templateSrv) {
     var self = this;
 
+    this.init = function(dashboard) {
+      this.templateParameters = dashboard.templating.list;
+
+      templateSrv.init(this.templateParameters);
+
+      for (var i = 0; i < this.templateParameters.length; i++) {
+        var param = this.templateParameters[i];
+        if (param.refresh) {
+          this.updateValuesFor(param);
+        }
+      }
+    };
+
     this.filterOptionSelected = function(templateParameter, option, recursive) {
       templateParameter.current = option;
 
@@ -38,8 +51,9 @@ function (angular, _) {
       return $q.all(promises);
     };
 
-    this.applyFilter = function(templateParam) {
-      return datasourceSrv.default.metricFindQuery(templateParam.query)
+    this.updateValuesFor = function(templateParam) {
+      var datasource = datasourceSrv.get(templateParam.datasource);
+      return datasource.metricFindQuery(templateParam.query)
         .then(function (results) {
           templateParam.options = _.map(results, function(node) {
             return { text: node.text, value: node.text };
