@@ -10,7 +10,7 @@ function (angular, _) {
   module.controller('TemplateEditorCtrl', function($scope, datasourceSrv) {
 
     var replacementDefaults = {
-      type: 'metric query',
+      type: 'query',
       datasource: null,
       refresh_on_load: false,
       name: '',
@@ -24,8 +24,17 @@ function (angular, _) {
       $scope.templateParameters = $scope.filter.templateParameters;
       $scope.reset();
 
-      $scope.$watch('editor.index', function(newVal) {
-        if (newVal !== 2) { $scope.reset(); }
+      _.each($scope.templateParameters, function(param) {
+        if (param.datasource === void 0) {
+          param.datasource = null;
+          param.type = 'query';
+        }
+      });
+
+      $scope.$watch('editor.index', function(index) {
+        if ($scope.currentIsNew === false && index === 1) {
+          $scope.reset();
+        }
       });
     };
 
@@ -33,6 +42,11 @@ function (angular, _) {
       $scope.current.datasource = $scope.currentDatasource.name;
       $scope.templateParameters.push($scope.current);
       $scope.reset();
+      $scope.editor.index = 0;
+    };
+
+    $scope.runQuery = function() {
+      $scope.filter.refreshTemplateParameter($scope.current);
     };
 
     $scope.edit = function(param) {
@@ -47,10 +61,14 @@ function (angular, _) {
       $scope.editor.index = 2;
     };
 
+    $scope.update = function() {
+      $scope.reset();
+      $scope.editor.index = 0;
+    };
+
     $scope.reset = function() {
       $scope.currentIsNew = true;
       $scope.current = angular.copy(replacementDefaults);
-      $scope.editor.index = 0;
     };
 
     $scope.removeTemplateParam = function(templateParam) {

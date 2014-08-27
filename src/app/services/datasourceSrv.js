@@ -12,7 +12,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, $injector) {
+  module.service('datasourceSrv', function($q, $http, $injector) {
     var datasources = {};
     var metricSources = [];
     var annotationSources = [];

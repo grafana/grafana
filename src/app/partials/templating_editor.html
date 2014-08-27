@@ -22,8 +22,8 @@
 					</div>
 					<table class="grafana-options-table">
 						<tr ng-repeat="templateParam in templateParameters">
-							<td>
-								{{templateParam.name}}
+							<td style="width: 1%">
+								[[{{templateParam.name}}]]
 							</td>
 							<td class="max-width" style="max-width: 200px;">
 								{{templateParam.query}}
@@ -54,7 +54,7 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Type</label>
-					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['metric query', 'custom']"></select>
+					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'custom']"></select>
 				</div>
 				<div class="editor-option">
 					<label class="small">Datasource</label>
@@ -63,9 +63,29 @@
 			</div>
 
 			<div class="editor-row">
-				<div class="editor-option">
-					<label class="small">Metric query</label>
-					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="query"></input>
+				<div class="editor-option form-inline">
+					<label class="small">Metric name query</label>
+					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
+					<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+				</div>
+			</div>
+
+			<div class="editor-row" style="margin-top: 10px;">
+				<div class="editor-option form-inline">
+					<label class="small">Regex (optional, if you want to extract part of a series name or metric node segment)</label>
+					<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
+					<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+				</div>
+			</div>
+
+			<div class="editor-row" style="margin-top: 10px;">
+				<div class="editor-option form-inline">
+					<label class="small">Current replacement values</label>
+					<ul>
+						<li ng-repeat="option in current.options">
+							{{option.text}}
+						</li>
+					</ul>
 				</div>
 			</div>
 
@@ -74,8 +94,8 @@
 	</div>
 
 	<div class="dashboard-editor-footer">
-		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 2" ng-click="dismiss();">Update</button>
-		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 1" ng-click="dismiss();">Add</button>
+		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 2" ng-click="update();">Update</button>
+		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 1" ng-click="add();">Add</button>
 		<button type="button" class="btn btn-success pull-right" ng-click="dismiss();">Close</button>
 	</div>
 </div>

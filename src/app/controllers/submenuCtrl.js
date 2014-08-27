@@ -50,7 +50,6 @@ function (angular, app, _) {
     $scope.applyFilter = function(templateParam) {
       return datasourceSrv.default.metricFindQuery($scope.filter, templateParam.query)
         .then(function (results) {
-          templateParam.editing = undefined;
           templateParam.options = _.map(results, function(node) {
             return { text: node.text, value: node.text };
           });

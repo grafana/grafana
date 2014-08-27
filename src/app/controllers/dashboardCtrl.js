@@ -11,9 +11,16 @@ function (angular, $, config, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('DashboardCtrl', function(
-      $scope, $rootScope, dashboardKeybindings,
-      filterSrv, dashboardSrv, dashboardViewStateSrv,
-      panelMoveSrv, timer, $timeout) {
+      $scope,
+      $rootScope,
+      dashboardKeybindings,
+      filterSrv,
+      templateSrv,
+      dashboardSrv,
+      dashboardViewStateSrv,
+      panelMoveSrv,
+      timer,
+      $timeout) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
@@ -47,6 +54,7 @@ function (angular, $, config, _) {
 
       $scope.filter = filterSrv;
       $scope.filter.init($scope.dashboard);
+      templateSrv.init($scope.dashboard);
 
       $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
 

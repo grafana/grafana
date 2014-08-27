@@ -78,11 +78,6 @@ define([
         }
       },
 
-      removeTemplateParameter: function(templateParameter) {
-        this.templateParameters = _.without(this.templateParameters, templateParameter);
-        this.dashboard.templating.list = this.templateParameters;
-      },
-
       init: function(dashboard) {
         this.dashboard = dashboard;
         this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };

@@ -9,7 +9,12 @@
     padding: 5px 10px;
     white-space: nowrap;
     border-bottom: 1px solid @grafanaListBorderBottom;
-    border-top: 1px solid @grafanaListBorderTop;
+  }
+
+  tr:first-child {
+    td {
+      border-top: 1px solid @grafanaListBorderBottom;
+    }
   }
 
   td:first-child {
