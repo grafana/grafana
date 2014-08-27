@@ -29,7 +29,7 @@ define([
         var ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
 
         ctx.$httpBackend.expect('GET', urlExpected).respond(response);
-        ds.query(ctx.filterSrv, query).then(function(data) { results = data; });
+        ds.query(query).then(function(data) { results = data; });
         ctx.$httpBackend.flush();
       });
 
@@ -59,7 +59,7 @@ define([
         var ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
 
         ctx.$httpBackend.expect('GET', urlExpected).respond(response);
-        ds.query(ctx.filterSrv, query).then(function(data) { results = data; });
+        ds.query(query).then(function(data) { results = data; });
         ctx.$httpBackend.flush();
       });
 

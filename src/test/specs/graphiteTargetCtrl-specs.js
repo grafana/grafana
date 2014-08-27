@@ -28,7 +28,7 @@ define([
       });
 
       it('should validate metric key exists', function() {
-        expect(ctx.scope.datasource.metricFindQuery.getCall(0).args[1]).to.be('test.prod.*');
+        expect(ctx.scope.datasource.metricFindQuery.getCall(0).args[0]).to.be('test.prod.*');
       });
 
       it('should delete last segment if no metrics are found', function() {

@@ -3,7 +3,6 @@ define([
   'app',
   'lodash',
   'require',
-  'services/filterSrv'
 ],
 function (angular, app, _, require) {
   'use strict';

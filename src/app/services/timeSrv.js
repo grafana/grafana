@@ -8,10 +8,17 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.factory('filterSrv', function($rootScope, $timeout, $routeParams) {
-    var result = {
+  module.service('timeSrv', function($rootScope, $timeout, $routeParams) {
 
-      updateTemplateData: function(initial) {
+    this.init = function(dashboard) {
+        this.dashboard = dashboard;
+        this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
+        this.time = dashboard.time;
+        this.templateParameters = dashboard.templating.list;
+        this.updateTemplateData(true);
+    };
+
+     this.updateTemplateData = function(initial) {
         var _templateData = {};
         _.each(this.templateParameters, function(templateParameter) {
           if (initial) {
@@ -26,22 +33,22 @@ define([
           _templateData[templateParameter.name] = templateParameter.current.value;
         });
         this._templateData = _templateData;
-      },
+      };
 
-      addTemplateParameter: function(templateParameter) {
+      this.addTemplateParameter = function(templateParameter) {
         this.templateParameters.push(templateParameter);
         this.updateTemplateData();
-      },
+      };
 
-      applyTemplateToTarget: function(target) {
+      this.applyTemplateToTarget = function(target) {
         if (!target || target.indexOf('[[') === -1) {
           return target;
         }
 
         return _.template(target, this._templateData, this.templateSettings);
-      },
+      };
 
-      setTime: function(time) {
+      this.setTime = function(time) {
         _.extend(this.time, time);
 
         // disable refresh if we have an absolute time
@@ -55,9 +62,9 @@ define([
         }
 
         $timeout(this.dashboard.emit_refresh, 0);
-      },
+      };
 
-      timeRange: function(parse) {
+      this.timeRange = function(parse) {
         var _t = this.time;
         if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
           return false;
@@ -76,18 +83,8 @@ define([
             to : kbn.parseDate(_to)
           };
         }
-      },
+      };
 
-      init: function(dashboard) {
-        this.dashboard = dashboard;
-        this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-        this.time = dashboard.time;
-        this.templateParameters = dashboard.templating.list;
-        this.updateTemplateData(true);
-      }
-    };
-
-    return result;
   });
 
 });

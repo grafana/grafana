@@ -9,7 +9,7 @@ function (angular, _, kbn, InfluxSeries) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http) {
+  module.factory('InfluxDatasource', function($q, $http, timeSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
@@ -31,7 +31,7 @@ function (angular, _, kbn, InfluxSeries) {
       this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
     }
 
-    InfluxDatasource.prototype.query = function(filterSrv, options) {
+    InfluxDatasource.prototype.query = function(options) {
       var promises = _.map(options.targets, function(target) {
         var query;
         var alias = '';
@@ -73,7 +73,7 @@ function (angular, _, kbn, InfluxSeries) {
           }
 
           query = queryElements.join(" ");
-          query = filterSrv.applyTemplateToTarget(query);
+          query = timeSrv.applyTemplateToTarget(query);
         }
         else {
 
@@ -100,7 +100,7 @@ function (angular, _, kbn, InfluxSeries) {
           }
 
           query = _.template(template, templateData, this.templateSettings);
-          query = filterSrv.applyTemplateToTarget(query);
+          query = timeSrv.applyTemplateToTarget(query);
 
           if (target.groupby_field_add) {
             groupByField = target.groupby_field;

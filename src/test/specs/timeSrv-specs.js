@@ -1,12 +1,12 @@
 define([
   'mocks/dashboard-mock',
   'lodash',
-  'services/filterSrv'
+  'services/timeSrv'
 ], function(dashboardMock, _) {
   'use strict';
 
-  describe('filterSrv', function() {
-    var _filterSrv;
+  describe('timeSrv', function() {
+    var _timeSrv;
     var _dashboard;
 
     beforeEach(module('grafana.services'));
@@ -14,52 +14,52 @@ define([
       _dashboard = dashboardMock.create();
     }));
 
-    beforeEach(inject(function(filterSrv) {
-      _filterSrv = filterSrv;
+    beforeEach(inject(function(timeSrv) {
+      _timeSrv = timeSrv;
     }));
 
     beforeEach(function() {
-      _filterSrv.init(_dashboard);
+      _timeSrv.init(_dashboard);
     });
 
     describe('init', function() {
       beforeEach(function() {
-        _filterSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
+        _timeSrv.addTemplateParameter({ name: 'test', current: { value: 'oogle' } });
       });
 
       it('should initialize template data', function() {
-        var target = _filterSrv.applyTemplateToTarget('this.[[test]].filters');
+        var target = _timeSrv.applyTemplateToTarget('this.[[test]].filters');
         expect(target).to.be('this.oogle.filters');
       });
     });
 
     describe('updateTemplateData', function() {
       beforeEach(function() {
-        _filterSrv.addTemplateParameter({
+        _timeSrv.addTemplateParameter({
           name: 'test',
           value: 'muuu',
           current: { value: 'muuuu' }
         });
 
-        _filterSrv.updateTemplateData();
+        _timeSrv.updateTemplateData();
       });
       it('should set current value and update template data', function() {
-        var target = _filterSrv.applyTemplateToTarget('this.[[test]].filters');
+        var target = _timeSrv.applyTemplateToTarget('this.[[test]].filters');
         expect(target).to.be('this.muuuu.filters');
       });
     });
 
     describe('timeRange', function() {
       it('should return unparsed when parse is false', function() {
-        _filterSrv.setTime({from: 'now', to: 'now-1h' });
-        var time = _filterSrv.timeRange(false);
+        _timeSrv.setTime({from: 'now', to: 'now-1h' });
+        var time = _timeSrv.timeRange(false);
         expect(time.from).to.be('now');
         expect(time.to).to.be('now-1h');
       });
 
       it('should return parsed when parse is true', function() {
-        _filterSrv.setTime({from: 'now', to: 'now-1h' });
-        var time = _filterSrv.timeRange(true);
+        _timeSrv.setTime({from: 'now', to: 'now-1h' });
+        var time = _timeSrv.timeRange(true);
         expect(_.isDate(time.from)).to.be(true);
         expect(_.isDate(time.to)).to.be(true);
       });
@@ -69,15 +69,15 @@ define([
       it('should return disable refresh for absolute times', function() {
         _dashboard.refresh = true;
 
-        _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
+        _timeSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
         expect(_dashboard.refresh).to.be(false);
       });
 
       it('should restore refresh after relative time range is set', function() {
         _dashboard.refresh = true;
-        _filterSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
+        _timeSrv.setTime({from: '2011-01-01', to: '2015-01-01' });
         expect(_dashboard.refresh).to.be(false);
-        _filterSrv.setTime({from: '2011-01-01', to: 'now' });
+        _timeSrv.setTime({from: '2011-01-01', to: 'now' });
         expect(_dashboard.refresh).to.be(true);
       });
     });

@@ -11,7 +11,7 @@ function (angular, _, moment, config, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv) {
+  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv, timeSrv) {
 
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
@@ -114,7 +114,7 @@ function (angular, _, moment, config, store) {
     // function $scope.zoom
     // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = $scope.filter.timeRange();
+      var _range = timeSrv.timeRange();
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
       var _center = _range.to.valueOf() - _timespan/2;
 
@@ -128,7 +128,7 @@ function (angular, _, moment, config, store) {
         _to = Date.now();
       }
 
-      $scope.filter.setTime({
+      timeSrv.setTime({
         from:moment.utc(_from).toDate(),
         to:moment.utc(_to).toDate(),
       });

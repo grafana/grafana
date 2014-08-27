@@ -25,11 +25,11 @@ function (angular, app, _, moment, kbn) {
   var module = angular.module('grafana.panels.timepicker', []);
   app.useModule(module);
 
-  module.controller('timepicker', function($scope) {
+  module.controller('timepicker', function($scope, timeSrv) {
+
     $scope.panelMeta = {
       status  : "Stable",
-      description : "A panel for controlling the time range filters. If you have time based data, "+
-        " or if you're using time stamped indices, you need one of these"
+      description : ""
     };
 
     // Set and populate defaults
@@ -55,9 +55,9 @@ function (angular, app, _, moment, kbn) {
     });
 
     $scope.init = function() {
-      var time = this.filter.timeRange(true);
+      var time = timeSrv.timeRange(true);
       if(time) {
-        $scope.panel.now = this.filter.timeRange(false).to === "now" ? true : false;
+        $scope.panel.now = timeSrv.timeRange(false).to === "now" ? true : false;
         $scope.time = getScopeTimeObj(time.from,time.to);
       }
     };
@@ -126,7 +126,7 @@ function (angular, app, _, moment, kbn) {
       }
 
       // Set the filter
-      $scope.panel.filter_id = $scope.filter.setTime(_filter);
+      $scope.panel.filter_id = timeSrv.setTime(_filter);
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
@@ -140,7 +140,7 @@ function (angular, app, _, moment, kbn) {
         to: "now"
       };
 
-      this.filter.setTime(_filter);
+      timeSrv.setTime(_filter);
 
       $scope.time = getScopeTimeObj(kbn.parseDate(_filter.from),new Date());
     };
@@ -173,7 +173,7 @@ function (angular, app, _, moment, kbn) {
         model.tooltip = 'Click to set time filter';
       }
 
-      if ($scope.filter.time) {
+      if (timeSrv.time) {
         if ($scope.panel.now) {
           model.rangeString = moment(model.from.date).fromNow() + ' to ' +
             moment(model.to.date).fromNow();

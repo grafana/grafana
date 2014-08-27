@@ -15,6 +15,9 @@ define([
       describe(desc, function() {
         var ctx = {};
         ctx.setup = function (setupFunc) {
+          beforeEach(module(function($provide) {
+            $provide.value("timeSrv", new helpers.TimeSrvStub());
+          }));
           beforeEach(inject(function($rootScope, $compile) {
             var scope = $rootScope.$new();
             var element = angular.element("<div style='width:500px' grafana-graph><div>");

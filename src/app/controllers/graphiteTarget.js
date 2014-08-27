@@ -110,7 +110,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return $scope.datasource.metricFindQuery($scope.filter, path)
+      return $scope.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
             $scope.segments = $scope.segments.splice(0, fromIndex);
@@ -147,7 +147,7 @@ function (angular, _, config, gfunc, Parser) {
       var query = index === 0 ?
         '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery($scope.filter, query)
+      return $scope.datasource.metricFindQuery(query)
         .then(function(segments) {
           $scope.altSegments = _.map(segments, function(segment) {
             return new MetricSegment({ value: segment.text, expandable: segment.expandable });

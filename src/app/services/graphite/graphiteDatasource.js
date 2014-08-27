@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('GraphiteDatasource', function($q, $http) {
+  module.factory('GraphiteDatasource', function($q, $http, timeSrv) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -26,7 +26,7 @@ function (angular, _, $, config, kbn, moment) {
       this.cacheTimeout = datasource.cacheTimeout;
     }
 
-    GraphiteDatasource.prototype.query = function(filterSrv, options) {
+    GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -37,7 +37,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(filterSrv, graphOptions);
+        var params = this.buildGraphiteParams(graphOptions);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -60,10 +60,10 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+    GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       // Graphite metric as annotation
       if (annotation.target) {
-        var target = filterSrv.applyTemplateToTarget(annotation.target);
+        var target = timeSrv.applyTemplateToTarget(annotation.target);
         var graphiteQuery = {
           range: rangeUnparsed,
           targets: [{ target: target }],
@@ -71,7 +71,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: 100
         };
 
-        return this.query(filterSrv, graphiteQuery)
+        return this.query(timeSrv, graphiteQuery)
           .then(function(result) {
             var list = [];
 
@@ -95,7 +95,7 @@ function (angular, _, $, config, kbn, moment) {
       }
       // Graphite event as annotation
       else {
-        var tags = filterSrv.applyTemplateToTarget(annotation.tags);
+        var tags = timeSrv.applyTemplateToTarget(annotation.tags);
         return this.events({ range: rangeUnparsed, tags: tags })
           .then(function(results) {
             var list = [];
@@ -166,10 +166,10 @@ function (angular, _, $, config, kbn, moment) {
       return date.unix();
     };
 
-    GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
+    GraphiteDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
-        interpolated = encodeURIComponent(filterSrv.applyTemplateToTarget(query));
+        interpolated = encodeURIComponent(timeSrv.applyTemplateToTarget(query));
       }
       catch(err) {
         return $q.reject(err);
@@ -210,7 +210,7 @@ function (angular, _, $, config, kbn, moment) {
       return $http(options);
     };
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
+    GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
       var clean_options = [];
       var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
 
@@ -226,7 +226,7 @@ function (angular, _, $, config, kbn, moment) {
         if (key === "targets") {
           _.each(value, function (value) {
             if (value.target && !value.hide) {
-              var targetValue = filterSrv.applyTemplateToTarget(value.target);
+              var targetValue = timeSrv.applyTemplateToTarget(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           }, this);

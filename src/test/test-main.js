@@ -125,7 +125,7 @@ require([
     'specs/graph-ctrl-specs',
     'specs/grafanaGraph-specs',
     'specs/seriesOverridesCtrl-specs',
-    'specs/filterSrv-specs',
+    'specs/timeSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',

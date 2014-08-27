@@ -14,7 +14,7 @@ function (angular, $, config, _) {
       $scope,
       $rootScope,
       dashboardKeybindings,
-      filterSrv,
+      timeSrv,
       templateSrv,
       dashboardSrv,
       dashboardViewStateSrv,
@@ -52,8 +52,7 @@ function (angular, $, config, _) {
 
       $scope.grafana.style = $scope.dashboard.style;
 
-      $scope.filter = filterSrv;
-      $scope.filter.init($scope.dashboard);
+      timeSrv.init($scope.dashboard);
       templateSrv.init($scope.dashboard);
 
       $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;

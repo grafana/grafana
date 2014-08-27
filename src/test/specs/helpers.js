@@ -8,6 +8,7 @@ define([
 
     this.datasource = {};
     this.annotationsSrv = {};
+    this.timeSrv = new TimeSrvStub();
     this.datasourceSrv = {
       getMetricSources: function() {},
       get: function() { return self.datasource; }
@@ -17,6 +18,7 @@ define([
       return module(function($provide) {
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
+        $provide.value('timeSrv', self.timeSrv);
       });
     };
 
@@ -25,7 +27,6 @@ define([
         self.scope = $rootScope.$new();
         self.scope.panel = {};
         self.scope.row = { panels:[] };
-        self.scope.filter = new FilterSrvStub();
         self.scope.dashboard = {};
         self.scope.dashboardViewState = new DashboardViewStateStub();
 
@@ -50,7 +51,6 @@ define([
         self.service = InfluxDatasource;
         self.$q = $q;
         self.$rootScope = $rootScope;
-        self.filterSrv = new FilterSrvStub();
         self.$httpBackend =  $httpBackend;
       }]);
     };
@@ -61,7 +61,7 @@ define([
     };
   }
 
-  function FilterSrvStub() {
+  function TimeSrvStub() {
     this.time = { from:'now-1h', to: 'now'};
     this.timeRange = function(parse) {
       if (parse === false) {
@@ -81,7 +81,7 @@ define([
 
   return {
     ControllerTestContext: ControllerTestContext,
-    FilterSrvStub: FilterSrvStub,
+    TimeSrvStub: TimeSrvStub,
     ServiceTestContext: ServiceTestContext
   };
 

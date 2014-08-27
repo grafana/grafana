@@ -21,7 +21,7 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
+    this.getAnnotations = function(rangeUnparsed, dashboard) {
       if (!dashboard.annotations.enable) {
         return $q.when(null);
       }
@@ -36,7 +36,7 @@ define([
       var promises  = _.map(annotations, function(annotation) {
         var datasource = datasourceSrv.get(annotation.datasource);
 
-        return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
+        return datasource.annotationQuery(annotation, rangeUnparsed)
           .then(this.receiveAnnotationResults)
           .then(null, errorHandler);
       }, this);

@@ -10,7 +10,7 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -416,7 +416,7 @@ function (angular, $, kbn, moment, _) {
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
-            scope.filter.setTime({
+            timeSrv.setTime({
               from  : moment.utc(ranges.xaxis.from).toDate(),
               to    : moment.utc(ranges.xaxis.to).toDate(),
             });
