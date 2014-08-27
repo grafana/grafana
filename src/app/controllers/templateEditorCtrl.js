@@ -23,12 +23,28 @@ function (angular, _) {
       $scope.currentDatasource = _.findWhere($scope.datasources, { default: true });
       $scope.templateParameters = $scope.filter.templateParameters;
       $scope.reset();
+
+      $scope.$watch('editor.index', function(newVal) {
+        if (newVal !== 2) { $scope.reset(); }
+      });
     };
 
     $scope.add = function() {
       $scope.current.datasource = $scope.currentDatasource.name;
       $scope.templateParameters.push($scope.current);
       $scope.reset();
+    };
+
+    $scope.edit = function(param) {
+      $scope.current = param;
+      $scope.currentIsNew = false;
+      $scope.currentDatasource = _.findWhere($scope.datasources, { name: param.datasource });
+
+      if (!$scope.currentDatasource) {
+        $scope.currentDatasource = $scope.datasources[0];
+      }
+
+      $scope.editor.index = 2;
     };
 
     $scope.reset = function() {
@@ -40,9 +56,6 @@ function (angular, _) {
     $scope.removeTemplateParam = function(templateParam) {
       var index = _.indexOf($scope.templateParameters, templateParam);
       $scope.templateParameters.splice(index, 1);
-    };
-
-    $scope.setDatasource = function() {
     };
 
   });

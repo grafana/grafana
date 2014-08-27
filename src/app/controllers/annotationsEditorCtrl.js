@@ -60,7 +60,6 @@ function (angular, _, $) {
     };
 
     $scope.add = function() {
-      $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
       $scope.annotations.push($scope.currentAnnotation);
       $scope.reset();
       $scope.editor.index = 0;

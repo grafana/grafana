@@ -15,23 +15,28 @@
 
 		<div ng-if="editor.index == 0">
 
-			<div class="editor-row">
-				<div class="span4">
+			<div class="editor-row row">
+				<div class="span8">
 					<div ng-if="templateParameters.length === 0">
 						<em>No replacements defined</em>
 					</div>
-					<table class="table table-striped">
+					<table class="grafana-options-table">
 						<tr ng-repeat="templateParam in templateParameters">
-							<td>{{templateParam.name}}</td>
-							<td>{{templateParam.query}}</td>
 							<td>
-								<a ng-click="asd">
+								{{templateParam.name}}
+							</td>
+							<td class="max-width" style="max-width: 200px;">
+								{{templateParam.query}}
+							</td>
+							<td style="width: 1%">
+								<a ng-click="edit(templateParam)" class="btn btn-success btn-mini">
+									<i class="icon-edit"></i>
 									Edit
 								</a>
 							</td>
-							<td>
-								<a ng-click="removeTemplateParam(templateParam)">
-									Remove
+							<td style="width: 1%">
+								<a ng-click="removeTemplateParam(templateParam)" class="btn btn-danger btn-mini">
+									<i class="icon-remove"></i>
 								</a>
 							</td>
 						</tr>
@@ -41,7 +46,7 @@
 
 		</div>
 
-		<div ng-if="editor.index == 1">
+		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
 			<div class="editor-row">
 				<div class="editor-option">
 					<label class="small">Replacement name</label>
@@ -53,7 +58,7 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Datasource</label>
-					<select ng-model="currentDatasource" ng-options="f.name for f in datasources" ng-change="setDatasource()"></select>
+					<select ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
 				</div>
 			</div>
 
@@ -64,13 +69,14 @@
 				</div>
 			</div>
 
-			<button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add template replacement</button>
 		</div>
 
 	</div>
 
 	<div class="dashboard-editor-footer">
-		<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();">Close</button>
+		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 2" ng-click="dismiss();">Update</button>
+		<button type="button" class="btn btn-success pull-left" ng-show="editor.index === 1" ng-click="dismiss();">Add</button>
+		<button type="button" class="btn btn-success pull-right" ng-click="dismiss();">Close</button>
 	</div>
 </div>
 

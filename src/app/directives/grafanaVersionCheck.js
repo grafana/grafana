@@ -11,7 +11,7 @@ function (angular) {
         restrict: 'A',
         link: function(scope, elem) {
           if (grafanaVersion[0] === '@') {
-          //  return;
+            return;
           }
 
           $http({ method: 'GET', url: 'https://grafanarel.s3.amazonaws.com/latest.json' })

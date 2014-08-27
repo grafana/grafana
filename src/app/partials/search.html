@@ -49,8 +49,7 @@
 				<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 
 				<div class="search-results-container" ng-if="tagsOnly">
-					<div ng-repeat="tag in results.tags"
-						class="search-result-item pointer"
+					<div ng-repeat="tag in results.tags" class="pointer" style="width: 180px; float: left;"
 						ng-class="{'selected': $index === selectedIndex }"
 						ng-click="filterByTag(tag.term, $event)">
 						<a class="search-result-tag label label-tag" tag-color-from-name>
