@@ -73,7 +73,7 @@ define([
       };
     };
 
-    this.applyTemplateToTarget = function(target) {
+    this.replace = function(target) {
       return target;
     };
   }

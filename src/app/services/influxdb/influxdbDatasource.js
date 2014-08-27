@@ -9,7 +9,7 @@ function (angular, _, kbn, InfluxSeries) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, timeSrv) {
+  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
@@ -73,7 +73,7 @@ function (angular, _, kbn, InfluxSeries) {
           }
 
           query = queryElements.join(" ");
-          query = timeSrv.applyTemplateToTarget(query);
+          query = templateSrv.replace(query);
         }
         else {
 
@@ -100,7 +100,7 @@ function (angular, _, kbn, InfluxSeries) {
           }
 
           query = _.template(template, templateData, this.templateSettings);
-          query = timeSrv.applyTemplateToTarget(query);
+          query = templateSrv.replace(query);
 
           if (target.groupby_field_add) {
             groupByField = target.groupby_field;
@@ -110,7 +110,7 @@ function (angular, _, kbn, InfluxSeries) {
         }
 
         if (target.alias) {
-          alias = filterSrv.applyTemplateToTarget(target.alias);
+          alias = templateSrv.replace(target.alias);
         }
 
         var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
@@ -164,7 +164,7 @@ function (angular, _, kbn, InfluxSeries) {
     InfluxDatasource.prototype.metricFindQuery = function (filterSrv, query) {
       var interpolated;
       try {
-        interpolated = filterSrv.applyTemplateToTarget(query);
+        interpolated = templateSrv.replace(query);
       }
       catch (err) {
         return $q.reject(err);

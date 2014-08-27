@@ -129,13 +129,6 @@ function (angular, _) {
           $scope.get_data();
         }
       }
-
-      if ($rootScope.profilingEnabled) {
-        $rootScope.performance.panelsInitialized++;
-        if ($rootScope.performance.panelsInitialized === $scope.dashboard.rows.length) {
-          $rootScope.performance.allPanelsInitialized = new Date().getTime();
-        }
-      }
     };
   });
 

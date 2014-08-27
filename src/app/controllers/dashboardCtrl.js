@@ -41,8 +41,6 @@ function (angular, $, config, _) {
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
-      timer.cancel_all();
-
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered= 0;
@@ -66,11 +64,6 @@ function (angular, $, config, _) {
       $scope.panelMoveOut = panelMove.onOut;
 
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-
-      // start auto refresh
-      if($scope.dashboard.refresh) {
-        $scope.dashboard.set_interval($scope.dashboard.refresh);
-      }
 
       dashboardKeybindings.shortcuts($scope);
 

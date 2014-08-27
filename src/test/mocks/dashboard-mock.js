@@ -5,9 +5,6 @@ define([],
   return {
     create: function() {
       return {
-        emit_refresh: function() {},
-        set_interval: function(value) { this.refresh = value; },
-
         title: "",
         tags: [],
         style: "dark",
@@ -18,11 +15,11 @@ define([],
         rows: [],
         pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
         nav: [ { type: 'timepicker' } ],
-        time: {},
+        time: {from: '1h', to: 'now'},
         templating: {
           list: []
         },
-        refresh: true
+        refresh: '10s',
       };
     }
   };

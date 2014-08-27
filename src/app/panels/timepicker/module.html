@@ -32,10 +32,10 @@
             <a href="#">Auto-Refresh</a>
             <ul class="dropdown-menu">
               <li>
-                <a ng-click="dashboard.set_interval(false)">Off</a>
+                <a ng-click="timeSrv.set_interval(false)">Off</a>
               </li>
               <li bindonce ng-repeat="interval in panel.refresh_intervals track by $index">
-                <a ng-click="dashboard.set_interval(interval)" bo-text="'Every ' + interval"></a>
+                <a ng-click="timeSrv.set_interval(interval)" bo-text="'Every ' + interval"></a>
               </li>
             </ul>
           </li>
@@ -44,7 +44,7 @@
 
       </li>
       <li ng-show="!dashboard.refresh" class="grafana-menu-refresh">
-        <a ng-click="dashboard.emit_refresh()"><i class="icon-refresh"></i></a>
+        <a ng-click="timeSrv.refreshDashboard()"><i class="icon-refresh"></i></a>
       </li>
     </ul>
 

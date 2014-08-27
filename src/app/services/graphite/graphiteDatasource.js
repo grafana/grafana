@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('GraphiteDatasource', function($q, $http, timeSrv) {
+  module.factory('GraphiteDatasource', function($q, $http, templateSrv) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -63,7 +63,7 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       // Graphite metric as annotation
       if (annotation.target) {
-        var target = timeSrv.applyTemplateToTarget(annotation.target);
+        var target = templateSrv.replace(annotation.target);
         var graphiteQuery = {
           range: rangeUnparsed,
           targets: [{ target: target }],
@@ -71,7 +71,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: 100
         };
 
-        return this.query(timeSrv, graphiteQuery)
+        return this.query(graphiteQuery)
           .then(function(result) {
             var list = [];
 
@@ -95,7 +95,7 @@ function (angular, _, $, config, kbn, moment) {
       }
       // Graphite event as annotation
       else {
-        var tags = timeSrv.applyTemplateToTarget(annotation.tags);
+        var tags = templateSrv.replace(annotation.tags);
         return this.events({ range: rangeUnparsed, tags: tags })
           .then(function(results) {
             var list = [];
@@ -169,7 +169,7 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
-        interpolated = encodeURIComponent(timeSrv.applyTemplateToTarget(query));
+        interpolated = encodeURIComponent(templateSrv.replace(query));
       }
       catch(err) {
         return $q.reject(err);
@@ -226,7 +226,7 @@ function (angular, _, $, config, kbn, moment) {
         if (key === "targets") {
           _.each(value, function (value) {
             if (value.target && !value.hide) {
-              var targetValue = timeSrv.applyTemplateToTarget(value.target);
+              var targetValue = templateSrv.replace(value.target);
               clean_options.push("target=" + encodeURIComponent(targetValue));
             }
           }, this);

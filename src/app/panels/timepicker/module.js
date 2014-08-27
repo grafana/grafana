@@ -25,7 +25,7 @@ function (angular, app, _, moment, kbn) {
   var module = angular.module('grafana.panels.timepicker', []);
   app.useModule(module);
 
-  module.controller('timepicker', function($scope, timeSrv) {
+  module.controller('timepicker', function($scope, $rootScope, timeSrv) {
 
     $scope.panelMeta = {
       status  : "Stable",
@@ -49,6 +49,8 @@ function (angular, app, _, moment, kbn) {
       second: /^[0-5][0-9]$/,
       millisecond: /^[0-9]*$/
     };
+
+    $scope.timeSrv = timeSrv;
 
     $scope.$on('refresh', function() {
       $scope.init();

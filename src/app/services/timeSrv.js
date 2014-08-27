@@ -8,82 +8,82 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('timeSrv', function($rootScope, $timeout, $routeParams) {
+  module.service('timeSrv', function($rootScope, $timeout, timer) {
+    var self = this;
 
     this.init = function(dashboard) {
-        this.dashboard = dashboard;
-        this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-        this.time = dashboard.time;
-        this.templateParameters = dashboard.templating.list;
-        this.updateTemplateData(true);
+      timer.cancel_all();
+
+      this.dashboard = dashboard;
+      this.time = dashboard.time;
+
+      if(this.dashboard.refresh) {
+        this.set_interval(this.dashboard.refresh);
+      }
     };
 
-     this.updateTemplateData = function(initial) {
-        var _templateData = {};
-        _.each(this.templateParameters, function(templateParameter) {
-          if (initial) {
-            var urlValue = $routeParams[ templateParameter.name ];
-            if (urlValue) {
-              templateParameter.current = { text: urlValue, value: urlValue };
-            }
-          }
-          if (!templateParameter.current || !templateParameter.current.value) {
-            return;
-          }
-          _templateData[templateParameter.name] = templateParameter.current.value;
-        });
-        this._templateData = _templateData;
-      };
+    this.set_interval = function (interval) {
+      this.dashboard.refresh = interval;
+      if (interval) {
+        var _i = kbn.interval_to_ms(interval);
+        this.start_scheduled_refresh(_i);
+      } else {
+        this.cancel_scheduled_refresh();
+      }
+    };
 
-      this.addTemplateParameter = function(templateParameter) {
-        this.templateParameters.push(templateParameter);
-        this.updateTemplateData();
-      };
+    this.refreshDashboard = function() {
+      $rootScope.$broadcast('refresh');
+    };
 
-      this.applyTemplateToTarget = function(target) {
-        if (!target || target.indexOf('[[') === -1) {
-          return target;
-        }
+    this.start_scheduled_refresh = function (after_ms) {
+      self.cancel_scheduled_refresh();
+      self.refresh_timer = timer.register($timeout(function () {
+        self.start_scheduled_refresh(after_ms);
+        self.refreshDashboard();
+      }, after_ms));
+    };
 
-        return _.template(target, this._templateData, this.templateSettings);
-      };
+    this.cancel_scheduled_refresh = function () {
+      timer.cancel(this.refresh_timer);
+    };
 
-      this.setTime = function(time) {
-        _.extend(this.time, time);
+    this.setTime = function(time) {
+      _.extend(this.time, time);
 
-        // disable refresh if we have an absolute time
-        if (time.to !== 'now') {
-          this.old_refresh = this.dashboard.refresh;
-          this.dashboard.set_interval(false);
-        }
-        else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
-          this.dashboard.set_interval(this.old_refresh);
-          this.old_refresh = null;
-        }
+      // disable refresh if we have an absolute time
+      if (time.to !== 'now') {
+        this.old_refresh = this.dashboard.refresh;
+        this.set_interval(false);
+      }
+      else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
+        this.set_interval(this.old_refresh);
+        this.old_refresh = null;
+      }
 
-        $timeout(this.dashboard.emit_refresh, 0);
-      };
+      $timeout(this.refreshDashboard, 0);
+    };
 
-      this.timeRange = function(parse) {
-        var _t = this.time;
-        if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
-          return false;
-        }
-        if(parse === false) {
-          return {
-            from: _t.from,
-            to: _t.to
-          };
-        } else {
-          var _from = _t.from;
-          var _to = _t.to || new Date();
+    this.timeRange = function(parse) {
+      var _t = this.time;
+      if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
+        return false;
+      }
+      if(parse === false) {
+        return {
+          from: _t.from,
+          to: _t.to
+        };
+      } else {
+        var _from = _t.from;
+        var _to = _t.to || new Date();
 
-          return {
-            from : kbn.parseDate(_from),
-            to : kbn.parseDate(_to)
-          };
-        }
-      };
+        return {
+          from: kbn.parseDate(_from),
+          to: kbn.parseDate(_to)
+        };
+      }
+    };
 
   });
 

@@ -11,7 +11,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(timer, $rootScope, $timeout) {
+  module.factory('dashboardSrv', function($rootScope)  {
 
     function DashboardModel (data) {
 
@@ -113,28 +113,6 @@ function (angular, $, kbn, _, moment) {
 
     p.emit_refresh = function() {
       $rootScope.$broadcast('refresh');
-    };
-
-    p.start_scheduled_refresh = function (after_ms) {
-      this.cancel_scheduled_refresh();
-      this.refresh_timer = timer.register($timeout(function () {
-        this.start_scheduled_refresh(after_ms);
-        this.emit_refresh();
-      }.bind(this), after_ms));
-    };
-
-    p.cancel_scheduled_refresh = function () {
-      timer.cancel(this.refresh_timer);
-    };
-
-    p.set_interval = function (interval) {
-      this.refresh = interval;
-      if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        this.start_scheduled_refresh(_i);
-      } else {
-        this.cancel_scheduled_refresh();
-      }
     };
 
     p.updateSchema = function(old) {

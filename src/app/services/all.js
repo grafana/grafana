@@ -3,6 +3,7 @@ define([
   './datasourceSrv',
   './timeSrv',
   './templateSrv',
+  './templateValuesSrv',
   './panelSrv',
   './timer',
   './panelMove',
