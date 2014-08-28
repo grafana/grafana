@@ -11,7 +11,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, $http) {
+  module.factory('ElasticDatasource', function($q, $http, templateSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elastic';
@@ -60,7 +60,7 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
-    ElasticDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+    ElasticDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var range = {};
       var timeField = annotation.timeField || '@timestamp';
       var queryString = annotation.query || '*';
@@ -73,7 +73,7 @@ function (angular, _, $, config, kbn, moment) {
         to: rangeUnparsed.to,
       };
 
-      var queryInterpolated = filterSrv.applyTemplateToTarget(queryString);
+      var queryInterpolated = templateSrv.replace(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
       var data = { "query" : { "filtered": { "query" : query, "filter": filter } }, "size": 100 };

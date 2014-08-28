@@ -2,14 +2,15 @@ define([
   'angular',
   'lodash',
   'kbn',
-  'store'
+  'config'
 ],
-function (angular, _) {
+function (angular, _, kbn, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
   module.service('templateSrv', function($q, $routeParams) {
+    var self = this;
 
     this.init = function(variables) {
       this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
@@ -29,7 +30,9 @@ function (angular, _) {
         if (!variable.current || !variable.current.value) {
           return;
         }
+
         _templateData[variable.name] = variable.current.value;
+
       });
       this._templateData = _templateData;
     };

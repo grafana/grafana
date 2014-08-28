@@ -5,7 +5,7 @@
 		</div>
 
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+			<div ng-repeat="tab in ['Variables', 'Add', 'Edit']" data-title="{{tab}}">
 			</div>
 		</div>
 
@@ -71,16 +71,6 @@
 					<label class="small">Values</label>
 					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="name"></input>
 				</div>
-				<div class="editor-option">
-					<label class="small">Auto period count <tip>The number you want to divide the time range in</tip></label>
-					<select class="input-small" ng-model="current.auto_count" ng-options="f for f in [5,6,7,8,9,10,15,20,30,40,50,70,90,100]"></select>
-				</div>
-				<p class="small">
-					<br>
-					<i class="icon-info-sign"></i>
-					This special type of template replacement is useful as the auto word will be calculated depending on the time range divided by
-					the number of periods you wish.
-				</p>
 			</div>
 
 			<div ng-show="current.type === 'query'">

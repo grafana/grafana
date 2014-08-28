@@ -21,9 +21,6 @@ function (angular, app, _, $) {
           var $input = $(inputTemplate);
           var $button = $(buttonTemplate);
           var variable = $scope.variable;
-          var options = _.map(variable.options, function(option) {
-            return option.text;
-          });
 
           $input.appendTo(elem);
           $button.appendTo(elem);
@@ -40,7 +37,6 @@ function (angular, app, _, $) {
 
           $input.attr('data-provide', 'typeahead');
           $input.typeahead({
-            source: options,
             minLength: 0,
             items: 10,
             updater: function(value) {
@@ -52,8 +48,9 @@ function (angular, app, _, $) {
 
           var typeahead = $input.data('typeahead');
           typeahead.lookup = function () {
+            var options = _.map(variable.options, function(option) { return option.text; });
             this.query = this.$element.val() || '';
-            return this.process(this.source);
+            return this.process(options);
           };
 
           $button.click(function() {

@@ -29,14 +29,9 @@ define([
       });
     });
 
-    describe('updateTemplateData', function() {
+    describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
-        _templateSrv.init([{
-          name: 'test',
-          value: 'muuu',
-          current: { value: 'muuuu' }
-        }]);
-
+        _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
         _templateSrv.updateTemplateData();
       });
 

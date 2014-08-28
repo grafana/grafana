@@ -74,8 +74,10 @@ function (angular, _) {
 
     $scope.typeChanged = function () {
       if ($scope.current.type === 'time period') {
-        $scope.current.query = 'auto,1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
-        $scope.current.auto_count = 10;
+        $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
+      }
+      else {
+        $scope.current.query = '';
       }
     };
 

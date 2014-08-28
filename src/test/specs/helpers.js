@@ -9,6 +9,7 @@ define([
     this.datasource = {};
     this.annotationsSrv = {};
     this.timeSrv = new TimeSrvStub();
+    this.templateSrv = new TemplateSrvStub();
     this.datasourceSrv = {
       getMetricSources: function() {},
       get: function() { return self.datasource; }
@@ -19,6 +20,7 @@ define([
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
         $provide.value('timeSrv', self.timeSrv);
+        $provide.value('templateSrv', self.templateSrv);
       });
     };
 
@@ -77,6 +79,12 @@ define([
       return target;
     };
   }
+
+  function TemplateSrvStub() {
+    this.variables = [];
+    this.replace = function() {};
+  }
+
 
 
   return {
