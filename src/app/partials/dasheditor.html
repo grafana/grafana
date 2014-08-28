@@ -49,14 +49,19 @@
 
 		<div ng-if="editor.index == 1">
 			<div class="editor-row">
-				<div class="span8">
-					<h5>Rows</h5>
-					<table class="table table-striped">
+				<div class="span6">
+					<table class="grafana-options-table">
 						<tr ng-repeat="row in dashboard.rows">
+							<td style="width: 97%">
+								{{row.title}}
+							</td>
 							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
 							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
-							<td><i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer icon-remove"></i></td>
-							<td style="width: 97%">{{row.title}}</td>
+							<td>
+								<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-mini">
+									<i class="icon-remove"></i>
+								</a>
+							</td>
 						</tr>
 					</table>
 				</div>
@@ -66,9 +71,13 @@
 		<div ng-if="editor.index == 2">
 			<div class="editor-row">
 				<div class="section">
-					<h5>Feature toggles</h5>
-					<div class="editor-option" ng-repeat="pulldown in dashboard.pulldowns">
-						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+					<div class="editor-option">
+						<label class="small">Templating</label>
+						<input type="checkbox" ng-model="dashboard.templating.enable" ng-checked="dashboard.templating.enable" ng-change="checkFeatureToggles()"x >
+					</div>
+					<div class="editor-option">
+						<label class="small">Annotations</label>
+						<input type="checkbox" ng-model="dashboard.annotations.enable" ng-checked="dashboard.annotations.enable" ng-change="checkFeatureToggles()">
 					</div>
 					<div class="editor-option" ng-repeat="pulldown in dashboard.nav">
 						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">

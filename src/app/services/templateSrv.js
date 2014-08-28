@@ -1,16 +1,13 @@
 define([
   'angular',
   'lodash',
-  'kbn',
-  'config'
 ],
-function (angular, _, kbn, config) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
   module.service('templateSrv', function($q, $routeParams) {
-    var self = this;
 
     this.init = function(variables) {
       this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };

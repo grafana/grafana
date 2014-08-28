@@ -17,7 +17,7 @@
 						</li>
 					</ul>
 
-					<ul class="grafana-segment-list">
+					<ul class="grafana-segment-list" ng-if="dashboard.templating.enable">
 						<li class="small grafana-target-segment">
 							<strong>VARIABLES</strong>
 						</li>
@@ -27,7 +27,9 @@
 
 						<li ng-repeat-end template-param-selector>
 						</li>
+					</ul>
 
+					<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
 						<li class="small grafana-target-segment">
 							<strong>ANNOTATIONS</strong>
 						</li>
@@ -38,7 +40,6 @@
 								{{annotation.name}}
 							</a>
 						</li>
-
 					</ul>
 
 					<div class="clearfix"></div>

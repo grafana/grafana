@@ -14,20 +14,30 @@
 	</div>
 
 	<div class="dashboard-editor-body">
-		<div class="editor-row" ng-if="editor.index == 0">
-			<table class="table table-striped annotation-editor-table" style="width: 700px">
-				<tr ng-repeat="annotation in annotations">
-					<td style="width:90%">
-						<a ng-click="edit(annotation)" bs-tooltip="'Click to edit'" data-placement="right">
+		<div class="editor-row row" ng-if="editor.index == 0">
+			<div class="span6">
+				<table class="grafana-options-table">
+					<tr ng-repeat="annotation in annotations">
+						<td style="width:90%">
 							<i class="icon-bolt"></i>
 							{{annotation.name}}
-						</a>
-					</td>
-					<td><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-					<td><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
-					<td><i ng-click="removeAnnotation(annotation)" class="pointer icon-remove"></i></td>
-				</tr>
-			</table>
+						</td>
+						<td style="width: 1%">
+							<a ng-click="edit(annotation)" class="btn btn-success btn-mini">
+								<i class="icon-edit"></i>
+								Edit
+							</a>
+						</td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+						<td style="width: 1%">
+							<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+								<i class="icon-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</div>
 		</div>
 
 		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">

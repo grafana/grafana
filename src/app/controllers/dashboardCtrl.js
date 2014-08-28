@@ -48,26 +48,20 @@ function (angular, $, config, _) {
       $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
-      $scope.grafana.style = $scope.dashboard.style;
-
+      // init services
       timeSrv.init($scope.dashboard);
       templateValuesSrv.init($scope.dashboard);
+      panelMoveSrv.init($scope.dashboard, $scope);
 
-      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
-
-      var panelMove = panelMoveSrv.create($scope.dashboard);
-
-      $scope.panelMoveDrop = panelMove.onDrop;
-      $scope.panelMoveStart = panelMove.onStart;
-      $scope.panelMoveStop = panelMove.onStop;
-      $scope.panelMoveOver = panelMove.onOver;
-      $scope.panelMoveOut = panelMove.onOut;
-
-      window.document.title = config.window_title_prefix + $scope.dashboard.title;
-
+      $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
 
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
+    };
+
+    $scope.setWindowTitleAndTheme = function() {
+      window.document.title = config.window_title_prefix + $scope.dashboard.title;
+      $scope.grafana.style = $scope.dashboard.style;
     };
 
     $scope.isPanel = function(obj) {
@@ -111,6 +105,10 @@ function (angular, $, config, _) {
       } else {
         return false;
       }
+    };
+
+    $scope.checkFeatureToggles = function() {
+      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
     };
 
     $scope.setEditorTabs = function(panelMeta) {

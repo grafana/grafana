@@ -34,6 +34,8 @@
 									Edit
 								</a>
 							</td>
+							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
 							<td style="width: 1%">
 								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
 									<i class="icon-remove"></i>
