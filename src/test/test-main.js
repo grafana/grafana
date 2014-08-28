@@ -127,6 +127,7 @@ require([
     'specs/seriesOverridesCtrl-specs',
     'specs/timeSrv-specs',
     'specs/templateSrv-specs',
+    'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',

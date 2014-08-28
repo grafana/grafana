@@ -18,7 +18,7 @@ function (angular, app, _) {
     $scope.init = function() {
       $scope.panel = $scope.pulldown;
       $scope.row = $scope.pulldown;
-      $scope.templateParameters = $scope.dashboard.templating.list;
+      $scope.variables = $scope.dashboard.templating.list;
     };
 
     $scope.disableAnnotation = function (annotation) {
@@ -26,8 +26,8 @@ function (angular, app, _) {
       $rootScope.$broadcast('refresh');
     };
 
-    $scope.filterOptionSelected = function(param, option) {
-      templateValuesSrv.filterOptionSelected(param, option);
+    $scope.setVariableValue = function(param, option) {
+      templateValuesSrv.setVariableValue(param, option);
     };
 
     $scope.init();

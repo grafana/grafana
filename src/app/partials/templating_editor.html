@@ -17,25 +17,25 @@
 
 			<div class="editor-row row">
 				<div class="span8">
-					<div ng-if="templateParameters.length === 0">
+					<div ng-if="variables.length === 0">
 						<em>No replacements defined</em>
 					</div>
 					<table class="grafana-options-table">
-						<tr ng-repeat="templateParam in templateParameters">
+						<tr ng-repeat="variable in variables">
 							<td style="width: 1%">
-								[[{{templateParam.name}}]]
+								[[{{variable.name}}]]
 							</td>
 							<td class="max-width" style="max-width: 200px;">
-								{{templateParam.query}}
+								{{variable.query}}
 							</td>
 							<td style="width: 1%">
-								<a ng-click="edit(templateParam)" class="btn btn-success btn-mini">
+								<a ng-click="edit(variable)" class="btn btn-success btn-mini">
 									<i class="icon-edit"></i>
 									Edit
 								</a>
 							</td>
 							<td style="width: 1%">
-								<a ng-click="removeTemplateParam(templateParam)" class="btn btn-danger btn-mini">
+								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
 									<i class="icon-remove"></i>
 								</a>
 							</td>
@@ -49,7 +49,7 @@
 		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
 			<div class="editor-row">
 				<div class="editor-option">
-					<label class="small">Replacement name</label>
+					<label class="small">Variable name</label>
 					<input type="text" class="input-medium" ng-model='current.name' placeholder="name"></input>
 				</div>
 				<div class="editor-option">
@@ -69,7 +69,7 @@
 			<div ng-show="current.type === 'time period'">
 				<div class="editor-option">
 					<label class="small">Values</label>
-					<input type="text" class="input-xxlarge" array-join ng-model='current.options' ng-change="csvValuesChanged()" ng-model-onblur placeholder="name"></input>
+					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="name"></input>
 				</div>
 				<div class="editor-option">
 					<label class="small">Auto period count <tip>The number you want to divide the time range in</tip></label>
@@ -86,7 +86,7 @@
 			<div ng-show="current.type === 'query'">
 				<div class="editor-row">
 					<div class="editor-option form-inline">
-						<label class="small">Metric name query</label>
+						<label class="small">Variable values query</label>
 						<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
 						<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
 					</div>
@@ -102,7 +102,7 @@
 
 				<div class="editor-row" style="margin-top: 10px;">
 					<div class="editor-option form-inline">
-						<label class="small">Current replacement values</label>
+						<label class="small">Variable values</label>
 						<ul>
 							<li ng-repeat="option in current.options">
 								{{option.text}}

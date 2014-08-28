@@ -18,21 +18,18 @@
 					</ul>
 
 					<ul class="grafana-segment-list">
-						<li ng-repeat-start="param in templateParameters" class="grafana-target-segment template-param-name">
-							{{param.name}}:
+						<li class="small grafana-target-segment">
+							<strong>VARIABLES</strong>
+						</li>
+						<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
+							{{variable.name}}:
 						</li>
 
-						<li ng-repeat-end>
-							<div class="dropdown">
-								<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown">
-									{{param.current.text}}
-								</a>
-								<ul class="dropdown-menu">
-									<li ng-repeat="option in param.options">
-										<a ng-click="filterOptionSelected(param, option)">{{option.text}}</a>
-									</li>
-								</ul>
-							</div>
+						<li ng-repeat-end template-param-selector>
+						</li>
+
+						<li class="small grafana-target-segment">
+							<strong>ANNOTATIONS</strong>
 						</li>
 
 						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">

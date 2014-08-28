@@ -13,24 +13,24 @@ function (angular, _) {
     var self = this;
 
     this.init = function(dashboard) {
-      this.templateParameters = dashboard.templating.list;
+      this.variables = dashboard.templating.list;
 
-      templateSrv.init(this.templateParameters);
+      templateSrv.init(this.variables);
 
-      for (var i = 0; i < this.templateParameters.length; i++) {
-        var param = this.templateParameters[i];
+      for (var i = 0; i < this.variables.length; i++) {
+        var param = this.variables[i];
         if (param.refresh) {
-          this.updateValuesFor(param);
+          this.updateOptions(param);
         }
       }
     };
 
-    this.filterOptionSelected = function(templateParameter, option, recursive) {
-      templateParameter.current = option;
+    this.setVariableValue = function(variable, option, recursive) {
+      variable.current = option;
 
       templateSrv.updateTemplateData();
 
-      return this.applyFilterToOtherFilters(templateParameter)
+      return this.applyFilterToOtherFilters(variable)
         .then(function() {
           if (!recursive) {
             $rootScope.$broadcast('refresh');
@@ -38,46 +38,54 @@ function (angular, _) {
         });
     };
 
-    this.applyFilterToOtherFilters = function(updatedTemplatedParam) {
-      var promises = _.map(self.templateParameters, function(templateParam) {
-        if (templateParam === updatedTemplatedParam) {
+    this.applyFilterToOtherFilters = function(updatedVariable) {
+      var promises = _.map(self.variables, function(otherVariable) {
+        if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateParam.query.indexOf('[[' + updatedTemplatedParam.name + ']]') !== -1) {
-          return self.applyFilter(templateParam);
+        if (otherVariable.query.indexOf('[[' + updatedVariable.name + ']]') !== -1) {
+          return self.updateOptions(otherVariable);
         }
       });
 
       return $q.all(promises);
     };
 
-    this.updateValuesFor = function(templateParam) {
-      var datasource = datasourceSrv.get(templateParam.datasource);
-      return datasource.metricFindQuery(templateParam.query)
+    this.updateOptions = function(variable) {
+      if (variable.type === 'time period') {
+        variable.options = _.map(variable.query.split(','), function(text) {
+          return { text: text, value: text };
+        });
+        self.setVariableValue(variable, variable.options[0]);
+        return;
+      }
+
+      var datasource = datasourceSrv.get(variable.datasource);
+      return datasource.metricFindQuery(variable.query)
         .then(function (results) {
-          templateParam.options = _.map(results, function(node) {
+          variable.options = _.map(results, function(node) {
             return { text: node.text, value: node.text };
           });
 
-          if (templateParam.includeAll) {
+          if (variable.includeAll) {
             var allExpr = '{';
-            _.each(templateParam.options, function(option) {
+            _.each(variable.options, function(option) {
               allExpr += option.text + ',';
             });
             allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
-            templateParam.options.unshift({text: 'All', value: allExpr});
+            variable.options.unshift({text: 'All', value: allExpr});
           }
 
           // if parameter has current value
           // if it exists in options array keep value
-          if (templateParam.current) {
-            var currentExists = _.findWhere(templateParam.options, { value: templateParam.current.value });
+          if (variable.current) {
+            var currentExists = _.findWhere(variable.options, { value: variable.current.value });
             if (currentExists) {
-              return self.filterOptionSelected(templateParam, templateParam.current, true);
+              return self.setVariableValue(variable, variable.current, true);
             }
           }
 
-          return self.filterOptionSelected(templateParam, templateParam.options[0], true);
+          return self.setVariableValue(variable, variable.options[0], true);
         });
     };
 

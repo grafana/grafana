@@ -15,6 +15,7 @@ define([
   './bodyClass',
   './addGraphiteFunc',
   './graphiteFuncEditor',
+  './templateParamSelector',
   './grafanaVersionCheck',
   './influxdbFuncEditor'
 ], function () {});

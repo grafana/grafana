@@ -21,13 +21,13 @@ function (angular, _) {
       $scope.editor = { index: 0 };
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.currentDatasource = _.findWhere($scope.datasources, { default: true });
-      $scope.templateParameters = templateSrv.templateParameters;
+      $scope.variables = templateSrv.variables;
       $scope.reset();
 
-      _.each($scope.templateParameters, function(param) {
-        if (param.datasource === void 0) {
-          param.datasource = null;
-          param.type = 'query';
+      _.each($scope.variables, function(variable) {
+        if (variable.datasource === void 0) {
+          variable.datasource = null;
+          variable.type = 'query';
         }
       });
 
@@ -40,19 +40,19 @@ function (angular, _) {
 
     $scope.add = function() {
       $scope.current.datasource = $scope.currentDatasource.name;
-      $scope.templateParameters.push($scope.current);
+      $scope.variables.push($scope.current);
       $scope.reset();
       $scope.editor.index = 0;
     };
 
     $scope.runQuery = function() {
-      templateValuesSrv.updateValuesFor($scope.current);
+      templateValuesSrv.updateOptions($scope.current);
     };
 
-    $scope.edit = function(param) {
-      $scope.current = param;
+    $scope.edit = function(variable) {
+      $scope.current = variable;
       $scope.currentIsNew = false;
-      $scope.currentDatasource = _.findWhere($scope.datasources, { name: param.datasource });
+      $scope.currentDatasource = _.findWhere($scope.datasources, { name: variable.datasource });
 
       if (!$scope.currentDatasource) {
         $scope.currentDatasource = $scope.datasources[0];
@@ -62,6 +62,7 @@ function (angular, _) {
     };
 
     $scope.update = function() {
+      templateValuesSrv.updateOptions($scope.current);
       $scope.reset();
       $scope.editor.index = 0;
     };
@@ -73,14 +74,14 @@ function (angular, _) {
 
     $scope.typeChanged = function () {
       if ($scope.current.type === 'time period') {
-        $scope.current.options = ['auto', '1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d'];
+        $scope.current.query = 'auto,1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
         $scope.current.auto_count = 10;
       }
     };
 
-    $scope.removeTemplateParam = function(templateParam) {
-      var index = _.indexOf($scope.templateParameters, templateParam);
-      $scope.templateParameters.splice(index, 1);
+    $scope.removeVariable = function(variable) {
+      var index = _.indexOf($scope.variables, variable);
+      $scope.variables.splice(index, 1);
     };
 
   });

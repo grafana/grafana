@@ -11,25 +11,25 @@ function (angular, _) {
 
   module.service('templateSrv', function($q, $routeParams) {
 
-    this.init = function(templateParameters) {
+    this.init = function(variables) {
       this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
-      this.templateParameters = templateParameters;
+      this.variables = variables;
       this.updateTemplateData(true);
     };
 
     this.updateTemplateData = function(initial) {
       var _templateData = {};
-      _.each(this.templateParameters, function(templateParameter) {
+      _.each(this.variables, function(variable) {
         if (initial) {
-          var urlValue = $routeParams[ templateParameter.name ];
+          var urlValue = $routeParams[ variable.name ];
           if (urlValue) {
-            templateParameter.current = { text: urlValue, value: urlValue };
+            variable.current = { text: urlValue, value: urlValue };
           }
         }
-        if (!templateParameter.current || !templateParameter.current.value) {
+        if (!variable.current || !variable.current.value) {
           return;
         }
-        _templateData[templateParameter.name] = templateParameter.current.value;
+        _templateData[variable.name] = variable.current.value;
       });
       this._templateData = _templateData;
     };

@@ -111,8 +111,6 @@ function (angular, _, moment, config, store) {
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
-    // function $scope.zoom
-    // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
       var _range = timeSrv.timeRange();
       var _timespan = (_range.to.valueOf() - _range.from.valueOf());
@@ -136,6 +134,12 @@ function (angular, _, moment, config, store) {
 
     $scope.styleUpdated = function() {
       $scope.grafana.style = $scope.dashboard.style;
+    };
+
+    $scope.editJson = function() {
+      var editScope = $rootScope.$new();
+      editScope.json = angular.toJson($scope.dashboard, true);
+      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.openSaveDropdown = function() {
