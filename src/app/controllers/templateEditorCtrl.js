@@ -20,7 +20,6 @@ function (angular, _) {
     $scope.init = function() {
       $scope.editor = { index: 0 };
       $scope.datasources = datasourceSrv.getMetricSources();
-      $scope.currentDatasource = _.findWhere($scope.datasources, { default: true });
       $scope.variables = templateSrv.variables;
       $scope.reset();
 
@@ -39,10 +38,8 @@ function (angular, _) {
     };
 
     $scope.add = function() {
-      $scope.current.datasource = $scope.currentDatasource.name;
       $scope.variables.push($scope.current);
-      $scope.reset();
-      $scope.editor.index = 0;
+      $scope.update();
     };
 
     $scope.runQuery = function() {
@@ -52,12 +49,6 @@ function (angular, _) {
     $scope.edit = function(variable) {
       $scope.current = variable;
       $scope.currentIsNew = false;
-      $scope.currentDatasource = _.findWhere($scope.datasources, { name: variable.datasource });
-
-      if (!$scope.currentDatasource) {
-        $scope.currentDatasource = $scope.datasources[0];
-      }
-
       $scope.editor.index = 2;
     };
 

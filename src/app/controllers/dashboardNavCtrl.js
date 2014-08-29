@@ -127,9 +127,9 @@ function (angular, _, moment, config, store) {
         to = Date.now();
       }
 
-      $scope.filter.setTime({
-        from:moment.utc(from).toDate(),
-        to:moment.utc(to).toDate(),
+      timeSrv.setTime({
+        from: moment.utc(from).toDate(),
+        to: moment.utc(to).toDate(),
       });
     };
 
