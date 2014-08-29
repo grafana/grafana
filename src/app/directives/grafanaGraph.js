@@ -355,7 +355,7 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value);
+            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
             timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
