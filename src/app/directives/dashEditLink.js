@@ -15,7 +15,8 @@ function (angular, $) {
 
           elem.bind('click',function() {
             $timeout(function() {
-              scope.emitAppEvent('show-dash-editor', { src: partial, scope: scope });
+              var editorScope = attrs.editorScope === 'isolated' ? null : scope;
+              scope.emitAppEvent('show-dash-editor', { src: partial, scope: editorScope });
             });
           });
         }
