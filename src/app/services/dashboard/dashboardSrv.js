@@ -116,11 +116,12 @@ function (angular, $, kbn, _, moment) {
     };
 
     p.updateSchema = function(old) {
+      var i, j, k;
       var oldVersion = this.version;
       var panelUpgrades = [];
-      this.version = 5;
+      this.version = 6;
 
-      if (oldVersion === 5) {
+      if (oldVersion === 6) {
         return;
       }
 
@@ -195,7 +196,7 @@ function (angular, $, kbn, _, moment) {
         });
       }
 
-      if (oldVersion < 5) {
+      if (oldVersion < 6) {
         // move pulldowns to new schema
         var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
         var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
@@ -208,16 +209,24 @@ function (angular, $, kbn, _, moment) {
             enable: annotations.enable
           };
         }
+
+        // update template variables
+        for (i = 0 ; i < this.templating.list.length; i++) {
+          var variable = this.templating.list[i];
+          if (variable.datasource === void 0) { variable.datasource = null; }
+          if (variable.type === void 0) { variable.type = 'query'; }
+          if (variable.allFormat === void 0) { variable.allFormat = 'Glob'; }
+        }
       }
 
       if (panelUpgrades.length === 0) {
         return;
       }
 
-      for (var i = 0; i < this.rows.length; i++) {
+      for (i = 0; i < this.rows.length; i++) {
         var row = this.rows[i];
-        for (var j = 0; j < row.panels.length; j++) {
-          for (var k = 0; k < panelUpgrades.length; k++) {
+        for (j = 0; j < row.panels.length; j++) {
+          for (k = 0; k < panelUpgrades.length; k++) {
             panelUpgrades[k](row.panels[j]);
           }
         }

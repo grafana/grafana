@@ -68,12 +68,7 @@ function (angular, _) {
           });
 
           if (variable.includeAll) {
-            var allExpr = '{';
-            _.each(variable.options, function(option) {
-              allExpr += option.text + ',';
-            });
-            allExpr = allExpr.substring(0, allExpr.length - 1) + '}';
-            variable.options.unshift({text: 'All', value: allExpr});
+            self.addAllOption(variable);
           }
 
           // if parameter has current value
@@ -87,6 +82,26 @@ function (angular, _) {
 
           return self.setVariableValue(variable, variable.options[0], true);
         });
+    };
+
+    this.addAllOption = function(variable) {
+      var allValue = '';
+      switch(variable.allFormat) {
+      case 'wildcard':
+        allValue = '*';
+        break;
+      case 'regex wildcard':
+        allValue = '.*';
+        break;
+      default:
+        allValue = '{';
+        _.each(variable.options, function(option) {
+          allValue += option.text + ',';
+        });
+        allValue = allValue.substring(0, allValue.length - 1) + '}';
+      }
+
+      variable.options.unshift({text: 'All', value: allValue});
     };
 
   });

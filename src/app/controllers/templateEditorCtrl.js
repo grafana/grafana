@@ -15,6 +15,8 @@ function (angular, _) {
       refresh_on_load: false,
       name: '',
       options: [],
+      includeAll: false,
+      allFormat: 'Glob',
     };
 
     $scope.init = function() {
@@ -22,13 +24,6 @@ function (angular, _) {
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.variables = templateSrv.variables;
       $scope.reset();
-
-      _.each($scope.variables, function(variable) {
-        if (variable.datasource === void 0) {
-          variable.datasource = null;
-          variable.type = 'query';
-        }
-      });
 
       $scope.$watch('editor.index', function(index) {
         if ($scope.currentIsNew === false && index === 1) {
@@ -50,6 +45,12 @@ function (angular, _) {
       $scope.current = variable;
       $scope.currentIsNew = false;
       $scope.editor.index = 2;
+
+      if ($scope.current.datasource === void 0) {
+        $scope.current.datasource = null;
+        $scope.current.type = 'query';
+        $scope.current.allFormat = 'Glob';
+      }
     };
 
     $scope.update = function() {

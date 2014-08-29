@@ -49,57 +49,77 @@
 		</div>
 
 		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
-			<div class="editor-row">
+			<div class="row">
 				<div class="editor-option">
-					<label class="small">Variable name</label>
-					<input type="text" class="input-medium" ng-model='current.name' placeholder="name"></input>
-				</div>
-				<div class="editor-option">
-					<label class="small">Type</label>
-					<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'time period']" ng-change="typeChanged()"></select>
-				</div>
-				<div class="editor-option" ng-show="current.type === 'query'">
-					<label class="small">Datasource</label>
-					<select ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
-				</div>
-				<div class="editor-option text-center" ng-show="current.type === 'query'">
-					<label class="small">Refresh on load <tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time.</tip></label>
-					<input type="checkbox" ng-model="current.refresh" ng-checked="refresh">
-				</div>
-			</div>
+					<div class="editor-row">
+						<div class="editor-option">
+							<label class="small">Variable name</label>
+							<input type="text" class="input-medium" ng-model='current.name' placeholder="name"></input>
+						</div>
+						<div class="editor-option">
+							<label class="small">Type</label>
+							<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'time period']" ng-change="typeChanged()"></select>
+						</div>
+						<div class="editor-option" ng-show="current.type === 'query'">
+							<label class="small">Datasource</label>
+							<select class="input input-medium" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
+						</div>
+						<div class="editor-option text-center" ng-show="current.type === 'query'">
+							<label class="small">Refresh on load <tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time.</tip></label>
+							<input type="checkbox" ng-model="current.refresh" ng-checked="current.refresh">
+						</div>
+					</div>
 
-			<div ng-show="current.type === 'time period'">
-				<div class="editor-option">
-					<label class="small">Values</label>
-					<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="name"></input>
-				</div>
-			</div>
+					<div ng-show="current.type === 'time period'">
+						<div class="editor-option">
+							<label class="small">Values</label>
+							<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="name"></input>
+						</div>
+					</div>
 
-			<div ng-show="current.type === 'query'">
-				<div class="editor-row">
-					<div class="editor-option form-inline">
-						<label class="small">Variable values query</label>
-						<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
-						<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+					<div ng-show="current.type === 'query'">
+						<div class="editor-row">
+							<div class="editor-option form-inline">
+								<label class="small">Variable values query</label>
+								<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
+								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+							</div>
+						</div>
+
+						<div class="editor-row" style="margin: 15px 0">
+							<div class="editor-option form-inline">
+								<label class="small">regex (optional, if you want to extract part of a series name or metric node segment)</label>
+								<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
+								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'execute query'" data-placement="right"><i class="icon-play"></i></button>
+							</div>
+						</div>
+
+						<div class="editor-row" style="margin: 15px 0">
+							<div class="editor-option text-center">
+								<label class="small">All option</label>
+								<input type="checkbox" ng-model="current.includeAll" ng-checked="current.includeAll" ng-change="runQuery()">
+							</div>
+							<div class="editor-option" ng-show="current.includeAll">
+								<label class="small">All format</label>
+								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['Glob', 'wildcard', 'regex wildcard', 'regex all values', 'comma list', 'custom']" ng-change="typeChanged()"></select>
+							</div>
+							<div class="editor-option" ng-show="current.includeAll">
+								<label class="small">All value</label>
+								<input type="text" class="input-xlarge" ng-disabled="true" ng-model='current.options[0].value'></input>
+							</div>
+						</div>
 					</div>
 				</div>
-
-				<div class="editor-row" style="margin-top: 10px;">
-					<div class="editor-option form-inline">
-						<label class="small">Regex (optional, if you want to extract part of a series name or metric node segment)</label>
-						<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
-						<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
-					</div>
-				</div>
-
-				<div class="editor-row" style="margin-top: 10px;">
-					<div class="editor-option form-inline">
-						<label class="small">Variable values</label>
-						<ul>
-							<li ng-repeat="option in current.options">
-								{{option.text}}
-							</li>
-						</ul>
+				<div class="editor-option">
+					<div class="editor-row">
+						<div class="editor-option" >
+							<label class="small">Variable values (first 20)</label>
+							<ul class="grafana-options-list">
+								<li ng-repeat="option in current.options | limitTo: 20">
+									{{option.text}}
+								</li>
+							</ul>
+					 	</div>
 					</div>
 				</div>
 			</div>

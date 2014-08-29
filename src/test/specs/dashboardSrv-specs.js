@@ -156,9 +156,8 @@ define([
       expect(model.annotations.list[0].name).to.be('old');
     });
 
-
     it('dashboard schema version should be set to latest', function() {
-      expect(model.version).to.be(5);
+      expect(model.version).to.be(6);
     });
 
   });
