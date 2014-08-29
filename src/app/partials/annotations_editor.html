@@ -19,7 +19,7 @@
 				<table class="grafana-options-table">
 					<tr ng-repeat="annotation in annotations">
 						<td style="width:90%">
-							<i class="icon-bolt"></i>
+							<i class="icon-bolt"></i> &nbsp;
 							{{annotation.name}}
 						</td>
 						<td style="width: 1%">
@@ -31,7 +31,7 @@
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
 						<td style="width: 1%">
-							<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
 								<i class="icon-remove"></i>
 							</a>
 						</td>
@@ -48,7 +48,7 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Datasource</label>
-					<select ng-model="currentDatasource" ng-options="f.name for f in datasources" ng-change="setDatasource()"></select>
+					<select ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
 				</div>
 				<div class="editor-option">
 					<label class="small">Icon color</label>
@@ -71,11 +71,12 @@
 			<div ng-include src="currentDatasource.editorSrc">
 			</div>
 
-			<button ng-show="currentIsNew" type="button" class="btn btn-success" ng-click="add()">Add annotation</button>
 		</div>
 	</div>
 
 	<div class="dashboard-editor-footer">
+		<button ng-show="editor.index === 1" type="button" class="btn btn-success" ng-click="add()">Add</button>
+		<button ng-show="editor.index === 2" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
 		<button type="button" class="btn btn-success pull-right" ng-click="close_edit();dismiss();dashboard.refresh();">Close</button>
 	</div>
 </div>

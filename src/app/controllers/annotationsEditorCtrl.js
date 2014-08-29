@@ -20,15 +20,10 @@ function (angular, _, $) {
     };
 
     $scope.init = function() {
-      $scope.currentAnnotation = angular.copy(annotationDefaults);
-      $scope.currentIsNew = true;
       $scope.editor = { index: 0 };
       $scope.datasources = datasourceSrv.getAnnotationSources();
       $scope.annotations = $scope.dashboard.annotations.list;
-
-      if ($scope.datasources.length > 0) {
-        $scope.currentDatasource = $scope.datasources[0];
-      }
+      $scope.reset();
 
       $scope.$watch('editor.index', function(newVal) {
         if (newVal !== 2) {
@@ -37,18 +32,17 @@ function (angular, _, $) {
       });
     };
 
-    $scope.setDatasource = function() {
-      $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
+    $scope.datasourceChanged = function() {
+      $scope.currentDatasource = _.findWhere($scope.datasources, { name: $scope.currentAnnotation.datasource });
+      if (!$scope.currentDatasource) {
+        $scope.currentDatasource = $scope.datasources[0];
+      }
     };
 
     $scope.edit = function(annotation) {
       $scope.currentAnnotation = annotation;
       $scope.currentIsNew = false;
-      $scope.currentDatasource = _.findWhere($scope.datasources, { name: annotation.datasource });
-
-      if (!$scope.currentDatasource) {
-        $scope.currentDatasource = $scope.datasources[0];
-      }
+      $scope.datasourceChanged();
 
       $scope.editor.index = 2;
       $(".tooltip.in").remove();
@@ -57,6 +51,13 @@ function (angular, _, $) {
     $scope.reset = function() {
       $scope.currentAnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
+      $scope.datasourceChanged();
+      $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
+    };
+
+    $scope.update = function() {
+      $scope.reset();
+      $scope.editor.index = 0;
     };
 
     $scope.add = function() {
