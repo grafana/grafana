@@ -216,7 +216,7 @@ function (angular, $, kbn, _, moment) {
           if (variable.datasource === void 0) { variable.datasource = null; }
           if (variable.type === 'filter') { variable.type = 'query'; }
           if (variable.type === void 0) { variable.type = 'query'; }
-          if (variable.allFormat === void 0) { variable.allFormat = 'Glob'; }
+          if (variable.allFormat === void 0) { variable.allFormat = 'glob'; }
         }
       }
 

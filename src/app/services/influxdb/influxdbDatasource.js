@@ -76,30 +76,32 @@ function (angular, _, kbn, InfluxSeries) {
           query = templateSrv.replace(query);
         }
         else {
+          query = 'select ';
+          var seriesName = target.series;
 
-          var template = "select [[group]][[group_comma]] [[func]]([[column]]) from [[series]] " +
-                         "where  [[timeFilter]] [[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
-                         "group by time([[interval]])[[group_comma]] [[group]] order asc";
-
-          var templateData = {
-            series: target.series,
-            column: target.column,
-            func: target.function,
-            timeFilter: timeFilter,
-            interval: target.interval || options.interval,
-            condition_add: target.condition_filter ? 'and' : '',
-            condition_key: target.condition_filter ? target.condition_key : '',
-            condition_op: target.condition_filter ? target.condition_op : '',
-            condition_value: target.condition_filter ? target.condition_value : '',
-            group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
-            group: target.groupby_field_add ? target.groupby_field : '',
-          };
-
-          if(!templateData.series.match('^/.*/')) {
-            templateData.series = '"' + templateData.series + '"';
+          if(!seriesName.match('^/.*/')) {
+            seriesName = '"' + seriesName+ '"';
           }
 
-          query = _.template(template, templateData, this.templateSettings);
+          if (target.groupby_field_add) {
+            query += target.groupby_field + ', ';
+          }
+
+          query +=  target.function + '(' + target.column + ')';
+          query += ' from ' + seriesName + ' where ' + timeFilter;
+
+          if (target.condition_filter) {
+            query += ' and ' + target.condition_expression;
+          }
+
+          query += ' group by time(' + (target.interval || options.interval) + ')';
+
+          if (target.groupby_field_add) {
+            query += ',' + target.groupby_field;
+          }
+
+          query += " order asc";
+
           query = templateSrv.replace(query);
 
           if (target.groupby_field_add) {
