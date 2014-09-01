@@ -124,7 +124,7 @@ function (angular, _, kbn, InfluxSeries) {
 
     };
 
-    InfluxDatasource.prototype.annotationQuery = function(annotation, filterSrv, rangeUnparsed) {
+    InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
       var query = _.template(annotation.query, { timeFilter: timeFilter }, this.templateSettings);
 
@@ -132,9 +132,14 @@ function (angular, _, kbn, InfluxSeries) {
         return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
       });
     };
-    InfluxDatasource.prototype.listColumns = function(seriesName) {
 
-      return this._seriesQuery('select * from /' + seriesName + '/ limit 1').then(function(data) {
+    InfluxDatasource.prototype.listColumns = function(seriesName) {
+      var interpolated = templateSrv.replace(seriesName);
+      if (interpolated[0] !== '/') {
+        interpolated = '/' + interpolated + '/';
+      }
+
+      return this._seriesQuery('select * from ' + interpolated + ' limit 1').then(function(data) {
         if (!data) {
           return [];
         }

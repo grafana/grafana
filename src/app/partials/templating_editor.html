@@ -101,7 +101,7 @@
 							</div>
 							<div class="editor-option" ng-show="current.includeAll">
 								<label class="small">All format</label>
-								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['Glob', 'wildcard', 'regex wildcard', 'regex all values', 'comma list', 'custom']" ng-change="typeChanged()"></select>
+								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex all values', 'comma list', 'custom']" ng-change="typeChanged()"></select>
 							</div>
 							<div class="editor-option" ng-show="current.includeAll">
 								<label class="small">All value</label>

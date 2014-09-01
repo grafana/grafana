@@ -154,7 +154,7 @@ define([
 
     describeUpdateVariable('with include All glob syntax', function(ctx) {
       ctx.setup(function() {
-        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'Glob' };
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'glob' };
         ctx.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
       });
 
@@ -162,6 +162,19 @@ define([
         expect(ctx.variable.options[0].value).to.be('{backend1,backend2,backend3}');
       });
     });
+
+    describeUpdateVariable('with include all regex wildcard', function(ctx) {
+      ctx.setup(function() {
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'wildcard' };
+        ctx.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add All wildcard option', function() {
+        expect(ctx.variable.options[0].value).to.be('*');
+      });
+    });
+
+
 
   });
 

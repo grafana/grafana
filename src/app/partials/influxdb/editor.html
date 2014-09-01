@@ -45,7 +45,7 @@
 				<ul class="grafana-segment-list" ng-show="target.rawQuery">
 					<li>
 						<input type="text"
-               class="grafana-target-segment-input span8"
+               class="grafana-target-text-input span10"
                ng-model="target.query"
                placeholder="select ..."
                focus-me="target.rawQuery"
@@ -55,10 +55,34 @@
 							 ng-blur="get_data()">
 					</li>
 
-					<li class="grafana-target-segment">
-            as
-          </li>
+				</ul>
 
+				<!-- Query editor mode -->
+        <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
+					<li class="grafana-target-segment">
+						from series
+					</li>
+          <li>
+            <input type="text"
+                   class="grafana-target-text-input span8"
+                   ng-model="target.series"
+                   spellcheck='false'
+                   bs-typeahead="listSeries"
+                   placeholder="series name"
+                   data-min-length=0 data-items=100
+                   ng-blur="seriesBlur()">
+          </li>
+        </ul>
+
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="grafana-target-inner">
+				<!-- Raw Query mode  -->
+				<ul class="grafana-segment-list" ng-show="target.rawQuery">
+					<li class="grafana-target-segment">
+            alias
+          </li>
           <li>
             <input type="text"
                    class="input-medium grafana-target-segment-input"
@@ -71,104 +95,93 @@
 
 				<!-- Query editor mode -->
         <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
-          <li>
-            <input type="text"
-                   class="input-large grafana-target-segment-input"
-                   ng-model="target.series"
-                   spellcheck='false'
-                   bs-typeahead="listSeries"
-                   placeholder="series name"
-                   data-min-length=0 data-items=100
-                   ng-blur="seriesBlur()">
-          </li>
+					<li class="grafana-target-segment">
+						select
+					</li>
+					<li class="dropdown">
+						<span influxdb-func-editor class="grafana-target-segment grafana-target-function">
+						</span>
+					</li>
 
-          <li class="grafana-target-segment">
-            select
-          </li>
+					<li class="grafana-target-segment">
+						alias
+					</li>
 
-          <li class="dropdown">
-            <span influxdb-func-editor class="grafana-target-segment grafana-target-function">
-            </span>
-          </li>
+					<li>
+						<input type="text"
+						class="input-medium grafana-target-segment-input"
+						ng-model="target.alias"
+						spellcheck='false'
+						placeholder="alias"
+						ng-blur="get_data()">
+					</li>
+					<li>
+						<a class="grafana-target-segment"
+							ng-click="target.condition_filter = !target.condition_filter; get_data();"
+							bs-tooltip="'Add a where clause'"
+							role="menuitem">
+							<i class="icon-filter"></i>
+						</a>
+					</li>
+					<li ng-show="target.condition_filter">
+						<input type="text"
+						class="input-small grafana-target-segment-input"
+						ng-model="target.condition_key"
+						placeholder="key"
+						spellcheck='false'
+						bs-typeahead="listColumns"
+						data-min-length=0
+						ng-blur="get_data()">
+						<select class="input-mini grafana-target-segment-input"
+							ng-change="get_data()"
+							ng-model="target.condition_op"
+							ng-options="f for f in operators" ></select>
+						<input type="text"
+						class="input-small grafana-target-segment-input"
+						ng-model="target.condition_value"
+						placeholder="value"
+						spellcheck='false'
+						data-min-length=0
+						ng-blur="get_data()">
+					</li>
+					<li class="grafana-target-segment">
+						group by time
+					</li>
 
-          <li>
-            <a class="grafana-target-segment"
-               ng-click="target.condition_filter = !target.condition_filter; get_data();"
-               bs-tooltip="'Add a where clause'"
-               role="menuitem">
-              <i class="icon-filter"></i>
-            </a>
-          </li>
-          <li ng-show="target.condition_filter">
-            <input type="text"
-                   class="input-small grafana-target-segment-input"
-                   ng-model="target.condition_key"
-                   placeholder="key"
-                   spellcheck='false'
-                   bs-typeahead="listColumns"
-                   data-min-length=0
-                   ng-blur="get_data()">
-            <select class="input-mini grafana-target-segment-input"
-                    ng-change="get_data()"
-                    ng-model="target.condition_op"
-                    ng-options="f for f in operators" ></select>
-            <input type="text"
-                   class="input-small grafana-target-segment-input"
-                   ng-model="target.condition_value"
-                   placeholder="value"
-                   spellcheck='false'
-                   data-min-length=0
-                   ng-blur="get_data()">
-          </li>
-          <li class="grafana-target-segment">
-            group by time
-          </li>
+					<li>
+						<input type="text"
+						class="input-mini grafana-target-segment-input"
+						ng-model="target.interval"
+						placeholder="{{interval}}"
+						bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+						spellcheck='false'
+						ng-model-onblur ng-change="get_data()" >
+					</li>
+					<li>
+						<a class="grafana-target-segment"
+							ng-click="target.groupby_field_add = !target.groupby_field_add; get_data();"
+							bs-tooltip="'Add a group by column'"
+							role="menuitem">
+							<i class="icon-plus"></i>
+						</a>
+					</li>
 
-          <li>
-            <input type="text"
-                   class="input-mini grafana-target-segment-input"
-                   ng-model="target.interval"
-                   placeholder="{{interval}}"
-                   bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
-                   spellcheck='false'
-                   ng-model-onblur ng-change="get_data()" >
-          </li>
-          <li>
-            <a class="grafana-target-segment"
-               ng-click="target.groupby_field_add = !target.groupby_field_add; get_data();"
-               bs-tooltip="'Add a group by column'"
-               role="menuitem">
-              <i class="icon-plus"></i>
-            </a>
-          </li>
+					<li ng-show="target.groupby_field_add">
+						<input type="text"
+						class="input-small grafana-target-segment-input"
+						ng-model="target.groupby_field"
+						placeholder="column"
+						spellcheck="false"
+						bs-typeahead="listColumns"
+						data-min-length=0
+						ng-blur="get_data()">
+					</li>
 
-          <li ng-show="target.groupby_field_add">
-            <input type="text"
-                   class="input-small grafana-target-segment-input"
-                   ng-model="target.groupby_field"
-                   placeholder="column"
-                   spellcheck="false"
-                   bs-typeahead="listColumns"
-                   data-min-length=0
-                   ng-blur="get_data()">
-          </li>
-
-          <li class="grafana-target-segment">
-            as
-          </li>
-
-          <li>
-            <input type="text"
-                   class="input-medium grafana-target-segment-input"
-                   ng-model="target.alias"
-                   spellcheck='false'
-                   placeholder="alias"
-                   ng-blur="get_data()">
-          </li>
         </ul>
 
         <div class="clearfix"></div>
       </div>
+
     </div>
   </div>
 </div>
