@@ -214,6 +214,7 @@ function (angular, $, kbn, _, moment) {
         for (i = 0 ; i < this.templating.list.length; i++) {
           var variable = this.templating.list[i];
           if (variable.datasource === void 0) { variable.datasource = null; }
+          if (variable.type === 'filter') { variable.type = 'query'; }
           if (variable.type === void 0) { variable.type = 'query'; }
           if (variable.allFormat === void 0) { variable.allFormat = 'Glob'; }
         }

@@ -2,9 +2,8 @@ define([
   'angular',
   'lodash',
   'kbn',
-  'store'
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -30,7 +29,7 @@ function (angular, _) {
 
       templateSrv.updateTemplateData();
 
-      return this.applyFilterToOtherFilters(variable)
+      return this.updateOptionsInChildVariables(variable)
         .then(function() {
           if (!recursive) {
             $rootScope.$broadcast('refresh');
@@ -38,7 +37,7 @@ function (angular, _) {
         });
     };
 
-    this.applyFilterToOtherFilters = function(updatedVariable) {
+    this.updateOptionsInChildVariables = function(updatedVariable) {
       var promises = _.map(self.variables, function(otherVariable) {
         if (otherVariable === updatedVariable) {
           return;
@@ -63,9 +62,8 @@ function (angular, _) {
       var datasource = datasourceSrv.get(variable.datasource);
       return datasource.metricFindQuery(variable.query)
         .then(function (results) {
-          variable.options = _.map(results, function(node) {
-            return { text: node.text, value: node.text };
-          });
+
+          variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
             self.addAllOption(variable);
@@ -82,6 +80,31 @@ function (angular, _) {
 
           return self.setVariableValue(variable, variable.options[0], true);
         });
+    };
+
+    this.metricNamesToVariableValues = function(variable, metricNames) {
+      var regex, options, i, matches;
+      options = [];
+
+      if (variable.regex) {
+        regex = kbn.stringToJsRegex(variable.regex);
+      }
+
+      for (i = 0; i < metricNames.length; i++) {
+        var value = metricNames[i].text;
+
+        if (regex) {
+          matches = regex.exec(value);
+          if (!matches) { continue; }
+          if (matches.length > 1) {
+            value = matches[1];
+          }
+        }
+
+        options.push({text: value, value: value});
+      }
+
+      return options;
     };
 
     this.addAllOption = function(variable) {

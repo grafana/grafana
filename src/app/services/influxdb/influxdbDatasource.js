@@ -161,7 +161,7 @@ function (angular, _, kbn, InfluxSeries) {
       });
     };
 
-    InfluxDatasource.prototype.metricFindQuery = function (filterSrv, query) {
+    InfluxDatasource.prototype.metricFindQuery = function (query) {
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);

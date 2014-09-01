@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -38,7 +38,10 @@ function (angular, _) {
     };
 
     $scope.runQuery = function() {
-      templateValuesSrv.updateOptions($scope.current);
+      return templateValuesSrv.updateOptions($scope.current).then(function() {
+      }, function(err) {
+        alertSrv.set('Templating', 'Failed to run query for variable values: ' + err.message, 'error');
+      });
     };
 
     $scope.edit = function(variable) {
@@ -54,9 +57,10 @@ function (angular, _) {
     };
 
     $scope.update = function() {
-      templateValuesSrv.updateOptions($scope.current);
-      $scope.reset();
-      $scope.editor.index = 0;
+      $scope.runQuery().then(function() {
+        $scope.reset();
+        $scope.editor.index = 0;
+      });
     };
 
     $scope.reset = function() {
@@ -67,9 +71,6 @@ function (angular, _) {
     $scope.typeChanged = function () {
       if ($scope.current.type === 'time period') {
         $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
-      }
-      else {
-        $scope.current.query = '';
       }
     };
 

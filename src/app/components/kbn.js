@@ -652,5 +652,14 @@ function($, _, moment) {
     }
   };
 
+  kbn.stringToJsRegex = function(str) {
+    if (str[0] !== '/') {
+      return new RegExp(str);
+    }
+
+    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+    return new RegExp(match[1], match[2]);
+  };
+
   return kbn;
 });

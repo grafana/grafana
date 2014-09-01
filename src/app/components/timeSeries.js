@@ -15,8 +15,7 @@ function (_, kbn) {
     if (!aliasOrRegex) { return false; }
 
     if (aliasOrRegex[0] === '/') {
-      var match = aliasOrRegex.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
-      var regex = new RegExp(match[1], match[2]);
+      var regex = kbn.stringToJsRegex(aliasOrRegex);
       return seriesAlias.match(regex) != null;
     }
 
