@@ -147,7 +147,7 @@ function (angular, _, $) {
             $funcLink.appendTo(elem);
 
             _.each(funcDef.params, function(param, index) {
-              if (param.optional && !func.params[index]) {
+              if (param.optional && func.params.length !== index + 1) {
                 return;
               }
 

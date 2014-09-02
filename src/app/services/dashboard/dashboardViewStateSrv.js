@@ -21,10 +21,6 @@ function (angular, _, $) {
         }
       };
 
-      $scope.onAppEvent('dashboard-saved', function() {
-        self.update({ fullscreen: false });
-      });
-
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
         if (self.needsSync(urlState)) {

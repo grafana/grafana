@@ -280,8 +280,8 @@ function (_) {
   addFuncDef({
     name: 'nonNegativeDerivative',
     category: categories.Transform,
-    params: [{ name: "max value or 0", type: "int", }],
-    defaultParams: [0]
+    params: [{ name: "max value or 0", type: "int", optional: true }],
+    defaultParams: ['']
   });
 
   addFuncDef({
