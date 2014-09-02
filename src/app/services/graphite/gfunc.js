@@ -58,13 +58,20 @@ function (_) {
   });
 
   addFuncDef({
-    name: 'sumSeries',
-    shortName: 'sum',
-    category: categories.Combine,
+    name: 'diffSeries',
+    category: categories.Calculate,
   });
 
   addFuncDef({
-    name: 'diffSeries',
+    name: 'asPercent',
+    params: [{ name: 'other', type: 'value_or_series', optional: true }],
+    defaultParams: ['$B'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'sumSeries',
+    shortName: 'sum',
     category: categories.Combine,
   });
 
@@ -490,9 +497,16 @@ function (_) {
 
   FuncInstance.prototype.render = function(metricExp) {
     var str = this.def.name + '(';
-    var parameters = _.map(this.params, function(value) {
-      return _.isString(value) ? "'" + value + "'" : value;
-    });
+    var parameters = _.map(this.params, function(value, index) {
+
+      var paramType = this.def.params[index].type;
+      if (paramType === 'int' || paramType === 'value_or_series') {
+        return value;
+      }
+
+      return "'" + value + "'";
+
+    }, this);
 
     if (metricExp !== undefined) {
       parameters.unshift(metricExp);

@@ -168,17 +168,14 @@ function (angular, _, config, gfunc, Parser) {
         });
     };
 
-    $scope.setSegment = function (altIndex, segmentIndex) {
+    $scope.segmentValueChanged = function (segment, segmentIndex) {
       delete $scope.parserError;
-
-      $scope.segments[segmentIndex].value = $scope.altSegments[altIndex].value;
-      $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
         $scope.functions = [];
       }
 
-      if ($scope.altSegments[altIndex].expandable) {
+      if (segment.expandable) {
         return checkOtherSegments(segmentIndex + 1)
           .then(function () {
             setSegmentFocus(segmentIndex + 1);

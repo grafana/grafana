@@ -55,6 +55,12 @@ define([
       expect(func.render(undefined)).to.equal("randomWalk('test')");
     });
 
+    it('should handle function multiple series params', function() {
+      var func = gfunc.createFuncInstance('asPercent');
+      func.params[0] = '$B';
+      expect(func.render('$A')).to.equal("asPercent($A,$B)");
+    });
+
   });
 
   describe('when requesting function categories', function() {
