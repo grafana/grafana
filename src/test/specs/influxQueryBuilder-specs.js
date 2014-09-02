@@ -39,7 +39,7 @@ define([
 
       it('should generate correct query', function() {
         expect(query).to.be('select host, mean(value) from asd.asd where [[$timeFilter]] and time > now() - 1h ' +
-          ' group by time(1s), code order asc');
+          'group by time(1s), code order asc');
       });
 
       it('should expose groupByFiled', function() {
