@@ -8,6 +8,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
+    beforeEach(ctx.providePhase());
     beforeEach(ctx.createService('InfluxDatasource'));
 
     describe('When querying influxdb with one target using query editor target spec', function() {

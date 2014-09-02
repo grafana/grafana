@@ -84,7 +84,7 @@ function (angular, _, kbn) {
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
       var regex, options, i, matches;
-      options = [];
+      options = {}; // use object hash to remove duplicates
 
       if (variable.regex) {
         regex = kbn.stringToJsRegex(variable.regex);
@@ -101,10 +101,12 @@ function (angular, _, kbn) {
           }
         }
 
-        options.push({text: value, value: value});
+        options[value] = value;
       }
 
-      return options;
+      return _.map(_.keys(options), function(key) {
+        return { text: key, value: key };
+      });
     };
 
     this.addAllOption = function(variable) {

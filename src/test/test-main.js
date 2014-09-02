@@ -121,6 +121,8 @@ require([
     'specs/timeSeries-specs',
     'specs/row-ctrl-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/influxSeries-specs',
+    'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/grafanaGraph-specs',
@@ -130,8 +132,7 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs',
-    'specs/influxSeries-specs'
+    'specs/dashboardViewStateSrv-specs'
   ], function () {
     window.__karma__.start();
   });

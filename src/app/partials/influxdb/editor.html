@@ -72,6 +72,16 @@
                    data-min-length=0 data-items=100
                    ng-blur="seriesBlur()">
           </li>
+
+					<li class="grafana-target-segment">
+						alias
+					</li>
+
+					<li>
+						<input type="text" class="input-medium grafana-target-text-input" ng-model="target.alias"
+						spellcheck='false' placeholder="alias" ng-blur="get_data()">
+					</li>
+
         </ul>
 
         <div class="clearfix"></div>
@@ -102,16 +112,6 @@
 						<span influxdb-func-editor class="grafana-target-segment grafana-target-function">
 						</span>
 					</li>
-
-					<li class="grafana-target-segment">
-						alias
-					</li>
-
-					<li>
-						<input type="text" class="input-medium grafana-target-segment-input" ng-model="target.alias"
-									 spellcheck='false' placeholder="alias" ng-blur="get_data()">
-					</li>
-
 					<li>
 						<a class="grafana-target-segment" ng-click="target.condition_filter = !target.condition_filter; get_data();"
 								bs-tooltip="'Add a where clause'" role="menuitem" data-placement="right">
@@ -129,7 +129,7 @@
 					</li>
 
 					<li>
-						<input type="text" class="input-mini grafana-target-segment-input" ng-model="target.interval"
+						<input type="text" class="input-mini grafana-target-text-input" ng-model="target.interval"
 									 spellcheck='false' placeholder="{{interval}}" data-placement="right"
 									 bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
 									 ng-model-onblur ng-change="get_data()" >
@@ -142,7 +142,7 @@
 					</li>
 
 					<li ng-show="target.groupby_field_add">
-						<input type="text" class="input-small grafana-target-segment-input" ng-model="target.groupby_field"
+						<input type="text" class="input-small grafana-target-text-input" ng-model="target.groupby_field"
 									 placeholder="column" spellcheck="false" bs-typeahead="listColumns" data-min-length=0 ng-blur="get_data()">
 					</li>
 

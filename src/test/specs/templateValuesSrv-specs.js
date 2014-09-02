@@ -140,6 +140,18 @@ define([
       });
     });
 
+   describeUpdateVariable('regex pattern remove duplicates', function(ctx) {
+      ctx.setup(function() {
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test' };
+        ctx.variable.regex = 'backend_01';
+        ctx.queryResult = [{text: 'apps.backend.backend_01.counters.req'}, {text: 'apps.backend.backend_01.counters.req'}];
+      });
+
+      it('should return matches options', function() {
+        expect(ctx.variable.options.length).to.be(1);
+      });
+    });
+
     describeUpdateVariable('and existing value still exists in options', function(ctx) {
       ctx.setup(function() {
         ctx.variable = { type: 'query', query: 'apps.*', name: 'test' };
@@ -163,7 +175,29 @@ define([
       });
     });
 
-    describeUpdateVariable('with include all regex wildcard', function(ctx) {
+    describeUpdateVariable('with include all wildcard', function(ctx) {
+      ctx.setup(function() {
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'wildcard' };
+        ctx.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add All wildcard option', function() {
+        expect(ctx.variable.options[0].value).to.be('*');
+      });
+    });
+
+    describeUpdateVariable('with include all wildcard', function(ctx) {
+      ctx.setup(function() {
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex wildcard' };
+        ctx.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add All wildcard option', function() {
+        expect(ctx.variable.options[0].value).to.be('.*');
+      });
+    });
+
+    describeUpdateVariable('with include all regex values', function(ctx) {
       ctx.setup(function() {
         ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'wildcard' };
         ctx.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];

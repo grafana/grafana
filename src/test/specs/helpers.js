@@ -1,6 +1,7 @@
 define([
-    'kbn'
-], function(kbn) {
+    'kbn',
+    'lodash'
+], function(kbn, _) {
   'use strict';
 
   function ControllerTestContext() {
@@ -47,10 +48,17 @@ define([
 
   function ServiceTestContext() {
     var self = this;
+    self.templateSrv = new TemplateSrvStub();
+
+    this.providePhase = function() {
+     return module(function($provide) {
+        $provide.value('templateSrv', self.templateSrv);
+      });
+    };
 
     this.createService = function(name) {
-      return inject([name, '$q', '$rootScope', '$httpBackend', function(InfluxDatasource, $q, $rootScope, $httpBackend) {
-        self.service = InfluxDatasource;
+      return inject([name, '$q', '$rootScope', '$httpBackend', function(service, $q, $rootScope, $httpBackend) {
+        self.service = service;
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
@@ -82,10 +90,15 @@ define([
 
   function TemplateSrvStub() {
     this.variables = [];
-    this.replace = function() {};
+    this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
+    this.data = {};
+    this.replace = function(text) {
+      return _.template(text, this.data,  this.templateSettings);
+    };
+    this.setGrafanaVariable = function(name, value) {
+      this.data[name] = value;
+    };
   }
-
-
 
   return {
     ControllerTestContext: ControllerTestContext,

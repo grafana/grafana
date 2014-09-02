@@ -34,6 +34,10 @@ function (angular, _) {
       this._templateData = _templateData;
     };
 
+    this.setGrafanaVariable = function(name, value) {
+      this._templateData[name] = value;
+    };
+
     this.replace = function(target) {
       if (!target || target.indexOf('[[') === -1) {
         return target;

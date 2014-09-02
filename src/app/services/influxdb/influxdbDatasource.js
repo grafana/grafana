@@ -2,9 +2,10 @@ define([
   'angular',
   'lodash',
   'kbn',
-  './influxSeries'
+  './influxSeries',
+  './influxQueryBuilder'
 ],
-function (angular, _, kbn, InfluxSeries) {
+function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -32,90 +33,25 @@ function (angular, _, kbn, InfluxSeries) {
     }
 
     InfluxDatasource.prototype.query = function(options) {
-      var promises = _.map(options.targets, function(target) {
-        var query;
-        var alias = '';
+      var timeFilter = getTimeFilter(options);
 
+      var promises = _.map(options.targets, function(target) {
         if (target.hide || !((target.series && target.column) || target.query)) {
           return [];
         }
 
-        var timeFilter = getTimeFilter(options);
-        var groupByField;
+        // build query
+        var queryBuilder = new InfluxQueryBuilder(target);
+        var query = queryBuilder.build();
 
-        if (target.rawQuery) {
-          query = target.query;
-          query = query.replace(";", "");
-          var queryElements = query.split(" ");
-          var lowerCaseQueryElements = query.toLowerCase().split(" ");
-          var whereIndex = lowerCaseQueryElements.indexOf("where");
-          var groupByIndex = lowerCaseQueryElements.indexOf("group");
-          var orderIndex = lowerCaseQueryElements.indexOf("order");
+        // replace templated variables
+        templateSrv.setGrafanaVariable('$timeFilter', timeFilter);
+        templateSrv.setGrafanaVariable('$interval', (target.interval || options.interval));
+        query = templateSrv.replace(query);
 
-          if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
-            groupByField = lowerCaseQueryElements[1].replace(',', '');
-          }
+        var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-          if (whereIndex !== -1) {
-            queryElements.splice(whereIndex + 1, 0, timeFilter, "and");
-          }
-          else {
-            if (groupByIndex !== -1) {
-              queryElements.splice(groupByIndex, 0, "where", timeFilter);
-            }
-            else if (orderIndex !== -1) {
-              queryElements.splice(orderIndex, 0, "where", timeFilter);
-            }
-            else {
-              queryElements.push("where");
-              queryElements.push(timeFilter);
-            }
-          }
-
-          query = queryElements.join(" ");
-          query = templateSrv.replace(query);
-        }
-        else {
-          query = 'select ';
-          var seriesName = target.series;
-
-          if(!seriesName.match('^/.*/')) {
-            seriesName = '"' + seriesName+ '"';
-          }
-
-          if (target.groupby_field_add) {
-            query += target.groupby_field + ', ';
-          }
-
-          query +=  target.function + '(' + target.column + ')';
-          query += ' from ' + seriesName + ' where ' + timeFilter;
-
-          if (target.condition_filter) {
-            query += ' and ' + target.condition_expression;
-          }
-
-          query += ' group by time(' + (target.interval || options.interval) + ')';
-
-          if (target.groupby_field_add) {
-            query += ',' + target.groupby_field;
-          }
-
-          query += " order asc";
-
-          query = templateSrv.replace(query);
-
-          if (target.groupby_field_add) {
-            groupByField = target.groupby_field;
-          }
-
-          target.query = query;
-        }
-
-        if (target.alias) {
-          alias = templateSrv.replace(target.alias);
-        }
-
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, groupByField);
+        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
         return this._seriesQuery(query).then(handleResponse);
 
       }, this);
@@ -123,12 +59,11 @@ function (angular, _, kbn, InfluxSeries) {
       return $q.all(promises).then(function(results) {
         return { data: _.flatten(results) };
       });
-
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
-      var query = _.template(annotation.query, { timeFilter: timeFilter }, this.templateSettings);
+      var query = _.template(annotation.query, { timeFilter: timeFilter, "$timeFilter": timeFilter }, this.templateSettings);
 
       return this._seriesQuery(query).then(function(results) {
         return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();

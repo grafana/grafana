@@ -11,8 +11,17 @@ function (angular) {
   module.controller('InfluxTargetCtrl', function($scope, $timeout) {
 
     $scope.init = function() {
-      $scope.target.function = $scope.target.function || 'mean';
-      $scope.target.column = $scope.target.column || 'value';
+      var target = $scope.target;
+
+      target.function = target.function || 'mean';
+      target.column = target.column || 'value';
+
+      if (target.condition_value) {
+        target.condition_expression = target.condition_key + ' ' + target.condition_op + ' ' + target.condition_value;
+        delete target.condition_key;
+        delete target.condition_op;
+        delete target.condition_value;
+      }
 
       $scope.rawQuery = false;
 
@@ -24,7 +33,7 @@ function (angular) {
       ];
 
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
-      $scope.oldSeries = $scope.target.series;
+      $scope.oldSeries = target.series;
       $scope.$on('typeahead-updated', function() {
         $timeout($scope.get_data);
       });
