@@ -64,6 +64,59 @@ define([
       });
     });
 
+    describe('when adding function before any metric segment', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = '';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: true}]));
+        ctx.scope.init();
+        ctx.scope.$digest();
+
+        ctx.scope.$parent = { get_data: sinon.spy() };
+        ctx.scope.addFunction(gfunc.getFuncDef('asPercent'));
+      });
+
+      it('should add function and remove select metric link', function() {
+        expect(ctx.scope.segments.length).to.be(0);
+      });
+    });
+
+    describe('when initalizing target without metric expression and only function', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = 'asPercent(#A, #B)';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+        ctx.scope.init();
+        ctx.scope.$digest();
+        ctx.scope.$parent = { get_data: sinon.spy() };
+      });
+
+      it('should not add select metric segment', function() {
+        expect(ctx.scope.segments.length).to.be(0);
+      });
+
+      it('should add both series refs as params', function() {
+        expect(ctx.scope.functions[0].params.length).to.be(2);
+      });
+
+    });
+
+    describe('when initalizing target without metric expression and function with series-ref', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = 'asPercent(metric.node.count, #A)';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+        ctx.scope.init();
+        ctx.scope.$digest();
+        ctx.scope.$parent = { get_data: sinon.spy() };
+      });
+
+      it('should add segments', function() {
+        expect(ctx.scope.segments.length).to.be(3);
+      });
+
+      it('should have correct func params', function() {
+        expect(ctx.scope.functions[0].params.length).to.be(1);
+      });
+    });
+
     describe('targetChanged', function() {
       beforeEach(function() {
         ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));

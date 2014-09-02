@@ -69,7 +69,6 @@ function (angular, _, $) {
 
           function inputBlur(paramIndex) {
             /*jshint validthis:true */
-
             var $input = $(this);
             var $link = $input.prev();
 
@@ -88,7 +87,6 @@ function (angular, _, $) {
 
           function inputKeyPress(paramIndex, e) {
             /*jshint validthis:true */
-
             if(e.which === 13) {
               inputBlur.call(this, paramIndex);
             }
@@ -147,7 +145,7 @@ function (angular, _, $) {
             $funcLink.appendTo(elem);
 
             _.each(funcDef.params, function(param, index) {
-              if (param.optional && func.params.length !== index + 1) {
+              if (param.optional && func.params.length <= index) {
                 return;
               }
 

@@ -64,10 +64,7 @@ function (angular, app, _, $) {
           };
 
           $scope.source = function(query, callback) {
-            console.log("source!", callback);
-            if (options) {
-              return options;
-            }
+            if (options) { return options; }
 
             $scope.$apply(function() {
               $scope.getAltSegments($scope.$index).then(function() {

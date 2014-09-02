@@ -210,31 +210,50 @@ function (angular, _, $, config, kbn, moment) {
       return $http(options);
     };
 
+    GraphiteDatasource.prototype._seriesRefLetters = [
+      '#A', '#B', '#C', '#D',
+      '#E', '#F', '#G', '#H',
+      '#I', '#J', '#K', '#L',
+      '#M', '#N', '#O'
+    ];
+
     GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
-      var clean_options = [];
-      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+      var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+      var clean_options = [], targets = {};
+      var target, targetValue, i;
+      var regex = /(\#[A-Z])/g;
 
       if (options.format !== 'png') {
         options['format'] = 'json';
       }
 
-      _.each(options, function (value, key) {
-        if ($.inArray(key, graphite_options) === -1) {
-          return;
+      for (i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        targetValue = templateSrv.replace(target.target);
+        targets[this._seriesRefLetters[i]] = targetValue;
+      }
+
+      function nestedSeriesRegexReplacer(match) {
+        return targets[match];
+      }
+
+      for (i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        if (!target.target || target.hide) {
+          continue;
         }
 
-        if (key === "targets") {
-          _.each(value, function (value) {
-            if (value.target && !value.hide) {
-              var targetValue = templateSrv.replace(value.target);
-              clean_options.push("target=" + encodeURIComponent(targetValue));
-            }
-          }, this);
-        }
-        else if (value) {
-          clean_options.push(key + "=" + encodeURIComponent(value));
-        }
-      }, this);
+        targetValue = targets[this._seriesRefLetters[i]];
+        targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
+
+        clean_options.push("target=" + encodeURIComponent(targetValue));
+      }
+
+      _.each(options, function (value, key) {
+        if ($.inArray(key, graphite_options) === -1) { return; }
+        clean_options.push(key + "=" + encodeURIComponent(value));
+      });
+
       return clean_options;
     };
 

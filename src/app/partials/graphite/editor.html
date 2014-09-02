@@ -47,6 +47,9 @@
       </ul>
 
       <ul class="grafana-target-controls-left">
+				<li class="grafana-target-segment" style="min-width: 15px; text-align: center">
+					{{targetLetter}}
+        </li>
         <li>
           <a  class="grafana-target-segment"
               ng-click="target.hide = !target.hide; get_data();"
@@ -65,9 +68,7 @@
               ng-show="showTextEditor" />
 
       <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
-        <li ng-repeat="segment in segments" role="menuitem" graphite-segment>
-
-        </li>
+        <li ng-repeat="segment in segments" role="menuitem" graphite-segment></li>
 				<li ng-repeat="func in functions">
           <span graphite-func-editor class="grafana-target-segment grafana-target-function">
           </span>

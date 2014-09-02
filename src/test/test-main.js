@@ -121,6 +121,7 @@ require([
     'specs/timeSeries-specs',
     'specs/row-ctrl-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',

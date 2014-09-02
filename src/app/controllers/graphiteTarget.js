@@ -9,11 +9,13 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
+  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
   module.controller('GraphiteTargetCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';
+      $scope.targetLetter = targetLetters[$scope.$index];
 
       parseTarget();
     };
@@ -69,6 +71,14 @@ function (angular, _, config, gfunc, Parser) {
         $scope.functions.push(innerFunc);
         break;
 
+      case 'series-ref':
+        if ($scope.segments.length === 0) {
+          func.params[index] = astNode.value;
+        }
+        else {
+          func.params[index - 1] = astNode.value;
+        }
+        break;
       case 'string':
       case 'number':
         if ((index-1) >= func.def.params.length) {
@@ -81,9 +91,7 @@ function (angular, _, config, gfunc, Parser) {
         else {
           func.params[index - 1] = astNode.value;
         }
-
         break;
-
       case 'metric':
         if ($scope.segments.length > 0) {
           throw { message: 'Multiple metric params not supported, use text editor.' };
@@ -113,8 +121,10 @@ function (angular, _, config, gfunc, Parser) {
       return $scope.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
-            $scope.segments = $scope.segments.splice(0, fromIndex);
-            $scope.segments.push(new MetricSegment('select metric'));
+            if (path !== '') {
+              $scope.segments = $scope.segments.splice(0, fromIndex);
+              $scope.segments.push(new MetricSegment('select metric'));
+            }
             return;
           }
           if (segments[0].expandable) {
@@ -144,8 +154,7 @@ function (angular, _, config, gfunc, Parser) {
     $scope.getAltSegments = function (index) {
       $scope.altSegments = [];
 
-      var query = index === 0 ?
-        '*' : getSegmentPathUpTo(index) + '.*';
+      var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
       return $scope.datasource.metricFindQuery(query)
         .then(function(segments) {
@@ -225,6 +234,10 @@ function (angular, _, config, gfunc, Parser) {
 
       if (!newFunc.params.length && newFunc.added) {
         $scope.targetChanged();
+      }
+
+      if ($scope.segments.length === 1 && $scope.segments[0].value === 'select metric') {
+        $scope.segments = [];
       }
     };
 

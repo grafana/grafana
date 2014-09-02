@@ -59,13 +59,23 @@ function (_) {
 
   addFuncDef({
     name: 'diffSeries',
+    params: [
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: 'other', type: 'value_or_series', optional: true }
+    ],
+    defaultParams: ['$B'],
     category: categories.Calculate,
   });
 
   addFuncDef({
     name: 'asPercent',
-    params: [{ name: 'other', type: 'value_or_series', optional: true }],
-    defaultParams: ['$B'],
+    params: [
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: 'other', type: 'value_or_series', optional: true }
+    ],
+    defaultParams: ['#A'],
     category: categories.Calculate,
   });
 
@@ -508,7 +518,7 @@ function (_) {
 
     }, this);
 
-    if (metricExp !== undefined) {
+    if (metricExp) {
       parameters.unshift(metricExp);
     }
 
