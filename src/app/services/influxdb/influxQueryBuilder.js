@@ -41,6 +41,7 @@ function () {
     }
 
     query += " order asc";
+    target.query = query;
 
     return query;
   };
