@@ -56,7 +56,7 @@ define([
       });
 
       it('should update target', function() {
-        expect(ctx.scope.target.target).to.be('aliasByNode(test.prod.*.count,2)');
+        expect(ctx.scope.target.target).to.be('aliasByNode(test.prod.*.count, 2)');
       });
 
       it('should call get_data', function() {
@@ -129,7 +129,7 @@ define([
       });
 
       it('should rebuld target after expression model', function() {
-        expect(ctx.scope.target.target).to.be('aliasByNode(scaleToSeconds(test.prod.*,1),2)');
+        expect(ctx.scope.target.target).to.be('aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
       });
 
       it('should call get_data', function() {

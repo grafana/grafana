@@ -40,6 +40,7 @@ function (angular, app, _, $, gfunc) {
               var funcDef = gfunc.getFuncDef(value);
               if (!funcDef) {
                 // try find close match
+                value = value.toLowerCase();
                 funcDef = _.find(allFunctions, function(funcName) {
                   return funcName.toLowerCase().indexOf(value) === 0;
                 });

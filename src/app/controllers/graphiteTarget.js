@@ -61,7 +61,7 @@ function (angular, _, config, gfunc, Parser) {
 
       switch(astNode.type) {
       case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name);
+        var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
           parseTargeRecursive(param, innerFunc, index);
@@ -225,19 +225,19 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.addFunction = function(funcDef) {
-      var newFunc = gfunc.createFuncInstance(funcDef);
+      var newFunc = gfunc.createFuncInstance(funcDef, { withDefaultParams: true });
       newFunc.added = true;
       $scope.functions.push(newFunc);
 
       $scope.moveAliasFuncLast();
       $scope.smartlyHandleNewAliasByNode(newFunc);
 
-      if (!newFunc.params.length && newFunc.added) {
-        $scope.targetChanged();
-      }
-
       if ($scope.segments.length === 1 && $scope.segments[0].value === 'select metric') {
         $scope.segments = [];
+      }
+
+      if (!newFunc.params.length && newFunc.added) {
+        $scope.targetChanged();
       }
     };
 

@@ -9,9 +9,8 @@ define([
       var func = gfunc.createFuncInstance('sumSeries');
       expect(func).to.be.ok();
       expect(func.def.name).to.equal('sumSeries');
-      expect(func.def.params.length).to.equal(0);
-      expect(func.def.defaultParams.length).to.equal(0);
-      expect(func.def.defaultParams.length).to.equal(0);
+      expect(func.def.params.length).to.equal(5);
+      expect(func.def.defaultParams.length).to.equal(1);
     });
 
     it('should return func instance with shortName', function() {
@@ -42,11 +41,16 @@ define([
       expect(func.render('hello.metric')).to.equal("sumSeries(hello.metric)");
     });
 
+    it('should include default params if options enable it', function() {
+      var func = gfunc.createFuncInstance('scaleToSeconds', { withDefaultParams: true });
+      expect(func.render('hello')).to.equal("scaleToSeconds(hello, 1)");
+    });
+
     it('should handle metric param and int param and string param', function() {
       var func = gfunc.createFuncInstance('groupByNode');
       func.params[0] = 5;
       func.params[1] = 'avg';
-      expect(func.render('hello.metric')).to.equal("groupByNode(hello.metric,5,'avg')");
+      expect(func.render('hello.metric')).to.equal("groupByNode(hello.metric, 5, 'avg')");
     });
 
     it('should handle function with no metric param', function() {
@@ -57,8 +61,8 @@ define([
 
     it('should handle function multiple series params', function() {
       var func = gfunc.createFuncInstance('asPercent');
-      func.params[0] = '$B';
-      expect(func.render('$A')).to.equal("asPercent($A,$B)");
+      func.params[0] = '#B';
+      expect(func.render('#A')).to.equal("asPercent(#A, #B)");
     });
 
   });
@@ -72,7 +76,7 @@ define([
 
   describe('when updating func param', function() {
     it('should update param value and update text representation', function() {
-      var func = gfunc.createFuncInstance('summarize');
+      var func = gfunc.createFuncInstance('summarize', { withDefaultParams: true });
       func.updateParam('1h', 0);
       expect(func.params[0]).to.be('1h');
       expect(func.text).to.be('summarize(1h, sum)');
