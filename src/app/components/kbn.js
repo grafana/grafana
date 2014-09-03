@@ -8,6 +8,44 @@ function($, _, moment) {
 
   var kbn = {};
 
+  function round(value, diff) {
+    if(value === 0) {
+      return '0';
+    }
+
+    if(String(value).indexOf('e') !== -1) {
+      return String(value);
+    }
+
+    var x;
+    if(typeof diff === 'undefined') {
+      x = 2 - Math.log(value > 0 ? value : -value) / Math.LN10;
+    }
+    else {
+      x = Math.log(diff) / Math.LN10;
+    }
+    return value.toFixed(2 - x > 0 ? 2 - x : 0);
+  }
+
+   /**
+     * Calculate a graph interval
+     *
+     * from::           Date object containing the start time
+     * to::             Date object containing the finish time
+     * size::           Calculate to approximately this many bars
+     * user_interval::  User specified histogram interval
+     *
+     */
+  kbn.calculate_interval = function(from,to,size,user_interval) {
+    if(_.isObject(from)) {
+      from = from.valueOf();
+    }
+    if(_.isObject(to)) {
+      to = to.valueOf();
+    }
+    return user_interval === 0 ? kbn.round_interval((to - from)/size) : user_interval;
+  };
+
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
@@ -309,14 +347,8 @@ function($, _, moment) {
     ].join(';') + '"></div>';
   };
 
-  kbn.byteFormat = function(size, decimals) {
+  kbn.byteFormat = function(size, diff) {
     var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
 
     while (Math.abs(size) >= 1024) {
       steps++;
@@ -353,17 +385,11 @@ function($, _, moment) {
       break;
     }
 
-    return (size.toFixed(decimals) + ext);
+    return round(size, diff) + ext;
   };
 
-  kbn.bitFormat = function(size, decimals) {
+  kbn.bitFormat = function(size, diff) {
     var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
 
     while (Math.abs(size) >= 1024) {
       steps++;
@@ -400,17 +426,11 @@ function($, _, moment) {
       break;
     }
 
-    return (size.toFixed(decimals) + ext);
+    return round(size, diff) + ext;
   };
 
-  kbn.bpsFormat = function(size, decimals) {
+  kbn.bpsFormat = function(size, diff) {
     var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
 
     while (Math.abs(size) >= 1000) {
       steps++;
@@ -447,17 +467,11 @@ function($, _, moment) {
       break;
     }
 
-    return (size.toFixed(decimals) + ext);
+    return round(size, diff) + ext;
   };
 
-  kbn.shortFormat = function(size, decimals) {
+  kbn.shortFormat = function(size, diff) {
     var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
 
     while (Math.abs(size) >= 1000) {
       steps++;
@@ -494,164 +508,138 @@ function($, _, moment) {
       break;
     }
 
-    return (size.toFixed(decimals) + ext);
+    return round(size, diff) + ext;
   };
 
-  kbn.getFormatFunction = function(formatName, decimals) {
+  kbn.getFormatFunction = function(formatName, diff) {
     switch(formatName) {
     case 'short':
       return function(val) {
-        return kbn.shortFormat(val, decimals);
+        return kbn.shortFormat(val, diff);
       };
     case 'bytes':
       return function(val) {
-        return kbn.byteFormat(val, decimals);
+        return kbn.byteFormat(val, diff);
       };
     case 'bits':
       return function(val) {
-        return kbn.bitFormat(val, decimals);
+        return kbn.bitFormat(val, diff);
       };
     case 'bps':
       return function(val) {
-        return kbn.bpsFormat(val, decimals);
+        return kbn.bpsFormat(val, diff);
       };
     case 's':
       return function(val) {
-        return kbn.sFormat(val, decimals);
+        return kbn.sFormat(val, diff);
       };
     case 'ms':
       return function(val) {
-        return kbn.msFormat(val, decimals);
+        return kbn.msFormat(val, diff);
       };
     case 'µs':
       return function(val) {
-        return kbn.microsFormat(val, decimals);
+        return kbn.microsFormat(val, diff);
       };
     case 'ns':
       return function(val) {
-        return kbn.nanosFormat(val, decimals);
+        return kbn.nanosFormat(val, diff);
       };
     default:
-      return function(val, axis) {
-        return kbn.noneFormat(val, axis ? axis.tickDecimals : null);
+      return function(val) {
+        return round(val, diff);
       };
     }
   };
 
-  kbn.noneFormat = function(value, decimals) {
-    var factor = decimals ? Math.pow(10, decimals) : 1;
-    var formatted = String(Math.round(value * factor) / factor);
-
-    // if exponent return directly
-    if (formatted.indexOf('e') !== -1 || value === 0) {
-      return formatted;
-    }
-
-    // If tickDecimals was specified, ensure that we have exactly that
-    // much precision; otherwise default to the value's own precision.
-
-    if (decimals != null) {
-      var decimalPos = formatted.indexOf(".");
-      var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
-      if (precision < decimals) {
-        return (precision ? formatted : formatted + ".") + (String(factor)).substr(1, decimals - precision);
-      }
-    }
-
-    return formatted;
-  };
-
-  kbn.msFormat = function(size, decimals) {
+  kbn.msFormat = function(size, diff) {
     // Less than 1 milli, downscale to micro
     if (Math.abs(size) < 1) {
-      return kbn.microsFormat(size * 1000,decimals);
+      return kbn.microsFormat(size * 1000, diff);
     }
     else if (Math.abs(size) < 1000) {
-      return size.toFixed(decimals) + " ms";
+      return round(size, diff) + " ms";
     }
     // Less than 1 min
     else if (Math.abs(size) < 60000) {
-      return (size / 1000).toFixed(decimals) + " s";
+      return round(size / 1000, diff) + " s";
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600000) {
-      return (size / 60000).toFixed(decimals) + " min";
+      return round(size / 60000, diff) + " min";
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400000) {
-      return (size / 3600000).toFixed(decimals) + " hour";
+      return round(size / 3600000, diff) + " hour";
     }
     // Less than one year, devide in days
     else if (Math.abs(size) < 31536000000) {
-      return (size / 86400000).toFixed(decimals) + " day";
+      return round(size / 86400000, diff) + " day";
     }
 
-    return (size / 31536000000).toFixed(decimals) + " year";
+    return round(size / 31536000000, diff) + " year";
   };
 
-  kbn.sFormat = function(size, decimals) {
+  kbn.sFormat = function(size, diff) {
     // Less than 1 sec, downscale to milli
     if (Math.abs(size) < 1) {
-      return kbn.msFormat(size * 1000, decimals);
+      return kbn.msFormat(size * 1000, diff);
     }
     // Less than 10 min, use seconds
     else if (Math.abs(size) < 600) {
-      return size.toFixed(decimals) + " s";
+      return round(size, diff) + " s";
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600) {
-      return (size / 60).toFixed(decimals) + " min";
+      return round(size / 60, diff) + " min";
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400) {
-      return (size / 3600).toFixed(decimals) + " hour";
+      return round(size / 3600, diff) + " hour";
     }
     // Less than one week, devide in days
     else if (Math.abs(size) < 604800) {
-      return (size / 86400).toFixed(decimals) + " day";
+      return round(size / 86400, diff) + " day";
     }
     // Less than one year, devide in week
     else if (Math.abs(size) < 31536000) {
-      return (size / 604800).toFixed(decimals) + " week";
+      return round(size / 604800, diff) + " week";
     }
 
-    return (size / 3.15569e7).toFixed(decimals) + " year";
+    return round(size / 3.15569e7, diff) + " year";
   };
 
-  kbn.microsFormat = function(size, decimals) {
+  kbn.microsFormat = function(size, diff) {
     // Less than 1 micro, downscale to nano
     if (Math.abs(size) < 1) {
-      return kbn.nanosFormat(size * 1000, decimals);
+      return kbn.nanosFormat(size * 1000, diff);
     }
     else if (Math.abs(size) < 1000) {
-      return size.toFixed(decimals) + " µs";
+      return round(size, diff) + " µs";
     }
     else if (Math.abs(size) < 1000000) {
-      return (size / 1000).toFixed(decimals) + " ms";
+      return round(size / 1000, diff) + " ms";
     }
     else {
-      return (size / 1000000).toFixed(decimals) + " s";
+      return round(size / 1000000, diff) + " s";
     }
   };
 
-  kbn.nanosFormat = function(size, decimals) {
-    if (Math.abs(size) < 1) {
-      return size.toFixed(decimals) + " ns";
-    }
-    else if (Math.abs(size) < 1000) {
-      return size.toFixed(0) + " ns";
+  kbn.nanosFormat = function(size, diff) {
+    if (Math.abs(size) < 1000) {
+      return round(size, diff) + " ns";
     }
     else if (Math.abs(size) < 1000000) {
-      return (size / 1000).toFixed(decimals) + " µs";
+      return round(size / 1000, diff) + " µs";
     }
     else if (Math.abs(size) < 1000000000) {
-      return (size / 1000000).toFixed(decimals) + " ms";
+      return round(size / 1000000, diff) + " ms";
     }
     else if (Math.abs(size) < 60000000000){
-      return (size / 1000000000).toFixed(decimals) + " s";
+      return round(size / 1000000000, diff) + " s";
     }
     else {
-      return (size / 60000000000).toFixed(decimals) + " m";
+      return round(size / 60000000000, diff) + " m";
     }
   };
 
