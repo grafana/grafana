@@ -24,6 +24,15 @@ function (_) {
     index[funcDef.shortName || funcDef.name] = funcDef;
   }
 
+  var optionalSeriesRefArgs = [
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true }
+  ];
+
+
   addFuncDef({
     name: 'scaleToSeconds',
     category: categories.Transform,
@@ -59,22 +68,14 @@ function (_) {
 
   addFuncDef({
     name: 'diffSeries',
-    params: [
-      { name: 'other', type: 'value_or_series', optional: true },
-      { name: 'other', type: 'value_or_series', optional: true },
-      { name: 'other', type: 'value_or_series', optional: true }
-    ],
-    defaultParams: ['$B'],
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#B'],
     category: categories.Calculate,
   });
 
   addFuncDef({
     name: 'asPercent',
-    params: [
-      { name: 'other', type: 'value_or_series', optional: true },
-      { name: 'other', type: 'value_or_series', optional: true },
-      { name: 'other', type: 'value_or_series', optional: true }
-    ],
+    params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
     category: categories.Calculate,
   });
@@ -83,12 +84,16 @@ function (_) {
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
   });
 
   addFuncDef({
     name: 'averageSeries',
     shortName: 'avg',
     category: categories.Combine,
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
   });
 
   addFuncDef({
