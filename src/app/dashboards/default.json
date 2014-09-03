@@ -8,9 +8,7 @@
     {
       "title": "New row",
       "height": "150px",
-      "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
           "error": false,
@@ -22,15 +20,12 @@
           "style": {},
           "title": "Welcome to"
         }
-      ],
-      "notice": false
+      ]
     },
     {
       "title": "Welcome to Grafana",
       "height": "210px",
-      "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
           "error": false,
@@ -53,15 +48,12 @@
           "style": {},
           "title": "Tips & Shortcuts"
         }
-      ],
-      "notice": false
+      ]
     },
     {
       "title": "test",
       "height": "250px",
-      "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
           "span": 12,
@@ -132,27 +124,13 @@
             "enable": false
           }
         }
-      ],
-      "notice": false
-    }
-  ],
-  "pulldowns": [
-    {
-      "type": "filtering",
-      "collapse": false,
-      "notice": false,
-      "enable": false
-    },
-    {
-      "type": "annotations",
-      "enable": false
+      ]
     }
   ],
   "nav": [
     {
       "type": "timepicker",
       "collapse": false,
-      "notice": false,
       "enable": true,
       "status": "Stable",
       "time_options": [
@@ -188,5 +166,5 @@
   "templating": {
     "list": []
   },
-  "version": 2
+  "version": 5
 }

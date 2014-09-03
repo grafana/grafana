@@ -29,6 +29,7 @@ function (angular, $, config, _) {
     $scope.init = function() {
       $scope.availablePanels = config.panels;
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
+      $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
     };
@@ -105,6 +106,13 @@ function (angular, $, config, _) {
       } else {
         return false;
       }
+    };
+
+    $scope.showJsonEditor = function(evt, options) {
+      var editScope = $rootScope.$new();
+      editScope.object = options.object;
+      editScope.updateHandler = options.updateHandler;
+      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.checkFeatureToggles = function() {

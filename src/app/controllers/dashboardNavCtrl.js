@@ -140,9 +140,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.editJson = function() {
-      var editScope = $rootScope.$new();
-      editScope.json = angular.toJson($scope.dashboard, true);
-      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+      $scope.emitAppEvent('show-json-editor', { object: $scope.dashboard });
     };
 
     $scope.openSaveDropdown = function() {

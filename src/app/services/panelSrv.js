@@ -53,6 +53,13 @@ function (angular, _) {
           condition: true
         },
         {
+          text: 'Advanced',
+          submenu: [
+            { text: 'Panel JSON', click: 'editPanelJson()' },
+          ],
+          condition: true
+        },
+        {
           text: 'Remove',
           click: 'remove_panel_from_row(row, panel)',
           condition: true
@@ -61,6 +68,10 @@ function (angular, _) {
 
       $scope.inspector = {};
       $scope.panelMeta.menu = _.where(menu, { condition: true });
+
+      $scope.editPanelJson = function() {
+        $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
+      };
 
       $scope.updateColumnSpan = function(span) {
         $scope.panel.span = span;
