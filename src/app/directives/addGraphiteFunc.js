@@ -38,6 +38,14 @@ function (angular, app, _, $, gfunc) {
             items: 10,
             updater: function (value) {
               var funcDef = gfunc.getFuncDef(value);
+              if (!funcDef) {
+                // try find close match
+                funcDef = _.find(allFunctions, function(funcName) {
+                  return funcName.toLowerCase().indexOf(value) === 0;
+                });
+
+                if (!funcDef) { return; }
+              }
 
               $scope.$apply(function() {
                 $scope.addFunction(funcDef);
