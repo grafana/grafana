@@ -32,7 +32,6 @@ function (_) {
     { name: 'other', type: 'value_or_series', optional: true }
   ];
 
-
   addFuncDef({
     name: 'scaleToSeconds',
     category: categories.Transform,
