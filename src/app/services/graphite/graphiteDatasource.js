@@ -251,7 +251,9 @@ function (angular, _, $, config, kbn, moment) {
 
       _.each(options, function (value, key) {
         if ($.inArray(key, graphite_options) === -1) { return; }
-        clean_options.push(key + "=" + encodeURIComponent(value));
+        if (value) {
+          clean_options.push(key + "=" + encodeURIComponent(value));
+        }
       });
 
       return clean_options;

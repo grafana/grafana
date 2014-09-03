@@ -18,7 +18,7 @@ define([
       var query = {
         range: { from: 'now-1h', to: 'now' },
         targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
-        maxDataPoints: 500
+        maxDataPoints: 500,
       };
 
       var response = [{ target: 'prod1.count', points: [[10, 1], [12,1]], }];
@@ -44,6 +44,11 @@ define([
         expect(params).to.contain('target=prod2.count');
         expect(params).to.contain('from=-1h');
         expect(params).to.contain('until=now');
+      });
+
+      it('should exclude undefined params', function() {
+        var params = request.split('&');
+        expect(params).to.not.contain('cacheTimeout=undefined');
       });
 
       it('should return series list', function() {
