@@ -43,6 +43,7 @@ function (angular, $) {
           }
 
           function hideEditorPane() {
+            hideScrollbars(false);
             if (editorScope) { editorScope.dismiss(); }
           }
 
