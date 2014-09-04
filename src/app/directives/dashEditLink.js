@@ -42,26 +42,23 @@ function (angular, $) {
             }
           }
 
-          scope.onAppEvent('hide-dash-editor', function() {
-            if (editorScope) {
-              editorScope.dismiss();
-            }
-          });
+          function hideEditorPane() {
+            if (editorScope) { editorScope.dismiss(); }
+          }
+
+          scope.onAppEvent("dashboard-loaded", hideEditorPane);
+          scope.onAppEvent('hide-dash-editor', hideEditorPane);
 
           scope.onAppEvent('show-dash-editor', function(evt, payload) {
-            if (lastEditor === payload.src) {
-              editorScope.dismiss();
-              return;
-            }
+            hideEditorPane();
 
-            if (editorScope) {
-              editorScope.dismiss();
-            }
+            if (lastEditor === payload.src) { return; }
 
             scope.exitFullscreen();
 
             lastEditor = payload.src;
             editorScope = payload.scope ? payload.scope.$new() : scope.$new();
+
             editorScope.dismiss = function() {
               editorScope.$destroy();
               elem.empty();
