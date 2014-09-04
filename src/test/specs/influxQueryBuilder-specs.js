@@ -17,8 +17,8 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('select code, mean(value) from "google.test" where [[$timeFilter]] and code=1 ' +
-          'group by time([[$interval]]), code order asc');
+        expect(query).to.be('select code, mean(value) from "google.test" where $timeFilter and code=1 ' +
+          'group by time($interval), code order asc');
       });
 
       it('should expose groupByFiled', function() {
@@ -38,31 +38,11 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('select mean(value) from "google.test" where [[$timeFilter]] ' +
-          'group by time([[$interval]]) fill(0) order asc');
+        expect(query).to.be('select mean(value) from "google.test" where $timeFilter ' +
+          'group by time($interval) fill(0) order asc');
       });
 
     });
-
-    describe('old style raw query', function() {
-      var builder = new InfluxQueryBuilder({
-        query: 'select host, mean(value) from asd.asd where time > now() - 1h group by time(1s), code order asc',
-        rawQuery: true
-      });
-
-      var query = builder.build();
-
-      it('should generate correct query', function() {
-        expect(query).to.be('select host, mean(value) from asd.asd where [[$timeFilter]] and time > now() - 1h ' +
-          'group by time(1s), code order asc');
-      });
-
-      it('should expose groupByFiled', function() {
-        expect(builder.groupByField).to.be('host');
-      });
-
-    });
-
 
   });
 

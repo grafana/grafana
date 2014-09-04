@@ -27,13 +27,13 @@ function () {
     }
 
     query +=  target.function + '(' + target.column + ')';
-    query += ' from ' + seriesName + ' where [[$timeFilter]]';
+    query += ' from ' + seriesName + ' where $timeFilter';
 
     if (target.condition) {
       query += ' and ' + target.condition;
     }
 
-    query += ' group by time([[$interval]])';
+    query += ' group by time($interval)';
 
     if (target.groupby_field) {
       query += ', ' + target.groupby_field;
@@ -55,28 +55,9 @@ function () {
 
     var queryElements = query.split(" ");
     var lowerCaseQueryElements = query.toLowerCase().split(" ");
-    var whereIndex = lowerCaseQueryElements.indexOf("where");
-    var groupByIndex = lowerCaseQueryElements.indexOf("group");
-    var orderIndex = lowerCaseQueryElements.indexOf("order");
 
     if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
       this.groupByField = lowerCaseQueryElements[1].replace(',', '');
-    }
-
-    if (whereIndex !== -1) {
-      queryElements.splice(whereIndex + 1, 0, '[[$timeFilter]]', "and");
-    }
-    else {
-      if (groupByIndex !== -1) {
-        queryElements.splice(groupByIndex, 0, "where", '[[$timeFilter]]');
-      }
-      else if (orderIndex !== -1) {
-        queryElements.splice(orderIndex, 0, "where", '[[$timeFilter]]');
-      }
-      else {
-        queryElements.push("where");
-        queryElements.push('[[$timeFilter]]');
-      }
     }
 
     return queryElements.join(" ");

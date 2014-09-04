@@ -44,9 +44,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
 
+        // replace grafana variables
+        query = query.replace('$timeFilter', timeFilter);
+        query = query.replace('$interval', (target.interval || options.interval));
+
         // replace templated variables
-        templateSrv.setGrafanaVariable('$timeFilter', timeFilter);
-        templateSrv.setGrafanaVariable('$interval', (target.interval || options.interval));
         query = templateSrv.replace(query);
 
         var alias = target.alias ? templateSrv.replace(target.alias) : '';
@@ -63,7 +65,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
-      var query = _.template(annotation.query, { timeFilter: timeFilter, "$timeFilter": timeFilter }, this.templateSettings);
+      var query = annotation.query.replace('$timeFilter', timeFilter);
+      query = templateSrv.replace(annotation.query);
 
       return this._seriesQuery(query).then(function(results) {
         return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
