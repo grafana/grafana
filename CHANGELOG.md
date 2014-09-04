@@ -10,16 +10,16 @@
 - [Issue #219](https://github.com/grafana/grafana/issues/219). Templating: Template variable value selection is now a typeahead autocomplete dropdown
 
 **InfluxDB Breaking changes**
-- To better support influxdb & templating some changes has been made the editor and query model schema
+- To better support templating, fill(0) and group by time low limit some changes has been made to the editor and query model schema
 - Currently some of these changes are breaking
-- If you used custom condition filter you need to open the graph in edit mode the editor will update the schema, and the queries should work again
-- If you used raw query you need to remove the time filter and replace it with $timeFilter (this is done automatically when you switch from query editor to raw query, but old raw queries needs to updated)
+- If you used custom condition filter you need to open the graph in edit mode, the editor will update the schema, and the queries should work again
+- If you used a raw query you need to remove the time filter and replace it with $timeFilter (this is done automatically when you switch from query editor to raw query, but old raw queries needs to updated)
 - If you used group by and later removed the group by the graph could break, open in editor and should correct it
-- InfluxDB annotations queries that used [[timeFilter]] should be updated to use $timeFilter instead
-- Might write a upgrade tool to update dashboards automatically, but right now master (1.8) includes the above breaking changes
+- InfluxDB annotation queries that used [[timeFilter]] should be updated to use $timeFilter syntax instead
+- Might write an upgrade tool to update dashboards automatically, but right now master (1.8) includes the above breaking changes
 
 **InfluxDB query editor enhancements**
-- [Issue #756](https://github.com/grafana/grafana/issues/756). InfluxDB: Add option for fill(0) and fill(null), and documentation and help why this option is important when stacking series
+- [Issue #756](https://github.com/grafana/grafana/issues/756). InfluxDB: Add option for fill(0) and fill(null), integrated help in editor for why this option is important when stacking series
 - [Issue #743](https://github.com/grafana/grafana/issues/743). InfluxDB: A group by time option for all queries in graph panel that supports a low limit for auto group by time, very important for stacking and fill(0)
 - The above to enhancements solves the problems associated with stacked bars and lines when points are missing, these issues are solved:
 - [Issue #673](https://github.com/grafana/grafana/issues/673). InfluxDB: stacked bars missing intermediate data points, unless lines also enabled
