@@ -81,7 +81,6 @@ function(angular, _, config) {
 
       // ignore timespan changes
       current.time = original.time = {};
-
       current.refresh = original.refresh;
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });

@@ -209,7 +209,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Timeseries data request error";
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
           $scope.render([]);
         });

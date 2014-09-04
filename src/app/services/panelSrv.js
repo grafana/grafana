@@ -95,7 +95,7 @@ function (angular, _) {
         $scope.datasource = datasourceSrv.get(datasource);
 
         if (!$scope.datasource) {
-          $scope.panel.error = "Cannot find datasource " + datasource;
+          $scope.panelMeta.error = "Cannot find datasource " + datasource;
           return;
         }
       };
@@ -129,7 +129,7 @@ function (angular, _) {
         $scope.get_data = function() {
           if ($scope.otherPanelInFullscreenMode()) { return; }
 
-          delete $scope.panel.error;
+          delete $scope.panelMeta.error;
           $scope.panelMeta.loading = true;
 
           panel_get_data();
