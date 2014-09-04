@@ -22,22 +22,26 @@ function () {
       seriesName = '"' + seriesName+ '"';
     }
 
-    if (target.groupby_field_add) {
+    if (target.groupby_field) {
       query += target.groupby_field + ', ';
     }
 
     query +=  target.function + '(' + target.column + ')';
     query += ' from ' + seriesName + ' where [[$timeFilter]]';
 
-    if (target.condition_filter) {
-      query += ' and ' + target.condition_expression;
+    if (target.condition) {
+      query += ' and ' + target.condition;
     }
 
     query += ' group by time([[$interval]])';
 
-    if (target.groupby_field_add) {
+    if (target.groupby_field) {
       query += ', ' + target.groupby_field;
       this.groupByField = target.groupby_field;
+    }
+
+    if (target.fill) {
+      query += ' fill(' + target.fill + ')';
     }
 
     query += " order asc";

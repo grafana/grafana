@@ -61,6 +61,10 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
+    InfluxDatasource.prototype._getGroupByTimeInterval = function(target, options) {
+      return target.interval || options.interval;
+    };
+
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
       var query = _.template(annotation.query, { timeFilter: timeFilter, "$timeFilter": timeFilter }, this.templateSettings);

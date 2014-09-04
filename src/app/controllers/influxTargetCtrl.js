@@ -16,11 +16,17 @@ function (angular) {
       target.function = target.function || 'mean';
       target.column = target.column || 'value';
 
+      // backward compatible correction of schema
       if (target.condition_value) {
-        target.condition_expression = target.condition_key + ' ' + target.condition_op + ' ' + target.condition_value;
+        target.condition = target.condition_key + ' ' + target.condition_op + ' ' + target.condition_value;
         delete target.condition_key;
         delete target.condition_op;
         delete target.condition_value;
+      }
+
+      if (target.groupby_field_add === false) {
+        target.groupby_field = '';
+        delete target.groupby_field_add;
       }
 
       $scope.rawQuery = false;

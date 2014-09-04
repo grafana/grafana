@@ -135,7 +135,6 @@
   list-style: none;
   margin: 0;
   margin-right: 90px;
-  margin-left: 30px;
   >li {
     float: left;
   }
@@ -143,9 +142,6 @@
 
 .grafana-metric-options {
   margin-top: 35px;
-  .grafana-segment-list {
-    margin-left: 0;
-  }
 }
 
 // fix for fixed positioned panel & scrolling
@@ -183,6 +179,15 @@
   &.annotation-segment {
     padding: 8px 15px;
   }
+
+}
+
+.grafana-target-segment-icon {
+  i {
+    width: 15px;
+    text-align: center;
+    display: inline-block;
+  }
 }
 
 .grafana-target-function {
@@ -206,15 +211,6 @@ input[type=text].grafana-function-param-input {
   border: none;
   margin: 0;
   padding: 0;
-}
-
-.grafana-target-controls-left {
-  list-style: none;
-  float: left;
-  margin: 0px;
-  li {
-    display: inline-block;
-  }
 }
 
 .grafana-target-controls {

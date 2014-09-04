@@ -8,25 +8,6 @@ function($, _, moment) {
 
   var kbn = {};
 
-   /**
-     * Calculate a graph interval
-     *
-     * from::           Date object containing the start time
-     * to::             Date object containing the finish time
-     * size::           Calculate to approximately this many bars
-     * user_interval::  User specified histogram interval
-     *
-     */
-  kbn.calculate_interval = function(from,to,size,user_interval) {
-    if(_.isObject(from)) {
-      from = from.valueOf();
-    }
-    if(_.isObject(to)) {
-      to = to.valueOf();
-    }
-    return user_interval === 0 ? kbn.round_interval((to - from)/size) : user_interval;
-  };
-
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
@@ -129,6 +110,28 @@ function($, _, moment) {
     h: 3600,
     m: 60,
     s: 1
+  };
+
+  kbn.calculateInterval = function(range, resolution, userInterval) {
+    var lowLimitMs = 1; // 1 millisecond default low limit
+    var intervalMs, lowLimitInterval;
+
+    if (userInterval) {
+      if (userInterval[0] === '>') {
+        lowLimitInterval = userInterval.slice(1);
+        lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
+      }
+      else {
+        return userInterval;
+      }
+    }
+
+    intervalMs = kbn.round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+    if (lowLimitMs > intervalMs) {
+      intervalMs = lowLimitMs;
+    }
+
+    return kbn.secondsToHms(intervalMs / 1000);
   };
 
   kbn.describe_interval = function (string) {

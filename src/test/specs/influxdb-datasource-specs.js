@@ -10,6 +10,9 @@ define([
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createService('InfluxDatasource'));
+    beforeEach(function() {
+      ctx.ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
+    });
 
     describe('When querying influxdb with one target using query editor target spec', function() {
       var results;
@@ -28,10 +31,8 @@ define([
       }];
 
       beforeEach(function() {
-        var ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
-
         ctx.$httpBackend.expect('GET', urlExpected).respond(response);
-        ds.query(query).then(function(data) { results = data; });
+        ctx.ds.query(query).then(function(data) { results = data; });
         ctx.$httpBackend.flush();
       });
 
@@ -58,10 +59,8 @@ define([
       var response = [];
 
       beforeEach(function() {
-        var ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
-
         ctx.$httpBackend.expect('GET', urlExpected).respond(response);
-        ds.query(query).then(function(data) { results = data; });
+        ctx.ds.query(query).then(function(data) { results = data; });
         ctx.$httpBackend.flush();
       });
 
@@ -71,6 +70,18 @@ define([
 
     });
 
+    describe('When calculating group by time interval', function() {
+      it('if blank should use auto interval', function() {
+        var result = ctx.ds._getGroupByTimeInterval({}, { interval:'0.1s' });
+        expect(result).to.be('0.1s');
+      });
+
+      it('if target interval specified should use that interval', function() {
+        var result = ctx.ds._getGroupByTimeInterval({interval: '10s'}, { interval:'0.1s' });
+        expect(result).to.be('10s');
+      });
+
+    });
   });
 
 });
