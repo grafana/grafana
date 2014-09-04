@@ -8,10 +8,12 @@ function (angular, _) {
   var module = angular.module('grafana.services');
 
   module.service('templateSrv', function($q, $routeParams) {
+    var self = this;
 
     this.init = function(variables) {
       this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
       this.variables = variables;
+      this.regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
       this.updateTemplateData(true);
     };
 
@@ -39,11 +41,11 @@ function (angular, _) {
     };
 
     this.replace = function(target) {
-      if (!target || target.indexOf('[[') === -1) {
-        return target;
-      }
+      if (!target) { return; }
 
-      return _.template(target, this._templateData, this.templateSettings);
+      return target.replace(this.regex, function(match, g1, g2) {
+        return self._templateData[g1 || g2] || match;
+      });
     };
 
   });

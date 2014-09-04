@@ -165,7 +165,7 @@ function (angular, _, config, gfunc, Parser) {
           _.each(templateSrv.variables, function(variable) {
             $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
-              value: '[[' + variable.name + ']]',
+              value: '$' + variable.name + ']]',
               expandable: true,
             }));
           });
