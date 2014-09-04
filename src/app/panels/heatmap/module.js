@@ -40,10 +40,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         {
           title:'Axes & Grid',
           src:'app/panels/heatmap/axisEditor.html'
-        },
-        {
-          title:'Display Styles',
-          src:'app/panels/heatmap/styleEditor.html'
         }
       ],
       fullscreenEdit: true,
@@ -83,58 +79,20 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
        */
       grid          : {
         leftMax: null,
-        rightMax: null,
         leftMin: null,
-        rightMin: null,
-        threshold1: null,
-        threshold2: null,
-        threshold1Color: 'rgba(216, 200, 27, 0.27)',
-        threshold2Color: 'rgba(234, 112, 112, 0.22)'
+        depthMin: null,
+        depthMax: null,
+        timePointCount: null,
+        bucketCount: 30,
+        mapColor: 'rgba(216, 200, 27, 1)',
       },
 
       annotate      : {
         enable      : false,
       },
 
-      /** @scratch /panels/histogram/3
-       * resolution:: If auto_int is true, shoot for this many bars.
-       */
-      resolution    : 100,
-
-      /** @scratch /panels/histogram/3
-       * ==== Drawing options
-       * lines:: Show line chart
-       */
-      lines         : true,
-      /** @scratch /panels/histogram/3
-       * fill:: Area fill factor for line charts, 1-10
-       */
-      fill          : 0,
-      /** @scratch /panels/histogram/3
-       * linewidth:: Weight of lines in pixels
-       */
-      linewidth     : 1,
-      /** @scratch /panels/histogram/3
-       * points:: Show points on chart
-       */
-      points        : false,
-      /** @scratch /panels/histogram/3
-       * pointradius:: Size of points in pixels
-       */
-      pointradius   : 5,
-      /** @scratch /panels/histogram/3
-       * bars:: Show bars on chart
-       */
-      bars          : false,
-      /** @scratch /panels/histogram/3
-       * stack:: Stack multiple series
-       */
-      stack         : false,
-      /** @scratch /panels/histogram/3
-       * legend:: Display the legend
-       */
       legend: {
-        show: true, // disable/enable legend
+        show: false, // disable/enable legend
         values: false, // disable/enable legend values
         min: false,
         max: false,
@@ -142,25 +100,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         total: false,
         avg: false
       },
-      /** @scratch /panels/histogram/3
-       * ==== Transformations
-      /** @scratch /panels/histogram/3
-       * percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
-       * queries
-       */
-      percentage    : false,
-      /** @scratch /panels/histogram/3
-       * zerofill:: Improves the accuracy of line charts at a small performance cost.
-       */
-      zerofill      : true,
-
-      nullPointMode : 'connected',
-
-      steppedLine: false,
 
       tooltip       : {
-        value_type: 'cumulative',
-        query_as_alias: true
       },
 
       targets: [{}],
@@ -174,7 +115,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     _.defaults($scope.panel.tooltip, _d.tooltip);
     _.defaults($scope.panel.annotate, _d.annotate);
     _.defaults($scope.panel.grid, _d.grid);
-    _.defaults($scope.panel.legend, _d.legend);
 
     $scope.hiddenSeries = {};
 
@@ -245,7 +185,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
+      var color = $scope.panel.grid.mapColor;
 
       var seriesInfo = {
         alias: alias,
@@ -253,7 +193,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         isHistogram: seriesData.isHistogram,
       };
 
-      $scope.legend.push(seriesInfo);
+      if (seriesInfo.isHistogram && $scope.legend.length == 0) {
+        $scope.legend.push(seriesInfo);
+      }
 
       var series = new TimeSeries({
         datapoints: datapoints,

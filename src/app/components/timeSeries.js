@@ -55,8 +55,11 @@ function (_, kbn) {
     }
   };
 
-  TimeSeries.prototype.getHeatmapData = function (fillStyle, yFormats, bucketMin, bucketMax) {
-    var result = {};
+  //This function takes the raw data from DB and transforms them into buckets adjusted to the current display settings.
+  //This can lead to "merging" of buckets if the source has higher resolution as the target. The same applies for horizontal. scaling.
+  //Input data needs to be pre sorted by time point, value, otherwise this will not work properly.
+  TimeSeries.prototype.getHeatmapData = function (bucketMin, bucketMax, timePointCount, bucketCount) {
+    var result = [];
 
     if (!this.info.isHistogram) {
       return result;
@@ -65,34 +68,30 @@ function (_, kbn) {
     this.color = this.info.color;
     this.yaxis = this.info.yaxis;
 
-    this.info.total = 0;
     this.info.max = -212312321312;
     this.info.min = 212312321312;
     this.info.bucketMax = -212312321312;
     this.info.bucketMin = 212312321312;
-    this.info.bucketCount = 20;
-    this.info.timePointCount = 100;
+    this.info.bucketCount = bucketCount;
+    this.info.timePointCount = timePointCount;
     this.info.showOutsideValues = false;
+    this.info.buckets = [];
+    this.info.bucketSize = 0;
 
-    var ignoreNulls = fillStyle === 'connected';
-    var nullAsZero = fillStyle === 'null as zero';
     var currentTime;
     var currentBucketStart;
-    var currentCount;
     var timePoints = new Set();
 
+    //Get all unique time points and min/max buckets
     for (var i = 0; i < this.datapoints.length; i++) {
       var datapoints = this.datapoints[i];
       currentBucketStart = datapoints[0];
-      currentCount = datapoints[1];
       currentTime = datapoints[2];
-      currentCount = currentCount === null ? 0 : currentCount;
       timePoints.add(currentTime);
-
-      this.info.total += currentCount;
       this.info.bucketMax = Math.max(this.info.bucketMax, currentBucketStart);
       this.info.bucketMin = Math.min(this.info.bucketMin, currentBucketStart);
     }
+    //Bucket min/max could be predefined, if not we use the source values
     if (bucketMin !== null){
       this.info.bucketMin = bucketMin;
     }
@@ -100,16 +99,22 @@ function (_, kbn) {
       this.info.bucketMax = bucketMax;
     }
 
-    result.buckets = [];
-    result.bucketSize = ((this.info.bucketMax - this.info.bucketMin) / this.info.bucketCount);
-    for (var i = 0; i < this.info.bucketCount; i++) {
-      result.buckets.push(this.info.bucketMin + result.bucketSize * i);
+    //Time point count could be predefined, if not we use the source values.
+    if (this.info.timePointCount == null) {
+      this.info.timePointCount = timePoints.size;
     }
-    result.values = [];
+
+    //Create a definition of target buckets
+    this.info.buckets = [];
+    this.info.bucketSize = ((this.info.bucketMax - this.info.bucketMin) / this.info.bucketCount);
+    for (var i = 0; i < this.info.bucketCount; i++) {
+      this.info.buckets.push(this.info.bucketMin + this.info.bucketSize * i);
+    }
     var prevTime = null
     var timePointNo = 0;
 
-    //Rescaling of source bucckets to the target ones and merging source time points to fit into the given amount of target time points
+    var currentCount;
+    //Rescaling of source buckets to the target ones and merging source time points to fit into the given amount of target time points
     for (var i = 0; i < this.datapoints.length; i++) {
       currentBucketStart = this.datapoints[i][0];
       currentCount = this.datapoints[i][1];
@@ -117,44 +122,30 @@ function (_, kbn) {
       currentCount = currentCount === null ? 0 : currentCount;
 
       if (prevTime != currentTime) {
-        if (timePointNo == 0 || Math.floor((timePointNo * this.info.timePointCount) / timePoints.size) > Math.floor(((timePointNo - 1) * this.info.timePointCount) / timePoints.size)) {
-          var bucketArray = Array.apply(null, new Array(result.buckets.length)).map(Number.prototype.valueOf, 0); // Generates an array filled with zeros
-          result.values.push([currentTime * 1000, bucketArray]);
+        //If the time difference is big enough to force moving to the next target point
+        var addBucket = Math.floor((timePointNo * this.info.timePointCount) / timePoints.size) >= Math.floor(((timePointNo - 1) * this.info.timePointCount) / timePoints.size);
+
+        if (addBucket) {
+          var bucketArray = Array.apply(null, new Array(this.info.buckets.length)).map(Number.prototype.valueOf, 0); // Generates an array filled with zeros
+          result.push([currentTime * 1000, bucketArray]);
         }
         ++timePointNo;
       }
       prevTime = currentTime;
-      var bucketIndex = Math.round((currentBucketStart - this.info.bucketMin) / result.bucketSize); //Map the source bucket to the target bucket
-      if ((bucketIndex >= 0 && bucketIndex < result.buckets.length) || this.info.showOutsideValues) {
-        bucketIndex = Math.max(0, Math.min(bucketIndex, result.buckets.length - 1)); //Make sure value is in boundaries
-        result.values[result.values.length - 1][1][bucketIndex] += currentCount;
+      var bucketIndex = Math.round((currentBucketStart - this.info.bucketMin) / this.info.bucketSize); //Map the source bucket to the target bucket
+      if ((bucketIndex >= 0 && bucketIndex < this.info.buckets.length) || this.info.showOutsideValues) {
+        bucketIndex = Math.max(0, Math.min(bucketIndex, this.info.buckets.length - 1)); //Make sure value is in boundaries
+        result[result.length - 1][1][bucketIndex] += currentCount;
       }
     }
 
-    for (var i = 0; i < result.values.length; i++) {
-      var values = result.values[i];
+    //Get the min and max values (needed for proper heatmap depth drawing)
+    for (var i = 0; i < result.length; i++) {
+      var values = result[i];
       for (var j = 0; j < values.length; j++) {
         this.info.max = Math.max(this.info.max, values[1][j]);
         this.info.min = Math.min(this.info.min, values[1][j]);
       }
-    }
-    result.min = this.info.min;
-    result.max = this.info.max;
-
-    if (result.values.length > 2) {
-      this.info.timeStep = result.values[1][0] - result.values[0][0];
-    }
-
-    if (result.values.length) {
-      this.info.avg = (this.info.total / (result.values.length * result.buckets.length));
-      this.info.current = result.values[result.values.length-1][1][0];
-
-      var formater = kbn.getFormatFunction(yFormats[this.yaxis - 1], 2);
-      this.info.avg = this.info.avg != null ? formater(this.info.avg) : null;
-      this.info.current = this.info.current != null ? formater(this.info.current) : null;
-      this.info.min = this.info.min != null ? formater(this.info.min) : null;
-      this.info.max = this.info.max != null ? formater(this.info.max) : null;
-      this.info.total = this.info.total != null ? formater(this.info.total) : null;
     }
 
     return result;
