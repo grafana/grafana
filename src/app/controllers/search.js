@@ -94,8 +94,7 @@ function (angular, _, config, $) {
       }
     };
 
-    $scope.showTags = function(evt) {
-      evt.stopPropagation();
+    $scope.showTags = function() {
       $scope.tagsOnly = !$scope.tagsOnly;
       $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
@@ -106,8 +105,12 @@ function (angular, _, config, $) {
     $scope.search = function() {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
-
       $scope.searchDashboards($scope.query.query);
+    };
+
+    $scope.deleteDashboard = function(id, evt) {
+      evt.stopPropagation();
+      $scope.emitAppEvent('delete-dashboard', { id: id });
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
@@ -126,8 +129,7 @@ function (angular, _, config, $) {
       });
     };
 
-    $scope.toggleImport = function ($event) {
-      $event.stopPropagation();
+    $scope.toggleImport = function () {
       $scope.showImport = !$scope.showImport;
     };
 

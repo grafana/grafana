@@ -16,9 +16,8 @@ function (angular, _, moment, config, store) {
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
 
-      $scope.onAppEvent('save-dashboard', function() {
-        $scope.saveDashboard();
-      });
+      $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
+      $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
 
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
@@ -57,10 +56,10 @@ function (angular, _, moment, config, store) {
 
     $scope.isAdmin = function() {
       if (!config.admin || !config.admin.password) { return true; }
-      if (this.passwordCache() === config.admin.password) { return true; }
+      if ($scope.passwordCache() === config.admin.password) { return true; }
 
       var password = window.prompt("Admin password", "");
-      this.passwordCache(password);
+      $scope.passwordCache(password);
 
       if (password === config.admin.password) { return true; }
 
@@ -74,7 +73,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.saveDashboard = function() {
-      if (!this.isAdmin()) { return false; }
+      if (!$scope.isAdmin()) { return false; }
 
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)
@@ -93,15 +92,14 @@ function (angular, _, moment, config, store) {
         });
     };
 
-    $scope.deleteDashboard = function(id, $event) {
-      $event.stopPropagation();
-
+    $scope.deleteDashboard = function(evt, options) {
       if (!confirm('Are you sure you want to delete dashboard?')) {
         return;
       }
 
-      if (!this.isAdmin()) { return false; }
+      if (!$scope.isAdmin()) { return false; }
 
+      var id = options.id;
       $scope.db.deleteDashboard(id).then(function(id) {
         alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
       }, function() {
