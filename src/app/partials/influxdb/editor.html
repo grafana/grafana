@@ -87,16 +87,28 @@
 				<!-- Raw Query mode  -->
 				<ul class="grafana-segment-list" ng-show="target.rawQuery">
 					<li class="grafana-target-segment">
+						<i class="icon-eye-open invisible"></i>
+					</li>
+					<li class="grafana-target-segment">
             alias
           </li>
           <li>
             <input type="text"
-                   class="input-medium grafana-target-segment-input"
+                   class="input-medium grafana-target-text-input"
                    ng-model="target.alias"
                    spellcheck='false'
                    placeholder="alias"
                    ng-blur="get_data()">
           </li>
+					<li class="grafana-target-segment">
+						group by time
+					</li>
+					<li>
+						<input type="text" class="input-mini grafana-target-text-input" ng-model="target.interval"
+									 spellcheck='false' placeholder="{{interval}}" data-placement="right"
+									 bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+									 ng-model-onblur ng-change="get_data()" >
+					</li>
 				</ul>
 
 				<!-- Query editor mode -->

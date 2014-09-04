@@ -70,18 +70,6 @@ define([
 
     });
 
-    describe('When calculating group by time interval', function() {
-      it('if blank should use auto interval', function() {
-        var result = ctx.ds._getGroupByTimeInterval({}, { interval:'0.1s' });
-        expect(result).to.be('0.1s');
-      });
-
-      it('if target interval specified should use that interval', function() {
-        var result = ctx.ds._getGroupByTimeInterval({interval: '10s'}, { interval:'0.1s' });
-        expect(result).to.be('10s');
-      });
-
-    });
   });
 
 });
