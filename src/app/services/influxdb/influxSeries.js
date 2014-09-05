@@ -22,11 +22,11 @@ function (_) {
 
   function histogramSort(firstCol, secondCol, x, y) {
     var result = compare(x[firstCol], y[firstCol]);
-    if (result != 0) {
+    if (result !== 0) {
       return;
     }
     return compare(x[secondCol], y[secondCol]);
-  };
+  }
 
   p.getTimeSeries = function() {
     var output = [];
@@ -49,9 +49,9 @@ function (_) {
       _.each(series.columns, function(column, index) {
         if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
           valueCol = index;
-          if (column.contains('bucket_start')) {
+          if (column.indexOf('bucket_start') > -1) {
             valueColBucketStart = index;
-          } else if (column.contains('count')) {
+          } else if (column.indexOf('count') > -1) {
             valueColCount = index;
           }
         }

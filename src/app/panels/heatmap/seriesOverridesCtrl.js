@@ -2,6 +2,7 @@ define([
   'angular',
   'app',
   'lodash',
+  /*jshint unused: vars */
 ], function(angular, app, _) {
   'use strict';
 

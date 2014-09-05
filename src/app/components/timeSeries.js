@@ -55,28 +55,7 @@ function (_, kbn) {
     }
   };
 
-  //This function takes the raw data from DB and transforms them into buckets adjusted to the current display settings.
-  //This can lead to "merging" of buckets if the source has higher resolution as the target. The same applies for horizontal. scaling.
-  //Input data needs to be pre sorted by time point, value, otherwise this will not work properly.
-  TimeSeries.prototype.getHeatmapData = function (bucketMin, bucketMax, timePointCount, bucketCount) {
-    var result = [];
-
-    if (!this.info.isHistogram) {
-      return result;
-    }
-
-    this.color = this.info.color;
-    this.yaxis = this.info.yaxis;
-
-    this.info.max = -212312321312;
-    this.info.min = 212312321312;
-    this.info.bucketMax = -212312321312;
-    this.info.bucketMin = 212312321312;
-    this.info.bucketCount = bucketCount;
-    this.info.timePointCount = timePointCount;
-    this.info.showOutsideValues = false;
-    this.info.buckets = [];
-    this.info.bucketSize = 0;
+  TimeSeries.prototype.calculateBucketSizes = function (bucketMin, bucketMax) {
 
     var currentTime;
     var currentBucketStart;
@@ -99,40 +78,70 @@ function (_, kbn) {
       this.info.bucketMax = bucketMax;
     }
 
+    this.info.sourceTimePointCount = timePoints.size;
     //Time point count could be predefined, if not we use the source values.
-    if (this.info.timePointCount == null) {
-      this.info.timePointCount = timePoints.size;
+    if (this.info.targetTimePointCount == null) {
+      this.info.targetTimePointCount = timePoints.size;
     }
 
     //Create a definition of target buckets
     this.info.buckets = [];
     this.info.bucketSize = ((this.info.bucketMax - this.info.bucketMin) / this.info.bucketCount);
-    for (var i = 0; i < this.info.bucketCount; i++) {
+    for (i = 0; i < this.info.bucketCount; i++) {
       this.info.buckets.push(this.info.bucketMin + this.info.bucketSize * i);
     }
-    var prevTime = null
+  };
+
+  //This function takes the raw data from DB and transforms them into buckets adjusted to the current display settings.
+  //This can lead to "merging" of buckets if the source has higher resolution as the target. The same applies for horizontal. scaling.
+  //Input data needs to be pre sorted by time point, value, otherwise this will not work properly.
+  TimeSeries.prototype.getHeatmapData = function (bucketMin, bucketMax, timePointCount, bucketCount) {
+    var result = [];
+
+    if (!this.info.isHistogram) {
+      return result;
+    }
+
+    this.color = this.info.color;
+    this.yaxis = this.info.yaxis;
+
+    this.info.max = -212312321312;
+    this.info.min = 212312321312;
+    this.info.bucketMax = -212312321312;
+    this.info.bucketMin = 212312321312;
+    this.info.bucketCount = bucketCount;
+    this.info.targetTimePointCount = timePointCount;
+    this.info.sourceTimePointCount = 0;
+    this.info.showOutsideValues = false;
+    this.info.buckets = [];
+    this.info.bucketSize = 0;
+
+    this.calculateBucketSizes(bucketMin, bucketMax);
+
+    var prevTime = null;
     var timePointNo = 0;
 
-    var currentCount;
     //Rescaling of source buckets to the target ones and merging source time points to fit into the given amount of target time points
     for (var i = 0; i < this.datapoints.length; i++) {
-      currentBucketStart = this.datapoints[i][0];
-      currentCount = this.datapoints[i][1];
-      currentTime = this.datapoints[i][2];
-      currentCount = currentCount === null ? 0 : currentCount;
+      var currentBucketStart = this.datapoints[i][0];
+      var currentCount = this.datapoints[i][1] !== null ? this.datapoints[i][1] : 0;
+      var currentTime = this.datapoints[i][2];
 
-      if (prevTime != currentTime) {
+      if (prevTime !== currentTime) {
         //If the time difference is big enough to force moving to the next target point
-        var addBucket = Math.floor((timePointNo * this.info.timePointCount) / timePoints.size) >= Math.floor(((timePointNo - 1) * this.info.timePointCount) / timePoints.size);
+        var currentBucketValue = Math.floor((timePointNo * this.info.targetTimePointCount) / this.info.sourceTimePointCount);
+        var prevBucketValue = Math.floor(((timePointNo - 1) * this.info.targetTimePointCount) / this.info.sourceTimePointCount);
 
-        if (addBucket) {
-          var bucketArray = Array.apply(null, new Array(this.info.buckets.length)).map(Number.prototype.valueOf, 0); // Generates an array filled with zeros
+        if (currentBucketValue >= prevBucketValue) {
+           //Generates an array filled with zeros
+          var bucketArray = Array.apply(null, new Array(this.info.buckets.length)).map(Number.prototype.valueOf, 0);
           result.push([currentTime * 1000, bucketArray]);
         }
         ++timePointNo;
       }
       prevTime = currentTime;
-      var bucketIndex = Math.round((currentBucketStart - this.info.bucketMin) / this.info.bucketSize); //Map the source bucket to the target bucket
+      //Map the source bucket to the target bucket
+      var bucketIndex = Math.round((currentBucketStart - this.info.bucketMin) / this.info.bucketSize);
       if ((bucketIndex >= 0 && bucketIndex < this.info.buckets.length) || this.info.showOutsideValues) {
         bucketIndex = Math.max(0, Math.min(bucketIndex, this.info.buckets.length - 1)); //Make sure value is in boundaries
         result[result.length - 1][1][bucketIndex] += currentCount;
@@ -140,7 +149,7 @@ function (_, kbn) {
     }
 
     //Get the min and max values (needed for proper heatmap depth drawing)
-    for (var i = 0; i < result.length; i++) {
+    for (i = 0; i < result.length; i++) {
       var values = result[i];
       for (var j = 0; j < values.length; j++) {
         this.info.max = Math.max(this.info.max, values[1][j]);

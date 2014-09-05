@@ -182,6 +182,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         });
     };
 
+    /*jshint unused: vars */
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
@@ -193,7 +194,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         isHistogram: seriesData.isHistogram,
       };
 
-      if (seriesInfo.isHistogram && $scope.legend.length == 0) {
+      if (seriesInfo.isHistogram && $scope.legend.length === 0) {
         $scope.legend.push(seriesInfo);
       }
 

@@ -129,7 +129,8 @@ function (angular, $, kbn, moment, _) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
-            series.data = series.getHeatmapData(scope.panel.grid.leftMin, scope.panel.grid.leftMax, scope.panel.grid.timePointCount, scope.panel.grid.bucketCount);
+            series.data = series.getHeatmapData(
+              scope.panel.grid.leftMin, scope.panel.grid.leftMax, scope.panel.grid.timePointCount, scope.panel.grid.bucketCount);
             if (series.data.length > 0) {
               ymin = series.info.buckets[0];
               ymax = series.info.buckets[series.info.buckets.length - 1] + series.info.bucketSize;
@@ -165,12 +166,16 @@ function (angular, $, kbn, moment, _) {
         function convertColor(rgb, multiplier) {
           var rgbRegex = /^rgba?\(\s*(-?\d+)(%?)\s*,\s*(-?\d+)(%?)\s*,\s*(-?\d+)(%?)\s*(,\s*(-?\d+(\.\d+)?)(%?))?\s*\)$/;
           var result, r, g, b, hex = "";
-          if ( (result = rgbRegex.exec(rgb)) ) {
+          if (result = rgbRegex.exec(rgb)) {
             r = componentFromStr(result[1], result[2]);
             g = componentFromStr(result[3], result[4]);
             b = componentFromStr(result[5], result[6]);
 
-            hex = "#" + (0x1000000 + (Math.round(r * multiplier) << 16) + (Math.round(g * multiplier) << 8) + Math.round(b * multiplier)).toString(16).slice(1);
+            r = Math.round(r * multiplier) << 16;
+            b = Math.round(b * multiplier) << 8;
+            g = Math.round(g * multiplier);
+
+            hex = "#" + (0x1000000 + r + b + g).toString(16).slice(1);
           }
           return hex;
         }
@@ -189,7 +194,7 @@ function (angular, $, kbn, moment, _) {
           var maxValue = scope.panel.grid.depthMax != null ? scope.panel.grid.depthMax : info.max;
           var valueRange = maxValue - minValue;
           if (valueRange <= 0) {
-            valueRange = 1
+            valueRange = 1;
           }
 
           for (var ix = 0; ix < xpoints; ++ix) {
