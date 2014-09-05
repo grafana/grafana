@@ -165,7 +165,7 @@ function (angular, _, config, gfunc, Parser) {
           _.each(templateSrv.variables, function(variable) {
             $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
-              value: '$' + variable.name + ']]',
+              value: '$' + variable.name,
               expandable: true,
             }));
           });
@@ -297,13 +297,7 @@ function (angular, _, config, gfunc, Parser) {
       this.value = options.value;
       this.type = options.type;
       this.expandable = options.expandable;
-
-      if (options.type === 'template') {
-        this.html = $sce.trustAsHtml(options.value);
-      }
-      else {
-        this.html = $sce.trustAsHtml(this.value);
-      }
+      this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
     }
 
   });

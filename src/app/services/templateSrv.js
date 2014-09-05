@@ -40,9 +40,27 @@ function (angular, _) {
       this._templateData[name] = value;
     };
 
+    this.variableExists = function(expression) {
+      this.regex.lastIndex = 0;
+      var match = this.regex.exec(expression);
+      return match && (self._templateData[match[1] || match[2]] !== void 0);
+    };
+
+    this.highlightVariablesAsHtml = function(str) {
+      if (!str) { return str; }
+
+      this.regex.lastIndex = 0;
+      return str.replace(this.regex, function(match, g1, g2) {
+        if (self._templateData[g1 || g2]) {
+          return '<span class="template-variable">' + match + '</span>';
+        }
+      });
+    };
+
     this.replace = function(target) {
       if (!target) { return; }
 
+      this.regex.lastIndex = 0;
       return target.replace(this.regex, function(match, g1, g2) {
         return self._templateData[g1 || g2] || match;
       });

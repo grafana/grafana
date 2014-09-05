@@ -8,6 +8,7 @@
 - Filter editing has gotten its own edit pane with much improved UI and options
 - [Issue #296](https://github.com/grafana/grafana/issues/296). Templating: Can now retrieve variable values from a non-default data source
 - [Issue #219](https://github.com/grafana/grafana/issues/219). Templating: Template variable value selection is now a typeahead autocomplete dropdown
+- [Issue #760](https://github.com/grafana/grafana/issues/760). Templating: Extend template variable syntax to include $variable syntax replacement
 
 **InfluxDB Breaking changes**
 - To better support templating, fill(0) and group by time low limit some changes has been made to the editor and query model schema

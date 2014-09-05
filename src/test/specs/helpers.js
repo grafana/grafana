@@ -95,6 +95,8 @@ define([
     this.replace = function(text) {
       return _.template(text, this.data,  this.templateSettings);
     };
+    this.variableExists = function() { return false; };
+    this.highlightVariablesAsHtml = function(str) { return str; };
     this.setGrafanaVariable = function(name, value) {
       this.data[name] = value;
     };

@@ -29,6 +29,34 @@ define([
       });
     });
 
+    describe('can check if variable exists', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+      });
+
+      it('should return true if exists', function() {
+        var result = _templateSrv.variableExists('$test');
+        expect(result).to.be(true);
+      });
+    });
+
+    describe('can hightlight variables in string', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+      });
+
+      it('should insert html', function() {
+        var result = _templateSrv.highlightVariablesAsHtml('$test');
+        expect(result).to.be('<span class="template-variable">$test</span>');
+      });
+
+      it('should insert html anywhere in string', function() {
+        var result = _templateSrv.highlightVariablesAsHtml('this $test ok');
+        expect(result).to.be('this <span class="template-variable">$test</span> ok');
+      });
+
+    });
+
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
