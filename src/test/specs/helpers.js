@@ -49,20 +49,28 @@ define([
   function ServiceTestContext() {
     var self = this;
     self.templateSrv = new TemplateSrvStub();
+    self.timeSrv = new TimeSrvStub();
+    self.datasourceSrv = {};
 
-    this.providePhase = function() {
+    this.providePhase = function(mocks) {
      return module(function($provide) {
-        $provide.value('templateSrv', self.templateSrv);
+       _.each(mocks, function(key) {
+         $provide.value(key, self[key]);
+       });
       });
     };
 
     this.createService = function(name) {
-      return inject([name, '$q', '$rootScope', '$httpBackend', function(service, $q, $rootScope, $httpBackend) {
-        self.service = service;
+      return inject(function($q, $rootScope, $httpBackend, $injector) {
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
-      }]);
+
+        self.$rootScope.onAppEvent = function() {};
+        self.$rootScope.emitAppEvent = function() {};
+
+        self.service = $injector.get(name);
+      });
     };
   }
 
@@ -95,6 +103,7 @@ define([
     this.replace = function(text) {
       return _.template(text, this.data,  this.templateSettings);
     };
+    this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
     this.highlightVariablesAsHtml = function(str) { return str; };
     this.setGrafanaVariable = function(name, value) {

@@ -8,12 +8,18 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $routeParams, templateSrv) {
+  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $routeParams, templateSrv, timeSrv) {
     var self = this;
+
+    $rootScope.onAppEvent('time-range-changed', function()  {
+      var variable = _.findWhere(self.variables, { type: 'interval' });
+      if (variable) {
+        self.updateAutoInterval(variable);
+      }
+    });
 
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
-
       templateSrv.init(this.variables);
 
       for (var i = 0; i < this.variables.length; i++) {
@@ -21,7 +27,22 @@ function (angular, _, kbn) {
         if (param.refresh) {
           this.updateOptions(param);
         }
+        else if (param.type === 'interval') {
+          this.updateAutoInterval(param);
+        }
       }
+    };
+
+    this.updateAutoInterval = function(variable) {
+      if (!variable.auto) { return; }
+
+      // add auto option if missing
+      if (variable.options[0].text !== 'auto') {
+        variable.options.unshift({ text: 'auto', value: '$__auto_interval' });
+      }
+
+      var interval = kbn.calculateInterval(timeSrv.timeRange(), variable.auto_count);
+      templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
     this.setVariableValue = function(variable, option, recursive) {
@@ -51,10 +72,12 @@ function (angular, _, kbn) {
     };
 
     this.updateOptions = function(variable) {
-      if (variable.type === 'time period') {
+      if (variable.type === 'interval') {
         variable.options = _.map(variable.query.split(','), function(text) {
           return { text: text, value: text };
         });
+
+        self.updateAutoInterval(variable);
         self.setVariableValue(variable, variable.options[0]);
         return $q.when([]);
       }
