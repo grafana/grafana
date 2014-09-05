@@ -90,6 +90,9 @@ function (angular, _, config, gfunc, Parser) {
         break;
       case 'metric':
         if ($scope.segments.length > 0) {
+          if ($scope.segments[0].length !== 1) {
+            throw { message: 'Multiple metric params not supported, use text editor.' };
+          }
           addFunctionParameter(func, astNode.segments[0].value, index, true);
           break;
         }

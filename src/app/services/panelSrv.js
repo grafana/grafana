@@ -9,9 +9,8 @@ function (angular, _) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
 
     this.init = function($scope) {
-      if (!$scope.panel.span) {
-        $scope.panel.span = 12;
-      }
+      if (!$scope.panel.span) { $scope.panel.span = 12; }
+      if (!$scope.panel.title) { $scope.panel.title = 'No title'; }
 
       var menu = [
         {
