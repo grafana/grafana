@@ -85,7 +85,7 @@ define([
     it('should parse numbers as float', function() {
       var func = gfunc.createFuncInstance('scale');
       func.updateParam('0.001', 0);
-      expect(func.params[0]).to.be(0.001);
+      expect(func.params[0]).to.be('0.001');
     });
   });
 
@@ -93,14 +93,14 @@ define([
     it('should update value and text', function() {
       var func = gfunc.createFuncInstance('aliasByNode');
       func.updateParam('1', 0);
-      expect(func.params[0]).to.be(1);
+      expect(func.params[0]).to.be('1');
     });
 
     it('should slit text and put value in second param', function() {
       var func = gfunc.createFuncInstance('aliasByNode');
       func.updateParam('4,-5', 0);
-      expect(func.params[0]).to.be(4);
-      expect(func.params[1]).to.be(-5);
+      expect(func.params[0]).to.be('4');
+      expect(func.params[1]).to.be('-5');
       expect(func.text).to.be('aliasByNode(4, -5)');
     });
 
@@ -108,7 +108,7 @@ define([
       var func = gfunc.createFuncInstance('aliasByNode');
       func.updateParam('4,-5', 0);
       func.updateParam('', 1);
-      expect(func.params[0]).to.be(4);
+      expect(func.params[0]).to.be('4');
       expect(func.params[1]).to.be(undefined);
       expect(func.text).to.be('aliasByNode(4)');
     });

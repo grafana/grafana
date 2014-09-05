@@ -56,7 +56,7 @@ function (angular, _, kbn) {
           return { text: text, value: text };
         });
         self.setVariableValue(variable, variable.options[0]);
-        return;
+        return $q.when([]);
       }
 
       var datasource = datasourceSrv.get(variable.datasource);

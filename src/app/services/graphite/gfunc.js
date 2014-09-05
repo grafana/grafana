@@ -555,9 +555,6 @@ function (_) {
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
     }
-    else if (this.def.params[index].type === 'int') {
-      this.params[index] = parseFloat(strValue, 10);
-    }
     else {
       this.params[index] = strValue;
     }
