@@ -120,10 +120,8 @@ function (angular, _, kbn) {
         break;
       default:
         allValue = '{';
-        _.each(variable.options, function(option) {
-          allValue += option.text + ',';
-        });
-        allValue = allValue.substring(0, allValue.length - 1) + '}';
+        allValue += _.pluck(variable.options, 'text').join(',');
+        allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});

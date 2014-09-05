@@ -208,7 +208,16 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all glob no values', function(ctx) {
+      ctx.setup(function() {
+        ctx.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'glob' };
+        ctx.queryResult = [];
+      });
 
+      it('should add empty glob', function() {
+        expect(ctx.variable.options[0].value).to.be('{}');
+      });
+    });
 
   });
 

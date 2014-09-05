@@ -57,6 +57,8 @@ function (angular, $, config, _) {
       $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
 
+      $scope.setWindowTitleAndTheme();
+
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
     };
 

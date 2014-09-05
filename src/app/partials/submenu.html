@@ -1,49 +1,47 @@
 <div class="submenu-controls" ng-controller="SubmenuCtrl">
 		<div class="grafana-target">
-			<div class="grafana-target-inner-wrapper">
-				<div class="grafana-target-inner">
+			<div class="grafana-target-inner" style="border-top: none">
 
-					<ul class="grafana-segment-list">
-						<li class="grafana-target-segment">
-							<div class="dropdown">
-								<a class="pointer" data-toggle="dropdown">
-									<i class="icon-cog"></i>
-								</a>
-								<ul class="dropdown-menu">
-									<li><a class="pointer" dash-editor-link="app/partials/templating_editor.html">Templating</a></li>
-									<li><a class="pointer" dash-editor-link="app/partials/annotations_editor.html">Annotations</a></li>
-								</ul>
-							</div>
-						</li>
-					</ul>
-
-					<ul class="grafana-segment-list" ng-if="dashboard.templating.enable">
-						<li class="small grafana-target-segment">
-							<strong>VARIABLES</strong>
-						</li>
-						<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
-							{{variable.name}}:
-						</li>
-
-						<li ng-repeat-end template-param-selector>
-						</li>
-					</ul>
-
-					<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
-						<li class="small grafana-target-segment">
-							<strong>ANNOTATIONS</strong>
-						</li>
-
-						<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
-							<a ng-click="disableAnnotation(annotation)">
-								<i class="annotation-color-icon icon-bolt"></i>
-								{{annotation.name}}
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment">
+						<div class="dropdown">
+							<a class="pointer" data-toggle="dropdown">
+								<i class="icon-cog"></i>
 							</a>
-						</li>
-					</ul>
+							<ul class="dropdown-menu">
+								<li><a class="pointer" dash-editor-link="app/partials/templating_editor.html">Templating</a></li>
+								<li><a class="pointer" dash-editor-link="app/partials/annotations_editor.html">Annotations</a></li>
+							</ul>
+						</div>
+					</li>
+				</ul>
 
-					<div class="clearfix"></div>
-				</div>
+				<ul class="grafana-segment-list" ng-if="dashboard.templating.enable">
+					<li class="small grafana-target-segment">
+						<strong>VARIABLES</strong>
+					</li>
+					<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
+						{{variable.name}}:
+					</li>
+
+					<li ng-repeat-end template-param-selector>
+					</li>
+				</ul>
+
+				<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
+					<li class="small grafana-target-segment">
+						<strong>ANNOTATIONS</strong>
+					</li>
+
+					<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
+						<a ng-click="disableAnnotation(annotation)">
+							<i class="annotation-color-icon icon-bolt"></i>
+							{{annotation.name}}
+						</a>
+					</li>
+				</ul>
+
+				<div class="clearfix"></div>
 			</div>
 		</div>
 	</div>
