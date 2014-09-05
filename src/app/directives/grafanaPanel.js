@@ -40,7 +40,7 @@ function (angular, $) {
                 'onStop:\'panelMoveStop\''+
                 '}"  ng-model="panel" ' +
                 '>' +
-                '{{panel.title || "No title"}}' +
+                '{{panel.title | interpolateTemplateVars}}' +
               '</span>' +
             '</span>'+
 

@@ -3,7 +3,7 @@
 **UI polish / changes**
 - [Issue #725](https://github.com/grafana/grafana/issues/725). UI: All modal editors are removed and replaced by an edit pane under menu. The look of editors is also updated and polished. Search dropdown is also shown as pane under menu and has seen some UI polish.
 
-**Filtering feature overhaul**
+**Filtering/Templating feature overhaul**
 - Filtering renamed to Templating, and filter items to variables
 - Filter editing has gotten its own edit pane with much improved UI and options
 - [Issue #296](https://github.com/grafana/grafana/issues/296). Templating: Can now retrieve variable values from a non-default data source
@@ -11,6 +11,7 @@
 - [Issue #760](https://github.com/grafana/grafana/issues/760). Templating: Extend template variable syntax to include $variable syntax replacement
 - [Issue #234](https://github.com/grafana/grafana/issues/234). Templating: Interval variable type for time intervals summarize/group by parameter, included "auto" option, and auto step counts option.
 - [Issue #262](https://github.com/grafana/grafana/issues/262). Templating: Ability to use template variables for function parameters via custom variable type, can be used as parameter for movingAverage or scaleToSeconds for example
+- [Issue #312](https://github.com/grafana/grafana/issues/312). Templating: Can now use template variables in panel titles
 
 **InfluxDB Breaking changes**
 - To better support templating, fill(0) and group by time low limit some changes has been made to the editor and query model schema
