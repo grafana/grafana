@@ -74,6 +74,20 @@ define([
         expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
       });
 
+      it('should fix wrong minute interval parameters', function() {
+        var results = ctx.ds.buildGraphiteParams({
+          targets: [{target: "summarize(prod.25m.count, '25m', 'sum')" }]
+        });
+        expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
+      });
+
+      it('should fix wrong month interval parameters', function() {
+        var results = ctx.ds.buildGraphiteParams({
+          targets: [{target: "summarize(prod.5M.count, '5M', 'sum')" }]
+        });
+        expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
+      });
+
       it('should ignore empty targets', function() {
         var results = ctx.ds.buildGraphiteParams({
           targets: [{target: 'series1'}, {target: ''}]

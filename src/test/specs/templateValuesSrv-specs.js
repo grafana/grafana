@@ -1,8 +1,9 @@
 define([
   'mocks/dashboard-mock',
   './helpers',
+  'moment',
   'services/templateValuesSrv'
-], function(dashboardMock, helpers) {
+], function(dashboardMock, helpers, moment) {
   'use strict';
 
   describe('templateValuesSrv', function() {
@@ -12,7 +13,7 @@ define([
     beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv']));
     beforeEach(ctx.createService('templateValuesSrv'));
 
-    describe('update time period variable options', function() {
+    describe('update interval variable options', function() {
       var variable = { type: 'interval', query: 'auto,1s,2h,5h,1d', name: 'test' };
 
       beforeEach(function() {
@@ -47,15 +48,41 @@ define([
       });
     }
 
-    describeUpdateVariable('time period variable ', function(scenario) {
+    describeUpdateVariable('interval variable without auto', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'interval', query: 'auto,1s,2h,5h,1d', name: 'test' };
+        scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
+      });
+
+      it('should update options array', function() {
+        expect(scenario.variable.options.length).to.be(4);
+        expect(scenario.variable.options[0].text).to.be('1s');
+        expect(scenario.variable.options[0].value).to.be('1s');
+      });
+    });
+
+    describeUpdateVariable('interval variable with auto', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test', auto: true, auto_count: 10 };
+
+        var range = {
+          from: moment(new Date()).subtract(7, 'days').toDate(),
+          to: new Date()
+        };
+
+        ctx.timeSrv.timeRange = sinon.stub().returns(range);
+        ctx.templateSrv.setGrafanaVariable = sinon.spy();
       });
 
       it('should update options array', function() {
         expect(scenario.variable.options.length).to.be(5);
-        expect(scenario.variable.options[1].text).to.be('1s');
-        expect(scenario.variable.options[1].value).to.be('1s');
+        expect(scenario.variable.options[0].text).to.be('auto');
+        expect(scenario.variable.options[0].value).to.be('$__auto_interval');
+      });
+
+      it('should set $__auto_interval', function() {
+        var call = ctx.templateSrv.setGrafanaVariable.getCall(0);
+        expect(call.args[0]).to.be('$__auto_interval');
+        expect(call.args[1]).to.be('12h');
       });
     });
 

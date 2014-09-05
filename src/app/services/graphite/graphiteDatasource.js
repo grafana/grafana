@@ -222,14 +222,24 @@ function (angular, _, $, config, kbn, moment) {
       var clean_options = [], targets = {};
       var target, targetValue, i;
       var regex = /(\#[A-Z])/g;
+      var intervalFormatFixRegex = /'(\d+)m'/gi;
 
       if (options.format !== 'png') {
         options['format'] = 'json';
       }
 
+      function fixIntervalFormat(match) {
+        return match.replace('m', 'min').replace('M', 'mon');
+      }
+
       for (i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
+        if (!target.target) {
+          continue;
+        }
+
         targetValue = templateSrv.replace(target.target);
+        targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
         targets[this._seriesRefLetters[i]] = targetValue;
       }
 
