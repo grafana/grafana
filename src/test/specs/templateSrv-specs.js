@@ -55,6 +55,11 @@ define([
         expect(result).to.be('this <span class="template-variable">$test</span> ok');
       });
 
+      it('should ignore if variables does not exist', function() {
+        var result = _templateSrv.highlightVariablesAsHtml('this $google ok');
+        expect(result).to.be('this $google ok');
+      });
+
     });
 
     describe('updateTemplateData with simple value', function() {

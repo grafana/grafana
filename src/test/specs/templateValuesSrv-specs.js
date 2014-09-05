@@ -86,6 +86,24 @@ define([
       });
     });
 
+    describeUpdateVariable('update custom variable', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'custom', query: 'hej, hop, asd', name: 'test'};
+      });
+
+      it('should update options array', function() {
+        expect(scenario.variable.options.length).to.be(3);
+        expect(scenario.variable.options[0].text).to.be('hej');
+        expect(scenario.variable.options[1].value).to.be('hop');
+      });
+
+      it('should set $__auto_interval', function() {
+        var call = ctx.templateSrv.setGrafanaVariable.getCall(0);
+        expect(call.args[0]).to.be('$__auto_interval');
+        expect(call.args[1]).to.be('12h');
+      });
+    });
+
     describeUpdateVariable('basic query variable', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };

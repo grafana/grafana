@@ -71,13 +71,20 @@ function (angular, _, kbn) {
       return $q.all(promises);
     };
 
-    this.updateOptions = function(variable) {
-      if (variable.type === 'interval') {
-        variable.options = _.map(variable.query.split(','), function(text) {
-          return { text: text, value: text };
-        });
+    this._updateNonQueryVariable = function(variable) {
+      // extract options in comma seperated string
+      variable.options = _.map(variable.query.split(/[\s,]+/), function(text) {
+        return { text: text, value: text };
+      });
 
+      if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
+      }
+    };
+
+    this.updateOptions = function(variable) {
+      if (variable.type !== 'query') {
+        self._updateNonQueryVariable(variable);
         self.setVariableValue(variable, variable.options[0]);
         return $q.when([]);
       }

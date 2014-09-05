@@ -58,6 +58,7 @@ function (angular, _) {
         if (self._templateData[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
+        return match;
       });
     };
 

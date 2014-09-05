@@ -89,6 +89,15 @@
 						</div>
 					</div>
 
+					<div ng-show="current.type === 'custom'">
+						<div class="editor-row">
+							<div class="editor-option">
+								<label class="small">Values seperated by comma</label>
+								<input type="text" class="input-xxlarge" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
+							</div>
+						</div>
+					</div>
+
 					<div ng-show="current.type === 'query'">
 						<div class="editor-row">
 							<div class="editor-option form-inline">
