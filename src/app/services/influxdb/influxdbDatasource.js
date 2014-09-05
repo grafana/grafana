@@ -19,9 +19,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-      this.templateSettings = {
-        interpolate : /\[\[([\s\S]+?)\]\]/g,
-      };
 
       this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
       this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
