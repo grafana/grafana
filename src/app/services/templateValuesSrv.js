@@ -117,7 +117,7 @@ function (angular, _, kbn) {
       options = {}; // use object hash to remove duplicates
 
       if (variable.regex) {
-        regex = kbn.stringToJsRegex(variable.regex);
+        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
       }
 
       for (i = 0; i < metricNames.length; i++) {
@@ -147,6 +147,9 @@ function (angular, _, kbn) {
         break;
       case 'regex wildcard':
         allValue = '.*';
+        break;
+      case 'regex values':
+        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
         break;
       default:
         allValue = '{';

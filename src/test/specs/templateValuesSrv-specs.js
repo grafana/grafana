@@ -249,6 +249,17 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all regex all values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
+        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add empty glob', function() {
+        expect(scenario.variable.options[0].value).to.be('(backend1|backend2|backend3)');
+      });
+    });
+
   });
 
 });

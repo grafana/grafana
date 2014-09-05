@@ -122,11 +122,11 @@
 							</div>
 							<div class="editor-option" ng-show="current.includeAll">
 								<label class="small">All format</label>
-								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex all values', 'comma list', 'custom']"></select>
+								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values']"></select>
 							</div>
 							<div class="editor-option" ng-show="current.includeAll">
 								<label class="small">All value</label>
-								<input type="text" class="input-xlarge" ng-disabled="true" ng-model='current.options[0].value'></input>
+								<input type="text" class="input-xlarge" ng-model='current.options[0].value'></input>
 							</div>
 						</div>
 					</div>
