@@ -18,8 +18,8 @@ function(angular, $) {
         keyboardManager.unbind('ctrl+s');
         keyboardManager.unbind('ctrl+r');
         keyboardManager.unbind('ctrl+z');
+        keyboardManager.unbind('esc');
       });
-      keyboardManager.unbind('esc');
 
       keyboardManager.bind('ctrl+f', function() {
         scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
