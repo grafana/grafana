@@ -8,6 +8,49 @@ function (angular, $) {
 
   angular
     .module('grafana.directives')
+    .directive('panelTitle', function($compile) {
+      var linkTemplate = '<a class="pointer panel-title">{{panel.title || interpolateTemplateVars}}</div>';
+      var menuTemplate = '<div class="panel-menu">' +
+                            '<a class="pointer"><i class="icon-th-list"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-eye-open"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-cog"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-resize-horizontal"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-move"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-copy"></i></a>  ' +
+                            '<a class="pointer"><i class="icon-share"></i></a>' +
+                            '<a class="pointer"><i class="icon-remove"></i></a>  ' +
+                          '</div>';
+
+      return {
+        restrict: 'A',
+        link: function($scope, elem) {
+          var $link = $(linkTemplate);
+          elem.append($link);
+
+          $link.click(function() {
+            var $menu = $(menuTemplate);
+            var menuScope = $scope.$new();
+
+            elem.append($menu);
+            $compile($menu.contents())(menuScope);
+
+            setTimeout(function() {
+              $menu.remove();
+              menuScope.$destroy();
+              $link.show();
+            }, 8000);
+
+            $link.hide();
+          });
+
+          $compile(elem.contents())($scope);
+        }
+      };
+
+    });
+
+  angular
+    .module('grafana.directives')
     .directive('grafanaPanel', function($compile, $parse) {
 
       var container = '<div class="panel-container"></div>';
@@ -15,37 +58,19 @@ function (angular, $) {
 
       var panelHeader =
       '<div class="panel-header">'+
-       '<div class="row-fluid panel-extra">' +
-          '<div class="panel-extra-container">' +
-            '<span class="alert-error panel-error small pointer"' +
-                  'config-modal="app/partials/inspector.html" ng-if="panelMeta.error">' +
-              '<span data-placement="right" bs-tooltip="panelMeta.error">' +
-              '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
-              '</span>' +
+          '<span class="alert-error panel-error small pointer"' +
+                'config-modal="app/partials/inspector.html" ng-if="panelMeta.error">' +
+            '<span data-placement="right" bs-tooltip="panelMeta.error">' +
+            '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
             '</span>' +
+          '</span>' +
 
-            '<span class="panel-loading" ng-show="panelMeta.loading">' +
-              '<i class="icon-spinner icon-spin icon-large"></i>' +
-            '</span>' +
+          '<span class="panel-loading" ng-show="panelMeta.loading">' +
+            '<i class="icon-spinner icon-spin icon-large"></i>' +
+          '</span>' +
 
-            '<span class="dropdown">' +
-              '<span class="panel-text panel-title pointer" gf-dropdown="panelMeta.menu" tabindex="1" ' +
-              'data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
-              ' jqyoui-draggable="'+
-              '{'+
-                'animate:false,'+
-                'mutate:false,'+
-                'index:{{$index}},'+
-                'onStart:\'panelMoveStart\','+
-                'onStop:\'panelMoveStop\''+
-                '}"  ng-model="panel" ' +
-                '>' +
-                '{{panel.title | interpolateTemplateVars}}' +
-              '</span>' +
-            '</span>'+
-
-          '</div>'+
-        '</div>\n'+
+          '<div panel-title></div>' +
+        '</div>'+
       '</div>';
 
       return {
