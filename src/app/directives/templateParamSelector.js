@@ -38,7 +38,7 @@ function (angular, app, _, $) {
           $input.attr('data-provide', 'typeahead');
           $input.typeahead({
             minLength: 0,
-            items: 10,
+            items: 1000,
             updater: function(value) {
               $input.val(value);
               $input.trigger('blur');
