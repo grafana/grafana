@@ -28,23 +28,10 @@
   z-index: 800;
 }
 
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 3px;
+.panel-header {
   text-align: center;
-  ul {
-    text-align: left;
-  }
 }
 
-.panel div.panel-extra {
-  font-size: 0.9em;
-  margin-bottom: 0px;
-}
-
-.panel div.panel-extra .extra {
-  float:right !important;
-}
 
 .panel-error {
   color: @white;
@@ -69,3 +56,19 @@
   bottom: 0;
 }
 
+.panel-menu {
+  display: inline-block;
+  vertical-align: top;
+  a {
+    font-size: 1.2em;
+    float: left;
+    padding: 2px 10px;
+    border-top: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    background: @grayDark;
+  }
+  a:first-child {
+    border-left: 1px solid black;
+  }
+}
