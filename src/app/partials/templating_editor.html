@@ -23,7 +23,9 @@
 					<table class="grafana-options-table">
 						<tr ng-repeat="variable in variables">
 							<td style="width: 1%">
-								[[{{variable.name}}]]
+								<span class="template-variable">
+									${{variable.name}}
+								</span>
 							</td>
 							<td class="max-width" style="max-width: 200px;">
 								{{variable.query}}

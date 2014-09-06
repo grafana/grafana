@@ -40,9 +40,9 @@ function (angular, app, _, $) {
             minLength: 0,
             items: 10,
             updater: function(value) {
-              updateVariableValue(value);
+              $input.val(value);
               $input.trigger('blur');
-              return '';
+              return value;
             }
           });
 

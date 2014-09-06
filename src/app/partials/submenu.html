@@ -21,7 +21,9 @@
 						<strong>VARIABLES</strong>
 					</li>
 					<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
-						{{variable.name}}:
+						<span class="template-variable ">
+						${{variable.name}}:
+						</span>
 					</li>
 
 					<li ng-repeat-end template-param-selector>
