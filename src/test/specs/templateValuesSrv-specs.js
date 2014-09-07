@@ -10,7 +10,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv']));
+    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', "$routeParams"]));
     beforeEach(ctx.createService('templateValuesSrv'));
 
     describe('update interval variable options', function() {
@@ -24,6 +24,20 @@ define([
         expect(variable.options.length).to.be(5);
         expect(variable.options[1].text).to.be('1s');
         expect(variable.options[1].value).to.be('1s');
+      });
+    });
+
+    describe.only('should init values', function() {
+      var variables = [
+        { name: 'test', current: { value: 'hej' }}
+      ];
+      var dashboard = { templating: { list: variables } };
+
+      beforeEach(function() {
+        ctx.service.init(dashboard);
+      });
+
+      it('should update options array', function() {
       });
     });
 
