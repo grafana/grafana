@@ -18,17 +18,24 @@ function (angular, _, kbn) {
       }
     });
 
-    this.init = function(dashboard) {
+    this.init = function(dashboard, viewstate) {
       this.variables = dashboard.templating.list;
+      this.viewstate = viewstate;
       templateSrv.init(this.variables);
 
       for (var i = 0; i < this.variables.length; i++) {
-        var param = this.variables[i];
-        if (param.refresh) {
-          this.updateOptions(param);
+        var variable = this.variables[i];
+        var urlValue = viewstate.state['var-' + variable.name];
+        if (urlValue !== void 0) {
+          var option = _.findWhere(variable.options, { text: urlValue });
+          option = option || { text: urlValue, value: urlValue };
+          this.setVariableValue(variable, option, true);
         }
-        else if (param.type === 'interval') {
-          this.updateAutoInterval(param);
+        else if (variable.refresh) {
+          this.updateOptions(variable);
+        }
+        else if (variable.type === 'interval') {
+          this.updateAutoInterval(variable);
         }
       }
     };
@@ -63,7 +70,7 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (otherVariable.query.indexOf('[[' + updatedVariable.name + ']]') !== -1) {
+        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
       });
@@ -92,7 +99,6 @@ function (angular, _, kbn) {
       var datasource = datasourceSrv.get(variable.datasource);
       return datasource.metricFindQuery(variable.query)
         .then(function (results) {
-
           variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
@@ -102,7 +108,7 @@ function (angular, _, kbn) {
           // if parameter has current value
           // if it exists in options array keep value
           if (variable.current) {
-            var currentExists = _.findWhere(variable.options, { value: variable.current.value });
+            var currentExists = _.findWhere(variable.options, { text: variable.current.text });
             if (currentExists) {
               return self.setVariableValue(variable, variable.current, true);
             }

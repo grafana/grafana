@@ -51,7 +51,7 @@ function (angular, $, config, _) {
 
       // init services
       timeSrv.init($scope.dashboard);
-      templateValuesSrv.init($scope.dashboard);
+      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
       panelMoveSrv.init($scope.dashboard, $scope);
 
       $scope.checkFeatureToggles();

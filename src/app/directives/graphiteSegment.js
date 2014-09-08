@@ -94,7 +94,7 @@ function (angular, app, _, $) {
           };
 
           $input.attr('data-provide', 'typeahead');
-          $input.typeahead({ source: $scope.source, minLength: 0, items: 100, updater: $scope.updater });
+          $input.typeahead({ source: $scope.source, minLength: 0, items: 10000, updater: $scope.updater });
 
           var typeahead = $input.data('typeahead');
           typeahead.lookup = function () {

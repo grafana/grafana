@@ -62,6 +62,24 @@ define([
 
     });
 
+    describe('when checking if a string contains a variable', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
+        _templateSrv.updateTemplateData();
+      });
+
+      it('should find it with $var syntax', function() {
+        var contains = _templateSrv.containsVariable('this.$test.filters', 'test');
+        expect(contains).to.be(true);
+      });
+
+      it('should find it with [[var]] syntax', function() {
+        var contains = _templateSrv.containsVariable('this.[[test]].filters', 'test');
+        expect(contains).to.be(true);
+      });
+
+    });
+
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);

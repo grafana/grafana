@@ -13,6 +13,8 @@
 - [Issue #262](https://github.com/grafana/grafana/issues/262). Templating: Ability to use template variables for function parameters via custom variable type, can be used as parameter for movingAverage or scaleToSeconds for example
 - [Issue #312](https://github.com/grafana/grafana/issues/312). Templating: Can now use template variables in panel titles
 - [Issue #613](https://github.com/grafana/grafana/issues/613). Templating: Full support for InfluxDB, filter by part of series names, extract series substrings, nested queries, multipe where clauses!
+- Template variables can be initialized from url, with var-my_varname=value, breaking change, before it was just my_varname.
+- Templating and url state sync has some issues that are not solved for this release, see [Issue #772](https://github.com/grafana/grafana/issues/772) for more details.
 
 **InfluxDB Breaking changes**
 - To better support templating, fill(0) and group by time low limit some changes has been made to the editor and query model schema

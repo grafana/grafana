@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('templateSrv', function($q, $routeParams) {
+  module.service('templateSrv', function() {
     var self = this;
 
     this._regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
@@ -19,17 +19,10 @@ function (angular, _) {
       this.updateTemplateData(true);
     };
 
-    this.updateTemplateData = function(initial) {
+    this.updateTemplateData = function() {
       var data = {};
 
       _.each(this.variables, function(variable) {
-        if (initial) {
-          var urlValue = $routeParams[ variable.name ];
-          if (urlValue) {
-            variable.current = { text: urlValue, value: urlValue };
-          }
-        }
-
         if (!variable.current || !variable.current.value) {
           return;
         }
@@ -48,6 +41,10 @@ function (angular, _) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
       return match && (self._templateData[match[1] || match[2]] !== void 0);
+    };
+
+    this.containsVariable = function(str, variableName) {
+      return str.indexOf('$' + variableName) !== -1 || str.indexOf('[[' + variableName + ']]') !== -1;
     };
 
     this.highlightVariablesAsHtml = function(str) {

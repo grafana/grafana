@@ -20,6 +20,7 @@ define([
         viewState.update(updateState);
         expect(location.search()).to.eql(updateState);
         expect(viewState.fullscreen).to.be(true);
+        expect(viewState.state.fullscreen).to.be(true);
       });
     });
 
@@ -29,6 +30,7 @@ define([
         viewState.update({fullscreen: false});
         expect(location.search()).to.eql({});
         expect(viewState.fullscreen).to.be(false);
+        expect(viewState.state.fullscreen).to.be(false);
       });
     });
 
