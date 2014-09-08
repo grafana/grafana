@@ -82,7 +82,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         leftMin: null,
         depthMin: null,
         depthMax: null,
-        timePointCount: null,
         bucketCount: 30,
         mapColor: 'rgba(216, 200, 27, 1)',
       },

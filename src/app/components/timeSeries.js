@@ -55,7 +55,8 @@ function (_, kbn) {
     }
   };
 
-  TimeSeries.prototype.calculateBucketSizes = function (bucketMin, bucketMax) {
+  //Helper function for heatmap calculation of target buckets, their sizes and time point count
+  TimeSeries.prototype.calculateHeatmapBucketSizes = function (bucketMin, bucketMax) {
 
     var currentTime;
     var currentBucketStart;
@@ -116,7 +117,7 @@ function (_, kbn) {
     this.info.buckets = [];
     this.info.bucketSize = 0;
 
-    this.calculateBucketSizes(bucketMin, bucketMax);
+    this.calculateHeatmapBucketSizes(bucketMin, bucketMax);
 
     var prevTime = null;
     var timePointNo = 0;

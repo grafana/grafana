@@ -32,13 +32,9 @@
     </div>
   </div>
   <div class="section">
-    <h5>Heatmap resolution</h5>
-       <div class="editor-option">
-        <label class="small">Max time point count</label>
-        <input type="number" class="input-small" ng-model="panel.grid.timePointCount" ng-change="render()" ng-model-onblur />
-      </div>
+    <h5>Heatmap data</h5>
       <div class="editor-option">
-        <label class="small">Value bucket count</label>
+        <label class="small">Vertical resolution <tip>How many brackets will the heatmap have vertically. Horizontal scaling can be adjusted by changing time grouping of the query.</tip></label>
         <input type="number" class="input-small" ng-model="panel.grid.bucketCount" ng-change="render()" ng-model-onblur />
       </div>
   </div>
@@ -48,11 +44,11 @@
   <div class="section">
     <h5>Color and Depth</h5>
     <div class="editor-option">
-      <label class="small">Min / <a ng-click="toggleGridMinMax('depthMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.depthMin)"></i></a></label>
+      <label class="small">Min / <a ng-click="toggleGridMinMax('depthMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.depthMin)"></i></a> <tip>Value which will be displayed as 0% (black)</tip></label>
       <input type="number" class="input-small" ng-model="panel.grid.depthMin" ng-change="render()" ng-model-onblur />
     </div>
     <div class="editor-option">
-      <label class="small">Max / <a ng-click="toggleGridMinMax('depthMax')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.depthMax)"></i></a></label>
+      <label class="small">Max / <a ng-click="toggleGridMinMax('depthMax')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.depthMax)"></i></a> <tip>Value which will be displayed as 100% (full color)</tip></label>
       <input type="number" class="input-small" ng-model="panel.grid.depthMax" ng-change="render()" ng-model-onblur />
     </div>
     <div class="editor-option">

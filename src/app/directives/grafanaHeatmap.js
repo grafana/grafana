@@ -130,7 +130,7 @@ function (angular, $, kbn, moment, _) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getHeatmapData(
-              scope.panel.grid.leftMin, scope.panel.grid.leftMax, scope.panel.grid.timePointCount, scope.panel.grid.bucketCount);
+              scope.panel.grid.leftMin, scope.panel.grid.leftMax, null, scope.panel.grid.bucketCount);
             if (series.data.length > 0) {
               ymin = series.info.buckets[0];
               ymax = series.info.buckets[series.info.buckets.length - 1] + series.info.bucketSize;
@@ -172,8 +172,8 @@ function (angular, $, kbn, moment, _) {
             b = componentFromStr(result[5], result[6]);
 
             r = Math.round(r * multiplier) << 16;
-            b = Math.round(b * multiplier) << 8;
-            g = Math.round(g * multiplier);
+            g = Math.round(g * multiplier) << 8;
+            b = Math.round(b * multiplier);
 
             hex = "#" + (0x1000000 + r + b + g).toString(16).slice(1);
           }
