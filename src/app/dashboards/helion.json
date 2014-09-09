@@ -208,7 +208,7 @@
               "function": "avg",
               "column": "value",
               "series": "disk_space_utilization_perc",
-              "condiction_filter": true,
+              "condition_filter": true,
               "condition_key": "device",
               "condition_value": "/dev/sda1"
             }
@@ -331,7 +331,7 @@
               "function": "avg",
               "column": "value",
               "series": "net.bytes_out",
-              "condiction_filter": true,
+              "condition_filter": true,
               "condition_key": "device_name",
               "condition_value": "eth0"
             }

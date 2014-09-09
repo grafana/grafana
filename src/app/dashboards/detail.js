@@ -39,6 +39,7 @@ dashboard.time = {
 
 var rows = 1;
 var seriesName = 'argName';
+var threshold = null;
 
 if(!_.isUndefined(ARGS.rows)) {
   rows = parseInt(ARGS.rows, 10);
@@ -46,6 +47,10 @@ if(!_.isUndefined(ARGS.rows)) {
 
 if(!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
+}
+
+if(!_.isUndefined(ARGS.threshold)) {
+  threshold = ARGS.threshold;
 }
 
 for (var i = 0; i < rows; i++) {
@@ -67,6 +72,9 @@ for (var i = 0; i < rows; i++) {
               "series": seriesName
             }
         ],
+        grid: {
+            threshold1: threshold,
+        },
       }
     ]
   });
