@@ -182,34 +182,46 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var tags = dashboard.tags.join(',');
       var title = dashboard.title;
       var temp = dashboard.temp;
+      var id = kbn.slugifyForUrl(title);
       if (temp) { delete dashboard.temp; }
 
       var data = [{
-        name: 'grafana.dashboard_' + btoa(title),
-        columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard'],
-        points: [[1000000000000, 1, title, tags, angular.toJson(dashboard)]]
+        name: 'grafana.dashboard_' + btoa(id),
+        columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard', 'id'],
+        points: [[1000000000000, 1, title, tags, angular.toJson(dashboard), id]]
       }];
 
       if (temp) {
-        return this._saveDashboardTemp(data, title);
+        return this._saveDashboardTemp(data, title, id);
       }
       else {
+        var self = this;
         return this._influxRequest('POST', '/series', data).then(function() {
-          return { title: title, url: '/dashboard/db/' + title };
+          self._removeUnslugifiedDashboard(title, false);
+          return { title: title, url: '/dashboard/db/' + id };
         }, function(err) {
           throw 'Failed to save dashboard to InfluxDB: ' + err.data;
         });
       }
     };
 
-    InfluxDatasource.prototype._saveDashboardTemp = function(data, title) {
-      data[0].name = 'grafana.temp_dashboard_' + btoa(title);
+    InfluxDatasource.prototype._removeUnslugifiedDashboard = function(id, isTemp) {
+      var self = this;
+      self._getDashboardInternal(id, isTemp).then(function(dashboard) {
+        if (dashboard !== null) {
+          self.deleteDashboard(id);
+        }
+      });
+    };
+
+    InfluxDatasource.prototype._saveDashboardTemp = function(data, title, id) {
+      data[0].name = 'grafana.temp_dashboard_' + btoa(id);
       data[0].columns.push('expires');
       data[0].points[0].push(this._getTempDashboardExpiresDate());
 
       return this._influxRequest('POST', '/series', data).then(function() {
         var baseUrl = window.location.href.replace(window.location.hash,'');
-        var url = baseUrl + "#dashboard/temp/" + title;
+        var url = baseUrl + "#dashboard/temp/" + id;
         return { title: title, url: url };
       }, function(err) {
         throw 'Failed to save shared dashboard to InfluxDB: ' + err.data;
@@ -236,7 +248,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return expires;
     };
 
-    InfluxDatasource.prototype.getDashboard = function(id, isTemp) {
+    InfluxDatasource.prototype._getDashboardInternal = function(id, isTemp) {
       var queryString = 'select dashboard from "grafana.dashboard_' + btoa(id) + '"';
 
       if (isTemp) {
@@ -245,13 +257,32 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       return this._seriesQuery(queryString).then(function(results) {
         if (!results || !results.length) {
-          throw "Dashboard not found";
+          return null;
         }
 
         var dashCol = _.indexOf(results[0].columns, 'dashboard');
         var dashJson = results[0].points[0][dashCol];
 
         return angular.fromJson(dashJson);
+      }, function() {
+        return null;
+      });
+    };
+
+    InfluxDatasource.prototype.getDashboard = function(id, isTemp) {
+      var self = this;
+      return this._getDashboardInternal(id, isTemp).then(function(dashboard) {
+        if (dashboard !== null)  {
+          return dashboard;
+        }
+
+        // backward compatible load for unslugified ids
+        var slug = kbn.slugifyForUrl(id);
+        if (slug !== id) {
+          return self.getDashboard(slug, isTemp);
+        }
+
+        throw "Dashboard not found";
       }, function(err) {
         throw  "Could not load dashboard, " + err.data;
       });
@@ -269,7 +300,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     InfluxDatasource.prototype.searchDashboards = function(queryString) {
-      var influxQuery = 'select title, tags from /grafana.dashboard_.*/ where ';
+      var influxQuery = 'select * from /grafana.dashboard_.*/ where ';
 
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
@@ -294,15 +325,21 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           return hits;
         }
 
-        var dashCol = _.indexOf(results[0].columns, 'title');
-        var tagsCol = _.indexOf(results[0].columns, 'tags');
-
         for (var i = 0; i < results.length; i++) {
+          var dashCol = _.indexOf(results[i].columns, 'title');
+          var tagsCol = _.indexOf(results[i].columns, 'tags');
+          var idCol = _.indexOf(results[i].columns, 'id');
+
           var hit =  {
             id: results[i].points[0][dashCol],
             title: results[i].points[0][dashCol],
             tags: results[i].points[0][tagsCol].split(",")
           };
+
+          if (idCol !== -1) {
+            hit.id = results[i].points[0][idCol];
+          }
+
           hit.tags = hit.tags[0] ? hit.tags : [];
           hits.dashboards.push(hit);
         }
