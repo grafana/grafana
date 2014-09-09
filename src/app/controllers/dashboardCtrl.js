@@ -102,6 +102,14 @@ function (angular, $, config, _) {
       }
     };
 
+    $scope.panel_path =function(type) {
+      if(type) {
+        return 'app/panels/'+type.replace(".","/");
+      } else {
+        return false;
+      }
+    };
+
     $scope.showJsonEditor = function(evt, options) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;
