@@ -70,7 +70,9 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
+        console.log("value");
         if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
+          console.log("valuei2");
           return self.updateOptions(otherVariable);
         }
       });
@@ -108,9 +110,9 @@ function (angular, _, kbn) {
           // if parameter has current value
           // if it exists in options array keep value
           if (variable.current) {
-            var currentExists = _.findWhere(variable.options, { text: variable.current.text });
-            if (currentExists) {
-              return self.setVariableValue(variable, variable.current, true);
+            var currentOption = _.findWhere(variable.options, { text: variable.current.text });
+            if (currentOption) {
+              return self.setVariableValue(variable, currentOption, true);
             }
           }
 
