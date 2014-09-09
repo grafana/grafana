@@ -16,6 +16,9 @@
 	<div class="dashboard-editor-body">
 		<div class="editor-row row" ng-if="editor.index == 0">
 			<div class="span6">
+				<div ng-if="variables.length === 0">
+					<em>No annotations defined</em>
+				</div>
 				<table class="grafana-options-table">
 					<tr ng-repeat="annotation in annotations">
 						<td style="width:90%">

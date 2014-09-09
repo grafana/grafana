@@ -76,7 +76,11 @@ function (angular, _, $, config, kbn, moment) {
       var queryInterpolated = templateSrv.replace(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
-      var data = { "query" : { "filtered": { "query" : query, "filter": filter } }, "size": 100 };
+      var data = {
+        "fields": [timeField, "_source"],
+        "query" : { "filtered": { "query" : query, "filter": filter } },
+        "size": 100
+      };
 
       return this._request('POST', '/_search', annotation.index, data).then(function(results) {
         var list = [];
@@ -84,9 +88,16 @@ function (angular, _, $, config, kbn, moment) {
 
         for (var i = 0; i < hits.length; i++) {
           var source = hits[i]._source;
+          var fields = hits[i].fields;
+          var time = source[timeField];
+
+          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+            time = fields[timeField];
+          }
+
           var event = {
             annotation: annotation,
-            time: moment.utc(source[timeField]).valueOf(),
+            time: moment.utc(time).valueOf(),
             title: source[titleField],
           };
 
