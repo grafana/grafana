@@ -23,7 +23,7 @@ function (_) {
   function histogramSort(firstCol, secondCol, x, y) {
     var result = compare(x[firstCol], y[firstCol]);
     if (result !== 0) {
-      return;
+      return result;
     }
     return compare(x[secondCol], y[secondCol]);
   }
