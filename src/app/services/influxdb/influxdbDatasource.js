@@ -3,14 +3,15 @@ define([
   'lodash',
   'kbn',
   './influxSeries',
-  './influxQueryBuilder'
+  './influxQueryBuilder',
+  '../alertSrv'
 ],
 function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource', function($q, $http, templateSrv, alertSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
@@ -28,7 +29,44 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       this.supportAnnotations = true;
       this.supportMetrics = true;
       this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
+      this.templateSettings = {
+        interpolate : /\[\[([\s\S]+?)\]\]/g,
+      };
     }
+
+    InfluxDatasource.prototype.continuousQueryName = function(target) {
+      var templateData;
+      if (target.rawQuery) {
+        // TODO: be smarter here
+        templateData = {
+          series: '[series]',
+          column: '[column]',
+          func: '[func]',
+          interval: '[group_by_interval]',
+          group_dot: '',
+          group: '([group_by_column])',
+          retentionPolicy: 'store90d',
+        };
+      }
+      else {
+        templateData = {
+          series: target.series,
+          column: target.column,
+          func: target.function,
+          interval: target.interval,
+          group_dot: target.groupby_field ? ', ' : '',
+          group: target.groupby_field ? target.groupby_field : '',
+          retentionPolicy: 'store90d',
+        };
+      }
+
+      if(templateData.series.match('/.*/')) {
+        templateData.series = ':series_name';
+      }
+
+      var template = "cq.[[series]].[[func]]_[[column]].[[group]][[group_dot]][[interval]].[[retentionPolicy]]";
+      return _.template(template, templateData, this.templateSettings);
+    };
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
@@ -61,6 +99,72 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
+    InfluxDatasource.prototype.continuousQuery = function(target, withInto) {
+      var query;
+
+      if (target.hide || !((target.series && target.column) || target.query) || !target.cq_name) {
+        return '';
+      }
+
+      if (target.rawQuery) {
+        query = target.query;
+        query = query.replace(";", "");
+        var queryElements = query.split(" ");
+
+        if (withInto) {
+          queryElements.push("into");
+          queryElements.push(target.cq_name);
+        }
+
+        query = queryElements.join(" ");
+      }
+      else {
+
+        var template = "select [[group]][[group_comma]] [[func]]([[column]]) as [[column_desc]] from [[series]] " +
+                        "[[condition_add]] [[condition_key]] [[condition_op]] [[condition_value]] " +
+                        "group by time([[interval]])[[group_comma]] [[group]][[into]][[cq_name]]";
+
+        var templateData = {
+          series: target.series,
+          column: target.column,
+          column_desc: target.column,
+          func: target.function,
+          interval: target.interval,
+          condition_add: target.condition_filter ? 'where' : '',
+          condition_key: target.condition_filter ? target.condition_key : '',
+          condition_op: target.condition_filter ? target.condition_op : '',
+          condition_value: target.condition_filter ? target.condition_value : '',
+          group_comma: target.groupby_field_add && target.groupby_field ? ',' : '',
+          group: target.groupby_field_add ? target.groupby_field : '',
+          into: withInto ? ' into ' : '',
+          cq_name: withInto ? target.cq_name : ''
+        };
+
+        if(!templateData.series.match('^/.*/')) {
+          templateData.series = '"' + templateData.series + '"';
+        }
+
+        query = _.template(template, templateData, this.templateSettings);
+      }
+      return query;
+    };
+
+    InfluxDatasource.prototype.makeContinuousQuery = function(target) {
+      var query = this.continuousQuery(target, true);
+      var datasource = this;
+      return this.listContinuousQueryNames().then(function(continuousQueryNames) {
+        if (continuousQueryNames.indexOf(target.cq_name) !== -1) {
+          alertSrv.set('Make continuous query failed', 'Wrong name (already exists)','error',5000);
+          return $q.reject(new Error("Wrong name (already exists)"));
+        }
+
+        return datasource._seriesQuery(query).then(function(result) {
+          alertSrv.set('Make continuous query succeeded','','success',5000);
+          return result;
+        });
+      });
+    };
+
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
       var query = annotation.query.replace('$timeFilter', timeFilter);
@@ -90,15 +194,34 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         if (!data || data.length === 0) {
           return [];
         }
-        // influxdb >= 1.8
+        // influxdb >= 0.8
         if (data[0].points.length > 0) {
           return _.map(data[0].points, function(point) {
             return point[1];
           });
         }
-        else { // influxdb <= 1.7
+        else { // influxdb <= 0.7
           return _.map(data, function(series) {
-            return series.name; // influxdb < 1.7
+            return series.name; // influxdb < 0.7
+          });
+        }
+      });
+    };
+
+    InfluxDatasource.prototype.listContinuousQueryNames = function() {
+      return this._seriesQuery('list series like /^cq\\./').then(function(data) {
+        if (!data || data.length === 0) {
+          return [];
+        }
+        // influxdb >= 0.8
+        if (data[0].points.length > 0) {
+          return _.map(data[0].points, function(point) {
+            return point[1];
+          });
+        }
+        else { // influxdb <= 0.7
+          return _.map(data, function(series) {
+            return series.name; // influxdb < 0.7
           });
         }
       });

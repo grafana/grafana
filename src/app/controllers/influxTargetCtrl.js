@@ -53,6 +53,23 @@ function (angular) {
       $scope.target.rawQuery = false;
     };
 
+    $scope.continuousQuery = function () {
+      $scope.target.cq_name = $scope.datasource.continuousQueryName($scope.target);
+      $scope.$watch('target.cq_name', function () {
+        $scope.target.cq_query = $scope.datasource.continuousQuery($scope.target, false);
+      });
+    };
+
+    $scope.makeContinuousQuery = function () {
+      $scope.datasource.makeContinuousQuery($scope.target).then(function() {
+        var clone = angular.copy($scope.target);
+        clone.series = $scope.target.cq_name;
+        $scope.target.hide = true;
+        $scope.panel.targets.push(clone);
+        $scope.get_data();
+      });
+    };
+
     // Cannot use typeahead and ng-change on blur at the same time
     $scope.seriesBlur = function() {
       if ($scope.oldSeries !== $scope.target.series) {
