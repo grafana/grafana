@@ -1,12 +1,11 @@
 define([
   'angular',
   'lodash',
-  'jquery',
   'config',
   'kbn',
   'moment'
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, config, kbn, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -119,25 +118,29 @@ function (angular, _, $, config, kbn, moment) {
       });
     };
 
+    ElasticDatasource.prototype._getDashboardWithSlug = function(id) {
+      return this._get('/dashboard/' + kbn.slugifyForUrl(id))
+        .then(function(result) {
+          return angular.fromJson(result._source.dashboard);
+        }, function() {
+          throw "Dashboard not found";
+        });
+    };
+
     ElasticDatasource.prototype.getDashboard = function(id, isTemp) {
       var url = '/dashboard/' + id;
+      if (isTemp) { url = '/temp/' + id; }
 
-      if (isTemp) {
-        url = '/temp/' + id;
-      }
-
+      var self = this;
       return this._get(url)
         .then(function(result) {
-          if (result._source && result._source.dashboard) {
-            return angular.fromJson(result._source.dashboard);
-          } else {
-            return false;
-          }
+          return angular.fromJson(result._source.dashboard);
         }, function(data) {
           if(data.status === 0) {
             throw "Could not contact Elasticsearch. Please ensure that Elasticsearch is reachable from your browser.";
           } else {
-            throw "Could not find dashboard " + id;
+            // backward compatible fallback
+            return self._getDashboardWithSlug(id);
           }
         });
     };
@@ -159,13 +162,27 @@ function (angular, _, $, config, kbn, moment) {
         return this._saveTempDashboard(data);
       }
       else {
-        return this._request('PUT', '/dashboard/' + encodeURIComponent(title), this.index, data)
-          .then(function() {
-            return { title: title, url: '/dashboard/db/' + title };
+
+        var id = encodeURIComponent(kbn.slugifyForUrl(title));
+        var self = this;
+
+        return this._request('PUT', '/dashboard/' + id, this.index, data)
+          .then(function(results) {
+            self._removeUnslugifiedDashboard(results, title);
+            return { title: title, url: '/dashboard/db/' + id };
           }, function(err) {
             throw 'Failed to save to elasticsearch ' + err.data;
           });
       }
+    };
+
+    ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title) {
+      if (saveResult.statusText !== 'Created') { return; }
+
+      var self = this;
+      this._get('/dashboard/' + title).then(function() {
+        self.deleteDashboard(title);
+      });
     };
 
     ElasticDatasource.prototype._saveTempDashboard = function(data) {
@@ -227,7 +244,7 @@ function (angular, _, $, config, kbn, moment) {
           for (var i = 0; i < results.hits.hits.length; i++) {
             hits.dashboards.push({
               id: results.hits.hits[i]._id,
-              title: results.hits.hits[i]._id,
+              title: results.hits.hits[i]._source.title,
               tags: results.hits.hits[i]._source.tags
             });
           }

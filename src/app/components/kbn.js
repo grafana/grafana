@@ -655,6 +655,13 @@ function($, _, moment) {
     }
   };
 
+  kbn.slugifyForUrl = function(str) {
+    return str
+      .toLowerCase()
+      .replace(/[^\w ]+/g,'')
+      .replace(/ +/g,'-');
+  };
+
   kbn.stringToJsRegex = function(str) {
     if (str[0] !== '/') {
       return new RegExp(str);
