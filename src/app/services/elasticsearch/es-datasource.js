@@ -209,7 +209,21 @@ function (angular, _, config, kbn, moment) {
     };
 
     ElasticDatasource.prototype.searchDashboards = function(queryString) {
-      queryString = queryString.toLowerCase().replace(' and ', ' AND ');
+      var endsInOpen = function(string, opener, closer) {
+        var character;
+        var count = 0;
+        for (var i=0; i<string.length; i++) {
+          character = string[i];
+
+          if (character == opener) {
+            count++;
+          } else if (character == closer) {
+            count--;
+          }
+        }
+
+        return count > 0;
+      }
 
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
@@ -221,7 +235,21 @@ function (angular, _, config, kbn, moment) {
           queryString = 'title:';
         }
 
-        if (queryString[queryString.length - 1] !== '*') {
+        // make this a partial search if we're not in some reserved portion of the language,  comments on conditionals, in order:
+        // 1. ends in reserved character, boosting, boolean operator ( -foo)
+        // 2. typing a reserved word like AND, OR, NOT
+        // 3. open parens (groupiing)
+        // 4. open " (term phrase)
+        // 5. open [ (range)
+        // 6. open { (range)
+        // see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax
+        if (!queryString.match(/(\*|\]|}|~|\)|"|^\d+|\s[\-+]\w+)$/) &&
+            !queryString.match(/[A-Z]$/) &&
+            !endsInOpen(queryString, '(', ')') &&
+            !endsInOpen(queryString, '"', '"') &&
+            !endsInOpen(queryString, '[', ']') && !endsInOpen(queryString, '[', '}') &&
+            !endsInOpen(queryString, '{', ']') && !endsInOpen(queryString, '{', '}')
+        ){
           queryString += '*';
         }
       }
