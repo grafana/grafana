@@ -253,7 +253,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         return angular.fromJson(dashJson);
       }, function(err) {
-        return "Could not load dashboard, " + err.data;
+        throw  "Could not load dashboard, " + err.data;
       });
     };
 
@@ -264,7 +264,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         }
         return id;
       }, function(err) {
-        return "Could not delete dashboard, " + err.data;
+        throw "Could not delete dashboard, " + err.data;
       });
     };
 
