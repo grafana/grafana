@@ -60,14 +60,14 @@ function (_, kbn) {
 
     var currentTime;
     var currentBucketStart;
-    var timePoints = new Set();
+    var timePoints = {}; //This dictionary is used as a set
 
     //Get all unique time points and min/max buckets
     for (var i = 0; i < this.datapoints.length; i++) {
       var datapoints = this.datapoints[i];
       currentBucketStart = datapoints[0];
       currentTime = datapoints[2];
-      timePoints.add(currentTime);
+      timePoints[currentTime] = true;
       this.info.bucketMax = Math.max(this.info.bucketMax, currentBucketStart);
       this.info.bucketMin = Math.min(this.info.bucketMin, currentBucketStart);
     }
@@ -79,10 +79,10 @@ function (_, kbn) {
       this.info.bucketMax = bucketMax;
     }
 
-    this.info.sourceTimePointCount = timePoints.size;
+    this.info.sourceTimePointCount = _.size(timePoints);
     //Time point count could be predefined, if not we use the source values.
     if (this.info.targetTimePointCount == null) {
-      this.info.targetTimePointCount = timePoints.size;
+      this.info.targetTimePointCount = this.info.sourceTimePointCount;
     }
 
     //Create a definition of target buckets
