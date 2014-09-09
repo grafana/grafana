@@ -215,15 +215,15 @@ function (angular, _, config, kbn, moment) {
         for (var i=0; i<string.length; i++) {
           character = string[i];
 
-          if (character == opener) {
+          if (character === opener) {
             count++;
-          } else if (character == closer) {
+          } else if (character === closer) {
             count--;
           }
         }
 
         return count > 0;
-      }
+      };
 
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
