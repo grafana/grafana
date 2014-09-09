@@ -17,6 +17,7 @@ function (angular, _, config, $) {
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: 'title:' };
       $scope.db = datasourceSrv.getGrafanaDB();
+      $scope.currentSearchId = 0;
 
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
@@ -75,8 +76,18 @@ function (angular, _, config, $) {
     };
 
     $scope.searchDashboards = function(queryString) {
+      // bookeeping for determining stale search requests
+      var searchId = $scope.currentSearchId + 1;
+      $scope.currentSearchId = searchId > $scope.currentSearchId ? searchId : $scope.currentSearchId;
+
       return $scope.db.searchDashboards(queryString)
         .then(function(results) {
+          // since searches are async, it's possible that these results are not for the latest search. throw
+          // them away if so
+          if (searchId < $scope.currentSearchId) {
+            return;
+          }
+
           $scope.tagsOnly = results.tagsOnly;
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
