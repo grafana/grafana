@@ -224,10 +224,11 @@ define([
                             return;
                         }
 
-                        var target = data.alias || series.name + "." + column;
+                        var target = data.alias || series.name + "." + column + '(';
                         for (var dimension in series.dimensions) {
-                            target += dimension;
+                            target += dimension + '=' + series.dimensions[dimension] + ',';
                         }
+                        target += ')'
                         var datapoints = [];
 
                         if ('statistics' in series) {

@@ -94,7 +94,7 @@
       "collapsable": true,
       "panels": [
         {
-          "span": 4,
+          "span": 6,
           "editable": true,
           "type": "graph",
           "loadingEditor": false,
@@ -147,7 +147,7 @@
             {
               "function": "avg",
               "column": "value",
-              "series": "cpu_user_perc"
+              "series": "cpu.user_perc"
             }
           ],
           "aliasColors": {},
@@ -155,7 +155,7 @@
           "title": "CPU"
         },
         {
-          "span": 4,
+          "span": 6,
           "editable": true,
           "type": "graph",
           "datasource": null,
@@ -207,7 +207,10 @@
             {
               "function": "avg",
               "column": "value",
-              "series": "disk_used_kbytes"
+              "series": "disk_space_utilization_perc",
+              "condiction_filter": true,
+              "condition_key": "device",
+              "condition_value": "/dev/sda1"
             }
           ],
           "aliasColors": {},
@@ -215,7 +218,7 @@
           "title": "Disk"
         },
         {
-          "span": 4,
+          "span": 6,
           "editable": true,
           "type": "graph",
           "datasource": null,
@@ -267,7 +270,70 @@
             {
               "function": "avg",
               "column": "value",
-              "series": "net_bytes_out"
+              "series": "mysql.performance.user_time"
+            }
+          ],
+          "aliasColors": {},
+          "aliasYAxis": {},
+          "title": "Database"
+        },
+        {
+          "span": 6,
+          "editable": true,
+          "type": "graph",
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "max": null,
+            "min": null,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 0,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "function": "avg",
+              "column": "value",
+              "series": "net.bytes_out",
+              "condiction_filter": true,
+              "condition_key": "device_name",
+              "condition_value": "eth0"
             }
           ],
           "aliasColors": {},
