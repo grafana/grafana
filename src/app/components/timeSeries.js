@@ -92,7 +92,7 @@ function (_, kbn) {
         this.info.min = currentValue;
       }
 
-      result.push([currentTime * 1000, currentValue]);
+      result.push([currentTime, currentValue]);
     }
 
     if (result.length > 2) {

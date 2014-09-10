@@ -141,7 +141,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype._seriesQuery = function(query) {
       return this._influxRequest('GET', '/series', {
         q: query,
-        time_precision: 's',
+        time_precision: 'ms',
       });
     };
 
@@ -390,7 +390,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     function to_utc_epoch_seconds(date) {
-      return (date.getTime() / 1000).toFixed(0) + 's';
+      return (date.getTime()).toFixed(0) + 'ms';
     }
 
     return InfluxDatasource;
