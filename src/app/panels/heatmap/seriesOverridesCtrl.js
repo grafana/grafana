@@ -9,7 +9,7 @@ define([
   var module = angular.module('grafana.panels.heatmap', []);
   app.useModule(module);
 
-  module.controller('SeriesOverridesCtrl', function($scope) {
+  module.controller('HeatmapSeriesOverridesCtrl', function($scope) {
 
   });
 

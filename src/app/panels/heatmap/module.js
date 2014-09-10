@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
   var module = angular.module('grafana.panels.heatmap');
   app.useModule(module);
 
-  module.controller('GraphCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
+  module.controller('HeatmapCtrl', function($scope, $rootScope, $timeout, panelSrv, annotationsSrv) {
 
     $scope.panelMeta = {
       modals : [],
