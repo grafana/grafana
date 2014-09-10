@@ -2,13 +2,14 @@ define([
   'angular',
   'lodash',
   'config',
-  'kbn'
-], function (angular, _, config, kbn) {
+  'kbn',
+  'moment'
+], function (angular, _, config, kbn, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('timeSrv', function($rootScope, $timeout, timer) {
+  module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
     this.init = function(dashboard) {
@@ -17,8 +18,37 @@ define([
       this.dashboard = dashboard;
       this.time = dashboard.time;
 
+      this._initTimeFromUrl();
+
       if(this.dashboard.refresh) {
         this.set_interval(this.dashboard.refresh);
+      }
+    };
+
+    this._parseUrlParam = function(value) {
+      if (value.indexOf('now') !== -1) {
+        return value;
+      }
+      if (value.length === 8) {
+        return moment.utc(value, 'YYYYMMDD').toDate();
+      }
+      if (value.length === 15) {
+        return moment.utc(value, 'YYYYMMDDTHHmmss').toDate();
+      }
+      var epoch = parseInt(value);
+      if (!_.isNaN(epoch)) {
+        return new Date(epoch);
+      }
+
+      return null;
+    };
+
+    this._initTimeFromUrl = function() {
+      if ($routeParams.from) {
+        this.time.from = this._parseUrlParam($routeParams.from) || this.time.from;
+      }
+      if ($routeParams.to) {
+        this.time.to = this._parseUrlParam($routeParams.to) || this.time.to;
       }
     };
 
