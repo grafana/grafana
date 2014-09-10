@@ -19,6 +19,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
+      this.basicAuth = datasource.basicAuth;
 
       this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
       this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
@@ -169,6 +170,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           data:   data,
           inspect: { type: 'influxdb' },
         };
+
+        options.headers = options.headers || {};
+        if (_this.basicAuth) {
+          options.headers.Authorization = 'Basic ' + _this.basicAuth;
+        }
 
         return $http(options).success(function (data) {
           deferred.resolve(data);
