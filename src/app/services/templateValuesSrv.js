@@ -70,9 +70,7 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        console.log("value");
         if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
-          console.log("valuei2");
           return self.updateOptions(otherVariable);
         }
       });
