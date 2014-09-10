@@ -44,6 +44,33 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
 
+        var from = getInfluxTime(options.range.from);
+        var until = getInfluxTime(options.range.to);
+
+        if (until === 'now()') {
+          var q = this.urls[0] + "/series?p=" + this.password;
+          q += "&q=" + "select+" + target.column + "+from+%22" + target.series + "%22+where+time+%3C+now()-" + from;
+          q += "+limit+1&time_precision=ms&u=" + this.password;
+          var temp = getPoint(q);
+          if (temp !== 'warning') { from = temp + 'ms'; }
+          timeFilter = 'time > now() - ' + from;
+        }
+        else {
+          var q1 = this.urls[0] + "/series?p=" + this.password;
+          q1 += "&q=" + "select+" + target.column + "+from+%22" + target.series + "%22+where+time+%3C+" + from;
+          q1 += "+limit+1&time_precision=ms&u=" + this.password;
+          var tempFrom = getPoint(q1);
+          if (tempFrom !== 'warning') { from = tempFrom + 'ms'; }
+
+          var q2 = this.urls[0] + "/series?p=" + this.password;
+          q2 += "&q=" + "select+" + target.column + "+from+%22" + target.series + "%22+where+time+%3E+" + until;
+          q2 += "+limit+1&time_precision=ms&u=" + this.password;
+          var tempUntil = getPoint(q2);
+          if (tempUntil !== 'warning') { until = tempUntil + 'ms'; }
+
+          timeFilter = 'time > ' + from + ' and time < ' + until;
+        }
+
         // replace templated variables
         templateSrv.setGrafanaVariable('$timeFilter', timeFilter);
         templateSrv.setGrafanaVariable('$interval', (target.interval || options.interval));
@@ -350,8 +377,22 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return (date.getTime()).toFixed(0) + 'ms';
     }
 
-    return InfluxDatasource;
+    function getPoint(query) {
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.open('GET', query, false);
+      xmlhttp.send(null);
+
+      if (xmlhttp.status !== 200) { return 'warning'; }
+        else {
+          var points = JSON.parse(xmlhttp.responseText);
+          if (points.length === 0) { return 'warning'; }
+          if (points[0].points[0][0] === 'undefined group by time') { return 'warning'; }
+          return points[0].points[0][0];
+        }
+      }
+
+      return InfluxDatasource;
+
+    });
 
   });
-
-});
