@@ -9,6 +9,7 @@
       "title": "New row",
       "height": "150px",
       "collapse": false,
+      "editable": true,
       "panels": [
         {
           "id": 1,
@@ -26,6 +27,7 @@
       "title": "Welcome to Grafana",
       "height": "210px",
       "collapse": false,
+      "editable": true,
       "panels": [
         {
           "id": 2,
@@ -50,6 +52,7 @@
     {
       "title": "test",
       "height": "250px",
+      "editable": true,
       "collapse": false,
       "panels": [
         {
