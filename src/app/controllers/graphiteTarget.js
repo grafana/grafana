@@ -15,7 +15,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';
-      $scope.targetLetter = targetLetters[$scope.$index];
+      $scope.targetLetters = targetLetters;
 
       parseTarget();
     };
