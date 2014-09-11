@@ -92,6 +92,23 @@ define([
       });
     });
 
+    describe('replaceWithText', function() {
+      beforeEach(function() {
+        _templateSrv.init([
+          { name: 'server', current: { value: '{asd,asd2}', text: 'All' } },
+          { name: 'period', current: { value: '$__auto_interval', text: 'auto' } }
+        ]);
+        _templateSrv.setGrafanaVariable('$__auto_interval', '13m');
+        _templateSrv.updateTemplateData();
+      });
+
+      it('should replace with text except for grafanaVariables', function() {
+        var target = _templateSrv.replaceWithText('Server: $server, period: $period');
+        expect(target).to.be('Server: All, period: 13m');
+      });
+    });
+
+
   });
 
 });
