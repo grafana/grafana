@@ -353,6 +353,7 @@ function($, _, moment) {
     while (Math.abs(size) >= 1024) {
       steps++;
       size /= 1024;
+      diff /= 1024;
     }
 
     switch (steps) {
@@ -394,6 +395,7 @@ function($, _, moment) {
     while (Math.abs(size) >= 1024) {
       steps++;
       size /= 1024;
+      diff /= 1024;
     }
 
     switch (steps) {
@@ -435,6 +437,7 @@ function($, _, moment) {
     while (Math.abs(size) >= 1000) {
       steps++;
       size /= 1000;
+      diff /= 1000;
     }
 
     switch (steps) {
@@ -476,6 +479,7 @@ function($, _, moment) {
     while (Math.abs(size) >= 1000) {
       steps++;
       size /= 1000;
+      diff /= 1000;
     }
 
     switch (steps) {
