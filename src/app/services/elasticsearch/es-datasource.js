@@ -170,8 +170,8 @@ function (angular, _, config, kbn, moment) {
           .then(function(results) {
             self._removeUnslugifiedDashboard(results, title);
             return { title: title, url: '/dashboard/db/' + id };
-          }, function(err) {
-            throw 'Failed to save to elasticsearch ' + err.data;
+          }, function() {
+            throw 'Failed to save to elasticsearch';
           });
       }
     };
