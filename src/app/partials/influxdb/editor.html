@@ -181,8 +181,8 @@
 	<div class="grafana-target">
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment">
-					<i class="icon-cogs"></i>
+				<li class="grafana-target-segment grafana-target-segment-icon">
+					<i class="icon-wrench"></i>
 				</li>
 				<li class="grafana-target-segment">
 					group by time
@@ -227,8 +227,8 @@
 <div class="editor-row">
 	<div class="pull-left" style="margin-top: 30px;">
 
-		<div class="span6" ng-if="editorHelpIndex === 1">
-			Alias patterns:
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+			<h5>Alias patterns</h5>
 			<ul>
 				<li>$s = series name</li>
 				<li>$g = group by</li>
@@ -236,8 +236,8 @@
 			</ul>
 		</div>
 
-		<div class="span6" ng-if="editorHelpIndex === 2">
-			Stacking and fill:
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 2">
+			<h5>Stacking and fill</h5>
 			<ul>
 				<li>When stacking is enabled it important that points align</li>
 				<li>If there are missing points for one series it can cause gaps or missing bars</li>
@@ -247,8 +247,8 @@
 			</ul>
 		</div>
 
-		<div class="span6" ng-if="editorHelpIndex === 3">
-			Group by time:
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
+			<h5>Group by time</h5>
 			<ul>
 				<li>Group by time is important, otherwise the query could return many thousands of datapoints that will slow down Grafana</li>
 				<li>Leave the group by time field empty for each query and it will be calculated based on time range and pixel width of the graph</li>

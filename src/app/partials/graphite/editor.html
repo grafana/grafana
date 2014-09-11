@@ -1,4 +1,4 @@
-<div class="editor-row" style="margin-top: 10px;">
+<div class="editor-row">
 
 	<div  ng-repeat="target in panel.targets"
         class="grafana-target"
@@ -30,13 +30,6 @@
                   ng-click="duplicate()">
                 Duplicate
               </a>
-            </li>
-            <li role="menuitem">
-              <a  tabindex="1"
-                  ng-click="toggleMetricOptions()">
-                Toggle request options
-              </a>
-            </li>
           </ul>
         </li>
         <li>
@@ -80,24 +73,109 @@
     </div>
   </div>
 
-	<div class="grafana-target grafana-metric-options" ng-if="panel.metricOptionsEnabled">
+</div>
+
+<section class="grafana-metric-options">
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
+				<li class="grafana-target-segment grafana-target-segment-icon">
+					<i class="icon-wrench"></i>
+				</li>
 				<li class="grafana-target-segment">
-					cacheTimeout <tip>Graphite parameter to overwride memcache default timeout (unit is seconds)</tip>
+					cacheTimeout
 				</li>
 				<li>
 					<input type="text"
-								class="input-large grafana-target-segment-input"
-								ng-model="panel.cacheTimeout"
-								spellcheck='false'
-								placeholder="60">
+					class="input-mini grafana-target-segment-input"
+					ng-model="panel.cacheTimeout"
+					bs-tooltip="'Graphite parameter to overwride memcache default timeout (unit is seconds)'"
+					data-placement="right"
+					spellcheck='false'
+					placeholder="60">
 				</li>
 			</ul>
-      <div class="clearfix"></div>
+			<div class="clearfix"></div>
+		</div>
+		<div class="grafana-target-inner">
+			<ul class="grafana-segment-list">
+				<li class="grafana-target-segment grafana-target-segment-icon">
+					<i class="icon-info-sign"></i>
+				</li>
+				<li class="grafana-target-segment">
+					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						shorter legend names
+					</a>
+				</li>
+				<li class="grafana-target-segment">
+					<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						series as paramaters
+					</a>
+				</li>
+				<li class="grafana-target-segment">
+					<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						stacking
+					</a>
+				</li>
+				<li class="grafana-target-segment">
+					<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						templating
+					</a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
 		</div>
 	</div>
+</section>
 
+<div class="editor-row">
+	<div class="pull-left" style="margin-top: 30px;">
+
+		<div class="grafana-info-box span8" ng-if="editorHelpIndex === 1">
+			<h5>Shorter legend names</h5>
+			<ul>
+				<li>alias() function to specify a custom series name</li>
+				<li>aliasByNode(2) to alias by a specific part of your metric path</li>
+				<li>aliasByNode(2, -1) you can add multiple segment paths, and use negative index</li>
+				<li>groupByNode(2, 'sum') is useful if you have 2 wildcards in your metric path and want to sumSeries and group by</li>
+			</ul>
+		</div>
+
+		<div class="grafana-info-box span8" ng-if="editorHelpIndex === 2">
+			<h5>Series as parameter</h5>
+			<ul>
+				<li>Some graphite functions allow you to have many series arguments</li>
+				<li>Use #[A-Z] to use a graphite query as parameter to a function</li>
+				<li>
+					Examples:
+					<ul>
+						<li>asPercent(#A, #B)</li>
+						<li>prod.srv-01.counters.count - asPercent(#A) : percentage of count in comparison with A query</li>
+						<li>prod.srv-01.counters.count - sumSeries(#A) : sum count and series A </li>
+						<li>divideSeries(#A, #B)</li>
+					</ul>
+				</li>
+				<li>If a query is added only to be used as a parameter, hide it from the graph with the eye icon</li>
+			</ul>
+		</div>
+
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
+			<h5>Stacking</h5>
+			<ul>
+				<li>You find the stacking option under Display Styles tab</li>
+				<li>When stacking is enabled make sure null point mode is set to 'null as zero'</li>
+			</ul>
+		</div>
+
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 4">
+			<h5>Templating</h5>
+			<ul>
+				<li>You can use a template variable in place of metric names</li>
+				<li>You can use a template variable in place of function parameters</li>
+				<li>You enable the templating feature in Dashboard settings / Feature toggles </li>
+			</ul>
+		</div>
+
+	</div>
 </div>
 
 

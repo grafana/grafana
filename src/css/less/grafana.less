@@ -485,3 +485,22 @@ select.grafana-target-segment-input {
   color: @variable;
 }
 
+.grafana-info-box:before {
+  content: "\f05a";
+  font-family:'FontAwesome';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 20px;
+  color: @blue;
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: 5px 15px;
+  background-color: @grafanaTargetBackground;
+  border: 1px solid @grafanaTargetBorder;
+  h5 {
+    margin-top: 5px;
+  }
+}
