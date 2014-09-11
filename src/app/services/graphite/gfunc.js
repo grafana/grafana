@@ -68,7 +68,14 @@ function (_) {
   addFuncDef({
     name: 'diffSeries',
     params: optionalSeriesRefArgs,
-    defaultParams: ['#B'],
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'divideSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
     category: categories.Calculate,
   });
 
