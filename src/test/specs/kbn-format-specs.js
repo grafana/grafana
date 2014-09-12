@@ -48,7 +48,6 @@ define([
     it('should translate 2558000 to 2.558 ms', function () {
       var str = kbn.nanosFormat(2558000, 0.011);
       expect(str).to.be("2.558 ms");
-<<<<<<< HEAD
     });
 
     it('should translate 2019962000 to 2.0500 s', function () {
