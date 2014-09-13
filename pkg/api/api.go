@@ -51,8 +51,8 @@ func (self *HttpServer) ListenAndServe() {
 	}
 
 	// register default route
-	self.router.GET("/", self.authMiddleware(), self.index)
-	self.router.GET("/dashboard/*_", self.authMiddleware(), self.index)
+	self.router.GET("/", self.auth(), self.index)
+	self.router.GET("/dashboard/*_", self.auth(), self.index)
 
 	self.router.Run(":" + self.port)
 }
