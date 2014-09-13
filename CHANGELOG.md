@@ -1,4 +1,4 @@
-# 1.8.0 (2014-09-12)
+# 1.8.0 (unreleased)
 
 **Fixes**
 - [Issue #802](https://github.com/grafana/grafana/issues/802). Annotations: Fix when using InfluxDB datasource
