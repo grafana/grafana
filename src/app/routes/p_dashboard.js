@@ -38,6 +38,7 @@ function (angular) {
         $scope.emitAppEvent('setup-dashboard', dashboard);
       }).then(null, function(error) {
         alertSrv.set('Error', error, 'error');
+        $scope.emitAppEvent('setup-dashboard', {});
       });
 
   });

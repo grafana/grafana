@@ -14,7 +14,7 @@ function (angular, config, _, $, store) {
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
     $scope.consoleEnabled = store.getBool('grafanaConsole');
-    $scope.showProSideMenu = store.getBool('grafanaProSideMenu');
+    //$scope.showProSideMenu = store.getBool('grafanaProSideMenu');
 
     $rootScope.profilingEnabled = store.getBool('profilingEnabled');
     $rootScope.performance = { loadStart: new Date().getTime() };

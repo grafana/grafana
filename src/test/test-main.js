@@ -115,6 +115,7 @@ require([
   angular.module('grafana.filters', []);
 
   require([
+    'specs/overview-ctrl-specs',
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
@@ -133,7 +134,7 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs'
+    'specs/dashboardViewStateSrv-specs',
   ], function () {
     window.__karma__.start();
   });

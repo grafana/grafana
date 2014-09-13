@@ -11,8 +11,42 @@ function (angular) {
       .when('/login', {
         templateUrl: 'app/partials/pro/login.html',
         controller : 'LoginCtrl',
+      })
+      .when('/register', {
+        templateUrl: 'app/partials/pro/register.html',
+        controller : 'RegisterCtrl',
       });
   });
+
+  module.controller('RegisterCtrl', function($scope, $http, $location, $routeParams) {
+    $scope.loginModel = {};
+
+    $scope.init = function() {
+      if ($routeParams.logout) {
+        $scope.logout();
+      }
+    };
+
+    $scope.register = function() {
+      delete $scope.registerError;
+
+      if (!$scope.loginForm.$valid) { return; }
+      if ($scope.loginModel.password !== $scope.loginModel.password2) {
+        $scope.registerError = "Passwords do not match";
+        return;
+      }
+
+      $http.post('/api/register/user', $scope.loginModel).then(function() {
+        $location.path('/login');
+      }, function(err) {
+        $scope.registerError = "Unexpected error: " + err;
+      });
+    };
+
+    $scope.init();
+
+  });
+
 
   module.controller('LoginCtrl', function($scope, $http, $location, $routeParams, alertSrv) {
     $scope.loginModel = {};
