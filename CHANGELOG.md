@@ -1,4 +1,9 @@
-# 1.8.0 (unreleased)
+# 1.8.0 (2014-09-12)
+
+**Fixes**
+- [Issue #802](https://github.com/grafana/grafana/issues/802). Annotations: Fix when using InfluxDB datasource
+
+# 1.8.0-RC1 (2014-09-12)
 
 **UI polish / changes**
 - [Issue #725](https://github.com/grafana/grafana/issues/725). UI: All modal editors are removed and replaced by an edit pane under menu. The look of editors is also updated and polished. Search dropdown is also shown as pane under menu and has seen some UI polish.

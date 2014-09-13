@@ -64,7 +64,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       var timeFilter = getTimeFilter({ range: rangeUnparsed });
       var query = annotation.query.replace('$timeFilter', timeFilter);
-      query = templateSrv.replace(annotation.query);
+      query = templateSrv.replace(query);
 
       return this._seriesQuery(query).then(function(results) {
         return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
