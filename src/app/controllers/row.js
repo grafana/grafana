@@ -13,7 +13,6 @@ function (angular, app, _) {
       title: "Row",
       height: "150px",
       collapse: false,
-      editable: true,
       panels: [],
     };
 
@@ -74,6 +73,19 @@ function (angular, app, _) {
       if (confirm('Are you sure you want to remove this ' + panel.type + ' panel?')) {
         row.panels = _.without(row.panels,panel);
       }
+    };
+
+    $scope.replacePanel = function(newPanel, oldPanel) {
+      var row = $scope.row;
+      var index = _.indexOf(row.panels, oldPanel);
+      row.panels.splice(index, 1);
+
+      // adding it back needs to be done in next digest
+      $timeout(function() {
+        newPanel.id = oldPanel.id;
+        newPanel.span = oldPanel.span;
+        row.panels.splice(index, 0, newPanel);
+      });
     };
 
     $scope.duplicatePanel = function(panel, row) {

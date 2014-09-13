@@ -118,14 +118,22 @@ require([
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
+    'specs/timeSeries-specs',
     'specs/row-ctrl-specs',
     'specs/graphiteTargetCtrl-specs',
+    'specs/graphiteDatasource-specs',
+    'specs/influxSeries-specs',
+    'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
-    'specs/filterSrv-specs',
+    'specs/grafanaGraph-specs',
+    'specs/seriesOverridesCtrl-specs',
+    'specs/timeSrv-specs',
+    'specs/templateSrv-specs',
+    'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/influxSeries-specs'
+    'specs/dashboardViewStateSrv-specs'
   ], function () {
     window.__karma__.start();
   });

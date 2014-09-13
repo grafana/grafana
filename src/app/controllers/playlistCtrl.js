@@ -13,7 +13,6 @@ function (angular, _, config) {
     $scope.init = function() {
       $scope.timespan = config.playlist_timespan;
       $scope.loadFavorites();
-      $scope.$on('modal-opened', $scope.loadFavorites);
     };
 
     $scope.loadFavorites = function() {

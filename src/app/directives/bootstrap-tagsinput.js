@@ -102,7 +102,7 @@ function (angular, $) {
           var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
             '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
               (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-              (item.configModal ? ' config-modal="' + item.configModal + '"' : "") +
+              (item.configModal ? ' dash-editor-link="' + item.configModal + '"' : "") +
               '>' + (item.text || '') + '</a>';
 
           if (item.submenu && item.submenu.length) {

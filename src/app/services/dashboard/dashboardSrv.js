@@ -3,14 +3,15 @@ define([
   'jquery',
   'kbn',
   'lodash',
+  'moment',
   '../timer',
 ],
-function (angular, $, kbn, _) {
+function (angular, $, kbn, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(timer, $rootScope, $timeout) {
+  module.factory('dashboardSrv', function($rootScope)  {
 
     function DashboardModel (data) {
 
@@ -18,30 +19,24 @@ function (angular, $, kbn, _) {
         data = {};
       }
 
+      this.id = data.id || null;
       this.title = data.title || 'No Title';
+      this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editble || true;
+      this.editable = data.editable || true;
+      this.hideControls = data.hideControls || false;
       this.rows = data.rows || [];
-      this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
-      this.templating = data.templating || { list: [] };
+      this.templating = data.templating || { list: [], enable: false };
+      this.annotations = data.annotations || { list: [], enable: false};
       this.refresh = data.refresh;
       this.version = data.version || 0;
-      this.$state = data.$state;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'filtering'})) {
-        this.pulldowns.push({ type: 'filtering', enable: false });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'annotations'})) {
-        this.pulldowns.push({ type: 'annotations', enable: false });
       }
 
       this.updateSchema(data);
@@ -108,107 +103,135 @@ function (angular, $, kbn, _) {
       this.rows.push(newRow);
     };
 
+    p.formatDate = function(date, format) {
+      format = format || 'YYYY-MM-DD HH:mm:ss';
+
+      return this.timezone === 'browser' ?
+              moment(date).format(format) :
+              moment.utc(date).format(format);
+    };
+
     p.emit_refresh = function() {
       $rootScope.$broadcast('refresh');
     };
 
-    p.start_scheduled_refresh = function (after_ms) {
-      this.cancel_scheduled_refresh();
-      this.refresh_timer = timer.register($timeout(function () {
-        this.start_scheduled_refresh(after_ms);
-        this.emit_refresh();
-      }.bind(this), after_ms));
-    };
-
-    p.cancel_scheduled_refresh = function () {
-      timer.cancel(this.refresh_timer);
-    };
-
-    p.set_interval = function (interval) {
-      this.refresh = interval;
-      if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        this.start_scheduled_refresh(_i);
-      } else {
-        this.cancel_scheduled_refresh();
-      }
-    };
-
     p.updateSchema = function(old) {
-      var i, j, row, panel;
+      var i, j, k;
       var oldVersion = this.version;
-      this.version = 3;
+      var panelUpgrades = [];
+      this.version = 6;
 
-      if (oldVersion === 3) {
+      if (oldVersion === 6) {
         return;
       }
 
-      // Version 3 schema changes
-      // ensure panel ids
-      var maxId = this.getNextPanelId();
-      for (i = 0; i < this.rows.length; i++) {
-        row = this.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          panel = row.panels[j];
-          if (!panel.id) {
-            panel.id = maxId;
-            maxId += 1;
+      // version 2 schema changes
+      if (oldVersion < 2) {
+
+        if (old.services) {
+          if (old.services.filter) {
+            this.time = old.services.filter.time;
+            this.templating.list = old.services.filter.list;
           }
+          delete this.services;
         }
-      }
 
-      if (oldVersion === 2) {
-        return;
-      }
-
-      // Version 2 schema changes
-      if (old.services) {
-        if (old.services.filter) {
-          this.time = old.services.filter.time;
-          this.templating.list = old.services.filter.list;
-        }
-        delete this.services;
-      }
-
-      for (i = 0; i < this.rows.length; i++) {
-        row = this.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          panel = row.panels[j];
+        panelUpgrades.push(function(panel) {
+          // rename panel type
           if (panel.type === 'graphite') {
             panel.type = 'graph';
           }
 
-          if (panel.type === 'graph') {
-            if (_.isBoolean(panel.legend)) {
-              panel.legend = { show: panel.legend };
+          if (panel.type !== 'graph') {
+            return;
+          }
+
+          if (_.isBoolean(panel.legend)) { panel.legend = { show: panel.legend }; }
+
+          if (panel.grid) {
+            if (panel.grid.min) {
+              panel.grid.leftMin = panel.grid.min;
+              delete panel.grid.min;
             }
 
-            if (panel.grid) {
-              if (panel.grid.min) {
-                panel.grid.leftMin = panel.grid.min;
-                delete panel.grid.min;
-              }
-
-              if (panel.grid.max) {
-                panel.grid.leftMax = panel.grid.max;
-                delete panel.grid.max;
-              }
-            }
-
-            if (panel.y_format) {
-              panel.y_formats[0] = panel.y_format;
-              delete panel.y_format;
-            }
-
-            if (panel.y2_format) {
-              panel.y_formats[1] = panel.y2_format;
-              delete panel.y2_format;
+            if (panel.grid.max) {
+              panel.grid.leftMax = panel.grid.max;
+              delete panel.grid.max;
             }
           }
+
+          if (panel.y_format) {
+            panel.y_formats[0] = panel.y_format;
+            delete panel.y_format;
+          }
+
+          if (panel.y2_format) {
+            panel.y_formats[1] = panel.y2_format;
+            delete panel.y2_format;
+          }
+        });
+      }
+
+      // schema version 3 changes
+      if (oldVersion < 3) {
+        // ensure panel ids
+        var maxId = this.getNextPanelId();
+        panelUpgrades.push(function(panel) {
+          if (!panel.id) {
+            panel.id = maxId;
+            maxId += 1;
+          }
+        });
+      }
+
+      // schema version 4 changes
+      if (oldVersion < 4) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'graph') { return; }
+          _.each(panel.aliasYAxis, function(value, key) {
+            panel.seriesOverrides = [{ alias: key, yaxis: value }];
+          });
+          delete panel.aliasYAxis;
+        });
+      }
+
+      if (oldVersion < 6) {
+        // move pulldowns to new schema
+        var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
+        var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
+        if (filtering) {
+          this.templating.enable = filtering.enable;
+        }
+        if (annotations) {
+          this.annotations = {
+            list: annotations.annotations,
+            enable: annotations.enable
+          };
+        }
+
+        // update template variables
+        for (i = 0 ; i < this.templating.list.length; i++) {
+          var variable = this.templating.list[i];
+          if (variable.datasource === void 0) { variable.datasource = null; }
+          if (variable.type === 'filter') { variable.type = 'query'; }
+          if (variable.type === void 0) { variable.type = 'query'; }
+          if (variable.allFormat === void 0) { variable.allFormat = 'glob'; }
         }
       }
 
-      this.version = 3;
+      if (panelUpgrades.length === 0) {
+        return;
+      }
+
+      for (i = 0; i < this.rows.length; i++) {
+        var row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          for (k = 0; k < panelUpgrades.length; k++) {
+            panelUpgrades[k](row.panels[j]);
+          }
+        }
+      }
     };
 
     return {

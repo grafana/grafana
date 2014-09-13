@@ -20,7 +20,7 @@
 
 // Accent colors
 // -------------------------
-@blue:                  #01A6E6;
+@blue:                  #007FFF;
 @blueDark:              #75CAEB;
 @green:                 #28B62C;
 @red:                   #FF4136;
@@ -28,6 +28,7 @@
 @orange:                #FF7518;
 @pink:                  #E671B8;
 @purple:                #9954BB;
+@variable:              #32D1DF;
 
 // grafana Variables
 // -------------------------
@@ -38,10 +39,7 @@
 @submenuBorder:         @white;
 
 // Tabs
-@fullEditTabsBackground:  @white;
-@fullEditBorder:          @white;
-@fullEditBackground:      @navbarBackground;
-@fullEditTabsBorder:      @white;
+@fullEditBorder:          @grayLighter;
 
 // Graphite Target Editor
 @grafanaTargetBorder:         @submenuBackground;
@@ -61,8 +59,8 @@
 
 // Links
 // -------------------------
-@linkColor:             @blue;
-@linkColorHover:        darken(@linkColor, 10%);
+@linkColor:             @textColor;
+@linkColorHover:        @blue;
 
 
 // Typography
@@ -97,6 +95,15 @@
 @borderRadiusLarge:     4px;
 @borderRadiusSmall:     2px;
 
+// Lists
+@grafanaListBackground:  transparent;
+@grafanaListAccent:         @grayLighter;
+@grafanaListBorderTop:      #eee;
+@grafanaListBorderBottom:   #efefef;
+@grafanaListHighlight:      @blue;
+@grafanaListHighlightContrast: #ddd;
+@grafanaListMainLinkColor: @textColor;
+
 
 // Tables
 // -------------------------
@@ -104,6 +111,11 @@
 @tableBackgroundAccent:             #f9f9f9; // for striping
 @tableBackgroundHover:              #E8F8FD; // for hover
 @tableBorder:                       #ddd; // table and cell border
+
+// Scrollbars
+@scrollbarBackground: @grayLighter;
+@scrollbarBackground2: @grayLighter;
+@scrollbarBorder: @grayLight;
 
 // Buttons
 // -------------------------
@@ -180,7 +192,7 @@
 
 // Input placeholder text color
 // -------------------------
-@placeholderText:         @gray;
+@placeholderText:         @grayLight;
 
 
 // Hr border color
@@ -210,7 +222,7 @@
 
 @navbarText:                      #666;
 @navbarLinkColor:                 #666;
-@navbarLinkColorHover:            #333;
+@navbarLinkColorHover:            @blue;
 @navbarLinkColorActive:           #555;
 @navbarLinkBackgroundHover:       transparent;
 @navbarLinkBackgroundActive:      darken(@navbarBackground, 6.5%);

@@ -157,6 +157,7 @@ define([
       var param =
         this.functionCall() ||
         this.numericLiteral() ||
+        this.seriesRefExpression() ||
         this.metricExpression() ||
         this.stringLiteral();
 
@@ -166,6 +167,24 @@ define([
 
       this.consumeToken();
       return [param].concat(this.functionParameters());
+    },
+
+    seriesRefExpression: function() {
+      if (!this.match('identifier')) {
+        return null;
+      }
+
+      var value = this.tokens[this.index].value;
+      if (!value.match(/\#[A-Z]/)) {
+        return null;
+      }
+
+      var token = this.consumeToken();
+
+      return {
+        type: 'series-ref',
+        value: token.value
+      };
     },
 
     numericLiteral: function () {

@@ -38,7 +38,7 @@ Graphite, InfluxDB & OpenTSDB.
 - Import dashboard from Graphite
 - Templating
 - [Scripted dashboards](http://grafana.org/docs/features/scripted_dashboards)
-- [Dashboard playlists](http://grafana.org/docs/docs/features/playlist)
+- [Dashboard playlists](http://grafana.org/docs/features/playlist)
 - [Time range controls](http://grafana.org/docs/features/time_range)
 
 ### InfluxDB

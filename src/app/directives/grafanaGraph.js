@@ -10,12 +10,12 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, plot, annotations;
+        var data, annotations;
         var hiddenData = {};
         var dashboard = scope.dashboard;
         var legendSideLastValue = null;
@@ -43,11 +43,6 @@ function (angular, $, kbn, moment, _) {
             return;
           }
           annotations = data.annotations || annotations;
-          render_panel();
-        });
-
-        // Re-render if the window is resized
-        angular.element(window).bind('resize', function() {
           render_panel();
         });
 
@@ -87,6 +82,10 @@ function (angular, $, kbn, moment, _) {
             render_panel_as_graphite_png(data);
             return true;
           }
+
+          if (elem.width() === 0) {
+            return;
+          }
         }
 
         // Function for rendering panel
@@ -118,7 +117,7 @@ function (angular, $, kbn, moment, _) {
               lines:  {
                 show: panel.lines,
                 zero: false,
-                fill: panel.fill === 0 ? 0.001 : panel.fill/10,
+                fill: translateFillOption(panel.fill),
                 lineWidth: panel.linewidth,
                 steps: panel.steppedLine
               },
@@ -154,11 +153,12 @@ function (angular, $, kbn, moment, _) {
           };
 
           for (var i = 0; i < data.length; i++) {
-            var _d = data[i].getFlotPairs(panel.nullPointMode, panel.y_formats);
-            data[i].data = _d;
+            var series = data[i];
+            series.applySeriesOverrides(panel.seriesOverrides);
+            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
           }
 
-          if (panel.bars && data.length && data[0].info.timeStep) {
+          if (data.length && data[0].info.timeStep) {
             options.series.bars.barWidth = data[0].info.timeStep / 1.5;
           }
 
@@ -167,19 +167,29 @@ function (angular, $, kbn, moment, _) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
-          // if legend is to the right delay plot draw a few milliseconds
-          // so the legend width calculation can be done
-          if (shouldDelayDraw(panel)) {
-            legendSideLastValue = panel.legend.rightSide;
-            setTimeout(function() {
-              plot = $.plot(elem, data, options);
-              addAxisLabels();
-            }, 50);
-          }
-          else {
-            plot = $.plot(elem, data, options);
+          var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+
+          function callPlot() {
+            try {
+              $.plot(elem, sortedSeries, options);
+            } catch (e) {
+              console.log('flotcharts error', e);
+            }
+
             addAxisLabels();
           }
+
+          if (shouldDelayDraw(panel)) {
+            setTimeout(callPlot, 50);
+            legendSideLastValue = panel.legend.rightSide;
+          }
+          else {
+            callPlot();
+          }
+        }
+
+        function translateFillOption(fill) {
+          return fill === 0 ? 0.001 : fill/10;
         }
 
         function shouldDelayDraw(panel) {
@@ -353,11 +363,8 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value);
-
-            timestamp = dashboard.timezone === 'browser' ?
-              moment(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss') :
-              moment.utc(item.datapoint[0]).format('YYYY-MM-DD HH:mm:ss');
+            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
+            timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
           } else {
@@ -417,7 +424,7 @@ function (angular, $, kbn, moment, _) {
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
-            scope.filter.setTime({
+            timeSrv.setTime({
               from  : moment.utc(ranges.xaxis.from).toDate(),
               to    : moment.utc(ranges.xaxis.to).toDate(),
             });

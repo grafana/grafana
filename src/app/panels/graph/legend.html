@@ -34,12 +34,12 @@
 
     <div class="editor-row small" style="padding-bottom: 0;">
       <label>Axis:</label>
-      <button ng-click="toggleYAxis(series)"
+      <button ng-click="toggleYAxis(series);dismiss();"
               class="btn btn-mini"
               ng-class="{'btn-success': series.yaxis === 1 }">
         Left
       </button>
-      <button ng-click="toggleYAxis(series)"
+      <button ng-click="toggleYAxis(series);dismiss();"
               class="btn btn-mini"
               ng-class="{'btn-success': series.yaxis === 2 }">
         Right

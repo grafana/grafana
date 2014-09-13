@@ -212,7 +212,7 @@ div.subnav {
 
 .nav-tabs {
 
-	border-bottom: 1px solid @grayDark;
+	border-bottom: 1px solid @fullEditBorder;
 
 	& > li > a {
 		.border-radius(0);
@@ -221,8 +221,9 @@ div.subnav {
 	li > a:hover,
 	li.active > a,
 	li.active > a:hover {
-		border-color: transparent;
-		background-color: @blue;
+	  border-color: transparent;
+	  background-color: transparent;
+		border-bottom: 2px solid @blue;
 		color: @white;
 	}
 
@@ -362,7 +363,7 @@ div.subnav {
 	background-image: none;
 	.box-shadow(none);
 	border: none;
-	.border-radius(0);
+	.border-radius(2px);
 	text-shadow: none;
 
 	&.disabled {
@@ -544,16 +545,16 @@ a:hover {
 .modal {
  	.border-radius(1px);
 	border-top: solid 1px lighten(@grayDark, 5%);
-	background-color: @grayDark;
+	background-color: @grafanaPanelBackground;
 }
 
 .modal-header {
-	border-bottom: 1px solid @grayDark;
+	border-bottom: 1px solid @grafanaPanelBackground;
 }
 
 .modal-footer {
-	background-color: @grayDark;
-	border-top: 1px solid @grayDark;
+	background-color: @grafanaPanelBackground;
+	border-top: 1px solid @grafanaPanelBackground;
 	.border-radius(0 0 0px 0px);
 	.box-shadow(none);
 }

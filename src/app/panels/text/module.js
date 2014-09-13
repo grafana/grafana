@@ -3,7 +3,6 @@ define([
   'app',
   'lodash',
   'require',
-  'services/filterSrv'
 ],
 function (angular, app, _, require) {
   'use strict';
@@ -13,7 +12,7 @@ function (angular, app, _, require) {
 
   var converter;
 
-  module.controller('text', function($scope, filterSrv, $sce, panelSrv) {
+  module.controller('text', function($scope, templateSrv, $sce, panelSrv) {
 
     $scope.panelMeta = {
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
@@ -76,7 +75,7 @@ function (angular, app, _, require) {
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = $sce.trustAsHtml(filterSrv.applyTemplateToTarget(html));
+        $scope.content = $sce.trustAsHtml(templateSrv.replace(html));
       } catch(e) {
         console.log('Text panel error: ', e);
         $scope.content = $sce.trustAsHtml(html);
