@@ -5,12 +5,14 @@ import (
 )
 
 type Store interface {
-	GetById(id string) (*models.Dashboard, error)
-	Save(dash *models.Dashboard) error
+	GetDashboard(title string, accountId int) (*models.Dashboard, error)
+	SaveDashboard(dash *models.Dashboard) error
 	Query(query string) ([]*models.SearchResult, error)
+	SaveUserAccount(acccount *models.UserAccount) error
+	GetUserAccountLogin(emailOrName string) (*models.UserAccount, error)
 	Close()
 }
 
 func New() Store {
-	return NewFileStore("data")
+	return NewRethinkStore(&RethinkCfg{DatabaseName: "grafana"})
 }
