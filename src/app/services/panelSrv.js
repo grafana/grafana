@@ -6,7 +6,7 @@ function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $location) {
 
     this.init = function($scope) {
       if (!$scope.panel.span) { $scope.panel.span = 12; }
@@ -15,6 +15,13 @@ function (angular, _) {
         {
           text: "view",
           icon: "icon-eye-open",
+        {
+          text: 'Drill down',
+          click: 'drillDown(panel.drillDown)',
+          condition: true
+        },
+        {
+          text: "Fullscreen",
           click: 'toggleFullscreen(false)',
           condition: $scope.panelMeta.fullscreenView
         },
@@ -61,6 +68,22 @@ function (angular, _) {
           src: './app/partials/share-panel.html',
           scope: $scope.$new()
         });
+
+      $scope.drillDown = function(dashboard) {
+        var variables = {};
+
+        if (dashboard == null) { return; }
+        _.each($scope.dashboard.templating.list, function(variable) {
+          variables['var-' + variable.name] = variable.current.value;
+        });
+
+        if ($scope.panel.drillDownVariables != null) {
+          _.each($scope.panel.drillDownVariables.split(','), function(token) {
+            variables['var-' + token.split('=')[0]] = token.split('=')[1];
+          });
+        }
+
+        $location.path("/dashboard/db/" + dashboard).search(variables);
       };
 
       $scope.editPanelJson = function() {
