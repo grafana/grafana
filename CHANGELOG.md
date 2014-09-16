@@ -244,7 +244,7 @@ Read this for more info:
 - More graphite function definitions
 - Make "ms" axis format include hour, day, weeks, month and year ([Issue #149](https://github.com/grafana/grafana/issues/149))
 - Microsecond axis format ([Issue #146](https://github.com/grafana/grafana/issues/146))
-- Specify template paramaters in URL ([Issue #123](https://github.com/grafana/grafana/issues/123))
+- Specify template parameters in URL ([Issue #123](https://github.com/grafana/grafana/issues/123))
 
 ### Fixes
 - Basic Auth fix ([Issue #152](https://github.com/grafana/grafana/issues/152))
