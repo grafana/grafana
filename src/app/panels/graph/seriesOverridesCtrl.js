@@ -70,7 +70,7 @@ define([
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);
-    $scope.addOverrideOption('Stack', 'stack', [true, false]);
+    $scope.addOverrideOption('Stack', 'stack', [true, false, 2, 3, 4, 5]);
     $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
     $scope.addOverrideOption('Z-index', 'zindex', [-1,-2,-3,0,1,2,3]);
     $scope.updateCurrentOverrides();
