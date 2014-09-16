@@ -131,7 +131,7 @@ function (angular, $, kbn, _, moment) {
         if (old.services) {
           if (old.services.filter) {
             this.time = old.services.filter.time;
-            this.templating.list = old.services.filter.list;
+            this.templating.list = old.services.filter.list || [];
           }
           delete this.services;
         }
