@@ -531,6 +531,10 @@ function($, _, moment) {
       return function(val) {
         return kbn.nanosFormat(val, decimals);
       };
+    case 'percent':
+      return function(val, axis) {
+        return kbn.noneFormat(val, axis ? axis.tickDecimals : null) + ' %';
+      };
     default:
       return function(val, axis) {
         return kbn.noneFormat(val, axis ? axis.tickDecimals : null);
