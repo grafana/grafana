@@ -51,6 +51,17 @@ func (self *HttpServer) logoutPost(c *gin.Context) {
 	c.JSON(200, gin.H{"status": "logged out"})
 }
 
+type GrafanaReqContext struct {
+}
+
+type authenticatedAuthRouteFunc func(c *gin.Context, grc GrafanaReqContext)
+
+func (self *HttpServer) addAuthRoute(route string, handler authenticatedAuthRouteFunc) {
+	self.router.GET(route, self.auth(), func(c *gin.Context) {
+
+	})
+}
+
 func (self *HttpServer) auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, _ := sessionStore.Get(c.Request, "grafana-session")
