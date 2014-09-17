@@ -9,7 +9,6 @@ define([
 
   module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
-    var annotationPanel;
     var list = [];
     var timezone;
 
@@ -22,9 +21,8 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
-      annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
-      if (!annotationPanel.enable) {
+    this.getAnnotations = function(rangeUnparsed, dashboard) {
+      if (!dashboard.annotations.enable) {
         return $q.when(null);
       }
 
@@ -33,12 +31,12 @@ define([
       }
 
       timezone = dashboard.timezone;
-      var annotations = _.where(annotationPanel.annotations, { enable: true });
+      var annotations = _.where(dashboard.annotations.list, { enable: true });
 
       var promises  = _.map(annotations, function(annotation) {
         var datasource = datasourceSrv.get(annotation.datasource);
 
-        return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
+        return datasource.annotationQuery(annotation, rangeUnparsed)
           .then(this.receiveAnnotationResults)
           .then(null, errorHandler);
       }, this);

@@ -69,8 +69,14 @@ function (angular, _) {
     };
 
     return {
-      create: function(dashboard) {
-        return new PanelMoveSrv(dashboard);
+      init: function(dashboard, scope) {
+        var panelMove = new PanelMoveSrv(dashboard);
+
+        scope.panelMoveDrop = panelMove.onDrop;
+        scope.panelMoveStart = panelMove.onStart;
+        scope.panelMoveStop = panelMove.onStop;
+        scope.panelMoveOver = panelMove.onOver;
+        scope.panelMoveOut = panelMove.onOut;
       }
     };
 

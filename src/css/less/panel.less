@@ -1,0 +1,71 @@
+.panel {
+  display: inline-block;
+  float: left;
+  vertical-align: top;
+}
+
+.panel-container {
+  padding: 0px 0px 0px 0px;
+  background: @grafanaPanelBackground;
+  margin: 5px;
+  position: relative;
+}
+
+.panel-content {
+  padding: 0px 10px 5px 10px;
+}
+
+.panel-title {
+  border: 0px;
+  font-weight: bold;
+  position: relative;
+}
+
+.panel-loading {
+  position:absolute;
+  top: 0px;
+  right: 4px;
+  z-index: 800;
+}
+
+.panel div.panel-extra div.panel-extra-container {
+  margin-right: -10px;
+  margin-top: 3px;
+  text-align: center;
+  ul {
+    text-align: left;
+  }
+}
+
+.panel div.panel-extra {
+  font-size: 0.9em;
+  margin-bottom: 0px;
+}
+
+.panel div.panel-extra .extra {
+  float:right !important;
+}
+
+.panel-error {
+  color: @white;
+  position: absolute;
+  left: 0;
+  padding: 0px 17px 6px 5px;
+  top: 0;
+  i {
+    position: relative;
+    top: -2px;
+  }
+}
+
+.panel-error-arrow {
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-left: 31px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 27px solid @grafanaPanelBackground;
+  left: 0;
+  bottom: 0;
+}
+

@@ -1,7 +1,9 @@
 define([
   './alertSrv',
   './datasourceSrv',
-  './filterSrv',
+  './timeSrv',
+  './templateSrv',
+  './templateValuesSrv',
   './panelSrv',
   './timer',
   './panelMove',

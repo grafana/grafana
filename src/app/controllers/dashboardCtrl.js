@@ -11,58 +11,60 @@ function (angular, $, config, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('DashboardCtrl', function(
-      $scope, $rootScope, dashboardKeybindings,
-      filterSrv, dashboardSrv, dashboardViewStateSrv,
-      panelMoveSrv, timer, $timeout) {
+      $scope,
+      $rootScope,
+      dashboardKeybindings,
+      timeSrv,
+      templateValuesSrv,
+      dashboardSrv,
+      dashboardViewStateSrv,
+      panelMoveSrv,
+      timer,
+      $timeout) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
+    var resizeEventTimeout;
 
     $scope.init = function() {
       $scope.availablePanels = config.panels;
       $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
+      $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
+      $scope.reset_row();
+      $scope.registerWindowResizeEvent();
+    };
 
+    $scope.registerWindowResizeEvent = function() {
       angular.element(window).bind('resize', function() {
-        $timeout(function() {
-          $scope.$broadcast('render');
-        });
+        $timeout.cancel(resizeEventTimeout);
+        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
       });
-
     };
 
     $scope.setupDashboard = function(event, dashboardData) {
-      timer.cancel_all();
-
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
-      $rootScope.performance.panelsRendered= 0;
+      $rootScope.performance.panelsRendered = 0;
 
       $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
-      $scope.grafana.style = $scope.dashboard.style;
+      // init services
+      timeSrv.init($scope.dashboard);
+      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
+      panelMoveSrv.init($scope.dashboard, $scope);
 
-      $scope.filter = filterSrv;
-      $scope.filter.init($scope.dashboard);
-
-      var panelMove = panelMoveSrv.create($scope.dashboard);
-
-      $scope.panelMoveDrop = panelMove.onDrop;
-      $scope.panelMoveStart = panelMove.onStart;
-      $scope.panelMoveStop = panelMove.onStop;
-      $scope.panelMoveOver = panelMove.onOver;
-      $scope.panelMoveOut = panelMove.onOut;
-
-      window.document.title = 'Grafana - ' + $scope.dashboard.title;
-
-      // start auto refresh
-      if($scope.dashboard.refresh) {
-        $scope.dashboard.set_interval($scope.dashboard.refresh);
-      }
-
+      $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
 
+      $scope.setWindowTitleAndTheme();
+
       $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
+    };
+
+    $scope.setWindowTitleAndTheme = function() {
+      window.document.title = config.window_title_prefix + $scope.dashboard.title;
+      $scope.grafana.style = $scope.dashboard.style;
     };
 
     $scope.isPanel = function(obj) {
@@ -91,6 +93,15 @@ function (angular, $, config, _) {
       };
     };
 
+    $scope.edit_path = function(type) {
+      var p = $scope.panel_path(type);
+      if(p) {
+        return p+'/editor.html';
+      } else {
+        return false;
+      }
+    };
+
     $scope.panel_path =function(type) {
       if(type) {
         return 'app/panels/'+type.replace(".","/");
@@ -99,13 +110,15 @@ function (angular, $, config, _) {
       }
     };
 
-    $scope.edit_path = function(type) {
-      var p = $scope.panel_path(type);
-      if(p) {
-        return p+'/editor.html';
-      } else {
-        return false;
-      }
+    $scope.showJsonEditor = function(evt, options) {
+      var editScope = $rootScope.$new();
+      editScope.object = options.object;
+      editScope.updateHandler = options.updateHandler;
+      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+    };
+
+    $scope.checkFeatureToggles = function() {
+      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
     };
 
     $scope.setEditorTabs = function(panelMeta) {

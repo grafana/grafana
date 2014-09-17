@@ -14,7 +14,7 @@
   padding-right: 0px;
 }
 
-.container.grafana-container {
+.main-view-container {
   padding: 5px 10px;
   width: 100%;
   box-sizing: border-box;
@@ -65,74 +65,6 @@ code, pre {
   background-color: @grayLighter;
 }
 
-.panel {
-  display: inline-table;
-  vertical-align: top;
-}
-
-.panel-container {
-  padding: 0px 0px 0px 0px;
-  background: @grafanaPanelBackground;
-  margin: 5px;
-}
-
-.panel-content {
-  padding: 0px 10px 5px 10px;
-}
-
-.panel-title {
-  border: 0px;
-  font-weight: bold;
-}
-
-.panel-loading {
-  position:absolute;
-  top: 0px;
-  right: 4px;
-  z-index: 800;
-}
-
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 3px;
-  text-align: center;
-  ul {
-    text-align: left;
-  }
-}
-
-.panel div.panel-extra {
-  font-size: 0.9em;
-  margin-bottom: 0px;
-}
-
-.panel div.panel-extra .extra {
-  float:right !important;
-}
-
-.panel-error {
-  color: @white;
-  //padding: 5px 10px 0px 10px;
-  position: absolute;
-  left: 5px;
-  padding: 0px 17px 6px 5px;
-  top: 0;
-  i {
-    position: relative;
-    top: -2px;
-  }
-}
-.panel-error-arrow {
-  width: 0;
-  height: 0;
-  position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 27px solid @grafanaPanelBackground;
-  left: 0;
-  bottom: 0;
-}
-
 div.editor-row {
   vertical-align: top;
 }
@@ -142,11 +74,13 @@ div.editor-row div.section {
   vertical-align: top;
   display: inline-block;
 }
+
 div.editor-option {
   vertical-align: top;
   display: inline-block;
   margin-right: 10px;
 }
+
 div.editor-option label {
   display: block;
 }
@@ -266,9 +200,9 @@ form input.ng-invalid {
   left:-34px;
   position: absolute;
   z-index: 100;
-  transition: .25s left;
-  transition-delay: .25s;
-  -webkit-transition-delay: .25s;
+  transition: .10s left;
+  transition-delay: .10s;
+  -webkit-transition-delay: .10s;
 }
 
 .row-open:hover {
@@ -467,7 +401,6 @@ div.flot-text {
 /*************************
  *   Right Positions
  *************************/
-
 .popover {
   &.rightTop .arrow {
     top: 10%;
@@ -583,17 +516,30 @@ div.flot-text {
   }
 }
 
+// typeahead max height
+.typeahead {
+  max-height: 300px;
+  overflow-y: auto;
+}
 
 // Labels & Badges
-
 .label-tag {
   background-color: @purple;
   color: darken(@white, 5%);
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 13px;
+  padding: 4px 6px;
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
 }
 
 .label-tag:hover {
+  opacity: 0.85;
   background-color: darken(@purple, 10%);
-  color: @white;
 }
 
 .annotation-editor-table {
@@ -603,7 +549,6 @@ div.flot-text {
 }
 
 // Top menu
-
 .save-dashboard-dropdown {
   padding: 10px;
   li>a {
@@ -632,3 +577,4 @@ code, pre {
   background-color: @grafanaPanelBackground;
   color: @textColor;
 }
+

@@ -10,12 +10,12 @@ function (angular, $, kbn, moment, _) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, plot, annotations;
+        var data, annotations;
         var hiddenData = {};
         var dashboard = scope.dashboard;
         var legendSideLastValue = null;
@@ -81,6 +81,10 @@ function (angular, $, kbn, moment, _) {
           if (_.isString(data)) {
             render_panel_as_graphite_png(data);
             return true;
+          }
+
+          if (elem.width() === 0) {
+            return;
           }
         }
 
@@ -165,18 +169,22 @@ function (angular, $, kbn, moment, _) {
 
           var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
-          // if legend is to the right delay plot draw a few milliseconds
-          // so the legend width calculation can be done
+          function callPlot() {
+            try {
+              $.plot(elem, sortedSeries, options);
+            } catch (e) {
+              console.log('flotcharts error', e);
+            }
+
+            addAxisLabels();
+          }
+
           if (shouldDelayDraw(panel)) {
+            setTimeout(callPlot, 50);
             legendSideLastValue = panel.legend.rightSide;
-            setTimeout(function() {
-              plot = $.plot(elem, sortedSeries, options);
-              addAxisLabels();
-            }, 50);
           }
           else {
-            plot = $.plot(elem, sortedSeries, options);
-            addAxisLabels();
+            callPlot();
           }
         }
 
@@ -355,7 +363,7 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value);
+            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
             timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
@@ -416,7 +424,7 @@ function (angular, $, kbn, moment, _) {
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
-            scope.filter.setTime({
+            timeSrv.setTime({
               from  : moment.utc(ranges.xaxis.from).toDate(),
               to    : moment.utc(ranges.xaxis.to).toDate(),
             });

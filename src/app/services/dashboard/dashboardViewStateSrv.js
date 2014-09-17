@@ -14,14 +14,15 @@ function (angular, _, $) {
     // like fullscreen panel & edit
     function DashboardViewState($scope) {
       var self = this;
+      self.state = {};
+      self.panelScopes = [];
+      self.$scope = $scope;
 
       $scope.exitFullscreen = function() {
-        self.update({ fullscreen: false });
+        if (self.state.fullscreen) {
+          self.update({ fullscreen: false });
+        }
       };
-
-      $scope.onAppEvent('dashboard-saved', function() {
-        self.update({ fullscreen: false });
-      });
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
@@ -30,42 +31,48 @@ function (angular, _, $) {
         }
       });
 
-      this.panelScopes = [];
-      this.$scope = $scope;
-
       this.update(this.getQueryStringState(), true);
     }
 
     DashboardViewState.prototype.needsSync = function(urlState) {
-      if (urlState.fullscreen !== this.fullscreen) { return true; }
-      if (urlState.edit !== this.edit) { return true; }
-      if (urlState.panelId !== this.panelId) { return true; }
-      return false;
+      return _.isEqual(this.state, urlState) === false;
     };
 
     DashboardViewState.prototype.getQueryStringState = function() {
       var queryParams = $location.search();
-      return {
+      var urlState = {
         panelId: parseInt(queryParams.panelId) || null,
         fullscreen: queryParams.fullscreen ? true : false,
-        edit: queryParams.edit ? true : false
+        edit: queryParams.edit ? true : false,
       };
+
+      _.each(queryParams, function(value, key) {
+        if (key.indexOf('var-') !== 0) { return; }
+        urlState[key] = value;
+      });
+
+      return urlState;
+    };
+
+    DashboardViewState.prototype.serializeToUrl = function() {
+      var urlState = _.clone(this.state);
+      urlState.fullscreen = this.state.fullscreen ? true : null,
+      urlState.edit = this.state.edit ? true : null;
+
+      return urlState;
     };
 
     DashboardViewState.prototype.update = function(state, skipUrlSync) {
-      _.extend(this, state);
+      _.extend(this.state, state);
+      this.fullscreen = this.state.fullscreen;
 
-      if (!this.fullscreen) {
-        this.panelId = null;
-        this.edit = false;
+      if (!this.state.fullscreen) {
+        this.state.panelId = null;
+        this.state.edit = false;
       }
 
       if (!skipUrlSync) {
-        $location.search({
-          fullscreen: this.fullscreen ? true : null,
-          panelId: this.panelId,
-          edit: this.edit ? true : null
-        });
+        $location.search(this.serializeToUrl());
       }
 
       this.syncState();
@@ -78,7 +85,7 @@ function (angular, _, $) {
         if (this.fullscreenPanel) {
           this.leaveFullscreen(false);
         }
-        var panelScope = this.getPanelScope(this.panelId);
+        var panelScope = this.getPanelScope(this.state.panelId);
         this.enterFullscreen(panelScope);
         return;
       }
@@ -120,8 +127,8 @@ function (angular, _, $) {
       var fullscreenHeight = Math.floor(docHeight * 0.7);
       this.oldTimeRange = panelScope.range;
 
-      panelScope.height = this.edit ? editHeight : fullscreenHeight;
-      panelScope.editMode = this.edit;
+      panelScope.height = this.state.edit ? editHeight : fullscreenHeight;
+      panelScope.editMode = this.state.edit;
       this.fullscreenPanel = panelScope;
 
       $(window).scrollTop(0);
@@ -137,7 +144,7 @@ function (angular, _, $) {
       var self = this;
       self.panelScopes.push(panelScope);
 
-      if (self.panelId === panelScope.panel.id) {
+      if (self.state.panelId === panelScope.panel.id) {
         self.enterFullscreen(panelScope);
       }
 

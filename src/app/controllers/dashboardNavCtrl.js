@@ -11,14 +11,13 @@ function (angular, _, moment, config, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv) {
+  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv, timeSrv) {
 
     $scope.init = function() {
       $scope.db = datasourceSrv.getGrafanaDB();
 
-      $scope.onAppEvent('save-dashboard', function() {
-        $scope.saveDashboard();
-      });
+      $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
+      $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
 
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
@@ -57,10 +56,10 @@ function (angular, _, moment, config, store) {
 
     $scope.isAdmin = function() {
       if (!config.admin || !config.admin.password) { return true; }
-      if (this.passwordCache() === config.admin.password) { return true; }
+      if ($scope.passwordCache() === config.admin.password) { return true; }
 
       var password = window.prompt("Admin password", "");
-      this.passwordCache(password);
+      $scope.passwordCache(password);
 
       if (password === config.admin.password) { return true; }
 
@@ -69,16 +68,22 @@ function (angular, _, moment, config, store) {
       return false;
     };
 
+    $scope.openSearch = function() {
+      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
+    };
+
     $scope.saveDashboard = function() {
-      if (!this.isAdmin()) { return false; }
+      if (!$scope.isAdmin()) { return false; }
 
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)
         .then(function(result) {
           alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
 
-          $location.search({});
-          $location.path(result.url);
+          if (result.url !== $location.path()) {
+            $location.search({});
+            $location.path(result.url);
+          }
 
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
 
@@ -87,15 +92,14 @@ function (angular, _, moment, config, store) {
         });
     };
 
-    $scope.deleteDashboard = function(id, $event) {
-      $event.stopPropagation();
-
+    $scope.deleteDashboard = function(evt, options) {
       if (!confirm('Are you sure you want to delete dashboard?')) {
         return;
       }
 
-      if (!this.isAdmin()) { return false; }
+      if (!$scope.isAdmin()) { return false; }
 
+      var id = options.id;
       $scope.db.deleteDashboard(id).then(function(id) {
         alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
       }, function() {
@@ -108,31 +112,33 @@ function (angular, _, moment, config, store) {
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
-    // function $scope.zoom
-    // factor :: Zoom factor, so 0.5 = cuts timespan in half, 2 doubles timespan
     $scope.zoom = function(factor) {
-      var _range = $scope.filter.timeRange();
-      var _timespan = (_range.to.valueOf() - _range.from.valueOf());
-      var _center = _range.to.valueOf() - _timespan/2;
+      var range = timeSrv.timeRange();
 
-      var _to = (_center + (_timespan*factor)/2);
-      var _from = (_center - (_timespan*factor)/2);
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
 
-      // If we're not already looking into the future, don't.
-      if(_to > Date.now() && _range.to < Date.now()) {
-        var _offset = _to - Date.now();
-        _from = _from - _offset;
-        _to = Date.now();
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if(to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
       }
 
-      $scope.filter.setTime({
-        from:moment.utc(_from).toDate(),
-        to:moment.utc(_to).toDate(),
+      timeSrv.setTime({
+        from: moment.utc(from).toDate(),
+        to: moment.utc(to).toDate(),
       });
     };
 
     $scope.styleUpdated = function() {
       $scope.grafana.style = $scope.dashboard.style;
+    };
+
+    $scope.editJson = function() {
+      $scope.emitAppEvent('show-json-editor', { object: $scope.dashboard });
     };
 
     $scope.openSaveDropdown = function() {

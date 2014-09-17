@@ -41,7 +41,6 @@ define([
   });
 
   describe('nanosecond formatting', function () {
-
     it('should translate 25 to 25 ns', function () {
       var str = kbn.nanosFormat(25, 2);
       expect(str).to.be("25 ns");
@@ -68,4 +67,38 @@ define([
     });
 
   });
+
+  describe('calculateInterval', function() {
+    it('1h 100 resultion', function() {
+      var range = { from: kbn.parseDate('now-1h'), to: kbn.parseDate('now') };
+      var str = kbn.calculateInterval(range, 100, null);
+      expect(str).to.be('30s');
+    });
+
+    it('10m 1600 resolution', function() {
+      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var str = kbn.calculateInterval(range, 1600, null);
+      expect(str).to.be('0.1s');
+    });
+
+    it('fixed user interval', function() {
+      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var str = kbn.calculateInterval(range, 1600, '10s');
+      expect(str).to.be('10s');
+    });
+
+    it('short time range and user low limit', function() {
+      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var str = kbn.calculateInterval(range, 1600, '>10s');
+      expect(str).to.be('10s');
+    });
+
+    it('large time range and user low limit', function() {
+      var range = { from: kbn.parseDate('now-14d'), to: kbn.parseDate('now') };
+      var str = kbn.calculateInterval(range, 1000, '>10s');
+      expect(str).to.be('30m');
+    });
+
+  });
+
 });

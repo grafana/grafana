@@ -9,11 +9,13 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
+  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
-  module.controller('GraphiteTargetCtrl', function($scope, $sce) {
+  module.controller('GraphiteTargetCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';
+      $scope.targetLetters = targetLetters;
 
       parseTarget();
     };
@@ -52,6 +54,13 @@ function (angular, _, config, gfunc, Parser) {
       checkOtherSegments($scope.segments.length - 1);
     }
 
+    function addFunctionParameter(func, value, index, shiftBack) {
+      if (shiftBack) {
+        index = Math.max(index - 1, 0);
+      }
+      func.params[index] = value;
+    }
+
     function parseTargeRecursive(astNode, func, index) {
       if (astNode === null) {
         return null;
@@ -59,7 +68,7 @@ function (angular, _, config, gfunc, Parser) {
 
       switch(astNode.type) {
       case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name);
+        var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
           parseTargeRecursive(param, innerFunc, index);
@@ -69,24 +78,23 @@ function (angular, _, config, gfunc, Parser) {
         $scope.functions.push(innerFunc);
         break;
 
+      case 'series-ref':
+        addFunctionParameter(func, astNode.value, index, $scope.segments.length > 0);
+        break;
       case 'string':
       case 'number':
         if ((index-1) >= func.def.params.length) {
           throw { message: 'invalid number of parameters to method ' + func.def.name };
         }
-
-        if (index === 0) {
-          func.params[index] = astNode.value;
-        }
-        else {
-          func.params[index - 1] = astNode.value;
-        }
-
+        addFunctionParameter(func, astNode.value, index, true);
         break;
-
       case 'metric':
         if ($scope.segments.length > 0) {
-          throw { message: 'Multiple metric params not supported, use text editor.' };
+          if (astNode.segments.length !== 1) {
+            throw { message: 'Multiple metric params not supported, use text editor.' };
+          }
+          addFunctionParameter(func, astNode.segments[0].value, index, true);
+          break;
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
@@ -110,11 +118,13 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return $scope.datasource.metricFindQuery($scope.filter, path)
+      return $scope.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
-            $scope.segments = $scope.segments.splice(0, fromIndex);
-            $scope.segments.push(new MetricSegment('select metric'));
+            if (path !== '') {
+              $scope.segments = $scope.segments.splice(0, fromIndex);
+              $scope.segments.push(new MetricSegment('select metric'));
+            }
             return;
           }
           if (segments[0].expandable) {
@@ -144,19 +154,18 @@ function (angular, _, config, gfunc, Parser) {
     $scope.getAltSegments = function (index) {
       $scope.altSegments = [];
 
-      var query = index === 0 ?
-        '*' : getSegmentPathUpTo(index) + '.*';
+      var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery($scope.filter, query)
+      return $scope.datasource.metricFindQuery(query)
         .then(function(segments) {
           $scope.altSegments = _.map(segments, function(segment) {
             return new MetricSegment({ value: segment.text, expandable: segment.expandable });
           });
 
-          _.each($scope.filter.templateParameters, function(templateParameter) {
+          _.each(templateSrv.variables, function(variable) {
             $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
-              value: '[[' + templateParameter.name + ']]',
+              value: '$' + variable.name,
               expandable: true,
             }));
           });
@@ -168,17 +177,14 @@ function (angular, _, config, gfunc, Parser) {
         });
     };
 
-    $scope.setSegment = function (altIndex, segmentIndex) {
+    $scope.segmentValueChanged = function (segment, segmentIndex) {
       delete $scope.parserError;
-
-      $scope.segments[segmentIndex].value = $scope.altSegments[altIndex].value;
-      $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
         $scope.functions = [];
       }
 
-      if ($scope.altSegments[altIndex].expandable) {
+      if (segment.expandable) {
         return checkOtherSegments(segmentIndex + 1)
           .then(function () {
             setSegmentFocus(segmentIndex + 1);
@@ -219,12 +225,16 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.addFunction = function(funcDef) {
-      var newFunc = gfunc.createFuncInstance(funcDef);
+      var newFunc = gfunc.createFuncInstance(funcDef, { withDefaultParams: true });
       newFunc.added = true;
       $scope.functions.push(newFunc);
 
       $scope.moveAliasFuncLast();
       $scope.smartlyHandleNewAliasByNode(newFunc);
+
+      if ($scope.segments.length === 1 && $scope.segments[0].value === 'select metric') {
+        $scope.segments = [];
+      }
 
       if (!newFunc.params.length && newFunc.added) {
         $scope.targetChanged();
@@ -287,13 +297,7 @@ function (angular, _, config, gfunc, Parser) {
       this.value = options.value;
       this.type = options.type;
       this.expandable = options.expandable;
-
-      if (options.type === 'template') {
-        this.html = $sce.trustAsHtml(options.value);
-      }
-      else {
-        this.html = $sce.trustAsHtml(this.value);
-      }
+      this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
     }
 
   });

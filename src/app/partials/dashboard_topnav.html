@@ -1,7 +1,10 @@
 <div class="navbar navbar-static-top">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="brand"><img src="img/small.png" bs-tooltip="'Grafana'" data-placement="bottom"> {{dashboard.title}}</span>
+			<span class="brand">
+				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+				<span class="page-title">{{dashboard.title}}</span>
+			</span>
 			<ul class="nav pull-right" ng-controller='DashboardNavCtrl' ng-init="init()">
 
 				<li ng-show="dashboardViewState.fullscreen">
@@ -47,6 +50,9 @@
 							<a class="link" ng-click="removeAsFavorite()">Remove as favorite</a>
 						</li>
 						<li>
+							<a class="link" ng-click="editJson()">Dashboard JSON</a>
+						</li>
+						<li>
 							<a class="link" ng-click="exportDashboard()">Export dashboard</a>
 						</li>
 						<li ng-show="db.saveTemp">
@@ -57,12 +63,15 @@
 					</ul>
 				</li>
 
-				<li class="dropdown grafana-menu-load" ng-controller="SearchCtrl" ng-init="init()" ng-include="'app/partials/search.html'">
+				<li class="dropdown grafana-menu-load">
+					<a bs-tooltip="'Search'" ng-click="openSearch()">
+						<i class='icon-folder-open'></i>
+					</a>
 				</li>
 
 				<li class="grafana-menu-home"><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/'><i class='icon-home'></i></a></li>
 
-				<li class="grafana-menu-edit" ng-show="dashboard.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" config-modal="app/partials/dasheditor.html"><i class='icon-cog pointer'></i></a></li>
+				<li class="grafana-menu-edit" ng-show="dashboard.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" dash-editor-link="app/partials/dasheditor.html"><i class='icon-cog pointer'></i></a></li>
 
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>

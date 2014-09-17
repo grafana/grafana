@@ -78,7 +78,7 @@ function (Settings) {
       max_results: 20
     },
 
-    // default start dashboard
+    // default home dashboard
     default_route: '/dashboard/file/default.json',
 
     // set to false to disable unsaved changes warning
@@ -93,6 +93,9 @@ function (Settings) {
     admin: {
       password: ''
     },
+
+    // Change window title prefix from 'Grafana - <dashboard title>'
+    window_title_prefix: 'Grafana - ',
 
     // Add your own custom pannels
     plugins: {

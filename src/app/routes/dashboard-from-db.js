@@ -34,9 +34,9 @@ function (angular) {
       .then(function(dashboard) {
         $scope.emitAppEvent('setup-dashboard', dashboard);
       }).then(null, function(error) {
+        $scope.emitAppEvent('setup-dashboard', { title: 'Grafana'});
         alertSrv.set('Error', error, 'error');
       });
-
   });
 
 });

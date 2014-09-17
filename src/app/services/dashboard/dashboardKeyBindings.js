@@ -18,11 +18,11 @@ function(angular, $) {
         keyboardManager.unbind('ctrl+s');
         keyboardManager.unbind('ctrl+r');
         keyboardManager.unbind('ctrl+z');
+        keyboardManager.unbind('esc');
       });
-      keyboardManager.unbind('esc');
 
-      keyboardManager.bind('ctrl+f', function(evt) {
-        scope.emitAppEvent('open-search', evt);
+      keyboardManager.bind('ctrl+f', function() {
+        scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {
@@ -52,6 +52,8 @@ function(angular, $) {
         if (modalData && modalData.$scope && modalData.$scope.dismiss) {
           modalData.$scope.dismiss();
         }
+
+        scope.emitAppEvent('hide-dash-editor');
 
         scope.exitFullscreen();
       }, { inputDisabled: true });

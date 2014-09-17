@@ -81,8 +81,15 @@ function(angular, _, config) {
 
       // ignore timespan changes
       current.time = original.time = {};
-
       current.refresh = original.refresh;
+
+      // ignore template variable values
+      _.each(current.templating.list, function(value, index) {
+        value.current = null;
+        value.options = null;
+        original.templating.list[index].current = null;
+        original.templating.list[index].options = null;
+      });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });

@@ -25,11 +25,11 @@ function (angular, app, _, moment, kbn) {
   var module = angular.module('grafana.panels.timepicker', []);
   app.useModule(module);
 
-  module.controller('timepicker', function($scope, $modal, $q) {
+  module.controller('timepicker', function($scope, $rootScope, timeSrv) {
+
     $scope.panelMeta = {
       status  : "Stable",
-      description : "A panel for controlling the time range filters. If you have time based data, "+
-        " or if you're using time stamped indices, you need one of these"
+      description : ""
     };
 
     // Set and populate defaults
@@ -38,8 +38,6 @@ function (angular, app, _, moment, kbn) {
       time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
       refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
     };
-
-    var customTimeModal = null;
 
     _.defaults($scope.panel,_d);
 
@@ -52,33 +50,25 @@ function (angular, app, _, moment, kbn) {
       millisecond: /^[0-9]*$/
     };
 
+    $scope.timeSrv = timeSrv;
+
     $scope.$on('refresh', function() {
       $scope.init();
     });
 
     $scope.init = function() {
-      var time = this.filter.timeRange(true);
+      var time = timeSrv.timeRange(true);
       if(time) {
-        $scope.panel.now = this.filter.timeRange(false).to === "now" ? true : false;
+        $scope.panel.now = timeSrv.timeRange(false).to === "now" ? true : false;
         $scope.time = getScopeTimeObj(time.from,time.to);
       }
     };
 
     $scope.customTime = function() {
-      if (!customTimeModal) {
-        customTimeModal = $modal({
-          template: './app/panels/timepicker/custom.html',
-          persist: true,
-          show: false,
-          scope: $scope,
-          keyboard: false
-        });
-      }
-
       // Assume the form is valid since we're setting it to something valid
       $scope.input.$setValidity("dummy", true);
       $scope.temptime = cloneTime($scope.time);
-      $scope.tempnow = $scope.panel.now;
+      $scope.temptime.now = $scope.panel.now;
 
       $scope.temptime.from.date.setHours(0,0,0,0);
       $scope.temptime.to.date.setHours(0,0,0,0);
@@ -89,9 +79,7 @@ function (angular, app, _, moment, kbn) {
         $scope.temptime.to.date = moment($scope.temptime.to.date).add('days',1).toDate();
       }
 
-      $q.when(customTimeModal).then(function(modalEl) {
-        modalEl.modal('show');
-      });
+      $scope.emitAppEvent('show-dash-editor', {src: 'app/panels/timepicker/custom.html', scope: $scope });
     };
 
     // Constantly validate the input of the fields. This function does not change any date variables
@@ -118,7 +106,7 @@ function (angular, app, _, moment, kbn) {
         return false;
       }
 
-      return {from:_from,to:_to};
+      return { from: _from, to:_to, now: time.now};
     };
 
     $scope.setNow = function() {
@@ -135,12 +123,12 @@ function (angular, app, _, moment, kbn) {
       // Create filter object
       var _filter = _.clone(time);
 
-      if($scope.tempnow) {
+      if(time.now) {
         _filter.to = "now";
       }
 
       // Set the filter
-      $scope.panel.filter_id = $scope.filter.setTime(_filter);
+      $scope.panel.filter_id = timeSrv.setTime(_filter);
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
@@ -154,7 +142,7 @@ function (angular, app, _, moment, kbn) {
         to: "now"
       };
 
-      this.filter.setTime(_filter);
+      timeSrv.setTime(_filter);
 
       $scope.time = getScopeTimeObj(kbn.parseDate(_filter.from),new Date());
     };
@@ -187,7 +175,7 @@ function (angular, app, _, moment, kbn) {
         model.tooltip = 'Click to set time filter';
       }
 
-      if ($scope.filter.time) {
+      if (timeSrv.time) {
         if ($scope.panel.now) {
           model.rangeString = moment(model.from.date).fromNow() + ' to ' +
             moment(model.to.date).fromNow();

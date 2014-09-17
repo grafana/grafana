@@ -11,7 +11,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(timer, $rootScope, $timeout) {
+  module.factory('dashboardSrv', function($rootScope)  {
 
     function DashboardModel (data) {
 
@@ -25,25 +25,18 @@ function (angular, $, kbn, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editble || true;
+      this.editable = data.editable || true;
+      this.hideControls = data.hideControls || false;
       this.rows = data.rows || [];
-      this.pulldowns = data.pulldowns || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
-      this.templating = data.templating || { list: [] };
+      this.templating = data.templating || { list: [], enable: false };
+      this.annotations = data.annotations || { list: [], enable: false};
       this.refresh = data.refresh;
       this.version = data.version || 0;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'filtering'})) {
-        this.pulldowns.push({ type: 'filtering', enable: false });
-      }
-
-      if (!_.findWhere(this.pulldowns, {type: 'annotations'})) {
-        this.pulldowns.push({ type: 'annotations', enable: false });
       }
 
       this.updateSchema(data);
@@ -122,34 +115,13 @@ function (angular, $, kbn, _, moment) {
       $rootScope.$broadcast('refresh');
     };
 
-    p.start_scheduled_refresh = function (after_ms) {
-      this.cancel_scheduled_refresh();
-      this.refresh_timer = timer.register($timeout(function () {
-        this.start_scheduled_refresh(after_ms);
-        this.emit_refresh();
-      }.bind(this), after_ms));
-    };
-
-    p.cancel_scheduled_refresh = function () {
-      timer.cancel(this.refresh_timer);
-    };
-
-    p.set_interval = function (interval) {
-      this.refresh = interval;
-      if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        this.start_scheduled_refresh(_i);
-      } else {
-        this.cancel_scheduled_refresh();
-      }
-    };
-
     p.updateSchema = function(old) {
+      var i, j, k;
       var oldVersion = this.version;
       var panelUpgrades = [];
-      this.version = 4;
+      this.version = 6;
 
-      if (oldVersion === 4) {
+      if (oldVersion === 6) {
         return;
       }
 
@@ -159,7 +131,7 @@ function (angular, $, kbn, _, moment) {
         if (old.services) {
           if (old.services.filter) {
             this.time = old.services.filter.time;
-            this.templating.list = old.services.filter.list;
+            this.templating.list = old.services.filter.list || [];
           }
           delete this.services;
         }
@@ -224,14 +196,38 @@ function (angular, $, kbn, _, moment) {
         });
       }
 
+      if (oldVersion < 6) {
+        // move pulldowns to new schema
+        var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
+        var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
+        if (filtering) {
+          this.templating.enable = filtering.enable;
+        }
+        if (annotations) {
+          this.annotations = {
+            list: annotations.annotations,
+            enable: annotations.enable
+          };
+        }
+
+        // update template variables
+        for (i = 0 ; i < this.templating.list.length; i++) {
+          var variable = this.templating.list[i];
+          if (variable.datasource === void 0) { variable.datasource = null; }
+          if (variable.type === 'filter') { variable.type = 'query'; }
+          if (variable.type === void 0) { variable.type = 'query'; }
+          if (variable.allFormat === void 0) { variable.allFormat = 'glob'; }
+        }
+      }
+
       if (panelUpgrades.length === 0) {
         return;
       }
 
-      for (var i = 0; i < this.rows.length; i++) {
+      for (i = 0; i < this.rows.length; i++) {
         var row = this.rows[i];
-        for (var j = 0; j < row.panels.length; j++) {
-          for (var k = 0; k < panelUpgrades.length; k++) {
+        for (j = 0; j < row.panels.length; j++) {
+          for (k = 0; k < panelUpgrades.length; k++) {
             panelUpgrades[k](row.panels[j]);
           }
         }

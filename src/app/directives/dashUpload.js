@@ -15,8 +15,9 @@ function (angular) {
           var readerOnload = function() {
             return function(e) {
               var dashboard = JSON.parse(e.target.result);
-              scope.emitAppEvent('setup-dashboard', dashboard);
-              scope.$apply();
+              scope.$apply(function() {
+                scope.emitAppEvent('setup-dashboard', dashboard);
+              });
             };
           };
           for (var i = 0, f; f = files[i]; i++) {

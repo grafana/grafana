@@ -8,7 +8,7 @@ function (angular, _, $) {
 
   angular
     .module('grafana.directives')
-    .directive('graphiteFuncEditor', function($compile) {
+    .directive('graphiteFuncEditor', function($compile, templateSrv) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
@@ -69,12 +69,12 @@ function (angular, _, $) {
 
           function inputBlur(paramIndex) {
             /*jshint validthis:true */
-
             var $input = $(this);
             var $link = $input.prev();
+            var newValue = $input.val();
 
-            if ($input.val() !== '' || func.def.params[paramIndex].optional) {
-              $link.text($input.val());
+            if (newValue !== '' || func.def.params[paramIndex].optional) {
+              $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
               func.updateParam($input.val(), paramIndex);
               scheduledRelinkIfNeeded();
@@ -88,7 +88,6 @@ function (angular, _, $) {
 
           function inputKeyPress(paramIndex, e) {
             /*jshint validthis:true */
-
             if(e.which === 13) {
               inputBlur.call(this, paramIndex);
             }
@@ -147,7 +146,7 @@ function (angular, _, $) {
             $funcLink.appendTo(elem);
 
             _.each(funcDef.params, function(param, index) {
-              if (param.optional && !func.params[index]) {
+              if (param.optional && func.params.length <= index) {
                 return;
               }
 
@@ -155,7 +154,8 @@ function (angular, _, $) {
                 $('<span>, </span>').appendTo(elem);
               }
 
-              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + func.params[index] + '</a>');
+              var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
+              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + paramValue + '</a>');
               var $input = $(paramTemplate);
 
               paramCountAtLink++;

@@ -1,108 +1,113 @@
-<div class="modal-body">
-  <div class="pull-right editor-title">Dashboard settings</div>
+<div class="dashboard-editor-header">
+	<div class="dashboard-editor-title">
+		<i class="icon icon-cogs"></i>
+		Dashboard settings
+	</div>
 
-  <div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-    <div ng-repeat="tab in ['General', 'Rows', 'Controls', 'Import']" data-title="{{tab}}">
-    </div>
-    <div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
-    </div>
-  </div>
-
-  <div ng-if="editor.index == 0">
-    <div class="editor-row">
-      <div class="section">
-        <div class="editor-option">
-          <label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.title'></input>
-        </div>
-        <div class="editor-option">
-          <label class="small">Theme</label><select class="input-small" ng-model="dashboard.style" ng-options="f for f in ['dark','light']" ng-change="styleUpdated()"></select>
-        </div>
-        <div class="editor-option">
-          <label class="small">Time correction</label>
-          <select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
-        </div>
-        <div class="editor-option">
-          <label class="small">Hide controls (CTRL+H)</label>
-          <input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
-        </div>
-     </div>
-    </div>
-     <div class="editor-row">
-      <div class="section">
-        <div class="editor-option">
-          <label class="small">Tags</label>
-          <bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
-          </bootstrap-tagsinput>
-          <tip>Press enter to a add tag</tip>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div ng-if="editor.index == 1">
-    <div class="editor-row">
-      <div class="span8">
-        <h4>Rows</h4>
-        <table class="table table-striped">
-          <thead>
-            <th width="1%"></th>
-            <th width="1%"></th>
-            <th width="1%"></th>
-            <th width="97%">Title</th>
-          </thead>
-          <tr ng-repeat="row in dashboard.rows">
-            <td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-            <td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
-            <td><i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer icon-remove"></i></td>
-            <td>{{row.title}}</td>
-          </tr>
-        </table>
-      </div>
-      <div class="span4">
-        <h4>Add Row</h4>
-        <label class="small">Title</label>
-        <input type="text" class="input-normal" ng-model='row.title' placeholder="New row"></input>
-        <label class="small">Height</label>
-        <input type="text" class="input-mini" ng-model='row.height'></input>
-      </div>
-    </div>
-  </div>
-
-  <div ng-if="editor.index == 2">
-    <div class="editor-row">
-			<div class="section">
-				<h5>Feature toggles</h5>
-				<div class="editor-option" ng-repeat="pulldown in dashboard.pulldowns">
-					<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
-				</div>
-				<div class="editor-option" ng-repeat="pulldown in dashboard.nav">
-					<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
-				</div>
-			</div>
+	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+		<div ng-repeat="tab in ['General', 'Rows', 'Features', 'Import']" data-title="{{tab}}">
+		</div>
+		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
 	</div>
 
-	<div ng-if="editor.index == 3">
-    <ng-include src="'app/partials/import.html'"></ng-include>
-  </div>
-
-  <div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 4+$index">
-    <ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
-    <button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
-  </div>
-
 </div>
 
-<div class="modal-footer">
-  <div class="pull-left grafana-version-footer" ng-if="editor.index == 0">
-    <span class="editor-option small">
-      Grafana version: {{grafanaVersion}}
-    </span>
-		<span> | <a ng-click="toggleConsole()" ng-show="!consoleEnabled">enable console</a> <a ng-click="toggleConsole()" ng-show="consoleEnabled">disable console</a></span>
-    <div class="small" grafana-version-check>
-    </div>
-  </div>
+<div class="dashboard-editor-body">
 
-  <button ng-click="add_row(dashboard,row); reset_row();" class="btn btn-success" ng-show="editor.index == 1">Create Row</button>
-  <button type="button" class="btn btn-info" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>
+		<div ng-if="editor.index == 0">
+			<div class="editor-row">
+				<div class="section">
+					<div class="editor-option">
+						<label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.title'></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Theme</label><select class="input-small" ng-model="dashboard.style" ng-options="f for f in ['dark','light']" ng-change="styleUpdated()"></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Time correction</label>
+						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Hide controls (CTRL+H)</label>
+						<input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
+					</div>
+				</div>
+			</div>
+			<div class="editor-row">
+				<div class="section">
+					<div class="editor-option">
+						<label class="small">Tags</label>
+						<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+						</bootstrap-tagsinput>
+						<tip>Press enter to a add tag</tip>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+		<div ng-if="editor.index == 1">
+			<div class="editor-row">
+				<div class="span6">
+					<table class="grafana-options-table">
+						<tr ng-repeat="row in dashboard.rows">
+							<td style="width: 97%">
+								{{row.title}}
+							</td>
+							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
+							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+							<td>
+								<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-mini">
+									<i class="icon-remove"></i>
+								</a>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div ng-if="editor.index == 2">
+			<div class="editor-row">
+				<div class="section">
+					<div class="editor-option">
+						<label class="small">Templating</label>
+						<input type="checkbox" ng-model="dashboard.templating.enable" ng-checked="dashboard.templating.enable" ng-change="checkFeatureToggles()"x >
+					</div>
+					<div class="editor-option">
+						<label class="small">Annotations</label>
+						<input type="checkbox" ng-model="dashboard.annotations.enable" ng-checked="dashboard.annotations.enable" ng-change="checkFeatureToggles()">
+					</div>
+					<div class="editor-option" ng-repeat="pulldown in dashboard.nav">
+						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div ng-if="editor.index == 3">
+			<ng-include src="'app/partials/import.html'"></ng-include>
+		</div>
+
+		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 4+$index">
+			<ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
+			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
+		</div>
+
+	</div>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="dashboard-editor-footer">
+	<div class="grafana-version-info" ng-show="editor.index === 0">
+		<span class="editor-option small">
+			Grafana version: {{grafanaVersion}} &nbsp;&nbsp;
+		</span>
+		<span grafana-version-check>
+		</span>
+	</div>
+
+	<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>
 </div>

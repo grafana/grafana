@@ -9,9 +9,8 @@ function (angular, _) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
 
     this.init = function($scope) {
-      if (!$scope.panel.span) {
-        $scope.panel.span = 12;
-      }
+      if (!$scope.panel.span) { $scope.panel.span = 12; }
+      if (!$scope.panel.title) { $scope.panel.title = 'No title'; }
 
       var menu = [
         {
@@ -53,6 +52,13 @@ function (angular, _) {
           condition: true
         },
         {
+          text: 'Advanced',
+          submenu: [
+            { text: 'Panel JSON', click: 'editPanelJson()' },
+          ],
+          condition: true
+        },
+        {
           text: 'Remove',
           click: 'remove_panel_from_row(row, panel)',
           condition: true
@@ -61,6 +67,10 @@ function (angular, _) {
 
       $scope.inspector = {};
       $scope.panelMeta.menu = _.where(menu, { condition: true });
+
+      $scope.editPanelJson = function() {
+        $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
+      };
 
       $scope.updateColumnSpan = function(span) {
         $scope.panel.span = span;
@@ -84,7 +94,7 @@ function (angular, _) {
         $scope.datasource = datasourceSrv.get(datasource);
 
         if (!$scope.datasource) {
-          $scope.panel.error = "Cannot find datasource " + datasource;
+          $scope.panelMeta.error = "Cannot find datasource " + datasource;
           return;
         }
       };
@@ -111,7 +121,6 @@ function (angular, _) {
 
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);
-
       $scope.dashboardViewState.registerPanel($scope);
 
       if ($scope.get_data) {
@@ -119,7 +128,7 @@ function (angular, _) {
         $scope.get_data = function() {
           if ($scope.otherPanelInFullscreenMode()) { return; }
 
-          delete $scope.panel.error;
+          delete $scope.panelMeta.error;
           $scope.panelMeta.loading = true;
 
           panel_get_data();
@@ -127,13 +136,6 @@ function (angular, _) {
 
         if (!$scope.skipDataOnInit) {
           $scope.get_data();
-        }
-      }
-
-      if ($rootScope.profilingEnabled) {
-        $rootScope.performance.panelsInitialized++;
-        if ($rootScope.performance.panelsInitialized === $scope.dashboard.rows.length) {
-          $rootScope.performance.allPanelsInitialized = new Date().getTime();
         }
       }
     };

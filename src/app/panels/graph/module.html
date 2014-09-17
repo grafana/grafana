@@ -21,14 +21,23 @@
 
   <div class="clearfix"></div>
 
-  <div class="panel-full-edit-tabs" ng-if="editMode">
-    <div ng-model="editor.index" bs-tabs>
-      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
-      </div>
-    </div>
+	<div style="margin-top: 30px" ng-if="editMode">
+		<div class="dashboard-editor-header">
+			<div class="dashboard-editor-title">
+				<i class="icon icon-bar-chart"></i>
+				Graph
+			</div>
 
-    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-if="editorTabs[editor.index] == tab.title">
-      <div ng-include src="tab.src"></div>
-    </div>
-  </div>
+			<div ng-model="editor.index" bs-tabs>
+				<div ng-repeat="tab in editorTabs" data-title="{{tab}}">
+				</div>
+			</div>
+		</div>
+
+		<div class="dashboard-editor-body">
+			<div ng-repeat="tab in panelMeta.fullEditorTabs" ng-if="editorTabs[editor.index] == tab.title">
+				<div ng-include src="tab.src"></div>
+			</div>
+		</div>
+	</div>
 </div>
