@@ -10,17 +10,19 @@ import (
 func (self *rethinkStore) getNextAccountId() (int, error) {
 	resp, err := r.Table("master").Get("ids").Update(map[string]interface{}{
 		"NextAccountId": r.Row.Field("NextAccountId").Add(1),
-	}, r.UpdateOpts{ReturnVals: true}).RunWrite(self.session)
+	}, r.UpdateOpts{ReturnChanges: true}).RunWrite(self.session)
 
 	if err != nil {
 		return 0, err
 	}
 
-	if resp.NewValue == nil {
+	change := resp.Changes[0]
+
+	if change.NewValue == nil {
 		return 0, errors.New("Failed to get new value after incrementing account id")
 	}
 
-	return int(resp.NewValue.(map[string]interface{})["NextAccountId"].(float64)), nil
+	return int(change.NewValue.(map[string]interface{})["NextAccountId"].(float64)), nil
 }
 
 func (self *rethinkStore) SaveUserAccount(account *models.UserAccount) error {
@@ -62,15 +64,17 @@ func (self *rethinkStore) GetUserAccountLogin(emailOrName string) (*models.UserA
 func (self *rethinkStore) getNextDashboardNumber(accountId int) (int, error) {
 	resp, err := r.Table("accounts").Get(accountId).Update(map[string]interface{}{
 		"NextDashboardId": r.Row.Field("NextDashboardId").Add(1),
-	}, r.UpdateOpts{ReturnVals: true}).RunWrite(self.session)
+	}, r.UpdateOpts{ReturnChanges: true}).RunWrite(self.session)
 
 	if err != nil {
 		return 0, err
 	}
 
-	if resp.NewValue == nil {
+	change := resp.Changes[0]
+
+	if change.NewValue == nil {
 		return 0, errors.New("Failed to get next dashboard id, no new value after update")
 	}
 
-	return int(resp.NewValue.(map[string]interface{})["NextDashboardId"].(float64)), nil
+	return int(change.NewValue.(map[string]interface{})["NextDashboardId"].(float64)), nil
 }

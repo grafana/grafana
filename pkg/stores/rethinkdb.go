@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"errors"
 	"time"
 
 	log "github.com/alecthomas/log4go"
@@ -63,7 +64,7 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 }
 
 func (self *rethinkStore) SaveDashboard(dash *models.Dashboard) error {
-	resp, err := r.Table("dashboards").Insert(dash, r.InsertOpts{Upsert: true}).RunWrite(self.session)
+	resp, err := r.Table("dashboards").Insert(dash, r.InsertOpts{Conflict: "update"}).RunWrite(self.session)
 	if err != nil {
 		return err
 	}
@@ -90,6 +91,22 @@ func (self *rethinkStore) GetDashboard(slug string, accountId int) (*models.Dash
 	}
 
 	return &dashboard, nil
+}
+
+func (self *rethinkStore) DeleteDashboard(slug string, accountId int) error {
+	resp, err := r.Table("dashboards").
+		GetAllByIndex("AccountIdSlug", []interface{}{accountId, slug}).
+		Delete().RunWrite(self.session)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Deleted != 1 {
+		return errors.New("Did not find dashboard to delete")
+	}
+
+	return nil
 }
 
 func (self *rethinkStore) Query(query string, accountId int) ([]*models.SearchResult, error) {
