@@ -21,11 +21,9 @@ function (angular) {
 
   module.controller('RegisterCtrl', function($scope, $http, $location, $routeParams) {
     $scope.loginModel = {};
+    $scope.grafana.sidemenu = false;
 
     $scope.init = function() {
-      if ($routeParams.logout) {
-        $scope.logout();
-      }
     };
 
     $scope.register = function() {

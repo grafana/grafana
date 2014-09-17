@@ -11,10 +11,8 @@ function (angular, config, _, $, store) {
   var module = angular.module('grafana.controllers');
 
   module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
-
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope.consoleEnabled = store.getBool('grafanaConsole');
-    $scope.showProSideMenu = store.getBool('grafanaProSideMenu');
+    $scope.grafana = {};
 
     $rootScope.profilingEnabled = store.getBool('profilingEnabled');
     $rootScope.performance = { loadStart: new Date().getTime() };
@@ -25,25 +23,27 @@ function (angular, config, _, $, store) {
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana = { style: 'dark' };
+      $scope.grafana.style = 'dark';
+      $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
+
+      if (window.grafanaBootData.user.login) {
+        $scope.grafana.user = window.grafanaBootData.user;
+      }
 
       $scope.onAppEvent('logged-out', function() {
         $scope.showProSideMenu = false;
+        $scope.grafana.user = {};
       });
 
-      $scope.onAppEvent('logged-in', function() {
-        $scope.showProSideMenu = store.getBool('grafanaProSideMenu');
+      $scope.onAppEvent('logged-in', function(evt, user) {
+        $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
+        $scope.grafana.user = user;
       });
     };
 
     $scope.toggleProSideMenu = function() {
-      $scope.showProSideMenu = !$scope.showProSideMenu;
-      store.set('grafanaProSideMenu', $scope.showProSideMenu);
-    };
-
-    $scope.toggleConsole = function() {
-      $scope.consoleEnabled = !$scope.consoleEnabled;
-      store.set('grafanaConsole', $scope.consoleEnabled);
+      $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
+      store.set('grafana.sidemenu', $scope.grafana.sidemenu);
     };
 
     $rootScope.onAppEvent = function(name, callback) {
