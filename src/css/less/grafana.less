@@ -36,8 +36,8 @@
 }
 
 .logo-icon {
-  width: 26px;
-  padding: 12px 11px 0 0;
+  width: 24px;
+  padding: 13px 11px 0 0;
   display: block;
   float: left;
 }
@@ -100,7 +100,7 @@
 
 .panel-fullscreen {
   z-index: 100;
-  display: block !important;
+  display: block;
   position: fixed;
   left: 0px;
   right: 0px;
@@ -116,11 +116,10 @@
   }
 }
 
-.dashboard-fullscreen .main-view-container {
-  height: 0px;
-  width: 0px;
-  position: fixed;
-  right: -10000px;
+.dashboard-fullscreen {
+  .row-control-inner {
+    display: none;
+  }
 }
 
 .histogram-chart {
