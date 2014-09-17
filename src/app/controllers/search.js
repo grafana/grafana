@@ -119,9 +119,10 @@ function (angular, _, config, $) {
       $scope.searchDashboards($scope.query.query);
     };
 
-    $scope.deleteDashboard = function(id, evt) {
+    $scope.deleteDashboard = function(dash, evt) {
       evt.stopPropagation();
-      $scope.emitAppEvent('delete-dashboard', { id: id });
+      $scope.emitAppEvent('delete-dashboard', { id: dash.id });
+      $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
