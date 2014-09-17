@@ -87,6 +87,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'group',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A', '#B'],
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
