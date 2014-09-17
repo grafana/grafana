@@ -1,5 +1,10 @@
 # 1.8.0 (unreleased)
 
+**Fixes**
+- [Issue #802](https://github.com/grafana/grafana/issues/802). Annotations: Fix when using InfluxDB datasource
+
+# 1.8.0-RC1 (2014-09-12)
+
 **UI polish / changes**
 - [Issue #725](https://github.com/grafana/grafana/issues/725). UI: All modal editors are removed and replaced by an edit pane under menu. The look of editors is also updated and polished. Search dropdown is also shown as pane under menu and has seen some UI polish.
 
@@ -239,7 +244,7 @@ Read this for more info:
 - More graphite function definitions
 - Make "ms" axis format include hour, day, weeks, month and year ([Issue #149](https://github.com/grafana/grafana/issues/149))
 - Microsecond axis format ([Issue #146](https://github.com/grafana/grafana/issues/146))
-- Specify template paramaters in URL ([Issue #123](https://github.com/grafana/grafana/issues/123))
+- Specify template parameters in URL ([Issue #123](https://github.com/grafana/grafana/issues/123))
 
 ### Fixes
 - Basic Auth fix ([Issue #152](https://github.com/grafana/grafana/issues/152))

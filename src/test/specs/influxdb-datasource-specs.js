@@ -8,7 +8,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase());
+    beforeEach(ctx.providePhase(['templateSrv']));
     beforeEach(ctx.createService('InfluxDatasource'));
     beforeEach(function() {
       ctx.ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
@@ -61,6 +61,30 @@ define([
       beforeEach(function() {
         ctx.$httpBackend.expect('GET', urlExpected).respond(response);
         ctx.ds.query(query).then(function(data) { results = data; });
+        ctx.$httpBackend.flush();
+      });
+
+      it('should generate the correct query', function() {
+        ctx.$httpBackend.verifyNoOutstandingExpectation();
+      });
+
+    });
+
+    describe('When issuing annotation query', function() {
+      var results;
+      var urlExpected = "/series?p=mupp&q=select+title+from+events.backend_01"+
+                        "+where+time+%3E+now()+-+1h&time_precision=s";
+
+      var range = { from: 'now-1h', to: 'now' };
+      var annotation = { query: 'select title from events.$server where $timeFilter' };
+      var response = [];
+
+      beforeEach(function() {
+        ctx.templateSrv.replace = function(str) {
+          return str.replace('$server', 'backend_01');
+        };
+        ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+        ctx.ds.annotationQuery(annotation, range).then(function(data) { results = data; });
         ctx.$httpBackend.flush();
       });
 

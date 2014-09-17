@@ -35,11 +35,9 @@ return function(callback) {
 
   // Set a title
   dashboard.title = 'Scripted dash';
-  dashboard.services.filter = {
-    time: {
-      from: "now-" + (ARGS.from || timspan),
-      to: "now"
-    }
+  dashboard.time = {
+    from: "now-" + (ARGS.from || timspan),
+    to: "now"
   };
 
   var rows = 1;

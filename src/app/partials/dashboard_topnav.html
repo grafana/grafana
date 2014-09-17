@@ -1,7 +1,10 @@
 <div class="navbar navbar-static-top">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="brand"><img src="img/small.png" bs-tooltip="'Grafana'" data-placement="bottom"> {{dashboard.title}}</span>
+			<span class="brand">
+				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+				<span class="page-title">{{dashboard.title}}</span>
+			</span>
 			<ul class="nav pull-right" ng-controller='DashboardNavCtrl' ng-init="init()">
 
 				<li ng-show="dashboardViewState.fullscreen">
