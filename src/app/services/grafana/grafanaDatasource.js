@@ -55,6 +55,15 @@ function (angular) {
         });
     };
 
+    GrafanaDatasource.prototype.deleteDashboard = function(id) {
+      return $http({ method: 'DELETE', url: '/api/dashboard/' + id })
+        .then(function(result) {
+          return result.data.title;
+        }, function(err) {
+          throw err.data;
+        });
+    };
+
     GrafanaDatasource.prototype.searchDashboards = function(query) {
       return $http.get('/api/search/', { params: { q: query } })
         .then(function(results) {
