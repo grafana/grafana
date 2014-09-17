@@ -29,8 +29,9 @@ func (self *HttpServer) getDashboard(c *gin.Context) {
 
 func (self *HttpServer) search(c *gin.Context) {
 	query := c.Params.ByName("q")
+	accountId, err := c.Get("accountId")
 
-	results, err := self.store.Query(query)
+	results, err := self.store.Query(query, accountId.(int))
 	if err != nil {
 		log.Error("Store query error: %v", err)
 		c.JSON(500, newErrorResponse("Failed"))
@@ -42,12 +43,13 @@ func (self *HttpServer) search(c *gin.Context) {
 
 func (self *HttpServer) postDashboard(c *gin.Context) {
 	var command saveDashboardCommand
+	accountId, _ := c.Get("accountId")
 
 	if c.EnsureBody(&command) {
 		dashboard := models.NewDashboard("test")
 		dashboard.Data = command.Dashboard
 		dashboard.Title = dashboard.Data["title"].(string)
-		dashboard.AccountId = 1
+		dashboard.AccountId = accountId.(int)
 		dashboard.UpdateSlug()
 
 		if dashboard.Data["id"] != nil {

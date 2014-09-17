@@ -5,9 +5,9 @@ import (
 )
 
 type Store interface {
-	GetDashboard(title string, accountId int) (*models.Dashboard, error)
+	GetDashboard(slug string, accountId int) (*models.Dashboard, error)
 	SaveDashboard(dash *models.Dashboard) error
-	Query(query string) ([]*models.SearchResult, error)
+	Query(query string, acccountId int) ([]*models.SearchResult, error)
 	SaveUserAccount(acccount *models.UserAccount) error
 	GetUserAccountLogin(emailOrName string) (*models.UserAccount, error)
 	Close()

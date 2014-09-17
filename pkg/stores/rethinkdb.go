@@ -44,6 +44,10 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 		return []interface{}{row.Field("AccountId"), row.Field("Slug")}
 	}).Exec(session)
 
+	r.Db(config.DatabaseName).Table("dashboards").IndexCreateFunc("AccountId", func(row r.Term) interface{} {
+		return []interface{}{row.Field("AccountId")}
+	}).Exec(session)
+
 	r.Db(config.DatabaseName).Table("accounts").IndexCreateFunc("AccountLogin", func(row r.Term) interface{} {
 		return []interface{}{row.Field("Login")}
 	}).Exec(session)
@@ -88,9 +92,9 @@ func (self *rethinkStore) GetDashboard(slug string, accountId int) (*models.Dash
 	return &dashboard, nil
 }
 
-func (self *rethinkStore) Query(query string) ([]*models.SearchResult, error) {
+func (self *rethinkStore) Query(query string, accountId int) ([]*models.SearchResult, error) {
+	docs, err := r.Table("dashboards").GetAllByIndex("AccountId", []interface{}{accountId}).Filter(r.Row.Field("Title").Match(".*")).Run(self.session)
 
-	docs, err := r.Table("dashboards").Filter(r.Row.Field("Title").Match(".*")).Run(self.session)
 	if err != nil {
 		return nil, err
 	}
