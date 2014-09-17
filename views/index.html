@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-  <!--[if IE 8]>         <html class="no-js lt-ie9" lang="en"> <![endif]-->
-  <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -8,6 +7,7 @@
 
     <title>Grafana</title>
     <link rel="stylesheet" href="/public/css/grafana.dark.min.css" title="Dark">
+    <link rel="icon" type="image/png" href="img/fav32.png">
 		<base href="/">
 
     <!-- build:js app/app.js -->
@@ -20,12 +20,11 @@
   </head>
 
   <body ng-cloak ng-controller="GrafanaCtrl">
-
     <link rel="stylesheet" href="/public/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
-		<div class="pro-container" ng-class="{'pro-sidemenu-open': showProSideMenu}">
+		<div class="pro-container" ng-class="{'pro-sidemenu-open': grafana.sidemenu}">
 
-			<aside class="pro-sidemenu" ng-if="showProSideMenu">
+			<aside class="pro-sidemenu" ng-if="grafana.sidemenu">
 				<div ng-include="'app/partials/pro/sidemenu.html'"></div>
 			</aside>
 
@@ -39,4 +38,12 @@
 		</div>
 
   </body>
+
+	<script>
+		window.grafanaBootData = {
+				user: {
+			    login: [[.User.Login]]
+				}
+		};
+	</script>
 </html>

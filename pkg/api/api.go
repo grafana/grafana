@@ -58,7 +58,13 @@ func (self *HttpServer) ListenAndServe() {
 }
 
 func (self *HttpServer) index(c *gin.Context) {
-	c.HTML(200, "index.html", &indexViewModel{title: "hello from go"})
+	viewModel := &IndexDto{}
+	login, _ := c.Get("login")
+	if login != nil {
+		viewModel.User.Login = login.(string)
+	}
+
+	c.HTML(200, "index.html", viewModel)
 }
 
 func CacheHeadersMiddleware() gin.HandlerFunc {
