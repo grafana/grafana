@@ -36,7 +36,7 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 
 	session, _ := sessionStore.Get(c.Request, "grafana-session")
 	session.Values["login"] = loginModel.Email
-	session.Values["accountId"] = account.DatabaseId
+	session.Values["accountId"] = account.Id
 	session.Save(c.Request, c.Writer)
 
 	var resp = &LoginResultDto{}
@@ -52,17 +52,6 @@ func (self *HttpServer) logoutPost(c *gin.Context) {
 	session.Save(c.Request, c.Writer)
 
 	c.JSON(200, gin.H{"status": "logged out"})
-}
-
-type GrafanaReqContext struct {
-}
-
-type authenticatedAuthRouteFunc func(c *gin.Context, grc GrafanaReqContext)
-
-func (self *HttpServer) addAuthRoute(route string, handler authenticatedAuthRouteFunc) {
-	self.router.GET(route, self.auth(), func(c *gin.Context) {
-
-	})
 }
 
 func (self *HttpServer) auth() gin.HandlerFunc {

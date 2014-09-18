@@ -11,6 +11,7 @@ type Store interface {
 	Query(query string, acccountId int) ([]*models.SearchResult, error)
 	SaveUserAccount(acccount *models.UserAccount) error
 	GetUserAccountLogin(emailOrName string) (*models.UserAccount, error)
+	GetAccount(id int) (*models.UserAccount, error)
 	Close()
 }
 
