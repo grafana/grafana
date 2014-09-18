@@ -471,6 +471,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: "grep",
+    category: categories.Filter,
+    params: [{ name: "grep", type: 'string' }],
+    defaultParams: ['grep']
+  });
+
+  addFuncDef({
     name: "exclude",
     category: categories.Filter,
     params: [{ name: "exclude", type: 'string' }],
