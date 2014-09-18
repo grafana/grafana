@@ -24,12 +24,17 @@
 
     <link rel="stylesheet" href="css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
-    <div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} dashboard-notice" ng-show="$last">
-      <button type="button" class="close" ng-click="dashAlerts.clear(alert)" style="padding-right:50px">&times;</button>
-      <strong>{{alert.title}}</strong> <span ng-bind-html='alert.text'></span> <div style="padding-right:10px" class='pull-right small'> {{$index + 1}} alert(s) </div>
-    </div>
+		<div class="page-alert-list">
+			<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
+				<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
+					<i class="icon-remove-sign"></i>
+				</button>
+				<div class="alert-title">{{alert.title}}</div>
+				<div ng-bind-html='alert.text'></div>
+			</div>
+		</div>
 
-    <div ng-view></div>
+		<div ng-view></div>
 
-  </body>
+	</body>
 </html>
