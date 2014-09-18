@@ -31,7 +31,7 @@ func (self *rethinkStore) SaveUserAccount(account *models.UserAccount) error {
 		return err
 	}
 
-	account.DatabaseId = accountId
+	account.Id = accountId
 
 	resp, err := r.Table("accounts").Insert(account).RunWrite(self.session)
 	if err != nil {
@@ -47,6 +47,22 @@ func (self *rethinkStore) SaveUserAccount(account *models.UserAccount) error {
 
 func (self *rethinkStore) GetUserAccountLogin(emailOrName string) (*models.UserAccount, error) {
 	resp, err := r.Table("accounts").GetAllByIndex("AccountLogin", []interface{}{emailOrName}).Run(self.session)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var account models.UserAccount
+	err = resp.One(&account)
+	if err != nil {
+		return nil, errors.New("Not found")
+	}
+
+	return &account, nil
+}
+
+func (self *rethinkStore) GetAccount(id int) (*models.UserAccount, error) {
+	resp, err := r.Table("accounts").Get(id).Run(self.session)
 
 	if err != nil {
 		return nil, err

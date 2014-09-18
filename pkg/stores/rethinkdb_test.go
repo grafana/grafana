@@ -38,17 +38,17 @@ func TestRethinkStore(t *testing.T) {
 		account := &models.UserAccount{UserName: "torkelo", Email: "mupp", Login: "test@test.com"}
 		err := store.SaveUserAccount(account)
 		So(err, ShouldBeNil)
-		So(account.DatabaseId, ShouldNotEqual, 0)
+		So(account.Id, ShouldNotEqual, 0)
 
 		read, err := store.GetUserAccountLogin("test@test.com")
 		So(err, ShouldBeNil)
-		So(read.DatabaseId, ShouldEqual, account.DatabaseId)
+		So(read.Id, ShouldEqual, account.DatabaseId)
 	})
 
 	Convey("can get next dashboard id", t, func() {
 		account := &models.UserAccount{UserName: "torkelo", Email: "mupp"}
 		err := store.SaveUserAccount(account)
-		dashId, err := store.getNextDashboardNumber(account.DatabaseId)
+		dashId, err := store.getNextDashboardNumber(account.Id)
 		So(err, ShouldBeNil)
 		So(dashId, ShouldEqual, 1)
 	})
