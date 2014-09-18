@@ -1,6 +1,6 @@
 define([
   'angular',
-  '../controllers/p_loginCtrl',
+  '../controllers/pro/loginCtrl',
 ],
 function (angular) {
   "use strict";
@@ -19,12 +19,9 @@ function (angular) {
       });
   });
 
-  module.controller('RegisterCtrl', function($scope, $http, $location, $routeParams) {
+  module.controller('RegisterCtrl', function($scope, $http, $location) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
-
-    $scope.init = function() {
-    };
 
     $scope.register = function() {
       delete $scope.registerError;
@@ -41,8 +38,6 @@ function (angular) {
         $scope.registerError = "Unexpected error: " + err;
       });
     };
-
-    $scope.init();
 
   });
 
