@@ -158,6 +158,19 @@ function (angular, $, kbn, moment, _) {
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
           }
 
+          var values = data[0].data;
+          data.min = Number.MAX_VALUE;
+          data.max = Number.MIN_VALUE;
+
+          for(var j = 0; j < values.length; j++) {
+            if(values[j][1] < data.min) {
+              data.min = values[j][1];
+            }
+            if(values[j][1] > data.max) {
+              data.max = values[j][1];
+            }
+          }
+
           if (data.length && data[0].info.timeStep) {
             options.series.bars.barWidth = data[0].info.timeStep / 1.5;
           }
@@ -313,7 +326,7 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          axis.tickFormatter = kbn.getFormatFunction(format, 1);
+          axis.tickFormatter = kbn.getFormatFunction(format, data.max - data.min);
         }
 
         function time_format(interval, ticks, min, max) {
@@ -363,7 +376,7 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
+            value = kbn.getFormatFunction(format, data.max - data.min)(value);
             timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
