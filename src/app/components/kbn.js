@@ -567,8 +567,8 @@ function($, _, moment) {
 
   kbn.msFormat = function(size, decimals) {
     // Less than 1 milli, downscale to micro
-    if (Math.abs(size) < 1) {
-      return kbn.microsFormat(size * 1000,decimals);
+    if (size !== 0 && Math.abs(size) < 1) {
+      return kbn.microsFormat(size * 1000, decimals);
     }
     else if (Math.abs(size) < 1000) {
       return size.toFixed(decimals) + " ms";
@@ -595,7 +595,7 @@ function($, _, moment) {
 
   kbn.sFormat = function(size, decimals) {
     // Less than 1 sec, downscale to milli
-    if (Math.abs(size) < 1) {
+    if (size !== 0 && Math.abs(size) < 1) {
       return kbn.msFormat(size * 1000, decimals);
     }
     // Less than 10 min, use seconds
@@ -624,7 +624,7 @@ function($, _, moment) {
 
   kbn.microsFormat = function(size, decimals) {
     // Less than 1 micro, downscale to nano
-    if (Math.abs(size) < 1) {
+    if (size !== 0 && Math.abs(size) < 1) {
       return kbn.nanosFormat(size * 1000, decimals);
     }
     else if (Math.abs(size) < 1000) {
