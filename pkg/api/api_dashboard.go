@@ -8,18 +8,17 @@ import (
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.router.GET("/api/dashboards/:slug", self.auth(), self.getDashboard)
-		self.router.GET("/api/search/", self.auth(), self.search)
-		self.router.POST("/api/dashboard", self.auth(), self.postDashboard)
-		self.router.DELETE("/api/dashboard/:slug", self.auth(), self.deleteDashboard)
+		self.addRoute("GET", "/api/dashboards/:slug", self.getDashboard)
+		self.addRoute("GET", "/api/search/", self.search)
+		self.addRoute("POST", "/api/dashboard/", self.postDashboard)
+		self.addRoute("DELETE", "/api/dashboard/:slug", self.deleteDashboard)
 	})
 }
 
-func (self *HttpServer) getDashboard(c *gin.Context) {
+func (self *HttpServer) getDashboard(c *gin.Context, auth *authContext) {
 	slug := c.Params.ByName("slug")
-	accountId, err := c.Get("accountId")
 
-	dash, err := self.store.GetDashboard(slug, accountId.(int))
+	dash, err := self.store.GetDashboard(slug, auth.getAccountId())
 	if err != nil {
 		c.JSON(404, newErrorResponse("Dashboard not found"))
 		return
@@ -30,17 +29,16 @@ func (self *HttpServer) getDashboard(c *gin.Context) {
 	c.JSON(200, dash.Data)
 }
 
-func (self *HttpServer) deleteDashboard(c *gin.Context) {
+func (self *HttpServer) deleteDashboard(c *gin.Context, auth *authContext) {
 	slug := c.Params.ByName("slug")
-	accountId, err := c.Get("accountId")
 
-	dash, err := self.store.GetDashboard(slug, accountId.(int))
+	dash, err := self.store.GetDashboard(slug, auth.getAccountId())
 	if err != nil {
 		c.JSON(404, newErrorResponse("Dashboard not found"))
 		return
 	}
 
-	err = self.store.DeleteDashboard(slug, accountId.(int))
+	err = self.store.DeleteDashboard(slug, auth.getAccountId())
 	if err != nil {
 		c.JSON(500, newErrorResponse("Failed to delete dashboard: "+err.Error()))
 		return
@@ -51,11 +49,10 @@ func (self *HttpServer) deleteDashboard(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-func (self *HttpServer) search(c *gin.Context) {
+func (self *HttpServer) search(c *gin.Context, auth *authContext) {
 	query := c.Params.ByName("q")
-	accountId, err := c.Get("accountId")
 
-	results, err := self.store.Query(query, accountId.(int))
+	results, err := self.store.Query(query, auth.getAccountId())
 	if err != nil {
 		log.Error("Store query error: %v", err)
 		c.JSON(500, newErrorResponse("Failed"))
@@ -65,15 +62,14 @@ func (self *HttpServer) search(c *gin.Context) {
 	c.JSON(200, results)
 }
 
-func (self *HttpServer) postDashboard(c *gin.Context) {
+func (self *HttpServer) postDashboard(c *gin.Context, auth *authContext) {
 	var command saveDashboardCommand
-	accountId, _ := c.Get("accountId")
 
 	if c.EnsureBody(&command) {
 		dashboard := models.NewDashboard("test")
 		dashboard.Data = command.Dashboard
 		dashboard.Title = dashboard.Data["title"].(string)
-		dashboard.AccountId = accountId.(int)
+		dashboard.AccountId = auth.getAccountId()
 		dashboard.UpdateSlug()
 
 		if dashboard.Data["id"] != nil {

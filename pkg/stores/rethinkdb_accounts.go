@@ -32,6 +32,7 @@ func (self *rethinkStore) SaveUserAccount(account *models.UserAccount) error {
 	}
 
 	account.Id = accountId
+	account.UsingAccountId = accountId
 
 	resp, err := r.Table("accounts").Insert(account).RunWrite(self.session)
 	if err != nil {

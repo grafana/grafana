@@ -35,8 +35,8 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 	}
 
 	session, _ := sessionStore.Get(c.Request, "grafana-session")
-	session.Values["login"] = loginModel.Email
-	session.Values["accountId"] = account.Id
+	session.Values["userAccountId"] = account.Id
+	session.Values["usingAccountId"] = account.UsingAccountId
 	session.Save(c.Request, c.Writer)
 
 	var resp = &LoginResultDto{}
@@ -48,25 +48,8 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 
 func (self *HttpServer) logoutPost(c *gin.Context) {
 	session, _ := sessionStore.Get(c.Request, "grafana-session")
-	session.Values["login"] = nil
+	session.Values = nil
 	session.Save(c.Request, c.Writer)
 
 	c.JSON(200, gin.H{"status": "logged out"})
-}
-
-func (self *HttpServer) auth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		session, _ := sessionStore.Get(c.Request, "grafana-session")
-
-		if c.Request.URL.Path != "/login" && session.Values["login"] == nil {
-			c.Writer.Header().Set("Location", "/login")
-			c.Abort(302)
-			return
-		}
-
-		c.Set("accountId", session.Values["accountId"])
-		c.Set("login", session.Values["login"])
-
-		session.Save(c.Request, c.Writer)
-	}
 }

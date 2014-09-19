@@ -4,7 +4,7 @@ import "github.com/gin-gonic/gin"
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.router.POST("/api/account/collaborators/add", self.auth(), self.addCollaborator)
+		self.addRoute("POST", "/api/account/collaborators/add", self.addCollaborator)
 	})
 }
 
@@ -12,28 +12,34 @@ type addCollaboratorDto struct {
 	Email string `json:"email" binding:"required"`
 }
 
-func (self *HttpServer) addCollaborator(c *gin.Context) {
+func (self *HttpServer) addCollaborator(c *gin.Context, auth *authContext) {
 	var model addCollaboratorDto
 
 	if !c.EnsureBody(&model) {
-		c.JSON(400, gin.H{"status": "bad request"})
+		c.JSON(400, gin.H{"status": "Collaborator not found"})
 		return
-	}
-
-	accountId, _ := c.Get("accountId")
-	account, err := self.store.GetAccount(accountId.(int))
-	if err != nil {
-		c.JSON(401, gin.H{"status": "Authentication error"})
 	}
 
 	collaborator, err := self.store.GetUserAccountLogin(model.Email)
 	if err != nil {
 		c.JSON(404, gin.H{"status": "Collaborator not found"})
+		return
 	}
 
-	account.AddCollaborator(collaborator.Id)
+	userAccount := auth.userAccount
 
-	self.store.SaveUserAccount(account)
+	if collaborator.Id == userAccount.Id {
+		c.JSON(400, gin.H{"status": "Cannot add yourself as collaborator"})
+		return
+	}
+
+	err = userAccount.AddCollaborator(collaborator.Id)
+	if err != nil {
+		c.JSON(400, gin.H{"status": err.Error()})
+		return
+	}
+
+	self.store.SaveUserAccount(userAccount)
 
 	c.JSON(200, gin.H{"status": "Collaborator added"})
 }
