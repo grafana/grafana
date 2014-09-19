@@ -88,6 +88,18 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
+        function updateLegendValues(plot) {
+          var yaxis = plot.getYAxes();
+          console.log('drawSeries', yaxis);
+
+          for (var i = 0; i < data.length; i++) {
+            var series = data[i];
+            var formater = kbn.formatFunctions[scope.panel.y_formats[series.yaxis - 1]];
+            series.updateLegendValues(formater, yaxis[series.yaxis - 1].tickDecimals);
+          }
+
+        }
+
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -110,6 +122,7 @@ function (angular, $, kbn, moment, _) {
 
           // Populate element
           var options = {
+            hooks: { draw: [updateLegendValues] },
             legend: { show: false },
             series: {
               stackpercent: panel.stack ? panel.percentage : false,
@@ -313,7 +326,9 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          axis.tickFormatter = kbn.getFormatFunction(format, 1);
+          axis.tickFormatter = function(val, axis) {
+            return kbn.formatFunctions[format](val, axis.tickDecimals);
+          };
         }
 
         function time_format(interval, ticks, min, max) {
