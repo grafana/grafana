@@ -21,31 +21,6 @@ type Dashboard struct {
 	Data  map[string]interface{}
 }
 
-type CollaboratorLink struct {
-	AccountId  int
-	Role       string
-	ModifiedOn time.Time
-	CreatedOn  time.Time
-}
-
-type UserAccount struct {
-	Id              int `gorethink:"id"`
-	UserName        string
-	Login           string
-	Email           string
-	Password        string
-	NextDashboardId int
-	UsingAccountId  int
-	Collaborators   []CollaboratorLink
-	CreatedOn       time.Time
-	ModifiedOn      time.Time
-}
-
-type UserContext struct {
-	UserId    string
-	AccountId string
-}
-
 type SearchResult struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
@@ -86,13 +61,4 @@ func (dash *Dashboard) UpdateSlug() {
 	re := regexp.MustCompile("[^\\w ]+")
 	re2 := regexp.MustCompile("\\s")
 	dash.Slug = re2.ReplaceAllString(re.ReplaceAllString(title, ""), "-")
-}
-
-func (account *UserAccount) AddCollaborator(accountId int) {
-	account.Collaborators = append(account.Collaborators, CollaboratorLink{
-		AccountId:  accountId,
-		Role:       "admin",
-		CreatedOn:  time.Now(),
-		ModifiedOn: time.Now(),
-	})
 }

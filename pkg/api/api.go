@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/torkelo/grafana-pro/pkg/components"
+	"github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
@@ -61,9 +62,9 @@ func (self *HttpServer) ListenAndServe() {
 
 func (self *HttpServer) index(c *gin.Context) {
 	viewModel := &IndexDto{}
-	login, _ := c.Get("login")
-	if login != nil {
-		viewModel.User.Login = login.(string)
+	userAccount, _ := c.Get("userAccount")
+	if userAccount != nil {
+		viewModel.User.Login = userAccount.(*models.UserAccount).Login
 	}
 
 	c.HTML(200, "index.html", viewModel)
@@ -73,13 +74,4 @@ func CacheHeadersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Add("Cache-Control", "max-age=0, public, must-revalidate, proxy-revalidate")
 	}
-}
-
-// Api Handler Registration
-var routeHandlers = make([]routeHandlerRegisterFn, 0)
-
-type routeHandlerRegisterFn func(self *HttpServer)
-
-func addRoutes(fn routeHandlerRegisterFn) {
-	routeHandlers = append(routeHandlers, fn)
 }
