@@ -86,7 +86,23 @@ function (angular, _, config, kbn, moment) {
         var list = [];
         var hits = results.data.hits.hits;
 
+        var getFieldFromSource = function(source, fieldName) {
+          var fieldValue;
+          if (fieldName) {
+            var fieldNames = fieldName.split('.');
+            fieldValue = source;
+            for (var i = 0; i < fieldNames.length; i++) {
+              fieldValue = fieldValue[fieldNames[i]];
+            }
+            if (_.isArray(fieldValue)) {
+              fieldValue = fieldValue.join(',');
+            }
+          }
+          return fieldValue;
+        };
+
         for (var i = 0; i < hits.length; i++) {
+          console.log('annotationQuery', hits[i]);
           var source = hits[i]._source;
           var fields = hits[i].fields;
           var time = source[timeField];
@@ -98,20 +114,10 @@ function (angular, _, config, kbn, moment) {
           var event = {
             annotation: annotation,
             time: moment.utc(time).valueOf(),
-            title: source[titleField],
+            title: getFieldFromSource(source, titleField),
+            tags: getFieldFromSource(source, tagsField),
+            text: getFieldFromSource(source, textField)
           };
-
-          if (source[tagsField]) {
-            if (_.isArray(source[tagsField])) {
-              event.tags = source[tagsField].join(', ');
-            }
-            else {
-              event.tags = source[tagsField];
-            }
-          }
-          if (textField && source[textField]) {
-            event.text = source[textField];
-          }
 
           list.push(event);
         }
