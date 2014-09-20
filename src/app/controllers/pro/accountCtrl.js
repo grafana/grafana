@@ -15,7 +15,12 @@ function (angular) {
     };
 
     $scope.getAccountInfo = function() {
+      $http.get('/api/account').then(function(result) {
+        $scope.account = result.data;
+        console.log("value", result.data);
+      }, function(err) {
 
+      });
     };
 
     $scope.addCollaborator = function() {
@@ -34,6 +39,8 @@ function (angular) {
         }
       });
     };
+
+    $scope.init();
 
   });
 });

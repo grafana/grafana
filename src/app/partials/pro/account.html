@@ -80,6 +80,7 @@
 	</div>
 
 	<div class="dashboard-editor-body">
+
 		<div class="editor-row">
 			<div class="editor-option">
 				<form name="addCollaboratorForm" class="form-inline">
@@ -89,6 +90,15 @@
 				</form>
 			</div>
 		</div>
+
+		<div class="editor-row row">
+			<table class="grafana-options-table span5">
+				<tr ng-repeat="collaborator in account.collaborators">
+					<td>{{collaborator.accountId}}<td>
+				</tr>
+			</table>
+		</div>
+
 	</div>
 </div>
 
