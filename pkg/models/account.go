@@ -12,7 +12,7 @@ type CollaboratorLink struct {
 	CreatedOn  time.Time
 }
 
-type UserAccount struct {
+type Account struct {
 	Id              int `gorethink:"id"`
 	UserName        string
 	Login           string
@@ -25,7 +25,7 @@ type UserAccount struct {
 	ModifiedOn      time.Time
 }
 
-func (account *UserAccount) AddCollaborator(accountId int) error {
+func (account *Account) AddCollaborator(accountId int) error {
 	for _, collaborator := range account.Collaborators {
 		if collaborator.AccountId == accountId {
 			return errors.New("Collaborator already exists")

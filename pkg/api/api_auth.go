@@ -6,8 +6,8 @@ import (
 )
 
 type authContext struct {
-	account     *models.UserAccount
-	userAccount *models.UserAccount
+	account     *models.Account
+	userAccount *models.Account
 }
 
 func (auth *authContext) getAccountId() int {

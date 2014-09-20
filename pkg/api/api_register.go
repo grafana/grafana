@@ -27,14 +27,14 @@ func (self *HttpServer) registerUserPost(c *gin.Context) {
 		return
 	}
 
-	account := models.UserAccount{
+	account := models.Account{
 		UserName: registerModel.Email,
 		Login:    registerModel.Email,
 		Email:    registerModel.Email,
 		Password: registerModel.Password,
 	}
 
-	err := self.store.SaveUserAccount(&account)
+	err := self.store.CreateAccount(&account)
 	if err != nil {
 		log.Error("Failed to create user account, email: %v, error: %v", registerModel.Email, err)
 		c.JSON(500, gin.H{"status": "failed to create account"})
