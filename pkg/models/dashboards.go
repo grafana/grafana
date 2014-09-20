@@ -21,31 +21,6 @@ type Dashboard struct {
 	Data  map[string]interface{}
 }
 
-type UserAccountLink struct {
-	UserId     int
-	Role       string
-	ModifiedOn time.Time
-	CreatedOn  time.Time
-}
-
-type UserAccount struct {
-	DatabaseId      int `gorethink:"id"`
-	UserName        string
-	Login           string
-	Email           string
-	Password        string
-	NextDashboardId int
-	UsingAccountId  int
-	GrantedAccess   []UserAccountLink
-	CreatedOn       time.Time
-	ModifiedOn      time.Time
-}
-
-type UserContext struct {
-	UserId    string
-	AccountId string
-}
-
 type SearchResult struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`

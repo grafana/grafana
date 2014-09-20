@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"errors"
 	"time"
 
 	log "github.com/alecthomas/log4go"
@@ -44,6 +45,10 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 		return []interface{}{row.Field("AccountId"), row.Field("Slug")}
 	}).Exec(session)
 
+	r.Db(config.DatabaseName).Table("dashboards").IndexCreateFunc("AccountId", func(row r.Term) interface{} {
+		return []interface{}{row.Field("AccountId")}
+	}).Exec(session)
+
 	r.Db(config.DatabaseName).Table("accounts").IndexCreateFunc("AccountLogin", func(row r.Term) interface{} {
 		return []interface{}{row.Field("Login")}
 	}).Exec(session)
@@ -59,7 +64,7 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 }
 
 func (self *rethinkStore) SaveDashboard(dash *models.Dashboard) error {
-	resp, err := r.Table("dashboards").Insert(dash, r.InsertOpts{Upsert: true}).RunWrite(self.session)
+	resp, err := r.Table("dashboards").Insert(dash, r.InsertOpts{Conflict: "update"}).RunWrite(self.session)
 	if err != nil {
 		return err
 	}
@@ -88,9 +93,25 @@ func (self *rethinkStore) GetDashboard(slug string, accountId int) (*models.Dash
 	return &dashboard, nil
 }
 
-func (self *rethinkStore) Query(query string) ([]*models.SearchResult, error) {
+func (self *rethinkStore) DeleteDashboard(slug string, accountId int) error {
+	resp, err := r.Table("dashboards").
+		GetAllByIndex("AccountIdSlug", []interface{}{accountId, slug}).
+		Delete().RunWrite(self.session)
 
-	docs, err := r.Table("dashboards").Filter(r.Row.Field("Title").Match(".*")).Run(self.session)
+	if err != nil {
+		return err
+	}
+
+	if resp.Deleted != 1 {
+		return errors.New("Did not find dashboard to delete")
+	}
+
+	return nil
+}
+
+func (self *rethinkStore) Query(query string, accountId int) ([]*models.SearchResult, error) {
+	docs, err := r.Table("dashboards").GetAllByIndex("AccountId", []interface{}{accountId}).Filter(r.Row.Field("Title").Match(".*")).Run(self.session)
+
 	if err != nil {
 		return nil, err
 	}
