@@ -317,13 +317,38 @@ div.flot-text {
   color: @textColor !important;
 }
 
-.dashboard-notice {
+.page-alert-list {
   z-index:8000;
-  margin-left:0px;
-  padding:3px 0px 3px 0px;
-  width:100%;
-  padding-left:20px;
-  color: @white;
+  min-width: 300px;
+  max-width: 300px;
+  position: fixed;
+  right: 20px;
+  top: 56px;
+
+  .alert {
+    color: @white;
+    padding-bottom: 13px;
+    position: relative;
+  }
+
+  .alert-close {
+    position: absolute;
+    top: -4px;
+    right: -2px;
+    width: 19px;
+    height: 19px;
+    padding: 0;
+    background: @grayLighter;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.1rem;
+    color: @grayDarker;
+  }
+
+  .alert-title {
+    font-weight: bold;
+    padding-bottom: 2px;
+  }
 }
 
 

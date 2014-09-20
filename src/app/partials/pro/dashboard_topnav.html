@@ -3,9 +3,9 @@
 		<div class="container-fluid">
 			<span class="brand">
 				<a ng-click="toggleProSideMenu()">
-					<img src="img/small.png">
+				  <img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
 				</a>
-				{{dashboard.title}}
+				<span class="page-title">{{dashboard.title}}</span>
 			</span>
 			<ul class="nav pull-right" ng-controller='DashboardNavCtrl' ng-init="init()">
 

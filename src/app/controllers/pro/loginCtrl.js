@@ -8,6 +8,7 @@ function (angular) {
 
   module.controller('LoginCtrl', function($scope, $http, $location, $routeParams, alertSrv) {
     $scope.loginModel = {};
+    $scope.grafana.sidemenu = false;
 
     $scope.init = function() {
       if ($routeParams.logout) {
@@ -20,6 +21,7 @@ function (angular) {
 
         alertSrv.set('Logged out!', '', 'success', 3000);
         $scope.emitAppEvent('logged-out');
+        $location.search({});
 
       }, function() {
         alertSrv.set('Logout failed:', 'Unexpected error', 'error', 3000);
@@ -33,8 +35,8 @@ function (angular) {
         return;
       }
 
-      $http.post('/login', $scope.loginModel).then(function() {
-        $scope.emitAppEvent('logged-in');
+      $http.post('/login', $scope.loginModel).then(function(results) {
+        $scope.emitAppEvent('logged-in', results.data.user);
         $location.path('/');
       }, function(err) {
         if (err.status === 401) {

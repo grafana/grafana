@@ -15,6 +15,12 @@ define([
       expect(str).to.be('1.02 hour');
     });
 
+    it('should not downscale when value is zero', function() {
+      var str = kbn.msFormat(0, 2);
+      expect(str).to.be('0.00 ms');
+    });
+
+
     it('should translate 365445 as 6.09 min', function() {
       var str = kbn.msFormat(365445, 2);
       expect(str).to.be('6.09 min');

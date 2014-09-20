@@ -1,22 +1,14 @@
-<div class="navbar navbar-static-top">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand">
-				<i class="icon-gears" style=""></i>
-				<span style="color: white; padding-left: 4px;">Grafana</span>
-				<ul class="nav" ng-controller='DashboardNavCtrl' ng-init="init()">
-			</span>
-			</ul>
-		</div>
-	</div>
-</div>
-
 <section class="pro-sidemenu-items">
-	<a class="pro-sidemenu-link pro-side-menu-user" href="/login?logout">
-		<img  src="https://secure.gravatar.com/avatar/c8656e8972626f01e1703681d5e55f92?s=90&default=blank">
-		logout
-	</a>
-	<a class="pro-sidemenu-link" href="/dashboard/db/home">
+	<div class="dropdown">
+		<a class="pro-sidemenu-link pointer" data-toggle="dropdown">
+			<i class="icon-user"></i>
+			{{grafana.user.login}}
+		</a>
+		<ul class="dropdown-menu">
+			<li><a href="/login?logout">Logout</a>
+		</ul>
+	</div>
+	<a class="pro-sidemenu-link" href="/">
 		<i class="icon-th-large"></i>
 		Dashboards
 	</a>
@@ -36,10 +28,15 @@
 		<i class="icon-tasks"></i>
 		Global options
 	</a>
-	<a class="pro-sidemenu-link" href="/admin">
+	<a class="pro-sidemenu-link" href="/account">
 		<i class="icon-user"></i>
 		User accounts
 	</a>
+	<a class="pro-sidemenu-link" href="/login?logout">
+		<i class="icon-signout"></i>
+		Sign out
+	</a>
+
 </section>
 
 </div>

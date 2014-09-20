@@ -37,6 +37,7 @@ function (angular, _, config, kbn, moment) {
       };
 
       if (this.basicAuth) {
+        options.withCredentials = true;
         options.headers = {
           "Authorization": "Basic " + this.basicAuth
         };
@@ -168,7 +169,7 @@ function (angular, _, config, kbn, moment) {
 
         return this._request('PUT', '/dashboard/' + id, this.index, data)
           .then(function(results) {
-            self._removeUnslugifiedDashboard(results, title);
+            self._removeUnslugifiedDashboard(results, title, id);
             return { title: title, url: '/dashboard/db/' + id };
           }, function() {
             throw 'Failed to save to elasticsearch';
@@ -176,8 +177,9 @@ function (angular, _, config, kbn, moment) {
       }
     };
 
-    ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title) {
+    ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title, id) {
       if (saveResult.statusText !== 'Created') { return; }
+      if (title === id) { return; }
 
       var self = this;
       this._get('/dashboard/' + title).then(function() {

@@ -1,0 +1,73 @@
+<div class="navbar navbar-static-top">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<span class="brand">
+				<a ng-click="toggleProSideMenu()">
+				  <img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+				</a>
+				<span class="page-title">Account Settings</span>
+			</span>
+		</div>
+	</div>
+</div>
+
+<div class="dashboard-edit-view">
+
+	<div class="dashboard-editor-header">
+		<div class="dashboard-editor-title">
+			<i class="icon icon-user"></i>
+			Personal information
+		</div>
+	</div>
+
+	<div class="dashboard-editor-body">
+		<div class="editor-row">
+		  <div class="editor-option">
+				<label class="small">Name</label>
+				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			</div>
+		</div>
+
+	  <div class="editor-row">
+		  <div class="editor-option">
+				<label class="small">Email</label>
+				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			</div>
+		</div>
+
+	  <div class="editor-row">
+		  <div class="editor-option">
+				<label class="small">Account Name</label>
+				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="dashboard-editor-footer">
+		<button class="btn btn-success">Update</button>
+	</div>
+</div>
+
+<div class="dashboard-edit-view" style="border-top: solid 1px black;">
+
+	<div class="dashboard-editor-header">
+		<div class="dashboard-editor-title">
+			<i class="icon icon-eye-open"></i>
+			Collaborators
+		</div>
+	</div>
+
+	<div class="dashboard-editor-body">
+		<div class="editor-row">
+			<div class="editor-option">
+				<form name="addCollaboratorForm" class="form-inline">
+					<label class="small">Add a collaborator</label>
+					<input type="text" class="input-xxlarge" ng-model='collaborator.email' placeholder="collaborator@email.com"></input>
+					<button class="btn btn-success" ng-click="addCollaborator()">Add</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+

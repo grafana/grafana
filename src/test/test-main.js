@@ -135,6 +135,7 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
+    'specs/overview-ctrl-specs',
   ], function () {
     window.__karma__.start();
   });

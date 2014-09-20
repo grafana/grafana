@@ -3,6 +3,9 @@
 @import "graph.less";
 @import "console.less";
 @import "bootstrap-tagsinput.less";
+@import "tables_lists.less";
+@import "search.less";
+@import "panel.less";
 
 .hide-controls {
   padding: 0;
@@ -31,6 +34,19 @@
   .grafana-menu-stop-playlist {
     display: list-item;
   }
+}
+
+.logo-icon {
+  width: 24px;
+  padding: 13px 11px 0 0;
+  display: block;
+  float: left;
+}
+
+.page-title {
+ padding: 15px 0;
+ display: block;
+ float: left;
 }
 
 .row-button {
@@ -85,7 +101,7 @@
 
 .panel-fullscreen {
   z-index: 100;
-  display: block !important;
+  display: block;
   position: fixed;
   left: 0px;
   right: 0px;
@@ -101,11 +117,10 @@
   }
 }
 
-.dashboard-fullscreen .main-view-container {
-  height: 0px;
-  width: 0px;
-  position: fixed;
-  right: -10000px;
+.dashboard-fullscreen {
+  .row-control-inner {
+    display: none;
+  }
 }
 
 .histogram-chart {

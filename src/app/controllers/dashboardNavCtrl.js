@@ -78,7 +78,7 @@ function (angular, _, moment, config, store) {
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)
         .then(function(result) {
-          alertSrv.set('Dashboard Saved', 'Dashboard has been saved as "' + result.title + '"','success', 5000);
+          alertSrv.set('Dashboard Saved', 'Saved as "' + result.title + '"','success', 3000);
 
           if (result.url !== $location.path()) {
             $location.search({});
@@ -88,7 +88,7 @@ function (angular, _, moment, config, store) {
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
 
         }, function(err) {
-          alertSrv.set('Save failed', err, 'error',5000);
+          alertSrv.set('Save failed', err, 'error', 5000);
         });
     };
 

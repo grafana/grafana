@@ -1,7 +1,8 @@
 define([
   'angular',
+  'store',
 ],
-function (angular) {
+function (angular, store) {
   "use strict";
 
   var module = angular.module('grafana.routes');
@@ -25,12 +26,29 @@ function (angular) {
       });
   });
 
-  module.controller('DashFromDBProvider', function($scope, $rootScope, datasourceSrv, $routeParams, alertSrv) {
+  module.controller('DashFromDBProvider', function(
+        $scope, $rootScope, datasourceSrv, $routeParams,
+        alertSrv, $http, $location) {
 
     var db = datasourceSrv.getGrafanaDB();
     var isTemp = window.location.href.indexOf('dashboard/temp') !== -1;
+
     if (!$routeParams.id) {
-      $routeParams.id = 'default';
+      var savedRoute = store.get('grafanaDashboardDefault');
+
+      if (!savedRoute) {
+        $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
+          var dashboard = angular.fromJson(result.data);
+          $scope.emitAppEvent('setup-dashboard', dashboard);
+        },function() {
+          alertSrv.set('Error',"Could not load default dashboard", 'error');
+        });
+        return;
+      }
+      else {
+        $location.path(savedRoute);
+        return;
+      }
     }
 
     db.getDashboard($routeParams.id, isTemp)
