@@ -87,22 +87,22 @@ function (angular, _, config, kbn, moment) {
         var hits = results.data.hits.hits;
 
         var getFieldFromSource = function(source, fieldName) {
-          var fieldValue;
-          if (fieldName) {
-            var fieldNames = fieldName.split('.');
-            fieldValue = source;
-            for (var i = 0; i < fieldNames.length; i++) {
-              fieldValue = fieldValue[fieldNames[i]];
-            }
-            if (_.isArray(fieldValue)) {
-              fieldValue = fieldValue.join(',');
-            }
+          if (!fieldName) { return; }
+
+          var fieldNames = fieldName.split('.');
+          var fieldValue = source;
+
+          for (var i = 0; i < fieldNames.length; i++) {
+            fieldValue = fieldValue[fieldNames[i]];
+          }
+
+          if (_.isArray(fieldValue)) {
+            fieldValue = fieldValue.join(', ');
           }
           return fieldValue;
         };
 
         for (var i = 0; i < hits.length; i++) {
-          console.log('annotationQuery', hits[i]);
           var source = hits[i]._source;
           var fields = hits[i].fields;
           var time = source[timeField];

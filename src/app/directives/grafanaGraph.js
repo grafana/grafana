@@ -110,11 +110,6 @@ function (angular, $, kbn, moment, _) {
 
           // Populate element
           var options = {
-            hooks: {
-              drawSeries: [function() {
-                console.log('drawSeries', arguments);
-              }]
-            },
             legend: { show: false },
             series: {
               stackpercent: panel.stack ? panel.percentage : false,

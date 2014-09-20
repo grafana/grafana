@@ -5,6 +5,7 @@
 - [Issue #795](https://github.com/grafana/grafana/issues/795). Chrome: Fix for display issue in chrome beta & chrome canary when entering edit mode
 - [Issue #818](https://github.com/grafana/grafana/issues/818). Graph: Added percent y-axis format
 - [Issue #828](https://github.com/grafana/grafana/issues/828). Elasticsearch: saving new dashboard with title equal to slugified url would cause it to deleted.
+- [Issue #830](https://github.com/grafana/grafana/issues/830). Annotations: Fix for elasticsearch annotations and mapping nested fields
 
 # 1.8.0-RC1 (2014-09-12)
 
