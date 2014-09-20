@@ -35,6 +35,19 @@
   }
 }
 
+.logo-icon {
+  width: 24px;
+  padding: 13px 11px 0 0;
+  display: block;
+  float: left;
+}
+
+.page-title {
+ padding: 15px 0;
+ display: block;
+ float: left;
+}
+
 .row-button {
   width: 24px;
 }
@@ -87,7 +100,7 @@
 
 .panel-fullscreen {
   z-index: 100;
-  display: block !important;
+  display: block;
   position: fixed;
   left: 0px;
   right: 0px;
@@ -103,11 +116,10 @@
   }
 }
 
-.dashboard-fullscreen .main-view-container {
-  height: 0px;
-  width: 0px;
-  position: fixed;
-  right: -10000px;
+.dashboard-fullscreen {
+  .row-control-inner {
+    display: none;
+  }
 }
 
 .histogram-chart {
@@ -423,6 +435,9 @@ select.grafana-target-segment-input {
   background-color: rgb(58, 57, 57);
   border-radius: 5px;
   z-index: 9999;
+  max-width: 800px;
+  max-height: 600px;
+  overflow: hidden;
 }
 
 .tooltip.in {
@@ -485,3 +500,26 @@ select.grafana-target-segment-input {
   color: @variable;
 }
 
+.grafana-info-box:before {
+  content: "\f05a";
+  font-family:'FontAwesome';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 20px;
+  color: @blue;
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: 5px 15px;
+  background-color: @grafanaTargetBackground;
+  border: 1px solid @grafanaTargetBorder;
+  h5 {
+    margin-top: 5px;
+  }
+}
+
+.grafana-tip {
+  padding-left: 5px;
+}

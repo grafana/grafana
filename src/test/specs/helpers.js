@@ -51,6 +51,7 @@ define([
     self.templateSrv = new TemplateSrvStub();
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
+    self.$routeParams = {};
 
     this.providePhase = function(mocks) {
      return module(function($provide) {
@@ -103,6 +104,7 @@ define([
     this.replace = function(text) {
       return _.template(text, this.data,  this.templateSettings);
     };
+    this.init = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
     this.highlightVariablesAsHtml = function(str) { return str; };

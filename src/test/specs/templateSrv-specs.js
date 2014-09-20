@@ -62,6 +62,24 @@ define([
 
     });
 
+    describe('when checking if a string contains a variable', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
+        _templateSrv.updateTemplateData();
+      });
+
+      it('should find it with $var syntax', function() {
+        var contains = _templateSrv.containsVariable('this.$test.filters', 'test');
+        expect(contains).to.be(true);
+      });
+
+      it('should find it with [[var]] syntax', function() {
+        var contains = _templateSrv.containsVariable('this.[[test]].filters', 'test');
+        expect(contains).to.be(true);
+      });
+
+    });
+
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
@@ -73,6 +91,23 @@ define([
         expect(target).to.be('this.muuuu.filters');
       });
     });
+
+    describe('replaceWithText', function() {
+      beforeEach(function() {
+        _templateSrv.init([
+          { name: 'server', current: { value: '{asd,asd2}', text: 'All' } },
+          { name: 'period', current: { value: '$__auto_interval', text: 'auto' } }
+        ]);
+        _templateSrv.setGrafanaVariable('$__auto_interval', '13m');
+        _templateSrv.updateTemplateData();
+      });
+
+      it('should replace with text except for grafanaVariables', function() {
+        var target = _templateSrv.replaceWithText('Server: $server, period: $period');
+        expect(target).to.be('Server: All, period: 13m');
+      });
+    });
+
 
   });
 

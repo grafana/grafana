@@ -10,7 +10,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv']));
+    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', "$routeParams"]));
     beforeEach(ctx.createService('templateValuesSrv'));
 
     describe('update interval variable options', function() {
@@ -125,12 +125,12 @@ define([
     describeUpdateVariable('and existing value still exists in options', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
-        scenario.variable.current = { value: 'backend2'};
+        scenario.variable.current = { text: 'backend2'};
         scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
       });
 
       it('should keep variable value', function() {
-        expect(scenario.variable.current.value).to.be('backend2');
+        expect(scenario.variable.current.text).to.be('backend2');
       });
     });
 
@@ -179,18 +179,6 @@ define([
 
       it('should return matches options', function() {
         expect(scenario.variable.options.length).to.be(1);
-      });
-    });
-
-    describeUpdateVariable('and existing value still exists in options', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
-        scenario.variable.current = { value: 'backend2'};
-        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
-      });
-
-      it('should keep variable value', function() {
-        expect(scenario.variable.current.value).to.be('backend2');
       });
     });
 

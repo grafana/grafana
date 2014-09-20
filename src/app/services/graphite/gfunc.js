@@ -68,7 +68,14 @@ function (_) {
   addFuncDef({
     name: 'diffSeries',
     params: optionalSeriesRefArgs,
-    defaultParams: ['#B'],
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'divideSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
     category: categories.Calculate,
   });
 
@@ -77,6 +84,13 @@ function (_) {
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
     category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'group',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A', '#B'],
+    category: categories.Combine,
   });
 
   addFuncDef({

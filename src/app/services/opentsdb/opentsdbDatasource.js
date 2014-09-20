@@ -19,7 +19,7 @@ function (angular, _, kbn) {
     }
 
     // Called once per panel (graph)
-    OpenTSDBDatasource.prototype.query = function(filterSrv, options) {
+    OpenTSDBDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.range.from);
       var end = convertToTSDBTime(options.range.to);
       var queries = _.compact(_.map(options.targets, convertTargetToQuery));

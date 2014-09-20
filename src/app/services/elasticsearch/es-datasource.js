@@ -1,12 +1,11 @@
 define([
   'angular',
   'lodash',
-  'jquery',
   'config',
   'kbn',
   'moment'
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, config, kbn, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -38,6 +37,7 @@ function (angular, _, $, config, kbn, moment) {
       };
 
       if (this.basicAuth) {
+        options.withCredentials = true;
         options.headers = {
           "Authorization": "Basic " + this.basicAuth
         };
@@ -76,31 +76,48 @@ function (angular, _, $, config, kbn, moment) {
       var queryInterpolated = templateSrv.replace(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
-      var data = { "query" : { "filtered": { "query" : query, "filter": filter } }, "size": 100 };
+      var data = {
+        "fields": [timeField, "_source"],
+        "query" : { "filtered": { "query" : query, "filter": filter } },
+        "size": 100
+      };
 
       return this._request('POST', '/_search', annotation.index, data).then(function(results) {
         var list = [];
         var hits = results.data.hits.hits;
 
+        var getFieldFromSource = function(source, fieldName) {
+          if (!fieldName) { return; }
+
+          var fieldNames = fieldName.split('.');
+          var fieldValue = source;
+
+          for (var i = 0; i < fieldNames.length; i++) {
+            fieldValue = fieldValue[fieldNames[i]];
+          }
+
+          if (_.isArray(fieldValue)) {
+            fieldValue = fieldValue.join(', ');
+          }
+          return fieldValue;
+        };
+
         for (var i = 0; i < hits.length; i++) {
           var source = hits[i]._source;
+          var fields = hits[i].fields;
+          var time = source[timeField];
+
+          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+            time = fields[timeField];
+          }
+
           var event = {
             annotation: annotation,
-            time: moment.utc(source[timeField]).valueOf(),
-            title: source[titleField],
+            time: moment.utc(time).valueOf(),
+            title: getFieldFromSource(source, titleField),
+            tags: getFieldFromSource(source, tagsField),
+            text: getFieldFromSource(source, textField)
           };
-
-          if (source[tagsField]) {
-            if (_.isArray(source[tagsField])) {
-              event.tags = source[tagsField].join(', ');
-            }
-            else {
-              event.tags = source[tagsField];
-            }
-          }
-          if (textField && source[textField]) {
-            event.text = source[textField];
-          }
 
           list.push(event);
         }
@@ -108,25 +125,29 @@ function (angular, _, $, config, kbn, moment) {
       });
     };
 
+    ElasticDatasource.prototype._getDashboardWithSlug = function(id) {
+      return this._get('/dashboard/' + kbn.slugifyForUrl(id))
+        .then(function(result) {
+          return angular.fromJson(result._source.dashboard);
+        }, function() {
+          throw "Dashboard not found";
+        });
+    };
+
     ElasticDatasource.prototype.getDashboard = function(id, isTemp) {
       var url = '/dashboard/' + id;
+      if (isTemp) { url = '/temp/' + id; }
 
-      if (isTemp) {
-        url = '/temp/' + id;
-      }
-
+      var self = this;
       return this._get(url)
         .then(function(result) {
-          if (result._source && result._source.dashboard) {
-            return angular.fromJson(result._source.dashboard);
-          } else {
-            return false;
-          }
+          return angular.fromJson(result._source.dashboard);
         }, function(data) {
           if(data.status === 0) {
             throw "Could not contact Elasticsearch. Please ensure that Elasticsearch is reachable from your browser.";
           } else {
-            throw "Could not find dashboard " + id;
+            // backward compatible fallback
+            return self._getDashboardWithSlug(id);
           }
         });
     };
@@ -148,13 +169,28 @@ function (angular, _, $, config, kbn, moment) {
         return this._saveTempDashboard(data);
       }
       else {
-        return this._request('PUT', '/dashboard/' + encodeURIComponent(title), this.index, data)
-          .then(function() {
-            return { title: title, url: '/dashboard/db/' + title };
-          }, function(err) {
-            throw 'Failed to save to elasticsearch ' + err.data;
+
+        var id = encodeURIComponent(kbn.slugifyForUrl(title));
+        var self = this;
+
+        return this._request('PUT', '/dashboard/' + id, this.index, data)
+          .then(function(results) {
+            self._removeUnslugifiedDashboard(results, title, id);
+            return { title: title, url: '/dashboard/db/' + id };
+          }, function() {
+            throw 'Failed to save to elasticsearch';
           });
       }
+    };
+
+    ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title, id) {
+      if (saveResult.statusText !== 'Created') { return; }
+      if (title === id) { return; }
+
+      var self = this;
+      this._get('/dashboard/' + title).then(function() {
+        self.deleteDashboard(title);
+      });
     };
 
     ElasticDatasource.prototype._saveTempDashboard = function(data) {
@@ -181,7 +217,21 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     ElasticDatasource.prototype.searchDashboards = function(queryString) {
-      queryString = queryString.toLowerCase().replace(' and ', ' AND ');
+      var endsInOpen = function(string, opener, closer) {
+        var character;
+        var count = 0;
+        for (var i=0; i<string.length; i++) {
+          character = string[i];
+
+          if (character === opener) {
+            count++;
+          } else if (character === closer) {
+            count--;
+          }
+        }
+
+        return count > 0;
+      };
 
       var tagsOnly = queryString.indexOf('tags!:') === 0;
       if (tagsOnly) {
@@ -193,7 +243,21 @@ function (angular, _, $, config, kbn, moment) {
           queryString = 'title:';
         }
 
-        if (queryString[queryString.length - 1] !== '*') {
+        // make this a partial search if we're not in some reserved portion of the language,  comments on conditionals, in order:
+        // 1. ends in reserved character, boosting, boolean operator ( -foo)
+        // 2. typing a reserved word like AND, OR, NOT
+        // 3. open parens (groupiing)
+        // 4. open " (term phrase)
+        // 5. open [ (range)
+        // 6. open { (range)
+        // see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax
+        if (!queryString.match(/(\*|\]|}|~|\)|"|^\d+|\s[\-+]\w+)$/) &&
+            !queryString.match(/[A-Z]$/) &&
+            !endsInOpen(queryString, '(', ')') &&
+            !endsInOpen(queryString, '"', '"') &&
+            !endsInOpen(queryString, '[', ']') && !endsInOpen(queryString, '[', '}') &&
+            !endsInOpen(queryString, '{', ']') && !endsInOpen(queryString, '{', '}')
+        ){
           queryString += '*';
         }
       }
@@ -216,7 +280,7 @@ function (angular, _, $, config, kbn, moment) {
           for (var i = 0; i < results.hits.hits.length; i++) {
             hits.dashboards.push({
               id: results.hits.hits[i]._id,
-              title: results.hits.hits[i]._id,
+              title: results.hits.hits[i]._source.title,
               tags: results.hits.hits[i]._source.tags
             });
           }

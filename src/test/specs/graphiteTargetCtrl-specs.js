@@ -99,6 +99,25 @@ define([
 
     });
 
+    describe('when initializing a target with single param func using variable', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = 'movingAverage(prod.count, $var)';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+        ctx.scope.init();
+        ctx.scope.$digest();
+        ctx.scope.$parent = { get_data: sinon.spy() };
+      });
+
+      it('should add 2 segments', function() {
+        expect(ctx.scope.segments.length).to.be(2);
+      });
+
+      it('should add function param', function() {
+        expect(ctx.scope.functions[0].params.length).to.be(1);
+      });
+
+    });
+
     describe('when initalizing target without metric expression and function with series-ref', function() {
       beforeEach(function() {
         ctx.scope.target.target = 'asPercent(metric.node.count, #A)';

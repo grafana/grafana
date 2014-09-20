@@ -4,7 +4,7 @@
     <h5>Left Y Axis</h5>
        <div class="editor-option">
         <label class="small">Format <tip>Y-axis formatting</tip></label>
-        <select class="input-small" ng-model="panel.y_formats[0]" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns']" ng-change="render()"></select>
+        <select class="input-small" ng-model="panel.y_formats[0]" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns', 'percent']" ng-change="render()"></select>
       </div>
       <div class="editor-option">
         <label class="small">Min / <a ng-click="toggleGridMinMax('leftMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.leftMin)"></i></a></label>
@@ -23,7 +23,7 @@
     <h5>Right Y Axis</h5>
        <div class="editor-option">
         <label class="small">Format <tip>Y-axis formatting</tip></label>
-        <select class="input-small" ng-model="panel.y_formats[1]" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns']" ng-change="render()"></select>
+        <select class="input-small" ng-model="panel.y_formats[1]" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns', 'percent']" ng-change="render()"></select>
       </div>
       <div class="editor-option">
         <label class="small">Min / <a ng-click="toggleGridMinMax('rightMin')">Auto <i class="icon-star" ng-show="_.isNull(panel.grid.rightMin)"></i></a></label>
