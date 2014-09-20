@@ -3,7 +3,7 @@
 		<div class="container-fluid">
 			<span class="brand">
 				<a ng-click="toggleProSideMenu()">
-				  <img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+					<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
 				</a>
 				<span class="page-title">Account Settings</span>
 			</span>
@@ -12,40 +12,61 @@
 </div>
 
 <div class="dashboard-edit-view">
+	<div class="editor-row">
+		<div class="section">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
-			<i class="icon icon-user"></i>
-			Personal information
-		</div>
-	</div>
-
-	<div class="dashboard-editor-body">
-		<div class="editor-row">
-		  <div class="editor-option">
-				<label class="small">Name</label>
-				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			<div class="dashboard-editor-header">
+				<div class="dashboard-editor-title">
+					<i class="icon icon-user"></i>
+					Personal information
+				</div>
 			</div>
-		</div>
 
-	  <div class="editor-row">
-		  <div class="editor-option">
-				<label class="small">Email</label>
-				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			<div class="dashboard-editor-body">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Name</label>
+						<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+					</div>
+				</div>
+
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Email</label>
+						<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+					</div>
+				</div>
+
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Account Name</label>
+						<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+					</div>
+				</div>
+
 			</div>
-		</div>
 
-	  <div class="editor-row">
-		  <div class="editor-option">
-				<label class="small">Account Name</label>
-				<input type="text" class="input-xxlarge" ng-model='currentAnnotation.name' placeholder="name"></input>
+			<div class="dashboard-editor-footer">
+				<button class="btn btn-success">Update</button>
 			</div>
+
 		</div>
+		<div class="section">
 
-	</div>
+			<div class="dashboard-editor-header">
+				<div class="dashboard-editor-title">
+					<i class="icon icon-eye-open"></i>
+					Active account
+				</div>
+			</div>
 
-	<div class="dashboard-editor-footer">
-		<button class="btn btn-success">Update</button>
+			<table class="grafana-options-table">
+				<tr ng-repeat="account in accounts">
+					<td>{{Name}}<td>
+				</tr>
+			</table>
+
+		</div>
 	</div>
 </div>
 
