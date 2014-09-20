@@ -28,7 +28,6 @@ func (self *HttpServer) registerUserPost(c *gin.Context) {
 	}
 
 	account := models.Account{
-		UserName: registerModel.Email,
 		Login:    registerModel.Email,
 		Email:    registerModel.Email,
 		Password: registerModel.Password,

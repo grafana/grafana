@@ -14,15 +14,17 @@ type CollaboratorLink struct {
 
 type Account struct {
 	Id              int `gorethink:"id"`
-	UserName        string
+	Version         int
 	Login           string
 	Email           string
+	AccountName     string
 	Password        string
 	NextDashboardId int
 	UsingAccountId  int
 	Collaborators   []CollaboratorLink
 	CreatedOn       time.Time
 	ModifiedOn      time.Time
+	LastLoginOn     time.Time
 }
 
 func (account *Account) AddCollaborator(accountId int) error {
