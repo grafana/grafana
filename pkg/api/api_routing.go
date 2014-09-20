@@ -13,8 +13,8 @@ var routeHandlers = make([]routeHandlerRegisterFn, 0)
 func getRouteHandlerWrapper(handler routeHandlerFn) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authContext := authContext{
-			account:     c.MustGet("usingAccount").(*models.UserAccount),
-			userAccount: c.MustGet("userAccount").(*models.UserAccount),
+			account:     c.MustGet("usingAccount").(*models.Account),
+			userAccount: c.MustGet("userAccount").(*models.Account),
 		}
 		handler(c, &authContext)
 	}

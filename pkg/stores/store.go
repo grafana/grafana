@@ -9,9 +9,10 @@ type Store interface {
 	SaveDashboard(dash *models.Dashboard) error
 	DeleteDashboard(slug string, accountId int) error
 	Query(query string, acccountId int) ([]*models.SearchResult, error)
-	SaveUserAccount(acccount *models.UserAccount) error
-	GetUserAccountLogin(emailOrName string) (*models.UserAccount, error)
-	GetAccount(id int) (*models.UserAccount, error)
+	CreateAccount(acccount *models.Account) error
+	UpdateAccount(acccount *models.Account) error
+	GetAccountByLogin(emailOrName string) (*models.Account, error)
+	GetAccount(id int) (*models.Account, error)
 	Close()
 }
 

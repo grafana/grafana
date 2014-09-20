@@ -20,7 +20,7 @@ func (self *HttpServer) addCollaborator(c *gin.Context, auth *authContext) {
 		return
 	}
 
-	collaborator, err := self.store.GetUserAccountLogin(model.Email)
+	collaborator, err := self.store.GetAccountByLogin(model.Email)
 	if err != nil {
 		c.JSON(404, gin.H{"status": "Collaborator not found"})
 		return
@@ -39,7 +39,11 @@ func (self *HttpServer) addCollaborator(c *gin.Context, auth *authContext) {
 		return
 	}
 
-	self.store.SaveUserAccount(userAccount)
+	err = self.store.UpdateAccount(userAccount)
+	if err != nil {
+		c.JSON(500, gin.H{"status": err.Error()})
+		return
+	}
 
 	c.JSON(200, gin.H{"status": "Collaborator added"})
 }

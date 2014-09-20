@@ -24,7 +24,7 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 		return
 	}
 
-	account, err := self.store.GetUserAccountLogin(loginModel.Email)
+	account, err := self.store.GetAccountByLogin(loginModel.Email)
 	if err != nil {
 		c.JSON(400, gin.H{"status": "some error"})
 	}

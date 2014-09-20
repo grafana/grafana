@@ -64,7 +64,7 @@ func (self *HttpServer) index(c *gin.Context) {
 	viewModel := &IndexDto{}
 	userAccount, _ := c.Get("userAccount")
 	if userAccount != nil {
-		viewModel.User.Login = userAccount.(*models.UserAccount).Login
+		viewModel.User.Login = userAccount.(*models.Account).Login
 	}
 
 	c.HTML(200, "index.html", viewModel)
