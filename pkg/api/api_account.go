@@ -5,11 +5,27 @@ import "github.com/gin-gonic/gin"
 func init() {
 	addRoutes(func(self *HttpServer) {
 		self.addRoute("POST", "/api/account/collaborators/add", self.addCollaborator)
+		self.addRoute("GET", "/api/account/", self.getAccount)
 	})
 }
 
-type addCollaboratorDto struct {
-	Email string `json:"email" binding:"required"`
+func (self *HttpServer) getAccount(c *gin.Context, auth *authContext) {
+	var account = auth.userAccount
+
+	model := accountInfoDto{
+		Login:       account.Login,
+		Email:       account.Email,
+		AccountName: account.AccountName,
+	}
+
+	for _, collaborator := range account.Collaborators {
+		model.Collaborators = append(model.Collaborators, &collaboratorInfoDto{
+			AccountId: collaborator.AccountId,
+			Role:      collaborator.Role,
+		})
+	}
+
+	c.JSON(200, model)
 }
 
 func (self *HttpServer) addCollaborator(c *gin.Context, auth *authContext) {
