@@ -47,7 +47,7 @@ func (self *rethinkStore) CreateAccount(account *models.Account) error {
 }
 
 func (self *rethinkStore) GetAccountByLogin(emailOrName string) (*models.Account, error) {
-	resp, err := r.Table("accounts").GetAllByIndex("AccountLogin", []interface{}{emailOrName}).Run(self.session)
+	resp, err := r.Table("accounts").GetAllByIndex("Login", emailOrName).Run(self.session)
 
 	if err != nil {
 		return nil, err
@@ -84,8 +84,8 @@ func (self *rethinkStore) UpdateAccount(account *models.Account) error {
 		return err
 	}
 
-	if resp.Replaced != 1 {
-		return errors.New("Could not fund account to uodate")
+	if resp.Replaced == 0 && resp.Unchanged == 0 {
+		return errors.New("Could not find account to update")
 	}
 
 	return nil
@@ -107,4 +107,30 @@ func (self *rethinkStore) getNextDashboardNumber(accountId int) (int, error) {
 	}
 
 	return int(change.NewValue.(map[string]interface{})["NextDashboardId"].(float64)), nil
+}
+
+func (self *rethinkStore) GetOtherAccountsFor(accountId int) ([]*models.OtherAccount, error) {
+	resp, err := r.Table("accounts").
+		GetAllByIndex("CollaboratorAccountId", accountId).
+		Map(func(row r.Term) interface{} {
+		return map[string]interface{}{
+			"id":   row.Field("id"),
+			"Name": row.Field("Email"),
+			"Role": row.Field("Collaborators").Filter(map[string]interface{}{
+				"AccountId": accountId,
+			}).Nth(0).Field("Role"),
+		}
+	}).Run(self.session)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var list []*models.OtherAccount
+	err = resp.All(&list)
+	if err != nil {
+		return nil, errors.New("Failed to read available accounts")
+	}
+
+	return list, nil
 }

@@ -26,7 +26,8 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 
 	account, err := self.store.GetAccountByLogin(loginModel.Email)
 	if err != nil {
-		c.JSON(400, gin.H{"status": "some error"})
+		c.JSON(400, gin.H{"status": err.Error()})
+		return
 	}
 
 	if loginModel.Password != account.Password {
@@ -35,8 +36,7 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 	}
 
 	session, _ := sessionStore.Get(c.Request, "grafana-session")
-	session.Values["userAccountId"] = account.Id
-	session.Values["usingAccountId"] = account.UsingAccountId
+	session.Values["accountId"] = account.Id
 	session.Save(c.Request, c.Writer)
 
 	var resp = &LoginResultDto{}
