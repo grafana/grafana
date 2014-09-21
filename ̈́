@@ -21,9 +21,9 @@ type removeCollaboratorDto struct {
 	AccountId int `json:"accountId" binding:"required"`
 }
 
-type otherAccountDto struct {
-	Id      int    `json:"id"`
-	Name    string `json:"name"`
-	Role    string `json:"role"`
-	IsUsing bool   `json:"isUsing"`
+type usingAccountDto struct {
+	AccountId int    `json:"accountId"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	IsUsing   bool
 }

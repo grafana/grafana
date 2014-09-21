@@ -23,18 +23,18 @@ func (self *HttpServer) auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, _ := sessionStore.Get(c.Request, "grafana-session")
 
-		if c.Request.URL.Path != "/login" && session.Values["userAccountId"] == nil {
+		if c.Request.URL.Path != "/login" && session.Values["accountId"] == nil {
 			self.authDenied(c)
 			return
 		}
 
-		account, err := self.store.GetAccount(session.Values["userAccountId"].(int))
+		account, err := self.store.GetAccount(session.Values["accountId"].(int))
 		if err != nil {
 			self.authDenied(c)
 			return
 		}
 
-		usingAccount, err := self.store.GetAccount(session.Values["usingAccountId"].(int))
+		usingAccount, err := self.store.GetAccount(account.UsingAccountId)
 		if err != nil {
 			self.authDenied(c)
 			return

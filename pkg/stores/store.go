@@ -12,7 +12,8 @@ type Store interface {
 	CreateAccount(acccount *models.Account) error
 	UpdateAccount(acccount *models.Account) error
 	GetAccountByLogin(emailOrName string) (*models.Account, error)
-	GetAccount(id int) (*models.Account, error)
+	GetAccount(accountId int) (*models.Account, error)
+	GetOtherAccountsFor(accountId int) ([]*models.OtherAccount, error)
 	Close()
 }
 
