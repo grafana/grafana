@@ -57,7 +57,8 @@ define([
 
     function errorHandler(err) {
       console.log('Annotation error: ', err);
-      alertSrv.set('Annotations','Could not fetch annotations','error');
+      var message = err.message || "Aannotation query failed";
+      alertSrv.set('Annotations error', message,'error');
     }
 
     function addAnnotation(options) {
