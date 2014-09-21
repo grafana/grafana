@@ -1,26 +1,50 @@
 define([
   'angular',
+  'lodash',
+  'services/pro/backendSrv',
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AccountCtrl', function($scope, $http, alertSrv) {
+  module.controller('AccountCtrl', function($scope, $http, backendSrv) {
 
     $scope.collaborator = {};
 
     $scope.init = function() {
-      $scope.getAccountInfo();
+      $scope.getAccount();
+      $scope.getOtherAccounts();
     };
 
-    $scope.getAccountInfo = function() {
-      $http.get('/api/account').then(function(result) {
-        $scope.account = result.data;
-        console.log("value", result.data);
-      }, function(err) {
-
+    $scope.getAccount = function() {
+      backendSrv.get('/api/account/').then(function(account) {
+        $scope.account = account;
+        $scope.collaborators = account.collaborators;
       });
+    };
+
+    $scope.getOtherAccounts = function() {
+      backendSrv.get('/api/account/others').then(function(otherAccounts) {
+        $scope.otherAccounts = otherAccounts;
+      });
+    };
+
+    $scope.setUsingAccount = function(otherAccount) {
+      backendSrv.request({
+        method: 'POST',
+        url: '/api/account/using/' + otherAccount.id,
+        desc: 'Change active account',
+      }).then($scope.getOtherAccounts);
+    };
+
+    $scope.removeCollaborator = function(collaborator) {
+      backendSrv.request({
+        method: 'POST',
+        url: '/api/account/collaborators/remove',
+        data: { accountId: collaborator.accountId },
+        desc: 'Remove collaborator',
+      }).then($scope.getAccount);
     };
 
     $scope.addCollaborator = function() {
@@ -28,16 +52,12 @@ function (angular) {
         return;
       }
 
-      $http.post('/api/account/collaborators/add', $scope.collaborator).then(function() {
-        alertSrv.set('Collaborator added', '', 'success', 3000);
-      }, function(err) {
-        if (err.data && err.data.status) {
-          alertSrv.set('Could not add collaborator', err.data.status, 'warning', 10000);
-        }
-        else if (err.statusText) {
-          alertSrv.set('Could not add collaborator', err.data.status, 'warning', 10000);
-        }
-      });
+      backendSrv.request({
+        method: 'POST',
+        url: '/api/account/collaborators/add',
+        data: $scope.collaborator,
+        desc: 'Add collaborator'
+      }).then($scope.getAccount);
     };
 
     $scope.init();

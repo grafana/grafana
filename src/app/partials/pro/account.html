@@ -51,18 +51,28 @@
 			</div>
 
 		</div>
-		<div class="section">
 
+		<div class="section">
 			<div class="dashboard-editor-header">
 				<div class="dashboard-editor-title">
 					<i class="icon icon-eye-open"></i>
 					Active account
 				</div>
 			</div>
+			<br>
 
 			<table class="grafana-options-table">
-				<tr ng-repeat="account in accounts">
-					<td>{{Name}}<td>
+				<tr ng-repeat="other in otherAccounts">
+					<td>name: {{other.name}}</td>
+					<td>role: {{other.role}}</td>
+					<td ng-show="other.isUsing">
+						currently using this account
+					</td>
+					<td ng-show="!other.isUsing">
+						<a ng-click="setUsingAccount(other)" class="btn btn-success btn-mini">
+							Select
+						</a>
+					</td>
 				</tr>
 			</table>
 
@@ -94,7 +104,15 @@
 		<div class="editor-row row">
 			<table class="grafana-options-table span5">
 				<tr ng-repeat="collaborator in account.collaborators">
-					<td>{{collaborator.accountId}}<td>
+					<td>{{collaborator.email}}</td>
+					<td>
+						{{collaborator.role}}
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeCollaborator(collaborator)" class="btn btn-danger btn-mini">
+							<i class="icon-remove"></i>
+						</a>
+					</td>
 				</tr>
 			</table>
 		</div>
