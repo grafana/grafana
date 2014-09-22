@@ -27,6 +27,7 @@ type Account struct {
 	AccountName     string
 	Password        string
 	Name            string
+	Company         string
 	NextDashboardId int
 	UsingAccountId  int
 	Collaborators   []CollaboratorLink
