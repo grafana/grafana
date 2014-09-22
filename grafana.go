@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/alecthomas/log4go"
+	"github.com/torkelo/grafana-pro/pkg/configuration"
 	"github.com/torkelo/grafana-pro/pkg/server"
 )
 
@@ -16,7 +17,8 @@ func main() {
 
 	log.Info("Starting Grafana-Pro v.1-alpha")
 
-	server, err := server.NewServer(port)
+	cfg := configuration.NewCfg(port)
+	server, err := server.NewServer(cfg)
 	if err != nil {
 		time.Sleep(time.Second)
 		panic(err)

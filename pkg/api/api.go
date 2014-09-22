@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/torkelo/grafana-pro/pkg/components"
+	"github.com/torkelo/grafana-pro/pkg/configuration"
 	"github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/stores"
 )
@@ -17,13 +18,15 @@ type HttpServer struct {
 	store    stores.Store
 	renderer *components.PhantomRenderer
 	router   *gin.Engine
+	cfg      *configuration.Cfg
 }
 
 var sessionStore = sessions.NewCookieStore([]byte("something-very-secret"))
 
-func NewHttpServer(port string, store stores.Store) *HttpServer {
+func NewHttpServer(cfg *configuration.Cfg, store stores.Store) *HttpServer {
 	self := &HttpServer{}
-	self.port = port
+	self.cfg = cfg
+	self.port = cfg.Http.Port
 	self.store = store
 	self.renderer = &components.PhantomRenderer{ImagesDir: "data/png", PhantomDir: "_vendor/phantomjs"}
 
@@ -63,9 +66,8 @@ func (self *HttpServer) ListenAndServe() {
 func (self *HttpServer) index(c *gin.Context) {
 	viewModel := &IndexDto{}
 	userAccount, _ := c.Get("userAccount")
-	if userAccount != nil {
-		viewModel.User.Login = userAccount.(*models.Account).Login
-	}
+	account, _ := userAccount.(*models.Account)
+	initCurrentUserDto(&viewModel.User, account)
 
 	c.HTML(200, "index.html", viewModel)
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/torkelo/grafana-pro/pkg/api"
+	"github.com/torkelo/grafana-pro/pkg/configuration"
 	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
@@ -10,9 +11,10 @@ type Server struct {
 	Store      stores.Store
 }
 
-func NewServer(port string) (*Server, error) {
+func NewServer(cfg *configuration.Cfg) (*Server, error) {
 	store := stores.New()
-	httpServer := api.NewHttpServer(port, store)
+
+	httpServer := api.NewHttpServer(cfg, store)
 
 	return &Server{
 		HttpServer: httpServer,
