@@ -7,36 +7,22 @@
 			<img src="/img/logo_transparent_200x75.png">
 		</div>
 
-		<form name="loginForm" class="form-horizontal">
-			<div class="row-fluid">
-				<div class="span8">
-					<div class="control-group">
-						<label class="control-label" for="inputEmail">Email</label>
-						<div class="controls">
-							<input type="text" required ng-model="loginModel.email" id="inputEmail" placeholder="Email">
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" for="inputPassword">Password</label>
-						<div class="controls">
-							<input type="password" required ng-model="loginModel.password" id="inputPassword" placeholder="Password">
-						</div>
-					</div>
-					<div class="control-group">
-						<div class="controls">
-							<label class="checkbox">
-								<input type="checkbox" ng-model="loginModel.remember" ng-checked="login.remember"> Remember me
-							</label>
-						</div>
-					</div>
-				</div>
-				<div class="span4">
-					<button type="submit" ng-click="login()" class="btn btn-success btn-large">
-						<i class="icon-lock"></i>
+		<div class="login-inner-box">
+
+			<form name="loginForm">
+					<input type="text" required ng-model="loginModel.email" id="inputEmail" placeholder="Email">
+
+					<input type="password" required ng-model="loginModel.password" id="inputPassword" placeholder="Password">
+
+					<label class="checkbox">
+						<input type="checkbox" ng-model="loginModel.remember" ng-checked="login.remember"> Remember me
+					</label>
+
+					<button type="submit" ng-click="login()" class="btn btn-success" style="margin-bottom: 20px">
 						Sign in
 					</button>
-				</div>
-			</div>
+			</form>
+
 			<div class="alert alert-error" ng-show="loginError">
 				<button type="button" class="close" data-dismiss="alert">&times;</button>
 				<strong>Login failed:</strong> {{loginError}}
@@ -51,11 +37,8 @@
 				</a>
 			</div>
 
-		</form>
-
-		<div class="register-box text-center">
-			<h3>If you do not already have an account<h3>
-				</a> <a href="/register" class="btn btn-info btn-large">Sign up now!</a>
+			<div class="register-box text-center">
+				<a href="/register" class="btn btn-info">Sign up now!</a>
 			</div>
 		</div>
 
