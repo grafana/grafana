@@ -11,7 +11,14 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
-var oauthCfg *oauth2.Config
+var (
+	googleOAuthConfig  *oauth2.Config
+	googleRedirectUrl  string = "http://localhost:3000/oauth2/google/callback"
+	googleAuthUrl      string = "https://accounts.google.com/o/oauth2/auth"
+	googleTokenUrl     string = "https://accounts.google.com/o/oauth2/token"
+	googleScopeProfile string = "https://www.googleapis.com/auth/userinfo.profile"
+	googleScopeEmail   string = "https://www.googleapis.com/auth/userinfo.email"
+)
 
 func init() {
 	addRoutes(func(self *HttpServer) {
@@ -19,33 +26,28 @@ func init() {
 			return
 		}
 
-		self.router.GET("/login/google", self.loginGoogle)
-		self.router.GET("/oauth2callback", self.oauthCallback)
+		self.router.GET("/oauth2/google", self.oauthGoogle)
+		self.router.GET("/oauth2/google/callback", self.oauthGoogleCallback)
 
 		options := &oauth2.Options{
 			ClientID:     self.cfg.Http.GoogleOAuth.ClientId,
 			ClientSecret: self.cfg.Http.GoogleOAuth.ClientSecret,
-			RedirectURL:  "http://localhost:3000/oauth2callback",
-			Scopes: []string{
-				"https://www.googleapis.com/auth/userinfo.profile",
-				"https://www.googleapis.com/auth/userinfo.email",
-			},
+			RedirectURL:  googleRedirectUrl,
+			Scopes:       []string{googleScopeEmail, googleScopeProfile},
 		}
 
-		cfg, err := oauth2.NewConfig(options,
-			"https://accounts.google.com/o/oauth2/auth",
-			"https://accounts.google.com/o/oauth2/token")
+		cfg, err := oauth2.NewConfig(options, googleAuthUrl, googleTokenUrl)
 
 		if err != nil {
 			log.Error("Failed to init google auth %v", err)
 		}
 
-		oauthCfg = cfg
+		googleOAuthConfig = cfg
 	})
 }
 
-func (self *HttpServer) loginGoogle(c *gin.Context) {
-	url := oauthCfg.AuthCodeURL("", "online", "auto")
+func (self *HttpServer) oauthGoogle(c *gin.Context) {
+	url := googleOAuthConfig.AuthCodeURL("", "online", "auto")
 	c.Redirect(302, url)
 }
 
@@ -56,11 +58,11 @@ type googleUserInfoDto struct {
 	Name       string `json:"name"`
 }
 
-func (self *HttpServer) oauthCallback(c *gin.Context) {
+func (self *HttpServer) oauthGoogleCallback(c *gin.Context) {
 	code := c.Request.URL.Query()["code"][0]
 	log.Info("OAuth code: %v", code)
 
-	transport, err := oauthCfg.NewTransportWithCode(code)
+	transport, err := googleOAuthConfig.NewTransportWithCode(code)
 	if err != nil {
 		c.String(500, "Failed to exchange oauth token: "+err.Error())
 		return
