@@ -1,11 +1,11 @@
 <section class="pro-sidemenu-items">
 	<div class="dropdown">
-		<a class="pro-sidemenu-link pointer" data-toggle="dropdown">
-			<i class="icon-user"></i>
-			{{grafana.user.login}}
+		<a class="pro-sidemenu-link pointer gravatar" data-toggle="dropdown" title="{{grafana.user.email}}">
+			<span class="gravatar-missing">f</span>
+			<img src="{{grafana.user.gravatarUrl}}" width="35"> <span class="gravatar-email small">{{grafana.user.login}}</span>
 		</a>
 		<ul class="dropdown-menu">
-			<li><a href="/login?logout">Logout</a>
+			<li><a href="/login?logout">Logout</a></li>
 		</ul>
 	</div>
 	<a class="pro-sidemenu-link" href="/">
