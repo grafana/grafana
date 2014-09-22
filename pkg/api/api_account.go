@@ -20,7 +20,7 @@ func (self *HttpServer) getAccount(c *gin.Context, auth *authContext) {
 	var account = auth.userAccount
 
 	model := accountInfoDto{
-		Login:       account.Login,
+		Name:        account.Name,
 		Email:       account.Email,
 		AccountName: account.AccountName,
 	}

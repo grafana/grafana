@@ -1,10 +1,15 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/torkelo/grafana-pro/pkg/models"
+
+	log "github.com/alecthomas/log4go"
+)
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.router.GET("/login/*_", self.index)
+		self.router.GET("/login", self.index)
 		self.router.POST("/login", self.loginPost)
 		self.router.POST("/logout", self.logoutPost)
 	})
@@ -35,15 +40,25 @@ func (self *HttpServer) loginPost(c *gin.Context) {
 		return
 	}
 
-	session, _ := sessionStore.Get(c.Request, "grafana-session")
-	session.Values["accountId"] = account.Id
-	session.Save(c.Request, c.Writer)
+	loginUserWithAccount(account, c)
 
 	var resp = &LoginResultDto{}
 	resp.Status = "Logged in"
 	resp.User.Login = account.Login
 
 	c.JSON(200, resp)
+}
+
+func loginUserWithAccount(account *models.Account, c *gin.Context) {
+	if account == nil {
+		log.Error("Account login with nil account")
+	}
+	session, err := sessionStore.Get(c.Request, "grafana-session")
+	if err != nil {
+		log.Error("Failed to get session %v", err)
+	}
+	session.Values["accountId"] = account.Id
+	session.Save(c.Request, c.Writer)
 }
 
 func (self *HttpServer) logoutPost(c *gin.Context) {

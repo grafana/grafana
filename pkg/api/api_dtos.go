@@ -1,8 +1,8 @@
 package api
 
 type accountInfoDto struct {
-	Login         string                 `json:"login"`
 	Email         string                 `json:"email"`
+	Name          string                 `json:"name"`
 	AccountName   string                 `json:"accountName"`
 	Collaborators []*collaboratorInfoDto `json:"collaborators"`
 }

@@ -1,0 +1,4 @@
+# Security
+- OAuth and email, unique?
+- Form authentication token
+- Password hash

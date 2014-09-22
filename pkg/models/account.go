@@ -26,6 +26,7 @@ type Account struct {
 	Email           string
 	AccountName     string
 	Password        string
+	Name            string
 	NextDashboardId int
 	UsingAccountId  int
 	Collaborators   []CollaboratorLink

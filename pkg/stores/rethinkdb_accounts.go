@@ -56,7 +56,7 @@ func (self *rethinkStore) GetAccountByLogin(emailOrName string) (*models.Account
 	var account models.Account
 	err = resp.One(&account)
 	if err != nil {
-		return nil, errors.New("Not found")
+		return nil, ErrAccountNotFound
 	}
 
 	return &account, nil
