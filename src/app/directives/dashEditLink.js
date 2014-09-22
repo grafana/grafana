@@ -51,9 +51,12 @@ function (angular, $) {
           scope.onAppEvent('hide-dash-editor', hideEditorPane);
 
           scope.onAppEvent('show-dash-editor', function(evt, payload) {
-            hideEditorPane();
+            if (lastEditor === payload.src) {
+              hideEditorPane();
+              return;
+            }
 
-            if (lastEditor === payload.src) { return; }
+            hideEditorPane();
 
             scope.exitFullscreen();
 
