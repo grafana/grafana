@@ -25,7 +25,11 @@ function (angular, $, kbn, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editable || true;
+      if (typeof data.editable == 'boolean') {
+        this.editable = data.editable;
+      } else {
+        this.editable = true;
+      }
       this.hideControls = data.hideControls || false;
       this.rows = data.rows || [];
       this.nav = data.nav || [];
