@@ -27,7 +27,10 @@ define([
               legend: {},
               grid: {},
               y_formats: [],
-              seriesOverrides: []
+              seriesOverrides: [],
+	      tooltip: {
+                shared: true
+              }
             };
             scope.hiddenSeries = {};
             scope.dashboard = { timezone: 'browser' };

@@ -130,6 +130,9 @@ function (angular, $, kbn, moment, _) {
             selection: {
               mode: "x",
               color: '#666'
+            },
+            crosshair: {
+              mode: panel.tooltip.shared ? "x" : null
             }
           };
 
@@ -157,7 +160,7 @@ function (angular, $, kbn, moment, _) {
 
           function callPlot() {
             try {
-              $.plot(elem, sortedSeries, options);
+              elem.flot=$.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
             }
@@ -326,9 +329,73 @@ function (angular, $, kbn, moment, _) {
 
         var $tooltip = $('<div id="tooltip">');
 
-        elem.bind("plothover", function (event, pos, item) {
-          var group, value, timestamp, seriesInfo, format;
+        //this event will erase tooltip and crosshair once leaved the graph
+        elem.mouseleave(function () {
+          console.log('onmouse out:');
+          if(scope.panel.tooltip.shared) {
+            $tooltip.detach();
+            elem.flot.clearCrosshair();
+          }
+        });
 
+        elem.bind("plothover", function (event, pos, item) {
+          var group, value, timestamp, seriesInfo, format, i, j, s, s_final;
+
+          //if tooltip shared we'll show a crosshair and will look for X and all Y series values
+          //else we will take from item.
+          if(scope.panel.tooltip.shared){
+            //check if all series has same length if so, only one x index will
+            //be checked and only for exact timestamp values
+            var l = [];
+            var series;
+            for (i = 0; i < data.length; ++i) {
+              series = data[i];
+              l.push(series.data.length);
+            }
+            //if all series has the same length it is because of they share time axis
+            if(_.uniq(l).length === 1) {
+              s='';
+              series = data[0];
+              j=0;
+              do {
+                ++j;
+              } while (series.data[j][0] < pos.x);
+              j--; //we take previous value in time.
+              //now we know the current X (j) position for X and Y values
+              timestamp = dashboard.formatDate(series.data[j][0]);
+              var last_value=0; //needed for stacked values
+              for (i = data.length-1; i >= 0; --i) {
+                //stacked values should be added in reverse order
+                series = data[i];
+                seriesInfo = series.info;
+                format = scope.panel.y_formats[seriesInfo.yaxis - 1];
+                if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
+                  value = series.data[j][1];
+                } else {
+                  last_value+=series.data[j][1];
+                  value = last_value;
+                }
+                value = kbn.getFormatFunction(format, 2)(value,series.yaxis);
+                if (seriesInfo.alias) {
+                  group = '<i class="icon-circle" style="color:'+series.color+';"></i>' +
+                          ' ' +  seriesInfo.alias;
+                } else {
+                  group = kbn.query_color_dot(series.color, 15) + ' ';
+                }
+                //pre-pending new values
+                s_final= group+ ": "+value +'<br>'+ s;
+                s=s_final;
+              }
+
+              $tooltip.html('<small style="font-size:0.7em;">Time@ <b>'+
+                            timestamp + '</b><br>' + s + '</small>').place_tt(pos.pageX, pos.pageY);
+              return;
+            }else {
+              console.log('WARNING: tootltip shared can not be shown becouse of from '
+                          +data.length+' series has different length '+_.uniq(l));
+              $tooltip.detach();
+            }
+          }
           if (item) {
             seriesInfo = item.series.info;
             format = scope.panel.y_formats[seriesInfo.yaxis - 1];
