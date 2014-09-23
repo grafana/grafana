@@ -52,10 +52,8 @@ function (angular, _) {
         //   condition: true
         // },
         {
-          text: 'advanced',
-          submenu: [
-            { text: 'Panel JSON', click: 'editPanelJson()' },
-          ],
+          text: 'json',
+          click: 'editPanelJson()',
           condition: true
         },
         // {

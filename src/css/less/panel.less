@@ -59,13 +59,13 @@
 
 .panel-menu {
   z-index: 10000;
-  width: 277px;
   position: absolute;
   background: @grafanaTargetFuncBackground;
   border: 1px solid black;
   top: -62px;
 
   .panel-menu-row {
+    white-space: nowrap;
     border-bottom: 1px solid black;
     &:last-child {
       border-bottom: none;
@@ -77,6 +77,7 @@
   }
 
   .panel-menu-link {
+    display: inline-block;
     border-right: 1px solid black;
     &:last-child {
       border: none;
