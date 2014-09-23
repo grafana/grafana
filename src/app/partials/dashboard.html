@@ -74,17 +74,16 @@
 					</div>
 				</div>
 
-				<div class="panel-menu small" ng-show="showPanelMenu" ng-style="{'margin-left': panelMenuPos}">
-					<a class="pointer"><i class="icon-eye-open"></i> <span>view</span></a>
-					<a class="pointer"><i class="icon-cog"></i> <span>edit</span></a>
-					<a class="pointer"><i class="icon-resize-horizontal"></i> <span>span</span></a>
-					<a class="pointer"><i class="icon-copy"></i> <span>duplicate</span></a>
-					<a class="pointer"><i class="icon-share"></i> <span>share</span></a>
-					<a class="pointer"><i class="icon-remove"></i> <span>remove</span></a>
-				</div>
-
-				<div style="padding-top:0px" ng-if="!row.collapse">
+				<div class="panels-wrapper" ng-if="!row.collapse">
 					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
+					</div>
+					<div class="panel-menu-container" data-menu-container>
+							<!-- <a class="pointer"><i class="icon&#45;eye&#45;open"></i> <span>view</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;cog"></i> <span>edit</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;resize&#45;horizontal"></i> <span>span</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;copy"></i> <span>duplicate</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;share"></i> <span>share</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;remove"></i> <span>remove</span></a> -->
 					</div>
 
 					<!-- Panels -->

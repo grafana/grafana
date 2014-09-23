@@ -19,6 +19,7 @@
   border: 0px;
   font-weight: bold;
   position: relative;
+  font-size: 0.9em;
 }
 
 .panel-loading {
@@ -57,22 +58,32 @@
 }
 
 .panel-menu {
-  display: inline-block;
-  vertical-align: top;
-  a {
-    font-size: 1.2em;
-    float: left;
-    padding: 7px 10px;
-    border-top: 1px solid black;
-    border-right: 1px solid black;
+  z-index: 10000;
+  width: 277px;
+  position: absolute;
+  background: @grafanaTargetFuncBackground;
+  border: 1px solid black;
+  top: -62px;
+
+  .panel-menu-row {
     border-bottom: 1px solid black;
-    background: @grayDark;
+    &:last-child {
+      border-bottom: none;
+    }
   }
-  a:first-child {
-    border-left: 1px solid black;
+
+  .panel-menu-link, .panel-menu-icon {
+    padding: 5px 10px;
+  }
+
+  .panel-menu-link {
+    border-right: 1px solid black;
+    &:last-child {
+      border: none;
+    }
   }
 }
 
 .panel-highlight  {
-  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(82,168,236, 0.9)");
+  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
 }
