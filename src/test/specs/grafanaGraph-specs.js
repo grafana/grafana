@@ -29,6 +29,7 @@ define([
               y_formats: [],
               seriesOverrides: []
             };
+            scope.hiddenSeries = {};
             scope.dashboard = { timezone: 'browser' };
             scope.range = {
               from: new Date('2014-08-09 10:00:00'),
@@ -142,6 +143,18 @@ define([
       it('should move zindex 2 last', function() {
         expect(ctx.plotData[0].info.alias).to.be('series2');
         expect(ctx.plotData[1].info.alias).to.be('series1');
+      });
+    });
+
+    graphScenario('when series is hidden', function(ctx) {
+      ctx.setup(function(scope) {
+        scope.hiddenSeries = {'series2': true};
+      });
+
+      it('should remove datapoints and disable stack', function() {
+        expect(ctx.plotData[0].info.alias).to.be('series1');
+        expect(ctx.plotData[1].data.length).to.be(0);
+        expect(ctx.plotData[1].stack).to.be(false);
       });
     });
 
