@@ -53,7 +53,6 @@ function (angular, $, _) {
         link: function($scope, elem) {
           var $link = $(linkTemplate);
           var $panelContainer = elem.parents(".panel-container");
-          var menuTemplate = createMenuTemplate($scope);
           var menuWidth = 246;
           var menuScope = null;
           var timeout = null;
@@ -106,6 +105,7 @@ function (angular, $, _) {
               menuLeftPos = 0;
             }
 
+            var menuTemplate = createMenuTemplate($scope);
             $menu = $(menuTemplate);
             $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
