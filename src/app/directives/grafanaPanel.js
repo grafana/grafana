@@ -27,20 +27,31 @@ function (angular, $) {
           var $link = $(linkTemplate);
           elem.append($link);
 
-          $link.click(function() {
-            var $menu = $(menuTemplate);
-            var menuScope = $scope.$new();
+          $link.click(function(e) {
+            var menuWidth = 452;
+            var windowWidth = $(window).width();
+            var maxPos = windowWidth - menuWidth - 20;
+            var leftPos = e.screenX - (menuWidth / 2);
+            leftPos = Math.min(leftPos, maxPos);
 
-            elem.append($menu);
-            $compile($menu.contents())(menuScope);
+            $scope.$apply(function() {
+              $scope.togglePanelMenu(leftPos);
+            });
+            elem.parents(".panel-container").toggleClass('panel-highlight');
+            console.log(e);
+//             var $menu = $(menuTemplate);
+//             var menuScope = $scope.$new();
+//
+//             elem.append($menu);
+//             $compile($menu.contents())(menuScope);
 
-            setTimeout(function() {
-              $menu.remove();
-              menuScope.$destroy();
-              $link.show();
-            }, 8000);
+            // setTimeout(function() {
+            //   $menu.remove();
+            //   menuScope.$destroy();
+            //   $link.show();
+            // }, 8000);
 
-            $link.hide();
+            //$link.hide();
           });
 
           $compile(elem.contents())($scope);

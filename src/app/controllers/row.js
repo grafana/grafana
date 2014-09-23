@@ -22,6 +22,11 @@ function (angular, app, _) {
       $scope.reset_panel();
     };
 
+    $scope.togglePanelMenu = function(posX) {
+      $scope.showPanelMenu = !$scope.showPanelMenu;
+      $scope.panelMenuPos = posX;
+    };
+
     $scope.toggle_row = function(row) {
       row.collapse = row.collapse ? false : true;
       if (!row.collapse) {
