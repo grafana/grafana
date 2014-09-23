@@ -3,55 +3,113 @@ define([
   'jquery',
   'lodash',
 ],
-function (angular, $) {
+function (angular, $, _) {
   'use strict';
 
   angular
     .module('grafana.directives')
     .directive('panelTitle', function($compile) {
-      var linkTemplate = '<a class="pointer panel-title">{{panel.title || interpolateTemplateVars}}</div>';
-      var menuTemplate = '<div class="panel-menu">' +
-                            '<a class="pointer"><i class="icon-th-list"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-eye-open"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-cog"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-resize-horizontal"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-move"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-copy"></i></a>  ' +
-                            '<a class="pointer"><i class="icon-share"></i></a>' +
-                            '<a class="pointer"><i class="icon-remove"></i></a>  ' +
-                          '</div>';
+      var linkTemplate = '<a class="pointer panel-title">{{panel.title || interpolateTemplateVars}}</a>';
+      var moveAttributes = ' data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
+              ' jqyoui-draggable="'+
+              '{'+
+                'animate:false,'+
+                'mutate:false,'+
+                'index:{{$index}},'+
+                'onStart:\'panelMoveStart\','+
+                'onStop:\'panelMoveStop\''+
+                '}"  ng-model="panel" ';
+
+      function createMenuTemplate($scope) {
+        var template = '<div class="panel-menu small">';
+        template += '<div class="panel-menu-inner">';
+        template += '<div class="panel-menu-row">';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="icon-minus"></i></a>';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="icon-plus"></i></a>';
+        template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="icon-remove"></i></a>';
+        template += '<a class="panel-menu-icon pull-right" ' + moveAttributes + '><i class="icon-move"></i></a>';
+        template += '<div class="clearfix"></div>';
+        template += '</div>';
+
+        template += '<div class="panel-menu-row">';
+
+        _.each($scope.panelMeta.menu, function(item) {
+          template += '<a class="panel-menu-link pull-left" ';
+          if (item.click) { template += ' ng-click="' + item.click + '"'; }
+          template += '>';
+          template += item.text + '</a>';
+        });
+
+        template += '<a class="panel-menu-link pull-left">share</a>';
+
+        template += '</div>';
+        template += '</div>';
+        template += '</div>';
+        return template;
+      }
 
       return {
         restrict: 'A',
         link: function($scope, elem) {
           var $link = $(linkTemplate);
+          var $panelContainer = elem.parents(".panel-container");
+          var menuTemplate = createMenuTemplate($scope);
+          var menuWidth = 277;
+          var menuScope = null;
+          var timeout = null;
+
           elem.append($link);
 
-          $link.click(function(e) {
-            var menuWidth = 452;
+          var dismiss = function() {
+            $('.panel-menu').remove();
+
+            if (menuScope) {
+              menuScope.$destroy();
+              menuScope = null;
+              $panelContainer.removeClass('panel-highlight');
+            }
+            if (timeout) {
+              clearTimeout(timeout);
+              timeout = null;
+            }
+            return;
+          };
+
+          $link.click(function() {
+            if (menuScope) {
+              dismiss();
+              return;
+            }
+
+            dismiss();
+
             var windowWidth = $(window).width();
-            var maxPos = windowWidth - menuWidth - 20;
-            var leftPos = e.screenX - (menuWidth / 2);
-            leftPos = Math.min(leftPos, maxPos);
+            var panelLeftPos = $(elem).offset().left;
+            var panelWidth = $(elem).width();
+            var menuLeftPos = (panelWidth / 2) - (menuWidth/2);
+            var stickingOut = panelLeftPos + menuLeftPos + menuWidth - windowWidth;
+            if (stickingOut > 0) {
+              menuLeftPos -= stickingOut + 10;
+            }
+            if (panelLeftPos + menuLeftPos < 0) {
+              menuLeftPos = 0;
+            }
 
+            var $menu = $(menuTemplate);
+            $menu.css('left', menuLeftPos);
+
+            menuScope = $scope.$new();
+
+            elem.append($menu);
             $scope.$apply(function() {
-              $scope.togglePanelMenu(leftPos);
+              $compile($menu.contents())(menuScope);
             });
-            elem.parents(".panel-container").toggleClass('panel-highlight');
-            console.log(e);
-//             var $menu = $(menuTemplate);
-//             var menuScope = $scope.$new();
-//
-//             elem.append($menu);
-//             $compile($menu.contents())(menuScope);
 
-            // setTimeout(function() {
-            //   $menu.remove();
-            //   menuScope.$destroy();
-            //   $link.show();
-            // }, 8000);
 
-            //$link.hide();
+            $(".panel-container").removeClass('panel-highlight');
+            $panelContainer.toggleClass('panel-highlight');
+
+            //timeout = setTimeout(dismiss, 8000);
           });
 
           $compile(elem.contents())($scope);
@@ -80,7 +138,7 @@ function (angular, $) {
             '<i class="icon-spinner icon-spin icon-large"></i>' +
           '</span>' +
 
-          '<div panel-title></div>' +
+          '<div panel-title ' + '></div>' +
         '</div>'+
       '</div>';
 
