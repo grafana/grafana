@@ -61,7 +61,15 @@
       <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
     </div>
   </div>
+
+  <div class="section">
+    <h5>Tooltip</h5>
+    <div class="editor-option">
+      <label class="small">shared <tip> Show all series values on the same time in the same tooltip and a x croshair to help follow all series</tip> </label><input type="checkbox" ng-model="panel.tooltip.shared" ng-checked="panel.tooltip.shared" ng-change="render()">
+    </div>
+  </div>
 </div>
+
 
 <div class="editor-row">
   <div class="section">
