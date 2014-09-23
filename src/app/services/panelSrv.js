@@ -20,13 +20,8 @@ function (angular, _) {
         },
         {
           text: 'edit',
-          editorLink: "app/partials/paneleditor.html",
-          condition: !$scope.panelMeta.fullscreenEdit
-        },
-        {
-          text: 'edit',
-          click: "toggleFullscreen(true)",
-          condition: $scope.panelMeta.fullscreenEdit
+          click: 'editPanel()',
+          condition: true,
         },
         {
           text: 'duplicate',
@@ -65,6 +60,15 @@ function (angular, _) {
 
       $scope.inspector = {};
       $scope.panelMeta.menu = _.where(menu, { condition: true });
+
+      $scope.editPanel = function() {
+        if ($scope.panelMeta.fullscreenEdit) {
+          $scope.toggleFullscreen(true);
+        }
+        else {
+          $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/paneleditor.html', scope: $scope });
+        }
+      };
 
       $scope.editPanelJson = function() {
         $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
