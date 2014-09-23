@@ -1,3 +1,8 @@
+# 1.9.0 (unreleased)
+
+**Fixes**
+- [Issue #847](https://github.com/grafana/grafana/issues/847). Graph: Fix for series draw order not being the same after hiding/unhiding series
+
 # 1.8.0 (2014-09-22)
 
 Read this [blog post](http://grafana.org/blog/2014/09/11/grafana-1-8-0-rc1-released.html) for an overview of all improvements.
