@@ -17,9 +17,6 @@
 				</ul>
 
 				<ul class="grafana-segment-list" ng-if="dashboard.templating.enable">
-					<li class="small grafana-target-segment">
-						<strong>VARIABLES</strong>
-					</li>
 					<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
 						<span class="template-variable ">
 						${{variable.name}}:
@@ -31,10 +28,6 @@
 				</ul>
 
 				<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
-					<li class="small grafana-target-segment">
-						<strong>ANNOTATIONS</strong>
-					</li>
-
 					<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 						<a ng-click="disableAnnotation(annotation)">
 							<i class="annotation-color-icon icon-bolt"></i>

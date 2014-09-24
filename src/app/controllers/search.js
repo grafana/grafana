@@ -121,7 +121,7 @@ function (angular, _, config, $) {
 
     $scope.deleteDashboard = function(dash, evt) {
       evt.stopPropagation();
-      $scope.emitAppEvent('delete-dashboard', { id: dash.id });
+      $scope.emitAppEvent('delete-dashboard', { id: dash.id, title: dash.title });
       $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 

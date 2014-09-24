@@ -93,7 +93,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboard = function(evt, options) {
-      if (!confirm('Are you sure you want to delete dashboard?')) {
+      if (!confirm('Do you want to delete dashboard ' + options.title + ' ?')) {
         return;
       }
 
