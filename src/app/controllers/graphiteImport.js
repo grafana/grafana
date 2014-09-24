@@ -73,7 +73,7 @@ function (angular, app, _, kbn) {
       newDashboard.title = state.name;
       newDashboard.rows.push(currentRow);
 
-      _.each(state.graphs, function(graph) {
+      _.each(state.graphs, function(graph, index) {
         if (currentRow.panels.length === graphsPerRow) {
           currentRow = angular.copy(rowTemplate);
           newDashboard.rows.push(currentRow);
@@ -84,7 +84,8 @@ function (angular, app, _, kbn) {
           span: 12 / graphsPerRow,
           title: graph[1].title,
           targets: [],
-          datasource: datasource
+          datasource: datasource,
+          id: index + 1
         };
 
         _.each(graph[1].target, function(target) {
