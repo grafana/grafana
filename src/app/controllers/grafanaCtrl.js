@@ -10,18 +10,18 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope, $controller) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller) {
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope.consoleEnabled = store.getBool('grafanaConsole');
-
+    $scope._ = _;
     $rootScope.profilingEnabled = store.getBool('profilingEnabled');
     $rootScope.performance = { loadStart: new Date().getTime() };
 
     $scope.init = function() {
-      $scope._ = _;
-
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
+
+      alertSrv.init();
+      utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
       $scope.grafana = { style: 'dark' };

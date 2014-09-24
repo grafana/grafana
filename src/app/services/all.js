@@ -1,5 +1,6 @@
 define([
   './alertSrv',
+  './utilSrv',
   './datasourceSrv',
   './timeSrv',
   './templateSrv',

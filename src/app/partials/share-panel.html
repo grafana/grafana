@@ -1,0 +1,26 @@
+<div ng-controller="SharePanelCtrl">
+	<div class="modal-header">
+		<div class="dashboard-editor-header">
+			<div class="dashboard-editor-title">
+				<i class="icon icon-share"></i>
+				Share
+			</div>
+
+			<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+				<div ng-repeat="tab in ['Link', 'Embedd', 'Image']" data-title="{{tab}}">
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<div class="modal-body">
+		<div class="editor-row">
+			<input type="text" class="input input-xxlarge"></input>
+		</div>
+	</div>
+
+	<div class="modal-footer">
+		<button class="btn btn-success pull-right" ng-click="dismiss();">close</button>
+	</div>
+</div>
