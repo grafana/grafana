@@ -16,13 +16,15 @@
 
 	<div class="modal-body">
 		<div class="editor-row">
-			<div class="editor-option">
-				<label class="small">Current time range</label>
-				<input type="checkbox"></input>
+			<div class="editor-option text-center">
+				<label for="currentTime" class="small">Current time range</label>
+				<input id="currentTime" type="checkbox" ng-model="forCurrent" ng-checked="forCurrent"></input>
+				<label for="currentTime" class="cr1"></label>
 			</div>
-			<div class="editor-option">
-				<label class="small">To fullscreen panel</label>
-				<input type="checkbox"></input>
+			<div class="editor-option text-center">
+				<label for="toPanel" class="small">To fullscreen panel</label>
+				<input id="toPanel" type="checkbox" ng-model="toPanel" ng-checked="toPanel"></input>
+				<label for="toPanel" class="cr1"></label>
 			</div>
 		</div>
 

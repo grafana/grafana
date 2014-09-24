@@ -1,0 +1,26 @@
+input[type=text].input-fluid {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+}
+
+input[type="checkbox"] {
+  display: none;
+}
+
+input[type="checkbox"]+.cr1 {
+  display: inline-block;
+  height: 19px;
+  clear: none;
+  text-indent: 2px;
+  margin-top: 4px;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background:url(../img/checkbox.png) left top no-repeat;
+  cursor:pointer;
+}
+
+input[type="checkbox"]:checked+label {
+  background:url(../img/checkbox.png) 0px -18px no-repeat;
+}
+
