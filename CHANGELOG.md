@@ -1,7 +1,10 @@
 # 1.9.0 (unreleased)
 
+# 1.8.1 (unreleased)
+
 **Fixes**
 - [Issue #847](https://github.com/grafana/grafana/issues/847). Graph: Fix for series draw order not being the same after hiding/unhiding series
+- [Issue #851](https://github.com/grafana/grafana/issues/851). Annotations: Fix for annotations not reloaded when switching between 2 dashboards with annotations
 
 # 1.8.0 (2014-09-22)
 
