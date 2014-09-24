@@ -16,16 +16,8 @@
 
 	<div class="modal-body">
 		<div class="editor-row">
-			<div class="editor-option text-center">
-				<label for="currentTime" class="small">Current time range</label>
-				<input id="currentTime" type="checkbox" ng-model="forCurrent" ng-checked="forCurrent"></input>
-				<label for="currentTime" class="cr1"></label>
-			</div>
-			<div class="editor-option text-center">
-				<label for="toPanel" class="small">To fullscreen panel</label>
-				<input id="toPanel" type="checkbox" ng-model="toPanel" ng-checked="toPanel"></input>
-				<label for="toPanel" class="cr1"></label>
-			</div>
+			<editor-opt-bool name="currentTime" text="Current time range" model="forCurrent"></editor-opt-bool>
+			<editor-opt-bool name="toPanel" text="To this panel only" model="toPanel"></editor-opt-bool>
 		</div>
 
 		<div class="editor-row" style="margin-top: 20px;">
