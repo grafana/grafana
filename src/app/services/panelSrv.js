@@ -56,6 +56,13 @@ function (angular, _) {
         }
       };
 
+      $scope.sharePanel = function() {
+        $scope.emitAppEvent('show-modal', {
+          src: './app/partials/share-panel.html',
+          scope: $scope.$new()
+        });
+      };
+
       $scope.editPanelJson = function() {
         $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
       };
