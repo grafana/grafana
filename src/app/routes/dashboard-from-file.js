@@ -52,7 +52,7 @@ function (angular, $, config, _) {
     };
 
     file_load($routeParams.jsonFile).then(function(result) {
-      $scope.emitAppEvent('setup-dashboard', result);
+      $scope.initDashboard(result, $scope);
     });
 
   });

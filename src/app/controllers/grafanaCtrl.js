@@ -10,7 +10,7 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope, $controller) {
 
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
     $scope.consoleEnabled = store.getBool('grafanaConsole');
@@ -30,6 +30,10 @@ function (angular, config, _, $, store) {
     $scope.toggleConsole = function() {
       $scope.consoleEnabled = !$scope.consoleEnabled;
       store.set('grafanaConsole', $scope.consoleEnabled);
+    };
+
+    $scope.initDashboard = function(dashboardData, viewScope) {
+      $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
     $rootScope.onAppEvent = function(name, callback) {
