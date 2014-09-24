@@ -26,7 +26,7 @@ function (angular, $) {
             '<i class="icon-spinner icon-spin icon-large"></i>' +
           '</span>' +
 
-          '<div panel-menu></div>' +
+          '<div class="panel-title-container" panel-menu></div>' +
         '</div>'+
       '</div>';
 
