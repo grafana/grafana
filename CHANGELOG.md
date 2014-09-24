@@ -1,3 +1,14 @@
+# 1.9.0 (unreleased)
+
+# 1.8.1 (unreleased)
+
+**Fixes**
+- [Issue #847](https://github.com/grafana/grafana/issues/847). Graph: Fix for series draw order not being the same after hiding/unhiding series
+- [Issue #851](https://github.com/grafana/grafana/issues/851). Annotations: Fix for annotations not reloaded when switching between 2 dashboards with annotations
+- [Issue #846](https://github.com/grafana/grafana/issues/846). Edit panes: Issue when open row or json editor when scrolled down the page, unable to scroll and you did not see editor
+- [Issue #840](https://github.com/grafana/grafana/issues/840). Import: Fixes to import from json file and import from graphite. Issues was lingering state from previous dashboard.
+- [Issue #859](https://github.com/grafana/grafana/issues/859). InfluxDB: Fix for bug when saving dashboard where title is the same as slugified url id
+
 # 1.8.0 (2014-09-22)
 
 Read this [blog post](http://grafana.org/blog/2014/09/11/grafana-1-8-0-rc1-released.html) for an overview of all improvements.

@@ -1,14 +1,15 @@
 define([
   'angular',
   'app',
-  'lodash'
+  'lodash',
+  'kbn'
 ],
-function (angular, app, _) {
+function (angular, app, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
+  module.controller('GraphiteImportCtrl', function($scope, $rootScope, $timeout, datasourceSrv, $location) {
 
     $scope.init = function() {
       $scope.datasources = datasourceSrv.getMetricSources();
@@ -72,18 +73,19 @@ function (angular, app, _) {
       newDashboard.title = state.name;
       newDashboard.rows.push(currentRow);
 
-      _.each(state.graphs, function(graph) {
+      _.each(state.graphs, function(graph, index) {
         if (currentRow.panels.length === graphsPerRow) {
           currentRow = angular.copy(rowTemplate);
           newDashboard.rows.push(currentRow);
         }
 
         panel = {
-          type: 'graphite',
+          type: 'graph',
           span: 12 / graphsPerRow,
           title: graph[1].title,
           targets: [],
-          datasource: datasource
+          datasource: datasource,
+          id: index + 1
         };
 
         _.each(graph[1].target, function(target) {
@@ -95,7 +97,9 @@ function (angular, app, _) {
         currentRow.panels.push(panel);
       });
 
-      $scope.emitAppEvent('setup-dashboard', newDashboard);
+      window.grafanaImportDashboard = newDashboard;
+      $location.path('/dashboard/import/' + kbn.slugifyForUrl(newDashboard.title));
+
       $scope.dismiss();
     }
 

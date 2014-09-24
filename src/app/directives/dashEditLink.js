@@ -34,6 +34,7 @@ function (angular, $) {
 
           function hideScrollbars(value) {
             if (value) {
+              window.scrollTo(0,0);
               document.documentElement.style.overflow = 'hidden';  // firefox, chrome
               document.body.scroll = "no"; // ie only
             } else {

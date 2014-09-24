@@ -16,7 +16,6 @@ function (angular, $, kbn, moment, _) {
       template: '<div> </div>',
       link: function(scope, elem) {
         var data, annotations;
-        var hiddenData = {};
         var dashboard = scope.dashboard;
         var legendSideLastValue = null;
 
@@ -24,14 +23,7 @@ function (angular, $, kbn, moment, _) {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function(e, series) {
-          _.each(series, function(serie) {
-            if (hiddenData[serie.alias]) {
-              data.push(hiddenData[serie.alias]);
-              delete hiddenData[serie.alias];
-            }
-          });
-
+        scope.$on('toggleLegend', function() {
           render_panel();
         });
 
@@ -95,17 +87,6 @@ function (angular, $, kbn, moment, _) {
           }
 
           var panel = scope.panel;
-
-          _.each(_.keys(scope.hiddenSeries), function(seriesAlias) {
-            var dataSeries = _.find(data, function(series) {
-              return series.info.alias === seriesAlias;
-            });
-            if (dataSeries) {
-              hiddenData[dataSeries.info.alias] = dataSeries;
-              data = _.without(data, dataSeries);
-            }
-          });
-
           var stack = panel.stack ? true : null;
 
           // Populate element
@@ -156,6 +137,11 @@ function (angular, $, kbn, moment, _) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+            // if hidden remove points and disable stack
+            if (scope.hiddenSeries[series.info.alias]) {
+              series.data = [];
+              series.stack = false;
+            }
           }
 
           if (data.length && data[0].info.timeStep) {

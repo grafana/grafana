@@ -203,7 +203,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       else {
         var self = this;
         return this._influxRequest('POST', '/series', data).then(function() {
-          self._removeUnslugifiedDashboard(title, false);
+          self._removeUnslugifiedDashboard(id, title, false);
           return { title: title, url: '/dashboard/db/' + id };
         }, function(err) {
           throw 'Failed to save dashboard to InfluxDB: ' + err.data;
@@ -211,7 +211,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       }
     };
 
-    InfluxDatasource.prototype._removeUnslugifiedDashboard = function(id, isTemp) {
+    InfluxDatasource.prototype._removeUnslugifiedDashboard = function(id, title, isTemp) {
+      if (id === title) { return; }
+
       var self = this;
       self._getDashboardInternal(id, isTemp).then(function(dashboard) {
         if (dashboard !== null) {

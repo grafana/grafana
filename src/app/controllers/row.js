@@ -13,6 +13,7 @@ function (angular, app, _) {
       title: "Row",
       height: "150px",
       collapse: false,
+      editable: true,
       panels: [],
     };
 
