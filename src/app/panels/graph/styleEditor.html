@@ -1,14 +1,20 @@
 <div class="editor-row">
   <div class="section">
     <h5>Chart Options</h5>
-    <div class="editor-option">
-      <label class="small">Bars</label><input type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
+    <div class="editor-option text-center">
+			<label for="barsCheck" class="small">Bars</label>
+			<input id="barsCheck" type="checkbox" ng-model="panel.bars" ng-checked="panel.bars" ng-change="render()">
+			<label for="barsCheck" class="cr1"></label>
     </div>
-    <div class="editor-option">
-      <label class="small">Lines</label><input type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
+    <div class="editor-option text-center">
+			<label for="linesCheck" class="small">Lines</label>
+			<input id="linesCheck" type="checkbox" ng-model="panel.lines" ng-checked="panel.lines" ng-change="render()">
+			<label for="linesCheck" class="cr1"></label>
     </div>
-    <div class="editor-option">
-      <label class="small">Points</label><input type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
+    <div class="editor-option text-center">
+			<label for="pointsCheck" class="small">Points</label>
+			<input id="pointsCheck" type="checkbox" ng-model="panel.points" ng-checked="panel.points" ng-change="render()">
+			<label for="pointsCheck" class="cr1"></label>
     </div>
   </div>
 

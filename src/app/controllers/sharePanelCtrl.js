@@ -28,6 +28,9 @@ function (angular, _) {
       $scope.shareUrl += "&from=" + from;
       $scope.shareUrl += "&to=" + to;
 
+      $scope.forCurrent = true;
+      $scope.toPanel = true;
+
       $timeout(function() {
         var input = $element.find('[data-share-panel-url]');
         input.focus();
