@@ -9,7 +9,7 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile) {
-      var linkTemplate = '<a class="pointer panel-title">{{panel.title || interpolateTemplateVars}}</a>';
+      var linkTemplate = '<a class="panel-title">{{panel.title || interpolateTemplateVars}}</a>';
       var moveAttributes = ' data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
               ' jqyoui-draggable="{'+
                 'animate:false,'+
@@ -61,8 +61,6 @@ function (angular, $, _) {
           function dismiss(time) {
             clearTimeout(timeout);
             timeout = null;
-
-            console.log('dismiss', time);
 
             if (time) {
               timeout = setTimeout(dismiss, time);
@@ -124,7 +122,7 @@ function (angular, $, _) {
             dismiss(2500);
           };
 
-          $link.click(showMenu);
+          elem.click(showMenu);
           $compile(elem.contents())($scope);
         }
       };
