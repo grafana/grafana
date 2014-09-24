@@ -91,7 +91,7 @@ define([
         this.old_refresh = null;
       }
 
-      $rootScope.emitAppEvent('time-range-changed', this.time);
+      $rootScope.appEvent('time-range-changed', this.time);
       $timeout(this.refreshDashboard, 0);
     };
 

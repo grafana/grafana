@@ -79,7 +79,7 @@ function (angular, app, _, moment, kbn) {
         $scope.temptime.to.date = moment($scope.temptime.to.date).add('days',1).toDate();
       }
 
-      $scope.emitAppEvent('show-dash-editor', {src: 'app/panels/timepicker/custom.html', scope: $scope });
+      $scope.appEvent('show-dash-editor', {src: 'app/panels/timepicker/custom.html', scope: $scope });
     };
 
     // Constantly validate the input of the fields. This function does not change any date variables

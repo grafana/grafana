@@ -58,7 +58,7 @@ function (angular, $, config, _) {
 
       $scope.setWindowTitleAndTheme();
 
-      $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
+      $scope.appEvent("dashboard-loaded", $scope.dashboard);
     };
 
     $scope.setWindowTitleAndTheme = function() {
@@ -113,7 +113,7 @@ function (angular, $, config, _) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;
       editScope.updateHandler = options.updateHandler;
-      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+      $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.checkFeatureToggles = function() {

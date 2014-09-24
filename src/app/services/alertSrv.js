@@ -18,7 +18,7 @@ function (angular, _) {
         self.set(alert[0], alert[1], 'warning', 5000);
       });
       $rootScope.onAppEvent('alert-success', function(e, alert) {
-        self.set(alert[0], alert[0], 'success', 3000);
+        self.set(alert[0], alert[1], 'success', 3000);
       });
     };
 

@@ -41,7 +41,7 @@ function (angular, config, _, $, store) {
       this.$on('$destroy', unbind);
     };
 
-    $rootScope.emitAppEvent = function(name, payload) {
+    $rootScope.appEvent = function(name, payload) {
       $rootScope.$emit(name, payload);
     };
 
