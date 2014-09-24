@@ -68,7 +68,7 @@ define([
         self.$httpBackend =  $httpBackend;
 
         self.$rootScope.onAppEvent = function() {};
-        self.$rootScope.emitAppEvent = function() {};
+        self.$rootScope.appEvent = function() {};
 
         self.service = $injector.get(name);
       });

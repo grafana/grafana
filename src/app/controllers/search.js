@@ -29,7 +29,7 @@ function (angular, _, config, $) {
 
     $scope.keyDown = function (evt) {
       if (evt.keyCode === 27) {
-        $scope.emitAppEvent('hide-dash-editor');
+        $scope.appEvent('hide-dash-editor');
       }
       if (evt.keyCode === 40) {
         $scope.moveSelection(1);
@@ -121,7 +121,7 @@ function (angular, _, config, $) {
 
     $scope.deleteDashboard = function(dash, evt) {
       evt.stopPropagation();
-      $scope.emitAppEvent('delete-dashboard', { id: dash.id, title: dash.title });
+      $scope.appEvent('delete-dashboard', { id: dash.id, title: dash.title });
       $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 

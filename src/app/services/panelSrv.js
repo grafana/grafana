@@ -52,19 +52,19 @@ function (angular, _) {
           $scope.toggleFullscreen(true);
         }
         else {
-          $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/paneleditor.html', scope: $scope });
+          $scope.appEvent('show-dash-editor', { src: 'app/partials/paneleditor.html', scope: $scope });
         }
       };
 
       $scope.sharePanel = function() {
-        $scope.emitAppEvent('show-modal', {
+        $scope.appEvent('show-modal', {
           src: './app/partials/share-panel.html',
           scope: $scope.$new()
         });
       };
 
       $scope.editPanelJson = function() {
-        $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
+        $scope.appEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
       };
 
       $scope.updateColumnSpan = function(span) {
