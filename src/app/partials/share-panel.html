@@ -7,7 +7,7 @@
 			</div>
 
 			<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-				<div ng-repeat="tab in ['Link', 'Embedd', 'Image']" data-title="{{tab}}">
+				<div ng-repeat="tab in ['Link', 'Embed', 'Image']" data-title="{{tab}}">
 				</div>
 			</div>
 
@@ -16,7 +16,18 @@
 
 	<div class="modal-body">
 		<div class="editor-row">
-			<input type="text" class="input input-xxlarge"></input>
+			<div class="editor-option">
+				<label class="small">Current time range</label>
+				<input type="checkbox"></input>
+			</div>
+			<div class="editor-option">
+				<label class="small">To fullscreen panel</label>
+				<input type="checkbox"></input>
+			</div>
+		</div>
+
+		<div class="editor-row" style="margin-top: 20px;">
+			<input type="text" data-share-panel-url ng-model="shareUrl" class="input input-fluid"></input>
 		</div>
 	</div>
 

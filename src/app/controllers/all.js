@@ -15,5 +15,6 @@ define([
   './opentsdbTargetCtrl',
   './annotationsEditorCtrl',
   './templateEditorCtrl',
+  './sharePanelCtrl',
   './jsonEditorCtrl',
 ], function () {});
