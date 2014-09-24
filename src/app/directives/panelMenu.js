@@ -51,7 +51,7 @@ function (angular, $, _) {
         link: function($scope, elem) {
           var $link = $(linkTemplate);
           var $panelContainer = elem.parents(".panel-container");
-          var menuWidth = 246;
+          var menuWidth = $scope.panelMeta.menu.length === 5 ? 246 : 201;
           var menuScope = null;
           var timeout = null;
           var $menu = null;
