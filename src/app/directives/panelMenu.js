@@ -40,8 +40,6 @@ function (angular, $, _) {
           template += item.text + '</a>';
         });
 
-        template += '<a class="panel-menu-link">share</a>';
-
         template += '</div>';
         template += '</div>';
         template += '</div>';
@@ -123,7 +121,7 @@ function (angular, $, _) {
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
 
-            dismiss(2000);
+            dismiss(2500);
           };
 
           $link.click(showMenu);
