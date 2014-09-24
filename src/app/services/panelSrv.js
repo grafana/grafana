@@ -15,47 +15,34 @@ function (angular, _) {
       var menu = [
         {
           text: "view",
+          icon: "icon-eye-open",
           click: 'toggleFullscreen(false)',
           condition: $scope.panelMeta.fullscreenView
         },
         {
           text: 'edit',
+          icon: 'icon-cogs',
           click: 'editPanel()',
           condition: true,
         },
         {
           text: 'duplicate',
+          icon: 'icon-copy',
           click: 'duplicatePanel(panel)',
           condition: true
         },
-        // {
-        //   text: 'span',
-        //   submenu: [
-        //     { text: '1', click: 'updateColumnSpan(1)' },
-        //     { text: '2', click: 'updateColumnSpan(2)' },
-        //     { text: '3', click: 'updateColumnSpan(3)' },
-        //     { text: '4', click: 'updateColumnSpan(4)' },
-        //     { text: '5', click: 'updateColumnSpan(5)' },
-        //     { text: '6', click: 'updateColumnSpan(6)' },
-        //     { text: '7', click: 'updateColumnSpan(7)' },
-        //     { text: '8', click: 'updateColumnSpan(8)' },
-        //     { text: '9', click: 'updateColumnSpan(9)' },
-        //     { text: '10', click: 'updateColumnSpan(10)' },
-        //     { text: '11', click: 'updateColumnSpan(11)' },
-        //     { text: '12', click: 'updateColumnSpan(12)' },
-        //   ],
-        //   condition: true
-        // },
         {
           text: 'json',
+          icon: 'icon-code',
           click: 'editPanelJson()',
           condition: true
         },
-        // {
-        //   text: 'remove',
-        //   click: 'remove_panel_from_row(row, panel)',
-        //   condition: true
-        // }
+        {
+          text: 'share',
+          icon: 'icon-share',
+          click: 'sharePanel()',
+          condition: true
+        },
       ];
 
       $scope.inspector = {};
