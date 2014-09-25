@@ -374,7 +374,7 @@ function (angular, $, kbn, moment, _) {
               j=0;
               do {
                 ++j;
-              } while (series.data[j][0] < pos.x);
+              } while (series.data[j][0] < pos.x && j<series.length);
               j--; //we take previous value in time.
               //now we know the current X (j) position for X and Y values
               timestamp = dashboard.formatDate(series.data[j][0]);
