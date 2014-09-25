@@ -356,10 +356,11 @@ function (angular, $, kbn, moment, _) {
             if(_.uniq(l).length === 1) {
               s='';
               series = data[0];
-              j=0;
-              do {
-                ++j;
-              } while (series.data[j][0] < pos.x && j<series.length);
+              for(j=0;j<series.data.length;j++) {
+                if(series.data[j][0] > pos.x){
+                  break;
+                }
+              }
               j--; //we take previous value in time.
               //now we know the current X (j) position for X and Y values
               timestamp = dashboard.formatDate(series.data[j][0]);
