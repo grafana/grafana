@@ -24,13 +24,16 @@ function (angular, kbn) {
       return {
         restrict: 'E',
         link: function(scope, elem, attrs) {
+          var ngchange = attrs.change ? (' ng-change="' + attrs.change + '"') : '';
+          var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
+
           var template = '<div class="editor-option text-center">' +
-                         ' <label for="' + attrs.name + '" class="small">' +
-                           attrs.text + '</label>' +
-                          '<input id="' + attrs.name + '" type="checkbox" ' +
-                          '       ng-model="' + attrs.model + '"' +
+                         ' <label for="' + attrs.model + '" class="small">' +
+                           attrs.text + tip + '</label>' +
+                          '<input id="' + attrs.model + '" type="checkbox" ' +
+                          '       ng-model="' + attrs.model + '"' + ngchange +
                           '       ng-checked="' + attrs.model + '"></input>' +
-                          ' <label for="' + attrs.name + '" class="cr1"></label>';
+                          ' <label for="' + attrs.model + '" class="cr1"></label>';
           elem.replaceWith($compile(angular.element(template))(scope));
         }
       };

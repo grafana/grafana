@@ -28,11 +28,7 @@
 						<label class="small">Time correction</label>
 						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
 					</div>
-					<div class="editor-option text-center">
-						<label for="hideControls" class="small">Hide controls (CTRL+H)</label>
-						<input id="hideControls" type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
-						<label for="hideControls" class="cr1"></label>
-					</div>
+					<editor-opt-bool text="Hide controls (CTRL+H)" model="dashboard.hideControls"></editor-opt-bool>
 				</div>
 			</div>
 			<div class="editor-row">
@@ -72,16 +68,8 @@
 		<div ng-if="editor.index == 2">
 			<div class="editor-row">
 				<div class="section">
-					<div class="editor-option text-center">
-						<label for="templateFeature" class="small">Templating</label>
-						<input id="templateFeature" type="checkbox" ng-model="dashboard.templating.enable" ng-checked="dashboard.templating.enable" ng-change="checkFeatureToggles()"x >
-						<label for="templateFeature" class="cr1"></label>
-					</div>
-					<div class="editor-option text-center">
-						<label for="annotationFeature" class="small">Annotations</label>
-						<input id="annotationFeature" type="checkbox" ng-model="dashboard.annotations.enable" ng-checked="dashboard.annotations.enable" ng-change="checkFeatureToggles()">
-						<label for="annotationFeature" class="cr1"></label>
-					</div>
+					<editor-opt-bool text="Templating" model="dashboard.templating.enable"></editor-opt-bool>
+					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable"></editor-opt-bool>
 					<div class="editor-option text-center" ng-repeat="pulldown in dashboard.nav">
 						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label>
 						<input id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">

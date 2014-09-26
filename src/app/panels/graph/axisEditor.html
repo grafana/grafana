@@ -40,42 +40,19 @@
 <div class="editor-row">
   <div class="section">
     <h5>Legend styles</h5>
-    <div class="editor-option">
-      <label class="small">Show Legend</label><input type="checkbox" ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="render();">
-    </div>
-    <div class="editor-option">
-      <label class="small">Include Values</label><input type="checkbox" ng-model="panel.legend.values" ng-checked="panel.legend.values" ng-change="render();">
-    </div>
-    <div class="editor-option">
-      <label class="small">Align as table</label><input type="checkbox" ng-model="panel.legend.alignAsTable" ng-checked="panel.legend.alignAsTable">
-    </div>
-    <div class="editor-option">
-      <label class="small">Right side</label><input type="checkbox" ng-model="panel.legend.rightSide" ng-change="render();" ng-checked="panel.legend.rightSide">
-    </div>
+		<editor-opt-bool text="Show legend" model="panel.legend.show" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Include values" model="panel.legend.values" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Align as table" model="panel.legend.alignAsTable" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Right side" model="panel.legend.rightSide" change="render()"></editor-opt-bool>
   </div>
 
   <div class="section" ng-if="panel.legend.values">
     <h5>Legend values</h5>
-    <div class="editor-option">
-      <label class="small">Min</label><input type="checkbox" ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="render();">
-    </div>
-
-    <div class="editor-option">
-      <label class="small">Max</label><input type="checkbox" ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="render();">
-    </div>
-
-    <div class="editor-option">
-      <label class="small">Current</label><input type="checkbox" ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="render();">
-    </div>
-
-    <div class="editor-option">
-      <label class="small">Total</label><input type="checkbox" ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="render();">
-    </div>
-
-    <div class="editor-option">
-      <label class="small">Avg</label><input type="checkbox" ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="render();">
-    </div>
-
+		<editor-opt-bool text="Min" model="panel.legend.min" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Max" model="panel.legend.max" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Current" model="panel.legend.current" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Total" model="panel.legend.total" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Avg" model="panel.legend.avg" change="render()"></editor-opt-bool>
   </div>
 
   <div class="section">
@@ -96,19 +73,13 @@
       <label class="small">Color</label>
       <spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
     </div>
-    <div class="editor-option">
-      <label class="small">Line mode</label><input type="checkbox" ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render();">
-    </div>
+		<editor-opt-bool text="Line mode" model="panel.grid.thresholdLine" change="render()"></editor-opt-bool>
   </div>
 
   <div class="section">
     <h5>Show Axes</h5>
-    <div class="editor-option">
-      <label class="small">X-Axis</label><input type="checkbox" ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
-    </div>
-    <div class="editor-option">
-      <label class="small">Y-Axis</label><input type="checkbox" ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
-    </div>
+		<editor-opt-bool text="X-Axis" model="panel['x-axis']" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Y-axis" model="panel['y-axis']" change="render()"></editor-opt-bool>
   </div>
 
 </div>
