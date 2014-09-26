@@ -61,10 +61,7 @@
 					<label class="small">Icon size</label>
 					<select class="input-mini" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
 				</div>
-				<div class="editor-option">
-					<label class="small">Grid line</label>
-					<input type="checkbox" ng-model="currentAnnotation.showLine" ng-checked="currentAnnotation.showLine">
-				</div>
+				<editor-opt-bool text="Grid line" model="currentAnnotation.showLine"></editor-opt-bool>
 				<div class="editor-option">
 					<label class="small">Line color</label>
 					<spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
