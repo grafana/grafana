@@ -82,12 +82,12 @@ function (angular, $, kbn, moment, _) {
 
         function updateLegendValues(plot) {
           var yaxis = plot.getYAxes();
-          console.log('drawSeries', yaxis);
 
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
-            var formater = kbn.formatFunctions[scope.panel.y_formats[series.yaxis - 1]];
-            series.updateLegendValues(formater, yaxis[series.yaxis - 1].tickDecimals);
+            var axis = yaxis[series.yaxis - 1];
+            var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
+            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
           }
 
         }
@@ -316,7 +316,7 @@ function (angular, $, kbn, moment, _) {
 
         function configureAxisMode(axis, format) {
           axis.tickFormatter = function(val, axis) {
-            return kbn.formatFunctions[format](val, axis.tickDecimals);
+            return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
           };
         }
 
@@ -432,7 +432,7 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
+            value = kbn.valueFormats[format](value, item.series.yaxis.tickDecimals);
             timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);

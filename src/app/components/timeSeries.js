@@ -54,7 +54,7 @@ function (_, kbn) {
     }
   };
 
-  TimeSeries.prototype.getFlotPairs = function (fillStyle, yFormats) {
+  TimeSeries.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
 
     this.color = this.info.color;
@@ -107,12 +107,12 @@ function (_, kbn) {
     return result;
   };
 
-  TimeSeries.prototype.updateLegendValues = function(formater, decimals) {
-    this.info.avg = this.info.avg != null ? formater(this.info.avg, decimals) : null;
-    this.info.current = this.info.current != null ? formater(this.info.current, decimals) : null;
-    this.info.min = this.info.min != null ? formater(this.info.min, decimals) : null;
-    this.info.max = this.info.max != null ? formater(this.info.max, decimals) : null;
-    this.info.total = this.info.total != null ? formater(this.info.total, decimals) : null;
+  TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
+    this.info.avg = this.info.avg != null ? formater(this.info.avg, decimals, scaledDecimals) : null;
+    this.info.current = this.info.current != null ? formater(this.info.current, decimals, scaledDecimals) : null;
+    this.info.min = this.info.min != null ? formater(this.info.min, decimals, scaledDecimals) : null;
+    this.info.max = this.info.max != null ? formater(this.info.max, decimals, scaledDecimals) : null;
+    this.info.total = this.info.total != null ? formater(this.info.total, decimals, scaledDecimals) : null;
   };
 
   return TimeSeries;
