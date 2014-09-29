@@ -13,7 +13,8 @@ define([
     var timezone;
 
     this.init = function() {
-      $rootScope.$on('refresh', this.clearCache);
+      $rootScope.onAppEvent('refresh', this.clearCache);
+      $rootScope.onAppEvent('setup-dashboard', this.clearCache);
     };
 
     this.clearCache = function() {

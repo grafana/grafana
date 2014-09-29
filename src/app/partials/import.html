@@ -16,11 +16,15 @@
     </div>
   </div>
 
-  <div class="editor-row" style="margin-top: 10px;">
-    <table class="table table-condensed table-striped">
+  <div class="editor-row" style="margin-top: 10px;max-height: 400px; overflow-y: scroll;max-width: 500px;">
+    <table class="grafana-options-table">
       <tr ng-repeat="dash in dashboards">
-        <td style="padding-right: 20px;"><button class="btn btn-success" ng-click="import(dash.name)">Import</button>
-        <td style="width: 100%; vertical-align: middle;">{{dash.name}}</td>
+        <td style="">{{dash.name}}</td>
+				<td style="padding-left: 20px;">
+					<a class="pointer" ng-click="import(dash.name)">
+						import
+					</a>
+				</td>
       </tr>
     </table>
   </div>

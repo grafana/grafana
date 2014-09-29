@@ -80,6 +80,18 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
+        function updateLegendValues(plot) {
+          var yaxis = plot.getYAxes();
+
+          for (var i = 0; i < data.length; i++) {
+            var series = data[i];
+            var axis = yaxis[series.yaxis - 1];
+            var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
+            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
+          }
+
+        }
+
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -91,6 +103,7 @@ function (angular, $, kbn, moment, _) {
 
           // Populate element
           var options = {
+            hooks: { draw: [updateLegendValues] },
             legend: { show: false },
             series: {
               stackpercent: panel.stack ? panel.percentage : false,
@@ -303,7 +316,9 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          axis.tickFormatter = kbn.getFormatFunction(format, 1);
+          axis.tickFormatter = function(val, axis) {
+            return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+          };
         }
 
         function time_format(interval, ticks, min, max) {
@@ -425,7 +440,7 @@ function (angular, $, kbn, moment, _) {
               value = item.datapoint[1];
             }
 
-            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
+            value = kbn.valueFormats[format](value, item.series.yaxis.tickDecimals);
             timestamp = dashboard.formatDate(item.datapoint[0]);
 
             $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);

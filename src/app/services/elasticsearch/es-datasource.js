@@ -94,6 +94,10 @@ function (angular, _, config, kbn, moment) {
 
           for (var i = 0; i < fieldNames.length; i++) {
             fieldValue = fieldValue[fieldNames[i]];
+            if (!fieldValue) {
+              console.log('could not find field in annotatation: ', fieldName);
+              return '';
+            }
           }
 
           if (_.isArray(fieldValue)) {
