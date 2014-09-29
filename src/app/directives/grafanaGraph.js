@@ -3,9 +3,10 @@ define([
   'jquery',
   'kbn',
   'moment',
-  'lodash'
+  'lodash',
+  './grafanaGraph.tooltip'
 ],
-function (angular, $, kbn, moment, _) {
+function (angular, $, kbn, moment, _, graphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -15,8 +16,8 @@ function (angular, $, kbn, moment, _) {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, annotations;
         var dashboard = scope.dashboard;
+        var data, annotations;
         var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
@@ -174,7 +175,7 @@ function (angular, $, kbn, moment, _) {
 
           function callPlot() {
             try {
-              elem.flot=$.plot(elem, sortedSeries, options);
+              $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
             }
@@ -343,112 +344,6 @@ function (angular, $, kbn, moment, _) {
           return "%H:%M";
         }
 
-        var $tooltip = $('<div id="tooltip">');
-
-        //this event will erase tooltip and crosshair once leaved the graph
-        elem.mouseleave(function () {
-          console.log('onmouse out:');
-          if(scope.panel.tooltip.shared) {
-            $tooltip.detach();
-            elem.flot.clearCrosshair();
-            elem.flot.unhighlight();
-          }
-        });
-
-        elem.bind("plothover", function (event, pos, item) {
-          var group, value, timestamp, seriesInfo, format, i, j, s, s_final;
-
-          //if tooltip shared we'll show a crosshair and will look for X and all Y series values
-          //else we will take from item.
-          if(scope.panel.tooltip.shared){
-            //unhighligh previous points.
-            elem.flot.unhighlight();
-            //check if all series has same length if so, only one x index will
-            //be checked and only for exact timestamp values
-            var l = [];
-            var series;
-            for (i = 0; i < data.length; ++i) {
-              series = data[i];
-              l.push(series.data.length);
-            }
-            //if all series has the same length it is because of they share time axis
-            if(_.uniq(l).length === 1) {
-              s='';
-              series = data[0];
-              for(j=0;j<series.data.length;j++) {
-                if(series.data[j][0] > pos.x){
-                  break;
-                }
-              }
-              if(j>0) {
-                j--; //we take previous value in time.
-              }
-              //now we know the current X (j) position for X and Y values
-              timestamp = dashboard.formatDate(series.data[j][0]);
-              var last_value=0; //needed for stacked values
-              for (i = data.length-1; i >= 0; --i) {
-                //stacked values should be added in reverse order
-                series = data[i];
-                seriesInfo = series.info;
-                format = scope.panel.y_formats[seriesInfo.yaxis - 1];
-                if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
-                  value = series.data[j][1];
-                } else {
-                  last_value+=series.data[j][1];
-                  value = last_value;
-                }
-                value = kbn.getFormatFunction(format, 2)(value,series.yaxis);
-                if (seriesInfo.alias) {
-                  group = '<i class="icon-circle" style="color:'+series.color+';"></i>' +
-                          ' ' +  seriesInfo.alias;
-                } else {
-                  group = kbn.query_color_dot(series.color, 15) + ' ';
-                }
-                //pre-pending new values
-                s_final= group+ ": <b>"+value +'</b><br>'+ s;
-                s=s_final;
-                //higligth point
-                elem.flot.highlight(i,j);
-              }
-
-              $tooltip.html('<small style="font-size:0.7em;">Time@ <b>'+
-                            timestamp + '</b><br><hr>' + s + '</small>').place_tt(pos.pageX, pos.pageY);
-              return;
-            }else {
-              console.log('WARNING: tootltip shared can not be shown becouse of from '
-                          +data.length+' series has different length '+_.uniq(l));
-              $tooltip.detach();
-            }
-          }
-          if (item) {
-            seriesInfo = item.series.info;
-            format = scope.panel.y_formats[seriesInfo.yaxis - 1];
-
-            if (seriesInfo.alias) {
-              group = '<small style="font-size:0.9em;">' +
-                '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-                seriesInfo.alias +
-              '</small><br>';
-            } else {
-              group = kbn.query_color_dot(item.series.color, 15) + ' ';
-            }
-
-            if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
-              value = item.datapoint[1] - item.datapoint[2];
-            }
-            else {
-              value = item.datapoint[1];
-            }
-
-            value = kbn.valueFormats[format](value, item.series.yaxis.tickDecimals);
-            timestamp = dashboard.formatDate(item.datapoint[0]);
-
-            $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
-          } else {
-            $tooltip.detach();
-          }
-        });
-
         function render_panel_as_graphite_png(url) {
           url += '&width=' + elem.width();
           url += '&height=' + elem.css('height').replace('px', '');
@@ -498,6 +393,8 @@ function (angular, $, kbn, moment, _) {
 
           elem.html('<img src="' + url + '"></img>');
         }
+
+        graphTooltip.register(elem, dashboard, scope);
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
