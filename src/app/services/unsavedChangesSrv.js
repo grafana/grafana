@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
 ],
 function(angular, _, config) {
@@ -10,22 +10,30 @@ function(angular, _, config) {
     return;
   }
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, dashboard, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+
     var self = this;
     var modalScope = $rootScope.$new();
 
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
-      self.original = angular.copy(newDashboard);
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() {
+        self.original = angular.copy(newDashboard);
+        self.current = newDashboard;
+      }, 1200);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
+      self.current = savedDashboard;
+      self.orignalPath = $location.path();
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
       self.original = null;
+      self.originalPath = $location.path();
     });
 
     window.onbeforeunload = function() {
@@ -36,22 +44,27 @@ function(angular, _, config) {
 
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
+        if (self.originalPath === $location.path()) {
+          return;
+        }
+
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;
-          self.open_modal();
+
+          $timeout(self.open_modal);
         }
       });
     };
 
     this.open_modal = function() {
       var confirmModal = $modal({
-          template: './app/partials/unsaved-changes.html',
-          persist: true,
-          show: false,
-          scope: modalScope,
-          keyboard: false
-        });
+        template: './app/partials/unsaved-changes.html',
+        persist: true,
+        show: false,
+        scope: modalScope,
+        keyboard: false
+      });
 
       $q.when(confirmModal).then(function(modalEl) {
         modalEl.modal('show');
@@ -63,13 +76,20 @@ function(angular, _, config) {
         return false;
       }
 
-      var current = angular.copy(dashboard.current);
+      var current = angular.copy(self.current);
       var original = self.original;
 
       // ignore timespan changes
-      current.services.filter.time = original.services.filter.time = {};
-
+      current.time = original.time = {};
       current.refresh = original.refresh;
+
+      // ignore template variable values
+      _.each(current.templating.list, function(value, index) {
+        value.current = null;
+        value.options = null;
+        original.templating.list[index].current = null;
+        original.templating.list[index].options = null;
+      });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });

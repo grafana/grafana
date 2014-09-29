@@ -1,12 +1,12 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'kbn'
 ],
 function (angular, _, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
   module.factory('OpenTSDBDatasource', function($q, $http) {
 
@@ -16,10 +16,11 @@ function (angular, _, kbn) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.tagNames = [];
+      this.supportMetrics = true;
     }
 
     // Called once per panel (graph)
-    OpenTSDBDatasource.prototype.query = function(filterSrv, options) {
+    OpenTSDBDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.range.from);
       var end = convertToTSDBTime(options.range.to);
       var queries = _.compact(_.map(options.targets, convertTargetToQuery));
@@ -39,12 +40,12 @@ function (angular, _, kbn) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end)
-        .then(function(response) {
-          var result = _.map(response.data, function(metricData) {
-            return transformMetricData(metricData, groupByTags);
-          });
+        .then(_.bind(function(response) {
+          var result = _.map(response.data, _.bind(function(metricData, index) {
+            return transformMetricData(metricData, groupByTags, this.targets[index]);
+          }, this));
           return { data: result };
-        });
+        }, options));
     };
 
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
@@ -81,30 +82,41 @@ function (angular, _, kbn) {
       });
     };
 
-    function transformMetricData(md, groupByTags) {
-      var dps = [];
+    function transformMetricData(md, groupByTags, options) {
+      var dps = [],
+          tagData = [],
+          metricLabel = null;
+
+      if (!_.isEmpty(md.tags)) {
+        _.each(_.pairs(md.tags), function(tag) {
+          if (_.has(groupByTags, tag[0])) {
+            tagData.push(tag[0] + "=" + tag[1]);
+          }
+        });
+      }
+
+      metricLabel = createMetricLabel(md.metric, tagData, options);
+
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
       _.each(md.dps, function (v, k) {
         dps.push([v, k]);
       });
 
-      var target = md.metric;
-      if (!_.isEmpty(md.tags)) {
-        var tagData = [];
-
-        _.each(_.pairs(md.tags), function(tag) {
-          if (_.has(groupByTags, tag[0])) {
-            tagData.push(tag[0] + "=" + tag[1]);
-          }
-        });
-
-        if (!_.isEmpty(tagData)) {
-          target = target + "{" + tagData.join(", ") + "}";
-        }
-      }
       var candTags = md.aggregateTags.concat(Object.keys(md.tags));
-      return {metric: md.metric, target: target, datapoints: dps, aggregateTags: candTags };
+      return { target: metricLabel, datapoints: dps, aggregateTags: candTags };
+    }
+
+    function createMetricLabel(metric, tagData, options) {
+      if (!_.isUndefined(options) && options.alias) {
+        return options.alias;
+      }
+
+      if (!_.isEmpty(tagData)) {
+        metric += "{" + tagData.join(", ") + "}";
+      }
+
+      return metric;
     }
 
     function convertTargetToQuery(target) {
@@ -144,6 +156,7 @@ function (angular, _, kbn) {
       }
 
       query.tags = angular.copy(target.tags);
+
       return query;
     }
 

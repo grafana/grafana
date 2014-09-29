@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'jquery',
   'config',
   'kbn',
@@ -9,9 +9,9 @@ define([
 function (angular, _, $, config, kbn, moment) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.factory('GraphiteDatasource', function(dashboard, $q, $http) {
+  module.factory('GraphiteDatasource', function($q, $http, templateSrv) {
 
     function GraphiteDatasource(datasource) {
       this.type = 'graphite';
@@ -20,19 +20,24 @@ function (angular, _, $, config, kbn, moment) {
       this.editorSrc = 'app/partials/graphite/editor.html';
       this.name = datasource.name;
       this.render_method = datasource.render_method || 'POST';
+      this.supportAnnotations = true;
+      this.supportMetrics = true;
+      this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
+      this.cacheTimeout = datasource.cacheTimeout;
     }
 
-    GraphiteDatasource.prototype.query = function(filterSrv, options) {
+    GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
           until: this.translateTime(options.range.to, 'round-up'),
           targets: options.targets,
           format: options.format,
+          cacheTimeout: options.cacheTimeout || this.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(filterSrv, graphOptions);
+        var params = this.buildGraphiteParams(graphOptions);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -52,6 +57,60 @@ function (angular, _, $, config, kbn, moment) {
       }
       catch(err) {
         return $q.reject(err);
+      }
+    };
+
+    GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
+      // Graphite metric as annotation
+      if (annotation.target) {
+        var target = templateSrv.replace(annotation.target);
+        var graphiteQuery = {
+          range: rangeUnparsed,
+          targets: [{ target: target }],
+          format: 'json',
+          maxDataPoints: 100
+        };
+
+        return this.query(graphiteQuery)
+          .then(function(result) {
+            var list = [];
+
+            for (var i = 0; i < result.data.length; i++) {
+              var target = result.data[i];
+
+              for (var y = 0; y < target.datapoints.length; y++) {
+                var datapoint = target.datapoints[y];
+                if (!datapoint[0]) { continue; }
+
+                list.push({
+                  annotation: annotation,
+                  time: datapoint[1] * 1000,
+                  title: target.target
+                });
+              }
+            }
+
+            return list;
+          });
+      }
+      // Graphite event as annotation
+      else {
+        var tags = templateSrv.replace(annotation.tags);
+        return this.events({ range: rangeUnparsed, tags: tags })
+          .then(function(results) {
+            var list = [];
+            for (var i = 0; i < results.data.length; i++) {
+              var e = results.data[i];
+              list.push({
+                annotation: annotation,
+                time: e.when * 1000,
+                title: e.what,
+                tags: e.tags,
+                text: e.data
+              });
+            }
+            return list;
+          });
       }
     };
 
@@ -91,7 +150,7 @@ function (angular, _, $, config, kbn, moment) {
 
       if (rounding === 'round-up') {
         if (date.get('s')) {
-          date.add('m', 1);
+          date.add(1, 'm');
         }
       }
       else if (rounding === 'round-down') {
@@ -100,17 +159,17 @@ function (angular, _, $, config, kbn, moment) {
         // to guarantee that we get all the data that
         // exists for the specified range
         if (date.get('s')) {
-          date.subtract('m', 1);
+          date.subtract(1, 'm');
         }
       }
 
       return date.unix();
     };
 
-    GraphiteDatasource.prototype.metricFindQuery = function(filterSrv, query) {
+    GraphiteDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
-        interpolated = encodeURIComponent(filterSrv.applyTemplateToTarget(query));
+        interpolated = encodeURIComponent(templateSrv.replace(query));
       }
       catch(err) {
         return $q.reject(err);
@@ -146,35 +205,67 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       options.url = this.url + options.url;
+      options.inspect = { type: 'graphite' };
 
       return $http(options);
     };
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(filterSrv, options) {
-      var clean_options = [];
-      var graphite_options = ['target', 'targets', 'from', 'until', 'rawData', 'format', 'maxDataPoints'];
+    GraphiteDatasource.prototype._seriesRefLetters = [
+      '#A', '#B', '#C', '#D',
+      '#E', '#F', '#G', '#H',
+      '#I', '#J', '#K', '#L',
+      '#M', '#N', '#O'
+    ];
+
+    GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
+      var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+      var clean_options = [], targets = {};
+      var target, targetValue, i;
+      var regex = /(\#[A-Z])/g;
+      var intervalFormatFixRegex = /'(\d+)m'/gi;
 
       if (options.format !== 'png') {
         options['format'] = 'json';
       }
 
-      _.each(options, function (value, key) {
-        if ($.inArray(key, graphite_options) === -1) {
-          return;
+      function fixIntervalFormat(match) {
+        return match.replace('m', 'min').replace('M', 'mon');
+      }
+
+      for (i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        if (!target.target) {
+          continue;
         }
 
-        if (key === "targets") {
-          _.each(value, function (value) {
-            if (value.target && !value.hide) {
-              var targetValue = filterSrv.applyTemplateToTarget(value.target);
-              clean_options.push("target=" + encodeURIComponent(targetValue));
-            }
-          }, this);
+        targetValue = templateSrv.replace(target.target);
+        targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
+        targets[this._seriesRefLetters[i]] = targetValue;
+      }
+
+      function nestedSeriesRegexReplacer(match) {
+        return targets[match];
+      }
+
+      for (i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        if (!target.target || target.hide) {
+          continue;
         }
-        else if (value !== null) {
+
+        targetValue = targets[this._seriesRefLetters[i]];
+        targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
+
+        clean_options.push("target=" + encodeURIComponent(targetValue));
+      }
+
+      _.each(options, function (value, key) {
+        if ($.inArray(key, graphite_options) === -1) { return; }
+        if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
-      }, this);
+      });
+
       return clean_options;
     };
 

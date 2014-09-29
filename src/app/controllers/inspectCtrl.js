@@ -1,10 +1,11 @@
 define([
-  'angular'
+  'angular',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
@@ -28,6 +29,16 @@ function (angular) {
         return;
       }
 
+      if (_.isString(model.error.data)) {
+        $scope.response = model.error.data;
+      }
+
+      if (model.error.config && model.error.config.params) {
+        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
+          return { key: key, value: value};
+        });
+      }
+
       if (model.error.stack) {
         $scope.editor.index = 2;
         $scope.stack_trace = model.error.stack;
@@ -47,7 +58,7 @@ function (angular) {
   });
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('iframeContent', function($parse) {
       return {
         restrict: 'A',

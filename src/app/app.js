@@ -4,21 +4,21 @@
 define([
   'angular',
   'jquery',
-  'underscore',
+  'lodash',
   'require',
-  'elasticjs',
+  'config',
   'bootstrap',
-  'angular-sanitize',
+  'angular-route',
   'angular-strap',
   'angular-dragdrop',
   'extend-jquery',
-  'bindonce'
+  'bindonce',
 ],
-function (angular, $, _, appLevelRequire) {
+function (angular, $, _, appLevelRequire, config) {
 
   "use strict";
 
-  var app = angular.module('kibana', []),
+  var app = angular.module('grafana', []),
     // we will keep a reference to each module defined before boot, so that we can
     // go back and allow it to define new features later. Once we boot, this will be false
     pre_boot_modules = [],
@@ -48,102 +48,82 @@ function (angular, $, _, appLevelRequire) {
     return module;
   };
 
-  app.safeApply = function ($scope, fn) {
-    switch($scope.$$phase) {
-    case '$apply':
-      // $digest hasn't started, we should be good
-      $scope.$eval(fn);
-      break;
-    case '$digest':
-      // waiting to $apply the changes
-      setTimeout(function () { app.safeApply($scope, fn); }, 10);
-      break;
-    default:
-      // clear to begin an $apply $$phase
-      $scope.$apply(fn);
-      break;
-    }
-  };
-
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
-    $routeProvider
-      .when('/dashboard', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId', {
-        templateUrl: 'app/partials/dashboard.html',
-      })
-      .when('/dashboard/:kbnType/:kbnId/:params', {
-        templateUrl: 'app/partials/dashboard.html'
-      })
-      .otherwise({
-        redirectTo: 'dashboard'
-      });
-
+    $routeProvider.otherwise({ redirectTo: config.default_route });
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
+
   });
 
   var apps_deps = [
-    'elasticjs.service',
+    'ngRoute',
     '$strap.directives',
-    'ngSanitize',
     'ngDragDrop',
-    'kibana',
+    'grafana',
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'services.dashboard', 'filters'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
-    var module_name = 'kibana.'+type;
+    var module_name = 'grafana.'+type;
     // create the module
     app.useModule(angular.module(module_name, []));
     // push it into the apps dependencies
     apps_deps.push(module_name);
   });
 
-  // load the core components
-  require([
+  var preBootRequires = [
     'controllers/all',
     'directives/all',
     'filters/all',
     'components/partials',
-  ], function () {
+    'routes/all',
+  ];
 
-    // bootstrap the app
-    angular
-      .element(document)
-      .ready(function() {
-        $('body').attr('ng-controller', 'DashCtrl');
-        angular.bootstrap(document, apps_deps)
-          .invoke(['$rootScope', function ($rootScope) {
-            _.each(pre_boot_modules, function (module) {
-              _.extend(module, register_fns);
-            });
-            pre_boot_modules = false;
-
-            $rootScope.requireContext = appLevelRequire;
-            $rootScope.require = function (deps, fn) {
-              var $scope = this;
-              $scope.requireContext(deps, function () {
-                var deps = _.toArray(arguments);
-                // Check that this is a valid scope.
-                if($scope.$id) {
-                  $scope.$apply(function () {
-                    fn.apply($scope, deps);
-                  });
-                }
-              });
-            };
-          }]);
-      });
+  _.each(config.plugins.dependencies, function(dep) {
+    preBootRequires.push('../plugins/' + dep);
   });
+
+  app.boot = function() {
+    require(preBootRequires, function () {
+
+      // disable tool tip animation
+      $.fn.tooltip.defaults.animation = false;
+
+      // bootstrap the app
+      angular
+        .element(document)
+        .ready(function() {
+          angular.bootstrap(document, apps_deps)
+            .invoke(['$rootScope', function ($rootScope) {
+              _.each(pre_boot_modules, function (module) {
+                _.extend(module, register_fns);
+              });
+              pre_boot_modules = false;
+
+              $rootScope.requireContext = appLevelRequire;
+              $rootScope.require = function (deps, fn) {
+                var $scope = this;
+                $scope.requireContext(deps, function () {
+                  var deps = _.toArray(arguments);
+                  // Check that this is a valid scope.
+                  if($scope.$id) {
+                    $scope.$apply(function () {
+                      fn.apply($scope, deps);
+                    });
+                  }
+                });
+              };
+            }]);
+        });
+    });
+  };
 
   return app;
 });

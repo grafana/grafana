@@ -1,10 +1,14 @@
 @import "submenu.less";
 @import "graph.less";
+@import "console.less";
 @import "bootstrap-tagsinput.less";
+@import "tables_lists.less";
+@import "search.less";
+@import "panel.less";
 
 .hide-controls {
   padding: 0;
-  .grafana-row {
+  .row-control-inner {
     display: none;
   }
   .submenu-controls {
@@ -31,47 +35,17 @@
   }
 }
 
-// Search
-
-.grafana-search-panel {
-  padding: 6px 10px;
-
-  .search-field-wrapper {
-    input {
-      width: 100%;
-    }
-    button {
-      margin: 0 2px 0 0;
-    }
-    > span {
-      display: block;
-      overflow: hidden;
-      padding-right: 25px;
-    }
-  }
-
-  .selected td, tr.selected:nth-child(odd)>td {
-    background: @blue;
-    color: white;
-    text-shadow: -1px -1px 1px rgba(0,0,0,0.3);
-    a {
-      color: white;
-    }
-  }
-
-  .selected-tag .label-tag {
-    background-color: @blue;
-  }
+.logo-icon {
+  width: 24px;
+  padding: 13px 11px 0 0;
+  display: block;
+  float: left;
 }
 
-.search-tagview-switch {
-  position: absolute;
-  top: 15px;
-  right: 263px;
-  color: darken(@linkColor, 30%);
-  &.active {
-    color: @linkColor;
-  }
+.page-title {
+ padding: 15px 0;
+ display: block;
+ float: left;
 }
 
 .row-button {
@@ -126,14 +100,14 @@
 
 .panel-fullscreen {
   z-index: 100;
-  display: block !important;
+  display: block;
   position: fixed;
   left: 0px;
   right: 0px;
   top: 54px;
   height: 100%;
   padding: 0 10px;
-  background: @kibanaPanelBackground;
+  background: @grafanaPanelBackground;
   overflow-y: scroll;
   height: 100%;
 
@@ -142,47 +116,14 @@
   }
 }
 
-.dashboard-fullscreen .container-fluid.main {
-  height: 0px;
-  width: 0px;
-  position: fixed;
-  right: -10000px;
+.dashboard-fullscreen {
+  .row-control-inner {
+    display: none;
+  }
 }
 
 .histogram-chart {
   position:relative;
-}
-
-.panel-full-edit-tabs {
-  margin-top: 10px;
-  min-height: 250px;
-  margin-left: -10px;
-  margin-right: -10px;
-  background-color: @fullEditBackground;
-  border-top: 1px solid @fullEditBorder;
-
-  .tabs {
-    .nav-tabs {
-      margin: 0;
-      background: @fullEditTabsBackground;
-      border-top: 1px solid @fullEditTabsBorder;
-    }
-
-    .tab-content {
-      display: none;
-    }
-  }
-  .tab-content {
-    overflow: visible;
-    padding: 15px;
-  }
-
-  .nav-tabs > li > a {
-    line-height: 15px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    font-size: 0.8rem;
-  }
 }
 
 .grafana-target:last-child {
@@ -207,10 +148,13 @@
   list-style: none;
   margin: 0;
   margin-right: 90px;
-  margin-left: 30px;
   >li {
     float: left;
   }
+}
+
+.grafana-metric-options {
+  margin-top: 35px;
 }
 
 // fix for fixed positioned panel & scrolling
@@ -240,6 +184,23 @@
   &a:hover {
     background: @grafanaTargetFuncBackground;
   }
+
+  &.template-param-name {
+    border-right: none;
+    padding-right: 3px;
+  }
+  &.annotation-segment {
+    padding: 8px 15px;
+  }
+
+}
+
+.grafana-target-segment-icon {
+  i {
+    width: 15px;
+    text-align: center;
+    display: inline-block;
+  }
 }
 
 .grafana-target-function {
@@ -265,15 +226,7 @@ input[type=text].grafana-function-param-input {
   padding: 0;
 }
 
-.grafana-target-controls-left {
-  list-style: none;
-  float: left;
-  width: 30px;
-  margin: 0px;
-}
-
 .grafana-target-controls {
-  width: 120px;
   float: right;
   list-style: none;
   margin: 0;
@@ -284,10 +237,13 @@ input[type=text].grafana-function-param-input {
     white-space: nowrap;
   }
 
-  a {
-    padding: 8px 7px;
+  .icon {
     position: relative;
     top: 8px;
+  }
+
+  a {
+    padding: 8px 7px;
     color: @grafanaTargetColor;
     font-size: 16px;
 
@@ -309,6 +265,7 @@ input[type=text].grafana-target-text-input {
   float: left;
   color: @grafanaTargetColor;
   border-radius: 0;
+  border-right: 1px solid @grafanaTargetSegmentBorder;
 }
 
 input[type=text].grafana-target-segment-input {
@@ -361,7 +318,6 @@ select.grafana-target-segment-input {
   }
 }
 
-
 .scrollable {
   max-height: 300px;
   overflow: auto;
@@ -391,23 +347,22 @@ select.grafana-target-segment-input {
 ::-webkit-scrollbar-button:horizontal:increment:active { background-image: none; }
 ::-webkit-scrollbar-button:vertical:decrement:active { background-image: none; }
 ::-webkit-scrollbar-button:vertical:increment:active {background-image: none; }
-
-::-webkit-scrollbar-track-piece { background-color: grayDark; }
+::-webkit-scrollbar-track-piece { background-color: transparent; }
 
 ::-webkit-scrollbar-thumb:vertical {
   height: 50px;
-  background: -webkit-gradient(linear, left top, right top, color-stop(0%, #3a3a3a), color-stop(100%, #222222));
-  border: 1px solid #0d0d0d;
-  border-top: 1px solid #666666;
-  border-left: 1px solid #666666;
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
+  border: 1px solid @scrollbarBorder;
+  border-top: 1px solid @scrollbarBorder;
+  border-left: 1px solid @scrollbarBorder;
 }
 
 ::-webkit-scrollbar-thumb:horizontal {
   width: 50px;
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3a3a3a), color-stop(100%, #222222));
-  border: 1px solid #1f1f1f;
-  border-top: 1px solid #666666;
-  border-left: 1px solid #666666;
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
+  border: 1px solid @scrollbarBorder;
+  border-top: 1px solid @scrollbarBorder;
+  border-left: 1px solid @scrollbarBorder;
 }
 
 
@@ -460,18 +415,111 @@ select.grafana-target-segment-input {
   width: 200px;
   text-align: center;
   cursor: auto;
-  //background: rgba(50,50,50,0.8);
   padding: 10px;
 }
-
-.grafana-version-footer {
-  padding-top: 15px;
-  text-align: left;
-}
-
 
 .metrics-editor-help:hover {
   .hide {
     display: block;
   }
+}
+
+.grafana-tooltip {
+  position : absolute;
+  top: -1000;
+  left: 0;
+  color: #c8c8c8;
+  padding: 10px;
+  font-size: 11pt;
+  font-weight : 200;
+  background-color: rgb(58, 57, 57);
+  border-radius: 5px;
+  z-index: 9999;
+  max-width: 800px;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.tooltip.in {
+  .opacity(100);
+}
+.tooltip-inner {
+  max-width: 400px;
+}
+
+.dashboard-edit-view {
+  padding: 20px;
+  background-color: @grafanaPanelBackground;
+  position: relative;
+}
+
+.dashboard-editor-body {
+  padding: 20px 10px;
+  min-height: 100px;
+}
+
+.dashboard-editor-footer {
+  overflow: hidden;
+}
+
+.dashboard-editor-header {
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.dashboard-editor-title {
+  border-bottom: 1px solid @fullEditBorder;
+  padding-right: 20px;
+  float: left;
+  color: @linkColor;
+  font-size: 20px;
+  font-weight: normal;
+  line-height: 38px;
+  margin: 0;
+  .icon {
+    padding: 0 8px 0 5px;
+    color: @textColor;
+  }
+}
+
+.grafana-version-info {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  font-size: 80%;
+  color: darken(@gray, 25%);
+  a { color: darken(@gray, 25%); }
+}
+
+.template-variable {
+  color: @variable;
+}
+
+.grafana-info-box:before {
+  content: "\f05a";
+  font-family:'FontAwesome';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 20px;
+  color: @blue;
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: 5px 15px;
+  background-color: @grafanaTargetBackground;
+  border: 1px solid @grafanaTargetBorder;
+  h5 {
+    margin-top: 5px;
+  }
+}
+
+.grafana-tip {
+  padding-left: 5px;
 }

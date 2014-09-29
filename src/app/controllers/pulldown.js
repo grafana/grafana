@@ -1,12 +1,12 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'lodash'
 ],
 function (angular, app, _) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('PulldownCtrl', function($scope, $rootScope, $timeout) {
     var _d = {

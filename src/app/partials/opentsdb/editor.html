@@ -12,7 +12,7 @@
             <a  class="pointer dropdown-toggle"
                 data-toggle="dropdown"
                 tabindex="1">
-              <i class="icon-cog"></i>
+              <i class="icon icon-cog"></i>
             </a>
             <ul class="dropdown-menu pull-right" role="menu">
               <li role="menuitem">
@@ -24,13 +24,13 @@
             </ul>
           </li>
           <li>
-            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
-              <i class="icon-remove"></i>
+            <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+              <i class="icon icon-remove"></i>
             </a>
           </li>
         </ul>
 
-        <ul class="grafana-target-controls-left">
+        <ul class="grafana-segment-list">
           <li>
             <a  class="grafana-target-segment"
                 ng-click="target.hide = !target.hide; get_data();"
@@ -41,10 +41,9 @@
         </ul>
 
         <ul class="grafana-segment-list" role="menu">
-          
           <li>
             <input type="text"
-                   class="input-xxlarge grafana-target-segment-input"
+                   class="grafana-target-segment-input"
                    ng-model="target.metric"
                    spellcheck='false'
                    bs-typeahead="suggestMetrics"
@@ -58,8 +57,9 @@
               <i class="icon-warning-sign"></i>
             </a>
           </li>
-          <li class="grafana-target-segment">
+					<li class="grafana-target-segment">
             Aggregator
+          </li>
           <li>
             <select ng-model="target.aggregator"
                     class="grafana-target-segment-input input-small"
@@ -73,8 +73,36 @@
             </a>
           </li>
 
-          
-              
+          <li class="grafana-target-segment">
+              Rate:
+              <input type="checkbox"
+                     class="grafana-target-option-checkbox"
+                     ng-model="target.shouldComputeRate"
+                     ng-change="targetBlur()"
+                     >
+          </li>
+          <li class="grafana-target-segment" ng-hide="!target.shouldComputeRate">
+            Counter:
+            <input type="checkbox"
+                   class="grafana-target-option-checkbox"
+                   ng-disabled="!target.shouldComputeRate"
+                   ng-model="target.isCounter"
+                   ng-change="targetBlur()">
+          </li>
+          <li class="grafana-target-segment">
+            Alias:
+          </li>
+					<li>
+						<input type="text"
+                   class="grafana-target-segment-input input-medium"
+                   ng-model="target.alias"
+                   spellcheck='false'
+                   placeholder="series alias"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                   />
+          </li>
+
         </ul>
 
         <div class="clearfix"></div>
@@ -82,7 +110,7 @@
 
       <div class="grafana-target-inner">
         <ul class="grafana-segment-list" role="menu">
-            
+
           <li class="grafana-target-segment">
             Downsample:
             <input type="checkbox"

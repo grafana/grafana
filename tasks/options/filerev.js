@@ -5,8 +5,12 @@ module.exports = function(config) {
       algorithm: 'md5',
       length: 8,
     },
-    css: {
-      src: '<%= destDir %>/css/default.min.css',
+    cssDark: {
+      src: '<%= destDir %>/css/grafana.dark.min.css',
+      dest: '<%= destDir %>/css'
+    },
+    cssLight: {
+      src: '<%= destDir %>/css/grafana.light.min.css',
       dest: '<%= destDir %>/css'
     },
     js: {

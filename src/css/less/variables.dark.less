@@ -6,7 +6,7 @@
 // -------------------------
 @black:                 #000;
 @gray:                  #bbb;
-@grayDark:              #303030;
+@grayDark:              #262626;
 @grayDarker:            #1f1f1f;
 
 @grayLight:             #ADAFAE;
@@ -19,25 +19,19 @@
 @blue:                  #33B5E5;
 @blueDark:              #0099CC;
 @green:                 #669900;
-@red:                   #CC0000;
+@red:                   #CC3900;
 @yellow:                #ECBB13;
 @orange:                #FF8800;
 @pink:                  #FF4444;
 @purple:                #9933CC;
+@variable:              #32D1DF;
 
-// Kibana Variables
+// grafana Variables
 // -------------------------
-@kibanaPanelBackground: @grayDarker;
-
-// Submenu
-@submenuBackground: #292929;
-@submenuBorder: #202020;
+@grafanaPanelBackground: @grayDarker;
 
 // Tabs
-@fullEditTabsBackground:  @grayDark;
-@fullEditBorder:          @black;
-@fullEditBackground:      transparent;
-@fullEditTabsBorder:      #555;
+@fullEditBorder:          #555;
 
 // Graphite Target Editor
 @grafanaTargetBorder:         @black;
@@ -46,8 +40,8 @@
 @grafanaTargetColorHide:      darken(#c8c8c8, 25%);
 @grafanaTargetSegmentBorder:  #050505;
 
-@grafanaTargetFuncBackground: #444;
-@grafanaTargetFuncHightlight: #555;
+@grafanaTargetFuncBackground: #333;
+@grafanaTargetFuncHightlight: #444;
 
 // Scaffolding
 // -------------------------
@@ -57,7 +51,7 @@
 
 // Links
 // -------------------------
-@linkColor:             darken(@white,5%);
+@linkColor:             darken(@white,11%);
 @linkColorHover:        @white;
 
 
@@ -93,6 +87,19 @@
 @borderRadiusLarge:     4px;
 @borderRadiusSmall:     2px;
 
+// Lists
+@grafanaListBackground:  transparent;
+@grafanaListAccent:      lighten(@grayDarker, 2%);
+@grafanaListBorderTop:      @grayDark;
+@grafanaListBorderBottom:   @black;
+@grafanaListHighlight:      @blue;
+@grafanaListHighlightContrast: #4F4F4F;
+@grafanaListMainLinkColor: @linkColor;
+
+// Scrollbars
+@scrollbarBackground: #3a3a3a;
+@scrollbarBackground2: #3a3a3a;
+@scrollbarBorder: black;
 
 // Tables
 // -------------------------
@@ -126,12 +133,10 @@
 @btnInverseBackgroundHighlight:     darken(@black, 5%);
 
 
-
-
 // Forms
 // -------------------------
-@inputBackground:               lighten(@grayDark,10%);
-@inputBorder:                   lighten(@grayDark,20%);
+@inputBackground:               lighten(@grayDark,5%);
+@inputBorder:                   lighten(@grayDark,5%);
 @inputBorderRadius:             @baseBorderRadius;
 @inputDisabledBackground:       #555;
 @formActionsBackground:         transparent;
@@ -252,7 +257,7 @@
 // Form states and alerts
 // -------------------------
 @warningText:             darken(#c09853, 10%);
-@warningBackground:       @grayLighter;
+@warningBackground:       @orange;
 @warningBorder:           transparent;
 
 @errorText:               #b94a48;

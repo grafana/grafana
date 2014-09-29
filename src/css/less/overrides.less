@@ -14,7 +14,7 @@
   padding-right: 0px;
 }
 
-.container.grafana-container {
+.main-view-container {
   padding: 5px 10px;
   width: 100%;
   box-sizing: border-box;
@@ -65,62 +65,6 @@ code, pre {
   background-color: @grayLighter;
 }
 
-.panel {
-  display: inline-table;
-  vertical-align: top;
-}
-
-.panel-container {
-  padding: 0px 0px 0px 0px;
-  background: @kibanaPanelBackground;
-  margin: 5px;
-}
-
-.panel-content {
-  padding: 0px 10px 5px 10px;
-}
-
-.panel-title {
-  border: 0px;
-  font-weight: bold;
-}
-
-.panel-loading {
-  position:absolute;
-  top: 0px;
-  right: 4px;
-  z-index: 800;
-}
-
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 3px;
-  text-align: center;
-  ul {
-    text-align: left;
-  }
-}
-
-.panel div.panel-extra {
-  font-size: 0.9em;
-  margin-bottom: 0px;
-}
-
-.panel div.panel-extra .extra {
-  float:right !important;
-}
-
-.panel-error {
-  color: @white;
-  padding: 5px 10px 0px 10px;
-}
-
-.panel-error-inspector-link {
-  float: right;
-  margin-right: 10px;
-}
-
-
 div.editor-row {
   vertical-align: top;
 }
@@ -130,11 +74,13 @@ div.editor-row div.section {
   vertical-align: top;
   display: inline-block;
 }
+
 div.editor-option {
   vertical-align: top;
   display: inline-block;
   margin-right: 10px;
 }
+
 div.editor-option label {
   display: block;
 }
@@ -199,7 +145,7 @@ form input.ng-invalid {
   border-width: 0 0 0px;
 }
 
-.kibana-row {
+.grafana-row {
   margin-bottom: 5px;
 }
 
@@ -223,9 +169,9 @@ form input.ng-invalid {
 
 .row-button {
   width: 30px;
-  text-align: center;
   float: left;
   cursor: pointer;
+  line-height: 31px;
 }
 
 .row-text {
@@ -233,15 +179,20 @@ form input.ng-invalid {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.9em;
-  margin: 0px 10px;
+  text-align: center;
+  line-height: 31px;
 }
 
 .row-close {
   padding: 0px;
   margin: 0px;
-  min-height: 30px !important;
-  line-height: 30px;
-  background: @kibanaPanelBackground;
+  background: @grafanaPanelBackground;
+  text-align: center;
+}
+
+.row-close-buttons {
+  position: absolute;
+  left: 0;
 }
 
 .row-open {
@@ -249,9 +200,9 @@ form input.ng-invalid {
   left:-34px;
   position: absolute;
   z-index: 100;
-  transition: .25s left;
-  transition-delay: .25s;
-  -webkit-transition-delay: .25s;
+  transition: .10s left;
+  transition-delay: .10s;
+  -webkit-transition-delay: .10s;
 }
 
 .row-open:hover {
@@ -366,13 +317,38 @@ div.flot-text {
   color: @textColor !important;
 }
 
-.dashboard-notice {
+.page-alert-list {
   z-index:8000;
-  margin-left:0px;
-  padding:3px 0px 3px 0px;
-  width:100%;
-  padding-left:20px;
-  color: @white;
+  min-width: 300px;
+  max-width: 300px;
+  position: fixed;
+  right: 20px;
+  top: 56px;
+
+  .alert {
+    color: @white;
+    padding-bottom: 13px;
+    position: relative;
+  }
+
+  .alert-close {
+    position: absolute;
+    top: -4px;
+    right: -2px;
+    width: 19px;
+    height: 19px;
+    padding: 0;
+    background: @grayLighter;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.1rem;
+    color: @grayDarker;
+  }
+
+  .alert-title {
+    font-weight: bold;
+    padding-bottom: 2px;
+  }
 }
 
 
@@ -450,7 +426,6 @@ div.flot-text {
 /*************************
  *   Right Positions
  *************************/
-
 .popover {
   &.rightTop .arrow {
     top: 10%;
@@ -566,17 +541,30 @@ div.flot-text {
   }
 }
 
+// typeahead max height
+.typeahead {
+  max-height: 300px;
+  overflow-y: auto;
+}
 
 // Labels & Badges
-
 .label-tag {
   background-color: @purple;
   color: darken(@white, 5%);
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 13px;
+  padding: 4px 6px;
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
 }
 
 .label-tag:hover {
+  opacity: 0.85;
   background-color: darken(@purple, 10%);
-  color: @white;
 }
 
 .annotation-editor-table {
@@ -586,7 +574,6 @@ div.flot-text {
 }
 
 // Top menu
-
 .save-dashboard-dropdown {
   padding: 10px;
   li>a {
@@ -612,6 +599,7 @@ div.flot-text {
 
 // pre
 code, pre {
-  background-color: @kibanaPanelBackground;
+  background-color: @grafanaPanelBackground;
   color: @textColor;
 }
+

@@ -1,13 +1,11 @@
 {
   "title": "New Dashboard",
-  "services": {
-    "filter": {
-      "list": [],
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      }
-    }
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
   },
   "rows": [
     {
@@ -15,28 +13,14 @@
       "height": "250px",
       "editable": true,
       "collapse": false,
-      "collapsable": true,
-      "panels": [],
-      "notice": false
+      "panels": []
     }
   ],
   "editable": true,
-  "failover": false,
-  "panel_hints": true,
   "style": "dark",
-  "pulldowns": [
-    {
-      "type": "filtering",
-      "collapse": false,
-      "notice": false,
-      "enable": false
-    }
-  ],
   "nav": [
     {
       "type": "timepicker",
-      "collapse": false,
-      "notice": false,
       "enable": true,
       "status": "Stable",
       "time_options": [
@@ -65,19 +49,5 @@
       "now": true
     }
   ],
-  "loader": {
-    "save_gist": false,
-    "save_elasticsearch": true,
-    "save_local": true,
-    "save_default": true,
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d",
-    "load_gist": false,
-    "load_elasticsearch": true,
-    "load_elasticsearch_size": 20,
-    "load_local": false,
-    "hide": false
-  },
   "refresh": false
 }

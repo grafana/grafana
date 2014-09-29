@@ -1,31 +1,33 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'lodash'
 ],
-function (angular, app, _) {
+function (angular) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('bodyClass', function() {
       return {
         link: function($scope, elem) {
 
-          var lastPulldownVal;
           var lastHideControlsVal;
 
-          $scope.$watch('dashboard.current.pulldowns', function() {
-            var panel = _.find($scope.dashboard.current.pulldowns, function(pulldown) { return pulldown.enable; });
-            var panelEnabled = panel ? panel.enable : false;
-            if (lastPulldownVal !== panelEnabled) {
-              elem.toggleClass('submenu-controls-visible', panelEnabled);
-              lastPulldownVal = panelEnabled;
+          $scope.$watch('submenuEnabled', function() {
+            if (!$scope.dashboard) {
+              return;
             }
-          }, true);
 
-          $scope.$watch('dashboard.current.hideControls', function() {
-            var hideControls = $scope.dashboard.current.hideControls || $scope.playlist_active;
+            elem.toggleClass('submenu-controls-visible', $scope.submenuEnabled);
+          });
+
+          $scope.$watch('dashboard.hideControls', function() {
+            if (!$scope.dashboard) {
+              return;
+            }
+
+            var hideControls = $scope.dashboard.hideControls || $scope.playlist_active;
 
             if (lastHideControlsVal !== hideControls) {
               elem.toggleClass('hide-controls', hideControls);

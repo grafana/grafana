@@ -5,7 +5,7 @@
        ng-class="{'pull-right': series.yaxis === 2, 'graph-legend-series-hidden': hiddenSeries[series.alias]}"
        >
     <div class="graph-legend-icon">
-      <i class='icon-minus pointer' ng-style="{color: series.color}" bs-popover="'colorPopup.html'">
+      <i class='icon-minus pointer' ng-style="{color: series.color}" bs-popover="'colorPopup.html'" data-placement="bottom">
       </i>
     </div>
     <div class="graph-legend-alias small">
@@ -13,20 +13,15 @@
         {{series.alias}}
       </a>
     </div>
-    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.current">
-      Current: {{series.current}}
+    <div class="graph-legend-value current small" ng-show="panel.legend.values && panel.legend.current" ng-bind="series.current">
     </div>
-    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.min">
-      Min: {{series.min}}
+    <div class="graph-legend-value min small" ng-show="panel.legend.values && panel.legend.min" ng-bind="series.min">
     </div>
-    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.max">
-      Max: {{series.max}}
+    <div class="graph-legend-value max small" ng-show="panel.legend.values && panel.legend.max" ng-bind="series.max">
     </div>
-    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.total">
-      Total: {{series.total}}
+    <div class="graph-legend-value total small" ng-show="panel.legend.values && panel.legend.total" ng-bind="series.total">
     </div>
-    <div class="graph-legend-value small" ng-show="panel.legend.values && panel.legend.avg">
-      Avg: {{series.avg}}
+    <div class="graph-legend-value avg small" ng-show="panel.legend.values && panel.legend.avg" ng-bind="series.avg">
     </div>
   </div>
 
@@ -39,12 +34,12 @@
 
     <div class="editor-row small" style="padding-bottom: 0;">
       <label>Axis:</label>
-      <button ng-click="toggleYAxis(series)"
+      <button ng-click="toggleYAxis(series);dismiss();"
               class="btn btn-mini"
               ng-class="{'btn-success': series.yaxis === 1 }">
         Left
       </button>
-      <button ng-click="toggleYAxis(series)"
+      <button ng-click="toggleYAxis(series);dismiss();"
               class="btn btn-mini"
               ng-class="{'btn-success': series.yaxis === 2 }">
         Right

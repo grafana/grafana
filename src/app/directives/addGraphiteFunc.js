@@ -1,7 +1,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'jquery',
   '../services/graphite/gfunc',
 ],
@@ -9,7 +9,7 @@ function (angular, app, _, $, gfunc) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('graphiteAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
                             ' class="grafana-target-segment-input input-medium grafana-target-segment-input"' +
@@ -38,6 +38,15 @@ function (angular, app, _, $, gfunc) {
             items: 10,
             updater: function (value) {
               var funcDef = gfunc.getFuncDef(value);
+              if (!funcDef) {
+                // try find close match
+                value = value.toLowerCase();
+                funcDef = _.find(allFunctions, function(funcName) {
+                  return funcName.toLowerCase().indexOf(value) === 0;
+                });
+
+                if (!funcDef) { return; }
+              }
 
               $scope.$apply(function() {
                 $scope.addFunction(funcDef);

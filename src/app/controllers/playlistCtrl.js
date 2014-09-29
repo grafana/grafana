@@ -1,19 +1,18 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config'
 ],
 function (angular, _, config) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('PlaylistCtrl', function($scope, playlistSrv) {
 
     $scope.init = function() {
       $scope.timespan = config.playlist_timespan;
       $scope.loadFavorites();
-      $scope.$on('modal-opened', $scope.loadFavorites);
     };
 
     $scope.loadFavorites = function() {

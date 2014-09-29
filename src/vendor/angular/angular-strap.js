@@ -783,7 +783,8 @@ angular.module('$strap.directives').directive('bsTooltip', [
             value = newValue;
           }
         });
-        if (!!attrs.unique) {
+        // Grafana change, always hide other tooltips
+        if (true) {
           element.on('show', function (ev) {
             $('.tooltip.in').each(function () {
               var $this = $(this), tooltip = $this.data('tooltip');
@@ -797,7 +798,8 @@ angular.module('$strap.directives').directive('bsTooltip', [
           title: function () {
             return angular.isFunction(value) ? value.apply(null, arguments) : value;
           },
-          html: true
+          html: true,
+          container: 'body', // Grafana change
         });
         var tooltip = element.data('tooltip');
         tooltip.show = function () {

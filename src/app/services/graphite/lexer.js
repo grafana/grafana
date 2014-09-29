@@ -1,5 +1,5 @@
 define([
-  'underscore'
+  'lodash'
 ], function(_) {
   'use strict';
 
@@ -124,7 +124,11 @@ define([
       i === 45 ||           // -
       i === 42 ||           // *
       i === 58 ||           // :
+      i === 91 ||           // templateStart [
+      i === 93 ||           // templateEnd ]
+      i === 63 ||           // ?
       i === 37 ||           // %
+      i === 35 ||           // #
       i >= 97 && i <= 122;  // a-z
   }
 

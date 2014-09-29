@@ -5,7 +5,7 @@ function (angular) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('grafanaVersionCheck', function($http, grafanaVersion) {
       return {
         restrict: 'A',
@@ -14,7 +14,7 @@ function (angular) {
             return;
           }
 
-          $http({ method: 'GET', url: 'http://grafanarel.s3.amazonaws.com/latest.json' })
+          $http({ method: 'GET', url: 'https://grafanarel.s3.amazonaws.com/latest.json' })
             .then(function(response) {
               if (!response.data || !response.data.version) {
                 return;

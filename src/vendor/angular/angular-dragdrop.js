@@ -257,9 +257,11 @@ var jqyoui = angular.module('ngDragDrop', []).service('ngDragDropService', ['$ti
       require: '?jqyouiDroppable',
       restrict: 'A',
       link: function(scope, element, attrs) {
-        var dragSettings, zIndex;
+        // grafana change, remove watcher after first evaluation
+        var dragSettings, zIndex, removeWatcher;
         var updateDraggable = function(newValue, oldValue) {
           if (newValue) {
+            removeWatcher();
             dragSettings = scope.$eval(element.attr('jqyoui-draggable')) || [];
             element
               .draggable({disabled: false})
@@ -283,7 +285,7 @@ var jqyoui = angular.module('ngDragDrop', []).service('ngDragDropService', ['$ti
             element.draggable({disabled: true});
           }
         };
-        scope.$watch(function() { return scope.$eval(attrs.drag); }, updateDraggable);
+        removeWatcher = scope.$watch(function() { return scope.$eval(attrs.drag); }, updateDraggable);
         updateDraggable();
       }
     };
@@ -292,8 +294,11 @@ var jqyoui = angular.module('ngDragDrop', []).service('ngDragDropService', ['$ti
       restrict: 'A',
       priority: 1,
       link: function(scope, element, attrs) {
+        // grafana change, remove watcher after first evaluation
+        var removeWatcher;
         var updateDroppable = function(newValue, oldValue) {
           if (newValue) {
+            removeWatcher();
             element
               .droppable({disabled: false})
               .droppable(scope.$eval(attrs.jqyouiOptions) || {})
@@ -319,7 +324,7 @@ var jqyoui = angular.module('ngDragDrop', []).service('ngDragDropService', ['$ti
           }
         };
 
-        scope.$watch(function() { return scope.$eval(attrs.drop); }, updateDroppable);
+        removeWatcher = scope.$watch(function() { return scope.$eval(attrs.drop); }, updateDroppable);
         updateDroppable();
       }
     };

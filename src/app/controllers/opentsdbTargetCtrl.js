@@ -1,12 +1,12 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'kbn'
 ],
 function (angular, _, kbn) {
   'use strict';
 
-  var module = angular.module('kibana.controllers');
+  var module = angular.module('grafana.controllers');
 
   module.controller('OpenTSDBTargetCtrl', function($scope, $timeout) {
 

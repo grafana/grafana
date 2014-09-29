@@ -5,7 +5,7 @@ define([
 function (angular) {
   'use strict';
 
-  var module = angular.module('kibana.directives');
+  var module = angular.module('grafana.directives');
 
   module.directive('confirmClick', function() {
     return {

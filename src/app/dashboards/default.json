@@ -1,54 +1,82 @@
 {
-  "title": "Welcome to Grafana!",
-  "services": {
-    "filter": {
-      "list": [],
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      }
-    }
-  },
+  "title": "Grafana",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
   "rows": [
     {
-      "title": "Welcome to Grafana",
+      "title": "New row",
       "height": "150px",
-      "editable": true,
       "collapse": false,
-      "collapsable": true,
+      "editable": true,
       "panels": [
         {
-          "error": false,
+          "id": 1,
           "span": 12,
           "editable": true,
           "type": "text",
-          "loadingEditor": false,
-          "mode": "markdown",
-          "content": "####Thank you for trying out Grafana! \n\nGeneral documentation is found in the readme and in the wiki section of the [Github Project](https://github.com/torkelo/grafana). If you encounter any problem or have an idea for an improvement do not hesitate to open a github issue. \n\nTips: \n\n- Ctrl+S saves the current dashboard\n- Ctrl+F Opens the dashboard finder (searches elastic search)\n- Ctrl+H Hide/show row controls \n- Click and drag graph title to move panel (only works when row controls are enabled)\n\nIf you do not see a graph in the panel below the browser cannot access your graphite installation. Please make sure that datasources property in config.js is correctly set and that any urls accessible from your browser.",
+          "mode": "html",
+          "content": "<div class=\"text-center\" style=\"padding-top: 15px\">\n<img src=\"//grafana.org/assets/img/logo_transparent_200x75.png\"> \n</div>",
           "style": {},
-          "title": "Welcome to Grafana"
+          "title": "Welcome to"
         }
-      ],
-      "notice": false
+      ]
+    },
+    {
+      "title": "Welcome to Grafana",
+      "height": "210px",
+      "collapse": false,
+      "editable": true,
+      "panels": [
+        {
+          "id": 2,
+          "span": 6,
+          "type": "text",
+          "mode": "html",
+          "content": "<br/>\n\n<div class=\"row-fluid\">\n  <div class=\"span6\">\n    <ul>\n      <li>\n        <a href=\"http://grafana.org/docs#configuration\" target=\"_blank\">Configuration</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/troubleshooting\" target=\"_blank\">Troubleshooting</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/support\" target=\"_blank\">Support</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/features/intro\" target=\"_blank\">Getting started</a>  (Must read!)\n      </li>\n    </ul>\n  </div>\n  <div class=\"span6\">\n    <ul>\n      <li>\n        <a href=\"http://grafana.org/docs/features/graphing\" target=\"_blank\">Graphing</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/features/annotations\" target=\"_blank\">Annotations</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/features/graphite\" target=\"_blank\">Graphite</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/features/influxdb\" target=\"_blank\">InfluxDB</a>\n      </li>\n      <li>\n        <a href=\"http://grafana.org/docs/features/opentsdb\" target=\"_blank\">OpenTSDB</a>\n      </li>\n    </ul>\n  </div>\n</div>",
+          "style": {},
+          "title": "Documentation Links"
+        },
+        {
+          "id": 3,
+          "span": 6,
+          "type": "text",
+          "mode": "html",
+          "content": "<br/>\n\n<div class=\"row-fluid\">\n  <div class=\"span12\">\n    <ul>\n      <li>Ctrl+S saves the current dashboard</li>\n      <li>Ctrl+F Opens the dashboard finder</li>\n      <li>Ctrl+H Hide/show row controls</li>\n      <li>Click and drag graph title to move panel</li>\n      <li>Hit Escape to exit graph when in fullscreen or edit mode</li>\n      <li>Click the colored icon in the legend to change series color</li>\n      <li>Ctrl or Shift + Click legend name to hide other series</li>\n    </ul>\n  </div>\n</div>\n",
+          "style": {},
+          "title": "Tips & Shortcuts"
+        }
+      ]
     },
     {
       "title": "test",
       "height": "250px",
       "editable": true,
       "collapse": false,
-      "collapsable": true,
       "panels": [
         {
+          "id": 4,
           "span": 12,
-          "editable": true,
           "type": "graph",
           "x-axis": true,
           "y-axis": true,
           "scale": 1,
-          "y_formats": ["short", "short"],
+          "y_formats": [
+            "short",
+            "short"
+          ],
           "grid": {
             "max": null,
-            "min": null
+            "min": null,
+            "leftMax": null,
+            "rightMax": null,
+            "leftMin": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "resolution": 100,
           "lines": true,
@@ -60,7 +88,15 @@
           "stack": true,
           "spyable": true,
           "options": false,
-          "legend": true,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
           "interactive": true,
           "legend_counts": true,
           "timezone": "browser",
@@ -69,44 +105,32 @@
           "nullPointMode": "connected",
           "steppedLine": false,
           "tooltip": {
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "query_as_alias": true
           },
           "targets": [
             {
-              "target": "randomWalk('random walk')"
-            },
-            {
-              "target": "randomWalk('random walk2')"
-            },
-            {
-              "target": "randomWalk('random walk3')"
+              "target": "randomWalk('random walk')",
+              "function": "mean",
+              "column": "value"
             }
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "Graphite test"
+          "title": "First Graph (click title to edit)",
+          "datasource": "graphite",
+          "renderer": "flot",
+          "annotate": {
+            "enable": false
+          }
         }
-      ],
-      "notice": false
-    }
-  ],
-  "editable": true,
-  "failover": false,
-  "panel_hints": true,
-  "style": "dark",
-  "pulldowns": [
-    {
-      "type": "filtering",
-      "collapse": false,
-      "notice": false,
-      "enable": false
+      ]
     }
   ],
   "nav": [
     {
       "type": "timepicker",
       "collapse": false,
-      "notice": false,
       "enable": true,
       "status": "Stable",
       "time_options": [
@@ -135,19 +159,12 @@
       "now": true
     }
   ],
-  "loader": {
-    "save_gist": false,
-    "save_elasticsearch": true,
-    "save_local": true,
-    "save_default": true,
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d",
-    "load_gist": false,
-    "load_elasticsearch": true,
-    "load_elasticsearch_size": 20,
-    "load_local": false,
-    "hide": false
+  "time": {
+    "from": "now-6h",
+    "to": "now"
   },
-  "refresh": false
+  "templating": {
+    "list": []
+  },
+  "version": 5
 }

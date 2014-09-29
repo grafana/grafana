@@ -1,26 +1,27 @@
 define([
   'angular',
-  'underscore',
-  'kbn'
+  'lodash',
+  'kbn',
+  'store'
 ],
-function (angular, _, kbn) {
+function (angular, _, kbn, store) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.service('playlistSrv', function(dashboard, $location, $rootScope) {
+  module.service('playlistSrv', function($location, $rootScope) {
     var timerInstance;
     var favorites = { dashboards: [] };
 
     this.init = function() {
-      var existingJson = window.localStorage["grafana-favorites"];
+      var existingJson = store.get("grafana-favorites");
       if (existingJson) {
         favorites = angular.fromJson(existingJson);
       }
     };
 
     this._save = function() {
-      window.localStorage["grafana-favorites"] = angular.toJson(favorites);
+      store.set('grafana-favorites', angular.toJson(favorites));
     };
 
     this._find = function(title) {
@@ -33,17 +34,17 @@ function (angular, _, kbn) {
       }
     };
 
-    this.isCurrentFavorite = function() {
-      return this._find(dashboard.current.title) ? true : false;
+    this.isCurrentFavorite = function(dashboard) {
+      return this._find(dashboard.title) ? true : false;
     };
 
-    this.markAsFavorite = function() {
-      var existing = this._find(dashboard.current.title);
+    this.markAsFavorite = function(dashboard) {
+      var existing = this._find(dashboard.title);
       this._remove(existing);
 
       favorites.dashboards.push({
         url: $location.path(),
-        title: dashboard.current.title
+        title: dashboard.title
       });
 
       this._save();
@@ -68,6 +69,7 @@ function (angular, _, kbn) {
       timerInstance = setInterval(function() {
         $rootScope.$apply(function() {
           angular.element(window).unbind('resize');
+          $location.search({});
           $location.path(dashboards[index % dashboards.length].url);
           index++;
         });

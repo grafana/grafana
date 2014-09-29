@@ -7,7 +7,7 @@ function (angular, $) {
   'use strict';
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('bootstrapTagsinput', function() {
 
       function getItemProperty(scope, property) {
@@ -84,7 +84,7 @@ function (angular, $) {
     });
 
   angular
-    .module('kibana.directives')
+    .module('grafana.directives')
     .directive('gfDropdown', function ($parse, $compile, $timeout) {
 
       function buildTemplate(items, placement) {
@@ -102,7 +102,7 @@ function (angular, $) {
           var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
             '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
               (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-              (item.configModal ? ' config-modal="' + item.configModal + '"' : "") +
+              (item.configModal ? ' dash-editor-link="' + item.configModal + '"' : "") +
               '>' + (item.text || '') + '</a>';
 
           if (item.submenu && item.submenu.length) {

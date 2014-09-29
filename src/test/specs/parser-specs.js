@@ -106,8 +106,8 @@ define([
 
       expect(rootNode.message).to.be(undefined);
       expect(rootNode.params[0].type).to.be('metric');
-      expect(rootNode.params[0].segments[1].type).to.be('template');
-      expect(rootNode.params[0].segments[1].value).to.be('server');
+      expect(rootNode.params[0].segments[1].type).to.be('segment');
+      expect(rootNode.params[0].segments[1].value).to.be('[[server]]');
     });
 
     it('invalid metric expression', function() {
@@ -140,13 +140,31 @@ define([
       expect(rootNode.type).to.be('function');
     });
 
-     it('handle float function arguments', function() {
+    it('handle float function arguments', function() {
       var parser = new Parser('scale(test, 0.002)');
       var rootNode = parser.getAst();
       expect(rootNode.type).to.be('function');
       expect(rootNode.params[1].type).to.be('number');
       expect(rootNode.params[1].value).to.be(0.002);
     });
+
+    it('handle curly brace pattern at start', function() {
+      var parser = new Parser('{apps}.test');
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('metric');
+      expect(rootNode.segments[0].value).to.be('{apps}');
+      expect(rootNode.segments[1].value).to.be('test');
+    });
+
+    it('series parameters', function() {
+      var parser = new Parser('asPercent(#A, #B)');
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('function');
+      expect(rootNode.params[0].type).to.be('series-ref');
+      expect(rootNode.params[0].value).to.be('#A');
+      expect(rootNode.params[1].value).to.be('#B');
+    });
+
 
   });
 

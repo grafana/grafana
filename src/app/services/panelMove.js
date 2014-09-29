@@ -1,33 +1,39 @@
 define([
   'angular',
-  'underscore'
+  'lodash'
 ],
 function (angular, _) {
   'use strict';
 
-  var module = angular.module('kibana.services');
+  var module = angular.module('grafana.services');
 
-  module.service('panelMove', function(dashboard, $rootScope) {
+  module.service('panelMoveSrv', function($rootScope) {
+
+    function PanelMoveSrv(dashboard) {
+      this.dashboard = dashboard;
+      _.bindAll(this, 'onStart', 'onOver', 'onOut', 'onDrop', 'onStop', 'cleanup');
+    }
+
+    var p = PanelMoveSrv.prototype;
 
     /* each of these can take event,ui,data parameters */
-
-    this.onStart = function() {
-      dashboard.panelDragging =  true;
+    p.onStart = function() {
+      this.dashboard.$$panelDragging =  true;
       $rootScope.$apply();
     };
 
-    this.onOver = function() {
+    p.onOver = function() {
       $rootScope.$apply();
     };
 
-    this.onOut = function() {
+    p.onOut = function() {
       $rootScope.$apply();
     };
 
     /*
       Use our own drop logic. the $parent.$parent this is ugly.
     */
-    this.onDrop = function(event,ui,data) {
+    p.onDrop = function(event,ui,data) {
       var
         dragRow = data.draggableScope.$parent.$parent.row.panels,
         dropRow =  data.droppableScope.$parent.$parent.row.panels,
@@ -42,24 +48,36 @@ function (angular, _) {
         dropRow.splice(dropIndex,0,data.dragItem);
       }
 
-      dashboard.panelDragging = false;
+      this.dashboard.$$panelDragging = false;
       // Cleanup nulls/undefined left behind
-      cleanup();
+      this.cleanup();
       $rootScope.$apply();
       $rootScope.$broadcast('render');
     };
 
-    this.onStop = function() {
-      dashboard.panelDragging = false;
-      cleanup();
+    p.onStop = function() {
+      this.dashboard.$$panelDragging = false;
+      this.cleanup();
       $rootScope.$apply();
     };
 
-    var cleanup = function () {
-      _.each(dashboard.current.rows, function(row) {
+    p.cleanup = function () {
+      _.each(this.dashboard.rows, function(row) {
         row.panels = _.without(row.panels,{});
         row.panels = _.compact(row.panels);
       });
+    };
+
+    return {
+      init: function(dashboard, scope) {
+        var panelMove = new PanelMoveSrv(dashboard);
+
+        scope.panelMoveDrop = panelMove.onDrop;
+        scope.panelMoveStart = panelMove.onStart;
+        scope.panelMoveStop = panelMove.onStop;
+        scope.panelMoveOver = panelMove.onOver;
+        scope.panelMoveOut = panelMove.onOut;
+      }
     };
 
   });

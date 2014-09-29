@@ -4,9 +4,9 @@ define([
 function (angular) {
   'use strict';
 
-  var module = angular.module('kibana.directives');
+  var module = angular.module('grafana.directives');
 
-  module.directive('dashUpload', function(timer, dashboard, alertSrv) {
+  module.directive('dashUpload', function(timer, alertSrv) {
     return {
       restrict: 'A',
       link: function(scope) {
@@ -14,8 +14,10 @@ function (angular) {
           var files = evt.target.files; // FileList object
           var readerOnload = function() {
             return function(e) {
-              dashboard.dash_load(JSON.parse(e.target.result));
-              scope.$apply();
+              var dashboard = JSON.parse(e.target.result);
+              scope.$apply(function() {
+                scope.emitAppEvent('setup-dashboard', dashboard);
+              });
             };
           };
           for (var i = 0, f; f = files[i]; i++) {

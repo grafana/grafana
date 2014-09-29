@@ -1,5 +1,5 @@
 define([
-  'underscore'
+  'lodash'
 ],
 function (_) {
   'use strict';
@@ -23,6 +23,14 @@ function (_) {
     index[funcDef.name] = funcDef;
     index[funcDef.shortName || funcDef.name] = funcDef;
   }
+
+  var optionalSeriesRefArgs = [
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true },
+    { name: 'other', type: 'value_or_series', optional: true }
+  ];
 
   addFuncDef({
     name: 'scaleToSeconds',
@@ -58,20 +66,47 @@ function (_) {
   });
 
   addFuncDef({
-    name: 'sumSeries',
-    shortName: 'sum',
+    name: 'diffSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'divideSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'asPercent',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'group',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A', '#B'],
     category: categories.Combine,
   });
 
   addFuncDef({
-    name: 'diffSeries',
+    name: 'sumSeries',
+    shortName: 'sum',
     category: categories.Combine,
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
   });
 
   addFuncDef({
     name: 'averageSeries',
     shortName: 'avg',
     category: categories.Combine,
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
   });
 
   addFuncDef({
@@ -216,6 +251,7 @@ function (_) {
 
   addFuncDef({
     name: 'randomWalk',
+    fake: true,
     category: categories.Special,
     params: [{ name: "name", type: "string", }],
     defaultParams: ['randomWalk']
@@ -279,8 +315,8 @@ function (_) {
   addFuncDef({
     name: 'nonNegativeDerivative',
     category: categories.Transform,
-    params: [{ name: "max value or 0", type: "int", }],
-    defaultParams: [0]
+    params: [{ name: "max value or 0", type: "int", optional: true }],
+    defaultParams: ['']
   });
 
   addFuncDef({
@@ -481,23 +517,35 @@ function (_) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
 
-  function FuncInstance(funcDef) {
+  function FuncInstance(funcDef, options) {
     this.def = funcDef;
-    this.params = funcDef.defaultParams.slice(0);
+    this.params = [];
+
+    if (options && options.withDefaultParams) {
+      this.params = funcDef.defaultParams.slice(0);
+    }
+
     this.updateText();
   }
 
   FuncInstance.prototype.render = function(metricExp) {
     var str = this.def.name + '(';
-    var parameters = _.map(this.params, function(value) {
-      return _.isString(value) ? "'" + value + "'" : value;
-    });
+    var parameters = _.map(this.params, function(value, index) {
 
-    if (metricExp !== undefined) {
+      var paramType = this.def.params[index].type;
+      if (paramType === 'int' || paramType === 'value_or_series') {
+        return value;
+      }
+
+      return "'" + value + "'";
+
+    }, this);
+
+    if (metricExp) {
       parameters.unshift(metricExp);
     }
 
-    return str + parameters.join(',') + ')';
+    return str + parameters.join(', ') + ')';
   };
 
   FuncInstance.prototype._hasMultipleParamsInString = function(strValue, index) {
@@ -521,9 +569,6 @@ function (_) {
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
     }
-    else if (this.def.params[index].type === 'int') {
-      this.params[index] = parseFloat(strValue, 10);
-    }
     else {
       this.params[index] = strValue;
     }
@@ -538,27 +583,20 @@ function (_) {
     }
 
     var text = this.def.name + '(';
-    _.each(this.def.params, function(param, index) {
-      if (param.optional && this.params[index] === undefined) {
-        return;
-      }
-
-      text += this.params[index] + ', ';
-    }, this);
-    text = text.substring(0, text.length - 2);
+    text += this.params.join(', ');
     text += ')';
     this.text = text;
   };
 
   return {
-    createFuncInstance: function(funcDef) {
+    createFuncInstance: function(funcDef, options) {
       if (_.isString(funcDef)) {
         if (!index[funcDef]) {
           throw { message: 'Method not found ' + name };
         }
         funcDef = index[funcDef];
       }
-      return new FuncInstance(funcDef);
+      return new FuncInstance(funcDef, options);
     },
 
     getFuncDef: function(name) {

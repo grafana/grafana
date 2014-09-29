@@ -12,22 +12,6 @@ body {
 	//url('../img/light.png') repeat right top;
 }
 
-h1 {
-	font-size: 50px;
-}
-
-h2, h3 {
-	font-size: 26px;
-}
-
-h4 {
-	font-size: 14px;
-}
-
-h5, h6 {
-	font-size: 11px;
-}
-
 blockquote {
 
 	padding: 10px 15px;
@@ -75,6 +59,7 @@ a.text-success:hover { color: darken(@green, 10%); }
 	}
 
 	.brand {
+		padding: 0px 15px;
 
 		&:hover {
 			color: @navbarLinkColorHover;
@@ -175,8 +160,9 @@ div.subnav {
 	li.active > a,
 	li.active > a:hover {
 		border-color: transparent;
-		background-color: @blue;
-		color: @white;
+	  background-color: transparent;
+		border-bottom: 2px solid @blue;
+		color: @blue
 	}
 
 	li.disabled > a {
@@ -476,7 +462,6 @@ legend {
 // -----------------------------------------------------
 
 .alert {
-	.border-radius(0);
 	text-shadow: none;
 
 	&-heading, h1, h2, h3, h4, h5, h6 {
@@ -525,11 +510,6 @@ a:hover {
 	border: none;
 	.border-radius(0);
 	.box-shadow(none);
-}
-
-[class^="icon-"], [class*=" icon-"] {
-	margin: 0 2px;
-	vertical-align: -2px;
 }
 
 a.thumbnail {

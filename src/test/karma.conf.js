@@ -2,29 +2,30 @@ module.exports = function(config) {
   'use strict';
 
   config.set({
-    basePath: '../',
+    basePath: '../../',
 
-    frameworks: ['mocha', 'requirejs', 'expect'],
+    frameworks: ['mocha', 'requirejs', 'expect', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
-      'test/test-main.js',
-      {pattern: 'app/**/*.js', included: false},
-      {pattern: 'vendor/**/*.js', included: false},
-      {pattern: 'test/**/*.js', included: false},
-      {pattern: '**/*.js', included: false}
+      'src/test/test-main.js',
+      {pattern: 'src/app/**/*.js', included: false},
+      {pattern: 'src/vendor/**/*.js', included: false},
+      {pattern: 'src/test/**/*.js', included: false},
+      {pattern: 'src/**/*.js', included: false}
     ],
 
     // list of files to exclude
     exclude: [],
 
-    reporters: ['progress'],
+    reporters: ['dots'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['Chrome'],
+    browsers: ['PhantomJS'],
     captureTimeout: 60000,
-    singleRun: false
+    singleRun: true,
+
   });
 };

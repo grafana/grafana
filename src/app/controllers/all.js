@@ -1,6 +1,7 @@
 define([
-  './dash',
-  './dashLoader',
+  './grafanaCtrl',
+  './dashboardCtrl',
+  './dashboardNavCtrl',
   './row',
   './submenuCtrl',
   './pulldown',
@@ -12,4 +13,7 @@ define([
   './playlistCtrl',
   './inspectCtrl',
   './opentsdbTargetCtrl',
+  './annotationsEditorCtrl',
+  './templateEditorCtrl',
+  './jsonEditorCtrl',
 ], function () {});
