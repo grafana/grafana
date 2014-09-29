@@ -161,7 +161,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
 
       tooltip       : {
         value_type: 'cumulative',
-        query_as_alias: true
+        shared: false,
       },
 
       targets: [{}],

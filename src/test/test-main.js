@@ -129,6 +129,7 @@ require([
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/grafanaGraph-specs',
+    'specs/graph-tooltip-specs',
     'specs/seriesOverridesCtrl-specs',
     'specs/timeSrv-specs',
     'specs/templateSrv-specs',
