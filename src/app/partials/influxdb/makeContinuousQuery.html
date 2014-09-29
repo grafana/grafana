@@ -1,0 +1,14 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+</div>
+<div class="modal-body">
+  <h5> Some text about continuous queries and our naming convention... </h5>
+  <label>Continuous query name:</label>
+  <input ng-model='target.cq_name' type="text" style="width:70%" onclick="this.select()" onfocus="this.select()">
+  <label>Continuous query:</label>
+  <input ng-model='target.cq_query' type="text" style="width:70%" onclick="this.select()" onfocus="this.select()"> into {{target.cq_name}}
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-success" ng-click="dismiss();">Close</button>
+  <button type="button" class="btn btn-success" ng-click="makeContinuousQuery();dismiss();">Make continuous query</button>
+</div>
