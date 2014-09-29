@@ -1,4 +1,5 @@
 # 1.9.0 (unreleased)
+- [Issue #877](https://github.com/grafana/grafana/issues/877). Graph: Smart auto decimal precision when using scaled unit formats
 
 # 1.8.1 (unreleased)
 
