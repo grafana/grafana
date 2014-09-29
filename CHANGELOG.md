@@ -1,4 +1,6 @@
 # 1.9.0 (unreleased)
+- [Issue #877](https://github.com/grafana/grafana/issues/877). Graph: Smart auto decimal precision when using scaled unit formats
+- [Issue #850](https://github.com/grafana/grafana/issues/850). Graph: Shared tooltip that shows multiple series & crosshair line, thx @toni-moreno
 
 # 1.8.1 (unreleased)
 
