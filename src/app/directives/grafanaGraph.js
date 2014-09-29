@@ -113,7 +113,8 @@ function (angular, $, kbn, moment, _) {
                 show: panel.points,
                 fill: 1,
                 fillColor: false,
-                radius: panel.pointradius
+                radius: panel.points ? panel.pointradius : 2
+                // little points when highlight points
               },
               shadowSize: 1
             },
@@ -335,6 +336,7 @@ function (angular, $, kbn, moment, _) {
           if(scope.panel.tooltip.shared) {
             $tooltip.detach();
             elem.flot.clearCrosshair();
+            elem.flot.unhighlight();
           }
         });
 
@@ -344,6 +346,8 @@ function (angular, $, kbn, moment, _) {
           //if tooltip shared we'll show a crosshair and will look for X and all Y series values
           //else we will take from item.
           if(scope.panel.tooltip.shared){
+            //unhighligh previous points.
+            elem.flot.unhighlight();
             //check if all series has same length if so, only one x index will
             //be checked and only for exact timestamp values
             var l = [];
@@ -361,7 +365,9 @@ function (angular, $, kbn, moment, _) {
                   break;
                 }
               }
-              j--; //we take previous value in time.
+              if(j>0) {
+                j--; //we take previous value in time.
+              }
               //now we know the current X (j) position for X and Y values
               timestamp = dashboard.formatDate(series.data[j][0]);
               var last_value=0; //needed for stacked values
@@ -384,12 +390,14 @@ function (angular, $, kbn, moment, _) {
                   group = kbn.query_color_dot(series.color, 15) + ' ';
                 }
                 //pre-pending new values
-                s_final= group+ ": "+value +'<br>'+ s;
+                s_final= group+ ": <b>"+value +'</b><br>'+ s;
                 s=s_final;
+                //higligth point
+                elem.flot.highlight(i,j);
               }
 
               $tooltip.html('<small style="font-size:0.7em;">Time@ <b>'+
-                            timestamp + '</b><br>' + s + '</small>').place_tt(pos.pageX, pos.pageY);
+                            timestamp + '</b><br><hr>' + s + '</small>').place_tt(pos.pageX, pos.pageY);
               return;
             }else {
               console.log('WARNING: tootltip shared can not be shown becouse of from '
