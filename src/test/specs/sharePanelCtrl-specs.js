@@ -1,7 +1,8 @@
 define([
   './helpers',
+  'moment',
   'controllers/sharePanelCtrl'
-], function(helpers) {
+], function(helpers, moment) {
   'use strict';
 
   describe('SharePanelCtrl', function() {
@@ -11,6 +12,10 @@ define([
 
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('SharePanelCtrl'));
+
+    function getDate(year, month, day) {
+      return moment.utc(new Date(year, month, day)).toDate();
+    }
 
     describe('shareUrl with current time range and panel', function() {
 
@@ -26,7 +31,7 @@ define([
       it('should generate share url absolute time', function() {
         ctx.$location.path('/test');
         ctx.scope.panel = { id: 22 };
-        ctx.timeSrv.time = { from: new Date(2012,1,1), to: new Date(2014,3,5) };
+        ctx.timeSrv.time = { from: getDate(2012,1,1), to: new Date(2014,3,5) };
 
         ctx.scope.buildUrl();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1328050800000&to=1396648800000&panelId=22&fullscreen');
