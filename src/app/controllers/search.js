@@ -62,6 +62,7 @@ function (angular, _, config, $) {
     };
 
     $scope.goToDashboard = function(id) {
+      $location.search({});
       $location.path("/dashboard/db/" + id);
     };
 
