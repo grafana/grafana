@@ -7,12 +7,13 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $location, $timeout, timeSrv, $element) {
+  module.controller('SharePanelCtrl', function($scope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
       $scope.forCurrent = true;
       $scope.toPanel = true;
+      $scope.includeTemplateVars = true;
 
       $scope.buildUrl();
     };
@@ -27,7 +28,7 @@ function (angular, _) {
 
       var panelId = $scope.panel.id;
       var range = timeSrv.timeRange(false);
-      var params = $location.search();
+      var params = angular.copy($location.search());
 
       if (_.isString(range.to) && range.to.indexOf('now')) {
         range = timeSrv.timeRange();
@@ -38,6 +39,17 @@ function (angular, _) {
 
       if (_.isDate(params.from)) { params.from = params.from.getTime(); }
       if (_.isDate(params.to)) { params.to = params.to.getTime(); }
+
+      if ($scope.includeTemplateVars) {
+        _.each(templateSrv.variables, function(variable) {
+          params['var-' + variable.name] = variable.current.text;
+        });
+      }
+      else {
+        _.each(templateSrv.variables, function(variable) {
+          delete params['var-' + variable.name];
+        });
+      }
 
       if (!$scope.forCurrent) {
         delete params.from;

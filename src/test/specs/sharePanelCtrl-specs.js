@@ -51,6 +51,18 @@ define([
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now');
       });
 
+      it('should include template variables in url', function() {
+        ctx.$location.path('/test');
+        ctx.scope.panel = { id: 22 };
+        ctx.scope.includeTemplateVars = true;
+        ctx.scope.toPanel = false;
+        ctx.templateSrv.variables = [{ name: 'app', current: {text: 'mupp' }}, {name: 'server', current: {text: 'srv-01'}}];
+        ctx.timeSrv.time = { from: 'now-1h', to: 'now' };
+
+        ctx.scope.buildUrl();
+        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now&var-app=mupp&var-server=srv-01');
+      });
+
     });
 
   });
