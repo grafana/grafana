@@ -9,7 +9,7 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile) {
-      var linkTemplate = '<a class="panel-title">{{panel.title || interpolateTemplateVars}}</a>';
+      var linkTemplate = '<a class="panel-title">{{panel.title | interpolateTemplateVars}}</a>';
       var moveAttributes = ' data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
               ' jqyoui-draggable="{'+
                 'animate:false,'+
