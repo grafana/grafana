@@ -43,6 +43,7 @@ require.config({
     'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
+    'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
 
     modernizr:                '../vendor/modernizr-2.6.1',
   },
@@ -77,6 +78,7 @@ require.config({
     'jquery.flot.stack':    ['jquery', 'jquery.flot'],
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
+    'jquery.flot.crosshair':['jquery', 'jquery.flot'],
 
     'angular-route':        ['angular'],
     'angular-cookies':      ['angular'],
@@ -127,6 +129,7 @@ require([
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/grafanaGraph-specs',
+    'specs/graph-tooltip-specs',
     'specs/seriesOverridesCtrl-specs',
     'specs/timeSrv-specs',
     'specs/templateSrv-specs',
