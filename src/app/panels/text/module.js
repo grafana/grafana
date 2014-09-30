@@ -20,6 +20,7 @@ function (angular, app, _, require) {
 
     // Set and populate defaults
     var _d = {
+      title: 'default title',
       mode    : "markdown", // 'html', 'markdown', 'text'
       content : "",
       style: {},
