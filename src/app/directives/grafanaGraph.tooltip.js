@@ -5,7 +5,7 @@ define([
 function ($, kbn) {
   'use strict';
 
-  function registerTooltipFeatures(elem, dashboard, scope) {
+  function registerTooltipFeatures(elem, dashboard, scope, $rootScope) {
 
     var $tooltip = $('<div id="tooltip">');
 
@@ -13,7 +13,8 @@ function ($, kbn) {
       if(scope.panel.tooltip.shared) {
         var plot = elem.data().plot;
         $tooltip.detach();
-        plot.clearCrosshair();
+        $rootScope.$broadcast('clearCrosshair');
+        //plot.clearCrosshair();
         plot.unhighlight();
       }
     });
@@ -32,6 +33,11 @@ function ($, kbn) {
       var data = plot.getData();
       var group, value, timestamp, seriesInfo, format, i, series, hoverIndex, seriesHtml;
 
+      scope.crosshairEmiter = true;
+      if(dashboard.sharedCrosshair){
+        $rootScope.$broadcast('setCrosshair',pos);
+      }
+      scope.crosshairEmiter = false;
       if (scope.panel.tooltip.shared) {
         plot.unhighlight();
 
@@ -60,11 +66,15 @@ function ($, kbn) {
           seriesInfo = series.info;
           format = scope.panel.y_formats[seriesInfo.yaxis - 1];
 
-          if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
-            value = series.data[hoverIndex][1];
+          if (scope.panel.stack) {
+            if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
+              value = series.data[hoverIndex][1];
+            } else {
+              last_value += series.data[hoverIndex][1];
+              value = last_value;
+            }
           } else {
-            last_value += series.data[hoverIndex][1];
-            value = last_value;
+            value = series.data[hoverIndex][1];
           }
 
           value = kbn.valueFormats[format](value, series.yaxis.tickDecimals);
