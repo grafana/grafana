@@ -215,9 +215,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       if (id === title) { return; }
 
       var self = this;
-      self._getDashboardInternal(id, isTemp).then(function(dashboard) {
+      self._getDashboardInternal(title, isTemp).then(function(dashboard) {
         if (dashboard !== null) {
-          self.deleteDashboard(id);
+          self.deleteDashboard(title);
         }
       });
     };
