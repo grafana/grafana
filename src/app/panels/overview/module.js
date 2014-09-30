@@ -11,7 +11,7 @@ function (angular, app, _, timeSeries) {
   var module = angular.module('grafana.panels.overview', []);
   app.useModule(module);
 
-  module.controller('OverviewCtrl', function($scope, panelSrv) {
+  module.controller('OverviewCtrl', function($scope, panelSrv, timeSrv) {
 
     $scope.panelMeta = {
       description : "A panel to show an overview of different metrics through avg, total, current numbers and sparklines",
@@ -39,7 +39,7 @@ function (angular, app, _, timeSeries) {
     };
 
     $scope.get_data = function() {
-      $scope.rangeUnparsed = $scope.filter.timeRange(false);
+      $scope.rangeUnparsed = timeSrv.timeRange(false);
 
       var metricsQuery = {
         range: $scope.rangeUnparsed,
