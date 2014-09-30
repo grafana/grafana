@@ -15,13 +15,14 @@
 	</div>
 
 	<div class="modal-body">
+
 		<div class="editor-row">
-			<editor-opt-bool name="currentTime" text="Current time range" model="forCurrent"></editor-opt-bool>
-			<editor-opt-bool name="toPanel" text="To this panel only" model="toPanel"></editor-opt-bool>
+			<editor-opt-bool name="currentTime" text="Current time range" model="forCurrent" change="buildUrl()"></editor-opt-bool>
+			<editor-opt-bool name="toPanel" text="To this panel only" model="toPanel" change="buildUrl()"></editor-opt-bool>
 		</div>
 
 		<div class="editor-row" style="margin-top: 20px;">
-			<input type="text" data-share-panel-url ng-model="shareUrl" class="input input-fluid"></input>
+			<input type="text" data-share-panel-url class="input input-fluid" ng-model='shareUrl'></input>
 		</div>
 	</div>
 
