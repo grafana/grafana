@@ -66,10 +66,10 @@
 							<label class="small">Datasource</label>
 							<select class="input input-medium" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
 						</div>
-						<div class="editor-option text-center" ng-show="current.type === 'query'">
-							<label class="small">Refresh on load <tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time.</tip></label>
-							<input type="checkbox" ng-model="current.refresh" ng-checked="current.refresh">
-						</div>
+
+						<editor-opt-bool text="Refresh on load" show-if="current.type === 'query'"
+						                 tip="Check if you want values to be updated on dashboard load, will slow down dashboard load time"
+						                 model="current.refresh"></editor-opt-bool>
 					</div>
 
 					<div ng-show="current.type === 'interval'">
@@ -80,10 +80,7 @@
 							</div>
 						</div>
 						<div class="editor-row">
-							<div class="editor-option text-center">
-								<label class="small">Include auto interval</label>
-								<input type="checkbox" ng-model="current.auto" ng-checked="current.auto" ng-change="runQuery()">
-							</div>
+							<editor-opt-bool text="Include auto interval" model="current.auto" change="runQuery()"></editor-opt-bool>
 							<div class="editor-option" ng-show="current.auto">
 								<label class="small">Auto interval steps <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip></label>
 								<select class="input-mini" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
@@ -118,10 +115,7 @@
 						</div>
 
 						<div class="editor-row" style="margin: 15px 0">
-							<div class="editor-option text-center">
-								<label class="small">All option</label>
-								<input type="checkbox" ng-model="current.includeAll" ng-checked="current.includeAll" ng-change="runQuery()">
-							</div>
+							<editor-opt-bool text="All option" model="current.includeAll" change="runQuery()"></editor-opt-bool>
 							<div class="editor-option" ng-show="current.includeAll">
 								<label class="small">All format</label>
 								<select class="input-medium" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values']"></select>
