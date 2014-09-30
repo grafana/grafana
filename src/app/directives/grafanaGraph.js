@@ -19,6 +19,20 @@ function (angular, $, kbn, moment, _, graphTooltip) {
         var dashboard = scope.dashboard;
         var data, annotations;
         var legendSideLastValue = null;
+        scope.crosshairEmiter = false;
+
+        scope.$on('setCrosshair',function(event,pos) {
+          console.log('setCrosshair'+ pos);
+          if(dashboard.sharedCrosshair && !scope.crosshairEmiter) {
+            var plot = elem.data().plot;
+            plot.setCrosshair({ x: pos.x, y: pos.y });
+          }
+        });
+
+        scope.$on('clearCrosshair',function() {
+          var plot = elem.data().plot;
+          plot.clearCrosshair();
+        });
 
         scope.$on('refresh',function() {
           scope.get_data();
@@ -147,7 +161,7 @@ function (angular, $, kbn, moment, _, graphTooltip) {
               color: '#666'
             },
             crosshair: {
-              mode: panel.tooltip.shared ? "x" : null
+              mode: panel.tooltip.shared || dashboard.sharedCrosshair ? "x" : null
             }
           };
 
@@ -394,7 +408,7 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           elem.html('<img src="' + url + '"></img>');
         }
 
-        graphTooltip.register(elem, dashboard, scope);
+        graphTooltip.register(elem, dashboard, scope, $rootScope);
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
