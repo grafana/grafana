@@ -72,6 +72,9 @@ function (angular, _) {
       if ($scope.current.type === 'interval') {
         $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
       }
+      if ($scope.current.type === 'query') {
+        $scope.current.query = '';
+      }
     };
 
     $scope.removeVariable = function(variable) {

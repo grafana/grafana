@@ -72,7 +72,7 @@
 					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable"></editor-opt-bool>
 					<div class="editor-option text-center" ng-repeat="pulldown in dashboard.nav">
 						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label>
-						<input id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+						<input class="cr1" id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
 						<label for="pulldown{{pulldown.type}}" class="cr1"></label>
 					</div>
 				</div>
