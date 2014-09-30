@@ -8,6 +8,7 @@ define([
     var self = this;
 
     this.datasource = {};
+    this.$element = {};
     this.annotationsSrv = {};
     this.timeSrv = new TimeSrvStub();
     this.templateSrv = new TemplateSrvStub();
@@ -16,18 +17,23 @@ define([
       get: function() { return self.datasource; }
     };
 
-    this.providePhase = function() {
+    this.providePhase = function(mocks) {
       return module(function($provide) {
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
         $provide.value('timeSrv', self.timeSrv);
         $provide.value('templateSrv', self.templateSrv);
+        $provide.value('$element', self.$element);
+        _.each(mocks, function(key, value) {
+          $provide.value(key, value);
+        });
       });
     };
 
     this.createControllerPhase = function(controllerName) {
-      return inject(function($controller, $rootScope, $q) {
+      return inject(function($controller, $rootScope, $q, $location) {
         self.scope = $rootScope.$new();
+        self.$location = $location;
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.dashboard = {};
