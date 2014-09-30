@@ -15,10 +15,17 @@
   padding: 0px 10px 5px 10px;
 }
 
+.panel-title-container {
+  min-height: 5px;
+  cursor: context-menu;
+}
+
 .panel-title {
   border: 0px;
   font-weight: bold;
   position: relative;
+  font-size: 0.9em;
+  cursor: context-menu;
 }
 
 .panel-loading {
@@ -28,23 +35,10 @@
   z-index: 800;
 }
 
-.panel div.panel-extra div.panel-extra-container {
-  margin-right: -10px;
-  margin-top: 3px;
+.panel-header {
   text-align: center;
-  ul {
-    text-align: left;
-  }
 }
 
-.panel div.panel-extra {
-  font-size: 0.9em;
-  margin-bottom: 0px;
-}
-
-.panel div.panel-extra .extra {
-  float:right !important;
-}
 
 .panel-error {
   color: @white;
@@ -69,3 +63,38 @@
   bottom: 0;
 }
 
+.panel-menu {
+  z-index: 1000;
+  position: absolute;
+  background: @grafanaTargetFuncBackground;
+  border: 1px solid black;
+  top: -62px;
+
+  .panel-menu-row {
+    white-space: nowrap;
+    border-bottom: 1px solid black;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .icon-move {
+    cursor: move;
+  }
+
+  .panel-menu-link, .panel-menu-icon {
+    padding: 5px 10px;
+  }
+
+  .panel-menu-link {
+    display: inline-block;
+    border-right: 1px solid black;
+    &:last-child {
+      border: none;
+    }
+  }
+}
+
+.panel-highlight  {
+  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
+}

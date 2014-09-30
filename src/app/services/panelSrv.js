@@ -10,70 +10,65 @@ function (angular, _) {
 
     this.init = function($scope) {
       if (!$scope.panel.span) { $scope.panel.span = 12; }
-      if (!$scope.panel.title) { $scope.panel.title = 'No title'; }
 
       var menu = [
         {
-          text: 'Edit',
-          configModal: "app/partials/paneleditor.html",
-          condition: !$scope.panelMeta.fullscreenEdit
-        },
-        {
-          text: 'Edit',
-          click: "toggleFullscreen(true)",
-          condition: $scope.panelMeta.fullscreenEdit
-        },
-        {
-          text: "Fullscreen",
+          text: "view",
+          icon: "icon-eye-open",
           click: 'toggleFullscreen(false)',
           condition: $scope.panelMeta.fullscreenView
         },
         {
-          text: 'Duplicate',
+          text: 'edit',
+          icon: 'icon-cogs',
+          click: 'editPanel()',
+          condition: true,
+        },
+        {
+          text: 'duplicate',
+          icon: 'icon-copy',
           click: 'duplicatePanel(panel)',
           condition: true
         },
         {
-          text: 'Span',
-          submenu: [
-            { text: '1', click: 'updateColumnSpan(1)' },
-            { text: '2', click: 'updateColumnSpan(2)' },
-            { text: '3', click: 'updateColumnSpan(3)' },
-            { text: '4', click: 'updateColumnSpan(4)' },
-            { text: '5', click: 'updateColumnSpan(5)' },
-            { text: '6', click: 'updateColumnSpan(6)' },
-            { text: '7', click: 'updateColumnSpan(7)' },
-            { text: '8', click: 'updateColumnSpan(8)' },
-            { text: '9', click: 'updateColumnSpan(9)' },
-            { text: '10', click: 'updateColumnSpan(10)' },
-            { text: '11', click: 'updateColumnSpan(11)' },
-            { text: '12', click: 'updateColumnSpan(12)' },
-          ],
+          text: 'json',
+          icon: 'icon-code',
+          click: 'editPanelJson()',
           condition: true
         },
         {
-          text: 'Advanced',
-          submenu: [
-            { text: 'Panel JSON', click: 'editPanelJson()' },
-          ],
+          text: 'share',
+          icon: 'icon-share',
+          click: 'sharePanel()',
           condition: true
         },
-        {
-          text: 'Remove',
-          click: 'remove_panel_from_row(row, panel)',
-          condition: true
-        }
       ];
 
       $scope.inspector = {};
       $scope.panelMeta.menu = _.where(menu, { condition: true });
 
+      $scope.editPanel = function() {
+        if ($scope.panelMeta.fullscreenEdit) {
+          $scope.toggleFullscreen(true);
+        }
+        else {
+          $scope.appEvent('show-dash-editor', { src: 'app/partials/paneleditor.html', scope: $scope });
+        }
+      };
+
+      $scope.sharePanel = function() {
+        $scope.appEvent('show-modal', {
+          src: './app/partials/share-panel.html',
+          scope: $scope.$new()
+        });
+      };
+
       $scope.editPanelJson = function() {
-        $scope.emitAppEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
+        $scope.appEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
       };
 
       $scope.updateColumnSpan = function(span) {
-        $scope.panel.span = span;
+        $scope.panel.span = Math.min(Math.max($scope.panel.span + span, 1), 12);
 
         $timeout(function() {
           $scope.$emit('render');

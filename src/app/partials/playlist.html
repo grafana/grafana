@@ -22,7 +22,8 @@
 								{{dashboard.title}}
 							</td>
 							<td style="text-align: center">
-								<input type="checkbox" ng-model="dashboard.include" ng-checked="dashboard.include" />
+								<input id="dash-{{$index}}" class="cr1" type="checkbox" ng-model="dashboard.include" ng-checked="dashboard.include" />
+								<label for="dash-{{$index}}" class="cr1"></label>
 							</td>
 							<td style="text-align: center">
 								<i class="icon-remove pointer" ng-click="removeAsFavorite(dashboard)"></i>

@@ -1,4 +1,4 @@
-<div ng-controller="DashboardCtrl" body-class class="dashboard" ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
+<div body-class class="dashboard" ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
 
 	<div ng-include="'app/partials/pro/dashboard_topnav.html'">
 	</div>
@@ -74,8 +74,16 @@
 					</div>
 				</div>
 
-				<div style="padding-top:0px" ng-if="!row.collapse">
+				<div class="panels-wrapper" ng-if="!row.collapse">
 					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
+					</div>
+					<div class="panel-menu-container" data-menu-container>
+							<!-- <a class="pointer"><i class="icon&#45;eye&#45;open"></i> <span>view</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;cog"></i> <span>edit</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;resize&#45;horizontal"></i> <span>span</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;copy"></i> <span>duplicate</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;share"></i> <span>share</span></a> -->
+							<!-- <a class="pointer"><i class="icon&#45;remove"></i> <span>remove</span></a> -->
 					</div>
 
 					<!-- Panels -->

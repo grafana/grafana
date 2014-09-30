@@ -16,7 +16,7 @@ function (angular, $) {
           elem.bind('click',function() {
             $timeout(function() {
               var editorScope = attrs.editorScope === 'isolated' ? null : scope;
-              scope.emitAppEvent('show-dash-editor', { src: partial, scope: editorScope });
+              scope.appEvent('show-dash-editor', { src: partial, scope: editorScope });
             });
           });
         }
@@ -34,6 +34,7 @@ function (angular, $) {
 
           function hideScrollbars(value) {
             if (value) {
+              window.scrollTo(0,0);
               document.documentElement.style.overflow = 'hidden';  // firefox, chrome
               document.body.scroll = "no"; // ie only
             } else {

@@ -53,7 +53,7 @@ function (angular, $, config, _, kbn, moment) {
     };
 
     script_load($routeParams.jsFile).then(function(result) {
-      $scope.emitAppEvent('setup-dashboard', result.data);
+      $scope.initDashboard(result.data, $scope);
     });
 
   });

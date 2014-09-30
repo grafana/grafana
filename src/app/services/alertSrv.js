@@ -7,8 +7,20 @@ function (angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('alertSrv', function($timeout, $sce) {
+  module.service('alertSrv', function($timeout, $sce, $rootScope) {
     var self = this;
+
+    this.init = function() {
+      $rootScope.onAppEvent('alert-error', function(e, alert) {
+        self.set(alert[0], alert[1], 'error');
+      });
+      $rootScope.onAppEvent('alert-warning', function(e, alert) {
+        self.set(alert[0], alert[1], 'warning', 5000);
+      });
+      $rootScope.onAppEvent('alert-success', function(e, alert) {
+        self.set(alert[0], alert[1], 'success', 3000);
+      });
+    };
 
     // List of all alert objects
     this.list = [];

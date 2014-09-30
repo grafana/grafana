@@ -1,5 +1,6 @@
 .graph-canvas-wrapper {
   position: relative;
+  cursor: crosshair;
 }
 
 .graph-legend {
@@ -124,7 +125,7 @@
 
 .graph-legend-series-hidden {
   a {
-    color: darken(@linkColor, 45%);
+    color: @linkColorDisabled;
   }
 }
 
@@ -164,5 +165,20 @@
   }
   .graph-series-override-selector {
     float: left;
+  }
+}
+
+.graph-tooltip {
+  .graph-tooltip-time {
+    text-align: center;
+    font-weight: bold;
+    position: relative;
+    top: -3px;
+  }
+
+  .graph-tooltip-value {
+    font-weight: bold;
+    float: right;
+    padding-left: 10px;
   }
 }

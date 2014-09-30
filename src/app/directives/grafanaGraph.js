@@ -3,9 +3,10 @@ define([
   'jquery',
   'kbn',
   'moment',
-  'lodash'
+  'lodash',
+  './grafanaGraph.tooltip'
 ],
-function (angular, $, kbn, moment, _) {
+function (angular, $, kbn, moment, _, graphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -15,23 +16,15 @@ function (angular, $, kbn, moment, _) {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var data, annotations;
-        var hiddenData = {};
         var dashboard = scope.dashboard;
+        var data, annotations;
         var legendSideLastValue = null;
 
         scope.$on('refresh',function() {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function(e, series) {
-          _.each(series, function(serie) {
-            if (hiddenData[serie.alias]) {
-              data.push(hiddenData[serie.alias]);
-              delete hiddenData[serie.alias];
-            }
-          });
-
+        scope.$on('toggleLegend', function() {
           render_panel();
         });
 
@@ -88,6 +81,18 @@ function (angular, $, kbn, moment, _) {
           }
         }
 
+        function updateLegendValues(plot) {
+          var yaxis = plot.getYAxes();
+
+          for (var i = 0; i < data.length; i++) {
+            var series = data[i];
+            var axis = yaxis[series.yaxis - 1];
+            var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
+            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
+          }
+
+        }
+
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -95,21 +100,11 @@ function (angular, $, kbn, moment, _) {
           }
 
           var panel = scope.panel;
-
-          _.each(_.keys(scope.hiddenSeries), function(seriesAlias) {
-            var dataSeries = _.find(data, function(series) {
-              return series.info.alias === seriesAlias;
-            });
-            if (dataSeries) {
-              hiddenData[dataSeries.info.alias] = dataSeries;
-              data = _.without(data, dataSeries);
-            }
-          });
-
           var stack = panel.stack ? true : null;
 
           // Populate element
           var options = {
+            hooks: { draw: [updateLegendValues] },
             legend: { show: false },
             series: {
               stackpercent: panel.stack ? panel.percentage : false,
@@ -132,7 +127,8 @@ function (angular, $, kbn, moment, _) {
                 show: panel.points,
                 fill: 1,
                 fillColor: false,
-                radius: panel.pointradius
+                radius: panel.points ? panel.pointradius : 2
+                // little points when highlight points
               },
               shadowSize: 1
             },
@@ -149,6 +145,9 @@ function (angular, $, kbn, moment, _) {
             selection: {
               mode: "x",
               color: '#666'
+            },
+            crosshair: {
+              mode: panel.tooltip.shared ? "x" : null
             }
           };
 
@@ -156,6 +155,11 @@ function (angular, $, kbn, moment, _) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+            // if hidden remove points and disable stack
+            if (scope.hiddenSeries[series.info.alias]) {
+              series.data = [];
+              series.stack = false;
+            }
           }
 
           if (data.length && data[0].info.timeStep) {
@@ -313,7 +317,9 @@ function (angular, $, kbn, moment, _) {
         }
 
         function configureAxisMode(axis, format) {
-          axis.tickFormatter = kbn.getFormatFunction(format, 1);
+          axis.tickFormatter = function(val, axis) {
+            return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+          };
         }
 
         function time_format(interval, ticks, min, max) {
@@ -337,40 +343,6 @@ function (angular, $, kbn, moment, _) {
 
           return "%H:%M";
         }
-
-        var $tooltip = $('<div id="tooltip">');
-
-        elem.bind("plothover", function (event, pos, item) {
-          var group, value, timestamp, seriesInfo, format;
-
-          if (item) {
-            seriesInfo = item.series.info;
-            format = scope.panel.y_formats[seriesInfo.yaxis - 1];
-
-            if (seriesInfo.alias) {
-              group = '<small style="font-size:0.9em;">' +
-                '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-                seriesInfo.alias +
-              '</small><br>';
-            } else {
-              group = kbn.query_color_dot(item.series.color, 15) + ' ';
-            }
-
-            if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
-              value = item.datapoint[1] - item.datapoint[2];
-            }
-            else {
-              value = item.datapoint[1];
-            }
-
-            value = kbn.getFormatFunction(format, 2)(value, item.series.yaxis);
-            timestamp = dashboard.formatDate(item.datapoint[0]);
-
-            $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
-          } else {
-            $tooltip.detach();
-          }
-        });
 
         function render_panel_as_graphite_png(url) {
           url += '&width=' + elem.width();
@@ -421,6 +393,8 @@ function (angular, $, kbn, moment, _) {
 
           elem.html('<img src="' + url + '"></img>');
         }
+
+        graphTooltip.register(elem, dashboard, scope);
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {

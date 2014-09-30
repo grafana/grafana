@@ -15,7 +15,8 @@ define([
   'jquery.flot.selection',
   'jquery.flot.time',
   'jquery.flot.stack',
-  'jquery.flot.stackpercent'
+  'jquery.flot.stackpercent',
+  'jquery.flot.crosshair'
 ],
 function (angular, app, $, _, kbn, moment, TimeSeries) {
   'use strict';
@@ -160,7 +161,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
 
       tooltip       : {
         value_type: 'cumulative',
-        query_as_alias: true
+        shared: false,
       },
 
       targets: [{}],

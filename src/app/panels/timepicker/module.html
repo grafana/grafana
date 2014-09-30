@@ -9,9 +9,7 @@
       border: 0px !important;
     }
   </style>
-  <!--  This is a complete hack. The form actually exists in the modal, but due to transclusion
-        $scope.input isn't available on the controller unless the form element is in this file -->
-  <form name="input" style="margin:3px 0 0 0">
+  <form name="input" style="margin:0">
     <ul class="nav nav-pills timepicker-dropdown">
       <li class="dropdown">
 
@@ -47,6 +45,5 @@
         <a ng-click="timeSrv.refreshDashboard()"><i class="icon-refresh"></i></a>
       </li>
     </ul>
-
   </form>
 </div>

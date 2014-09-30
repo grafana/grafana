@@ -54,7 +54,7 @@ function (_, kbn) {
     }
   };
 
-  TimeSeries.prototype.getFlotPairs = function (fillStyle, yFormats) {
+  TimeSeries.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
 
     this.color = this.info.color;
@@ -100,19 +100,19 @@ function (_, kbn) {
     }
 
     if (result.length) {
-
       this.info.avg = (this.info.total / result.length);
       this.info.current = result[result.length-1][1];
-
-      var formater = kbn.getFormatFunction(yFormats[this.yaxis - 1], 2);
-      this.info.avg = this.info.avg != null ? formater(this.info.avg) : null;
-      this.info.current = this.info.current != null ? formater(this.info.current) : null;
-      this.info.min = this.info.min != null ? formater(this.info.min) : null;
-      this.info.max = this.info.max != null ? formater(this.info.max) : null;
-      this.info.total = this.info.total != null ? formater(this.info.total) : null;
     }
 
     return result;
+  };
+
+  TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
+    this.info.avg = this.info.avg != null ? formater(this.info.avg, decimals, scaledDecimals) : null;
+    this.info.current = this.info.current != null ? formater(this.info.current, decimals, scaledDecimals) : null;
+    this.info.min = this.info.min != null ? formater(this.info.min, decimals, scaledDecimals) : null;
+    this.info.max = this.info.max != null ? formater(this.info.max, decimals, scaledDecimals) : null;
+    this.info.total = this.info.total != null ? formater(this.info.total, decimals, scaledDecimals) : null;
   };
 
   return TimeSeries;

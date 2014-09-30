@@ -22,7 +22,7 @@ function(angular, $) {
       });
 
       keyboardManager.bind('ctrl+f', function() {
-        scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
+        scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {
@@ -31,7 +31,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+s', function(evt) {
-        scope.emitAppEvent('save-dashboard', evt);
+        scope.appEvent('save-dashboard', evt);
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+r', function() {
@@ -39,7 +39,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+z', function(evt) {
-        scope.emitAppEvent('zoom-out', evt);
+        scope.appEvent('zoom-out', evt);
       }, { inputDisabled: true });
 
       keyboardManager.bind('esc', function() {
@@ -53,7 +53,7 @@ function(angular, $) {
           modalData.$scope.dismiss();
         }
 
-        scope.emitAppEvent('hide-dash-editor');
+        scope.appEvent('hide-dash-editor');
 
         scope.exitFullscreen();
       }, { inputDisabled: true });

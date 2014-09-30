@@ -19,19 +19,18 @@ function (angular, $, config, _) {
       dashboardSrv,
       dashboardViewStateSrv,
       panelMoveSrv,
-      timer,
       $timeout) {
 
     $scope.editor = { index: 0 };
     $scope.panelNames = config.panels;
     var resizeEventTimeout;
 
-    $scope.init = function() {
+    this.init = function(dashboardData) {
       $scope.availablePanels = config.panels;
-      $scope.onAppEvent('setup-dashboard', $scope.setupDashboard);
-      $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
+      $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
+      $scope.setupDashboard(dashboardData);
     };
 
     $scope.registerWindowResizeEvent = function() {
@@ -41,7 +40,7 @@ function (angular, $, config, _) {
       });
     };
 
-    $scope.setupDashboard = function(event, dashboardData) {
+    $scope.setupDashboard = function(dashboardData) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
@@ -59,7 +58,7 @@ function (angular, $, config, _) {
 
       $scope.setWindowTitleAndTheme();
 
-      $scope.emitAppEvent("dashboard-loaded", $scope.dashboard);
+      $scope.appEvent("dashboard-loaded", $scope.dashboard);
     };
 
     $scope.setWindowTitleAndTheme = function() {
@@ -114,7 +113,7 @@ function (angular, $, config, _) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;
       editScope.updateHandler = options.updateHandler;
-      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+      $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.checkFeatureToggles = function() {
@@ -129,6 +128,5 @@ function (angular, $, config, _) {
       return $scope.editorTabs;
     };
 
-    $scope.init();
   });
 });

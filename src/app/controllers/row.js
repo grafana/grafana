@@ -13,6 +13,7 @@ function (angular, app, _) {
       title: "Row",
       height: "150px",
       collapse: false,
+      editable: true,
       panels: [],
     };
 
@@ -20,6 +21,11 @@ function (angular, app, _) {
 
     $scope.init = function() {
       $scope.reset_panel();
+    };
+
+    $scope.togglePanelMenu = function(posX) {
+      $scope.showPanelMenu = !$scope.showPanelMenu;
+      $scope.panelMenuPos = posX;
     };
 
     $scope.toggle_row = function(row) {

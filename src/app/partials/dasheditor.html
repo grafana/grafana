@@ -28,10 +28,7 @@
 						<label class="small">Time correction</label>
 						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
 					</div>
-					<div class="editor-option">
-						<label class="small">Hide controls (CTRL+H)</label>
-						<input type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
-					</div>
+					<editor-opt-bool text="Hide controls (CTRL+H)" model="dashboard.hideControls"></editor-opt-bool>
 				</div>
 			</div>
 			<div class="editor-row">
@@ -42,7 +39,6 @@
 						</bootstrap-tagsinput>
 						<tip>Press enter to a add tag</tip>
 					</div>
-
 				</div>
 			</div>
 		</div>
@@ -71,16 +67,12 @@
 		<div ng-if="editor.index == 2">
 			<div class="editor-row">
 				<div class="section">
-					<div class="editor-option">
-						<label class="small">Templating</label>
-						<input type="checkbox" ng-model="dashboard.templating.enable" ng-checked="dashboard.templating.enable" ng-change="checkFeatureToggles()"x >
-					</div>
-					<div class="editor-option">
-						<label class="small">Annotations</label>
-						<input type="checkbox" ng-model="dashboard.annotations.enable" ng-checked="dashboard.annotations.enable" ng-change="checkFeatureToggles()">
-					</div>
-					<div class="editor-option" ng-repeat="pulldown in dashboard.nav">
-						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label><input type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+					<editor-opt-bool text="Templating" model="dashboard.templating.enable"></editor-opt-bool>
+					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable"></editor-opt-bool>
+					<div class="editor-option text-center" ng-repeat="pulldown in dashboard.nav">
+						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label>
+						<input class="cr1" id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
+						<label for="pulldown{{pulldown.type}}" class="cr1"></label>
 					</div>
 				</div>
 			</div>

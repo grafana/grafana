@@ -82,6 +82,22 @@ define([
 
   });
 
+  describe('when creating dashboard with editable false', function() {
+    var model;
+
+    beforeEach(module('grafana.services'));
+    beforeEach(inject(function(dashboardSrv) {
+      model = dashboardSrv.create({
+        editable: false
+      });
+    }));
+
+    it('should set editable false', function() {
+      expect(model.editable).to.be(false);
+    });
+
+  });
+
   describe('when creating dashboard with old schema', function() {
     var model;
     var graph;

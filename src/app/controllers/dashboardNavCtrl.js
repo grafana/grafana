@@ -69,7 +69,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.openSearch = function() {
-      $scope.emitAppEvent('show-dash-editor', { src: 'app/partials/search.html' });
+      $scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
     };
 
     $scope.saveDashboard = function() {
@@ -78,7 +78,7 @@ function (angular, _, moment, config, store) {
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)
         .then(function(result) {
-          alertSrv.set('Dashboard Saved', 'Saved as "' + result.title + '"','success', 3000);
+          $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + result.title]);
 
           if (result.url !== $location.path()) {
             $location.search({});
@@ -88,12 +88,12 @@ function (angular, _, moment, config, store) {
           $rootScope.$emit('dashboard-saved', $scope.dashboard);
 
         }, function(err) {
-          alertSrv.set('Save failed', err, 'error', 5000);
+          $scope.appEvent('alert-error', ['Save failed', err]);
         });
     };
 
     $scope.deleteDashboard = function(evt, options) {
-      if (!confirm('Are you sure you want to delete dashboard?')) {
+      if (!confirm('Do you want to delete dashboard ' + options.title + ' ?')) {
         return;
       }
 
@@ -101,9 +101,9 @@ function (angular, _, moment, config, store) {
 
       var id = options.id;
       $scope.db.deleteDashboard(id).then(function(id) {
-        alertSrv.set('Dashboard Deleted', id + ' has been deleted', 'success', 5000);
-      }, function() {
-        alertSrv.set('Dashboard Not Deleted', 'An error occurred deleting the dashboard', 'error', 5000);
+        $scope.appEvent('alert-success', ['Dashboard Deleted', id + ' has been deleted']);
+      }, function(err) {
+        $scope.appEvent('alert-error', ['Deleted failed', err]);
       });
     };
 
@@ -138,7 +138,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.editJson = function() {
-      $scope.emitAppEvent('show-json-editor', { object: $scope.dashboard });
+      $scope.appEvent('show-json-editor', { object: $scope.dashboard });
     };
 
     $scope.openSaveDropdown = function() {

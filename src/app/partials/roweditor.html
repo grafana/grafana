@@ -20,12 +20,8 @@
     <div class="editor-option">
       <label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
     </div>
-    <div class="editor-option">
-      <label class="small"> Editable </label><input type="checkbox" ng-model="row.editable" ng-checked="row.editable" />
-    </div>
-    <div class="editor-option">
-      <label class="small"> Show title </label><input type="checkbox" ng-model="row.showTitle" ng-checked="row.showTitle" />
-    </div>
+		<editor-opt-bool text="Editable" model="row.editable"></editor-opt-bool>
+		<editor-opt-bool text="Show title" model="row.showTitle"></editor-opt-bool>
 	</div>
   <div class="row-fluid" ng-if="editor.index == 1">
     <div class="span12">
