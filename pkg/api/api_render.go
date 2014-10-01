@@ -1,17 +1,20 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	log "github.com/alecthomas/log4go"
+	"github.com/gin-gonic/gin"
+)
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.router.GET("/api/render", self.renderToPng)
+		self.router.GET("/api/render/*url", self.renderToPng)
 	})
 }
 
 func (self *HttpServer) renderToPng(c *gin.Context) {
-	qs := c.Request.URL.Query()
-	url := qs["url"][0]
-	pngPath, err := self.renderer.RenderToPng(url)
+	url := c.Params.ByName("url")
+	log.Info("Rendering url %v", url)
+	pngPath, err := self.renderer.RenderToPng("http://localhost:3000/" + url)
 	if err != nil {
 		c.HTML(500, "error.html", nil)
 	}
