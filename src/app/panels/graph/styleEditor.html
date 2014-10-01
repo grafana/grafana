@@ -33,11 +33,7 @@
 		<editor-opt-bool text="Stack" model="panel.stack" change="render()"></editor-opt-bool>
 		<editor-opt-bool text="Percent" model="panel.percentage" change="render()" tip="Stack as a percentage of total"></editor-opt-bool>
 
-    <div class="editor-option" ng-show="panel.stack">
-      <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
-      <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
-    </div>
-  </div>
+	</div>
 
 
   <div class="section">
@@ -55,7 +51,12 @@
   <div class="section">
     <h5>Tooltip</h5>
     <div class="editor-option">
-      <label class="small">shared <tip> Show all series values on the same time in the same tooltip and a x croshair to help follow all series</tip> </label><input type="checkbox" ng-model="panel.tooltip.shared" ng-checked="panel.tooltip.shared" ng-change="render()">
+			<label class="small">shared <tip> Show all series values on the same time in the same tooltip and a x croshair to help follow all series</tip></label>
+			<input type="checkbox" ng-model="panel.tooltip.shared" ng-checked="panel.tooltip.shared" ng-change="render()">
+    </div>
+		<div class="editor-option" ng-show="panel.stack">
+      <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
+      <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
     </div>
   </div>
 </div>
@@ -88,7 +89,7 @@
 							{{option.name}}: {{option.value}}
 						</li>
 						<li class="dropdown">
-							<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown" gf-dropdown="overrideMenu" bs-tooltip="'set option to override'" data-placement="right">
+							<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown" gf-dropdown="overrideMenu" bs-tooltip="'set option to override'" data-placement="top">
 								<i class="icon-plus"></i>
 							</a>
 						</li>

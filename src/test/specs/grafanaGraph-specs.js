@@ -14,10 +14,13 @@ define([
     function graphScenario(desc, func)  {
       describe(desc, function() {
         var ctx = {};
+
         ctx.setup = function (setupFunc) {
+
           beforeEach(module(function($provide) {
             $provide.value("timeSrv", new helpers.TimeSrvStub());
           }));
+
           beforeEach(inject(function($rootScope, $compile) {
             var scope = $rootScope.$new();
             var element = angular.element("<div style='width:500px' grafana-graph><div>");
@@ -28,10 +31,13 @@ define([
               grid: {},
               y_formats: [],
               seriesOverrides: [],
-	      tooltip: {
+              tooltip: {
                 shared: true
               }
             };
+
+            scope.appEvent = sinon.spy();
+            scope.onAppEvent = sinon.spy();
             scope.hiddenSeries = {};
             scope.dashboard = { timezone: 'browser' };
             scope.range = {

@@ -10,11 +10,14 @@ define([
       formatDate: sinon.stub().returns('date'),
     };
     var scope =  {
+      appEvent: sinon.spy(),
+      onAppEvent: sinon.spy(),
       panel: {
         tooltip:  {
           shared: true
         },
         y_formats: ['ms', 'none'],
+        stack: true
       }
     };
 

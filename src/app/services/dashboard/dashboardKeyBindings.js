@@ -18,11 +18,18 @@ function(angular, $) {
         keyboardManager.unbind('ctrl+s');
         keyboardManager.unbind('ctrl+r');
         keyboardManager.unbind('ctrl+z');
+        keyboardManager.unbind('ctrl+o');
         keyboardManager.unbind('esc');
       });
 
       keyboardManager.bind('ctrl+f', function() {
         scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+o', function() {
+        var current = scope.dashboard.sharedCrosshair;
+        scope.dashboard.sharedCrosshair = !current;
+        scope.dashboard.emit_refresh('refresh');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {
