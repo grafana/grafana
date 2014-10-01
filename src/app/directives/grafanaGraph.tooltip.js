@@ -29,6 +29,12 @@ function ($, kbn) {
       return j - 1;
     }
 
+    function showTooltip(title, innerHtml, pos) {
+      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ title + '</div> ' ;
+      body += innerHtml + '</div>';
+      $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
+    }
+
     elem.bind("plothover", function (event, pos, item) {
       var plot = elem.data().plot;
       var data = plot.getData();
@@ -46,8 +52,10 @@ function ($, kbn) {
         var pointCount = data[0].data.length;
         for (i = 1; i < data.length; i++) {
           if (data[i].data.length !== pointCount) {
-            console.log('WARNING: tootltip shared can not be shown becouse of series points do not align, different point counts');
-            $tooltip.detach();
+            showTooltip('Shared tooltip error', '<ul>' +
+              '<li>Series point counts are not the same</li>' +
+              '<li>Set null point mode to null or null as zero</li>' +
+              '<li>For influxdb users set fill(0) in your query</li></ul>', pos);
             return;
           }
         }
@@ -91,22 +99,13 @@ function ($, kbn) {
           plot.highlight(i, hoverIndex);
         }
 
-        $tooltip.html('<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ timestamp + '</div> ' + seriesHtml + '</div>')
-          .place_tt(pos.pageX + 20, pos.pageY);
+        showTooltip(timestamp, seriesHtml, pos);
         return;
       }
       if (item) {
         seriesInfo = item.series.info;
         format = scope.panel.y_formats[seriesInfo.yaxis - 1];
-
-        if (seriesInfo.alias) {
-          group = '<small style="font-size:0.9em;">' +
-            '<i class="icon-circle" style="color:'+item.series.color+';"></i>' + ' ' +
-            seriesInfo.alias +
-            '</small><br>';
-        } else {
-          group = kbn.query_color_dot(item.series.color, 15) + ' ';
-        }
+        group = '<i class="icon-minus" style="color:' + item.series.color +';"></i> ' + seriesInfo.alias;
 
         if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];
@@ -117,8 +116,9 @@ function ($, kbn) {
 
         value = kbn.valueFormats[format](value, item.series.yaxis.tickDecimals);
         timestamp = dashboard.formatDate(item.datapoint[0]);
+        group += ': <span class="graph-tooltip-value">' + value + '</span>';
 
-        $tooltip.html(group + value + " @ " + timestamp).place_tt(pos.pageX, pos.pageY);
+        showTooltip(timestamp, group, pos);
       } else {
         $tooltip.detach();
       }
