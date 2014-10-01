@@ -5,17 +5,18 @@ define([
 function ($, kbn) {
   'use strict';
 
-  function registerTooltipFeatures(elem, dashboard, scope, $rootScope) {
+  function registerTooltipFeatures(elem, dashboard, scope) {
 
     var $tooltip = $('<div id="tooltip">');
 
     elem.mouseleave(function () {
-      if(scope.panel.tooltip.shared) {
+      if (scope.panel.tooltip.shared || dashboard.sharedCrosshair) {
         var plot = elem.data().plot;
-        $tooltip.detach();
-        $rootScope.$broadcast('clearCrosshair');
-        //plot.clearCrosshair();
-        plot.unhighlight();
+        if (plot) {
+          $tooltip.detach();
+          plot.unhighlight();
+          scope.appEvent('clearCrosshair');
+        }
       }
     });
 
@@ -33,11 +34,10 @@ function ($, kbn) {
       var data = plot.getData();
       var group, value, timestamp, seriesInfo, format, i, series, hoverIndex, seriesHtml;
 
-      scope.crosshairEmiter = true;
       if(dashboard.sharedCrosshair){
-        $rootScope.$broadcast('setCrosshair',pos);
+        scope.appEvent('setCrosshair',  { pos: pos, scope: scope });
       }
-      scope.crosshairEmiter = false;
+
       if (scope.panel.tooltip.shared) {
         plot.unhighlight();
 
