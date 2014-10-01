@@ -28,7 +28,6 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           }
 
           if(dashboard.sharedCrosshair) {
-            console.log("setCrosshair");
             var plot = elem.data().plot;
             if (plot) {
               plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
@@ -38,7 +37,9 @@ function (angular, $, kbn, moment, _, graphTooltip) {
 
         scope.onAppEvent('clearCrosshair', function() {
           var plot = elem.data().plot;
-          plot.clearCrosshair();
+          if (plot) {
+            plot.clearCrosshair();
+          }
         });
 
         scope.$on('refresh', function() {
