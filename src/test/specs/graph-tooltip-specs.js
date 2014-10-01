@@ -15,6 +15,7 @@ define([
           shared: true
         },
         y_formats: ['ms', 'none'],
+	stack: true
       }
     };
 
