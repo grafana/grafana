@@ -31,7 +31,7 @@ function (angular) {
 
   });
 
-  module.controller('DashFromDBProvider', function($scope, $rootScope, datasourceSrv, $routeParams, alertSrv) {
+  module.controller('DashFromDBProvider', function($scope, $rootScope, datasourceSrv, $routeParams) {
 
     var db = datasourceSrv.getGrafanaDB();
     var isTemp = window.location.href.indexOf('dashboard/temp') !== -1;
@@ -41,14 +41,14 @@ function (angular) {
       $scope.initDashboard(dashboard, $scope);
     }).then(null, function(error) {
       $scope.initDashboard({ title: 'Grafana'}, $scope);
-      alertSrv.set('Error', error, 'error');
+      $scope.appEvent('alert-error', ['Dashboard load failed', error]);
     });
   });
 
-  module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
+  module.controller('DashFromImportCtrl', function($scope, $location) {
 
     if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
+      $scope.appEvent('alert-warning', ['Dashboard load failed', 'Cannot reload unsaved imported dashboard']);
       $location.path('');
       return;
     }
