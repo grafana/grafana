@@ -81,12 +81,8 @@ function (angular, config, _, $, store) {
     $scope.initProfiling = function() {
       var count = 0;
 
-      $scope.$watch(function digestCounter() {
-        count++;
-      }, function() {
-      });
-
-      $scope.onAppEvent('setup-dashboard', function() {
+      $scope.$watch(function digestCounter() { count++; }, function() { });
+      $scope.onAppEvent('dashboard-loaded', function() {
         count = 0;
 
         setTimeout(function() {

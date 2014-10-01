@@ -214,7 +214,7 @@
           }
         };
 
-        return ctrl;
+        angular.extend(this, ctrl);
       }],
 
       link: function (scope, elm, attrs, bindonceController)
