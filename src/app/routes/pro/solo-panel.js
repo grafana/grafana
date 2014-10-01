@@ -1,25 +1,27 @@
 define([
   'angular',
+  'jquery',
 ],
-function (angular) {
+function (angular, $) {
   "use strict";
 
   var module = angular.module('grafana.routes');
 
   module.config(function($routeProvider) {
     $routeProvider
-      .when('/dashboard/:id/panel/:panelId', {
+      .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/pro/solo-panel.html',
         controller : 'SoloPanelCtrl',
       });
   });
 
-  module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, dashboardSrv, timeSrv) {
+  module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, dashboardSrv, timeSrv, $location) {
     var panelId;
 
     $scope.init = function() {
       var db = datasourceSrv.getGrafanaDB();
-      panelId = parseInt($routeParams.panelId);
+      var params = $location.search();
+      panelId = parseInt(params.panelId);
 
       db.getDashboard($routeParams.id, false)
         .then(function(dashboardData) {
@@ -33,7 +35,7 @@ function (angular) {
       $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.grafana.style = $scope.dashboard.style;
       $scope.row = {
-        height: '300px',
+        height: $(window).height() + 'px',
       };
       $scope.test = "Hej";
       $scope.$index = 0;

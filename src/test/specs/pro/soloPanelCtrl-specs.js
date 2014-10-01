@@ -9,11 +9,17 @@ define([
     var ctx = new helpers.ControllerTestContext();
     var datasource = {};
     var routeParams = {};
+    var search = {};
 
     beforeEach(module('grafana.routes'));
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase({
       $routeParams: routeParams,
+      $location: {
+        search: function() {
+          return search;
+        }
+      },
       datasourceSrv: {
         getGrafanaDB: sinon.stub().returns(datasource)
       }
@@ -38,7 +44,7 @@ define([
         };
 
         routeParams.id = 1;
-        routeParams.panelId = 23;
+        search.panelId = 23;
         datasource.getDashboard = sinon.stub().returns(ctx.$q.when(dashboard));
 
         ctx.scope.init();

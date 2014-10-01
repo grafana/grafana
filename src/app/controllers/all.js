@@ -1,5 +1,6 @@
 define([
   './pro/grafanaCtrl',
+  './pro/sharePanelCtrl',
   './dashboardCtrl',
   './dashboardNavCtrl',
   './row',
@@ -15,6 +16,5 @@ define([
   './opentsdbTargetCtrl',
   './annotationsEditorCtrl',
   './templateEditorCtrl',
-  './sharePanelCtrl',
   './jsonEditorCtrl',
 ], function () {});
