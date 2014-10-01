@@ -1,9 +1,8 @@
 define([
   'angular',
-  'lodash',
   'services/pro/backendSrv',
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');

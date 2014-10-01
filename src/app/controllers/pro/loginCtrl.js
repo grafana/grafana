@@ -20,7 +20,7 @@ function (angular) {
       $http.post('/logout').then(function() {
 
         alertSrv.set('Logged out!', '', 'success', 3000);
-        $scope.emitAppEvent('logged-out');
+        $scope.appEvent('logged-out');
         $location.search({});
 
       }, function() {
@@ -36,7 +36,7 @@ function (angular) {
       }
 
       $http.post('/login', $scope.loginModel).then(function(results) {
-        $scope.emitAppEvent('logged-in', results.data.user);
+        $scope.appEvent('logged-in', results.data.user);
         $location.path('/');
       }, function(err) {
         if (err.status === 401) {

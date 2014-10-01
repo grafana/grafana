@@ -10,7 +10,7 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, grafanaVersion, $rootScope) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller) {
     $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
     $scope.grafana = {};
 
@@ -21,6 +21,9 @@ function (angular, config, _, $, store) {
       $scope._ = _;
 
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
+
+      alertSrv.init();
+      utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
       $scope.grafana.style = 'dark';
@@ -41,6 +44,10 @@ function (angular, config, _, $, store) {
       });
     };
 
+    $scope.initDashboard = function(dashboardData, viewScope) {
+      $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
+    };
+
     $scope.toggleProSideMenu = function() {
       $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
       store.set('grafana.sidemenu', $scope.grafana.sidemenu);
@@ -51,7 +58,7 @@ function (angular, config, _, $, store) {
       this.$on('$destroy', unbind);
     };
 
-    $rootScope.emitAppEvent = function(name, payload) {
+    $rootScope.appEvent = function(name, payload) {
       $rootScope.$emit(name, payload);
     };
 

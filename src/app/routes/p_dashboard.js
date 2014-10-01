@@ -23,6 +23,11 @@ function (angular, store) {
         templateUrl: '/app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
+      })
+      .when('/dashboard/import/:id', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromImportCtrl',
+        reloadOnSearch: false,
       });
   });
 
@@ -39,9 +44,10 @@ function (angular, store) {
       if (!savedRoute) {
         $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
           var dashboard = angular.fromJson(result.data);
-          $scope.emitAppEvent('setup-dashboard', dashboard);
-        },function() {
-          alertSrv.set('Error',"Could not load default dashboard", 'error');
+          $scope.initDashboard(dashboard, $scope);
+        },function(err) {
+          $scope.initDashboard({}, $scope);
+          $scope.appEvent('alert-error', ['Load dashboard failed', err]);
         });
         return;
       }
@@ -53,12 +59,23 @@ function (angular, store) {
 
     db.getDashboard($routeParams.id, isTemp)
       .then(function(dashboard) {
-        $scope.emitAppEvent('setup-dashboard', dashboard);
-      }).then(null, function(error) {
-        alertSrv.set('Error', error, 'error');
-        $scope.emitAppEvent('setup-dashboard', {});
+        $scope.initDashboard(dashboard, $scope);
+      }).then(null, function(err) {
+        $scope.appEvent('alert-error', ['Load dashboard failed', err]);
+        $scope.initDashboard({}, $scope);
       });
 
+  });
+
+  module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
+
+    if (!window.grafanaImportDashboard) {
+      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
+      $location.path('');
+      return;
+    }
+
+    $scope.initDashboard(window.grafanaImportDashboard, $scope);
   });
 
 });
