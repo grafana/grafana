@@ -17,18 +17,27 @@ if (!params.url || !params.png) {
 }
 
 page.viewportSize = {
-  width: '800',
-  height: '400'
+  width: params.width || '800',
+  height: params.height || '400'
 };
 
 page.open(params.url, function (status) {
   console.log('Loading a web page: ' + params.url);
 
-  setTimeout(function() {
-    console.log('rendering panel to ' + params.png);
+  function checkIsReady() {
+    var canvas = page.evaluate(function() {
+      return $('canvas').length > 0;
+    });
 
-    page.render(params.png);
-    phantom.exit();
+    if (canvas) {
+      page.render(params.png);
+      phantom.exit();
+    }
+    else {
+      setTimeout(checkIsReady, 10);
+    }
+  }
 
-  }, 2000);
+  setTimeout(checkIsReady, 200);
+
 });
