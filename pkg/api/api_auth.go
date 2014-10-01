@@ -1,8 +1,13 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
+	"errors"
+	"strconv"
+
 	"github.com/torkelo/grafana-pro/pkg/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
 )
 
 type authContext struct {
@@ -19,16 +24,34 @@ func (self *HttpServer) authDenied(c *gin.Context) {
 	c.Abort(302)
 }
 
+func authGetRequestAccountId(c *gin.Context, session *sessions.Session) (int, error) {
+	accountId := session.Values["accountId"]
+
+	urlQuery := c.Request.URL.Query()
+	if len(urlQuery["render"]) > 0 {
+		accId, _ := strconv.Atoi(urlQuery["accountId"][0])
+		session.Values["accountId"] = accId
+		accountId = accId
+	}
+
+	if accountId == nil {
+		return -1, errors.New("Auth: session account id not found")
+	}
+
+	return accountId.(int), nil
+}
+
 func (self *HttpServer) auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, _ := sessionStore.Get(c.Request, "grafana-session")
+		accountId, err := authGetRequestAccountId(c, session)
 
-		if c.Request.URL.Path != "/login" && session.Values["accountId"] == nil {
+		if err != nil && c.Request.URL.Path != "/login" {
 			self.authDenied(c)
 			return
 		}
 
-		account, err := self.store.GetAccount(session.Values["accountId"].(int))
+		account, err := self.store.GetAccount(accountId)
 		if err != nil {
 			self.authDenied(c)
 			return
@@ -42,7 +65,6 @@ func (self *HttpServer) auth() gin.HandlerFunc {
 
 		c.Set("userAccount", account)
 		c.Set("usingAccount", usingAccount)
-
 		session.Save(c.Request, c.Writer)
 	}
 }

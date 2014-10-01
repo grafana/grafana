@@ -1,10 +1,12 @@
 var page = require('webpage').create();
 var args = require('system').args;
 var params = {};
+var regexp = /^([^=]+)=([^$]+)/;
 
 args.forEach(function(arg) {
-  var parts = arg.split('=');
-  params[parts[0]] = parts[1];
+  var parts = arg.match(regexp);
+  if (!parts) { return; }
+  params[parts[1]] = parts[2];
 });
 
 var usage = "url=<url> png=<filename> width=<width> height=<height>";
