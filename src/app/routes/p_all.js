@@ -1,6 +1,6 @@
 define([
   './p_dashboard',
-  './p_solo-panel',
+  './pro/solo-panel',
   './p_admin',
   './p_login',
 ],

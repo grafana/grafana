@@ -14,17 +14,20 @@ function (angular) {
       });
   });
 
-  module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, alertSrv, dashboardSrv, filterSrv) {
+  module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, dashboardSrv, timeSrv) {
+    var panelId;
 
-    var db = datasourceSrv.getGrafanaDB();
-    var panelId = parseInt($routeParams.panelId);
+    $scope.init = function() {
+      var db = datasourceSrv.getGrafanaDB();
+      panelId = parseInt($routeParams.panelId);
 
-    db.getDashboard($routeParams.id, false)
-      .then(function(dashboardData) {
-        $scope.initPanelScope(dashboardData);
-      }).then(null, function(error) {
-        alertSrv.set('Error', error, 'error');
-      });
+      db.getDashboard($routeParams.id, false)
+        .then(function(dashboardData) {
+          $scope.initPanelScope(dashboardData);
+        }).then(null, function(error) {
+          $scope.appEvent('alert-error', ['Load panel error', error]);
+        });
+    };
 
     $scope.initPanelScope = function(dashboardData) {
       $scope.dashboard = dashboardSrv.create(dashboardData);
@@ -36,14 +39,18 @@ function (angular) {
       $scope.$index = 0;
       $scope.panel = $scope.getPanelById(panelId);
 
+      if (!$scope.panel) {
+        $scope.appEvent('alert-error', ['Panel not found', '']);
+        return;
+      }
+
       $scope.panel.span = 12;
       $scope.dashboardViewState = {
         registerPanel: function() {
         }
       };
 
-      $scope.filter = filterSrv;
-      $scope.filter.init($scope.dashboard);
+      timeSrv.init($scope.dashboard);
     };
 
     $scope.getPanelById = function(id) {
@@ -59,6 +66,10 @@ function (angular) {
       }
       return null;
     };
+
+    if (!$scope.skipAutoInit) {
+      $scope.init();
+    }
 
   });
 

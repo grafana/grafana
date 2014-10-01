@@ -114,6 +114,7 @@ require([
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
+  angular.module('grafana.routes', ['ngRoute']);
   angular.module('grafana.filters', []);
 
   require([
@@ -140,6 +141,7 @@ require([
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
     'specs/overview-ctrl-specs',
+    'specs/pro/soloPanelCtrl-specs',
   ], function () {
     window.__karma__.start();
   });
