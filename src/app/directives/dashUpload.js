@@ -16,7 +16,13 @@ function (angular, kbn) {
           var readerOnload = function() {
             return function(e) {
               scope.$apply(function() {
-                window.grafanaImportDashboard = JSON.parse(e.target.result);
+                try {
+                  window.grafanaImportDashboard = JSON.parse(e.target.result);
+                } catch (err) {
+                  console.log(err);
+                  scope.appEvent('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
+                  return;
+                }
                 var title = kbn.slugifyForUrl(window.grafanaImportDashboard.title);
                 $location.path('/dashboard/import/' + title);
               });
