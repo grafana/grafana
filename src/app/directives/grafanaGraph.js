@@ -21,20 +21,27 @@ function (angular, $, kbn, moment, _, graphTooltip) {
         var legendSideLastValue = null;
         scope.crosshairEmiter = false;
 
-        scope.$on('setCrosshair',function(event,pos) {
-          console.log('setCrosshair'+ pos);
-          if(dashboard.sharedCrosshair && !scope.crosshairEmiter) {
+        scope.onAppEvent('setCrosshair', function(event, info) {
+          // do not need to to this if event is from this panel
+          if (info.scope === scope) {
+            return;
+          }
+
+          if(dashboard.sharedCrosshair) {
+            console.log("setCrosshair");
             var plot = elem.data().plot;
-            plot.setCrosshair({ x: pos.x, y: pos.y });
+            if (plot) {
+              plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
+            }
           }
         });
 
-        scope.$on('clearCrosshair',function() {
+        scope.onAppEvent('clearCrosshair', function() {
           var plot = elem.data().plot;
           plot.clearCrosshair();
         });
 
-        scope.$on('refresh',function() {
+        scope.$on('refresh', function() {
           scope.get_data();
         });
 

@@ -29,7 +29,6 @@
 						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
 					</div>
 					<editor-opt-bool text="Hide controls (CTRL+H)" model="dashboard.hideControls"></editor-opt-bool>
-          <editor-opt-bool text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-opt-bool>
 				</div>
 			</div>
 			<div class="editor-row">
@@ -75,6 +74,7 @@
 						<input class="cr1" id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
 						<label for="pulldown{{pulldown.type}}" class="cr1"></label>
 					</div>
+          <editor-opt-bool text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-opt-bool>
 				</div>
 			</div>
 		</div>

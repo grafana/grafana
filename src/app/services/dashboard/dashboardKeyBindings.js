@@ -29,6 +29,7 @@ function(angular, $) {
       keyboardManager.bind('ctrl+o', function() {
         var current = scope.dashboard.sharedCrosshair;
         scope.dashboard.sharedCrosshair = !current;
+        scope.dashboard.emit_refresh('refresh');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {
