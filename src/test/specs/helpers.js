@@ -1,6 +1,6 @@
 define([
-    'kbn',
-    'lodash'
+ 'kbn',
+ 'lodash'
 ], function(kbn, _) {
   'use strict';
 
@@ -24,7 +24,7 @@ define([
         $provide.value('timeSrv', self.timeSrv);
         $provide.value('templateSrv', self.templateSrv);
         $provide.value('$element', self.$element);
-        _.each(mocks, function(key, value) {
+        _.each(mocks, function(value, key) {
           $provide.value(key, value);
         });
       });
@@ -34,16 +34,20 @@ define([
       return inject(function($controller, $rootScope, $q, $location) {
         self.scope = $rootScope.$new();
         self.$location = $location;
+        self.scope.grafana = {};
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.dashboard = {};
         self.scope.dashboardViewState = new DashboardViewStateStub();
+        self.scope.appEvent = sinon.spy();
+        self.scope.onAppEvent = sinon.spy();
 
         $rootScope.colors = [];
         for (var i = 0; i < 50; i++) { $rootScope.colors.push('#' + i); }
 
         self.$q = $q;
         self.scope.skipDataOnInit = true;
+        self.scope.skipAutoInit = true;
         self.controller = $controller(controllerName, {
           $scope: self.scope
         });
@@ -87,6 +91,7 @@ define([
   }
 
   function TimeSrvStub() {
+    this.init = sinon.spy();
     this.time = { from:'now-1h', to: 'now'};
     this.timeRange = function(parse) {
       if (parse === false) {
