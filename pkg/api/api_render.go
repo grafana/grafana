@@ -3,22 +3,29 @@ package api
 import (
 	"strconv"
 
-	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
+	"github.com/torkelo/grafana-pro/pkg/components"
 )
 
 func init() {
 	addRoutes(func(self *HttpServer) {
-		self.addRoute("GET", "/api/render/*url", self.renderToPng)
+		self.addRoute("GET", "/render/*url", self.renderToPng)
 	})
 }
 
 func (self *HttpServer) renderToPng(c *gin.Context, auth *authContext) {
-	url := c.Params.ByName("url")
 	accountId := auth.getAccountId()
+	query := c.Request.URL.Query()
+	queryParams := "?render&accountId=" + strconv.Itoa(accountId) + "&" + c.Request.URL.RawQuery
+	renderOpts := &components.RenderOpts{
+		Url:    c.Params.ByName("url") + queryParams,
+		Width:  query["width"][0],
+		Height: query["height"][0],
+	}
 
-	log.Info("Rendering url %v", url)
-	pngPath, err := self.renderer.RenderToPng("http://localhost:3000" + url + "?render&accountId=" + strconv.Itoa(accountId))
+	renderOpts.Url = "http://localhost:3000" + renderOpts.Url
+
+	pngPath, err := self.renderer.RenderToPng(renderOpts)
 	if err != nil {
 		c.HTML(500, "error.html", nil)
 	}

@@ -17,14 +17,20 @@ type PhantomRenderer struct {
 	PhantomDir string
 }
 
-func (self *PhantomRenderer) RenderToPng(url string) (string, error) {
-	log.Info("PhantomRenderer::renderToPng url %v", url)
+type RenderOpts struct {
+	Url    string
+	Width  string
+	Height string
+}
+
+func (self *PhantomRenderer) RenderToPng(params *RenderOpts) (string, error) {
+	log.Info("PhantomRenderer::renderToPng url %v", params.Url)
 	binPath, _ := filepath.Abs(filepath.Join(self.PhantomDir, "phantomjs"))
 	scriptPath, _ := filepath.Abs(filepath.Join(self.PhantomDir, "render.js"))
-	pngPath, _ := filepath.Abs(filepath.Join(self.ImagesDir, getHash(url)))
+	pngPath, _ := filepath.Abs(filepath.Join(self.ImagesDir, getHash(params.Url)))
 	pngPath = pngPath + ".png"
 
-	cmd := exec.Command(binPath, scriptPath, "url="+url, "width=100", "height=100", "png="+pngPath)
+	cmd := exec.Command(binPath, scriptPath, "url="+params.Url, "width="+params.Width, "height="+params.Height, "png="+pngPath)
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
