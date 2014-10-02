@@ -56,9 +56,13 @@ define(['angular', 'jquery', 'lodash', 'moment'], function (angular, $, _, momen
   });
 
   module.filter('interpolateTemplateVars', function(templateSrv) {
-    return function(text) {
+    function interpolateTemplateVars(text) {
       return templateSrv.replaceWithText(text);
-    };
+    }
+
+    interpolateTemplateVars.$stateful = true;
+
+    return interpolateTemplateVars;
   });
 
 });
