@@ -50,10 +50,10 @@
 
   <div class="section">
     <h5>Tooltip</h5>
-    <div class="editor-option">
-			<label class="small">shared <tip> Show all series values on the same time in the same tooltip and a x croshair to help follow all series</tip></label>
-			<input type="checkbox" ng-model="panel.tooltip.shared" ng-checked="panel.tooltip.shared" ng-change="render()">
-    </div>
+		<editor-opt-bool
+			text="All series" model="panel.tooltip.shared" change="render()"
+			tip="Show all series on same tooltip and a x croshair to help follow all series">
+		</editor-opt-bool>
 		<div class="editor-option" ng-show="panel.stack">
       <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
       <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
