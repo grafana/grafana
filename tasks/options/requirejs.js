@@ -59,7 +59,6 @@ module.exports = function(config,grunt) {
         'services/all',
         'angular-strap',
         'directives/all',
-        'jquery.flot.pie',
         'angular-dragdrop',
         'controllers/all',
         'routes/all',

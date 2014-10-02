@@ -17,7 +17,7 @@
           "editable": true,
           "type": "text",
           "mode": "html",
-          "content": "<div class=\"text-center\" style=\"padding-top: 15px\">\n<img src=\"//grafana.org/assets/img/logo_transparent_200x75.png\"> \n</div>",
+          "content": "<div class=\"text-center\" style=\"padding-top: 15px\">\n<img src=\"img/logo_transparent_200x.png\"> \n</div>",
           "style": {},
           "title": "Welcome to"
         }

@@ -67,8 +67,8 @@
 		<div ng-if="editor.index == 2">
 			<div class="editor-row">
 				<div class="section">
-					<editor-opt-bool text="Templating" model="dashboard.templating.enable"></editor-opt-bool>
-					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable"></editor-opt-bool>
+					<editor-opt-bool text="Templating" model="dashboard.templating.enable" change="checkFeatureToggles()"></editor-opt-bool>
+					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable" change="checkFeatureToggles()"></editor-opt-bool>
 					<div class="editor-option text-center" ng-repeat="pulldown in dashboard.nav">
 						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label>
 						<input class="cr1" id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">

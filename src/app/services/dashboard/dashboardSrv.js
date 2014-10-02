@@ -31,8 +31,8 @@ function (angular, $, kbn, _, moment) {
       this.rows = data.rows || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
-      this.templating = data.templating || { list: [], enable: false };
-      this.annotations = data.annotations || { list: [], enable: false};
+      this.templating = this._ensureListExist(data.templating);
+      this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
       this.version = data.version || 0;
 
@@ -40,10 +40,16 @@ function (angular, $, kbn, _, moment) {
         this.nav.push({ type: 'timepicker' });
       }
 
-      this.updateSchema(data);
+      this._updateSchema(data);
     }
 
     var p = DashboardModel.prototype;
+
+    p._ensureListExist = function (data) {
+      if (!data) { data = {}; }
+      if (!data.list) { data.list = []; }
+      return data;
+    };
 
     p.getNextPanelId = function() {
       var i, j, row, panel, max = 0;
@@ -116,7 +122,7 @@ function (angular, $, kbn, _, moment) {
       $rootScope.$broadcast('refresh');
     };
 
-    p.updateSchema = function(old) {
+    p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.version;
       var panelUpgrades = [];

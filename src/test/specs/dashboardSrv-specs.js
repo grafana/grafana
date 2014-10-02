@@ -178,4 +178,26 @@ define([
 
   });
 
+  describe('when creating dashboard model with missing list for annoations or templating', function() {
+    var model;
+
+    beforeEach(module('grafana.services'));
+    beforeEach(inject(function(dashboardSrv) {
+      model = dashboardSrv.create({
+        annotations: {
+          enable: true,
+        },
+        templating: {
+          enable: true
+        }
+      });
+    }));
+
+    it('should add empty list', function() {
+      expect(model.annotations.list.length).to.be(0);
+      expect(model.templating.list.length).to.be(0);
+    });
+
+  });
+
 });

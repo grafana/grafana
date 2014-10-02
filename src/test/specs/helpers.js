@@ -1,6 +1,6 @@
 define([
-    'kbn',
-    'lodash'
+ 'kbn',
+ 'lodash'
 ], function(kbn, _) {
   'use strict';
 
