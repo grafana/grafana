@@ -68,6 +68,9 @@ function (angular, _) {
 
       var baseUrl = 'http://localhost:3000';
       $scope.shareUrl = baseUrl + '/dashboard/db/' + $routeParams.id + "?" + paramsArray.join('&') ;
+
+      paramsArray.push('width=1000');
+      paramsArray.push('height=500');
       $scope.imageUrl = baseUrl + '/render/dashboard/solo/' + $routeParams.id + '?' + paramsArray.join('&') ;
 
       $timeout(function() {
