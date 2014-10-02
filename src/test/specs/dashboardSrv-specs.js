@@ -195,7 +195,7 @@ define([
 
     it('should add empty list', function() {
       expect(model.annotations.list.length).to.be(0);
-      expect(model.templating.list.length).to.be(1);
+      expect(model.templating.list.length).to.be(0);
     });
 
   });
