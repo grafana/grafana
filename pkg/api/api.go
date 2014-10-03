@@ -37,8 +37,8 @@ func (self *HttpServer) ListenAndServe() {
 	log.Info("Starting Http Listener on port %v", self.port)
 	defer func() { self.shutdown <- true }()
 
-	self.router = gin.Default()
-	self.router.Use(CacheHeadersMiddleware())
+	self.router = gin.New()
+	self.router.Use(gin.Recovery(), apiLogger(), CacheHeadersMiddleware())
 
 	self.router.Static("/public", "./public")
 	self.router.Static("/app", "./public/app")
