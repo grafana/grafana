@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/torkelo/grafana-pro/pkg/components"
+	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
 func init() {
@@ -15,12 +16,13 @@ func init() {
 
 func (self *HttpServer) renderToPng(c *gin.Context, auth *authContext) {
 	accountId := auth.getAccountId()
-	query := c.Request.URL.Query()
+	queryReader := utils.NewUrlQueryReader(c.Request.URL)
 	queryParams := "?render&accountId=" + strconv.Itoa(accountId) + "&" + c.Request.URL.RawQuery
+
 	renderOpts := &components.RenderOpts{
 		Url:    c.Params.ByName("url") + queryParams,
-		Width:  query["width"][0],
-		Height: query["height"][0],
+		Width:  queryReader.Get("width", "800"),
+		Height: queryReader.Get("height", "400"),
 	}
 
 	renderOpts.Url = "http://localhost:3000" + renderOpts.Url
