@@ -136,6 +136,12 @@ function (angular, _, kbn) {
         query.rateOptions = {
           counter: !!target.isCounter
         };
+        if (target.rateCounterMaxValue) {
+          query.rateOptions.counterMax = target.rateCounterMaxValue;
+        }
+        if (target.rateCounterResetValue) {
+          query.rateOptions.resetValue = target.rateCounterResetValue;
+        }
       }
 
       if (target.shouldDownsample) {
