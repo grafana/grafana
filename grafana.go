@@ -2,32 +2,26 @@ package main
 
 import (
 	"os"
-	"time"
+	"runtime"
 
-	log "github.com/alecthomas/log4go"
-	"github.com/torkelo/grafana-pro/pkg/configuration"
-	"github.com/torkelo/grafana-pro/pkg/server"
+	"github.com/codegangsta/cli"
+	"github.com/torkelo/grafana-pro/pkg/cmd"
 )
 
+const APP_VER = "0.1.0 Alpha"
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+}
+
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3838"
+	app := cli.NewApp()
+	app.Name = "Grafana Pro"
+	app.Usage = "Grafana Pro Service"
+	app.Version = APP_VER
+	app.Commands = []cli.Command{
+		cmd.CmdWeb,
 	}
-
-	log.Info("Starting Grafana-Pro v.1-alpha")
-
-	cfg := configuration.NewCfg(port)
-	server, err := server.NewServer(cfg)
-	if err != nil {
-		time.Sleep(time.Second)
-		panic(err)
-	}
-
-	err = server.ListenAndServe()
-	if err != nil {
-		log.Error("ListenAndServe failed: ", err)
-	}
-
-	time.Sleep(time.Millisecond * 2000)
+	app.Flags = append(app.Flags, []cli.Flag{}...)
+	app.Run(os.Args)
 }

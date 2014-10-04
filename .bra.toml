@@ -1,0 +1,14 @@
+[run]
+init_cmds = [["./grafana-pro", "web"]]
+watch_all = true
+watch_dirs = [
+	"$WORKDIR/pkg",
+	"$WORKDIR/views",
+]
+watch_exts = [".go", ".ini"]
+build_delay = 1500
+cmds = [
+	["go", "install"],
+	["go", "build"],
+	["./grafana-pro", "web"]
+]

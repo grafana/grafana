@@ -3,8 +3,9 @@ package stores
 import (
 	"time"
 
-	log "github.com/alecthomas/log4go"
 	r "github.com/dancannon/gorethink"
+
+	"github.com/torkelo/grafana-pro/pkg/log"
 )
 
 type rethinkStore struct {
@@ -31,7 +32,7 @@ func NewRethinkStore(config *RethinkCfg) *rethinkStore {
 	})
 
 	if err != nil {
-		log.Crash("Failed to connect to rethink database %v", err)
+		log.Error(3, "Failed to connect to rethink database %v", err)
 	}
 
 	createRethinkDBTablesAndIndices(config, session)

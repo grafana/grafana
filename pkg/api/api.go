@@ -1,14 +1,17 @@
 package api
 
 import (
+	"fmt"
 	"html/template"
 
-	log "github.com/alecthomas/log4go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
+
 	"github.com/torkelo/grafana-pro/pkg/components"
 	"github.com/torkelo/grafana-pro/pkg/configuration"
+	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/stores"
 )
 
@@ -34,9 +37,9 @@ func NewHttpServer(cfg *configuration.Cfg, store stores.Store) *HttpServer {
 }
 
 func (self *HttpServer) ListenAndServe() {
-	log.Info("Starting Http Listener on port %v", self.port)
 	defer func() { self.shutdown <- true }()
 
+	gin.SetMode(gin.ReleaseMode)
 	self.router = gin.New()
 	self.router.Use(gin.Recovery(), apiLogger(), CacheHeadersMiddleware())
 
@@ -60,7 +63,9 @@ func (self *HttpServer) ListenAndServe() {
 	self.router.GET("/admin/*_", self.auth(), self.index)
 	self.router.GET("/account/*_", self.auth(), self.index)
 
-	self.router.Run(":" + self.port)
+	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
+	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
+	self.router.Run(listenAddr)
 }
 
 func (self *HttpServer) index(c *gin.Context) {
