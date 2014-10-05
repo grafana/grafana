@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"os"
 	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/siddontang/go-log/log"
 	"github.com/torkelo/grafana-pro/pkg/configuration"
-	"github.com/torkelo/grafana-pro/pkg/routes"
 	"github.com/torkelo/grafana-pro/pkg/server"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 var CmdWeb = cli.Command{
@@ -20,15 +19,11 @@ var CmdWeb = cli.Command{
 }
 
 func runWeb(*cli.Context) {
-	routes.GlobalInit()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3838"
-	}
-
 	log.Info("Starting Grafana-Pro v.1-alpha")
 
-	cfg := configuration.NewCfg(port)
+	setting.NewConfigContext()
+
+	cfg := configuration.NewCfg(setting.HttpPort)
 	server, err := server.NewServer(cfg)
 	if err != nil {
 		time.Sleep(time.Second)
