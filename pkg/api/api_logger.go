@@ -53,11 +53,10 @@ func apiLogger() gin.HandlerFunc {
 
 		end := time.Now()
 		latency := end.Sub(start)
-		log.Info("[http] %s %s %3d %12v %s %s",
+		log.Info("[http] %s %s %3d %12v %s",
 			c.Request.Method, c.Request.URL.Path,
 			code,
 			latency,
-			requester,
 			c.Errors.String(),
 		)
 	}

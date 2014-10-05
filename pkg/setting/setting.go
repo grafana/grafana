@@ -122,4 +122,9 @@ func NewConfigContext() {
 	Domain = Cfg.MustValue("server", "domain", "localhost")
 	HttpAddr = Cfg.MustValue("server", "http_addr", "0.0.0.0")
 	HttpPort = Cfg.MustValue("server", "http_port", "3000")
+
+	port := os.Getenv("PORT")
+	if port != "" {
+		HttpPort = port
+	}
 }
