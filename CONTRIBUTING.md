@@ -8,7 +8,11 @@ Prerequisites:
 Clone repository:
 
     npm install
+    grunt
     grunt server (starts development web server in src folder)
     grunt (runs jshint and less -> css compilation)
+
+    nginx -c $(pwd)/sample/nginx_testing.conf
+    open http://localhost/
 
 Please remember to run grunt before doing pull request to verify that your code passes all the jshint validations.
