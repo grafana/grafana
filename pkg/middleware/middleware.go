@@ -1,7 +1,8 @@
 package middleware
 
 import (
-	"time"
+	"encoding/json"
+	"io/ioutil"
 
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
@@ -21,12 +22,11 @@ type Context struct {
 }
 
 func GetContextHandler() macaron.Handler {
-	return func(c *macaron.Context) {
+	return func(c *macaron.Context, sess session.Store) {
 		ctx := &Context{
 			Context: c,
+			Session: sess,
 		}
-
-		ctx.Data["PageStartTime"] = time.Now()
 
 		c.Map(ctx)
 	}
@@ -49,4 +49,10 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	}
 
 	ctx.HTML(status, "index")
+}
+
+func (ctx *Context) JsonBody(model interface{}) bool {
+	b, _ := ioutil.ReadAll(ctx.Req.Body)
+	err := json.Unmarshal(b, &model)
+	return err == nil
 }

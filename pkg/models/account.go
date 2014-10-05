@@ -5,6 +5,19 @@ import (
 	"time"
 )
 
+var (
+	CreateAccount       func(acccount *Account) error
+	UpdateAccount       func(acccount *Account) error
+	GetAccountByLogin   func(emailOrName string) (*Account, error)
+	GetAccount          func(accountId int) (*Account, error)
+	GetOtherAccountsFor func(accountId int) ([]*OtherAccount, error)
+)
+
+// Typed errors
+var (
+	ErrAccountNotFound = errors.New("Account not found")
+)
+
 type CollaboratorLink struct {
 	AccountId  int
 	Role       string

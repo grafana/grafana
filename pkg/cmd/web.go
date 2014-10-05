@@ -10,11 +10,14 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
+	"github.com/macaron-contrib/session"
 
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/routes"
+	"github.com/torkelo/grafana-pro/pkg/routes/login"
 	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/torkelo/grafana-pro/pkg/stores/rethink"
 )
 
 var CmdWeb = cli.Command{
@@ -29,27 +32,15 @@ func newMacaron() *macaron.Macaron {
 	m := macaron.New()
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
-	m.Use(macaron.Static(
-		path.Join(setting.StaticRootPath, "public"),
-		macaron.StaticOptions{
-			SkipLogging: true,
-			Prefix:      "public",
-		},
-	))
-	m.Use(macaron.Static(
-		path.Join(setting.StaticRootPath, "public/app"),
-		macaron.StaticOptions{
-			SkipLogging: true,
-			Prefix:      "app",
-		},
-	))
-	m.Use(macaron.Static(
-		path.Join(setting.StaticRootPath, "public/img"),
-		macaron.StaticOptions{
-			SkipLogging: true,
-			Prefix:      "img",
-		},
-	))
+
+	mapStatic(m, "public", "public")
+	mapStatic(m, "public/app", "app")
+	mapStatic(m, "public/img", "img")
+
+	m.Use(session.Sessioner(session.Options{
+		Provider: setting.SessionProvider,
+		Config:   *setting.SessionConfig,
+	}))
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -61,16 +52,31 @@ func newMacaron() *macaron.Macaron {
 	return m
 }
 
+func mapStatic(m *macaron.Macaron, dir string, prefix string) {
+	m.Use(macaron.Static(
+		path.Join(setting.StaticRootPath, dir),
+		macaron.StaticOptions{
+			SkipLogging: true,
+			Prefix:      prefix,
+		},
+	))
+}
+
 func runWeb(*cli.Context) {
 	setting.NewConfigContext()
 	setting.InitServices()
+	rethink.Init()
 
 	log.Info("Starting Grafana-Pro v.1-alpha")
 
 	m := newMacaron()
 
+	auth := middleware.Auth()
+
 	// index
-	m.Get("/", routes.Index)
+	m.Get("/", auth, routes.Index)
+	m.Get("/login", routes.Index)
+	m.Post("/login", login.LoginPost)
 
 	var err error
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
