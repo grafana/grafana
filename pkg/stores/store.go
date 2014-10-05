@@ -1,10 +1,6 @@
 package stores
 
-import (
-	"errors"
-
-	"github.com/torkelo/grafana-pro/pkg/models"
-)
+import "github.com/torkelo/grafana-pro/pkg/models"
 
 type Store interface {
 	GetDashboard(slug string, accountId int) (*models.Dashboard, error)
@@ -18,11 +14,6 @@ type Store interface {
 	GetOtherAccountsFor(accountId int) ([]*models.OtherAccount, error)
 	Close()
 }
-
-// Typed errors
-var (
-	ErrAccountNotFound = errors.New("Account not found")
-)
 
 func New() Store {
 	return NewRethinkStore(&RethinkCfg{DatabaseName: "grafana"})
