@@ -224,7 +224,7 @@ function (angular, _, config, kbn, moment) {
       var endsInOpen = function(string, opener, closer) {
         var character;
         var count = 0;
-        for (var i=0; i<string.length; i++) {
+        for (var i = 0, len = string.length; i < len; i++) {
           character = string[i];
 
           if (character === opener) {
@@ -279,18 +279,20 @@ function (angular, _, config, kbn, moment) {
             return { dashboards: [], tags: [] };
           }
 
-          var hits = { dashboards: [], tags: results.facets.tags.terms || [] };
+          var resultsHits = results.hits;
+          var displayHits = { dashboards: [], tags: results.facets.tags.terms || [] };
 
-          for (var i = 0; i < results.hits.hits.length; i++) {
-            hits.dashboards.push({
-              id: results.hits.hits[i]._id,
-              title: results.hits.hits[i]._source.title,
-              tags: results.hits.hits[i]._source.tags
+          for (var i = 0, len = resultsHits.total; i < len; i++) {
+            var hit = resultsHits.hits[i];
+            displayHits.dashboards.push({
+              id: hit._id,
+              title: hit._source.title,
+              tags: hit._source.tags
             });
           }
 
-          hits.tagsOnly = tagsOnly;
-          return hits;
+          displayHits.tagsOnly = tagsOnly;
+          return displayHits;
         });
     };
 
