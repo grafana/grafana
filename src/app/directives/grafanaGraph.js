@@ -105,7 +105,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
         function updateLegendValues(plot) {
           var yaxis = plot.getYAxes();
-          console.log("value");
 
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
@@ -113,7 +112,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
             series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
           }
-
         }
 
         // Function for rendering panel
@@ -417,7 +415,9 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           elem.html('<img src="' + url + '"></img>');
         }
 
-        new GraphTooltip(elem, dashboard, scope);
+        new GraphTooltip(elem, dashboard, scope, function() {
+          return data;
+        });
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {

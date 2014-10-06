@@ -5,15 +5,11 @@ define([
 function (_, kbn) {
   'use strict';
 
-  function defaultValueFormater(value) {
-    return kbn.valueFormats.none(value, 2, 2);
-  }
-
   function TimeSeries(opts) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
-    this.valueFormater = defaultValueFormater;
+    this.valueFormater = kbn.valueFormats.none;
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -113,14 +109,19 @@ function (_, kbn) {
   };
 
   TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
-    this.valueFormater = function(value) {
-      return formater(value, decimals, scaledDecimals);
-    };
-    this.info.avg = this.valueFormater(this.info.avg);
-    this.info.current = this.valueFormater(this.info.current);
-    this.info.min = this.valueFormater(this.info.min);
-    this.info.max = this.valueFormater(this.info.max);
-    this.info.total = this.valueFormater(this.info.total);
+    this.valueFormater = formater;
+    this.decimals = decimals;
+    this.scaledDecimals = scaledDecimals;
+
+    this.info.avg = this.formatValue(this.info.avg);
+    this.info.current = this.formatValue(this.info.current);
+    this.info.min = this.formatValue(this.info.min);
+    this.info.max = this.formatValue(this.info.max);
+    this.info.total = this.formatValue(this.info.total);
+  };
+
+  TimeSeries.prototype.formatValue = function(value) {
+    return this.valueFormater(value, this.decimals, this.scaledDecimals);
   };
 
   return TimeSeries;
