@@ -111,6 +111,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var axis = yaxis[series.yaxis - 1];
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
             series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
+            if(!scope.$$phase) { scope.$digest(); }
           }
         }
 
