@@ -4,7 +4,7 @@ define([
 function ($) {
   'use strict';
 
-  function GraphTooltip(elem, dashboard, scope) {
+  function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
 
     var $tooltip = $('<div id="tooltip">');
@@ -38,7 +38,7 @@ function ($) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, seriesInfo, i, series, hoverIndex;
+      var value, i, series, hoverIndex;
       var results = [];
 
       var pointCount = seriesList[0].data.length;
@@ -62,7 +62,6 @@ function ($) {
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
-        seriesInfo = series.info;
 
         if (scope.panel.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
@@ -113,7 +112,8 @@ function ($) {
 
     elem.bind("plothover", function (event, pos, item) {
       var plot = elem.data().plot;
-      var data = plot.getData();
+      var plotData = plot.getData();
+      var seriesList = getSeriesFn();
       var group, value, timestamp, hoverInfo, i, series, seriesHtml;
 
       if(dashboard.sharedCrosshair){
@@ -123,7 +123,7 @@ function ($) {
       if (scope.panel.tooltip.shared) {
         plot.unhighlight();
 
-        var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(data, pos);
+        var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
         if (seriesHoverInfo.pointCountMismatch) {
           self.showTooltip('Shared tooltip error', '<ul>' +
             '<li>Series point counts are not the same</li>' +
@@ -136,9 +136,9 @@ function ($) {
         timestamp = dashboard.formatDate(seriesHoverInfo.time);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
-          series = data[i];
+          series = seriesList[i];
           hoverInfo = seriesHoverInfo[i];
-          value = series.valueFormater(hoverInfo.value);
+          value = series.formatValue(hoverInfo.value);
 
           group = '<i class="icon-minus" style="color:' + series.color +';"></i> ' + series.label;
           seriesHtml = group + ': <span class="graph-tooltip-value">' + value + '</span><br>' + seriesHtml;
@@ -159,7 +159,7 @@ function ($) {
           value = item.datapoint[1];
         }
 
-        value = series.valueFormater(value);
+        value = series.formatValue(value);
         timestamp = dashboard.formatDate(item.datapoint[0]);
         group += ': <span class="graph-tooltip-value">' + value + '</span>';
 
