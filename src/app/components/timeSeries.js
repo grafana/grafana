@@ -5,10 +5,15 @@ define([
 function (_, kbn) {
   'use strict';
 
+  function defaultValueFormater(value) {
+    return kbn.valueFormats.none(value, 2, 2);
+  }
+
   function TimeSeries(opts) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
+    this.valueFormater = defaultValueFormater;
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -108,11 +113,14 @@ function (_, kbn) {
   };
 
   TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
-    this.info.avg = this.info.avg != null ? formater(this.info.avg, decimals, scaledDecimals) : null;
-    this.info.current = this.info.current != null ? formater(this.info.current, decimals, scaledDecimals) : null;
-    this.info.min = this.info.min != null ? formater(this.info.min, decimals, scaledDecimals) : null;
-    this.info.max = this.info.max != null ? formater(this.info.max, decimals, scaledDecimals) : null;
-    this.info.total = this.info.total != null ? formater(this.info.total, decimals, scaledDecimals) : null;
+    this.valueFormater = function(value) {
+      return formater(value, decimals, scaledDecimals);
+    };
+    this.info.avg = this.valueFormater(this.info.avg);
+    this.info.current = this.valueFormater(this.info.current);
+    this.info.min = this.valueFormater(this.info.min);
+    this.info.max = this.valueFormater(this.info.max);
+    this.info.total = this.valueFormater(this.info.total);
   };
 
   return TimeSeries;
