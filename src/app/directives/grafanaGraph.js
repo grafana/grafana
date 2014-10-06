@@ -6,7 +6,7 @@ define([
   'lodash',
   './grafanaGraph.tooltip'
 ],
-function (angular, $, kbn, moment, _, graphTooltip) {
+function (angular, $, kbn, moment, _, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -105,6 +105,7 @@ function (angular, $, kbn, moment, _, graphTooltip) {
 
         function updateLegendValues(plot) {
           var yaxis = plot.getYAxes();
+          console.log("value");
 
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
@@ -416,7 +417,7 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           elem.html('<img src="' + url + '"></img>');
         }
 
-        graphTooltip.register(elem, dashboard, scope, $rootScope);
+        new GraphTooltip(elem, dashboard, scope);
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {

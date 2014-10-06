@@ -244,7 +244,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
 
       var seriesInfo = {
         alias: alias,
-        color:  color,
+        color: color,
       };
 
       $scope.legend.push(seriesInfo);

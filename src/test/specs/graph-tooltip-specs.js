@@ -1,55 +1,93 @@
 define([
   'jquery',
   'directives/grafanaGraph.tooltip'
-], function($, tooltip) {
+], function($, GraphTooltip) {
   'use strict';
 
-  describe('graph tooltip', function() {
-    var elem = $('<div></div>');
-    var dashboard = {
-      formatDate: sinon.stub().returns('date'),
-    };
-    var scope =  {
-      appEvent: sinon.spy(),
-      onAppEvent: sinon.spy(),
-      panel: {
-        tooltip:  {
-          shared: true
-        },
-        y_formats: ['ms', 'none'],
-        stack: true
-      }
-    };
+  var scope =  {
+    appEvent: sinon.spy(),
+    onAppEvent: sinon.spy(),
+  };
 
-    var data = [
-      {
-        data: [[10,10], [12,20]],
-        info: { yaxis: 1 },
-        yaxis: { tickDecimals: 2 },
+  var elem = $('<div></div>');
+  var dashboard = { };
+
+  function describeSharedTooltip(desc, fn) {
+    var ctx = {};
+    ctx.scope = scope;
+    ctx.scope.panel =  {
+      tooltip:  {
+        shared: true
       },
-      {
-        data: [[10,10], [12,20]],
-        info: { yaxis: 1 },
-        yaxis: { tickDecimals: 2 },
-      }
-    ];
-
-    var plot = {
-      getData: sinon.stub().returns(data),
-      highlight: sinon.stub(),
-      unhighlight: sinon.stub()
+      stack: false
     };
 
-    elem.data('plot', plot);
+    ctx.setup = function(setupFn) {
+      ctx.setupFn = setupFn;
+    };
 
-    beforeEach(function() {
-      tooltip.register(elem, dashboard, scope);
-      elem.trigger('plothover', [{}, {x: 13}, {}]);
+    describe(desc, function() {
+      beforeEach(function() {
+        ctx.setupFn();
+        var tooltip = new GraphTooltip(elem, dashboard, scope);
+        ctx.results = tooltip.getMultiSeriesPlotHoverInfo(ctx.data, ctx.pos);
+      });
+
+      fn(ctx);
+    });
+  }
+
+  describeSharedTooltip("steppedLine false, stack false", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [[10, 2], [12, 3]], }
+      ];
+      ctx.pos = { x: 11 };
     });
 
-    it('should add tooltip', function() {
-      var tooltipHtml = $(".graph-tooltip").text();
-      expect(tooltipHtml).to.be('date  : 40.00 ms : 20.00 ms');
+    it('should return 2 series', function() {
+      expect(ctx.results.length).to.be(2);
+    });
+    it('should add time to results array', function() {
+      expect(ctx.results.time).to.be(10);
+    });
+    it('should set value and hoverIndex', function() {
+      expect(ctx.results[0].value).to.be(15);
+      expect(ctx.results[1].value).to.be(2);
+      expect(ctx.results[0].hoverIndex).to.be(0);
+    });
+  });
+
+  describeSharedTooltip("steppedLine false, stack true, individual false", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [[10, 2], [12, 3]], }
+      ];
+      ctx.scope.panel.stack = true;
+      ctx.pos = { x: 11 };
+    });
+
+    it('should show stacked value', function() {
+      expect(ctx.results[1].value).to.be(17);
+    });
+
+  });
+
+  describeSharedTooltip("steppedLine false, stack true, individual true", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [[10, 2], [12, 3]], }
+      ];
+      ctx.scope.panel.stack = true;
+      ctx.scope.panel.tooltip.value_type = 'individual';
+      ctx.pos = { x: 11 };
+    });
+
+    it('should not show stacked value', function() {
+      expect(ctx.results[1].value).to.be(2);
     });
 
   });
