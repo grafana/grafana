@@ -1,28 +1,20 @@
 <section class="graph-legend" ng-class="{'graph-legend-table': panel.legend.alignAsTable}">
 
-  <div class="graph-legend-series"
-       ng-repeat='series in legend'
-       ng-class="{'pull-right': series.yaxis === 2, 'graph-legend-series-hidden': hiddenSeries[series.alias]}"
-       >
+  <div class="graph-legend-series" ng-repeat='series in legend'
+       ng-class="{'pull-right': series.yaxis === 2, 'graph-legend-series-hidden': hiddenSeries[series.alias]}">
     <div class="graph-legend-icon">
-      <i class='icon-minus pointer' ng-style="{color: series.color}" bs-popover="'colorPopup.html'" data-placement="bottom">
-      </i>
+      <i class='icon-minus pointer' ng-style="{color: series.color}" bs-popover="'colorPopup.html'" data-placement="bottom"></i>
     </div>
     <div class="graph-legend-alias small">
       <a ng-click="toggleSeries(series, $event)" data-unique="1" data-placement="{{series.yaxis === 2 ? 'bottomRight' : 'bottomLeft'}}">
         {{series.alias}}
       </a>
     </div>
-    <div class="graph-legend-value current small" ng-show="panel.legend.values && panel.legend.current" ng-bind="series.current">
-    </div>
-    <div class="graph-legend-value min small" ng-show="panel.legend.values && panel.legend.min" ng-bind="series.min">
-    </div>
-    <div class="graph-legend-value max small" ng-show="panel.legend.values && panel.legend.max" ng-bind="series.max">
-    </div>
-    <div class="graph-legend-value total small" ng-show="panel.legend.values && panel.legend.total" ng-bind="series.total">
-    </div>
-    <div class="graph-legend-value avg small" ng-show="panel.legend.values && panel.legend.avg" ng-bind="series.avg">
-    </div>
+    <div class="graph-legend-value current small" ng-show="panel.legend.values && panel.legend.current" ng-bind="series.current"></div>
+    <div class="graph-legend-value min small" ng-show="panel.legend.values && panel.legend.min" ng-bind="series.min"></div>
+    <div class="graph-legend-value max small" ng-show="panel.legend.values && panel.legend.max" ng-bind="series.max"></div>
+    <div class="graph-legend-value total small" ng-show="panel.legend.values && panel.legend.total" ng-bind="series.total"></div>
+    <div class="graph-legend-value avg small" ng-show="panel.legend.values && panel.legend.avg" ng-bind="series.avg"></div>
   </div>
 
 </section>
