@@ -34,6 +34,11 @@ func Init() {
 
 	models.GetAccount = GetAccount
 	models.GetAccountByLogin = GetAccountByLogin
+
+	models.GetDashboard = GetDashboard
+	models.SearchQuery = SearchQuery
+	models.DeleteDashboard = DeleteDashboard
+	models.SaveDashboard = SaveDashboard
 }
 
 func createRethinkDBTablesAndIndices() {

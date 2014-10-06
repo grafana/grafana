@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+var (
+	GetDashboard    func(slug string, accountId int) (*Dashboard, error)
+	SaveDashboard   func(dash *Dashboard) error
+	DeleteDashboard func(slug string, accountId int) error
+	SearchQuery     func(query string, acccountId int) ([]*SearchResult, error)
+)
+
 type Dashboard struct {
 	Id                   string `gorethink:"id,omitempty"`
 	Slug                 string
