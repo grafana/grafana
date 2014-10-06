@@ -34,3 +34,9 @@ func getGravatarUrl(text string) string {
 	hasher.Write([]byte(strings.ToLower(text)))
 	return fmt.Sprintf("https://secure.gravatar.com/avatar/%x?s=90&default=mm", hasher.Sum(nil))
 }
+
+type SaveDashboardCommand struct {
+	Id        string                 `json:"id"`
+	Title     string                 `json:"title"`
+	Dashboard map[string]interface{} `json:"dashboard"`
+}

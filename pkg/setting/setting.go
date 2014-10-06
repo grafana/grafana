@@ -58,6 +58,10 @@ var (
 	ProdMode     bool
 	RunUser      string
 	IsWindows    bool
+
+	// PhantomJs Rendering
+	ImagesDir  string
+	PhantomDir string
 )
 
 func init() {
@@ -140,6 +144,10 @@ func NewConfigContext() {
 
 	StaticRootPath = Cfg.MustValue("server", "static_root_path", workDir)
 	RouterLogging = Cfg.MustBool("server", "router_logging", false)
+
+	// PhantomJS rendering
+	ImagesDir = "data/png"
+	PhantomDir = "_vendor/phantomjs"
 }
 
 func initSessionService() {

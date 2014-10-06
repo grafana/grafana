@@ -15,7 +15,6 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/routes"
-	"github.com/torkelo/grafana-pro/pkg/routes/login"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/stores/rethink"
 )
@@ -70,13 +69,7 @@ func runWeb(*cli.Context) {
 	log.Info("Starting Grafana-Pro v.1-alpha")
 
 	m := newMacaron()
-
-	auth := middleware.Auth()
-
-	// index
-	m.Get("/", auth, routes.Index)
-	m.Get("/login", routes.Index)
-	m.Post("/login", login.LoginPost)
+	routes.Register(m)
 
 	var err error
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
