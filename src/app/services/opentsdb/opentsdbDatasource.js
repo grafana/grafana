@@ -144,6 +144,14 @@ function (angular, _, kbn) {
 
       query.tags = angular.copy(target.tags);
 
+      // Issue #560
+      // `angular.copy` doesn't work, let's copy a single tag
+      // this way.
+      if (target.currentTagKey) {
+        query.tags = {};
+        query.tags[target.currentTagKey] = target.currentTagValue;
+      }
+
       return query;
     }
 
