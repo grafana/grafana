@@ -20,7 +20,18 @@ function ($, kbn) {
       }
     });
 
-    function findHoverIndex(posX, series) {
+    function findHoverIndexFromDataPoints(posX, series,last) {
+      var ps=series.datapoints.pointsize;
+      var initial=last*ps;
+      for (var j = initial; j < series.datapoints.points.length; j+=ps) {
+        if (series.datapoints.points[j] > posX) {
+          return Math.max(j - ps,  0)/ps;
+        }
+      }
+      return j/ps - 1;
+    }
+
+    function findHoverIndexFromData(posX, series) {
       for (var j = 0; j < series.data.length; j++) {
         if (series.data[j][0] > posX) {
           return Math.max(j - 1,  0);
@@ -62,20 +73,23 @@ function ($, kbn) {
 
         seriesHtml = '';
         series = data[0];
-        hoverIndex = findHoverIndex(pos.x, series);
+        hoverIndex = findHoverIndexFromData(pos.x, series);
+        var lasthoverIndex=0;
+        if(!scope.panel.steppedLine) {
+          lasthoverIndex=hoverIndex;
+        }
 
         //now we know the current X (j) position for X and Y values
         timestamp = dashboard.formatDate(series.data[hoverIndex][0]);
         var last_value = 0; //needed for stacked values
 
-        for (i = data.length-1; i >= 0; --i) {
-          //stacked values should be added in reverse order
+        for (i = 0; i < data.length; i++) {
           series = data[i];
           seriesInfo = series.info;
           format = scope.panel.y_formats[seriesInfo.yaxis - 1];
 
           if (scope.panel.stack) {
-            if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
+            if (scope.panel.tooltip.value_type === 'individual') {
               value = series.data[hoverIndex][1];
             } else {
               last_value += series.data[hoverIndex][1];
@@ -96,7 +110,25 @@ function ($, kbn) {
           //pre-pending new values
           seriesHtml = group + ': <span class="graph-tooltip-value">' + value + '</span><br>' + seriesHtml;
 
-          plot.highlight(i, hoverIndex);
+          //Highlighting multiple Points depending on the plot type
+          if (scope.panel.steppedLine || (scope.panel.stack && scope.panel.nullPointMode == "null")) {
+            //stacked and steppedLine plots can have series with different length.
+            //Stacked series can increase its length  on each new stacked serie if null points found,
+            //to speed the index search we begin always on the las found hoverIndex.
+            var newhoverIndex=findHoverIndexFromDataPoints(pos.x, series,lasthoverIndex);
+            //update lasthoverIndex depends also on the plot type.
+            if(!scope.panel.steppedLine) {
+              //on stacked graphs new will be always greater than last
+              lasthoverIndex=newhoverIndex;
+            } else {
+              //if steppeLine, not always series increases its length, so we should begin
+              //to search correct index from the original hoverIndex on each serie.
+              lasthoverIndex=hoverIndex;
+            }
+            plot.highlight(i, newhoverIndex);
+          } else {
+            plot.highlight(i, hoverIndex);
+          }
         }
 
         showTooltip(timestamp, seriesHtml, pos);
