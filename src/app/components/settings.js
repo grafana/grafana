@@ -20,7 +20,7 @@ function (_, crypto) {
       default_route                 : '/dashboard/file/default.json',
       playlist_timespan             : "1m",
       unsaved_changes_warning       : true,
-      search                        : { max_results: 16 },
+      search                        : { max_results: 100 },
       admin                         : {}
     };
 
