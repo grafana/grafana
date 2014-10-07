@@ -27,7 +27,7 @@ func Register(m *macaron.Macaron) {
 	m.Delete("/api/dashboard/:slug", auth, api.DeleteDashboard)
 
 	// rendering
-	m.Get("/render/*url", auth, api.RenderToPng)
+	m.Get("/render/*", auth, api.RenderToPng)
 }
 
 func Index(ctx *middleware.Context) {
