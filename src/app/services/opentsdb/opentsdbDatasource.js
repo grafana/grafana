@@ -41,9 +41,12 @@ function (angular, _, kbn) {
       return this.performTimeSeriesQuery(queries, start, end)
         .then(_.bind(function(response) {
           var result = _.map(response.data, _.bind(function(metricData, index) {
+            if (this.targets[index]) {
+              this.aggregateTags[this.targets[index].metric] = metricData.aggregateTags.concat(Object.keys(metricData.tags));
+            }
             return transformMetricData(metricData, groupByTags, this.targets[index]);
           }, this));
-          return { data: result };
+              return { data: result };
         }, options));
     };
 
@@ -133,9 +136,20 @@ function (angular, _, kbn) {
 
       if (target.shouldComputeRate) {
         query.rate = true;
-        query.rateOptions = {
-          counter: !!target.isCounter
-        };
+
+        if (target.isCounter) {
+          query.rateOptions = {
+            counter: !!target.isCounter,
+          };
+
+          if (target.resetValue) {
+            query.rateOptions.resetValue = target.resetValue;
+          }
+
+          if (target.counterMax) {
+            query.rateOptions.counterMax = target.counterMax;
+          }
+        }
       }
 
       if (target.shouldDownsample) {

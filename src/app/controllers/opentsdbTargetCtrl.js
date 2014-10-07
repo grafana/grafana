@@ -49,9 +49,8 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'tagk')
-        .then(callback);
+
+      callback($scope.panel.aggregateTags[$scope.target.metric]);
     };
 
     $scope.suggestTagValues = function(query, callback) {

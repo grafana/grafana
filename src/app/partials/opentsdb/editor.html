@@ -4,7 +4,7 @@
         ng-class="{'grafana-target-hidden': target.hide}"
         ng-controller="OpenTSDBTargetCtrl"
         ng-init="init()">
-
+    <input type="hidden" ng-class="aggregateTags">
     <div class="grafana-target-inner-wrapper">
       <div class="grafana-target-inner">
         <ul class="grafana-target-controls">
@@ -141,7 +141,50 @@
                     ng-change="targetBlur()">
             </select>
           </li>
+          <li class="grafana-target-segment">
+              Rate:
+              <input type="checkbox"
+                     class="grafana-target-option-checkbox"
+                     ng-model="target.shouldComputeRate"
+                     ng-change="targetBlur()"
+                     >
+          </li>
+          <li class="grafana-target-segment" ng-hide="!target.shouldComputeRate">
+            Counter:
+            <input type="checkbox"
+                   class="grafana-target-option-checkbox"
+                   ng-disabled="!target.shouldComputeRate"
+                   ng-model="target.isCounter"
+                   ng-change="targetBlur()">
+          </li>          
+          
+            <li ng-hide="!target.isCounter">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-disabled="!target.isCounter"
+                   ng-model="target.resetValue"
+                   ng-change="targetBlur()"
+                   placeholder="reset value"
+                   >
+          </li>
 
+        
+          <li ng-hide="!target.isCounter">
+            <input type="text"
+                   class="input-small grafana-target-segment-input"
+                   ng-disabled="!target.isCounter"
+                   ng-model="target.counterMax"
+                   ng-change="targetBlur()"
+                   placeholder="counter max"
+                   >
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      
+
+      <div class="grafana-target-inner">
+        <ul class="grafana-segment-list" role="menu">
           <li class="grafana-target-segment">
               Tags:
           </li>
