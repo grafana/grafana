@@ -3,6 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
 
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
@@ -52,7 +53,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 		ctx.Data["Title"] = "Internal Server Error"
 	}
 
-	ctx.HTML(status, "index")
+	ctx.HTML(status, strconv.Itoa(status))
 }
 
 func (ctx *Context) JsonApiErr(status int, message string, err error) {

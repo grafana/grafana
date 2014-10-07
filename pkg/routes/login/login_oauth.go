@@ -13,14 +13,14 @@ import (
 
 func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService == nil {
-		ctx.Handle(404, "social.SocialSignIn(oauth service not enabled)", nil)
+		ctx.Handle(404, "login.OAuthLogin(oauth service not enabled)", nil)
 		return
 	}
 
 	name := ctx.Params(":name")
 	connect, ok := social.SocialMap[name]
 	if !ok {
-		ctx.Handle(404, "social.SocialSignIn(social login not enabled)", errors.New(name))
+		ctx.Handle(404, "login.OAuthLogin(social login not enabled)", errors.New(name))
 		return
 	}
 
@@ -29,23 +29,24 @@ func OAuthLogin(ctx *middleware.Context) {
 		ctx.Redirect(connect.AuthCodeURL("", "online", "auto"))
 		return
 	}
+	log.Info("code: %v", code)
 
 	// handle call back
 	transport, err := connect.NewTransportWithCode(code)
 	if err != nil {
-		ctx.Handle(500, "social.SocialSignIn(NewTransportWithCode)", err)
+		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
 	}
 
-	log.Trace("social.SocialSignIn(Got token)")
+	log.Trace("login.OAuthLogin(Got token)")
 
 	userInfo, err := connect.UserInfo(transport)
 	if err != nil {
-		ctx.Handle(500, fmt.Sprintf("social.SocialSignIn(get info from %s)", name), err)
+		ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		return
 	}
 
-	log.Info("social.SocialSignIn(social login): %s", userInfo)
+	log.Info("login.OAuthLogin(social login): %s", userInfo)
 
 	account, err := models.GetAccountByLogin(userInfo.Email)
 

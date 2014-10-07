@@ -29,20 +29,17 @@ type SocialConnector interface {
 }
 
 var (
-	SocialBaseUrl = "/login"
+	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
 )
 
-func NewOauthService() {
+func NewOAuthService() {
 	if !setting.Cfg.MustBool("oauth", "enabled") {
 		return
 	}
 
-	var err error
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-
-	socialConfigs := make(map[string]*oauth2.Config)
 
 	allOauthes := []string{"github", "google", "twitter"}
 
@@ -50,10 +47,15 @@ func NewOauthService() {
 	for _, name := range allOauthes {
 		info := &setting.OAuthInfo{
 			ClientId:     setting.Cfg.MustValue("oauth."+name, "client_id"),
-			ClientSecret: setting.Cfg.MustValue("oauth."+name, "client_secrect"),
+			ClientSecret: setting.Cfg.MustValue("oauth."+name, "client_secret"),
 			Scopes:       setting.Cfg.MustValueArray("oauth."+name, "scopes", " "),
 			AuthUrl:      setting.Cfg.MustValue("oauth."+name, "auth_url"),
 			TokenUrl:     setting.Cfg.MustValue("oauth."+name, "token_url"),
+			Enabled:      setting.Cfg.MustBool("oauth."+name, "enabled"),
+		}
+
+		if !info.Enabled {
+			continue
 		}
 
 		opts := &oauth2.Options{
@@ -64,26 +66,24 @@ func NewOauthService() {
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
-		socialConfigs[name], err = oauth2.NewConfig(opts, info.AuthUrl, info.TokenUrl)
+		config, err := oauth2.NewConfig(opts, info.AuthUrl, info.TokenUrl)
+
 		if err != nil {
-			log.Error(4, "Failed to init oauth service", err)
+			log.Error(3, "Failed to init oauth service", err)
+			continue
 		}
-	}
 
-	enabledOauths := make([]string, 0, 10)
+		// GitHub.
+		if name == "github" {
+			setting.OAuthService.GitHub = true
+			SocialMap["github"] = &SocialGithub{Config: config}
+		}
 
-	// GitHub.
-	if setting.Cfg.MustBool("oauth.github", "enabled") {
-		setting.OAuthService.GitHub = true
-		newGitHubOAuth(socialConfigs["github"])
-		enabledOauths = append(enabledOauths, "GitHub")
-	}
-
-	// Google.
-	if setting.Cfg.MustBool("oauth.google", "enabled") {
-		setting.OAuthService.Google = true
-		newGoogleOAuth(socialConfigs["google"])
-		enabledOauths = append(enabledOauths, "Google")
+		// Google.
+		if name == "google" {
+			setting.OAuthService.Google = true
+			SocialMap["google"] = &SocialGoogle{Config: config}
+		}
 	}
 }
 
@@ -93,12 +93,6 @@ type SocialGithub struct {
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
-}
-
-func newGitHubOAuth(config *oauth2.Config) {
-	SocialMap["github"] = &SocialGithub{
-		Config: config,
-	}
 }
 
 func (s *SocialGithub) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error) {
@@ -141,12 +135,6 @@ type SocialGoogle struct {
 
 func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
-}
-
-func newGoogleOAuth(config *oauth2.Config) {
-	SocialMap["google"] = &SocialGoogle{
-		Config: config,
-	}
 }
 
 func (s *SocialGoogle) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error) {
