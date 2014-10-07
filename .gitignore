@@ -13,3 +13,5 @@ config.js
 *.sublime-workspace
 *.swp
 .idea/
+
+data/sessions

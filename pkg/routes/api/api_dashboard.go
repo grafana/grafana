@@ -13,7 +13,7 @@ func GetDashboard(c *middleware.Context) {
 
 	dash, err := models.GetDashboard(slug, c.GetAccountId())
 	if err != nil {
-		c.ApiError(404, "Dashboard not found", nil)
+		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
@@ -27,13 +27,13 @@ func DeleteDashboard(c *middleware.Context) {
 
 	dash, err := models.GetDashboard(slug, c.GetAccountId())
 	if err != nil {
-		c.ApiError(404, "Dashboard not found", nil)
+		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
 	err = models.DeleteDashboard(slug, c.GetAccountId())
 	if err != nil {
-		c.ApiError(500, "Failed to delete dashboard", err)
+		c.JsonApiErr(500, "Failed to delete dashboard", err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func Search(c *middleware.Context) {
 
 	results, err := models.SearchQuery(query, c.GetAccountId())
 	if err != nil {
-		c.ApiError(500, "Search failed", err)
+		c.JsonApiErr(500, "Search failed", err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func PostDashboard(c *middleware.Context) {
 	var command apimodel.SaveDashboardCommand
 
 	if !c.JsonBody(&command) {
-		c.ApiError(400, "bad request", nil)
+		c.JsonApiErr(400, "bad request", nil)
 		return
 	}
 
@@ -74,7 +74,7 @@ func PostDashboard(c *middleware.Context) {
 
 	err := models.SaveDashboard(dashboard)
 	if err != nil {
-		c.ApiError(500, "Failed to save dashboard", err)
+		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
 

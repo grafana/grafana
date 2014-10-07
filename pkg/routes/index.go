@@ -16,8 +16,9 @@ func Register(m *macaron.Macaron) {
 	m.Post("/logout", login.LogoutPost)
 	m.Post("/login", login.LoginPost)
 
-	// no auth
+	// login
 	m.Get("/login", Index)
+	m.Get("/login/:name", login.OAuthLogin)
 
 	// dashboards
 	m.Get("/dashboard/*", auth, Index)

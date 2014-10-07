@@ -55,7 +55,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	ctx.HTML(status, "index")
 }
 
-func (ctx *Context) ApiError(status int, message string, err error) {
+func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 
 	if err != nil {
