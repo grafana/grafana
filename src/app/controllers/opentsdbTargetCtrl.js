@@ -12,7 +12,7 @@ function (angular, _, kbn) {
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
-      $scope.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
+      $scope.aggregators = ['count', 'avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
 
       if (!$scope.target.aggregator) {
         $scope.target.aggregator = 'sum';

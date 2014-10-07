@@ -74,22 +74,6 @@
           </li>
 
           <li class="grafana-target-segment">
-              Rate:
-              <input type="checkbox"
-                     class="grafana-target-option-checkbox"
-                     ng-model="target.shouldComputeRate"
-                     ng-change="targetBlur()"
-                     >
-          </li>
-          <li class="grafana-target-segment" ng-hide="!target.shouldComputeRate">
-            Counter:
-            <input type="checkbox"
-                   class="grafana-target-option-checkbox"
-                   ng-disabled="!target.shouldComputeRate"
-                   ng-model="target.isCounter"
-                   ng-change="targetBlur()">
-          </li>
-          <li class="grafana-target-segment">
             Alias:
           </li>
 					<li>
