@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/torkelo/grafana-pro/pkg/components/renderer"
@@ -14,17 +15,18 @@ func RenderToPng(c *middleware.Context) {
 	queryParams := "?render&accountId=" + strconv.Itoa(accountId) + "&" + c.Req.URL.RawQuery
 
 	renderOpts := &renderer.RenderOpts{
-		Url:    c.Params("url") + queryParams,
+		Url:    c.Params("*") + queryParams,
 		Width:  queryReader.Get("width", "800"),
 		Height: queryReader.Get("height", "400"),
 	}
 
-	renderOpts.Url = "http://localhost:3000" + renderOpts.Url
+	renderOpts.Url = "http://localhost:3000/" + renderOpts.Url
 
 	pngPath, err := renderer.RenderToPng(renderOpts)
 	if err != nil {
 		c.HTML(500, "error.html", nil)
 	}
 
-	c.ServeFile(pngPath)
+	c.Resp.Header().Set("Content-Type", "image/png")
+	http.ServeFile(c.Resp, c.Req, pngPath)
 }
