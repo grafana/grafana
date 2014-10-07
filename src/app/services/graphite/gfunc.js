@@ -40,6 +40,13 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'perSecond',
+    category: categories.Transform,
+    params: [],
+    defaultParams: [],
+  });
+
+  addFuncDef({
     name: "holtWintersForecast",
     category: categories.Calculate,
   });
