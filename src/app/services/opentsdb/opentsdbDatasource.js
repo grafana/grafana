@@ -46,7 +46,7 @@ function (angular, _, kbn) {
             }
             return transformMetricData(metricData, groupByTags, this.targets[index]);
           }, this));
-              return { data: result };
+          return { data: result };
         }, options));
     };
 
