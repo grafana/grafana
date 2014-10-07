@@ -168,6 +168,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       aliasColors: {},
 
       seriesOverrides: [],
+
+      aggregateTags: {}
     };
 
     _.defaults($scope.panel,_d);
@@ -194,7 +196,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
-        cacheTimeout: $scope.panel.cacheTimeout
+        cacheTimeout: $scope.panel.cacheTimeout,
+        aggregateTags: $scope.panel.aggregateTags
       };
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
@@ -236,8 +239,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         });
     };
 
-    $scope.aggregateTags = $scope.aggregateTags || {} ;
-
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
@@ -248,9 +249,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         color:  color,
       };
 
-      if (!$scope.aggregateTags[seriesData.target]) {
-        $scope.aggregateTags[seriesData.target] = seriesData.aggregateTags;
-      }
       $scope.legend.push(seriesInfo);
 
       var series = new TimeSeries({

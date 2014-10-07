@@ -15,7 +15,6 @@ function (angular, _, kbn) {
       this.editorSrc = 'app/partials/opentsdb/editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
-      this.tagNames = [];
       this.supportMetrics = true;
     }
 
@@ -42,9 +41,12 @@ function (angular, _, kbn) {
       return this.performTimeSeriesQuery(queries, start, end)
         .then(_.bind(function(response) {
           var result = _.map(response.data, _.bind(function(metricData, index) {
+            if (this.targets[index]) {
+              this.aggregateTags[this.targets[index].metric] = metricData.aggregateTags.concat(Object.keys(metricData.tags));
+            }
             return transformMetricData(metricData, groupByTags, this.targets[index]);
           }, this));
-          return { data: result };
+              return { data: result };
         }, options));
     };
 
@@ -103,8 +105,7 @@ function (angular, _, kbn) {
         dps.push([v, k]);
       });
 
-      var candTags = md.aggregateTags.concat(Object.keys(md.tags));
-      return { target: metricLabel, datapoints: dps, aggregateTags: candTags };
+      return { target: metricLabel, datapoints: dps };
     }
 
     function createMetricLabel(metric, tagData, options) {
