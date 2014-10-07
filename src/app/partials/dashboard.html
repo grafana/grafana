@@ -14,7 +14,7 @@
 	<div class="main-view-container">
 		<div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
 			<div class="row-control">
-				<div class="row-control-inner" style="padding:0px;margin:0px;position:relative;">
+				<div class="row-control-inner">
 					<div class="row-close" ng-show="row.collapse" data-placement="bottom" >
 						<div class="row-close-buttons">
 							<span class="row-button bgPrimary" ng-click="toggle_row(row)">
