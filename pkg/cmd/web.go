@@ -16,6 +16,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/routes"
 	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/torkelo/grafana-pro/pkg/social"
 	"github.com/torkelo/grafana-pro/pkg/stores/rethink"
 )
 
@@ -65,6 +66,7 @@ func runWeb(*cli.Context) {
 	setting.NewConfigContext()
 	setting.InitServices()
 	rethink.Init()
+	social.NewOAuthService()
 
 	log.Info("Starting Grafana-Pro v.1-alpha")
 

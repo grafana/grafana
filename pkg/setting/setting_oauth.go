@@ -4,6 +4,7 @@ type OAuthInfo struct {
 	ClientId, ClientSecret string
 	Scopes                 []string
 	AuthUrl, TokenUrl      string
+	Enabled                bool
 }
 
 type OAuther struct {
