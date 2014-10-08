@@ -97,7 +97,7 @@ function (_, kbn) {
       result.push([currentTime * 1000, currentValue]);
     }
 
-    if (result.length > 2) {
+    if (result.length >= 2) {
       this.stats.timeStep = result[1][0] - result[0][0];
     }
 

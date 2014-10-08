@@ -126,6 +126,20 @@ define([
       });
     });
 
+    graphScenario('should use timeStep for barWidth', function(ctx) {
+      ctx.setup(function(scope, data) {
+        scope.panel.bars = true;
+        data[0] = new TimeSeries({
+          datapoints: [[1,10],[2,20]],
+          info: { alias: 'series1', enable: true }
+        });
+      });
+
+      it('should set barWidth', function() {
+        expect(ctx.plotOptions.series.bars.barWidth).to.be(10000/1.5);
+      });
+    });
+
     graphScenario('series option overrides, fill & points', function(ctx) {
       ctx.setup(function(scope, data) {
         scope.panel.lines = true;
