@@ -122,6 +122,11 @@ function (angular, $, _) {
             dismiss(2500);
           };
 
+          if ($scope.panelMeta.titlePos) {
+            elem.css('text-align', 'left');
+            $link.css('padding-left', '10px');
+          }
+
           elem.click(showMenu);
           $compile(elem.contents())($scope);
         }

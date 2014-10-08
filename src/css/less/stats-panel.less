@@ -1,0 +1,44 @@
+.stats-panel-value-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.stats-panel-value {
+  font-size: 3em;
+  font-weight: bold;
+}
+
+.stats-panel-func {
+  font-size: 1.5em;
+}
+
+.stats-panel-table {
+  width: 100%;
+  td {
+    padding: 5px 10px;
+    white-space: nowrap;
+    text-align: right;
+    border-bottom: 1px solid @grafanaListBorderBottom;
+  }
+
+  th {
+    text-align: right;
+    padding: 5px 10px;
+    font-weight: bold;
+    color: @blue
+  }
+
+  td:first-child {
+    text-align: left;
+  }
+
+  tr:nth-child(odd) td {
+    background-color: @grafanaListAccent;
+  }
+
+  tr:last-child td {
+    border: none;
+  }
+}
+
+

@@ -1,0 +1,51 @@
+<div ng-controller='StatsCtrl'>
+
+	<div class="stats-panel-value-container">
+		<span class="stats-panel-value">{{mainstat.value}}</span>
+		<span class="stats-panel-func">({{mainstat.func}})</span>
+	</div>
+
+	<table class="stats-panel-table">
+		<tr>
+			<th></th>
+			<th>avg</th>
+			<th>min</th>
+			<th>max</th>
+			<th>current</th>
+			<th>total</th>
+		</tr>
+		<tr class="stats-series-item" ng-repeat="series in series">
+			<td>
+				<i class='icon-minus pointer' ng-style="{color: series.color}"></i>
+				{{series.info.alias}}
+			</td>
+			<td>{{series.info.avg}}</td>
+			<td>{{series.info.min}}</td>
+			<td>{{series.info.max}}</td>
+			<td>{{series.info.current}}</td>
+			<td>{{series.info.total}}</td>
+		</tr>
+	</table>
+
+  <div class="clearfix"></div>
+
+	<div style="margin-top: 30px" ng-if="editMode">
+		<div class="dashboard-editor-header">
+			<div class="dashboard-editor-title">
+				<i class="icon icon-bar-chart"></i>
+			  Panel settings
+			</div>
+
+			<div ng-model="editor.index" bs-tabs>
+				<div ng-repeat="tab in editorTabs" data-title="{{tab}}">
+				</div>
+			</div>
+		</div>
+
+		<div class="dashboard-editor-body">
+			<div ng-repeat="tab in panelMeta.fullEditorTabs" ng-if="editorTabs[editor.index] == tab.title">
+				<div ng-include src="tab.src"></div>
+			</div>
+		</div>
+	</div>
+</div>

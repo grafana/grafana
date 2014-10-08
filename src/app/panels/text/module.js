@@ -29,7 +29,7 @@ function (angular, app, _, require) {
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
-      panelSrv.init(this);
+      panelSrv.init($scope);
       $scope.ready = false;
       $scope.$on('refresh', $scope.render);
       $scope.render();

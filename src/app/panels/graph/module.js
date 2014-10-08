@@ -27,7 +27,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
   module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
     $scope.panelMeta = {
-      modals : [],
       editorTabs: [],
       fullEditorTabs : [
         {
