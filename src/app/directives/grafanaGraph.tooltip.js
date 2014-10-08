@@ -161,7 +161,7 @@ function ($) {
 
         value = series.formatValue(value);
         timestamp = dashboard.formatDate(item.datapoint[0]);
-        group += ': <span class="graph-tooltip-value">' + value + '</span>';
+        group += ': <span class="graph-tooltip-value">' + value + '</span><br>';
 
         self.showTooltip(timestamp, group, pos);
       }
