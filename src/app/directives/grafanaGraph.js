@@ -68,7 +68,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
-            height = height - 32; // subtract panel title bar
+            height -= scope.panel.title ? 24 : 9; // subtract panel title bar
 
             if (scope.panel.legend.show && !scope.panel.legend.rightSide) {
               height = height - 21; // subtract one line legend

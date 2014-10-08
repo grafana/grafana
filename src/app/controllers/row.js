@@ -103,6 +103,7 @@ function (angular, app, _) {
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
 
       $scope.panel = {
+        title: 'no title [click here]',
         error   : false,
         span    : _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: true,
