@@ -184,8 +184,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             }
           }
 
-          if (data.length && data[0].info.timeStep) {
-            options.series.bars.barWidth = data[0].info.timeStep / 1.5;
+          if (data.length && data[0].stats.timeStep) {
+            options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
           }
 
           addTimeAxis(options);
