@@ -4,7 +4,7 @@ define([
   'kbn',
   'moment'
 ],
-function (angular, _, kbn, moment) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
