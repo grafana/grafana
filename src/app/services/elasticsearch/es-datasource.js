@@ -279,11 +279,11 @@ function (angular, _, config, kbn, moment) {
             return { dashboards: [], tags: [] };
           }
 
-          var resultsHits = results.hits;
+          var resultsHits = results.hits.hits;
           var displayHits = { dashboards: [], tags: results.facets.tags.terms || [] };
 
-          for (var i = 0, len = resultsHits.total; i < len; i++) {
-            var hit = resultsHits.hits[i];
+          for (var i = 0, len = resultsHits.length; i < len; i++) {
+            var hit = resultsHits[i];
             displayHits.dashboards.push({
               id: hit._id,
               title: hit._source.title,
