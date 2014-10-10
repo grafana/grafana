@@ -77,29 +77,25 @@
 				<div class="panels-wrapper" ng-if="!row.collapse">
 					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
 					</div>
-					<div class="panel-menu-container" data-menu-container>
-							<!-- <a class="pointer"><i class="icon&#45;eye&#45;open"></i> <span>view</span></a> -->
-							<!-- <a class="pointer"><i class="icon&#45;cog"></i> <span>edit</span></a> -->
-							<!-- <a class="pointer"><i class="icon&#45;resize&#45;horizontal"></i> <span>span</span></a> -->
-							<!-- <a class="pointer"><i class="icon&#45;copy"></i> <span>duplicate</span></a> -->
-							<!-- <a class="pointer"><i class="icon&#45;share"></i> <span>share</span></a> -->
-							<!-- <a class="pointer"><i class="icon&#45;remove"></i> <span>remove</span></a> -->
-					</div>
 
 					<!-- Panels -->
 					<div ng-repeat="(name, panel) in row.panels"
-						class="panel nospace"
-						style="position:relative"
-						data-drop="true"
-						panel-width
-						ng-model="panel"
-						data-jqyoui-options
-						jqyoui-droppable="{index:$index,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver(true)',onOut:'panelMoveOut'}"
-						ng-class="{'dragInProgress':dashboard.$$panelDragging}">
+						class="panel"
+						ui-draggable="true" drag="panel.id"
+						ui-on-Drop="onDrop($data, row, panel)"
+						drag-handle-class="drag-handle" panel-width ng-model="panel">
+
 						<grafana-panel type="panel.type" ng-cloak></grafana-panel>
 					</div>
 
-					<div panel-drop-zone class="panel dragInProgress" style="margin:5px;width:30%;background:rgba(100,100,100,0.50)" ng-style="{height:row.height}" data-drop="true" ng-model="row.panels" data-jqyoui-options jqyoui-droppable="{index:row.panels.length,mutate:false,onDrop:'panelMoveDrop',onOver:'panelMoveOver',onOut:'panelMoveOut'}">
+					<div panel-drop-zone class="panel panel-drop-zone"
+							 ui-on-drop="onDrop($data, row)"
+							 data-drop="true">
+							 <div class="panel-container" style="background: transparent">
+								 <div style="text-align: center">
+									 <em>Drop here</em>
+								 </div>
+							 </div>
 					</div>
 
 					<div class="clearfix"></div>

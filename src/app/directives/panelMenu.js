@@ -9,15 +9,7 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile) {
-      var linkTemplate = '<a class="panel-title">{{panel.title | interpolateTemplateVars}}</a>';
-      var moveAttributes = ' data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
-              ' jqyoui-draggable="{'+
-                'animate:false,'+
-                'mutate:false,'+
-                'index:{{$index}},'+
-                'onStart:\'panelMoveStart\','+
-                'onStop:\'panelMoveStop\''+
-                '}"  ng-model="panel" ';
+      var linkTemplate = '<a class="panel-title drag-handle">{{panel.title | interpolateTemplateVars}}</a>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
@@ -26,7 +18,6 @@ function (angular, $, _) {
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="icon-minus"></i></a>';
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="icon-plus"></i></a>';
         template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="icon-remove"></i></a>';
-        template += '<a class="panel-menu-icon pull-right" ' + moveAttributes + '><i class="icon-move"></i></a>';
         template += '<div class="clearfix"></div>';
         template += '</div>';
 

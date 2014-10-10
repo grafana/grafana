@@ -29,7 +29,6 @@ require.config({
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
     jquery:                   '../vendor/jquery/jquery-2.1.1.min',
-    'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
 
     'extend-jquery':          'components/extend-jquery',
 
@@ -76,7 +75,6 @@ require.config({
 
     // simple dependency declaration
     //
-    'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.events':   ['jquery', 'jquery.flot'],
@@ -86,7 +84,7 @@ require.config({
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
     'jquery.flot.crosshair':['jquery', 'jquery.flot'],
     'angular-cookies':      ['angular'],
-    'angular-dragdrop':     ['jquery','jquery-ui','angular'],
+    'angular-dragdrop':     ['jquery', 'angular'],
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],

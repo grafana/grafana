@@ -145,13 +145,18 @@ function (angular, app, _) {
 
   module.directive('panelDropZone', function() {
     return function(scope, element) {
-      scope.$watch('dashboard.$$panelDragging', function(newVal) {
-        if (newVal && scope.dashboard.rowSpan(scope.row) < 10) {
+      scope.$on("ANGULAR_DRAG_START", function() {
+        var dropZoneSpan = 12 - scope.dashboard.rowSpan(scope.row);
+
+        if (dropZoneSpan > 0) {
+          element.find('.panel-container').css('height', scope.row.height);
+          element[0].style.width = ((dropZoneSpan / 1.2) * 10) + '%';
           element.show();
         }
-        else {
-          element.hide();
-        }
+      });
+
+      scope.$on("ANGULAR_DRAG_END", function() {
+        element.hide();
       });
     };
   });

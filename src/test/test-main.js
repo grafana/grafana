@@ -32,8 +32,6 @@ require.config({
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
-    'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
-
     'extend-jquery':          'components/extend-jquery',
 
     'jquery.flot':            '../vendor/jquery/jquery.flot',
@@ -82,7 +80,7 @@ require.config({
 
     'angular-route':        ['angular'],
     'angular-cookies':      ['angular'],
-    'angular-dragdrop':     ['jquery','jquery-ui','angular'],
+    'angular-dragdrop':     ['jquery', 'angular'],
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],

@@ -18,7 +18,6 @@ function (angular, $, config, _) {
       templateValuesSrv,
       dashboardSrv,
       dashboardViewStateSrv,
-      panelMoveSrv,
       $timeout) {
 
     $scope.editor = { index: 0 };
@@ -51,7 +50,6 @@ function (angular, $, config, _) {
       // init services
       timeSrv.init($scope.dashboard);
       templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
-      panelMoveSrv.init($scope.dashboard, $scope);
 
       $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
@@ -126,6 +124,25 @@ function (angular, $, config, _) {
         $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
       }
       return $scope.editorTabs;
+    };
+
+    $scope.onDrop = function(panelId, row, dropTarget) {
+      var info = $scope.dashboard.getPanelInfoById(panelId);
+      if (dropTarget) {
+        var dropInfo = $scope.dashboard.getPanelInfoById(dropTarget.id);
+        dropInfo.row.panels[dropInfo.index] = info.panel;
+        info.row.panels[info.index] = dropTarget;
+        var dragSpan = info.panel.span;
+        info.panel.span = dropTarget.span;
+        dropTarget.span = dragSpan;
+      }
+      else {
+        info.row.panels.splice(info.index, 1);
+        info.panel.span = 12 - $scope.dashboard.rowSpan(row);
+        row.panels.push(info.panel);
+      }
+
+      $rootScope.$broadcast('render');
     };
 
   });
