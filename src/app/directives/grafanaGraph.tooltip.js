@@ -120,6 +120,10 @@ function ($) {
         scope.appEvent('setCrosshair',  { pos: pos, scope: scope });
       }
 
+      if (seriesList.length === 0) {
+        return;
+      }
+
       if (scope.panel.tooltip.shared) {
         plot.unhighlight();
 
