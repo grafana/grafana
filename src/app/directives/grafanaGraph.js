@@ -185,10 +185,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
 
           if (data.length && data[0].stats.timeStep) {
-            console.log('timeStep', data[0].stats.timeStep);
-            console.log('timeStep2', data[1].stats.timeStep);
             options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
-            console.log('barWidth', data[1].stats.timeStep);
           }
 
           addTimeAxis(options);
