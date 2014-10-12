@@ -85,8 +85,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.listSeries = function() {
-      return this._seriesQuery('list series').then(function(data) {
+    InfluxDatasource.prototype.listSeries = function(query) {
+      // wrap in regex
+      if (query && query.length > 0 && query[0] !== '/')  {
+        query = '/' + query + '/';
+      }
+
+      return this._seriesQuery('list series ' + query).then(function(data) {
         if (!data || data.length === 0) {
           return [];
         }

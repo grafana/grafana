@@ -64,6 +64,8 @@
                    ng-model="target.series"
                    spellcheck='false'
                    bs-typeahead="listSeries"
+                   match-all="true"
+                   min-length="3"
                    placeholder="series name"
                    data-min-length=0 data-items=100
                    ng-blur="seriesBlur()">
