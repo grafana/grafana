@@ -136,6 +136,10 @@ function (angular, _, kbn) {
         query.rateOptions = {
           counter: !!target.isCounter
         };
+
+        if (target.counterMax && target.counterMax.length) {
+            query.rateOptions['counterMax'] = parseInt(target.counterMax);
+        }
       }
 
       if (target.shouldDownsample) {
