@@ -69,6 +69,7 @@ function (angular, _) {
           src: './app/partials/share-panel.html',
           scope: $scope.$new()
         });
+      };
 
       $scope.drillDown = function(dashboard) {
         var variables = {};
