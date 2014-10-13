@@ -138,7 +138,7 @@ function (angular, _, kbn) {
         };
 
         if (target.counterMax && target.counterMax.length) {
-            query.rateOptions['counterMax'] = parseInt(target.counterMax);
+          query.rateOptions['counterMax'] = parseInt(target.counterMax);
         }
       }
 
