@@ -15,6 +15,7 @@ function (angular, _) {
         {
           text: "view",
           icon: "icon-eye-open",
+        },
         {
           text: 'Drill down',
           click: 'drillDown(panel.drillDown)',
