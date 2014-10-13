@@ -7,7 +7,6 @@ define([
   './templateValuesSrv',
   './panelSrv',
   './timer',
-  './panelMove',
   './keyboardManager',
   './annotationsSrv',
   './playlistSrv',

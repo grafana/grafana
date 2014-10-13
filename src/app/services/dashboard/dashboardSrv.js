@@ -91,6 +91,21 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
+    p.getPanelInfoById = function(panelId) {
+      var result = {};
+      _.each(this.rows, function(row) {
+        _.each(row.panels, function(panel, index) {
+          if (panel.id === panelId) {
+            result.panel = panel;
+            result.row = row;
+            result.index = index;
+          }
+        });
+      });
+
+      return result;
+    };
+
     p.duplicatePanel = function(panel, row) {
       var rowIndex = _.indexOf(this.rows, row);
       var newPanel = angular.copy(panel);

@@ -83,10 +83,11 @@ function (angular) {
     };
 
     $scope.listSeries = function(query, callback) {
-      if (!seriesList || query === '') {
+      if (query !== '') {
         seriesList = [];
-        $scope.datasource.listSeries().then(function(series) {
+        $scope.datasource.listSeries(query).then(function(series) {
           seriesList = series;
+          console.log(series);
           callback(seriesList);
         });
       }

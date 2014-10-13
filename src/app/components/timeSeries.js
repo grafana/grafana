@@ -63,8 +63,10 @@ function (_, kbn) {
     this.yaxis = this.info.yaxis;
 
     this.stats.total = 0;
-    this.stats.max = -212312321312;
-    this.stats.min = 212312321312;
+    this.stats.max = Number.MIN_VALUE;
+    this.stats.min = Number.MAX_VALUE;
+    this.stats.avg = null;
+    this.stats.current = null;
 
     var ignoreNulls = fillStyle === 'connected';
     var nullAsZero = fillStyle === 'null as zero';
@@ -97,9 +99,12 @@ function (_, kbn) {
       result.push([currentTime * 1000, currentValue]);
     }
 
-    if (result.length >= 2) {
-      this.stats.timeStep = result[1][0] - result[0][0];
+    if (this.datapoints.length >= 2) {
+      this.stats.timeStep = (this.datapoints[1][1] - this.datapoints[0][1]) * 1000;
     }
+
+    if (this.stats.max === Number.MIN_VALUE) { this.stats.max = null; }
+    if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
     if (result.length) {
       this.stats.avg = (this.stats.total / result.length);
