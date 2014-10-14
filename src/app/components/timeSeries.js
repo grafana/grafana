@@ -31,6 +31,7 @@ function (_, kbn) {
 
   TimeSeries.prototype.applySeriesOverrides = function(overrides) {
     this.lines = {};
+    this.dashes = {};
     this.points = {};
     this.bars = {};
     this.info.yaxis = 1;
@@ -43,11 +44,16 @@ function (_, kbn) {
         continue;
       }
       if (override.lines !== void 0) { this.lines.show = override.lines; }
+      if (override.dashes !== void 0) { this.dashes.show = override.dashes; }
+      if (override.dashLength !== void 0) { this.dashes.dashLength = override.dashLength; }
       if (override.points !== void 0) { this.points.show = override.points; }
       if (override.bars !== void 0) { this.bars.show = override.bars; }
       if (override.fill !== void 0) { this.lines.fill = translateFillOption(override.fill); }
       if (override.stack !== void 0) { this.stack = override.stack; }
-      if (override.linewidth !== void 0) { this.lines.lineWidth = override.linewidth; }
+      if (override.linewidth !== void 0) {
+        this.dashes.lineWidth = override.linewidth;
+        this.lines.lineWidth = override.linewidth;
+      }
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }

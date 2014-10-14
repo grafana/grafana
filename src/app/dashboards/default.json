@@ -82,6 +82,8 @@
           "lines": true,
           "fill": 1,
           "linewidth": 2,
+          "dashes": false,
+          "dashLength": 4,
           "points": false,
           "pointradius": 5,
           "bars": false,
