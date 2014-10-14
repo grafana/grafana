@@ -57,7 +57,6 @@ function (angular, $, _, appLevelRequire, config) {
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
-
   });
 
   var apps_deps = [
