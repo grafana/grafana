@@ -1,0 +1,27 @@
+<div class="editor-row">
+  <div class="section">
+    <h5>Main options</h5>
+		<editor-opt-bool text="Show table" model="panel.table" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Show values" model="panel.stats" change="render()"></editor-opt-bool>
+  </div>
+</div>
+
+<div class="editor-row">
+	<div class="section">
+		<h5>Series options</h5>
+		<div class="grafana-target" ng-repeat="series in data.series">
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment">
+						{{series.info.alias}}
+					</li>
+
+					<li class="grafana-target-segment">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
