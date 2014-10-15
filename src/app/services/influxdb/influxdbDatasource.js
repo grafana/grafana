@@ -114,17 +114,16 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         if (!data || data.length === 0) {
           return [];
         }
-        console.log(data[0].points);
-        // influxdb >= 1.8
         if (data[0].points.length > 0) {
           return data[0].points;
-          //return _.map(data[0].points, function(point) {
-          //  return point[1];
-          //});
         } else {
           return [];
         }
       });
+    };
+
+    InfluxDatasource.prototype.rawCQ = function(query) {
+      return this._seriesQuery(query);
     };
 
     InfluxDatasource.prototype.metricFindQuery = function (query) {

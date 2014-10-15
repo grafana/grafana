@@ -11,10 +11,10 @@
         </ul>
       </div>
     </div>
-    <span style="font-size: 16px">Continuous Queries</span>
+    <span style="font-size: 24px; font-weight: bold">InfluxDB Continuous Queries</span>
   </div>
 
-  <div class="editor-row" ng-show="datasource.type != 'influxDB'">
+  <div class="editor-row" ng-show="!datasource || datasource.type != 'influxDB'">
     <h5>
       Continuous queries only supported for InfluxDB data sources. Please choose a different data source.
     </h5>
@@ -36,38 +36,25 @@
           <td>into</td>
           <td>{{ cq.series }}</td>
           <td>
-            <a class="btn btn-danger btn-mini">
+            <a class="btn btn-danger btn-mini" ng-click="deleteCQ(cq.id)">
               <i class="icon-remove"></i>
             </a>
           </td>
         </tr>
+	<tr ng-if="cqs.length === 0">
+            <td colspan="5" class="text-center" style="font-size: 18px; padding: 12px">No Continuous Queries Defined</td>
+        </tr>
         <tr>
           <td></td>
-          <td style="padding: 5px 7px"><input type="text" id="newCQ" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="select ..." spellcheck="false"/>
+          <td style="padding: 5px 7px"><input type="text" ng-model="newQuery" id="newCQ" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="Add new Continuous Query, eg.. select..." spellcheck="false"/>
           <td>into</td>
-          <td><input type="text" id="newCQSeries" style="width: 100%; border-right: 0px" class="grafana-target-text-input" placeholder="series name" spellcheck="false"/>
+          <td style="padding: 5px 7px"><input type="text" ng-model="newSeries" id="newCQSeries" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="New Series Name" spellcheck="false"/>
           <td>
-            <a class="btn btn-success btn-mini">
-              <i class="icon-plus-sign"></i>
-            </a>          
+            <a class="btn btn-success btn-mini" ng-click="addCQ()">
+              Add
+            </a>
           </td>
       </tbody>
     </table>
-<!--  <div class="grafana-target"> 
-    <div class="grafana-target-inner-wrapper">
-      <div ng-repeat="cq in cqs" class="grafana-target-inner">
-        <ul class="grafana-segment-list">
-          <li class="grafana-target-segment">
-            <input type="text" editable="false" class="grafana-target-text-input span10" value="{{ cq[2] }}" spellcheck="false"> </input>
-          </li>
-          <li class="grafana-target-segment">into</li>
-        </ul>
-      </div>
-    </div>
-    </div>-->
-  </div>
-  
-  <div ng-show="error" style="margin-top: 20px" class="alert alert-error">
-    {{error}}
-  </div>
+  </div> 
 </div>
