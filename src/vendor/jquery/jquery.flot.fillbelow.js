@@ -12,7 +12,6 @@
 
             var i;
 
-            debugger;
             for ( i = 0; i < allseries.length; ++i ) {
                 if ( allseries[ i ].id === series.fillBelowTo ) {
                     return allseries[ i ];
