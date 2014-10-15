@@ -38,6 +38,10 @@ function (angular, app, _, TimeSeries, kbn) {
     var _d = {
       targets: [{}],
       cacheTimeout: null,
+      format: 'none',
+      avg: true,
+      stats: true,
+      table: true,
     };
 
     _.defaults($scope.panel, _d);
@@ -80,19 +84,7 @@ function (angular, app, _, TimeSeries, kbn) {
 
     $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
-      var data= {};
-      data.series = _.map(results.data, $scope.seriesHandler);
-      data.stats = [];
-
-      if (data.series.length > 0) {
-        var stat = {};
-        var firstSeries = data.series[0];
-        stat.value = $scope.formatValue(firstSeries.stats.avg);
-        stat.func = 'avg';
-        data.stats.push(stat);
-      }
-
-      $scope.data = data;
+      $scope.series = _.map(results.data, $scope.seriesHandler);
       $scope.render();
     };
 
@@ -119,6 +111,22 @@ function (angular, app, _, TimeSeries, kbn) {
     };
 
     $scope.render = function() {
+      var data = {
+        series: $scope.series,
+        stats: []
+      };
+
+      var main = data.series[0];
+
+      if ($scope.panel.avg) {
+        data.stats.push({ value: $scope.formatValue(main.stats.avg), func: 'avg' });
+      }
+
+      if ($scope.panel.total) {
+        data.stats.push({ value: $scope.formatValue(main.stats.total), func: 'total' });
+      }
+
+      $scope.data = data;
       $scope.$emit('render');
     };
 
@@ -149,8 +157,10 @@ function (angular, app, _, TimeSeries, kbn) {
 
           if (scope.panel.stats) {
             body += '<div class="stats-panel-value-container">';
-            body += '<span class="stats-panel-value">' + data.stats[0].value + '</span>';
-            body += ' <span class="stats-panel-func">(' + data.stats[0].func + ')</span>';
+            for (i = 0; i < scope.data.stats.length; i++) {
+              body += '<span class="stats-panel-value">' + data.stats[i].value + '</span>';
+              body += ' <span class="stats-panel-func">(' + data.stats[i].func + ')</span>';
+            }
             body += '</div>';
           }
 

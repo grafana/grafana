@@ -2,8 +2,23 @@
   <div class="section">
     <h5>Main options</h5>
 		<editor-opt-bool text="Show table" model="panel.table" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Show values" model="panel.stats" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Show big values" model="panel.stats" change="render()"></editor-opt-bool>
   </div>
+  <div class="section" ng-if="panel.stats">
+    <h5>Big values</h5>
+		<editor-opt-bool text="Avg" model="panel.avg" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Min" model="panel.min" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Max" model="panel.max" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Total" model="panel.total" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Current" model="panel.current" change="render()"></editor-opt-bool>
+	</div>
+	<div class="section">
+    <h5>Formats</h5>
+		<div class="editor-option">
+			<label class="small">Unit format</label>
+			<select class="input-small" ng-model="panel.format" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns', 'percent']" ng-change="render()"></select>
+		</div>
+	</div>
 </div>
 
 <div class="editor-row">
@@ -12,6 +27,10 @@
 		<div class="grafana-target" ng-repeat="series in data.series">
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment">
+						<i class="icon-eye-open" ng-click="hideSeries(series)"></i>
+					</li>
+
 					<li class="grafana-target-segment">
 						{{series.info.alias}}
 					</li>
