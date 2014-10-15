@@ -88,7 +88,7 @@
 		</div>
 
 		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 5+$index">
-			<ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
+			<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
 			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
 		</div>
 

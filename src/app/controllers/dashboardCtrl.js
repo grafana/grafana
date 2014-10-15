@@ -21,7 +21,7 @@ function (angular, $, config, _) {
       $timeout) {
 
     $scope.editor = { index: 0 };
-    $scope.panelNames = config.panels;
+    $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
     var resizeEventTimeout;
 
     this.init = function(dashboardData) {
@@ -90,21 +90,12 @@ function (angular, $, config, _) {
       };
     };
 
-    $scope.edit_path = function(type) {
-      var p = $scope.panel_path(type);
-      if(p) {
-        return p+'/editor.html';
-      } else {
-        return false;
-      }
+    $scope.panelEditorPath = function(type) {
+      return 'app/' + config.panels[type].path + '/editor.html';
     };
 
-    $scope.panel_path =function(type) {
-      if(type) {
-        return 'app/panels/'+type.replace(".","/");
-      } else {
-        return false;
-      }
+    $scope.pulldownEditorPath = function(type) {
+      return 'app/panels/'+type+'/editor.html';
     };
 
     $scope.showJsonEditor = function(evt, options) {
