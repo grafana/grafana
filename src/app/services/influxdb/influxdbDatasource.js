@@ -109,6 +109,24 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
+    InfluxDatasource.prototype.listContinuousQueries = function() {
+      return this._seriesQuery('list continuous queries').then(function(data) {
+        if (!data || data.length === 0) {
+          return [];
+        }
+        console.log(data[0].points);
+        // influxdb >= 1.8
+        if (data[0].points.length > 0) {
+          return data[0].points;
+          //return _.map(data[0].points, function(point) {
+          //  return point[1];
+          //});
+        } else {
+          return [];
+        }
+      });
+    };
+
     InfluxDatasource.prototype.metricFindQuery = function (query) {
       var interpolated;
       try {

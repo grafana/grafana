@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Features', 'Import']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows', 'Features', 'Import', 'Continuous Queries']" data-title="{{tab}}">
 		</div>
 		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
@@ -83,7 +83,11 @@
 			<ng-include src="'app/partials/import.html'"></ng-include>
 		</div>
 
-		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 4+$index">
+		<div ng-if="editor.index == 4">
+			<ng-include src="'app/partials/cqs.html'"></ng-include>
+		</div>
+
+		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 5+$index">
 			<ng-include ng-show="pulldown.enable" src="edit_path(pulldown.type)"></ng-include>
 			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
 		</div>
