@@ -17,7 +17,6 @@ function (_, crypto) {
       window_title_prefix           : 'Grafana - ',
       panels                        : {
         'graph': { path: 'panels/graph' },
-        'stats': { path: 'panels/stats' },
         'text': { path: 'panels/text' }
       },
       plugins                       : {},
