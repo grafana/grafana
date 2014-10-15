@@ -201,7 +201,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.targetTextChanged = function() {
       parseTarget();
-      $scope.$parent.get_data();
+      $scope.get_data();
     };
 
     $scope.targetChanged = function() {

@@ -1,9 +1,10 @@
 define([
   'angular',
   'jquery',
+  'config',
   './panelMenu',
 ],
-function (angular, $) {
+function (angular, $, config) {
   'use strict';
 
   angular
@@ -68,10 +69,12 @@ function (angular, $) {
 
           elem.addClass('ng-cloak');
 
+          var panelPath = config.panels[panelType].path;
+
           $scope.require([
             'jquery',
-            'text!panels/'+panelType+'/module.html',
-            'panels/' + panelType + "/module",
+            'text!'+panelPath+'/module.html',
+            panelPath + "/module",
           ], function ($, moduleTemplate) {
             var $module = $(moduleTemplate);
             $module.prepend(panelHeader);

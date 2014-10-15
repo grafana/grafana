@@ -17,7 +17,7 @@
 	</div>
 
 	<div ng-show="editorTabs[editor.index] == 'Panel'">
-		<div ng-include src="edit_path(panel.type)"></div>
+		<div ng-include src="panelEditorPath(panel.type)"></div>
 	</div>
 
 	<div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">

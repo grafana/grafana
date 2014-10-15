@@ -16,6 +16,7 @@ define([
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
+  'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
 function (angular, app, $, _, kbn, moment, TimeSeries) {
@@ -340,8 +341,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       $scope.render();
     };
 
-    $scope.addSeriesOverride = function() {
-      $scope.panel.seriesOverrides.push({});
+    $scope.addSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides.push(override || {});
     };
 
     $scope.removeSeriesOverride = function(override) {
