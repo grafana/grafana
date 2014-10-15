@@ -34,6 +34,14 @@ define([
       var option = $scope.overrideMenu[optionIndex];
       var value = option.values[valueIndex];
       $scope.override[option.propertyName] = value;
+
+      // automatically disable lines for this series and the fill bellow to series
+      // can be removed by the user if they still want lines
+      if (option.propertyName === 'fillBelowTo') {
+        $scope.override['lines'] = false;
+        $scope.addSeriesOverride({ alias: value, lines: false });
+      }
+
       $scope.updateCurrentOverrides();
       $scope.render();
     };

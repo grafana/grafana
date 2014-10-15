@@ -342,8 +342,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       $scope.render();
     };
 
-    $scope.addSeriesOverride = function() {
-      $scope.panel.seriesOverrides.push({});
+    $scope.addSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides.push(override || {});
     };
 
     $scope.removeSeriesOverride = function(override) {
