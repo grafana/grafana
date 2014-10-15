@@ -8,7 +8,7 @@ function (angular, app, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CQEditorCtrl', function($scope, $rootScope, $timeout, datasourceSrv) {
+  module.controller('CQEditorCtrl', function($scope, $rootScope, $timeout, datasourceSrv, alertSrv) {
 
     $scope.init = function() {
       $scope.datasources = datasourceSrv.getMetricSources();
@@ -18,6 +18,8 @@ function (angular, app, _) {
       $scope.newQuery = "";
       $scope.newSeries = "";
     };
+
+    $scope.headerNames = {'id': 'Id', 'series': 'Series Name', 'query': 'Query'};
 
     $scope.setDatasource = function(datasource) {
       $scope.datasource = datasourceSrv.get(datasource);
@@ -51,16 +53,60 @@ function (angular, app, _) {
 
       $scope.datasource.rawCQ(query).then(function() {
         $scope.listCQs();
+        alertSrv.set('Success', 'Continuous Query Dropped', 'success', 3000);
+
+      }, function() {
+        alertSrv.set('Error', 'Error dropping continuous query ' + cqID, 'error');
       });
     };
 
     $scope.addCQ = function() {
+
+      if (!$scope.newSeries || !$scope.newQuery) {
+        alertSrv.set('Error', 'Both the query and series name must be set', 'error');
+        return;
+      }
+
       var query = $scope.newQuery + " into " + $scope.newSeries;
 
       $scope.datasource.rawCQ(query).then(function() {
         $scope.listCQs();
+        alertSrv.set('Success', 'Continuous Query Added', 'success', 3000);
+
+      }, function() {
+        alertSrv.set('Error', 'Error adding continuous query: ' + query, 'error');
       });
 
+    };
+
+    // Sorting
+    // Based on http://stackoverflow.com/questions/18789973/sortable-table-columns-with-angularjs
+
+    $scope.sort = {
+      column: 'series',
+      descending: false
+    };
+
+    $scope.sortStyle = function(column) {
+      var sort = $scope.sort;
+      if (sort.column !== column) {
+        return "";
+      }
+      if (sort.descending) {
+        return "icon-circle-arrow-up";
+      } else {
+        return "icon-circle-arrow-down";
+      }
+    };
+
+    $scope.changeSorting = function(column) {
+      var sort = $scope.sort;
+      if (sort.column === column) {
+        sort.descending = !sort.descending;
+      } else {
+        sort.column = column;
+        sort.descending = false;
+      }
     };
 
   });

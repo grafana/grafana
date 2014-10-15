@@ -1,5 +1,5 @@
 <div ng-controller="CQEditorCtrl" ng-init="init()">
-  <div class="editor-row">
+  <div class="editor-row" style="margin-bottom: 40px">
     <div class="section">
       <div class="btn-group">
         <button class="btn btn-info dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Datasource'">{{datasource.name}} <span class="caret"></span></button>
@@ -11,7 +11,7 @@
         </ul>
       </div>
     </div>
-    <span style="font-size: 24px; font-weight: bold">InfluxDB Continuous Queries</span>
+    <span style="font-size: 18px; font-weight: bold; vertical-align: bottom">InfluxDB Continuous Queries</span>
   </div>
 
   <div class="editor-row" ng-show="!datasource || datasource.type != 'influxDB'">
@@ -21,40 +21,43 @@
   </div>
 
   <div class="editor-row" ng-show="datasource.type === 'influxDB'">
-    <table class="grafana-options-table grafana-multi-col-table span8" style="margin-top: 10px">
-      <thead>
-        <th>id</th>
-        <th>query</th>
-        <th></th>
-        <th>series name</th>
-        <th style="text-align: center"></th>
-      </thead>
-      <tbody>
-        <tr ng-repeat="cq in cqs">
-          <td>{{ cq.id }}
-          <td>{{ cq.query }}</td>
-          <td>into</td>
-          <td>{{ cq.series }}</td>
-          <td>
-            <a class="btn btn-danger btn-mini" ng-click="deleteCQ(cq.id)">
-              <i class="icon-remove"></i>
-            </a>
-          </td>
-        </tr>
-	<tr ng-if="cqs.length === 0">
-            <td colspan="5" class="text-center" style="font-size: 18px; padding: 12px">No Continuous Queries Defined</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td style="padding: 5px 7px"><input type="text" ng-model="newQuery" id="newCQ" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="Add new Continuous Query, eg.. select..." spellcheck="false"/>
-          <td>into</td>
-          <td style="padding: 5px 7px"><input type="text" ng-model="newSeries" id="newCQSeries" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="New Series Name" spellcheck="false"/>
-          <td>
-            <a class="btn btn-success btn-mini" ng-click="addCQ()">
-              Add
-            </a>
-          </td>
-      </tbody>
-    </table>
+    <div style="display: block">
+      <table class="grafana-options-table grafana-multi-col-table span10">
+        <thead>
+	  <th ng-repeat="h in ['id', 'query', '_blank1', 'series', '_blank2']" style="font-size: 16px">
+            <a ng-show="h[0] !== '_'" href="" ng-click="changeSorting(h)">{{ headerNames[h] }}<i style="margin-left: 4px" ng-class="sortStyle(h)"></i></a>    
+          </th>
+        </thead>
+        <tbody style="max-height: 450px; overflow-y: scroll">
+          <tr ng-repeat="cq in cqs | orderBy:sort.column:sort.descending">
+            <td>{{ cq.id }}
+            <td>{{ cq.query }}</td>
+            <td style>into</td>
+            <td>{{ cq.series }}</td>
+            <td style="text-align: center">
+              <a class="btn btn-danger btn-mini" ng-click="deleteCQ(cq.id)">
+                <i class="icon-remove"></i>
+              </a>
+            </td>
+          </tr>
+          <tr ng-if="cqs.length === 0">
+              <td colspan="5" class="text-center" style="font-size: 18px; padding: 12px">No Continuous Queries Defined</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td style="padding: 5px 7px"><input type="text" ng-model="newQuery" id="newCQ" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="Enter New Continuous Query Here, eg. select..." spellcheck="false"/>
+            <td>into</td>
+            <td style="padding: 5px 7px"><input type="text" ng-model="newSeries" id="newCQSeries" style="width: 100%; border-right: 0px; padding-left: 3px; padding-right: 0px" class="grafana-target-text-input" placeholder="New Series Name" spellcheck="false"/>
+            <td>
+              <a class="btn btn-success btn-mini" ng-click="addCQ()">
+                <i class="icon-plus-sign"></i> Add
+              </a>
+            </td>
+          </tr>
+       </tfoot>
+      </table>
+    </div>
   </div> 
 </div>
