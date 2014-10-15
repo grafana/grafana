@@ -16,6 +16,7 @@ define([
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
+  'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
 function (angular, app, $, _, kbn, moment, TimeSeries) {

@@ -67,6 +67,7 @@ define([
     $scope.addOverrideOption('Lines', 'lines', [true, false]);
     $scope.addOverrideOption('Line fill', 'fill', [0,1,2,3,4,5,6,7,8,9,10]);
     $scope.addOverrideOption('Line width', 'linewidth', [0,1,2,3,4,5,6,7,8,9,10]);
+    $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);

@@ -9,6 +9,7 @@ function (_, kbn) {
     this.datapoints = opts.datapoints;
     this.info = opts.info;
     this.label = opts.info.alias;
+    this.id = opts.info.alias;
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
   }
@@ -50,6 +51,8 @@ function (_, kbn) {
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
+      if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
+
       if (override.yaxis !== void 0) {
         this.info.yaxis = override.yaxis;
       }
