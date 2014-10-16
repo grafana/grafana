@@ -52,7 +52,7 @@ function (angular, app, _, TimeSeries, kbn) {
     };
 
     $scope.formatValue = function(value) {
-      return kbn.valueFormats.bytes(value, 0, -7);
+      return kbn.valueFormats[$scope.panel.format](value, 0, -7);
     };
 
     $scope.updateTimeRange = function () {
@@ -105,26 +105,34 @@ function (angular, app, _, TimeSeries, kbn) {
       });
 
       series.points = series.getFlotPairs('connected');
-      series.updateLegendValues(kbn.valueFormats.bytes, 2, -7);
 
       return series;
     };
 
     $scope.render = function() {
+      var i, series;
       var data = {
         series: $scope.series,
         stats: []
       };
+
+      for (i = 0; i < data.series.length; i++) {
+        series = data.series[i];
+        series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
+      }
 
       var main = data.series[0];
 
       if ($scope.panel.avg) {
         data.stats.push({ value: $scope.formatValue(main.stats.avg), func: 'avg' });
       }
-
       if ($scope.panel.total) {
         data.stats.push({ value: $scope.formatValue(main.stats.total), func: 'total' });
       }
+      if ($scope.panel.current) {
+        data.stats.push({ value: $scope.formatValue(main.stats.current), func: 'current' });
+      }
+
 
       $scope.data = data;
       $scope.$emit('render');
