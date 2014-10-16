@@ -39,12 +39,18 @@ function (angular, app, _, TimeSeries, kbn) {
       targets: [{}],
       cacheTimeout: null,
       format: 'none',
-      avg: true,
-      stats: true,
-      table: true,
+      stats: {
+        show: true,
+        avg: true,
+        template: '{{value}} {{func}}'
+      },
+      table: {
+        show: true,
+      }
     };
 
     _.defaults($scope.panel, _d);
+    _.defaults($scope.panel.stats, _d.stats);
 
     $scope.init = function() {
       panelSrv.init($scope);
@@ -121,19 +127,6 @@ function (angular, app, _, TimeSeries, kbn) {
         series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
       }
 
-      var main = data.series[0];
-
-      if ($scope.panel.avg) {
-        data.stats.push({ value: $scope.formatValue(main.stats.avg), func: 'avg' });
-      }
-      if ($scope.panel.total) {
-        data.stats.push({ value: $scope.formatValue(main.stats.total), func: 'total' });
-      }
-      if ($scope.panel.current) {
-        data.stats.push({ value: $scope.formatValue(main.stats.current), func: 'current' });
-      }
-
-
       $scope.data = data;
       $scope.$emit('render');
     };
@@ -146,8 +139,9 @@ function (angular, app, _, TimeSeries, kbn) {
     return {
       link: function(scope, elem) {
         var data;
+        var valueRegex = /\{\{([a-zA-Z]+)\}\}/g;
+        var smallValueTextRegex = /!(\S+)/g;
 
-        console.log('asd');
         scope.$on('render', function() {
           data = scope.data;
 
@@ -159,20 +153,31 @@ function (angular, app, _, TimeSeries, kbn) {
           render();
         });
 
+        function valueTemplateReplaceFunc(match, statType) {
+          var stats = data.series[0].stats;
+          var value = scope.formatValue(stats[statType]);
+          return value;
+        }
+
+        function smallValueTextReplaceFunc(match, text) {
+          return '<span class="stats-panel-value-small">' + text + '</span>';
+        }
+
         function render() {
+          var panel = scope.panel;
           var body = '';
           var i, series;
 
-          if (scope.panel.stats) {
+          if (panel.stats.show) {
             body += '<div class="stats-panel-value-container">';
-            for (i = 0; i < scope.data.stats.length; i++) {
-              body += '<span class="stats-panel-value">' + data.stats[i].value + '</span>';
-              body += ' <span class="stats-panel-func">(' + data.stats[i].func + ')</span>';
-            }
+            body += '<span class="stats-panel-value">';
+            var valueHtml = panel.stats.template.replace(valueRegex, valueTemplateReplaceFunc);
+            body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
+            body += '</div>';
             body += '</div>';
           }
 
-          if (scope.panel.table) {
+          if (panel.table.show) {
             body += '<table class="stats-panel-table">';
             body += '<tr>';
             body += '<th></th><th>avg</th><th>min</th><th>max</th><th>current</th><th>total</th>';

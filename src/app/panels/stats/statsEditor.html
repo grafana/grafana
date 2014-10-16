@@ -1,16 +1,15 @@
 <div class="editor-row">
   <div class="section">
     <h5>Main options</h5>
-		<editor-opt-bool text="Show table" model="panel.table" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Show big values" model="panel.stats" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Show table" model="panel.table.show" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Show big values" model="panel.stats.show" change="render()"></editor-opt-bool>
   </div>
   <div class="section" ng-if="panel.stats">
     <h5>Big values</h5>
-		<editor-opt-bool text="Avg" model="panel.avg" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Min" model="panel.min" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Max" model="panel.max" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Total" model="panel.total" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Current" model="panel.current" change="render()"></editor-opt-bool>
+		<div class="editor-option">
+			<label class="small">Template</label>
+			<input type="text" class="input-large" ng-model="panel.stats.template" ng-blur="render()"></input>
+		</div>
 	</div>
 	<div class="section">
     <h5>Formats</h5>
