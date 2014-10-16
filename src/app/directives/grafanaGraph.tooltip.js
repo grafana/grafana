@@ -153,7 +153,7 @@ function ($) {
       }
       // single series tooltip
       else if (item) {
-        series = item.series;
+        series = seriesList[item.seriesIndex];
         group = '<i class="icon-minus" style="color:' + item.series.color +';"></i> ' + series.label;
 
         if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
