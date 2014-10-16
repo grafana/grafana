@@ -59,6 +59,17 @@
       <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
     </div>
   </div>
+  <div class="section">
+    <h5>Histogram</h5>
+    <editor-opt-bool
+      text="Histogram" model="panel.histogram" change="render()"
+      tip="Render as Histogram">
+    </editor-opt-bool>
+    <div class="editor-option" ng-show="panel.histogram">
+      <label class="small">Bucket Size</label>
+      <input type="text" class="input-mini" ng-model="panel.bucketSize" ng-change="render()">
+    </div>
+  </div>
 </div>
 
 

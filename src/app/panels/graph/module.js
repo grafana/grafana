@@ -170,6 +170,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       aliasColors: {},
 
       seriesOverrides: [],
+      histogram: false,
+      bucketSize: 1,
     };
 
     _.defaults($scope.panel,_d);
