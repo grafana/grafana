@@ -44,6 +44,12 @@ function (angular, app, _, TimeSeries, kbn) {
         avg: true,
         template: '{{value}} {{func}}'
       },
+      coloring: {
+        thresholds: '',
+        background: false,
+        value: false,
+        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"]
+      },
       table: {
         show: true,
       }
@@ -51,6 +57,7 @@ function (angular, app, _, TimeSeries, kbn) {
 
     _.defaults($scope.panel, _d);
     _.defaults($scope.panel.stats, _d.stats);
+    _.defaults($scope.panel.coloring, _d.coloring);
 
     $scope.init = function() {
       panelSrv.init($scope);
@@ -115,6 +122,25 @@ function (angular, app, _, TimeSeries, kbn) {
       return series;
     };
 
+    $scope.setColoring = function(options) {
+      if (options.background) {
+        $scope.panel.coloring.value = false;
+        $scope.panel.coloring.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
+      }
+      else {
+        $scope.panel.coloring.background = false;
+        $scope.panel.coloring.colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
+      }
+      $scope.render();
+    };
+
+    $scope.invertColorOrder = function() {
+      var tmp = $scope.panel.coloring.colors[0];
+      $scope.panel.coloring.colors[0] = $scope.panel.coloring.colors[2];
+      $scope.panel.coloring.colors[2] = tmp;
+      $scope.render();
+    };
+
     $scope.render = function() {
       var i, series;
       var data = {
@@ -126,6 +152,12 @@ function (angular, app, _, TimeSeries, kbn) {
         series = data.series[i];
         series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
       }
+
+      data.thresholds = $scope.panel.coloring.thresholds.split(',').map(function(strVale) {
+        return Number(strVale.trim());
+      });
+
+      data.colorMap = $scope.panel.coloring.colors;
 
       $scope.data = data;
       $scope.$emit('render');
@@ -144,6 +176,7 @@ function (angular, app, _, TimeSeries, kbn) {
 
         scope.$on('render', function() {
           data = scope.data;
+          data.mainValue = null;
 
           if (!data || data.series.length === 0) {
             elem.html('no data');
@@ -153,10 +186,33 @@ function (angular, app, _, TimeSeries, kbn) {
           render();
         });
 
+        function applyColoringThresholds(value, valueString) {
+          if (!scope.panel.coloring.value) {
+            return valueString;
+          }
+
+          var color = getColorForValue(value);
+          if (color) {
+            return '<span style="color:' + color + '">'+ valueString + '</span>';
+          }
+
+          return valueString;
+        }
+
+        function getColorForValue(value) {
+          for (var i = data.thresholds.length - 1; i >= 0 ; i--) {
+            if (value > data.thresholds[i]) {
+              return data.colorMap[i];
+            }
+          }
+          return null;
+        }
+
         function valueTemplateReplaceFunc(match, statType) {
           var stats = data.series[0].stats;
-          var value = scope.formatValue(stats[statType]);
-          return value;
+          data.mainValue = stats[statType];
+          var valueFormated = scope.formatValue(data.mainValue);
+          return applyColoringThresholds(data.mainValue, valueFormated);
         }
 
         function smallValueTextReplaceFunc(match, text) {
@@ -175,6 +231,21 @@ function (angular, app, _, TimeSeries, kbn) {
             body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
             body += '</div>';
             body += '</div>';
+          }
+
+          if (panel.coloring.background && data.mainValue) {
+            var color = getColorForValue(data.mainValue);
+            if (color) {
+              elem.parents('.panel-container').css('background-color', color);
+              if (scope.fullscreen) {
+                elem.css('background-color', color);
+              } else {
+                elem.css('background-color', '');
+              }
+            }
+          } else {
+            elem.parents('.panel-container').css('background-color', '');
+            elem.css('background-color', '');
           }
 
           if (panel.table.show) {
