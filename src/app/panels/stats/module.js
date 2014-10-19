@@ -5,14 +5,15 @@ define([
   'components/timeSeries',
   'kbn',
   'services/panelSrv',
+  './statsDirective',
 ],
 function (angular, app, _, TimeSeries, kbn) {
   'use strict';
 
-  var module = angular.module('grafana.panels.stats', []);
+  var module = angular.module('grafana.panels.stats');
   app.useModule(module);
 
-  module.controller('StatsCtrl', function($scope, panelSrv, timeSrv, $rootScope) {
+  module.controller('StatsCtrl', function($scope, panelSrv, timeSrv) {
 
     $scope.panelMeta = {
       titlePos: 'left',
@@ -27,7 +28,7 @@ function (angular, app, _, TimeSeries, kbn) {
           src:'app/partials/metrics.html'
         },
         {
-          title: 'Display Styles',
+          title: 'Options',
           src:'app/panels/stats/statsEditor.html'
         }
       ],
@@ -39,25 +40,20 @@ function (angular, app, _, TimeSeries, kbn) {
       targets: [{}],
       cacheTimeout: null,
       format: 'none',
-      stats: {
-        show: true,
-        avg: true,
-        template: '{{value}} {{func}}'
-      },
-      coloring: {
-        thresholds: '',
-        background: false,
-        value: false,
-        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"]
-      },
-      table: {
-        show: true,
+      template: '{{avg}} !(avg)',
+      thresholds: '',
+      colorBackground: false,
+      colorValue: false,
+      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+      sparkline: {
+        show: false,
+        full: false,
+        lineColor: 'rgb(31, 120, 193)',
+        fillColor: 'rgb(31, 120, 193)',
       }
     };
 
     _.defaults($scope.panel, _d);
-    _.defaults($scope.panel.stats, _d.stats);
-    _.defaults($scope.panel.coloring, _d.coloring);
 
     $scope.init = function() {
       panelSrv.init($scope);
@@ -101,43 +97,33 @@ function (angular, app, _, TimeSeries, kbn) {
       $scope.render();
     };
 
-    $scope.seriesHandler = function(seriesData, index) {
-      var datapoints = seriesData.datapoints;
-      var alias = seriesData.target;
-      var color = $rootScope.colors[index];
-
-      var seriesInfo = {
-        alias: alias,
-        enable: true,
-        color: color
-      };
-
+    $scope.seriesHandler = function(seriesData) {
       var series = new TimeSeries({
-        datapoints: datapoints,
-        info: seriesInfo,
+        datapoints: seriesData.datapoints,
+        info: { alias: seriesData.target },
       });
 
-      series.points = series.getFlotPairs('connected');
+      series.data = series.getFlotPairs('connected');
 
       return series;
     };
 
     $scope.setColoring = function(options) {
       if (options.background) {
-        $scope.panel.coloring.value = false;
-        $scope.panel.coloring.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
+        $scope.panel.colorValue = false;
+        $scope.panel.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
       }
       else {
-        $scope.panel.coloring.background = false;
-        $scope.panel.coloring.colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
+        $scope.panel.colorBackground = false;
+        $scope.panel.colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
       }
       $scope.render();
     };
 
     $scope.invertColorOrder = function() {
-      var tmp = $scope.panel.coloring.colors[0];
-      $scope.panel.coloring.colors[0] = $scope.panel.coloring.colors[2];
-      $scope.panel.coloring.colors[2] = tmp;
+      var tmp = $scope.panel.colors[0];
+      $scope.panel.colors[0] = $scope.panel.colors[2];
+      $scope.panel.colors[2] = tmp;
       $scope.render();
     };
 
@@ -153,11 +139,11 @@ function (angular, app, _, TimeSeries, kbn) {
         series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
       }
 
-      data.thresholds = $scope.panel.coloring.thresholds.split(',').map(function(strVale) {
+      data.thresholds = $scope.panel.thresholds.split(',').map(function(strVale) {
         return Number(strVale.trim());
       });
 
-      data.colorMap = $scope.panel.coloring.colors;
+      data.colorMap = $scope.panel.colors;
 
       $scope.data = data;
       $scope.$emit('render');
@@ -165,112 +151,4 @@ function (angular, app, _, TimeSeries, kbn) {
 
     $scope.init();
   });
-
-  module.directive('statsPanel', function() {
-
-    return {
-      link: function(scope, elem) {
-        var data;
-        var valueRegex = /\{\{([a-zA-Z]+)\}\}/g;
-        var smallValueTextRegex = /!(\S+)/g;
-
-        scope.$on('render', function() {
-          data = scope.data;
-          data.mainValue = null;
-
-          if (!data || data.series.length === 0) {
-            elem.html('no data');
-            return;
-          }
-
-          render();
-        });
-
-        function applyColoringThresholds(value, valueString) {
-          if (!scope.panel.coloring.value) {
-            return valueString;
-          }
-
-          var color = getColorForValue(value);
-          if (color) {
-            return '<span style="color:' + color + '">'+ valueString + '</span>';
-          }
-
-          return valueString;
-        }
-
-        function getColorForValue(value) {
-          for (var i = data.thresholds.length - 1; i >= 0 ; i--) {
-            if (value > data.thresholds[i]) {
-              return data.colorMap[i];
-            }
-          }
-          return null;
-        }
-
-        function valueTemplateReplaceFunc(match, statType) {
-          var stats = data.series[0].stats;
-          data.mainValue = stats[statType];
-          var valueFormated = scope.formatValue(data.mainValue);
-          return applyColoringThresholds(data.mainValue, valueFormated);
-        }
-
-        function smallValueTextReplaceFunc(match, text) {
-          return '<span class="stats-panel-value-small">' + text + '</span>';
-        }
-
-        function render() {
-          var panel = scope.panel;
-          var body = '';
-          var i, series;
-
-          if (panel.stats.show) {
-            body += '<div class="stats-panel-value-container">';
-            body += '<span class="stats-panel-value">';
-            var valueHtml = panel.stats.template.replace(valueRegex, valueTemplateReplaceFunc);
-            body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
-            body += '</div>';
-            body += '</div>';
-          }
-
-          if (panel.coloring.background && data.mainValue) {
-            var color = getColorForValue(data.mainValue);
-            if (color) {
-              elem.parents('.panel-container').css('background-color', color);
-              if (scope.fullscreen) {
-                elem.css('background-color', color);
-              } else {
-                elem.css('background-color', '');
-              }
-            }
-          } else {
-            elem.parents('.panel-container').css('background-color', '');
-            elem.css('background-color', '');
-          }
-
-          if (panel.table.show) {
-            body += '<table class="stats-panel-table">';
-            body += '<tr>';
-            body += '<th></th><th>avg</th><th>min</th><th>max</th><th>current</th><th>total</th>';
-            body += '</tr>';
-            for (i = 0; i < data.series.length; i++) {
-              series = data.series[i];
-              body += '<tr>';
-              body += '<td><i class="icon-minus pointer" style="color:' + series.color + '"></i> ';
-              body += series.info.alias + ' </td>';
-              body += '<td>' + series.info.avg + '</td>';
-              body += '<td>' + series.info.min + '</td>';
-              body += '<td>' + series.info.max + '</td>';
-              body += '<td>' + series.info.total + '</td>';
-              body += '<td>' + series.info.current + '</td>';
-            }
-            body += '</table>';
-          }
-
-          elem.html(body);
-        }
-      }
-    };
-  });
-
 });

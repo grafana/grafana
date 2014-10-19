@@ -1,40 +1,14 @@
 <div ng-controller='StatsCtrl'>
-	<div stats-panel></div>
 
-	<!-- <div class="stats&#45;panel&#45;value&#45;container"> -->
-	<!-- 	<span class="stats&#45;panel&#45;value">{{mainstat.value}}</span> -->
-	<!-- 	<span class="stats&#45;panel&#45;func">({{mainstat.func}})</span> -->
-	<!-- </div> -->
-  <!--  -->
-	<!-- <table class="stats&#45;panel&#45;table"> -->
-	<!-- 	<tr> -->
-	<!-- 		<th></th> -->
-	<!-- 		<th>avg</th> -->
-	<!-- 		<th>min</th> -->
-	<!-- 		<th>max</th> -->
-	<!-- 		<th>current</th> -->
-	<!-- 		<th>total</th> -->
-	<!-- 	</tr> -->
-	<!-- 	<tr class="stats&#45;series&#45;item" ng&#45;repeat="series in series"> -->
-	<!-- 		<td> -->
-	<!-- 			<i class='icon&#45;minus pointer' ng&#45;style="{color: series.color}"></i> -->
-	<!-- 			{{series.info.alias}} -->
-	<!-- 		</td> -->
-	<!-- 		<td>{{series.info.avg}}</td> -->
-	<!-- 		<td>{{series.info.min}}</td> -->
-	<!-- 		<td>{{series.info.max}}</td> -->
-	<!-- 		<td>{{series.info.current}}</td> -->
-	<!-- 		<td>{{series.info.total}}</td> -->
-	<!-- 	</tr> -->
-	<!-- </table> -->
+	<div class="stats-panel" stats-panel></div>
 
   <div class="clearfix"></div>
 
 	<div style="margin-top: 30px" ng-if="editMode">
 		<div class="dashboard-editor-header">
 			<div class="dashboard-editor-title">
-				<i class="icon icon-bar-chart"></i>
-			  Panel settings
+				<i class="icon icon-dashboard"></i>
+			  Singlestat
 			</div>
 
 			<div ng-model="editor.index" bs-tabs>

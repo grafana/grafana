@@ -9,7 +9,7 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile) {
-      var linkTemplate = '<a class="panel-title drag-handle">{{panel.title | interpolateTemplateVars}}</a>';
+      var linkTemplate = '<span class="panel-title drag-handle pointer">{{panel.title | interpolateTemplateVars}}</span>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
@@ -113,7 +113,7 @@ function (angular, $, _) {
             dismiss(2500);
           };
 
-          if ($scope.panelMeta.titlePos) {
+          if ($scope.panelMeta.titlePos && $scope.panel.title) {
             elem.css('text-align', 'left');
             $link.css('padding-left', '10px');
           }
