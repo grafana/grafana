@@ -1416,7 +1416,8 @@ Licensed under the MIT license.
 
                 var info = surface.getTextInfo(layer, t.label, font, null, maxWidth);
 
-                labelWidth = Math.max(labelWidth, info.width);
+                /// Grafana fix, add +1 to label width
+                labelWidth = Math.max(labelWidth, info.width + 1);
                 labelHeight = Math.max(labelHeight, info.height);
             }
 
