@@ -23,7 +23,7 @@ define([
       option.submenu = _.map(values, function(value, index) {
         return {
           text: String(value),
-          click: 'setOverride(' + option.index + ',' + index + ')'
+          click: 'menuItemSelected(' + option.index + ',' + index + ')'
         };
       });
 
