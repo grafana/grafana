@@ -115,7 +115,7 @@
   position: fixed;
   left: 0px;
   right: 0px;
-  top: 54px;
+  top: 51px;
   height: 100%;
   padding: 0 10px;
   background: @grafanaPanelBackground;
@@ -133,9 +133,11 @@
 
 .dashboard-fullscreen {
   .main-view-container {
-    height: 0;
     overflow: hidden;
-    padding: 0;
+    height: 0;
+    .row-control-inner {
+      display: none;
+    }
   }
 }
 

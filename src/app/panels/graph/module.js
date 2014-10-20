@@ -151,10 +151,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
        * queries
        */
       percentage    : false,
-      /** @scratch /panels/histogram/3
-       * zerofill:: Improves the accuracy of line charts at a small performance cost.
-       */
-      zerofill      : true,
 
       nullPointMode : 'connected',
 
