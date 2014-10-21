@@ -59,7 +59,7 @@ define([
                             var value = target.condition_value;
                             params.dimensions = key + ':' + value;
                         }
-                        return this.doGetStatisticsRequest(params, target.alias).then(handleGetStatisticsResponse);
+                        return this.doGetStatisticsRequest(params, target.alias, target.label).then(handleGetStatisticsResponse);
                     }
                     return [];
                 }, this);
@@ -138,7 +138,7 @@ define([
              * @param alias
              * @returns {promise}
              */
-            MonDatasource.prototype.doGetStatisticsRequest = function (params, alias) {
+            MonDatasource.prototype.doGetStatisticsRequest = function (params, alias, label) {
                 var _this = this;
                 var deferred = $q.defer();
 
@@ -165,6 +165,7 @@ define([
 
                     return $http(options).success(function (data) {
                         data.alias = alias;
+                        data.label = label;
                         deferred.resolve(data);
                     });
                 }, 10);
@@ -224,11 +225,17 @@ define([
                             return;
                         }
 
-                        var target = data.alias || series.name + "." + column + '(';
-                        for (var dimension in series.dimensions) {
-                            target += dimension + '=' + series.dimensions[dimension] + ',';
+                        var target;
+                        if (data.label) {
+                            target = series.dimensions[data.label]
                         }
-                        target += ')'
+                        else {
+                            target = data.alias || series.name + "." + column + '(';
+                            for (var dimension in series.dimensions) {
+                                target += dimension + '=' + series.dimensions[dimension] + ',';
+                            }
+                            target += ')'
+                        }
                         var datapoints = [];
 
                         if ('statistics' in series) {

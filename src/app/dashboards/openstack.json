@@ -70,6 +70,7 @@
             {
               "target": "randomWalk('random walk')",
               "function": "none",
+              "label": "service",
               "column": "value",
               "series": "http_status"
             }
@@ -147,6 +148,7 @@
             {
               "function": "avg",
               "column": "value",
+              "label": "hostname",
               "series": "cpu.user_perc"
             }
           ],
@@ -208,6 +210,7 @@
               "function": "avg",
               "column": "value",
               "series": "disk_space_utilization_perc",
+              "label": "hostname",
               "condition_filter": true,
               "condition_key": "device",
               "condition_value": "/dev/sda1"
@@ -269,6 +272,7 @@
           "targets": [
             {
               "function": "avg",
+              "label": "hostname",
               "column": "value",
               "series": "mysql.performance.user_time"
             }
@@ -331,6 +335,7 @@
               "function": "avg",
               "column": "value",
               "series": "net.bytes_out",
+              "label": "hostname",
               "condition_filter": true,
               "condition_key": "device_name",
               "condition_value": "eth0"
