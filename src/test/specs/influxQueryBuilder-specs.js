@@ -44,6 +44,35 @@ define([
 
     });
 
+    describe('merge function detection', function() {
+      it('should not quote wrap regex merged series', function() {
+        var builder = new InfluxQueryBuilder({
+          series: 'merge(/^google.test/)',
+          column: 'value',
+          function: 'mean'
+        });
+
+        var query = builder.build();
+
+        expect(query).to.be('select mean(value) from merge(/^google.test/) where $timeFilter ' +
+          'group by time($interval) order asc');
+      });
+
+      it('should quote wrap series names that start with "merge"', function() {
+        var builder = new InfluxQueryBuilder({
+          series: 'merge.google.test',
+          column: 'value',
+          function: 'mean'
+        });
+
+        var query = builder.build();
+
+        expect(query).to.be('select mean(value) from "merge.google.test" where $timeFilter ' +
+          'group by time($interval) order asc'); 
+      });
+
+    });
+
   });
 
 });
