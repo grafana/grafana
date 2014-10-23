@@ -84,34 +84,8 @@ function (angular, app, _, kbn, $) {
           return '<span class="stats-panel-value-small">' + text + '</span>';
         }
 
-        function render() {
-          setElementHeight();
-
+        function addSparkline() {
           var panel = scope.panel;
-          var body = '';
-
-          body += '<div class="stats-panel-value-container">';
-          body += '<span class="stats-panel-value">';
-          var valueHtml = panel.template.replace(valueRegex, valueTemplateReplaceFunc);
-          body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
-          body += '</div>';
-          body += '</div>';
-
-          if (panel.colorBackground && data.mainValue) {
-            var color = getColorForValue(data.mainValue);
-            if (color) {
-              $panelContainer.css('background-color', color);
-              if (scope.fullscreen) {
-                elem.css('background-color', color);
-              } else {
-                elem.css('background-color', '');
-              }
-            }
-          } else {
-            $panelContainer.css('background-color', '');
-            elem.css('background-color', '');
-          }
-
           var width = elem.width() + 20;
           var height = elem.height() || 100;
 
@@ -154,14 +128,48 @@ function (angular, app, _, kbn, $) {
             grid: { hoverable: false, show: false },
           };
 
-          elem.html(body);
           elem.append(plotCanvas);
 
           data.series[0].color = panel.sparkline.lineColor;
 
           setTimeout(function() {
             $.plot(plotCanvas, [data.series[0]], options);
-          }, 200);
+          }, 10);
+        }
+
+        function render() {
+          setElementHeight();
+
+          var panel = scope.panel;
+          var body = '';
+
+          body += '<div class="stats-panel-value-container">';
+          body += '<span class="stats-panel-value">';
+          var valueHtml = panel.template.replace(valueRegex, valueTemplateReplaceFunc);
+          body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
+          body += '</div>';
+          body += '</div>';
+
+          if (panel.colorBackground && data.mainValue) {
+            var color = getColorForValue(data.mainValue);
+            if (color) {
+              $panelContainer.css('background-color', color);
+              if (scope.fullscreen) {
+                elem.css('background-color', color);
+              } else {
+                elem.css('background-color', '');
+              }
+            }
+          } else {
+            $panelContainer.css('background-color', '');
+            elem.css('background-color', '');
+          }
+
+          elem.html(body);
+
+          if (panel.sparkline.show) {
+            addSparkline();
+          }
         }
       }
     };
