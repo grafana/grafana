@@ -10,19 +10,26 @@
     }
   </style>
   <form name="input" style="margin:0">
-    <ul class="nav nav-pills timepicker-dropdown">
-      <li class="dropdown">
+		<ul class="nav timepicker-dropdown">
 
-        <a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="dismiss();">
-          <span ng-bind="time.rangeString"></span>
-          <span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
-          <i class="icon-caret-down"></i>
-        </a>
+			<li class="grafana-menu-zoom-out">
+				<a class='small' ng-click='zoom(2)'>
+					Zoom Out
+				</a>
+			</li>
 
-        <ul class="dropdown-menu">
-          <!-- Relative time options -->
-          <li bindonce ng-repeat='timespan in panel.time_options track by $index'>
-            <a ng-click="setRelativeFilter(timespan)" bo-text="'Last ' + timespan"></a>
+			<li class="dropdown">
+
+				<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="dismiss();">
+					<span ng-bind="time.rangeString"></span>
+					<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
+					<i class="icon-caret-down"></i>
+				</a>
+
+				<ul class="dropdown-menu">
+					<!-- Relative time options -->
+					<li bindonce ng-repeat='timespan in panel.time_options track by $index'>
+						<a ng-click="setRelativeFilter(timespan)" bo-text="'Last ' + timespan"></a>
           </li>
 
           <!-- Auto refresh submenu -->
