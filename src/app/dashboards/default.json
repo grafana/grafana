@@ -101,7 +101,6 @@
           "legend_counts": true,
           "timezone": "browser",
           "percentage": false,
-          "zerofill": true,
           "nullPointMode": "connected",
           "steppedLine": false,
           "tooltip": {

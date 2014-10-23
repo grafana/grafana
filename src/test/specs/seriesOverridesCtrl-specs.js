@@ -18,7 +18,7 @@ define([
 
     describe('Controller should init overrideMenu', function() {
       it('click should include option and value index', function() {
-        expect(ctx.scope.overrideMenu[1].submenu[1].click).to.be('setOverride(1,1)');
+        expect(ctx.scope.overrideMenu[1].submenu[1].click).to.be('menuItemSelected(1,1)');
       });
     });
 

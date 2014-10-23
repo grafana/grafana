@@ -37,6 +37,17 @@ function (angular, app, _, $) {
             return memo;
           }, []);
 
+          $scope.menuItemSelected = function(optionIndex, valueIndex) {
+            var option = $scope.menuItems[optionIndex];
+            var result = {
+              $item: option.submenu[valueIndex],
+              $optionIndex: optionIndex,
+              $valueIndex: valueIndex
+            };
+
+            $scope.dropdownTypeaheadOnSelect(result);
+          };
+
           $input.attr('data-provide', 'typeahead');
           $input.typeahead({
             source: typeaheadValues,

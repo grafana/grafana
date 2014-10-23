@@ -23,7 +23,7 @@ function(angular, $) {
       });
 
       var helpModalScope = null;
-      keyboardManager.bind('shift+¿', function() {
+      keyboardManager.bind('shift+?', function() {
         if (helpModalScope) { return; }
 
         helpModalScope = $rootScope.$new();
