@@ -89,6 +89,20 @@
                    ng-model="target.isCounter"
                    ng-change="targetBlur()">
           </li>
+          <li class="grafana-target-segment-input" ng-hide="!target.isCounter">
+            Max:
+            <input type="number"
+                   class="grafana-target-segment-input input-small"
+                   ng-model="target.rateCounterMaxValue"
+                   ng-change="targetBlur()">
+          </li>
+          <li class="grafana-target-segment-input" ng-hide="!target.isCounter">
+            Reset:
+            <input type="number"
+                   class="grafana-target-segment-input input-small"
+                   ng-model="target.rateCounterResetValue"
+                   ng-change="targetBlur()">
+          </li>
           <li class="grafana-target-segment">
             Alias:
           </li>
