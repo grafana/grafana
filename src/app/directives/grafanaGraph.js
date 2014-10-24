@@ -176,7 +176,12 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
-            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+
+            if (panel.histogram) {
+              series.data = series.getHistogramPairs(panel.nullPointMode, panel.bucketSize);
+            } else {
+              series.data = series.getFlotPairs(panel.nullPointMode);
+            }
 
             // if hidden remove points and disable stack
             if (scope.hiddenSeries[series.info.alias]) {
@@ -188,10 +193,15 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (data.length && data[0].stats.timeStep) {
             options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
           }
+          if (panel.histogram) {
+            addHistogramAxis(options);
+            options.selection = {};
+          } else {
+            addTimeAxis(options);
+            addGridThresholds(options, panel);
+            addAnnotations(options);
+          }
 
-          addTimeAxis(options);
-          addGridThresholds(options, panel);
-          addAnnotations(options);
           configureAxisOptions(data, options);
 
           var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
@@ -229,6 +239,13 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             return true;
           }
           return false;
+        }
+
+        function addHistogramAxis(options) {
+          options.xaxis = {
+            show: scope.panel['x-axis'],
+            label: "Values"
+          };
         }
 
         function addTimeAxis(options) {
