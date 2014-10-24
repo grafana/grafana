@@ -203,6 +203,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
           $scope.panelMeta.loading = false;
           $scope.panelMeta.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
+          $scope.legend = [];
           $scope.render([]);
         });
     };
