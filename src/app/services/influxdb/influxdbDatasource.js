@@ -44,7 +44,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         // replace grafana variables
         query = query.replace('$timeFilter', timeFilter);
-        query = query.replace('$interval', (target.interval || options.interval));
+        query = query.replace(/\$interval/g, (target.interval || options.interval));
 
         // replace templated variables
         query = templateSrv.replace(query);
