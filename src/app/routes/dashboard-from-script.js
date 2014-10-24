@@ -16,6 +16,7 @@ function (angular, $, config, _, kbn, moment) {
       .when('/dashboard/script/:jsFile', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromScriptProvider',
+        reloadOnSearch: false,
       });
   });
 
