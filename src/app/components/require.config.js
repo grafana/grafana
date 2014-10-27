@@ -3,6 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
+  urlArgs: 'bust=' + (new Date().getTime()),
 
   paths: {
     config:                   ['../config', '../config.sample'],
@@ -40,6 +41,7 @@ require.config({
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
     'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
+    'jquery.flot.fillbelow':  '../vendor/jquery/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
 
@@ -83,6 +85,7 @@ require.config({
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
     'jquery.flot.crosshair':['jquery', 'jquery.flot'],
+    'jquery.flot.fillbelow':['jquery', 'jquery.flot'],
     'angular-cookies':      ['angular'],
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-loader':       ['angular'],

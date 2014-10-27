@@ -88,11 +88,10 @@
 							<i class="pointer icon-remove" ng-click="removeOverride(option)"></i>
 							{{option.name}}: {{option.value}}
 						</li>
-						<li class="dropdown">
-							<a class="dropdown-toggle grafana-target-segment" data-toggle="dropdown" gf-dropdown="overrideMenu" bs-tooltip="'set option to override'" data-placement="top">
-								<i class="icon-plus"></i>
-							</a>
+
+						<li class="dropdown" dropdown-typeahead="overrideMenu" dropdown-typeahead-on-select="setOverride($optionIndex, $valueIndex)">
 						</li>
+
 					</ul>
 					<div class="clearfix"></div>
 				</div>

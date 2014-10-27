@@ -177,6 +177,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+
             // if hidden remove points and disable stack
             if (scope.hiddenSeries[series.info.alias]) {
               series.data = [];
@@ -206,6 +207,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
 
           if (shouldDelayDraw(panel)) {
+            // temp fix for legends on the side, need to render twice to get dimensions right
+            callPlot();
             setTimeout(callPlot, 50);
             legendSideLastValue = panel.legend.rightSide;
           }

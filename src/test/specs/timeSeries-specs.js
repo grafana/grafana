@@ -70,6 +70,17 @@ define([
         });
       });
 
+      describe('series option overrides, fill below to', function() {
+        beforeEach(function() {
+          series.info.alias = 'test';
+          series.applySeriesOverrides([{ alias: 'test', fillBelowTo: 'min' }]);
+        });
+
+        it('should disable line fill and add fillBelowTo', function() {
+          expect(series.fillBelowTo).to.be('min');
+        });
+      });
+
       describe('series option overrides, pointradius, steppedLine', function() {
         beforeEach(function() {
           series.info.alias = 'test';

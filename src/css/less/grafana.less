@@ -15,7 +15,7 @@
 
 .hide-controls {
   padding: 0;
-  .row-control-inner {
+  .row-tab {
     display: none;
   }
   .submenu-controls {
@@ -115,7 +115,7 @@
   position: fixed;
   left: 0px;
   right: 0px;
-  top: 54px;
+  top: 51px;
   height: 100%;
   padding: 0 10px;
   background: @grafanaPanelBackground;
@@ -133,8 +133,11 @@
 
 .dashboard-fullscreen {
   .main-view-container {
-    height: 0;
     overflow: hidden;
+    height: 0;
+    .row-control-inner {
+      display: none;
+    }
   }
 }
 
@@ -550,4 +553,10 @@ select.grafana-target-segment-input {
 
 .grafana-tip {
   padding-left: 5px;
+}
+
+.shortcut-table {
+  td { padding: 3px; }
+  th:last-child { text-align: left; }
+  td:first-child { text-align: right; }
 }
