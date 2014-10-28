@@ -10,6 +10,7 @@ module.exports = function(config) {
         'app/filters/**/*.js',
         'app/panels/**/*.js',
         'app/routes/**/*.js',
+        'plugins/**/*.js',
         'app/app.js',
         'vendor/angular/**/*.js',
       ],
