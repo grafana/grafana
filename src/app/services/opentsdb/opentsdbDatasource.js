@@ -1,14 +1,15 @@
 define([
   'angular',
   'lodash',
-  'kbn'
+  'kbn',
+  'moment'
 ],
 function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, $http) {
+  module.factory('OpenTSDBDatasource', function($q, $http, templateSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
@@ -123,12 +124,12 @@ function (angular, _, kbn) {
       }
 
       var query = {
-        metric: target.metric,
+        metric: templateSrv.replace(target.metric),
         aggregator: "avg"
       };
 
       if (target.aggregator) {
-        query.aggregator = target.aggregator;
+        query.aggregator = templateSrv.replace(target.aggregator);
       }
 
       if (target.shouldComputeRate) {
@@ -151,6 +152,11 @@ function (angular, _, kbn) {
       }
 
       query.tags = angular.copy(target.tags);
+      if(query.tags){
+        for(var key in query.tags){
+          query.tags[key] = templateSrv.replace(query.tags[key]);
+        }
+      }
 
       return query;
     }
