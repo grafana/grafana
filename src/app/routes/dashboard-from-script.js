@@ -20,18 +20,24 @@ function (angular, $, config, _, kbn, moment) {
       });
   });
 
-  module.controller('DashFromScriptProvider', function($scope, $rootScope, $http, $routeParams, alertSrv, $q) {
+  module.controller('DashFromScriptProvider', function($scope, $rootScope, $http, $routeParams, $q, dashboardSrv, datasourceSrv, $timeout) {
 
     var execute_script = function(result) {
+      var services = {
+        dashboardSrv: dashboardSrv,
+        datasourceSrv: datasourceSrv,
+        $q: $q,
+      };
+
       /*jshint -W054 */
-      var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', result.data);
-      var script_result = script_func($routeParams, kbn, _ , moment, window, document, $, $);
+      var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', 'services', result.data);
+      var script_result = script_func($routeParams, kbn, _ , moment, window, document, $, $, services);
 
       // Handle async dashboard scripts
       if (_.isFunction(script_result)) {
         var deferred = $q.defer();
         script_result(function(dashboard) {
-          $rootScope.$apply(function() {
+          $timeout(function() {
             deferred.resolve({ data: dashboard });
           });
         });
@@ -48,7 +54,7 @@ function (angular, $, config, _, kbn, moment) {
       .then(execute_script)
       .then(null,function(err) {
         console.log('Script dashboard error '+ err);
-        alertSrv.set('Error', "Could not load <i>scripts/"+file+"</i>. Please make sure it exists and returns a valid dashboard", 'error');
+        $scope.appEvent('alert-error', ["Script Error", "Please make sure it exists and returns a valid dashboard"]);
         return false;
       });
     };
