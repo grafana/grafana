@@ -18,7 +18,7 @@ function () {
     var query = 'select ';
     var seriesName = target.series;
 
-    if(!seriesName.match('^/.*/')) {
+    if(!seriesName.match('^/.*/') && !seriesName.match(/^merge\(.*\)/)) {
       seriesName = '"' + seriesName+ '"';
     }
 

@@ -3,6 +3,7 @@
  */
 require.config({
   baseUrl: 'app',
+  urlArgs: 'bust=' + (new Date().getTime()),
 
   paths: {
     config:                   ['../config', '../config.sample'],

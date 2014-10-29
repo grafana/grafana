@@ -144,8 +144,9 @@ function ($) {
           hoverInfo = seriesHoverInfo[i];
           value = series.formatValue(hoverInfo.value);
 
-          group = '<i class="icon-minus" style="color:' + series.color +';"></i> ' + series.label;
-          seriesHtml = group + ': <span class="graph-tooltip-value">' + value + '</span><br>' + seriesHtml;
+          seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
+          seriesHtml += '<i class="icon-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
+          seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
@@ -154,7 +155,8 @@ function ($) {
       // single series tooltip
       else if (item) {
         series = seriesList[item.seriesIndex];
-        group = '<i class="icon-minus" style="color:' + item.series.color +';"></i> ' + series.label;
+        group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
+        group += '<i class="icon-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
 
         if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];
@@ -165,7 +167,7 @@ function ($) {
 
         value = series.formatValue(value);
         timestamp = dashboard.formatDate(item.datapoint[0]);
-        group += ': <span class="graph-tooltip-value">' + value + '</span><br>';
+        group += '<div class="graph-tooltip-value">' + value + '</div>';
 
         self.showTooltip(timestamp, group, pos);
       }

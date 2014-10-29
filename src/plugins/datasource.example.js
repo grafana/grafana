@@ -19,7 +19,7 @@ function (angular, _, kbn) {
       this.url = datasource.url;
     }
 
-    CustomDatasource.prototype.query = function(filterSrv, options) {
+    CustomDatasource.prototype.query = function(options) {
       // get from & to in seconds
       var from = kbn.parseDate(options.range.from).getTime() / 1000;
       var to = kbn.parseDate(options.range.to).getTime() / 1000;

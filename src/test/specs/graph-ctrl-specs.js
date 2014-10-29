@@ -36,6 +36,20 @@ define([
         var data = ctx.scope.render.getCall(0).args[0];
         expect(data.length).to.be(2);
       });
+
+      describe('get_data failure following success', function() {
+        beforeEach(function() {
+          ctx.datasource.query = sinon.stub().returns(ctx.$q.reject('Datasource Error'));
+          ctx.scope.get_data();
+          ctx.scope.$digest();
+        });
+
+        it('should clear the legend data', function() {
+          expect(ctx.scope.legend).to.eql([]);
+        });
+
+      });
+
     });
 
   });
