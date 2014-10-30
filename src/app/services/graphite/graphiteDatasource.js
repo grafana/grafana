@@ -255,7 +255,11 @@ function (angular, _, $, config, kbn, moment) {
 
         targetValue = targets[this._seriesRefLetters[i]];
         targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
-
+        if(target.consolidationFunc && target.consolidationFunc !== 'avg') {
+          targetValue= 'aliasSub(consolidateBy(' + targetValue +
+                       ',"' + target.consolidationFunc +'"),"consolidateBy\\((.*),.'+
+                       target.consolidationFunc+'.\\)$","\\1")';
+        }
         clean_options.push("target=" + encodeURIComponent(targetValue));
       }
 

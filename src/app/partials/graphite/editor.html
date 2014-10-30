@@ -13,11 +13,49 @@
             <i class="icon icon-warning-sign"></i>
           </a>
         </li>
+        <li class="dropdown">
+          <a  class="pointer dropdown-toggle"
+              data-toggle="dropdown"
+              tabindex="1">
+              <span graphite-func-editor class="grafana-metric-consolidation grafana-target-function">
+              <tip>notifies Grafana  how to compute consolidation or summarization process when needed</tip>
+              C[ <b> {{target.consolidationFunc == null ? 'avg':target.consolidationFunc }} </b> ]
+             </span>
+            <!--div class="grafana-metric-consolidation-mode"></div-->
+          </a>
+          <ul class="dropdown-menu pull-right" role="menu">
+           <li role="menuitem">
+              <a  tabindex="1"
+                  ng-click="target.consolidationFunc='avg'">
+                avg
+              </a>
+           </li>
+           <li role="menuitem">
+              <a  tabindex="2"
+                  ng-click="target.consolidationFunc='sum'">
+                sum
+              </a>
+            </li>
+            <li role="menuitem">
+              <a  tabindex="3"
+                  ng-click="target.consolidationFunc='max'">
+                max
+              </a>
+            </li>
+            <li role="menuitem">
+               <a  tabindex="4"
+                  ng-click="target.consolidationFunc='min'">
+                min
+              </a>
+            </li>
+          </ul>    
+        </li>
         <li>
           <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
             <i class="icon icon-pencil"></i>
           </a>
         </li>
+        
         <li class="dropdown">
           <a  class="pointer dropdown-toggle"
               data-toggle="dropdown"
@@ -30,8 +68,10 @@
                   ng-click="duplicate()">
                 Duplicate
               </a>
-          </ul>
+            </li>
+          </ul>  
         </li>
+
         <li>
           <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
             <i class="icon icon-remove"></i>
