@@ -34,36 +34,15 @@
 <div class="editor-row">
 	<div class="section">
 		<h5>Spark lines</h5>
-	</div>
-	<editor-opt-bool text="Spark line" model="panel.sparkline.show" change="render()"></editor-opt-bool>
-	<editor-opt-bool text="Background mode" model="panel.sparkline.full" change="render()"></editor-opt-bool>
-	<div class="editor-option">
-    <label class="small">Line color</label>
-		<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
-		<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
-  </div>
-</div>
-
-<div class="editor-row">
-	<div class="section">
-		<h5>Series options</h5>
-		<div class="grafana-target" ng-repeat="series in data.series">
-			<div class="grafana-target-inner">
-				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment">
-						<i class="icon-eye-open" ng-click="hideSeries(series)"></i>
-					</li>
-
-					<li class="grafana-target-segment">
-						{{series.info.alias}}
-					</li>
-
-					<li class="grafana-target-segment">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+		<editor-opt-bool text="Spark line" model="panel.sparkline.show" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Background mode" model="panel.sparkline.full" change="render()"></editor-opt-bool>
+		<div class="editor-option">
+			<label class="small">Line color</label>
+			<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
+			<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
 		</div>
 	</div>
+</div>
+
 </div>
 
