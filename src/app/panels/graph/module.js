@@ -276,14 +276,14 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     };
 
     $scope.toggleSeries = function(serie, event) {
-      if ($scope.hiddenSeries[serie.alias]) {
-        delete $scope.hiddenSeries[serie.alias];
-      }
-      else {
-        $scope.hiddenSeries[serie.alias] = true;
-      }
-
       if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        if ($scope.hiddenSeries[serie.alias]) {
+          delete $scope.hiddenSeries[serie.alias];
+        }
+        else {
+          $scope.hiddenSeries[serie.alias] = true;
+        }
+      } else {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
