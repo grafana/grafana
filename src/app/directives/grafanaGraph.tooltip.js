@@ -6,6 +6,8 @@ function ($) {
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
+    var click_hovering = false;
+    var click_hoverinfo = null;
 
     var $tooltip = $('<div id="tooltip">');
 
@@ -99,6 +101,27 @@ function ($) {
       return results;
     };
 
+    elem.click(function () {
+      if(click_hovering && click_hoverinfo.series.info.url_param !== "" && scope.panel.url !== "" && typeof scope.panel.url !== 'undefined') {
+
+        var value;
+
+        if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
+          value = click_hoverinfo.datapoint[1] - click_hoverinfo.datapoint[2];
+        } else {
+          value = click_hoverinfo.datapoint[1];
+        }
+
+        window.open(
+          scope.panel.url + '?title='
+          + encodeURIComponent(scope.panel.title)
+          + '&time=' + click_hoverinfo.datapoint[0]
+          + '&value=' + value
+          + '&' + click_hoverinfo.series.info.url_param,'_blank'
+        );
+      }
+    });
+
     elem.mouseleave(function () {
       if (scope.panel.tooltip.shared || dashboard.sharedCrosshair) {
         var plot = elem.data().plot;
@@ -150,6 +173,7 @@ function ($) {
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
+        click_hovering = false;
         self.showTooltip(timestamp, seriesHtml, pos);
       }
       // single series tooltip
@@ -170,9 +194,13 @@ function ($) {
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
         self.showTooltip(timestamp, group, pos);
+
+        click_hovering = true;
+        click_hoverinfo = item;
       }
       // no hit
       else {
+        click_hovering = false;
         $tooltip.detach();
       }
     });

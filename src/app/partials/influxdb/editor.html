@@ -111,6 +111,17 @@
 									 bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
 									 ng-model-onblur ng-change="get_data()" >
 					</li>
+					<li class="grafana-target-segment">
+                      Clickout-param
+                    </li>
+         			<li>
+                      <input type="text"
+                            class="input-large grafana-target-text-input span6"
+                            ng-model="target.url_param"
+                            spellcheck='false'
+                            placeholder="url"
+                            ng-blur="get_data()">
+                    </li>
 				</ul>
 
 				<!-- Query editor mode -->

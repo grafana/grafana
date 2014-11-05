@@ -7,6 +7,7 @@ function (_) {
   function InfluxSeries(options) {
     this.seriesList = options.seriesList;
     this.alias = options.alias;
+    this.url_param = options.url_param;
     this.groupByField = options.groupByField;
     this.annotation = options.annotation;
   }
@@ -59,7 +60,7 @@ function (_) {
           seriesName = self.createNameForSeries(series.name, key);
         }
 
-        output.push({ target: seriesName, datapoints: datapoints });
+        output.push({ target: seriesName, url_param: self.url_param, datapoints: datapoints });
       });
     });
 
