@@ -102,7 +102,10 @@ function ($) {
     };
 
     elem.click(function () {
-      if(click_hovering && click_hoverinfo.series.info.url_param !== "" && scope.panel.url !== "" && typeof scope.panel.url !== 'undefined') {
+      if(click_hovering
+        && click_hoverinfo.series.info.url_param !== ""
+        && scope.panel.url !== ""
+        && typeof scope.panel.url !== 'undefined') {
 
         var value;
 
