@@ -1,0 +1,7 @@
+include README.txt
+recursive-include xstatic/pkg/monasca_grafana *
+
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.orig
+global-exclude *.rej
