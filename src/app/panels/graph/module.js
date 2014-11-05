@@ -5,6 +5,7 @@ define([
   'lodash',
   'kbn',
   'moment',
+  'config',
   'components/timeSeries',
   'components/panelmeta',
   'services/panelSrv',
@@ -14,7 +15,7 @@ define([
   './graph',
   './legend',
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, app, $, _, kbn, moment, config, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -54,7 +55,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
-        threshold2Color: 'rgba(234, 112, 112, 0.22)'
+        threshold2Color: 'rgba(234, 112, 112, 0.22)',
+        thresholdCount: null
       },
       // show/hide lines
       lines         : true,

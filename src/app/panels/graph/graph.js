@@ -204,6 +204,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           addGridThresholds(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
+          checkThresholds(data, options, panel);
 
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
@@ -279,6 +280,78 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
                 color: panel.grid.threshold2Color
               });
             }
+          }
+        }
+
+        function checkThresholds(data, options, panel) {
+          var min_count = panel.grid.thresholdCount;
+          if (!min_count) {
+            return;
+          }
+
+          var th1 = {
+            level: panel.grid.threshold1,
+            color: panel.grid.threshold1Color,
+            count: 0,
+            hit: false
+          };
+          var th2 = {
+            level: panel.grid.threshold2,
+            color: panel.grid.threshold2Color,
+            count: 0,
+            hit: false
+          };
+
+          var high = !th2.level || th1.level < th2.level;
+          function count_value(t, v) {
+            if (t.hit) {
+              return;
+            }
+
+            if ((high && (v < t.level)) || (!high && (v > t.level))) {
+              t.count = 0;
+              return;
+            }
+
+            t.count++;
+            t.hit = t.count >= min_count;
+          }
+
+          function check_value(v) {
+            count_value(th1, v);
+            if (!th2.level) {
+              return th1.hit;
+            }
+            count_value(th2, v);
+            return th2.hit;
+          }
+
+          function apply_visualizations() {
+            var color;
+            if (th2.hit) {
+              color = th2.color;
+            } else {
+              color = th1.color;
+            }
+
+            color = window.tinycolor(color);
+            color.setAlpha(1);
+            options.grid.borderColor = color.toString();
+            options.grid.borderWidth = panel.grid.thresholdVisualBorderWidth || 2;
+          }
+
+          for (var series = 0; series < data.length; series++) {
+            var series_data = data[series].data;
+            for (var i = 0; i < series_data.length; i++) {
+              if (check_value(series_data[i][1])) {
+                apply_visualizations();
+                return;
+              }
+            }
+          }
+
+          if (th1.hit) {
+            apply_visualizations();
           }
         }
 
