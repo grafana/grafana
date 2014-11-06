@@ -54,7 +54,7 @@ function (angular, app, _, TimeSeries, kbn) {
         show: false,
         full: false,
         lineColor: 'rgb(31, 120, 193)',
-        fillColor: 'rgb(31, 120, 193)',
+        fillColor: 'rgba(31, 118, 189, 0.18)',
       }
     };
 
