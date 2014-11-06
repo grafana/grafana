@@ -5,15 +5,15 @@ define([
   'components/timeSeries',
   'kbn',
   'services/panelSrv',
-  './statsDirective',
+  './singleStatPanel',
 ],
 function (angular, app, _, TimeSeries, kbn) {
   'use strict';
 
-  var module = angular.module('grafana.panels.stats');
+  var module = angular.module('grafana.panels.singlestat');
   app.useModule(module);
 
-  module.controller('StatsCtrl', function($scope, panelSrv, timeSrv) {
+  module.controller('SingleStatCtrl', function($scope, panelSrv, timeSrv) {
 
     $scope.panelMeta = {
       titlePos: 'left',
@@ -29,7 +29,7 @@ function (angular, app, _, TimeSeries, kbn) {
         },
         {
           title: 'Options',
-          src:'app/panels/stats/statsEditor.html'
+          src:'app/panels/singlestat/editor.html'
         }
       ],
       fullscreenEdit: true,

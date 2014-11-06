@@ -10,10 +10,10 @@ define([
 function (angular, app, _, kbn, $) {
   'use strict';
 
-  var module = angular.module('grafana.panels.stats', []);
+  var module = angular.module('grafana.panels.singlestat', []);
   app.useModule(module);
 
-  module.directive('statsPanel', function() {
+  module.directive('singlestatPanel', function() {
 
     return {
       link: function(scope, elem) {
@@ -69,14 +69,14 @@ function (angular, app, _, kbn, $) {
         }
 
         function getBigValueHtml() {
-          var body = '<div class="stats-panel-value-container">';
+          var body = '<div class="singlestat-panel-value-container">';
 
-          if (panel.prefix) { body += getSpan('stats-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
+          if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
           var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
-          body += getSpan('stats-panel-value', panel.valueFontSize, value);
+          body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
-          if (panel.postfix) { body += getSpan('stats-panel-postfix', panel.postfixFontSize, panel.postfix); }
+          if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
 
           body += '</div>';
 
