@@ -339,8 +339,12 @@ function (_) {
   addFuncDef({
     name: 'summarize',
     category: categories.Transform,
-    params: [{ name: "interval", type: "string" }, { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] }],
-    defaultParams: ['1h', 'sum']
+    params: [
+      { name: "interval", type: "string" },
+      { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] },
+      { name: "alignToFrom", type: "boolean", optional: true, options: ['false', 'true'] },
+    ],
+    defaultParams: ['1h', 'sum', 'false']
   });
 
   addFuncDef({
@@ -543,7 +547,7 @@ function (_) {
     var parameters = _.map(this.params, function(value, index) {
 
       var paramType = this.def.params[index].type;
-      if (paramType === 'int' || paramType === 'value_or_series') {
+      if (paramType === 'int' || paramType === 'value_or_series' || paramType === 'boolean') {
         return value;
       }
 

@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -94,6 +95,10 @@ function (angular) {
       else {
         return seriesList;
       }
+    };
+
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+      _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
     $scope.duplicate = function() {

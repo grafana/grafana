@@ -79,7 +79,7 @@ define([
       var func = gfunc.createFuncInstance('summarize', { withDefaultParams: true });
       func.updateParam('1h', 0);
       expect(func.params[0]).to.be('1h');
-      expect(func.text).to.be('summarize(1h, sum)');
+      expect(func.text).to.be('summarize(1h, sum, false)');
     });
 
     it('should parse numbers as float', function() {

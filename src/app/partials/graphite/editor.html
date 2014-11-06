@@ -30,6 +30,19 @@
                   ng-click="duplicate()">
                 Duplicate
               </a>
+            </li>
+						<li role="menuitem">
+              <a  tabindex="1"
+                  ng-click="moveMetricQuery($index, $index-1)">
+                Move up
+              </a>
+            </li>
+						<li role="menuitem">
+							<a  tabindex="1"
+                  ng-click="moveMetricQuery($index, $index+1)">
+                Move down
+              </a>
+            </li>
           </ul>
         </li>
         <li>

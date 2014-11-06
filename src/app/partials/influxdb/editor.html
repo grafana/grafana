@@ -15,26 +15,26 @@
                tabindex="1">
               <i class="icon icon-cog"></i>
             </a>
-            <ul class="dropdown-menu pull-right" role="menu">
-              <li role="menuitem">
-                <a tabindex="1" ng-click="duplicate()">Duplicate</a>
-                <a tabindex="2" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a>
-                <a tabindex="2" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a>
-              </li>
-           </ul>
-          </li>
-          <li>
-            <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-              <i class="icon icon-remove"></i>
-            </a>
-          </li>
-        </ul>
+						<ul class="dropdown-menu pull-right" role="menu">
+							<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up </a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
+						</ul>
+					</li>
+					<li>
+						<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+							<i class="icon icon-remove"></i>
+						</a>
+					</li>
+				</ul>
 
-        <ul class="grafana-segment-list">
-          <li>
-            <a class="grafana-target-segment" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
-              <i class="icon-eye-open"></i>
-            </a>
+				<ul class="grafana-segment-list">
+					<li>
+						<a class="grafana-target-segment" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+							<i class="icon-eye-open"></i>
+						</a>
           </li>
         </ul>
 
