@@ -37,6 +37,8 @@ function (angular, app, _, TimeSeries, kbn) {
 
     // Set and populate defaults
     var _d = {
+      maxDataPoints: 100,
+      interval: null,
       targets: [{}],
       cacheTimeout: null,
       format: 'none',
@@ -68,6 +70,8 @@ function (angular, app, _, TimeSeries, kbn) {
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);
+      $scope.resolution = $scope.panel.maxDataPoints;
+      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
     $scope.get_data = function() {
@@ -75,9 +79,9 @@ function (angular, app, _, TimeSeries, kbn) {
 
       var metricsQuery = {
         range: $scope.rangeUnparsed,
-        interval: '1min',
+        interval: $scope.interval,
         targets: $scope.panel.targets,
-        maxDataPoints: 100,
+        maxDataPoints: $scope.resolution,
         cacheTimeout: $scope.panel.cacheTimeout
       };
 

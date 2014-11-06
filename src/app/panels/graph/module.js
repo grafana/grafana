@@ -178,7 +178,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);
-      $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
+      if ($scope.panel.maxDataPoints) {
+        $scope.resolution = $scope.panel.maxDataPoints;
+      }
+      else {
+        $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
+      }
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 

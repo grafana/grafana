@@ -96,16 +96,29 @@
 					<i class="icon-wrench"></i>
 				</li>
 				<li class="grafana-target-segment">
-					cacheTimeout
+					Cache timeout
 				</li>
 				<li>
 					<input type="text"
-					class="input-mini grafana-target-segment-input"
-					ng-model="panel.cacheTimeout"
-					bs-tooltip="'Graphite parameter to overwride memcache default timeout (unit is seconds)'"
-					data-placement="right"
-					spellcheck='false'
-					placeholder="60">
+								class="input-mini grafana-target-segment-input"
+								ng-model="panel.cacheTimeout"
+								bs-tooltip="'Graphite parameter to overwride memcache default timeout (unit is seconds)'"
+								data-placement="right"
+								spellcheck='false'
+								placeholder="60">
+				</li>
+				<li class="grafana-target-segment">
+					Max data points
+				</li>
+				<li>
+					<input type="text"
+								class="input-mini grafana-target-segment-input"
+								ng-model="panel.maxDataPoints"
+								bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
+								data-placement="right"
+								ng-model-onblur ng-change="get_data()"
+								spellcheck='false'
+								placeholder="auto">
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -133,6 +146,11 @@
 				<li class="grafana-target-segment">
 					<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 						templating
+					</a>
+				</li>
+				<li class="grafana-target-segment">
+					<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						max data points
 					</a>
 				</li>
 			</ul>
@@ -190,7 +208,18 @@
 			</ul>
 		</div>
 
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 5">
+			<h5>Max data points</h5>
+			<ul>
+				<li>Every graphite request is issued with a maxDataPoints parameter</li>
+				<li>Graphite uses this parameter to consolidate the real number of values down to this number</li>
+				<li>If there are more real values, then by default they will be consolidated using averages</li>
+				<li>This could hide real peaks and max values in your series</li>
+				<li>You can change how point consolidation is made using the consolidateBy graphite function</li>
+				<li>Point consolidation will effect series legend values (min,max,total,current)</li>
+				<li>If you override maxDataPoint and set a high value performance can be severely effected</li>
+			</ul>
+		</div>
+
 	</div>
 </div>
-
-
