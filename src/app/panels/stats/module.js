@@ -169,7 +169,9 @@ function (angular, app, _, TimeSeries, kbn) {
       var data = {};
 
       if (!$scope.series || $scope.series.length === 0) {
-        data.series = { mainValue: null, datapoints: [] };
+        data.flotpairs = [];
+        data.mainValue = Number.NaN;
+        data.mainValueFormated = 'NaN';
       }
       else {
         var series = $scope.series[0];

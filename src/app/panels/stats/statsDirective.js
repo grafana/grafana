@@ -21,14 +21,6 @@ function (angular, app, _, kbn, $) {
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
-          data = scope.data;
-          panel = scope.panel;
-
-          if (!data || data.flotpairs.length === 0) {
-            elem.html('no data');
-            return;
-          }
-
           render();
         });
 
@@ -148,9 +140,11 @@ function (angular, app, _, kbn, $) {
         }
 
         function render() {
+          data = scope.data;
+          panel = scope.panel;
+
           setElementHeight();
 
-          var panel = scope.panel;
           var body = getBigValueHtml();
 
           if (panel.colorBackground && data.mainValue) {

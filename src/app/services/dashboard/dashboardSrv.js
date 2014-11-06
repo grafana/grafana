@@ -99,9 +99,14 @@ function (angular, $, kbn, _, moment) {
             result.panel = panel;
             result.row = row;
             result.index = index;
+            return;
           }
         });
       });
+
+      if (!result.panel) {
+        return null;
+      }
 
       return result;
     };

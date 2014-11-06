@@ -39,7 +39,9 @@ function (angular, _, $) {
       if (!this.state.panelId) { return; }
 
       var panelInfo = this.$scope.dashboard.getPanelInfoById(this.state.panelId);
-      panelInfo.row.collapse = false;
+      if (panelInfo) {
+        panelInfo.row.collapse = false;
+      }
     };
 
     DashboardViewState.prototype.needsSync = function(urlState) {
