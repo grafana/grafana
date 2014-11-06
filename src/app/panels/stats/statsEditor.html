@@ -3,7 +3,7 @@
     <h5>Big value</h5>
 		<div class="editor-option">
 			<label class="small">Prefix</label>
-			<input type="text" class="input-medium" ng-model="panel.prefix" ng-blur="render()"></input>
+			<input type="text" class="input-small" ng-model="panel.prefix" ng-blur="render()"></input>
 		</div>
 		<div class="editor-option">
 			<label class="small">Value</label>
@@ -11,9 +11,26 @@
 		</div>
 		<div class="editor-option">
 			<label class="small">Postfix</label>
-			<input type="text" class="input-medium" ng-model="panel.prefix" ng-blur="render()"></input>
+			<input type="text" class="input-small" ng-model="panel.postfix" ng-blur="render()" ng-trim="false"></input>
 		</div>
 	</div>
+
+	<div class="section">
+    <h5>Big value font size</h5>
+		<div class="editor-option">
+			<label class="small">Prefix</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.prefixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Value</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.valueFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%', '110%', '120%']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Postfix</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.postfixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+		</div>
+	</div>
+
 	<div class="section">
     <h5>Formats</h5>
 		<div class="editor-option">

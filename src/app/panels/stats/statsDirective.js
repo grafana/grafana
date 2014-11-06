@@ -17,11 +17,12 @@ function (angular, app, _, kbn, $) {
 
     return {
       link: function(scope, elem) {
-        var data;
+        var data, panel;
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
           data = scope.data;
+          panel = scope.panel;
 
           if (!data || data.flotpairs.length === 0) {
             elem.html('no data');
@@ -33,12 +34,12 @@ function (angular, app, _, kbn, $) {
 
         function setElementHeight() {
           try {
-            var height = scope.height || scope.panel.height || scope.row.height;
+            var height = scope.height || panel.height || scope.row.height;
             if (_.isString(height)) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
-            height -= scope.panel.title ? 24 : 9; // subtract panel title bar
+            height -= panel.title ? 24 : 9; // subtract panel title bar
 
             elem.css('height', height + 'px');
 
@@ -49,7 +50,7 @@ function (angular, app, _, kbn, $) {
         }
 
         function applyColoringThresholds(value, valueString) {
-          if (!scope.panel.colorValue) {
+          if (!panel.colorValue) {
             return valueString;
           }
 
@@ -70,8 +71,24 @@ function (angular, app, _, kbn, $) {
           return null;
         }
 
+        function getSpan(className, fontSize, value)  {
+          return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
+            value + '</span>';
+        }
+
         function getBigValueHtml() {
-          return applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          var body = '<div class="stats-panel-value-container">';
+
+          if (panel.prefix) { body += getSpan('stats-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
+
+          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          body += getSpan('stats-panel-value', panel.valueFontSize, value);
+
+          if (panel.postfix) { body += getSpan('stats-panel-postfix', panel.postfixFontSize, panel.postfix); }
+
+          body += '</div>';
+
+          return body;
         }
 
         function addSparkline() {
@@ -134,13 +151,7 @@ function (angular, app, _, kbn, $) {
           setElementHeight();
 
           var panel = scope.panel;
-          var body = '';
-
-          body += '<div class="stats-panel-value-container">';
-          body += '<span class="stats-panel-value">';
-          body += getBigValueHtml();
-          body += '</div>';
-          body += '</div>';
+          var body = getBigValueHtml();
 
           if (panel.colorBackground && data.mainValue) {
             var color = getColorForValue(data.mainValue);

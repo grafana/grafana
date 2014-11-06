@@ -32,6 +32,10 @@ function (angular) {
           };
 
           input.spectrum(options);
+
+          scope.$on('$destroy', function() {
+            input.spectrum('destroy');
+          });
         }
       };
     });

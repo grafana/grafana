@@ -347,7 +347,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       $scope.render();
     };
 
-
     panelSrv.init($scope);
   });
 
