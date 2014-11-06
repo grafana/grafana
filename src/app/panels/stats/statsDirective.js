@@ -18,15 +18,12 @@ function (angular, app, _, kbn, $) {
     return {
       link: function(scope, elem) {
         var data;
-        var valueRegex = /\{\{([a-zA-Z]+)\}\}/g;
-        var smallValueTextRegex = /!(\S+)/g;
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
           data = scope.data;
-          data.mainValue = null;
 
-          if (!data || data.series.length === 0) {
+          if (!data || data.flotpairs.length === 0) {
             elem.html('no data');
             return;
           }
@@ -73,15 +70,8 @@ function (angular, app, _, kbn, $) {
           return null;
         }
 
-        function valueTemplateReplaceFunc(match, statType) {
-          var stats = data.series[0].stats;
-          data.mainValue = stats[statType];
-          var valueFormated = scope.formatValue(data.mainValue);
-          return applyColoringThresholds(data.mainValue, valueFormated);
-        }
-
-        function smallValueTextReplaceFunc(match, text) {
-          return '<span class="stats-panel-value-small">' + text + '</span>';
+        function getBigValueHtml() {
+          return applyColoringThresholds(data.mainValue, data.mainValueFormated);
         }
 
         function addSparkline() {
@@ -130,10 +120,13 @@ function (angular, app, _, kbn, $) {
 
           elem.append(plotCanvas);
 
-          data.series[0].color = panel.sparkline.lineColor;
+          var plotSeries = {
+            data: data.flotpairs,
+            color: panel.sparkline.lineColor
+          };
 
           setTimeout(function() {
-            $.plot(plotCanvas, [data.series[0]], options);
+            $.plot(plotCanvas, [plotSeries], options);
           }, 10);
         }
 
@@ -145,8 +138,7 @@ function (angular, app, _, kbn, $) {
 
           body += '<div class="stats-panel-value-container">';
           body += '<span class="stats-panel-value">';
-          var valueHtml = panel.template.replace(valueRegex, valueTemplateReplaceFunc);
-          body += valueHtml.replace(smallValueTextRegex, smallValueTextReplaceFunc);
+          body += getBigValueHtml();
           body += '</div>';
           body += '</div>';
 

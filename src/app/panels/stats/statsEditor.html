@@ -1,9 +1,17 @@
 <div class="editor-row">
 	<div class="section">
-    <h5>Big values</h5>
+    <h5>Big value</h5>
 		<div class="editor-option">
-			<label class="small">Template</label>
-			<input type="text" class="input-xlarge" ng-model="panel.template" ng-blur="render()"></input>
+			<label class="small">Prefix</label>
+			<input type="text" class="input-medium" ng-model="panel.prefix" ng-blur="render()"></input>
+		</div>
+		<div class="editor-option">
+			<label class="small">Value</label>
+			<select class="input-small" ng-model="panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Postfix</label>
+			<input type="text" class="input-medium" ng-model="panel.prefix" ng-blur="render()"></input>
 		</div>
 	</div>
 	<div class="section">
@@ -39,6 +47,9 @@
 		<div class="editor-option">
 			<label class="small">Line color</label>
 			<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
+		</div>
+		<div class="editor-option">
+			<label class="small">Fill color</label>
 			<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
 		</div>
 	</div>

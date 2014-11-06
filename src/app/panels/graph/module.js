@@ -347,13 +347,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       $scope.render();
     };
 
-    $scope.toggleEditorHelp = function(index) {
-      if ($scope.editorHelpIndex === index) {
-        $scope.editorHelpIndex = null;
-        return;
-      }
-      $scope.editorHelpIndex = index;
-    };
 
     panelSrv.init($scope);
   });

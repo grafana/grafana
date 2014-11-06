@@ -99,6 +99,14 @@ function (angular, _) {
         $scope.get_data();
       };
 
+      $scope.toggleEditorHelp = function(index) {
+        if ($scope.editorHelpIndex === index) {
+          $scope.editorHelpIndex = null;
+          return;
+        }
+        $scope.editorHelpIndex = index;
+      };
+
       $scope.toggleFullscreen = function(edit) {
         $scope.dashboardViewState.update({ fullscreen: true, edit: edit, panelId: $scope.panel.id });
       };

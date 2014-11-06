@@ -40,7 +40,9 @@ function (angular, app, _, TimeSeries, kbn) {
       targets: [{}],
       cacheTimeout: null,
       format: 'none',
-      template: '{{avg}} !(avg)',
+      prefix: '',
+      postfix: '',
+      valueName: 'avg',
       thresholds: '',
       colorBackground: false,
       colorValue: false,
@@ -103,7 +105,7 @@ function (angular, app, _, TimeSeries, kbn) {
         info: { alias: seriesData.target },
       });
 
-      series.data = series.getFlotPairs('connected');
+      series.flotpairs = series.getFlotPairs('connected');
 
       return series;
     };
@@ -128,15 +130,17 @@ function (angular, app, _, TimeSeries, kbn) {
     };
 
     $scope.render = function() {
-      var i, series;
-      var data = {
-        series: $scope.series,
-        stats: []
-      };
+      var data = {};
 
-      for (i = 0; i < data.series.length; i++) {
-        series = data.series[i];
+      if (!$scope.series || $scope.series.length === 0) {
+        data.series = { mainValue: null, datapoints: [] };
+      }
+      else {
+        var series = $scope.series[0];
         series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
+        data.mainValue = series.stats[$scope.panel.valueName];
+        data.mainValueFormated = $scope.formatValue(data.mainValue);
+        data.flotpairs = series.flotpairs;
       }
 
       data.thresholds = $scope.panel.thresholds.split(',').map(function(strVale) {
