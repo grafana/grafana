@@ -65,10 +65,6 @@ function (angular, app, _, TimeSeries, kbn) {
       $scope.$on('refresh', $scope.get_data);
     };
 
-    $scope.formatValue = function(value) {
-      return kbn.valueFormats[$scope.panel.format](value, 0, -7);
-    };
-
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);
@@ -132,6 +128,43 @@ function (angular, app, _, TimeSeries, kbn) {
       $scope.render();
     };
 
+    $scope.getDecimalsForValue = function(value) {
+      var opts = {};
+
+      var delta = value / 2;
+      var dec = -Math.floor(Math.log(delta) / Math.LN10);
+
+      var magn = Math.pow(10, -dec),
+          norm = delta / magn, // norm is between 1.0 and 10.0
+          size;
+
+      if (norm < 1.5) {
+        size = 1;
+      } else if (norm < 3) {
+        size = 2;
+        // special case for 2.5, requires an extra decimal
+        if (norm > 2.25) {
+          size = 2.5;
+          ++dec;
+        }
+      } else if (norm < 7.5) {
+        size = 5;
+      } else {
+        size = 10;
+      }
+
+      size *= magn;
+
+      if (opts.minTickSize != null && size < opts.minTickSize) {
+        size = opts.minTickSize;
+      }
+
+      var result = {};
+      result.decimals = Math.max(0, dec);
+      result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10);
+      return result;
+    };
+
     $scope.render = function() {
       var data = {};
 
@@ -140,9 +173,11 @@ function (angular, app, _, TimeSeries, kbn) {
       }
       else {
         var series = $scope.series[0];
-        series.updateLegendValues(kbn.valueFormats[$scope.panel.format], 2, -7);
         data.mainValue = series.stats[$scope.panel.valueName];
-        data.mainValueFormated = $scope.formatValue(data.mainValue);
+        var decimalInfo = $scope.getDecimalsForValue(data.mainValue);
+        var formatFunc = kbn.valueFormats[$scope.panel.format];
+
+        data.mainValueFormated = formatFunc(data.mainValue, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.flotpairs = series.flotpairs;
       }
 

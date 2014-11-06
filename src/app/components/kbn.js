@@ -327,17 +327,19 @@ function($, _, moment) {
         size /= factor;
       }
       if (steps > 0) {
-        decimals = scaledDecimals + (3 * steps);
+        scaledDecimals = scaledDecimals + (3 * steps);
       }
 
-      return kbn.toFixed(size, decimals) + extArray[steps];
+      return kbn.toFixed(size, scaledDecimals, decimals) + extArray[steps];
     };
   };
 
-  kbn.toFixed = function(value, decimals) {
+  kbn.toFixed = function(value, decimals, fallbackDecimals) {
     if (value === null) {
       return "";
     }
+
+    decimals = decimals || fallbackDecimals;
 
     var factor = decimals ? Math.pow(10, decimals) : 1;
     var formatted = String(Math.round(value * factor) / factor);
