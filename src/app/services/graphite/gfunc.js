@@ -101,6 +101,27 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'mapSeries',
+    shortName: 'map',
+    params: [{ name: "node", type: 'int' }],
+    defaultParams: [3],
+    category: categories.Combine,
+  });
+
+  addFuncDef({
+    name: 'reduceSeries',
+    shortName: 'reduce',
+    params: [
+      { name: "function", type: 'string', options: ['asPercent', 'diffSeries', 'divideSeries'] },
+      { name: "reduceNode", type: 'int', options: [0,1,2,3,4,5,6,7,8,9,10,11,12,13] },
+      { name: "reduceMatchers", type: 'string' },
+      { name: "reduceMatchers", type: 'string' },
+    ],
+    defaultParams: ['asPercent', 2, 'used_bytes', 'total_bytes'],
+    category: categories.Combine,
+  });
+
+  addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
