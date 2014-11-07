@@ -46,10 +46,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function() {
-          render_panel();
-        });
-
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;

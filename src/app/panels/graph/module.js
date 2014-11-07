@@ -7,6 +7,7 @@ define([
   'moment',
   'components/timeSeries',
   './seriesOverridesCtrl',
+  './legend',
   'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
@@ -23,7 +24,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
-  app.useModule(module);
 
   module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
@@ -270,7 +270,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
     };
 
     $scope.render = function(data) {
-      $scope.$emit('render', data);
+      $scope.$broadcast('render', data);
     };
 
     $scope.changeSeriesColor = function(series, color) {
@@ -291,7 +291,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
-      $scope.$emit('toggleLegend', $scope.legend);
+      $scope.render();
     };
 
     $scope.toggleSeriesExclusiveMode = function(serie) {
