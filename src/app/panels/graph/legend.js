@@ -65,16 +65,17 @@ function (angular, app, _, kbn, $) {
 
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable);
 
-          if (panel.legend.bigTableMode) {
-            $container.toggleClass('graph-legend-big-table', true);
+          if (panel.legend.alignAsTable) {
             var header = '<tr>';
             header += '<th></th>';
             header += '<th></th>';
-            header += '<th>min</th>';
-            header += '<th>max</th>';
-            header += '<th>avg</th>';
-            header += '<th>current</th>';
-            header += '<th>total</th>';
+            if (panel.legend.values) {
+              if (panel.legend.min) { header += '<th>min</div>'; }
+              if (panel.legend.max) { header += '<th>max</div>'; }
+              if (panel.legend.avg) { header += '<th>avg</div>'; }
+              if (panel.legend.current) { header += '<th>current</div>'; }
+              if (panel.legend.total) { header += '<th>total</div>'; }
+            }
             header += '</tr>';
             $container.append($(header));
           }
