@@ -50,6 +50,11 @@ function(angular, $) {
         scope.dashboard.emit_refresh('refresh');
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+l', function() {
+        scope.dashboard.hideAllLegends = !scope.dashboard.hideAllLegends;
+        scope.dashboard.emit_refresh('refresh');
+      }, { inputDisabled: true });
+
       keyboardManager.bind('ctrl+h', function() {
         var current = scope.dashboard.hideControls;
         scope.dashboard.hideControls = !current;

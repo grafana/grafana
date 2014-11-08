@@ -63,7 +63,7 @@ function (angular, app, _, kbn, $) {
 
           $container.empty();
 
-          $container.toggleClass('graph-legend-table', panel.legend.alignAsTable);
+          $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
           if (panel.legend.alignAsTable) {
             var header = '<tr>';
