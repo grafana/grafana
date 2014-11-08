@@ -16,6 +16,10 @@
       <label class="small">Line Width</label>
       <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
     </div>
+    <div class="editor-option" ng-show="panel.dashes">
+      <label class="small">Dash Length</label>
+      <select class="input-mini" ng-model="panel.dashLength" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
     <div class="editor-option" ng-show="panel.points">
       <label class="small">Point Radius</label>
       <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
@@ -24,7 +28,7 @@
       <label class="small">Null point mode<tip>Define how null values should be drawn</tip></label>
       <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
     </div>
-
+    <editor-opt-bool text="Dashed line" model="panel.dashes" change="render()"></editor-opt-bool>
 		<editor-opt-bool text="Staircase line" model="panel.steppedLine" change="render()"></editor-opt-bool>
   </div>
   <div class="section">

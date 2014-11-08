@@ -73,6 +73,8 @@ define([
 
     $scope.addOverrideOption('Bars', 'bars', [true, false]);
     $scope.addOverrideOption('Lines', 'lines', [true, false]);
+    $scope.addOverrideOption('Dashed line', 'dashes', [true, false]);
+    $scope.addOverrideOption('Dash length', 'dashLength', [0,1,2,3,4,5,6,7,8,9,10]);
     $scope.addOverrideOption('Line fill', 'fill', [0,1,2,3,4,5,6,7,8,9,10]);
     $scope.addOverrideOption('Line width', 'linewidth', [0,1,2,3,4,5,6,7,8,9,10]);
     $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
