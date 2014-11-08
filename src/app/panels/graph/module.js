@@ -243,10 +243,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
       var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
+      var url_param = seriesData.url_param;
 
       var seriesInfo = {
         alias: alias,
         color: color,
+        url_param: url_param,
       };
 
       $scope.legend.push(seriesInfo);

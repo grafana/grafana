@@ -49,9 +49,10 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         // replace templated variables
         query = templateSrv.replace(query);
 
+        var url_param = target.url_param ? templateSrv.replace(target.url_param) : '';
         var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
+        var handleResponse = _.partial(handleInfluxQueryResponse, alias, url_param, queryBuilder.groupByField);
         return this._seriesQuery(query).then(handleResponse);
 
       }, this);
@@ -360,10 +361,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
+    function handleInfluxQueryResponse(alias, url_param, groupByField, seriesList) {
       var influxSeries = new InfluxSeries({
         seriesList: seriesList,
         alias: alias,
+        url_param: url_param,
         groupByField: groupByField
       });
 
