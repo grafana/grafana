@@ -36,7 +36,7 @@ function (angular, app, _, kbn, $) {
         function openColorSelector(e) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = data[index].info;
+          var seriesInfo = data[index];
           var popoverScope = scope.$new();
           popoverScope.series = seriesInfo;
           popoverSrv.show({
@@ -49,7 +49,7 @@ function (angular, app, _, kbn, $) {
         function toggleSeries(e) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = data[index].info;
+          var seriesInfo = data[index];
           scope.toggleSeries(seriesInfo, e);
         }
 
@@ -83,8 +83,8 @@ function (angular, app, _, kbn, $) {
           for (i = 0; i < data.length; i++) {
             var series = data[i];
             var html = '<div class="graph-legend-series';
-            if (series.info.yaxis === 2) { html += ' pull-right'; }
-            if (scope.hiddenSeries[series.label]) { html += ' graph-legend-series-hidden'; }
+            if (series.yaxis === 2) { html += ' pull-right'; }
+            if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
             html += '<i class="icon-minus pointer" style="color:' + series.color + '"></i>';
@@ -94,12 +94,18 @@ function (angular, app, _, kbn, $) {
             html += '<a>' + series.label + '</a>';
             html += '</div>';
 
+            var avg = series.formatValue(series.stats.avg);
+            var current = series.formatValue(series.stats.current);
+            var min = series.formatValue(series.stats.min);
+            var max = series.formatValue(series.stats.max);
+            var total = series.formatValue(series.stats.total);
+
             if (panel.legend.values) {
-              if (panel.legend.min) { html += '<div class="graph-legend-value min small">' + series.info.min + '</div>'; }
-              if (panel.legend.max) { html += '<div class="graph-legend-value max small">' + series.info.max + '</div>'; }
-              if (panel.legend.avg) { html += '<div class="graph-legend-value avg small">' + series.info.avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value current small">' + series.info.current + '</div>'; }
-              if (panel.legend.total) { html += '<div class="graph-legend-value total small">' + series.info.total + '</div>'; }
+              if (panel.legend.min) { html += '<div class="graph-legend-value min small">' + min + '</div>'; }
+              if (panel.legend.max) { html += '<div class="graph-legend-value max small">' + max + '</div>'; }
+              if (panel.legend.avg) { html += '<div class="graph-legend-value avg small">' + avg + '</div>'; }
+              if (panel.legend.current) { html += '<div class="graph-legend-value current small">' + current + '</div>'; }
+              if (panel.legend.total) { html += '<div class="graph-legend-value total small">' + total + '</div>'; }
             }
 
             html += '</div>';

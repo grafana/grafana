@@ -112,6 +112,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.legend, _d.legend);
 
     $scope.hiddenSeries = {};
+    $scope.seriesList = [];
 
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
@@ -145,6 +146,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
           $scope.panelMeta.loading = false;
           $scope.panelMeta.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
+          $scope.seriesList = [];
           $scope.render([]);
         });
     };
@@ -162,16 +164,16 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;
 
-      var data = _.map(results.data, $scope.seriesHandler);
+      $scope.seriesList = _.map(results.data, $scope.seriesHandler);
 
       $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;
 
       $scope.annotationsPromise
         .then(function(annotations) {
-          data.annotations = annotations;
-          $scope.render(data);
+          $scope.seriesList.annotations = annotations;
+          $scope.render($scope.seriesList);
         }, function() {
-          $scope.render(data);
+          $scope.render($scope.seriesList);
         });
     };
 
@@ -182,7 +184,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-        info: {alias: alias, color: color},
+        alias: alias,
+        color: color,
       });
 
       if (datapoints && datapoints.length > 0) {
@@ -231,7 +234,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       }
 
       // check if every other series is hidden
-      var alreadyExclusive = _.every($scope.legend, function(value) {
+      var alreadyExclusive = _.every($scope.seriesList, function(value) {
         if (value.alias === serie.alias) {
           return true;
         }
@@ -241,13 +244,13 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       if (alreadyExclusive) {
         // remove all hidden series
-        _.each($scope.legend, function(value) {
+        _.each($scope.seriesList, function(value) {
           delete $scope.hiddenSeries[value.alias];
         });
       }
       else {
         // hide all but this serie
-        _.each($scope.legend, function(value) {
+        _.each($scope.seriesList, function(value) {
           if (value.alias === serie.alias) {
             return;
           }

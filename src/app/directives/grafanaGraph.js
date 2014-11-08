@@ -175,7 +175,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack
-            if (scope.hiddenSeries[series.info.alias]) {
+            if (scope.hiddenSeries[series.alias]) {
               series.data = [];
               series.stack = false;
             }

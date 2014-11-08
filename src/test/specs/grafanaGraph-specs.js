@@ -47,11 +47,11 @@ define([
             ctx.data = [];
             ctx.data.push(new TimeSeries({
               datapoints: [[1,1],[2,2]],
-              info: { alias: 'series1', enable: true }
+              alias: 'series1'
             }));
             ctx.data.push(new TimeSeries({
               datapoints: [[1,1],[2,2]],
-              info: { alias: 'series2', enable: true }
+              alias: 'series2'
             }));
 
             setupFunc(scope, ctx.data);
@@ -131,7 +131,7 @@ define([
         scope.panel.bars = true;
         data[0] = new TimeSeries({
           datapoints: [[1,10],[2,20]],
-          info: { alias: 'series1', enable: true }
+          alias: 'series1',
         });
       });
 
@@ -148,7 +148,7 @@ define([
           { alias: 'test', fill: 0, points: true }
         ];
 
-        data[1].info.alias = 'test';
+        data[1].alias = 'test';
       });
 
       it('should match second series and fill zero, and enable points', function() {
@@ -164,8 +164,8 @@ define([
       });
 
       it('should move zindex 2 last', function() {
-        expect(ctx.plotData[0].info.alias).to.be('series2');
-        expect(ctx.plotData[1].info.alias).to.be('series1');
+        expect(ctx.plotData[0].alias).to.be('series2');
+        expect(ctx.plotData[1].alias).to.be('series1');
       });
     });
 
@@ -175,7 +175,7 @@ define([
       });
 
       it('should remove datapoints and disable stack', function() {
-        expect(ctx.plotData[0].info.alias).to.be('series1');
+        expect(ctx.plotData[0].alias).to.be('series1');
         expect(ctx.plotData[1].data.length).to.be(0);
         expect(ctx.plotData[1].stack).to.be(false);
       });
