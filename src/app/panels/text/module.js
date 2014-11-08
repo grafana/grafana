@@ -3,8 +3,9 @@ define([
   'app',
   'lodash',
   'require',
+  'components/panelmeta',
 ],
-function (angular, app, _, require) {
+function (angular, app, _, require, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.text', []);
@@ -14,13 +15,15 @@ function (angular, app, _, require) {
 
   module.controller('text', function($scope, templateSrv, $sce, panelSrv) {
 
-    $scope.panelMeta = {
+    $scope.panelMeta = new PanelMeta({
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
-    };
+    });
+
+    $scope.panelMeta.addEditorTab('Edit text', 'app/panels/text/editor.html');
 
     // Set and populate defaults
     var _d = {
-      title: 'default title',
+      title   : 'default title',
       mode    : "markdown", // 'html', 'markdown', 'text'
       content : "",
       style: {},

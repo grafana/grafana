@@ -4,10 +4,11 @@ define([
   'lodash',
   'components/timeSeries',
   'kbn',
+  'components/panelmeta',
   'services/panelSrv',
   './singleStatPanel',
 ],
-function (angular, app, _, TimeSeries, kbn) {
+function (angular, app, _, TimeSeries, kbn, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat');
@@ -15,25 +16,14 @@ function (angular, app, _, TimeSeries, kbn) {
 
   module.controller('SingleStatCtrl', function($scope, panelSrv, timeSrv) {
 
-    $scope.panelMeta = {
+    $scope.panelMeta = new PanelMeta({
+      description: 'Singlestat panel',
       titlePos: 'left',
-      description : "A stats values panel",
-      fullEditorTabs : [
-        {
-          title: 'General',
-          src:'app/partials/panelgeneral.html'
-        },
-        {
-          title: 'Metrics',
-          src:'app/partials/metrics.html'
-        },
-        {
-          title: 'Options',
-          src:'app/panels/singlestat/editor.html'
-        }
-      ],
-      fullscreenEdit: true,
-    };
+      fullscreen: true,
+      metricsEditor: true
+    });
+
+    $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
 
     // Set and populate defaults
     var _d = {

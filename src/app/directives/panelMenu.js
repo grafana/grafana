@@ -22,7 +22,7 @@ function (angular, $, _) {
         template += '</div>';
 
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-link" bs-dropdown="[{text: \'hej\'}]"><i class="icon-th-list"></i></a>';
+        template += '<a class="panel-menu-link" bs-dropdown="panelMeta.extendedMenu"><i class="icon-th-list"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
           template += '<a class="panel-menu-link" ';
@@ -97,7 +97,7 @@ function (angular, $, _) {
             $menu = $(menuTemplate);
             $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
-              dismiss(1000);
+              //dismiss(1000);
             });
 
             menuScope = $scope.$new();
@@ -111,7 +111,7 @@ function (angular, $, _) {
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
 
-            dismiss(2500);
+            //dismiss(2500);
           };
 
           if ($scope.panelMeta.titlePos && $scope.panel.title) {

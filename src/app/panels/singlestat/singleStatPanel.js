@@ -2,12 +2,10 @@ define([
   'angular',
   'app',
   'lodash',
-  'kbn',
   'jquery',
   'jquery.flot',
-  'jquery.flot.time',
 ],
-function (angular, app, _, kbn, $) {
+function (angular, app, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat', []);

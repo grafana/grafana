@@ -11,44 +11,10 @@ function (angular, _) {
     this.init = function($scope) {
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
-      var menu = [
-        {
-          text: "view",
-          icon: "icon-eye-open",
-          click: 'toggleFullscreen(false)',
-          condition: $scope.panelMeta.fullscreenView
-        },
-        {
-          text: 'edit',
-          icon: 'icon-cogs',
-          click: 'editPanel()',
-          condition: true,
-        },
-        {
-          text: 'duplicate',
-          icon: 'icon-copy',
-          click: 'duplicatePanel(panel)',
-          condition: true
-        },
-        {
-          text: 'json',
-          icon: 'icon-code',
-          click: 'editPanelJson()',
-          condition: true
-        },
-        {
-          text: 'share',
-          icon: 'icon-share',
-          click: 'sharePanel()',
-          condition: true
-        },
-      ];
-
       $scope.inspector = {};
-      $scope.panelMeta.menu = _.where(menu, { condition: true });
 
       $scope.editPanel = function() {
-        if ($scope.panelMeta.fullscreenEdit) {
+        if ($scope.panelMeta.fullscreen) {
           $scope.toggleFullscreen(true);
         }
         else {
@@ -118,9 +84,6 @@ function (angular, _) {
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
-      if ($scope.panelMeta.fullEditorTabs) {
-        $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs, 'title');
-      }
 
       $scope.datasources = datasourceSrv.getMetricSources();
       $scope.setDatasource($scope.panel.datasource);

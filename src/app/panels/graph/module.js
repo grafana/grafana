@@ -6,6 +6,7 @@ define([
   'kbn',
   'moment',
   'components/timeSeries',
+  'components/panelmeta',
   './seriesOverridesCtrl',
   './legend',
   'services/panelSrv',
@@ -20,68 +21,35 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries) {
+function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
 
   module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
-    $scope.panelMeta = {
-      editorTabs: [],
-      fullEditorTabs : [
-        {
-          title: 'General',
-          src:'app/partials/panelgeneral.html'
-        },
-        {
-          title: 'Metrics',
-          src:'app/partials/metrics.html'
-        },
-        {
-          title:'Axes & Grid',
-          src:'app/panels/graph/axisEditor.html'
-        },
-        {
-          title:'Display Styles',
-          src:'app/panels/graph/styleEditor.html'
-        }
-      ],
-      fullscreenEdit: true,
-      fullscreenView: true,
-      description : "Graphing"
-    };
+    $scope.panelMeta = new PanelMeta({
+      description: 'Graph panel',
+      fullscreen: true,
+      metricsEditor: true
+    });
+
+    $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
+    $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
 
     // Set and populate defaults
     var _d = {
-
+      // datasource name, null = default datasource
       datasource: null,
-
-      /** @scratch /panels/histogram/3
-       * renderer:: sets client side (flot) or native graphite png renderer (png)
-       */
+       // sets client side (flot) or native graphite png renderer (png)
       renderer: 'flot',
-      /** @scratch /panels/histogram/3
-       * x-axis:: Show the x-axis
-       */
+       // Show/hide the x-axis
       'x-axis'      : true,
-      /** @scratch /panels/histogram/3
-       * y-axis:: Show the y-axis
-       */
+      // Show/hide y-axis
       'y-axis'      : true,
-      /** @scratch /panels/histogram/3
-       * scale:: Scale the y-axis by this factor
-       */
-      scale         : 1,
-      /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','bits','bps','short', 's', 'ms'
-       */
+      // y axis formats, [left axis,right axis]
       y_formats    : ['short', 'short'],
-      /** @scratch /panels/histogram/5
-       * grid object:: Min and max y-axis values
-       * grid.min::: Minimum y-axis value
-       * grid.ma1::: Maximum y-axis value
-       */
+      // grid options
       grid          : {
         leftMax: null,
         rightMax: null,
@@ -92,48 +60,23 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
         threshold2Color: 'rgba(234, 112, 112, 0.22)'
       },
-
-      annotate      : {
-        enable      : false,
-      },
-
-      /** @scratch /panels/histogram/3
-       * resolution:: If auto_int is true, shoot for this many bars.
-       */
-      resolution    : 100,
-
-      /** @scratch /panels/histogram/3
-       * ==== Drawing options
-       * lines:: Show line chart
-       */
+      // show/hide lines
       lines         : true,
-      /** @scratch /panels/histogram/3
-       * fill:: Area fill factor for line charts, 1-10
-       */
+      // fill factor
       fill          : 0,
-      /** @scratch /panels/histogram/3
-       * linewidth:: Weight of lines in pixels
-       */
+      // line width in pixels
       linewidth     : 1,
-      /** @scratch /panels/histogram/3
-       * points:: Show points on chart
-       */
+      // show hide points
       points        : false,
-      /** @scratch /panels/histogram/3
-       * pointradius:: Size of points in pixels
-       */
+      // point radius in pixels
       pointradius   : 5,
-      /** @scratch /panels/histogram/3
-       * bars:: Show bars on chart
-       */
+      // show hide bars
       bars          : false,
-      /** @scratch /panels/histogram/3
-       * stack:: Stack multiple series
-       */
+      // enable/disable stacking
       stack         : false,
-      /** @scratch /panels/histogram/3
-       * legend:: Display the legend
-       */
+      // stack percentage mode
+      percentage    : false,
+      // legend options
       legend: {
         show: true, // disable/enable legend
         values: false, // disable/enable legend values
@@ -143,27 +86,20 @@ function (angular, app, $, _, kbn, moment, TimeSeries) {
         total: false,
         avg: false
       },
-      /** @scratch /panels/histogram/3
-       * ==== Transformations
-      /** @scratch /panels/histogram/3
-       * percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
-       * queries
-       */
-      percentage    : false,
-
+      // how null points should be handled
       nullPointMode : 'connected',
-
+      // staircase line mode
       steppedLine: false,
-
+      // tooltip options
       tooltip       : {
         value_type: 'cumulative',
         shared: false,
       },
-
+      // metric queries
       targets: [{}],
-
+      // series color overrides
       aliasColors: {},
-
+      // other style overrides
       seriesOverrides: [],
     };
 

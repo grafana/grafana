@@ -109,14 +109,6 @@ function (angular, $, config, _) {
       $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
     };
 
-    $scope.setEditorTabs = function(panelMeta) {
-      $scope.editorTabs = ['General','Panel'];
-      if(!_.isUndefined(panelMeta.editorTabs)) {
-        $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
-      }
-      return $scope.editorTabs;
-    };
-
     $scope.onDrop = function(panelId, row, dropTarget) {
       var info = $scope.dashboard.getPanelInfoById(panelId);
       if (dropTarget) {
