@@ -51,8 +51,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+l', function() {
-        scope.dashboard.hideAllLegends = !scope.dashboard.hideAllLegends;
-        scope.dashboard.emit_refresh('refresh');
+        scope.$broadcast('toggle-all-legends');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {

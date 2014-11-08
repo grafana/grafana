@@ -97,7 +97,7 @@ function (angular, $, _) {
             $menu = $(menuTemplate);
             $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
-              //dismiss(1000);
+              dismiss(1000);
             });
 
             menuScope = $scope.$new();
@@ -111,7 +111,7 @@ function (angular, $, _) {
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
 
-            //dismiss(2500);
+            dismiss(2500);
           };
 
           if ($scope.panelMeta.titlePos && $scope.panel.title) {

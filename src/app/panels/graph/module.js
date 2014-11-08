@@ -37,6 +37,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
 
+    $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
+
     // Set and populate defaults
     var _d = {
       // datasource name, null = default datasource
@@ -143,14 +145,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
           $scope.panelMeta.loading = false;
           $scope.panelMeta.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
-          $scope.legend = [];
           $scope.render([]);
         });
     };
 
     $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
-      $scope.legend = [];
 
       // png renderer returns just a url
       if (_.isString(results)) {
@@ -180,16 +180,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       var alias = seriesData.target;
       var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
 
-      var seriesInfo = {
-        alias: alias,
-        color: color,
-      };
-
-      $scope.legend.push(seriesInfo);
-
       var series = new TimeSeries({
         datapoints: datapoints,
-        info: seriesInfo,
+        info: {alias: alias, color: color},
       });
 
       if (datapoints && datapoints.length > 0) {
@@ -286,6 +279,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.removeSeriesOverride = function(override) {
       $scope.panel.seriesOverrides = _.without($scope.panel.seriesOverrides, override);
       $scope.render();
+    };
+
+    // Called from panel menu
+    $scope.toggleLegend = function() {
+      $scope.panel.legend.show = !$scope.panel.legend.show;
+      $scope.get_data();
     };
 
     panelSrv.init($scope);
