@@ -94,10 +94,6 @@ function (angular, app, _) {
       });
     };
 
-    $scope.duplicatePanel = function(panel, row) {
-      $scope.dashboard.duplicatePanel(panel, row || $scope.row);
-    };
-
     $scope.reset_panel = function(type) {
       var defaultSpan = 12;
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);

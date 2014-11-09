@@ -33,6 +33,10 @@ function (angular, _) {
         $scope.appEvent('show-json-editor', { object: $scope.panel, updateHandler: $scope.replacePanel });
       };
 
+      $scope.duplicatePanel = function() {
+        $scope.dashboard.duplicatePanel($scope.panel, $scope.row);
+      };
+
       $scope.updateColumnSpan = function(span) {
         $scope.panel.span = Math.min(Math.max($scope.panel.span + span, 1), 12);
 
