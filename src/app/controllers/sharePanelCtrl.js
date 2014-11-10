@@ -66,11 +66,13 @@ function (angular, _) {
 
       var paramsArray = [];
       _.each(params, function(value, key) {
-        var str = key;
-        if (value !== true) {
-          str += '=' + encodeURIComponent(value);
+        if (value === null) { return; }
+        if (value === true) {
+          paramsArray.push(key);
+        } else {
+          key += '=' + encodeURIComponent(value);
+          paramsArray.push(key);
         }
-        paramsArray.push(str);
       });
 
       $scope.shareUrl = baseUrl + "?" + paramsArray.join('&') ;
