@@ -76,9 +76,12 @@ function (angular, app, _) {
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
-      if (confirm('Are you sure you want to remove this ' + panel.type + ' panel?')) {
-        row.panels = _.without(row.panels,panel);
-      }
+      $scope.appEvent('confirm-modal', {
+        title: 'Are you sure you want to remove this panel?',
+        onConfirm: function() {
+          row.panels = _.without(row.panels, panel);
+        }
+      });
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {

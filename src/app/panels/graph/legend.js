@@ -22,8 +22,8 @@ function (angular, app, _, kbn, $) {
         var data;
         var i;
 
-        scope.$on('render', function(event, renderData) {
-          data = renderData || data;
+        scope.$on('render', function() {
+          data = scope.seriesList;
           if (data) {
             render();
           }
