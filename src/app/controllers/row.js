@@ -47,9 +47,13 @@ function (angular, app, _) {
     };
 
     $scope.delete_row = function() {
-      if (confirm("Are you sure you want to delete this row?")) {
-        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
-      }
+      $scope.appEvent('confirm-modal', {
+        title: 'Delete row',
+        text: 'Are you sure you want to delete this row?',
+        onConfirm: function() {
+          $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+        }
+      });
     };
 
     $scope.move_row = function(direction) {
@@ -77,7 +81,8 @@ function (angular, app, _) {
 
     $scope.remove_panel_from_row = function(row, panel) {
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to remove this panel?',
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
         onConfirm: function() {
           row.panels = _.without(row.panels, panel);
         }
