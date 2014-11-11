@@ -209,7 +209,7 @@
             {
               "function": "avg",
               "column": "value",
-              "series": "disk_space_utilization_perc",
+              "series": "disk.space_used_perc",
               "label": "hostname",
               "condition_filter": true,
               "condition_key": "device",
@@ -334,10 +334,10 @@
             {
               "function": "avg",
               "column": "value",
-              "series": "net.bytes_out",
+              "series": "net.out_bytes",
               "label": "hostname",
               "condition_filter": true,
-              "condition_key": "device_name",
+              "condition_key": "device",
               "condition_value": "eth0"
             }
           ],

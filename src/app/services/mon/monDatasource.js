@@ -24,6 +24,9 @@ define([
                     if (pair[0] === "token") {
                         this.access_token = pair[1];
                     }
+                    else if (pair[0] === "api") {
+                        this.api = pair[1];
+                    }
                 }
             }
 
@@ -143,8 +146,7 @@ define([
                 var deferred = $q.defer();
 
                 retry(deferred, function () {
-                    var currentUrl = _this.urls.shift();
-                    _this.urls.push(currentUrl);
+                    var currentUrl = _this.api;
 
                     var headers = {
                         'X-Auth-Token': _this.access_token,
@@ -185,8 +187,7 @@ define([
                 var seriesName = metricName;
 
                 retry(deferred, function () {
-                    var currentUrl = _this.urls.shift();
-                    _this.urls.push(currentUrl);
+                    var currentUrl = _this.api;
 
                     var headers = {
                         'X-Auth-Token': _this.access_token,
