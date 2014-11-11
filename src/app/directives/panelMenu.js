@@ -26,7 +26,7 @@ function (angular, $, _) {
         template += '</div>';
 
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-link" bs-dropdown="extendedMenu"><i class="icon-th-list"></i></a>';
+        template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="icon-th-list"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
           template += '<a class="panel-menu-link" ';
