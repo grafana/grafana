@@ -95,6 +95,18 @@ define([
       $timeout(this.refreshDashboard, 0);
     };
 
+    this.timeRangeForUrl = function() {
+      var range = this.timeRange(false);
+      if (_.isString(range.to) && range.to.indexOf('now')) {
+        range = this.timeRange();
+      }
+
+      if (_.isDate(range.from)) { range.from = range.from.getTime(); }
+      if (_.isDate(range.to)) { range.to = range.to.getTime(); }
+
+      return range;
+    };
+
     this.timeRange = function(parse) {
       var _t = this.time;
       if(_.isUndefined(_t) || _.isUndefined(_t.from)) {

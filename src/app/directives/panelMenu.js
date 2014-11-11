@@ -8,7 +8,7 @@ function (angular, $, _) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile) {
+    .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate = '<span class="panel-title drag-handle pointer">{{panel.title | interpolateTemplateVars}}</span>';
 
       function createMenuTemplate($scope) {
@@ -22,7 +22,7 @@ function (angular, $, _) {
         template += '</div>';
 
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-link" bs-dropdown="panelMeta.extendedMenu"><i class="icon-th-list"></i></a>';
+        template += '<a class="panel-menu-link" bs-dropdown="extendedMenu"><i class="icon-th-list"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
           template += '<a class="panel-menu-link" ';
@@ -36,6 +36,17 @@ function (angular, $, _) {
         template += '</div>';
         template += '</div>';
         return template;
+      }
+
+      function getExtendedMenu($scope) {
+        var menu =angular.copy($scope.panelMeta.extendedMenu);
+        if (!$scope.panel.links) { return; }
+
+        _.each($scope.panel.links, function(link) {
+          var info = linkSrv.getPanelLinkAnchorInfo(link);
+          menu.push({text: info.title, href: info.href, target: info.target });
+        });
+        return menu;
       }
 
       return {
@@ -101,6 +112,7 @@ function (angular, $, _) {
             });
 
             menuScope = $scope.$new();
+            menuScope.extendedMenu = getExtendedMenu($scope);
 
             $('.panel-menu').remove();
             elem.append($menu);
