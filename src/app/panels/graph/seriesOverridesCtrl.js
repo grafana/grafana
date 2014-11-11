@@ -53,8 +53,8 @@ define([
     };
 
     $scope.getSeriesNames = function() {
-      return _.map($scope.legend, function(info) {
-        return info.alias;
+      return _.map($scope.seriesList, function(series) {
+        return series.alias;
       });
     };
 
