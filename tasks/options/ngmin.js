@@ -8,6 +8,7 @@ module.exports = function(config) {
         'app/directives/**/*.js',
         'app/services/**/*.js',
         'app/filters/**/*.js',
+        'app/features/**/*.js',
         'app/panels/**/*.js',
         'app/routes/**/*.js',
         'plugins/**/*.js',
