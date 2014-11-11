@@ -25,7 +25,7 @@ define([
                         this.access_token = pair[1];
                     }
                     else if (pair[0] === "api") {
-                        this.api = pair[1];
+                        this.api = unescape(pair[1]);
                     }
                 }
             }
