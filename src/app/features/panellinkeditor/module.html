@@ -21,7 +21,10 @@
 
 					<li class="grafana-target-segment" ng-show="link.type === 'dashboard'">dashboard</li>
 					<li ng-show="link.type === 'dashboard'">
-						<input type="text" ng-model="link.dashboard" class="input-large grafana-target-segment-input">
+						<input type="text"
+						       ng-model="link.dashboard"
+									 bs-typeahead="searchDashboards"
+									 class="input-large grafana-target-segment-input">
 					</li>
 
 					<li class="grafana-target-segment" ng-show="link.type === 'absolute'">url</li>

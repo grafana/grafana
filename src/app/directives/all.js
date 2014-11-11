@@ -19,6 +19,5 @@ define([
   './graphiteSegment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
-  'components/panellinkeditor/module',
   './influxdbFuncEditor'
 ], function () {});

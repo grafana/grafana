@@ -3,7 +3,6 @@ define([
   'jquery',
   'config',
   'lodash',
-  'services/all',
 ],
 function (angular, $, config, _) {
   "use strict";

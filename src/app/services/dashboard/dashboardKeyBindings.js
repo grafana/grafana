@@ -1,7 +1,6 @@
 define([
   'angular',
   'jquery',
-  'services/all'
 ],
 function(angular, $) {
   "use strict";

@@ -15,11 +15,11 @@ function (angular, _) {
         },
         restrict: 'E',
         controller: 'PanelLinkEditorCtrl',
-        templateUrl: 'app/components/panellinkeditor/module.html',
+        templateUrl: 'app/features/panellinkeditor/module.html',
         link: function() {
         }
       };
-    }).controller('PanelLinkEditorCtrl', function($scope) {
+    }).controller('PanelLinkEditorCtrl', function($scope, datasourceSrv) {
 
       $scope.panel.links = $scope.panel.links || [];
 
@@ -27,6 +27,19 @@ function (angular, _) {
         $scope.panel.links.push({
           type: 'dashboard',
           name: 'Drilldown dashboard'
+        });
+      };
+
+      $scope.searchDashboards = function(query, callback) {
+        var ds = datasourceSrv.getGrafanaDB();
+        if (ds === null) { return; }
+
+        ds.searchDashboards(query).then(function(result) {
+          var dashboards = _.map(result.dashboards, function(dash) {
+            return dash.title;
+          });
+
+          callback(dashboards);
         });
       };
 
