@@ -158,7 +158,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
       var result = {};
       result.decimals = Math.max(0, dec);
-      result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10);
+      result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
       return result;
     };
