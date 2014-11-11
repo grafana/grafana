@@ -1,7 +1,8 @@
 define([
   'angular',
+  'lodash',
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,7 +22,7 @@ function (angular) {
       }
 
       this.getTemplate(options.templateUrl).then(function(result) {
-        var template = result.data;
+        var template = _.isString(result) ? result : result.data;
 
         options.element.popover({
           content: template,
