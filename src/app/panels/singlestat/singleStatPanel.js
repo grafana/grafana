@@ -138,6 +138,8 @@ function (angular, app, _, $) {
         }
 
         function render() {
+          if (!scope.data) { return; }
+
           data = scope.data;
           panel = scope.panel;
 

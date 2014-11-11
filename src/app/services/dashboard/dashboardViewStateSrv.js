@@ -69,7 +69,8 @@ function (angular, _, $) {
 
       if (!this.state.fullscreen) {
         this.state.panelId = null;
-        this.state.edit = false;
+        this.state.fullscreen = null;
+        this.state.edit = null;
       }
 
       if (!skipUrlSync) {
