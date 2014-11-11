@@ -27,6 +27,15 @@
   font-weight: bold;
   position: relative;
   cursor: context-menu;
+
+  &.has-panel-links {
+    .panel-title-text:after {
+      content: "\f0c1";
+      font-family:'FontAwesome';
+      font-size: 80%;
+      padding-left: 10px;
+    }
+  }
 }
 
 .panel-loading {

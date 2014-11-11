@@ -9,7 +9,11 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile, linkSrv) {
-      var linkTemplate = '<span class="panel-title drag-handle pointer">{{panel.title | interpolateTemplateVars}}</span>';
+      var linkTemplate =
+          '<span class="panel-title drag-handle pointer">' +
+            '<span class="panel-title-text">{{panel.title | interpolateTemplateVars}}</span>' +
+            '<span class="panel-links-icon"></span>' +
+          '</span>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
@@ -39,13 +43,15 @@ function (angular, $, _) {
       }
 
       function getExtendedMenu($scope) {
-        var menu =angular.copy($scope.panelMeta.extendedMenu);
-        if (!$scope.panel.links) { return; }
+        var menu = angular.copy($scope.panelMeta.extendedMenu);
 
-        _.each($scope.panel.links, function(link) {
-          var info = linkSrv.getPanelLinkAnchorInfo(link);
-          menu.push({text: info.title, href: info.href, target: info.target });
-        });
+        if ($scope.panel.links) {
+          _.each($scope.panel.links, function(link) {
+            var info = linkSrv.getPanelLinkAnchorInfo(link);
+            menu.push({text: info.title, href: info.href, target: info.target });
+          });
+        }
+
         return menu;
       }
 
@@ -60,6 +66,10 @@ function (angular, $, _) {
           var $menu = null;
 
           elem.append($link);
+
+          $scope.$watchCollection('panel.links', function(newValue) {
+            $link.toggleClass('has-panel-links', newValue ? newValue.length > 0 : false);
+          });
 
           function dismiss(time) {
             clearTimeout(timeout);

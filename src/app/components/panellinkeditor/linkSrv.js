@@ -13,14 +13,14 @@ function (angular, kbn) {
         var info = {};
         if (link.type === 'absolute') {
           info.target = '_blank';
-          info.href = templateSrv.replace(link.url);
-          info.title = templateSrv.replace(link.title);
+          info.href = templateSrv.replace(link.url || '');
+          info.title = templateSrv.replace(link.title || '');
           info.href += '?';
 
         }
         else {
-          info.title = templateSrv.replace(link.title);
-          var slug = kbn.slugifyForUrl(link.dashboard);
+          info.title = templateSrv.replace(link.title || '');
+          var slug = kbn.slugifyForUrl(link.dashboard || '');
           info.href = '#dashboard/db/' + slug + '?';
         }
 
