@@ -18,12 +18,12 @@
   top: 1px;
 }
 
-.graph-legend-series,
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
   float: left;
   white-space: nowrap;
+  font-size: 85%;
   text-align: left;
   &.current:before {
     content: "Current: "
@@ -43,6 +43,8 @@
 }
 
 .graph-legend-series {
+  float: left;
+  white-space: nowrap;
   padding-left: 10px;
   padding-top: 6px;
 }
@@ -110,7 +112,8 @@
     text-align: right;
     padding: 5px 10px;
     font-weight: bold;
-    color: @blue
+    color: @blue;
+    font-size: 85%;
   }
 }
 
@@ -131,7 +134,8 @@
     display: table-cell;
     vertical-align: top;
     position: relative;
-    left: -4px;
+    left: 4px;
+    top: -20px;
   }
 
   .graph-legend {

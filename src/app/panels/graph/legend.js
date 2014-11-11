@@ -90,7 +90,7 @@ function (angular, app, _, kbn, $) {
             html += '<i class="icon-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<div class="graph-legend-alias small">';
+            html += '<div class="graph-legend-alias">';
             html += '<a>' + series.label + '</a>';
             html += '</div>';
 
@@ -101,11 +101,11 @@ function (angular, app, _, kbn, $) {
             var total = series.formatValue(series.stats.total);
 
             if (panel.legend.values) {
-              if (panel.legend.min) { html += '<div class="graph-legend-value min small">' + min + '</div>'; }
-              if (panel.legend.max) { html += '<div class="graph-legend-value max small">' + max + '</div>'; }
-              if (panel.legend.avg) { html += '<div class="graph-legend-value avg small">' + avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value current small">' + current + '</div>'; }
-              if (panel.legend.total) { html += '<div class="graph-legend-value total small">' + total + '</div>'; }
+              if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
+              if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
+              if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
+              if (panel.legend.current) { html += '<div class="graph-legend-value">' + current + '</div>'; }
+              if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
             }
 
             html += '</div>';
