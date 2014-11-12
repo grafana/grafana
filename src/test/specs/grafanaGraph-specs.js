@@ -136,7 +136,7 @@ define([
       });
 
       it('should set barWidth', function() {
-        expect(ctx.plotOptions.series.bars.barWidth).to.be(10000/1.5);
+        expect(ctx.plotOptions.series.bars.barWidth).to.be(10/1.5);
       });
     });
 

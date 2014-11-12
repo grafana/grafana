@@ -21,7 +21,7 @@ define([
         maxDataPoints: 500,
       };
 
-      var response = [{ target: 'prod1.count', points: [[10, 1], [12,1]], }];
+      var response = [{ target: 'prod1.count', datapoints: [[10, 1], [12,1]], }];
       var results;
       var request;
 

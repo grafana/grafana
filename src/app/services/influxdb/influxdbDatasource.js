@@ -146,7 +146,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype._seriesQuery = function(query) {
       return this._influxRequest('GET', '/series', {
         q: query,
-        time_precision: 's',
       });
     };
 

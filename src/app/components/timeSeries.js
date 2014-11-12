@@ -99,11 +99,11 @@ function (_, kbn) {
         this.stats.min = currentValue;
       }
 
-      result.push([currentTime * 1000, currentValue]);
+      result.push([currentTime, currentValue]);
     }
 
     if (this.datapoints.length >= 2) {
-      this.stats.timeStep = (this.datapoints[1][1] - this.datapoints[0][1]) * 1000;
+      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
 
     if (this.stats.max === Number.MIN_VALUE) { this.stats.max = null; }

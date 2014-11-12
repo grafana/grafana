@@ -100,7 +100,7 @@ function (angular, _, kbn) {
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
       _.each(md.dps, function (v, k) {
-        dps.push([v, k]);
+        dps.push([v, k * 1000]);
       });
 
       return { target: metricLabel, datapoints: dps };

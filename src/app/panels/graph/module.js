@@ -189,7 +189,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       });
 
       if (datapoints && datapoints.length > 0) {
-        var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
+        var last = moment.utc(datapoints[datapoints.length - 1][1]);
         var from = moment.utc($scope.range.from);
         if (last - from < -10000) {
           $scope.datapointsOutside = true;
