@@ -147,7 +147,7 @@ function (angular, app, _, kbn, $) {
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
               if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value">' + current + '</div>'; }
+              if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
               if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
             }
 
