@@ -56,7 +56,11 @@ function (angular, app, _, kbn, $) {
 
         function sortLegend(e) {
           var el = $(e.currentTarget);
+          var stat = el.data('stat');
 
+          if (stat !== panel.legend.sort) { panel.legend.sortDesc = null; }
+
+          // if already sort ascending, disable sorting
           if (panel.legend.sortDesc === false) {
             panel.legend.sort = null;
             panel.legend.sortDesc = null;
@@ -65,7 +69,7 @@ function (angular, app, _, kbn, $) {
           }
 
           panel.legend.sortDesc = !panel.legend.sortDesc;
-          panel.legend.sort = el.data('stat');
+          panel.legend.sort = stat;
           render();
         }
 
