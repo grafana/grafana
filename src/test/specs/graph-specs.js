@@ -3,7 +3,7 @@ define([
   'angular',
   'jquery',
   'components/timeSeries',
-  'directives/grafanaGraph'
+  'panels/graph/graph'
 ], function(helpers, angular, $, TimeSeries) {
   'use strict';
 

@@ -7,19 +7,12 @@ define([
   'moment',
   'components/timeSeries',
   'components/panelmeta',
-  './seriesOverridesCtrl',
-  './legend',
   'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
-  'jquery.flot',
-  'jquery.flot.events',
-  'jquery.flot.selection',
-  'jquery.flot.time',
-  'jquery.flot.stack',
-  'jquery.flot.stackpercent',
-  'jquery.flot.fillbelow',
-  'jquery.flot.crosshair'
+  './seriesOverridesCtrl',
+  './graph',
+  './legend',
 ],
 function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';

@@ -4,7 +4,15 @@ define([
   'kbn',
   'moment',
   'lodash',
-  './grafanaGraph.tooltip'
+  './graph.tooltip',
+  'jquery.flot',
+  'jquery.flot.events',
+  'jquery.flot.selection',
+  'jquery.flot.time',
+  'jquery.flot.stack',
+  'jquery.flot.stackpercent',
+  'jquery.flot.fillbelow',
+  'jquery.flot.crosshair'
 ],
 function (angular, $, kbn, moment, _, GraphTooltip) {
   'use strict';

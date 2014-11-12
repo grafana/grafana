@@ -127,7 +127,7 @@ require([
     'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
-    'specs/grafanaGraph-specs',
+    'specs/graph-specs',
     'specs/graph-tooltip-specs',
     'specs/seriesOverridesCtrl-specs',
     'specs/sharePanelCtrl-specs',
