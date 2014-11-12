@@ -95,7 +95,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.seriesHandler = function(seriesData) {
       var series = new TimeSeries({
         datapoints: seriesData.datapoints,
-        info: { alias: seriesData.target },
+        alias: seriesData.target,
       });
 
       series.flotpairs = series.getFlotPairs('connected');
