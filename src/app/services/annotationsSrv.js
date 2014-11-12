@@ -58,7 +58,7 @@ define([
 
     function errorHandler(err) {
       console.log('Annotation error: ', err);
-      var message = err.message || "Aannotation query failed";
+      var message = err.message || "Annotation query failed";
       alertSrv.set('Annotations error', message,'error');
     }
 

@@ -11,7 +11,7 @@ function (angular, $, _) {
     .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text">{{panel.title | interpolateTemplateVars}}</span>' +
+            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
             '<span class="panel-links-icon"></span>' +
           '</span>';
 
