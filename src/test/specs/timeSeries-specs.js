@@ -26,6 +26,15 @@ define([
         expect(points.length).to.be(4);
         expect(points[1][1]).to.be(0);
       });
+
+      it('if last is null current should pick next to last', function() {
+        series = new TimeSeries({
+          datapoints: [[10,1], [null, 2]]
+        });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.current).to.be(10);
+      });
+
     });
 
     describe('series overrides', function() {
