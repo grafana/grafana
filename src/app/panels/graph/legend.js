@@ -20,6 +20,7 @@ function (angular, app, _, kbn, $) {
         var firstRender = true;
         var panel = scope.panel;
         var data;
+        var seriesList;
         var i;
 
         scope.$on('render', function() {
@@ -36,7 +37,7 @@ function (angular, app, _, kbn, $) {
         function openColorSelector(e) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = data[index];
+          var seriesInfo = seriesList[index];
           var popoverScope = scope.$new();
           popoverScope.series = seriesInfo;
           popoverSrv.show({
@@ -49,12 +50,35 @@ function (angular, app, _, kbn, $) {
         function toggleSeries(e) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = data[index];
+          var seriesInfo = seriesList[index];
           scope.toggleSeries(seriesInfo, e);
         }
 
         function sortLegend(e) {
+          var el = $(e.currentTarget);
 
+          if (panel.legend.sortDesc === false) {
+            panel.legend.sort = null;
+            panel.legend.sortDesc = null;
+            render();
+            return;
+          }
+
+          panel.legend.sortDesc = !panel.legend.sortDesc;
+          panel.legend.sort = el.data('stat');
+          render();
+        }
+
+        function getTableHeaderHtml(statName) {
+          if (!panel.legend[statName]) { return ""; }
+          var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
+
+          if (panel.legend.sort === statName) {
+            var cssClass = panel.legend.sortDesc ? 'icon-caret-down' : 'icon-caret-up' ;
+            html += ' <span class="' + cssClass + '"></span>';
+          }
+
+          return html + '</th>';
         }
 
         function render() {
@@ -66,27 +90,37 @@ function (angular, app, _, kbn, $) {
             firstRender = false;
           }
 
+          seriesList = data;
+
           $container.empty();
 
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
           if (panel.legend.alignAsTable) {
             var header = '<tr>';
-            header += '<th></th>';
-            header += '<th></th>';
+            header += '<th colspan="2" style="text-align:left"></th>';
             if (panel.legend.values) {
-              if (panel.legend.min) { header += '<th>min</div>'; }
-              if (panel.legend.max) { header += '<th>max</div>'; }
-              if (panel.legend.avg) { header += '<th>avg</div>'; }
-              if (panel.legend.current) { header += '<th>current</div>'; }
-              if (panel.legend.total) { header += '<th>total</div>'; }
+              header += getTableHeaderHtml('min');
+              header += getTableHeaderHtml('max');
+              header += getTableHeaderHtml('avg');
+              header += getTableHeaderHtml('current');
+              header += getTableHeaderHtml('total');
             }
             header += '</tr>';
             $container.append($(header));
           }
 
-          for (i = 0; i < data.length; i++) {
-            var series = data[i];
+          if (panel.legend.sort) {
+            seriesList = _.sortBy(seriesList, function(series) {
+              return series.stats[panel.legend.sort];
+            });
+            if (panel.legend.sortDesc) {
+              seriesList = seriesList.reverse();
+            }
+          }
+
+          for (i = 0; i < seriesList.length; i++) {
+            var series = seriesList[i];
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }
             if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
