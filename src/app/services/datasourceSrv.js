@@ -76,6 +76,40 @@ function (angular, _, config) {
       return new Datasource(ds);
     };
 
+    this.add = function(dt) {
+      datasources[dt.name] = dt;
+      if(_.findIndex(metricSources,{name: dt.name}) === -1){
+        //add only if not exists yet
+        metricSources.push({name: dt.name, value: dt.value});
+      }
+    };
+
+    this.remove = function(dtname) {
+      if(datasources[dtname]){
+        delete datasources[dtname];
+      }
+      var i=_.findIndex(metricSources, { name: dtname });
+      if(i !== -1) {
+        metricSources.splice(i, 1);
+      }
+    };
+    //reset all its variable datasources ( owned by dashboards).
+    this.reset = function() {
+      for (var key in datasources){
+        if(key.match(/^\$./) != null) {
+          delete datasources[key];
+          console.log('deleting:'+key);
+        }
+      }
+      //reset metric sources
+      metricSources.forEach(function(obj,i) {
+        if(obj.name.match(/^\$./) != null) {
+          console.log('deleting:'+obj.name);
+          delete metricSources[i];
+        }
+      });
+    };
+
     this.get = function(name) {
       if (!name) { return this.default; }
       if (datasources[name]) { return datasources[name]; }

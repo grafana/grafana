@@ -59,7 +59,7 @@
 						</div>
 						<div class="editor-option">
 							<label class="small">Type</label>
-							<select class="input-medium" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
+							<select class="input-medium" ng-model="current.type" ng-options="f for f in ['datasource', 'query', 'interval', 'custom']" ng-change="typeChanged()"></select>
 						</div>
 						<div class="editor-option" ng-show="current.type === 'query'">
 							<label class="small">Datasource</label>
@@ -125,6 +125,18 @@
 							</div>
 						</div>
 					</div>
+          
+          <div ng-show="current.type === 'datasource'">
+              <label ng-repeat="dts in dtsSelector" class="checkbox-inline">
+                <input 
+                  type="checkbox" 
+                  name="selectedDatasources[]" 
+                  value="{{dts}}" 
+                  ng-checked="dtsSelection.indexOf(dts) > -1" 
+                  ng-click="toggleDtsSelection(dts)"
+                > {{dts}}
+              </label>
+            </div>
 				</div>
 				<div class="editor-option">
 					<div class="editor-row">

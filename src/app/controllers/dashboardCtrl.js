@@ -17,6 +17,8 @@ function (angular, $, config, _) {
       templateValuesSrv,
       dashboardSrv,
       dashboardViewStateSrv,
+      datasourceSrv,
+      datasourceVarSrv,
       $timeout) {
 
     $scope.editor = { index: 0 };
@@ -43,6 +45,12 @@ function (angular, $, config, _) {
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
+      //reset all variable datasources
+      datasourceSrv.reset();
+      //setup variable datasources in this dashboard
+      if(dashboardData.templating) {
+        $scope.updateDataSources(dashboardData.templating);
+      }
       $scope.dashboard = dashboardSrv.create(dashboardData);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
@@ -56,6 +64,14 @@ function (angular, $, config, _) {
       $scope.setWindowTitleAndTheme();
 
       $scope.appEvent("dashboard-loaded", $scope.dashboard);
+    };
+
+    $scope.updateDataSources = function (data) {
+      _.each(data.list,function(variable) {
+        if(variable.type === 'datasource'){
+          datasourceVarSrv.init(variable.name);
+        }
+      });
     };
 
     $scope.setWindowTitleAndTheme = function() {
