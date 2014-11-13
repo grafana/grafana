@@ -22,7 +22,7 @@ function () {
     this.addEditorTab('General', 'app/partials/panelgeneral.html');
 
     if (options.metricsEditor) {
-      this.addEditorTab('General', 'app/partials/metrics.html');
+      this.addEditorTab('Metrics', 'app/partials/metrics.html');
     }
 
     this.addExtendedMenuItem('Panel JSON', '', 'editPanelJson()');
