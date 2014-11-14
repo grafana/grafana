@@ -30,6 +30,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
 
+    $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
     $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
 
     // Set and populate defaults
@@ -281,6 +282,10 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.toggleLegend = function() {
       $scope.panel.legend.show = !$scope.panel.legend.show;
       $scope.get_data();
+    };
+
+    $scope.exportCsv = function() {
+      kbn.exportSeriesListToCsv($scope.seriesList);
     };
 
     panelSrv.init($scope);
