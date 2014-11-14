@@ -18,6 +18,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
 	"github.com/torkelo/grafana-pro/pkg/stores/rethink"
+	"github.com/torkelo/grafana-pro/pkg/stores/sqlstore"
 )
 
 var CmdWeb = cli.Command{
@@ -67,6 +68,12 @@ func runWeb(*cli.Context) {
 	setting.InitServices()
 	rethink.Init()
 	social.NewOAuthService()
+
+	// init database
+	sqlstore.LoadModelsConfig()
+	if err := sqlstore.NewEngine(); err != nil {
+		log.Fatal(4, "fail to initialize orm engine: %v", err)
+	}
 
 	log.Info("Starting Grafana-Pro v.1-alpha")
 
