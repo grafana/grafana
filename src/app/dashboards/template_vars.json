@@ -65,7 +65,6 @@
             "avg": false
           },
           "percentage": false,
-          "zerofill": true,
           "nullPointMode": "connected",
           "steppedLine": false,
           "tooltip": {

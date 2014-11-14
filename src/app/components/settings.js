@@ -15,12 +15,16 @@ function (_, crypto) {
     var defaults = {
       datasources                   : {},
       window_title_prefix           : 'Grafana - ',
-      panels                        : ['graph', 'text'],
+      panels                        : {
+        'graph': { path: 'panels/graph' },
+        'singlestat': { path: 'panels/singlestat' },
+        'text': { path: 'panels/text' }
+      },
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
       playlist_timespan             : "1m",
       unsaved_changes_warning       : true,
-      search                        : { max_results: 16 },
+      search                        : { max_results: 100 },
       admin                         : {}
     };
 
@@ -76,7 +80,7 @@ function (_, crypto) {
     });
 
     if (settings.plugins.panels) {
-      settings.panels = _.union(settings.panels, settings.plugins.panels);
+      _.extend(settings.panels, settings.plugins.panels);
     }
 
     if (!settings.plugins.dependencies) {

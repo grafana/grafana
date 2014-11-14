@@ -27,18 +27,11 @@ function (angular, _) {
       }
 
       var panelId = $scope.panel.id;
-      var range = timeSrv.timeRange(false);
       var params = angular.copy($location.search());
 
-      if (_.isString(range.to) && range.to.indexOf('now')) {
-        range = timeSrv.timeRange();
-      }
-
+      var range = timeSrv.timeRangeForUrl();
       params.from = range.from;
       params.to = range.to;
-
-      if (_.isDate(params.from)) { params.from = params.from.getTime(); }
-      if (_.isDate(params.to)) { params.to = params.to.getTime(); }
 
       if ($scope.includeTemplateVars) {
         _.each(templateSrv.variables, function(variable) {
@@ -66,11 +59,13 @@ function (angular, _) {
 
       var paramsArray = [];
       _.each(params, function(value, key) {
-        var str = key;
-        if (value !== true) {
-          str += '=' + encodeURIComponent(value);
+        if (value === null) { return; }
+        if (value === true) {
+          paramsArray.push(key);
+        } else {
+          key += '=' + encodeURIComponent(value);
+          paramsArray.push(key);
         }
-        paramsArray.push(str);
       });
 
       $scope.shareUrl = baseUrl + "?" + paramsArray.join('&') ;

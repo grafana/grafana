@@ -4,9 +4,17 @@ define([
   'kbn',
   'moment',
   'lodash',
-  './grafanaGraph.tooltip'
+  './graph.tooltip',
+  'jquery.flot',
+  'jquery.flot.events',
+  'jquery.flot.selection',
+  'jquery.flot.time',
+  'jquery.flot.stack',
+  'jquery.flot.stackpercent',
+  'jquery.flot.fillbelow',
+  'jquery.flot.crosshair'
 ],
-function (angular, $, kbn, moment, _, graphTooltip) {
+function (angular, $, kbn, moment, _, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -46,10 +54,6 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           scope.get_data();
         });
 
-        scope.$on('toggleLegend', function() {
-          render_panel();
-        });
-
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
@@ -68,7 +72,7 @@ function (angular, $, kbn, moment, _, graphTooltip) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
-            height = height - 32; // subtract panel title bar
+            height -= scope.panel.title ? 24 : 9; // subtract panel title bar
 
             if (scope.panel.legend.show && !scope.panel.legend.rightSide) {
               height = height - 21; // subtract one line legend
@@ -110,9 +114,9 @@ function (angular, $, kbn, moment, _, graphTooltip) {
             var series = data[i];
             var axis = yaxis[series.yaxis - 1];
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
-            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals);
+            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals + 2);
+            if(!scope.$$phase) { scope.$digest(); }
           }
-
         }
 
         // Function for rendering panel
@@ -177,15 +181,16 @@ function (angular, $, kbn, moment, _, graphTooltip) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+
             // if hidden remove points and disable stack
-            if (scope.hiddenSeries[series.info.alias]) {
+            if (scope.hiddenSeries[series.alias]) {
               series.data = [];
               series.stack = false;
             }
           }
 
-          if (data.length && data[0].info.timeStep) {
-            options.series.bars.barWidth = data[0].info.timeStep / 1.5;
+          if (data.length && data[0].stats.timeStep) {
+            options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
           }
 
           addTimeAxis(options);
@@ -206,6 +211,8 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           }
 
           if (shouldDelayDraw(panel)) {
+            // temp fix for legends on the side, need to render twice to get dimensions right
+            callPlot();
             setTimeout(callPlot, 50);
             legendSideLastValue = panel.legend.rightSide;
           }
@@ -416,7 +423,9 @@ function (angular, $, kbn, moment, _, graphTooltip) {
           elem.html('<img src="' + url + '"></img>');
         }
 
-        graphTooltip.register(elem, dashboard, scope, $rootScope);
+        new GraphTooltip(elem, dashboard, scope, function() {
+          return data;
+        });
 
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {

@@ -93,12 +93,18 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboard = function(evt, options) {
-      if (!confirm('Do you want to delete dashboard ' + options.title + ' ?')) {
-        return;
-      }
-
       if (!$scope.isAdmin()) { return false; }
 
+      $scope.appEvent('confirm-modal', {
+        title: 'Delete dashboard',
+        text: 'Do you want to delete dashboard ' + options.title + '?',
+        onConfirm: function() {
+          $scope.deleteDashboardConfirmed(options);
+        }
+      });
+    };
+
+    $scope.deleteDashboardConfirmed = function(options) {
       var id = options.id;
       $scope.db.deleteDashboard(id).then(function(id) {
         $scope.appEvent('alert-success', ['Dashboard Deleted', id + ' has been deleted']);

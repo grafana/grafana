@@ -53,11 +53,22 @@ function (angular, _, $, config, kbn, moment) {
           httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
         }
 
-        return this.doGraphiteRequest(httpOptions);
+        return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
       }
       catch(err) {
         return $q.reject(err);
       }
+    };
+
+    GraphiteDatasource.prototype.convertDataPointsToMs = function(result) {
+      if (!result || !result.data) { return []; }
+      for (var i = 0; i < result.data.length; i++) {
+        var series = result.data[i];
+        for (var y = 0; y < series.datapoints.length; y++) {
+          series.datapoints[y][1] *= 1000;
+        }
+      }
+      return result;
     };
 
     GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
@@ -84,7 +95,7 @@ function (angular, _, $, config, kbn, moment) {
 
                 list.push({
                   annotation: annotation,
-                  time: datapoint[1] * 1000,
+                  time: datapoint[1],
                   title: target.target
                 });
               }

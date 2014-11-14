@@ -1,0 +1,76 @@
+<div class="editor-row">
+	<div class="section">
+    <h5>Big value</h5>
+		<div class="editor-option">
+			<label class="small">Prefix</label>
+			<input type="text" class="input-small" ng-model="panel.prefix" ng-blur="render()"></input>
+		</div>
+		<div class="editor-option">
+			<label class="small">Value</label>
+			<select class="input-small" ng-model="panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Postfix</label>
+			<input type="text" class="input-small" ng-model="panel.postfix" ng-blur="render()" ng-trim="false"></input>
+		</div>
+	</div>
+
+	<div class="section">
+    <h5>Big value font size</h5>
+		<div class="editor-option">
+			<label class="small">Prefix</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.prefixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Value</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.valueFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%', '110%', '120%']" ng-change="render()"></select>
+		</div>
+		<div class="editor-option">
+			<label class="small">Postfix</label>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.postfixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+		</div>
+	</div>
+
+	<div class="section">
+    <h5>Formats</h5>
+		<div class="editor-option">
+			<label class="small">Unit format</label>
+			<select class="input-small" ng-model="panel.format" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns', 'percent']" ng-change="render()"></select>
+		</div>
+	</div>
+	<div class="section">
+    <h5>Coloring</h5>
+		<editor-opt-bool text="Background" model="panel.colorBackground" change="setColoring({background: true})"></editor-opt-bool>
+		<editor-opt-bool text="Value" model="panel.colorValue" change="setColoring({value: true})"></editor-opt-bool>
+		<div class="editor-option">
+			<label class="small">Thresholds<tip>Comma seperated values</tip></label>
+			<input type="text" class="input-large" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
+		</div>
+		<div class="editor-option">
+      <label class="small">Color</label>
+      <spectrum-picker ng-model="panel.colors[0]" ng-change="render()" ></spectrum-picker>
+      <spectrum-picker ng-model="panel.colors[1]" ng-change="render()" ></spectrum-picker>
+			<spectrum-picker ng-model="panel.colors[2]" ng-change="render()" ></spectrum-picker>
+			<a class="pointer" ng-click="invertColorOrder()">invert order</a>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section">
+		<h5>Spark lines</h5>
+		<editor-opt-bool text="Spark line" model="panel.sparkline.show" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Background mode" model="panel.sparkline.full" change="render()"></editor-opt-bool>
+		<div class="editor-option">
+			<label class="small">Line color</label>
+			<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
+		</div>
+		<div class="editor-option">
+			<label class="small">Fill color</label>
+			<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
+		</div>
+	</div>
+</div>
+
+</div>
+

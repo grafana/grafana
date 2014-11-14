@@ -73,7 +73,7 @@ define(['settings'], function(Settings) {
 
       // specify the limit for dashboard search results
       search: {
-        max_results: 20
+        max_results: 100
       },
 
       // default home dashboard

@@ -32,8 +32,6 @@ require.config({
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
-    'jquery-ui':              '../vendor/jquery/jquery-ui-1.10.3',
-
     'extend-jquery':          'components/extend-jquery',
 
     'jquery.flot':            '../vendor/jquery/jquery.flot',
@@ -44,6 +42,7 @@ require.config({
     'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
     'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
     'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
+    'jquery.flot.fillbelow':  '../vendor/jquery/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
   },
@@ -70,7 +69,6 @@ require.config({
       exports: 'Crypto'
     },
 
-    'jquery-ui':            ['jquery'],
     'jquery.flot':          ['jquery'],
     'jquery.flot.pie':      ['jquery', 'jquery.flot'],
     'jquery.flot.events':   ['jquery', 'jquery.flot'],
@@ -79,10 +77,11 @@ require.config({
     'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
     'jquery.flot.crosshair':['jquery', 'jquery.flot'],
+    'jquery.flot.fillbelow':['jquery', 'jquery.flot'],
 
     'angular-route':        ['angular'],
     'angular-cookies':      ['angular'],
-    'angular-dragdrop':     ['jquery','jquery-ui','angular'],
+    'angular-dragdrop':     ['jquery', 'angular'],
     'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
     'angular-resource':     ['angular'],
@@ -130,7 +129,7 @@ require([
     'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
-    'specs/grafanaGraph-specs',
+    'specs/graph-specs',
     'specs/graph-tooltip-specs',
     'specs/seriesOverridesCtrl-specs',
     'specs/sharePanelCtrl-specs',

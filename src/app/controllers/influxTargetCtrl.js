@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -83,16 +84,21 @@ function (angular) {
     };
 
     $scope.listSeries = function(query, callback) {
-      if (!seriesList || query === '') {
+      if (query !== '') {
         seriesList = [];
-        $scope.datasource.listSeries().then(function(series) {
+        $scope.datasource.listSeries(query).then(function(series) {
           seriesList = series;
+          console.log(series);
           callback(seriesList);
         });
       }
       else {
         return seriesList;
       }
+    };
+
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+      _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
     $scope.duplicate = function() {

@@ -1,14 +1,13 @@
 define([
   'angular',
   'jquery',
-  'services/all'
 ],
 function(angular, $) {
   "use strict";
 
   var module = angular.module('grafana.services');
 
-  module.service('dashboardKeybindings', function($rootScope, keyboardManager) {
+  module.service('dashboardKeybindings', function($rootScope, keyboardManager, $modal, $q) {
 
     this.shortcuts = function(scope) {
 
@@ -22,6 +21,24 @@ function(angular, $) {
         keyboardManager.unbind('esc');
       });
 
+      var helpModalScope = null;
+      keyboardManager.bind('shift+?', function() {
+        if (helpModalScope) { return; }
+
+        helpModalScope = $rootScope.$new();
+        var helpModal = $modal({
+          template: './app/partials/help_modal.html',
+          persist: false,
+          show: false,
+          scope: helpModalScope,
+          keyboard: false
+        });
+
+        helpModalScope.$on('$destroy', function() { helpModalScope = null; });
+        $q.when(helpModal).then(function(modalEl) { modalEl.modal('show'); });
+
+      }, { inputDisabled: true });
+
       keyboardManager.bind('ctrl+f', function() {
         scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
       }, { inputDisabled: true });
@@ -30,6 +47,10 @@ function(angular, $) {
         var current = scope.dashboard.sharedCrosshair;
         scope.dashboard.sharedCrosshair = !current;
         scope.dashboard.emit_refresh('refresh');
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+l', function() {
+        scope.$broadcast('toggle-all-legends');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {

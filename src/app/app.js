@@ -56,7 +56,6 @@ function (angular, $, _, appLevelRequire, config) {
     register_fns.factory    = $provide.factory;
     register_fns.service    = $provide.service;
     register_fns.filter     = $filterProvider.register;
-
   });
 
   var apps_deps = [
@@ -78,6 +77,8 @@ function (angular, $, _, appLevelRequire, config) {
   });
 
   var preBootRequires = [
+    'services/all',
+    'features/all',
     'controllers/all',
     'directives/all',
     'filters/all',

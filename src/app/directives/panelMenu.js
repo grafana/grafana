@@ -8,16 +8,12 @@ function (angular, $, _) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile) {
-      var linkTemplate = '<a class="panel-title">{{panel.title | interpolateTemplateVars}}</a>';
-      var moveAttributes = ' data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
-              ' jqyoui-draggable="{'+
-                'animate:false,'+
-                'mutate:false,'+
-                'index:{{$index}},'+
-                'onStart:\'panelMoveStart\','+
-                'onStop:\'panelMoveStop\''+
-                '}"  ng-model="panel" ';
+    .directive('panelMenu', function($compile, linkSrv) {
+      var linkTemplate =
+          '<span class="panel-title drag-handle pointer">' +
+            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
+            '<span class="panel-links-icon"></span>' +
+          '</span>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
@@ -26,11 +22,11 @@ function (angular, $, _) {
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="icon-minus"></i></a>';
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="icon-plus"></i></a>';
         template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="icon-remove"></i></a>';
-        template += '<a class="panel-menu-icon pull-right" ' + moveAttributes + '><i class="icon-move"></i></a>';
         template += '<div class="clearfix"></div>';
         template += '</div>';
 
         template += '<div class="panel-menu-row">';
+        template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="icon-th-list"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
           template += '<a class="panel-menu-link" ';
@@ -46,17 +42,35 @@ function (angular, $, _) {
         return template;
       }
 
+      function getExtendedMenu($scope) {
+        var menu = angular.copy($scope.panelMeta.extendedMenu);
+
+        if ($scope.panel.links) {
+          _.each($scope.panel.links, function(link) {
+            var info = linkSrv.getPanelLinkAnchorInfo(link);
+            menu.push({text: info.title, href: info.href, target: info.target });
+          });
+        }
+
+        return menu;
+      }
+
       return {
         restrict: 'A',
         link: function($scope, elem) {
           var $link = $(linkTemplate);
           var $panelContainer = elem.parents(".panel-container");
-          var menuWidth = $scope.panelMeta.menu.length === 5 ? 246 : 201;
+          var menuWidth = $scope.panelMeta.menu.length === 4 ? 236 : 191;
           var menuScope = null;
           var timeout = null;
           var $menu = null;
 
           elem.append($link);
+
+          $scope.$watchCollection('panel.links', function(newValue) {
+            var showIcon = (newValue ? newValue.length > 0 : false) && $scope.panel.title !== '';
+            $link.toggleClass('has-panel-links', showIcon);
+          });
 
           function dismiss(time) {
             clearTimeout(timeout);
@@ -109,6 +123,7 @@ function (angular, $, _) {
             });
 
             menuScope = $scope.$new();
+            menuScope.extendedMenu = getExtendedMenu($scope);
 
             $('.panel-menu').remove();
             elem.append($menu);
@@ -121,6 +136,11 @@ function (angular, $, _) {
 
             dismiss(2500);
           };
+
+          if ($scope.panelMeta.titlePos && $scope.panel.title) {
+            elem.css('text-align', 'left');
+            $link.css('padding-left', '10px');
+          }
 
           elem.click(showMenu);
           $compile(elem.contents())($scope);

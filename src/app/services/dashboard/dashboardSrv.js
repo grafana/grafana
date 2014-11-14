@@ -35,6 +35,7 @@ function (angular, $, kbn, _, moment) {
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
       this.version = data.version || 0;
+      this.hideAllLegends = data.hideAllLegends || false;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -89,6 +90,26 @@ function (angular, $, kbn, _, moment) {
       }
 
       row.panels.push(panel);
+    };
+
+    p.getPanelInfoById = function(panelId) {
+      var result = {};
+      _.each(this.rows, function(row) {
+        _.each(row.panels, function(panel, index) {
+          if (panel.id === panelId) {
+            result.panel = panel;
+            result.row = row;
+            result.index = index;
+            return;
+          }
+        });
+      });
+
+      if (!result.panel) {
+        return null;
+      }
+
+      return result;
     };
 
     p.duplicatePanel = function(panel, row) {

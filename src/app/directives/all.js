@@ -10,7 +10,6 @@ define([
   './confirmClick',
   './configModal',
   './spectrumPicker',
-  './grafanaGraph',
   './bootstrap-tagsinput',
   './bodyClass',
   './addGraphiteFunc',
@@ -18,5 +17,6 @@ define([
   './templateParamSelector',
   './graphiteSegment',
   './grafanaVersionCheck',
+  './dropdown.typeahead',
   './influxdbFuncEditor'
 ], function () {});

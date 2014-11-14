@@ -3,7 +3,6 @@ define([
   'jquery',
   'config',
   'lodash',
-  'services/all',
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -18,11 +17,10 @@ function (angular, $, config, _) {
       templateValuesSrv,
       dashboardSrv,
       dashboardViewStateSrv,
-      panelMoveSrv,
       $timeout) {
 
     $scope.editor = { index: 0 };
-    $scope.panelNames = config.panels;
+    $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
     var resizeEventTimeout;
 
     this.init = function(dashboardData) {
@@ -51,7 +49,6 @@ function (angular, $, config, _) {
       // init services
       timeSrv.init($scope.dashboard);
       templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
-      panelMoveSrv.init($scope.dashboard, $scope);
 
       $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
@@ -92,21 +89,12 @@ function (angular, $, config, _) {
       };
     };
 
-    $scope.edit_path = function(type) {
-      var p = $scope.panel_path(type);
-      if(p) {
-        return p+'/editor.html';
-      } else {
-        return false;
-      }
+    $scope.panelEditorPath = function(type) {
+      return 'app/' + config.panels[type].path + '/editor.html';
     };
 
-    $scope.panel_path =function(type) {
-      if(type) {
-        return 'app/panels/'+type.replace(".","/");
-      } else {
-        return false;
-      }
+    $scope.pulldownEditorPath = function(type) {
+      return 'app/panels/'+type+'/editor.html';
     };
 
     $scope.showJsonEditor = function(evt, options) {
@@ -120,12 +108,23 @@ function (angular, $, config, _) {
       $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
     };
 
-    $scope.setEditorTabs = function(panelMeta) {
-      $scope.editorTabs = ['General','Panel'];
-      if(!_.isUndefined(panelMeta.editorTabs)) {
-        $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
+    $scope.onDrop = function(panelId, row, dropTarget) {
+      var info = $scope.dashboard.getPanelInfoById(panelId);
+      if (dropTarget) {
+        var dropInfo = $scope.dashboard.getPanelInfoById(dropTarget.id);
+        dropInfo.row.panels[dropInfo.index] = info.panel;
+        info.row.panels[info.index] = dropTarget;
+        var dragSpan = info.panel.span;
+        info.panel.span = dropTarget.span;
+        dropTarget.span = dragSpan;
       }
-      return $scope.editorTabs;
+      else {
+        info.row.panels.splice(info.index, 1);
+        info.panel.span = 12 - $scope.dashboard.rowSpan(row);
+        row.panels.push(info.panel);
+      }
+
+      $rootScope.$broadcast('render');
     };
 
   });

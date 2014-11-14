@@ -1,9 +1,10 @@
 define([
   'angular',
   'jquery',
+  'config',
   './panelMenu',
 ],
-function (angular, $) {
+function (angular, $, config) {
   'use strict';
 
   angular
@@ -26,7 +27,7 @@ function (angular, $) {
             '<i class="icon-spinner icon-spin icon-large"></i>' +
           '</span>' +
 
-          '<div class="panel-title-container" panel-menu></div>' +
+          '<div class="panel-title-container drag-handle" panel-menu></div>' +
         '</div>'+
       '</div>';
 
@@ -68,10 +69,12 @@ function (angular, $) {
 
           elem.addClass('ng-cloak');
 
+          var panelPath = config.panels[panelType].path;
+
           $scope.require([
             'jquery',
-            'text!panels/'+panelType+'/module.html',
-            'panels/' + panelType + "/module",
+            'text!'+panelPath+'/module.html',
+            panelPath + "/module",
           ], function ($, moduleTemplate) {
             var $module = $(moduleTemplate);
             $module.prepend(panelHeader);

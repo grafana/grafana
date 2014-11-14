@@ -68,6 +68,17 @@ for (var i = 0; i < rows; i++) {
             'target': "randomWalk('random walk2')"
           }
         ],
+        seriesOverrides: [
+          {
+            alias: '/random/',
+            yaxis: 2,
+            fill: 0,
+            linewidth: 5
+          }
+        ],
+        tooltip: {
+          shared: true
+        }
       }
     ]
   });

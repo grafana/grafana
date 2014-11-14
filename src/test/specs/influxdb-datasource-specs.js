@@ -17,7 +17,7 @@ define([
     describe('When querying influxdb with one target using query editor target spec', function() {
       var results;
       var urlExpected = "/series?p=mupp&q=select+mean(value)+from+%22test%22"+
-                        "+where+time+%3E+now()+-+1h+group+by+time(1s)+order+asc&time_precision=s";
+                        "+where+time+%3E+now()+-+1h+group+by+time(1s)+order+asc";
       var query = {
         range: { from: 'now-1h', to: 'now' },
         targets: [{ series: 'test', column: 'value', function: 'mean' }],
@@ -50,7 +50,7 @@ define([
     describe('When querying influxdb with one raw query', function() {
       var results;
       var urlExpected = "/series?p=mupp&q=select+value+from+series"+
-                        "+where+time+%3E+now()+-+1h&time_precision=s";
+                        "+where+time+%3E+now()+-+1h";
       var query = {
         range: { from: 'now-1h', to: 'now' },
         targets: [{ query: "select value from series where $timeFilter", rawQuery: true }]
@@ -73,7 +73,7 @@ define([
     describe('When issuing annotation query', function() {
       var results;
       var urlExpected = "/series?p=mupp&q=select+title+from+events.backend_01"+
-                        "+where+time+%3E+now()+-+1h&time_precision=s";
+                        "+where+time+%3E+now()+-+1h";
 
       var range = { from: 'now-1h', to: 'now' };
       var annotation = { query: 'select title from events.$server where $timeFilter' };

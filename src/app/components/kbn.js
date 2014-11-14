@@ -316,6 +316,10 @@ function($, _, moment) {
 
   kbn.formatFuncCreator = function(factor, extArray) {
     return function(size, decimals, scaledDecimals) {
+      if (size === null) {
+        return "";
+      }
+
       var steps = 0;
 
       while (Math.abs(size) >= factor) {
@@ -331,6 +335,10 @@ function($, _, moment) {
   };
 
   kbn.toFixed = function(value, decimals) {
+    if (value === null) {
+      return "";
+    }
+
     var factor = decimals ? Math.pow(10, decimals) : 1;
     var formatted = String(Math.round(value * factor) / factor);
 
@@ -359,6 +367,8 @@ function($, _, moment) {
   kbn.valueFormats.none = kbn.toFixed;
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
     if (Math.abs(size) < 1000) {
       return kbn.toFixed(size, decimals) + " ms";
     }
@@ -383,6 +393,8 @@ function($, _, moment) {
   };
 
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
     if (Math.abs(size) < 600) {
       return kbn.toFixed(size, decimals) + " s";
     }
@@ -407,6 +419,8 @@ function($, _, moment) {
   };
 
   kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
     if (Math.abs(size) < 1000) {
       return kbn.toFixed(size, decimals) + " µs";
     }
@@ -419,6 +433,8 @@ function($, _, moment) {
   };
 
   kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
     if (Math.abs(size) < 1000) {
       return kbn.toFixed(size, decimals) + " ns";
     }
@@ -441,6 +457,17 @@ function($, _, moment) {
       .toLowerCase()
       .replace(/[^\w ]+/g,'')
       .replace(/ +/g,'-');
+  };
+
+  kbn.exportSeriesListToCsv = function(seriesList) {
+    var text = 'Series;Time;Value\n';
+    _.each(seriesList, function(series) {
+      _.each(series.datapoints, function(dp) {
+        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+      });
+    });
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    window.saveAs(blob, 'grafana_data_export.csv');
   };
 
   kbn.stringToJsRegex = function(str) {

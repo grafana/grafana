@@ -61,6 +61,7 @@ function (angular) {
         else if (e.which) {
           code = e.which;
         }
+
         var character = String.fromCharCode(code).toLowerCase();
 
         if (code === 188) {
@@ -93,6 +94,9 @@ function (angular) {
           ",": "<",
           ".": ">",
           "/": "?",
+          "»": "?",
+          "«": "?",
+          "¿": "?",
           "\\": "|"
         };
         // Special Keys - and their codes

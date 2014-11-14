@@ -201,7 +201,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.targetTextChanged = function() {
       parseTarget();
-      $scope.$parent.get_data();
+      $scope.get_data();
     };
 
     $scope.targetChanged = function() {
@@ -273,6 +273,10 @@ function (angular, _, config, gfunc, Parser) {
       if (!$scope.panel.metricOptionsEnabled) {
         delete $scope.panel.cacheTimeout;
       }
+    };
+
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+      _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
     $scope.duplicate = function() {

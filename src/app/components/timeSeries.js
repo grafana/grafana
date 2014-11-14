@@ -7,8 +7,12 @@ function (_, kbn) {
 
   function TimeSeries(opts) {
     this.datapoints = opts.datapoints;
-    this.info = opts.info;
-    this.label = opts.info.alias;
+    this.label = opts.alias;
+    this.id = opts.alias;
+    this.alias = opts.alias;
+    this.color = opts.color;
+    this.valueFormater = kbn.valueFormats.none;
+    this.stats = {};
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -30,13 +34,13 @@ function (_, kbn) {
     this.lines = {};
     this.points = {};
     this.bars = {};
-    this.info.yaxis = 1;
+    this.yaxis = 1;
     this.zindex = 0;
     delete this.stack;
 
     for (var i = 0; i < overrides.length; i++) {
       var override = overrides[i];
-      if (!matchSeriesOverride(override.alias, this.info.alias)) {
+      if (!matchSeriesOverride(override.alias, this.alias)) {
         continue;
       }
       if (override.lines !== void 0) { this.lines.show = override.lines; }
@@ -48,8 +52,10 @@ function (_, kbn) {
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
+      if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
+
       if (override.yaxis !== void 0) {
-        this.info.yaxis = override.yaxis;
+        this.yaxis = override.yaxis;
       }
     }
   };
@@ -57,12 +63,12 @@ function (_, kbn) {
   TimeSeries.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
 
-    this.color = this.info.color;
-    this.yaxis = this.info.yaxis;
-
-    this.info.total = 0;
-    this.info.max = -212312321312;
-    this.info.min = 212312321312;
+    this.stats.total = 0;
+    this.stats.max = Number.MIN_VALUE;
+    this.stats.min = Number.MAX_VALUE;
+    this.stats.avg = null;
+    this.stats.current = null;
+    this.allIsNull = true;
 
     var ignoreNulls = fillStyle === 'connected';
     var nullAsZero = fillStyle === 'null as zero';
@@ -81,38 +87,47 @@ function (_, kbn) {
       }
 
       if (_.isNumber(currentValue)) {
-        this.info.total += currentValue;
+        this.stats.total += currentValue;
+        this.allIsNull = false;
       }
 
-      if (currentValue > this.info.max) {
-        this.info.max = currentValue;
+      if (currentValue > this.stats.max) {
+        this.stats.max = currentValue;
       }
 
-      if (currentValue < this.info.min) {
-        this.info.min = currentValue;
+      if (currentValue < this.stats.min) {
+        this.stats.min = currentValue;
       }
 
-      result.push([currentTime * 1000, currentValue]);
+      result.push([currentTime, currentValue]);
     }
 
-    if (result.length > 2) {
-      this.info.timeStep = result[1][0] - result[0][0];
+    if (this.datapoints.length >= 2) {
+      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
+
+    if (this.stats.max === Number.MIN_VALUE) { this.stats.max = null; }
+    if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
     if (result.length) {
-      this.info.avg = (this.info.total / result.length);
-      this.info.current = result[result.length-1][1];
+      this.stats.avg = (this.stats.total / result.length);
+      this.stats.current = result[result.length-1][1];
+      if (this.stats.current === null && result.length > 1) {
+        this.stats.current = result[result.length-2][1];
+      }
     }
 
     return result;
   };
 
   TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
-    this.info.avg = this.info.avg != null ? formater(this.info.avg, decimals, scaledDecimals) : null;
-    this.info.current = this.info.current != null ? formater(this.info.current, decimals, scaledDecimals) : null;
-    this.info.min = this.info.min != null ? formater(this.info.min, decimals, scaledDecimals) : null;
-    this.info.max = this.info.max != null ? formater(this.info.max, decimals, scaledDecimals) : null;
-    this.info.total = this.info.total != null ? formater(this.info.total, decimals, scaledDecimals) : null;
+    this.valueFormater = formater;
+    this.decimals = decimals;
+    this.scaledDecimals = scaledDecimals;
+  };
+
+  TimeSeries.prototype.formatValue = function(value) {
+    return this.valueFormater(value, this.decimals, this.scaledDecimals);
   };
 
   return TimeSeries;
