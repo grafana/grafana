@@ -15,4 +15,6 @@ config.js
 .idea/
 
 data/sessions
+data/*.db
+data/log
 grafana-pro

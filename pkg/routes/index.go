@@ -6,6 +6,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/routes/api"
 	"github.com/torkelo/grafana-pro/pkg/routes/apimodel"
 	"github.com/torkelo/grafana-pro/pkg/routes/login"
+	"github.com/torkelo/grafana-pro/pkg/stores/sqlstore"
 )
 
 func Register(m *macaron.Macaron) {
@@ -32,6 +33,8 @@ func Register(m *macaron.Macaron) {
 }
 
 func Index(ctx *middleware.Context) {
+	sqlstore.GetAccounts()
+
 	ctx.Data["User"] = apimodel.NewCurrentUserDto(ctx.UserAccount)
 	ctx.HTML(200, "index")
 }

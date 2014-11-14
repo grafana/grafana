@@ -148,6 +148,8 @@ func NewConfigContext() {
 	// PhantomJS rendering
 	ImagesDir = "data/png"
 	PhantomDir = "_vendor/phantomjs"
+
+	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(workDir, "/data/log"))
 }
 
 func initSessionService() {
