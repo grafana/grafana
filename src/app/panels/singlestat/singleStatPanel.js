@@ -185,7 +185,7 @@ function (angular, app, _, $) {
           var linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0]);
           if (linkInfo.href[0] === '#') { linkInfo.href = linkInfo.href.substring(1); }
 
-          $timeout(function() { $location.search({}); $location.path(linkInfo.href); });
+          $timeout(function() { $location.url(linkInfo.href); });
 
           drilldownTooltip.detach();
         });
