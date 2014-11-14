@@ -27,6 +27,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     // Set and populate defaults
     var _d = {
+      links: [],
       maxDataPoints: 100,
       interval: null,
       targets: [{}],

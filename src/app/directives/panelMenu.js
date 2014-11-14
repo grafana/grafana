@@ -68,7 +68,8 @@ function (angular, $, _) {
           elem.append($link);
 
           $scope.$watchCollection('panel.links', function(newValue) {
-            $link.toggleClass('has-panel-links', newValue ? newValue.length > 0 : false);
+            var showIcon = (newValue ? newValue.length > 0 : false) && $scope.panel.title !== '';
+            $link.toggleClass('has-panel-links', showIcon);
           });
 
           function dismiss(time) {
