@@ -364,6 +364,9 @@ function($, _, moment) {
   kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', 'GJ', 'TJ', 'PJ', 'EJ', 'ZJ', 'YJ']);
+  kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', 'GW', 'TW', 'PW', 'EW', 'ZW', 'YW']);
+  kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
   kbn.valueFormats.none = kbn.toFixed;
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {

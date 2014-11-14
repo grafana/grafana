@@ -402,6 +402,15 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           case 'short':
             url += '&yUnitSystem=si';
             break;
+          case 'joule':
+            url += '&yUnitSystem=si';
+            break;
+          case 'watt':
+            url += '&yUnitSystem=si';
+            break;
+          case 'ev':
+            url += '&yUnitSystem=si';
+            break;
           case 'none':
             url += '&yUnitSystem=none';
             break;
