@@ -115,7 +115,12 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var series = data[i];
             var axis = yaxis[series.yaxis - 1];
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
-            series.updateLegendValues(formater, axis.tickDecimals, axis.scaledDecimals + 2);
+
+            // legend and tooltip gets one more decimal precision
+            // than graph legend ticks
+            var tickDecimals = (axis.tickDecimals || -1) + 1;
+
+            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
             if(!scope.$$phase) { scope.$digest(); }
           }
         }
