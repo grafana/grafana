@@ -10,6 +10,11 @@
   background: @grafanaPanelBackground;
   margin: 5px;
   position: relative;
+  &:hover {
+    .panel-actions {
+      display: block;
+    }
+  }
 }
 
 .panel-content {
@@ -27,6 +32,8 @@
   font-weight: bold;
   position: relative;
   cursor: context-menu;
+  width: 100%;
+  display: block;
 
   &.has-panel-links {
     .panel-title-text:after {
@@ -122,5 +129,23 @@
   display: none;
   .panel-container {
     border: 1px solid @grayDark;
+  }
+}
+
+.panel-actions {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 112px;
+  a {
+    opacity: 0.35;
+    border: 1px solid black;
+    padding: 5px 10px;
+    font-size: 75%;
+    background: @grafanaTargetFuncBackground;
+    &:hover {
+      opacity: 1;
+    }
   }
 }

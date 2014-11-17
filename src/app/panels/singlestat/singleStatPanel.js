@@ -29,6 +29,7 @@ function (angular, app, _, $) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
+            height -= 5; // padding
             height -= panel.title ? 24 : 9; // subtract panel title bar
 
             elem.css('height', height + 'px');

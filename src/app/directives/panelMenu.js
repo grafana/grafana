@@ -13,6 +13,11 @@ function (angular, $, _) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
             '<span class="panel-links-icon"></span>' +
+            '<span class="panel-actions">' +
+               '<a href="asd" class="panel-menu-link"><i class="icon-th-list"></i></a>' +
+               '<a href="asd" class="panel-menu-link">View</a>' +
+               '<a href="asd" class="panel-menu-link">Edit</a>' +
+            '</span>';
           '</span>';
 
       function createMenuTemplate($scope) {
@@ -119,7 +124,7 @@ function (angular, $, _) {
             $menu = $(menuTemplate);
             $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
-              dismiss(1000);
+              //dismiss(1000);
             });
 
             menuScope = $scope.$new();
@@ -134,7 +139,7 @@ function (angular, $, _) {
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
 
-            dismiss(2500);
+            //dismiss(2500);
           };
 
           if ($scope.panelMeta.titlePos && $scope.panel.title) {
