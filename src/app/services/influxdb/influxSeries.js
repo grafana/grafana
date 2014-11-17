@@ -69,7 +69,6 @@ function (_) {
   p.getAnnotations = function () {
     var list = [];
     var self = this;
-    console.log(this.seriesList);
 
     _.each(this.seriesList, function (series) {
       var titleCol = null;

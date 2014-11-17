@@ -79,6 +79,32 @@
   bottom: 0;
 }
 
+.panel-fullscreen {
+  z-index: 100;
+  display: block;
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  top: 51px;
+  height: 100%;
+  padding: 0 10px;
+  background: @grafanaPanelBackground;
+  overflow-y: scroll;
+  height: 100%;
+
+  .panel-content {
+    padding-bottom: 130px;
+  }
+
+  .dropdown-menu {
+    margin-bottom: 70px;
+  }
+
+  .panel-menu {
+    top: 0px;
+  }
+}
+
 .panel-menu {
   z-index: 1000;
   position: absolute;
@@ -132,20 +158,4 @@
   }
 }
 
-.panel-actions {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: -2px;
-  width: 112px;
-  a {
-    opacity: 0.35;
-    border: 1px solid black;
-    padding: 5px 10px;
-    font-size: 75%;
-    background: @grafanaTargetFuncBackground;
-    &:hover {
-      opacity: 1;
-    }
-  }
-}
+

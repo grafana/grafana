@@ -13,11 +13,6 @@ function (angular, $, _) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
             '<span class="panel-links-icon"></span>' +
-            '<span class="panel-actions">' +
-               '<a href="asd" class="panel-menu-link"><i class="icon-th-list"></i></a>' +
-               '<a href="asd" class="panel-menu-link">View</a>' +
-               '<a href="asd" class="panel-menu-link">Edit</a>' +
-            '</span>';
           '</span>';
 
       function createMenuTemplate($scope) {
@@ -77,7 +72,7 @@ function (angular, $, _) {
             $link.toggleClass('has-panel-links', showIcon);
           });
 
-          function dismiss(time) {
+          function dismiss(time, force) {
             clearTimeout(timeout);
             timeout = null;
 
@@ -87,9 +82,11 @@ function (angular, $, _) {
             }
 
             // if hovering or draging pospone close
-            if ($menu.is(':hover') || $scope.dashboard.$$panelDragging) {
-              dismiss(2500);
-              return;
+            if (force !== true) {
+              if ($menu.is(':hover') || $scope.dashboard.$$panelDragging) {
+                dismiss(2200);
+                return;
+              }
             }
 
             if (menuScope) {
@@ -102,7 +99,12 @@ function (angular, $, _) {
             }
           }
 
-          var showMenu = function() {
+          var showMenu = function(e) {
+            // if menu item is clicked and menu was just removed from dom ignore this event
+            if (!$.contains(document, e.target)) {
+              return;
+            }
+
             if ($menu) {
               dismiss();
               return;
@@ -124,11 +126,14 @@ function (angular, $, _) {
             $menu = $(menuTemplate);
             $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
-              //dismiss(1000);
+              dismiss(1000);
             });
 
             menuScope = $scope.$new();
             menuScope.extendedMenu = getExtendedMenu($scope);
+            menuScope.dismiss = function() {
+              dismiss(null, true);
+            };
 
             $('.panel-menu').remove();
             elem.append($menu);
@@ -139,7 +144,7 @@ function (angular, $, _) {
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
 
-            //dismiss(2500);
+            dismiss(2200);
           };
 
           if ($scope.panelMeta.titlePos && $scope.panel.title) {
