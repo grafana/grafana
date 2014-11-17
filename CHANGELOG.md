@@ -1,4 +1,4 @@
-# 1.9.0 (unreleased)
+# 1.9.0-rc1 (2014-11-17)
 
 **UI Improvements*
 - [Issue #770](https://github.com/grafana/grafana/issues/770). UI: Panel dropdown menu replaced with a new panel menu
