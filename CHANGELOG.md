@@ -1,3 +1,8 @@
+# 1.9.0 (unreleased)
+
+**Fixes**
+- [Issue #1087](https://github.com/grafana/grafana/issues/1087). Bug: Fixed IE9 crash due to angular drag drop
+
 # 1.9.0-rc1 (2014-11-17)
 
 **UI Improvements*
