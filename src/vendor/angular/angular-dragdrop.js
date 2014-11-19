@@ -6,13 +6,14 @@
  * To change this template use File | Settings | File Templates.
  */
 
-(function(){
+(function(angular){
 
 function isDnDsSupported(){
-    return 'draggable' in document.createElement("span");
+    return 'ondrag' in document.createElement("a");
 }
 
 if(!isDnDsSupported()){
+    angular.module("ang-drag-drop", []);
     return;
 }
 
@@ -22,7 +23,7 @@ if (window.jQuery && (-1 == window.jQuery.event.props.indexOf("dataTransfer"))) 
 
 var currentData;
 
-angular.module("ngDragDrop",[])
+angular.module("ang-drag-drop",[])
     .directive("uiDraggable", [
         '$parse',
         '$rootScope',
@@ -71,13 +72,13 @@ angular.module("ngDragDrop",[])
                     if (e.dataTransfer && e.dataTransfer.dropEffect !== "none") {
                         if (attrs.onDropSuccess) {
                             var fn = $parse(attrs.onDropSuccess);
-                            scope.$apply(function () {
+                            scope.$evalAsync(function () {
                                 fn(scope, {$event: e});
                             });
                         } else {
                             if (attrs.onDropFailure) {
                                 var fn = $parse(attrs.onDropFailure);
-                                scope.$apply(function () {
+                                scope.$evalAsync(function () {
                                     fn(scope, {$event: e});
                                 });
                             }
@@ -101,7 +102,7 @@ angular.module("ngDragDrop",[])
 
                         if (dragImage) {
                             var dragImageFn = $parse(attrs.dragImage);
-                            scope.$apply(function() {
+                            scope.$evalAsync(function() {
                                 var dragImageParameters = dragImageFn(scope, {$event: e});
                                 if (dragImageParameters) {
                                     if (angular.isString(dragImageParameters)) {
@@ -116,10 +117,10 @@ angular.module("ngDragDrop",[])
                             });
                         }
 
-                        e.dataTransfer.setData("Text", sendData);
+                        e.dataTransfer.setData("dataToSend", sendData);
                         currentData = angular.fromJson(sendData);
                         e.dataTransfer.effectAllowed = "copyMove";
-                        $rootScope.$broadcast("ANGULAR_DRAG_START", sendChannel);
+                        $rootScope.$broadcast("ANGULAR_DRAG_START", sendChannel, currentData.data);
                     }
                     else {
                         e.preventDefault();
@@ -138,6 +139,8 @@ angular.module("ngDragDrop",[])
                 var dragChannel = "";
                 var dragEnterClass = attr.dragEnterClass || "on-drag-enter";
                 var dragHoverClass = attr.dragHoverClass || "on-drag-hover";
+                var customDragEnterEvent = $parse(attr.onDragEnter);
+                var customDragLeaveEvent = $parse(attr.onDragLeave);
 
                 function onDragOver(e) {
                     if (e.preventDefault) {
@@ -148,20 +151,57 @@ angular.module("ngDragDrop",[])
                         e.stopPropagation();
                     }
 
+                    var fn = $parse(attr.uiOnDragOver);
+                    scope.$evalAsync(function () {
+                        fn(scope, {$event: e, $channel: dropChannel});
+                    });
+
                     e.dataTransfer.dropEffect = e.shiftKey ? 'copy' : 'move';
                     return false;
                 }
 
                 function onDragLeave(e) {
-                  dragging--;
-                  if (dragging == 0) {
-                    element.removeClass(dragHoverClass);
-                  }
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    }
+                    dragging--;
+
+                    if (dragging == 0) {
+                        scope.$evalAsync(function () {
+                            customDragEnterEvent(scope, {$event: e});
+                        });
+                        element.removeClass(dragHoverClass);
+                    }
+
+                    var fn = $parse(attr.uiOnDragLeave);
+                    scope.$evalAsync(function () {
+                        fn(scope, {$event: e, $channel: dropChannel});
+                    });
                 }
 
                 function onDragEnter(e) {
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    }
                     dragging++;
+
+                    var fn = $parse(attr.uiOnDragEnter);
+                    scope.$evalAsync(function () {
+                        fn(scope, {$event: e, $channel: dropChannel});
+                    });
+
                     $rootScope.$broadcast("ANGULAR_HOVER", dragChannel);
+                    scope.$evalAsync(function () {
+                        customDragLeaveEvent(scope, {$event: e});
+                    });
                     element.addClass(dragHoverClass);
                 }
 
@@ -173,11 +213,11 @@ angular.module("ngDragDrop",[])
                         e.stopPropagation(); // Necessary. Allows us to drop.
                     }
 
-                    var sendData = e.dataTransfer.getData("Text");
+                    var sendData = e.dataTransfer.getData("dataToSend");
                     sendData = angular.fromJson(sendData);
 
                     var fn = $parse(attr.uiOnDrop);
-                    scope.$apply(function () {
+                    scope.$evalAsync(function () {
                         fn(scope, {$data: sendData.data, $event: e, $channel: sendData.channel});
                     });
                     element.removeClass(dragEnterClass);
@@ -338,4 +378,4 @@ angular.module("ngDragDrop",[])
         }
     ]);
 
-}());
+}(angular));
