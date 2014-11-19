@@ -196,7 +196,7 @@ function (angular, app, _, $) {
 
           drilldownTooltip.text('click to go to: ' + panel.links[0].title);
 
-          drilldownTooltip.place_tt(e.clientX+20, e.clientY-15);
+          drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
         });
       }
     };

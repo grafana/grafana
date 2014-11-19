@@ -2,6 +2,7 @@
 
 **Fixes**
 - [Issue #1087](https://github.com/grafana/grafana/issues/1087). Bug: Fixed IE9 crash due to angular drag drop
+- [Issue #1093](https://github.com/grafana/grafana/issues/1093). Bug: Fixed position for drilldown link tooltip when dashboard requires scrolling
 
 # 1.9.0-rc1 (2014-11-17)
 
