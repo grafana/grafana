@@ -38,18 +38,26 @@ function ($) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex;
+      var value, i, series, hoverIndex, seriesTmp;
       var results = [];
 
-      var pointCount = seriesList[0].data.length;
-      for (i = 1; i < seriesList.length; i++) {
-        if (seriesList[i].data.length !== pointCount) {
+      var pointCount;
+      for (i = 0; i < seriesList.length; i++) {
+        seriesTmp = seriesList[i];
+        if (!seriesTmp.data.length) { continue; }
+
+        if (!pointCount) {
+          series = seriesTmp;
+          pointCount = series.data.length;
+          continue;
+        }
+
+        if (seriesTmp.data.length !== pointCount) {
           results.pointCountMismatch = true;
           return results;
         }
       }
 
-      series = seriesList[0];
       hoverIndex = this.findHoverIndexFromData(pos.x, series);
       var lasthoverIndex = 0;
       if(!scope.panel.steppedLine) {
@@ -62,6 +70,7 @@ function ($) {
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
+        if (!series.data.length) { continue; }
 
         if (scope.panel.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
