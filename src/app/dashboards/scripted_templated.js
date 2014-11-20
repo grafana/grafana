@@ -23,7 +23,7 @@ var dashboard, timspan;
 var ARGS;
 
 // Set a default timespan if one isn't specified
-timspan = '1d';
+timspan = ARGS.from || 'now-1d';
 
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
@@ -33,7 +33,7 @@ dashboard = {
 // Set a title
 dashboard.title = 'Scripted dash';
 dashboard.time = {
-  from: "now-" + (ARGS.from || timspan),
+  from: timspan,
   to: "now"
 };
 dashboard.templating = {
