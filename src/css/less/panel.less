@@ -10,6 +10,11 @@
   background: @grafanaPanelBackground;
   margin: 5px;
   position: relative;
+  &:hover {
+    .panel-actions {
+      display: block;
+    }
+  }
 }
 
 .panel-content {
@@ -27,6 +32,8 @@
   font-weight: bold;
   position: relative;
   cursor: context-menu;
+  width: 100%;
+  display: block;
 
   &.has-panel-links {
     .panel-title-text:after {
@@ -70,6 +77,32 @@
   border-bottom: 27px solid @grafanaPanelBackground;
   left: 0;
   bottom: 0;
+}
+
+.panel-fullscreen {
+  z-index: 100;
+  display: block;
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  top: 51px;
+  height: 100%;
+  padding: 0 10px;
+  background: @grafanaPanelBackground;
+  overflow-y: scroll;
+  height: 100%;
+
+  .panel-content {
+    padding-bottom: 130px;
+  }
+
+  .dropdown-menu {
+    margin-bottom: 70px;
+  }
+
+  .panel-menu {
+    top: 0px;
+  }
 }
 
 .panel-menu {
@@ -124,3 +157,5 @@
     border: 1px solid @grayDark;
   }
 }
+
+

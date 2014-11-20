@@ -146,7 +146,7 @@ define([
           {
             columns: ['time', 'text', 'sequence_number', 'title', 'tags'],
             name: 'events1',
-            points: [[1402596000, 'some text', 1, 'Hello', 'B'], [1402596001, 'asd', 2, 'Hello2', 'B']]
+            points: [[1402596000000, 'some text', 1, 'Hello', 'B'], [1402596001000, 'asd', 2, 'Hello2', 'B']]
           }
         ],
         annotation: {
@@ -176,7 +176,7 @@ define([
           {
             columns: ['time', 'text', 'sequence_number'],
             name: 'events1',
-            points: [[1402596000, 'some text', 1]]
+            points: [[1402596000000, 'some text', 1]]
           }
         ],
         annotation: { query: 'select' }

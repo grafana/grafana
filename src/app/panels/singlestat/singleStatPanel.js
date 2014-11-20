@@ -29,6 +29,7 @@ function (angular, app, _, $) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
+            height -= 5; // padding
             height -= panel.title ? 24 : 9; // subtract panel title bar
 
             elem.css('height', height + 'px');
@@ -195,7 +196,7 @@ function (angular, app, _, $) {
 
           drilldownTooltip.text('click to go to: ' + panel.links[0].title);
 
-          drilldownTooltip.place_tt(e.clientX+20, e.clientY-15);
+          drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
         });
       }
     };

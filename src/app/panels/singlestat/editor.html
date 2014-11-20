@@ -42,12 +42,12 @@
     <h5>Coloring</h5>
 		<editor-opt-bool text="Background" model="panel.colorBackground" change="setColoring({background: true})"></editor-opt-bool>
 		<editor-opt-bool text="Value" model="panel.colorValue" change="setColoring({value: true})"></editor-opt-bool>
-		<div class="editor-option">
+		<div class="editor-option" ng-show="panel.colorBackground || panel.colorValue">
 			<label class="small">Thresholds<tip>Comma seperated values</tip></label>
 			<input type="text" class="input-large" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
 		</div>
-		<div class="editor-option">
-      <label class="small">Color</label>
+		<div class="editor-option" ng-show="panel.colorBackground || panel.colorValue">
+      <label class="small">Colors</label>
       <spectrum-picker ng-model="panel.colors[0]" ng-change="render()" ></spectrum-picker>
       <spectrum-picker ng-model="panel.colors[1]" ng-change="render()" ></spectrum-picker>
 			<spectrum-picker ng-model="panel.colors[2]" ng-change="render()" ></spectrum-picker>

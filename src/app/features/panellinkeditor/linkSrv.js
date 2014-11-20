@@ -29,7 +29,7 @@ function (angular, kbn) {
         info.href += '&to=' + range.to;
 
         if (link.params) {
-          info.href += "&" + link.params;
+          info.href += "&" + templateSrv.replace(link.params);
         }
 
         return info;

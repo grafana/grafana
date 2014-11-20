@@ -59,6 +59,34 @@ define([
     });
   });
 
+  describeSharedTooltip("point count missmatch", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [[10, 2]] }
+      ];
+      ctx.pos = { x: 11 };
+    });
+
+    it('should set pointCountMismatch to true', function() {
+      expect(ctx.results.pointCountMismatch).to.be(true);
+    });
+  });
+
+  describeSharedTooltip("one series is hidden", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [] }
+      ];
+      ctx.pos = { x: 11 };
+    });
+
+    it('should set pointCountMismatch to false', function() {
+      expect(ctx.results.pointCountMismatch).to.be(undefined);
+    });
+  });
+
   describeSharedTooltip("steppedLine false, stack true, individual false", function(ctx) {
     ctx.setup(function() {
       ctx.data = [
