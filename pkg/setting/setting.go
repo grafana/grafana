@@ -163,9 +163,6 @@ func initSessionService() {
 	SessionConfig.EnableSetCookie = Cfg.MustBool("session", "enable_set_cookie", true)
 	SessionConfig.Gclifetime = Cfg.MustInt64("session", "gc_interval_time", 86400)
 	SessionConfig.Maxlifetime = Cfg.MustInt64("session", "session_life_time", 86400)
-	SessionConfig.SessionIDHashFunc = Cfg.MustValueRange("session", "session_id_hashfunc",
-		"sha1", []string{"sha1", "sha256", "md5"})
-	SessionConfig.SessionIDHashKey = Cfg.MustValue("session", "session_id_hashkey", string(com.RandomCreateBytes(16)))
 
 	if SessionProvider == "file" {
 		os.MkdirAll(path.Dir(SessionConfig.ProviderConfig), os.ModePerm)
