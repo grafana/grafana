@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"strconv"
 
 	"github.com/Unknwon/macaron"
@@ -81,7 +80,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 }
 
 func (ctx *Context) JsonBody(model interface{}) bool {
-	b, _ := ioutil.ReadAll(ctx.Req.Body)
+	b, _ := ctx.Req.Body().Bytes()
 	err := json.Unmarshal(b, &model)
 	return err == nil
 }

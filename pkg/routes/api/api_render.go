@@ -28,5 +28,5 @@ func RenderToPng(c *middleware.Context) {
 	}
 
 	c.Resp.Header().Set("Content-Type", "image/png")
-	http.ServeFile(c.Resp, c.Req, pngPath)
+	http.ServeFile(c.Resp, c.Req.Request, pngPath)
 }
