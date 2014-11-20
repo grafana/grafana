@@ -6,6 +6,7 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
+
 	"github.com/torkelo/grafana-pro/pkg/models"
 )
 

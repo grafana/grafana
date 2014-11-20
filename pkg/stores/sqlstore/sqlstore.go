@@ -35,6 +35,7 @@ func Init() {
 	models.GetDashboard = GetDashboard
 	models.SaveDashboard = SaveDashboard
 	models.SearchQuery = SearchQuery
+	models.DeleteDashboard = DeleteDashboard
 }
 
 func LoadModelsConfig() {

@@ -27,8 +27,8 @@ func CreateAccount(account *models.Account) error {
 func GetAccount(id int64) (*models.Account, error) {
 	var err error
 
-	account := &models.Account{Id: id}
-	has, err := x.Get(account)
+	var account models.Account
+	has, err := x.Id(id).Get(&account)
 
 	if err != nil {
 		return nil, err
@@ -36,7 +36,11 @@ func GetAccount(id int64) (*models.Account, error) {
 		return nil, models.ErrAccountNotFound
 	}
 
-	return account, nil
+	if account.UsingAccountId == 0 {
+		account.UsingAccountId = account.Id
+	}
+
+	return &account, nil
 }
 
 func GetAccountByLogin(emailOrLogin string) (*models.Account, error) {
