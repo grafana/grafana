@@ -17,7 +17,6 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/routes"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
-	"github.com/torkelo/grafana-pro/pkg/stores/rethink"
 	"github.com/torkelo/grafana-pro/pkg/stores/sqlstore"
 )
 
@@ -66,7 +65,7 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 func runWeb(*cli.Context) {
 	setting.NewConfigContext()
 	setting.InitServices()
-	rethink.Init()
+	sqlstore.Init()
 	social.NewOAuthService()
 
 	// init database

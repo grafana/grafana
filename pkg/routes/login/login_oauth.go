@@ -63,6 +63,8 @@ func OAuthLogin(ctx *middleware.Context) {
 			ctx.Handle(500, "Failed to create account", err)
 			return
 		}
+	} else if err != nil {
+		ctx.Handle(500, "Unexpected error", err)
 	}
 
 	// login

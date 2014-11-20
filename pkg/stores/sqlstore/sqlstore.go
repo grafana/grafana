@@ -6,9 +6,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
+
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 var (
@@ -24,14 +26,14 @@ var (
 	UseSQLite3 bool
 )
 
-type AccountDto struct {
-	Id     int64
-	Email  string `xorm:"UNIQUE NOT NULL"`
-	Passwd string `xorm:"NOT NULL"`
-}
+func Init() {
+	tables = append(tables, new(models.Account), new(models.Dashboard))
 
-func init() {
-	tables = append(tables, new(AccountDto))
+	models.CreateAccount = CreateAccount
+	models.GetAccount = GetAccount
+	models.GetAccountByLogin = GetAccountByLogin
+	models.GetDashboard = GetDashboard
+	models.SaveDashboard = SaveDashboard
 }
 
 func LoadModelsConfig() {

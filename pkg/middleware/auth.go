@@ -9,7 +9,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
-func authGetRequestAccountId(c *Context, sess session.Store) (int, error) {
+func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 	accountId := sess.Get("accountId")
 
 	urlQuery := c.Req.URL.Query()
@@ -23,7 +23,7 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int, error) {
 		return -1, errors.New("Auth: session account id not found")
 	}
 
-	return accountId.(int), nil
+	return accountId.(int64), nil
 }
 
 func authDenied(c *Context) {

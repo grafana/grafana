@@ -21,7 +21,7 @@ type Context struct {
 	IsSigned bool
 }
 
-func (c *Context) GetAccountId() int {
+func (c *Context) GetAccountId() int64 {
 	return c.Account.Id
 }
 

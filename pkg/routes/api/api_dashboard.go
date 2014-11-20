@@ -69,7 +69,7 @@ func PostDashboard(c *middleware.Context) {
 	dashboard.UpdateSlug()
 
 	if dashboard.Data["id"] != nil {
-		dashboard.Id = dashboard.Data["id"].(string)
+		dashboard.Id = int64(dashboard.Data["id"].(float64))
 	}
 
 	err := models.SaveDashboard(dashboard)
