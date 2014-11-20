@@ -54,6 +54,15 @@ func Search(c *middleware.Context) {
 	c.JSON(200, results)
 }
 
+func convertToStringArray(arr []interface{}) []string {
+	b := make([]string, len(arr))
+	for i := range arr {
+		b[i] = arr[i].(string)
+	}
+
+	return b
+}
+
 func PostDashboard(c *middleware.Context) {
 	var command apimodel.SaveDashboardCommand
 
@@ -66,6 +75,7 @@ func PostDashboard(c *middleware.Context) {
 	dashboard.Data = command.Dashboard
 	dashboard.Title = dashboard.Data["title"].(string)
 	dashboard.AccountId = c.GetAccountId()
+	dashboard.Tags = convertToStringArray(dashboard.Data["tags"].([]interface{}))
 	dashboard.UpdateSlug()
 
 	if dashboard.Data["id"] != nil {

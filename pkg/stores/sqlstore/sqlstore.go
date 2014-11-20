@@ -34,6 +34,7 @@ func Init() {
 	models.GetAccountByLogin = GetAccountByLogin
 	models.GetDashboard = GetDashboard
 	models.SaveDashboard = SaveDashboard
+	models.SearchQuery = SearchQuery
 }
 
 func LoadModelsConfig() {
