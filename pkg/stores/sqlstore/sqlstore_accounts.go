@@ -1,8 +1,10 @@
 package sqlstore
 
-import "github.com/torkelo/grafana-pro/pkg/log"
+import (
+	"github.com/torkelo/grafana-pro/pkg/models"
+)
 
-func SaveAccount() error {
+func CreateAccount(account *models.Account) error {
 	var err error
 
 	sess := x.NewSession()
@@ -12,12 +14,7 @@ func SaveAccount() error {
 		return err
 	}
 
-	u := &AccountDto{
-		Email:  "asdasdas",
-		Passwd: "MyPassWd",
-	}
-
-	if _, err = sess.Insert(u); err != nil {
+	if _, err = sess.Insert(account); err != nil {
 		sess.Rollback()
 		return err
 	} else if err = sess.Commit(); err != nil {
@@ -27,14 +24,32 @@ func SaveAccount() error {
 	return nil
 }
 
-func GetAccounts() {
-	var resp = make([]*AccountDto, 1)
-	err := x.Find(&resp)
+func GetAccount(id int64) (*models.Account, error) {
+	var err error
+
+	account := &models.Account{Id: id}
+	has, err := x.Get(account)
+
 	if err != nil {
-		log.Error(4, "Error", err)
+		return nil, err
+	} else if has == false {
+		return nil, models.ErrAccountNotFound
 	}
 
-	for _, i := range resp {
-		log.Info("Item %v", i)
+	return account, nil
+}
+
+func GetAccountByLogin(emailOrLogin string) (*models.Account, error) {
+	var err error
+
+	account := &models.Account{Login: emailOrLogin}
+	has, err := x.Get(account)
+
+	if err != nil {
+		return nil, err
+	} else if has == false {
+		return nil, models.ErrAccountNotFound
 	}
+
+	return account, nil
 }

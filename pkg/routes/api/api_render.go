@@ -12,7 +12,7 @@ import (
 func RenderToPng(c *middleware.Context) {
 	accountId := c.GetAccountId()
 	queryReader := utils.NewUrlQueryReader(c.Req.URL)
-	queryParams := "?render&accountId=" + strconv.Itoa(accountId) + "&" + c.Req.URL.RawQuery
+	queryParams := "?render&accountId=" + strconv.FormatInt(accountId, 10) + "&" + c.Req.URL.RawQuery
 
 	renderOpts := &renderer.RenderOpts{
 		Url:    c.Params("*") + queryParams,
