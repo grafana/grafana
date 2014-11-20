@@ -79,7 +79,7 @@ function (angular, _, config, kbn, moment) {
       var data = {
         "fields": [timeField, "_source"],
         "query" : { "filtered": { "query" : query, "filter": filter } },
-        "size": 100
+        "size": this.searchMaxResults
       };
 
       return this._request('POST', '/_search', annotation.index, data).then(function(results) {
