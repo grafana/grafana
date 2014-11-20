@@ -17,7 +17,7 @@
 var window, document, ARGS, $, jQuery, moment, kbn;
 
 // Setup some variables
-var dashboard, timspan;
+var dashboard;
 
 // All url parameters are available via the ARGS object
 var ARGS;
@@ -30,11 +30,11 @@ dashboard = {
 // Set a title
 dashboard.title = 'Scripted dash';
 
-// set default time
+// Set default time
 // time can be overriden in the url using from/to parameteres, but this is
 // handled automatically in grafana core during dashboard initialization
 dashboard.time = {
-  from: 'now-6h',
+  from: "now-6h",
   to: "now"
 };
 
