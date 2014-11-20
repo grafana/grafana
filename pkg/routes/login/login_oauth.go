@@ -53,7 +53,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	// create account if missing
 	if err == models.ErrAccountNotFound {
 		account = &models.Account{
-			Login:   userInfo.Login,
+			Login:   userInfo.Email,
 			Email:   userInfo.Email,
 			Name:    userInfo.Name,
 			Company: userInfo.Company,

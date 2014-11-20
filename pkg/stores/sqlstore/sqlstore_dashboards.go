@@ -47,8 +47,18 @@ func SearchQuery(query string, accountId int64) ([]*models.SearchResult, error) 
 	sess := x.Limit(100, 0).Where("account_id=?", accountId)
 	sess.Table("Dashboard")
 
-	var results []*models.SearchResult
+	results := make([]*models.SearchResult, 0)
 	err := sess.Find(&results)
 
 	return results, err
+}
+
+func DeleteDashboard(slug string, accountId int64) error {
+	sess := x.NewSession()
+	defer sess.Close()
+
+	rawSql := "DELETE FROM Dashboard WHERE account_id=? and slug=?"
+	_, err := sess.Exec(rawSql, accountId, slug)
+
+	return err
 }

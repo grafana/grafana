@@ -1,11 +1,10 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/routes/apimodel"
+	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
 func GetDashboard(c *middleware.Context) {
@@ -88,5 +87,5 @@ func PostDashboard(c *middleware.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"status": "success", "slug": dashboard.Slug})
+	c.JSON(200, utils.DynMap{"status": "success", "slug": dashboard.Slug})
 }
