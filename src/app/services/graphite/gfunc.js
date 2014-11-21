@@ -358,6 +358,17 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'timeStack',
+    category: categories.Transform,
+    params: [
+      { name: "timeShiftUnit", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] },
+      { name: "timeShiftStart", type: "int" },
+      { name: "timeShiftEnd", type: "int" }
+    ],
+    defaultParams: ['1d', 0, 7]
+  });
+
+  addFuncDef({
     name: 'summarize',
     category: categories.Transform,
     params: [
