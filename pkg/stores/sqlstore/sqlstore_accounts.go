@@ -57,3 +57,31 @@ func GetAccountByLogin(emailOrLogin string) (*models.Account, error) {
 
 	return account, nil
 }
+
+func GetCollaboratorsForAccount(accountId int64) ([]*models.CollaboratorInfo, error) {
+	collaborators := make([]*models.CollaboratorInfo, 0)
+	sess := x.Table("Collaborator")
+	sess.Join("INNER", "Account", "Account.id=Collaborator.account_Id")
+	err := sess.Find(&collaborators)
+	return collaborators, err
+}
+
+func AddCollaborator(collaborator *models.Collaborator) error {
+	var err error
+
+	sess := x.NewSession()
+	defer sess.Close()
+
+	if err = sess.Begin(); err != nil {
+		return err
+	}
+
+	if _, err = sess.Insert(collaborator); err != nil {
+		sess.Rollback()
+		return err
+	} else if err = sess.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}

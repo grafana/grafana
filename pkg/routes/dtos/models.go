@@ -1,4 +1,4 @@
-package apimodel
+package dtos
 
 import (
 	"crypto/md5"
@@ -8,19 +8,35 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/models"
 )
 
-type LoginResultDto struct {
-	Status string         `json:"status"`
-	User   CurrentUserDto `json:"user"`
+type LoginResult struct {
+	Status string      `json:"status"`
+	User   CurrentUser `json:"user"`
 }
 
-type CurrentUserDto struct {
+type CurrentUser struct {
 	Login       string `json:"login"`
 	Email       string `json:"email"`
 	GravatarUrl string `json:"gravatarUrl"`
 }
 
-func NewCurrentUserDto(account *models.Account) *CurrentUserDto {
-	model := &CurrentUserDto{}
+type AccountInfo struct {
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	Collaborators []*Collaborator `json:"collaborators"`
+}
+
+type Collaborator struct {
+	AccountId int64  `json:"accountId"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+}
+
+type AddCollaboratorCommand struct {
+	Email string `json:"email" binding:"required"`
+}
+
+func NewCurrentUser(account *models.Account) *CurrentUser {
+	model := &CurrentUser{}
 	if account != nil {
 		model.Login = account.Login
 		model.Email = account.Email

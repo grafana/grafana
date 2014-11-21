@@ -6,11 +6,13 @@ import (
 )
 
 var (
-	CreateAccount       func(acccount *Account) error
-	UpdateAccount       func(acccount *Account) error
-	GetAccountByLogin   func(emailOrName string) (*Account, error)
-	GetAccount          func(accountId int64) (*Account, error)
-	GetOtherAccountsFor func(accountId int64) ([]*OtherAccount, error)
+	CreateAccount              func(acccount *Account) error
+	UpdateAccount              func(acccount *Account) error
+	GetAccountByLogin          func(emailOrName string) (*Account, error)
+	GetAccount                 func(accountId int64) (*Account, error)
+	GetOtherAccountsFor        func(accountId int64) ([]*OtherAccount, error)
+	GetCollaboratorsForAccount func(accountId int64) ([]*CollaboratorInfo, error)
+	AddCollaborator            func(collaborator *Collaborator) error
 )
 
 // Typed errors

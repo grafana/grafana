@@ -27,7 +27,7 @@ var (
 )
 
 func Init() {
-	tables = append(tables, new(models.Account), new(models.Dashboard))
+	tables = append(tables, new(models.Account), new(models.Dashboard), new(models.Collaborator))
 
 	models.CreateAccount = CreateAccount
 	models.GetAccount = GetAccount
@@ -36,6 +36,8 @@ func Init() {
 	models.SaveDashboard = SaveDashboard
 	models.SearchQuery = SearchQuery
 	models.DeleteDashboard = DeleteDashboard
+	models.GetCollaboratorsForAccount = GetCollaboratorsForAccount
+	models.AddCollaborator = AddCollaborator
 }
 
 func LoadModelsConfig() {
