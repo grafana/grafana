@@ -194,7 +194,7 @@ function (_) {
     name: "aliasSub",
     category: categories.Special,
     params: [{ name: "search", type: 'string' }, { name: "replace", type: 'string' }],
-    defaultParams: ['', '']
+    defaultParams: ['', '\\1']
   });
 
   addFuncDef({
