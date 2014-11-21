@@ -4,7 +4,7 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/routes/api"
-	"github.com/torkelo/grafana-pro/pkg/routes/apimodel"
+	"github.com/torkelo/grafana-pro/pkg/routes/dtos"
 	"github.com/torkelo/grafana-pro/pkg/routes/login"
 )
 
@@ -19,6 +19,11 @@ func Register(m *macaron.Macaron) {
 	// login
 	m.Get("/login", Index)
 	m.Get("/login/:name", login.OAuthLogin)
+
+	// account
+	m.Get("/account/", auth, Index)
+	m.Get("/api/account/", auth, api.GetAccount)
+	m.Post("/api/account/collaborators/add", auth, api.AddCollaborator)
 
 	// user register
 	m.Get("/register/*_", Index)
@@ -36,7 +41,7 @@ func Register(m *macaron.Macaron) {
 }
 
 func Index(ctx *middleware.Context) {
-	ctx.Data["User"] = apimodel.NewCurrentUserDto(ctx.UserAccount)
+	ctx.Data["User"] = dtos.NewCurrentUser(ctx.UserAccount)
 	ctx.HTML(200, "index")
 }
 

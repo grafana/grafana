@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/routes/apimodel"
+	"github.com/torkelo/grafana-pro/pkg/routes/dtos"
 	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
@@ -63,7 +63,7 @@ func convertToStringArray(arr []interface{}) []string {
 }
 
 func PostDashboard(c *middleware.Context) {
-	var command apimodel.SaveDashboardCommand
+	var command dtos.SaveDashboardCommand
 
 	if !c.JsonBody(&command) {
 		c.JsonApiErr(400, "bad request", nil)

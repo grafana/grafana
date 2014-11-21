@@ -1,11 +1,11 @@
 package login
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/routes/apimodel"
+	"github.com/torkelo/grafana-pro/pkg/routes/dtos"
+	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
 type loginJsonModel struct {
@@ -18,24 +18,24 @@ func LoginPost(c *middleware.Context) {
 	var loginModel loginJsonModel
 
 	if !c.JsonBody(&loginModel) {
-		c.JSON(400, gin.H{"status": "bad request"})
+		c.JSON(400, utils.DynMap{"status": "bad request"})
 		return
 	}
 
 	account, err := models.GetAccountByLogin(loginModel.Email)
 	if err != nil {
-		c.JSON(401, gin.H{"status": "unauthorized"})
+		c.JSON(401, utils.DynMap{"status": "unauthorized"})
 		return
 	}
 
 	if loginModel.Password != account.Password {
-		c.JSON(401, gin.H{"status": "unauthorized"})
+		c.JSON(401, utils.DynMap{"status": "unauthorized"})
 		return
 	}
 
 	loginUserWithAccount(account, c)
 
-	var resp = &apimodel.LoginResultDto{}
+	var resp = &dtos.LoginResult{}
 	resp.Status = "Logged in"
 	resp.User.Login = account.Login
 
@@ -52,5 +52,5 @@ func loginUserWithAccount(account *models.Account, c *middleware.Context) {
 
 func LogoutPost(c *middleware.Context) {
 	c.Session.Delete("accountId")
-	c.JSON(200, gin.H{"status": "logged out"})
+	c.JSON(200, utils.DynMap{"status": "logged out"})
 }
