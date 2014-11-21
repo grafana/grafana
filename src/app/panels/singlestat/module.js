@@ -18,7 +18,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     $scope.panelMeta = new PanelMeta({
       description: 'Singlestat panel',
-      titlePos: 'left',
       fullscreen: true,
       metricsEditor: true
     });
