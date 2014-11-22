@@ -34,9 +34,14 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       format: 'none',
       prefix: '',
       postfix: '',
+      nullText: null,
+      valueMaps: [
+        { value: 'null', op: '=', text: 'N/A' }
+      ],
+      nullPointMode: 'connected',
       valueName: 'avg',
       prefixFontSize: '50%',
-      valueFontSize: '100%',
+      valueFontSize: '80%',
       postfixFontSize: '50%',
       thresholds: '',
       colorBackground: false,
@@ -98,7 +103,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
         alias: seriesData.target,
       });
 
-      series.flotpairs = series.getFlotPairs('connected');
+      series.flotpairs = series.getFlotPairs($scope.panel.nullPointMode);
 
       return series;
     };
@@ -169,15 +174,12 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       if (!$scope.series || $scope.series.length === 0) {
         data.flotpairs = [];
         data.mainValue = Number.NaN;
-        data.mainValueFormated = 'NaN';
+        data.mainValueFormated = $scope.getFormatedValue(null);
       }
       else {
         var series = $scope.series[0];
         data.mainValue = series.stats[$scope.panel.valueName];
-        var decimalInfo = $scope.getDecimalsForValue(data.mainValue);
-        var formatFunc = kbn.valueFormats[$scope.panel.format];
-
-        data.mainValueFormated = formatFunc(data.mainValue, decimalInfo.decimals, decimalInfo.scaledDecimals);
+        data.mainValueFormated = $scope.getFormatedValue(data.mainValue);
         data.flotpairs = series.flotpairs;
       }
 
@@ -189,6 +191,44 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
       $scope.data = data;
       $scope.$emit('render');
+    };
+
+    $scope.getFormatedValue = function(mainValue) {
+
+      // first check value to text mappings
+      for(var i = 0; i < $scope.panel.valueMaps.length; i++) {
+        var map = $scope.panel.valueMaps[i];
+        // special null case
+        if (map.value === 'null') {
+          if (mainValue === null || mainValue === void 0) {
+            return map.text;
+          }
+          continue;
+        }
+        // value/number to text mapping
+        var value = parseFloat(map.value);
+        if (value === mainValue) {
+          return map.text;
+        }
+      }
+
+      if (mainValue === null || mainValue === void 0) {
+        return "no value";
+      }
+
+      var decimalInfo = $scope.getDecimalsForValue(mainValue);
+      var formatFunc = kbn.valueFormats[$scope.panel.format];
+      return formatFunc(mainValue, decimalInfo.decimals, decimalInfo.scaledDecimals);
+    };
+
+    $scope.removeValueMap = function(map) {
+      var index = _.indexOf($scope.panel.valueMaps, map);
+      $scope.panel.valueMaps.splice(index, 1);
+      $scope.render();
+    };
+
+    $scope.addValueMap = function() {
+      $scope.panel.valueMaps.push({value: '', op: '=', text: '' });
     };
 
     $scope.init();

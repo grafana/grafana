@@ -13,6 +13,10 @@
 			<label class="small">Postfix</label>
 			<input type="text" class="input-small" ng-model="panel.postfix" ng-blur="render()" ng-trim="false"></input>
 		</div>
+    <div class="editor-option">
+      <label class="small">Null point mode<tip>Define how null values should handled, connected = ignored</tip></label>
+      <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="get_data()"></select>
+    </div>
 	</div>
 
 	<div class="section">
@@ -38,6 +42,9 @@
 			<select class="input-small" ng-model="panel.format" ng-options="f for f in ['none','short','bytes', 'bits', 'bps', 's', 'ms', 'µs', 'ns', 'percent']" ng-change="render()"></select>
 		</div>
 	</div>
+</div>
+
+<div class="editor-row">
 	<div class="section">
     <h5>Coloring</h5>
 		<editor-opt-bool text="Background" model="panel.colorBackground" change="setColoring({background: true})"></editor-opt-bool>
@@ -54,9 +61,7 @@
 			<a class="pointer" ng-click="invertColorOrder()">invert order</a>
 		</div>
 	</div>
-</div>
 
-<div class="editor-row">
 	<div class="section">
 		<h5>Spark lines</h5>
 		<editor-opt-bool text="Spark line" model="panel.sparkline.show" change="render()"></editor-opt-bool>
@@ -72,5 +77,39 @@
 	</div>
 </div>
 
+<div class="editor-row">
+	<div class="section">
+		<h5>Value to text mapping</h5>
+		<div class="editor-option">
+			<label class="small">Specify mappings</label>
+			<div class="grafana-target">
+				<div class="grafana-target-inner">
+					<ul class="grafana-segment-list">
+						<li class="grafana-target-segment"  ng-repeat-start="map in panel.valueMaps">
+							<i class="icon-remove pointer" ng-click="removeValueMap(map)"></i>
+						</li>
+
+						<li>
+							<input type="text" ng-model="map.value" placeholder="value" class="input-mini grafana-target-segment-input" ng-blur="render()">
+						</li>
+						<li class="grafana-target-segment">
+							<i class="icon-arrow-right"></i>
+						</li>
+						<li ng-repeat-end>
+							<input type="text" placeholder="text" ng-model="map.text" class="input-mini grafana-target-segment-input" ng-blur="render()">
+						</li>
+
+						<li>
+							<a class="pointer grafana-target-segment" ng-click="addValueMap();">
+								<i class="icon-plus"></i>
+							</a>
+						</li>
+
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
