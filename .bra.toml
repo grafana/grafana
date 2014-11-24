@@ -4,6 +4,7 @@ watch_all = true
 watch_dirs = [
 	"$WORKDIR/pkg",
 	"$WORKDIR/views",
+	"$WORKDIR/conf",
 ]
 watch_exts = [".go", ".ini"]
 build_delay = 1500

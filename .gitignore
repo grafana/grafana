@@ -13,3 +13,8 @@ config.js
 *.sublime-workspace
 *.swp
 .idea/
+
+data/sessions
+data/*.db
+data/log
+grafana-pro
