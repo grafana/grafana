@@ -25,6 +25,13 @@ type AccountInfo struct {
 	Collaborators []*Collaborator `json:"collaborators"`
 }
 
+type OtherAccount struct {
+	Id      int64  `json:"id"`
+	Name    string `json:"name"`
+	Role    string `json:"role"`
+	IsUsing bool   `json:"isUsing"`
+}
+
 type Collaborator struct {
 	AccountId int64  `json:"accountId"`
 	Email     string `json:"email"`

@@ -49,8 +49,7 @@ func AddCollaborator(c *middleware.Context) {
 		return
 	}
 
-	var collaborator = models.NewCollaborator(accountToAdd.Id, c.UserAccount.Id)
-	collaborator.Role = models.ROLE_READ_WRITE
+	var collaborator = models.NewCollaborator(accountToAdd.Id, c.UserAccount.Id, models.ROLE_READ_WRITE)
 
 	err = models.AddCollaborator(collaborator)
 	if err != nil {
@@ -59,4 +58,32 @@ func AddCollaborator(c *middleware.Context) {
 	}
 
 	c.Status(204)
+}
+
+func GetOtherAccounts(c *middleware.Context) {
+
+	otherAccounts, err := models.GetOtherAccountsFor(c.UserAccount.Id)
+	if err != nil {
+		c.JSON(500, utils.DynMap{"message": err.Error()})
+		return
+	}
+
+	var result []*dtos.OtherAccount
+	result = append(result, &dtos.OtherAccount{
+		Id:      c.UserAccount.Id,
+		Role:    "owner",
+		IsUsing: c.UserAccount.Id == c.UserAccount.UsingAccountId,
+		Name:    c.UserAccount.Email,
+	})
+
+	for _, other := range otherAccounts {
+		result = append(result, &dtos.OtherAccount{
+			Id:      other.Id,
+			Role:    other.Role,
+			Name:    other.Email,
+			IsUsing: other.Id == c.UserAccount.UsingAccountId,
+		})
+	}
+
+	c.JSON(200, result)
 }

@@ -29,9 +29,9 @@ type CollaboratorLink struct {
 }
 
 type OtherAccount struct {
-	Id   int `gorethink:"id"`
-	Name string
-	Role string
+	Id    int64
+	Email string
+	Role  string
 }
 
 type Account struct {
