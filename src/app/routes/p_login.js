@@ -32,7 +32,7 @@ function (angular) {
         return;
       }
 
-      $http.post('/api/register/user', $scope.loginModel).then(function() {
+      $http.post('/api/account', $scope.loginModel).then(function() {
         $location.path('/login');
       }, function(err) {
         $scope.registerError = "Unexpected error: " + err;

@@ -1,12 +1,8 @@
 define([
   'angular',
   'lodash',
-  'jquery',
-  'config',
-  'kbn',
-  'moment'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -68,7 +64,10 @@ function (angular) {
       return $http.get('/api/search/', { params: { q: query } })
         .then(function(results) {
           var hits = { dashboards: [], tags: [] };
-          hits.dashboards = results.data;
+          hits.dashboards = _.map(results.data, function(item) {
+            item.id = item.slug;
+            return item;
+          });
           return hits;
         }, function(data) {
           throw "Failed to search: " + data;
