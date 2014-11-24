@@ -87,3 +87,29 @@ func GetOtherAccounts(c *middleware.Context) {
 
 	c.JSON(200, result)
 }
+
+// func SetUsingAccount(c *middleware.Context) {
+// 	idString := c.Params.ByName("id")
+// 	id, _ := strconv.Atoi(idString)
+//
+// 	account := auth.userAccount
+// 	otherAccount, err := self.store.GetAccount(id)
+// 	if err != nil {
+// 		c.JSON(500, gin.H{"message": err.Error()})
+// 		return
+// 	}
+//
+// 	if otherAccount.Id != account.Id && !otherAccount.HasCollaborator(account.Id) {
+// 		c.Abort(401)
+// 		return
+// 	}
+//
+// 	account.UsingAccountId = otherAccount.Id
+// 	err = self.store.UpdateAccount(account)
+// 	if err != nil {
+// 		c.JSON(500, gin.H{"message": err.Error()})
+// 		return
+// 	}
+//
+// 	c.Abort(204)
+// }
