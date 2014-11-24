@@ -76,7 +76,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 		resp["message"] = message
 	}
 
-	ctx.HTML(status, "index")
+	ctx.JSON(status, resp)
 }
 
 func (ctx *Context) JsonBody(model interface{}) bool {

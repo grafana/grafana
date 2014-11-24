@@ -1,7 +1,9 @@
-docker kill rethinkdb
-docker rm rethinkdb
+docker build -t gf-pro-image .
 
-docker run -d -p 8180:8080 -p 28015:28015 -p 29015:29015 \
-  --name rethinkdb \
-  -v /var/docker/grafana-pro-rethinkdb:/data \
-  dockerfile/rethinkdb
+docker kill gf-pro
+docker rm gf-pro
+
+docker run -d --name="gf-pro" \
+             -p 127.0.0.1:5432:5432 \
+             -v /var/docker/grafana-pro/postgresql:/var/lib/postgres \
+             gf-pro-image

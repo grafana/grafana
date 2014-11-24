@@ -40,12 +40,12 @@ func AddCollaborator(c *middleware.Context) {
 
 	accountToAdd, err := models.GetAccountByLogin(model.Email)
 	if err != nil {
-		c.JSON(404, utils.DynMap{"message": "Collaborator not found"})
+		c.JsonApiErr(404, "Collaborator not found", nil)
 		return
 	}
 
 	if accountToAdd.Id == c.UserAccount.Id {
-		c.JSON(400, utils.DynMap{"message": "Cannot add yourself as collaborator"})
+		c.JsonApiErr(400, "Cannot add yourself as collaborator", nil)
 		return
 	}
 
@@ -53,7 +53,7 @@ func AddCollaborator(c *middleware.Context) {
 
 	err = models.AddCollaborator(collaborator)
 	if err != nil {
-		c.JSON(400, utils.DynMap{"message": err.Error()})
+		c.JsonApiErr(500, "Could not add collaborator", err)
 		return
 	}
 
