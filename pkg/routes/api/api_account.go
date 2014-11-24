@@ -34,7 +34,7 @@ func AddCollaborator(c *middleware.Context) {
 	var model dtos.AddCollaboratorCommand
 
 	if !c.JsonBody(&model) {
-		c.JSON(400, utils.DynMap{"message": "Invalid request"})
+		c.JsonApiErr(400, "Invalid request", nil)
 		return
 	}
 

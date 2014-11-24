@@ -38,10 +38,6 @@ type Collaborator struct {
 	Role      string `json:"role"`
 }
 
-type AddCollaboratorCommand struct {
-	Email string `json:"email" binding:"required"`
-}
-
 func NewCurrentUser(account *models.Account) *CurrentUser {
 	model := &CurrentUser{}
 	if account != nil {
@@ -56,10 +52,4 @@ func getGravatarUrl(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(strings.ToLower(text)))
 	return fmt.Sprintf("https://secure.gravatar.com/avatar/%x?s=90&default=mm", hasher.Sum(nil))
-}
-
-type SaveDashboardCommand struct {
-	Id        string                 `json:"id"`
-	Title     string                 `json:"title"`
-	Dashboard map[string]interface{} `json:"dashboard"`
 }
