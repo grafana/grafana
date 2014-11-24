@@ -9,7 +9,6 @@ watch_dirs = [
 watch_exts = [".go", ".ini"]
 build_delay = 1500
 cmds = [
-	["go", "install"],
-	["go", "build"],
+	["go", "build", "./pkg/cmd/grafana-pro"],
 	["./grafana-pro", "web"]
 ]
