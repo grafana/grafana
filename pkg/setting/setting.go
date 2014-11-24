@@ -1,3 +1,6 @@
+// Copyright 2014 Unknwon
+// Copyright 2014 Torkel Ödegaard
+
 package setting
 
 import (
@@ -11,6 +14,8 @@ import (
 
 	"github.com/Unknwon/com"
 	"github.com/Unknwon/goconfig"
+	"github.com/macaron-contrib/session"
+
 	"github.com/torkelo/grafana-pro/pkg/log"
 )
 
@@ -39,7 +44,12 @@ var (
 	HttpAddr, HttpPort string
 	SshPort            int
 	CertFile, KeyFile  string
-	DisableRouterLog   bool
+	RouterLogging      bool
+	StaticRootPath     string
+
+	// Session settings.
+	SessionProvider string
+	SessionConfig   *session.Config
 
 	// Global setting objects.
 	Cfg          *goconfig.ConfigFile
@@ -48,6 +58,10 @@ var (
 	ProdMode     bool
 	RunUser      string
 	IsWindows    bool
+
+	// PhantomJs Rendering
+	ImagesDir  string
+	PhantomDir string
 )
 
 func init() {
@@ -127,4 +141,36 @@ func NewConfigContext() {
 	if port != "" {
 		HttpPort = port
 	}
+
+	StaticRootPath = Cfg.MustValue("server", "static_root_path", workDir)
+	RouterLogging = Cfg.MustBool("server", "router_logging", false)
+
+	// PhantomJS rendering
+	ImagesDir = "data/png"
+	PhantomDir = "_vendor/phantomjs"
+
+	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(workDir, "/data/log"))
+}
+
+func initSessionService() {
+	SessionProvider = Cfg.MustValueRange("session", "provider", "memory", []string{"memory", "file"})
+
+	SessionConfig = new(session.Config)
+	SessionConfig.ProviderConfig = strings.Trim(Cfg.MustValue("session", "provider_config"), "\" ")
+	SessionConfig.CookieName = Cfg.MustValue("session", "cookie_name", "grafana_pro_sess")
+	SessionConfig.CookiePath = AppSubUrl
+	SessionConfig.Secure = Cfg.MustBool("session", "cookie_secure")
+	SessionConfig.EnableSetCookie = Cfg.MustBool("session", "enable_set_cookie", true)
+	SessionConfig.Gclifetime = Cfg.MustInt64("session", "gc_interval_time", 86400)
+	SessionConfig.Maxlifetime = Cfg.MustInt64("session", "session_life_time", 86400)
+
+	if SessionProvider == "file" {
+		os.MkdirAll(path.Dir(SessionConfig.ProviderConfig), os.ModePerm)
+	}
+
+	log.Info("Session Service Enabled")
+}
+
+func InitServices() {
+	initSessionService()
 }

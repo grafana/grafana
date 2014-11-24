@@ -2,19 +2,32 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"regexp"
 	"strings"
 	"time"
 )
 
+var (
+	GetDashboard    func(slug string, accountId int64) (*Dashboard, error)
+	SaveDashboard   func(dash *Dashboard) error
+	DeleteDashboard func(slug string, accountId int64) error
+	SearchQuery     func(query string, acccountId int64) ([]*SearchResult, error)
+)
+
+// Typed errors
+var (
+	ErrDashboardNotFound = errors.New("Account not found")
+)
+
 type Dashboard struct {
-	Id                   string `gorethink:"id,omitempty"`
-	Slug                 string
-	AccountId            int
-	LastModifiedByUserId string
-	LastModifiedByDate   time.Time
-	CreatedDate          time.Time
+	Id        int64
+	Slug      string `xorm:"index(IX_AccountIdSlug)"`
+	AccountId int64  `xorm:"index(IX_AccountIdSlug)"`
+
+	Created time.Time `xorm:"CREATED"`
+	Updated time.Time `xorm:"UPDATED"`
 
 	Title string
 	Tags  []string
@@ -29,10 +42,7 @@ type SearchResult struct {
 
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Id = ""
-	dash.LastModifiedByDate = time.Now()
-	dash.CreatedDate = time.Now()
-	dash.LastModifiedByUserId = "123"
+	dash.Id = 0
 	dash.Data = make(map[string]interface{})
 	dash.Data["title"] = title
 	dash.Title = title
