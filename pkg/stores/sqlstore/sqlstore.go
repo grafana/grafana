@@ -32,6 +32,7 @@ func Init() {
 	models.CreateAccount = CreateAccount
 	models.GetAccount = GetAccount
 	models.GetAccountByLogin = GetAccountByLogin
+	models.GetOtherAccountsFor = GetOtherAccountsFor
 	models.GetDashboard = GetDashboard
 	models.SaveDashboard = SaveDashboard
 	models.SearchQuery = SearchQuery

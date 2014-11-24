@@ -60,9 +60,12 @@ func GetAccountByLogin(emailOrLogin string) (*models.Account, error) {
 
 func GetCollaboratorsForAccount(accountId int64) ([]*models.CollaboratorInfo, error) {
 	collaborators := make([]*models.CollaboratorInfo, 0)
+
 	sess := x.Table("Collaborator")
 	sess.Join("INNER", "Account", "Account.id=Collaborator.account_Id")
+	sess.Where("Collaborator.for_account_id=?", accountId)
 	err := sess.Find(&collaborators)
+
 	return collaborators, err
 }
 
@@ -84,4 +87,13 @@ func AddCollaborator(collaborator *models.Collaborator) error {
 	}
 
 	return nil
+}
+
+func GetOtherAccountsFor(accountId int64) ([]*models.OtherAccount, error) {
+	collaborators := make([]*models.OtherAccount, 0)
+	sess := x.Table("Collaborator")
+	sess.Join("INNER", "Account", "Account.id=Collaborator.account_Id")
+	sess.Where("Collaborator.account_id=?", accountId)
+	err := sess.Find(&collaborators)
+	return collaborators, err
 }

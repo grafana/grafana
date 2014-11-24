@@ -27,11 +27,11 @@ type CollaboratorInfo struct {
 	Email     string
 }
 
-func NewCollaborator(accountId int64, forAccountId int64) *Collaborator {
+func NewCollaborator(accountId int64, forAccountId int64, role RoleType) *Collaborator {
 	return &Collaborator{
 		AccountId:    accountId,
 		ForAccountId: forAccountId,
-		Role:         ROLE_READ,
+		Role:         role,
 		Created:      time.Now(),
 		Updated:      time.Now(),
 	}
