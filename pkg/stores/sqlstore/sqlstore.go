@@ -50,7 +50,7 @@ func LoadModelsConfig() {
 	DbCfg.Name = setting.Cfg.MustValue("database", "name")
 	DbCfg.User = setting.Cfg.MustValue("database", "user")
 	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = setting.Cfg.MustValue("database", "passwd")
+		DbCfg.Pwd = setting.Cfg.MustValue("database", "password")
 	}
 	DbCfg.SslMode = setting.Cfg.MustValue("database", "ssl_mode")
 	DbCfg.Path = setting.Cfg.MustValue("database", "path", "data/grafana.db")
