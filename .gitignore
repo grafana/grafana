@@ -17,4 +17,4 @@ config.js
 data/sessions
 data/*.db
 data/log
-grafana-pro
+/grafana-pro
