@@ -148,7 +148,7 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && data.mainValue) {
+          if (panel.colorBackground && !isNaN(data.mainValue)) {
             var color = getColorForValue(data.mainValue);
             if (color) {
               $panelContainer.css('background-color', color);
