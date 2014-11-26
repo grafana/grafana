@@ -5,7 +5,6 @@ function () {
 
   function PanelMeta(options) {
     this.description = options.description;
-    this.titlePos = options.titlePos;
     this.fullscreen = options.fullscreen;
     this.menu = [];
     this.editorTabs = [];

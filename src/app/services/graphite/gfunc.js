@@ -194,7 +194,7 @@ function (_) {
     name: "aliasSub",
     category: categories.Special,
     params: [{ name: "search", type: 'string' }, { name: "replace", type: 'string' }],
-    defaultParams: ['', '']
+    defaultParams: ['', '\\1']
   });
 
   addFuncDef({
@@ -240,6 +240,8 @@ function (_) {
     category: categories.Special,
     params: [
       { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
       { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
     ],
     defaultParams: [3]
@@ -355,6 +357,17 @@ function (_) {
     category: categories.Transform,
     params: [{ name: "amount", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
     defaultParams: ['1d']
+  });
+
+  addFuncDef({
+    name: 'timeStack',
+    category: categories.Transform,
+    params: [
+      { name: "timeShiftUnit", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] },
+      { name: "timeShiftStart", type: "int" },
+      { name: "timeShiftEnd", type: "int" }
+    ],
+    defaultParams: ['1d', 0, 7]
   });
 
   addFuncDef({
