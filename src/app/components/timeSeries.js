@@ -64,7 +64,7 @@ function (_, kbn) {
     var result = [];
 
     this.stats.total = 0;
-    this.stats.max = Number.MIN_VALUE;
+    this.stats.max = -Number.MAX_VALUE;
     this.stats.min = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
@@ -106,7 +106,7 @@ function (_, kbn) {
       this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
 
-    if (this.stats.max === Number.MIN_VALUE) { this.stats.max = null; }
+    if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
     if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
     if (result.length) {

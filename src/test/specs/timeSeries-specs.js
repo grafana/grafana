@@ -35,6 +35,14 @@ define([
         expect(series.stats.current).to.be(10);
       });
 
+      it('max value should work for negative values', function() {
+        series = new TimeSeries({
+          datapoints: [[-10,1], [-4, 2]]
+        });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.max).to.be(-4);
+      });
+
     });
 
     describe('series overrides', function() {
