@@ -26,6 +26,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
       link: function(scope, elem) {
         var dashboard = scope.dashboard;
         var data, annotations;
+        var sortedSeries;
         var legendSideLastValue = null;
         scope.crosshairEmiter = false;
 
@@ -204,7 +205,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           addAnnotations(options);
           configureAxisOptions(data, options);
 
-          var sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+          sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
           function callPlot() {
             try {
@@ -430,7 +431,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         }
 
         new GraphTooltip(elem, dashboard, scope, function() {
-          return data;
+          return sortedSeries;
         });
 
         elem.bind("plotselected", function (event, ranges) {
