@@ -47,7 +47,6 @@
 					</table>
 				</div>
 			</div>
-
 		</div>
 
 		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
@@ -56,7 +55,7 @@
 					<div class="editor-row">
 						<div class="editor-option">
 							<label class="small">Variable name</label>
-							<input type="text" class="input-medium" ng-model='current.name' placeholder="name"></input>
+							<input type="text" class="input-medium" ng-model='current.name' placeholder="name" required></input>
 						</div>
 						<div class="editor-option">
 							<label class="small">Type</label>
