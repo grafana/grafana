@@ -45,6 +45,11 @@ function (angular, _) {
         return false;
       }
 
+      if (!$scope.current.name.match(/^\w+$/)) {
+        $scope.appEvent('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
+        return false;
+      }
+
       var sameName = _.findWhere($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
