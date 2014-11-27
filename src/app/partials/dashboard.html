@@ -78,13 +78,12 @@
 					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
 					</div>
 
-					<!-- Panels -->
+					<!-- Panels, draggable needs to be disabled in fullscreen because Firefox bug -->
 					<div ng-repeat="(name, panel) in row.panels"
 						class="panel"
-						ui-draggable="true" drag="panel.id"
+						ui-draggable="{{!dashboardViewState.fullscreen}}" drag="panel.id"
 						ui-on-Drop="onDrop($data, row, panel)"
 						drag-handle-class="drag-handle" panel-width ng-model="panel">
-
 						<grafana-panel type="panel.type" ng-cloak></grafana-panel>
 					</div>
 

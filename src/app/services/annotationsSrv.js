@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope, $sanitize) {
     var promiseCached;
     var list = [];
     var timezone;
@@ -63,9 +63,11 @@ define([
     }
 
     function addAnnotation(options) {
-      var tooltip = "<small><b>" + options.title + "</b><br/>";
+      var title = $sanitize(options.title);
+      var tooltip = "<small><b>" + title + "</b><br/>";
       if (options.tags) {
-        tooltip += '<span class="tag label label-tag">' + (options.tags || '') + '</span><br/>';
+        var tags = $sanitize(options.tags);
+        tooltip += '<span class="tag label label-tag">' + (tags || '') + '</span><br/>';
       }
 
       if (timezone === 'browser') {
@@ -76,7 +78,8 @@ define([
       }
 
       if (options.text) {
-        tooltip += options.text.replace(/\n/g, '<br/>');
+        var text = $sanitize(options.text);
+        tooltip += text.replace(/\n/g, '<br/>');
       }
 
       tooltip += "</small>";

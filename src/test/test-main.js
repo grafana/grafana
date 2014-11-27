@@ -18,6 +18,7 @@ require.config({
 
     angular:               '../vendor/angular/angular',
     'angular-route':       '../vendor/angular/angular-route',
+    'angular-sanitize':    '../vendor/angular/angular-sanitize',
     angularMocks:          '../vendor/angular/angular-mocks',
     'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
     'angular-strap':          '../vendor/angular/angular-strap',
@@ -80,14 +81,11 @@ require.config({
     'jquery.flot.fillbelow':['jquery', 'jquery.flot'],
 
     'angular-route':        ['angular'],
-    'angular-cookies':      ['angular'],
+    'angular-sanitize':     ['angular'],
     'angular-dragdrop':     ['jquery', 'angular'],
-    'angular-loader':       ['angular'],
     'angular-mocks':        ['angular'],
-    'angular-resource':     ['angular'],
-    'angular-touch':        ['angular'],
-    'bindonce':             ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
+    'bindonce':             ['angular'],
 
     'bootstrap-tagsinput':          ['jquery'],
 
