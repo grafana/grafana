@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/cmd"
 
 	"github.com/codegangsta/cli"
@@ -16,6 +17,8 @@ func init() {
 }
 
 func main() {
+	bus.InitBus()
+
 	app := cli.NewApp()
 	app.Name = "Grafana Pro"
 	app.Usage = "Grafana Pro Service"
