@@ -1,7 +1,7 @@
 // Copyright 2014 Unknwon
 // Copyright 2014 Torkel Ödegaard
 
-package main
+package cmd
 
 import (
 	"fmt"
