@@ -4,8 +4,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/codegangsta/cli"
 	"github.com/torkelo/grafana-pro/pkg/cmd"
+
+	"github.com/codegangsta/cli"
 )
 
 const APP_VER = "0.1.0 Alpha"
@@ -19,9 +20,7 @@ func main() {
 	app.Name = "Grafana Pro"
 	app.Usage = "Grafana Pro Service"
 	app.Version = APP_VER
-	app.Commands = []cli.Command{
-		cmd.CmdWeb,
-	}
+	app.Commands = []cli.Command{cmd.CmdWeb}
 	app.Flags = append(app.Flags, []cli.Flag{}...)
 	app.Run(os.Args)
 }
