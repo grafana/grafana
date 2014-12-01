@@ -15,7 +15,7 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 
 	urlQuery := c.Req.URL.Query()
 	if len(urlQuery["render"]) > 0 {
-		accId, _ := strconv.Atoi(urlQuery["accountId"][0])
+		accId, _ := strconv.ParseInt(urlQuery["accountId"][0], 10, 64)
 		sess.Set("accountId", accId)
 		accountId = accId
 	}

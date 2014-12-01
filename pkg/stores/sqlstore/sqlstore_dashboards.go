@@ -1,8 +1,6 @@
 package sqlstore
 
-import (
-	"github.com/torkelo/grafana-pro/pkg/models"
-)
+import "github.com/torkelo/grafana-pro/pkg/models"
 
 func SaveDashboard(dash *models.Dashboard) error {
 	var err error

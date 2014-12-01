@@ -67,8 +67,9 @@ func runWeb(*cli.Context) {
 
 	setting.NewConfigContext()
 	setting.InitServices()
-	sqlstore.Init()
 	social.NewOAuthService()
+
+	sqlstore.Init()
 
 	// init database
 	sqlstore.LoadModelsConfig()
