@@ -9,19 +9,26 @@ import (
 type QueryHandler interface{}
 type Query interface{}
 
-var (
-	handlerIndex map[string]QueryHandler
-)
-
-func InitBus() {
-	handlerIndex = make(map[string]QueryHandler)
+type Bus interface {
+	SendQuery(query Query) error
+	AddQueryHandler(handler QueryHandler)
 }
 
-func SendQuery(query interface{}) error {
+type InProcBus struct {
+	handlerIndex map[string]QueryHandler
+}
+
+func New() Bus {
+	bus := &InProcBus{}
+	bus.handlerIndex = make(map[string]QueryHandler)
+	return bus
+}
+
+func (b *InProcBus) SendQuery(query Query) error {
 	var queryName = reflect.TypeOf(query).Elem().Name()
 	fmt.Printf("sending query for type: %v\n", queryName)
 
-	var handler = handlerIndex[queryName]
+	var handler = b.handlerIndex[queryName]
 	if handler == nil {
 		return errors.New("handler not found")
 
@@ -38,10 +45,9 @@ func SendQuery(query interface{}) error {
 	}
 }
 
-func AddQueryHandler(handler QueryHandler) {
+func (b *InProcBus) AddQueryHandler(handler QueryHandler) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
 	fmt.Printf("QueryType %v\n", queryTypeName)
-	handlerIndex[queryTypeName] = handler
-	//fmt.Printf("Adding handler for type: %v\n", queryTypeName)
+	b.handlerIndex[queryTypeName] = handler
 }
