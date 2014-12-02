@@ -1,4 +1,4 @@
-# 1.9.0 (unreleased)
+# 1.9.0 (2014-12-02)
 
 **Enhancements**
 - [Issue #1130](https://github.com/grafana/grafana/issues/1130). SinglestatPanel: Added null point handling, and value to text mapping
