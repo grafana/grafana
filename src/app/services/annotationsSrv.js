@@ -1,20 +1,20 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'moment'
 ], function (angular, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope, $sanitize) {
     var promiseCached;
-    var annotationPanel;
     var list = [];
     var timezone;
 
     this.init = function() {
-      $rootScope.$on('refresh', this.clearCache);
+      $rootScope.onAppEvent('refresh', this.clearCache);
+      $rootScope.onAppEvent('setup-dashboard', this.clearCache);
     };
 
     this.clearCache = function() {
@@ -22,9 +22,8 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(filterSrv, rangeUnparsed, dashboard) {
-      annotationPanel = _.findWhere(dashboard.pulldowns, { type: 'annotations' });
-      if (!annotationPanel.enable) {
+    this.getAnnotations = function(rangeUnparsed, dashboard) {
+      if (!dashboard.annotations.enable) {
         return $q.when(null);
       }
 
@@ -33,12 +32,12 @@ define([
       }
 
       timezone = dashboard.timezone;
-      var annotations = _.where(annotationPanel.annotations, { enable: true });
+      var annotations = _.where(dashboard.annotations.list, { enable: true });
 
       var promises  = _.map(annotations, function(annotation) {
         var datasource = datasourceSrv.get(annotation.datasource);
 
-        return datasource.annotationQuery(annotation, filterSrv, rangeUnparsed)
+        return datasource.annotationQuery(annotation, rangeUnparsed)
           .then(this.receiveAnnotationResults)
           .then(null, errorHandler);
       }, this);
@@ -59,13 +58,16 @@ define([
 
     function errorHandler(err) {
       console.log('Annotation error: ', err);
-      alertSrv.set('Annotations','Could not fetch annotations','error');
+      var message = err.message || "Annotation query failed";
+      alertSrv.set('Annotations error', message,'error');
     }
 
     function addAnnotation(options) {
-      var tooltip = "<small><b>" + options.title + "</b><br/>";
+      var title = $sanitize(options.title);
+      var tooltip = "<small><b>" + title + "</b><br/>";
       if (options.tags) {
-        tooltip += '<span class="tag label label-tag">' + (options.tags || '') + '</span><br/>';
+        var tags = $sanitize(options.tags);
+        tooltip += '<span class="tag label label-tag">' + (tags || '') + '</span><br/>';
       }
 
       if (timezone === 'browser') {
@@ -76,7 +78,8 @@ define([
       }
 
       if (options.text) {
-        tooltip += options.text.replace(/\n/g, '<br/>');
+        var text = $sanitize(options.text);
+        tooltip += text.replace(/\n/g, '<br/>');
       }
 
       tooltip += "</small>";

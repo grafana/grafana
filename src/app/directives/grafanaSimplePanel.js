@@ -1,8 +1,7 @@
 define([
   'angular',
-  'underscore'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   angular
@@ -60,16 +59,6 @@ function (angular, _) {
             loadController(name);
           });
 
-          if(attr.panel) {
-            $scope.$watch(attr.panel, function (panel) {
-              // If the panel attribute is specified, create a new scope. This ruins configuration
-              // so don't do it with anything that needs to use editor.html
-              if(!_.isUndefined(panel)) {
-                $scope = $scope.$new();
-                $scope.panel = angular.fromJson(panel);
-              }
-            });
-          }
         }
       };
     });

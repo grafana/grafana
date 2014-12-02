@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
 ],
 function(angular, _, config) {
@@ -28,10 +28,12 @@ function(angular, _, config) {
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
       self.original = angular.copy(savedDashboard);
       self.current = savedDashboard;
+      self.orignalPath = $location.path();
     });
 
     $rootScope.$on("$routeChangeSuccess", function() {
       self.original = null;
+      self.originalPath = $location.path();
     });
 
     window.onbeforeunload = function() {
@@ -42,6 +44,10 @@ function(angular, _, config) {
 
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
+        if (self.originalPath === $location.path()) {
+          return;
+        }
+
         if (self.has_unsaved_changes()) {
           event.preventDefault();
           self.next = next;
@@ -75,8 +81,15 @@ function(angular, _, config) {
 
       // ignore timespan changes
       current.time = original.time = {};
-
       current.refresh = original.refresh;
+
+      // ignore template variable values
+      _.each(current.templating.list, function(value, index) {
+        value.current = null;
+        value.options = null;
+        original.templating.list[index].current = null;
+        original.templating.list[index].options = null;
+      });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });

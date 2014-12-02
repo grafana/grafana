@@ -4,10 +4,11 @@
 define([
   'angular',
   'jquery',
-  'underscore',
+  'lodash',
   'require',
   'config',
   'bootstrap',
+  'angular-route',
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
@@ -51,7 +52,6 @@ function (angular, $, _, appLevelRequire, config) {
   app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
 
     $routeProvider.otherwise({ redirectTo: config.default_route });
-
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
@@ -61,9 +61,10 @@ function (angular, $, _, appLevelRequire, config) {
   });
 
   var apps_deps = [
-    '$strap.directives',
+    'ngRoute',
     'ngSanitize',
-    'ngDragDrop',
+    '$strap.directives',
+    'ang-drag-drop',
     'grafana',
     'pasvaz.bindonce'
   ];
@@ -78,42 +79,54 @@ function (angular, $, _, appLevelRequire, config) {
     apps_deps.push(module_name);
   });
 
-  // load the core components
-  require([
+  var preBootRequires = [
+    'services/all',
+    'features/all',
     'controllers/all',
     'directives/all',
     'filters/all',
     'components/partials',
     'routes/all',
-  ], function () {
+  ];
 
-    // bootstrap the app
-    angular
-      .element(document)
-      .ready(function() {
-        angular.bootstrap(document, apps_deps)
-          .invoke(['$rootScope', function ($rootScope) {
-            _.each(pre_boot_modules, function (module) {
-              _.extend(module, register_fns);
-            });
-            pre_boot_modules = false;
-
-            $rootScope.requireContext = appLevelRequire;
-            $rootScope.require = function (deps, fn) {
-              var $scope = this;
-              $scope.requireContext(deps, function () {
-                var deps = _.toArray(arguments);
-                // Check that this is a valid scope.
-                if($scope.$id) {
-                  $scope.$apply(function () {
-                    fn.apply($scope, deps);
-                  });
-                }
-              });
-            };
-          }]);
-      });
+  _.each(config.plugins.dependencies, function(dep) {
+    preBootRequires.push('../plugins/' + dep);
   });
+
+  app.boot = function() {
+    require(preBootRequires, function () {
+
+      // disable tool tip animation
+      $.fn.tooltip.defaults.animation = false;
+
+      // bootstrap the app
+      angular
+        .element(document)
+        .ready(function() {
+          angular.bootstrap(document, apps_deps)
+            .invoke(['$rootScope', function ($rootScope) {
+              _.each(pre_boot_modules, function (module) {
+                _.extend(module, register_fns);
+              });
+              pre_boot_modules = false;
+
+              $rootScope.requireContext = appLevelRequire;
+              $rootScope.require = function (deps, fn) {
+                var $scope = this;
+                $scope.requireContext(deps, function () {
+                  var deps = _.toArray(arguments);
+                  // Check that this is a valid scope.
+                  if($scope.$id) {
+                    $scope.$apply(function () {
+                      fn.apply($scope, deps);
+                    });
+                  }
+                });
+              };
+            }]);
+        });
+    });
+  };
 
   return app;
 });

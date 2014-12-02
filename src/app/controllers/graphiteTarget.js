@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
   '../services/graphite/gfunc',
   '../services/graphite/parser'
@@ -9,11 +9,13 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
+  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
-  module.controller('GraphiteTargetCtrl', function($scope) {
+  module.controller('GraphiteTargetCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';
+      $scope.targetLetters = targetLetters;
 
       parseTarget();
     };
@@ -52,6 +54,13 @@ function (angular, _, config, gfunc, Parser) {
       checkOtherSegments($scope.segments.length - 1);
     }
 
+    function addFunctionParameter(func, value, index, shiftBack) {
+      if (shiftBack) {
+        index = Math.max(index - 1, 0);
+      }
+      func.params[index] = value;
+    }
+
     function parseTargeRecursive(astNode, func, index) {
       if (astNode === null) {
         return null;
@@ -59,7 +68,7 @@ function (angular, _, config, gfunc, Parser) {
 
       switch(astNode.type) {
       case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name);
+        var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
           parseTargeRecursive(param, innerFunc, index);
@@ -69,40 +78,27 @@ function (angular, _, config, gfunc, Parser) {
         $scope.functions.push(innerFunc);
         break;
 
+      case 'series-ref':
+        addFunctionParameter(func, astNode.value, index, $scope.segments.length > 0);
+        break;
       case 'string':
       case 'number':
         if ((index-1) >= func.def.params.length) {
           throw { message: 'invalid number of parameters to method ' + func.def.name };
         }
-
-        if (index === 0) {
-          func.params[index] = astNode.value;
-        }
-        else {
-          func.params[index - 1] = astNode.value;
-        }
-
+        addFunctionParameter(func, astNode.value, index, true);
         break;
-
       case 'metric':
         if ($scope.segments.length > 0) {
-          throw { message: 'Multiple metric params not supported, use text editor.' };
+          if (astNode.segments.length !== 1) {
+            throw { message: 'Multiple metric params not supported, use text editor.' };
+          }
+          addFunctionParameter(func, astNode.segments[0].value, index, true);
+          break;
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          var node = {
-            type: segment.type,
-            val: segment.value,
-            html: segment.value
-          };
-          if (segment.value === '*') {
-            node.html = '<i class="icon-asterisk"><i>';
-          }
-          if (segment.type === 'template') {
-            node.val = node.html = '[[' + segment.value + ']]';
-            node.html = "<span style='color: #ECEC09'>" + node.html + "</span>";
-          }
-          return node;
+          return new MetricSegment(segment);
         });
       }
     }
@@ -111,27 +107,29 @@ function (angular, _, config, gfunc, Parser) {
       var arr = $scope.segments.slice(0, index);
 
       return _.reduce(arr, function(result, segment) {
-        return result ? (result + "." + segment.val) : segment.val;
+        return result ? (result + "." + segment.value) : segment.value;
       }, "");
     }
 
     function checkOtherSegments(fromIndex) {
       if (fromIndex === 0) {
-        $scope.segments.push({html: 'select metric'});
+        $scope.segments.push(new MetricSegment('select metric'));
         return;
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return $scope.datasource.metricFindQuery($scope.filter, path)
+      return $scope.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
-            $scope.segments = $scope.segments.splice(0, fromIndex);
-            $scope.segments.push({html: 'select metric'});
+            if (path !== '') {
+              $scope.segments = $scope.segments.splice(0, fromIndex);
+              $scope.segments.push(new MetricSegment('select metric'));
+            }
             return;
           }
           if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
-              $scope.segments.push({html: 'select metric'});
+              $scope.segments.push(new MetricSegment('select metric'));
             }
             else {
               return checkOtherSegments(fromIndex + 1);
@@ -156,43 +154,37 @@ function (angular, _, config, gfunc, Parser) {
     $scope.getAltSegments = function (index) {
       $scope.altSegments = [];
 
-      var query = index === 0 ?
-        '*' : getSegmentPathUpTo(index) + '.*';
+      var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery($scope.filter, query)
+      return $scope.datasource.metricFindQuery(query)
         .then(function(segments) {
-          _.each(segments, function(segment) {
-            segment.html = segment.val = segment.text;
+          $scope.altSegments = _.map(segments, function(segment) {
+            return new MetricSegment({ value: segment.text, expandable: segment.expandable });
           });
 
-          _.each($scope.filter.templateParameters, function(templateParameter) {
-            segments.unshift({
+          _.each(templateSrv.variables, function(variable) {
+            $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
-              html: '[[' + templateParameter.name + ']]',
-              val: '[[' + templateParameter.name + ']]',
+              value: '$' + variable.name,
               expandable: true,
-            });
+            }));
           });
 
-          segments.unshift({val: '*', html: '<i class="icon-asterisk"></i>', expandable: true });
-          $scope.altSegments = segments;
+          $scope.altSegments.unshift(new MetricSegment('*'));
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
         });
     };
 
-    $scope.setSegment = function (altIndex, segmentIndex) {
+    $scope.segmentValueChanged = function (segment, segmentIndex) {
       delete $scope.parserError;
-
-      $scope.segments[segmentIndex].val = $scope.altSegments[altIndex].val;
-      $scope.segments[segmentIndex].html = $scope.altSegments[altIndex].html;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
         $scope.functions = [];
       }
 
-      if ($scope.altSegments[altIndex].expandable) {
+      if (segment.expandable) {
         return checkOtherSegments(segmentIndex + 1)
           .then(function () {
             setSegmentFocus(segmentIndex + 1);
@@ -209,7 +201,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.targetTextChanged = function() {
       parseTarget();
-      $scope.$parent.get_data();
+      $scope.get_data();
     };
 
     $scope.targetChanged = function() {
@@ -233,12 +225,16 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.addFunction = function(funcDef) {
-      var newFunc = gfunc.createFuncInstance(funcDef);
+      var newFunc = gfunc.createFuncInstance(funcDef, { withDefaultParams: true });
       newFunc.added = true;
       $scope.functions.push(newFunc);
 
       $scope.moveAliasFuncLast();
       $scope.smartlyHandleNewAliasByNode(newFunc);
+
+      if ($scope.segments.length === 1 && $scope.segments[0].value === 'select metric') {
+        $scope.segments = [];
+      }
 
       if (!newFunc.params.length && newFunc.added) {
         $scope.targetChanged();
@@ -263,7 +259,7 @@ function (angular, _, config, gfunc, Parser) {
         return;
       }
       for(var i = 0; i < $scope.segments.length; i++) {
-        if ($scope.segments[i].val.indexOf('*') >= 0)  {
+        if ($scope.segments[i].value.indexOf('*') >= 0)  {
           func.params[0] = i;
           func.added = false;
           $scope.targetChanged();
@@ -279,10 +275,34 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
 
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+      _.move($scope.panel.targets, fromIndex, toIndex);
+    };
+
     $scope.duplicate = function() {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);
     };
+
+    function MetricSegment(options) {
+      if (options === '*' || options.value === '*') {
+        this.value = '*';
+        this.html = $sce.trustAsHtml('<i class="icon-asterisk"><i>');
+        this.expandable = true;
+        return;
+      }
+
+      if (_.isString(options)) {
+        this.value = options;
+        this.html = $sce.trustAsHtml(this.value);
+        return;
+      }
+
+      this.value = options.value;
+      this.type = options.type;
+      this.expandable = options.expandable;
+      this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
+    }
 
   });
 

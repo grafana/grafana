@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -11,8 +12,23 @@ function (angular) {
   module.controller('InfluxTargetCtrl', function($scope, $timeout) {
 
     $scope.init = function() {
-      $scope.target.function = $scope.target.function || 'mean';
-      $scope.target.column = $scope.target.column || 'value';
+      var target = $scope.target;
+
+      target.function = target.function || 'mean';
+      target.column = target.column || 'value';
+
+      // backward compatible correction of schema
+      if (target.condition_value) {
+        target.condition = target.condition_key + ' ' + target.condition_op + ' ' + target.condition_value;
+        delete target.condition_key;
+        delete target.condition_op;
+        delete target.condition_value;
+      }
+
+      if (target.groupby_field_add === false) {
+        target.groupby_field = '';
+        delete target.groupby_field_add;
+      }
 
       $scope.rawQuery = false;
 
@@ -24,7 +40,7 @@ function (angular) {
       ];
 
       $scope.operators = ['=', '=~', '>', '<', '!~', '<>'];
-      $scope.oldSeries = $scope.target.series;
+      $scope.oldSeries = target.series;
       $scope.$on('typeahead-updated', function() {
         $timeout($scope.get_data);
       });
@@ -68,16 +84,21 @@ function (angular) {
     };
 
     $scope.listSeries = function(query, callback) {
-      if (!seriesList || query === '') {
+      if (query !== '') {
         seriesList = [];
-        $scope.datasource.listSeries().then(function(series) {
+        $scope.datasource.listSeries(query).then(function(series) {
           seriesList = series;
+          console.log(series);
           callback(seriesList);
         });
       }
       else {
         return seriesList;
       }
+    };
+
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+      _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
     $scope.duplicate = function() {

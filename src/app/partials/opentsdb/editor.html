@@ -12,7 +12,7 @@
             <a  class="pointer dropdown-toggle"
                 data-toggle="dropdown"
                 tabindex="1">
-              <i class="icon-cog"></i>
+              <i class="icon icon-cog"></i>
             </a>
             <ul class="dropdown-menu pull-right" role="menu">
               <li role="menuitem">
@@ -24,13 +24,13 @@
             </ul>
           </li>
           <li>
-            <a class="pointer" tabindex="1" ng-click="removeTarget(target)">
-              <i class="icon-remove"></i>
+            <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+              <i class="icon icon-remove"></i>
             </a>
           </li>
         </ul>
 
-        <ul class="grafana-target-controls-left">
+        <ul class="grafana-segment-list">
           <li>
             <a  class="grafana-target-segment"
                 ng-click="target.hide = !target.hide; get_data();"
@@ -88,6 +88,32 @@
                    ng-disabled="!target.shouldComputeRate"
                    ng-model="target.isCounter"
                    ng-change="targetBlur()">
+          </li>
+          <li class="grafana-target-segment" ng-hide="!target.isCounter">
+            Counter Max:
+          </li>
+          <li ng-hide="!target.isCounter">
+            <input type="text"
+                   class="grafana-target-segment-input input-medium"
+                   ng-disabled="!target.shouldComputeRate"
+                   ng-model="target.counterMax"
+                   spellcheck='false'
+                   placeholder="Counter max value"
+                   ng-blur="targetBlur()"
+                   />
+          </li>
+          <li class="grafana-target-segment" ng-hide="!target.isCounter">
+            Counter Reset Value:
+          </li>
+          <li ng-hide="!target.isCounter">
+            <input type="text"
+                   class="grafana-target-segment-input input-medium"
+                   ng-disabled="!target.shouldComputeRate"
+                   ng-model="target.counterResetValue"
+                   spellcheck='false'
+                   placeholder="Counter reset value"
+                   ng-blur="targetBlur()"
+                   />
           </li>
           <li class="grafana-target-segment">
             Alias:

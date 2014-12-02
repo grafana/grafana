@@ -1,37 +1,42 @@
-<div  ng-controller='graph'
-      ng-init="init()"
-      style="min-height:{{panel.height || row.height}}"
-      ng-class="{'panel-fullscreen': fullscreen}">
+<div ng-controller='GraphCtrl'>
 
-  <div class="graph-wrapper" ng-class="{'graph-legend-rightside': panel.legend.rightSide}">
-      <div class="graph-canvas-wrapper">
+	<div class="graph-wrapper" ng-class="{'graph-legend-rightside': panel.legend.rightSide}">
+		<div class="graph-canvas-wrapper">
 
-        <div ng-if="datapointsWarning" class="datapoints-warning">
-          <span class="small" ng-show="!datapointsCount">No datapoints <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
-          <span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
-        </div>
+			<div ng-if="datapointsWarning" class="datapoints-warning">
+				<span class="small" ng-show="!datapointsCount">
+					No datapoints <tip>No datapoints returned from metric query</tip>
+				</span>
+				<span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+			</div>
 
-        <div grafana-graph class="pointer histogram-chart">
-        </div>
+			<div grafana-graph class="histogram-chart">
+			</div>
 
-      </div>
+		</div>
 
-      <div class="graph-legend-wrapper"
-           ng-if="panel.legend.show"
-           ng-include="'app/panels/graph/legend.html'">
-      </div>
-  </div>
+		<div class="graph-legend-wrapper" ng-if="panel.legend.show" graph-legend></div>
+	</div>
 
-  <div class="clearfix"></div>
+	<div class="clearfix"></div>
 
-  <div class="panel-full-edit-tabs" ng-if="editMode">
-    <div ng-model="editor.index" bs-tabs>
-      <div ng-repeat="tab in editorTabs" data-title="{{tab}}">
-      </div>
-    </div>
+	<div style="margin-top: 30px" ng-if="editMode">
+		<div class="dashboard-editor-header">
+			<div class="dashboard-editor-title">
+				<i class="icon icon-bar-chart"></i>
+				Graph
+			</div>
 
-    <div class="tab-content" ng-repeat="tab in panelMeta.fullEditorTabs" ng-show="editorTabs[editor.index] == tab.title">
-      <div ng-include src="tab.src"></div>
-    </div>
-  </div>
+			<div ng-model="editor.index" bs-tabs>
+				<div ng-repeat="tab in panelMeta.editorTabs" data-title="{{tab.title}}">
+				</div>
+			</div>
+		</div>
+
+		<div class="dashboard-editor-body">
+			<div ng-repeat="tab in panelMeta.editorTabs" ng-if="editor.index === $index">
+				<div ng-include src="tab.src"></div>
+			</div>
+		</div>
+	</div>
 </div>

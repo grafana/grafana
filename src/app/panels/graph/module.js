@@ -1,98 +1,51 @@
-/** @scratch /panels/5
- * include::panels/histogram.asciidoc[]
- */
-
-/** @scratch /panels/histogram/0
- * == Histogram
- * Status: *Stable*
- *
- * The histogram panel allow for the display of time charts. It includes several modes and tranformations
- * to display event counts, mean, min, max and total of numeric fields, and derivatives of counter
- * fields.
- *
- */
 define([
   'angular',
   'app',
   'jquery',
-  'underscore',
+  'lodash',
   'kbn',
   'moment',
-  './timeSeries',
+  'components/timeSeries',
+  'components/panelmeta',
+  'services/panelSrv',
   'services/annotationsSrv',
   'services/datasourceSrv',
-  'jquery.flot',
-  'jquery.flot.events',
-  'jquery.flot.selection',
-  'jquery.flot.time',
-  'jquery.flot.stack',
-  'jquery.flot.stackpercent'
+  './seriesOverridesCtrl',
+  './graph',
+  './legend',
 ],
-function (angular, app, $, _, kbn, moment, timeSeries) {
-
+function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
-  var module = angular.module('grafana.panels.graph', []);
-  app.useModule(module);
+  var module = angular.module('grafana.panels.graph');
 
-  module.controller('graph', function($scope, $rootScope, datasourceSrv, $timeout, annotationsSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
-    $scope.panelMeta = {
-      modals : [],
-      editorTabs: [],
-      fullEditorTabs : [
-        {
-          title: 'General',
-          src:'app/partials/panelgeneral.html'
-        },
-        {
-          title: 'Metrics',
-          src:'app/partials/metrics.html'
-        },
-        {
-          title:'Axes & Grid',
-          src:'app/panels/graph/axisEditor.html'
-        },
-        {
-          title:'Display Styles',
-          src:'app/panels/graph/styleEditor.html'
-        }
-      ],
-      fullscreenEdit: true,
-      fullscreenView: true,
-      description : "Graphing"
-    };
+    $scope.panelMeta = new PanelMeta({
+      description: 'Graph panel',
+      fullscreen: true,
+      metricsEditor: true
+    });
+
+    $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
+    $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
+
+    $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
+    $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
 
     // Set and populate defaults
     var _d = {
-
+      // datasource name, null = default datasource
       datasource: null,
-
-      /** @scratch /panels/histogram/3
-       * renderer:: sets client side (flot) or native graphite png renderer (png)
-       */
+       // sets client side (flot) or native graphite png renderer (png)
       renderer: 'flot',
-      /** @scratch /panels/histogram/3
-       * x-axis:: Show the x-axis
-       */
+       // Show/hide the x-axis
       'x-axis'      : true,
-      /** @scratch /panels/histogram/3
-       * y-axis:: Show the y-axis
-       */
+      // Show/hide y-axis
       'y-axis'      : true,
-      /** @scratch /panels/histogram/3
-       * scale:: Scale the y-axis by this factor
-       */
-      scale         : 1,
-      /** @scratch /panels/histogram/3
-       * y_formats :: 'none','bytes','bits','bps','short', 's', 'ms'
-       */
+      // y axis formats, [left axis,right axis]
       y_formats    : ['short', 'short'],
-      /** @scratch /panels/histogram/5
-       * grid object:: Min and max y-axis values
-       * grid.min::: Minimum y-axis value
-       * grid.ma1::: Maximum y-axis value
-       */
+      // grid options
       grid          : {
         leftMax: null,
         rightMax: null,
@@ -103,48 +56,23 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
         threshold2Color: 'rgba(234, 112, 112, 0.22)'
       },
-
-      annotate      : {
-        enable      : false,
-      },
-
-      /** @scratch /panels/histogram/3
-       * resolution:: If auto_int is true, shoot for this many bars.
-       */
-      resolution    : 100,
-
-      /** @scratch /panels/histogram/3
-       * ==== Drawing options
-       * lines:: Show line chart
-       */
+      // show/hide lines
       lines         : true,
-      /** @scratch /panels/histogram/3
-       * fill:: Area fill factor for line charts, 1-10
-       */
+      // fill factor
       fill          : 0,
-      /** @scratch /panels/histogram/3
-       * linewidth:: Weight of lines in pixels
-       */
+      // line width in pixels
       linewidth     : 1,
-      /** @scratch /panels/histogram/3
-       * points:: Show points on chart
-       */
+      // show hide points
       points        : false,
-      /** @scratch /panels/histogram/3
-       * pointradius:: Size of points in pixels
-       */
+      // point radius in pixels
       pointradius   : 5,
-      /** @scratch /panels/histogram/3
-       * bars:: Show bars on chart
-       */
+      // show hide bars
       bars          : false,
-      /** @scratch /panels/histogram/3
-       * stack:: Stack multiple series
-       */
+      // enable/disable stacking
       stack         : false,
-      /** @scratch /panels/histogram/3
-       * legend:: Display the legend
-       */
+      // stack percentage mode
+      percentage    : false,
+      // legend options
       legend: {
         show: true, // disable/enable legend
         values: false, // disable/enable legend values
@@ -154,31 +82,21 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         total: false,
         avg: false
       },
-      /** @scratch /panels/histogram/3
-       * ==== Transformations
-      /** @scratch /panels/histogram/3
-       * percentage:: Show the y-axis as a percentage of the axis total. Only makes sense for multiple
-       * queries
-       */
-      percentage    : false,
-      /** @scratch /panels/histogram/3
-       * zerofill:: Improves the accuracy of line charts at a small performance cost.
-       */
-      zerofill      : true,
-
+      // how null points should be handled
       nullPointMode : 'connected',
-
+      // staircase line mode
       steppedLine: false,
-
+      // tooltip options
       tooltip       : {
         value_type: 'cumulative',
-        query_as_alias: true
+        shared: false,
       },
-
-      targets: [],
-
+      // metric queries
+      targets: [{}],
+      // series color overrides
       aliasColors: {},
-      aliasYAxis: {},
+      // other style overrides
+      seriesOverrides: [],
     };
 
     _.defaults($scope.panel,_d);
@@ -187,57 +105,22 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
-    $scope.init = function() {
-      $scope.initBaseController(this, $scope);
-
-      $scope.fullscreen = false;
-      $scope.editor = { index: 1 };
-      $scope.editorTabs = _.pluck($scope.panelMeta.fullEditorTabs,'title');
-      $scope.hiddenSeries = {};
-
-      $scope.datasources = datasourceSrv.getMetricSources();
-      $scope.setDatasource($scope.panel.datasource);
-
-      if ($scope.panel.targets.length === 0) {
-        $scope.panel.targets.push({});
-      }
-    };
-
-    $scope.setDatasource = function(datasource) {
-      $scope.panel.datasource = datasource;
-      $scope.datasource = datasourceSrv.get(datasource);
-
-      if (!$scope.datasource) {
-        $scope.panel.error = "Cannot find datasource " + datasource;
-        return;
-      }
-
-      $scope.get_data();
-    };
-
-    $scope.removeTarget = function (target) {
-      $scope.panel.targets = _.without($scope.panel.targets, target);
-      $scope.get_data();
-    };
+    $scope.hiddenSeries = {};
+    $scope.seriesList = [];
 
     $scope.updateTimeRange = function () {
-      $scope.range = this.filter.timeRange();
-      $scope.rangeUnparsed = this.filter.timeRange(false);
-      $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
-      $scope.interval = '10m';
-
-      if ($scope.range) {
-        $scope.interval = kbn.secondsToHms(
-          kbn.calculate_interval($scope.range.from, $scope.range.to, $scope.resolution, 0) / 1000
-        );
+      $scope.range = timeSrv.timeRange();
+      $scope.rangeUnparsed = timeSrv.timeRange(false);
+      if ($scope.panel.maxDataPoints) {
+        $scope.resolution = $scope.panel.maxDataPoints;
       }
+      else {
+        $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
+      }
+      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
     $scope.get_data = function() {
-      delete $scope.panel.error;
-
-      $scope.panelMeta.loading = true;
-
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -246,25 +129,24 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
         targets: $scope.panel.targets,
         format: $scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: $scope.resolution,
-        datasource: $scope.panel.datasource,
         cacheTimeout: $scope.panel.cacheTimeout
       };
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.filter, $scope.rangeUnparsed, $scope.dashboard);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query($scope.filter, metricsQuery)
+      return $scope.datasource.query(metricsQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
-          $scope.panel.error = err.message || "Timeseries data request error";
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
           $scope.inspector.error = err;
+          $scope.seriesList = [];
           $scope.render([]);
         });
     };
 
     $scope.dataHandler = function(results) {
       $scope.panelMeta.loading = false;
-      $scope.legend = [];
 
       // png renderer returns just a url
       if (_.isString(results)) {
@@ -276,41 +158,32 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;
 
-      var data = _.map(results.data, $scope.seriesHandler);
+      $scope.seriesList = _.map(results.data, $scope.seriesHandler);
 
-      $scope.datapointsWarning = $scope.datapointsCount || !$scope.datapointsOutside;
+      $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;
 
       $scope.annotationsPromise
         .then(function(annotations) {
-          data.annotations = annotations;
-          $scope.render(data);
+          $scope.seriesList.annotations = annotations;
+          $scope.render($scope.seriesList);
         }, function() {
-          $scope.render(data);
+          $scope.render($scope.seriesList);
         });
     };
 
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $scope.colors[index];
-      var yaxis = $scope.panel.aliasYAxis[alias] || 1;
+      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
 
-      var seriesInfo = {
-        alias: alias,
-        color:  color,
-        enable: true,
-        yaxis: yaxis
-      };
-
-      $scope.legend.push(seriesInfo);
-
-      var series = new timeSeries.ZeroFilled({
+      var series = new TimeSeries({
         datapoints: datapoints,
-        info: seriesInfo,
+        alias: alias,
+        color: color,
       });
 
       if (datapoints && datapoints.length > 0) {
-        var last = moment.utc(datapoints[datapoints.length - 1][1] * 1000);
+        var last = moment.utc(datapoints[datapoints.length - 1][1]);
         var from = moment.utc($scope.range.from);
         if (last - from < -10000) {
           $scope.datapointsOutside = true;
@@ -322,16 +195,8 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       return series;
     };
 
-    $scope.add_target = function() {
-      $scope.panel.targets.push({target: ''});
-    };
-
-    $scope.otherPanelInFullscreenMode = function() {
-      return $rootScope.fullscreen && !$scope.fullscreen;
-    };
-
     $scope.render = function(data) {
-      $scope.$emit('render', data);
+      $scope.$broadcast('render', data);
     };
 
     $scope.changeSeriesColor = function(series, color) {
@@ -341,18 +206,18 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.toggleSeries = function(serie, event) {
-      if ($scope.hiddenSeries[serie.alias]) {
-        delete $scope.hiddenSeries[serie.alias];
-      }
-      else {
-        $scope.hiddenSeries[serie.alias] = true;
-      }
-
       if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        if ($scope.hiddenSeries[serie.alias]) {
+          delete $scope.hiddenSeries[serie.alias];
+        }
+        else {
+          $scope.hiddenSeries[serie.alias] = true;
+        }
+      } else {
         $scope.toggleSeriesExclusiveMode(serie);
       }
 
-      $scope.$emit('toggleLegend', $scope.legend);
+      $scope.render();
     };
 
     $scope.toggleSeriesExclusiveMode = function(serie) {
@@ -363,7 +228,7 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       }
 
       // check if every other series is hidden
-      var alreadyExclusive = _.every($scope.legend, function(value) {
+      var alreadyExclusive = _.every($scope.seriesList, function(value) {
         if (value.alias === serie.alias) {
           return true;
         }
@@ -373,13 +238,13 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
 
       if (alreadyExclusive) {
         // remove all hidden series
-        _.each($scope.legend, function(value) {
+        _.each($scope.seriesList, function(value) {
           delete $scope.hiddenSeries[value.alias];
         });
       }
       else {
         // hide all but this serie
-        _.each($scope.legend, function(value) {
+        _.each($scope.seriesList, function(value) {
           if (value.alias === serie.alias) {
             return;
           }
@@ -390,8 +255,12 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
     };
 
     $scope.toggleYAxis = function(info) {
-      info.yaxis = info.yaxis === 2 ? 1 : 2;
-      $scope.panel.aliasYAxis[info.alias] = info.yaxis;
+      var override = _.findWhere($scope.panel.seriesOverrides, { alias: info.alias });
+      if (!override) {
+        override = { alias: info.alias };
+        $scope.panel.seriesOverrides.push(override);
+      }
+      override.yaxis = info.yaxis === 2 ? 1 : 2;
       $scope.render();
     };
 
@@ -400,6 +269,26 @@ function (angular, app, $, _, kbn, moment, timeSeries) {
       $scope.render();
     };
 
+    $scope.addSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides.push(override || {});
+    };
+
+    $scope.removeSeriesOverride = function(override) {
+      $scope.panel.seriesOverrides = _.without($scope.panel.seriesOverrides, override);
+      $scope.render();
+    };
+
+    // Called from panel menu
+    $scope.toggleLegend = function() {
+      $scope.panel.legend.show = !$scope.panel.legend.show;
+      $scope.get_data();
+    };
+
+    $scope.exportCsv = function() {
+      kbn.exportSeriesListToCsv($scope.seriesList);
+    };
+
+    panelSrv.init($scope);
   });
 
 });

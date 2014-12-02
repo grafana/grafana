@@ -1,109 +1,88 @@
-  <style>
-    #grafana-search {
-      position: fixed;
-      right: 0;
-      left: 0;
-      top: 39px;
-      margin-right: auto;
-      margin-left: auto;
-      /* give it dimensions */
-      min-height: 10em;
-      width: 90%;
-    }
-  </style>
+<div ng-controller="SearchCtrl" ng-init="init()">
 
-  <a href="#" bs-tooltip="'Search'" data-placement="bottom" ng-click="openSearch()" class="dropdown-toggle" data-toggle="dropdown">
-    <i class='icon-folder-open'></i>
-  </a>
+	<div class="dashboard-editor-header">
+		<div class="dashboard-editor-title" style="border: 0; line-height: 41px;">
+			<i class="icon icon-search"></i>
+			Search
+		</div>
 
-  <ul class="dropdown-menu" id="grafana-search">
-    <li ng-if="!showImport">
-      <div class="grafana-search-panel">
-        <div class="search-field-wrapper">
-          <button class="btn btn-success pull-right" config-modal="app/partials/playlist.html">
-            <i class="icon-play"></i>
-            Playlist
-          </button>
-          <button class="btn btn-success pull-right" ng-click="toggleImport($event)">
-            <i class="icon-download-alt"></i>
-            Import
-          </button>
-          <button class="btn btn-success pull-right" ng-click="newDashboard()">
-            <i class="icon-th-large"></i>
-            New
-          </button>
-          <span class="position: relative;">
-            <input  type="text"
-                    placeholder="search dashboards, metrics, or graphs"
-                    xng-focus="giveSearchFocus"
-                    ng-keydown="keyDown($event)"
-                    ng-model="query.query" spellcheck='false'
-                    ng-change="search()" />
-            <a class="search-tagview-switch" href="javascript:void(0);"
-              ng-class="{'active': tagsOnly}"
-              ng-click="showTags($event)">tags</a>
-          </span>
-        </div>
+		<div class="grafana-search-panel">
+			<div class="search-field-wrapper">
+				<button class="btn btn-success pull-right" dash-editor-link="app/partials/playlist.html" editor-scope="isolated">
+					<i class="icon-play"></i>
+					Playlist
+				</button>
+				<button class="btn btn-success pull-right" ng-click="toggleImport($event)">
+					<i class="icon-download-alt"></i>
+					Import
+				</button>
+				<button class="btn btn-success pull-right" ng-click="newDashboard()">
+					<i class="icon-th-large"></i>
+					New
+				</button>
+				<span style="position: relative;">
+					<input  type="text" placeholder="search dashboards, metrics, or graphs" xng-focus="giveSearchFocus"
+									ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+					<a class="search-tagview-switch" href="javascript:void(0);" ng-class="{'active': tagsOnly}" ng-click="showTags($event)">tags</a>
+				</span>
+			</div>
+		</div>
+	</div>
 
-        <h6 ng-hide="results.dashboards.length || results.metrics.length">No dashboards or metrics matching your query found</h6>
+	<div ng-if="!showImport">
+		<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
+		<div class="search-results-container" ng-if="tagsOnly">
+			<div class="row">
+				<div class="span6 offset1">
+			<div ng-repeat="tag in results.tags" class="pointer" style="width: 180px; float: left;"
+				ng-class="{'selected': $index === selectedIndex }"
+				ng-click="filterByTag(tag.term, $event)">
+				<a class="search-result-tag label label-tag" tag-color-from-name>
+					<i class="icon icon-tag"></i>
+					<span>{{tag.term}} &nbsp;({{tag.count}})</span>
+				</a>
+			</div>
+			</div>
+			</div>
+		</div>
 
-        <table class="table table-condensed table-striped" ng-if="tagsOnly">
-          <tr ng-repeat="tag in results.tags" ng-class="{'selected-tag': $index === selectedIndex }">
-            <td>
-              <a ng-click="filterByTag(tag.term, $event)" class="label label-tag">
-                {{tag.term}} &nbsp;({{tag.count}})
-              </a>
-            </td>
-            <td style="width:100%;padding-left: 10px;font-weight: bold;">
-            </td>
-          </tr>
-        </table>
+		<div class="search-results-container" ng-if="!tagsOnly">
+			<div class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
+				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
 
-        <table class="table table-condensed table-striped" ng-if="!tagsOnly">
-					<tbody style="max-height: 570px; overflow: auto; display: block">
-          <tr bindonce ng-repeat="row in results.metrics"
-              class="grafana-search-metric-result"
-              ng-class="{'selected': $index === selectedIndex }">
-            <td><span class="label label-info">metric</span></td>
-            <td class="grafana-search-metric-name">
-              {{row.id}}
-            </td>
-            <td style="width:100%;">
-              <div class="grafana-search-metric-actions">
-                <a ng-click="addMetricToCurrentDashboard(row.id)"><i class="icon-plus-sign"></i> Add to dashboard</a>
-              </div>
-            </td>
-          </tr>
+				<div class="search-result-actions small">
+					<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
+						<i class="icon-share"></i> share &nbsp;&nbsp;&nbsp;
+					</a>
+					<a ng-click="deleteDashboard(row, $event)">
+						<i class="icon-remove"></i> delete
+					</a>
+				</div>
 
-          <tr bindonce
-              ng-repeat="row in results.dashboards"
-              ng-class="{'selected': $index === selectedIndex }">
-            <td><a ng-click="deleteDashboard(row.id)"><i class="icon-remove"></i></a></td>
-            <td style="width:100%">
-              <a href="#/dashboard/db/{{row.id}}" bo-text="row.id"></a>
-            </td>
-            <td style="white-space: nowrap; text-align: right;">
-              <a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" style="margin-right: 5px;" class="label label-tag">
-                {{tag}}
-              </a>
-            </td>
-            <td><a><i class="icon-share" ng-click="shareDashboard(row.id, row.id)" config-modal="app/partials/dashLoaderShare.html"></i></a></td>
-          </tr>
-					</tbody>
-        </table>
-      </div>
-    </li>
+				<div class="search-result-tags">
+					<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name  class="label label-tag">
+						{{tag}}
+					</a>
+				</div>
 
-    <li ng-if="showImport" style="margin: 20px;">
-      <div class="editor-row">
-        <div class="section">
-          <div class="editor-option">
-            <h5>Local File <tip>Load dashboard JSON layout from file</tip></h5>
-            <form>
-              <input type="file" id="dashupload" dash-upload /><br>
-            </form>
-          </div>
-        </div>
-      </div>
-    </li>
-  </ul>
+				<a class="search-result-link">
+					<i class="icon icon-th-large"></i>
+					<span bo-text="row.title"></span>
+				</a>
+
+			</div>
+		</div>
+	</div>
+
+	<div class="editor-row" ng-if="showImport">
+		<div class="section">
+			<div class="editor-option">
+				<h5>Local File <tip>Load dashboard JSON layout from file</tip></h5>
+				<form>
+					<input type="file" id="dashupload" dash-upload/><br>
+				</form>
+			</div>
+		</div>
+	</div>
+
+</div>

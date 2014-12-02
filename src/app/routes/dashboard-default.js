@@ -1,8 +1,9 @@
 define([
   'angular',
-  'config'
+  'config',
+  'store'
 ],
-function (angular, config) {
+function (angular, config, store) {
   "use strict";
 
   var module = angular.module('grafana.routes');
@@ -11,12 +12,7 @@ function (angular, config) {
     $routeProvider
       .when('/', {
         redirectTo: function() {
-          if (window.localStorage && window.localStorage.grafanaDashboardDefault) {
-            return window.localStorage.grafanaDashboardDefault;
-          }
-          else {
-            return config.default_route;
-          }
+          return store.get('grafanaDashboardDefault') || config.default_route;
         }
       });
   });

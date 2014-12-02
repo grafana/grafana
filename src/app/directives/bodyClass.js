@@ -1,9 +1,9 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'lodash'
 ],
-function (angular, app, _) {
+function (angular) {
   'use strict';
 
   angular
@@ -12,21 +12,15 @@ function (angular, app, _) {
       return {
         link: function($scope, elem) {
 
-          var lastPulldownVal;
           var lastHideControlsVal;
 
-          $scope.$watch('dashboard.pulldowns', function() {
+          $scope.$watch('submenuEnabled', function() {
             if (!$scope.dashboard) {
               return;
             }
 
-            var panel = _.find($scope.dashboard.pulldowns, function(pulldown) { return pulldown.enable; });
-            var panelEnabled = panel ? panel.enable : false;
-            if (lastPulldownVal !== panelEnabled) {
-              elem.toggleClass('submenu-controls-visible', panelEnabled);
-              lastPulldownVal = panelEnabled;
-            }
-          }, true);
+            elem.toggleClass('submenu-controls-visible', $scope.submenuEnabled);
+          });
 
           $scope.$watch('dashboard.hideControls', function() {
             if (!$scope.dashboard) {

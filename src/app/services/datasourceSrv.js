@@ -1,6 +1,6 @@
 define([
   'angular',
-  'underscore',
+  'lodash',
   'config',
   './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
@@ -13,7 +13,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, filterSrv, $http, $injector) {
+  module.service('datasourceSrv', function($q, $http, $injector) {
     var datasources = {};
     var metricSources = [];
     var annotationSources = [];
@@ -21,10 +21,12 @@ function (angular, _, config) {
 
     this.init = function() {
       _.each(config.datasources, function(value, key) {
-        datasources[key] = this.datasourceFactory(value);
+        var ds = this.datasourceFactory(value);
         if (value.default) {
-          this.default = datasources[key];
+          this.default = ds;
+          ds.default = true;
         }
+        datasources[key] = ds;
       }, this);
 
       if (!this.default) {
@@ -38,6 +40,7 @@ function (angular, _, config) {
           metricSources.push({
             name: value.name,
             value: value.default ? null : key,
+            default: value.default,
           });
         }
         if (value.supportAnnotations) {
@@ -71,6 +74,8 @@ function (angular, _, config) {
       case 'mon':
         Datasource = $injector.get('MonDatasource');
         break;
+      default:
+        Datasource = $injector.get(ds.type);
       }
       return new Datasource(ds);
     };
@@ -79,7 +84,7 @@ function (angular, _, config) {
       if (!name) { return this.default; }
       if (datasources[name]) { return datasources[name]; }
 
-      throw "Unable to find datasource: " + name;
+      return this.default;
     };
 
     this.getAnnotationSources = function() {

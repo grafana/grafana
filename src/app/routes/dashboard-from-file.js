@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   'config',
-  'underscore'
+  'lodash'
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -14,6 +14,7 @@ function (angular, $, config, _) {
       .when('/dashboard/file/:jsonFile', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromFileProvider',
+        reloadOnSearch: false,
       });
   });
 
@@ -51,7 +52,7 @@ function (angular, $, config, _) {
     };
 
     file_load($routeParams.jsonFile).then(function(result) {
-      $scope.emitAppEvent('setup-dashboard', result);
+      $scope.initDashboard(result, $scope);
     });
 
   });

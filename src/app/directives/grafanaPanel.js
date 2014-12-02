@@ -1,61 +1,40 @@
 define([
   'angular',
   'jquery',
-  'underscore',
-  '../controllers/panelBaseCtrl'
+  'config',
+  './panelMenu',
 ],
-function (angular, $, _, PanelBaseCtrl) {
+function (angular, $, config) {
   'use strict';
 
   angular
     .module('grafana.directives')
-    .directive('grafanaPanel', function($compile, $timeout, $rootScope, $injector) {
+    .directive('grafanaPanel', function($compile, $parse) {
 
       var container = '<div class="panel-container"></div>';
       var content = '<div class="panel-content"></div>';
 
       var panelHeader =
       '<div class="panel-header">'+
-        '<div class="row-fluid">' +
-          '<div class="span12 alert-error panel-error small" ng-show="panel.error">' +
-            '<a class="close" ng-click="panel.error=false">&times;</a>' +
-            '<span><i class="icon-exclamation-sign"></i> <strong>Oops!</strong> {{panel.error}} </span>' +
-            '<span class="pointer panel-error-inspector-link" config-modal="app/partials/inspector.html">View details</span>' +
-          '</div>' +
-        '</div>\n' +
-
-        '<div class="row-fluid panel-extra">' +
-          '<div class="panel-extra-container">' +
-
-            '<span class="panel-loading" ng-show="panelMeta.loading == true">' +
-              '<i class="icon-spinner icon-spin icon-large"></i>' +
+          '<span class="alert-error panel-error small pointer"' +
+                'config-modal="app/partials/inspector.html" ng-if="panelMeta.error">' +
+            '<span data-placement="right" bs-tooltip="panelMeta.error">' +
+            '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
             '</span>' +
+          '</span>' +
 
-            '<span class="dropdown">' +
-              '<span class="panel-text panel-title pointer" gf-dropdown="panelMeta.menu" tabindex="1" ' +
-              'data-drag=true data-jqyoui-options="kbnJqUiDraggableOptions"'+
-              ' jqyoui-draggable="'+
-              '{'+
-                'animate:false,'+
-                'mutate:false,'+
-                'index:{{$index}},'+
-                'onStart:\'panelMoveStart\','+
-                'onStop:\'panelMoveStop\''+
-                '}"  ng-model="row.panels" ' +
-                '>' +
-                '{{panel.title || "No title"}}' +
-              '</span>' +
-            '</span>'+
+          '<span class="panel-loading" ng-show="panelMeta.loading">' +
+            '<i class="icon-spinner icon-spin icon-large"></i>' +
+          '</span>' +
 
-          '</div>'+
-        '</div>\n'+
+          '<div class="panel-title-container drag-handle" panel-menu></div>' +
+        '</div>'+
       '</div>';
 
       return {
         restrict: 'E',
         link: function($scope, elem, attr) {
-          // once we have the template, scan it for controllers and
-          // load the module.js if we have any
+          var getter = $parse(attr.type), panelType = getter($scope);
           var newScope = $scope.$new();
 
           $scope.kbnJqUiDraggableOptions = {
@@ -73,6 +52,14 @@ function (angular, $, _, PanelBaseCtrl) {
             /* jshint indent:false */
             $compile(elem.contents())(newScope);
             elem.removeClass("ng-cloak");
+
+            var panelCtrlElem = $(elem.children()[0]);
+            var panelCtrlScope = panelCtrlElem.data().$scope;
+
+            panelCtrlScope.$watchGroup(['fullscreen', 'panel.height', 'row.height'], function() {
+              panelCtrlElem.css({ minHeight: panelCtrlScope.panel.height || panelCtrlScope.row.height });
+              panelCtrlElem.toggleClass('panel-fullscreen', panelCtrlScope.fullscreen ? true : false);
+            });
           }
 
           newScope.$on('$destroy',function() {
@@ -80,35 +67,19 @@ function (angular, $, _, PanelBaseCtrl) {
             elem.remove();
           });
 
-          newScope.initBaseController = function(self, scope) {
-            $injector.invoke(PanelBaseCtrl, self, { $scope: scope });
-          };
+          elem.addClass('ng-cloak');
 
-          $scope.$watch(attr.type, function (name) {
-            elem.addClass("ng-cloak");
-            // load the panels module file, then render it in the dom.
-            var nameAsPath = name.replace(".", "/");
-            $scope.require([
-              'jquery',
-              'text!panels/'+nameAsPath+'/module.html'
-            ], function ($, moduleTemplate) {
-              var $module = $(moduleTemplate);
-              // top level controllers
-              var $controllers = $module.filter('ngcontroller, [ng-controller], .ng-controller');
-              // add child controllers
-              $controllers = $controllers.add($module.find('ngcontroller, [ng-controller], .ng-controller'));
+          var panelPath = config.panels[panelType].path;
 
-              if ($controllers.length) {
-                $controllers.first().prepend(panelHeader);
-                $controllers.first().find('.panel-header').nextAll().wrapAll(content);
-
-                $scope.require(['panels/' + nameAsPath + '/module'], function() {
-                  loadModule($module);
-                });
-              } else {
-                loadModule($module);
-              }
-            });
+          $scope.require([
+            'jquery',
+            'text!'+panelPath+'/module.html',
+            panelPath + "/module",
+          ], function ($, moduleTemplate) {
+            var $module = $(moduleTemplate);
+            $module.prepend(panelHeader);
+            $module.first().find('.panel-header').nextAll().wrapAll(content);
+            loadModule($module);
           });
 
         }

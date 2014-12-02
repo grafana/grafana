@@ -1,14 +1,27 @@
 define([
   'angular',
-  'underscore'
+  'lodash'
 ],
 function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('alertSrv', function($timeout) {
+  module.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
     var self = this;
+
+    this.init = function() {
+      $rootScope.onAppEvent('alert-error', function(e, alert) {
+        self.set(alert[0], alert[1], 'error');
+      });
+      $rootScope.onAppEvent('alert-warning', function(e, alert) {
+        self.set(alert[0], alert[1], 'warning', 5000);
+      });
+      $rootScope.onAppEvent('alert-success', function(e, alert) {
+        self.set(alert[0], alert[1], 'success', 3000);
+      });
+      $rootScope.onAppEvent('confirm-modal', this.showConfirmModal);
+    };
 
     // List of all alert objects
     this.list = [];
@@ -17,7 +30,7 @@ function (angular, _) {
       var
         _a = {
           title: title || '',
-          text: text || '',
+          text: $sce.trustAsHtml(text || ''),
           severity: severity || 'info',
         },
         _ca = angular.toJson(_a),
@@ -45,5 +58,28 @@ function (angular, _) {
     this.clearAll = function() {
       self.list = [];
     };
+
+    this.showConfirmModal = function(e, payload) {
+      var scope = $rootScope.$new();
+
+      scope.title = payload.title;
+      scope.text = payload.text;
+      scope.onConfirm = payload.onConfirm;
+
+      var confirmModal = $modal({
+        template: './app/partials/confirm_modal.html',
+        persist: true,
+        modalClass: 'confirm-modal',
+        show: false,
+        scope: scope,
+        keyboard: false
+      });
+
+      $q.when(confirmModal).then(function(modalEl) {
+        modalEl.modal('show');
+      });
+
+    };
+
   });
 });

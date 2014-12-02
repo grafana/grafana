@@ -1,27 +1,13 @@
-define(['jquery','underscore','moment'],
+define([
+  'jquery',
+  'lodash',
+  'moment'
+],
 function($, _, moment) {
   'use strict';
 
   var kbn = {};
-
-   /**
-     * Calculate a graph interval
-     *
-     * from::           Date object containing the start time
-     * to::             Date object containing the finish time
-     * size::           Calculate to approximately this many bars
-     * user_interval::  User specified histogram interval
-     *
-     */
-  kbn.calculate_interval = function(from,to,size,user_interval) {
-    if(_.isObject(from)) {
-      from = from.valueOf();
-    }
-    if(_.isObject(to)) {
-      to = to.valueOf();
-    }
-    return user_interval === 0 ? kbn.round_interval((to - from)/size) : user_interval;
-  };
+  kbn.valueFormats = {};
 
   kbn.round_interval = function(interval) {
     switch (true) {
@@ -127,6 +113,28 @@ function($, _, moment) {
     s: 1
   };
 
+  kbn.calculateInterval = function(range, resolution, userInterval) {
+    var lowLimitMs = 1; // 1 millisecond default low limit
+    var intervalMs, lowLimitInterval;
+
+    if (userInterval) {
+      if (userInterval[0] === '>') {
+        lowLimitInterval = userInterval.slice(1);
+        lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
+      }
+      else {
+        return userInterval;
+      }
+    }
+
+    intervalMs = kbn.round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+    if (lowLimitMs > intervalMs) {
+      intervalMs = lowLimitMs;
+    }
+
+    return kbn.secondsToHms(intervalMs / 1000);
+  };
+
   kbn.describe_interval = function (string) {
     var matches = string.match(kbn.interval_regex);
     if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
@@ -227,36 +235,36 @@ function($, _, moment) {
         if (type === 0) {
           roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
         } else if (type === 1) {
-          dateTime.add('years',num);
+          dateTime.add(num, 'years');
         } else if (type === 2) {
-          dateTime.subtract('years',num);
+          dateTime.subtract(num, 'years');
         }
         break;
       case 'M':
         if (type === 0) {
           roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
         } else if (type === 1) {
-          dateTime.add('months',num);
+          dateTime.add(num, 'months');
         } else if (type === 2) {
-          dateTime.subtract('months',num);
+          dateTime.subtract(num, 'months');
         }
         break;
       case 'w':
         if (type === 0) {
           roundUp ? dateTime.endOf('week') : dateTime.startOf('week');
         } else if (type === 1) {
-          dateTime.add('weeks',num);
+          dateTime.add(num, 'weeks');
         } else if (type === 2) {
-          dateTime.subtract('weeks',num);
+          dateTime.subtract(num, 'weeks');
         }
         break;
       case 'd':
         if (type === 0) {
           roundUp ? dateTime.endOf('day') : dateTime.startOf('day');
         } else if (type === 1) {
-          dateTime.add('days',num);
+          dateTime.add(num, 'days');
         } else if (type === 2) {
-          dateTime.subtract('days',num);
+          dateTime.subtract(num, 'days');
         }
         break;
       case 'h':
@@ -264,27 +272,27 @@ function($, _, moment) {
         if (type === 0) {
           roundUp ? dateTime.endOf('hour') : dateTime.startOf('hour');
         } else if (type === 1) {
-          dateTime.add('hours',num);
+          dateTime.add(num, 'hours');
         } else if (type === 2) {
-          dateTime.subtract('hours',num);
+          dateTime.subtract(num,'hours');
         }
         break;
       case 'm':
         if (type === 0) {
           roundUp ? dateTime.endOf('minute') : dateTime.startOf('minute');
         } else if (type === 1) {
-          dateTime.add('minutes',num);
+          dateTime.add(num, 'minutes');
         } else if (type === 2) {
-          dateTime.subtract('minutes',num);
+          dateTime.subtract(num, 'minutes');
         }
         break;
       case 's':
         if (type === 0) {
           roundUp ? dateTime.endOf('second') : dateTime.startOf('second');
         } else if (type === 1) {
-          dateTime.add('seconds',num);
+          dateTime.add(num, 'seconds');
         } else if (type === 2) {
-          dateTime.subtract('seconds',num);
+          dateTime.subtract(num, 'seconds');
         }
         break;
       default:
@@ -302,327 +310,173 @@ function($, _, moment) {
     ].join(';') + '"></div>';
   };
 
-  kbn.byteFormat = function(size, decimals) {
-    var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
-
-    while (Math.abs(size) >= 1024) {
-      steps++;
-      size /= 1024;
-    }
-
-    switch (steps) {
-    case 0:
-      ext = " B";
-      break;
-    case 1:
-      ext = " KiB";
-      break;
-    case 2:
-      ext = " MiB";
-      break;
-    case 3:
-      ext = " GiB";
-      break;
-    case 4:
-      ext = " TiB";
-      break;
-    case 5:
-      ext = " PiB";
-      break;
-    case 6:
-      ext = " EiB";
-      break;
-    case 7:
-      ext = " ZiB";
-      break;
-    case 8:
-      ext = " YiB";
-      break;
-    }
-
-    return (size.toFixed(decimals) + ext);
+  kbn.valueFormats.percent = function(size, decimals) {
+    return kbn.toFixed(size, decimals) + '%';
   };
 
-  kbn.bitFormat = function(size, decimals) {
-    var ext, steps = 0;
+  kbn.formatFuncCreator = function(factor, extArray) {
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) {
+        return "";
+      }
 
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
+      var steps = 0;
 
-    while (Math.abs(size) >= 1024) {
-      steps++;
-      size /= 1024;
-    }
+      while (Math.abs(size) >= factor) {
+        steps++;
+        size /= factor;
+      }
+      if (steps > 0) {
+        decimals = scaledDecimals + (3 * steps);
+      }
 
-    switch (steps) {
-    case 0:
-      ext = " b";
-      break;
-    case 1:
-      ext = " Kib";
-      break;
-    case 2:
-      ext = " Mib";
-      break;
-    case 3:
-      ext = " Gib";
-      break;
-    case 4:
-      ext = " Tib";
-      break;
-    case 5:
-      ext = " Pib";
-      break;
-    case 6:
-      ext = " Eib";
-      break;
-    case 7:
-      ext = " Zib";
-      break;
-    case 8:
-      ext = " Yib";
-      break;
-    }
-
-    return (size.toFixed(decimals) + ext);
+      return kbn.toFixed(size, decimals) + extArray[steps];
+    };
   };
 
-  kbn.bpsFormat = function(size, decimals) {
-    var ext, steps = 0;
-
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
+  kbn.toFixed = function(value, decimals) {
+    if (value === null) {
+      return "";
     }
 
-    while (Math.abs(size) >= 1000) {
-      steps++;
-      size /= 1000;
+    var factor = decimals ? Math.pow(10, decimals) : 1;
+    var formatted = String(Math.round(value * factor) / factor);
+
+    // if exponent return directly
+    if (formatted.indexOf('e') !== -1 || value === 0) {
+      return formatted;
     }
 
-    switch (steps) {
-    case 0:
-      ext = " bps";
-      break;
-    case 1:
-      ext = " Kbps";
-      break;
-    case 2:
-      ext = " Mbps";
-      break;
-    case 3:
-      ext = " Gbps";
-      break;
-    case 4:
-      ext = " Tbps";
-      break;
-    case 5:
-      ext = " Pbps";
-      break;
-    case 6:
-      ext = " Ebps";
-      break;
-    case 7:
-      ext = " Zbps";
-      break;
-    case 8:
-      ext = " Ybps";
-      break;
+    // If tickDecimals was specified, ensure that we have exactly that
+    // much precision; otherwise default to the value's own precision.
+    if (decimals != null) {
+      var decimalPos = formatted.indexOf(".");
+      var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+      if (precision < decimals) {
+        return (precision ? formatted : formatted + ".") + (String(factor)).substr(1, decimals - precision);
+      }
     }
 
-    return (size.toFixed(decimals) + ext);
+    return formatted;
   };
 
-  kbn.shortFormat = function(size, decimals) {
-    var ext, steps = 0;
+  kbn.valueFormats.bits = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
+  kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
+  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.none = kbn.toFixed;
 
-    if(_.isUndefined(decimals)) {
-      decimals = 2;
-    } else if (decimals === 0) {
-      decimals = undefined;
-    }
+  kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
 
-    while (Math.abs(size) >= 1000) {
-      steps++;
-      size /= 1000;
-    }
-
-    switch (steps) {
-    case 0:
-      ext = "";
-      break;
-    case 1:
-      ext = " K";
-      break;
-    case 2:
-      ext = " Mil";
-      break;
-    case 3:
-      ext = " Bil";
-      break;
-    case 4:
-      ext = " Tri";
-      break;
-    case 5:
-      ext = " Quadr";
-      break;
-    case 6:
-      ext = " Quint";
-      break;
-    case 7:
-      ext = " Sext";
-      break;
-    case 8:
-      ext = " Sept";
-      break;
-    }
-
-    return (size.toFixed(decimals) + ext);
-  };
-
-  kbn.getFormatFunction = function(formatName, decimals) {
-    switch(formatName) {
-    case 'short':
-      return function(val) {
-        return kbn.shortFormat(val, decimals);
-      };
-    case 'bytes':
-      return function(val) {
-        return kbn.byteFormat(val, decimals);
-      };
-    case 'bits':
-      return function(val) {
-        return kbn.bitFormat(val, decimals);
-      };
-    case 'bps':
-      return function(val) {
-        return kbn.bpsFormat(val, decimals);
-      };
-    case 's':
-      return function(val) {
-        return kbn.sFormat(val, decimals);
-      };
-    case 'ms':
-      return function(val) {
-        return kbn.msFormat(val, decimals);
-      };
-    case 'µs':
-      return function(val) {
-        return kbn.microsFormat(val, decimals);
-      };
-    case 'ns':
-      return function(val) {
-        return kbn.nanosFormat(val, decimals);
-      };
-    default:
-      return function(val) {
-        return val % 1 === 0 ? val : val.toFixed(decimals);
-      };
-    }
-  };
-
-  kbn.msFormat = function(size, decimals) {
-    // Less than 1 milli, downscale to micro
-    if (Math.abs(size) < 1) {
-      return kbn.microsFormat(size * 1000,decimals);
-    }
-    else if (Math.abs(size) < 1000) {
-      return size.toFixed(decimals) + " ms";
+    if (Math.abs(size) < 1000) {
+      return kbn.toFixed(size, decimals) + " ms";
     }
     // Less than 1 min
     else if (Math.abs(size) < 60000) {
-      return (size / 1000).toFixed(decimals) + " s";
+      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " s";
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600000) {
-      return (size / 60000).toFixed(decimals) + " min";
+      return kbn.toFixed(size / 60000, scaledDecimals + 5) + " min";
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400000) {
-      return (size / 3600000).toFixed(decimals) + " hour";
+      return kbn.toFixed(size / 3600000, scaledDecimals + 7) + " hour";
     }
     // Less than one year, devide in days
     else if (Math.abs(size) < 31536000000) {
-      return (size / 86400000).toFixed(decimals) + " day";
+      return kbn.toFixed(size / 86400000, scaledDecimals + 8) + " day";
     }
 
-    return (size / 31536000000).toFixed(decimals) + " year";
+    return kbn.toFixed(size / 31536000000, scaledDecimals + 10) + " year";
   };
 
-  kbn.sFormat = function(size, decimals) {
-    // Less than 1 sec, downscale to milli
-    if (Math.abs(size) < 1) {
-      return kbn.msFormat(size * 1000, decimals);
-    }
-    // Less than 10 min, use seconds
-    else if (Math.abs(size) < 600) {
-      return size.toFixed(decimals) + " s";
+  kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 600) {
+      return kbn.toFixed(size, decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600) {
-      return (size / 60).toFixed(decimals) + " min";
+      return kbn.toFixed(size / 60, scaledDecimals + 1) + " min";
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400) {
-      return (size / 3600).toFixed(decimals) + " hour";
+      return kbn.toFixed(size / 3600, scaledDecimals + 4) + " hour";
     }
     // Less than one week, devide in days
     else if (Math.abs(size) < 604800) {
-      return (size / 86400).toFixed(decimals) + " day";
+      return kbn.toFixed(size / 86400, scaledDecimals + 5) + " day";
     }
     // Less than one year, devide in week
     else if (Math.abs(size) < 31536000) {
-      return (size / 604800).toFixed(decimals) + " week";
+      return kbn.toFixed(size / 604800, scaledDecimals + 6) + " week";
     }
 
-    return (size / 3.15569e7).toFixed(decimals) + " year";
+    return kbn.toFixed(size / 3.15569e7, scaledDecimals + 7) + " year";
   };
 
-  kbn.microsFormat = function(size, decimals) {
-    // Less than 1 micro, downscale to nano
-    if (Math.abs(size) < 1) {
-      return kbn.nanosFormat(size * 1000, decimals);
-    }
-    else if (Math.abs(size) < 1000) {
-      return size.toFixed(decimals) + " µs";
+  kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 1000) {
+      return kbn.toFixed(size, decimals) + " µs";
     }
     else if (Math.abs(size) < 1000000) {
-      return (size / 1000).toFixed(decimals) + " ms";
+      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " ms";
     }
     else {
-      return (size / 1000000).toFixed(decimals) + " s";
+      return kbn.toFixed(size / 1000000, scaledDecimals + 6) + " s";
     }
   };
 
-  kbn.nanosFormat = function(size, decimals) {
-    if (Math.abs(size) < 1) {
-      return size.toFixed(decimals) + " ns";
-    }
-    else if (Math.abs(size) < 1000) {
-      return size.toFixed(0) + " ns";
+  kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 1000) {
+      return kbn.toFixed(size, decimals) + " ns";
     }
     else if (Math.abs(size) < 1000000) {
-      return (size / 1000).toFixed(decimals) + " µs";
+      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " µs";
     }
     else if (Math.abs(size) < 1000000000) {
-      return (size / 1000000).toFixed(decimals) + " ms";
+      return kbn.toFixed(size / 1000000, scaledDecimals + 6) + " ms";
     }
     else if (Math.abs(size) < 60000000000){
-      return (size / 1000000000).toFixed(decimals) + " s";
+      return kbn.toFixed(size / 1000000000, scaledDecimals + 9) + " s";
     }
     else {
-      return (size / 60000000000).toFixed(decimals) + " m";
+      return kbn.toFixed(size / 60000000000, scaledDecimals + 12) + " m";
     }
+  };
+
+  kbn.slugifyForUrl = function(str) {
+    return str
+      .toLowerCase()
+      .replace(/[^\w ]+/g,'')
+      .replace(/ +/g,'-');
+  };
+
+  kbn.exportSeriesListToCsv = function(seriesList) {
+    var text = 'Series;Time;Value\n';
+    _.each(seriesList, function(series) {
+      _.each(series.datapoints, function(dp) {
+        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+      });
+    });
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    window.saveAs(blob, 'grafana_data_export.csv');
+  };
+
+  kbn.stringToJsRegex = function(str) {
+    if (str[0] !== '/') {
+      return new RegExp(str);
+    }
+
+    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+    return new RegExp(match[1], match[2]);
   };
 
   return kbn;

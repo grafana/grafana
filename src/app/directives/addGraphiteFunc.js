@@ -1,7 +1,7 @@
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'jquery',
   '../services/graphite/gfunc',
 ],
@@ -38,6 +38,15 @@ function (angular, app, _, $, gfunc) {
             items: 10,
             updater: function (value) {
               var funcDef = gfunc.getFuncDef(value);
+              if (!funcDef) {
+                // try find close match
+                value = value.toLowerCase();
+                funcDef = _.find(allFunctions, function(funcName) {
+                  return funcName.toLowerCase().indexOf(value) === 0;
+                });
+
+                if (!funcDef) { return; }
+              }
 
               $scope.$apply(function() {
                 $scope.addFunction(funcDef);
@@ -59,13 +68,12 @@ function (angular, app, _, $, gfunc) {
           });
 
           $input.blur(function() {
-            $input.hide();
-            $input.val('');
-            $button.show();
-            $button.focus();
             // clicking the function dropdown menu wont
             // work if you remove class at once
             setTimeout(function() {
+              $input.val('');
+              $input.hide();
+              $button.show();
               elem.removeClass('open');
             }, 200);
           });

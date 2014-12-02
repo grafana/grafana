@@ -17,22 +17,10 @@
     }
   ],
   "editable": true,
-  "failover": false,
-  "panel_hints": true,
   "style": "dark",
-  "pulldowns": [
-    {
-      "type": "filtering",
-      "collapse": false,
-      "notice": false,
-      "enable": false
-    }
-  ],
   "nav": [
     {
       "type": "timepicker",
-      "collapse": false,
-      "notice": false,
       "enable": true,
       "status": "Stable",
       "time_options": [

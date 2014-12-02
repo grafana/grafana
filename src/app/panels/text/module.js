@@ -1,36 +1,29 @@
-/** @scratch /panels/5
- * include::panels/text.asciidoc[]
- */
-
-/** @scratch /panels/text/0
- * == text
- * Status: *Stable*
- *
- * The text panel is used for displaying static text formated as markdown, sanitized html or as plain
- * text.
- *
- */
 define([
   'angular',
   'app',
-  'underscore',
+  'lodash',
   'require',
-  'services/filterSrv'
+  'components/panelmeta',
 ],
-function (angular, app, _, require) {
+function (angular, app, _, require, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
 
-  module.controller('text', function($scope, filterSrv) {
+  var converter;
 
-    $scope.panelMeta = {
+  module.controller('text', function($scope, templateSrv, $sce, panelSrv) {
+
+    $scope.panelMeta = new PanelMeta({
       description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
-    };
+    });
+
+    $scope.panelMeta.addEditorTab('Edit text', 'app/panels/text/editor.html');
 
     // Set and populate defaults
     var _d = {
+      title   : 'default title',
       mode    : "markdown", // 'html', 'markdown', 'text'
       content : "",
       style: {},
@@ -39,7 +32,7 @@ function (angular, app, _, require) {
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
-      $scope.initBaseController(this, $scope);
+      panelSrv.init($scope);
       $scope.ready = false;
       $scope.$on('refresh', $scope.render);
       $scope.render();
@@ -68,30 +61,38 @@ function (angular, app, _, require) {
     };
 
     $scope.renderMarkdown = function(content) {
-      require(['./lib/showdown'], function (Showdown) {
-        var converter = new Showdown.converter();
-        var text = content
-          .replace(/&/g, '&amp;')
-          .replace(/>/g, '&gt;')
-          .replace(/</g, '&lt;');
+      var text = content
+        .replace(/&/g, '&amp;')
+        .replace(/>/g, '&gt;')
+        .replace(/</g, '&lt;');
 
+      if (converter) {
         $scope.updateContent(converter.makeHtml(text));
-      });
+      }
+      else {
+        require(['./lib/showdown'], function (Showdown) {
+          converter = new Showdown.converter();
+          $scope.updateContent(converter.makeHtml(text));
+        });
+      }
     };
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = filterSrv.applyTemplateToTarget(html);
-
-        if(!$scope.$$phase) {
-          $scope.$apply();
-        }
+        $scope.content = $sce.trustAsHtml(templateSrv.replace(html));
       } catch(e) {
+        console.log('Text panel error: ', e);
+        $scope.content = $sce.trustAsHtml(html);
+      }
+
+      if(!$scope.$$phase) {
+        $scope.$digest();
       }
     };
 
     $scope.openEditor = function() {
     };
 
+    $scope.init();
   });
 });

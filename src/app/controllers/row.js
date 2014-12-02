@@ -1,7 +1,7 @@
 define([
   'angular',
   'app',
-  'underscore'
+  'lodash'
 ],
 function (angular, app, _) {
   'use strict';
@@ -23,6 +23,11 @@ function (angular, app, _) {
       $scope.reset_panel();
     };
 
+    $scope.togglePanelMenu = function(posX) {
+      $scope.showPanelMenu = !$scope.showPanelMenu;
+      $scope.panelMenuPos = posX;
+    };
+
     $scope.toggle_row = function(row) {
       row.collapse = row.collapse ? false : true;
       if (!row.collapse) {
@@ -32,45 +37,23 @@ function (angular, app, _) {
       }
     };
 
-    $scope.rowSpan = function(row) {
-      var panels = _.filter(row.panels, function(p) {
-        return $scope.isPanel(p);
-      });
-      return _.reduce(_.pluck(panels,'span'), function(p,v) {
-        return p+v;
-      },0);
-    };
-
     // This can be overridden by individual panels
     $scope.close_edit = function() {
       $scope.$broadcast('render');
     };
 
     $scope.add_panel = function(panel) {
-      var rowSpan = $scope.rowSpan($scope.row);
-      var panelCount = $scope.row.panels.length;
-      var space = (12 - rowSpan) - panel.span;
-
-      // try to make room of there is no space left
-      if (space <= 0) {
-        if (panelCount === 1) {
-          $scope.row.panels[0].span = 6;
-          panel.span = 6;
-        }
-        else if (panelCount === 2) {
-          $scope.row.panels[0].span = 4;
-          $scope.row.panels[1].span = 4;
-          panel.span = 4;
-        }
-      }
-
-      $scope.row.panels.push(panel);
+      $scope.dashboard.add_panel(panel, $scope.row);
     };
 
     $scope.delete_row = function() {
-      if (confirm("Are you sure you want to delete this row?")) {
-        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
-      }
+      $scope.appEvent('confirm-modal', {
+        title: 'Delete row',
+        text: 'Are you sure you want to delete this row?',
+        onConfirm: function() {
+          $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+        }
+      });
     };
 
     $scope.move_row = function(direction) {
@@ -97,51 +80,37 @@ function (angular, app, _) {
     };
 
     $scope.remove_panel_from_row = function(row, panel) {
-      if (confirm('Are you sure you want to remove this ' + panel.type + ' panel?')) {
-        row.panels = _.without(row.panels,panel);
-      }
+      $scope.appEvent('confirm-modal', {
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        onConfirm: function() {
+          row.panels = _.without(row.panels, panel);
+        }
+      });
     };
 
-    $scope.duplicatePanel = function(panel, row) {
-      row = row || $scope.row;
-      var currentRowSpan = $scope.rowSpan(row);
-      if (currentRowSpan <= 9) {
-        row.panels.push(angular.copy(panel));
-      }
-      else {
-        var rowsList = $scope.dashboard.rows;
-        var rowIndex = _.indexOf(rowsList, row);
-        if (rowIndex === rowsList.length - 1) {
-          var newRow = angular.copy($scope.row);
-          newRow.panels = [];
-          $scope.dashboard.rows.push(newRow);
-          $scope.duplicatePanel(panel, newRow);
-        }
-        else {
-          $scope.duplicatePanel(panel, rowsList[rowIndex+1]);
-        }
-      }
+    $scope.replacePanel = function(newPanel, oldPanel) {
+      var row = $scope.row;
+      var index = _.indexOf(row.panels, oldPanel);
+      row.panels.splice(index, 1);
+
+      // adding it back needs to be done in next digest
+      $timeout(function() {
+        newPanel.id = oldPanel.id;
+        newPanel.span = oldPanel.span;
+        row.panels.splice(index, 0, newPanel);
+      });
     };
 
     $scope.reset_panel = function(type) {
-      var
-        defaultSpan = 12,
-        _as = 12-$scope.rowSpan($scope.row);
+      var defaultSpan = 12;
+      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
 
       $scope.panel = {
+        title: 'no title (click here)',
         error   : false,
-        /** @scratch /panels/1
-         * span:: A number, 1-12, that describes the width of the panel.
-         */
         span    : _as < defaultSpan && _as > 0 ? _as : defaultSpan,
-        /** @scratch /panels/1
-         * editable:: Enable or disable the edit button the the panel
-         */
         editable: true,
-        /** @scratch /panels/1
-         * type:: The type of panel this object contains. Each panel type will require additional
-         * properties. See the panel types list to the right.
-         */
         type    : type
       };
 
@@ -158,12 +127,42 @@ function (angular, app, _) {
       $scope.row.height = fixRowHeight($scope.row.height);
     };
 
-    /** @scratch /panels/2
-     * --
-     */
-
     $scope.init();
 
+  });
+
+  module.directive('rowHeight', function() {
+    return function(scope, element) {
+      scope.$watchGroup(['row.collapse', 'row.height'], function() {
+        element[0].style.minHeight = scope.row.collapse ? '5px' : scope.row.height;
+      });
+    };
+  });
+
+  module.directive('panelWidth', function() {
+    return function(scope, element) {
+      scope.$watch('panel.span', function() {
+        element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
+      });
+    };
+  });
+
+  module.directive('panelDropZone', function() {
+    return function(scope, element) {
+      scope.$on("ANGULAR_DRAG_START", function() {
+        var dropZoneSpan = 12 - scope.dashboard.rowSpan(scope.row);
+
+        if (dropZoneSpan > 0) {
+          element.find('.panel-container').css('height', scope.row.height);
+          element[0].style.width = ((dropZoneSpan / 1.2) * 10) + '%';
+          element.show();
+        }
+      });
+
+      scope.$on("ANGULAR_DRAG_END", function() {
+        element.hide();
+      });
+    };
   });
 
 });

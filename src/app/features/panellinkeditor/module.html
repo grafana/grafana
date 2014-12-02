@@ -1,0 +1,49 @@
+<div class="editor-row">
+  <div class="section">
+		<h5>Drilldown / detail link<tip>These links appear in the dropdown menu in the panel menu</tip></h5>
+
+		<div class="grafana-target" ng-repeat="link in panel.links"j>
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment">
+						<i class="icon-remove pointer" ng-click="deleteLink(link)"></i>
+					</li>
+
+					<li class="grafana-target-segment">title</li>
+					<li>
+						<input type="text" ng-model="link.title" class="input-medium grafana-target-segment-input">
+					</li>
+
+					<li class="grafana-target-segment">type</li>
+					<li>
+						<select class="input-medium grafana-target-segment-input" style="width: 101px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
+					</li>
+
+					<li class="grafana-target-segment" ng-show="link.type === 'dashboard'">dashboard</li>
+					<li ng-show="link.type === 'dashboard'">
+						<input type="text"
+						       ng-model="link.dashboard"
+									 bs-typeahead="searchDashboards"
+									 class="input-large grafana-target-segment-input">
+					</li>
+
+					<li class="grafana-target-segment" ng-show="link.type === 'absolute'">url</li>
+					<li ng-show="link.type === 'absolute'">
+						<input type="text" ng-model="link.url" class="input-large grafana-target-segment-input">
+					</li>
+
+					<li class="grafana-target-segment">params</li>
+					<li>
+						<input type="text" ng-model="link.params" class="input-medium grafana-target-segment-input">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<br>
+	<button class="btn btn-success" ng-click="addLink()">Add link</button>
+</div>

@@ -1,30 +1,15 @@
 define([
   'angular',
   'jquery',
-  'services/all'
 ],
 function(angular, $) {
   "use strict";
 
   var module = angular.module('grafana.services');
 
-  module.service('dashboardKeybindings', function($rootScope, keyboardManager) {
+  module.service('dashboardKeybindings', function($rootScope, keyboardManager, $modal, $q) {
 
     this.shortcuts = function(scope) {
-
-      scope.onAppEvent('panel-fullscreen-enter', function() {
-        $rootScope.fullscreen = true;
-      });
-
-      scope.onAppEvent('panel-fullscreen-exit', function() {
-        $rootScope.fullscreen = false;
-      });
-
-      scope.onAppEvent('dashboard-saved', function() {
-        if ($rootScope.fullscreen) {
-          scope.emitAppEvent('panel-fullscreen-exit');
-        }
-      });
 
       scope.$on('$destroy', function() {
         keyboardManager.unbind('ctrl+f');
@@ -32,11 +17,40 @@ function(angular, $) {
         keyboardManager.unbind('ctrl+s');
         keyboardManager.unbind('ctrl+r');
         keyboardManager.unbind('ctrl+z');
+        keyboardManager.unbind('ctrl+o');
         keyboardManager.unbind('esc');
       });
 
-      keyboardManager.bind('ctrl+f', function(evt) {
-        scope.emitAppEvent('open-search', evt);
+      var helpModalScope = null;
+      keyboardManager.bind('shift+?', function() {
+        if (helpModalScope) { return; }
+
+        helpModalScope = $rootScope.$new();
+        var helpModal = $modal({
+          template: './app/partials/help_modal.html',
+          persist: false,
+          show: false,
+          scope: helpModalScope,
+          keyboard: false
+        });
+
+        helpModalScope.$on('$destroy', function() { helpModalScope = null; });
+        $q.when(helpModal).then(function(modalEl) { modalEl.modal('show'); });
+
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+f', function() {
+        scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+o', function() {
+        var current = scope.dashboard.sharedCrosshair;
+        scope.dashboard.sharedCrosshair = !current;
+        scope.dashboard.emit_refresh('refresh');
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+l', function() {
+        scope.$broadcast('toggle-all-legends');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {
@@ -45,7 +59,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+s', function(evt) {
-        scope.emitAppEvent('save-dashboard', evt);
+        scope.appEvent('save-dashboard', evt);
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+r', function() {
@@ -53,7 +67,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+z', function(evt) {
-        scope.emitAppEvent('zoom-out', evt);
+        scope.appEvent('zoom-out', evt);
       }, { inputDisabled: true });
 
       keyboardManager.bind('esc', function() {
@@ -67,7 +81,9 @@ function(angular, $) {
           modalData.$scope.dismiss();
         }
 
-        scope.emitAppEvent('panel-fullscreen-exit');
+        scope.appEvent('hide-dash-editor');
+
+        scope.exitFullscreen();
       }, { inputDisabled: true });
     };
   });
