@@ -6,7 +6,6 @@ dist
 # locally required config files
 web.config
 config.js
-src/css/*.min.css
 
 # Editor junk
 *.sublime-workspace
