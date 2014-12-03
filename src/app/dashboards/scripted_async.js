@@ -22,10 +22,7 @@ var window, document, ARGS, $, jQuery, moment, kbn;
 return function(callback) {
 
   // Setup some variables
-  var dashboard, timspan;
-
-  // Set a default timespan if one isn't specified
-  timspan = '1d';
+  var dashboard;
 
   // Intialize a skeleton with nothing but a rows array and service object
   dashboard = {
@@ -35,9 +32,13 @@ return function(callback) {
 
   // Set a title
   dashboard.title = 'Scripted dash';
+
+  // Set default time
+  // time can be overriden in the url using from/to parameteres, but this is
+  // handled automatically in grafana core during dashboard initialization
   dashboard.time = {
-    from: "now-" + (ARGS.from || timspan),
-    to: "now"
+      from: "now-6h",
+      to: "now"
   };
 
   var rows = 1;

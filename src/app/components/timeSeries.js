@@ -7,9 +7,10 @@ function (_, kbn) {
 
   function TimeSeries(opts) {
     this.datapoints = opts.datapoints;
-    this.info = opts.info;
-    this.label = opts.info.alias;
-    this.id = opts.info.alias;
+    this.label = opts.alias;
+    this.id = opts.alias;
+    this.alias = opts.alias;
+    this.color = opts.color;
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
   }
@@ -33,13 +34,13 @@ function (_, kbn) {
     this.lines = {};
     this.points = {};
     this.bars = {};
-    this.info.yaxis = 1;
+    this.yaxis = 1;
     this.zindex = 0;
     delete this.stack;
 
     for (var i = 0; i < overrides.length; i++) {
       var override = overrides[i];
-      if (!matchSeriesOverride(override.alias, this.info.alias)) {
+      if (!matchSeriesOverride(override.alias, this.alias)) {
         continue;
       }
       if (override.lines !== void 0) { this.lines.show = override.lines; }
@@ -54,7 +55,7 @@ function (_, kbn) {
       if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
 
       if (override.yaxis !== void 0) {
-        this.info.yaxis = override.yaxis;
+        this.yaxis = override.yaxis;
       }
     }
   };
@@ -62,14 +63,12 @@ function (_, kbn) {
   TimeSeries.prototype.getFlotPairs = function (fillStyle) {
     var result = [];
 
-    this.color = this.info.color;
-    this.yaxis = this.info.yaxis;
-
     this.stats.total = 0;
-    this.stats.max = Number.MIN_VALUE;
+    this.stats.max = -Number.MAX_VALUE;
     this.stats.min = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
+    this.allIsNull = true;
 
     var ignoreNulls = fillStyle === 'connected';
     var nullAsZero = fillStyle === 'null as zero';
@@ -89,6 +88,7 @@ function (_, kbn) {
 
       if (_.isNumber(currentValue)) {
         this.stats.total += currentValue;
+        this.allIsNull = false;
       }
 
       if (currentValue > this.stats.max) {
@@ -99,19 +99,22 @@ function (_, kbn) {
         this.stats.min = currentValue;
       }
 
-      result.push([currentTime * 1000, currentValue]);
+      result.push([currentTime, currentValue]);
     }
 
     if (this.datapoints.length >= 2) {
-      this.stats.timeStep = (this.datapoints[1][1] - this.datapoints[0][1]) * 1000;
+      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
 
-    if (this.stats.max === Number.MIN_VALUE) { this.stats.max = null; }
+    if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
     if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
     if (result.length) {
       this.stats.avg = (this.stats.total / result.length);
       this.stats.current = result[result.length-1][1];
+      if (this.stats.current === null && result.length > 1) {
+        this.stats.current = result[result.length-2][1];
+      }
     }
 
     return result;
@@ -121,12 +124,6 @@ function (_, kbn) {
     this.valueFormater = formater;
     this.decimals = decimals;
     this.scaledDecimals = scaledDecimals;
-
-    this.info.avg = this.formatValue(this.stats.avg);
-    this.info.current = this.formatValue(this.stats.current);
-    this.info.min = this.formatValue(this.stats.min);
-    this.info.max = this.formatValue(this.stats.max);
-    this.info.total = this.formatValue(this.stats.total);
   };
 
   TimeSeries.prototype.formatValue = function(value) {

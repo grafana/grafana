@@ -9,6 +9,7 @@ define([
   './timer',
   './keyboardManager',
   './annotationsSrv',
+  './popoverSrv',
   './playlistSrv',
   './unsavedChangesSrv',
   './dashboard/dashboardKeyBindings',

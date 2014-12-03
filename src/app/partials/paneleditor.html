@@ -5,22 +5,14 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in setEditorTabs(panelMeta)" data-title="{{tab}}">
+		<div ng-repeat="tab in panelMeta.editorTabs" data-title="{{tab.title}}">
 		</div>
 	</div>
 
 </div>
 
 <div class="dashboard-editor-body">
-	<div ng-show="editorTabs[editor.index] == 'General'">
-		<div ng-include src="'app/partials/panelgeneral.html'"></div>
-	</div>
-
-	<div ng-show="editorTabs[editor.index] == 'Panel'">
-		<div ng-include src="panelEditorPath(panel.type)"></div>
-	</div>
-
-	<div ng-repeat="tab in panelMeta.editorTabs" ng-show="editorTabs[editor.index] == tab.title">
+	<div ng-repeat="tab in panelMeta.editorTabs" ng-show="editor.index == $index">
 		<div ng-include src="tab.src"></div>
 	</div>
 </div>

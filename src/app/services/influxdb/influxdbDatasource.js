@@ -163,7 +163,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype._seriesQuery = function(query) {
       return this._influxRequest('GET', '/series', {
         q: query,
-        time_precision: 's',
       });
     };
 
@@ -390,8 +389,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     function getTimeFilter(options) {
       var from = getInfluxTime(options.range.from);
       var until = getInfluxTime(options.range.to);
+      var fromIsAbsolute = from[from.length-1] === 's';
 
-      if (until === 'now()') {
+      if (until === 'now()' && !fromIsAbsolute) {
         return 'time > now() - ' + from;
       }
 

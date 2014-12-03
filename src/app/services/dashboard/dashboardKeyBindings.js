@@ -1,7 +1,6 @@
 define([
   'angular',
   'jquery',
-  'services/all'
 ],
 function(angular, $) {
   "use strict";
@@ -48,6 +47,10 @@ function(angular, $) {
         var current = scope.dashboard.sharedCrosshair;
         scope.dashboard.sharedCrosshair = !current;
         scope.dashboard.emit_refresh('refresh');
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+l', function() {
+        scope.$broadcast('toggle-all-legends');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+h', function() {

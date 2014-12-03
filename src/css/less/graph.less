@@ -18,12 +18,12 @@
   top: 1px;
 }
 
-.graph-legend-series,
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
   float: left;
   white-space: nowrap;
+  font-size: 85%;
   text-align: left;
   &.current:before {
     content: "Current: "
@@ -43,6 +43,8 @@
 }
 
 .graph-legend-series {
+  float: left;
+  white-space: nowrap;
   padding-left: 10px;
   padding-top: 6px;
 }
@@ -53,6 +55,8 @@
 
 .graph-legend-table {
   display: table;
+  width: 100%;
+  margin: 0;
 
   .graph-legend-series {
     display: table-row;
@@ -60,34 +64,59 @@
     padding-left: 0;
     &.pull-right {
       float: none;
-      .graph-legend-alias::after {
-        content: 'y\00B2';
+    }
+  }
+
+  td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
+    float: none;
+    display: table-cell;
+    white-space: nowrap;
+    padding: 2px 10px;
+    text-align: right;
+    border-bottom: 1px solid @grafanaListBorderBottom;
+  }
+
+  .graph-legend-icon {
+    width: 5px;
+    padding: 0;
+    top: 0;
+    .icon-minus {
+      position: relative;
+      top: 2px;
+    }
+  }
+
+ .graph-legend-value  {
+    padding-left: 15px;
+  }
+
+  .graph-legend-alias {
+    padding-left: 7px;
+    text-align: left;
+    width: 95%;
+  }
+
+  .graph-legend-series:nth-child(odd) {
+    background-color: @grafanaListAccent;
+  }
+
+  .graph-legend-value {
+    &.current, &.max, &.min, &.total, &.avg {
+      &:before {
+        content: '';
       }
     }
   }
 
-  .graph-legend-alias {
-    float: none;
-    display: table-cell;
+  th {
+    text-align: right;
+    padding: 5px 10px;
+    font-weight: bold;
+    color: @blue;
+    font-size: 85%;
     white-space: nowrap;
-  }
-
-  .graph-legend-icon {
-    display: table-cell;
-    float: none;
-    white-space: nowrap;
-    padding: 0 4px;
-    top: 2px;
-  }
-
-  .graph-legend-value  {
-    float: none;
-    display: table-cell;
-    white-space: nowrap;
-    padding-left: 15px;
   }
 }
-
 
 .graph-legend-rightside {
 
@@ -106,7 +135,8 @@
     display: table-cell;
     vertical-align: top;
     position: relative;
-    left: -4px;
+    left: 4px;
+    top: -20px;
   }
 
   .graph-legend {

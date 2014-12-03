@@ -68,13 +68,12 @@ function (angular, app, _, $, gfunc) {
           });
 
           $input.blur(function() {
-            $input.hide();
-            $input.val('');
-            $button.show();
-            $button.focus();
             // clicking the function dropdown menu wont
             // work if you remove class at once
             setTimeout(function() {
+              $input.val('');
+              $input.hide();
+              $button.show();
               elem.removeClass('open');
             }, 200);
           });

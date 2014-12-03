@@ -88,7 +88,7 @@ function (_) {
       _.each(series.points, function (point) {
         var data = {
           annotation: self.annotation,
-          time: point[timeCol] * 1000,
+          time: point[timeCol],
           title: point[titleCol],
           tags: point[tagsCol],
           text: point[textCol]

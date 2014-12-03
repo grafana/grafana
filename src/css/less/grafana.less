@@ -6,6 +6,7 @@
 @import "search.less";
 @import "panel.less";
 @import "forms.less";
+@import "singlestat.less";
 
 .row-control-inner {
   padding:0px;
@@ -107,28 +108,6 @@
   position: absolute;
   text-align: center;
   font-size: 12px;
-}
-
-.panel-fullscreen {
-  z-index: 100;
-  display: block;
-  position: fixed;
-  left: 0px;
-  right: 0px;
-  top: 51px;
-  height: 100%;
-  padding: 0 10px;
-  background: @grafanaPanelBackground;
-  overflow-y: scroll;
-  height: 100%;
-
-  .panel-content {
-    padding-bottom: 130px;
-  }
-
-  .dropdown-menu {
-    margin-bottom: 70px;
-  }
 }
 
 .dashboard-fullscreen {
@@ -460,8 +439,6 @@ select.grafana-target-segment-input {
   line-height: 14px;
 }
 
-
-
 .grafana-tooltip hr {
  padding: 2px;
  color: #c8c8c8;
@@ -559,4 +536,8 @@ select.grafana-target-segment-input {
   td { padding: 3px; }
   th:last-child { text-align: left; }
   td:first-child { text-align: right; }
+}
+
+.confirm-modal {
+  max-width: 500px;
 }

@@ -10,7 +10,6 @@ define([
   './confirmClick',
   './configModal',
   './spectrumPicker',
-  './grafanaGraph',
   './bootstrap-tagsinput',
   './bodyClass',
   './addGraphiteFunc',

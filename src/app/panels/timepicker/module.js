@@ -75,8 +75,8 @@ function (angular, app, _, moment, kbn) {
 
       // Date picker needs the date to be at the start of the day
       if(new Date().getTimezoneOffset() < 0) {
-        $scope.temptime.from.date = moment($scope.temptime.from.date).add('days',1).toDate();
-        $scope.temptime.to.date = moment($scope.temptime.to.date).add('days',1).toDate();
+        $scope.temptime.from.date = moment($scope.temptime.from.date).add(1, 'days').toDate();
+        $scope.temptime.to.date = moment($scope.temptime.to.date).add(1, 'days').toDate();
       }
 
       $scope.appEvent('show-dash-editor', {src: 'app/panels/timepicker/custom.html', scope: $scope });

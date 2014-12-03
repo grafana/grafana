@@ -30,6 +30,7 @@ function (angular, _, kbn) {
           var option = _.findWhere(variable.options, { text: urlValue });
           option = option || { text: urlValue, value: urlValue };
           this.setVariableValue(variable, option, true);
+          this.updateAutoInterval(variable);
         }
         else if (variable.refresh) {
           this.updateOptions(variable);

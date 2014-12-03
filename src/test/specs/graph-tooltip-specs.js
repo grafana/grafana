@@ -1,6 +1,6 @@
 define([
   'jquery',
-  'directives/grafanaGraph.tooltip'
+  'panels/graph/graph.tooltip'
 ], function($, GraphTooltip) {
   'use strict';
 
@@ -56,6 +56,34 @@ define([
       expect(ctx.results[0].value).to.be(15);
       expect(ctx.results[1].value).to.be(2);
       expect(ctx.results[0].hoverIndex).to.be(0);
+    });
+  });
+
+  describeSharedTooltip("point count missmatch", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [[10, 2]] }
+      ];
+      ctx.pos = { x: 11 };
+    });
+
+    it('should set pointCountMismatch to true', function() {
+      expect(ctx.results.pointCountMismatch).to.be(true);
+    });
+  });
+
+  describeSharedTooltip("one series is hidden", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        { data: [[10, 15], [12, 20]], },
+        { data: [] }
+      ];
+      ctx.pos = { x: 11 };
+    });
+
+    it('should set pointCountMismatch to false', function() {
+      expect(ctx.results.pointCountMismatch).to.be(undefined);
     });
   });
 

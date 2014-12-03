@@ -29,6 +29,12 @@ define([
       expect(tokens[2].value).to.be('192-168-1-1');
     });
 
+    it('should tokenize metric expression with equal sign', function() {
+      var lexer = new Lexer('apps=test');
+      var tokens = lexer.tokenize();
+      expect(tokens[0].value).to.be('apps=test');
+    });
+
     it('simple function2', function() {
       var lexer = new Lexer('offset(test.metric, -100)');
       var tokens = lexer.tokenize();

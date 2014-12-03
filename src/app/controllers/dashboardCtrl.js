@@ -3,7 +3,6 @@ define([
   'jquery',
   'config',
   'lodash',
-  'services/all',
 ],
 function (angular, $, config, _) {
   "use strict";
@@ -107,14 +106,6 @@ function (angular, $, config, _) {
 
     $scope.checkFeatureToggles = function() {
       $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
-    };
-
-    $scope.setEditorTabs = function(panelMeta) {
-      $scope.editorTabs = ['General','Panel'];
-      if(!_.isUndefined(panelMeta.editorTabs)) {
-        $scope.editorTabs =  _.union($scope.editorTabs,_.pluck(panelMeta.editorTabs,'title'));
-      }
-      return $scope.editorTabs;
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {

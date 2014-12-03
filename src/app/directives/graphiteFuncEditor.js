@@ -206,6 +206,7 @@ function (angular, _, $) {
               if ($target.hasClass('icon-arrow-left')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index - 1);
+                  $scope.targetChanged();
                 });
                 return;
               }
@@ -213,6 +214,7 @@ function (angular, _, $) {
               if ($target.hasClass('icon-arrow-right')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index + 1);
+                  $scope.targetChanged();
                 });
                 return;
               }

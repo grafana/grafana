@@ -35,6 +35,7 @@ function (angular, $, kbn, _, moment) {
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
       this.version = data.version || 0;
+      this.hideAllLegends = data.hideAllLegends || false;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -99,9 +100,14 @@ function (angular, $, kbn, _, moment) {
             result.panel = panel;
             result.row = row;
             result.index = index;
+            return;
           }
         });
       });
+
+      if (!result.panel) {
+        return null;
+      }
 
       return result;
     };
