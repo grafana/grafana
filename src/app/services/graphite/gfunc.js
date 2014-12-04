@@ -329,6 +329,11 @@ function (_) {
   });
 
   addFuncDef({
+    name: 'offsetToZero',
+    category: categories.Transform,
+  });
+
+  addFuncDef({
     name: 'transformNull',
     category: categories.Transform,
     params: [{ name: "amount", type: "int", }],
