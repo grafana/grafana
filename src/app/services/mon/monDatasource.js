@@ -241,13 +241,13 @@ function (angular, _, kbn) {
           if ('statistics' in series) {
             for (var i = 0; i < series.statistics.length; i++) {
               var myDate = new Date(series.statistics[i][timeCol]);
-              var result = myDate.getTime() / 1000;
+              var result = myDate.getTime();
               datapoints[i] = [series.statistics[i][index], result];
             }
           } else {
             for (var j = 0; j < series.measurements.length; j++) {
               var myDate2 = new Date(series.measurements[j][timeCol]);
-              var result2 = myDate2.getTime() / 1000;
+              var result2 = myDate2.getTime();
               datapoints[j] = [series.measurements[j][index], result2];
             }
           }
