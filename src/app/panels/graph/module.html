@@ -15,7 +15,7 @@
 
 		</div>
 
-		<div class="graph-legend-wrapper" ng-if="panel.legend.show" graph-legend></div>
+		<div class="graph-legend-wrapper" ng-if="panel.legend.show || (panel.legend.fullscreen && dashboardViewState.fullscreen && !editMode)" graph-legend></div>
 	</div>
 
 	<div class="clearfix"></div>

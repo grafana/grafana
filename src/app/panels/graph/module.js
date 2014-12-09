@@ -75,6 +75,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // legend options
       legend: {
         show: true, // disable/enable legend
+        fullscreen: true, // disable/enable legend in fullscreen
         values: false, // disable/enable legend values
         min: false,
         max: false,
