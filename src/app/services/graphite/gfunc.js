@@ -569,7 +569,7 @@ function (_) {
       { name: "search", type: "string" },
       { name: "replace", type: "string" }
     ],
-    defaultParams: [0]
+    defaultParams: [0, 'search', 'replace']
   });
 
   _.each(categories, function(funcList, catName) {
