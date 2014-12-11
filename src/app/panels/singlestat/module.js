@@ -173,8 +173,8 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       }
       else {
         var series = $scope.series[0];
-        data.mainValue = 0;
-        data.mainValueFormated = '0';
+        data.mainValue = series.stats[$scope.panel.valueName];
+        data.mainValueFormated = $scope.getFormatedValue(data.mainValue);
         data.flotpairs = series.flotpairs;
       }
 
