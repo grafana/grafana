@@ -561,6 +561,17 @@ function (_) {
     defaultParams: [5]
   });
 
+  addFuncDef({
+    name: 'useSeriesAbove',
+    category: categories.Filter,
+    params: [
+      { name: "value", type: "int" },
+      { name: "search", type: "string" },
+      { name: "replace", type: "string" }
+    ],
+    defaultParams: [0, 'search', 'replace']
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
