@@ -1,3 +1,8 @@
+# 1.9.1 (unreleased)
+
+**Fixes**
+- [Issue #1199](https://github.com/grafana/grafana/issues/1199). Graph: fix for series tooltip when one series is hidden/disabled
+
 # 1.9.0 (2014-12-02)
 
 **Enhancements**

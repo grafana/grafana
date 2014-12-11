@@ -99,9 +99,9 @@ function ($) {
             lasthoverIndex = hoverIndex;
           }
 
-          results.push({ value: value, hoverIndex: newhoverIndex });
+          results.push({ value: value, hoverIndex: newhoverIndex, series: series });
         } else {
-          results.push({ value: value, hoverIndex: hoverIndex });
+          results.push({ value: value, hoverIndex: hoverIndex, series: series });
         }
       }
 
@@ -149,8 +149,8 @@ function ($) {
         timestamp = dashboard.formatDate(seriesHoverInfo.time);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
-          series = seriesList[i];
           hoverInfo = seriesHoverInfo[i];
+          series = hoverInfo.series;
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';

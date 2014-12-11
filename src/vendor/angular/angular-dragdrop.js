@@ -39,7 +39,6 @@ angular.module("ang-drag-drop",[])
                 element.attr("draggable", false);
 
                 attrs.$observe("uiDraggable", function (newValue) {
-                  console.log(newValue);
                     if(newValue){
                         element.attr("draggable", newValue);
                     }
