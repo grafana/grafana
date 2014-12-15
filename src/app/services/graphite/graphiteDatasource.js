@@ -24,6 +24,7 @@ function (angular, _, $, config, kbn, moment) {
       this.supportMetrics = true;
       this.annotationEditorSrc = 'app/partials/graphite/annotation_editor.html';
       this.cacheTimeout = datasource.cacheTimeout;
+      this.withCredentials = datasource.withCredentials;
     }
 
     GraphiteDatasource.prototype.query = function(options) {
@@ -209,8 +210,10 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     GraphiteDatasource.prototype.doGraphiteRequest = function(options) {
-      if (this.basicAuth) {
+      if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
+      }
+      if (this.basicAuth) {
         options.headers = options.headers || {};
         options.headers.Authorization = 'Basic ' + this.basicAuth;
       }
