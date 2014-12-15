@@ -46,6 +46,18 @@ define([
       expect(func.render('hello')).to.equal("scaleToSeconds(hello, 1)");
     });
 
+    it('should handle int or interval params with number', function() {
+      var func = gfunc.createFuncInstance('movingMedian');
+      func.params[0] = '5';
+      expect(func.render('hello')).to.equal("movingMedian(hello, 5)");
+    });
+
+    it('should handle int or interval params with interval string', function() {
+      var func = gfunc.createFuncInstance('movingMedian');
+      func.params[0] = '5min';
+      expect(func.render('hello')).to.equal("movingMedian(hello, '5min')");
+    });
+
     it('should handle metric param and int param and string param', function() {
       var func = gfunc.createFuncInstance('groupByNode');
       func.params[0] = 5;

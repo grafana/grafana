@@ -2,6 +2,7 @@
 
 **Fixes**
 - [Issue #1199](https://github.com/grafana/grafana/issues/1199). Graph: fix for series tooltip when one series is hidden/disabled
+- [Issue #1207](https://github.com/grafana/grafana/issues/1207). Graphite: movingAverage / movingMedian parameter type impovement, now handles int and interval parameter
 
 # 1.9.0 (2014-12-02)
 

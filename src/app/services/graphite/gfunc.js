@@ -1,7 +1,8 @@
 define([
-  'lodash'
+  'lodash',
+  'jquery'
 ],
-function (_) {
+function (_, $) {
   'use strict';
 
   var index = [];
@@ -501,15 +502,15 @@ function (_) {
   addFuncDef({
     name: 'movingAverage',
     category: categories.Filter,
-    params: [{ name: "window size", type: "int" }],
+    params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'movingMedian',
     category: categories.Filter,
-    params: [{ name: "windowSize", type: "select", options: ['1min', '5min', '15min', '30min', '1hour'] }],
-    defaultParams: ['1min']
+    params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: ['5']
   });
 
   addFuncDef({
@@ -593,6 +594,9 @@ function (_) {
 
       var paramType = this.def.params[index].type;
       if (paramType === 'int' || paramType === 'value_or_series' || paramType === 'boolean') {
+        return value;
+      }
+      else if (paramType === 'int_or_interval' && $.isNumeric(value)) {
         return value;
       }
 
