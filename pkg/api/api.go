@@ -22,6 +22,7 @@ func Register(m *macaron.Macaron) {
 	m.Get("/account/", auth, Index)
 	m.Get("/api/account/", auth, GetAccount)
 	m.Post("/api/account/collaborators/add", auth, AddCollaborator)
+	m.Post("/api/account/using/:id", auth, SetUsingAccount)
 	m.Get("/api/account/others", auth, GetOtherAccounts)
 
 	// user register

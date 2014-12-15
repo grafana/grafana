@@ -15,7 +15,7 @@ func SaveDashboard(dash *models.Dashboard) error {
 	if dash.Id == 0 {
 		_, err = sess.Insert(dash)
 	} else {
-		_, err = sess.Update(dash)
+		_, err = sess.Id(dash.Id).Update(dash)
 	}
 
 	if err != nil {

@@ -59,7 +59,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			Company: userInfo.Company,
 		}
 
-		if err = models.CreateAccount(account); err != nil {
+		if err = models.SaveAccount(account); err != nil {
 			ctx.Handle(500, "Failed to create account", err)
 			return
 		}
