@@ -6,7 +6,6 @@ package setting
 import (
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -69,18 +68,8 @@ func init() {
 	log.NewLogger(0, "console", `{"level": 0}`)
 }
 
-// WorkDir returns absolute path of work directory.
 func WorkDir() (string, error) {
-	execPath, err := ExecPath()
-	return path.Dir(strings.Replace(execPath, "\\", "/", -1)), err
-}
-
-func ExecPath() (string, error) {
-	file, err := exec.LookPath(os.Args[0])
-	if err != nil {
-		return "", err
-	}
-	p, err := filepath.Abs(file)
+	p, err := filepath.Abs(".")
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +85,7 @@ func NewConfigContext() {
 
 	Cfg, err = goconfig.LoadConfigFile(path.Join(workDir, "conf/grafana.ini"))
 	if err != nil {
-		log.Fatal(4, "Fail to parse 'conf/grafana.ini': %v", err)
+		log.Fatal(4, "Fail to parse '%v/conf/grafana.ini': %v", workDir, err)
 	}
 
 	CustomPath = os.Getenv("GRAFANA_CONF")
