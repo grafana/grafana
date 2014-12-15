@@ -107,6 +107,7 @@ function (angular, _, moment, config, store) {
     $scope.deleteDashboardConfirmed = function(options) {
       var id = options.id;
       $scope.db.deleteDashboard(id).then(function(id) {
+        $scope.appEvent('dashboard-deleted', id);
         $scope.appEvent('alert-success', ['Dashboard Deleted', id + ' has been deleted']);
       }, function(err) {
         $scope.appEvent('alert-error', ['Deleted failed', err]);
