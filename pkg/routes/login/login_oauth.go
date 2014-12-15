@@ -32,7 +32,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	log.Info("code: %v", code)
 
 	// handle call back
-	transport, err := connect.NewTransportWithCode(code)
+	transport, err := connect.NewTransportFromCode(code)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
