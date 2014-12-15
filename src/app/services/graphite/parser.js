@@ -67,9 +67,16 @@ define([
       }
 
       if (this.match('identifier') || this.match('number')) {
+        // hack to handle float numbers in metric segments
+        var parts = this.consumeToken().value.split('.');
+        if (parts.length === 2) {
+          this.tokens.splice(this.index, 0, { type: '.' });
+          this.tokens.splice(this.index + 1, 0, { type: 'number', value: parts[1] });
+        }
+
         return {
           type: 'segment',
-          value: this.consumeToken().value
+          value: parts[0]
         };
       }
 
