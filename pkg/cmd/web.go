@@ -12,9 +12,9 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/macaron-contrib/session"
 
+	"github.com/torkelo/grafana-pro/pkg/api"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/routes"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
 	"github.com/torkelo/grafana-pro/pkg/stores/sqlstore"
@@ -78,7 +78,7 @@ func runWeb(*cli.Context) {
 	}
 
 	m := newMacaron()
-	routes.Register(m)
+	api.Register(m)
 
 	var err error
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
