@@ -6,8 +6,7 @@ import (
 )
 
 var (
-	CreateAccount              func(acccount *Account) error
-	UpdateAccount              func(acccount *Account) error
+	SaveAccount                func(account *Account) error
 	GetAccountByLogin          func(emailOrName string) (*Account, error)
 	GetAccount                 func(accountId int64) (*Account, error)
 	GetOtherAccountsFor        func(accountId int64) ([]*OtherAccount, error)

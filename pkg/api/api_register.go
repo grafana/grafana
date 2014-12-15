@@ -27,7 +27,7 @@ func CreateAccount(c *middleware.Context) {
 		Password: registerModel.Password,
 	}
 
-	err := models.CreateAccount(&account)
+	err := models.SaveAccount(&account)
 	if err != nil {
 		log.Error(2, "Failed to create user account, email: %v, error: %v", registerModel.Email, err)
 		c.JSON(500, utils.DynMap{"status": "failed to create account"})

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
@@ -88,28 +89,36 @@ func GetOtherAccounts(c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-// func SetUsingAccount(c *middleware.Context) {
-// 	idString := c.Params.ByName("id")
-// 	id, _ := strconv.Atoi(idString)
-//
-// 	account := auth.userAccount
-// 	otherAccount, err := self.store.GetAccount(id)
-// 	if err != nil {
-// 		c.JSON(500, gin.H{"message": err.Error()})
-// 		return
-// 	}
-//
-// 	if otherAccount.Id != account.Id && !otherAccount.HasCollaborator(account.Id) {
-// 		c.Abort(401)
-// 		return
-// 	}
-//
-// 	account.UsingAccountId = otherAccount.Id
-// 	err = self.store.UpdateAccount(account)
-// 	if err != nil {
-// 		c.JSON(500, gin.H{"message": err.Error()})
-// 		return
-// 	}
-//
-// 	c.Abort(204)
-// }
+func SetUsingAccount(c *middleware.Context) {
+	usingAccountId := c.ParamsInt64(":id")
+
+	account := c.UserAccount
+	otherAccounts, err := models.GetOtherAccountsFor(c.UserAccount.Id)
+
+	if err != nil {
+		c.JSON(500, gin.H{"message": err.Error()})
+		return
+	}
+
+	// validate that the account id in the list
+	valid := false
+	for _, other := range otherAccounts {
+		if other.Id == usingAccountId {
+			valid = true
+		}
+	}
+
+	if !valid {
+		c.Status(401)
+		return
+	}
+
+	account.UsingAccountId = usingAccountId
+	err = models.SaveAccount(account)
+	if err != nil {
+		c.JSON(500, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.Status(204)
+}

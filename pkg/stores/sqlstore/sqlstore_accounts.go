@@ -1,10 +1,8 @@
 package sqlstore
 
-import (
-	"github.com/torkelo/grafana-pro/pkg/models"
-)
+import "github.com/torkelo/grafana-pro/pkg/models"
 
-func CreateAccount(account *models.Account) error {
+func SaveAccount(account *models.Account) error {
 	var err error
 
 	sess := x.NewSession()
@@ -14,7 +12,13 @@ func CreateAccount(account *models.Account) error {
 		return err
 	}
 
-	if _, err = sess.Insert(account); err != nil {
+	if account.Id == 0 {
+		_, err = sess.Insert(account)
+	} else {
+		_, err = sess.Id(account.Id).Update(account)
+	}
+
+	if err != nil {
 		sess.Rollback()
 		return err
 	} else if err = sess.Commit(); err != nil {

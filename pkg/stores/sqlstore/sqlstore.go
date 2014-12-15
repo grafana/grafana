@@ -29,7 +29,7 @@ var (
 func Init() {
 	tables = append(tables, new(models.Account), new(models.Dashboard), new(models.Collaborator))
 
-	models.CreateAccount = CreateAccount
+	models.SaveAccount = SaveAccount
 	models.GetAccount = GetAccount
 	models.GetAccountByLogin = GetAccountByLogin
 	models.GetOtherAccountsFor = GetOtherAccountsFor
