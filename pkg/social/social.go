@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gogits/gogs/models"
-	"github.com/golang/oauth2"
 	"github.com/torkelo/grafana-pro/pkg/log"
+	"github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
+
+	"github.com/golang/oauth2"
 )
 
 type BasicUserInfo struct {
@@ -25,7 +26,7 @@ type SocialConnector interface {
 	UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error)
 
 	AuthCodeURL(state, accessType, prompt string) string
-	NewTransportWithCode(code string) (*oauth2.Transport, error)
+	NewTransportFromCode(code string) (*oauth2.Transport, error)
 }
 
 var (
@@ -58,15 +59,13 @@ func NewOAuthService() {
 			continue
 		}
 
-		opts := &oauth2.Options{
-			ClientID:     info.ClientId,
-			ClientSecret: info.ClientSecret,
-			RedirectURL:  strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
-			Scopes:       info.Scopes,
-		}
-
 		setting.OAuthService.OAuthInfos[name] = info
-		config, err := oauth2.NewConfig(opts, info.AuthUrl, info.TokenUrl)
+		options, err := oauth2.New(
+			oauth2.Client(info.ClientId, info.ClientSecret),
+			oauth2.Scope(info.Scopes...),
+			oauth2.Endpoint(info.AuthUrl, info.TokenUrl),
+			oauth2.RedirectURL(strings.TrimSuffix(setting.AppUrl, "/")+SocialBaseUrl+name),
+		)
 
 		if err != nil {
 			log.Error(3, "Failed to init oauth service", err)
@@ -76,19 +75,19 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: config}
+			SocialMap["github"] = &SocialGithub{Options: options}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: config}
+			SocialMap["google"] = &SocialGoogle{Options: options}
 		}
 	}
 }
 
 type SocialGithub struct {
-	*oauth2.Config
+	*oauth2.Options
 }
 
 func (s *SocialGithub) Type() int {
@@ -130,7 +129,7 @@ func (s *SocialGithub) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, er
 //         \/             /_____/           \/
 
 type SocialGoogle struct {
-	*oauth2.Config
+	*oauth2.Options
 }
 
 func (s *SocialGoogle) Type() int {
