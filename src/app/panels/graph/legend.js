@@ -125,6 +125,12 @@ function (angular, app, _, kbn, $) {
 
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
+
+            // ignore empty series
+            if (panel.legend.hideEmpty && series.allIsNull) {
+              continue;
+            }
+
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }
             if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
