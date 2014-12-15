@@ -158,7 +158,12 @@ function (_, $) {
   addFuncDef({
     name: 'sumSeriesWithWildcards',
     category: categories.Combine,
-    params: [{ name: "node", type: "int" }],
+    params: [
+      { name: "node", type: "int" },
+      { name: "node", type: "int", optional: true },
+      { name: "node", type: "int", optional: true },
+      { name: "node", type: "int", optional: true }
+    ],
     defaultParams: [3]
   });
 
