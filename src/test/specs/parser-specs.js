@@ -165,6 +165,14 @@ define([
       expect(rootNode.params[1].value).to.be('#B');
     });
 
+    it('should parse metric expression with ip number segments', function() {
+      var parser = new Parser('5.10.123.5');
+      var rootNode = parser.getAst();
+      expect(rootNode.segments[0].value).to.be('5');
+      expect(rootNode.segments[1].value).to.be('10');
+      expect(rootNode.segments[2].value).to.be('123');
+      expect(rootNode.segments[3].value).to.be('5');
+    });
 
   });
 

@@ -117,18 +117,8 @@ function (angular, $, kbn, _, moment) {
       var newPanel = angular.copy(panel);
       newPanel.id = this.getNextPanelId();
 
-      while(rowIndex < this.rows.length) {
-        var currentRow = this.rows[rowIndex];
-        if (this.rowSpan(currentRow) <= 9) {
-          currentRow.panels.push(newPanel);
-          return;
-        }
-        rowIndex++;
-      }
-
-      var newRow = angular.copy(row);
-      newRow.panels = [newPanel];
-      this.rows.push(newRow);
+      var currentRow = this.rows[rowIndex];
+      currentRow.panels.push(newPanel);
     };
 
     p.formatDate = function(date, format) {

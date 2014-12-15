@@ -1,7 +1,8 @@
 define([
-  'lodash'
+  'lodash',
+  'jquery'
 ],
-function (_) {
+function (_, $) {
   'use strict';
 
   var index = [];
@@ -157,7 +158,12 @@ function (_) {
   addFuncDef({
     name: 'sumSeriesWithWildcards',
     category: categories.Combine,
-    params: [{ name: "node", type: "int" }],
+    params: [
+      { name: "node", type: "int" },
+      { name: "node", type: "int", optional: true },
+      { name: "node", type: "int", optional: true },
+      { name: "node", type: "int", optional: true }
+    ],
     defaultParams: [3]
   });
 
@@ -326,6 +332,11 @@ function (_) {
     category: categories.Transform,
     params: [{ name: "amount", type: "int", }],
     defaultParams: [10]
+  });
+
+  addFuncDef({
+    name: 'offsetToZero',
+    category: categories.Transform,
   });
 
   addFuncDef({
@@ -501,15 +512,15 @@ function (_) {
   addFuncDef({
     name: 'movingAverage',
     category: categories.Filter,
-    params: [{ name: "window size", type: "int" }],
+    params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'movingMedian',
     category: categories.Filter,
-    params: [{ name: "windowSize", type: "select", options: ['1min', '5min', '15min', '30min', '1hour'] }],
-    defaultParams: ['1min']
+    params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: ['5']
   });
 
   addFuncDef({
@@ -561,6 +572,17 @@ function (_) {
     defaultParams: [5]
   });
 
+  addFuncDef({
+    name: 'useSeriesAbove',
+    category: categories.Filter,
+    params: [
+      { name: "value", type: "int" },
+      { name: "search", type: "string" },
+      { name: "replace", type: "string" }
+    ],
+    defaultParams: [0, 'search', 'replace']
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
@@ -582,6 +604,9 @@ function (_) {
 
       var paramType = this.def.params[index].type;
       if (paramType === 'int' || paramType === 'value_or_series' || paramType === 'boolean') {
+        return value;
+      }
+      else if (paramType === 'int_or_interval' && $.isNumeric(value)) {
         return value;
       }
 

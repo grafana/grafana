@@ -55,7 +55,7 @@ function (angular, app, _, $) {
 
         function getColorForValue(value) {
           for (var i = data.thresholds.length - 1; i >= 0 ; i--) {
-            if (value > data.thresholds[i]) {
+            if (value >= data.thresholds[i]) {
               return data.colorMap[i];
             }
           }

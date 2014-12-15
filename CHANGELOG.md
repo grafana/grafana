@@ -1,4 +1,13 @@
-# 1.9.0 (unreleased)
+# 1.9.1 (unreleased)
+
+**Enhancements**
+- [Issue #1028](https://github.com/grafana/grafana/issues/1028). Graph: New legend option ``hideEmtpy`` to hide series with only null values
+
+**Fixes**
+- [Issue #1199](https://github.com/grafana/grafana/issues/1199). Graph: fix for series tooltip when one series is hidden/disabled
+- [Issue #1207](https://github.com/grafana/grafana/issues/1207). Graphite: movingAverage / movingMedian parameter type impovement, now handles int and interval parameter
+
+# 1.9.0 (2014-12-02)
 
 **Enhancements**
 - [Issue #1130](https://github.com/grafana/grafana/issues/1130). SinglestatPanel: Added null point handling, and value to text mapping
@@ -16,7 +25,7 @@
 
 # 1.9.0-rc1 (2014-11-17)
 
-**UI Improvements*
+**UI Improvements**
 - [Issue #770](https://github.com/grafana/grafana/issues/770). UI: Panel dropdown menu replaced with a new panel menu
 
 **Graph**

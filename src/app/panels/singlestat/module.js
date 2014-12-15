@@ -128,10 +128,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     $scope.getDecimalsForValue = function(value) {
-      var opts = {};
-      if (value === 0 || value === 1) {
-        return { decimals: 0, scaledDecimals: 0 };
-      }
 
       var delta = value / 2;
       var dec = -Math.floor(Math.log(delta) / Math.LN10);
@@ -157,13 +153,12 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
       size *= magn;
 
-      if (opts.minTickSize != null && size < opts.minTickSize) {
-        size = opts.minTickSize;
-      }
+      // reduce starting decimals if not needed
+      if (Math.floor(value) === value) { dec = 0; }
 
       var result = {};
       result.decimals = Math.max(0, dec);
-      result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN11) + 2;
+      result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
       return result;
     };
