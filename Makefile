@@ -3,7 +3,7 @@
 all: build
 
 build:
-	go build ../pkg/cmd/grafana-pro/
+	go build -o bin/grafana .
 
 setup:
 	go get github.com/tools/godep
