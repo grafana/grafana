@@ -136,6 +136,22 @@ define([
       });
     });
 
+    describe('when getting altSegments and metricFindQuery retuns empty array', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = 'test.count';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+        ctx.scope.init();
+        ctx.scope.getAltSegments(1);
+        ctx.scope.$digest();
+        ctx.scope.$parent = { get_data: sinon.spy() };
+      });
+
+      it('should have no segments', function() {
+        expect(ctx.scope.altSegments.length).to.be(0);
+      });
+
+    });
+
     describe('targetChanged', function() {
       beforeEach(function() {
         ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));

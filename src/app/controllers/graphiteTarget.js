@@ -162,6 +162,11 @@ function (angular, _, config, gfunc, Parser) {
             return new MetricSegment({ value: segment.text, expandable: segment.expandable });
           });
 
+          if ($scope.altSegments.length === 0) {
+            return;
+          }
+
+          // add template variables
           _.each(templateSrv.variables, function(variable) {
             $scope.altSegments.unshift(new MetricSegment({
               type: 'template',
@@ -170,6 +175,7 @@ function (angular, _, config, gfunc, Parser) {
             }));
           });
 
+          // add wildcard option
           $scope.altSegments.unshift(new MetricSegment('*'));
         })
         .then(null, function(err) {
