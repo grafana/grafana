@@ -1,10 +1,10 @@
-package login
+package api
 
 import (
+	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/routes/dtos"
 	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
