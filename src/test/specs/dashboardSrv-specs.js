@@ -70,16 +70,6 @@ define([
       expect(dashboard.rows[0].panels[1].id).to.be(11);
     });
 
-    it('duplicate should add row if there is no space left', function() {
-      var panel = { span: 12, attr: '123' };
-      dashboard.rows = [{ panels: [panel] }];
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
-
-      expect(dashboard.rows[0].panels[0].span).to.be(12);
-      expect(dashboard.rows[0].panels.length).to.be(1);
-      expect(dashboard.rows[1].panels[0].attr).to.be('123');
-    });
-
   });
 
   describe('when creating dashboard with editable false', function() {
