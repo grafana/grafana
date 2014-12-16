@@ -6,16 +6,16 @@ import (
 	"reflect"
 )
 
-type QueryHandler interface{}
-type Query interface{}
+type HandlerFunc interface{}
+type Msg interface{}
 
 type Bus interface {
-	SendQuery(query Query) error
-	AddQueryHandler(handler QueryHandler)
+	Dispatch(msg Msg) error
+	AddHandler(handler HandlerFunc)
 }
 
 type InProcBus struct {
-	handlerIndex map[string]QueryHandler
+	handlers map[string]HandlerFunc
 }
 
 // temp stuff, not sure how to handle bus instance, and init yet
@@ -23,21 +23,20 @@ var globalBus = New()
 
 func New() Bus {
 	bus := &InProcBus{}
-	bus.handlerIndex = make(map[string]QueryHandler)
+	bus.handlers = make(map[string]HandlerFunc)
 	return bus
 }
 
-func (b *InProcBus) SendQuery(query Query) error {
-	var queryName = reflect.TypeOf(query).Elem().Name()
-	fmt.Printf("sending query for type: %v\n", queryName)
+func (b *InProcBus) Dispatch(msg Msg) error {
+	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	var handler = b.handlerIndex[queryName]
+	var handler = b.handlers[msgName]
 	if handler == nil {
 		return errors.New("handler not found")
-
 	}
+
 	var params = make([]reflect.Value, 1)
-	params[0] = reflect.ValueOf(query)
+	params[0] = reflect.ValueOf(msg)
 
 	ret := reflect.ValueOf(handler).Call(params)
 	err := ret[0].Interface()
@@ -48,18 +47,18 @@ func (b *InProcBus) SendQuery(query Query) error {
 	}
 }
 
-func (b *InProcBus) AddQueryHandler(handler QueryHandler) {
+func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
 	fmt.Printf("QueryType %v\n", queryTypeName)
-	b.handlerIndex[queryTypeName] = handler
+	b.handlers[queryTypeName] = handler
 }
 
 // Package level functions
-func AddQueryHandler(implName string, handler QueryHandler) {
-	globalBus.AddQueryHandler(handler)
+func AddHandler(implName string, handler HandlerFunc) {
+	globalBus.AddHandler(handler)
 }
 
-func SendQuery(query Query) error {
-	return globalBus.SendQuery(query)
+func Dispatch(msg Msg) error {
+	return globalBus.Dispatch(msg)
 }
