@@ -96,8 +96,9 @@ func AddCollaborator(collaborator *models.Collaborator) error {
 func GetOtherAccountsFor(accountId int64) ([]*models.OtherAccount, error) {
 	collaborators := make([]*models.OtherAccount, 0)
 	sess := x.Table("collaborator")
-	sess.Join("INNER", "account", "account.id=collaborator.account_Id")
+	sess.Join("INNER", "account", "collaborator.for_account_id=account.id")
 	sess.Where("account_id=?", accountId)
+	sess.Cols("collaborator.id", "collaborator.role", "account.email")
 	err := sess.Find(&collaborators)
 	return collaborators, err
 }
