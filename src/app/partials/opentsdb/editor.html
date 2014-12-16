@@ -118,13 +118,25 @@
           <li class="grafana-target-segment">
             Alias:
           </li>
-					<li>
-						<input type="text"
+          <li>
+            <input type="text"
                    class="grafana-target-segment-input input-medium"
                    ng-model="target.alias"
                    spellcheck='false'
                    placeholder="series alias"
                    data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                   />
+          </li>
+          <li class="grafana-target-segment">
+            Scale:
+          </li>
+		  <li>
+		    <input type="text"
+                   class="grafana-target-segment-input input-medium"
+                   ng-model="target.scale"
+                   spellcheck='false'
+                   placeholder="Scale value by"
                    ng-blur="targetBlur()"
                    />
           </li>

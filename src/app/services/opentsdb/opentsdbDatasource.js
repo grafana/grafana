@@ -97,11 +97,21 @@ function (angular, _, kbn) {
 
       metricLabel = createMetricLabel(md.metric, tagData, options);
 
-      // TSDB returns datapoints has a hash of ts => value.
-      // Can't use _.pairs(invert()) because it stringifies keys/values
-      _.each(md.dps, function (v, k) {
-        dps.push([v, k * 1000]);
-      });
+      // TSDB doesn't support scaling, so allow it client side
+      var scale = parseFloat(options.scale);
+      if (!isNaN(scale) && scale !== 1){
+        _.each(md.dps, function (v, k) {
+          dps.push([v * scale, k * 1000]);
+        });
+      }
+      else
+      {
+        // TSDB returns datapoints has a hash of ts => value.
+        // Can't use _.pairs(invert()) because it stringifies keys/values
+        _.each(md.dps, function (v, k) {
+          dps.push([v, k * 1000]);
+        });
+      }
 
       return { target: metricLabel, datapoints: dps };
     }
