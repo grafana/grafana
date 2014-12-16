@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 
 	"github.com/go-xorm/xorm"
@@ -27,18 +27,19 @@ var (
 )
 
 func Init() {
-	tables = append(tables, new(models.Account), new(models.Dashboard), new(models.Collaborator))
+	tables = append(tables, new(m.Account), new(m.Dashboard),
+		new(m.Collaborator), new(m.DataSource))
 
-	models.SaveAccount = SaveAccount
-	models.GetAccount = GetAccount
-	models.GetAccountByLogin = GetAccountByLogin
-	models.GetOtherAccountsFor = GetOtherAccountsFor
-	models.GetDashboard = GetDashboard
-	models.SaveDashboard = SaveDashboard
-	models.SearchQuery = SearchQuery
-	models.DeleteDashboard = DeleteDashboard
-	models.GetCollaboratorsForAccount = GetCollaboratorsForAccount
-	models.AddCollaborator = AddCollaborator
+	m.SaveAccount = SaveAccount
+	m.GetAccount = GetAccount
+	m.GetAccountByLogin = GetAccountByLogin
+	m.GetOtherAccountsFor = GetOtherAccountsFor
+	m.GetDashboard = GetDashboard
+	m.SaveDashboard = SaveDashboard
+	m.SearchQuery = SearchQuery
+	m.DeleteDashboard = DeleteDashboard
+	m.GetCollaboratorsForAccount = GetCollaboratorsForAccount
+	m.AddCollaborator = AddCollaborator
 }
 
 func LoadModelsConfig() {

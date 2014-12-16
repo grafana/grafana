@@ -4,6 +4,7 @@ all: build
 
 build:
 	go build -o bin/grafana .
+	go test ./pkg/...
 
 lint:
 	@gofmt -w . && go tool vet pkg/**/*.go && echo "$(GOLINT)"

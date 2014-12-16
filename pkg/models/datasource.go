@@ -33,3 +33,13 @@ type GetDataSourcesQuery struct {
 	AccountId int64
 	Resp      []*DataSource
 }
+
+type AddDataSourceCommand struct {
+	AccountId int64
+	Name      string
+	Type      DsType
+	Access    DsAccess
+	Url       string
+	Password  string
+	User      string
+}

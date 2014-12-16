@@ -10,14 +10,14 @@ type TestQuery struct {
 	Resp string
 }
 
-func TestHandlerReturnsError(t *testing.T) {
+func TestQueryHandlerReturnsError(t *testing.T) {
 	bus := New()
 
-	bus.AddQueryHandler(func(query *TestQuery) error {
+	bus.AddHandler(func(query *TestQuery) error {
 		return errors.New("handler error")
 	})
 
-	err := bus.SendQuery(&TestQuery{})
+	err := bus.Dispatch(&TestQuery{})
 
 	if err == nil {
 		t.Fatal("Send query failed " + err.Error())
@@ -26,16 +26,16 @@ func TestHandlerReturnsError(t *testing.T) {
 	}
 }
 
-func TestHandlerReturn(t *testing.T) {
+func TestQueryHandlerReturn(t *testing.T) {
 	bus := New()
 
-	bus.AddQueryHandler(func(q *TestQuery) error {
+	bus.AddHandler(func(q *TestQuery) error {
 		q.Resp = "hello from handler"
 		return nil
 	})
 
 	query := &TestQuery{}
-	err := bus.SendQuery(query)
+	err := bus.Dispatch(query)
 
 	if err != nil {
 		t.Fatal("Send query failed " + err.Error())
