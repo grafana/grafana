@@ -151,6 +151,7 @@ func (mapper SnakeMapper) Table2Obj(name string) string {
 func (mapper SnakeMapper) TableName(t string) string {
 	return t
 }
+
 // provide prefix table name support
 type PrefixMapper struct {
 	Mapper IMapper

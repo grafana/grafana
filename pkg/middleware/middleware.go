@@ -9,6 +9,7 @@ import (
 
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 type Context struct {
@@ -60,8 +61,8 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 	if err != nil {
 		log.Error(4, "%s: %v", message, err)
-		if macaron.Env != macaron.PROD {
-			resp["error"] = err
+		if setting.Env != setting.PROD {
+			resp["error"] = err.Error()
 		}
 	}
 

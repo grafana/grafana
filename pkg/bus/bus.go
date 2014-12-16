@@ -18,6 +18,9 @@ type InProcBus struct {
 	handlerIndex map[string]QueryHandler
 }
 
+// temp stuff, not sure how to handle bus instance, and init yet
+var globalBus = New()
+
 func New() Bus {
 	bus := &InProcBus{}
 	bus.handlerIndex = make(map[string]QueryHandler)
@@ -50,4 +53,13 @@ func (b *InProcBus) AddQueryHandler(handler QueryHandler) {
 	queryTypeName := handlerType.In(0).Elem().Name()
 	fmt.Printf("QueryType %v\n", queryTypeName)
 	b.handlerIndex[queryTypeName] = handler
+}
+
+// Package level functions
+func AddQueryHandler(implName string, handler QueryHandler) {
+	globalBus.AddQueryHandler(handler)
+}
+
+func SendQuery(query Query) error {
+	return globalBus.SendQuery(query)
 }

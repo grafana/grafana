@@ -20,7 +20,7 @@ func TestHandlerReturnsError(t *testing.T) {
 	err := bus.SendQuery(&TestQuery{})
 
 	if err == nil {
-		t.Fatal("Send query failed %v", err)
+		t.Fatal("Send query failed " + err.Error())
 	} else {
 		t.Log("Handler error received ok")
 	}
@@ -38,7 +38,7 @@ func TestHandlerReturn(t *testing.T) {
 	err := bus.SendQuery(query)
 
 	if err != nil {
-		t.Fatal("Send query failed %v", err)
+		t.Fatal("Send query failed " + err.Error())
 	} else if query.Resp != "hello from handler" {
 		t.Fatal("Failed to get response from handler")
 	}

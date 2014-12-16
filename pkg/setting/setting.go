@@ -25,8 +25,15 @@ const (
 	HTTPS Scheme = "https"
 )
 
+const (
+	DEV  string = "development"
+	PROD string = "production"
+	TEST string = "test"
+)
+
 var (
 	// App settings.
+	Env       string = DEV
 	AppVer    string
 	AppName   string
 	AppUrl    string
