@@ -1,6 +1,6 @@
 define([
   'angular',
-  '../controllers/pro/loginCtrl',
+  'controllers/pro/loginCtrl',
 ],
 function (angular) {
   "use strict";

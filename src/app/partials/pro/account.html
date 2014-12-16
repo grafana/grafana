@@ -1,15 +1,5 @@
-<div class="navbar navbar-static-top">
-	<div class="navbar-inner">
-		<div class="container-fluid">
-			<span class="brand">
-				<a ng-click="toggleProSideMenu()">
-					<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-				</a>
-				<span class="page-title">Account Settings</span>
-			</span>
-		</div>
-	</div>
-</div>
+
+<div ng-include="'app/partials/pro/navbar.html'" ng-init="pageTitle='Account Settings'"></div>
 
 <div class="dashboard-edit-view">
 	<div class="editor-row">

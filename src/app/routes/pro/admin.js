@@ -1,6 +1,7 @@
 define([
   'angular',
   'controllers/pro/accountCtrl',
+  'controllers/pro/datasourcesCtrl',
 ],
 function (angular) {
   "use strict";
@@ -10,8 +11,8 @@ function (angular) {
   module.config(function($routeProvider) {
     $routeProvider
       .when('/admin/datasources', {
-        templateUrl: 'app/partials/pro/admin_datasources.html',
-        controller : 'AdminCtrl',
+        templateUrl: 'app/partials/pro/datasources.html',
+        controller : 'DataSourcesCtrl',
       })
       .when('/account', {
         templateUrl: 'app/partials/pro/account.html',
