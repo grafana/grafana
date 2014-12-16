@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 
@@ -26,10 +27,14 @@ var (
 	UseSQLite3 bool
 )
 
-func Init() {
+func init() {
+	tables = make([]interface{}, 0)
+
 	tables = append(tables, new(m.Account), new(m.Dashboard),
 		new(m.Collaborator), new(m.DataSource))
+}
 
+func Init() {
 	m.SaveAccount = SaveAccount
 	m.GetAccount = GetAccount
 	m.GetAccountByLogin = GetAccountByLogin
@@ -42,55 +47,52 @@ func Init() {
 	m.AddCollaborator = AddCollaborator
 }
 
-func LoadModelsConfig() {
-	DbCfg.Type = setting.Cfg.MustValue("database", "type")
-	if DbCfg.Type == "sqlite3" {
-		UseSQLite3 = true
-	}
-	DbCfg.Host = setting.Cfg.MustValue("database", "host")
-	DbCfg.Name = setting.Cfg.MustValue("database", "name")
-	DbCfg.User = setting.Cfg.MustValue("database", "user")
-	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = setting.Cfg.MustValue("database", "password")
-	}
-	DbCfg.SslMode = setting.Cfg.MustValue("database", "ssl_mode")
-	DbCfg.Path = setting.Cfg.MustValue("database", "path", "data/grafana.db")
-}
-
 func NewEngine() (err error) {
-	if err = SetEngine(); err != nil {
-		return err
+	x, err = getEngine()
+
+	if err != nil {
+		return fmt.Errorf("sqlstore.init(fail to connect to database): %v", err)
 	}
-	if err = x.Sync2(tables...); err != nil {
-		return fmt.Errorf("sync database struct error: %v\n", err)
+
+	err = SetEngine(x, true)
+
+	if err != nil {
+		log.Fatal(4, "fail to initialize orm engine: %v", err)
 	}
+
 	return nil
 }
 
-func SetEngine() (err error) {
-	x, err = getEngine()
-	if err != nil {
-		return fmt.Errorf("models.init(fail to connect to database): %v", err)
+func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
+	x = engine
+
+	if err := x.Sync2(tables...); err != nil {
+		return fmt.Errorf("sync database struct error: %v\n", err)
 	}
 
-	logPath := path.Join(setting.LogRootPath, "xorm.log")
-	os.MkdirAll(path.Dir(logPath), os.ModePerm)
+	if enableLog {
+		logPath := path.Join(setting.LogRootPath, "xorm.log")
+		os.MkdirAll(path.Dir(logPath), os.ModePerm)
 
-	f, err := os.Create(logPath)
-	if err != nil {
-		return fmt.Errorf("models.init(fail to create xorm.log): %v", err)
+		f, err := os.Create(logPath)
+		if err != nil {
+			return fmt.Errorf("sqlstore.init(fail to create xorm.log): %v", err)
+		}
+		x.Logger = xorm.NewSimpleLogger(f)
+
+		x.ShowSQL = true
+		x.ShowInfo = true
+		x.ShowDebug = true
+		x.ShowErr = true
+		x.ShowWarn = true
 	}
-	x.Logger = xorm.NewSimpleLogger(f)
 
-	x.ShowSQL = true
-	x.ShowInfo = true
-	x.ShowDebug = true
-	x.ShowErr = true
-	x.ShowWarn = true
 	return nil
 }
 
 func getEngine() (*xorm.Engine, error) {
+	LoadConfig()
+
 	cnnstr := ""
 	switch DbCfg.Type {
 	case "mysql":
@@ -113,5 +115,45 @@ func getEngine() (*xorm.Engine, error) {
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
+
 	return xorm.NewEngine(DbCfg.Type, cnnstr)
+}
+
+func LoadConfig() {
+	DbCfg.Type = setting.Cfg.MustValue("database", "type")
+	if DbCfg.Type == "sqlite3" {
+		UseSQLite3 = true
+	}
+	DbCfg.Host = setting.Cfg.MustValue("database", "host")
+	DbCfg.Name = setting.Cfg.MustValue("database", "name")
+	DbCfg.User = setting.Cfg.MustValue("database", "user")
+	if len(DbCfg.Pwd) == 0 {
+		DbCfg.Pwd = setting.Cfg.MustValue("database", "password")
+	}
+	DbCfg.SslMode = setting.Cfg.MustValue("database", "ssl_mode")
+	DbCfg.Path = setting.Cfg.MustValue("database", "path", "data/grafana.db")
+}
+
+type dbTransactionFunc func(sess *xorm.Session) error
+
+func inTransaction(callback dbTransactionFunc) error {
+	var err error
+
+	sess := x.NewSession()
+	defer sess.Close()
+
+	if err = sess.Begin(); err != nil {
+		return err
+	}
+
+	err = callback(sess)
+
+	if err != nil {
+		sess.Rollback()
+		return err
+	} else if err = sess.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

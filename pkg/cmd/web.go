@@ -70,12 +70,7 @@ func runWeb(*cli.Context) {
 	social.NewOAuthService()
 
 	sqlstore.Init()
-
-	// init database
-	sqlstore.LoadModelsConfig()
-	if err := sqlstore.NewEngine(); err != nil {
-		log.Fatal(4, "fail to initialize orm engine: %v", err)
-	}
+	sqlstore.NewEngine()
 
 	m := newMacaron()
 	api.Register(m)

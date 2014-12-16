@@ -30,4 +30,5 @@ func AddDataSource(c *middleware.Context) {
 		return
 	}
 
+	c.Status(204)
 }
