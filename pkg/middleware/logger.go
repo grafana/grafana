@@ -46,8 +46,8 @@ func Logger() macaron.Handler {
 				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
 				return
 			case 304:
+				//content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
 				return
-				content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
 			case 404:
 				content = fmt.Sprintf("\033[1;31m%s\033[0m", content)
 			case 500:
