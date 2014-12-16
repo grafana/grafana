@@ -13,6 +13,10 @@ function (angular, _) {
       return this.request({ method: 'GET', url: url });
     };
 
+    this.post = function(url, data) {
+      return this.request({ method: 'POST', url: url, data: data });
+    };
+
     this.request = function(options) {
       var httpOptions = {
         url: options.url,

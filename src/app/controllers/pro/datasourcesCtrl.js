@@ -9,13 +9,29 @@ function (angular) {
 
   module.controller('DataSourcesCtrl', function($scope, $http, backendSrv) {
 
-    $scope.init = function() {
+    var defaults = {
+      name: '',
+      type: 'graphite',
+      url: '',
+      access: 'proxy'
     };
 
-    $scope.getAccount = function() {
-      backendSrv.get('/api/account/').then(function(account) {
-        $scope.account = account;
-        $scope.collaborators = account.collaborators;
+    $scope.init = function() {
+      $scope.current = angular.copy(defaults);
+    };
+
+    $scope.addDatasource = function() {
+      if (!$scope.editForm.$valid) {
+        return;
+      }
+
+      backendSrv.request({
+        method: 'POST',
+        url: '/api/admin/datasource/add',
+        data: $scope.current,
+        desc: 'Add data source'
+      }).then(function(result) {
+        console.log('add datasource result', result);
       });
     };
 

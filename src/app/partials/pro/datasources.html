@@ -1,2 +1,49 @@
-
 <div ng-include="'app/partials/pro/navbar.html'" ng-init="pageTitle='Data sources'"></div>
+
+<div class="dashboard-edit-view" style="min-height: 500px">
+	<div class="editor-row">
+		<div class="section">
+
+			<div class="dashboard-editor-header">
+				<div class="dashboard-editor-title">
+					<i class="icon icon-sitemap"></i>
+					Add data source
+				</div>
+			</div>
+
+			<form name="editForm">
+
+				<div class="dashboard-editor-body">
+
+					<div class="editor-row">
+						<div class="editor-option">
+							<label class="small">Data source name</label>
+							<input type="text" class="input-large" required ng-model='current.name' placeholder="name" required></input>
+						</div>
+						<div class="editor-option">
+							<label class="small">Type</label>
+							<select class="input-medium" ng-model="current.type" ng-options="f for f in ['graphite', 'influxdb', 'opentsdb']" ng-change="typeChanged()"></select>
+						</div>
+					</div>
+
+					<div class="editor-row">
+						<div class="editor-option">
+							<label class="small">Url</label>
+							<input type="text" class="input-xxlarge" required ng-model='current.url' placeholder="http://my.graphite.com:8080" required></input>
+						</div>
+						<div class="editor-option">
+							<label class="small">Access method <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
+							<select class="input-medium" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+						</div>
+					</div>
+
+				</div>
+
+				<div class="dashboard-editor-footer">
+					<button type="submit" class="btn btn-success" ng-click="addDatasource()">Add</button>
+				</div>
+
+			</form>
+		</div>
+	</div>
+</div>
