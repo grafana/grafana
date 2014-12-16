@@ -2,7 +2,6 @@ package bus
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 )
 
@@ -50,7 +49,6 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
-	fmt.Printf("QueryType %v\n", queryTypeName)
 	b.handlers[queryTypeName] = handler
 }
 

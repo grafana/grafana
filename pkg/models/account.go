@@ -37,6 +37,7 @@ type Account struct {
 	Company         string
 	NextDashboardId int
 	UsingAccountId  int64
-	Created         time.Time `xorm:"CREATED"`
-	Updated         time.Time `xorm:"UPDATED"`
+
+	Created time.Time
+	Updated time.Time
 }

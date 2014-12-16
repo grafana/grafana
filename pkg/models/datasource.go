@@ -6,8 +6,8 @@ const (
 	DS_GRAPHITE      = "GRAPHITE"
 	DS_INFLUXDB      = "INFLUXDB"
 	DS_ES            = "ES"
-	DS_ACESSS_DIRECT = "DIRECT"
-	DS_ACESSS_PROXY  = "PROXY"
+	DS_ACCESS_DIRECT = "DIRECT"
+	DS_ACCESS_PROXY  = "PROXY"
 )
 
 type DsType string
