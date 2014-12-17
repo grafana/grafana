@@ -106,21 +106,23 @@ function (_) {
   };
 
   p.createNameForSeries = function(seriesName, groupByColValue) {
-    var name = this.alias
-      .replace('$s', seriesName);
-
+    var regex = /\$(\w+)/g;
     var segments = seriesName.split('.');
-    for (var i = 0; i < segments.length; i++) {
-      if (segments[i].length > 0) {
-        name = name.replace('$' + i, segments[i]);
+
+    return this.alias.replace(regex, function(match, group) {
+      if (group === 's') {
+        return seriesName;
       }
-    }
+      else if (group === 'g') {
+        return groupByColValue;
+      }
+      var index = parseInt(group);
+      if (_.isNumber(index) && index < segments.length) {
+        return segments[index];
+      }
+      return match;
+    });
 
-    if (this.groupByField) {
-      name = name.replace('$g', groupByColValue);
-    }
-
-    return name;
   };
 
   return InfluxSeries;
