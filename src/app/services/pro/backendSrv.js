@@ -26,7 +26,9 @@ function (angular, _) {
 
       return $http(httpOptions).then(function(results) {
         if (options.method !== 'GET') {
-          alertSrv.set(options.desc + ' OK ', '', 'success', 3000);
+          if (results && results.data.message) {
+            alertSrv.set(results.data.message, '', 'success', 3000);
+          }
         }
         return results.data;
       }, function(err) {
@@ -42,7 +44,11 @@ function (angular, _) {
           data.severity = "warning";
         }
 
-        alertSrv.set(options.desc + ' failed', data.message, data.severity, 10000);
+        if (data.message) {
+          alertSrv.set("Error", data.message, data.severity, 10000);
+        }
+
+        throw data;
       });
     };
 

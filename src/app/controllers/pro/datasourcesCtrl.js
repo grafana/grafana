@@ -25,14 +25,10 @@ function (angular) {
         return;
       }
 
-      backendSrv.request({
-        method: 'POST',
-        url: '/api/admin/datasource/add',
-        data: $scope.current,
-        desc: 'Add data source'
-      }).then(function(result) {
-        console.log('add datasource result', result);
-      });
+      backendSrv.post('/api/admin/datasources/add', $scope.current)
+        .then(function(result) {
+          console.log('add datasource result', result);
+        });
     };
 
     $scope.init();
