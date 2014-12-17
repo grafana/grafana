@@ -31,7 +31,7 @@ type DataSource struct {
 
 type GetDataSourcesQuery struct {
 	AccountId int64
-	Resp      []*DataSource
+	Result    []*DataSource
 }
 
 type AddDataSourceCommand struct {
@@ -42,4 +42,20 @@ type AddDataSourceCommand struct {
 	Url       string
 	Password  string
 	User      string
+}
+
+type UpdateDataSourceCommand struct {
+	Id        int64
+	AccountId int64
+	Name      string
+	Type      DsType
+	Access    DsAccess
+	Url       string
+	Password  string
+	User      string
+}
+
+type DeleteDataSourceCommand struct {
+	Id        int64
+	AccountId int64
 }

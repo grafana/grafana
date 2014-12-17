@@ -12,13 +12,23 @@ import (
 func init() {
 	bus.AddHandler("sql", GetDataSources)
 	bus.AddHandler("sql", AddDataSource)
+	bus.AddHandler("sql", DeleteDataSource)
+	bus.AddHandler("sql", UpdateDataSource)
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
 	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId)
 
-	query.Resp = make([]*m.DataSource, 0)
-	return sess.Find(&query.Resp)
+	query.Result = make([]*m.DataSource, 0)
+	return sess.Find(&query.Result)
+}
+
+func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM data_source WHERE id=? and account_id=?"
+		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		return err
+	})
 }
 
 func AddDataSource(cmd *m.AddDataSourceCommand) error {
@@ -36,12 +46,28 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Updated:   time.Now(),
 		}
 
-		if ds.Id == 0 {
-			_, err = sess.Insert(ds)
-		} else {
-			_, err = sess.Id(ds.Id).Update(ds)
+		_, err = sess.Insert(ds)
+
+		return err
+	})
+}
+
+func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
+
+	return inTransaction(func(sess *xorm.Session) error {
+		var err error
+
+		ds := m.DataSource{
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+			Name:      cmd.Name,
+			Type:      cmd.Type,
+			Access:    cmd.Access,
+			Url:       cmd.Url,
+			Updated:   time.Now(),
 		}
 
+		_, err = sess.Where("id=? and account_id=?", ds.Id, ds.AccountId).Update(&ds)
 		return err
 	})
 }

@@ -39,9 +39,8 @@ type Collaborator struct {
 }
 
 type DataSource struct {
-	Id        int64 `json:"id"`
-	AccountId int64 `json:"accountId"`
-
+	Id        int64           `json:"id"`
+	AccountId int64           `json:"accountId"`
 	Name      string          `json:"name"`
 	Type      models.DsType   `json:"type"`
 	Access    models.DsAccess `json:"access"`
