@@ -13,6 +13,10 @@ function (angular, _) {
       return this.request({ method: 'GET', url: url });
     };
 
+    this.delete = function(url) {
+      return this.request({ method: 'DELETE', url: url });
+    };
+
     this.post = function(url, data) {
       return this.request({ method: 'POST', url: url, data: data });
     };
