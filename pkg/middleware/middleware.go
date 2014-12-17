@@ -56,6 +56,14 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	ctx.HTML(status, strconv.Itoa(status))
 }
 
+func (ctx *Context) JsonOK(message string) {
+	resp := make(map[string]interface{})
+
+	resp["message"] = message
+
+	ctx.JSON(200, resp)
+}
+
 func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 

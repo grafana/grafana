@@ -38,6 +38,19 @@ type Collaborator struct {
 	Role      string `json:"role"`
 }
 
+type DataSource struct {
+	Id        int64 `json:"id"`
+	AccountId int64 `json:"accountId"`
+
+	Name      string          `json:"name"`
+	Type      models.DsType   `json:"type"`
+	Access    models.DsAccess `json:"access"`
+	Url       string          `json:"url"`
+	Password  string          `json:"password"`
+	User      string          `json:"user"`
+	BasicAuth bool            `json:"basicAuth"`
+}
+
 func NewCurrentUser(account *models.Account) *CurrentUser {
 	model := &CurrentUser{}
 	if account != nil {
