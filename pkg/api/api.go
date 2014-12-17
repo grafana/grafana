@@ -27,8 +27,8 @@ func Register(m *macaron.Macaron) {
 
 	// datasources
 	m.Get("/admin/datasources/", auth, Index)
-	m.Get("/api/admin/datasource/list", auth, GetDataSources)
-	m.Post("/api/admin/datasource/add", auth, AddDataSource)
+	m.Get("/api/admin/datasources/list", auth, GetDataSources)
+	m.Post("/api/admin/datasources/add", auth, AddDataSource)
 
 	// user register
 	m.Get("/register/*_", Index)

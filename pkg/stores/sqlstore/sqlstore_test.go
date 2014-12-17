@@ -47,6 +47,9 @@ func TestDataAccess(t *testing.T) {
 
 			So(len(query.Resp), ShouldEqual, 1)
 
+			ds := query.Resp[0]
+
+			So(ds.AccountId, ShouldEqual, 10)
 		})
 
 	})
