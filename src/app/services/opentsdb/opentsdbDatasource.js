@@ -148,7 +148,7 @@ function (angular, _, kbn) {
       }
 
       if (target.shouldDownsample) {
-        query.downsample = target.downsampleInterval + "-" + target.downsampleAggregator;
+        query.downsample = templateSrv.replace(target.downsampleInterval) + "-" + target.downsampleAggregator;
       }
 
       query.tags = angular.copy(target.tags);
