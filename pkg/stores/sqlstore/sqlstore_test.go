@@ -45,11 +45,42 @@ func TestDataAccess(t *testing.T) {
 			err = GetDataSources(&query)
 			So(err, ShouldBeNil)
 
-			So(len(query.Resp), ShouldEqual, 1)
+			So(len(query.Result), ShouldEqual, 1)
 
-			ds := query.Resp[0]
+			ds := query.Result[0]
 
 			So(ds.AccountId, ShouldEqual, 10)
+		})
+
+		Convey("Given a datasource", func() {
+
+			AddDataSource(&m.AddDataSourceCommand{
+				AccountId: 10,
+				Type:      m.DS_GRAPHITE,
+				Access:    m.DS_ACCESS_DIRECT,
+				Url:       "http://test",
+			})
+
+			query := m.GetDataSourcesQuery{AccountId: 10}
+			GetDataSources(&query)
+			ds := query.Result[0]
+
+			Convey("Can delete datasource", func() {
+				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, AccountId: ds.AccountId})
+				So(err, ShouldBeNil)
+
+				GetDataSources(&query)
+				So(len(query.Result), ShouldEqual, 0)
+			})
+
+			Convey("Can not delete datasource with wrong accountId", func() {
+				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, AccountId: 123123})
+				So(err, ShouldBeNil)
+
+				GetDataSources(&query)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+
 		})
 
 	})
