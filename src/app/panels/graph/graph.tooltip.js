@@ -70,7 +70,11 @@ function ($) {
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
-        if (!series.data.length) { continue; }
+
+        if (!series.data.length) {
+          results.push({ hidden: true });
+          continue;
+        }
 
         if (scope.panel.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
@@ -99,9 +103,9 @@ function ($) {
             lasthoverIndex = hoverIndex;
           }
 
-          results.push({ value: value, hoverIndex: newhoverIndex, series: series });
+          results.push({ value: value, hoverIndex: newhoverIndex});
         } else {
-          results.push({ value: value, hoverIndex: hoverIndex, series: series });
+          results.push({ value: value, hoverIndex: hoverIndex});
         }
       }
 
@@ -150,7 +154,12 @@ function ($) {
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
-          series = hoverInfo.series;
+
+          if (hoverInfo.hidden) {
+            continue;
+          }
+
+          series = seriesList[i];
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
