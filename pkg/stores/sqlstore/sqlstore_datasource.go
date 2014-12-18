@@ -14,6 +14,17 @@ func init() {
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSource)
 	bus.AddHandler("sql", UpdateDataSource)
+	bus.AddHandler("sql", GetDataSourceByName)
+}
+
+func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
+	sess := x.Limit(100, 0).Where("account_id=? AND name=?", query.AccountId, query.Name)
+	has, err := sess.Get(&query.Result)
+
+	if !has {
+		return m.ErrDataSourceNotFound
+	}
+	return err
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {

@@ -25,12 +25,15 @@ func Register(m *macaron.Macaron) {
 	m.Post("/api/account/using/:id", auth, SetUsingAccount)
 	m.Get("/api/account/others", auth, GetOtherAccounts)
 
-	// datasources
+	// data sources
 	m.Get("/admin/datasources/", auth, Index)
 	m.Get("/api/admin/datasources/list", auth, GetDataSources)
 	m.Put("/api/admin/datasources", auth, AddDataSource)
 	m.Post("/api/admin/datasources", auth, UpdateDataSource)
 	m.Delete("/api/admin/datasources/:id", auth, DeleteDataSource)
+
+	// data source proxy
+	m.Any("/api/datasources/proxy/:name/*", auth, ProxyDataSourceRequest)
 
 	// user register
 	m.Get("/register/*_", Index)
