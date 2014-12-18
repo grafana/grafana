@@ -339,7 +339,7 @@ function($, _, moment) {
       return "";
     }
 
-    var factor = decimals ? Math.pow(10, decimals) : 1;
+    var factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
     var formatted = String(Math.round(value * factor) / factor);
 
     // if exponent return directly
