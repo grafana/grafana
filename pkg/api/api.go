@@ -43,6 +43,9 @@ func Register(m *macaron.Macaron) {
 	m.Post("/api/dashboard/", auth, PostDashboard)
 	m.Delete("/api/dashboard/:slug", auth, DeleteDashboard)
 
+	// frontend config
+	m.Get("/frontend/config", auth, GetConfigJS)
+
 	// rendering
 	m.Get("/render/*", auth, RenderToPng)
 }

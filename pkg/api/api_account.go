@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	"github.com/torkelo/grafana-pro/pkg/models"
@@ -96,7 +95,7 @@ func SetUsingAccount(c *middleware.Context) {
 	otherAccounts, err := models.GetOtherAccountsFor(c.UserAccount.Id)
 
 	if err != nil {
-		c.JSON(500, gin.H{"message": err.Error()})
+		c.JSON(500, utils.DynMap{"message": err.Error()})
 		return
 	}
 
@@ -116,7 +115,7 @@ func SetUsingAccount(c *middleware.Context) {
 	account.UsingAccountId = usingAccountId
 	err = models.SaveAccount(account)
 	if err != nil {
-		c.JSON(500, gin.H{"message": err.Error()})
+		c.JSON(500, utils.DynMap{"message": err.Error()})
 		return
 	}
 
