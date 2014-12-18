@@ -25,9 +25,13 @@ func renderConfig(data *configJsTmplModel) string {
 	datasources := make(map[string]interface{})
 
 	for _, ds := range data.DataSources {
+		url := ds.Url
+		if ds.Access == m.DS_ACCESS_PROXY {
+			url = "/api/datasources/proxy/" + ds.Name
+		}
 		datasources[ds.Name] = map[string]interface{}{
 			"type": ds.Type,
-			"url":  ds.Url,
+			"url":  url,
 		}
 	}
 

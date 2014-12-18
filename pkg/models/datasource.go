@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 const (
 	DS_GRAPHITE      = "graphite"
@@ -8,6 +11,11 @@ const (
 	DS_ES            = "es"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
+)
+
+// Typed errors
+var (
+	ErrDataSourceNotFound = errors.New("Data source not found")
 )
 
 type DsType string
@@ -32,6 +40,12 @@ type DataSource struct {
 type GetDataSourcesQuery struct {
 	AccountId int64
 	Result    []*DataSource
+}
+
+type GetDataSourceByNameQuery struct {
+	Name      string
+	AccountId int64
+	Result    DataSource
 }
 
 type AddDataSourceCommand struct {
