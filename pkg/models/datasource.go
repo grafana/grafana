@@ -3,11 +3,11 @@ package models
 import "time"
 
 const (
-	DS_GRAPHITE      = "GRAPHITE"
-	DS_INFLUXDB      = "INFLUXDB"
-	DS_ES            = "ES"
-	DS_ACCESS_DIRECT = "DIRECT"
-	DS_ACCESS_PROXY  = "PROXY"
+	DS_GRAPHITE      = "graphite"
+	DS_INFLUXDB      = "influxdb"
+	DS_ES            = "es"
+	DS_ACCESS_DIRECT = "direct"
+	DS_ACCESS_PROXY  = "proxy"
 )
 
 type DsType string
