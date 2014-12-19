@@ -47,6 +47,7 @@ type DataSource struct {
 	Url       string          `json:"url"`
 	Password  string          `json:"password"`
 	User      string          `json:"user"`
+	Database  string          `json:"database"`
 	BasicAuth bool            `json:"basicAuth"`
 }
 

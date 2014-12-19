@@ -26,6 +26,7 @@ func GetDataSources(c *middleware.Context) {
 			Type:      ds.Type,
 			Access:    ds.Access,
 			Password:  ds.Password,
+			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
 		}

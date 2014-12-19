@@ -28,12 +28,22 @@ func renderConfig(data *configJsTmplModel) string {
 
 	for i, ds := range data.DataSources {
 		url := ds.Url
+
 		if ds.Access == m.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
+
 		var dsMap = map[string]interface{}{
 			"type": ds.Type,
 			"url":  url,
+		}
+
+		if ds.Type == m.DS_INFLUXDB {
+			if ds.Access == m.DS_ACCESS_DIRECT {
+				dsMap["username"] = ds.User
+				dsMap["password"] = ds.Password
+				dsMap["url"] = url + "/db/" + ds.Database
+			}
 		}
 
 		// temp hack, first is always default

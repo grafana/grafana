@@ -31,6 +31,7 @@ type DataSource struct {
 	Url       string
 	Password  string
 	User      string
+	Database  string
 	BasicAuth bool
 
 	Created time.Time
@@ -55,6 +56,7 @@ type AddDataSourceCommand struct {
 	Access    DsAccess
 	Url       string
 	Password  string
+	Database  string
 	User      string
 }
 
@@ -67,6 +69,7 @@ type UpdateDataSourceCommand struct {
 	Url       string
 	Password  string
 	User      string
+	Database  string
 }
 
 type DeleteDataSourceCommand struct {
