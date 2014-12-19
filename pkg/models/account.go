@@ -6,7 +6,6 @@ import (
 )
 
 var (
-	SaveAccount       func(account *Account) error
 	GetAccountByLogin func(emailOrName string) (*Account, error)
 	GetAccount        func(accountId int64) (*Account, error)
 )
@@ -53,6 +52,16 @@ type AccountDTO struct {
 	Email         string             `json:"email"`
 	Name          string             `json:"name"`
 	Collaborators []*CollaboratorDTO `json:"collaborators"`
+}
+
+type CreateAccountCommand struct {
+	Email    string `json:"email" binding:"required"`
+	Login    string `json:"login"`
+	Password string `json:"password" binding:"required"`
+	Name     string `json:"name"`
+	Company  string `json:"company"`
+
+	Result Account `json:"-"`
 }
 
 // returns a view projection

@@ -13,6 +13,24 @@ func init() {
 	bus.AddHandler("sql", GetAccountInfo)
 	bus.AddHandler("sql", AddCollaborator)
 	bus.AddHandler("sql", GetOtherAccounts)
+	bus.AddHandler("sql", CreateAccount)
+}
+
+func CreateAccount(cmd *m.CreateAccountCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+
+		account := m.Account{
+			Email:    cmd.Email,
+			Login:    cmd.Login,
+			Password: cmd.Password,
+			Created:  time.Now(),
+			Updated:  time.Now(),
+		}
+
+		_, err := sess.Insert(&account)
+		cmd.Result = account
+		return err
+	})
 }
 
 func GetAccountInfo(query *m.GetAccountInfoQuery) error {
@@ -53,32 +71,6 @@ func AddCollaborator(cmd *m.AddCollaboratorCommand) error {
 		_, err := sess.Insert(&entity)
 		return err
 	})
-}
-
-func SaveAccount(account *m.Account) error {
-	var err error
-
-	sess := x.NewSession()
-	defer sess.Close()
-
-	if err = sess.Begin(); err != nil {
-		return err
-	}
-
-	if account.Id == 0 {
-		_, err = sess.Insert(account)
-	} else {
-		_, err = sess.Id(account.Id).Update(account)
-	}
-
-	if err != nil {
-		sess.Rollback()
-		return err
-	} else if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func GetAccount(id int64) (*m.Account, error) {
