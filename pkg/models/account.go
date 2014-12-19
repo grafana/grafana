@@ -42,3 +42,23 @@ type Account struct {
 	Created time.Time
 	Updated time.Time
 }
+
+// api projection model
+type CollaboratorDTO struct {
+	AccountId int64  `json:"accountId"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+}
+
+// api view projection
+type AccountDTO struct {
+	Email         string             `json:"email"`
+	Name          string             `json:"name"`
+	Collaborators []*CollaboratorDTO `json:"collaborators"`
+}
+
+// returns a view projection
+type GetAccountInfoQuery struct {
+	Id     int64
+	Result AccountDTO
+}

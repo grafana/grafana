@@ -1,8 +1,39 @@
 package sqlstore
 
-import "github.com/torkelo/grafana-pro/pkg/models"
+import (
+	"github.com/torkelo/grafana-pro/pkg/bus"
+	m "github.com/torkelo/grafana-pro/pkg/models"
+)
 
-func SaveAccount(account *models.Account) error {
+func init() {
+	bus.AddHandler("sql", GetAccountInfo)
+}
+
+func GetAccountInfo(query *m.GetAccountInfoQuery) error {
+	var account m.Account
+	has, err := x.Id(query.Id).Get(&account)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrAccountNotFound
+	}
+
+	query.Result = m.AccountDTO{
+		Name:          account.Name,
+		Email:         account.Email,
+		Collaborators: make([]*m.CollaboratorDTO, 0),
+	}
+
+	sess := x.Table("collaborator")
+	sess.Join("INNER", "account", "account.id=collaborator.account_Id")
+	sess.Where("collaborator.for_account_id=?", query.Id)
+	err = sess.Find(&query.Result.Collaborators)
+
+	return err
+}
+
+func SaveAccount(account *m.Account) error {
 	var err error
 
 	sess := x.NewSession()
@@ -28,16 +59,16 @@ func SaveAccount(account *models.Account) error {
 	return nil
 }
 
-func GetAccount(id int64) (*models.Account, error) {
+func GetAccount(id int64) (*m.Account, error) {
 	var err error
 
-	var account models.Account
+	var account m.Account
 	has, err := x.Id(id).Get(&account)
 
 	if err != nil {
 		return nil, err
 	} else if has == false {
-		return nil, models.ErrAccountNotFound
+		return nil, m.ErrAccountNotFound
 	}
 
 	if account.UsingAccountId == 0 {
@@ -47,23 +78,23 @@ func GetAccount(id int64) (*models.Account, error) {
 	return &account, nil
 }
 
-func GetAccountByLogin(emailOrLogin string) (*models.Account, error) {
+func GetAccountByLogin(emailOrLogin string) (*m.Account, error) {
 	var err error
 
-	account := &models.Account{Login: emailOrLogin}
+	account := &m.Account{Login: emailOrLogin}
 	has, err := x.Get(account)
 
 	if err != nil {
 		return nil, err
 	} else if has == false {
-		return nil, models.ErrAccountNotFound
+		return nil, m.ErrAccountNotFound
 	}
 
 	return account, nil
 }
 
-func GetCollaboratorsForAccount(accountId int64) ([]*models.CollaboratorInfo, error) {
-	collaborators := make([]*models.CollaboratorInfo, 0)
+func GetCollaboratorsForAccount(accountId int64) ([]*m.CollaboratorInfo, error) {
+	collaborators := make([]*m.CollaboratorInfo, 0)
 
 	sess := x.Table("collaborator")
 	sess.Join("INNER", "account", "account.id=collaborator.account_Id")
@@ -73,7 +104,7 @@ func GetCollaboratorsForAccount(accountId int64) ([]*models.CollaboratorInfo, er
 	return collaborators, err
 }
 
-func AddCollaborator(collaborator *models.Collaborator) error {
+func AddCollaborator(collaborator *m.Collaborator) error {
 	var err error
 
 	sess := x.NewSession()
@@ -93,8 +124,8 @@ func AddCollaborator(collaborator *models.Collaborator) error {
 	return nil
 }
 
-func GetOtherAccountsFor(accountId int64) ([]*models.OtherAccount, error) {
-	collaborators := make([]*models.OtherAccount, 0)
+func GetOtherAccountsFor(accountId int64) ([]*m.OtherAccount, error) {
+	collaborators := make([]*m.OtherAccount, 0)
 	sess := x.Table("collaborator")
 	sess.Join("INNER", "account", "collaborator.for_account_id=account.id")
 	sess.Where("account_id=?", accountId)
