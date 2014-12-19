@@ -21,6 +21,10 @@ function (angular, _) {
       return this.request({ method: 'POST', url: url, data: data });
     };
 
+    this.put = function(url, data) {
+      return this.request({ method: 'PUT', url: url, data: data });
+    };
+
     this.request = function(options) {
       var httpOptions = {
         url: options.url,
