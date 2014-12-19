@@ -146,10 +146,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      $scope.panelMeta.loading = false;
-
       // png renderer returns just a url
       if (_.isString(results)) {
+        $scope.panelMeta.loading = false;
         $scope.render(results);
         return;
       }
@@ -164,9 +163,11 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.annotationsPromise
         .then(function(annotations) {
+          $scope.panelMeta.loading = false;
           $scope.seriesList.annotations = annotations;
           $scope.render($scope.seriesList);
         }, function() {
+          $scope.panelMeta.loading = false;
           $scope.render($scope.seriesList);
         });
     };
