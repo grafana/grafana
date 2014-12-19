@@ -35,7 +35,6 @@ func init() {
 }
 
 func Init() {
-	m.SaveAccount = SaveAccount
 	m.GetAccount = GetAccount
 	m.GetAccountByLogin = GetAccountByLogin
 	m.GetDashboard = GetDashboard

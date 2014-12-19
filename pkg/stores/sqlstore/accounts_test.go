@@ -14,27 +14,22 @@ func TestAccountDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given two saved accounts", func() {
-			ac1 := m.Account{
-				Login: "ac1",
-				Email: "ac1@test.com",
-				Name:  "ac1_name",
-			}
-			ac2 := m.Account{
-				Login: "ac2",
-				Email: "ac2@test.com",
-				Name:  "ac2_name",
-			}
+			ac1cmd := m.CreateAccountCommand{Login: "ac1", Email: "ac1@test.com"}
+			ac2cmd := m.CreateAccountCommand{Login: "ac2", Email: "ac2@test.com"}
 
-			err := SaveAccount(&ac1)
-			err = SaveAccount(&ac2)
+			err := CreateAccount(&ac1cmd)
+			err = CreateAccount(&ac2cmd)
 			So(err, ShouldBeNil)
+
+			ac1 := ac1cmd.Result
+			ac2 := ac2cmd.Result
 
 			Convey("Should be able to read account info projection", func() {
 				query := m.GetAccountInfoQuery{Id: ac1.Id}
 				err = GetAccountInfo(&query)
 
 				So(err, ShouldBeNil)
-				So(query.Result.Name, ShouldEqual, "ac1_name")
+				So(query.Result.Email, ShouldEqual, "ac1@test.com")
 			})
 
 			Convey("Can add collaborator", func() {

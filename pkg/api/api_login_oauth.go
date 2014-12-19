@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
 )
@@ -48,21 +49,23 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	log.Info("login.OAuthLogin(social login): %s", userInfo)
 
-	account, err := models.GetAccountByLogin(userInfo.Email)
+	account, err := m.GetAccountByLogin(userInfo.Email)
 
 	// create account if missing
-	if err == models.ErrAccountNotFound {
-		account = &models.Account{
+	if err == m.ErrAccountNotFound {
+		cmd := &m.CreateAccountCommand{
 			Login:   userInfo.Email,
 			Email:   userInfo.Email,
 			Name:    userInfo.Name,
 			Company: userInfo.Company,
 		}
 
-		if err = models.SaveAccount(account); err != nil {
+		if err = bus.Dispatch(&cmd); err != nil {
 			ctx.Handle(500, "Failed to create account", err)
 			return
 		}
+
+		account = &cmd.Result
 	} else if err != nil {
 		ctx.Handle(500, "Unexpected error", err)
 	}

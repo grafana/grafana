@@ -1,38 +1,26 @@
 package api
 
 import (
-	"github.com/torkelo/grafana-pro/pkg/log"
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-type registerAccountJsonModel struct {
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	Password2 bool   `json:"remember2"`
-}
-
 func CreateAccount(c *middleware.Context) {
-	var registerModel registerAccountJsonModel
+	var cmd m.CreateAccountCommand
 
-	if !c.JsonBody(&registerModel) {
-		c.JSON(400, utils.DynMap{"status": "bad request"})
+	if !c.JsonBody(&cmd) {
+		c.JsonApiErr(400, "Validation error", nil)
 		return
 	}
 
-	account := models.Account{
-		Login:    registerModel.Email,
-		Email:    registerModel.Email,
-		Password: registerModel.Password,
-	}
+	cmd.Login = cmd.Email
+	err := bus.Dispatch(&cmd)
 
-	err := models.SaveAccount(&account)
 	if err != nil {
-		log.Error(2, "Failed to create user account, email: %v, error: %v", registerModel.Email, err)
-		c.JSON(500, utils.DynMap{"status": "failed to create account"})
+		c.JsonApiErr(500, "failed to create account", err)
 		return
 	}
 
-	c.JSON(200, utils.DynMap{"status": "ok"})
+	c.JsonOK("Account created")
 }
