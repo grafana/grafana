@@ -15,6 +15,8 @@ func init() {
 	bus.AddHandler("sql", GetOtherAccounts)
 	bus.AddHandler("sql", CreateAccount)
 	bus.AddHandler("sql", SetUsingAccount)
+	bus.AddHandler("sql", GetAccountById)
+	bus.AddHandler("sql", GetAccountByLogin)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -85,38 +87,46 @@ func AddCollaborator(cmd *m.AddCollaboratorCommand) error {
 	})
 }
 
-func GetAccount(id int64) (*m.Account, error) {
+func GetAccountById(query *m.GetAccountByIdQuery) error {
 	var err error
 
 	var account m.Account
-	has, err := x.Id(id).Get(&account)
+	has, err := x.Id(query.Id).Get(&account)
 
 	if err != nil {
-		return nil, err
+		return err
 	} else if has == false {
-		return nil, m.ErrAccountNotFound
+		return m.ErrAccountNotFound
 	}
 
 	if account.UsingAccountId == 0 {
 		account.UsingAccountId = account.Id
 	}
 
-	return &account, nil
+	query.Result = &account
+
+	return nil
 }
 
-func GetAccountByLogin(emailOrLogin string) (*m.Account, error) {
+func GetAccountByLogin(query *m.GetAccountByLoginQuery) error {
 	var err error
 
-	account := &m.Account{Login: emailOrLogin}
-	has, err := x.Get(account)
+	account := m.Account{Login: query.Login}
+	has, err := x.Get(&account)
 
 	if err != nil {
-		return nil, err
+		return err
 	} else if has == false {
-		return nil, m.ErrAccountNotFound
+		return m.ErrAccountNotFound
 	}
 
-	return account, nil
+	if account.UsingAccountId == 0 {
+		account.UsingAccountId = account.Id
+	}
+
+	query.Result = &account
+
+	return nil
 }
 
 func GetOtherAccounts(query *m.GetOtherAccountsQuery) error {

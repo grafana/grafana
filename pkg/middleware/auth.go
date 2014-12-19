@@ -7,7 +7,8 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
 
-	"github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/bus"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
 func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
@@ -40,19 +41,21 @@ func Auth() macaron.Handler {
 			return
 		}
 
-		account, err := models.GetAccount(accountId)
+		userQuery := m.GetAccountByIdQuery{Id: accountId}
+		err = bus.Dispatch(&userQuery)
 		if err != nil {
 			authDenied(c)
 			return
 		}
 
-		usingAccount, err := models.GetAccount(account.UsingAccountId)
+		usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
+		err = bus.Dispatch(&usingQuery)
 		if err != nil {
 			authDenied(c)
 			return
 		}
 
-		c.UserAccount = account
-		c.Account = usingAccount
+		c.UserAccount = userQuery.Result
+		c.Account = usingQuery.Result
 	}
 }
