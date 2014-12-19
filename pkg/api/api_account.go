@@ -21,14 +21,14 @@ func GetAccount(c *middleware.Context) {
 }
 
 func AddCollaborator(c *middleware.Context) {
-	var model dtos.AddCollaboratorCommand
+	var cmd m.AddCollaboratorCommand
 
-	if !c.JsonBody(&model) {
+	if !c.JsonBody(&cmd) {
 		c.JsonApiErr(400, "Invalid request", nil)
 		return
 	}
 
-	accountToAdd, err := m.GetAccountByLogin(model.Email)
+	accountToAdd, err := m.GetAccountByLogin(cmd.Email)
 	if err != nil {
 		c.JsonApiErr(404, "Collaborator not found", nil)
 		return
@@ -39,15 +39,17 @@ func AddCollaborator(c *middleware.Context) {
 		return
 	}
 
-	var collaborator = m.NewCollaborator(accountToAdd.Id, c.UserAccount.Id, m.ROLE_READ_WRITE)
+	cmd.AccountId = accountToAdd.Id
+	cmd.ForAccountId = c.UserAccount.Id
+	cmd.Role = m.ROLE_READ_WRITE
 
-	err = m.AddCollaborator(collaborator)
+	err = bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Could not add collaborator", err)
 		return
 	}
 
-	c.Status(204)
+	c.JsonOK("Collaborator added")
 }
 
 func GetOtherAccounts(c *middleware.Context) {
