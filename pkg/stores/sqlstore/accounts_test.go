@@ -61,6 +61,12 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
 				})
+
+				Convey("Can set using account", func() {
+					cmd := m.SetUsingAccountCommand{AccountId: ac2.Id, UsingAccountId: ac1.Id}
+					err := SetUsingAccount(&cmd)
+					So(err, ShouldBeNil)
+				})
 			})
 		})
 	})

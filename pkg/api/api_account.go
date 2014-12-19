@@ -76,36 +76,45 @@ func GetOtherAccounts(c *middleware.Context) {
 	c.JSON(200, result)
 }
 
+func validateUsingAccount(accountId int64, otherId int64) bool {
+	if accountId == otherId {
+		return true
+	}
+
+	query := m.GetOtherAccountsQuery{AccountId: accountId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		return false
+	}
+
+	// validate that the account id in the list
+	valid := false
+	for _, other := range query.Result {
+		if other.Id == otherId {
+			valid = true
+		}
+	}
+	return valid
+}
+
 func SetUsingAccount(c *middleware.Context) {
-	// usingAccountId := c.ParamsInt64(":id")
-	//
-	// account := c.UserAccount
-	// otherAccounts, err := m.GetOtherAccountsFor(c.UserAccount.Id)
-	//
-	// if err != nil {
-	// 	c.JSON(500, utils.DynMap{"message": err.Error()})
-	// 	return
-	// }
-	//
-	// // validate that the account id in the list
-	// valid := false
-	// for _, other := range otherAccounts {
-	// 	if other.Id == usingAccountId {
-	// 		valid = true
-	// 	}
-	// }
-	//
-	// if !valid {
-	// 	c.Status(401)
-	// 	return
-	// }
-	//
-	// account.UsingAccountId = usingAccountId
-	// err = m.SaveAccount(account)
-	// if err != nil {
-	// 	c.JSON(500, utils.DynMap{"message": err.Error()})
-	// 	return
-	// }
-	//
-	// c.Status(204)
+	usingAccountId := c.ParamsInt64(":id")
+
+	if !validateUsingAccount(c.UserAccount.Id, usingAccountId) {
+		c.JsonApiErr(401, "Not a valid account", nil)
+		return
+	}
+
+	cmd := m.SetUsingAccountCommand{
+		AccountId:      c.UserAccount.Id,
+		UsingAccountId: usingAccountId,
+	}
+
+	err := bus.Dispatch(&cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to update account", err)
+		return
+	}
+
+	c.JsonOK("Active account changed")
 }

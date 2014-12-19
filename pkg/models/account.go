@@ -64,6 +64,11 @@ type CreateAccountCommand struct {
 	Result Account `json:"-"`
 }
 
+type SetUsingAccountCommand struct {
+	AccountId      int64
+	UsingAccountId int64
+}
+
 // returns a view projection
 type GetAccountInfoQuery struct {
 	Id     int64
