@@ -14,11 +14,11 @@ func init() {
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSource)
 	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDataSourceByName)
+	bus.AddHandler("sql", GetDataSourceById)
 }
 
-func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=? AND name=?", query.AccountId, query.Name)
+func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
+	sess := x.Limit(100, 0).Where("account_id=? AND id=?", query.AccountId, query.Id)
 	has, err := sess.Get(&query.Result)
 
 	if !has {
