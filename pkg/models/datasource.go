@@ -42,8 +42,8 @@ type GetDataSourcesQuery struct {
 	Result    []*DataSource
 }
 
-type GetDataSourceByNameQuery struct {
-	Name      string
+type GetDataSourceByIdQuery struct {
+	Id        int64
 	AccountId int64
 	Result    DataSource
 }

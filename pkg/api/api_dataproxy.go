@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
-	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
@@ -36,18 +35,17 @@ func NewReverseProxy(target *url.URL, proxyPath string) *httputil.ReverseProxy {
 		} else {
 			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
 		}
-
-		log.Info("Proxy: %v", req.URL.Path)
 	}
+
 	return &httputil.ReverseProxy{Director: director}
 }
 
 // TODO: need to cache datasources
 func ProxyDataSourceRequest(c *middleware.Context) {
-	name := c.Params(":name")
+	id := c.ParamsInt64(":id")
 
-	query := m.GetDataSourceByNameQuery{
-		Name:      name,
+	query := m.GetDataSourceByIdQuery{
+		Id:        id,
 		AccountId: c.GetAccountId(),
 	}
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
@@ -27,7 +28,7 @@ func renderConfig(data *configJsTmplModel) string {
 	for _, ds := range data.DataSources {
 		url := ds.Url
 		if ds.Access == m.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + ds.Name
+			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 		datasources[ds.Name] = map[string]interface{}{
 			"type": ds.Type,

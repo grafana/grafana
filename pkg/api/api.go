@@ -33,7 +33,7 @@ func Register(m *macaron.Macaron) {
 	m.Delete("/api/admin/datasources/:id", auth, DeleteDataSource)
 
 	// data source proxy
-	m.Any("/api/datasources/proxy/:name/*", auth, ProxyDataSourceRequest)
+	m.Any("/api/datasources/proxy/:id/*", auth, ProxyDataSourceRequest)
 
 	// user register
 	m.Get("/register/*_", Index)
