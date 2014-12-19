@@ -58,6 +58,14 @@ func TestAccountDataAccess(t *testing.T) {
 					So(query.Result.Collaborators[0].Role, ShouldEqual, m.ROLE_READ_WRITE)
 					So(query.Result.Collaborators[0].Email, ShouldEqual, "ac2@test.com")
 				})
+
+				Convey("Can get other accounts", func() {
+					query := m.GetOtherAccountsQuery{AccountId: ac2.Id}
+					err := GetOtherAccounts(&query)
+
+					So(err, ShouldBeNil)
+					So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
+				})
 			})
 		})
 	})

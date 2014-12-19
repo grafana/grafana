@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -53,63 +52,60 @@ func AddCollaborator(c *middleware.Context) {
 }
 
 func GetOtherAccounts(c *middleware.Context) {
+	query := m.GetOtherAccountsQuery{AccountId: c.UserAccount.Id}
+	err := bus.Dispatch(&query)
 
-	otherAccounts, err := m.GetOtherAccountsFor(c.UserAccount.Id)
 	if err != nil {
 		c.JSON(500, utils.DynMap{"message": err.Error()})
 		return
 	}
 
-	var result []*dtos.OtherAccount
-	result = append(result, &dtos.OtherAccount{
-		Id:      c.UserAccount.Id,
-		Role:    "owner",
-		IsUsing: c.UserAccount.Id == c.UserAccount.UsingAccountId,
-		Name:    c.UserAccount.Email,
+	result := append(query.Result, &m.OtherAccountDTO{
+		Id:    c.UserAccount.Id,
+		Role:  "owner",
+		Email: c.UserAccount.Email,
 	})
 
-	for _, other := range otherAccounts {
-		result = append(result, &dtos.OtherAccount{
-			Id:      other.Id,
-			Role:    other.Role,
-			Name:    other.Email,
-			IsUsing: other.Id == c.UserAccount.UsingAccountId,
-		})
+	for _, ac := range result {
+		if ac.Id == c.UserAccount.UsingAccountId {
+			ac.IsUsing = true
+			break
+		}
 	}
 
 	c.JSON(200, result)
 }
 
 func SetUsingAccount(c *middleware.Context) {
-	usingAccountId := c.ParamsInt64(":id")
-
-	account := c.UserAccount
-	otherAccounts, err := m.GetOtherAccountsFor(c.UserAccount.Id)
-
-	if err != nil {
-		c.JSON(500, utils.DynMap{"message": err.Error()})
-		return
-	}
-
-	// validate that the account id in the list
-	valid := false
-	for _, other := range otherAccounts {
-		if other.Id == usingAccountId {
-			valid = true
-		}
-	}
-
-	if !valid {
-		c.Status(401)
-		return
-	}
-
-	account.UsingAccountId = usingAccountId
-	err = m.SaveAccount(account)
-	if err != nil {
-		c.JSON(500, utils.DynMap{"message": err.Error()})
-		return
-	}
-
-	c.Status(204)
+	// usingAccountId := c.ParamsInt64(":id")
+	//
+	// account := c.UserAccount
+	// otherAccounts, err := m.GetOtherAccountsFor(c.UserAccount.Id)
+	//
+	// if err != nil {
+	// 	c.JSON(500, utils.DynMap{"message": err.Error()})
+	// 	return
+	// }
+	//
+	// // validate that the account id in the list
+	// valid := false
+	// for _, other := range otherAccounts {
+	// 	if other.Id == usingAccountId {
+	// 		valid = true
+	// 	}
+	// }
+	//
+	// if !valid {
+	// 	c.Status(401)
+	// 	return
+	// }
+	//
+	// account.UsingAccountId = usingAccountId
+	// err = m.SaveAccount(account)
+	// if err != nil {
+	// 	c.JSON(500, utils.DynMap{"message": err.Error()})
+	// 	return
+	// }
+	//
+	// c.Status(204)
 }

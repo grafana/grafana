@@ -12,6 +12,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetAccountInfo)
 	bus.AddHandler("sql", AddCollaborator)
+	bus.AddHandler("sql", GetOtherAccounts)
 }
 
 func GetAccountInfo(query *m.GetAccountInfoQuery) error {
@@ -114,12 +115,12 @@ func GetAccountByLogin(emailOrLogin string) (*m.Account, error) {
 	return account, nil
 }
 
-func GetOtherAccountsFor(accountId int64) ([]*m.OtherAccount, error) {
-	collaborators := make([]*m.OtherAccount, 0)
+func GetOtherAccounts(query *m.GetOtherAccountsQuery) error {
+	query.Result = make([]*m.OtherAccountDTO, 0)
 	sess := x.Table("collaborator")
 	sess.Join("INNER", "account", "collaborator.for_account_id=account.id")
-	sess.Where("account_id=?", accountId)
+	sess.Where("account_id=?", query.AccountId)
 	sess.Cols("collaborator.id", "collaborator.role", "account.email")
-	err := sess.Find(&collaborators)
-	return collaborators, err
+	err := sess.Find(&query.Result)
+	return err
 }

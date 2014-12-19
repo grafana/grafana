@@ -38,7 +38,6 @@ func Init() {
 	m.SaveAccount = SaveAccount
 	m.GetAccount = GetAccount
 	m.GetAccountByLogin = GetAccountByLogin
-	m.GetOtherAccountsFor = GetOtherAccountsFor
 	m.GetDashboard = GetDashboard
 	m.SaveDashboard = SaveDashboard
 	m.SearchQuery = SearchQuery
