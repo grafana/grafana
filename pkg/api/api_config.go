@@ -22,18 +22,34 @@ type configJsTmplModel struct {
 	DataSources []*m.DataSource
 }
 
+// TODO: cleanup this ugly code
 func renderConfig(data *configJsTmplModel) string {
 	datasources := make(map[string]interface{})
 
-	for _, ds := range data.DataSources {
+	for i, ds := range data.DataSources {
 		url := ds.Url
 		if ds.Access == m.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
-		datasources[ds.Name] = map[string]interface{}{
+		var dsMap = map[string]interface{}{
 			"type": ds.Type,
 			"url":  url,
 		}
+
+		// temp hack, first is always default
+		// TODO: implement default ds account setting
+		if i == 0 {
+			dsMap["default"] = true
+		}
+
+		datasources[ds.Name] = dsMap
+	}
+
+	// add grafana backend data source
+	datasources["grafana"] = map[string]interface{}{
+		"type":      "grafana",
+		"url":       "",
+		"grafanaDB": true,
 	}
 
 	jsonObj := map[string]interface{}{

@@ -19,6 +19,7 @@ var (
 	ErrAccountNotFound = errors.New("Account not found")
 )
 
+// Projection from User -> other account given access to
 type OtherAccount struct {
 	Id    int64
 	Email string
