@@ -34,9 +34,10 @@ func TestDataAccess(t *testing.T) {
 
 			err := AddDataSource(&m.AddDataSourceCommand{
 				AccountId: 10,
-				Type:      m.DS_GRAPHITE,
+				Type:      m.DS_INFLUXDB,
 				Access:    m.DS_ACCESS_DIRECT,
 				Url:       "http://test",
+				Database:  "site",
 			})
 
 			So(err, ShouldBeNil)
@@ -50,6 +51,7 @@ func TestDataAccess(t *testing.T) {
 			ds := query.Result[0]
 
 			So(ds.AccountId, ShouldEqual, 10)
+			So(ds.Database, ShouldEqual, "site")
 		})
 
 		Convey("Given a datasource", func() {

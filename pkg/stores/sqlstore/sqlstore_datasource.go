@@ -28,7 +28,7 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId)
+	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
@@ -53,6 +53,9 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Type:      cmd.Type,
 			Access:    cmd.Access,
 			Url:       cmd.Url,
+			User:      cmd.User,
+			Password:  cmd.Password,
+			Database:  cmd.Database,
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
@@ -75,6 +78,9 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			Type:      cmd.Type,
 			Access:    cmd.Access,
 			Url:       cmd.Url,
+			User:      cmd.User,
+			Password:  cmd.Password,
+			Database:  cmd.Database,
 			Updated:   time.Now(),
 		}
 
