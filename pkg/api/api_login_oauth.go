@@ -49,7 +49,8 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	log.Info("login.OAuthLogin(social login): %s", userInfo)
 
-	account, err := m.GetAccountByLogin(userInfo.Email)
+	userQuery := m.GetAccountByLoginQuery{Login: userInfo.Email}
+	err = bus.Dispatch(&userQuery)
 
 	// create account if missing
 	if err == m.ErrAccountNotFound {
@@ -65,13 +66,13 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 
-		account = &cmd.Result
+		userQuery.Result = &cmd.Result
 	} else if err != nil {
 		ctx.Handle(500, "Unexpected error", err)
 	}
 
 	// login
-	loginUserWithAccount(account, ctx)
+	loginUserWithAccount(userQuery.Result, ctx)
 
 	ctx.Redirect("/")
 }

@@ -2,9 +2,10 @@ package api
 
 import (
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/utils"
 )
 
@@ -22,14 +23,18 @@ func LoginPost(c *middleware.Context) {
 		return
 	}
 
-	account, err := models.GetAccountByLogin(loginModel.Email)
+	userQuery := m.GetAccountByLoginQuery{Login: loginModel.Email}
+	err := bus.Dispatch(&userQuery)
+
 	if err != nil {
-		c.JSON(401, utils.DynMap{"status": "unauthorized"})
+		c.JsonApiErr(401, "Invalid username or password", err)
 		return
 	}
 
+	account := userQuery.Result
+
 	if loginModel.Password != account.Password {
-		c.JSON(401, utils.DynMap{"status": "unauthorized"})
+		c.JsonApiErr(401, "Invalid username or password", err)
 		return
 	}
 
@@ -42,7 +47,7 @@ func LoginPost(c *middleware.Context) {
 	c.JSON(200, resp)
 }
 
-func loginUserWithAccount(account *models.Account, c *middleware.Context) {
+func loginUserWithAccount(account *m.Account, c *middleware.Context) {
 	if account == nil {
 		log.Error(3, "Account login with nil account")
 	}

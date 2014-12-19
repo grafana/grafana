@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-var (
-	GetAccountByLogin func(emailOrName string) (*Account, error)
-	GetAccount        func(accountId int64) (*Account, error)
-)
-
 // Typed errors
 var (
 	ErrAccountNotFound = errors.New("Account not found")
@@ -79,4 +74,14 @@ type GetAccountInfoQuery struct {
 type GetOtherAccountsQuery struct {
 	AccountId int64
 	Result    []*OtherAccountDTO
+}
+
+type GetAccountByIdQuery struct {
+	Id     int64
+	Result *Account
+}
+
+type GetAccountByLoginQuery struct {
+	Login  string
+	Result *Account
 }

@@ -27,11 +27,14 @@ func AddCollaborator(c *middleware.Context) {
 		return
 	}
 
-	accountToAdd, err := m.GetAccountByLogin(cmd.Email)
+	userQuery := m.GetAccountByLoginQuery{Login: cmd.Email}
+	err := bus.Dispatch(&userQuery)
 	if err != nil {
 		c.JsonApiErr(404, "Collaborator not found", nil)
 		return
 	}
+
+	accountToAdd := userQuery.Result
 
 	if accountToAdd.Id == c.UserAccount.Id {
 		c.JsonApiErr(400, "Cannot add yourself as collaborator", nil)
