@@ -6,23 +6,15 @@ import (
 )
 
 var (
-	SaveAccount         func(account *Account) error
-	GetAccountByLogin   func(emailOrName string) (*Account, error)
-	GetAccount          func(accountId int64) (*Account, error)
-	GetOtherAccountsFor func(accountId int64) ([]*OtherAccount, error)
+	SaveAccount       func(account *Account) error
+	GetAccountByLogin func(emailOrName string) (*Account, error)
+	GetAccount        func(accountId int64) (*Account, error)
 )
 
 // Typed errors
 var (
 	ErrAccountNotFound = errors.New("Account not found")
 )
-
-// Projection from User -> other account given access to
-type OtherAccount struct {
-	Id    int64
-	Email string
-	Role  string
-}
 
 type Account struct {
 	Id              int64
@@ -39,6 +31,14 @@ type Account struct {
 
 	Created time.Time
 	Updated time.Time
+}
+
+// api projection
+type OtherAccountDTO struct {
+	Id      int64  `json:"id"`
+	Email   string `json:"email"`
+	Role    string `json:"role"`
+	IsUsing bool   `json:"isUsing"`
 }
 
 // api projection model
@@ -59,4 +59,10 @@ type AccountDTO struct {
 type GetAccountInfoQuery struct {
 	Id     int64
 	Result AccountDTO
+}
+
+// returns a view projection
+type GetOtherAccountsQuery struct {
+	AccountId int64
+	Result    []*OtherAccountDTO
 }
