@@ -1,12 +1,17 @@
 package sqlstore
 
 import (
+	"time"
+
+	"github.com/go-xorm/xorm"
+
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
 func init() {
 	bus.AddHandler("sql", GetAccountInfo)
+	bus.AddHandler("sql", AddCollaborator)
 }
 
 func GetAccountInfo(query *m.GetAccountInfoQuery) error {
@@ -31,6 +36,22 @@ func GetAccountInfo(query *m.GetAccountInfoQuery) error {
 	err = sess.Find(&query.Result.Collaborators)
 
 	return err
+}
+
+func AddCollaborator(cmd *m.AddCollaboratorCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+
+		entity := m.Collaborator{
+			AccountId:    cmd.AccountId,
+			ForAccountId: cmd.ForAccountId,
+			Role:         cmd.Role,
+			Created:      time.Now(),
+			Updated:      time.Now(),
+		}
+
+		_, err := sess.Insert(&entity)
+		return err
+	})
 }
 
 func SaveAccount(account *m.Account) error {
@@ -91,37 +112,6 @@ func GetAccountByLogin(emailOrLogin string) (*m.Account, error) {
 	}
 
 	return account, nil
-}
-
-func GetCollaboratorsForAccount(accountId int64) ([]*m.CollaboratorInfo, error) {
-	collaborators := make([]*m.CollaboratorInfo, 0)
-
-	sess := x.Table("collaborator")
-	sess.Join("INNER", "account", "account.id=collaborator.account_Id")
-	sess.Where("collaborator.for_account_id=?", accountId)
-	err := sess.Find(&collaborators)
-
-	return collaborators, err
-}
-
-func AddCollaborator(collaborator *m.Collaborator) error {
-	var err error
-
-	sess := x.NewSession()
-	defer sess.Close()
-
-	if err = sess.Begin(); err != nil {
-		return err
-	}
-
-	if _, err = sess.Insert(collaborator); err != nil {
-		sess.Rollback()
-		return err
-	} else if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func GetOtherAccountsFor(accountId int64) ([]*m.OtherAccount, error) {

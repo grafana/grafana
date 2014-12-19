@@ -43,8 +43,6 @@ func Init() {
 	m.SaveDashboard = SaveDashboard
 	m.SearchQuery = SearchQuery
 	m.DeleteDashboard = DeleteDashboard
-	m.GetCollaboratorsForAccount = GetCollaboratorsForAccount
-	m.AddCollaborator = AddCollaborator
 }
 
 func NewEngine() (err error) {

@@ -6,12 +6,10 @@ import (
 )
 
 var (
-	SaveAccount                func(account *Account) error
-	GetAccountByLogin          func(emailOrName string) (*Account, error)
-	GetAccount                 func(accountId int64) (*Account, error)
-	GetOtherAccountsFor        func(accountId int64) ([]*OtherAccount, error)
-	GetCollaboratorsForAccount func(accountId int64) ([]*CollaboratorInfo, error)
-	AddCollaborator            func(collaborator *Collaborator) error
+	SaveAccount         func(account *Account) error
+	GetAccountByLogin   func(emailOrName string) (*Account, error)
+	GetAccount          func(accountId int64) (*Account, error)
+	GetOtherAccountsFor func(accountId int64) ([]*OtherAccount, error)
 )
 
 // Typed errors
@@ -30,7 +28,7 @@ type Account struct {
 	Id              int64
 	Login           string `xorm:"UNIQUE NOT NULL"`
 	Email           string `xorm:"UNIQUE NOT NULL"`
-	Name            string `xorm:"UNIQUE NOT NULL"`
+	Name            string
 	FullName        string
 	Password        string
 	IsAdmin         bool
