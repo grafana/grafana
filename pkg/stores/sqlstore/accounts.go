@@ -14,6 +14,7 @@ func init() {
 	bus.AddHandler("sql", AddCollaborator)
 	bus.AddHandler("sql", GetOtherAccounts)
 	bus.AddHandler("sql", CreateAccount)
+	bus.AddHandler("sql", SetUsingAccount)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -29,6 +30,17 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 
 		_, err := sess.Insert(&account)
 		cmd.Result = account
+		return err
+	})
+}
+
+func SetUsingAccount(cmd *m.SetUsingAccountCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		account := m.Account{}
+		sess.Id(cmd.AccountId).Get(&account)
+
+		account.UsingAccountId = cmd.UsingAccountId
+		_, err := sess.Id(account.Id).Update(&account)
 		return err
 	})
 }
