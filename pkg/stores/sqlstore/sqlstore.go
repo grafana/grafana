@@ -36,7 +36,6 @@ func init() {
 
 func Init() {
 	m.GetDashboard = GetDashboard
-	m.SaveDashboard = SaveDashboard
 	m.SearchQuery = SearchQuery
 	m.DeleteDashboard = DeleteDashboard
 }

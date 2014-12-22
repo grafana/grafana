@@ -1,9 +1,7 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -11,7 +9,6 @@ import (
 
 var (
 	GetDashboard    func(slug string, accountId int64) (*Dashboard, error)
-	SaveDashboard   func(dash *Dashboard) error
 	DeleteDashboard func(slug string, accountId int64) error
 	SearchQuery     func(query string, acccountId int64) ([]*SearchResult, error)
 )
@@ -40,26 +37,46 @@ type SearchResult struct {
 	Slug  string `json:"slug"`
 }
 
+type SaveDashboardCommand struct {
+	Id        string                 `json:"id"`
+	Title     string                 `json:"title"`
+	Dashboard map[string]interface{} `json:"dashboard"`
+	AccountId int64                  `json:"-"`
+
+	Result *Dashboard
+}
+
+func convertToStringArray(arr []interface{}) []string {
+	b := make([]string, len(arr))
+	for i := range arr {
+		b[i] = arr[i].(string)
+	}
+
+	return b
+}
+
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Id = 0
 	dash.Data = make(map[string]interface{})
 	dash.Data["title"] = title
 	dash.Title = title
 	dash.UpdateSlug()
-
 	return dash
 }
 
-func NewFromJson(reader io.Reader) (*Dashboard, error) {
-	dash := NewDashboard("temp")
-	jsonParser := json.NewDecoder(reader)
+func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
+	dash := &Dashboard{}
+	dash.Data = cmd.Dashboard
+	dash.Title = dash.Data["title"].(string)
+	dash.AccountId = cmd.AccountId
+	dash.Tags = convertToStringArray(dash.Data["tags"].([]interface{}))
+	dash.UpdateSlug()
 
-	if err := jsonParser.Decode(&dash.Data); err != nil {
-		return nil, err
+	if dash.Data["id"] != nil {
+		dash.Id = int64(dash.Data["id"].(float64))
 	}
 
-	return dash, nil
+	return dash
 }
 
 func (dash *Dashboard) GetString(prop string) string {
