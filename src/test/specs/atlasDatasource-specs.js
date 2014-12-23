@@ -52,7 +52,7 @@ define([
         ctx.$httpBackend.verifyNoOutstandingExpectation();
       });
 
-      it.only('should return series list', function() {
+      it('should return series list', function() {
         expect(results.data.length).to.be(2);
         expect(results.data[0].target).to.be('atlas.legacy=epic, name=sps, nf.app=nccp');
         expect(results.data[0].datapoints[0]).to.eql([604930.164776, 1419312000000]);
