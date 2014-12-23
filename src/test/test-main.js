@@ -124,6 +124,7 @@ require([
     'specs/influxSeries-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influxdb-datasource-specs',
+    'specs/atlasDatasource-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',

@@ -6,6 +6,7 @@ define([
   './influxdb/influxdbDatasource',
   './opentsdb/opentsdbDatasource',
   './elasticsearch/es-datasource',
+  './atlas/atlasDatasource',
 ],
 function (angular, _, config) {
   'use strict';
@@ -69,6 +70,9 @@ function (angular, _, config) {
         break;
       case 'elasticsearch':
         Datasource = $injector.get('ElasticDatasource');
+        break;
+      case 'atlas':
+        Datasource = $injector.get('AtlasDatasource');
         break;
       default:
         Datasource = $injector.get(ds.type);
