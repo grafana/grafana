@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'services/graphite/graphiteDatasource'
 ], function(helpers) {
   'use strict';

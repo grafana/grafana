@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'services/influxdb/influxdbDatasource'
 ], function(helpers) {
   'use strict';

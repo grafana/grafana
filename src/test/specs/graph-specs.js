@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'angular',
   'jquery',
   'components/timeSeries',

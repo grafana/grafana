@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'controllers/sharePanelCtrl'
 ], function(helpers) {
   'use strict';
