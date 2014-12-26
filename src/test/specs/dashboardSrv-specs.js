@@ -95,7 +95,7 @@ define([
     beforeEach(module('grafana.services'));
     beforeEach(inject(function(dashboardSrv) {
       model = dashboardSrv.create({
-        services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [1] }},
+        services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [{}] }},
         pulldowns: [
           {
             type: 'filtering',
@@ -135,7 +135,7 @@ define([
 
     it('should move time and filtering list', function() {
       expect(model.time.from).to.be('now-1d');
-      expect(model.templating.list[0]).to.be(1);
+      expect(model.templating.list[0].allFormat).to.be('glob');
     });
 
     it('graphite panel should change name too graph', function() {
