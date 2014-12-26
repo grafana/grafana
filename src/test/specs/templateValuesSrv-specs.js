@@ -1,6 +1,6 @@
 define([
   'mocks/dashboard-mock',
-  './helpers',
+  'helpers',
   'moment',
   'services/templateValuesSrv'
 ], function(dashboardMock, helpers, moment) {

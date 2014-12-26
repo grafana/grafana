@@ -1,6 +1,6 @@
 define([
   'mocks/dashboard-mock',
-  './helpers',
+  'helpers',
   'lodash',
   'services/timeSrv'
 ], function(dashboardMock, helpers, _) {

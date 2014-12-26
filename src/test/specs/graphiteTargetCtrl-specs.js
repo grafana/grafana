@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'services/graphite/gfunc',
   'controllers/graphiteTarget'
 ], function(helpers, gfunc) {

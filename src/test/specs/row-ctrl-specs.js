@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'controllers/row'
 ], function(helpers) {
   'use strict';

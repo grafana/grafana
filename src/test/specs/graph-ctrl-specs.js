@@ -1,5 +1,5 @@
 define([
-  './helpers',
+  'helpers',
   'panels/graph/module'
 ], function(helpers) {
   'use strict';

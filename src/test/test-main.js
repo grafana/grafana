@@ -4,7 +4,8 @@ require.config({
   paths: {
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
-    config:                '../config.sample',
+    helpers:               '../test/specs/helpers',
+    config:                ['../config', '../config.sample'],
     kbn:                   'components/kbn',
     store:                 'components/store',
 
@@ -96,9 +97,10 @@ require.config({
 
 require([
   'angular',
+  'config',
   'angularMocks',
   'app',
-], function(angular) {
+], function(angular, config) {
   'use strict';
 
   for (var file in window.__karma__.files) {
@@ -113,7 +115,7 @@ require([
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
 
-  require([
+  var specs = [
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
@@ -135,9 +137,14 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs'
-  ], function () {
-    window.__karma__.start();
+  ];
+
+  var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
+    return '../plugins/' + spec;
   });
 
+  require(specs.concat(pluginSpecs), function () {
+    window.__karma__.start();
+  });
 });
 
