@@ -18,7 +18,7 @@ function (angular, $, config) {
       '<div class="panel-header">'+
           '<span class="alert-error panel-error small pointer"' +
                 'config-modal="app/partials/inspector.html" ng-if="panelMeta.error">' +
-            '<span data-placement="right" bs-tooltip="panelMeta.error">' +
+            '<span data-placement="top" bs-tooltip="panelMeta.error">' +
             '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
             '</span>' +
           '</span>' +
