@@ -46,15 +46,12 @@ func Register(m *macaron.Macaron) {
 	m.Post("/api/dashboard/", auth, PostDashboard)
 	m.Delete("/api/dashboard/:slug", auth, DeleteDashboard)
 
-	// frontend config
-	m.Get("/frontend/config", auth, GetConfigJS)
-
 	// rendering
 	m.Get("/render/*", auth, RenderToPng)
 }
 
 func Index(ctx *middleware.Context) {
-	settings, err := getFrontendSettings(ctx.GetAccountId())
+	settings, err := getFrontendSettings(ctx)
 	if err != nil {
 		ctx.Handle(500, "Failed to get settings", err)
 		return

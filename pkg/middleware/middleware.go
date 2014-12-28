@@ -18,8 +18,6 @@ type Context struct {
 
 	Account     *models.Account
 	UserAccount *models.Account
-
-	IsSigned bool
 }
 
 func (c *Context) GetAccountId() int64 {

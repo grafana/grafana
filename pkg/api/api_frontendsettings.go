@@ -4,20 +4,27 @@ import (
 	"strconv"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-func getFrontendSettings(accountId int64) (map[string]interface{}, error) {
-	query := m.GetDataSourcesQuery{AccountId: accountId}
-	err := bus.Dispatch(&query)
+func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) {
+	accountDataSources := make([]*m.DataSource, 0)
 
-	if err != nil {
-		return nil, err
+	if c.Account != nil {
+		query := m.GetDataSourcesQuery{AccountId: c.Account.Id}
+		err := bus.Dispatch(&query)
+
+		if err != nil {
+			return nil, err
+		}
+
+		accountDataSources = query.Result
 	}
 
 	datasources := make(map[string]interface{})
 
-	for i, ds := range query.Result {
+	for i, ds := range accountDataSources {
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {
