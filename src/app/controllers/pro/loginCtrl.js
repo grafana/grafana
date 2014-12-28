@@ -37,7 +37,7 @@ function (angular) {
 
       $http.post('/login', $scope.loginModel).then(function(results) {
         $scope.appEvent('logged-in', results.data.user);
-        $location.path('/');
+        window.location.href = '/';
       }, function(err) {
         if (err.status === 401) {
           $scope.loginError = "Username or password is incorrect";
