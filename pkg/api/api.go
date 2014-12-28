@@ -54,7 +54,14 @@ func Register(m *macaron.Macaron) {
 }
 
 func Index(ctx *middleware.Context) {
-	ctx.Data["User"] = dtos.NewCurrentUser(ctx.UserAccount)
+	settings, err := getFrontendSettings(ctx.GetAccountId())
+	if err != nil {
+		ctx.Handle(500, "Failed to get settings", err)
+		return
+	}
+
+	ctx.Data["user"] = dtos.NewCurrentUser(ctx.UserAccount)
+	ctx.Data["settings"] = settings
 	ctx.HTML(200, "index")
 }
 
