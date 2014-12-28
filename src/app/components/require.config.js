@@ -6,7 +6,7 @@ require.config({
 
   paths: {
     app: 'p_app',
-    config:                   ['../../frontend/config'],
+    config:                   ['components/config'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',
     store:                    'components/store',
