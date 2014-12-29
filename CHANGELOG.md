@@ -1,4 +1,4 @@
-# 1.9.1 (unreleased)
+# 1.9.1 (2014-12-29)
 
 **Enhancements**
 - [Issue #1028](https://github.com/grafana/grafana/issues/1028). Graph: New legend option ``hideEmtpy`` to hide series with only null values from legend
