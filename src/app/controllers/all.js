@@ -9,6 +9,7 @@ define([
   './metricKeys',
   './graphiteTarget',
   './graphiteImport',
+  './cqCtrl',
   './influxTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
