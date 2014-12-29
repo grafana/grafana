@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/url"
+	"strings"
 )
 
 type UrlQueryReader struct {
@@ -21,4 +22,16 @@ func (r *UrlQueryReader) Get(name string, def string) string {
 	}
 
 	return val[0]
+}
+
+func JoinUrlFragments(a, b string) string {
+	aslash := strings.HasSuffix(a, "/")
+	bslash := strings.HasPrefix(b, "/")
+	switch {
+	case aslash && bslash:
+		return a + b[1:]
+	case !aslash && !bslash:
+		return a + "/" + b
+	}
+	return a + b
 }
