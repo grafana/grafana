@@ -7,12 +7,6 @@ import (
 	"time"
 )
 
-var (
-	GetDashboard    func(slug string, accountId int64) (*Dashboard, error)
-	DeleteDashboard func(slug string, accountId int64) error
-	SearchQuery     func(query string, acccountId int64) ([]*SearchResult, error)
-)
-
 // Typed errors
 var (
 	ErrDashboardNotFound = errors.New("Account not found")
@@ -37,11 +31,30 @@ type SearchResult struct {
 	Slug  string `json:"slug"`
 }
 
+type SearchDashboardsQuery struct {
+	Query     string
+	AccountId int64
+
+	Result []*SearchResult
+}
+
 type SaveDashboardCommand struct {
 	Id        string                 `json:"id"`
 	Title     string                 `json:"title"`
 	Dashboard map[string]interface{} `json:"dashboard"`
 	AccountId int64                  `json:"-"`
+
+	Result *Dashboard
+}
+
+type DeleteDashboardCommand struct {
+	Slug      string
+	AccountId int64
+}
+
+type GetDashboardQuery struct {
+	Slug      string
+	AccountId int64
 
 	Result *Dashboard
 }

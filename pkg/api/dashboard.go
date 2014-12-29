@@ -10,47 +10,51 @@ import (
 func GetDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	dash, err := m.GetDashboard(slug, c.GetAccountId())
+	query := m.GetDashboardQuery{Slug: slug, AccountId: c.GetAccountId()}
+	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
-	dash.Data["id"] = dash.Id
+	query.Result.Data["id"] = query.Result.Id
 
-	c.JSON(200, dash.Data)
+	c.JSON(200, query.Result.Data)
 }
 
 func DeleteDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	dash, err := m.GetDashboard(slug, c.GetAccountId())
+	query := m.GetDashboardQuery{Slug: slug, AccountId: c.GetAccountId()}
+	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
-	err = m.DeleteDashboard(slug, c.GetAccountId())
+	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: c.GetAccountId()}
+	err = bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to delete dashboard", err)
 		return
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
+	var resp = map[string]interface{}{"title": query.Result.Title}
 
 	c.JSON(200, resp)
 }
 
 func Search(c *middleware.Context) {
-	query := c.Query("q")
+	queryText := c.Query("q")
 
-	results, err := m.SearchQuery(query, c.GetAccountId())
+	query := m.SearchDashboardsQuery{Query: queryText, AccountId: c.GetAccountId()}
+	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(500, "Search failed", err)
 		return
 	}
 
-	c.JSON(200, results)
+	c.JSON(200, query.Result)
 }
 
 func PostDashboard(c *middleware.Context) {
