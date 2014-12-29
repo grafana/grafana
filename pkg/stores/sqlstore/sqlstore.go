@@ -35,9 +35,6 @@ func init() {
 }
 
 func Init() {
-	m.GetDashboard = GetDashboard
-	m.SearchQuery = SearchQuery
-	m.DeleteDashboard = DeleteDashboard
 }
 
 func NewEngine() (err error) {

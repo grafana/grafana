@@ -7,10 +7,13 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", SaveDashboard2)
+	bus.AddHandler("sql", SaveDashboard)
+	bus.AddHandler("sql", GetDashboard)
+	bus.AddHandler("sql", DeleteDashboard)
+	bus.AddHandler("sql", SearchDashboards)
 }
 
-func SaveDashboard2(cmd *m.SaveDashboardCommand) error {
+func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		dash := cmd.GetDashboardModel()
 
@@ -27,34 +30,36 @@ func SaveDashboard2(cmd *m.SaveDashboardCommand) error {
 	})
 }
 
-func GetDashboard(slug string, accountId int64) (*m.Dashboard, error) {
-	dashboard := m.Dashboard{Slug: slug, AccountId: accountId}
+func GetDashboard(query *m.GetDashboardQuery) error {
+	dashboard := m.Dashboard{Slug: query.Slug, AccountId: query.AccountId}
 	has, err := x.Get(&dashboard)
 	if err != nil {
-		return nil, err
+		return err
 	} else if has == false {
-		return nil, m.ErrDashboardNotFound
+		return m.ErrDashboardNotFound
 	}
 
-	return &dashboard, nil
+	query.Result = &dashboard
+
+	return nil
 }
 
-func SearchQuery(query string, accountId int64) ([]*m.SearchResult, error) {
-	sess := x.Limit(100, 0).Where("account_id=?", accountId)
+func SearchDashboards(query *m.SearchDashboardsQuery) error {
+	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId)
 	sess.Table("Dashboard")
 
-	results := make([]*m.SearchResult, 0)
-	err := sess.Find(&results)
+	query.Result = make([]*m.SearchResult, 0)
+	err := sess.Find(&query.Result)
 
-	return results, err
+	return err
 }
 
-func DeleteDashboard(slug string, accountId int64) error {
+func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	sess := x.NewSession()
 	defer sess.Close()
 
 	rawSql := "DELETE FROM Dashboard WHERE account_id=? and slug=?"
-	_, err := sess.Exec(rawSql, accountId, slug)
+	_, err := sess.Exec(rawSql, cmd.AccountId, cmd.Slug)
 
 	return err
 }
