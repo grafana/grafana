@@ -1,5 +1,8 @@
 box: wercker/golang
 
+steps:
+  - wercker/npm-install@0.9.3
+
 build:
   steps:
     # Workspace
@@ -22,5 +25,5 @@ build:
           go test ./...
     # npm install
     - npm-install:
-      cwd: grafana/
+        cwd: grafana/
 
