@@ -37,10 +37,7 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "public/app", "app")
 	mapStatic(m, "public/img", "img")
 
-	m.Use(session.Sessioner(session.Options{
-		Provider: setting.SessionProvider,
-		Config:   *setting.SessionConfig,
-	}))
+	m.Use(session.Sessioner(setting.SessionOptions))
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
