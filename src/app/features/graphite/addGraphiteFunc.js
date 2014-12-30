@@ -3,7 +3,7 @@ define([
   'app',
   'lodash',
   'jquery',
-  '../features/graphite/gfunc',
+  './gfunc',
 ],
 function (angular, app, _, $, gfunc) {
   'use strict';

@@ -1,5 +1,5 @@
 define([
-  'services/influxdb/influxSeries'
+  'features/influxdb/influxSeries'
 ], function(InfluxSeries) {
   'use strict';
 

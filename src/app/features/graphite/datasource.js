@@ -6,6 +6,8 @@ define([
   'kbn',
   'moment',
   './queryCtrl',
+  './funcEditor',
+  './addGraphiteFunc',
 ],
 function (angular, _, $, config, kbn, moment) {
   'use strict';
@@ -18,14 +20,15 @@ function (angular, _, $, config, kbn, moment) {
       this.type = 'graphite';
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
-      this.editorSrc = 'app/features/graphite/partials/query.editor.html';
       this.name = datasource.name;
-      this.render_method = datasource.render_method || 'POST';
-      this.supportAnnotations = true;
-      this.supportMetrics = true;
-      this.annotationEditorSrc = 'app/features/graphite/partials/annotation.editor.html';
       this.cacheTimeout = datasource.cacheTimeout;
       this.withCredentials = datasource.withCredentials;
+      this.render_method = datasource.render_method || 'POST';
+
+      this.supportAnnotations = true;
+      this.supportMetrics = true;
+      this.editorSrc = 'app/features/graphite/partials/query.editor.html';
+      this.annotationEditorSrc = 'app/features/graphite/partials/annotation.editor.html';
     }
 
     GraphiteDatasource.prototype.query = function(options) {

@@ -8,7 +8,6 @@ define([
   './search',
   './metricKeys',
   './graphiteImport',
-  './influxTargetCtrl',
   './playlistCtrl',
   './inspectCtrl',
   './opentsdbTargetCtrl',

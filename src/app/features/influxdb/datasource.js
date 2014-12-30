@@ -3,7 +3,9 @@ define([
   'lodash',
   'kbn',
   './influxSeries',
-  './influxQueryBuilder'
+  './queryBuilder',
+  './queryCtrl',
+  './funcEditor',
 ],
 function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
@@ -14,20 +16,20 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxDB';
-      this.editorSrc = 'app/partials/influxdb/editor.html';
       this.urls = datasource.urls;
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
       this.basicAuth = datasource.basicAuth;
+      this.grafanaDB = datasource.grafanaDB;
 
       this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
       this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
 
-      this.grafanaDB = datasource.grafanaDB;
       this.supportAnnotations = true;
       this.supportMetrics = true;
-      this.annotationEditorSrc = 'app/partials/influxdb/annotation_editor.html';
+      this.editorSrc = 'app/features/influxdb/partials/query.editor.html';
+      this.annotationEditorSrc = 'app/features/influxdb/partials/annotations.editor.html';
     }
 
     InfluxDatasource.prototype.query = function(options) {
