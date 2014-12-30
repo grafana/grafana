@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/oauth2"
+
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
@@ -27,13 +29,13 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		ctx.Redirect(connect.AuthCodeURL("", "online", "auto"))
+		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
 		return
 	}
 	log.Info("code: %v", code)
 
 	// handle call back
-	transport, err := connect.NewTransportFromCode(code)
+	token, err := connect.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
@@ -41,7 +43,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	log.Trace("login.OAuthLogin(Got token)")
 
-	userInfo, err := connect.UserInfo(transport)
+	userInfo, err := connect.UserInfo(token)
 	if err != nil {
 		ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		return

@@ -29,10 +29,6 @@
 			"Rev": "5c23849a66f4593e68909bb6c1fa30651b5b0541"
 		},
 		{
-			"ImportPath": "github.com/golang/oauth2",
-			"Rev": "5fd31d511c212ab476371f61b4fa28e9f168a8f0"
-		},
-		{
 			"ImportPath": "github.com/macaron-contrib/session",
 			"Rev": "f00d48fd4f85088603c1493b0a99fdfe95d0658c"
 		},

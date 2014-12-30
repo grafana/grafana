@@ -2,15 +2,13 @@ package social
 
 import (
 	"encoding/json"
-	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 
-	"github.com/golang/oauth2"
+	"golang.org/x/oauth2"
 )
 
 type BasicUserInfo struct {
@@ -23,10 +21,10 @@ type BasicUserInfo struct {
 
 type SocialConnector interface {
 	Type() int
-	UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error)
+	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 
-	AuthCodeURL(state, accessType, prompt string) string
-	NewTransportFromCode(code string) (*oauth2.Transport, error)
+	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+	Exchange(ctx oauth2.Context, code string) (*oauth2.Token, error)
 }
 
 var (
@@ -60,41 +58,40 @@ func NewOAuthService() {
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
-		options, err := oauth2.New(
-			oauth2.Client(info.ClientId, info.ClientSecret),
-			oauth2.Scope(info.Scopes...),
-			oauth2.Endpoint(info.AuthUrl, info.TokenUrl),
-			oauth2.RedirectURL(strings.TrimSuffix(setting.AppUrl, "/")+SocialBaseUrl+name),
-		)
-
-		if err != nil {
-			log.Error(3, "Failed to init oauth service", err)
-			continue
+		config := oauth2.Config{
+			ClientID:     info.ClientId,
+			ClientSecret: info.ClientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  info.AuthUrl,
+				TokenURL: info.TokenUrl,
+			},
+			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			Scopes:      info.Scopes,
 		}
 
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Options: options}
+			SocialMap["github"] = &SocialGithub{Config: &config}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Options: options}
+			SocialMap["google"] = &SocialGoogle{Config: &config}
 		}
 	}
 }
 
 type SocialGithub struct {
-	*oauth2.Options
+	*oauth2.Config
 }
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
 }
 
-func (s *SocialGithub) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
@@ -102,7 +99,7 @@ func (s *SocialGithub) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, er
 	}
 
 	var err error
-	client := http.Client{Transport: transport}
+	client := s.Client(oauth2.NoContext, token)
 	r, err := client.Get("https://api.github.com/user")
 	if err != nil {
 		return nil, err
@@ -129,14 +126,14 @@ func (s *SocialGithub) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, er
 //         \/             /_____/           \/
 
 type SocialGoogle struct {
-	*oauth2.Options
+	*oauth2.Config
 }
 
 func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
 }
 
-func (s *SocialGoogle) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`
 		Name  string `json:"name"`
@@ -145,7 +142,7 @@ func (s *SocialGoogle) UserInfo(transport *oauth2.Transport) (*BasicUserInfo, er
 	var err error
 
 	reqUrl := "https://www.googleapis.com/oauth2/v1/userinfo"
-	client := http.Client{Transport: transport}
+	client := s.Client(oauth2.NoContext, token)
 	r, err := client.Get(reqUrl)
 	if err != nil {
 		return nil, err
