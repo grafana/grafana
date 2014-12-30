@@ -1,9 +1,12 @@
 [run]
-init_cmds = [["./bin/grafana", "web"]]
+init_cmds = [
+  ["make", "build"],
+	["./bin/grafana", "web"]
+]
 watch_all = true
 watch_dirs = [
 	"$WORKDIR/pkg",
-	"$WORKDIR/views",
+	"$WORKDIR/templates",
 	"$WORKDIR/conf",
 ]
 watch_exts = [".go", ".ini"]
