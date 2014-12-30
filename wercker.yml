@@ -2,28 +2,31 @@ box: wercker/golang
 
 steps:
   - wercker/npm-install@0.9.3
+  - wercker/step-grunt
 
 build:
   steps:
     # Workspace
     - setup-go-workspace
     - script:
-        name: go get
-        code: |
-          cd $WERCKER_SOURCE_DIR
-          go version
-          go get -t ./...
+        name: install godep
+        code:
+          go get -u github.com/tools/godep
+          go install github.com/tools/godep
     # Build the project
     - script:
-        name: go build
+        name: godep build
         code: |
-          go build ./...
+          godep go build ./...
     # Test the project
     - script:
-        name: go test
+        name: godep go test
         code: |
-          go test ./...
-    # npm install
+          godep go test ./...
+    # frontend
     - npm-install:
         cwd: grafana/
+    - grunt:
+        cwd: grafana/
+        tasks: release
 
