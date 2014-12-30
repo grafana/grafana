@@ -15,47 +15,53 @@
 package com
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha1"
-	"crypto/sha256"
-	"fmt"
-	"hash"
+	"encoding/base64"
+	"errors"
 	"io"
 	r "math/rand"
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 )
 
-func sha(m hash.Hash, str string) string {
-	io.WriteString(m, str)
-	return fmt.Sprintf("%x", m.Sum(nil))
+// AESEncrypt encrypts text and given key with AES.
+func AESEncrypt(key, text []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	b := base64.StdEncoding.EncodeToString(text)
+	ciphertext := make([]byte, aes.BlockSize+len(b))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, err
+	}
+	cfb := cipher.NewCFBEncrypter(block, iv)
+	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
+	return ciphertext, nil
 }
 
-// sha1 hash string
-func Sha1(str string) string {
-	return sha(sha1.New(), str)
-}
-
-// sha256 hash string
-func Sha256(str string) string {
-	return sha(sha256.New(), str)
-}
-
-// trim space on left
-func Ltrim(str string) string {
-	return strings.TrimLeftFunc(str, unicode.IsSpace)
-}
-
-// trim space on right
-func Rtrim(str string) string {
-	return strings.TrimRightFunc(str, unicode.IsSpace)
-}
-
-// replace find all occurs to string
-func StrReplace(str string, find string, to string) string {
-	return strings.Replace(str, find, to, -1)
+// AESDecrypt decrypts text and given key with AES.
+func AESDecrypt(key, text []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	if len(text) < aes.BlockSize {
+		return nil, errors.New("ciphertext too short")
+	}
+	iv := text[:aes.BlockSize]
+	text = text[aes.BlockSize:]
+	cfb := cipher.NewCFBDecrypter(block, iv)
+	cfb.XORKeyStream(text, text)
+	data, err := base64.StdEncoding.DecodeString(string(text))
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 // IsLetter returns true if the 'l' is an English letter.

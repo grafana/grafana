@@ -24,12 +24,15 @@ import (
 	"strings"
 
 	"github.com/Unknwon/com"
+	"gopkg.in/ini.v1"
 
 	"github.com/Unknwon/macaron/inject"
 )
 
+const _VERSION = "0.4.9.1229"
+
 func Version() string {
-	return "0.4.5.1122"
+	return _VERSION
 }
 
 // Handler can be any callable function.
@@ -39,9 +42,17 @@ type Handler interface{}
 
 // validateHandler makes sure a handler is a callable function,
 // and panics if it is not.
-func validateHandler(handler Handler) {
-	if reflect.TypeOf(handler).Kind() != reflect.Func {
-		panic("mocaron handler must be a callable function")
+func validateHandler(h Handler) {
+	if reflect.TypeOf(h).Kind() != reflect.Func {
+		panic("Macaron handler must be a callable function")
+	}
+}
+
+// validateHandlers makes sure handlers are callable functions,
+// and panics if any of them is not.
+func validateHandlers(handlers []Handler) {
+	for _, h := range handlers {
+		validateHandler(h)
 	}
 }
 
@@ -210,9 +221,9 @@ func (m *Macaron) SetURLPrefix(prefix string) {
 //                \/              \/    \/          \/     \/
 
 const (
-	DEV  string = "development"
-	PROD string = "production"
-	TEST string = "test"
+	DEV  = "development"
+	PROD = "production"
+	TEST = "test"
 )
 
 var (
@@ -225,6 +236,9 @@ var (
 
 	// Flash applies to current request.
 	FlashNow bool
+
+	// Configuration convention object.
+	cfg *ini.File
 )
 
 func setENV(e string) {
@@ -235,9 +249,25 @@ func setENV(e string) {
 
 func init() {
 	setENV(os.Getenv("MACARON_ENV"))
+
 	var err error
 	Root, err = os.Getwd()
 	if err != nil {
-		panic(err)
+		panic("error getting work directory: " + err.Error())
 	}
+}
+
+// SetConfig sets data sources for configuration.
+func SetConfig(source interface{}, others ...interface{}) (err error) {
+	cfg, err = ini.Load(source, others...)
+	return err
+}
+
+// Config returns configuration convention object.
+// It returns an empty object if there is no one available.
+func Config() *ini.File {
+	if cfg == nil {
+		return &ini.File{}
+	}
+	return cfg
 }

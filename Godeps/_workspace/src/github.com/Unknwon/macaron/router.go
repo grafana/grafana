@@ -147,10 +147,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 		h = append(h, handlers...)
 		handlers = h
 	}
-	// verify handlers by cnphpbb at 20140803 23:51
-	for _, handler := range handlers {
-		validateHandler(handler)
-	}
+	validateHandlers(handlers)
 
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
@@ -217,8 +214,8 @@ func (r *Router) Route(pattern, methods string, h ...Handler) {
 }
 
 // Combo returns a combo router.
-func (r *Router) Combo(pattern string) *ComboRouter {
-	return &ComboRouter{r, pattern, map[string]bool{}}
+func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
+	return &ComboRouter{r, pattern, h, map[string]bool{}}
 }
 
 // Configurable http.HandlerFunc which is called when no matching route is
@@ -253,9 +250,10 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // ComboRouter represents a combo router.
 type ComboRouter struct {
-	router  *Router
-	pattern string
-	methods map[string]bool // Registered methods.
+	router   *Router
+	pattern  string
+	handlers []Handler
+	methods  map[string]bool // Registered methods.
 }
 
 func (cr *ComboRouter) checkMethod(name string) {
@@ -265,44 +263,36 @@ func (cr *ComboRouter) checkMethod(name string) {
 	cr.methods[name] = true
 }
 
-func (cr *ComboRouter) Get(h ...Handler) *ComboRouter {
-	cr.checkMethod("GET")
-	cr.router.Get(cr.pattern, h...)
+func (cr *ComboRouter) route(fn func(string, ...Handler), method string, h ...Handler) *ComboRouter {
+	cr.checkMethod(method)
+	fn(cr.pattern, append(cr.handlers, h...)...)
 	return cr
+}
+
+func (cr *ComboRouter) Get(h ...Handler) *ComboRouter {
+	return cr.route(cr.router.Get, "GET", h...)
 }
 
 func (cr *ComboRouter) Patch(h ...Handler) *ComboRouter {
-	cr.checkMethod("PATCH")
-	cr.router.Patch(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Patch, "PATCH", h...)
 }
 
 func (cr *ComboRouter) Post(h ...Handler) *ComboRouter {
-	cr.checkMethod("POST")
-	cr.router.Post(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Post, "POST", h...)
 }
 
 func (cr *ComboRouter) Put(h ...Handler) *ComboRouter {
-	cr.checkMethod("PUT")
-	cr.router.Put(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Put, "PUT", h...)
 }
 
 func (cr *ComboRouter) Delete(h ...Handler) *ComboRouter {
-	cr.checkMethod("DELETE")
-	cr.router.Delete(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Delete, "DELETE", h...)
 }
 
 func (cr *ComboRouter) Options(h ...Handler) *ComboRouter {
-	cr.checkMethod("OPTIONS")
-	cr.router.Options(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Options, "OPTIONS", h...)
 }
 
 func (cr *ComboRouter) Head(h ...Handler) *ComboRouter {
-	cr.checkMethod("HEAD")
-	cr.router.Head(cr.pattern, h...)
-	return cr
+	return cr.route(cr.router.Head, "HEAD", h...)
 }

@@ -18,3 +18,4 @@ data/sessions
 data/*.db
 data/log
 /bin/*
+/grafana-pro

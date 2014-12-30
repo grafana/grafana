@@ -116,7 +116,7 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 
 func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 	if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
-		return true
+		return false
 	}
 
 	file := ctx.Req.URL.Path
@@ -185,6 +185,7 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 	}
 }
 
+// Statics registers multiple static middleware handlers all at once.
 func Statics(opt StaticOptions, dirs ...string) Handler {
 	if len(dirs) == 0 {
 		panic("no static directory is given")

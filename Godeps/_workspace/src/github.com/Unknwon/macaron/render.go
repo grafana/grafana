@@ -307,9 +307,6 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 	if len(opt.HTMLContentType) == 0 {
 		opt.HTMLContentType = ContentHTML
 	}
-	// if opt.TemplateFileSystem == nil {
-	// 	opt.TemplateFileSystem = newTemplateFileSystem(opt)
-	// }
 
 	return opt
 }

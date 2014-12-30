@@ -15,7 +15,7 @@
 
 package macaron
 
-// NOTE: last sync 90cff5f on Nov 2, 2014.
+// NOTE: last sync 0c93364 on Dec 19, 2014.
 
 import (
 	"path"
@@ -142,6 +142,10 @@ func NewTree() *Tree {
 // 		"/admin/" -> ["admin"]
 // 		"/admin/users" -> ["admin", "users"]
 func splitPath(pattern string) []string {
+	if len(pattern) == 0 {
+		return []string{}
+	}
+
 	elements := strings.Split(pattern, "/")
 	if elements[0] == "" {
 		elements = elements[1:]
