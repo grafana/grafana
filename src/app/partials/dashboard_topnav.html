@@ -3,10 +3,9 @@
 		<div class="container-fluid">
 			<span class="brand">
 				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-				<span class="page-title">{{dashboard.title}}</span>
+				<span class="page-title" >{{dashboard.title}} <span ng-show="dashboard.description !== null && dashboard.description.length"><tip place="bottom" icon="info-sign">{{dashboard.description}}</tip></span> </span>
 			</span>
 			<ul class="nav pull-right" ng-controller='DashboardNavCtrl' ng-init="init()">
-
 				<li ng-show="dashboardViewState.fullscreen">
 					<a ng-click="exitFullscreen()">
 						Back to dashboard
