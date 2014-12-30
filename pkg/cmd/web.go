@@ -22,8 +22,8 @@ import (
 
 var CmdWeb = cli.Command{
 	Name:        "web",
-	Usage:       "Start Grafana Pro web server",
-	Description: `Start Grafana Pro server`,
+	Usage:       "grafana web",
+	Description: "Starts Grafana backend & web server",
 	Action:      runWeb,
 	Flags:       []cli.Flag{},
 }
@@ -33,14 +33,14 @@ func newMacaron() *macaron.Macaron {
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
 
-	mapStatic(m, "public", "public")
-	mapStatic(m, "public/app", "app")
-	mapStatic(m, "public/img", "img")
+	mapStatic(m, "", "public")
+	mapStatic(m, "app", "app")
+	mapStatic(m, "img", "img")
 
 	m.Use(session.Sessioner(setting.SessionOptions))
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "views"),
+		Directory:  setting.TemplatesRootPath,
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))

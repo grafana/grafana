@@ -52,6 +52,7 @@ var (
 	CertFile, KeyFile  string
 	RouterLogging      bool
 	StaticRootPath     string
+	TemplatesRootPath  string
 
 	// Session settings.
 	SessionOptions session.Options
@@ -137,7 +138,8 @@ func NewConfigContext() {
 		HttpPort = port
 	}
 
-	StaticRootPath = Cfg.MustValue("server", "static_root_path", workDir)
+	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(workDir, "grafana/src"))
+	TemplatesRootPath = Cfg.MustValue("server", "templates_path", path.Join(workDir, "templates"))
 	RouterLogging = Cfg.MustBool("server", "router_logging", false)
 
 	// PhantomJS rendering
