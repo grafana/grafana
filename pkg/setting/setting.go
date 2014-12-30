@@ -54,8 +54,7 @@ var (
 	StaticRootPath     string
 
 	// Session settings.
-	SessionProvider string
-	SessionConfig   *session.Config
+	SessionOptions session.Options
 
 	// Global setting objects.
 	Cfg          *goconfig.ConfigFile
@@ -149,19 +148,18 @@ func NewConfigContext() {
 }
 
 func initSessionService() {
-	SessionProvider = Cfg.MustValueRange("session", "provider", "memory", []string{"memory", "file"})
 
-	SessionConfig = new(session.Config)
-	SessionConfig.ProviderConfig = strings.Trim(Cfg.MustValue("session", "provider_config"), "\" ")
-	SessionConfig.CookieName = Cfg.MustValue("session", "cookie_name", "grafana_pro_sess")
-	SessionConfig.CookiePath = AppSubUrl
-	SessionConfig.Secure = Cfg.MustBool("session", "cookie_secure")
-	SessionConfig.EnableSetCookie = Cfg.MustBool("session", "enable_set_cookie", true)
-	SessionConfig.Gclifetime = Cfg.MustInt64("session", "gc_interval_time", 86400)
-	SessionConfig.Maxlifetime = Cfg.MustInt64("session", "session_life_time", 86400)
+	SessionOptions = session.Options{}
+	SessionOptions.Provider = Cfg.MustValueRange("session", "provider", "memory", []string{"memory", "file"})
+	SessionOptions.ProviderConfig = strings.Trim(Cfg.MustValue("session", "provider_config"), "\" ")
+	SessionOptions.CookieName = Cfg.MustValue("session", "cookie_name", "grafana_pro_sess")
+	SessionOptions.CookiePath = AppSubUrl
+	SessionOptions.Secure = Cfg.MustBool("session", "cookie_secure")
+	SessionOptions.Gclifetime = Cfg.MustInt64("session", "gc_interval_time", 86400)
+	SessionOptions.Maxlifetime = Cfg.MustInt64("session", "session_life_time", 86400)
 
-	if SessionProvider == "file" {
-		os.MkdirAll(path.Dir(SessionConfig.ProviderConfig), os.ModePerm)
+	if SessionOptions.Provider == "file" {
+		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
 
 	log.Info("Session Service Enabled")
