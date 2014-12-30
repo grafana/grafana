@@ -4,7 +4,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Unknwon/com",
-			"Rev": "6c41aba9600e474c1a9e0521402c996b52944c4b"
+			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/goconfig",
@@ -12,7 +12,7 @@
 		},
 		{
 			"ImportPath": "github.com/Unknwon/macaron",
-			"Rev": "634a5d99660f7104f290a54e95ada2f8e34e46b2"
+			"Rev": "0f55900b417c019233ec27f86950bfb9feda8379"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",

@@ -110,21 +110,24 @@ func Test_Router_Handle(t *testing.T) {
 	Convey("Register all HTTP methods routes with combo", t, func() {
 		m := Classic()
 		m.SetURLPrefix("/prefix")
-		m.Combo("/").
-			Get(func() string { return "GET" }).
-			Patch(func() string { return "PATCH" }).
-			Post(func() string { return "POST" }).
-			Put(func() string { return "PUT" }).
-			Delete(func() string { return "DELETE" }).
-			Options(func() string { return "OPTIONS" }).
-			Head(func() string { return "HEAD" })
+		m.Use(Renderer())
+		m.Combo("/", func(ctx *Context) {
+			ctx.Data["prefix"] = "Prefix_"
+		}).
+			Get(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "GET" }).
+			Patch(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "PATCH" }).
+			Post(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "POST" }).
+			Put(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "PUT" }).
+			Delete(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "DELETE" }).
+			Options(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "OPTIONS" }).
+			Head(func(ctx *Context) string { return ctx.Data["prefix"].(string) + "HEAD" })
 
 		for name := range _HTTP_METHODS {
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest(name, "/", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, name)
+			So(resp.Body.String(), ShouldEqual, "Prefix_"+name)
 		}
 
 		defer func() {

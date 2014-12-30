@@ -191,7 +191,8 @@ func Test_Context(t *testing.T) {
 			req, err := http.NewRequest("GET", "/set", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(strings.HasPrefix(resp.Header().Get("Set-Cookie"), "user=VW5rbndvbg==|"), ShouldBeTrue)
+
+			cookie := resp.Header().Get("Set-Cookie")
 
 			m.Get("/get", func(ctx *Context) string {
 				name, ok := ctx.GetSecureCookie("user")
@@ -202,7 +203,7 @@ func Test_Context(t *testing.T) {
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/get", nil)
 			So(err, ShouldBeNil)
-			req.Header.Set("Cookie", "user=VW5rbndvbg==|1409244667158399419|6097781707f68d9940ba1ef0e78cc84aaeebc48f; Path=/; Max-Age=1")
+			req.Header.Set("Cookie", cookie)
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "Unknwon")
 		})

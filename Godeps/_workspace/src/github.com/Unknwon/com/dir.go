@@ -16,6 +16,7 @@ package com
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -93,6 +94,36 @@ func GetAllSubDirs(rootPath string) ([]string, error) {
 		return nil, errors.New("not a directory or does not exist: " + rootPath)
 	}
 	return statDir(rootPath, "", true, true)
+}
+
+// GetFileListBySuffix returns an ordered list of file paths.
+// It recognize if given path is a file, and don't do recursive find.
+func GetFileListBySuffix(dirPath, suffix string) ([]string, error) {
+	if !IsExist(dirPath) {
+		return nil, fmt.Errorf("given path does not exist: %s", dirPath)
+	} else if IsFile(dirPath) {
+		return []string{dirPath}, nil
+	}
+
+	// Given path is a directory.
+	dir, err := os.Open(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	fis, err := dir.Readdir(0)
+	if err != nil {
+		return nil, err
+	}
+
+	files := make([]string, 0, len(fis))
+	for _, fi := range fis {
+		if strings.HasSuffix(fi.Name(), suffix) {
+			files = append(files, path.Join(dirPath, fi.Name()))
+		}
+	}
+
+	return files, nil
 }
 
 // CopyDir copy files recursively from source to target directory.

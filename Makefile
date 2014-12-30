@@ -7,7 +7,7 @@ build:
 	go test ./pkg/...
 
 lint:
-	@gofmt -w . && go tool vet pkg/**/*.go && echo "$(GOLINT)"
+	@gofmt -w pkg && go tool vet pkg/**/*.go && echo "$(GOLINT)"
 
 setup:
 	go get github.com/tools/godep

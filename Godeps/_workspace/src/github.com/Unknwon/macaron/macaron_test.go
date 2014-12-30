@@ -25,6 +25,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func Test_Version(t *testing.T) {
+	Convey("Get version", t, func() {
+		So(Version(), ShouldEqual, _VERSION)
+	})
+}
+
 func Test_New(t *testing.T) {
 	Convey("Initialize a new instance", t, func() {
 		So(New(), ShouldNotBeNil)
@@ -171,11 +177,14 @@ func Test_Macaron_Written(t *testing.T) {
 func Test_Macaron_Basic_NoRace(t *testing.T) {
 	Convey("Make sure no race between requests", t, func() {
 		m := New()
+		handlers := []Handler{func() {}, func() {}}
+		// Ensure append will not realloc to trigger the race condition
+		m.handlers = handlers[:1]
 		m.Get("/", func() {})
+		req, _ := http.NewRequest("GET", "/", nil)
 		for i := 0; i < 2; i++ {
 			go func() {
 				resp := httptest.NewRecorder()
-				req, _ := http.NewRequest("GET", "/", nil)
 				m.ServeHTTP(resp, req)
 			}()
 		}
@@ -199,8 +208,10 @@ func Test_SetENV(t *testing.T) {
 	})
 }
 
-func Test_Version(t *testing.T) {
-	Convey("Get version", t, func() {
-		Version()
+func Test_Config(t *testing.T) {
+	Convey("Set and get configuration object", t, func() {
+		So(Config(), ShouldNotBeNil)
+		So(SetConfig([]byte("")), ShouldBeNil)
+		So(Config(), ShouldNotBeNil)
 	})
 }

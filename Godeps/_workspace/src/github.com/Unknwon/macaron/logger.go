@@ -31,21 +31,25 @@ func init() {
 
 // Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
 func Logger() Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *Context, log *log.Logger) {
+	return func(ctx *Context, log *log.Logger) {
 		start := time.Now()
 
-		log.Printf("Started %s %s for %s", req.Method, req.URL.Path, c.RemoteAddr())
+		log.Printf("Started %s %s for %s", ctx.Req.Method,ctx.Req.RequestURI, ctx.RemoteAddr())
 
-		rw := res.(ResponseWriter)
-		c.Next()
+		rw := ctx.Resp.(ResponseWriter)
+		ctx.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("Completed %s %v %s in %v",  ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
 		if !isWindows {
 			switch rw.Status() {
-			case 200:
+			case 200, 201, 202:
 				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
+			case 301, 302:
+				content = fmt.Sprintf("\033[1;37m%s\033[0m", content)
 			case 304:
 				content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
+			case 401, 403:
+				content = fmt.Sprintf("\033[4;31m%s\033[0m", content)
 			case 404:
 				content = fmt.Sprintf("\033[1;31m%s\033[0m", content)
 			case 500:

@@ -66,6 +66,7 @@ func Test_Tree_Match(t *testing.T) {
 		{"/:id", "/123", map[string]string{":id": "123"}},
 		{"/hello/?:id", "/hello", map[string]string{":id": ""}},
 		{"/", "/", nil},
+		{"", "", nil},
 		{"/customer/login", "/customer/login", nil},
 		{"/customer/login", "/customer/login.json", map[string]string{":ext": "json"}},
 		{"/*", "/customer/123", map[string]string{":splat": "customer/123"}},
