@@ -7,7 +7,6 @@ define([
   './pulldown',
   './search',
   './metricKeys',
-  './graphiteTarget',
   './graphiteImport',
   './influxTargetCtrl',
   './playlistCtrl',

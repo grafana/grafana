@@ -2,8 +2,8 @@ define([
   'angular',
   'lodash',
   'config',
-  '../services/graphite/gfunc',
-  '../services/graphite/parser'
+  './gfunc',
+  './parser'
 ],
 function (angular, _, config, gfunc, Parser) {
   'use strict';
@@ -11,7 +11,7 @@ function (angular, _, config, gfunc, Parser) {
   var module = angular.module('grafana.controllers');
   var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
-  module.controller('GraphiteTargetCtrl', function($scope, $sce, templateSrv) {
+  module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
       $scope.target.target = $scope.target.target || '';

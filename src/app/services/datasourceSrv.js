@@ -2,7 +2,6 @@ define([
   'angular',
   'lodash',
   'config',
-  './graphite/graphiteDatasource',
   './influxdb/influxdbDatasource',
   './opentsdb/opentsdbDatasource',
   './elasticsearch/es-datasource',

@@ -1,5 +1,5 @@
 define([
-  'services/graphite/gfunc'
+  'features/graphite/gfunc'
 ], function(gfunc) {
   'use strict';
 
