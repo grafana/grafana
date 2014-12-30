@@ -37,6 +37,11 @@
 			"Rev": "d10e2c8f62100097910367dee90a9bd89d426a44"
 		},
 		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-254-g627707e",
+			"Rev": "627707e8db4a4e52f4e1fbbb4e10d98e79a3c946"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "3053e46bf4d836639f474dd738a58070463890e9"
 		},
