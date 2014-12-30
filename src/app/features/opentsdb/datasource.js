@@ -2,7 +2,8 @@ define([
   'angular',
   'lodash',
   'kbn',
-  'moment'
+  'moment',
+  './queryCtrl',
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -13,7 +14,7 @@ function (angular, _, kbn) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
-      this.editorSrc = 'app/partials/opentsdb/editor.html';
+      this.editorSrc = 'app/features/opentsdb/partials/query.editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;

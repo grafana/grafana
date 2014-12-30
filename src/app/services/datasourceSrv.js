@@ -2,8 +2,6 @@ define([
   'angular',
   'lodash',
   'config',
-  './opentsdb/opentsdbDatasource',
-  './elasticsearch/es-datasource',
 ],
 function (angular, _, config) {
   'use strict';

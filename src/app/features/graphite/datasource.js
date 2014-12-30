@@ -28,7 +28,7 @@ function (angular, _, $, config, kbn, moment) {
       this.supportAnnotations = true;
       this.supportMetrics = true;
       this.editorSrc = 'app/features/graphite/partials/query.editor.html';
-      this.annotationEditorSrc = 'app/features/graphite/partials/annotation.editor.html';
+      this.annotationEditorSrc = 'app/features/graphite/partials/annotations.editor.html';
     }
 
     GraphiteDatasource.prototype.query = function(options) {
