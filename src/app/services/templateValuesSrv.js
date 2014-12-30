@@ -18,6 +18,17 @@ function (angular, _, kbn) {
       }
     });
 
+    $rootScope.onAppEvent('ds-changed',function(event,info) {
+      var variable=info.variable;
+      for (var i = 0; i < self.variables.length; i++) {
+        if(self.variables[i]  && self.variables[i].type === 'query') {
+          if(self.variables[i].datasource && self.variables[i].datasource.replace("$","") === variable) {
+            self.updateOptions(self.variables[i]);
+          }
+        }
+      }
+    });
+
     this.init = function(dashboard, viewstate) {
       this.variables = dashboard.templating.list;
       this.viewstate = viewstate;
@@ -58,6 +69,15 @@ function (angular, _, kbn) {
 
       templateSrv.updateTemplateData();
 
+      if(variable.type === "datasource") {
+        return this.updateOptionsInChildVariables(variable)
+          .then(function() {
+            if (!recursive) {
+              $rootScope.$broadcast('ds-changed',{variable:variable.name,datasource:option.value});
+            }
+          });
+      }
+
       return this.updateOptionsInChildVariables(variable)
         .then(function() {
           if (!recursive) {
@@ -97,7 +117,14 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      var datasource = datasourceSrv.get(variable.datasource);
+      var real_datasource=variable.datasource;
+      if(variable.datasource != null){
+        if (variable.datasource.match(/^\$./) != null){
+          real_datasource=templateSrv.replace(variable.datasource);
+        }
+      }
+      var datasource = datasourceSrv.get(real_datasource);
+      //var datasource = datasourceSrv.get(variable.datasource);
       return datasource.metricFindQuery(variable.query)
         .then(function (results) {
           variable.options = self.metricNamesToVariableValues(variable, results);
