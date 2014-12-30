@@ -35,6 +35,19 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "d10e2c8f62100097910367dee90a9bd89d426a44"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "3053e46bf4d836639f474dd738a58070463890e9"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
+		},
+		{
+			"ImportPath": "gopkg.in/ini.v1",
+			"Comment": "v1",
+			"Rev": "70a46eeb84707a1d77984c1a5b7af666063fc5e7"
 		}
 	]
 }
