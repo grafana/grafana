@@ -1,5 +1,11 @@
 module.exports = function(config) {
   return {
-    html: '<%= destDir %>/index.html',
+    html: [
+      '<%= destDir %>/views/index.html',
+      '<%= destDir %>/index.html',
+    ],
+    options: {
+      assetsDirs: ['<%= destDir %>']
+    }
   };
 };

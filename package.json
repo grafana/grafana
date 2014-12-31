@@ -32,7 +32,7 @@
     "grunt-karma": "~0.8.3",
     "grunt-ngmin": "0.0.3",
     "grunt-string-replace": "~0.2.4",
-    "grunt-usemin": "^2.1.1",
+    "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
     "karma": "~0.12.21",
     "karma-chrome-launcher": "~0.1.4",
