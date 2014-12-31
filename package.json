@@ -64,6 +64,7 @@
   "dependencies": {
     "grunt-jscs-checker": "^0.4.4",
     "karma-sinon": "^1.0.3",
+    "lodash": "^2.4.1",
     "sinon": "^1.10.3"
   }
 }

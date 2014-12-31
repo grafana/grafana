@@ -11,6 +11,19 @@ module.exports = function (grunt) {
     docsDir: 'docs/'
   };
 
+  config.mode = grunt.option('mode') || 'standalone';
+  config.modeOptions = {
+    requirejs: {
+      paths: { config: '../config.sample' },
+      excludeConfig: true,
+    }
+  };
+
+  if (config.mode === 'backend') {
+    config.modeOptions.requirejs.path = { config: 'components/config' };
+    config.modeOptions.requirejs.excludeConfig = true;
+  }
+
   // load plugins
   require('load-grunt-tasks')(grunt);
 
@@ -34,5 +47,4 @@ module.exports = function (grunt) {
 
   // pass the config to grunt
   grunt.initConfig(config);
-
 };
