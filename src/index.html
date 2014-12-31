@@ -13,13 +13,11 @@
 
 		<script type="text/javascript">
 			window.grafanaBackend = false;
-			window.grafanaRequireJsBaseUrl = 'app';
-			window.grafanaConfigUrl = ['../config', '../config.sample'];
 		</script>
 
     <!-- build:js app/app.js -->
     <script src="vendor/require/require.js"></script>
-    <script src="app/components/require.config.js"></script>
+    <script src="app/components/require.standalone.js"></script>
     <!-- endbuild -->
 
     <script>require(['app'], function (app) { app.boot(); })</script>

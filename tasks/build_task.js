@@ -20,7 +20,7 @@ module.exports = function(grunt) {
     'filerev',
     'usemin',
     'clean:temp',
-    'uglify:dest'
+  //  'uglify:dest'
   ]);
 
   grunt.registerTask('build:grafanaVersion', function() {

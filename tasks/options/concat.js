@@ -28,7 +28,7 @@ module.exports = function(config) {
     js: {
       src: [
         '<%= destDir %>/vendor/require/require.js',
-        '<%= destDir %>/app/components/require.config.js',
+        '<%= destDir %>/app/components/require.standalone.js',
         '<%= destDir %>/app/app.js',
       ],
       dest: '<%= destDir %>/app/app.js'

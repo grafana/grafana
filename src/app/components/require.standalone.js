@@ -1,10 +1,9 @@
-
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
-  baseUrl: window.grafanaRequireJsBaseUrl,
+  baseUrl: 'app',
 
   paths: {
-    config:                   window.grafanaConfigUrl,
+    config:                   ['../config', '../config.sample'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',
     store:                    'components/store',

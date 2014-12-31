@@ -8,7 +8,7 @@ module.exports = function(config,grunt) {
         dir: '<%= destDir %>',
         baseUrl: './app',
 
-        mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
+        mainConfigFile: '<%= tempDir %>/app/components/require.standalone.js',
         modules: [], // populated below,
 
         optimize: 'none',
@@ -63,7 +63,8 @@ module.exports = function(config,grunt) {
         'directives/all',
         'filters/all',
         'controllers/all',
-        'routes/standalone/default',
+        'routes/standalone/all',
+        'routes/backend/all',
         'components/partials',
       ]
     }
