@@ -17,8 +17,8 @@ func init() {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "Grafana Pro"
-	app.Usage = "Grafana Pro Service"
+	app.Name = "Grafana Backend"
+	app.Usage = "grafana web"
 	app.Version = APP_VER
 	app.Commands = []cli.Command{cmd.CmdWeb}
 	app.Flags = append(app.Flags, []cli.Flag{}...)
