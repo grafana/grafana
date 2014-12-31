@@ -13,11 +13,12 @@ function (angular, config, store) {
 
   module.config(function($routeProvider) {
     $routeProvider
-    .when('/', {
-      redirectTo: function() {
-        return store.get('grafanaDashboardDefault') || config.default_route;
-      }
-    });
+      .otherwise({ redirectTo: config.default_route })
+      .when('/', {
+        redirectTo: function() {
+          return store.get('grafanaDashboardDefault') || config.default_route;
+        }
+      });
   });
 
 });

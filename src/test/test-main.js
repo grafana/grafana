@@ -5,7 +5,7 @@ require.config({
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
     helpers:               '../test/specs/helpers',
-    config:                ['../config', '../config.sample'],   
+    config:                ['../config', '../config.sample'],
     kbn:                   'components/kbn',
     store:                 'components/store',
 
@@ -114,8 +114,9 @@ require([
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
+  angular.module('grafana.routes', ['ngRoute']);
 
- var specs = [
+  var specs = [
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
@@ -136,7 +137,7 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs'
+    'specs/dashboardViewStateSrv-specs',
     'specs/pro/soloPanelCtrl-specs',
   ];
 

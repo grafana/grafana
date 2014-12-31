@@ -7,7 +7,9 @@ function (angular, store) {
 
   var module = angular.module('grafana.routes');
 
-  module.config(function($routeProvider) {
+  module.config(function($routeProvider, $locationProvider) {
+    $locationProvider.html5Mode(true);
+
     $routeProvider
       .when('/', {
         templateUrl: '/app/partials/dashboard.html',

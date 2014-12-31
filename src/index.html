@@ -11,6 +11,12 @@
     <link rel="stylesheet" href="css/grafana.dark.min.css" title="Dark">
     <link rel="icon" type="image/png" href="img/fav32.png">
 
+		<script type="text/javascript">
+			window.grafanaBackend = false;
+			window.grafanaRequireJsBaseUrl = 'app';
+			window.grafanaConfigUrl = ['../config', '../config.sample'];
+		</script>
+
     <!-- build:js app/app.js -->
     <script src="vendor/require/require.js"></script>
     <script src="app/components/require.config.js"></script>

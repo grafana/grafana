@@ -1,7 +1,7 @@
 define([
-  '../helpers',
-  'routes/pro/solo-panel',
-  'services/dashboard/dashboardSrv',
+  'helpers',
+  'routes/backend/solo-panel',
+  'features/dashboard/dashboardSrv',
 ], function(helpers) {
   'use strict';
 

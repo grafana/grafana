@@ -1,11 +1,10 @@
-/**
- * Bootstrap require with the needed config, then load the app.js module.
- */
+
 require.config({
-  baseUrl: 'public/app',
+  urlArgs: 'bust=' + (new Date().getTime()),
+  baseUrl: window.grafanaRequireJsBaseUrl,
 
   paths: {
-    config:                   ['components/config'],
+    config:                   window.grafanaConfigUrl,
     settings:                 'components/settings',
     kbn:                      'components/kbn',
     store:                    'components/store',
@@ -46,7 +45,6 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
-
   },
   shim: {
 
