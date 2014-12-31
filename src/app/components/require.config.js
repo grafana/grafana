@@ -2,10 +2,9 @@
  * Bootstrap require with the needed config, then load the app.js module.
  */
 require.config({
-  baseUrl: '/public/app',
+  baseUrl: 'public/app',
 
   paths: {
-    app: 'p_app',
     config:                   ['components/config'],
     settings:                 'components/settings',
     kbn:                      'components/kbn',

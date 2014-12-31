@@ -6,9 +6,10 @@ module.exports = function(config,grunt) {
       options: {
         appDir: '<%= tempDir %>',
         dir: '<%= destDir %>',
+        baseUrl: './app',
 
         mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-        modules: [], // populated below
+        modules: [], // populated below,
 
         optimize: 'none',
         optimizeCss: 'none',

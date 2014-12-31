@@ -22,7 +22,6 @@ module.exports = function(grunt) {
     'uglify:dest'
   ]);
 
-
   grunt.registerTask('build:grafanaVersion', function() {
     grunt.config('string-replace.config', {
       files: {
