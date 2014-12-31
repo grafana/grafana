@@ -3,8 +3,6 @@ define([
   './utilSrv',
   './datasourceSrv',
   './timeSrv',
-  './templateSrv',
-  './templateValuesSrv',
   './panelSrv',
   './timer',
   './keyboardManager',

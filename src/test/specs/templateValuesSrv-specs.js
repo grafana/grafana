@@ -2,7 +2,7 @@ define([
   'mocks/dashboard-mock',
   'helpers',
   'moment',
-  'services/templateValuesSrv'
+  'features/templating/templateValuesSrv'
 ], function(dashboardMock, helpers, moment) {
   'use strict';
 

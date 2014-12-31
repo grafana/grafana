@@ -1,7 +1,7 @@
 define([
   'mocks/dashboard-mock',
   'lodash',
-  'services/templateSrv'
+  'features/templating/templateSrv'
 ], function(dashboardMock) {
   'use strict';
 

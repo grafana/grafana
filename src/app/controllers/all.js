@@ -10,7 +10,6 @@ define([
   './graphiteImport',
   './playlistCtrl',
   './inspectCtrl',
-  './templateEditorCtrl',
   './sharePanelCtrl',
   './jsonEditorCtrl',
 ], function () {});
