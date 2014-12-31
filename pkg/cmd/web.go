@@ -35,12 +35,14 @@ func newMacaron() *macaron.Macaron {
 
 	mapStatic(m, "", "public")
 	mapStatic(m, "app", "app")
+	mapStatic(m, "css", "css")
 	mapStatic(m, "img", "img")
+	mapStatic(m, "font", "font")
 
 	m.Use(session.Sessioner(setting.SessionOptions))
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  setting.TemplatesRootPath,
+		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
