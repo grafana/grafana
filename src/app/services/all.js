@@ -8,7 +8,6 @@ define([
   './panelSrv',
   './timer',
   './keyboardManager',
-  './annotationsSrv',
   './popoverSrv',
   './playlistSrv',
   './unsavedChangesSrv',

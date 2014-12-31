@@ -8,8 +8,6 @@ define([
   'components/timeSeries',
   'components/panelmeta',
   'services/panelSrv',
-  'services/annotationsSrv',
-  'services/datasourceSrv',
   './seriesOverridesCtrl',
   './graph',
   './legend',

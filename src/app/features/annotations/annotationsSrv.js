@@ -1,7 +1,8 @@
 define([
   'angular',
   'lodash',
-  'moment'
+  'moment',
+  './editorCtrl'
 ], function (angular, _, moment) {
   'use strict';
 

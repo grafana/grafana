@@ -10,7 +10,6 @@ define([
   './graphiteImport',
   './playlistCtrl',
   './inspectCtrl',
-  './annotationsEditorCtrl',
   './templateEditorCtrl',
   './sharePanelCtrl',
   './jsonEditorCtrl',
