@@ -63,7 +63,7 @@ module.exports = function(config,grunt) {
         'directives/all',
         'filters/all',
         'controllers/all',
-        'routes/all',
+        'routes/standalone/default',
         'components/partials',
       ]
     }

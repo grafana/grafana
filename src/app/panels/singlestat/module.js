@@ -5,7 +5,6 @@ define([
   'components/timeSeries',
   'kbn',
   'components/panelmeta',
-  'services/panelSrv',
   './singleStatPanel',
 ],
 function (angular, app, _, TimeSeries, kbn, PanelMeta) {
@@ -21,6 +20,8 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       fullscreen: true,
       metricsEditor: true
     });
+
+    $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
     $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
 

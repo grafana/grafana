@@ -1,5 +1,5 @@
 define([
-  'services/influxdb/influxQueryBuilder'
+  'features/influxdb/queryBuilder'
 ], function(InfluxQueryBuilder) {
   'use strict';
 
@@ -68,7 +68,7 @@ define([
         var query = builder.build();
 
         expect(query).to.be('select mean(value) from "merge.google.test" where $timeFilter ' +
-          'group by time($interval) order asc'); 
+          'group by time($interval) order asc');
       });
 
     });

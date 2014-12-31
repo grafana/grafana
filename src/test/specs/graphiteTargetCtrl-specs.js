@@ -1,16 +1,16 @@
 define([
-  './helpers',
-  'services/graphite/gfunc',
-  'controllers/graphiteTarget'
+  'helpers',
+  'features/graphite/gfunc',
+  'features/graphite/queryCtrl'
 ], function(helpers, gfunc) {
   'use strict';
 
-  describe('GraphiteTargetCtrl', function() {
+  describe('GraphiteQueryCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
     beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('GraphiteTargetCtrl'));
+    beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
 
     beforeEach(function() {
       ctx.scope.target = {

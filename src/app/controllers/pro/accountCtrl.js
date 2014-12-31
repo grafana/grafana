@@ -1,6 +1,5 @@
 define([
   'angular',
-  'services/pro/backendSrv',
 ],
 function (angular) {
   'use strict';

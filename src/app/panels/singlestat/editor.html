@@ -23,15 +23,15 @@
     <h5>Big value font size</h5>
 		<div class="editor-option">
 			<label class="small">Prefix</label>
-			<select class="input-mini" style="width: 75px;" ng-model="panel.prefixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.prefixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 		</div>
 		<div class="editor-option">
 			<label class="small">Value</label>
-			<select class="input-mini" style="width: 75px;" ng-model="panel.valueFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%', '110%', '120%']" ng-change="render()"></select>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.valueFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 		</div>
 		<div class="editor-option">
 			<label class="small">Postfix</label>
-			<select class="input-mini" style="width: 75px;" ng-model="panel.postfixFontSize" ng-options="f for f in ['30%','50%','70%','80%','100%']" ng-change="render()"></select>
+			<select class="input-mini" style="width: 75px;" ng-model="panel.postfixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 		</div>
 	</div>
 

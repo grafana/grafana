@@ -21,8 +21,8 @@ function (angular, _, kbn) {
 
     CustomDatasource.prototype.query = function(options) {
       // get from & to in seconds
-      var from = kbn.parseDate(options.range.from).getTime() / 1000;
-      var to = kbn.parseDate(options.range.to).getTime() / 1000;
+      var from = kbn.parseDate(options.range.from).getTime();
+      var to = kbn.parseDate(options.range.to).getTime();
 
       var series = [];
       var stepInSeconds = (to - from) / options.maxDataPoints;

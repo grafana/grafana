@@ -85,7 +85,7 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/all',
+    'routes/backend/all',
   ];
 
   _.each(config.plugins.dependencies, function(dep) {

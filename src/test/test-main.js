@@ -4,7 +4,8 @@ require.config({
   paths: {
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
-    config:                '../config.sample',
+    helpers:               '../test/specs/helpers',
+    config:                ['../config', '../config.sample'],   
     kbn:                   'components/kbn',
     store:                 'components/store',
 
@@ -96,9 +97,10 @@ require.config({
 
 require([
   'angular',
+  'config',
   'angularMocks',
   'app',
-], function(angular) {
+], function(angular, config) {
   'use strict';
 
   for (var file in window.__karma__.files) {
@@ -111,11 +113,9 @@ require([
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
-  angular.module('grafana.routes', ['ngRoute']);
   angular.module('grafana.filters', []);
 
-  require([
-    'specs/overview-ctrl-specs',
+ var specs = [
     'specs/lexer-specs',
     'specs/parser-specs',
     'specs/gfunc-specs',
@@ -136,12 +136,16 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs',
-    'specs/overview-ctrl-specs',
+    'specs/dashboardViewStateSrv-specs'
     'specs/pro/soloPanelCtrl-specs',
-  ], function () {
-    window.__karma__.start();
+  ];
+
+  var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
+    return '../plugins/' + spec;
   });
 
+  require(specs.concat(pluginSpecs), function () {
+    window.__karma__.start();
+  });
 });
 

@@ -12,11 +12,8 @@ define([
   './spectrumPicker',
   './bootstrap-tagsinput',
   './bodyClass',
-  './addGraphiteFunc',
-  './graphiteFuncEditor',
   './templateParamSelector',
   './graphiteSegment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
-  './influxdbFuncEditor'
 ], function () {});
