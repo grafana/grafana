@@ -1,5 +1,6 @@
 define([
   'helpers',
+  'features/dashboard/panelSrv',
   'panels/graph/module'
 ], function(helpers) {
   'use strict';

@@ -4,7 +4,6 @@ define([
   'kbn',
   'lodash',
   'moment',
-  '../timer',
 ],
 function (angular, $, kbn, _, moment) {
   'use strict';

@@ -1,6 +1,6 @@
 define([
   'helpers',
-  'controllers/row'
+  'features/dashboard/rowCtrl'
 ], function(helpers) {
   'use strict';
 

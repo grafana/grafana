@@ -109,7 +109,6 @@ require([
     }
   }
 
-
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);

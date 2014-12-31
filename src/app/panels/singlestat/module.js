@@ -5,7 +5,6 @@ define([
   'components/timeSeries',
   'kbn',
   'components/panelmeta',
-  'services/panelSrv',
   './singleStatPanel',
 ],
 function (angular, app, _, TimeSeries, kbn, PanelMeta) {

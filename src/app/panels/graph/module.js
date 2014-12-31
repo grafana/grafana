@@ -7,7 +7,6 @@ define([
   'moment',
   'components/timeSeries',
   'components/panelmeta',
-  'services/panelSrv',
   './seriesOverridesCtrl',
   './graph',
   './legend',

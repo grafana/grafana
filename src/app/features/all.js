@@ -6,4 +6,5 @@ define([
   './influxdb/datasource',
   './opentsdb/datasource',
   './elasticsearch/datasource',
+  './dashboard/all',
 ], function () {});
