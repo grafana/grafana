@@ -4,6 +4,7 @@ module.exports = function(grunt) {
   // build, then zip and upload to s3
   grunt.registerTask('release', [
     'build',
+    'build-post-process',
     'compress:zip_release',
     'compress:tgz_release',
   ]);
