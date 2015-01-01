@@ -57,6 +57,7 @@ var (
 	SessionOptions session.Options
 
 	// Global setting objects.
+	WorkDir      string
 	Cfg          *goconfig.ConfigFile
 	ConfRootPath string
 	CustomPath   string // Custom directory path.
@@ -74,42 +75,47 @@ func init() {
 	log.NewLogger(0, "console", `{"level": 0}`)
 }
 
-func WorkDir() (string, error) {
-	p, err := filepath.Abs(".")
-	if err != nil {
-		return "", err
+func getWorkDir() string {
+	p, _ := filepath.Abs(".")
+	return p
+}
+
+func findConfigFile() string {
+	WorkDir = getWorkDir()
+	ConfRootPath = path.Join(WorkDir, "conf")
+
+	configFile := path.Join(ConfRootPath, "grafana.ini")
+	//log.Info("Looking for config file: %v", configFile)
+	if com.IsFile(configFile) {
+		return configFile
 	}
-	return p, nil
+	configFile = path.Join(ConfRootPath, "grafana.dev.ini")
+	//log.Info("Looking for config file: %v", configFile)
+	if com.IsFile(configFile) {
+		return configFile
+	}
+	configFile = path.Join(ConfRootPath, "grafana.example.ini")
+	//log.Info("Looking for config file: %v", configFile)
+	if com.IsFile(configFile) {
+		return configFile
+	}
+
+	log.Fatal(3, "Could not find any config file")
+	return ""
 }
 
 func NewConfigContext() {
-	workDir, err := WorkDir()
+	configFile := findConfigFile()
+
+	log.Info("Loading config file: %v", configFile)
+	var err error
+
+	Cfg, err = goconfig.LoadConfigFile(configFile)
 	if err != nil {
-		log.Fatal(4, "Fail to get work directory: %v", err)
-	}
-	ConfRootPath = path.Join(workDir, "conf")
-
-	Cfg, err = goconfig.LoadConfigFile(path.Join(workDir, "conf/grafana.ini"))
-	if err != nil {
-		log.Fatal(4, "Fail to parse '%v/conf/grafana.ini': %v", workDir, err)
+		log.Fatal(4, "Fail to parse %v, error: %v", configFile, err)
 	}
 
-	CustomPath = os.Getenv("GRAFANA_CONF")
-
-	if len(CustomPath) == 0 {
-		CustomPath = path.Join(workDir, "custom")
-	}
-
-	cfgPath := path.Join(CustomPath, "conf/grafana.ini")
-	if com.IsFile(cfgPath) {
-		if err = Cfg.AppendFiles(cfgPath); err != nil {
-			log.Fatal(4, "Fail to load custom 'conf/grafana.ini': %v", err)
-		}
-	} else {
-		log.Warn("No custom 'conf/grafana.ini'")
-	}
-
-	AppName = Cfg.MustValue("", "app_name", "Grafana Pro")
+	AppName = Cfg.MustValue("", "app_name", "Grafana")
 	AppUrl = Cfg.MustValue("server", "root_url", "http://localhost:3000/")
 	if AppUrl[len(AppUrl)-1] != '/' {
 		AppUrl += "/"
@@ -137,14 +143,14 @@ func NewConfigContext() {
 		HttpPort = port
 	}
 
-	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(workDir, "grafana/src"))
+	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(WorkDir, "webapp"))
 	RouterLogging = Cfg.MustBool("server", "router_logging", false)
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"
 	PhantomDir = "_vendor/phantomjs"
 
-	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(workDir, "/data/log"))
+	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(WorkDir, "/data/log"))
 }
 
 func initSessionService() {

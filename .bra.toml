@@ -6,7 +6,7 @@ init_cmds = [
 watch_all = true
 watch_dirs = [
 	"$WORKDIR/pkg",
-	"$WORKDIR/templates",
+	"$WORKDIR/grafana/src/views",
 	"$WORKDIR/conf",
 ]
 watch_exts = [".go", ".ini"]

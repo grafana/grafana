@@ -25,7 +25,13 @@ var CmdWeb = cli.Command{
 	Usage:       "grafana web",
 	Description: "Starts Grafana backend & web server",
 	Action:      runWeb,
-	Flags:       []cli.Flag{},
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "config",
+			Value: "grafana.ini",
+			Usage: "path to config file",
+		},
+	},
 }
 
 func newMacaron() *macaron.Macaron {
@@ -61,8 +67,8 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 	))
 }
 
-func runWeb(*cli.Context) {
-	log.Info("Starting Grafana-Pro v.2-alpha")
+func runWeb(c *cli.Context) {
+	log.Info("Starting Grafana 2.0-alpha")
 
 	setting.NewConfigContext()
 	setting.InitServices()
