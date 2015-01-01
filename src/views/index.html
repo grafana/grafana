@@ -16,8 +16,8 @@
 		</script>
 
 		<!-- build:js app/app.js -->
-    <script src="public/vendor/require/require.js"></script>
-    <script src="public/app/components/require.backend.js"></script>
+    <script src="/public/vendor/require/require.js"></script>
+    <script src="/public/app/components/require.backend.js"></script>
     <!-- endbuild -->
 
     <script>require(['app'], function (app) { app.boot(); })</script>
@@ -25,7 +25,7 @@
   </head>
 
   <body ng-cloak ng-controller="GrafanaCtrl">
-    <link rel="stylesheet" href="/public/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
+    <link rel="stylesheet" href="/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
 		<div class="pro-container" ng-class="{'pro-sidemenu-open': grafana.sidemenu}">
 

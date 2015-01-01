@@ -23,6 +23,34 @@ module.exports = function(grunt) {
     //'uglify:dest'
   ]);
 
+  grunt.registerTask('build-post-process', function() {
+    var mode = grunt.config.get('mode');
+    if (mode === 'backend') {
+      grunt.config('copy.dist_to_tmp', {
+        expand: true,
+        cwd: '<%= destDir %>',
+        src: '**/*',
+        dest: '<%= tempDir %>/public/',
+      });
+      grunt.config('copy.backend_bin', {
+        cwd: '../bin',
+        expand: true,
+        src: ['grafana'],
+        options: { mode: true},
+        dest: '<%= tempDir %>'
+      });
+      grunt.config('copy.backend_conf', {
+        cwd: '../',
+        expand: true,
+        src: ['conf/*', '!conf/grafana.dev.ini'],
+        dest: '<%= tempDir %>'
+      });
+      grunt.task.run('copy:dist_to_tmp');
+      grunt.task.run('copy:backend_bin');
+      grunt.task.run('copy:backend_conf');
+    }
+  });
+
   grunt.registerTask('build:grafanaVersion', function() {
     grunt.config('string-replace.config', {
       files: {
