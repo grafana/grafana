@@ -56,7 +56,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// create account if missing
 	if err == m.ErrAccountNotFound {
-		cmd := &m.CreateAccountCommand{
+		cmd := m.CreateAccountCommand{
 			Login:   userInfo.Email,
 			Email:   userInfo.Email,
 			Name:    userInfo.Name,
