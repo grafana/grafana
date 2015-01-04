@@ -32,7 +32,7 @@ build:
     - script:
         name: copy output
         code: |-
-          cp "grafana/dist/*" "$WERCKER_OUTPUT_DIR"
+          rsync -rv "$WERCKER_SOURCE_DIR/grafana/dist/" "$WERCKER_OUTPUT_DIR"
 deploy:
   steps:
     - add-to-known_hosts:
@@ -50,7 +50,7 @@ deploy:
         code: |
           pwd
           ls -la
-          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no *.gz deploy@play.grafana.org:/home/deploy/
+          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no grafana/dist deploy@play.grafana.org:/home/deploy/
     - script:
         name: deploy application
         code: |
