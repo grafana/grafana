@@ -31,19 +31,19 @@ build:
         tasks: release --mode=backend
 deploy:
   steps:
-  - add-to-known_hosts:
-      hostname: play.grafana.org
-   - mktemp:
-      envvar: PRIVATEKEY_PATH
-   - create-file:
-      name: write key
-      filename: $PRIVATEKEY_PATH
-      content: $GRAFANA_PLAY_PRIVATE
-      overwrite: true
-      hide-from-log: true
-   - script:
-      name: transfer application
-      code: |
-        pwd
-        ls -la
-        scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no grafana deploy@play.grafana.org:/home/deploy/
+    - add-to-known_hosts:
+        hostname: play.grafana.org
+    - mktemp:
+        envvar: PRIVATEKEY_PATH
+    - create-file:
+        name: write key
+        filename: $PRIVATEKEY_PATH
+        content: $GRAFANA_PLAY_PRIVATE
+        overwrite: true
+        hide-from-log: true
+    - script:
+        name: transfer application
+        code: |
+          pwd
+          ls -la
+          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no grafana deploy@play.grafana.org:/home/deploy/
