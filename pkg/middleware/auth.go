@@ -9,6 +9,7 @@ import (
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
@@ -29,7 +30,7 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 }
 
 func authDenied(c *Context) {
-	c.Redirect("/login")
+	c.Redirect(setting.AppSubUrl + "/login")
 }
 
 func Auth() macaron.Handler {
