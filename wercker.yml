@@ -32,7 +32,7 @@ build:
 deploy:
   steps:
   - add-to-known_hosts:
-     hostname: play.grafana.org
+      hostname: play.grafana.org
    - mktemp:
       envvar: PRIVATEKEY_PATH
    - create-file:
