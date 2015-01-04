@@ -1,4 +1,5 @@
 module.exports = function(grunt) {
+  "use strict";
 
   // Concat and Minify the src directory into dist
   grunt.registerTask('build', [
@@ -32,6 +33,7 @@ module.exports = function(grunt) {
         src: '**/*',
         dest: '<%= tempDir %>/public/',
       });
+      grunt.config('clean.dest_dir', ['<%= destDir %>']);
       grunt.config('copy.backend_bin', {
         cwd: '../bin',
         expand: true,
@@ -46,6 +48,7 @@ module.exports = function(grunt) {
         dest: '<%= tempDir %>'
       });
       grunt.task.run('copy:dist_to_tmp');
+      grunt.task.run('clean:dest_dir');
       grunt.task.run('copy:backend_bin');
       grunt.task.run('copy:backend_conf');
     }

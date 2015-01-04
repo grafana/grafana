@@ -13,6 +13,7 @@ module.exports = function (grunt) {
 
   config.mode = grunt.option('mode') || 'standalone';
   config.modeOptions = {
+    zipSuffix: '',
     requirejs: {
       paths: { config: '../config.sample' },
       excludeConfig: true,
@@ -20,6 +21,8 @@ module.exports = function (grunt) {
   };
 
   if (config.mode === 'backend') {
+    grunt.log.writeln('Setting backend build mode');
+    config.modeOptions.zipSuffix = '-backend';
     config.modeOptions.requirejs.path = { config: 'components/config' };
     config.modeOptions.requirejs.excludeConfig = true;
   }
