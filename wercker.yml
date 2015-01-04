@@ -53,6 +53,5 @@ deploy:
           scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no * deploy@play.grafana.org:/home/deploy/
     - script:
         name: deploy application
-        code: |
-          ./wercker_deploy.sh
+        code: ssh -i $PRIVATEKEY_PATH -l root -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no play.grafana.org ./wercker_deploy.sh
 
