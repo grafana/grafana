@@ -17,12 +17,12 @@ build:
     - script:
         name: godep build
         code: |
-          godep go build ./...
+          godep go build -o bin/grafana .
     # Test the project
     - script:
         name: godep go test
         code: |
-          godep go test ./...
+          godep go test ./pkg/...
     # frontend
     - npm-install:
         cwd: grafana/
