@@ -9,7 +9,7 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+  var targetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
