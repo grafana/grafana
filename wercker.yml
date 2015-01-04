@@ -28,5 +28,5 @@ build:
         cwd: grafana/
     - grunt:
         cwd: grafana/
-        tasks: release --mode==backend
+        tasks: release --mode=backend
 
