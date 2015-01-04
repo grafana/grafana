@@ -32,7 +32,7 @@ build:
     - script:
         name: copy output
         code: |-
-          rsync -avz "$WERCKER_SOURCE_DIR/grafana/dist/*" "$WERCKER_OUTPUT_DIR"
+          cp "$WERCKER_SOURCE_DIR/grafana/dist/*" "$WERCKER_OUTPUT_DIR"
 deploy:
   steps:
     - add-to-known_hosts:
