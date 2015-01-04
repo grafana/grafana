@@ -29,6 +29,10 @@ build:
     - grunt:
         cwd: grafana/
         tasks: release --mode=backend
+    - script:
+        name: copy output
+        code: |-
+          rsync -avz "$WERCKER_SOURCE_DIR/grafana/dist/*" "$WERCKER_OUTPUT_DIR"
 deploy:
   steps:
     - add-to-known_hosts:
@@ -46,4 +50,9 @@ deploy:
         code: |
           pwd
           ls -la
-          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no grafana deploy@play.grafana.org:/home/deploy/
+          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no *.gz deploy@play.grafana.org:/home/deploy/
+    - script:
+        name: deploy application
+        code: |
+          ./wercker_deploy.sh
+
