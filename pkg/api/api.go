@@ -4,6 +4,7 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 func Register(m *macaron.Macaron) {
@@ -36,7 +37,7 @@ func Register(m *macaron.Macaron) {
 	m.Any("/api/datasources/proxy/:id/*", auth, ProxyDataSourceRequest)
 
 	// user register
-	m.Get("/register/*_", Index)
+	m.Get("/register", Index)
 	m.Post("/api/account", CreateAccount)
 
 	// dashboards
@@ -57,8 +58,10 @@ func Index(ctx *middleware.Context) {
 		return
 	}
 
-	ctx.Data["user"] = dtos.NewCurrentUser(ctx.UserAccount)
-	ctx.Data["settings"] = settings
+	ctx.Data["User"] = dtos.NewCurrentUser(ctx.UserAccount)
+	ctx.Data["Settings"] = settings
+	ctx.Data["AppUrl"] = setting.AppUrl
+	ctx.Data["AppSubUrl"] = setting.AppSubUrl
 	ctx.HTML(200, "index")
 }
 

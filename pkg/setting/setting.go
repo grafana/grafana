@@ -126,7 +126,9 @@ func NewConfigContext() {
 	if err != nil {
 		log.Fatal(4, "Invalid root_url(%s): %s", AppUrl, err)
 	}
+
 	AppSubUrl = strings.TrimSuffix(url.Path, "/")
+	log.Info("AppSubUrl: %v", AppSubUrl)
 
 	Protocol = HTTP
 	if Cfg.MustValue("server", "protocol") == "https" {
