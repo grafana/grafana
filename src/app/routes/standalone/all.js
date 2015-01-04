@@ -9,7 +9,7 @@ define([
 function (angular, config, store) {
   'use strict';
 
-  var module = angular.module('grafana.routes');
+  var module = angular.module('grafana.routes.standalone');
 
   module.config(function($routeProvider) {
     $routeProvider

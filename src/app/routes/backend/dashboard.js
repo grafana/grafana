@@ -39,6 +39,7 @@ function (angular, store) {
 
     var db = datasourceSrv.getGrafanaDB();
     var isTemp = window.location.href.indexOf('dashboard/temp') !== -1;
+    console.log('default route');
 
     if (!$routeParams.id) {
       var savedRoute = store.get('grafanaDashboardDefault');
