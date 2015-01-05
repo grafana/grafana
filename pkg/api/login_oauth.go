@@ -76,5 +76,5 @@ func OAuthLogin(ctx *middleware.Context) {
 	// login
 	loginUserWithAccount(userQuery.Result, ctx)
 
-	ctx.Redirect("/")
+	ctx.Redirect(setting.AppSubUrl + "/")
 }
