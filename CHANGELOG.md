@@ -1,3 +1,8 @@
+# 2.0.0 (unreleased)
+
+**Enhancements**
+- [Issue #1297](https://github.com/grafana/grafana/issues/1297). Graphite: Added cumulative and minimumBelow graphite functions
+
 # 1.9.1 (2014-12-29)
 
 **Enhancements**
