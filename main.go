@@ -3,23 +3,33 @@ package main
 import (
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/torkelo/grafana-pro/pkg/cmd"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 
 	"github.com/codegangsta/cli"
 )
 
-const APP_VER = "0.1.0 Alpha"
+var version = "master"
+var commit = "NA"
+var buildstamp string
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
+	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
+
+	setting.BuildVersion = version
+	setting.BuildCommit = commit
+	setting.BuildStamp = buildstampInt64
+
 	app := cli.NewApp()
 	app.Name = "Grafana Backend"
 	app.Usage = "grafana web"
-	app.Version = APP_VER
+	app.Version = version
 	app.Commands = []cli.Command{cmd.CmdWeb}
 	app.Flags = append(app.Flags, []cli.Flag{}...)
 	app.Run(os.Args)
