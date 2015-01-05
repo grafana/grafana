@@ -34,10 +34,14 @@ const (
 var (
 	// App settings.
 	Env       string = DEV
-	AppVer    string
 	AppName   string
 	AppUrl    string
 	AppSubUrl string
+
+	// build
+	BuildVersion string
+	BuildCommit  string
+	BuildStamp   int64
 
 	// Log settings.
 	LogRootPath string

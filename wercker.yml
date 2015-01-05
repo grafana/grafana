@@ -15,14 +15,14 @@ build:
           go install github.com/tools/godep
     # Build the project
     - script:
-        name: godep build
+        name: build backend
         code: |
-          godep go build -o bin/grafana .
+          go run build.go build
     # Test the project
     - script:
-        name: godep go test
+        name: test backend
         code: |
-          godep go test ./pkg/...
+          go run build.go test
     # frontend
     - npm-install:
         cwd: grafana/

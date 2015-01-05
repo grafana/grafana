@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
@@ -68,7 +69,8 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 }
 
 func runWeb(c *cli.Context) {
-	log.Info("Starting Grafana 2.0-alpha")
+	log.Info("Starting Grafana")
+	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
 
 	setting.NewConfigContext()
 	setting.InitServices()

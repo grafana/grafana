@@ -63,6 +63,11 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 	jsonObj := map[string]interface{}{
 		"datasources": datasources,
 		"appSubUrl":   setting.AppSubUrl,
+		"buildInfo": map[string]interface{}{
+			"version":    setting.BuildVersion,
+			"commit":     setting.BuildCommit,
+			"buildstamp": setting.BuildStamp,
+		},
 	}
 
 	return jsonObj, nil
