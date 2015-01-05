@@ -6,6 +6,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) {
@@ -28,7 +29,7 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
 		var dsMap = map[string]interface{}{
@@ -56,12 +57,12 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 	// add grafana backend data source
 	datasources["grafana"] = map[string]interface{}{
 		"type":      "grafana",
-		"url":       "",
 		"grafanaDB": true,
 	}
 
 	jsonObj := map[string]interface{}{
 		"datasources": datasources,
+		"appSubUrl":   setting.AppSubUrl,
 	}
 
 	return jsonObj, nil
