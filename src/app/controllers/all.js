@@ -6,4 +6,5 @@ define([
   './graphiteImport',
   './inspectCtrl',
   './jsonEditorCtrl',
+  './loginCtrl',
 ], function () {});

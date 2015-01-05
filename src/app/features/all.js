@@ -7,4 +7,6 @@ define([
   './opentsdb/datasource',
   './elasticsearch/datasource',
   './dashboard/all',
+  './admin/accountCtrl',
+  './admin/datasourcesCtrl',
 ], function () {});

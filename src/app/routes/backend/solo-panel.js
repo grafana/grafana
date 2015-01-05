@@ -10,7 +10,7 @@ function (angular, $) {
   module.config(function($routeProvider) {
     $routeProvider
       .when('/dashboard/solo/:id/', {
-        templateUrl: 'app/partials/pro/solo-panel.html',
+        templateUrl: 'app/partials/solo-panel.html',
         controller : 'SoloPanelCtrl',
       });
   });

@@ -24,7 +24,7 @@ module.exports = function (grunt) {
     grunt.log.writeln('Setting backend build mode');
     config.modeOptions.zipSuffix = '-backend';
     config.modeOptions.requirejs.path = { config: 'components/config' };
-    config.modeOptions.requirejs.excludeConfig = true;
+    config.modeOptions.requirejs.excludeConfig = false;
   }
 
   // load plugins

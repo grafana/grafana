@@ -1,6 +1,5 @@
 define([
   'angular',
-  'controllers/pro/loginCtrl',
 ],
 function (angular) {
   "use strict";
@@ -10,16 +9,16 @@ function (angular) {
   module.config(function($routeProvider) {
     $routeProvider
       .when('/login', {
-        templateUrl: 'app/partials/pro/login.html',
+        templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
       .when('/register', {
-        templateUrl: 'app/partials/pro/register.html',
+        templateUrl: 'app/partials/register.html',
         controller : 'RegisterCtrl',
       });
   });
 
-  module.controller('RegisterCtrl', function($scope, $http, $location) {
+  module.controller('RegisterCtrl', function($scope, backendSrv, $location) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
 
@@ -32,10 +31,8 @@ function (angular) {
         return;
       }
 
-      $http.post('/api/account', $scope.loginModel).then(function() {
+      backendSrv.post('/api/account', $scope.loginModel).then(function() {
         $location.path('/login');
-      }, function(err) {
-        $scope.registerError = "Unexpected error: " + err;
       });
     };
 
