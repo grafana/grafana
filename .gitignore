@@ -19,3 +19,4 @@ data/*.db
 data/log
 /bin/*
 /grafana-pro
+grafana.custom.ini

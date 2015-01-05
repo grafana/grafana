@@ -80,39 +80,49 @@ func getWorkDir() string {
 	return p
 }
 
-func findConfigFile() string {
+func findConfigFiles() []string {
 	WorkDir = getWorkDir()
 	ConfRootPath = path.Join(WorkDir, "conf")
+	filenames := make([]string, 0)
 
 	configFile := path.Join(ConfRootPath, "grafana.ini")
-	//log.Info("Looking for config file: %v", configFile)
 	if com.IsFile(configFile) {
-		return configFile
-	}
-	configFile = path.Join(ConfRootPath, "grafana.dev.ini")
-	//log.Info("Looking for config file: %v", configFile)
-	if com.IsFile(configFile) {
-		return configFile
-	}
-	configFile = path.Join(ConfRootPath, "grafana.example.ini")
-	//log.Info("Looking for config file: %v", configFile)
-	if com.IsFile(configFile) {
-		return configFile
+		filenames = append(filenames, configFile)
 	}
 
-	log.Fatal(3, "Could not find any config file")
-	return ""
+	configFile = path.Join(ConfRootPath, "grafana.dev.ini")
+	if com.IsFile(configFile) {
+		filenames = append(filenames, configFile)
+	}
+
+	configFile = path.Join(ConfRootPath, "grafana.custom.ini")
+	if com.IsFile(configFile) {
+		filenames = append(filenames, configFile)
+	}
+
+	if len(filenames) == 0 {
+		log.Fatal(3, "Could not find any config file")
+	}
+
+	return filenames
 }
 
 func NewConfigContext() {
-	configFile := findConfigFile()
+	configFiles := findConfigFiles()
 
-	log.Info("Loading config file: %v", configFile)
+	log.Info("Loading config files: %v", configFiles)
 	var err error
 
-	Cfg, err = goconfig.LoadConfigFile(configFile)
+	Cfg, err = goconfig.LoadConfigFile(configFiles[0])
 	if err != nil {
-		log.Fatal(4, "Fail to parse %v, error: %v", configFile, err)
+		log.Fatal(4, "Fail to parse config file, error: %v", err)
+	}
+
+	if len(configFiles) > 1 {
+		err = Cfg.AppendFiles(configFiles[1:]...)
+		if err != nil {
+			log.Fatal(4, "Fail to parse config file, error: %v", err)
+		}
 	}
 
 	AppName = Cfg.MustValue("", "app_name", "Grafana")
@@ -128,7 +138,6 @@ func NewConfigContext() {
 	}
 
 	AppSubUrl = strings.TrimSuffix(url.Path, "/")
-	log.Info("AppSubUrl: %v", AppSubUrl)
 
 	Protocol = HTTP
 	if Cfg.MustValue("server", "protocol") == "https" {
