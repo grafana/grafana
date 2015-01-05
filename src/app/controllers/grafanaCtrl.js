@@ -42,13 +42,14 @@ function (angular, config, _, $, store) {
       }
 
       $scope.onAppEvent('logged-out', function() {
-        $scope.showProSideMenu = false;
+        $scope.grafana.sidemenu = false;
         $scope.grafana.user = {};
       });
 
       $scope.onAppEvent('logged-in', function(evt, user) {
-        $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
+        $scope.grafana.sidemenu = store.getBool('grafana.sidemenu', true);
         $scope.grafana.user = user;
+        store.set('grafana.sidemenu', $scope.grafana.sidemenu);
       });
     };
 
@@ -56,7 +57,7 @@ function (angular, config, _, $, store) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
-    $scope.toggleProSideMenu = function() {
+    $scope.toggleSideMenu = function() {
       $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
       store.set('grafana.sidemenu', $scope.grafana.sidemenu);
     };
