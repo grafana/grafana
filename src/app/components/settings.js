@@ -26,7 +26,12 @@ function (_, crypto) {
       unsaved_changes_warning       : true,
       search                        : { max_results: 100 },
       admin                         : {},
-      appSubUrl: ""
+      appSubUrl: "",
+      buildInfo: {
+        version: 'master',
+        commit: 'NA',
+        buildstamp: new Date().getTime()
+      }
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

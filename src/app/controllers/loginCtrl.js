@@ -11,6 +11,13 @@ function (angular, config) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
 
+    // build info view model
+    $scope.buildInfo = {
+      version: config.buildInfo.version,
+      commit: config.buildInfo.commit,
+      buildstamp: new Date(config.buildInfo.buildstamp * 1000)
+    };
+
     $scope.init = function() {
       if ($routeParams.logout) {
         $scope.logout();
