@@ -17,7 +17,17 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		dash := cmd.GetDashboardModel()
 
-		var err error
+		// try get existing dashboard
+		existing := m.Dashboard{Slug: dash.Slug, AccountId: dash.AccountId}
+		hasExisting, err := sess.Get(&existing)
+		if err != nil {
+			return err
+		}
+
+		if hasExisting && dash.Id != existing.Id {
+			return m.ErrDashboardWithSameNameExists
+		}
+
 		if dash.Id == 0 {
 			_, err = sess.Insert(dash)
 		} else {

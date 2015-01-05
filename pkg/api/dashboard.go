@@ -69,6 +69,10 @@ func PostDashboard(c *middleware.Context) {
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
+		if err == m.ErrDashboardWithSameNameExists {
+			c.JsonApiErr(400, "Dashboard with the same title already exists", nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
