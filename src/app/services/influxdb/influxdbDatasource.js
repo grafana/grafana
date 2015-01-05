@@ -81,7 +81,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         if (!data) {
           return [];
         }
-        return data[0].columns;
+        return data[0].columns.map(function(item) {
+          return /^\w+$/.test(item) ? item : ('"' + item + '"');
+        });
       });
     };
 
