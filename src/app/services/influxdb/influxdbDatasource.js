@@ -108,6 +108,10 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
             return series.name; // influxdb < 1.7
           });
         }
+      }).then(function(names) {
+        return names.map(function(name) {
+          return name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        });
       });
     };
 
