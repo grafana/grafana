@@ -23,7 +23,7 @@ module.exports = function (grunt) {
   if (config.mode === 'backend') {
     grunt.log.writeln('Setting backend build mode');
     config.modeOptions.zipSuffix = '-backend';
-    config.modeOptions.requirejs.path = { config: 'components/config' };
+    config.modeOptions.requirejs.paths = {};
     config.modeOptions.requirejs.excludeConfig = false;
   }
 
