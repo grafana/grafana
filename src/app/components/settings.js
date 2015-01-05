@@ -25,7 +25,8 @@ function (_, crypto) {
       playlist_timespan             : "1m",
       unsaved_changes_warning       : true,
       search                        : { max_results: 100 },
-      admin                         : {}
+      admin                         : {},
+      appSubUrl: ""
     };
 
     // This initializes a new hash on purpose, to avoid adding parameters to

@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('GrafanaDatasource', function($q, $http) {
+  module.factory('GrafanaDatasource', function($q, backendSrv) {
 
     function GrafanaDatasource() {
       this.type = 'grafana';
@@ -21,18 +21,12 @@ function (angular, _) {
         url = '/temp/' + id;
       }
 
-      return $http.get('/api/dashboards/' + id)
-        .then(function(result) {
-          if (result.data) {
-            return angular.fromJson(result.data);
+      return backendSrv.get('/api/dashboards/' + id)
+        .then(function(data) {
+          if (data) {
+            return angular.fromJson(data);
           } else {
             return false;
-          }
-        }, function(data) {
-          if(data.status === 0) {
-            throw "Could not contact Elasticsearch. Please ensure that Elasticsearch is reachable from your browser.";
-          } else {
-            throw "Could not find dashboard " + id;
           }
         });
     };
@@ -43,34 +37,28 @@ function (angular, _) {
         dashboard.id = null;
       }
 
-      return $http.post('/api/dashboard/', { dashboard: dashboard })
-        .then(function(result) {
-          return { title: dashboard.title, url: '/dashboard/db/' + result.data.slug };
-        }, function(data) {
-          throw "Failed to search: " + data;
+      return backendSrv.post('/api/dashboard/', { dashboard: dashboard })
+        .then(function(data) {
+          return { title: dashboard.title, url: '/dashboard/db/' + data.slug };
         });
     };
 
     GrafanaDatasource.prototype.deleteDashboard = function(id) {
-      return $http({ method: 'DELETE', url: '/api/dashboard/' + id })
-        .then(function(result) {
-          return result.data.title;
-        }, function(err) {
-          throw err.data;
+      return backendSrv.delete('/api/dashboard/' + id)
+        .then(function(data) {
+          return data.title;
         });
     };
 
     GrafanaDatasource.prototype.searchDashboards = function(query) {
-      return $http.get('/api/search/', { params: { q: query } })
-        .then(function(results) {
+      return backendSrv.get('/api/search/', { params: { q: query } })
+        .then(function(data) {
           var hits = { dashboards: [], tags: [] };
-          hits.dashboards = _.map(results.data, function(item) {
+          hits.dashboards = _.map(data, function(item) {
             item.id = item.slug;
             return item;
           });
           return hits;
-        }, function(data) {
-          throw "Failed to search: " + data;
         });
     };
 

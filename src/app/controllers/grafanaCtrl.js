@@ -16,6 +16,7 @@ function (angular, config, _, $, store) {
 
     $rootScope.profilingEnabled = store.getBool('profilingEnabled');
     $rootScope.performance = { loadStart: new Date().getTime() };
+    $rootScope.appSubUrl = config.appSubUrl;
 
     $scope.init = function() {
       $scope._ = _;

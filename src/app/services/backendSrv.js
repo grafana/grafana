@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'config',
 ],
-function (angular, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -27,7 +28,7 @@ function (angular, _) {
 
     this.request = function(options) {
       var httpOptions = {
-        url: options.url,
+        url: config.appSubUrl + options.url,
         method: options.method,
         data: options.data
       };

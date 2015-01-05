@@ -12,17 +12,17 @@ function (angular, store) {
 
     $routeProvider
       .when('/', {
-        templateUrl: '/app/partials/dashboard.html',
+        templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
       .when('/dashboard/db/:id', {
-        templateUrl: '/app/partials/dashboard.html',
+        templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
       .when('/dashboard/temp/:id', {
-        templateUrl: '/app/partials/dashboard.html',
+        templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })

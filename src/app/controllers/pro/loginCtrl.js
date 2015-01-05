@@ -1,12 +1,13 @@
 define([
   'angular',
+  'config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LoginCtrl', function($scope, $http, $location, $routeParams, alertSrv) {
+  module.controller('LoginCtrl', function($scope, backendSrv, $location, $routeParams, alertSrv) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
 
@@ -17,14 +18,10 @@ function (angular) {
     };
 
     $scope.logout = function() {
-      $http.post('/logout').then(function() {
-
+      backendSrv.post('/logout').then(function() {
         alertSrv.set('Logged out!', '', 'success', 3000);
         $scope.appEvent('logged-out');
         $location.search({});
-
-      }, function() {
-        alertSrv.set('Logout failed:', 'Unexpected error', 'error', 3000);
       });
     };
 
@@ -35,16 +32,9 @@ function (angular) {
         return;
       }
 
-      $http.post('/login', $scope.loginModel).then(function(results) {
-        $scope.appEvent('logged-in', results.data.user);
-        window.location.href = '/';
-      }, function(err) {
-        if (err.status === 401) {
-          $scope.loginError = "Username or password is incorrect";
-        }
-        else {
-          $scope.loginError = "Unexpected error";
-        }
+      backendSrv.post('/login', $scope.loginModel).then(function(results) {
+        $scope.appEvent('logged-in', results.user);
+        window.location.href = config.appSubUrl + '/';
       });
     };
 
