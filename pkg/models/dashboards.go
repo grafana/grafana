@@ -9,7 +9,8 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound = errors.New("Account not found")
+	ErrDashboardNotFound           = errors.New("Account not found")
+	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
 )
 
 type Dashboard struct {
@@ -39,8 +40,6 @@ type SearchDashboardsQuery struct {
 }
 
 type SaveDashboardCommand struct {
-	Id        string                 `json:"id"`
-	Title     string                 `json:"title"`
 	Dashboard map[string]interface{} `json:"dashboard"`
 	AccountId int64                  `json:"-"`
 
