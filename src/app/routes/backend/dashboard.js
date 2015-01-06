@@ -33,6 +33,9 @@ function (angular, store) {
       });
   });
 
+  // remember previous dashboard
+  var prevDashPath = null;
+
   module.controller('DashFromDBProvider', function(
         $scope, $rootScope, datasourceSrv, $routeParams,
         alertSrv, $http, $location) {
@@ -41,8 +44,12 @@ function (angular, store) {
     var isTemp = window.location.href.indexOf('dashboard/temp') !== -1;
 
     if (!$routeParams.id) {
-      var savedRoute = store.get('grafanaDashboardDefault');
+      // do we have a previous dash
+      if (prevDashPath) {
+        $location.path(prevDashPath);
+      }
 
+      var savedRoute = store.get('grafanaDashboardDefault');
       if (!savedRoute) {
         $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
           var dashboard = angular.fromJson(result.data);
@@ -61,6 +68,7 @@ function (angular, store) {
 
     db.getDashboard($routeParams.id, isTemp)
       .then(function(dashboard) {
+        prevDashPath = $location.path();
         $scope.initDashboard(dashboard, $scope);
       }).then(null, function(err) {
         $scope.appEvent('alert-error', ['Load dashboard failed', err]);
