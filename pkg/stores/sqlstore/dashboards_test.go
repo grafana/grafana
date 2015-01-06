@@ -21,7 +21,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				Dashboard: map[string]interface{}{
 					"id":    nil,
 					"title": "test dash 23",
-					"tags":  make([]interface{}, 0),
+					"tags":  []interface{}{"prod", "webapp"},
 				},
 			}
 
@@ -47,6 +47,18 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
 				So(query.Result.Slug, ShouldEqual, "test-dash-23")
+			})
+
+			Convey("Should be able to search for dashboard", func() {
+				query := m.SearchDashboardsQuery{
+					Query:     "%test%",
+					AccountId: 1,
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
 			})
 
 			Convey("Should not be able to save dashboard with same name", func() {

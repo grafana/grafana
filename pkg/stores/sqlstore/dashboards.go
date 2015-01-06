@@ -55,7 +55,9 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 func SearchDashboards(query *m.SearchDashboardsQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId)
+	titleMatch := "%" + query.Query + "%"
+
+	sess := x.Limit(100, 0).Where("account_id=? AND title LIKE ?", query.AccountId, titleMatch)
 	sess.Table("Dashboard")
 
 	query.Result = make([]*m.SearchResult, 0)
