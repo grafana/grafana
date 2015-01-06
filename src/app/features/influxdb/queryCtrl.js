@@ -88,7 +88,6 @@ function (angular, _) {
         seriesList = [];
         $scope.datasource.listSeries(query).then(function(series) {
           seriesList = series;
-          console.log(series);
           callback(seriesList);
         });
       }

@@ -74,16 +74,19 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     InfluxDatasource.prototype.listColumns = function(seriesName) {
-      var interpolated = templateSrv.replace(seriesName);
-      if (interpolated[0] !== '/') {
-        interpolated = '/' + interpolated + '/';
+      seriesName = templateSrv.replace(seriesName);
+
+      if(!seriesName.match('^/.*/') && !seriesName.match(/^merge\(.*\)/)) {
+        seriesName = '"' + seriesName+ '"';
       }
 
-      return this._seriesQuery('select * from ' + interpolated + ' limit 1').then(function(data) {
+      return this._seriesQuery('select * from ' + seriesName + ' limit 1').then(function(data) {
         if (!data) {
           return [];
         }
-        return data[0].columns;
+        return data[0].columns.map(function(item) {
+          return /^\w+$/.test(item) ? item : ('"' + item + '"');
+        });
       });
     };
 
@@ -97,17 +100,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         if (!data || data.length === 0) {
           return [];
         }
-        // influxdb >= 1.8
-        if (data[0].points.length > 0) {
-          return _.map(data[0].points, function(point) {
-            return point[1];
-          });
-        }
-        else { // influxdb <= 1.7
-          return _.map(data, function(series) {
-            return series.name; // influxdb < 1.7
-          });
-        }
+        return _.map(data[0].points, function(point) {
+          return point[1];
+        });
       });
     };
 
