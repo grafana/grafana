@@ -19,25 +19,6 @@ type CurrentUser struct {
 	GravatarUrl string `json:"gravatarUrl"`
 }
 
-type AccountInfo struct {
-	Email         string          `json:"email"`
-	Name          string          `json:"name"`
-	Collaborators []*Collaborator `json:"collaborators"`
-}
-
-type OtherAccount struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Role    string `json:"role"`
-	IsUsing bool   `json:"isUsing"`
-}
-
-type Collaborator struct {
-	AccountId int64  `json:"accountId"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-}
-
 type DataSource struct {
 	Id        int64           `json:"id"`
 	AccountId int64           `json:"accountId"`
@@ -49,6 +30,15 @@ type DataSource struct {
 	User      string          `json:"user"`
 	Database  string          `json:"database"`
 	BasicAuth bool            `json:"basicAuth"`
+}
+
+type MetricQueryResultDto struct {
+	Data []MetricQueryResultDataDto `json:"data"`
+}
+
+type MetricQueryResultDataDto struct {
+	Target     string       `json:"target"`
+	DataPoints [][2]float64 `json:"datapoints"`
 }
 
 func NewCurrentUser(account *models.Account) *CurrentUser {
