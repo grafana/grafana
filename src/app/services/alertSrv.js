@@ -27,28 +27,27 @@ function (angular, _) {
     this.list = [];
 
     this.set = function(title,text,severity,timeout) {
-      var
-        _a = {
-          title: title || '',
-          text: $sce.trustAsHtml(text || ''),
-          severity: severity || 'info',
-        },
-        _ca = angular.toJson(_a),
-        _clist = _.map(self.list,function(alert) {return angular.toJson(alert);});
+      var newAlert = {
+        title: title || '',
+        text: $sce.trustAsHtml(text || ''),
+        severity: severity || 'info',
+      };
 
-      // If we already have this alert, remove it and add a new one
-      // Why do this instead of skipping the add because it resets the timer
-      if(_.contains(_clist,_ca)) {
-        _.remove(self.list,_.indexOf(_clist,_ca));
-      }
+      var newAlertJson = angular.toJson(newAlert);
 
-      self.list.push(_a);
+      // remove same alert if it already exists
+      _.remove(self.list, function(value) {
+        return angular.toJson(value) === newAlertJson;
+      });
+
+      self.list.push(newAlert);
       if (timeout > 0) {
         $timeout(function() {
-          self.list = _.without(self.list,_a);
+          self.list = _.without(self.list,newAlert);
         }, timeout);
       }
-      return(_a);
+
+      return(newAlert);
     };
 
     this.clear = function(alert) {
