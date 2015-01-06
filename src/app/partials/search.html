@@ -30,7 +30,6 @@
 	</div>
 
 	<div ng-if="!showImport">
-		<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 		<div class="search-results-container" ng-if="tagsOnly">
 			<div class="row">
 				<div class="span6 offset1">
@@ -47,6 +46,8 @@
 		</div>
 
 		<div class="search-results-container" ng-if="!tagsOnly">
+			<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
+
 			<div class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
 				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
 
