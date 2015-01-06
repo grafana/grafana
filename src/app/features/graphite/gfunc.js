@@ -224,6 +224,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "cumulative",
+    category: categories.Special,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
     name: "groupByNode",
     category: categories.Special,
     params: [
@@ -462,6 +469,13 @@ function (_, $) {
 
   addFuncDef({
     name: 'minimumAbove',
+    category: categories.Filter,
+    params: [{ name: "value", type: "int" }],
+    defaultParams: [0]
+  });
+
+  addFuncDef({
+    name: 'minimumBelow',
     category: categories.Filter,
     params: [{ name: "value", type: "int" }],
     defaultParams: [0]
