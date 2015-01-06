@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'kbn',
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -12,6 +13,9 @@ function (angular, _) {
     function GrafanaDatasource() {
       this.type = 'grafana';
       this.grafanaDB = true;
+      this.name = "grafana";
+      this.supportMetrics = true;
+      this.editorSrc = 'app/features/grafanaDatasource/partials/query.editor.html';
     }
 
     GrafanaDatasource.prototype.getDashboard = function(id, isTemp) {
@@ -29,6 +33,14 @@ function (angular, _) {
             return false;
           }
         });
+    };
+
+    GrafanaDatasource.prototype.query = function(options) {
+      // get from & to in seconds
+      var from = kbn.parseDate(options.range.from).getTime();
+      var to = kbn.parseDate(options.range.to).getTime();
+
+      return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
     };
 
     GrafanaDatasource.prototype.saveDashboard = function(dashboard) {

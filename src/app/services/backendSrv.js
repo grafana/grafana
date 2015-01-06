@@ -10,8 +10,8 @@ function (angular, _, config) {
 
   module.service('backendSrv', function($http, alertSrv) {
 
-    this.get = function(url) {
-      return this.request({ method: 'GET', url: url });
+    this.get = function(url, params) {
+      return this.request({ method: 'GET', url: url, params: params });
     };
 
     this.delete = function(url) {
@@ -30,7 +30,8 @@ function (angular, _, config) {
       var httpOptions = {
         url: config.appSubUrl + options.url,
         method: options.method,
-        data: options.data
+        data: options.data,
+        params: options.params,
       };
 
       return $http(httpOptions).then(function(results) {
@@ -54,7 +55,7 @@ function (angular, _, config) {
         }
 
         if (data.message) {
-          alertSrv.set("Error", data.message, data.severity, 10000);
+          alertSrv.set("Problem!", data.message, data.severity, 10000);
         }
 
         throw data;

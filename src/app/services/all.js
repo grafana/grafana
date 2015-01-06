@@ -6,6 +6,5 @@ define([
   './keyboardManager',
   './popoverSrv',
   './backendSrv',
-  './grafanaDatasource',
 ],
 function () {});
