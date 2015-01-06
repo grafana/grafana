@@ -54,9 +54,9 @@ function (angular, store) {
         $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
           var dashboard = angular.fromJson(result.data);
           $scope.initDashboard(dashboard, $scope);
-        },function(err) {
+        },function() {
           $scope.initDashboard({}, $scope);
-          $scope.appEvent('alert-error', ['Load dashboard failed', err]);
+          $scope.appEvent('alert-error', ['Load dashboard failed', '']);
         });
         return;
       }
