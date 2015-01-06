@@ -49,6 +49,9 @@ func Register(m *macaron.Macaron) {
 
 	// rendering
 	m.Get("/render/*", auth, RenderToPng)
+
+	// metrics
+	m.Get("/api/metrics/test", auth, GetTestMetrics)
 }
 
 func Index(ctx *middleware.Context) {
