@@ -24,3 +24,13 @@ npm install
 npm install -g grunt-cli
 grunt
 ```
+
+To rebuild on source change:
+```
+go get github.com/Unknwon/bra
+
+bra run
+```
+
+
+

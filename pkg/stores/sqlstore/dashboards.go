@@ -11,6 +11,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", SearchDashboards)
+	bus.AddHandler("sql", GetDashboardTags)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -55,15 +56,23 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 func SearchDashboards(query *m.SearchDashboardsQuery) error {
-	titleMatch := "%" + query.Query + "%"
+	titleQuery := "%" + query.Query + "%"
 
-	sess := x.Limit(100, 0).Where("account_id=? AND title LIKE ?", query.AccountId, titleMatch)
+	sess := x.Limit(100, 0).Where("account_id=? AND title LIKE ?", query.AccountId, titleQuery)
 	sess.Table("Dashboard")
 
-	query.Result = make([]*m.SearchResult, 0)
+	query.Result = make([]m.DashboardSearchHit, 0)
 	err := sess.Find(&query.Result)
 
 	return err
+}
+
+func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
+	query.Result = []m.DashboardTagCloudItem{
+		m.DashboardTagCloudItem{Term: "test", Count: 10},
+		m.DashboardTagCloudItem{Term: "prod", Count: 20},
+	}
+	return nil
 }
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
