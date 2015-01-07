@@ -69,12 +69,9 @@ function (angular, _) {
       });
 
       $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
-      // var baseUrl = 'http://localhost:3000';
-      // $scope.shareUrl = baseUrl + '/dashboard/db/' + $routeParams.id + "?" + paramsArray.join('&') ;
-
-      // paramsArray.push('width=1000');
-      // paramsArray.push('height=500');
-      // $scope.imageUrl = baseUrl + '/render/dashboard/solo/' + $routeParams.id + '?' + paramsArray.join('&') ;
+      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
+      $scope.imageUrl += '&width=1000';
+      $scope.imageUrl += '&height=500';
 
       $timeout(function() {
         var input = $element.find('[data-share-panel-url]');
