@@ -10,6 +10,7 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -111,6 +112,8 @@ func getEngine() (*xorm.Engine, error) {
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
+
+	log.Info("Database: %v, ConnectionString: %v", DbCfg.Type, cnnstr)
 
 	return xorm.NewEngine(DbCfg.Type, cnnstr)
 }
