@@ -126,6 +126,20 @@ define([
       });
     });
 
+    graphScenario('grid thresholds from zero', function(ctx) {
+      ctx.setup(function(scope) {
+        scope.panel.grid = {
+          threshold1: 0,
+          threshold1Color: "#111",
+        };
+      });
+
+      it('should add grid markings', function() {
+        var markings = ctx.plotOptions.grid.markings;
+        expect(markings[0].yaxis.from).to.be(0);
+      });
+    });
+
     graphScenario('should use timeStep for barWidth', function(ctx) {
       ctx.setup(function(scope, data) {
         scope.panel.bars = true;
