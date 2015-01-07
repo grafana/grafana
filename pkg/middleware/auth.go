@@ -16,6 +16,8 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 	accountId := sess.Get("accountId")
 
 	urlQuery := c.Req.URL.Query()
+
+	// TODO: check that this is a localhost request
 	if len(urlQuery["render"]) > 0 {
 		accId, _ := strconv.ParseInt(urlQuery["accountId"][0], 10, 64)
 		sess.Set("accountId", accId)
@@ -23,6 +25,10 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 	}
 
 	if accountId == nil {
+		if setting.Anonymous {
+			return setting.AnonymousAccountId, nil
+		}
+
 		return -1, errors.New("Auth: session account id not found")
 	}
 
