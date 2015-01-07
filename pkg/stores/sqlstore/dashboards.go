@@ -35,6 +35,22 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			_, err = sess.Id(dash.Id).Update(dash)
 		}
 
+		// delete existing tabs
+		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
+		if err != nil {
+			return err
+		}
+
+		// insert new tags
+		tags := dash.GetTags()
+		if len(tags) > 0 {
+			tagRows := make([]DashboardTag, len(tags))
+			for _, tag := range tags {
+				tagRows = append(tagRows, DashboardTag{Term: tag, DashboardId: dash.Id})
+			}
+			sess.InsertMulti(&tagRows)
+		}
+
 		cmd.Result = dash
 
 		return err
@@ -55,24 +71,59 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 	return nil
 }
 
+type DashboardSearchProjection struct {
+	Id    int64
+	Title string
+	Slug  string
+	Term  string
+}
+
 func SearchDashboards(query *m.SearchDashboardsQuery) error {
-	titleQuery := "%" + query.Query + "%"
+	titleQuery := "%" + query.Title + "%"
 
-	sess := x.Limit(100, 0).Where("account_id=? AND title LIKE ?", query.AccountId, titleQuery)
-	sess.Table("Dashboard")
+	sess := x.Table("dashboard")
+	sess.Join("LEFT OUTER", "dashboard_tag", "dashboard.id=dashboard_tag.dashboard_id")
+	sess.Where("account_id=? AND title LIKE ?", query.AccountId, titleQuery)
+	sess.Cols("dashboard.id", "dashboard.title", "dashboard.slug", "dashboard_tag.term")
+	sess.Limit(100, 0)
 
-	query.Result = make([]m.DashboardSearchHit, 0)
-	err := sess.Find(&query.Result)
+	if len(query.Tag) > 0 {
+		sess.And("dashboard_tag.term=?", query.Tag)
+	}
+
+	var res []DashboardSearchProjection
+	err := sess.Find(&res)
+	if err != nil {
+		return err
+	}
+
+	query.Result = make([]*m.DashboardSearchHit, 0)
+	hits := make(map[int64]*m.DashboardSearchHit)
+
+	for _, item := range res {
+		hit, exists := hits[item.Id]
+		if !exists {
+			hit = &m.DashboardSearchHit{
+				Title: item.Title,
+				Slug:  item.Slug,
+				Tags:  []string{},
+			}
+			query.Result = append(query.Result, hit)
+			hits[item.Id] = hit
+		}
+		if len(item.Term) > 0 {
+			hit.Tags = append(hit.Tags, item.Term)
+		}
+	}
 
 	return err
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
-	query.Result = []m.DashboardTagCloudItem{
-		m.DashboardTagCloudItem{Term: "test", Count: 10},
-		m.DashboardTagCloudItem{Term: "prod", Count: 20},
-	}
-	return nil
+	sess := x.Sql("select count() as count, term from dashboard_tag group by term")
+
+	err := sess.Find(&query.Result)
+	return err
 }
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {

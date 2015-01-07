@@ -27,11 +27,17 @@ var (
 	UseSQLite3 bool
 )
 
+type DashboardTag struct {
+	Id          int64
+	DashboardId int64
+	Term        string
+}
+
 func init() {
 	tables = make([]interface{}, 0)
 
 	tables = append(tables, new(m.Account), new(m.Dashboard),
-		new(m.Collaborator), new(m.DataSource))
+		new(m.Collaborator), new(m.DataSource), new(DashboardTag))
 }
 
 func Init() {
