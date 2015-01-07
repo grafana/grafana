@@ -57,6 +57,10 @@ var (
 	RouterLogging      bool
 	StaticRootPath     string
 
+	// Http auth
+	Anonymous          bool
+	AnonymousAccountId int64
+
 	// Session settings.
 	SessionOptions session.Options
 
@@ -160,6 +164,14 @@ func NewConfigContext() {
 
 	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(WorkDir, "webapp"))
 	RouterLogging = Cfg.MustBool("server", "router_logging", false)
+
+	// Http auth
+	Anonymous = Cfg.MustBool("auth", "anonymous", false)
+	AnonymousAccountId = Cfg.MustInt64("auth", "anonymous_account_id", 0)
+
+	if Anonymous && AnonymousAccountId == 0 {
+		log.Fatal(3, "Must specify account id for anonymous access")
+	}
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"

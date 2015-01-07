@@ -33,24 +33,19 @@ var (
 )
 
 func NewOAuthService() {
-	if !setting.Cfg.MustBool("oauth", "enabled") {
-		return
-	}
-
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "twitter"}
+	allOauthes := []string{"github", "google"}
 
-	// Load all OAuth config data.
 	for _, name := range allOauthes {
 		info := &setting.OAuthInfo{
-			ClientId:     setting.Cfg.MustValue("oauth."+name, "client_id"),
-			ClientSecret: setting.Cfg.MustValue("oauth."+name, "client_secret"),
-			Scopes:       setting.Cfg.MustValueArray("oauth."+name, "scopes", " "),
-			AuthUrl:      setting.Cfg.MustValue("oauth."+name, "auth_url"),
-			TokenUrl:     setting.Cfg.MustValue("oauth."+name, "token_url"),
-			Enabled:      setting.Cfg.MustBool("oauth."+name, "enabled"),
+			ClientId:     setting.Cfg.MustValue("auth."+name, "client_id"),
+			ClientSecret: setting.Cfg.MustValue("auth."+name, "client_secret"),
+			Scopes:       setting.Cfg.MustValueArray("auth."+name, "scopes", " "),
+			AuthUrl:      setting.Cfg.MustValue("auth."+name, "auth_url"),
+			TokenUrl:     setting.Cfg.MustValue("auth."+name, "token_url"),
+			Enabled:      setting.Cfg.MustBool("auth."+name, "enabled"),
 		}
 
 		if !info.Enabled {
