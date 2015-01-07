@@ -18,22 +18,20 @@ type Dashboard struct {
 	Slug      string `xorm:"index(IX_AccountIdSlug)"`
 	AccountId int64  `xorm:"index(IX_AccountIdSlug)"`
 
-	Created time.Time `xorm:"CREATED"`
-	Updated time.Time `xorm:"UPDATED"`
+	Created time.Time
+	Updated time.Time
 
 	Title string
-	Tags  []string
 	Data  map[string]interface{}
 }
 
 type SearchResult struct {
-	Dashboards []DashboardSearchHit    `json:"dashboards"`
-	Tags       []DashboardTagCloudItem `json:"tags"`
-	TagsOnly   bool                    `json:"tagsOnly"`
+	Dashboards []*DashboardSearchHit    `json:"dashboards"`
+	Tags       []*DashboardTagCloudItem `json:"tags"`
+	TagsOnly   bool                     `json:"tagsOnly"`
 }
 
 type DashboardSearchHit struct {
-	Id    string   `json:"id"`
 	Title string   `json:"title"`
 	Slug  string   `json:"slug"`
 	Tags  []string `json:"tags"`
@@ -45,15 +43,16 @@ type DashboardTagCloudItem struct {
 }
 
 type SearchDashboardsQuery struct {
-	Query     string
+	Title     string
+	Tag       string
 	AccountId int64
 
-	Result []DashboardSearchHit
+	Result []*DashboardSearchHit
 }
 
 type GetDashboardTagsQuery struct {
 	AccountId int64
-	Result    []DashboardTagCloudItem
+	Result    []*DashboardTagCloudItem
 }
 
 type SaveDashboardCommand struct {
@@ -75,15 +74,6 @@ type GetDashboardQuery struct {
 	Result *Dashboard
 }
 
-func convertToStringArray(arr []interface{}) []string {
-	b := make([]string, len(arr))
-	for i := range arr {
-		b[i] = arr[i].(string)
-	}
-
-	return b
-}
-
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = make(map[string]interface{})
@@ -93,12 +83,25 @@ func NewDashboard(title string) *Dashboard {
 	return dash
 }
 
+func (dash *Dashboard) GetTags() []string {
+	jsonTags := dash.Data["tags"]
+	if jsonTags == nil {
+		return []string{}
+	}
+
+	arr := jsonTags.([]interface{})
+	b := make([]string, len(arr))
+	for i := range arr {
+		b[i] = arr[i].(string)
+	}
+	return b
+}
+
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = cmd.Dashboard
 	dash.Title = dash.Data["title"].(string)
 	dash.AccountId = cmd.AccountId
-	dash.Tags = convertToStringArray(dash.Data["tags"].([]interface{}))
 	dash.UpdateSlug()
 
 	if dash.Data["id"] != nil {

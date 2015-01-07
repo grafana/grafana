@@ -51,7 +51,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to search for dashboard", func() {
 				query := m.SearchDashboardsQuery{
-					Query:     "%test%",
+					Title:     "%test%",
 					AccountId: 1,
 				}
 
@@ -59,6 +59,20 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
+				hit := query.Result[0]
+				So(len(hit.Tags), ShouldEqual, 2)
+			})
+
+			Convey("Should be able to search for dashboards using tags", func() {
+				query1 := m.SearchDashboardsQuery{Tag: "webapp", AccountId: 1}
+				query2 := m.SearchDashboardsQuery{Tag: "tagdoesnotexist", AccountId: 1}
+
+				err := SearchDashboards(&query1)
+				err = SearchDashboards(&query2)
+				So(err, ShouldBeNil)
+
+				So(len(query1.Result), ShouldEqual, 1)
+				So(len(query2.Result), ShouldEqual, 0)
 			})
 
 			Convey("Should not be able to save dashboard with same name", func() {
@@ -67,7 +81,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					Dashboard: map[string]interface{}{
 						"id":    nil,
 						"title": "test dash 23",
-						"tags":  make([]interface{}, 0),
+						"tags":  []interface{}{},
 					},
 				}
 
@@ -75,8 +89,14 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			Convey("Should be able to get dashboard tags", func() {
+				query := m.GetDashboardTagsQuery{}
+
+				err := GetDashboardTags(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 3)
+			})
 		})
-
 	})
-
 }

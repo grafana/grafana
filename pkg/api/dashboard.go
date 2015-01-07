@@ -1,6 +1,7 @@
 package api
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
@@ -49,8 +50,8 @@ func DeleteDashboard(c *middleware.Context) {
 func Search(c *middleware.Context) {
 	queryText := c.Query("q")
 	result := m.SearchResult{
-		Dashboards: []m.DashboardSearchHit{},
-		Tags:       []m.DashboardTagCloudItem{},
+		Dashboards: []*m.DashboardSearchHit{},
+		Tags:       []*m.DashboardTagCloudItem{},
 	}
 
 	if strings.HasPrefix(queryText, "tags!:") {
@@ -63,8 +64,13 @@ func Search(c *middleware.Context) {
 		result.Tags = query.Result
 		result.TagsOnly = true
 	} else {
-		queryText := strings.TrimPrefix(queryText, "title:")
-		query := m.SearchDashboardsQuery{Query: queryText, AccountId: c.GetAccountId()}
+		searchQueryRegEx, _ := regexp.Compile(`(tags:(\w*)\sAND\s)?(?:title:)?(.*)?`)
+		matches := searchQueryRegEx.FindStringSubmatch(queryText)
+		query := m.SearchDashboardsQuery{
+			Title:     matches[3],
+			Tag:       matches[2],
+			AccountId: c.GetAccountId(),
+		}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			c.JsonApiErr(500, "Search failed", err)
