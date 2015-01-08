@@ -6,12 +6,12 @@ import (
 
 	"github.com/torkelo/grafana-pro/pkg/components/renderer"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func RenderToPng(c *middleware.Context) {
 	accountId := c.GetAccountId()
-	queryReader := utils.NewUrlQueryReader(c.Req.URL)
+	queryReader := util.NewUrlQueryReader(c.Req.URL)
 	queryParams := "?render&accountId=" + strconv.FormatInt(accountId, 10) + "&" + c.Req.URL.RawQuery
 
 	renderOpts := &renderer.RenderOpts{

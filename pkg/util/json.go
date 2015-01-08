@@ -1,3 +1,3 @@
-package utils
+package util
 
 type DynMap map[string]interface{}
