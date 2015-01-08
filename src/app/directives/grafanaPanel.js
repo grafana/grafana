@@ -19,12 +19,12 @@ function (angular, $, config) {
           '<span class="alert-error panel-error small pointer"' +
                 'config-modal="app/partials/inspector.html" ng-if="panelMeta.error">' +
             '<span data-placement="top" bs-tooltip="panelMeta.error">' +
-            '<i class="icon-exclamation-sign"></i><span class="panel-error-arrow"></span>' +
+            '<i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>' +
             '</span>' +
           '</span>' +
 
           '<span class="panel-loading" ng-show="panelMeta.loading">' +
-            '<i class="icon-spinner icon-spin icon-large"></i>' +
+            '<i class="fa fa-spinner fa-spin"></i>' +
           '</span>' +
 
           '<div class="panel-title-container drag-handle" panel-menu></div>' +
