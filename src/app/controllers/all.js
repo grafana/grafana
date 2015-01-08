@@ -8,4 +8,5 @@ define([
   './jsonEditorCtrl',
   './loginCtrl',
   './registerCtrl',
+  './errorCtrl',
 ], function () {});

@@ -52,6 +52,7 @@ define([
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',
+        controller: 'ErrorCtrl'
       });
   });
 
