@@ -6,7 +6,7 @@
 					<li class="grafana-target-segment">
 						<div class="dropdown">
 							<a class="pointer" data-toggle="dropdown">
-								<i class="icon-cog"></i>
+								<i class="fa fa-cog"></i>
 							</a>
 							<ul class="dropdown-menu">
 								<li><a class="pointer" dash-editor-link="app/partials/templating_editor.html">Templating</a></li>
@@ -30,7 +30,7 @@
 				<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
 					<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 						<a ng-click="disableAnnotation(annotation)">
-							<i class="annotation-color-icon icon-bolt"></i>
+							<i class="annotation-color-icon fa fa-bolt"></i>
 							{{annotation.name}}
 						</a>
 					</li>

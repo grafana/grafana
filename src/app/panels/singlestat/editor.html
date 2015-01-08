@@ -86,14 +86,14 @@
 				<div class="grafana-target-inner">
 					<ul class="grafana-segment-list">
 						<li class="grafana-target-segment"  ng-repeat-start="map in panel.valueMaps">
-							<i class="icon-remove pointer" ng-click="removeValueMap(map)"></i>
+							<i class="fa fa-remove pointer" ng-click="removeValueMap(map)"></i>
 						</li>
 
 						<li>
 							<input type="text" ng-model="map.value" placeholder="value" class="input-mini grafana-target-segment-input" ng-blur="render()">
 						</li>
 						<li class="grafana-target-segment">
-							<i class="icon-arrow-right"></i>
+							<i class="fa fa-arrow-right"></i>
 						</li>
 						<li ng-repeat-end>
 							<input type="text" placeholder="text" ng-model="map.text" class="input-mini grafana-target-segment-input" ng-blur="render()">
@@ -101,7 +101,7 @@
 
 						<li>
 							<a class="pointer grafana-target-segment" ng-click="addValueMap();">
-								<i class="icon-plus"></i>
+								<i class="fa fa-plus"></i>
 							</a>
 						</li>
 

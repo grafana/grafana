@@ -1,6 +1,6 @@
 <div class="dashboard-editor-header">
 	<div class="dashboard-editor-title">
-		<i class="icon icon-calendar-empty"></i>
+		<i class="fa fa-clock-o"></i>
 		Custom time range
 	</div>
 </div>
@@ -56,7 +56,7 @@
 
 			<div class="timepicker-to-column">
 
-				<label class="small">To (<a class="link" ng-class="{'strong':temptime.now}" ng-click="setNow();temptime.now=true">now</a>)</label>
+				<label class="small">To (<a class="link" ng-class="{'strong':temptime.now}" ng-click="setNow();temptime.now=true">set now</a>)</label>
 
 				<div class="fake-input timepicker-input">
 					<div ng-hide="temptime.now">
@@ -66,7 +66,7 @@
 						<input class="timepicker-hms" type="text" maxlength="2" ng-change="validate(temptime)" ng-model="temptime.to.second" required ng-pattern="patterns.second" onClick="this.select();"/>.
 						<input class="timepicker-ms" type="text" maxlength="3" ng-change="validate(temptime)" ng-model="temptime.to.millisecond" required ng-pattern="patterns.millisecond" onClick="this.select();"/>
 					</div>
-					<span type="text" ng-show="temptime.now" ng-disabled="temptime.now">&nbsp <i class="pointer icon-remove-sign" ng-click="setNow();temptime.now=false;"></i> Right Now <input type="text" name="dummy" style="visibility:hidden" /></span>
+					<span type="text" ng-show="temptime.now" ng-disabled="temptime.now">&nbsp <i class="pointer fa fa-remove" ng-click="setNow();temptime.now=false;"></i> Right Now <input type="text" name="dummy" style="visibility:hidden" /></span>
 				</div>
 			</div>
 

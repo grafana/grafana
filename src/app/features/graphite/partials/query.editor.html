@@ -10,19 +10,19 @@
       <ul class="grafana-target-controls">
         <li ng-show="parserError">
           <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
-            <i class="icon icon-warning-sign"></i>
+            <i class="fa fa-warning"></i>
           </a>
         </li>
         <li>
           <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
-            <i class="icon icon-pencil"></i>
+            <i class="fa fa-pencil"></i>
           </a>
         </li>
         <li class="dropdown">
           <a  class="pointer dropdown-toggle"
               data-toggle="dropdown"
               tabindex="1">
-            <i class="icon icon-cog"></i>
+            <i class="fa fa-bars"></i>
           </a>
           <ul class="dropdown-menu pull-right" role="menu">
             <li role="menuitem">
@@ -47,7 +47,7 @@
         </li>
         <li>
           <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-            <i class="icon icon-remove"></i>
+            <i class="fa fa-remove"></i>
           </a>
         </li>
       </ul>
@@ -60,7 +60,7 @@
           <a  class="grafana-target-segment"
               ng-click="target.hide = !target.hide; get_data();"
               role="menuitem">
-            <i class="icon-eye-open"></i>
+            <i class="fa fa-eye"></i>
           </a>
         </li>
       </ul>
@@ -93,7 +93,7 @@
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
 				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="icon-wrench"></i>
+					<i class="fa fa-wrench"></i>
 				</li>
 				<li class="grafana-target-segment">
 					Cache timeout
@@ -126,7 +126,7 @@
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
 				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="icon-info-sign"></i>
+					<i class="fa fa-info-circle"></i>
 				</li>
 				<li class="grafana-target-segment">
 					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">

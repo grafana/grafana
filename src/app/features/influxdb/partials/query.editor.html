@@ -13,7 +13,7 @@
             <a class="pointer dropdown-toggle"
                data-toggle="dropdown"
                tabindex="1">
-              <i class="icon icon-cog"></i>
+              <i class="fa fa-bars"></i>
             </a>
 						<ul class="dropdown-menu pull-right" role="menu">
 							<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
@@ -25,7 +25,7 @@
 					</li>
 					<li>
 						<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-							<i class="icon icon-remove"></i>
+							<i class="fa fa-remove"></i>
 						</a>
 					</li>
 				</ul>
@@ -33,7 +33,7 @@
 				<ul class="grafana-segment-list">
 					<li>
 						<a class="grafana-target-segment" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
-							<i class="icon-eye-open"></i>
+							<i class="fa fa-eye"></i>
 						</a>
           </li>
         </ul>
@@ -89,7 +89,7 @@
 				<!-- Raw Query mode  -->
 				<ul class="grafana-segment-list" ng-show="target.rawQuery">
 					<li class="grafana-target-segment">
-						<i class="icon-eye-open invisible"></i>
+						<i class="fa eye invisible"></i>
 					</li>
 					<li class="grafana-target-segment">
             alias
@@ -116,7 +116,7 @@
 				<!-- Query editor mode -->
         <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
 					<li class="grafana-target-segment">
-						<i class="icon-eye-open invisible"></i>
+						<i class="fa fa-eye invisible"></i>
 					</li>
 					<li class="grafana-target-segment">
 						select
@@ -145,7 +145,7 @@
 					</li>
 
 					<li class="grafana-target-segment">
-							<i class="icon-plus"></i>
+							<i class="fa fa-plus"></i>
 					</li>
 
 					<li>
@@ -184,7 +184,7 @@
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
 				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="icon-wrench"></i>
+					<i class="fa fa-wrench"></i>
 				</li>
 				<li class="grafana-target-segment">
 					group by time
@@ -194,7 +194,7 @@
 					       spellcheck='false' placeholder="example: >10s">
 				</li>
 				<li class="grafana-target-segment">
-					<i class="icon-question-sign" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
+					<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -203,7 +203,7 @@
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
 				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="icon-info-sign"></i>
+					<i class="fa fa-info-circle"></i>
 				</li>
 				<li class="grafana-target-segment">
 					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">

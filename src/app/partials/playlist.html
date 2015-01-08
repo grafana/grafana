@@ -1,7 +1,7 @@
 <div ng-controller="PlaylistCtrl" ng-init="init()">
 	<div class="dashboard-editor-header">
 		<div class="dashboard-editor-title">
-			<i class="icon icon-play"></i>
+			<i class="fa fa-play"></i>
 			Start dashboard playlist
 		</div>
 	</div>
@@ -26,19 +26,19 @@
 								<label for="dash-{{$index}}" class="cr1"></label>
 							</td>
 							<td style="text-align: center">
-								<i class="icon-remove pointer" ng-click="removeAsFavorite(dashboard)"></i>
+								<i class="fa fa-remove pointer" ng-click="removeAsFavorite(dashboard)"></i>
 							</td>
 						</tr>
 						<tr ng-hide="favDashboards.length">
 							<td colspan="3">
-								<i class="icon-warning"></i> No dashboards marked as favorites
+								<i class="fa fa-warning"></i> No dashboards marked as favorites
 							</td>
 						</tr>
 					</table>
 				</div>
 				<div class="editor-option">
 					<div class="span4">
-						<span><i class="icon-question-sign"></i>
+						<span><i class="fa fa-question-circle"></i>
 							dashboards available in the playlist are only the ones marked as favorites (stored in local browser storage).
 							to mark a dashboard as favorite, use save icon in the menu and in the dropdown select mark as favorite
 							<br/><br/>
@@ -56,7 +56,7 @@
 	</div>
 
 	<div class="dashboard-editor-footer">
-		<button class="btn btn-success" ng-click="start();dismiss();"><i class="icon-play"></i> Start</button>
-		<button type="button" class="btn btn-success pull-right" ng-click="dismiss();"><i class="icon-ban-circle"></i> Close</button>
+		<button class="btn btn-success" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
+		<button type="button" class="btn btn-success pull-right" ng-click="dismiss();">Close</button>
 	</div>
 </div>

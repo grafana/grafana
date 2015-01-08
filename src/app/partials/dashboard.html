@@ -18,7 +18,7 @@
 					<div class="row-close" ng-show="row.collapse" data-placement="bottom" >
 						<div class="row-close-buttons">
 							<span class="row-button bgPrimary" ng-click="toggle_row(row)">
-								<i bs-tooltip="'Expand row'" data-placement="right" class="icon-caret-left pointer" ></i>
+								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
 							</span>
 						</div>
 						<div class="row-text pointer" ng-click="toggle_row(row)" ng-bind="row.title"></div>
@@ -26,7 +26,7 @@
 					<div class="row-open" ng-show="!row.collapse">
 						<div class='row-tab bgSuccess dropdown' ng-show="row.editable">
 							<span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
-								<i class="icon-th-list"></i>
+								<i class="fa fa-bars"></i>
 							</span>
 							<ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
 								<li>
@@ -105,7 +105,7 @@
 		<div ng-show='dashboard.editable' class="row-fluid add-row-panel-hint">
 			<div class="span12" style="text-align:right;">
 				<span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-mini">
-					<span><i class="icon-plus-sign"></i> ADD A ROW</span>
+					<span><i class="fa fa-plus"></i> ADD ROW</span>
 				</span>
 			</div>
 		</div>
