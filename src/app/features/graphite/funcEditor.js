@@ -16,10 +16,10 @@ function (angular, _, $) {
 
       var funcControlsTemplate =
          '<div class="graphite-func-controls">' +
-           '<span class="pointer icon-arrow-left"></span>' +
-           '<span class="pointer icon-info-sign"></span>' +
-           '<span class="pointer icon-remove" ></span>' +
-           '<span class="pointer icon-arrow-right"></span>' +
+           '<span class="pointer fa fa-arrow-left"></span>' +
+           '<span class="pointer fa fa-question-circle"></span>' +
+           '<span class="pointer fa fa-remove" ></span>' +
+           '<span class="pointer fa fa-arrow-right"></span>' +
          '</div>';
 
       return {
@@ -195,7 +195,7 @@ function (angular, _, $) {
           function registerFuncControlsActions() {
             $funcControls.click(function(e) {
               var $target = $(e.target);
-              if ($target.hasClass('icon-remove')) {
+              if ($target.hasClass('fa-remove')) {
                 toggleFuncControls();
                 $scope.$apply(function() {
                   $scope.removeFunction($scope.func);
@@ -203,7 +203,7 @@ function (angular, _, $) {
                 return;
               }
 
-              if ($target.hasClass('icon-arrow-left')) {
+              if ($target.hasClass('fa-arrow-left')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index - 1);
                   $scope.targetChanged();
@@ -211,7 +211,7 @@ function (angular, _, $) {
                 return;
               }
 
-              if ($target.hasClass('icon-arrow-right')) {
+              if ($target.hasClass('fa-arrow-right')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index + 1);
                   $scope.targetChanged();
@@ -219,7 +219,7 @@ function (angular, _, $) {
                 return;
               }
 
-              if ($target.hasClass('icon-info-sign')) {
+              if ($target.hasClass('fa-question-circle')) {
                 window.open("http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + funcDef.name,'_blank');
                 return;
               }

@@ -23,7 +23,7 @@
 				<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" href="" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="dismiss();">
 					<span ng-bind="time.rangeString"></span>
 					<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
-					<i class="icon-caret-down"></i>
+					<i class="fa fa-caret-down"></i>
 				</a>
 
 				<ul class="dropdown-menu">
@@ -49,7 +49,7 @@
 
       </li>
       <li ng-show="!dashboard.refresh" class="grafana-menu-refresh">
-        <a ng-click="timeSrv.refreshDashboard()"><i class="icon-refresh"></i></a>
+        <a ng-click="timeSrv.refreshDashboard()"><i class="fa fa-refresh"></i></a>
       </li>
     </ul>
   </form>

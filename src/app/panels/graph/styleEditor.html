@@ -70,7 +70,7 @@
 				<div class="grafana-target-inner">
 					<ul class="grafana-segment-list">
 						<li class="grafana-target-segment">
-							<i class="icon-remove pointer" ng-click="removeSeriesOverride(override)"></i>
+							<i class="fa fa-remove pointer" ng-click="removeSeriesOverride(override)"></i>
 						</li>
 
 						<li class="grafana-target-segment">
@@ -85,7 +85,7 @@
 							class="input-medium grafana-target-segment-input" >
 						</li>
 						<li class="grafana-target-segment" ng-repeat="option in currentOverrides">
-							<i class="pointer icon-remove" ng-click="removeOverride(option)"></i>
+							<i class="pointer fa fa-remove" ng-click="removeOverride(option)"></i>
 							{{option.name}}: {{option.value}}
 						</li>
 

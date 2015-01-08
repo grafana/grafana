@@ -18,7 +18,7 @@
 	<div class="editor-row">
 		<i ng-repeat="color in colors"
 			class="pointer"
-			ng-class="{'icon-circle-blank': color === series.color,'icon-circle': color !== series.color}"
+			ng-class="{'fa fa-circle-o': color === series.color,'fa fa-circle': color !== series.color}"
 			ng-style="{color:color}"
 			ng-click="changeSeriesColor(series, color);dismiss();">&nbsp;</i>
 	</div>

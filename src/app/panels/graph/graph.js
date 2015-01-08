@@ -260,14 +260,14 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         }
 
         function addGridThresholds(options, panel) {
-          if (panel.grid.threshold1) {
+          if (_.isNumber(panel.grid.threshold1)) {
             var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
             options.grid.markings.push({
               yaxis: { from: panel.grid.threshold1, to: limit1 },
               color: panel.grid.threshold1Color
             });
 
-            if (panel.grid.threshold2) {
+            if (_.isNumber(panel.grid.threshold2)) {
               var limit2;
               if (panel.grid.thresholdLine) {
                 limit2 = panel.grid.threshold2;

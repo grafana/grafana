@@ -117,6 +117,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       return this._seriesQuery(interpolated)
         .then(function (results) {
+          if (!results || results.length === 0) { return []; }
+
           return _.map(results[0].points, function (metric) {
             return {
               text: metric[1],

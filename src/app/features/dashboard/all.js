@@ -12,4 +12,5 @@ define([
   './panelSrv',
   './soloPanelCtrl',
   './timeSrv',
+  './unsavedChangesSrv',
 ], function () {});

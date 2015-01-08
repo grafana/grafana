@@ -12,7 +12,7 @@
             <a  class="pointer dropdown-toggle"
                 data-toggle="dropdown"
                 tabindex="1">
-              <i class="icon icon-cog"></i>
+              <i class="fa fa-bars"></i>
             </a>
             <ul class="dropdown-menu pull-right" role="menu">
               <li role="menuitem">
@@ -25,7 +25,7 @@
           </li>
           <li>
             <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-              <i class="icon icon-remove"></i>
+              <i class="fa fa-remove"></i>
             </a>
           </li>
         </ul>
@@ -35,7 +35,7 @@
             <a  class="grafana-target-segment"
                 ng-click="target.hide = !target.hide; get_data();"
                 role="menuitem">
-              <i class="icon-eye-open"></i>
+              <i class="fa fa-eye"></i>
             </a>
           </li>
         </ul>
@@ -54,7 +54,7 @@
             <a bs-tooltip="target.errors.metric"
                style="color: rgb(229, 189, 28)"
                ng-show="target.errors.metric">
-              <i class="icon-warning-sign"></i>
+              <i class="fa fa-warning"></i>
             </a>
           </li>
 					<li class="grafana-target-segment">
@@ -69,7 +69,7 @@
             <a bs-tooltip="target.errors.aggregator"
                style="color: rgb(229, 189, 28)"
                ng-show="target.errors.aggregator">
-              <i class="icon-warning-sign"></i>
+              <i class="fa fa-warning"></i>
             </a>
           </li>
 
@@ -174,13 +174,13 @@
           <li ng-repeat="(key, value) in target.tags track by $index" class="grafana-target-segment">
             {{key}}&nbsp;=&nbsp;{{value}}
             <a ng-click="removeTag(key)">
-              <i class="icon-remove"></i>
+              <i class="fa fa-remove"></i>
             </a>
           </li>
 
           <li class="grafana-target-segment" ng-hide="addTagMode">
             <a ng-click="addTag()">
-              <i class="icon-plus-sign"></i>
+              <i class="fa fa-plus"></i>
             </a>
           </li>
 
@@ -200,12 +200,12 @@
                      ng-model="target.currentTagValue"
                      placeholder="value">
               <a ng-click="addTag()">
-                <i class="icon-plus-sign"></i>
+                <i class="fa fa-plus"></i>
               </a>
               <a bs-tooltip="target.errors.tags"
                  style="color: rgb(229, 189, 28)"
                  ng-show="target.errors.tags">
-                <i class="icon-warning-sign"></i>
+                <i class="fa fa-warning"></i>
               </a>
           </li>
         </ul>
