@@ -1,6 +1,6 @@
 define([
   'helpers',
-  'routes/backend/solo-panel',
+  'controllers/soloPanelCtrl',
   'features/dashboard/dashboardSrv',
 ], function(helpers) {
   'use strict';

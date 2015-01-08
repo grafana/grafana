@@ -7,32 +7,6 @@ function (angular, store) {
 
   var module = angular.module('grafana.routes');
 
-  module.config(function($routeProvider, $locationProvider) {
-    $locationProvider.html5Mode(true);
-
-    $routeProvider
-      .when('/', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBProvider',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/db/:id', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBProvider',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/temp/:id', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBProvider',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/import/:id', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromImportCtrl',
-        reloadOnSearch: false,
-      });
-  });
-
   // remember previous dashboard
   var prevDashPath = null;
 

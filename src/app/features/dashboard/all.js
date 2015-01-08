@@ -10,5 +10,6 @@ define([
   './viewStateSrv',
   './playlistSrv',
   './panelSrv',
+  './soloPanelCtrl',
   './timeSrv',
 ], function () {});

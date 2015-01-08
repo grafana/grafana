@@ -7,14 +7,6 @@ function (angular, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.config(function($routeProvider) {
-    $routeProvider
-      .when('/dashboard/solo/:id/', {
-        templateUrl: 'app/partials/solo-panel.html',
-        controller : 'SoloPanelCtrl',
-      });
-  });
-
   module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, dashboardSrv, timeSrv, $location) {
     var panelId;
 

@@ -6,18 +6,6 @@ function (angular) {
 
   var module = angular.module('grafana.routes');
 
-  module.config(function($routeProvider) {
-    $routeProvider
-      .when('/login', {
-        templateUrl: 'app/partials/login.html',
-        controller : 'LoginCtrl',
-      })
-      .when('/register', {
-        templateUrl: 'app/partials/register.html',
-        controller : 'RegisterCtrl',
-      });
-  });
-
   module.controller('RegisterCtrl', function($scope, backendSrv, $location) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
