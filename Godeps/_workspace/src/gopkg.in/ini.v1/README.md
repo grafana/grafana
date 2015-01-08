@@ -121,11 +121,15 @@ v, err = cfg.Section("").Key("BOOL").Bool()
 v, err = cfg.Section("").Key("FLOAT64").Float64()
 v, err = cfg.Section("").Key("INT").Int()
 v, err = cfg.Section("").Key("INT64").Int64()
+v, err = cfg.Section("").Key("TIME").TimeFormat(time.RFC3339)
+v, err = cfg.Section("").Key("TIME").Time() // RFC3339
 
 v = cfg.Section("").Key("BOOL").MustBool()
 v = cfg.Section("").Key("FLOAT64").MustFloat64()
 v = cfg.Section("").Key("INT").MustInt()
 v = cfg.Section("").Key("INT64").MustInt64()
+v = cfg.Section("").Key("TIME").MustTimeFormat(time.RFC3339)
+v = cfg.Section("").Key("TIME").MustTime() // RFC3339
 
 // Methods start with Must also accept one argument for default value
 // when key not found or fail to parse value to given type.
@@ -136,6 +140,8 @@ v = cfg.Section("").Key("BOOL").MustBool(true)
 v = cfg.Section("").Key("FLOAT64").MustFloat64(1.25)
 v = cfg.Section("").Key("INT").MustInt(10)
 v = cfg.Section("").Key("INT64").MustInt64(99)
+v = cfg.Section("").Key("TIME").MustTimeFormat(time.RFC3339, time.Now())
+v = cfg.Section("").Key("TIME").MustTime(time.Now()) // RFC3339
 ```
 
 What if my value is three-line long?
@@ -170,6 +176,7 @@ v = cfg.Section("").Key("STRING").In("default", []string{"str", "arr", "types"})
 v = cfg.Section("").Key("FLOAT64").InFloat64(1.1, []float64{1.25, 2.5, 3.75})
 v = cfg.Section("").Key("INT").InInt(5, []int{10, 20, 30})
 v = cfg.Section("").Key("INT64").InInt64(10, []int64{10, 20, 30})
+v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3})
 ```
 
 Default value will be presented if value of key is not in candidates you given, and default value does not need be one of candidates.
@@ -181,11 +188,12 @@ vals = cfg.Section("").Key("STRINGS").Strings(",")
 vals = cfg.Section("").Key("FLOAT64S").Float64s(",")
 vals = cfg.Section("").Key("INTS").Ints(",")
 vals = cfg.Section("").Key("INT64S").Int64s(",")
+vals = cfg.Section("").Key("TIMES").Times(",")
 ```
 
-### Advanced Usage
+## Advanced Usage
 
-#### Recursive Values
+### Recursive Values
 
 For all value of keys, there is a special syntax `%(<name>)s`, where `<name>` is the key name in same section or default section, and `%(<name>)s` will be replaced by corresponding value(empty string if key not found). You can use this syntax at most 99 level of recursions.
 
@@ -205,7 +213,7 @@ cfg.Section("author").Key("GITHUB").String()		// https://github.com/Unknwon
 cfg.Section("package").Key("FULL_NAME").String()	// github.com/go-ini/ini
 ```
 
-#### Parent-child Sections
+### Parent-child Sections
 
 You can use `.` in section name to indicate parent-child relationship between two or more sections. If the key not found in the child section, library will try again on its parent section until there is no parent section.
 
@@ -224,7 +232,7 @@ CLONE_URL = https://%(IMPORT_PATH)s
 cfg.Section("package.sub").Key("CLONE_URL").String()	// https://gopkg.in/ini.v1
 ```
 
-#### Auto-increment Key Names
+### Auto-increment Key Names
 
 If key name is `-` in data source, then it would be seen as special syntax for auto-increment key name start from 1, and every section is independent on counter.
 
@@ -237,6 +245,83 @@ If key name is `-` in data source, then it would be seen as special syntax for a
 
 ```go
 cfg.Section("features").KeyStrings()	// []{"#1", "#2", "#3"}
+```
+
+### Map To Struct
+
+Want more objective way to play with INI? Cool.
+
+```ini
+Name = Unknwon
+age = 21
+Male = true
+Born = 1993-01-01T20:17:05Z
+
+[Note]
+Content = Hi is a good man!
+Cities = HangZhou, Boston
+```
+
+```go
+type Note struct {
+	Content string
+	Cities  []string
+}
+
+type Person struct {
+	Name string
+	Age  int `ini:"age"`
+	Male bool
+	Born time.Time
+	Note
+	Created time.Time `ini:"-"`
+}
+
+func main() {
+	cfg, err := ini.Load("path/to/ini")
+	// ...
+	p := new(Person)
+	err = cfg.MapTo(p)
+	// ...
+
+	// Things can be simpler.
+	err = ini.MapTo(p, "path/to/ini")
+	// ...
+
+	// Just map a section? Fine.
+	n := new(Note)
+	err = cfg.Section("Note").MapTo(n)
+	// ...
+}
+```
+
+#### Name Mapper
+
+To save your time and make your code cleaner, this library supports [`NameMapper`](https://gowalker.org/gopkg.in/ini.v1#NameMapper) between struct field and actual secion and key name.
+
+There are 2 built-in name mappers:
+
+- `AllCapsUnderscore`: it converts to format `ALL_CAPS_UNDERSCORE` then match section or key.
+- `TitleUnderscore`: it converts to format `title_underscore` then match section or key.
+
+To use them:
+
+```go
+type Info struct{
+	PackageName string
+}
+
+func main() {
+	err = ini.MapToWithMapper(&Info{}, ini.TitleUnderscore, []byte("packag_name=ini"))
+	// ...
+
+	cfg, err := ini.Load("PACKAGE_NAME=ini")
+	// ...
+	info := new(Info)
+	cfg.NameMapper = ini.AllCapsUnderscore
+	err = cfg.MapTo(info)
+	// ...
+}
 ```
 
 ## Getting Help
