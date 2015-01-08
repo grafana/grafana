@@ -26,6 +26,7 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 			Email:    cmd.Email,
 			Login:    cmd.Login,
 			Password: cmd.Password,
+			Salt:     cmd.Salt,
 			Created:  time.Now(),
 			Updated:  time.Now(),
 		}

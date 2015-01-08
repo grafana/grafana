@@ -4,7 +4,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func GetAccount(c *middleware.Context) {
@@ -59,7 +59,7 @@ func GetOtherAccounts(c *middleware.Context) {
 	err := bus.Dispatch(&query)
 
 	if err != nil {
-		c.JSON(500, utils.DynMap{"message": err.Error()})
+		c.JSON(500, util.DynMap{"message": err.Error()})
 		return
 	}
 

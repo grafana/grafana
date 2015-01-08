@@ -1,13 +1,10 @@
 package api
 
 import (
-	"regexp"
-	"strings"
-
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func GetDashboard(c *middleware.Context) {
@@ -29,15 +26,13 @@ func DeleteDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
 	query := m.GetDashboardQuery{Slug: slug, AccountId: c.GetAccountId()}
-	err := bus.Dispatch(&query)
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
 	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: c.GetAccountId()}
-	err = bus.Dispatch(&cmd)
-	if err != nil {
+	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to delete dashboard", err)
 		return
 	}
@@ -45,41 +40,6 @@ func DeleteDashboard(c *middleware.Context) {
 	var resp = map[string]interface{}{"title": query.Result.Title}
 
 	c.JSON(200, resp)
-}
-
-func Search(c *middleware.Context) {
-	queryText := c.Query("q")
-	result := m.SearchResult{
-		Dashboards: []*m.DashboardSearchHit{},
-		Tags:       []*m.DashboardTagCloudItem{},
-	}
-
-	if strings.HasPrefix(queryText, "tags!:") {
-		query := m.GetDashboardTagsQuery{}
-		err := bus.Dispatch(&query)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to get tags from database", err)
-			return
-		}
-		result.Tags = query.Result
-		result.TagsOnly = true
-	} else {
-		searchQueryRegEx, _ := regexp.Compile(`(tags:(\w*)\sAND\s)?(?:title:)?(.*)?`)
-		matches := searchQueryRegEx.FindStringSubmatch(queryText)
-		query := m.SearchDashboardsQuery{
-			Title:     matches[3],
-			Tag:       matches[2],
-			AccountId: c.GetAccountId(),
-		}
-		err := bus.Dispatch(&query)
-		if err != nil {
-			c.JsonApiErr(500, "Search failed", err)
-			return
-		}
-		result.Dashboards = query.Result
-	}
-
-	c.JSON(200, result)
 }
 
 func PostDashboard(c *middleware.Context) {
@@ -102,5 +62,5 @@ func PostDashboard(c *middleware.Context) {
 		return
 	}
 
-	c.JSON(200, utils.DynMap{"status": "success", "slug": cmd.Result.Slug})
+	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug})
 }

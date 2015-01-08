@@ -8,7 +8,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy {
@@ -21,12 +21,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		reqQueryVals := req.URL.Query()
 
 		if ds.Type == m.DS_INFLUXDB {
-			req.URL.Path = utils.JoinUrlFragments(target.Path, "db/"+ds.Database+"/"+proxyPath)
+			req.URL.Path = util.JoinUrlFragments(target.Path, "db/"+ds.Database+"/"+proxyPath)
 			reqQueryVals.Add("u", ds.User)
 			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else {
-			req.URL.Path = utils.JoinUrlFragments(target.Path, proxyPath)
+			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}
 	}
 

@@ -6,7 +6,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/utils"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 type loginJsonModel struct {
@@ -19,7 +19,7 @@ func LoginPost(c *middleware.Context) {
 	var loginModel loginJsonModel
 
 	if !c.JsonBody(&loginModel) {
-		c.JSON(400, utils.DynMap{"status": "bad request"})
+		c.JSON(400, util.DynMap{"message": "bad request"})
 		return
 	}
 
@@ -33,7 +33,8 @@ func LoginPost(c *middleware.Context) {
 
 	account := userQuery.Result
 
-	if loginModel.Password != account.Password {
+	passwordHashed := util.EncodePassword(loginModel.Password, account.Salt)
+	if passwordHashed != account.Password {
 		c.JsonApiErr(401, "Invalid username or password", err)
 		return
 	}
@@ -57,5 +58,5 @@ func loginUserWithAccount(account *m.Account, c *middleware.Context) {
 
 func LogoutPost(c *middleware.Context) {
 	c.Session.Delete("accountId")
-	c.JSON(200, utils.DynMap{"status": "logged out"})
+	c.JSON(200, util.DynMap{"status": "logged out"})
 }

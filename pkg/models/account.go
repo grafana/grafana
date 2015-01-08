@@ -18,6 +18,7 @@ type Account struct {
 	FullName        string
 	Password        string
 	IsAdmin         bool
+	Rands           string `xorm:"VARCHAR(10)"`
 	Salt            string `xorm:"VARCHAR(10)"`
 	Company         string
 	NextDashboardId int
@@ -55,6 +56,7 @@ type CreateAccountCommand struct {
 	Password string `json:"password" binding:"required"`
 	Name     string `json:"name"`
 	Company  string `json:"company"`
+	Salt     string `json:"-"`
 
 	Result Account `json:"-"`
 }

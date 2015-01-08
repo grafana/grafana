@@ -4,6 +4,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func CreateAccount(c *middleware.Context) {
@@ -15,9 +16,10 @@ func CreateAccount(c *middleware.Context) {
 	}
 
 	cmd.Login = cmd.Email
-	err := bus.Dispatch(&cmd)
+	cmd.Salt = util.GetRandomString(10)
+	cmd.Password = util.EncodePassword(cmd.Password, cmd.Salt)
 
-	if err != nil {
+	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "failed to create account", err)
 		return
 	}
