@@ -11,4 +11,5 @@ define([
   './playlistSrv',
   './panelSrv',
   './timeSrv',
+  './unsavedChangesSrv',
 ], function () {});
