@@ -116,11 +116,15 @@ v, err = cfg.Section("").Key("BOOL").Bool()
 v, err = cfg.Section("").Key("FLOAT64").Float64()
 v, err = cfg.Section("").Key("INT").Int()
 v, err = cfg.Section("").Key("INT64").Int64()
+v, err = cfg.Section("").Key("TIME").TimeFormat(time.RFC3339)
+v, err = cfg.Section("").Key("TIME").Time() // RFC3339
 
 v = cfg.Section("").Key("BOOL").MustBool()
 v = cfg.Section("").Key("FLOAT64").MustFloat64()
 v = cfg.Section("").Key("INT").MustInt()
 v = cfg.Section("").Key("INT64").MustInt64()
+v = cfg.Section("").Key("TIME").MustTimeFormat(time.RFC3339)
+v = cfg.Section("").Key("TIME").MustTime() // RFC3339
 
 // 由 Must 开头的方法名允许接收一个相同类型的参数来作为默认值，
 // 当键不存在或者转换失败时，则会直接返回该默认值。
@@ -131,6 +135,8 @@ v = cfg.Section("").Key("BOOL").MustBool(true)
 v = cfg.Section("").Key("FLOAT64").MustFloat64(1.25)
 v = cfg.Section("").Key("INT").MustInt(10)
 v = cfg.Section("").Key("INT64").MustInt64(99)
+v = cfg.Section("").Key("TIME").MustTimeFormat(time.RFC3339, time.Now())
+v = cfg.Section("").Key("TIME").MustTime(time.Now()) // RFC3339
 ```
 
 如果我的值有好多行怎么办？
@@ -165,6 +171,7 @@ v = cfg.Section("").Key("STRING").In("default", []string{"str", "arr", "types"})
 v = cfg.Section("").Key("FLOAT64").InFloat64(1.1, []float64{1.25, 2.5, 3.75})
 v = cfg.Section("").Key("INT").InInt(5, []int{10, 20, 30})
 v = cfg.Section("").Key("INT64").InInt64(10, []int64{10, 20, 30})
+v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3})
 ```
 
 如果获取到的值不是候选值的任意一个，则会返回默认值，而默认值不需要是候选值中的一员。
@@ -176,6 +183,7 @@ vals = cfg.Section("").Key("STRINGS").Strings(",")
 vals = cfg.Section("").Key("FLOAT64S").Float64s(",")
 vals = cfg.Section("").Key("INTS").Ints(",")
 vals = cfg.Section("").Key("INT64S").Int64s(",")
+vals = cfg.Section("").Key("TIMES").Times(",")
 ```
 
 ### 高级用法
@@ -232,6 +240,83 @@ cfg.Section("package.sub").Key("CLONE_URL").String()	// https://gopkg.in/ini.v1
 
 ```go
 cfg.Section("features").KeyStrings()	// []{"#1", "#2", "#3"}
+```
+
+### 映射到结构
+
+想要使用更加面向对象的方式玩转 INI 吗？好主意。
+
+```ini
+Name = Unknwon
+age = 21
+Male = true
+Born = 1993-01-01T20:17:05Z
+
+[Note]
+Content = Hi is a good man!
+Cities = HangZhou, Boston
+```
+
+```go
+type Note struct {
+	Content string
+	Cities  []string
+}
+
+type Person struct {
+	Name string
+	Age  int `ini:"age"`
+	Male bool
+	Born time.Time
+	Note
+	Created time.Time `ini:"-"`
+}
+
+func main() {
+	cfg, err := ini.Load("path/to/ini")
+	// ...
+	p := new(Person)
+	err = cfg.MapTo(p)
+	// ...
+
+	// 一切竟可以如此的简单。
+	err = ini.MapTo(p, "path/to/ini")
+	// ...
+
+	// 嗯哼？只需要映射一个分区吗？
+	n := new(Note)
+	err = cfg.Section("Note").MapTo(n)
+	// ...
+}
+```
+
+#### 名称映射器（Name Mapper）
+
+为了节省您的时间并简化代码，本库支持类型为 [`NameMapper`](https://gowalker.org/gopkg.in/ini.v1#NameMapper) 的名称映射器，该映射器负责结构字段名与分区名和键名之间的映射。
+
+目前有 2 款内置的映射器：
+
+- `AllCapsUnderscore`：该映射器将字段名转换至格式 `ALL_CAPS_UNDERSCORE` 后再去匹配分区名和键名。
+- `TitleUnderscore`：该映射器将字段名转换至格式 `title_underscore` 后再去匹配分区名和键名。
+
+使用方法：
+
+```go
+type Info struct{
+	PackageName string
+}
+
+func main() {
+	err = ini.MapToWithMapper(&Info{}, ini.TitleUnderscore, []byte("packag_name=ini"))
+	// ...
+
+	cfg, err := ini.Load("PACKAGE_NAME=ini")
+	// ...
+	info := new(Info)
+	cfg.NameMapper = ini.AllCapsUnderscore
+	err = cfg.MapTo(info)
+	// ...
+}
 ```
 
 ## 获取帮助
