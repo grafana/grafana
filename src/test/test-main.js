@@ -138,7 +138,7 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
-    'specs/pro/soloPanelCtrl-specs',
+    'specs/soloPanelCtrl-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

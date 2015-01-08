@@ -49,6 +49,9 @@ define([
       .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/solo-panel.html',
         controller : 'SoloPanelCtrl',
+      })
+      .otherwise({
+        templateUrl: 'app/partials/error.html',
       });
   });
 
