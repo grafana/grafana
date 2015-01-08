@@ -44,7 +44,7 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "app", "app")
 	mapStatic(m, "css", "css")
 	mapStatic(m, "img", "img")
-	mapStatic(m, "font", "font")
+	mapStatic(m, "fonts", "fonts")
 
 	m.Use(session.Sessioner(setting.SessionOptions))
 

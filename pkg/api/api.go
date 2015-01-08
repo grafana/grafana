@@ -16,8 +16,8 @@ func Register(m *macaron.Macaron) {
 	m.Post("/login", LoginPost)
 
 	// login
-	m.Get("/login", Index)
 	m.Get("/login/:name", OAuthLogin)
+	m.Get("/login", Index)
 
 	// account
 	m.Get("/account/", auth, Index)

@@ -2,4 +2,3 @@ graphite:
   build: blocks/docker_graphite
   ports:
     - "8776:80"
-
