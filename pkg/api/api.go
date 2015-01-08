@@ -52,22 +52,38 @@ func Register(m *macaron.Macaron) {
 
 	// metrics
 	m.Get("/api/metrics/test", auth, GetTestMetrics)
+
+	m.NotFound(NotFound)
 }
 
-func Index(ctx *middleware.Context) {
-	settings, err := getFrontendSettings(ctx)
+func setIndexViewData(c *middleware.Context) error {
+	settings, err := getFrontendSettings(c)
 	if err != nil {
-		ctx.Handle(500, "Failed to get settings", err)
+		return err
+	}
+
+	c.Data["User"] = dtos.NewCurrentUser(c.UserAccount)
+	c.Data["Settings"] = settings
+	c.Data["AppUrl"] = setting.AppUrl
+	c.Data["AppSubUrl"] = setting.AppSubUrl
+
+	return nil
+}
+
+func Index(c *middleware.Context) {
+	if err := setIndexViewData(c); err != nil {
+		c.Handle(500, "Failed to get settings", err)
 		return
 	}
 
-	ctx.Data["User"] = dtos.NewCurrentUser(ctx.UserAccount)
-	ctx.Data["Settings"] = settings
-	ctx.Data["AppUrl"] = setting.AppUrl
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
-	ctx.HTML(200, "index")
+	c.HTML(200, "index")
 }
 
-func NotFound(ctx *middleware.Context) {
-	ctx.Handle(404, "index", nil)
+func NotFound(c *middleware.Context) {
+	if err := setIndexViewData(c); err != nil {
+		c.Handle(500, "Failed to get settings", err)
+		return
+	}
+
+	c.HTML(404, "index")
 }
