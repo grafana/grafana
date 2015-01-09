@@ -30,6 +30,7 @@ type DataSource struct {
 	User      string          `json:"user"`
 	Database  string          `json:"database"`
 	BasicAuth bool            `json:"basicAuth"`
+	IsDefault bool            `json:"isDefault"`
 }
 
 type MetricQueryResultDto struct {

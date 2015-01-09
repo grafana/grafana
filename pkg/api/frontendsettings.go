@@ -33,8 +33,9 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 		}
 
 		var dsMap = map[string]interface{}{
-			"type": ds.Type,
-			"url":  url,
+			"type":    ds.Type,
+			"url":     url,
+			"default": ds.IsDefault,
 		}
 
 		if ds.Type == m.DS_INFLUXDB {

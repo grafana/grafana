@@ -33,6 +33,7 @@ type DataSource struct {
 	User      string
 	Database  string
 	BasicAuth bool
+	IsDefault bool
 
 	Created time.Time
 	Updated time.Time
@@ -41,8 +42,9 @@ type DataSource struct {
 // ----------------------
 // COMMANDS
 
+// Also acts as api DTO
 type AddDataSourceCommand struct {
-	AccountId int64
+	AccountId int64 `json:"-"`
 	Name      string
 	Type      DsType
 	Access    DsAccess
@@ -50,10 +52,12 @@ type AddDataSourceCommand struct {
 	Password  string
 	Database  string
 	User      string
+	IsDefault bool
 
 	Result *DataSource
 }
 
+// Also acts as api DTO
 type UpdateDataSourceCommand struct {
 	Id        int64
 	AccountId int64
@@ -64,6 +68,7 @@ type UpdateDataSourceCommand struct {
 	Password  string
 	User      string
 	Database  string
+	IsDefault bool
 }
 
 type DeleteDataSourceCommand struct {

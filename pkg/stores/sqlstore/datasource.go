@@ -45,9 +45,7 @@ func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
 func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
-		var err error
-
-		ds := m.DataSource{
+		ds := &m.DataSource{
 			AccountId: cmd.AccountId,
 			Name:      cmd.Name,
 			Type:      cmd.Type,
@@ -56,23 +54,38 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			User:      cmd.User,
 			Password:  cmd.Password,
 			Database:  cmd.Database,
+			IsDefault: cmd.IsDefault,
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
 
-		_, err = sess.Insert(&ds)
-		cmd.Result = &ds
+		if _, err := sess.Insert(ds); err != nil {
+			return err
+		}
+		if err := updateIsDefaultFlag(ds, sess); err != nil {
+			return err
+		}
 
-		return err
+		cmd.Result = ds
+		return nil
 	})
+}
+
+func updateIsDefaultFlag(ds *m.DataSource, sess *xorm.Session) error {
+	// Handle is default flag
+	if ds.IsDefault {
+		rawSql := "UPDATE data_source SET is_default = 0 WHERE account_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSql, ds.AccountId, ds.Id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
-		var err error
-
-		ds := m.DataSource{
+		ds := &m.DataSource{
 			Id:        cmd.Id,
 			AccountId: cmd.AccountId,
 			Name:      cmd.Name,
@@ -83,9 +96,17 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			Password:  cmd.Password,
 			Database:  cmd.Database,
 			Updated:   time.Now(),
+			IsDefault: cmd.IsDefault,
 		}
 
-		_, err = sess.Where("id=? and account_id=?", ds.Id, ds.AccountId).Update(&ds)
+		sess.UseBool("is_default")
+
+		_, err := sess.Where("id=? and account_id=?", ds.Id, ds.AccountId).Update(ds)
+		if err != nil {
+			return err
+		}
+
+		err = updateIsDefaultFlag(ds, sess)
 		return err
 	})
 }
