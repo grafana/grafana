@@ -84,3 +84,17 @@
   </div>
 
 </div>
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Threshold visualization</h5>
+    <div class="editor-option">
+      <label class="small">Min count <tip>Minimum number of values beyond threshold to trigger visualization</tip></label>
+      <input type="number" class="input-small" ng-model="panel.grid.thresholdCount" ng-change="render()" ng-model-onblur />
+    </div>
+    <div class="editor-option">
+      <label class="small">Border width <tip>Only visible when visualization is triggered</tip></label>
+      <input type="number" class="input-small" ng-model="panel.grid.thresholdVisualBorderWidth" ng-change="render()" ng-model-onblur />
+    </div>
+  </div>
+</div>
