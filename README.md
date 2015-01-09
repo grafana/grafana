@@ -3,7 +3,20 @@ Work in progress Grafana 2.0 (with included Grafana backend)
 [![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
 
 ## building and running
+Before trying to build make sure the grafana frontend git submodule is loaded.
 
+By clone recursive
+
+```
+git clone --recursive <this_repo>
+```
+
+In case of after clone
+```
+git submodule update --init
+```
+
+Building
 ```
 go run build.go setup (only needed once to install godep)
 go run build.go build
