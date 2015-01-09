@@ -29,6 +29,7 @@ func GetDataSources(c *middleware.Context) {
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
+			IsDefault: ds.IsDefault,
 		}
 	}
 
@@ -68,8 +69,6 @@ func AddDataSource(c *middleware.Context) {
 		c.JsonApiErr(500, "Failed to add datasource", err)
 		return
 	}
-
-	//bus.Publish(&m.DataSourceCreatedEvent{Account: c.GetAccountId(), })
 
 	c.JsonOK("Datasource added")
 }

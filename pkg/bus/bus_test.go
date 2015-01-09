@@ -43,3 +43,26 @@ func TestQueryHandlerReturn(t *testing.T) {
 		t.Fatal("Failed to get response from handler")
 	}
 }
+
+func TestEventListeners(t *testing.T) {
+	bus := New()
+	count := 0
+
+	bus.AddEventListener(func(query *TestQuery) error {
+		count += 1
+		return nil
+	})
+
+	bus.AddEventListener(func(query *TestQuery) error {
+		count += 10
+		return nil
+	})
+
+	err := bus.Publish(&TestQuery{})
+
+	if err != nil {
+		t.Fatal("Publish event failed " + err.Error())
+	} else if count != 0 {
+		t.Fatal("Publish event failed, listeners called: %v, expected: %v", count, 11)
+	}
+}

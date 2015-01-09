@@ -12,18 +12,17 @@ var (
 )
 
 type Account struct {
-	Id                  int64
-	Login               string `xorm:"UNIQUE NOT NULL"`
-	Email               string `xorm:"UNIQUE NOT NULL"`
-	Name                string
-	FullName            string
-	Password            string
-	IsAdmin             bool
-	Salt                string `xorm:"VARCHAR(10)"`
-	Company             string
-	NextDashboardId     int
-	UsingAccountId      int64
-	DefaultDataSourceId int64
+	Id              int64
+	Login           string `xorm:"UNIQUE NOT NULL"`
+	Email           string `xorm:"UNIQUE NOT NULL"`
+	Name            string
+	FullName        string
+	Password        string
+	IsAdmin         bool
+	Salt            string `xorm:"VARCHAR(10)"`
+	Company         string
+	NextDashboardId int
+	UsingAccountId  int64
 
 	Created time.Time
 	Updated time.Time
@@ -46,11 +45,6 @@ type CreateAccountCommand struct {
 type SetUsingAccountCommand struct {
 	AccountId      int64
 	UsingAccountId int64
-}
-
-type SetDefaultDataSourceCommand struct {
-	AccountId    int64
-	DataSourceId int64
 }
 
 // ----------------------
