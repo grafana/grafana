@@ -38,16 +38,8 @@ type DataSource struct {
 	Updated time.Time
 }
 
-type GetDataSourcesQuery struct {
-	AccountId int64
-	Result    []*DataSource
-}
-
-type GetDataSourceByIdQuery struct {
-	Id        int64
-	AccountId int64
-	Result    DataSource
-}
+// ----------------------
+// COMMANDS
 
 type AddDataSourceCommand struct {
 	AccountId int64
@@ -58,6 +50,8 @@ type AddDataSourceCommand struct {
 	Password  string
 	Database  string
 	User      string
+
+	Result *DataSource
 }
 
 type UpdateDataSourceCommand struct {
@@ -75,4 +69,23 @@ type UpdateDataSourceCommand struct {
 type DeleteDataSourceCommand struct {
 	Id        int64
 	AccountId int64
+}
+
+// ---------------------
+// QUERIES
+
+type GetDataSourcesQuery struct {
+	AccountId int64
+	Result    []*DataSource
+}
+
+type GetDataSourceByIdQuery struct {
+	Id        int64
+	AccountId int64
+	Result    DataSource
+}
+
+// ---------------------
+// EVENTS
+type DataSourceCreatedEvent struct {
 }

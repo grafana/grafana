@@ -64,11 +64,12 @@ func AddDataSource(c *middleware.Context) {
 
 	cmd.AccountId = c.Account.Id
 
-	err := bus.Dispatch(&cmd)
-	if err != nil {
+	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add datasource", err)
 		return
 	}
+
+	//bus.Publish(&m.DataSourceCreatedEvent{Account: c.GetAccountId(), })
 
 	c.JsonOK("Datasource added")
 }
