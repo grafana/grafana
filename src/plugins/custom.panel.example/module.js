@@ -2,9 +2,9 @@ define([
   'angular',
   'app',
   'lodash',
-  'require',
+  'components/panelmeta',
 ],
-function (angular, app, _) {
+function (angular, app, _, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.custom', []);
@@ -12,9 +12,9 @@ function (angular, app, _) {
 
   module.controller('CustomPanelCtrl', function($scope, panelSrv) {
 
-    $scope.panelMeta = {
-      description : "Example plugin panel",
-    };
+    $scope.panelMeta = new PanelMeta({
+      description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
+    });
 
     // set and populate defaults
     var _d = {
@@ -22,10 +22,6 @@ function (angular, app, _) {
 
     _.defaults($scope.panel, _d);
 
-    $scope.init = function() {
-      panelSrv.init($scope);
-    };
-
-    $scope.init();
+    panelSrv.init($scope);
   });
 });
