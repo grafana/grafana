@@ -27,7 +27,7 @@
 		<div class="page-alert-list">
 			<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
 				<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
-					<i class="icon-remove-sign"></i>
+					<i class="fa fa-times-circle"></i>
 				</button>
 				<div class="alert-title">{{alert.title}}</div>
 				<div ng-bind-html='alert.text'></div>
