@@ -25,55 +25,6 @@ type Dashboard struct {
 	Data  map[string]interface{}
 }
 
-type SearchResult struct {
-	Dashboards []*DashboardSearchHit    `json:"dashboards"`
-	Tags       []*DashboardTagCloudItem `json:"tags"`
-	TagsOnly   bool                     `json:"tagsOnly"`
-}
-
-type DashboardSearchHit struct {
-	Title string   `json:"title"`
-	Slug  string   `json:"slug"`
-	Tags  []string `json:"tags"`
-}
-
-type DashboardTagCloudItem struct {
-	Term  string `json:"term"`
-	Count int    `json:"count"`
-}
-
-type SearchDashboardsQuery struct {
-	Title     string
-	Tag       string
-	AccountId int64
-
-	Result []*DashboardSearchHit
-}
-
-type GetDashboardTagsQuery struct {
-	AccountId int64
-	Result    []*DashboardTagCloudItem
-}
-
-type SaveDashboardCommand struct {
-	Dashboard map[string]interface{} `json:"dashboard"`
-	AccountId int64                  `json:"-"`
-
-	Result *Dashboard
-}
-
-type DeleteDashboardCommand struct {
-	Slug      string
-	AccountId int64
-}
-
-type GetDashboardQuery struct {
-	Slug      string
-	AccountId int64
-
-	Result *Dashboard
-}
-
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = make(map[string]interface{})
@@ -120,4 +71,31 @@ func (dash *Dashboard) UpdateSlug() {
 	re := regexp.MustCompile("[^\\w ]+")
 	re2 := regexp.MustCompile("\\s")
 	dash.Slug = re2.ReplaceAllString(re.ReplaceAllString(title, ""), "-")
+}
+
+//
+// COMMANDS
+//
+
+type SaveDashboardCommand struct {
+	Dashboard map[string]interface{} `json:"dashboard"`
+	AccountId int64                  `json:"-"`
+
+	Result *Dashboard
+}
+
+type DeleteDashboardCommand struct {
+	Slug      string
+	AccountId int64
+}
+
+//
+// QUERIES
+//
+
+type GetDashboardQuery struct {
+	Slug      string
+	AccountId int64
+
+	Result *Dashboard
 }

@@ -60,7 +60,8 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Updated:   time.Now(),
 		}
 
-		_, err = sess.Insert(ds)
+		_, err = sess.Insert(&ds)
+		cmd.Result = &ds
 
 		return err
 	})
