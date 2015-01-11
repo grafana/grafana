@@ -53,3 +53,62 @@ func GetLocationByCode(c *middleware.Context) {
 
 	c.JSON(200, result)
 }
+
+func DeleteLocation(c *middleware.Context) {
+	id := c.ParamsInt64(":id")
+
+	cmd := &m.DeleteLocationCommand{Id: id, AccountId: c.UserAccount.Id}
+
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to delete location", err)
+		return
+	}
+
+	c.JsonOK("location deleted")
+}
+	
+func AddLocation(c *middleware.Context) {
+	cmd := m.AddLocationCommand{}
+
+	if !c.JsonBody(&cmd) {
+		c.JsonApiErr(400, "Validation failed", nil)
+		return
+	}
+
+	cmd.AccountId = c.Account.Id
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to add location", err)
+		return
+	}
+	result := &dtos.Location{
+		Id:        cmd.Result.Id,
+		AccountId: cmd.Result.AccountId,
+		Code:      cmd.Result.Code,
+		Name:      cmd.Result.Name,
+		Country:   cmd.Result.Country,
+		Region:    cmd.Result.Region,
+		Provider:  cmd.Result.Provider,
+	}
+	c.JSON(200, result)
+}
+
+func UpdateLocation(c *middleware.Context) {
+	cmd := m.UpdateLocationCommand{}
+
+	if !c.JsonBody(&cmd) {
+		c.JsonApiErr(400, "Validation failed", nil)
+		return
+	}
+
+	cmd.AccountId = c.Account.Id
+
+	err := bus.Dispatch(&cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to update location", err)
+		return
+	}
+
+	c.JsonOK("Location updated")
+}

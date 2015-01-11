@@ -1,17 +1,18 @@
 package sqlstore
 
 import (
-	//"time"
-
+	"time"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-
-	//"github.com/go-xorm/xorm"
+	"github.com/go-xorm/xorm"
 )
 
 func init() {
 	bus.AddHandler("sql", GetLocations)
 	bus.AddHandler("sql", GetLocationByCode)
+	bus.AddHandler("sql", AddLocation)
+	bus.AddHandler("sql", UpdateLocation)
+	bus.AddHandler("sql", DeleteLocation)
 }
 
 func GetLocationByCode(query *m.GetLocationByCodeQuery) error {
@@ -29,4 +30,53 @@ func GetLocations(query *m.GetLocationsQuery) error {
 
 	query.Result = make([]*m.Location, 0)
 	return sess.Find(&query.Result)
+}
+
+func DeleteLocation(cmd *m.DeleteLocationCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM location WHERE id=? and account_id=?"
+		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		return err
+	})
+}
+
+func AddLocation(cmd *m.AddLocationCommand) error {
+
+	return inTransaction(func(sess *xorm.Session) error {
+		l := &m.Location{
+			AccountId: cmd.AccountId,
+			Code:      cmd.Code,
+			Name:      cmd.Name,
+			Country:   cmd.Country,
+			Region:    cmd.Region,
+			Provider:  cmd.Provider,
+			Created:   time.Now(),
+			Updated:   time.Now(),
+		}
+
+		if _, err := sess.Insert(l); err != nil {
+			return err
+		}
+		cmd.Result = l
+		return nil
+	})
+}
+
+func UpdateLocation(cmd *m.UpdateLocationCommand) error {
+
+	return inTransaction(func(sess *xorm.Session) error {
+		l := &m.Location{
+			Id:		   cmd.Id,
+			AccountId: cmd.AccountId,
+			Code:      cmd.Code,
+			Name:      cmd.Name,
+			Country:   cmd.Country,
+			Region:    cmd.Region,
+			Provider:  cmd.Provider,
+			Updated:   time.Now(),
+		}
+
+		_, err := sess.Where("id=? and account_id=?", l.Id, l.AccountId).Update(l)
+		return err
+	})
 }

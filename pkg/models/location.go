@@ -23,6 +23,9 @@ type Location struct {
 	Updated 	time.Time
 }
 
+// ----------------------
+// COMMANDS
+
 type AddLocationCommand struct {
 	Code        string    `json:"code" binding:"required"`
 	AccountId    int64    `json:"-"`
@@ -30,8 +33,23 @@ type AddLocationCommand struct {
 	Country		string    `json:"country"`
 	Region	    string    `json:"region"`
 	Provider	string    `json:"provider"`
+	Result      *Location
 }
 
+type UpdateLocationCommand struct {
+	Id          int64     `json:"id" binding:"required"`
+	AccountId   int64     `json:"-"`
+	Code        string    `json:"code"`
+	Name		string    `json:"name"`
+	Country		string    `json:"country"`
+	Region	    string    `json:"region"`
+	Provider	string    `json:"provider"`
+}
+
+type DeleteLocationCommand struct {
+	Id          int64     `json:"id" binding:"required"`
+	AccountId   int64     `json:"-"`
+}
 
 // ---------------------
 // QUERIES
