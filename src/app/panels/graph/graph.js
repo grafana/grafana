@@ -109,9 +109,9 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
         }
 
-        function updateLegendValues(plot) {
+        function drawHook(plot) {
+          // Update legend values
           var yaxis = plot.getYAxes();
-
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             var axis = yaxis[series.yaxis - 1];
@@ -124,6 +124,29 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
             if(!scope.$$phase) { scope.$digest(); }
           }
+
+          // add left axis labels
+          if (scope.panel.leftYAxisLabel) {
+            var yaxisLabel = $("<div class='axisLabel left-yaxis-label'></div>")
+              .text(scope.panel.leftYAxisLabel)
+              .appendTo(elem);
+
+            yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
+          }
+
+          // add right axis labels
+          if (scope.panel.rightYAxisLabel) {
+            var rightLabel = $("<div class='axisLabel right-yaxis-label'></div>")
+              .text(scope.panel.rightYAxisLabel)
+              .appendTo(elem);
+
+            rightLabel.css("margin-top", rightLabel.width() / 2);
+          }
+        }
+
+        function processOffsetHook(plot, gridMargin) {
+          if (scope.panel.leftYAxisLabel) { gridMargin.left = 20; }
+          if (scope.panel.rightYAxisLabel) { gridMargin.right = 20; }
         }
 
         // Function for rendering panel
@@ -137,7 +160,10 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           // Populate element
           var options = {
-            hooks: { draw: [updateLegendValues] },
+            hooks: {
+              draw: [drawHook],
+              processOffset: [processOffsetHook],
+            },
             legend: { show: false },
             series: {
               stackpercent: panel.stack ? panel.percentage : false,
@@ -173,7 +199,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               backgroundColor: null,
               borderWidth: 0,
               hoverable: true,
-              color: '#c8c8c8'
+              color: '#c8c8c8',
+              margin: { left: 0, right: 0 },
             },
             selection: {
               mode: "x",
@@ -213,8 +240,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             } catch (e) {
               console.log('flotcharts error', e);
             }
-
-            addAxisLabels();
           }
 
           if (shouldDelayDraw(panel)) {
@@ -315,19 +340,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             data: annotations,
             types: types
           };
-        }
-
-        function addAxisLabels() {
-          if (scope.panel.leftYAxisLabel) {
-            elem.css('margin-left', '10px');
-            var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>")
-              .text(scope.panel.leftYAxisLabel)
-              .appendTo(elem);
-
-            yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
-          } else if (elem.css('margin-left')) {
-            elem.css('margin-left', '');
-          }
         }
 
         function configureAxisOptions(data, options) {
