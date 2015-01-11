@@ -30,13 +30,17 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
-      .when('/admin/datasources', {
-        templateUrl: 'app/features/admin/partials/datasources.html',
+      .when('/account/datasources', {
+        templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
       .when('/account', {
-        templateUrl: 'app/features/admin/partials/account.html',
+        templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',
+      })
+      .when('/admin/', {
+        templateUrl: 'app/features/admin/partials/admin.html',
+        controller : 'AdminCtrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
