@@ -52,7 +52,8 @@ func Register(m *macaron.Macaron) {
 
 	// metrics
 	m.Get("/api/metrics/test", auth, GetTestMetrics)
-
+	m.Get("/api/admin/locations/list", auth, GetLocations)
+	m.Get("/api/admin/locations/:code", auth, GetLocationByCode)
 	m.NotFound(NotFound)
 }
 
