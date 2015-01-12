@@ -122,7 +122,6 @@
 .grafana-segment-list {
   list-style: none;
   margin: 0;
-  margin-right: 90px;
   >li {
     float: left;
   }
@@ -168,6 +167,9 @@
     padding: 8px 15px;
   }
 
+  &.last {
+    border-right: none;
+  }
 }
 
 .grafana-target-segment-icon {
@@ -243,7 +245,7 @@ input[type=text].grafana-target-text-input {
   border-right: 1px solid @grafanaTargetSegmentBorder;
 }
 
-input[type=text].grafana-target-segment-input {
+[type=text].grafana-target-segment-input, [type=number].grafana-target-segment-input {
   border: none;
   border-right: 1px solid @grafanaTargetSegmentBorder;
   margin: 0px;
@@ -347,6 +349,7 @@ select.grafana-target-segment-input {
   background: inherit;
   border: none;
   color: inherit;
+  padding: 0;
 }
 
 .sp-replacer:hover, .sp-replacer.sp-active {
