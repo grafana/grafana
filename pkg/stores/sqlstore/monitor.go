@@ -264,6 +264,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			return err
 		}
 		cmd.Result = &m.MonitorDTO{
+			Id:        mon.Id,
 			AccountId: mon.AccountId,
 			Name:      mon.Name,
 			MonitorTypeId: mon.MonitorTypeId,
