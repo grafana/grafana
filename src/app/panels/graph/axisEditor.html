@@ -4,13 +4,13 @@
 		<div class="grafana-target">
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment" style="width: 100px">
+					<li class="grafana-target-segment" style="width: 80px">
 						<strong>Left Y</strong>
 					</li>
 					<li class="grafana-target-segment">
 						Unit
 					</li>
-					<li class="dropdown" style="width: 140px;"
+					<li class="dropdown" style="width: 130px;"
 						ng-model="panel.y_formats[0]"
 						dropdown-typeahead="unitFormats"
 						dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
@@ -35,7 +35,7 @@
 						Label
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input"
+						<input type="text" class="input-small grafana-target-segment-input last"
 					  	ng-model="panel.leftYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
 				</ul>
@@ -43,13 +43,13 @@
 			</div>
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment" style="width: 100px">
+					<li class="grafana-target-segment" style="width: 80px">
 						<strong>Right Y</strong>
 					</li>
 					<li class="grafana-target-segment">
 						Unit
 					</li>
-					<li class="dropdown" style="width: 140px"
+					<li class="dropdown" style="width: 130px"
 						ng-model="panel.y_formats[1]"
 						dropdown-typeahead="unitFormats"
 						dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
@@ -74,7 +74,7 @@
 						Label
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input"
+						<input type="text" class="input-small grafana-target-segment-input last"
 					  	ng-model="panel.rightYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
 				</ul>
@@ -87,7 +87,7 @@
 		<div class="grafana-target">
 		<div class="grafana-target-inner">
 			<ul class="grafana-segment-list">
-					<li class="grafana-target-segment" style="width: 100px">
+					<li class="grafana-target-segment" style="width: 80px">
 						<strong>Show Axis</strong>
 					</li>
 					<li class="grafana-target-segment">
@@ -96,7 +96,7 @@
 								ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
 						<label for="hideXAxis" class="cr1"></label>
 					</li>
-					<li class="grafana-target-segment">
+					<li class="grafana-target-segment last">
 						Y-Axis&nbsp;
 						<input class="cr1" id="hideYAxis" type="checkbox"
 						    ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
@@ -107,7 +107,7 @@
 			</div>
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment" style="width: 100px">
+					<li class="grafana-target-segment" style="width: 80px">
 						<strong>Thresholds</strong>
 					</li>
 					<li class="grafana-target-segment">
@@ -130,7 +130,7 @@
 					<li class="grafana-target-segment">
 						<spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
 					</li>
-					<li class="grafana-target-segment">
+					<li class="grafana-target-segment last">
 						Line mode&nbsp;
 						<input class="cr1" id="panel.grid.thresholdLine" type="checkbox"
 								ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render()">
@@ -149,7 +149,7 @@
 		<div class="grafana-target">
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment" style="width: 100px">
+					<li class="grafana-target-segment" style="width: 80px">
 						<strong>Legend</strong>
 					</li>
 					<li class="grafana-target-segment">
@@ -170,8 +170,8 @@
 						    ng-model="panel.legend.rightSide" ng-checked="panel.legend.rightSide" ng-change="render()">
 						<label for="panel.legend.rightSide" class="cr1"></label>
 					</li>
-					<li class="grafana-target-segment">
-						Hide empty&nbsp;
+					<li class="grafana-target-segment last">
+						<span bs-tooltip="'Hides series with only null values'">Hide empty&nbsp;<span>
 						<input class="cr1" id="panel.legend.hideEmpty" type="checkbox"
 						    ng-model="panel.legend.hideEmpty" ng-checked="panel.legend.hideEmpty" ng-change="render()">
 						<label for="panel.legend.hideEmpty" class="cr1"></label>
@@ -206,7 +206,7 @@
 						    ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="render()">
 						<label for="panel.legend.avg" class="cr1"></label>
 					</li>
-					<li class="grafana-target-segment">
+					<li class="grafana-target-segment last">
 						Current&nbsp;
 						<input class="cr1" id="panel.legend.current" type="checkbox"
 						    ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="render()">
