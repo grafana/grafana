@@ -5,7 +5,7 @@
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
 					<li class="grafana-target-segment" style="width: 90px">
-						<strong>Left Y Axis</strong>
+						<strong>Left Y</strong>
 					</li>
 					<li class="grafana-target-segment">
 						Unit
@@ -38,16 +38,13 @@
 						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
 					  	ng-model="panel.leftYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
-					<li class="grafana-target-segment">
-						Show
-					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
 			<div class="grafana-target-inner">
 				<ul class="grafana-segment-list">
 					<li class="grafana-target-segment" style="width: 90px">
-						<strong>Right Y Axis</strong>
+						<strong>Right Y</strong>
 					</li>
 					<li class="grafana-target-segment">
 						Unit
@@ -80,91 +77,110 @@
 						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
 					  	ng-model="panel.rightYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment" style="width: 90px">
+						<strong>Show Axis</strong>
+					</li>
 					<li class="grafana-target-segment">
-						Show
+						X-Axis&nbsp;
+						<input class="cr1" id="hideXAxis" type="checkbox"
+								ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
+						<label for="hideXAxis" class="cr1"></label>
+					</li>
+					<li class="grafana-target-segment">
+						Y-Axis&nbsp;
+						<input class="cr1" id="hideYAxis" type="checkbox"
+						    ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
+						<label for="hideYAxis" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<div class="section">
+		<div class="grafana-target">
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment" style="width: 90px">
+						<strong>Thresholds</strong>
+					</li>
+					<li class="grafana-target-segment">
+						Level 1
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input">
+					</li>
+					<li class="grafana-target-segment">
+						<spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
+					</li>
+					<li class="grafana-target-segment">
+						Level 2
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input">
+					</li>
+					<li class="grafana-target-segment">
+						<spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
+					</li>
+					<li class="grafana-target-segment">
+						Line mode
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<div class="section">
+		<div class="grafana-target">
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment" style="width: 90px">
+						<strong>Legend</strong>
+					</li>
+					<li class="grafana-target-segment">
+						Show: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Table: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Right side: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Hide empty: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Min: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Max: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Avg: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Total: <input type="checkbox">
+					</li>
+					<li class="grafana-target-segment">
+						Current: <input type="checkbox">
 					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
 		</div>
-	</div>
-</div>
-
-<div class="editor-row" style="margin-top: 20px">
-	<div class="section">
-	<div class="grafana-target">
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment" style="width: 90px">
-					<strong>Thresholds</strong>
-				</li>
-				<li class="grafana-target-segment">
-					Level 1
-				</li>
-				<li>
-					<input type="text" class="input-small grafana-target-segment-input">
-				</li>
-				<li class="grafana-target-segment">
-					<spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
-				</li>
-				<li class="grafana-target-segment">
-					Level 2
-				</li>
-				<li>
-					<input type="text" class="input-small grafana-target-segment-input">
-				</li>
-				<li class="grafana-target-segment">
-					<spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
-				</li>
-				<li class="grafana-target-segment">
-					Line mode
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-	</div>
-</div>
-
-<div class="editor-row" style="margin-top: 20px">
-	<div class="section">
-	<div class="grafana-target">
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment" style="width: 90px">
-					<strong>Legend</strong>
-				</li>
-				<li class="grafana-target-segment">
-					Show: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Table: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Right side: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Hide empty: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Min: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Max: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Avg: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Total: <input type="checkbox">
-				</li>
-				<li class="grafana-target-segment">
-					Current: <input type="checkbox">
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
 	</div>
 </div>
 
