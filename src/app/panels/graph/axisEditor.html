@@ -1,90 +1,160 @@
 
 <div class="editor-row">
   <div class="section">
-    <h5>Left Y Axis</h5>
-       <div class="editor-option">
-        <label class="small">Format <tip>Y-axis formatting</tip></label>
-        <select class="input-small" ng-model="panel.y_formats[0]" ng-options="f for f in ['none','short','bytes', 'kbytes', 'mbytes', 'bits', 'bps', 'Bps', 's', 'ms', 'µs', 'ns', 'percent', 'joule', 'watt', 'ev']" ng-change="render()"></select>
-      </div>
-      <div class="editor-option">
-        <label class="small">Min / <a ng-click="toggleGridMinMax('leftMin')">Auto <i class="fa fa-star" ng-show="_.isNull(panel.grid.leftMin)"></i></a></label>
-        <input type="number" class="input-small" ng-model="panel.grid.leftMin" ng-change="render()" ng-model-onblur />
-      </div>
-      <div class="editor-option">
-        <label class="small">Max / <a ng-click="toggleGridMinMax('leftMax')">Auto <i class="fa fa-star" ng-show="_.isNull(panel.grid.leftMax)"></i></a></label>
-        <input type="number" class="input-small" ng-model="panel.grid.leftMax" ng-change="render()" ng-model-onblur />
-      </div>
-      <div class="editor-option">
-        <label class="small">Label</label>
-        <input ng-change="render()" ng-model-onblur placeholder="" type="text" class="input-medium" ng-model="panel.leftYAxisLabel">
-      </div>
-  </div>
-  <div class="section">
-    <h5>Right Y Axis</h5>
-       <div class="editor-option">
-        <label class="small">Format <tip>Y-axis formatting</tip></label>
-        <select class="input-small" ng-model="panel.y_formats[0]" ng-options="f for f in ['none','short','bytes', 'kbytes', 'mbytes', 'bits', 'bps', 'Bps', 's', 'ms', 'µs', 'ns', 'percent', 'joule', 'watt', 'ev']" ng-change="render()"></select>
-      </div>
-      <div class="editor-option">
-        <label class="small">Min / <a ng-click="toggleGridMinMax('rightMin')">Auto <i class="fa fa-star" ng-show="_.isNull(panel.grid.rightMin)"></i></a></label>
-        <input type="number" class="input-small" ng-model="panel.grid.rightMin" ng-change="render()" ng-model-onblur />
-      </div>
-      <div class="editor-option">
-        <label class="small">Max / <a ng-click="toggleGridMinMax('rightMax')">Auto <i class="fa fa-star" ng-show="_.isNull(panel.grid.rightMax)"></i></a></label>
-        <input type="number" class="input-small" ng-model="panel.grid.rightMax" ng-change="render()" ng-model-onblur />
-      </div>
-			<div class="editor-option">
-        <label class="small">Label</label>
-        <input ng-change="render()" ng-model-onblur placeholder="" type="text" class="input-medium" ng-model="panel.rightYAxisLabel">
-      </div>
-  </div>
-</div>
-
-
-<div class="editor-row">
-  <div class="section">
-    <h5>Legend styles</h5>
-		<editor-opt-bool text="Show" model="panel.legend.show" change="get_data();"></editor-opt-bool>
-		<editor-opt-bool text="Values" model="panel.legend.values" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Table" model="panel.legend.alignAsTable" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Right side" model="panel.legend.rightSide" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Hide empty" model="panel.legend.hideEmpty" tip="Hides series with only null values" change="render()"></editor-opt-bool>
+		<div class="grafana-target">
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment" style="width: 90px">
+						<strong>Left Y Axis</strong>
+					</li>
+					<li class="grafana-target-segment">
+						Unit
+					</li>
+					<li class="dropdown" style="width: 150px;"
+						ng-model="panel.y_formats[0]"
+						dropdown-typeahead="unitFormats"
+						dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
+					</li>
+					<li class="grafana-target-segment">
+						&nbsp;&nbsp; Grid Max
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+					</li>
+					<li class="grafana-target-segment">
+						Min
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+					</li>
+					<li class="grafana-target-segment">
+						Label
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" value="">
+					</li>
+					<li class="grafana-target-segment">
+						Show
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="grafana-target-inner">
+				<ul class="grafana-segment-list">
+					<li class="grafana-target-segment" style="width: 90px">
+						<strong>Right Y Axis</strong>
+					</li>
+					<li class="grafana-target-segment">
+						Unit
+					</li>
+					<li class="dropdown" style="width: 150px"
+						ng-model="panel.y_formats[1]"
+						dropdown-typeahead="unitFormats"
+						dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
+					</li>
+					<li class="grafana-target-segment">
+						&nbsp;&nbsp; Grid Max
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+					</li>
+					<li class="grafana-target-segment">
+						Min
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+					</li>
+					<li class="grafana-target-segment">
+						Label
+					</li>
+					<li>
+						<input type="text" class="input-small grafana-target-segment-input" value="">
+					</li>
+					<li class="grafana-target-segment">
+						Show
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
 	</div>
-
-  <div class="section" ng-if="panel.legend.values">
-    <h5>Legend values</h5>
-		<editor-opt-bool text="Min" model="panel.legend.min" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Max" model="panel.legend.max" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Current" model="panel.legend.current" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Total" model="panel.legend.total" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Avg" model="panel.legend.avg" change="render()"></editor-opt-bool>
-  </div>
-
-  <div class="section">
-    <h5>Grid thresholds</h5>
-    <div class="editor-option">
-      <label class="small">Level1</label>
-      <input type="number" class="input-small" ng-model="panel.grid.threshold1" ng-change="render()" ng-model-onblur />
-    </div>
-    <div class="editor-option">
-      <label class="small">Color</label>
-      <spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
-    </div>
-    <div class="editor-option">
-      <label class="small">Level2</label>
-      <input type="number" class="input-small" ng-model="panel.grid.threshold2" ng-change="render()" ng-model-onblur />
-    </div>
-    <div class="editor-option">
-      <label class="small">Color</label>
-      <spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
-    </div>
-		<editor-opt-bool text="Line mode" model="panel.grid.thresholdLine" change="render()"></editor-opt-bool>
-  </div>
-
-  <div class="section">
-    <h5>Show Axes</h5>
-		<editor-opt-bool text="X-Axis" model="panel['x-axis']" change="render()"></editor-opt-bool>
-		<editor-opt-bool text="Y-axis" model="panel['y-axis']" change="render()"></editor-opt-bool>
-  </div>
-
 </div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<div class="section">
+	<div class="grafana-target">
+		<div class="grafana-target-inner">
+			<ul class="grafana-segment-list">
+				<li class="grafana-target-segment" style="width: 90px">
+					<strong>Thresholds</strong>
+				</li>
+				<li class="grafana-target-segment">
+					Level 1
+				</li>
+				<li>
+					<input type="text" class="input-small grafana-target-segment-input">
+				</li>
+				<li class="grafana-target-segment">
+					<spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
+				</li>
+				<li class="grafana-target-segment">
+					Level 2
+				</li>
+				<li>
+					<input type="text" class="input-small grafana-target-segment-input">
+				</li>
+				<li class="grafana-target-segment">
+					<spectrum-picker ng-model="panel.grid.threshold1Color" ng-change="render()" ></spectrum-picker>
+				</li>
+				<li class="grafana-target-segment">
+					Line mode
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	</div>
+</div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<div class="section">
+	<div class="grafana-target">
+		<div class="grafana-target-inner">
+			<ul class="grafana-segment-list">
+				<li class="grafana-target-segment" style="width: 90px">
+					<strong>Legend</strong>
+				</li>
+				<li class="grafana-target-segment">
+					Show: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Table: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Right side: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Hide empty: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Min: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Max: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Avg: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Total: <input type="checkbox">
+				</li>
+				<li class="grafana-target-segment">
+					Current: <input type="checkbox">
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	</div>
+</div>
+

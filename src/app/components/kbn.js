@@ -485,5 +485,33 @@ function($, _, moment) {
     return new RegExp(match[1], match[2]);
   };
 
+  kbn.getUnitFormats = function() {
+    return [
+      {
+        text: 'none',
+        submenu: [
+          {text: 'none' , value: 'none'},
+          {text: 'short', value: 'short'},
+        ]
+      },
+      {
+        text: 'duration',
+        submenu: [
+          {text: 'nanoseconds (ns)' , value: 'ns'},
+          {text: 'microseconds (µs)', value: 'µs'},
+          {text: 'milliseconds (ms)', value: 'ms'},
+        ]
+      },
+      {
+        text: 'data',
+        submenu: [
+          {text: 'bit', value: 'bit'},
+          {text: 'bytes', value: 'bytes'},
+          {text: 'kilobytes', value: 'kbytes'},
+        ]
+      },
+    ];
+  };
+
   return kbn;
 });

@@ -104,6 +104,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
+    $scope.unitFormats = kbn.getUnitFormats();
+
+    $scope.setUnitFormat = function(axis, subItem) {
+      $scope.panel.y_formats[axis] = subItem.value;
+      $scope.render();
+    };
 
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
