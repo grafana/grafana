@@ -362,6 +362,8 @@ function($, _, moment) {
 
   kbn.valueFormats.bits = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
   kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.none = kbn.toFixed;
