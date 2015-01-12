@@ -492,6 +492,7 @@ function($, _, moment) {
         submenu: [
           {text: 'none' , value: 'none'},
           {text: 'short', value: 'short'},
+          {text: 'percent', value: 'percent'},
         ]
       },
       {
@@ -500,14 +501,30 @@ function($, _, moment) {
           {text: 'nanoseconds (ns)' , value: 'ns'},
           {text: 'microseconds (µs)', value: 'µs'},
           {text: 'milliseconds (ms)', value: 'ms'},
+          {text: 'seconds (s)', value: 's'},
         ]
       },
       {
         text: 'data',
         submenu: [
-          {text: 'bit', value: 'bit'},
+          {text: 'bits', value: 'bits'},
           {text: 'bytes', value: 'bytes'},
           {text: 'kilobytes', value: 'kbytes'},
+        ]
+      },
+      {
+        text: 'data rate',
+        submenu: [
+          {text: 'bits/sec', value: 'bps'},
+          {text: 'bytes/sec', value: 'Bps'},
+        ]
+      },
+      {
+        text: 'energy',
+        submenu: [
+          {text: 'watt', value: 'watt'},
+          {text: 'joule', value: 'joule'},
+          {text: 'eV', value: 'ev'},
         ]
       },
     ];
