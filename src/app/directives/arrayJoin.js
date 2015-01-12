@@ -31,4 +31,5 @@ function (angular, app, _) {
         }
       };
     });
+
 });

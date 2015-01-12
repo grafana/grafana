@@ -104,6 +104,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
+    $scope.unitFormats = kbn.getUnitFormats();
+
+    $scope.setUnitFormat = function(axis, subItem) {
+      $scope.panel.y_formats[axis] = subItem.value;
+      $scope.render();
+    };
 
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
@@ -262,11 +268,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.render();
     };
 
-    $scope.toggleGridMinMax = function(key) {
-      $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
-      $scope.render();
-    };
-
     $scope.addSeriesOverride = function(override) {
       $scope.panel.seriesOverrides.push(override || {});
     };
@@ -280,6 +281,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.toggleLegend = function() {
       $scope.panel.legend.show = !$scope.panel.legend.show;
       $scope.get_data();
+    };
+
+    $scope.legendValuesOptionChanged = function() {
+      var legend = $scope.panel.legend;
+      legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+      $scope.render();
     };
 
     $scope.exportCsv = function() {

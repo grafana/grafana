@@ -228,3 +228,44 @@
     text-align: right;
   }
 }
+
+.left-yaxis-label {
+  top: 50%;
+  left: -5px;
+  transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
+  transform-origin: left top;
+  -o-transform-origin: left top;
+  -ms-transform-origin: left top;
+  -moz-transform-origin: left top;
+  -webkit-transform-origin: left top;
+}
+
+.right-yaxis-label {
+  top: 50%;
+  right: -5px;
+
+  -webkit-transform: rotate(90deg);
+  -webkit-transform-origin: right top;
+  -moz-transform: rotate(90deg);
+  -moz-transform-origin: right top;
+  -ms-transform: rotate(90deg);
+  -ms-transform-origin: right top;
+  -o-transform: rotate(90deg);
+  -o-transform-origin: right top;
+  transform: rotate(90deg);
+  transform-origin: right top;
+}
+
+
+.axisLabel {
+  color: @textColor;
+  font-size: @fontSizeSmall;
+  position: absolute;
+  text-align: center;
+  font-size: 12px;
+}
+

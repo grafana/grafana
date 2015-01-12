@@ -57,6 +57,12 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     _.defaults($scope.panel, _d);
+    $scope.unitFormats = kbn.getUnitFormats();
+
+    $scope.setUnitFormat = function(subItem) {
+      $scope.panel.format = subItem.value;
+      $scope.render();
+    };
 
     $scope.init = function() {
       panelSrv.init($scope);

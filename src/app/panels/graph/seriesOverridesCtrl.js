@@ -20,26 +20,21 @@ define([
       option.index = $scope.overrideMenu.length;
       option.values = values;
 
-      option.submenu = _.map(values, function(value, index) {
-        return {
-          text: String(value),
-          click: 'menuItemSelected(' + option.index + ',' + index + ')'
-        };
+      option.submenu = _.map(values, function(value) {
+        return { text: String(value), value: value };
       });
 
       $scope.overrideMenu.push(option);
     };
 
-    $scope.setOverride = function(optionIndex, valueIndex) {
-      var option = $scope.overrideMenu[optionIndex];
-      var value = option.values[valueIndex];
-      $scope.override[option.propertyName] = value;
+    $scope.setOverride = function(item, subItem) {
+      $scope.override[item.propertyName] = subItem.value;
 
       // automatically disable lines for this series and the fill bellow to series
       // can be removed by the user if they still want lines
-      if (option.propertyName === 'fillBelowTo') {
+      if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;
-        $scope.addSeriesOverride({ alias: value, lines: false });
+        $scope.addSeriesOverride({ alias: subItem.value, lines: false });
       }
 
       $scope.updateCurrentOverrides();

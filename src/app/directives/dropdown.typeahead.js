@@ -17,35 +17,47 @@ function (angular, app, _, $) {
 
       var buttonTemplate = '<a  class="grafana-target-segment grafana-target-function dropdown-toggle"' +
                               ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
-                              ' data-placement="top"><i class="icon-plus"></i></a>';
+                              ' data-placement="top"><i class="fa fa-plus"></i></a>';
 
       return {
         scope: {
-          "menuItems": "=dropdownTypeahead",
-          "dropdownTypeaheadOnSelect": "&dropdownTypeaheadOnSelect"
+          menuItems: "=dropdownTypeahead",
+          dropdownTypeaheadOnSelect: "&dropdownTypeaheadOnSelect",
+          model: '=ngModel'
         },
-        link: function($scope, elem) {
+        link: function($scope, elem, attrs) {
           var $input = $(inputTemplate);
           var $button = $(buttonTemplate);
           $input.appendTo(elem);
           $button.appendTo(elem);
 
-          var typeaheadValues = _.reduce($scope.menuItems, function(memo, value) {
-            _.each(value.submenu, function(item) {
+          if (attrs.linkText) {
+            $button.html(attrs.linkText);
+          }
+
+          if (attrs.ngModel) {
+            $scope.$watch('model', function(newValue) {
+              _.each($scope.menuItems, function(item) {
+                _.each(item.submenu, function(subItem) {
+                  if (subItem.value === newValue) {
+                    $button.html(subItem.text);
+                  }
+                });
+              });
+            });
+          }
+
+          var typeaheadValues = _.reduce($scope.menuItems, function(memo, value, index) {
+            _.each(value.submenu, function(item, subIndex) {
+              item.click = 'menuItemSelected(' + index + ',' + subIndex + ')';
               memo.push(value.text + ' ' + item.text);
             });
             return memo;
           }, []);
 
-          $scope.menuItemSelected = function(optionIndex, valueIndex) {
-            var option = $scope.menuItems[optionIndex];
-            var result = {
-              $item: option.submenu[valueIndex],
-              $optionIndex: optionIndex,
-              $valueIndex: valueIndex
-            };
-
-            $scope.dropdownTypeaheadOnSelect(result);
+          $scope.menuItemSelected = function(index, subIndex) {
+            var item = $scope.menuItems[index];
+            $scope.dropdownTypeaheadOnSelect({$item: item, $subItem: item.submenu[subIndex]});
           };
 
           $input.attr('data-provide', 'typeahead');
@@ -55,12 +67,11 @@ function (angular, app, _, $) {
             items: 10,
             updater: function (value) {
               var result = {};
-              _.each($scope.menuItems, function(menuItem, optionIndex) {
-                _.each(menuItem.submenu, function(submenuItem, valueIndex) {
+              _.each($scope.menuItems, function(menuItem) {
+                _.each(menuItem.submenu, function(submenuItem) {
                   if (value === (menuItem.text + ' ' + submenuItem.text)) {
-                    result.$item  = submenuItem;
-                    result.$optionIndex = optionIndex;
-                    result.$valueIndex = valueIndex;
+                    result.$item = menuItem;
+                    result.$subItem = submenuItem;
                   }
                 });
               });

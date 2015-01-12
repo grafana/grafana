@@ -88,29 +88,6 @@
   }
 }
 
-.yaxisLabel {
-  top: 50%;
-  left: -20px;
-  transform: rotate(-90deg);
-  -o-transform: rotate(-90deg);
-  -ms-transform: rotate(-90deg);
-  -moz-transform: rotate(-90deg);
-  -webkit-transform: rotate(-90deg);
-  transform-origin: 0 0;
-  -o-transform-origin: 0 0;
-  -ms-transform-origin: 0 0;
-  -moz-transform-origin: 0 0;
-  -webkit-transform-origin: 0 0;
-}
-
-.axisLabel {
-  color: @textColor;
-  font-size: @fontSizeSmall;
-  position: absolute;
-  text-align: center;
-  font-size: 12px;
-}
-
 .dashboard-fullscreen {
   .main-view-container {
     overflow: hidden;
@@ -146,7 +123,6 @@
 .grafana-segment-list {
   list-style: none;
   margin: 0;
-  margin-right: 90px;
   >li {
     float: left;
   }
@@ -192,6 +168,9 @@
     padding: 8px 15px;
   }
 
+  &.last {
+    border-right: none;
+  }
 }
 
 .grafana-target-segment-icon {
@@ -225,37 +204,6 @@ input[type=text].grafana-function-param-input {
   padding: 0;
 }
 
-.grafana-target-controls {
-  float: right;
-  list-style: none;
-  margin: 0;
-  text-align: right;
-
-  >li {
-    display: inline-block;
-    white-space: nowrap;
-  }
-
-  .fa {
-    position: relative;
-    top: 8px;
-  }
-
-  a {
-    padding: 8px 7px;
-    color: @grafanaTargetColor;
-    font-size: 16px;
-
-    .grafana-target-hidden & {
-      color: @grafanaTargetColorHide;
-    }
-
-    &:hover, &:focus {
-      text-decoration: none;
-    }
-  }
-}
-
 input[type=text].grafana-target-text-input {
   padding: 8px 7px;
   border: none;
@@ -267,12 +215,15 @@ input[type=text].grafana-target-text-input {
   border-right: 1px solid @grafanaTargetSegmentBorder;
 }
 
-input[type=text].grafana-target-segment-input {
+[type=text].grafana-target-segment-input, [type=number].grafana-target-segment-input {
   border: none;
   border-right: 1px solid @grafanaTargetSegmentBorder;
   margin: 0px;
   border-radius: 0;
   padding: 8px 4px;
+  &.last {
+    border-right: none;
+  }
 }
 
 input[type=checkbox].grafana-target-option-checkbox {
@@ -286,6 +237,9 @@ select.grafana-target-segment-input {
   border-radius: 0;
   height: 36px;
   padding: 8px 5px;
+  &.last {
+    border-right: none;
+  }
 }
 
 .grafana-target .dropdown {
@@ -371,6 +325,7 @@ select.grafana-target-segment-input {
   background: inherit;
   border: none;
   color: inherit;
+  padding: 0;
 }
 
 .sp-replacer:hover, .sp-replacer.sp-active {

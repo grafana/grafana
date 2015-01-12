@@ -11,7 +11,7 @@ function (angular, app, _, $) {
   var module = angular.module('grafana.panels.singlestat', []);
   app.useModule(module);
 
-  module.directive('singlestatPanel', function($location, linkSrv, $timeout) {
+  module.directive('singlestatPanel', function($location, linkSrv, $timeout, templateSrv) {
 
     return {
       link: function(scope, elem) {
@@ -63,6 +63,7 @@ function (angular, app, _, $) {
         }
 
         function getSpan(className, fontSize, value)  {
+          value = templateSrv.replace(value);
           return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
             value + '</span>';
         }
@@ -133,9 +134,7 @@ function (angular, app, _, $) {
             color: panel.sparkline.lineColor
           };
 
-          setTimeout(function() {
-            $.plot(plotCanvas, [plotSeries], options);
-          }, 10);
+          $.plot(plotCanvas, [plotSeries], options);
         }
 
         function render() {
