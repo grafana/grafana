@@ -19,19 +19,24 @@
 						&nbsp;&nbsp; Grid Max
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					   	empty-to-null ng-model="panel.grid.leftMax"
+							ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Min
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					  	empty-to-null ng-model="panel.grid.leftMin"
+							ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Label
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" value="">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					  	ng-model="panel.leftYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Show
@@ -56,19 +61,24 @@
 						&nbsp;&nbsp; Grid Max
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					   	empty-to-null ng-model="panel.grid.rightMax"
+							ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Min
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					  	empty-to-null ng-model="panel.grid.rightMin"
+							ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Label
 					</li>
 					<li>
-						<input type="text" class="input-small grafana-target-segment-input" value="">
+						<input type="text" class="input-small grafana-target-segment-input" placeholder="auto"
+					  	ng-model="panel.rightYAxisLabel" ng-change="render()" ng-model-onblur>
 					</li>
 					<li class="grafana-target-segment">
 						Show

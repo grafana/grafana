@@ -268,11 +268,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.render();
     };
 
-    $scope.toggleGridMinMax = function(key) {
-      $scope.panel.grid[key] = _.toggle($scope.panel.grid[key], null, 0);
-      $scope.render();
-    };
-
     $scope.addSeriesOverride = function(override) {
       $scope.panel.seriesOverrides.push(override || {});
     };

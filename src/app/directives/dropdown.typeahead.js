@@ -37,7 +37,7 @@ function (angular, app, _, $) {
 
           if (attrs.ngModel) {
             $scope.$watch('model', function(newValue) {
-              _.each($scope.menuItems, function(item){
+              _.each($scope.menuItems, function(item) {
                 _.each(item.submenu, function(subItem) {
                   if (subItem.value === newValue) {
                     $button.html(subItem.text);
