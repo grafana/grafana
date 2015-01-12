@@ -191,25 +191,31 @@
 					<li class="grafana-target-segment">
 						Min&nbsp;
 						<input class="cr1" id="panel.legend.min" type="checkbox"
-						    ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="render()">
+						    ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="legendValuesOptionChanged()">
 						<label for="panel.legend.min" class="cr1"></label>
 					</li>
 					<li class="grafana-target-segment">
 						Max&nbsp;
 						<input class="cr1" id="panel.legend.max" type="checkbox"
-						    ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="render()">
+						    ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="legendValuesOptionChanged()">
 						<label for="panel.legend.max" class="cr1"></label>
 					</li>
 					<li class="grafana-target-segment">
 						Avg&nbsp;
 						<input class="cr1" id="panel.legend.avg" type="checkbox"
-						    ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="render()">
+						    ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="legendValuesOptionChanged()">
 						<label for="panel.legend.avg" class="cr1"></label>
 					</li>
-					<li class="grafana-target-segment last">
+					<li class="grafana-target-segment">
 						Current&nbsp;
 						<input class="cr1" id="panel.legend.current" type="checkbox"
-						    ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="render()">
+						    ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="legendValuesOptionChanged()">
+						<label for="panel.legend.current" class="cr1"></label>
+					</li>
+					<li class="grafana-target-segment last">
+						Total&nbsp;
+						<input class="cr1" id="panel.legend.total" type="checkbox"
+						    ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="legendValuesOptionChanged()">
 						<label for="panel.legend.total" class="cr1"></label>
 					</li>
 				</ul>
