@@ -134,9 +134,7 @@ function (angular, app, _, $) {
             color: panel.sparkline.lineColor
           };
 
-          setTimeout(function() {
-            $.plot(plotCanvas, [plotSeries], options);
-          }, 10);
+          $.plot(plotCanvas, [plotSeries], options);
         }
 
         function render() {
