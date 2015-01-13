@@ -1,10 +1,10 @@
 package sqlstore
 
 import (
-	"time"
+	"github.com/go-xorm/xorm"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/go-xorm/xorm"
+	"time"
 )
 
 func init() {
@@ -66,7 +66,7 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
-			Id:		   cmd.Id,
+			Id:        cmd.Id,
 			AccountId: cmd.AccountId,
 			Code:      cmd.Code,
 			Name:      cmd.Name,

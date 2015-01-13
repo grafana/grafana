@@ -6,7 +6,6 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-
 func GetMonitorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
@@ -31,7 +30,7 @@ func GetMonitors(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func GetMonitorTypes(c * middleware.Context) {
+func GetMonitorTypes(c *middleware.Context) {
 	query := m.GetMonitorTypesQuery{}
 	err := bus.Dispatch(&query)
 

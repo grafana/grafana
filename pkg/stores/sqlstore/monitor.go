@@ -1,13 +1,13 @@
 package sqlstore
 
 import (
-	"time"
-	"github.com/torkelo/grafana-pro/pkg/bus"
-	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/go-xorm/xorm"
-	"github.com/torkelo/grafana-pro/pkg/log"
 	"fmt"
+	"github.com/go-xorm/xorm"
+	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/log"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"math/rand"
+	"time"
 )
 
 func init() {
@@ -25,16 +25,16 @@ type MonitorWithLocationDTO struct {
 	Name          string
 	MonitorTypeId int64
 	LocationId    int64
-	Settings       []*m.MonitorSettingDTO
+	Settings      []*m.MonitorSettingDTO
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess := x.Table("monitor")
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	sess.Where("monitor.id=?", query.Id)
-	sess.Cols("monitor_location.location_id", "monitor.id", 
-				"monitor.account_id", "monitor.name", 
-				"monitor.monitor_type_id", "monitor.settings")
+	sess.Cols("monitor_location.location_id", "monitor.id",
+		"monitor.account_id", "monitor.name",
+		"monitor.monitor_type_id", "monitor.settings")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -70,9 +70,9 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	sess.Where("monitor.account_id=?", query.AccountId)
-	sess.Cols("monitor_location.location_id", "monitor.id", 
-				"monitor.account_id", "monitor.name", "monitor.settings", 
-				"monitor.monitor_type_id")
+	sess.Cols("monitor_location.location_id", "monitor.id",
+		"monitor.account_id", "monitor.name", "monitor.settings",
+		"monitor.monitor_type_id")
 
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -130,9 +130,9 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 	sess.Limit(100, 0).Asc("name")
 	sess.Join("LEFT", "monitor_type_setting", "monitor_type_setting.monitor_type_id=monitor_type.id")
 	sess.Cols("monitor_type.id", "monitor_type.name", "monitor_type.panel_template",
-			 "monitor_type_setting.variable", "monitor_type_setting.description", 
-			 "monitor_type_setting.required", "monitor_type_setting.data_type", 
-			 "monitor_type_setting.conditions", "monitor_type_setting.default_value")
+		"monitor_type_setting.variable", "monitor_type_setting.description",
+		"monitor_type_setting.required", "monitor_type_setting.data_type",
+		"monitor_type_setting.conditions", "monitor_type_setting.default_value")
 
 	result := make([]*MonitorTypeWithSettingsDTO, 0)
 	err := sess.Find(&result)
@@ -156,12 +156,12 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 		}
 
 		types[row.Id].Settings = append(types[row.Id].Settings, &m.MonitorTypeSettingDTO{
-				Variable:     row.Variable,      
-				Description:  row.Description,
-				Required:     row.Required,
-				DataType:     row.DataType,
-				Conditions:   row.Conditions,
-				DefaultValue: row.DefaultValue,
+			Variable:     row.Variable,
+			Description:  row.Description,
+			Required:     row.Required,
+			DataType:     row.DataType,
+			Conditions:   row.Conditions,
+			DefaultValue: row.DefaultValue,
 		})
 	}
 
@@ -174,7 +174,6 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 
 	return nil
 }
-
 
 func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
@@ -217,7 +216,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		settingMap := make(map[string]*m.MonitorTypeSetting)
 		for _, s := range typeSettings {
 			settingMap[s.Variable] = s
-		}	
+		}
 
 		//validate the settings.
 		seenMetrics := make(map[string]bool)
@@ -242,20 +241,20 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 					return m.ErrMonitorSettingsInvalid
 				}
 				cmd.Settings = append(cmd.Settings, &m.MonitorSettingDTO{
-					Variable: 	k,
-					Value: 		s.DefaultValue,
+					Variable: k,
+					Value:    s.DefaultValue,
 				})
 			}
 		}
 
 		mon := &m.Monitor{
-			AccountId: 		cmd.AccountId,
-			Name:      		cmd.Name,
-			MonitorTypeId: 	cmd.MonitorTypeId,
-			Offset: 		int64(rand.Intn(3599)),
-			Settings:		cmd.Settings,
-			Created:   		time.Now(),
-			Updated:  		time.Now(),
+			AccountId:     cmd.AccountId,
+			Name:          cmd.Name,
+			MonitorTypeId: cmd.MonitorTypeId,
+			Offset:        int64(rand.Intn(3599)),
+			Settings:      cmd.Settings,
+			Created:       time.Now(),
+			Updated:       time.Now(),
 		}
 
 		mon.UpdateMonitorSlug()
@@ -264,12 +263,12 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			return err
 		}
 		cmd.Result = &m.MonitorDTO{
-			Id:        mon.Id,
-			AccountId: mon.AccountId,
-			Name:      mon.Name,
+			Id:            mon.Id,
+			AccountId:     mon.AccountId,
+			Name:          mon.Name,
 			MonitorTypeId: mon.MonitorTypeId,
-			Locations: cmd.Locations,
-			Settings: mon.Settings,
+			Locations:     cmd.Locations,
+			Settings:      mon.Settings,
 		}
 		return nil
 	})

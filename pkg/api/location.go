@@ -1,10 +1,10 @@
 package api
 
 import (
+	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 )
 
 func GetLocations(c *middleware.Context) {
@@ -67,7 +67,7 @@ func DeleteLocation(c *middleware.Context) {
 
 	c.JsonOK("location deleted")
 }
-	
+
 func AddLocation(c *middleware.Context) {
 	cmd := m.AddLocationCommand{}
 
