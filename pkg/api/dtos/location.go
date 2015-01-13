@@ -2,7 +2,6 @@ package dtos
 
 type Location struct {
 	Id        int64  `json:"id"`
-	AccountId int64  `json:"accountId"`
 	Code      string `json:"code"`
 	Name      string `json:"name"`
 	Country   string `json:"country"`

@@ -16,7 +16,7 @@ func init() {
 }
 
 func GetLocationByCode(query *m.GetLocationByCodeQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=? AND code=?", query.AccountId, query.Code)
+	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND code=?", query.AccountId, query.Code)
 	has, err := sess.Get(&query.Result)
 
 	if !has {
@@ -26,7 +26,7 @@ func GetLocationByCode(query *m.GetLocationByCodeQuery) error {
 }
 
 func GetLocations(query *m.GetLocationsQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId).Asc("name")
+	sess := x.Limit(100, 0).Where("public=1 OR account_id=?", query.AccountId).Asc("name")
 
 	query.Result = make([]*m.Location, 0)
 	return sess.Find(&query.Result)
@@ -41,7 +41,7 @@ func DeleteLocation(cmd *m.DeleteLocationCommand) error {
 }
 
 func AddLocation(cmd *m.AddLocationCommand) error {
-
+	
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
 			AccountId: cmd.AccountId,

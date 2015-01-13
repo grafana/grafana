@@ -20,7 +20,6 @@ func GetLocations(c *middleware.Context) {
 	for i, l := range query.Result {
 		result[i] = &dtos.Location{
 			Id:        l.Id,
-			AccountId: l.AccountId,
 			Code:      l.Code,
 			Name:      l.Name,
 			Country:   l.Country,
@@ -44,7 +43,6 @@ func GetLocationByCode(c *middleware.Context) {
 
 	result := &dtos.Location{
 		Id:        query.Result.Id,
-		AccountId: query.Result.AccountId,
 		Code:      query.Result.Code,
 		Name:      query.Result.Name,
 		Country:   query.Result.Country,
@@ -79,14 +77,18 @@ func AddLocation(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.Account.Id
-
+	if cmd.Public {
+		if c.Account.IsAdmin != true {
+			c.JsonApiErr(400, "Only admins can make public locations", nil)
+			return
+		}
+	}
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add location", err)
 		return
 	}
 	result := &dtos.Location{
 		Id:        cmd.Result.Id,
-		AccountId: cmd.Result.AccountId,
 		Code:      cmd.Result.Code,
 		Name:      cmd.Result.Name,
 		Country:   cmd.Result.Country,
@@ -106,7 +108,12 @@ func UpdateLocation(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.Account.Id
-
+	if cmd.Public {
+		if c.Account.IsAdmin != true {
+			c.JsonApiErr(400, "Only admins can make public locations", nil)
+			return
+		}
+	}
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update location", err)
