@@ -54,13 +54,15 @@ func Register(m *macaron.Macaron) {
 	m.Get("/api/metrics/test", auth, GetTestMetrics)
 
 	// locations
-	m.Get("/api/admin/locations/list", auth, GetLocations)
-	m.Get("/api/admin/locations/:code", auth, GetLocationByCode)
-	m.Put("/api/admin/locations", auth, AddLocation)
-	m.Post("/api/admin/locations", auth, UpdateLocation)
-	m.Delete("/api/admin/locations/:id", auth, DeleteLocation)
+	m.Get("/location", auth, Index)
+	m.Get("/api/locations/list", auth, GetLocations)
+	m.Get("/api/locations/:code", auth, GetLocationByCode)
+	m.Put("/api/locations", auth, AddLocation)
+	m.Post("/api/locations", auth, UpdateLocation)
+	m.Delete("/api/locations/:id", auth, DeleteLocation)
 
 	// Monitors
+	m.Get("/monitor", auth, Index)
 	m.Get("/api/monitors/list", auth, GetMonitors)
 	m.Get("/api/monitors/:id", auth, GetMonitorById)
 	m.Get("/api/monitor_types/list", auth, GetMonitorTypes)
