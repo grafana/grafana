@@ -26,6 +26,7 @@ func GetLocations(c *middleware.Context) {
 			Country:   l.Country,
 			Region:    l.Region,
 			Provider:  l.Provider,
+			Public:    l.Public,
 		}
 	}
 	c.JSON(200, result)
@@ -49,6 +50,7 @@ func GetLocationByCode(c *middleware.Context) {
 		Country:   query.Result.Country,
 		Region:    query.Result.Region,
 		Provider:  query.Result.Provider,
+		Public:    query.Result.Public,
 	}
 
 	c.JSON(200, result)
@@ -90,6 +92,7 @@ func AddLocation(c *middleware.Context) {
 		Country:   cmd.Result.Country,
 		Region:    cmd.Result.Region,
 		Provider:  cmd.Result.Provider,
+		Public:    cmd.Public,
 	}
 	c.JSON(200, result)
 }

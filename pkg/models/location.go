@@ -19,6 +19,7 @@ type Location struct {
 	Country   string
 	Region    string
 	Provider  string
+	Public    bool
 	Created   time.Time
 	Updated   time.Time
 }
@@ -33,6 +34,7 @@ type AddLocationCommand struct {
 	Country   string `json:"country"`
 	Region    string `json:"region"`
 	Provider  string `json:"provider"`
+	Public    bool   `json:"public"`
 	Result    *Location
 }
 
@@ -44,6 +46,7 @@ type UpdateLocationCommand struct {
 	Country   string `json:"country"`
 	Region    string `json:"region"`
 	Provider  string `json:"provider"`
+	Public    bool   `json:"public"`
 }
 
 type DeleteLocationCommand struct {

@@ -8,4 +8,5 @@ type Location struct {
 	Country   string `json:"country"`
 	Region    string `json:"region"`
 	Provider  string `json:"provider"`
+	Public    bool   `json:"public"`
 }

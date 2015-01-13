@@ -50,6 +50,7 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 			Country:   cmd.Country,
 			Region:    cmd.Region,
 			Provider:  cmd.Provider,
+			Public:    cmd.Public,
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
@@ -73,6 +74,7 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 			Country:   cmd.Country,
 			Region:    cmd.Region,
 			Provider:  cmd.Provider,
+			Public:    cmd.Public,
 			Updated:   time.Now(),
 		}
 
