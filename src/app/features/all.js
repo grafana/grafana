@@ -9,5 +9,6 @@ define([
   './dashboard/all',
   './admin/accountCtrl',
   './admin/datasourcesCtrl',
+  './admin/locationCtrl',
   './grafanaDatasource/datasource',
 ], function () {});
