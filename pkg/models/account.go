@@ -72,16 +72,16 @@ type GetAccountByLoginQuery struct {
 // DTO & Projections
 
 type OtherAccountDTO struct {
-	Id      int64  `json:"id"`
-	Email   string `json:"email"`
-	Role    string `json:"role"`
-	IsUsing bool   `json:"isUsing"`
-}
-
-type CollaboratorDTO struct {
 	AccountId int64  `json:"accountId"`
 	Email     string `json:"email"`
 	Role      string `json:"role"`
+	IsUsing   bool   `json:"isUsing"`
+}
+
+type CollaboratorDTO struct {
+	CollaboratorId int64  `json:"id"`
+	Email          string `json:"email"`
+	Role           string `json:"role"`
 }
 
 type AccountDTO struct {

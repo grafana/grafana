@@ -4,7 +4,6 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func GetAccount(c *middleware.Context) {
@@ -41,8 +40,8 @@ func AddCollaborator(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = accountToAdd.Id
-	cmd.ForAccountId = c.UserAccount.Id
+	cmd.AccountId = c.UserAccount.Id
+	cmd.CollaboratorId = accountToAdd.Id
 	cmd.Role = m.ROLE_READ_WRITE
 
 	err = bus.Dispatch(&cmd)
@@ -54,23 +53,35 @@ func AddCollaborator(c *middleware.Context) {
 	c.JsonOK("Collaborator added")
 }
 
+func RemoveCollaborator(c *middleware.Context) {
+	collaboratorId := c.ParamsInt64(":id")
+
+	cmd := m.RemoveCollaboratorCommand{AccountId: c.UserAccount.Id, CollaboratorId: collaboratorId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to remove collaborator", err)
+	}
+
+	c.JsonOK("Collaborator removed")
+}
+
 func GetOtherAccounts(c *middleware.Context) {
 	query := m.GetOtherAccountsQuery{AccountId: c.UserAccount.Id}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
-		c.JSON(500, util.DynMap{"message": err.Error()})
+		c.JsonApiErr(500, "Failed to get other accounts", err)
 		return
 	}
 
 	result := append(query.Result, &m.OtherAccountDTO{
-		Id:    c.UserAccount.Id,
-		Role:  "owner",
-		Email: c.UserAccount.Email,
+		AccountId: c.UserAccount.Id,
+		Role:      "owner",
+		Email:     c.UserAccount.Email,
 	})
 
 	for _, ac := range result {
-		if ac.Id == c.UserAccount.UsingAccountId {
+		if ac.AccountId == c.UserAccount.UsingAccountId {
 			ac.IsUsing = true
 			break
 		}
@@ -93,7 +104,7 @@ func validateUsingAccount(accountId int64, otherId int64) bool {
 	// validate that the account id in the list
 	valid := false
 	for _, other := range query.Result {
-		if other.Id == otherId {
+		if other.AccountId == otherId {
 			valid = true
 		}
 	}
