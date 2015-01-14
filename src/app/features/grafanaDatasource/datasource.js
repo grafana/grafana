@@ -25,7 +25,7 @@ function (angular, _, kbn) {
         url = '/temp/' + id;
       }
 
-      return backendSrv.get('/api/dashboards/' + id)
+      return backendSrv.get('/api/dashboard/' + id)
         .then(function(data) {
           if (data) {
             return angular.fromJson(data);

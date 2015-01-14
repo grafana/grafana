@@ -45,7 +45,7 @@ function (angular) {
     };
 
     $scope.getDatasources = function() {
-      backendSrv.get('/api/datasources/list').then(function(results) {
+      backendSrv.get('/api/datasources').then(function(results) {
         $scope.datasources = results;
       });
     };
