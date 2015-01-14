@@ -19,7 +19,7 @@ function (angular) {
         return;
       }
 
-      backendSrv.post('/api/account', $scope.loginModel).then(function() {
+      backendSrv.post('/api/account/signup', $scope.loginModel).then(function() {
         $location.path('/login');
       });
     };
