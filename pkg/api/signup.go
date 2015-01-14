@@ -7,7 +7,8 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
-func CreateAccount(c *middleware.Context) {
+// POST /api/account/signup
+func SignUp(c *middleware.Context) {
 	var cmd m.CreateAccountCommand
 
 	if !c.JsonBody(&cmd) {

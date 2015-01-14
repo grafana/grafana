@@ -45,9 +45,9 @@ func Register(m *macaron.Macaron) {
 	// data source proxy
 	m.Any("/api/datasources/proxy/:id/*", auth, ProxyDataSourceRequest)
 
-	// user register
-	m.Get("/register", Index)
-	m.Post("/api/account", CreateAccount)
+	// User sign up
+	m.Get("/signup", Index)
+	m.Post("/api/account/signup", SignUp)
 
 	// dashboards
 	m.Get("/dashboard/*", auth, Index)
