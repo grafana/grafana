@@ -47,14 +47,13 @@ func authByToken(c *Context) {
 	}
 	token := parts[1]
 	userQuery := m.GetAccountByTokenQuery{Token: token}
-	err := bus.Dispatch(&userQuery)
-	if err != nil {
+
+	if err := bus.Dispatch(&userQuery); err != nil {
 		return
 	}
 
 	usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
-	err = bus.Dispatch(&usingQuery)
-	if err != nil {
+	if err := bus.Dispatch(&usingQuery); err != nil {
 		return
 	}
 
@@ -71,15 +70,13 @@ func authBySession(c *Context, sess session.Store) {
 	}
 
 	userQuery := m.GetAccountByIdQuery{Id: accountId}
-	err = bus.Dispatch(&userQuery)
-	if err != nil {
+	if err := bus.Dispatch(&userQuery); err != nil {
 		authDenied(c)
 		return
 	}
 
 	usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
-	err = bus.Dispatch(&usingQuery)
-	if err != nil {
+	if err := bus.Dispatch(&usingQuery); err != nil {
 		authDenied(c)
 		return
 	}
