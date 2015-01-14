@@ -39,6 +39,9 @@ func newMacaron() *macaron.Macaron {
 	m := macaron.New()
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
+	if setting.EnableGzip {
+		m.Use(macaron.Gziper())
+	}
 
 	mapStatic(m, "", "public")
 	mapStatic(m, "app", "app")
