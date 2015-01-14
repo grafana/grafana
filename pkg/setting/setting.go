@@ -56,6 +56,7 @@ var (
 	CertFile, KeyFile  string
 	RouterLogging      bool
 	StaticRootPath     string
+	EnableGzip         bool
 
 	// Http auth
 	Anonymous          bool
@@ -164,6 +165,7 @@ func NewConfigContext() {
 
 	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(WorkDir, "webapp"))
 	RouterLogging = Cfg.MustBool("server", "router_logging", false)
+	EnableGzip = Cfg.MustBool("server", "enable_gzip")
 
 	// Http auth
 	Anonymous = Cfg.MustBool("auth", "anonymous", false)

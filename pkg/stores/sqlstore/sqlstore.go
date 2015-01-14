@@ -38,8 +38,10 @@ func init() {
 	tables = make([]interface{}, 0)
 
 	tables = append(tables, new(m.Account), new(m.Dashboard),
-		new(m.Collaborator), new(m.DataSource), new(DashboardTag), new(m.Location),
-		new(m.Monitor), new(m.MonitorLocation), new(m.MonitorType), new(m.MonitorTypeSetting))
+		new(m.Collaborator), new(m.DataSource), new(DashboardTag),
+		new(m.Location), new(m.Monitor), new(m.MonitorLocation), 
+		new(m.MonitorType), new(m.MonitorTypeSetting),
+		new(m.Token))
 }
 
 func Init() {
