@@ -26,6 +26,12 @@ func Register(m *macaron.Macaron) {
 	m.Post("/api/account/using/:id", auth, SetUsingAccount)
 	m.Get("/api/account/others", auth, GetOtherAccounts)
 
+	// Token
+	m.Get("/api/tokens/list", auth, GetTokens)
+	m.Put("/api/tokens", auth, AddToken)
+	m.Post("/api/tokens", auth, UpdateToken)
+	m.Delete("/api/tokens/:id", auth, DeleteToken)
+
 	// data sources
 	m.Get("/acount/datasources/", auth, Index)
 	m.Get("/api/datasources/list", auth, GetDataSources)
