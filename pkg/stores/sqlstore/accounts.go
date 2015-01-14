@@ -114,7 +114,10 @@ func GetAccountByToken(query *m.GetAccountByTokenQuery) error {
 	var err error
 
 	var account m.Account
-	has, err := x.Where("token=?", query.Token).Get(&account)
+	sess := x.Join("INNER", "token", "token.account_id = account.id")
+	sess.Omit("token.id", "token.account_id", "token.name", "token.token",
+	 			"token.role", "token.updated", "token.created")
+	has, err := sess.Where("token.token=?", query.Token).Get(&account)
 
 	if err != nil {
 		return err
