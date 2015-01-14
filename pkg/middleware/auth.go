@@ -2,25 +2,25 @@ package middleware
 
 import (
 	"errors"
-	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/session"
 	"strconv"
 	"strings"
+
+	"github.com/Unknwon/macaron"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
-func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
-	accountId := sess.Get("accountId")
+func authGetRequestAccountId(c *Context) (int64, error) {
+	accountId := c.Session.Get("accountId")
 
 	urlQuery := c.Req.URL.Query()
 
 	// TODO: check that this is a localhost request
 	if len(urlQuery["render"]) > 0 {
 		accId, _ := strconv.ParseInt(urlQuery["accountId"][0], 10, 64)
-		sess.Set("accountId", accId)
+		c.Session.Set("accountId", accId)
 		accountId = accId
 	}
 
@@ -36,6 +36,10 @@ func authGetRequestAccountId(c *Context, sess session.Store) (int64, error) {
 }
 
 func authDenied(c *Context) {
+	if c.IsApiRequest() {
+		c.JsonApiErr(401, "Access denied", nil)
+	}
+
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -61,8 +65,8 @@ func authByToken(c *Context) {
 	c.Account = usingQuery.Result
 }
 
-func authBySession(c *Context, sess session.Store) {
-	accountId, err := authGetRequestAccountId(c, sess)
+func authBySession(c *Context) {
+	accountId, err := authGetRequestAccountId(c)
 
 	if err != nil && c.Req.URL.Path != "/login" {
 		authDenied(c)
@@ -86,10 +90,10 @@ func authBySession(c *Context, sess session.Store) {
 }
 
 func Auth() macaron.Handler {
-	return func(c *Context, sess session.Store) {
+	return func(c *Context) {
 		authByToken(c)
 		if c.UserAccount == nil {
-			authBySession(c, sess)
+			authBySession(c)
 		}
 	}
 }
