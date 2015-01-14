@@ -31,16 +31,15 @@ function (angular) {
     $scope.setUsingAccount = function(otherAccount) {
       backendSrv.request({
         method: 'POST',
-        url: '/api/account/using/' + otherAccount.id,
+        url: '/api/account/using/' + otherAccount.accountId,
         desc: 'Change active account',
       }).then($scope.getOtherAccounts);
     };
 
     $scope.removeCollaborator = function(collaborator) {
       backendSrv.request({
-        method: 'POST',
-        url: '/api/account/collaborators/remove',
-        data: { accountId: collaborator.accountId },
+        method: 'DELETE',
+        url: '/api/account/collaborators/' + collaborator.id,
         desc: 'Remove collaborator',
       }).then($scope.getAccount);
     };
@@ -51,8 +50,8 @@ function (angular) {
       }
 
       backendSrv.request({
-        method: 'POST',
-        url: '/api/account/collaborators/add',
+        method: 'PUT',
+        url: '/api/account/collaborators',
         data: $scope.collaborator,
         desc: 'Add collaborator'
       }).then($scope.getAccount);
