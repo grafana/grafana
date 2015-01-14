@@ -17,6 +17,7 @@ func init() {
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", GetAccountById)
 	bus.AddHandler("sql", GetAccountByLogin)
+	bus.AddHandler("sql", GetAccountByToken)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -93,6 +94,27 @@ func GetAccountById(query *m.GetAccountByIdQuery) error {
 
 	var account m.Account
 	has, err := x.Id(query.Id).Get(&account)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrAccountNotFound
+	}
+
+	if account.UsingAccountId == 0 {
+		account.UsingAccountId = account.Id
+	}
+
+	query.Result = &account
+
+	return nil
+}
+
+func GetAccountByToken(query *m.GetAccountByTokenQuery) error {
+	var err error
+
+	var account m.Account
+	has, err := x.Where("token=?", query.Token).Get(&account)
 
 	if err != nil {
 		return err

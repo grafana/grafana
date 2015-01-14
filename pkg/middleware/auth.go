@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"errors"
-	"strconv"
-
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
+	"strconv"
+	"strings"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -39,30 +39,60 @@ func authDenied(c *Context) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
+func authByToken(c *Context) {
+	header := c.Req.Header.Get("Authorization")
+	parts := strings.SplitN(header, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return
+	}
+	token := parts[1]
+	userQuery := m.GetAccountByTokenQuery{Token: token}
+	err := bus.Dispatch(&userQuery)
+	if err != nil {
+		return
+	}
+
+	usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
+	err = bus.Dispatch(&usingQuery)
+	if err != nil {
+		return
+	}
+
+	c.UserAccount = userQuery.Result
+	c.Account = usingQuery.Result
+}
+
+func authBySession(c *Context, sess session.Store) {
+	accountId, err := authGetRequestAccountId(c, sess)
+
+	if err != nil && c.Req.URL.Path != "/login" {
+		authDenied(c)
+		return
+	}
+
+	userQuery := m.GetAccountByIdQuery{Id: accountId}
+	err = bus.Dispatch(&userQuery)
+	if err != nil {
+		authDenied(c)
+		return
+	}
+
+	usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
+	err = bus.Dispatch(&usingQuery)
+	if err != nil {
+		authDenied(c)
+		return
+	}
+
+	c.UserAccount = userQuery.Result
+	c.Account = usingQuery.Result
+}
+
 func Auth() macaron.Handler {
 	return func(c *Context, sess session.Store) {
-		accountId, err := authGetRequestAccountId(c, sess)
-
-		if err != nil && c.Req.URL.Path != "/login" {
-			authDenied(c)
-			return
+		authByToken(c)
+		if c.UserAccount == nil {
+			authBySession(c, sess)
 		}
-
-		userQuery := m.GetAccountByIdQuery{Id: accountId}
-		err = bus.Dispatch(&userQuery)
-		if err != nil {
-			authDenied(c)
-			return
-		}
-
-		usingQuery := m.GetAccountByIdQuery{Id: userQuery.Result.UsingAccountId}
-		err = bus.Dispatch(&usingQuery)
-		if err != nil {
-			authDenied(c)
-			return
-		}
-
-		c.UserAccount = userQuery.Result
-		c.Account = usingQuery.Result
 	}
 }
