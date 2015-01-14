@@ -69,6 +69,7 @@ function (_, kbn) {
     this.stats.avg = null;
     this.stats.current = null;
     this.allIsNull = true;
+    this.allIsZero = true;
 
     var ignoreNulls = fillStyle === 'connected';
     var nullAsZero = fillStyle === 'null as zero';
@@ -89,6 +90,9 @@ function (_, kbn) {
       if (_.isNumber(currentValue)) {
         this.stats.total += currentValue;
         this.allIsNull = false;
+        if (currentValue !== 0) {
+          this.allIsZero = false;
+        }
       }
 
       if (currentValue > this.stats.max) {

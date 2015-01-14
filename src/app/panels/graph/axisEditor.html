@@ -170,11 +170,17 @@
 						    ng-model="panel.legend.rightSide" ng-checked="panel.legend.rightSide" ng-change="render()">
 						<label for="panel.legend.rightSide" class="cr1"></label>
 					</li>
-					<li class="grafana-target-segment last">
+					<li class="grafana-target-segment">
 						<span bs-tooltip="'Hides series with only null values'">Hide empty&nbsp;<span>
 						<input class="cr1" id="panel.legend.hideEmpty" type="checkbox"
 						    ng-model="panel.legend.hideEmpty" ng-checked="panel.legend.hideEmpty" ng-change="render()">
 						<label for="panel.legend.hideEmpty" class="cr1"></label>
+					</li>
+					<li class="grafana-target-segment last">
+						<span bs-tooltip="'Hides series with only zero values'">Hide zero&nbsp;<span>
+						<input class="cr1" id="panel.legend.hideZero" type="checkbox"
+						    ng-model="panel.legend.hideZero" ng-checked="panel.legend.hideZero" ng-change="render()">
+						<label for="panel.legend.hideZero" class="cr1"></label>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
