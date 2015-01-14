@@ -46,9 +46,9 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
-      .when('/register', {
+      .when('/signup', {
         templateUrl: 'app/partials/register.html',
-        controller : 'RegisterCtrl',
+        controller : 'SignUpCtrl',
       })
       .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/solo-panel.html',

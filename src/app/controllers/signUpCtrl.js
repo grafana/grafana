@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('RegisterCtrl', function($scope, backendSrv, $location) {
+  module.controller('SignUpCtrl', function($scope, backendSrv, $location) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
 
@@ -19,7 +19,7 @@ function (angular) {
         return;
       }
 
-      backendSrv.post('/api/account', $scope.loginModel).then(function() {
+      backendSrv.post('/api/account/signup', $scope.loginModel).then(function() {
         $location.path('/login');
       });
     };
