@@ -15,7 +15,7 @@ func init() {
 	bus.AddHandler("sql", GetMonitorById)
 	bus.AddHandler("sql", GetMonitorTypes)
 	bus.AddHandler("sql", AddMonitor)
-	//bus.AddHandler("sql", UpdateMonitor)
+	bus.AddHandler("sql", UpdateMonitor)
 	bus.AddHandler("sql", DeleteMonitor)
 }
 
@@ -183,16 +183,20 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	})
 }
 
+// store location list query result
+type locationList struct {
+	Id int64
+}
+
 func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		//validate locations.
-		type locationList struct {
-			Id int64
-		}
+		
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
 		sess.In("id", cmd.Locations).Where("account_id=?", cmd.AccountId)
+		sess.Cols("id")
 		err := sess.Find(&filtered_locations)
 
 		if err != nil {
@@ -262,6 +266,17 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		if _, err := sess.Insert(mon); err != nil {
 			return err
 		}
+		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.Locations))
+		for _,l := range cmd.Locations {
+			monitor_locations = append(monitor_locations, &m.MonitorLocation{
+				MonitorId: mon.Id,
+				LocationId: l,
+			})
+		}
+		sess.Table("monitor_location")
+		if _, err = sess.Insert(&monitor_locations); err != nil {
+			return err
+		}
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
 			AccountId:     mon.AccountId,
@@ -271,5 +286,106 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Settings:      mon.Settings,
 		}
 		return nil
+	})
+}
+
+func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
+
+	return inTransaction(func(sess *xorm.Session) error {
+		//validate locations.
+		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
+		sess.Table("location")
+		sess.In("id", cmd.Locations).Where("account_id=?", cmd.AccountId)
+		sess.Cols("id")
+		err := sess.Find(&filtered_locations)
+
+		if err != nil {
+			return err
+		}
+
+		if len(filtered_locations) < len(cmd.Locations) {
+			return m.ErrMonitorLocationsInvalid
+		}
+
+		//get settings definition for thie monitorType.
+		var typeSettings []*m.MonitorTypeSetting
+		sess.Table("monitor_type_setting")
+		sess.Where("monitor_type_id=?", cmd.MonitorTypeId)
+		err = sess.Find(&typeSettings)
+		if err != nil {
+			return nil
+		}
+		if len(typeSettings) < 1 {
+			log.Info("no monitorType settings found for type: %d", cmd.MonitorTypeId)
+			return m.ErrMonitorSettingsInvalid
+		}
+		// push the typeSettings into a Map with the variable name as key
+		settingMap := make(map[string]*m.MonitorTypeSetting)
+		for _, s := range typeSettings {
+			settingMap[s.Variable] = s
+			log.Info("monitorType has variable %s", s.Variable)
+		}
+
+		//validate the settings.
+		seenMetrics := make(map[string]bool)
+		for _, v := range cmd.Settings {
+			def, ok := settingMap[v.Variable]
+			if ok != true {
+				log.Info("Unkown variable %s passed.", v.Variable)
+				return m.ErrMonitorSettingsInvalid
+			}
+			//TODO:(awoods) make sure the value meets the definition.
+			seenMetrics[def.Variable] = true
+			log.Info("%s present in settings", def.Variable)
+		}
+
+		//make sure all required variables were provided.
+		//add defaults for missing optional variables.
+		for k, s := range settingMap {
+			if _, ok := seenMetrics[k]; ok != true {
+				log.Info("%s not in settings", k)
+				if s.Required {
+					// required setting variable missing.
+					return m.ErrMonitorSettingsInvalid
+				}
+				cmd.Settings = append(cmd.Settings, &m.MonitorSettingDTO{
+					Variable: k,
+					Value:    s.DefaultValue,
+				})
+			}
+		}
+
+		mon := &m.Monitor{
+			Id:            cmd.Id,
+			AccountId:     cmd.AccountId,
+			Name:          cmd.Name,
+			MonitorTypeId: cmd.MonitorTypeId,
+			Offset:        int64(rand.Intn(3599)),
+			Settings:      cmd.Settings,
+			Created:       time.Now(),
+			Updated:       time.Now(),
+		}
+
+		mon.UpdateMonitorSlug()
+
+		if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
+			return err
+		}
+
+		var rawSql = "DELETE FROM monitor_location WHERE monitor_id=?"
+		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
+			return err
+		}
+		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.Locations))
+		for _,l := range cmd.Locations {
+			monitor_locations = append(monitor_locations, &m.MonitorLocation{
+				MonitorId: cmd.Id,
+				LocationId: l,
+			})
+		}
+		sess.Table("monitor_location")
+		_, err = sess.Insert(&monitor_locations)
+
+		return err
 	})
 }

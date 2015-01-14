@@ -67,7 +67,7 @@ func Register(m *macaron.Macaron) {
 	m.Get("/api/monitors/:id", auth, GetMonitorById)
 	m.Get("/api/monitor_types/list", auth, GetMonitorTypes)
 	m.Put("/api/monitors", auth, AddMonitor)
-	//m.Post("/api/monitors", auth, UpdateMonitor)
+	m.Post("/api/monitors", auth, UpdateMonitor)
 	m.Delete("/api/monitors/:id", auth, DeleteMonitor)
 
 	m.NotFound(NotFound)

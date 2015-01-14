@@ -72,3 +72,22 @@ func AddMonitor(c *middleware.Context) {
 
 	c.JSON(200, cmd.Result)
 }
+
+func UpdateMonitor(c *middleware.Context) {
+	cmd := m.UpdateMonitorCommand{}
+
+	if !c.JsonBody(&cmd) {
+		c.JsonApiErr(400, "Validation failed", nil)
+		return
+	}
+
+	cmd.AccountId = c.Account.Id
+
+	err := bus.Dispatch(&cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to update monitor", err)
+		return
+	}
+
+	c.JsonOK("Monitor updated")
+}

@@ -100,7 +100,7 @@ type UpdateMonitorCommand struct {
 	Id            int64                `json:"id" binding:"required"`
 	AccountId     int64                `json:"-"`
 	Name          string               `json:"name" binding:"required"`
-	MonitorTypeId int64                `json:"monitor_type" binding:"required"`
+	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 }
