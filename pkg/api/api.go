@@ -78,7 +78,11 @@ func Register(m *macaron.Macaron) {
 
 	// rendering
 	m.Get("/render/*", auth, RenderToPng)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 9a947690fdfbcc2d96ce9f11373279d459d3852b
 	m.NotFound(NotFound)
 }
 
