@@ -48,7 +48,7 @@ function (angular, _) {
 
     $scope.getLocations = function() {
       var locationMap = {};
-      backendSrv.get('/api/locations/list').then(function(locations) {
+      backendSrv.get('/api/locations').then(function(locations) {
         _.forEach(locations, function(loc) {
           locationMap[loc.id] = loc;
         });
@@ -76,12 +76,12 @@ function (angular, _) {
     };
 
     $scope.getMonitors = function() {
-      backendSrv.get('/api/monitors/list').then(function(monitors) {
+      backendSrv.get('/api/monitors').then(function(monitors) {
         $scope.monitors = monitors;
       });
     };
     $scope.getMonitorTypes = function() {
-      backendSrv.get('/api/monitor_types/list').then(function(types) {
+      backendSrv.get('/api/monitor_types').then(function(types) {
         var typesMap = {};
         _.forEach(types, function(type) {
           typesMap[type.id] = type;

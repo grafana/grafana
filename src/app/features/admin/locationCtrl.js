@@ -46,7 +46,7 @@ function (angular) {
     };
 
     $scope.getLocations = function() {
-      backendSrv.get('/api/locations/list').then(function(locations) {
+      backendSrv.get('/api/locations').then(function(locations) {
         $scope.locations = locations;
       });
     };
