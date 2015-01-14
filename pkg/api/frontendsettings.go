@@ -25,7 +25,7 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 
 	datasources := make(map[string]interface{})
 
-	for i, ds := range accountDataSources {
+	for _, ds := range accountDataSources {
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {
@@ -44,12 +44,6 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 				dsMap["password"] = ds.Password
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
-		}
-
-		// temp hack, first is always default
-		// TODO: implement default ds account setting
-		if i == 0 {
-			dsMap["default"] = true
 		}
 
 		datasources[ds.Name] = dsMap

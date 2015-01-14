@@ -7,68 +7,77 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
+// Register adds http routes
 func Register(m *macaron.Macaron) {
 	auth := middleware.Auth()
 
-	// index
+	// not logged in views
 	m.Get("/", auth, Index)
 	m.Post("/logout", LogoutPost)
 	m.Post("/login", LoginPost)
-
-	// login
 	m.Get("/login/:name", OAuthLogin)
 	m.Get("/login", Index)
 
-	// account
+	// authed views
 	m.Get("/account/", auth, Index)
-	m.Get("/api/account/", auth, GetAccount)
-	m.Post("/api/account/collaborators/add", auth, AddCollaborator)
-	m.Post("/api/account/using/:id", auth, SetUsingAccount)
-	m.Get("/api/account/others", auth, GetOtherAccounts)
-
-	// data sources
-	m.Get("/admin/datasources/", auth, Index)
-	m.Get("/api/admin/datasources/list", auth, GetDataSources)
-	m.Put("/api/admin/datasources", auth, AddDataSource)
-	m.Post("/api/admin/datasources", auth, UpdateDataSource)
-	m.Delete("/api/admin/datasources/:id", auth, DeleteDataSource)
-
-	// data source proxy
-	m.Any("/api/datasources/proxy/:id/*", auth, ProxyDataSourceRequest)
-
-	// user register
-	m.Get("/register", Index)
-	m.Post("/api/account", CreateAccount)
-
-	// dashboards
+	m.Get("/account/datasources/", auth, Index)
+	m.Get("/admin", auth, Index)
 	m.Get("/dashboard/*", auth, Index)
-	m.Get("/api/dashboards/:slug", auth, GetDashboard)
-	m.Get("/api/search/", auth, Search)
-	m.Post("/api/dashboard/", auth, PostDashboard)
-	m.Delete("/api/dashboard/:slug", auth, DeleteDashboard)
+	m.Get("/location", auth, Index)
+	m.Get("/monitor", auth, Index)
+
+	// sign up
+	m.Get("/signup", Index)
+	m.Post("/api/account/signup", SignUp)
+
+	// authed api
+	m.Group("/api", func() {
+		// account
+		m.Group("/account", func() {
+			m.Get("/", GetAccount)
+			m.Post("/collaborators/add", AddCollaborator)
+			m.Post("/using/:id", SetUsingAccount)
+			m.Get("/others", GetOtherAccounts)
+		})
+		// Token
+		m.Group("/tokens", func() {
+			m.Combo("/").Get(GetTokens).Put(AddToken).Post(UpdateToken)
+			m.Delete("/:id", DeleteToken)
+		})
+		// Data sources
+		m.Group("/datasources", func() {
+			m.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
+			m.Delete("/:id", DeleteDataSource)
+			m.Any("/proxy/:id/*", auth, ProxyDataSourceRequest)
+		})
+		// Dashboard
+		m.Group("/dashboard", func() {
+			m.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			m.Post("/", PostDashboard)
+		})
+		// Search
+		m.Get("/search/", Search)
+		// metrics
+		m.Get("/metrics/test", auth, GetTestMetrics)
+
+		// locations
+		m.Group("/locations", func() {
+			m.Combo("/").Get(GetLocations).Put(AddLocation).Post(UpdateLocation)
+			m.Get("/:code", GetLocationByCode)
+			m.Delete("/:id", DeleteLocation)
+		})
+		
+		// Monitors
+		m.Group("/monitors", func() {
+			m.Combo("/").Get(GetMonitors).Put(AddMonitor).Post(UpdateMonitor)
+			m.Get("/:id", GetMonitorById)
+			m.Delete("/:id", DeleteMonitor)
+		})
+		m.Get("/monitor_types", GetMonitorTypes)
+	}, auth)
 
 	// rendering
 	m.Get("/render/*", auth, RenderToPng)
-
-	// metrics
-	m.Get("/api/metrics/test", auth, GetTestMetrics)
-
-	// locations
-	m.Get("/location", auth, Index)
-	m.Get("/api/locations/list", auth, GetLocations)
-	m.Get("/api/locations/:code", auth, GetLocationByCode)
-	m.Put("/api/locations", auth, AddLocation)
-	m.Post("/api/locations", auth, UpdateLocation)
-	m.Delete("/api/locations/:id", auth, DeleteLocation)
-
-	// Monitors
-	m.Get("/monitor", auth, Index)
-	m.Get("/api/monitors/list", auth, GetMonitors)
-	m.Get("/api/monitors/:id", auth, GetMonitorById)
-	m.Get("/api/monitor_types/list", auth, GetMonitorTypes)
-	m.Put("/api/monitors", auth, AddMonitor)
-	m.Post("/api/monitors", auth, UpdateMonitor)
-	m.Delete("/api/monitors/:id", auth, DeleteMonitor)
 
 	m.NotFound(NotFound)
 }
@@ -97,6 +106,11 @@ func Index(c *middleware.Context) {
 }
 
 func NotFound(c *middleware.Context) {
+	if c.IsApiRequest() {
+		c.JsonApiErr(200, "Not found", nil)
+		return
+	}
+
 	if err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
