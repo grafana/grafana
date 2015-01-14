@@ -16,15 +16,9 @@ define([
       ctx.scope.render = function() {};
     });
 
-    describe('Controller should init overrideMenu', function() {
-      it('click should include option and value index', function() {
-        expect(ctx.scope.overrideMenu[1].submenu[1].click).to.be('menuItemSelected(1,1)');
-      });
-    });
-
     describe('When setting an override', function() {
       beforeEach(function() {
-        ctx.scope.setOverride(1, 0);
+        ctx.scope.setOverride({propertyName: 'lines'}, {value: true});
       });
 
       it('should set override property', function() {

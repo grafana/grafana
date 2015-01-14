@@ -362,8 +362,14 @@ function($, _, moment) {
 
   kbn.valueFormats.bits = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
   kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
+  kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', 'GJ', 'TJ', 'PJ', 'EJ', 'ZJ', 'YJ']);
+  kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', 'GW', 'TW', 'PW', 'EW', 'ZW', 'YW']);
+  kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
   kbn.valueFormats.none = kbn.toFixed;
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
@@ -477,6 +483,51 @@ function($, _, moment) {
 
     var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
     return new RegExp(match[1], match[2]);
+  };
+
+  kbn.getUnitFormats = function() {
+    return [
+      {
+        text: 'none',
+        submenu: [
+          {text: 'none' , value: 'none'},
+          {text: 'short', value: 'short'},
+          {text: 'percent', value: 'percent'},
+        ]
+      },
+      {
+        text: 'duration',
+        submenu: [
+          {text: 'nanoseconds (ns)' , value: 'ns'},
+          {text: 'microseconds (µs)', value: 'µs'},
+          {text: 'milliseconds (ms)', value: 'ms'},
+          {text: 'seconds (s)', value: 's'},
+        ]
+      },
+      {
+        text: 'data',
+        submenu: [
+          {text: 'bits', value: 'bits'},
+          {text: 'bytes', value: 'bytes'},
+          {text: 'kilobytes', value: 'kbytes'},
+        ]
+      },
+      {
+        text: 'data rate',
+        submenu: [
+          {text: 'bits/sec', value: 'bps'},
+          {text: 'bytes/sec', value: 'Bps'},
+        ]
+      },
+      {
+        text: 'energy',
+        submenu: [
+          {text: 'watt', value: 'watt'},
+          {text: 'joule', value: 'joule'},
+          {text: 'eV', value: 'ev'},
+        ]
+      },
+    ];
   };
 
   return kbn;
