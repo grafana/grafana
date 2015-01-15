@@ -73,6 +73,14 @@
 								<label class="small">Locations</label>
 								<select class="input-medium" ng-model="current.locations" ng-options="l.id as l.name for (id, l) in locations" multiple></select>
 							</div>
+							<div class="editor-option">
+								<label class="small">Frequency</label>
+								<input type="number" class="input-large" ng-model='current.frequency' placeholder="Frequency" required></input>
+							</div>
+							<div class="editor-option">
+								<label class="small">Enabled</label>
+								<input type="checkbox" class="input-large" ng-model='current.enabled' required></input>
+							</div>
 						</div>
 						<div class="dashboard-editor-header">
 							<div class="dashboard-editor-title">Settings</div>

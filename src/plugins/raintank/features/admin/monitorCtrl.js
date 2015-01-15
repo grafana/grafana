@@ -13,7 +13,9 @@ function (angular, _) {
       name: '',
       monitor_type_id: 1,
       locations: [],
-      settings: []
+      settings: [],
+      enabled: true,
+      frequency: 10,
     };
 
     $scope.init = function() {
