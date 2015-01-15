@@ -16,6 +16,7 @@ type LoginResult struct {
 type CurrentUser struct {
 	Login       string `json:"login"`
 	Email       string `json:"email"`
+	IsAdmin     bool   `json:"isAdmin"`
 	GravatarUrl string `json:"gravatarUrl"`
 }
 
@@ -48,6 +49,7 @@ func NewCurrentUser(account *models.Account) *CurrentUser {
 		model.Login = account.Login
 		model.Email = account.Email
 		model.GravatarUrl = getGravatarUrl(account.Email)
+		model.IsAdmin = account.IsAdmin
 	}
 	return model
 }

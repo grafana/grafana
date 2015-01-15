@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -30,9 +31,12 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 			Login:    cmd.Login,
 			Password: cmd.Password,
 			Salt:     cmd.Salt,
+			IsAdmin:  cmd.IsAdmin,
 			Created:  time.Now(),
 			Updated:  time.Now(),
 		}
+
+		sess.UseBool("is_admin")
 
 		_, err := sess.Insert(&account)
 		cmd.Result = account
@@ -137,10 +141,14 @@ func GetAccountByToken(query *m.GetAccountByTokenQuery) error {
 }
 
 func GetAccountByLogin(query *m.GetAccountByLoginQuery) error {
-	var err error
+	account := new(m.Account)
+	if strings.Contains(query.Login, "@") {
+		account = &m.Account{Email: query.Login}
+	} else {
+		account = &m.Account{Login: strings.ToLower(query.Login)}
+	}
 
-	account := m.Account{Login: query.Login}
-	has, err := x.Get(&account)
+	has, err := x.Get(account)
 
 	if err != nil {
 		return err
@@ -152,7 +160,7 @@ func GetAccountByLogin(query *m.GetAccountByLoginQuery) error {
 		account.UsingAccountId = account.Id
 	}
 
-	query.Result = &account
+	query.Result = account
 
 	return nil
 }

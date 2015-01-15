@@ -16,9 +16,9 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/api"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
-	"github.com/torkelo/grafana-pro/pkg/stores/sqlstore"
 )
 
 var CmdWeb = cli.Command{
@@ -76,11 +76,9 @@ func runWeb(c *cli.Context) {
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
 
 	setting.NewConfigContext()
-	setting.InitServices()
 	social.NewOAuthService()
-
-	sqlstore.Init()
 	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
 
 	m := newMacaron()
 	api.Register(m)

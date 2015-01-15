@@ -6,9 +6,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/torkelo/grafana-pro/pkg/util"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
@@ -42,23 +44,39 @@ func init() {
 		new(m.Token))
 }
 
-func Init() {
+func EnsureAdminUser() {
+	adminQuery := m.GetAccountByLoginQuery{Login: setting.AdminUser}
+
+	if err := bus.Dispatch(&adminQuery); err == m.ErrAccountNotFound {
+		cmd := m.CreateAccountCommand{}
+		cmd.Login = setting.AdminUser
+		cmd.Email = setting.AdminUser + "@localhost"
+		cmd.Salt = util.GetRandomString(10)
+		cmd.Password = util.EncodePassword(setting.AdminPassword, cmd.Salt)
+		cmd.IsAdmin = true
+
+		if err = bus.Dispatch(&cmd); err != nil {
+			log.Fatal(3, "Failed to create default admin user", err)
+		}
+
+		log.Info("Created default admin user: %v", setting.AdminUser)
+	} else if err != nil {
+		log.Fatal(3, "Could not determine if admin user exists: %v", err)
+	}
 }
 
-func NewEngine() (err error) {
-	x, err = getEngine()
+func NewEngine() {
+	x, err := getEngine()
 
 	if err != nil {
-		return fmt.Errorf("sqlstore.init(fail to connect to database): %v", err)
+		log.Fatal(3, "Sqlstore: Fail to connect to database: %v", err)
 	}
 
 	err = SetEngine(x, true)
 
 	if err != nil {
-		log.Fatal(4, "fail to initialize orm engine: %v", err)
+		log.Fatal(3, "fail to initialize orm engine: %v", err)
 	}
-
-	return nil
 }
 
 func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {

@@ -59,6 +59,8 @@ var (
 	EnableGzip         bool
 
 	// Http auth
+	AdminUser          string
+	AdminPassword      string
 	Anonymous          bool
 	AnonymousAccountId int64
 
@@ -119,7 +121,7 @@ func findConfigFiles() []string {
 func NewConfigContext() {
 	configFiles := findConfigFiles()
 
-	log.Info("Loading config files: %v", configFiles)
+	//log.Info("Loading config files: %v", configFiles)
 	var err error
 
 	Cfg, err = goconfig.LoadConfigFile(configFiles[0])
@@ -168,6 +170,8 @@ func NewConfigContext() {
 	EnableGzip = Cfg.MustBool("server", "enable_gzip")
 
 	// Http auth
+	AdminUser = Cfg.MustValue("admin", "user", "admin")
+	AdminPassword = Cfg.MustValue("admin", "password", "admin")
 	Anonymous = Cfg.MustBool("auth", "anonymous", false)
 	AnonymousAccountId = Cfg.MustInt64("auth", "anonymous_account_id", 0)
 
@@ -180,10 +184,11 @@ func NewConfigContext() {
 	PhantomDir = "_vendor/phantomjs"
 
 	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(WorkDir, "/data/log"))
+
+	readSessionConfig()
 }
 
-func initSessionService() {
-
+func readSessionConfig() {
 	SessionOptions = session.Options{}
 	SessionOptions.Provider = Cfg.MustValueRange("session", "provider", "memory", []string{"memory", "file"})
 	SessionOptions.ProviderConfig = strings.Trim(Cfg.MustValue("session", "provider_config"), "\" ")
@@ -198,8 +203,4 @@ func initSessionService() {
 	}
 
 	log.Info("Session Service Enabled")
-}
-
-func InitServices() {
-	initSessionService()
 }
