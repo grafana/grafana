@@ -31,13 +31,15 @@ type Account struct {
 // COMMANDS
 
 type CreateAccountCommand struct {
-	Email    string  `json:"email" binding:"required"`
-	Login    string  `json:"login"`
-	Password string  `json:"password" binding:"required"`
-	Name     string  `json:"name"`
-	Company  string  `json:"company"`
-	Salt     string  `json:"-"`
-	Result   Account `json:"-"`
+	Email    string `json:"email" binding:"required"`
+	Login    string `json:"login"`
+	Password string `json:"password" binding:"required"`
+	Name     string `json:"name"`
+	Company  string `json:"company"`
+	Salt     string `json:"-"`
+	IsAdmin  bool   `json:"-"`
+
+	Result Account `json:"-"`
 }
 
 type SetUsingAccountCommand struct {
