@@ -34,9 +34,9 @@ func TestAccountDataAccess(t *testing.T) {
 
 			Convey("Can add collaborator", func() {
 				cmd := m.AddCollaboratorCommand{
-					AccountId:    ac2.Id,
-					ForAccountId: ac1.Id,
-					Role:         m.ROLE_READ_WRITE,
+					AccountId:      ac1.Id,
+					CollaboratorId: ac2.Id,
+					Role:           m.ROLE_READ_WRITE,
 				}
 
 				err := AddCollaborator(&cmd)
@@ -49,7 +49,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err = GetAccountInfo(&query)
 
 					So(err, ShouldBeNil)
-					So(query.Result.Collaborators[0].AccountId, ShouldEqual, ac2.Id)
+					So(query.Result.Collaborators[0].CollaboratorId, ShouldEqual, ac2.Id)
 					So(query.Result.Collaborators[0].Role, ShouldEqual, m.ROLE_READ_WRITE)
 					So(query.Result.Collaborators[0].Email, ShouldEqual, "ac2@test.com")
 				})
