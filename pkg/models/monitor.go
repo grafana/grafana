@@ -40,6 +40,8 @@ type Monitor struct {
 	Name          string
 	MonitorTypeId int64
 	Offset        int64
+	Frequency     int64
+	Enabled       bool
 	Settings      []*MonitorSettingDTO
 	Created       time.Time
 	Updated       time.Time
@@ -63,9 +65,12 @@ type MonitorDTO struct {
 	Id            int64                `json:"id"`
 	AccountId     int64                `json:"-"`
 	Name          string               `json:"name" binding:"required"`
+	Slug          string               `json:"slug"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
+	Frequency     int64                `json:"frequency"`
+	Enabled       bool                 `json:"enabled"`
 }
 
 type MonitorTypeSettingDTO struct {
@@ -93,6 +98,8 @@ type AddMonitorCommand struct {
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
+	Frequency     int64                `json:"frequency"`
+	Enabled       bool                 `json:"enabled"`
 	Result        *MonitorDTO
 }
 
@@ -103,6 +110,8 @@ type UpdateMonitorCommand struct {
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
+	Frequency     int64                `json:"frequency"`
+	Enabled       bool                 `json:"enabled"`
 }
 
 type DeleteMonitorCommand struct {

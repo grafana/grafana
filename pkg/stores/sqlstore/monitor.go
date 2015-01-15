@@ -26,6 +26,9 @@ type MonitorWithLocationDTO struct {
 	MonitorTypeId int64
 	LocationId    int64
 	Settings      []*m.MonitorSettingDTO
+	Slug          string
+	Frequency     int64
+	Enabled       bool
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -33,8 +36,9 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	sess.Where("monitor.id=?", query.Id)
 	sess.Cols("monitor_location.location_id", "monitor.id",
-		"monitor.account_id", "monitor.name",
-		"monitor.monitor_type_id", "monitor.settings")
+		"monitor.account_id", "monitor.name", "monitor.slug",
+		"monitor.monitor_type_id", "monitor.settings",
+		"monitor.frequency", "monitor.enabled")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -54,9 +58,13 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		Id:            result[0].Id,
 		AccountId:     result[0].AccountId,
 		Name:          result[0].Name,
+		Slug:          result[0].Slug,
 		MonitorTypeId: result[0].MonitorTypeId,
 		Locations:     monitorLocations,
 		Settings:      result[0].Settings,
+		Frequency:     result[0].Frequency,
+		Enabled:       result[0].Enabled,
+
 	}
 	//iterate through all of the results and build out our model.
 	for _, row := range result {
@@ -72,7 +80,8 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess.Where("monitor.account_id=?", query.AccountId)
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.settings",
-		"monitor.monitor_type_id")
+		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency", 
+		"monitor.enabled")
 
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -93,9 +102,12 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 				Id:            row.Id,
 				AccountId:     row.AccountId,
 				Name:          row.Name,
+				Slug:          row.Slug,
 				MonitorTypeId: row.MonitorTypeId,
 				Locations:     monitorLocations,
 				Settings:      row.Settings,
+				Frequency:     row.Frequency,
+				Enabled:       row.Enabled,
 			}
 		}
 
@@ -255,10 +267,12 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			AccountId:     cmd.AccountId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        int64(rand.Intn(3599)),
+			Offset:        int64(rand.Intn(int(cmd.Frequency) - 1)),
 			Settings:      cmd.Settings,
 			Created:       time.Now(),
 			Updated:       time.Now(),
+			Frequency:     cmd.Frequency,
+			Enabled:       cmd.Enabled,
 		}
 
 		mon.UpdateMonitorSlug()
@@ -281,9 +295,12 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Id:            mon.Id,
 			AccountId:     mon.AccountId,
 			Name:          mon.Name,
+			Slug:          mon.Slug,
 			MonitorTypeId: mon.MonitorTypeId,
 			Locations:     cmd.Locations,
 			Settings:      mon.Settings,
+			Frequency:     mon.Frequency,
+			Enabled:       mon.Enabled,
 		}
 		return nil
 	})
@@ -323,7 +340,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		settingMap := make(map[string]*m.MonitorTypeSetting)
 		for _, s := range typeSettings {
 			settingMap[s.Variable] = s
-			log.Info("monitorType has variable %s", s.Variable)
 		}
 
 		//validate the settings.
@@ -336,7 +352,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			}
 			//TODO:(awoods) make sure the value meets the definition.
 			seenMetrics[def.Variable] = true
-			log.Info("%s present in settings", def.Variable)
 		}
 
 		//make sure all required variables were provided.
@@ -360,14 +375,14 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			AccountId:     cmd.AccountId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        int64(rand.Intn(3599)),
 			Settings:      cmd.Settings,
-			Created:       time.Now(),
 			Updated:       time.Now(),
+			Enabled:       cmd.Enabled,
+			Frequency:     cmd.Frequency,
 		}
 
 		mon.UpdateMonitorSlug()
-
+		sess.UseBool("enabled")
 		if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
 			return err
 		}
