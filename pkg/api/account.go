@@ -18,51 +18,22 @@ func GetAccount(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func AddCollaborator(c *middleware.Context) {
-	var cmd m.AddCollaboratorCommand
+func UpdateAccount(c *middleware.Context) {
+	cmd := m.UpdateAccountCommand{}
 
 	if !c.JsonBody(&cmd) {
 		c.JsonApiErr(400, "Invalid request", nil)
 		return
 	}
 
-	userQuery := m.GetAccountByLoginQuery{Login: cmd.Email}
-	err := bus.Dispatch(&userQuery)
-	if err != nil {
-		c.JsonApiErr(404, "Collaborator not found", nil)
-		return
-	}
-
-	accountToAdd := userQuery.Result
-
-	if accountToAdd.Id == c.UserAccount.Id {
-		c.JsonApiErr(400, "Cannot add yourself as collaborator", nil)
-		return
-	}
-
 	cmd.AccountId = c.UserAccount.Id
-	cmd.CollaboratorId = accountToAdd.Id
-	cmd.Role = m.ROLE_READ_WRITE
-
-	err = bus.Dispatch(&cmd)
-	if err != nil {
-		c.JsonApiErr(500, "Could not add collaborator", err)
-		return
-	}
-
-	c.JsonOK("Collaborator added")
-}
-
-func RemoveCollaborator(c *middleware.Context) {
-	collaboratorId := c.ParamsInt64(":id")
-
-	cmd := m.RemoveCollaboratorCommand{AccountId: c.UserAccount.Id, CollaboratorId: collaboratorId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to remove collaborator", err)
+		c.JsonApiErr(400, "Failed to update account", nil)
+		return
 	}
 
-	c.JsonOK("Collaborator removed")
+	c.JsonOK("Account updated")
 }
 
 func GetOtherAccounts(c *middleware.Context) {

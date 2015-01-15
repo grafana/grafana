@@ -21,6 +21,19 @@ type Collaborator struct {
 	Updated time.Time
 }
 
+func NewCollaborator(accountId int64, collaboratorId int64, role RoleType) *Collaborator {
+	return &Collaborator{
+		AccountId:      accountId,
+		CollaboratorId: collaboratorId,
+		Role:           role,
+		Created:        time.Now(),
+		Updated:        time.Now(),
+	}
+}
+
+// ---------------------
+// COMMANDS
+
 type RemoveCollaboratorCommand struct {
 	CollaboratorId int64
 	AccountId      int64
@@ -33,12 +46,20 @@ type AddCollaboratorCommand struct {
 	Role           RoleType `json:"-"`
 }
 
-func NewCollaborator(accountId int64, collaboratorId int64, role RoleType) *Collaborator {
-	return &Collaborator{
-		AccountId:      accountId,
-		CollaboratorId: collaboratorId,
-		Role:           role,
-		Created:        time.Now(),
-		Updated:        time.Now(),
-	}
+// ----------------------
+// QUERIES
+
+type GetCollaboratorsQuery struct {
+	AccountId int64
+	Result    []*CollaboratorDTO
+}
+
+// ----------------------
+// Projections and DTOs
+
+type CollaboratorDTO struct {
+	CollaboratorId int64  `json:"id"`
+	Email          string `json:"email"`
+	Login          string `json:"login"`
+	Role           string `json:"role"`
 }

@@ -18,9 +18,8 @@ func init() {
 	bus.AddHandler("sql", GetAccountById)
 	bus.AddHandler("sql", GetAccountByLogin)
 	bus.AddHandler("sql", GetAccountByToken)
-	bus.AddHandler("sql", AddCollaborator)
-	bus.AddHandler("sql", RemoveCollaborator)
 	bus.AddHandler("sql", SearchAccounts)
+	bus.AddHandler("sql", UpdateAccount)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -40,6 +39,21 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 
 		_, err := sess.Insert(&account)
 		cmd.Result = account
+		return err
+	})
+}
+
+func UpdateAccount(cmd *m.UpdateAccountCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+
+		account := m.Account{
+			Email:   cmd.Email,
+			Login:   cmd.Login,
+			Name:    cmd.Name,
+			Updated: time.Now(),
+		}
+
+		_, err := sess.Id(cmd.AccountId).Update(&account)
 		return err
 	})
 }
@@ -66,33 +80,12 @@ func GetAccountInfo(query *m.GetAccountInfoQuery) error {
 	}
 
 	query.Result = m.AccountDTO{
-		Name:          account.Name,
-		Email:         account.Email,
-		Collaborators: make([]*m.CollaboratorDTO, 0),
+		Name:  account.Name,
+		Email: account.Email,
+		Login: account.Login,
 	}
 
-	sess := x.Table("collaborator")
-	sess.Join("INNER", "account", "account.id=collaborator.collaborator_id")
-	sess.Where("collaborator.account_id=?", query.Id)
-	err = sess.Find(&query.Result.Collaborators)
-
 	return err
-}
-
-func AddCollaborator(cmd *m.AddCollaboratorCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-
-		entity := m.Collaborator{
-			AccountId:      cmd.AccountId,
-			CollaboratorId: cmd.CollaboratorId,
-			Role:           cmd.Role,
-			Created:        time.Now(),
-			Updated:        time.Now(),
-		}
-
-		_, err := sess.Insert(&entity)
-		return err
-	})
 }
 
 func GetAccountById(query *m.GetAccountByIdQuery) error {
@@ -163,14 +156,6 @@ func GetAccountByLogin(query *m.GetAccountByLoginQuery) error {
 	query.Result = account
 
 	return nil
-}
-
-func RemoveCollaborator(cmd *m.RemoveCollaboratorCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "DELETE FROM collaborator WHERE collaborator_id=? and account_id=?"
-		_, err := sess.Exec(rawSql, cmd.CollaboratorId, cmd.AccountId)
-		return err
-	})
 }
 
 func GetOtherAccounts(query *m.GetOtherAccountsQuery) error {
