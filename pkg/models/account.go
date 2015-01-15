@@ -68,6 +68,14 @@ type GetAccountByLoginQuery struct {
 	Result *Account
 }
 
+type SearchAccountsQuery struct {
+	Query string
+	Page  int
+	Limit int
+
+	Result []*AccountSearchHitDTO
+}
+
 // ------------------------
 // DTO & Projections
 
@@ -82,6 +90,12 @@ type CollaboratorDTO struct {
 	CollaboratorId int64  `json:"id"`
 	Email          string `json:"email"`
 	Role           string `json:"role"`
+}
+
+type AccountSearchHitDTO struct {
+	Id    int64  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type AccountDTO struct {
