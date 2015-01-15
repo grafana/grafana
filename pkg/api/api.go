@@ -9,20 +9,21 @@ import (
 
 // Register adds http routes
 func Register(m *macaron.Macaron) {
-	auth := middleware.Auth()
+	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
+	reqAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqAdmin: false})
 
 	// not logged in views
-	m.Get("/", auth, Index)
+	m.Get("/", reqSignedIn, Index)
 	m.Post("/logout", LogoutPost)
 	m.Post("/login", LoginPost)
 	m.Get("/login/:name", OAuthLogin)
 	m.Get("/login", Index)
 
 	// authed views
-	m.Get("/account/", auth, Index)
-	m.Get("/account/datasources/", auth, Index)
-	m.Get("/admin", auth, Index)
-	m.Get("/dashboard/*", auth, Index)
+	m.Get("/account/", reqSignedIn, Index)
+	m.Get("/account/datasources/", reqSignedIn, Index)
+	m.Get("/admin", reqSignedIn, Index)
+	m.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up
 	m.Get("/signup", Index)
@@ -47,7 +48,7 @@ func Register(m *macaron.Macaron) {
 		m.Group("/datasources", func() {
 			m.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			m.Delete("/:id", DeleteDataSource)
-			m.Any("/proxy/:id/*", auth, ProxyDataSourceRequest)
+			m.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		})
 		// Dashboard
 		m.Group("/dashboard", func() {
@@ -57,11 +58,16 @@ func Register(m *macaron.Macaron) {
 		// Search
 		m.Get("/search/", Search)
 		// metrics
-		m.Get("/metrics/test", auth, GetTestMetrics)
-	}, auth)
+		m.Get("/metrics/test", GetTestMetrics)
+	}, reqSignedIn)
+
+	// admin api
+	m.Group("/api/admin", func() {
+		m.Get("/accounts", AdminSearchAccounts)
+	}, reqAdmin)
 
 	// rendering
-	m.Get("/render/*", auth, RenderToPng)
+	m.Get("/render/*", reqSignedIn, RenderToPng)
 
 	m.NotFound(NotFound)
 }

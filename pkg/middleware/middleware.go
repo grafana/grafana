@@ -8,8 +8,9 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
 
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
@@ -17,8 +18,11 @@ type Context struct {
 	*macaron.Context
 	Session session.Store
 
-	Account     *models.Account
-	UserAccount *models.Account
+	IsSignedIn bool
+	IsAdmin    bool
+
+	Account     *m.Account
+	UserAccount *m.Account
 }
 
 func (c *Context) GetAccountId() int64 {
@@ -30,6 +34,29 @@ func GetContextHandler() macaron.Handler {
 		ctx := &Context{
 			Context: c,
 			Session: sess,
+		}
+
+		// try get account id from request
+		if accountId, err := getRequestAccountId(ctx); err == nil {
+			// fetch user
+			userQuery := m.GetAccountByIdQuery{Id: accountId}
+			if err := bus.Dispatch(&userQuery); err != nil {
+				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
+			} else {
+				// fetch using account
+				ctx.UserAccount = userQuery.Result
+				usingQuery := m.GetAccountByIdQuery{Id: ctx.UserAccount.UsingAccountId}
+				if err := bus.Dispatch(&usingQuery); err != nil {
+					log.Error(3, "Faild to get account's using account, account: %v, usingAccountId: %v, err:%v", accountId, ctx.UserAccount.Id, err)
+				} else {
+					ctx.Account = usingQuery.Result
+				}
+			}
+		}
+
+		if ctx.Account != nil {
+			ctx.IsSignedIn = true
+			ctx.IsAdmin = ctx.Account.IsAdmin
 		}
 
 		c.Map(ctx)

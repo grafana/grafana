@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", GetAccountByToken)
 	bus.AddHandler("sql", AddCollaborator)
 	bus.AddHandler("sql", RemoveCollaborator)
+	bus.AddHandler("sql", SearchAccounts)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -172,4 +173,15 @@ func GetOtherAccounts(query *m.GetOtherAccountsQuery) error {
 	sess.Cols("collaborator.account_id", "collaborator.role", "account.email")
 	err := sess.Find(&query.Result)
 	return err
+}
+
+func SearchAccounts(query *m.SearchAccountsQuery) error {
+	query.Result = make([]*m.AccountSearchHitDTO, 0)
+	sess := x.Table("account")
+	sess.Where("email LIKE ?", query.Query+"%")
+	sess.Limit(query.Limit, query.Limit*query.Page)
+	sess.Cols("id", "email", "name")
+	err := sess.Find(&query.Result)
+	return err
+
 }
