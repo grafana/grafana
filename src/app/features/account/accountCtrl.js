@@ -18,7 +18,6 @@ function (angular) {
     $scope.getAccount = function() {
       backendSrv.get('/api/account/').then(function(account) {
         $scope.account = account;
-        $scope.collaborators = account.collaborators;
       });
     };
 
@@ -36,25 +35,10 @@ function (angular) {
       }).then($scope.getOtherAccounts);
     };
 
-    $scope.removeCollaborator = function(collaborator) {
-      backendSrv.request({
-        method: 'DELETE',
-        url: '/api/account/collaborators/' + collaborator.id,
-        desc: 'Remove collaborator',
-      }).then($scope.getAccount);
-    };
+    $scope.update = function() {
+      if (!$scope.accountForm.$valid) { return; }
 
-    $scope.addCollaborator = function() {
-      if (!$scope.addCollaboratorForm.$valid) {
-        return;
-      }
-
-      backendSrv.request({
-        method: 'PUT',
-        url: '/api/account/collaborators',
-        data: $scope.collaborator,
-        desc: 'Add collaborator'
-      }).then($scope.getAccount);
+      backendSrv.post('/api/account/', $scope.account);
     };
 
     $scope.init();

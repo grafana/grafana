@@ -8,38 +8,54 @@
 			<div class="dashboard-editor-header">
 				<div class="dashboard-editor-title">
 					<i class="fa fa-user"></i>
-					Personal information
+					Account details
 				</div>
 			</div>
 
 			<div class="dashboard-editor-body">
-				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Name</label>
-						<input type="text" class="input-xxlarge" ng-model='account.name' placeholder="name"></input>
-					</div>
-				</div>
 
-				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Email</label>
-						<input type="text" class="input-xxlarge" ng-model='account.email' placeholder="name"></input>
-					</div>
-				</div>
+				<form name="accountForm">
 
-				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Account Name</label>
-						<input type="text" class="input-xxlarge" ng-model='account.accountName' placeholder="name"></input>
+					<div class="grafana-target">
+						<div class="grafana-target-inner">
+							<ul class="grafana-segment-list">
+								<li class="grafana-target-segment" style="width: 80px">
+									<strong>Name</strong>
+								</li>
+								<li>
+									<input type="text" ng-model="account.name" class="input-xxlarge grafana-target-segment-input last" >
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+						<div class="grafana-target-inner" style="margin-top: 10px">
+							<ul class="grafana-segment-list">
+								<li class="grafana-target-segment" style="width: 80px">
+									<strong>Email</strong>
+								</li>
+								<li>
+									<input type="text" ng-model="account.email" class="input-xxlarge grafana-target-segment-input last" >
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+						<div class="grafana-target-inner" style="margin-top: 10px">
+							<ul class="grafana-segment-list">
+								<li class="grafana-target-segment" style="width: 80px">
+									<strong>Username</strong>
+								</li>
+								<li>
+									<input type="text" ng-model="account.login" class="input-xxlarge grafana-target-segment-input last" >
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
 					</div>
-				</div>
 
+					<br>
+					<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
+				</form>
 			</div>
-
-			<div class="dashboard-editor-footer">
-				<button class="btn btn-success">Update</button>
-			</div>
-
 		</div>
 
 		<div class="section">
@@ -70,43 +86,4 @@
 	</div>
 </div>
 
-<div class="dashboard-edit-view" style="border-top: solid 1px black;">
-
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
-			<i class="fa fa-users"></i>
-			Collaborators
-		</div>
-	</div>
-
-	<div class="dashboard-editor-body">
-
-		<div class="editor-row">
-			<div class="editor-option">
-				<form name="addCollaboratorForm" class="form-inline">
-					<label class="small">Add a collaborator</label>
-					<input type="text" class="input-xxlarge" ng-model='collaborator.email' placeholder="collaborator@email.com"></input>
-					<button class="btn btn-success" ng-click="addCollaborator()">Add</button>
-				</form>
-			</div>
-		</div>
-
-		<div class="editor-row row">
-			<table class="grafana-options-table span5">
-				<tr ng-repeat="collaborator in account.collaborators">
-					<td>{{collaborator.email}}</td>
-					<td>
-						{{collaborator.role}}
-					</td>
-					<td style="width: 1%">
-						<a ng-click="removeCollaborator(collaborator)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</table>
-		</div>
-
-	</div>
-</div>
 

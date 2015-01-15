@@ -8,6 +8,7 @@ define([
   './elasticsearch/datasource',
   './dashboard/all',
   './account/accountCtrl',
+  './account/collaboratorsCtrl',
   './account/datasourcesCtrl',
   './admin/accountsCtrl',
   './grafanaDatasource/datasource',

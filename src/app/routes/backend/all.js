@@ -34,6 +34,10 @@ define([
         templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
+      .when('/account/collaborators', {
+        templateUrl: 'app/features/account/partials/collaborators.html',
+        controller : 'CollaboratorsCtrl',
+      })
       .when('/account', {
         templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',

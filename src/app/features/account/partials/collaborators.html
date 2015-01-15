@@ -1,0 +1,42 @@
+<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account > Collaborators'"></div>
+
+<div class="dashboard-edit-view">
+
+	<div class="dashboard-editor-header">
+		<div class="dashboard-editor-title">
+			<i class="fa fa-users"></i>
+			Collaborators
+		</div>
+	</div>
+
+	<div class="dashboard-editor-body">
+
+		<div class="editor-row">
+			<div class="editor-option">
+				<form name="addCollaboratorForm" class="form-inline">
+					<label class="small">Add a collaborator</label>
+					<input type="text" class="input-xxlarge" ng-model='collaborator.email' placeholder="collaborator@email.com"></input>
+					<button class="btn btn-success" ng-click="addCollaborator()">Add</button>
+				</form>
+			</div>
+		</div>
+
+		<div class="editor-row row">
+			<table class="grafana-options-table span5">
+				<tr ng-repeat="collaborator in collaborators">
+					<td>{{collaborator.email}}</td>
+					<td>
+						{{collaborator.role}}
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeCollaborator(collaborator)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+	</div>
+</div>
+
