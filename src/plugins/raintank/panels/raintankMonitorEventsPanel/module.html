@@ -1,0 +1,17 @@
+<div ng-controller='raintankMonitorEventsPanel'>
+	<div class="row">
+        <div panel-scroll>
+            <table class="table">
+                <tbody>
+                    <tr ng-repeat="event in serviceEvents | orderBy:'timestamp':true" event-state>
+                        <td>{{event.timestamp | date:'medium'}}</td>
+                        <td>{{event.level}}</td>
+                        <td>{{event.location}}</td>
+                        <td>{{event.metric}}</td>
+                        <td>{{event.details}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

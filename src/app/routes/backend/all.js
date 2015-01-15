@@ -38,14 +38,6 @@ define([
         templateUrl: 'app/features/admin/partials/account.html',
         controller : 'AccountCtrl',
       })
-      .when('/location', {
-        templateUrl: 'app/features/admin/partials/locations.html',
-        controller : 'LocationCtrl',
-      })
-      .when('/monitor', {
-        templateUrl: 'app/features/admin/partials/monitors.html',
-        controller : 'MonitorCtrl',
-      })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',

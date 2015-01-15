@@ -1,0 +1,35 @@
+<div ng-controller='raintankMonitorDescription'>
+	<div class="row">
+		<div>
+			<a dash-editor-link="plugins/raintank/partials/serviceEditModal.html"><i class="icon-cog"></i></a>
+		</div>
+		<div class="panel" style="width: 50%">
+			<table class="table">
+				<tbody>
+					<tr>
+						<td><b>Name:<b></td><td>{{monitor.name}}</td>
+					</r>
+					<tr>
+						<td><b>Type:</b></td><td>{{monitor_type.name}}</td>
+					</tr>
+					<tr>
+						<td><b>Frequency:</b></td><td>{{monitor.frequency}}s</td>
+					</tr>
+					<tr>
+						<td><b>Enabled:</b></td><td><input type="checkbox" ng-model="monitor.enabled" disabled="disabled" class="form-control input-sm"/></td>
+					</tr>
+
+				</tbody>
+			</table>
+		</div>
+		<div class="panel" style="width: 50%">
+			<table class="table">
+				<tbody>
+					<tr>
+						<td><b>Tags:<b></td><td><span class="tag label label-tag" ng-repeat="tag in monitor.tags">{{tag}}</span></td>
+					</r>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

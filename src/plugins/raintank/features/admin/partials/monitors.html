@@ -22,14 +22,17 @@
 
 					<div class="editor-row row" ng-if="editor.index == 0">
 						<div class="span8">
+							<span>TODO: filters.  FilterByName, FilterByType, FilterByLocation</span>
 							<div ng-if="monitors.length === 0">
 								<em>No monitors defined</em>
 							</div>
 							<table class="grafana-options-table">
 								<tr ng-repeat="mon in monitors">
 									<td style="width:1%">
-										<i class="icon-hdd"></i> &nbsp;
-										{{mon.name}}
+										<a href="dashboard/monitor/{{mon.id}}">
+											<i class="fa fa-signal"></i>
+											{{mon.name}}
+										</a>
 									</td>
 									<td style="width:90%">
 										{{monitor_types[mon.monitor_type_id].name}}
@@ -76,13 +79,19 @@
 						</div>
 						<div class="editor-row">
 							
-							<div class="editor-option" ng-repeat="setting in current.settings">
+							<div class="editor-option" ng-repeat="setting in monitor_types[current.monitor_type_id].settings | filter:{required: 'true'}">
 								<label class="small">{{setting.variable}}</label>
-								<input type="text" class="input-large" ng-model='setting.value' placeholder="value" required></input>
+								<raintank-setting definition="setting" target="currentSettingByVariable(setting.variable)">
+							</div>
+						</div>
+						<div class="editor-row">
+							
+							<div class="editor-option" ng-repeat="setting in monitor_types[current.monitor_type_id].settings | filter:{required: 'false'}">
+								<label class="small">{{setting.variable}}</label>
+								<raintank-setting definition="setting" target="currentSettingByVariable(setting.variable)">
 							</div>
 						</div>
 
-						
 					</div>
 
 					<div class="dashboard-editor-footer" style="margin-top: 20px">

@@ -115,8 +115,31 @@ function (angular, _) {
     };
 
     $scope.typeChanged = function() {
+      $scope.current.settings = [];
       console.log($scope.current);
     }
+
+    $scope.currentSettingByVariable = function(variable) {
+      var s = {
+        "variable": variable,
+        "value": null
+      };
+      var found = false
+      _.forEach($scope.current.settings, function(setting) {
+        if (found) {
+          return;
+        }
+        if (setting.variable == variable) {
+          s = setting;
+          found = true;
+        }
+      });
+      if (! found ) {
+        $scope.current.settings.push(s);
+      }
+      return s;
+    }
+
     $scope.init();
 
   });
