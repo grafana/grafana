@@ -42,6 +42,14 @@ type CreateAccountCommand struct {
 	Result Account `json:"-"`
 }
 
+type UpdateAccountCommand struct {
+	Email string `json:"email" binding:"required"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+
+	AccountId int64 `json:"-"`
+}
+
 type SetUsingAccountCommand struct {
 	AccountId      int64
 	UsingAccountId int64
@@ -88,12 +96,6 @@ type OtherAccountDTO struct {
 	IsUsing   bool   `json:"isUsing"`
 }
 
-type CollaboratorDTO struct {
-	CollaboratorId int64  `json:"id"`
-	Email          string `json:"email"`
-	Role           string `json:"role"`
-}
-
 type AccountSearchHitDTO struct {
 	Id      int64  `json:"id"`
 	Name    string `json:"name"`
@@ -103,7 +105,7 @@ type AccountSearchHitDTO struct {
 }
 
 type AccountDTO struct {
-	Email         string             `json:"email"`
-	Name          string             `json:"name"`
-	Collaborators []*CollaboratorDTO `json:"collaborators"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	Login string `json:"login"`
 }
