@@ -188,7 +188,7 @@ func SearchAccounts(query *m.SearchAccountsQuery) error {
 	sess := x.Table("account")
 	sess.Where("email LIKE ?", query.Query+"%")
 	sess.Limit(query.Limit, query.Limit*query.Page)
-	sess.Cols("id", "email", "name")
+	sess.Cols("id", "email", "name", "login", "is_admin")
 	err := sess.Find(&query.Result)
 	return err
 

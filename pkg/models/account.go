@@ -95,9 +95,11 @@ type CollaboratorDTO struct {
 }
 
 type AccountSearchHitDTO struct {
-	Id    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Id      int64  `json:"id"`
+	Name    string `json:"name"`
+	Login   string `json:"login"`
+	Email   string `json:"email"`
+	IsAdmin bool   `json:"isAdmin"`
 }
 
 type AccountDTO struct {

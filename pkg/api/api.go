@@ -10,7 +10,7 @@ import (
 // Register adds http routes
 func Register(m *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
-	reqAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqAdmin: false})
+	reqAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqAdmin: true})
 
 	// not logged in views
 	m.Get("/", reqSignedIn, Index)
