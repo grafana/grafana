@@ -20,7 +20,7 @@ func GetLocations(c *middleware.Context) {
 	for i, l := range query.Result {
 		result[i] = &dtos.Location{
 			Id:        l.Id,
-			Code:      l.Code,
+			Slug:      l.Slug,
 			Name:      l.Name,
 			Country:   l.Country,
 			Region:    l.Region,
@@ -31,10 +31,10 @@ func GetLocations(c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func GetLocationByCode(c *middleware.Context) {
-	code := c.Params(":code")
+func GetLocationBySlug(c *middleware.Context) {
+	slug := c.Params(":slug")
 
-	query := m.GetLocationByCodeQuery{Code: code, AccountId: c.GetAccountId()}
+	query := m.GetLocationBySlugQuery{Slug: slug, AccountId: c.GetAccountId()}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Location not found", nil)
@@ -43,7 +43,7 @@ func GetLocationByCode(c *middleware.Context) {
 
 	result := &dtos.Location{
 		Id:        query.Result.Id,
-		Code:      query.Result.Code,
+		Slug:      query.Result.Slug,
 		Name:      query.Result.Name,
 		Country:   query.Result.Country,
 		Region:    query.Result.Region,
@@ -89,7 +89,7 @@ func AddLocation(c *middleware.Context) {
 	}
 	result := &dtos.Location{
 		Id:        cmd.Result.Id,
-		Code:      cmd.Result.Code,
+		Slug:      cmd.Result.Slug,
 		Name:      cmd.Result.Name,
 		Country:   cmd.Result.Country,
 		Region:    cmd.Result.Region,

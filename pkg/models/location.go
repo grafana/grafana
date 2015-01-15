@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+	"regexp"
+	"strings"
 )
 
 // Typed errors
@@ -14,7 +16,7 @@ var (
 type Location struct {
 	Id        int64
 	AccountId int64  `xorm:"not null unique(uix_location_for_account)"`
-	Code      string `xorm:"not null unique(uix_location_for_account)"` // The account being given access to
+	Slug      string `xorm:"not null unique(uix_location_for_account)"` // The account being given access to
 	Name      string
 	Country   string
 	Region    string
@@ -28,7 +30,6 @@ type Location struct {
 // COMMANDS
 
 type AddLocationCommand struct {
-	Code      string `json:"code" binding:"required"`
 	AccountId int64  `json:"-"`
 	Name      string `json:"name"`
 	Country   string `json:"country"`
@@ -41,7 +42,6 @@ type AddLocationCommand struct {
 type UpdateLocationCommand struct {
 	Id        int64  `json:"id" binding:"required"`
 	AccountId int64  `json:"-"`
-	Code      string `json:"code"`
 	Name      string `json:"name"`
 	Country   string `json:"country"`
 	Region    string `json:"region"`
@@ -62,8 +62,15 @@ type GetLocationsQuery struct {
 	Result    []*Location
 }
 
-type GetLocationByCodeQuery struct {
-	Code      string
+type GetLocationBySlugQuery struct {
+	Slug      string
 	AccountId int64
 	Result    Location
+}
+
+func (location *Location) UpdateLocationSlug() {
+	name := strings.ToLower(location.Name)
+	re := regexp.MustCompile("[^\\w ]+")
+	re2 := regexp.MustCompile("\\s")
+	location.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
 }

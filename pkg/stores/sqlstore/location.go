@@ -9,14 +9,14 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetLocations)
-	bus.AddHandler("sql", GetLocationByCode)
+	bus.AddHandler("sql", GetLocationBySlug)
 	bus.AddHandler("sql", AddLocation)
 	bus.AddHandler("sql", UpdateLocation)
 	bus.AddHandler("sql", DeleteLocation)
 }
 
-func GetLocationByCode(query *m.GetLocationByCodeQuery) error {
-	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND code=?", query.AccountId, query.Code)
+func GetLocationBySlug(query *m.GetLocationBySlugQuery) error {
+	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND slug=?", query.AccountId, query.Slug)
 	has, err := sess.Get(&query.Result)
 
 	if !has {
@@ -45,7 +45,6 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
 			AccountId: cmd.AccountId,
-			Code:      cmd.Code,
 			Name:      cmd.Name,
 			Country:   cmd.Country,
 			Region:    cmd.Region,
@@ -54,7 +53,7 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
-
+		l.UpdateLocationSlug()
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
@@ -69,7 +68,6 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 		l := &m.Location{
 			Id:        cmd.Id,
 			AccountId: cmd.AccountId,
-			Code:      cmd.Code,
 			Name:      cmd.Name,
 			Country:   cmd.Country,
 			Region:    cmd.Region,
@@ -77,7 +75,7 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 			Public:    cmd.Public,
 			Updated:   time.Now(),
 		}
-
+		l.UpdateLocationSlug()
 		_, err := sess.Where("id=? and account_id=?", l.Id, l.AccountId).Update(l)
 		return err
 	})
