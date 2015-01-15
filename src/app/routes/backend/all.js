@@ -38,9 +38,9 @@ define([
         templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',
       })
-      .when('/admin/', {
-        templateUrl: 'app/features/admin/partials/admin.html',
-        controller : 'AdminCtrl',
+      .when('/admin/accounts', {
+        templateUrl: 'app/features/admin/partials/accounts.html',
+        controller : 'AccountsCtrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
