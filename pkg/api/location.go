@@ -77,12 +77,12 @@ func AddLocation(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.UsingAccountId
-	/*if cmd.Public {
-		if c.Account.IsAdmin != true {
+	if cmd.Public {
+		if c.IsGrafanaAdmin != true {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}
-	}*/
+	}
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add location", err)
 		return
@@ -108,12 +108,12 @@ func UpdateLocation(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.UsingAccountId
-	/*if cmd.Public {
-		if c.Account.IsAdmin != true {
+	if cmd.Public {
+		if c.IsGrafanaAdmin != true {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}
-	}*/
+	}
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update location", err)
