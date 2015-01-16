@@ -16,7 +16,7 @@ import (
 
 type Context struct {
 	*macaron.Context
-	*m.SignInUser
+	*m.SignedInUser
 
 	Session session.Store
 
@@ -37,7 +37,7 @@ func GetContextHandler() macaron.Handler {
 				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
 			} else {
 				ctx.IsSignedIn = true
-				ctx.SignInUser = query.Result
+				ctx.SignedInUser = query.Result
 			}
 		} else if token := getApiToken(ctx); token != "" {
 			// Try API Key auth
@@ -54,12 +54,12 @@ func GetContextHandler() macaron.Handler {
 				}
 
 				ctx.IsSignedIn = true
-				ctx.SignInUser = query.Result
+				ctx.SignedInUser = query.Result
 
 				// api key role
-				ctx.SignInUser.UserRole = tokenInfo.Role
-				ctx.SignInUser.UsingAccountId = ctx.SignInUser.AccountId
-				ctx.SignInUser.UsingAccountName = ctx.SignInUser.UserName
+				ctx.UserRole = tokenInfo.Role
+				ctx.UsingAccountId = ctx.AccountId
+				ctx.UsingAccountName = ctx.UserName
 			}
 		}
 

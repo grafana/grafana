@@ -174,7 +174,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                LEFT OUTER JOIN collaborator on collaborator.account_id = usingAccount.id AND collaborator.collaborator_id = userAccount.id
 	                WHERE userAccount.id=?`
 
-	var user m.SignInUser
+	var user m.SignedInUser
 	sess := x.Table("account")
 	has, err := sess.Sql(rawSql, query.AccountId).Get(&user)
 	if err != nil {
