@@ -7,6 +7,10 @@ import (
 )
 
 func AddCollaborator(c *middleware.Context, cmd m.AddCollaboratorCommand) {
+	if !cmd.Role.IsValid() {
+		c.JsonApiErr(400, "Invalid role specified", nil)
+		return
+	}
 
 	userQuery := m.GetAccountByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)

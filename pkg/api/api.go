@@ -46,7 +46,10 @@ func Register(r *macaron.Macaron) {
 		})
 		// Token
 		r.Group("/tokens", func() {
-			r.Combo("/").Get(GetTokens).Put(AddToken).Post(UpdateToken)
+			r.Combo("/").
+				Get(GetTokens).
+				Put(bind(m.AddTokenCommand{}), AddToken).
+				Post(bind(m.UpdateTokenCommand{}), UpdateToken)
 			r.Delete("/:id", DeleteToken)
 		})
 		// Data sources
