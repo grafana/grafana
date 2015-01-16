@@ -1,0 +1,23 @@
+[----------] Running tests from PanickingTest
+[ RUN      ] PanickingTest.PanickingTest
+TearDown running.
+panicking_test.go:44:
+panic: foobar
+
+github.com/smartystreets/goconvey/convey/assertions/ogletest/somepkg_test.(*PanickingTest).PanickingTest
+	some_file.txt:0
+reflect.Value.call
+	some_file.txt:0
+reflect.Value.Call
+	some_file.txt:0
+
+
+[  FAILED  ] PanickingTest.PanickingTest
+[ RUN      ] PanickingTest.ZzzSomeOtherTest
+TearDown running.
+[       OK ] PanickingTest.ZzzSomeOtherTest
+[----------] Finished with tests from PanickingTest
+--- FAIL: somepkg (1.23 seconds)
+FAIL
+exit status 1
+FAIL somepkg 1.234s
