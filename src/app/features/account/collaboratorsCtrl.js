@@ -8,7 +8,10 @@ function (angular) {
 
   module.controller('CollaboratorsCtrl', function($scope, $http, backendSrv) {
 
-    $scope.collaborator = {};
+    $scope.collaborator = {
+      loginOrEmail: '',
+      role: 'Viewer',
+    };
 
     $scope.init = function() {
       $scope.get();
@@ -17,7 +20,6 @@ function (angular) {
     $scope.get = function() {
       backendSrv.get('/api/account/collaborators').then(function(collaborators) {
         $scope.collaborators = collaborators;
-        console.log(collaborators);
       });
     };
 
@@ -30,7 +32,7 @@ function (angular) {
     };
 
     $scope.addCollaborator = function() {
-      if (!$scope.addCollaboratorForm.$valid) {
+      if (!$scope.form.$valid) {
         return;
       }
 
