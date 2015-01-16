@@ -1,8 +1,11 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
+
+var ErrInvalidToken = errors.New("Invalid token")
 
 type Token struct {
 	Id        int64
@@ -47,9 +50,9 @@ type GetTokensQuery struct {
 	Result    []*Token
 }
 
-type GetAccountByTokenQuery struct {
+type GetTokenByTokenQuery struct {
 	Token  string
-	Result *Account
+	Result *Token
 }
 
 // ------------------------

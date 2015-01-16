@@ -31,13 +31,35 @@ func GetContextHandler() macaron.Handler {
 		}
 
 		// try get account id from request
-		if accountId, err := getRequestAccountId(ctx); err == nil {
+		if accountId := getRequestAccountId(ctx); accountId != 0 {
 			query := m.GetSignedInUserQuery{AccountId: accountId}
 			if err := bus.Dispatch(&query); err != nil {
 				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
 			} else {
 				ctx.IsSignedIn = true
 				ctx.SignInUser = query.Result
+			}
+		} else if token := getApiToken(ctx); token != "" {
+			// Try API Key auth
+			tokenQuery := m.GetTokenByTokenQuery{Token: token}
+			if err := bus.Dispatch(&tokenQuery); err != nil {
+				ctx.JsonApiErr(401, "Invalid token", err)
+				return
+			} else {
+				tokenInfo := tokenQuery.Result
+				query := m.GetSignedInUserQuery{AccountId: tokenInfo.AccountId}
+				if err := bus.Dispatch(&query); err != nil {
+					ctx.JsonApiErr(401, "Invalid token", err)
+					return
+				}
+
+				ctx.IsSignedIn = true
+				ctx.SignInUser = query.Result
+
+				// api key role
+				ctx.SignInUser.UserRole = tokenInfo.Role
+				ctx.SignInUser.UsingAccountId = ctx.SignInUser.AccountId
+				ctx.SignInUser.UsingAccountName = ctx.SignInUser.UserName
 			}
 		}
 
