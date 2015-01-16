@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/Unknwon/macaron"
@@ -22,12 +21,11 @@ func getRequestAccountId(c *Context) int64 {
 		return accountId.(int64)
 	}
 
-	// localhost render query
-	urlQuery := c.Req.URL.Query()
-	if len(urlQuery["render"]) > 0 {
-		accId, _ := strconv.ParseInt(urlQuery["accountId"][0], 10, 64)
-		c.Session.Set("accountId", accId)
-		accountId = accId
+	// TODO: figure out a way to secure this
+	if c.Query("render") == "1" {
+		accountId := c.QueryInt64("accountId")
+		c.Session.Set("accountId", accountId)
+		return accountId
 	}
 
 	return 0
