@@ -126,8 +126,13 @@ function (angular, app, _, kbn, $) {
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
-            // ignore empty series
+            // ignore null series
             if (panel.legend.hideEmpty && series.allIsNull) {
+              continue;
+            }
+
+            // ignore zero series
+            if (panel.legend.hideZero && series.allIsZero) {
               continue;
             }
 
