@@ -13,6 +13,7 @@ import (
 func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_OWNER)
 	bind := binding.Bind
 
 	// not logged in views
@@ -63,7 +64,7 @@ func Register(r *macaron.Macaron) {
 		// Dashboard
 		r.Group("/dashboard", func() {
 			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			r.Post("/", bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Post("/", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 		})
 		// Search
 		r.Get("/search/", Search)

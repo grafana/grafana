@@ -60,6 +60,21 @@ func authDenied(c *Context) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
+func RoleAuth(roles ...m.RoleType) macaron.Handler {
+	return func(c *Context) {
+		ok := false
+		for _, role := range roles {
+			if role == c.UserRole {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			authDenied(c)
+		}
+	}
+}
+
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
 

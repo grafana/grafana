@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/torkelo/grafana-pro",
 	"GoVersion": "go1.3",
+	"Packages": [
+		"."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -32,6 +35,11 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.1-19-g5c23849",
 			"Rev": "5c23849a66f4593e68909bb6c1fa30651b5b0541"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-13-g19eeca3",
+			"Rev": "19eeca3e30d2577b1761db471ec130810e67f532"
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/binding",
