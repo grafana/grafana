@@ -23,10 +23,10 @@ import (
 	"time"
 )
 
-var isWindows bool
+var ColorLog = true
 
 func init() {
-	isWindows = runtime.GOOS == "windows"
+	ColorLog = runtime.GOOS != "windows"
 }
 
 // Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
@@ -34,13 +34,13 @@ func Logger() Handler {
 	return func(ctx *Context, log *log.Logger) {
 		start := time.Now()
 
-		log.Printf("Started %s %s for %s", ctx.Req.Method,ctx.Req.RequestURI, ctx.RemoteAddr())
+		log.Printf("Started %s %s for %s", ctx.Req.Method, ctx.Req.RequestURI, ctx.RemoteAddr())
 
 		rw := ctx.Resp.(ResponseWriter)
 		ctx.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v",  ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
-		if !isWindows {
+		content := fmt.Sprintf("Completed %s %v %s in %v", ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		if ColorLog {
 			switch rw.Status() {
 			case 200, 201, 202:
 				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
