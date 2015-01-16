@@ -78,7 +78,7 @@
 }
 
 //.grafana-target-function {
-.tight-form-item-func {
+.tight-form-func {
   background: @grafanaTargetFuncBackground;
   > a {
     color: @grafanaTargetColor;
@@ -103,16 +103,16 @@ input[type=text].tight-form-func-param {
 }
 
 //input[type=text].grafana-target-text-input {
-// input[type=text].tight-form-input {
-//   padding: 8px 7px;
-//   border: none;
-//   margin: 0px;
-//   background: transparent;
-//   float: left;
-//   color: @grafanaTargetColor;
-//   border-radius: 0;
-//   border-right: 1px solid @grafanaTargetSegmentBorder;
-// }
+input[type=text].tight-form-clear-input {
+  padding: 8px 7px;
+  border: none;
+  margin: 0px;
+  background: transparent;
+  float: left;
+  color: @grafanaTargetColor;
+  border-radius: 0;
+  border-right: 1px solid @grafanaTargetSegmentBorder;
+}
 
 //[type=text].grafana-target-segment-input, [type=number].grafana-target-segment-input {
 [type=text].tight-form-input, [type=number].tight-form-input {
@@ -126,9 +126,10 @@ input[type=text].tight-form-func-param {
   }
 }
 
-// input[type=checkbox].grafana-target-option-checkbox {
-//   margin: 0;
-// }
+//input[type=checkbox].grafana-target-option-checkbox {
+input[type=checkbox].tight-form-checkbox {
+  margin: 0;
+}
 
 select.tight-form-input {
   border: none;

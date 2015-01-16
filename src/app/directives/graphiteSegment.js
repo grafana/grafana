@@ -11,10 +11,10 @@ function (angular, app, _, $) {
     .module('grafana.directives')
     .directive('graphiteSegment', function($compile, $sce) {
       var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-                            ' class="grafana-target-text-input input-medium"' +
+                            ' class="tight-form-clear-input input-medium"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a class="grafana-target-segment" tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
+      var buttonTemplate = '<a class="tight-form-item" tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
 
       return {
         link: function($scope, elem) {

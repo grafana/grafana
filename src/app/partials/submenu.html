@@ -1,9 +1,9 @@
 <div class="submenu-controls" ng-controller="SubmenuCtrl">
-		<div class="grafana-target">
-			<div class="grafana-target-inner" style="border-top: none">
+		<div class="tight-form">
+			<div class="tight-form-row" style="border-top: none">
 
-				<ul class="grafana-segment-list">
-					<li class="grafana-target-segment">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
 						<div class="dropdown">
 							<a class="pointer" data-toggle="dropdown">
 								<i class="fa fa-cog"></i>
@@ -16,8 +16,8 @@
 					</li>
 				</ul>
 
-				<ul class="grafana-segment-list" ng-if="dashboard.templating.enable">
-					<li ng-repeat-start="variable in variables" class="grafana-target-segment template-param-name">
+				<ul class="tight-form-list" ng-if="dashboard.templating.enable">
+					<li ng-repeat-start="variable in variables" class="tight-form-item template-param-name">
 						<span class="template-variable ">
 						${{variable.name}}:
 						</span>
@@ -27,8 +27,8 @@
 					</li>
 				</ul>
 
-				<ul class="grafana-segment-list" ng-if="dashboard.annotations.enable">
-					<li ng-repeat="annotation in dashboard.annotations.list" class="grafana-target-segment annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
+				<ul class="tight-form-list" ng-if="dashboard.annotations.enable">
+					<li ng-repeat="annotation in dashboard.annotations.list" class="tight-form-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 						<a ng-click="disableAnnotation(annotation)">
 							<i class="annotation-color-icon fa fa-bolt"></i>
 							{{annotation.name}}

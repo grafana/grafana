@@ -12,10 +12,10 @@ function (angular, app, _, $, gfunc) {
     .module('grafana.directives')
     .directive('graphiteAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
-                            ' class="grafana-target-segment-input input-medium grafana-target-segment-input"' +
+                            ' class="tight-form-input input-medium tight-form-input"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="grafana-target-segment grafana-target-function dropdown-toggle"' +
+      var buttonTemplate = '<a  class="tight-form-item tight-form-func dropdown-toggle"' +
                               ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown"' +
                               ' data-placement="top"><i class="fa fa-plus"></i></a>';
 
