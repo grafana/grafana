@@ -146,13 +146,12 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 	if ctx.Render == nil {
 		panic("renderer middleware hasn't been registered")
 	}
-	if len(data) == 0 {
+	if len(data) <= 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
-	} else {
+	} else if len(data) == 1 {
 		ctx.Render.HTMLSet(status, setName, tplName, data[0])
-		if len(data) > 1 {
-			ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
-		}
+	} else {
+		ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
 	}
 }
 
@@ -212,21 +211,33 @@ func (ctx *Context) QueryInt64(name string) int64 {
 }
 
 // Params returns value of given param name.
+// e.g. ctx.Params(":uid")
 func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
 }
 
+// SetParams sets value of param with given name.
+func (ctx *Context) SetParams(name, val string) {
+	if !strings.HasPrefix(name, ":") {
+		name = ":" + name
+	}
+	ctx.params[name] = val
+}
+
 // ParamsEscape returns escapred params result.
+// e.g. ctx.ParamsEscape(":uname")
 func (ctx *Context) ParamsEscape(name string) string {
 	return template.HTMLEscapeString(ctx.Params(name))
 }
 
 // ParamsInt returns params result in int type.
+// e.g. ctx.ParamsInt(":uid")
 func (ctx *Context) ParamsInt(name string) int {
 	return com.StrTo(ctx.Params(name)).MustInt()
 }
 
 // ParamsInt64 returns params result in int64 type.
+// e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
 	return com.StrTo(ctx.Params(name)).MustInt64()
 }
