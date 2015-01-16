@@ -1,10 +1,11 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/go-xorm/xorm"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"time"
 )
 
 func init() {
@@ -30,7 +31,6 @@ func DeleteToken(cmd *m.DeleteTokenCommand) error {
 }
 
 func AddToken(cmd *m.AddTokenCommand) error {
-
 	return inTransaction(func(sess *xorm.Session) error {
 		t := m.Token{
 			AccountId: cmd.AccountId,

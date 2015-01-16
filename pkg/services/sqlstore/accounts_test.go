@@ -30,6 +30,16 @@ func TestAccountDataAccess(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(query.Result.Email, ShouldEqual, "ac1@test.com")
+				So(query.Result.Login, ShouldEqual, "ac1")
+			})
+
+			Convey("Can search accounts", func() {
+				query := m.SearchAccountsQuery{Query: ""}
+				err := SearchAccounts(&query)
+
+				So(err, ShouldBeNil)
+				So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
+				So(query.Result[1].Email, ShouldEqual, "ac2@test.com")
 			})
 
 			Convey("Can add collaborator", func() {
@@ -42,16 +52,6 @@ func TestAccountDataAccess(t *testing.T) {
 				err := AddCollaborator(&cmd)
 				Convey("Saved without error", func() {
 					So(err, ShouldBeNil)
-				})
-
-				Convey("Collaborator should be included in account info projection", func() {
-					query := m.GetAccountInfoQuery{Id: ac1.Id}
-					err = GetAccountInfo(&query)
-
-					So(err, ShouldBeNil)
-					So(query.Result.Collaborators[0].CollaboratorId, ShouldEqual, ac2.Id)
-					So(query.Result.Collaborators[0].Role, ShouldEqual, m.ROLE_READ_WRITE)
-					So(query.Result.Collaborators[0].Email, ShouldEqual, "ac2@test.com")
 				})
 
 				Convey("Can get other accounts", func() {
