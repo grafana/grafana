@@ -41,18 +41,11 @@ func DeleteToken(c *middleware.Context) {
 	c.JsonOK("Token deleted")
 }
 
-func AddToken(c *middleware.Context) {
-	cmd := m.AddTokenCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
+func AddToken(c *middleware.Context, cmd m.AddTokenCommand) {
+	if !cmd.Role.IsValid() {
+		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
 	}
-
-	// if cmd.Role != m.ROLE_READ_WRITE && cmd.Role != m.ROLE_READ {
-	// 	c.JsonApiErr(400, "Invalid role specified", nil)
-	// 	return
-	// }
 
 	cmd.AccountId = c.Account.Id
 	cmd.Token = util.GetRandomString(64)
@@ -61,20 +54,20 @@ func AddToken(c *middleware.Context) {
 		c.JsonApiErr(500, "Failed to add token", err)
 		return
 	}
+
 	result := &m.TokenDTO{
 		Id:    cmd.Result.Id,
 		Name:  cmd.Result.Name,
 		Role:  cmd.Result.Role,
 		Token: cmd.Result.Token,
 	}
+
 	c.JSON(200, result)
 }
 
-func UpdateToken(c *middleware.Context) {
-	cmd := m.UpdateTokenCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
+func UpdateToken(c *middleware.Context, cmd m.UpdateTokenCommand) {
+	if !cmd.Role.IsValid() {
+		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
 	}
 

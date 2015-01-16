@@ -19,12 +19,8 @@ const (
 	ROLE_ADMIN  RoleType = "Admin"
 )
 
-func (r RoleType) Validate() error {
-	if r == ROLE_OWNER || r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR {
-		return nil
-	}
-
-	return ErrInvalidRoleType
+func (r RoleType) IsValid() bool {
+	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
 }
 
 type Collaborator struct {
