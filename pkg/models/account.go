@@ -87,12 +87,12 @@ type SearchAccountsQuery struct {
 
 type GetSignedInUserQuery struct {
 	AccountId int64
-	Result    *SignInUser
+	Result    *SignedInUser
 }
 
 // ------------------------
 // DTO & Projections
-type SignInUser struct {
+type SignedInUser struct {
 	AccountId        int64
 	UsingAccountId   int64
 	UsingAccountName string
