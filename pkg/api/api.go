@@ -25,6 +25,8 @@ func Register(r *macaron.Macaron) {
 	// authed views
 	r.Get("/account/", reqSignedIn, Index)
 	r.Get("/account/datasources/", reqSignedIn, Index)
+	r.Get("/account/collaborators/", reqSignedIn, Index)
+	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/admin", reqSignedIn, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 

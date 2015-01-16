@@ -6,7 +6,6 @@ import (
 )
 
 // Typed errors
-
 var (
 	ErrAccountNotFound = errors.New("Account not found")
 )

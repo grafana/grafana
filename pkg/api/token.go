@@ -8,7 +8,7 @@ import (
 )
 
 func GetTokens(c *middleware.Context) {
-	query := m.GetTokensQuery{AccountId: c.Account.Id}
+	query := m.GetTokensQuery{AccountId: c.UserAccount.Id}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -47,7 +47,7 @@ func AddToken(c *middleware.Context, cmd m.AddTokenCommand) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.UserAccount.Id
 	cmd.Token = util.GetRandomString(64)
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -71,7 +71,7 @@ func UpdateToken(c *middleware.Context, cmd m.UpdateTokenCommand) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.UserAccount.Id
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
