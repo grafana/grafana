@@ -52,6 +52,10 @@ function (angular, _, kbn) {
       return backendSrv.post('/api/dashboard/', { dashboard: dashboard })
         .then(function(data) {
           return { title: dashboard.title, url: '/dashboard/db/' + data.slug };
+        }, function(err) {
+          err.isHandled = true;
+          err.data = err.data || {};
+          throw err.data.message || "Unknown error";
         });
     };
 

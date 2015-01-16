@@ -9,7 +9,6 @@ function (angular) {
   module.controller('AccountCtrl', function($scope, $http, backendSrv) {
 
     $scope.collaborator = {};
-   $scope.showTokens = false;
 
     $scope.init = function() {
       $scope.getAccount();
