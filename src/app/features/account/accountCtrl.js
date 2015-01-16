@@ -9,10 +9,20 @@ function (angular) {
   module.controller('AccountCtrl', function($scope, $http, backendSrv) {
 
     $scope.collaborator = {};
+    $scope.token = {
+      role: "ReadWrite"
+    };
+    $scope.roleTypes = [
+      "ReadWrite",
+      "Read"
+    ];
+    $scope.showTokens = false;
 
     $scope.init = function() {
       $scope.getAccount();
       $scope.getOtherAccounts();
+      $scope.getTokens();
+      
     };
 
     $scope.getAccount = function() {
@@ -34,6 +44,25 @@ function (angular) {
         desc: 'Change active account',
       }).then($scope.getOtherAccounts);
     };
+
+    $scope.getTokens = function() {
+      backendSrv.get('/api/tokens').then(function(tokens) {
+        $scope.tokens = tokens;
+      });
+    }
+
+    $scope.removeToken = function(id) {
+      backendSrv.delete('/api/tokens/'+id).then($scope.getTokens);
+    }
+
+    $scope.addToken = function() {
+      backendSrv.request({
+        method: 'PUT',
+        url: '/api/tokens',
+        data: $scope.token,
+        desc: 'Add token'
+      }).then($scope.getTokens);
+    }
 
     $scope.update = function() {
       if (!$scope.accountForm.$valid) { return; }
