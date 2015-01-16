@@ -1,24 +1,22 @@
 <div class="editor-row">
 
 	<div  ng-repeat="target in panel.targets"
-        class="grafana-target"
-        ng-class="{'grafana-target-hidden': target.hide}"
+        class="tight-form"
+        ng-class="{'tight-form-disabled': target.hide}"
         ng-controller="GraphiteQueryCtrl"
         ng-init="init()">
-
-    <div class="grafana-target-inner">
-      <ul class="grafana-segment-list pull-right">
-        <li ng-show="parserError" class="grafana-target-segment">
+      <ul class="tight-form-list pull-right">
+        <li ng-show="parserError" class="tight-form-item">
           <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
             <i class="fa fa-warning"></i>
           </a>
         </li>
-        <li class="grafana-target-segment">
+        <li class="tight-form-item">
           <a class="pointer" tabindex="1" ng-click="showTextEditor = !showTextEditor">
             <i class="fa fa-pencil"></i>
           </a>
         </li>
-        <li class="grafana-target-segment">
+        <li class="tight-form-item">
 					<div class="dropdown">
 						<a  class="pointer dropdown-toggle"
 							data-toggle="dropdown"
@@ -47,19 +45,19 @@
 						</ul>
 					</div>
 				</li>
-				<li class="grafana-target-segment last">
+				<li class="tight-form-item last">
 					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
 						<i class="fa fa-remove"></i>
 					</a>
 				</li>
 			</ul>
 
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment" style="min-width: 15px; text-align: center">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="min-width: 15px; text-align: center">
 					{{targetLetters[$index]}}
 				</li>
 				<li>
-					<a  class="grafana-target-segment"
+					<a  class="tight-form-item"
 						ng-click="target.hide = !target.hide; get_data();"
 						role="menuitem">
 						<i class="fa fa-eye"></i>
@@ -68,17 +66,17 @@
 			</ul>
 
 			<input  type="text"
-			class="grafana-target-text-input span10"
+			class="tight-form-clear-input span10"
               ng-model="target.target"
               focus-me="showTextEditor"
               spellcheck='false'
               ng-model-onblur ng-change="targetTextChanged()"
               ng-show="showTextEditor" />
 
-      <ul class="grafana-segment-list" role="menu" ng-hide="showTextEditor">
+      <ul class="tight-form-list" role="menu" ng-hide="showTextEditor">
         <li ng-repeat="segment in segments" role="menuitem" graphite-segment></li>
 				<li ng-repeat="func in functions">
-          <span graphite-func-editor class="grafana-target-segment grafana-target-function">
+          <span graphite-func-editor class="tight-form-item tight-form-func">
           </span>
         </li>
         <li class="dropdown" graphite-add-func>
@@ -86,80 +84,75 @@
       </ul>
       <div class="clearfix"></div>
     </div>
-  </div>
-
 </div>
 
 <section class="grafana-metric-options">
-	<div class="grafana-target">
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="fa fa-wrench"></i>
-				</li>
-				<li class="grafana-target-segment">
-					Cache timeout
-				</li>
-				<li>
-					<input type="text"
-								class="input-mini grafana-target-segment-input"
-								ng-model="panel.cacheTimeout"
-								bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
-								data-placement="right"
-								spellcheck='false'
-								placeholder="60">
-				</li>
-				<li class="grafana-target-segment">
-					Max data points
-				</li>
-				<li>
-					<input type="text"
-								class="input-mini grafana-target-segment-input"
-								ng-model="panel.maxDataPoints"
-								bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
-								data-placement="right"
-								ng-model-onblur ng-change="get_data()"
-								spellcheck='false'
-								placeholder="auto">
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="fa fa-info-circle"></i>
-				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						shorter legend names
-					</a>
-				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						series as parameters
-					</a>
-				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						stacking
-					</a>
-				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						templating
-					</a>
-				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						max data points
-					</a>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-wrench"></i>
+			</li>
+			<li class="tight-form-item">
+				Cache timeout
+			</li>
+			<li>
+				<input type="text"
+				class="input-mini tight-form-input"
+				ng-model="panel.cacheTimeout"
+				bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
+				data-placement="right"
+				spellcheck='false'
+				placeholder="60">
+			</li>
+			<li class="tight-form-item">
+				Max data points
+			</li>
+			<li>
+				<input type="text"
+				class="input-mini tight-form-input"
+				ng-model="panel.maxDataPoints"
+				bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
+				data-placement="right"
+				ng-model-onblur ng-change="get_data()"
+				spellcheck='false'
+				placeholder="auto">
+			</li>
+		</ul>
+		<div class="clearfix"></div>
 	</div>
- </div>
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-info-circle"></i>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					shorter legend names
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					series as parameters
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					stacking
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					templating
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					max data points
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
 </section>
 
 <div class="editor-row">

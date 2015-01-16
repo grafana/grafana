@@ -11,10 +11,10 @@ function (angular, app, _, $) {
     .module('grafana.directives')
     .directive('templateParamSelector', function($compile) {
       var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-                            ' class="grafana-target-text-input input-medium"' +
+                            ' class="tight-form-clear-input input-medium"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="grafana-target-segment tabindex="1">{{variable.current.text}}</a>';
+      var buttonTemplate = '<a  class="tight-form-item tabindex="1">{{variable.current.text}}</a>';
 
       return {
         link: function($scope, elem) {

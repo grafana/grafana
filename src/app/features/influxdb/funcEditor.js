@@ -14,7 +14,7 @@ function (angular, _, $) {
                              'data-toggle="dropdown">{{target.function}}</a><span>(</span>';
 
       var paramTemplate = '<input type="text" style="display:none"' +
-                          ' class="input-mini grafana-function-param-input"></input>';
+                          ' class="input-mini tight-form-func-param"></input>';
 
       return {
         restrict: 'A',
