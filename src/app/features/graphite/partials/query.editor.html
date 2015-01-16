@@ -5,8 +5,6 @@
         ng-class="{'tight-form-disabled': target.hide}"
         ng-controller="GraphiteQueryCtrl"
         ng-init="init()">
-
-    <div class="tight-form-row">
       <ul class="tight-form-list pull-right">
         <li ng-show="parserError" class="tight-form-item">
           <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
@@ -86,80 +84,75 @@
       </ul>
       <div class="clearfix"></div>
     </div>
-  </div>
-
 </div>
 
 <section class="grafana-metric-options">
 	<div class="tight-form">
-		<div class="tight-form-row">
-			<ul class="tight-form-list">
-				<li class="tight-form-item tight-form-item-icon">
-					<i class="fa fa-wrench"></i>
-				</li>
-				<li class="tight-form-item">
-					Cache timeout
-				</li>
-				<li>
-					<input type="text"
-								class="input-mini tight-form-input"
-								ng-model="panel.cacheTimeout"
-								bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
-								data-placement="right"
-								spellcheck='false'
-								placeholder="60">
-				</li>
-				<li class="tight-form-item">
-					Max data points
-				</li>
-				<li>
-					<input type="text"
-								class="input-mini tight-form-input"
-								ng-model="panel.maxDataPoints"
-								bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
-								data-placement="right"
-								ng-model-onblur ng-change="get_data()"
-								spellcheck='false'
-								placeholder="auto">
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form-row">
-			<ul class="tight-form-list">
-				<li class="tight-form-item tight-form-item-icon">
-					<i class="fa fa-info-circle"></i>
-				</li>
-				<li class="tight-form-item">
-					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						shorter legend names
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						series as parameters
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						stacking
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						templating
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						max data points
-					</a>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-wrench"></i>
+			</li>
+			<li class="tight-form-item">
+				Cache timeout
+			</li>
+			<li>
+				<input type="text"
+				class="input-mini tight-form-input"
+				ng-model="panel.cacheTimeout"
+				bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
+				data-placement="right"
+				spellcheck='false'
+				placeholder="60">
+			</li>
+			<li class="tight-form-item">
+				Max data points
+			</li>
+			<li>
+				<input type="text"
+				class="input-mini tight-form-input"
+				ng-model="panel.maxDataPoints"
+				bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
+				data-placement="right"
+				ng-model-onblur ng-change="get_data()"
+				spellcheck='false'
+				placeholder="auto">
+			</li>
+		</ul>
+		<div class="clearfix"></div>
 	</div>
- </div>
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-info-circle"></i>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					shorter legend names
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					series as parameters
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					stacking
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					templating
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					max data points
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
 </section>
 
 <div class="editor-row">

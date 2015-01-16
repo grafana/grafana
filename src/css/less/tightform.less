@@ -1,19 +1,26 @@
-
-// old graphite-target
-.tight-form:last-child {
-  border-bottom: 1px solid @grafanaTargetBorder;
-  .dropdown {
-    padding: 0; margin: 0;
-  }
-}
-
-// old graphite-target-inner
-.tight-form-row {
+.tight-form {
   border-top: 1px solid @grafanaTargetBorder;
   border-left: 1px solid @grafanaTargetBorder;
   border-right: 1px solid @grafanaTargetBorder;
   background: @grafanaTargetBackground;
   width: 100%;
+
+  .dropdown {
+    padding: 0; margin: 0;
+  }
+
+  &:last-child {
+    border-bottom: 1px solid @grafanaTargetBorder;
+  }
+}
+
+.tight-form-container {
+  .tight-form:last-child {
+    border-bottom: none;
+  }
+  &:last-child {
+    border-bottom: 1px solid @grafanaTargetBorder;
+  }
 }
 
 // old graphite-segment-list

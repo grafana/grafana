@@ -126,7 +126,7 @@ function (angular, _, $) {
           }
 
           function toggleFuncControls() {
-            var targetDiv = elem.closest('.tight-form-row');
+            var targetDiv = elem.closest('.tight-form');
 
             if (elem.hasClass('show-function-controls')) {
               elem.removeClass('show-function-controls');

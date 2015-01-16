@@ -1,10 +1,12 @@
 <div class="editor-row" style="margin-top: 10px;">
+
   <div  ng-repeat="target in panel.targets"
-        class="tight-form"
+        class="tight-form-container"
         ng-class="{'tight-form-disabled': target.hide}"
         ng-controller="OpenTSDBQueryCtrl"
         ng-init="init()">
-    <div class="tight-form-row">
+
+    <div class="tight-form">
 			<ul class="tight-form-list pull-right">
 				<li class="tight-form-item">
 					<div class="dropdown">
@@ -134,7 +136,7 @@
       <div class="clearfix"></div>
     </div>
 
-    <div class="tight-form-row">
+    <div class="tight-form">
       <ul class="tight-form-list" role="menu">
 
         <li class="tight-form-item">
@@ -209,7 +211,6 @@
             </a>
         </li>
       </ul>
-
       <div class="clearfix"></div>
     </div>
   </div>
