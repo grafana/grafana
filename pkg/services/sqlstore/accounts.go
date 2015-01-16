@@ -134,11 +134,15 @@ func GetAccountByToken(query *m.GetAccountByTokenQuery) error {
 }
 
 func GetAccountByLogin(query *m.GetAccountByLoginQuery) error {
+	if query.LoginOrEmail == "" {
+		return m.ErrAccountNotFound
+	}
+
 	account := new(m.Account)
-	if strings.Contains(query.Login, "@") {
-		account = &m.Account{Email: query.Login}
+	if strings.Contains(query.LoginOrEmail, "@") {
+		account = &m.Account{Email: query.LoginOrEmail}
 	} else {
-		account = &m.Account{Login: strings.ToLower(query.Login)}
+		account = &m.Account{Login: strings.ToLower(query.LoginOrEmail)}
 	}
 
 	has, err := x.Get(account)

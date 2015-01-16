@@ -51,7 +51,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	log.Info("login.OAuthLogin(social login): %s", userInfo)
 
-	userQuery := m.GetAccountByLoginQuery{Login: userInfo.Email}
+	userQuery := m.GetAccountByLoginQuery{LoginOrEmail: userInfo.Email}
 	err = bus.Dispatch(&userQuery)
 
 	// create account if missing

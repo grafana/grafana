@@ -74,8 +74,8 @@ type GetAccountByIdQuery struct {
 }
 
 type GetAccountByLoginQuery struct {
-	Login  string
-	Result *Account
+	LoginOrEmail string
+	Result       *Account
 }
 
 type SearchAccountsQuery struct {
