@@ -9,7 +9,7 @@ import (
 func GetMonitorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	query := m.GetMonitorByIdQuery{Id: id, AccountId: c.GetAccountId()}
+	query := m.GetMonitorByIdQuery{Id: id, AccountId: c.UsingAccountId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Monitor not found", nil)
@@ -20,7 +20,7 @@ func GetMonitorById(c *middleware.Context) {
 }
 
 func GetMonitors(c *middleware.Context) {
-	query := m.GetMonitorsQuery{AccountId: c.Account.Id}
+	query := m.GetMonitorsQuery{AccountId: c.UsingAccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -44,7 +44,7 @@ func GetMonitorTypes(c *middleware.Context) {
 func DeleteMonitor(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteMonitorCommand{Id: id, AccountId: c.UserAccount.Id}
+	cmd := &m.DeleteMonitorCommand{Id: id, AccountId: c.UsingAccountId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -63,7 +63,7 @@ func AddMonitor(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.UsingAccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add monitor", err)
@@ -81,7 +81,7 @@ func UpdateMonitor(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.UsingAccountId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

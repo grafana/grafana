@@ -2,85 +2,103 @@ package api
 
 import (
 	"github.com/Unknwon/macaron"
+	"github.com/macaron-contrib/binding"
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 // Register adds http routes
-func Register(m *macaron.Macaron) {
-	auth := middleware.Auth()
+func Register(r *macaron.Macaron) {
+	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
+	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	bind := binding.Bind
 
 	// not logged in views
-	m.Get("/", auth, Index)
-	m.Post("/logout", LogoutPost)
-	m.Post("/login", LoginPost)
-	m.Get("/login/:name", OAuthLogin)
-	m.Get("/login", Index)
+	r.Get("/", reqSignedIn, Index)
+	r.Post("/logout", LogoutPost)
+	r.Post("/login", LoginPost)
+	r.Get("/login/:name", OAuthLogin)
+	r.Get("/login", Index)
 
 	// authed views
-	m.Get("/account/", auth, Index)
-	m.Get("/account/datasources/", auth, Index)
-	m.Get("/admin", auth, Index)
-	m.Get("/dashboard/*", auth, Index)
-	m.Get("/location", auth, Index)
-	m.Get("/monitor", auth, Index)
+	r.Get("/account/", reqSignedIn, Index)
+	r.Get("/account/datasources/", reqSignedIn, Index)
+	r.Get("/account/collaborators/", reqSignedIn, Index)
+	r.Get("/account/apikeys/", reqSignedIn, Index)
+	r.Get("/admin", reqSignedIn, Index)
+	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/location", reqSignedIn, Index)
+	r.Get("/monitor", reqSignedIn, Index)
+
 
 	// sign up
-	m.Get("/signup", Index)
-	m.Post("/api/account/signup", SignUp)
+	r.Get("/signup", Index)
+	r.Post("/api/account/signup", SignUp)
 
 	// authed api
-	m.Group("/api", func() {
+	r.Group("/api", func() {
 		// account
-		m.Group("/account", func() {
-			m.Get("/", GetAccount)
-			m.Put("/collaborators", AddCollaborator)
-			m.Delete("/collaborators/:id", RemoveCollaborator)
-			m.Post("/using/:id", SetUsingAccount)
-			m.Get("/others", GetOtherAccounts)
+		r.Group("/account", func() {
+			r.Get("/", GetAccount)
+			r.Post("/", UpdateAccount)
+			r.Put("/collaborators", bind(m.AddCollaboratorCommand{}), AddCollaborator)
+			r.Get("/collaborators", GetCollaborators)
+			r.Delete("/collaborators/:id", RemoveCollaborator)
+			r.Post("/using/:id", SetUsingAccount)
+			r.Get("/others", GetOtherAccounts)
 		})
 		// Token
-		m.Group("/tokens", func() {
-			m.Combo("/").Get(GetTokens).Put(AddToken).Post(UpdateToken)
-			m.Delete("/:id", DeleteToken)
+		r.Group("/tokens", func() {
+			r.Combo("/").
+				Get(GetTokens).
+				Put(bind(m.AddTokenCommand{}), AddToken).
+				Post(bind(m.UpdateTokenCommand{}), UpdateToken)
+			r.Delete("/:id", DeleteToken)
 		})
 		// Data sources
-		m.Group("/datasources", func() {
-			m.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
-			m.Delete("/:id", DeleteDataSource)
-			m.Any("/proxy/:id/*", auth, ProxyDataSourceRequest)
+		r.Group("/datasources", func() {
+			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
+			r.Delete("/:id", DeleteDataSource)
+			r.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		})
 		// Dashboard
-		m.Group("/dashboard", func() {
-			m.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			m.Post("/", PostDashboard)
+		r.Group("/dashboard", func() {
+			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Post("/", bind(m.SaveDashboardCommand{}), PostDashboard)
 		})
 		// Search
-		m.Get("/search/", Search)
+		r.Get("/search/", Search)
 		// metrics
-		m.Get("/metrics/test", auth, GetTestMetrics)
+
+		r.Get("/metrics/test", GetTestMetrics)
 
 		// locations
-		m.Group("/locations", func() {
-			m.Combo("/").Get(GetLocations).Put(AddLocation).Post(UpdateLocation)
-			m.Get("/:slug", GetLocationBySlug)
-			m.Delete("/:id", DeleteLocation)
+		r.Group("/locations", func() {
+			r.Combo("/").Get(GetLocations).Put(AddLocation).Post(UpdateLocation)
+			r.Get("/:slug", GetLocationBySlug)
+			r.Delete("/:id", DeleteLocation)
 		})
 		
 		// Monitors
-		m.Group("/monitors", func() {
-			m.Combo("/").Get(GetMonitors).Put(AddMonitor).Post(UpdateMonitor)
-			m.Get("/:id", GetMonitorById)
-			m.Delete("/:id", DeleteMonitor)
+		r.Group("/monitors", func() {
+			r.Combo("/").Get(GetMonitors).Put(AddMonitor).Post(UpdateMonitor)
+			r.Get("/:id", GetMonitorById)
+			r.Delete("/:id", DeleteMonitor)
 		})
-		m.Get("/monitor_types", GetMonitorTypes)
-	}, auth)
+		r.Get("/monitor_types", GetMonitorTypes)
+	}, reqSignedIn)
+
+	// admin api
+	r.Group("/api/admin", func() {
+		r.Get("/accounts", AdminSearchAccounts)
+	}, reqGrafanaAdmin)
 
 	// rendering
-	m.Get("/render/*", auth, RenderToPng)
-	
-	m.NotFound(NotFound)
+	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.NotFound(NotFound)
 }
 
 func setIndexViewData(c *middleware.Context) error {
@@ -89,7 +107,21 @@ func setIndexViewData(c *middleware.Context) error {
 		return err
 	}
 
-	c.Data["User"] = dtos.NewCurrentUser(c.UserAccount)
+	currentUser := &dtos.CurrentUser{}
+
+	if c.IsSignedIn {
+		currentUser = &dtos.CurrentUser{
+			Login:            c.UserLogin,
+			Email:            c.UserEmail,
+			Name:             c.UserName,
+			UsingAccountName: c.UsingAccountName,
+			GravatarUrl:      dtos.GetGravatarUrl(c.UserEmail),
+			IsGrafanaAdmin:   c.IsGrafanaAdmin,
+			Role:             c.UserRole,
+		}
+	}
+
+	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl
 	c.Data["AppSubUrl"] = setting.AppSubUrl

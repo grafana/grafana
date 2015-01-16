@@ -12,8 +12,8 @@ import (
 func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) {
 	accountDataSources := make([]*m.DataSource, 0)
 
-	if c.Account != nil {
-		query := m.GetDataSourcesQuery{AccountId: c.Account.Id}
+	if c.IsSignedIn {
+		query := m.GetDataSourcesQuery{AccountId: c.UsingAccountId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {

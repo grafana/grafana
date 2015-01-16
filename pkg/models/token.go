@@ -25,11 +25,12 @@ type AddTokenCommand struct {
 }
 
 type UpdateTokenCommand struct {
-	Id        int64    `json:"id"`
-	Name      string   `json:"name"`
-	AccountId int64    `json:"-"`
-	Role      RoleType `json:"role"`
-	Result    *Token   `json:"-"`
+	Id   int64    `json:"id"`
+	Name string   `json:"name"`
+	Role RoleType `json:"role"`
+
+	AccountId int64  `json:"-"`
+	Result    *Token `json:"-"`
 }
 
 type DeleteTokenCommand struct {

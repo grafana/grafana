@@ -211,7 +211,8 @@ func Test_SetENV(t *testing.T) {
 func Test_Config(t *testing.T) {
 	Convey("Set and get configuration object", t, func() {
 		So(Config(), ShouldNotBeNil)
-		So(SetConfig([]byte("")), ShouldBeNil)
-		So(Config(), ShouldNotBeNil)
+		cfg, err := SetConfig([]byte(""))
+		So(err, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
 	})
 }

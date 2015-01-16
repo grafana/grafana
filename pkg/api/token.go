@@ -8,7 +8,7 @@ import (
 )
 
 func GetTokens(c *middleware.Context) {
-	query := m.GetTokensQuery{AccountId: c.Account.Id}
+	query := m.GetTokensQuery{AccountId: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -30,7 +30,7 @@ func GetTokens(c *middleware.Context) {
 func DeleteToken(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteTokenCommand{Id: id, AccountId: c.UserAccount.Id}
+	cmd := &m.DeleteTokenCommand{Id: id, AccountId: c.AccountId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -41,44 +41,37 @@ func DeleteToken(c *middleware.Context) {
 	c.JsonOK("Token deleted")
 }
 
-func AddToken(c *middleware.Context) {
-	cmd := m.AddTokenCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
-	if cmd.Role != m.ROLE_READ_WRITE && cmd.Role != m.ROLE_READ {
+func AddToken(c *middleware.Context, cmd m.AddTokenCommand) {
+	if !cmd.Role.IsValid() {
 		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.AccountId
 	cmd.Token = util.GetRandomString(64)
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add token", err)
 		return
 	}
+
 	result := &m.TokenDTO{
 		Id:    cmd.Result.Id,
 		Name:  cmd.Result.Name,
 		Role:  cmd.Result.Role,
 		Token: cmd.Result.Token,
 	}
+
 	c.JSON(200, result)
 }
 
-func UpdateToken(c *middleware.Context) {
-	cmd := m.UpdateTokenCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
+func UpdateToken(c *middleware.Context, cmd m.UpdateTokenCommand) {
+	if !cmd.Role.IsValid() {
+		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
+	cmd.AccountId = c.AccountId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

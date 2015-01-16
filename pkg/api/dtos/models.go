@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
 type LoginResult struct {
@@ -14,23 +14,27 @@ type LoginResult struct {
 }
 
 type CurrentUser struct {
-	Login       string `json:"login"`
-	Email       string `json:"email"`
-	GravatarUrl string `json:"gravatarUrl"`
+	Login            string     `json:"login"`
+	Email            string     `json:"email"`
+	Role             m.RoleType `json:"role"`
+	Name             string     `json:"name"`
+	UsingAccountName string     `json:"usingAccountName"`
+	IsGrafanaAdmin   bool       `json:"isGrafanaAdmin"`
+	GravatarUrl      string     `json:"gravatarUrl"`
 }
 
 type DataSource struct {
-	Id        int64           `json:"id"`
-	AccountId int64           `json:"accountId"`
-	Name      string          `json:"name"`
-	Type      models.DsType   `json:"type"`
-	Access    models.DsAccess `json:"access"`
-	Url       string          `json:"url"`
-	Password  string          `json:"password"`
-	User      string          `json:"user"`
-	Database  string          `json:"database"`
-	BasicAuth bool            `json:"basicAuth"`
-	IsDefault bool            `json:"isDefault"`
+	Id        int64      `json:"id"`
+	AccountId int64      `json:"accountId"`
+	Name      string     `json:"name"`
+	Type      m.DsType   `json:"type"`
+	Access    m.DsAccess `json:"access"`
+	Url       string     `json:"url"`
+	Password  string     `json:"password"`
+	User      string     `json:"user"`
+	Database  string     `json:"database"`
+	BasicAuth bool       `json:"basicAuth"`
+	IsDefault bool       `json:"isDefault"`
 }
 
 type MetricQueryResultDto struct {
@@ -42,17 +46,11 @@ type MetricQueryResultDataDto struct {
 	DataPoints [][2]float64 `json:"datapoints"`
 }
 
-func NewCurrentUser(account *models.Account) *CurrentUser {
-	model := &CurrentUser{}
-	if account != nil {
-		model.Login = account.Login
-		model.Email = account.Email
-		model.GravatarUrl = getGravatarUrl(account.Email)
+func GetGravatarUrl(text string) string {
+	if text == "" {
+		return ""
 	}
-	return model
-}
 
-func getGravatarUrl(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(strings.ToLower(text)))
 	return fmt.Sprintf("https://secure.gravatar.com/avatar/%x?s=90&default=mm", hasher.Sum(nil))

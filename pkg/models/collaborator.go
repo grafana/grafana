@@ -1,15 +1,27 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
-const (
-	ROLE_READ_WRITE RoleType = "ReadWrite"
-	ROLE_READ                = "Read"
+// Typed errors
+var (
+	ErrInvalidRoleType = errors.New("Invalid role type")
 )
 
 type RoleType string
+
+const (
+	ROLE_OWNER  RoleType = "Owner"
+	ROLE_VIEWER RoleType = "Viewer"
+	ROLE_EDITOR RoleType = "Editor"
+	ROLE_ADMIN  RoleType = "Admin"
+)
+
+func (r RoleType) IsValid() bool {
+	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
+}
 
 type Collaborator struct {
 	Id             int64
@@ -21,24 +33,35 @@ type Collaborator struct {
 	Updated time.Time
 }
 
+// ---------------------
+// COMMANDS
+
 type RemoveCollaboratorCommand struct {
 	CollaboratorId int64
 	AccountId      int64
 }
 
 type AddCollaboratorCommand struct {
-	Email          string   `json:"email" binding:"required"`
+	LoginOrEmail   string   `json:"loginOrEmail" binding:"Required"`
+	Role           RoleType `json:"role" binding:"Required"`
 	AccountId      int64    `json:"-"`
 	CollaboratorId int64    `json:"-"`
-	Role           RoleType `json:"-"`
 }
 
-func NewCollaborator(accountId int64, collaboratorId int64, role RoleType) *Collaborator {
-	return &Collaborator{
-		AccountId:      accountId,
-		CollaboratorId: collaboratorId,
-		Role:           role,
-		Created:        time.Now(),
-		Updated:        time.Now(),
-	}
+// ----------------------
+// QUERIES
+
+type GetCollaboratorsQuery struct {
+	AccountId int64
+	Result    []*CollaboratorDTO
+}
+
+// ----------------------
+// Projections and DTOs
+
+type CollaboratorDTO struct {
+	CollaboratorId int64  `json:"id"`
+	Email          string `json:"email"`
+	Login          string `json:"login"`
+	Role           string `json:"role"`
 }

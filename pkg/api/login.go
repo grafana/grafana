@@ -23,7 +23,7 @@ func LoginPost(c *middleware.Context) {
 		return
 	}
 
-	userQuery := m.GetAccountByLoginQuery{Login: loginModel.Email}
+	userQuery := m.GetAccountByLoginQuery{LoginOrEmail: loginModel.Email}
 	err := bus.Dispatch(&userQuery)
 
 	if err != nil {

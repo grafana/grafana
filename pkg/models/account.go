@@ -6,7 +6,6 @@ import (
 )
 
 // Typed errors
-
 var (
 	ErrAccountNotFound = errors.New("Account not found")
 )
@@ -31,13 +30,23 @@ type Account struct {
 // COMMANDS
 
 type CreateAccountCommand struct {
-	Email    string  `json:"email" binding:"required"`
-	Login    string  `json:"login"`
-	Password string  `json:"password" binding:"required"`
-	Name     string  `json:"name"`
-	Company  string  `json:"company"`
-	Salt     string  `json:"-"`
-	Result   Account `json:"-"`
+	Email    string `json:"email" binding:"required"`
+	Login    string `json:"login"`
+	Password string `json:"password" binding:"required"`
+	Name     string `json:"name"`
+	Company  string `json:"company"`
+	Salt     string `json:"-"`
+	IsAdmin  bool   `json:"-"`
+
+	Result Account `json:"-"`
+}
+
+type UpdateAccountCommand struct {
+	Email string `json:"email" binding:"required"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+
+	AccountId int64 `json:"-"`
 }
 
 type SetUsingAccountCommand struct {
@@ -64,28 +73,53 @@ type GetAccountByIdQuery struct {
 }
 
 type GetAccountByLoginQuery struct {
-	Login  string
-	Result *Account
+	LoginOrEmail string
+	Result       *Account
+}
+
+type SearchAccountsQuery struct {
+	Query string
+	Page  int
+	Limit int
+
+	Result []*AccountSearchHitDTO
+}
+
+type GetSignedInUserQuery struct {
+	AccountId int64
+	Result    *SignInUser
 }
 
 // ------------------------
 // DTO & Projections
-
-type OtherAccountDTO struct {
-	AccountId int64  `json:"accountId"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	IsUsing   bool   `json:"isUsing"`
+type SignInUser struct {
+	AccountId        int64
+	UsingAccountId   int64
+	UsingAccountName string
+	UserRole         RoleType
+	UserLogin        string
+	UserName         string
+	UserEmail        string
+	IsGrafanaAdmin   bool
 }
 
-type CollaboratorDTO struct {
-	CollaboratorId int64  `json:"id"`
-	Email          string `json:"email"`
-	Role           string `json:"role"`
+type OtherAccountDTO struct {
+	AccountId int64    `json:"accountId"`
+	Email     string   `json:"email"`
+	Role      RoleType `json:"role"`
+	IsUsing   bool     `json:"isUsing"`
+}
+
+type AccountSearchHitDTO struct {
+	Id      int64  `json:"id"`
+	Name    string `json:"name"`
+	Login   string `json:"login"`
+	Email   string `json:"email"`
+	IsAdmin bool   `json:"isAdmin"`
 }
 
 type AccountDTO struct {
-	Email         string             `json:"email"`
-	Name          string             `json:"name"`
-	Collaborators []*CollaboratorDTO `json:"collaborators"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	Login string `json:"login"`
 }

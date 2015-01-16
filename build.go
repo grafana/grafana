@@ -84,6 +84,7 @@ func main() {
 
 func setup() {
 	runPrint("go", "get", "-v", "github.com/tools/godep")
+	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
 

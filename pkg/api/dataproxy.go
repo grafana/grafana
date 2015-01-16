@@ -39,7 +39,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	query := m.GetDataSourceByIdQuery{
 		Id:        id,
-		AccountId: c.GetAccountId(),
+		AccountId: c.UsingAccountId,
 	}
 
 	err := bus.Dispatch(&query)

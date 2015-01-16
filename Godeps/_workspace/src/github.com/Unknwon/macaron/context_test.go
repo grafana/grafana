@@ -130,6 +130,7 @@ func Test_Context(t *testing.T) {
 		Convey("URL parameter", func() {
 			m.Get("/:name/:int/:int64", func(ctx *Context) string {
 				var buf bytes.Buffer
+				ctx.SetParams(":name", ctx.Params(":name"))
 				buf.WriteString(ctx.Params(":name") + " ")
 				buf.WriteString(ctx.ParamsEscape(":name") + " ")
 				buf.WriteString(com.ToStr(ctx.ParamsInt(":int")) + " ")

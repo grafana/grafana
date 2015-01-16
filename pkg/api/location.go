@@ -8,7 +8,7 @@ import (
 )
 
 func GetLocations(c *middleware.Context) {
-	query := m.GetLocationsQuery{AccountId: c.Account.Id}
+	query := m.GetLocationsQuery{AccountId: c.UsingAccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -34,7 +34,7 @@ func GetLocations(c *middleware.Context) {
 func GetLocationBySlug(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	query := m.GetLocationBySlugQuery{Slug: slug, AccountId: c.GetAccountId()}
+	query := m.GetLocationBySlugQuery{Slug: slug, AccountId: c.UsingAccountId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Location not found", nil)
@@ -57,7 +57,7 @@ func GetLocationBySlug(c *middleware.Context) {
 func DeleteLocation(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteLocationCommand{Id: id, AccountId: c.UserAccount.Id}
+	cmd := &m.DeleteLocationCommand{Id: id, AccountId: c.UsingAccountId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -76,13 +76,13 @@ func AddLocation(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
-	if cmd.Public {
+	cmd.AccountId = c.UsingAccountId
+	/*if cmd.Public {
 		if c.Account.IsAdmin != true {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}
-	}
+	}*/
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add location", err)
 		return
@@ -107,13 +107,13 @@ func UpdateLocation(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.Account.Id
-	if cmd.Public {
+	cmd.AccountId = c.UsingAccountId
+	/*if cmd.Public {
 		if c.Account.IsAdmin != true {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}
-	}
+	}*/
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update location", err)

@@ -7,7 +7,7 @@ import (
 )
 
 func GetAccount(c *middleware.Context) {
-	query := m.GetAccountInfoQuery{Id: c.UserAccount.Id}
+	query := m.GetAccountInfoQuery{Id: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -18,55 +18,26 @@ func GetAccount(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func AddCollaborator(c *middleware.Context) {
-	var cmd m.AddCollaboratorCommand
+func UpdateAccount(c *middleware.Context) {
+	cmd := m.UpdateAccountCommand{}
 
 	if !c.JsonBody(&cmd) {
 		c.JsonApiErr(400, "Invalid request", nil)
 		return
 	}
 
-	userQuery := m.GetAccountByLoginQuery{Login: cmd.Email}
-	err := bus.Dispatch(&userQuery)
-	if err != nil {
-		c.JsonApiErr(404, "Collaborator not found", nil)
-		return
-	}
-
-	accountToAdd := userQuery.Result
-
-	if accountToAdd.Id == c.UserAccount.Id {
-		c.JsonApiErr(400, "Cannot add yourself as collaborator", nil)
-		return
-	}
-
-	cmd.AccountId = c.UserAccount.Id
-	cmd.CollaboratorId = accountToAdd.Id
-	cmd.Role = m.ROLE_READ_WRITE
-
-	err = bus.Dispatch(&cmd)
-	if err != nil {
-		c.JsonApiErr(500, "Could not add collaborator", err)
-		return
-	}
-
-	c.JsonOK("Collaborator added")
-}
-
-func RemoveCollaborator(c *middleware.Context) {
-	collaboratorId := c.ParamsInt64(":id")
-
-	cmd := m.RemoveCollaboratorCommand{AccountId: c.UserAccount.Id, CollaboratorId: collaboratorId}
+	cmd.AccountId = c.AccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to remove collaborator", err)
+		c.JsonApiErr(400, "Failed to update account", nil)
+		return
 	}
 
-	c.JsonOK("Collaborator removed")
+	c.JsonOK("Account updated")
 }
 
 func GetOtherAccounts(c *middleware.Context) {
-	query := m.GetOtherAccountsQuery{AccountId: c.UserAccount.Id}
+	query := m.GetOtherAccountsQuery{AccountId: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -75,13 +46,13 @@ func GetOtherAccounts(c *middleware.Context) {
 	}
 
 	result := append(query.Result, &m.OtherAccountDTO{
-		AccountId: c.UserAccount.Id,
-		Role:      "owner",
-		Email:     c.UserAccount.Email,
+		AccountId: c.AccountId,
+		Role:      m.ROLE_OWNER,
+		Email:     c.UserEmail,
 	})
 
 	for _, ac := range result {
-		if ac.AccountId == c.UserAccount.UsingAccountId {
+		if ac.AccountId == c.UsingAccountId {
 			ac.IsUsing = true
 			break
 		}
@@ -114,13 +85,13 @@ func validateUsingAccount(accountId int64, otherId int64) bool {
 func SetUsingAccount(c *middleware.Context) {
 	usingAccountId := c.ParamsInt64(":id")
 
-	if !validateUsingAccount(c.UserAccount.Id, usingAccountId) {
+	if !validateUsingAccount(c.AccountId, usingAccountId) {
 		c.JsonApiErr(401, "Not a valid account", nil)
 		return
 	}
 
 	cmd := m.SetUsingAccountCommand{
-		AccountId:      c.UserAccount.Id,
+		AccountId:      c.AccountId,
 		UsingAccountId: usingAccountId,
 	}
 

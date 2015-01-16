@@ -8,21 +8,19 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
 
+	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 type Context struct {
 	*macaron.Context
+	*m.SignInUser
+
 	Session session.Store
 
-	Account     *models.Account
-	UserAccount *models.Account
-}
-
-func (c *Context) GetAccountId() int64 {
-	return c.Account.Id
+	IsSignedIn bool
 }
 
 func GetContextHandler() macaron.Handler {
@@ -30,6 +28,17 @@ func GetContextHandler() macaron.Handler {
 		ctx := &Context{
 			Context: c,
 			Session: sess,
+		}
+
+		// try get account id from request
+		if accountId, err := getRequestAccountId(ctx); err == nil {
+			query := m.GetSignedInUserQuery{AccountId: accountId}
+			if err := bus.Dispatch(&query); err != nil {
+				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
+			} else {
+				ctx.IsSignedIn = true
+				ctx.SignInUser = query.Result
+			}
 		}
 
 		c.Map(ctx)
