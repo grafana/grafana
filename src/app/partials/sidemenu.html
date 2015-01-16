@@ -16,17 +16,26 @@
 		<i class="fa fa-signal"></i>
 		Graphs
 	</a>
-	<a class="pro-sidemenu-link" href="/charts">
+	<a class="pro-sidemenu-link" href="charts">
 		<i class="fa fa-bolt" style="padding-right: 23px"></i>
 		 Alerts
 	</a>
-	<a class="pro-sidemenu-link" href="admin/datasources">
+	<a class="pro-sidemenu-link" href="account/datasources">
 		<i class="fa fa-sitemap"></i>
-		Data sources
+		Data
 	</a>
 	<a class="pro-sidemenu-link" href="account">
 		<i class="fa fa-user"></i>
-		Account settings
+		Account
+	</a>
+	<a class="pro-sidemenu-link" href="account/collaborators">
+		<i class="fa fa-users"></i>Collaborators
+	</a>
+	<a class="pro-sidemenu-link" href="account/apikeys">
+		<i class="fa fa-key"></i>API Keys
+	</a>
+	<a class="pro-sidemenu-link" href="admin/accounts" ng-if="grafana.user.isGrafanaAdmin">
+		<i class="fa fa-institution"></i>Admin
 	</a>
 	<a class="pro-sidemenu-link" href="location">
 		<i class="fa fa-globe"></i>

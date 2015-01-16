@@ -25,7 +25,7 @@ function (angular, _, kbn) {
         url = '/temp/' + id;
       }
 
-      return backendSrv.get('/api/dashboards/' + id)
+      return backendSrv.get('/api/dashboard/' + id)
         .then(function(data) {
           if (data) {
             return angular.fromJson(data);
@@ -52,6 +52,10 @@ function (angular, _, kbn) {
       return backendSrv.post('/api/dashboard/', { dashboard: dashboard })
         .then(function(data) {
           return { title: dashboard.title, url: '/dashboard/db/' + data.slug };
+        }, function(err) {
+          err.isHandled = true;
+          err.data = err.data || {};
+          throw err.data.message || "Unknown error";
         });
     };
 

@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('RegisterCtrl', function($scope, backendSrv, $location) {
+  module.controller('SignUpCtrl', function($scope, backendSrv, $location) {
     $scope.loginModel = {};
     $scope.grafana.sidemenu = false;
 

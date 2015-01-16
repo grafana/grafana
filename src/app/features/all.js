@@ -7,7 +7,10 @@ define([
   './opentsdb/datasource',
   './elasticsearch/datasource',
   './dashboard/all',
-  './admin/accountCtrl',
-  './admin/datasourcesCtrl',
+  './account/accountCtrl',
+  './account/collaboratorsCtrl',
+  './account/datasourcesCtrl',
+  './account/apiKeysCtrl',
+  './admin/accountsCtrl',
   './grafanaDatasource/datasource',
 ], function () {});

@@ -1,230 +1,216 @@
 <div class="editor-row">
-
-  <div  ng-repeat="target in panel.targets"
-        class="grafana-target"
-        ng-class="{'grafana-target-hidden': target.hide}"
-        ng-controller="InfluxQueryCtrl"
-        ng-init="init()">
-
-    <div class="grafana-target-inner-wrapper">
-      <div class="grafana-target-inner">
-				<ul class="grafana-segment-list pull-right">
-					<li class="grafana-target-segment">
-						<div class="dropdown">
-							<a class="pointer dropdown-toggle"
-								data-toggle="dropdown"
-								tabindex="1">
-								<i class="fa fa-bars"></i>
-							</a>
-							<ul class="dropdown-menu pull-right" role="menu">
-								<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
-								<li role="menuitem"><a tabindex="1" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a></li>
-								<li role="menuitem"><a tabindex="1" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a></li>
-								<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up </a></li>
-								<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
-							</ul>
-						</div>
-					</li>
-					<li class="grafana-target-segment last">
-						<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-							<i class="fa fa-remove"></i>
+	<div ng-repeat="target in panel.targets" ng-controller="InfluxQueryCtrl" ng-init="init()" ng-class="{'tight-form-disabled': target.hide}" class="tight-form-container">
+		<div class="tight-form">
+			<ul class="tight-form-list pull-right">
+				<li class="tight-form-item">
+					<div class="dropdown">
+						<a class="pointer dropdown-toggle"
+							data-toggle="dropdown"
+							tabindex="1">
+							<i class="fa fa-bars"></i>
 						</a>
-					</li>
-				</ul>
-
-				<ul class="grafana-segment-list">
-					<li>
-						<a class="grafana-target-segment" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
-							<i class="fa fa-eye"></i>
-						</a>
-          </li>
-        </ul>
-
-				<!-- Raw Query mode  -->
-				<ul class="grafana-segment-list" ng-show="target.rawQuery">
-					<li>
-						<input type="text"
-               class="grafana-target-segment-input span10"
-               ng-model="target.query"
-               placeholder="select ..."
-               focus-me="target.rawQuery"
-               spellcheck='false'
-               data-min-length=0 data-items=100
-               ng-model-onblur
-							 ng-blur="get_data()">
-					</li>
-				</ul>
-
-				<!-- Query editor mode -->
-        <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
-					<li class="grafana-target-segment">
-						series
-					</li>
-          <li>
-            <input type="text"
-                   class="grafana-target-segment-input span8"
-                   ng-model="target.series"
-                   spellcheck='false'
-                   bs-typeahead="listSeries"
-                   match-all="true"
-                   min-length="3"
-                   placeholder="series name"
-                   data-min-length=0 data-items=100
-                   ng-blur="seriesBlur()">
-          </li>
-
-					<li class="grafana-target-segment">
-						alias
-					</li>
-
-					<li>
-						<input type="text" class="input-medium grafana-target-segment-input" ng-model="target.alias"
-						spellcheck='false' placeholder="alias" ng-blur="get_data()">
-					</li>
-
-        </ul>
-
-        <div class="clearfix"></div>
-      </div>
-
-      <div class="grafana-target-inner">
-				<!-- Raw Query mode  -->
-				<ul class="grafana-segment-list" ng-show="target.rawQuery">
-					<li class="grafana-target-segment">
-						<i class="fa fa-eye invisible"></i>
-					</li>
-					<li class="grafana-target-segment">
-            alias
-          </li>
-          <li>
-            <input type="text"
-                   class="input-medium grafana-target-segment-input"
-                   ng-model="target.alias"
-                   spellcheck='false'
-                   placeholder="alias"
-                   ng-blur="get_data()">
-          </li>
-					<li class="grafana-target-segment">
-						group by time
-					</li>
-					<li>
-						<input type="text" class="input-mini grafana-target-segment-input" ng-model="target.interval"
-									 spellcheck='false' placeholder="{{interval}}" data-placement="right"
-									 bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
-									 ng-model-onblur ng-change="get_data()" >
-					</li>
-				</ul>
-
-				<!-- Query editor mode -->
-        <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
-					<li class="grafana-target-segment">
-						<i class="fa fa-eye invisible"></i>
-					</li>
-					<li class="grafana-target-segment">
-						select
-					</li>
-					<li class="dropdown">
-						<span influxdb-func-editor class="grafana-target-segment grafana-target-function">
-						</span>
-					</li>
-
-					<li class="grafana-target-segment">
-						where
-					</li>
-					<li>
-						<input type="text" class="input-medium grafana-target-segment-input" ng-model="target.condition"
-									 bs-tooltip="'Add a where clause'" data-placement="right" spellcheck='false' placeholder="column ~= value" ng-blur="get_data()">
-					</li>
-
-					<li class="grafana-target-segment">
-						group by time
-					</li>
-					<li>
-						<input type="text" class="input-mini grafana-target-segment-input" ng-model="target.interval"
-									 spellcheck='false' placeholder="{{interval}}" data-placement="right"
-									 bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
-									 ng-model-onblur ng-change="get_data()" >
-					</li>
-
-					<li class="grafana-target-segment">
-						and
-					</li>
-
-					<li>
-						<input type="text" class="input-small grafana-target-segment-input" ng-model="target.groupby_field" bs-tooltip="'Add a group by column or leave blank'"
-									 placeholder="column" spellcheck="false" bs-typeahead="listColumns" data-min-length=0 ng-blur="get_data()">
-					</li>
-
-					<li class="dropdown">
-						<a class="grafana-target-segment pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
-							<span ng-show="target.fill">
-								fill ({{target.fill}})
-							</span>
-							<span ng-show="!target.fill">
-								no fill
-							</span>
-					  </a>
-						<ul class="dropdown-menu">
-							<li><a ng-click="target.fill = ''">no fill</a></li>
-							<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
-							<li><a ng-click="target.fill = '0'">fill (0)</a></li>
+						<ul class="dropdown-menu pull-right" role="menu">
+							<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up </a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
 						</ul>
-					</li>
-
-        </ul>
-
-        <div class="clearfix"></div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
-<section class="grafana-metric-options">
-	<div class="grafana-target">
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="fa fa-wrench"></i>
+					</div>
 				</li>
-				<li class="grafana-target-segment">
+				<li class="tight-form-item last">
+					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+						<i class="fa fa-remove"></i>
+					</a>
+				</li>
+			</ul>
+
+			<ul class="tight-form-list">
+				<li>
+					<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+						<i class="fa fa-eye"></i>
+					</a>
+				</li>
+			</ul>
+
+			<!-- Raw Query mode  -->
+			<ul class="tight-form-list" ng-show="target.rawQuery">
+				<li>
+					<input type="text"
+					class="tight-form-input span10"
+					ng-model="target.query"
+					placeholder="select ..."
+					focus-me="target.rawQuery"
+					spellcheck='false'
+					data-min-length=0 data-items=100
+					ng-model-onblur
+					ng-blur="get_data()">
+				</li>
+			</ul>
+
+			<!-- Query editor mode -->
+			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
+				<li class="tight-form-item">
+					series
+				</li>
+				<li>
+					<input type="text"
+					class="tight-form-input span8"
+					ng-model="target.series"
+					spellcheck='false'
+					bs-typeahead="listSeries"
+					match-all="true"
+					min-length="3"
+					placeholder="series name"
+					data-min-length=0 data-items=100
+					ng-blur="seriesBlur()">
+				</li>
+
+				<li class="tight-form-item">
+					alias
+				</li>
+
+				<li>
+					<input type="text" class="input-medium tight-form-input" ng-model="target.alias"
+					spellcheck='false' placeholder="alias" ng-blur="get_data()">
+				</li>
+
+			</ul>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form">
+			<!-- Raw Query mode  -->
+			<ul class="tight-form-list" ng-show="target.rawQuery">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+				<li class="tight-form-item">
+					alias
+				</li>
+				<li>
+					<input type="text"
+					class="input-medium tight-form-input"
+					ng-model="target.alias"
+					spellcheck='false'
+					placeholder="alias"
+					ng-blur="get_data()">
+				</li>
+				<li class="tight-form-item">
 					group by time
 				</li>
 				<li>
-					<input type="text" class="input-medium grafana-target-segment-input" ng-model="panel.interval" ng-blur="get_data();"
-					       spellcheck='false' placeholder="example: >10s">
-				</li>
-				<li class="grafana-target-segment">
-					<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
+					<input type="text" class="input-mini tight-form-input" ng-model="target.interval"
+					spellcheck='false' placeholder="{{interval}}" data-placement="right"
+					bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+					ng-model-onblur ng-change="get_data()" >
 				</li>
 			</ul>
-			<div class="clearfix"></div>
-		</div>
 
-		<div class="grafana-target-inner">
-			<ul class="grafana-segment-list">
-				<li class="grafana-target-segment grafana-target-segment-icon">
-					<i class="fa fa-info-circle"></i>
+			<!-- Query editor mode -->
+			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
 				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						alias patterns
-					</a>
+				<li class="tight-form-item">
+					select
 				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						stacking &amp; and fill
-					</a>
+				<li class="dropdown">
+					<span influxdb-func-editor class="tight-form-item tight-form-func">
+					</span>
 				</li>
-				<li class="grafana-target-segment">
-					<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-						group by time
+
+				<li class="tight-form-item">
+					where
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input" ng-model="target.condition"
+					bs-tooltip="'Add a where clause'" data-placement="right" spellcheck='false' placeholder="column ~= value" ng-blur="get_data()">
+				</li>
+
+				<li class="tight-form-item">
+					group by time
+				</li>
+				<li>
+					<input type="text" class="input-mini tight-form-input" ng-model="target.interval"
+					spellcheck='false' placeholder="{{interval}}" data-placement="right"
+					bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+					ng-model-onblur ng-change="get_data()" >
+				</li>
+
+				<li class="tight-form-item">
+					and
+				</li>
+
+				<li>
+					<input type="text" class="input-small tight-form-input" ng-model="target.groupby_field" bs-tooltip="'Add a group by column or leave blank'"
+					placeholder="column" spellcheck="false" bs-typeahead="listColumns" data-min-length=0 ng-blur="get_data()">
+				</li>
+
+				<li class="dropdown">
+					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
+						<span ng-show="target.fill">
+							fill ({{target.fill}})
+						</span>
+						<span ng-show="!target.fill">
+							no fill
+						</span>
 					</a>
+					<ul class="dropdown-menu">
+						<li><a ng-click="target.fill = ''">no fill</a></li>
+						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
+						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
+					</ul>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+	</div>
+</div>
+
+<section class="grafana-metric-options">
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-wrench"></i>
+			</li>
+			<li class="tight-form-item">
+				group by time
+			</li>
+			<li>
+				<input type="text" class="input-medium tight-form-input" ng-model="panel.interval" ng-blur="get_data();"
+				spellcheck='false' placeholder="example: >10s">
+			</li>
+			<li class="tight-form-item">
+				<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-info-circle"></i>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					alias patterns
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					stacking &amp; and fill
+				</a>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					group by time
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
 	</div>
 </section>
 

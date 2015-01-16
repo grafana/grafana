@@ -13,12 +13,12 @@ function (angular) {
     $scope.init = function() {
       $scope.getAccount();
       $scope.getOtherAccounts();
+
     };
 
     $scope.getAccount = function() {
       backendSrv.get('/api/account/').then(function(account) {
         $scope.account = account;
-        $scope.collaborators = account.collaborators;
       });
     };
 
@@ -31,31 +31,15 @@ function (angular) {
     $scope.setUsingAccount = function(otherAccount) {
       backendSrv.request({
         method: 'POST',
-        url: '/api/account/using/' + otherAccount.id,
+        url: '/api/account/using/' + otherAccount.accountId,
         desc: 'Change active account',
       }).then($scope.getOtherAccounts);
     };
 
-    $scope.removeCollaborator = function(collaborator) {
-      backendSrv.request({
-        method: 'POST',
-        url: '/api/account/collaborators/remove',
-        data: { accountId: collaborator.accountId },
-        desc: 'Remove collaborator',
-      }).then($scope.getAccount);
-    };
+    $scope.update = function() {
+      if (!$scope.accountForm.$valid) { return; }
 
-    $scope.addCollaborator = function() {
-      if (!$scope.addCollaboratorForm.$valid) {
-        return;
-      }
-
-      backendSrv.request({
-        method: 'POST',
-        url: '/api/account/collaborators/add',
-        data: $scope.collaborator,
-        desc: 'Add collaborator'
-      }).then($scope.getAccount);
+      backendSrv.post('/api/account/', $scope.account);
     };
 
     $scope.init();

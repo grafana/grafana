@@ -12,10 +12,10 @@ function (angular, _, $) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
-                          ' class="input-mini grafana-function-param-input"></input>';
+                          ' class="input-mini tight-form-func-param"></input>';
 
       var funcControlsTemplate =
-         '<div class="graphite-func-controls">' +
+         '<div class="tight-form-func-controls">' +
            '<span class="pointer fa fa-arrow-left"></span>' +
            '<span class="pointer fa fa-question-circle"></span>' +
            '<span class="pointer fa fa-remove" ></span>' +
@@ -126,7 +126,7 @@ function (angular, _, $) {
           }
 
           function toggleFuncControls() {
-            var targetDiv = elem.closest('.grafana-target-inner');
+            var targetDiv = elem.closest('.tight-form');
 
             if (elem.hasClass('show-function-controls')) {
               elem.removeClass('show-function-controls');

@@ -45,19 +45,19 @@ function (angular) {
     };
 
     $scope.getDatasources = function() {
-      backendSrv.get('/api/admin/datasources/list').then(function(results) {
+      backendSrv.get('/api/datasources').then(function(results) {
         $scope.datasources = results;
       });
     };
 
     $scope.remove = function(ds) {
-      backendSrv.delete('/api/admin/datasources/' + ds.id).then(function() {
+      backendSrv.delete('/api/datasources/' + ds.id).then(function() {
         $scope.getDatasources();
       });
     };
 
     $scope.update = function() {
-      backendSrv.post('/api/admin/datasources', $scope.current).then(function() {
+      backendSrv.post('/api/datasources', $scope.current).then(function() {
         $scope.editor.index = 0;
         $scope.getDatasources();
       });
@@ -68,7 +68,7 @@ function (angular) {
         return;
       }
 
-      backendSrv.put('/api/admin/datasources', $scope.current)
+      backendSrv.put('/api/datasources', $scope.current)
         .then(function() {
           $scope.editor.index = 0;
           $scope.getDatasources();

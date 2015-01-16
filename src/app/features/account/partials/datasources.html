@@ -6,7 +6,7 @@
 
 			<div class="dashboard-editor-header">
 				<div class="dashboard-editor-title">
-					<i class="icon icon-sitemap"></i>
+					<i class="fa fa-sitemap"></i>
 					Data sources
 				</div>
 
@@ -26,13 +26,25 @@
 								<em>No datasources defined</em>
 							</div>
 							<table class="grafana-options-table">
+								<tr>
+									<td><strong>Name<strong></td>
+									<td><strong>Url<strong></td>
+									<td><strong><strong></td>
+									<td><strong><strong></td>
+									<td><strong><strong></td>
+								</tr>
 								<tr ng-repeat="ds in datasources">
 									<td style="width:1%">
-										<i class="icon-hdd"></i> &nbsp;
+										<i class="fa fa-database"></i> &nbsp;
 										{{ds.name}}
 									</td>
 									<td style="width:90%">
 										{{ds.url}}
+									</td>
+									<td style="width:2%" class="text-center">
+										<span ng-if="ds.isDefault">
+											<span class="label label-info">default</span>
+										</span>
 									</td>
 									<td style="width: 1%">
 										<a ng-click="edit(ds)" class="btn btn-success btn-mini">
@@ -60,6 +72,7 @@
 								<label class="small">Type</label>
 								<select class="input-medium" ng-model="current.type" ng-options="f for f in ['graphite', 'influxdb', 'opentsdb']" ng-change="typeChanged()"></select>
 							</div>
+							<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
 						</div>
 
 						<div class="editor-row">

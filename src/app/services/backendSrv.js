@@ -8,7 +8,8 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('backendSrv', function($http, alertSrv) {
+  module.service('backendSrv', function($http, alertSrv, $timeout) {
+    var self = this;
 
     this.get = function(url, params) {
       return this.request({ method: 'GET', url: url, params: params });
@@ -24,6 +25,31 @@ function (angular, _, config) {
 
     this.put = function(url, data) {
       return this.request({ method: 'PUT', url: url, data: data });
+    };
+
+    this._handleError = function(err) {
+      if (err.status === 422) {
+        alertSrv.set("Validation failed", "", "warning", 4000);
+        throw err.data;
+      }
+
+      var data = err.data || { message: 'Unexpected error' };
+
+      if (_.isString(data)) {
+        data = { message: data };
+      }
+
+      data.severity = 'error';
+
+      if (err.status < 500) {
+        data.severity = "warning";
+      }
+
+      if (data.message) {
+        alertSrv.set("Problem!", data.message, data.severity, 10000);
+      }
+
+      throw data;
     };
 
     this.request = function(options) {
@@ -42,23 +68,12 @@ function (angular, _, config) {
         }
         return results.data;
       }, function(err) {
-        var data = err.data || { message: 'Unexpected error' };
+        $timeout(function() {
+          if (err.isHandled) { return; }
+          self._handleError(err);
+        }, 50);
 
-        if (_.isString(data)) {
-          data = { message: data };
-        }
-
-        data.severity = 'error';
-
-        if (err.status < 500) {
-          data.severity = "warning";
-        }
-
-        if (data.message) {
-          alertSrv.set("Problem!", data.message, data.severity, 10000);
-        }
-
-        throw data;
+        throw err;
       });
     };
 

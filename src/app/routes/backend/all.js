@@ -30,21 +30,33 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
-      .when('/admin/datasources', {
-        templateUrl: 'app/features/admin/partials/datasources.html',
+      .when('/account/datasources', {
+        templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
+      .when('/account/collaborators', {
+        templateUrl: 'app/features/account/partials/collaborators.html',
+        controller : 'CollaboratorsCtrl',
+      })
+      .when('/account/apikeys', {
+        templateUrl: 'app/features/account/partials/apikeys.html',
+        controller : 'ApiKeysCtrl',
+      })
       .when('/account', {
-        templateUrl: 'app/features/admin/partials/account.html',
+        templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',
+      })
+      .when('/admin/accounts', {
+        templateUrl: 'app/features/admin/partials/accounts.html',
+        controller : 'AccountsCtrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
-      .when('/register', {
+      .when('/signup', {
         templateUrl: 'app/partials/register.html',
-        controller : 'RegisterCtrl',
+        controller : 'SignUpCtrl',
       })
       .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/solo-panel.html',
