@@ -1,4 +1,3 @@
-
 <div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account Settings'"></div>
 
 <div class="dashboard-edit-view">
@@ -79,45 +78,6 @@
 					</td>
 				</tr>
 			</table>
-
-		</div>
-		<div class="clearfix"></div><br><br>
-		<div class="section">
-			<div class="dashboard-editor-header">
-				<div class="dashboard-editor-title">
-					<i class="fa fa-key"></i>
-					API Tokens
-					<a ng-click="showTokens=!showTokens">
-						<i class="fa fa-sort-up" ng-show="showTokens"></i>
-						<i class="fa fa-sort-down" ng-hide="showTokens"></i>
-					</a>
-				</div>
-			</div>
-			<br>
-			<div ng-show="showTokens">
-				<div class="editor-row">
-					<div class="editor-option">
-						<form name="addTokenrForm" class="form-inline">
-							<label class="small">Add a Token</label>
-							<input type="text" class="input-xlarge" ng-model='token.name' placeholder="Name"></input>
-							<select ng-model="token.role" ng-options="r for r in roleTypes"></select>
-							<button class="btn btn-success" ng-click="addToken()">Add</button>
-						</form>
-					</div>
-				</div>
-				<table class="grafana-options-table">
-					<tr ng-repeat="t in tokens">
-						<td>{{t.name}}</td>
-						<td>{{t.role}}</td>
-						<td>{{t.token}}</td>
-						<td style="width: 1%">
-							<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
-			</div>
 
 		</div>
 	</div>

@@ -1,0 +1,57 @@
+<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account > API Keys'"></div>
+
+<div class="dashboard-edit-view" style="min-height: 500px">
+
+	<div class="dashboard-editor-header">
+		<div class="dashboard-editor-title">
+			<i class="fa fa-key"></i>
+			API Tokens
+		</div>
+	</div>
+
+	<div class="dashboard-editor-body">
+		<div class="editor-row">
+			<div class="section">
+				<form name="addTokenrForm" class="form-inline tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							Add a Token
+						</li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
+						</li>
+						<li class="tight-form-item">
+							Role
+						</li>
+						<li>
+							<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+						</li>
+						<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</form>
+		</div>
+
+		<div class="editor-row row">
+			<div class="section span6">
+				<table class="grafana-options-table">
+					<tr ng-repeat="t in tokens">
+						<td>{{t.name}}</td>
+						<td>{{t.role}}</td>
+						<td>{{t.token}}</td>
+						<td style="width: 1%">
+							<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+
+

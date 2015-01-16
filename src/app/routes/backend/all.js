@@ -38,6 +38,10 @@ define([
         templateUrl: 'app/features/account/partials/collaborators.html',
         controller : 'CollaboratorsCtrl',
       })
+      .when('/account/apikeys', {
+        templateUrl: 'app/features/account/partials/apikeys.html',
+        controller : 'ApiKeysCtrl',
+      })
       .when('/account', {
         templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',

@@ -10,6 +10,7 @@ define([
   './account/accountCtrl',
   './account/collaboratorsCtrl',
   './account/datasourcesCtrl',
+  './account/apiKeysCtrl',
   './admin/accountsCtrl',
   './grafanaDatasource/datasource',
 ], function () {});
