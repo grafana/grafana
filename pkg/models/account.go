@@ -85,14 +85,29 @@ type SearchAccountsQuery struct {
 	Result []*AccountSearchHitDTO
 }
 
+type GetSignedInUserQuery struct {
+	AccountId int64
+	Result    *SignInUser
+}
+
 // ------------------------
 // DTO & Projections
+type SignInUser struct {
+	AccountId        int64
+	UsingAccountId   int64
+	UsingAccountName string
+	UserRole         RoleType
+	UserLogin        string
+	UserName         string
+	UserEmail        string
+	IsGrafanaAdmin   bool
+}
 
 type OtherAccountDTO struct {
-	AccountId int64  `json:"accountId"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	IsUsing   bool   `json:"isUsing"`
+	AccountId int64    `json:"accountId"`
+	Email     string   `json:"email"`
+	Role      RoleType `json:"role"`
+	IsUsing   bool     `json:"isUsing"`
 }
 
 type AccountSearchHitDTO struct {

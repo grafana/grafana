@@ -16,17 +16,11 @@ import (
 
 type Context struct {
 	*macaron.Context
+	*m.SignInUser
+
 	Session session.Store
 
 	IsSignedIn bool
-	IsAdmin    bool
-
-	Account     *m.Account
-	UserAccount *m.Account
-}
-
-func (c *Context) GetAccountId() int64 {
-	return c.Account.Id
 }
 
 func GetContextHandler() macaron.Handler {
@@ -38,25 +32,13 @@ func GetContextHandler() macaron.Handler {
 
 		// try get account id from request
 		if accountId, err := getRequestAccountId(ctx); err == nil {
-			// fetch user
-			userQuery := m.GetAccountByIdQuery{Id: accountId}
-			if err := bus.Dispatch(&userQuery); err != nil {
+			query := m.GetSignedInUserQuery{AccountId: accountId}
+			if err := bus.Dispatch(&query); err != nil {
 				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
 			} else {
-				// fetch using account
-				ctx.UserAccount = userQuery.Result
-				usingQuery := m.GetAccountByIdQuery{Id: ctx.UserAccount.UsingAccountId}
-				if err := bus.Dispatch(&usingQuery); err != nil {
-					log.Error(3, "Faild to get account's using account, account: %v, usingAccountId: %v, err:%v", accountId, ctx.UserAccount.Id, err)
-				} else {
-					ctx.Account = usingQuery.Result
-				}
+				ctx.IsSignedIn = true
+				ctx.SignInUser = query.Result
 			}
-		}
-
-		if ctx.Account != nil {
-			ctx.IsSignedIn = true
-			ctx.IsAdmin = ctx.Account.IsAdmin
 		}
 
 		c.Map(ctx)

@@ -20,6 +20,7 @@ func init() {
 	bus.AddHandler("sql", GetAccountByToken)
 	bus.AddHandler("sql", SearchAccounts)
 	bus.AddHandler("sql", UpdateAccount)
+	bus.AddHandler("sql", GetSignedInUser)
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
@@ -27,6 +28,7 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 
 		account := m.Account{
 			Email:    cmd.Email,
+			Name:     cmd.Name,
 			Login:    cmd.Login,
 			Password: cmd.Password,
 			Salt:     cmd.Salt,
@@ -180,5 +182,38 @@ func SearchAccounts(query *m.SearchAccountsQuery) error {
 	sess.Cols("id", "email", "name", "login", "is_admin")
 	err := sess.Find(&query.Result)
 	return err
+}
 
+func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+	var rawSql = `SELECT
+	                userAccount.id       as account_id,
+	                userAccount.is_admin as is_grafana_admin,
+	                userAccount.email    as user_email,
+	                userAccount.name     as user_name,
+	                userAccount.login    as user_login,
+	                usingAccount.id      as using_account_id,
+	                usingAccount.name    as using_account_name,
+	                collaborator.role    as user_role
+	                FROM account as userAccount
+	                LEFT OUTER JOIN account as usingAccount on usingAccount.id = userAccount.using_account_id
+	                LEFT OUTER JOIN collaborator on collaborator.account_id = usingAccount.id AND collaborator.collaborator_id = userAccount.id
+	                WHERE userAccount.id=?`
+
+	var user m.SignInUser
+	sess := x.Table("account")
+	has, err := sess.Sql(rawSql, query.AccountId).Get(&user)
+	if err != nil {
+		return err
+	} else if !has {
+		return m.ErrAccountNotFound
+	}
+
+	if user.UsingAccountId == 0 || user.UsingAccountId == user.AccountId {
+		user.UsingAccountId = query.AccountId
+		user.UsingAccountName = user.UserName
+		user.UserRole = m.ROLE_OWNER
+	}
+
+	query.Result = &user
+	return err
 }

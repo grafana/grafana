@@ -12,7 +12,7 @@ import (
 // Register adds http routes
 func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
-	reqAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqAdmin: true})
+	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	bind := binding.Bind
 
 	// not logged in views
@@ -63,7 +63,7 @@ func Register(r *macaron.Macaron) {
 		// Dashboard
 		r.Group("/dashboard", func() {
 			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			r.Post("/", PostDashboard)
+			r.Post("/", bind(m.SaveDashboardCommand{}), PostDashboard)
 		})
 		// Search
 		r.Get("/search/", Search)
@@ -74,7 +74,7 @@ func Register(r *macaron.Macaron) {
 	// admin api
 	r.Group("/api/admin", func() {
 		r.Get("/accounts", AdminSearchAccounts)
-	}, reqAdmin)
+	}, reqGrafanaAdmin)
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
@@ -88,7 +88,21 @@ func setIndexViewData(c *middleware.Context) error {
 		return err
 	}
 
-	c.Data["User"] = dtos.NewCurrentUser(c.UserAccount)
+	currentUser := &dtos.CurrentUser{}
+
+	if c.IsSignedIn {
+		currentUser = &dtos.CurrentUser{
+			Login:            c.UserLogin,
+			Email:            c.UserEmail,
+			Name:             c.UserName,
+			UsingAccountName: c.UsingAccountName,
+			GravatarUrl:      dtos.GetGravatarUrl(c.UserEmail),
+			IsGrafanaAdmin:   c.IsGrafanaAdmin,
+			Role:             c.UserRole,
+		}
+	}
+
+	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl
 	c.Data["AppSubUrl"] = setting.AppSubUrl

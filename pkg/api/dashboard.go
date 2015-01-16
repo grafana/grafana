@@ -10,7 +10,7 @@ import (
 func GetDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	query := m.GetDashboardQuery{Slug: slug, AccountId: c.GetAccountId()}
+	query := m.GetDashboardQuery{Slug: slug, AccountId: c.UsingAccountId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
@@ -25,13 +25,13 @@ func GetDashboard(c *middleware.Context) {
 func DeleteDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	query := m.GetDashboardQuery{Slug: slug, AccountId: c.GetAccountId()}
+	query := m.GetDashboardQuery{Slug: slug, AccountId: c.UsingAccountId}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
 		return
 	}
 
-	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: c.GetAccountId()}
+	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: c.UsingAccountId}
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to delete dashboard", err)
 		return
@@ -42,15 +42,8 @@ func DeleteDashboard(c *middleware.Context) {
 	c.JSON(200, resp)
 }
 
-func PostDashboard(c *middleware.Context) {
-	var cmd m.SaveDashboardCommand
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "bad request", nil)
-		return
-	}
-
-	cmd.AccountId = c.GetAccountId()
+func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
+	cmd.AccountId = c.UsingAccountId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

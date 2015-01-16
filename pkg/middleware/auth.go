@@ -13,8 +13,8 @@ import (
 )
 
 type AuthOptions struct {
-	ReqAdmin    bool
-	ReqSignedIn bool
+	ReqGrafanaAdmin bool
+	ReqSignedIn     bool
 }
 
 func getRequestAccountId(c *Context) (int64, error) {
@@ -68,7 +68,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 			return
 		}
 
-		if !c.IsAdmin && options.ReqAdmin {
+		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
 			authDenied(c)
 			return
 		}
