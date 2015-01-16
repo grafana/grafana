@@ -49,10 +49,10 @@ func AddToken(c *middleware.Context) {
 		return
 	}
 
-	if cmd.Role != m.ROLE_READ_WRITE && cmd.Role != m.ROLE_READ {
-		c.JsonApiErr(400, "Invalid role specified", nil)
-		return
-	}
+	// if cmd.Role != m.ROLE_READ_WRITE && cmd.Role != m.ROLE_READ {
+	// 	c.JsonApiErr(400, "Invalid role specified", nil)
+	// 	return
+	// }
 
 	cmd.AccountId = c.Account.Id
 	cmd.Token = util.GetRandomString(64)

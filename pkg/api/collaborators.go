@@ -6,15 +6,9 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-func AddCollaborator(c *middleware.Context) {
-	var cmd m.AddCollaboratorCommand
+func AddCollaborator(c *middleware.Context, cmd m.AddCollaboratorCommand) {
 
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Invalid request", nil)
-		return
-	}
-
-	userQuery := m.GetAccountByLoginQuery{Login: cmd.Email}
+	userQuery := m.GetAccountByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
 	if err != nil {
 		c.JsonApiErr(404, "Collaborator not found", nil)
@@ -30,7 +24,6 @@ func AddCollaborator(c *middleware.Context) {
 
 	cmd.AccountId = c.UserAccount.Id
 	cmd.CollaboratorId = accountToAdd.Id
-	cmd.Role = m.ROLE_READ_WRITE
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {

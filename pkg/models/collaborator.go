@@ -1,15 +1,31 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
-const (
-	ROLE_READ_WRITE RoleType = "ReadWrite"
-	ROLE_READ                = "Read"
+// Typed errors
+var (
+	ErrInvalidRoleType = errors.New("Invalid role type")
 )
 
 type RoleType string
+
+const (
+	ROLE_OWNER  RoleType = "Owner"
+	ROLE_VIEWER RoleType = "Viewer"
+	ROLE_EDITOR RoleType = "Editor"
+	ROLE_ADMIN  RoleType = "Admin"
+)
+
+func (r RoleType) Validate() error {
+	if r == ROLE_OWNER || r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR {
+		return nil
+	}
+
+	return ErrInvalidRoleType
+}
 
 type Collaborator struct {
 	Id             int64
@@ -21,16 +37,6 @@ type Collaborator struct {
 	Updated time.Time
 }
 
-func NewCollaborator(accountId int64, collaboratorId int64, role RoleType) *Collaborator {
-	return &Collaborator{
-		AccountId:      accountId,
-		CollaboratorId: collaboratorId,
-		Role:           role,
-		Created:        time.Now(),
-		Updated:        time.Now(),
-	}
-}
-
 // ---------------------
 // COMMANDS
 
@@ -40,10 +46,10 @@ type RemoveCollaboratorCommand struct {
 }
 
 type AddCollaboratorCommand struct {
-	Email          string   `json:"email" binding:"required"`
+	LoginOrEmail   string   `json:"loginOrEmail" binding:"Required"`
+	Role           RoleType `json:"role" binding:"Required"`
 	AccountId      int64    `json:"-"`
 	CollaboratorId int64    `json:"-"`
-	Role           RoleType `json:"-"`
 }
 
 // ----------------------

@@ -46,7 +46,7 @@ func TestAccountDataAccess(t *testing.T) {
 				cmd := m.AddCollaboratorCommand{
 					AccountId:      ac1.Id,
 					CollaboratorId: ac2.Id,
-					Role:           m.ROLE_READ_WRITE,
+					Role:           m.ROLE_VIEWER,
 				}
 
 				err := AddCollaborator(&cmd)

@@ -45,7 +45,7 @@ func init() {
 }
 
 func EnsureAdminUser() {
-	adminQuery := m.GetAccountByLoginQuery{Login: setting.AdminUser}
+	adminQuery := m.GetAccountByLoginQuery{LoginOrEmail: setting.AdminUser}
 
 	if err := bus.Dispatch(&adminQuery); err == m.ErrAccountNotFound {
 		cmd := m.CreateAccountCommand{}
