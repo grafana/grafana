@@ -7,7 +7,7 @@ import (
 )
 
 func GetAccount(c *middleware.Context) {
-	query := m.GetAccountInfoQuery{Id: c.UserAccount.Id}
+	query := m.GetAccountInfoQuery{Id: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -26,7 +26,7 @@ func UpdateAccount(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.UserAccount.Id
+	cmd.AccountId = c.AccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(400, "Failed to update account", nil)
@@ -37,7 +37,7 @@ func UpdateAccount(c *middleware.Context) {
 }
 
 func GetOtherAccounts(c *middleware.Context) {
-	query := m.GetOtherAccountsQuery{AccountId: c.UserAccount.Id}
+	query := m.GetOtherAccountsQuery{AccountId: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -46,13 +46,13 @@ func GetOtherAccounts(c *middleware.Context) {
 	}
 
 	result := append(query.Result, &m.OtherAccountDTO{
-		AccountId: c.UserAccount.Id,
-		Role:      "owner",
-		Email:     c.UserAccount.Email,
+		AccountId: c.AccountId,
+		Role:      m.ROLE_OWNER,
+		Email:     c.UserEmail,
 	})
 
 	for _, ac := range result {
-		if ac.AccountId == c.UserAccount.UsingAccountId {
+		if ac.AccountId == c.UsingAccountId {
 			ac.IsUsing = true
 			break
 		}
@@ -85,13 +85,13 @@ func validateUsingAccount(accountId int64, otherId int64) bool {
 func SetUsingAccount(c *middleware.Context) {
 	usingAccountId := c.ParamsInt64(":id")
 
-	if !validateUsingAccount(c.UserAccount.Id, usingAccountId) {
+	if !validateUsingAccount(c.AccountId, usingAccountId) {
 		c.JsonApiErr(401, "Not a valid account", nil)
 		return
 	}
 
 	cmd := m.SetUsingAccountCommand{
-		AccountId:      c.UserAccount.Id,
+		AccountId:      c.AccountId,
 		UsingAccountId: usingAccountId,
 	}
 
