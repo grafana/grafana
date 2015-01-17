@@ -42,7 +42,7 @@ type CreateAccountCommand struct {
 }
 
 type UpdateAccountCommand struct {
-	Email string `json:"email" binding:"required"`
+	Email string `json:"email" binding:"Required"`
 	Login string `json:"login"`
 	Name  string `json:"name"`
 
@@ -100,6 +100,7 @@ type SignedInUser struct {
 	UserLogin        string
 	UserName         string
 	UserEmail        string
+	ApiKeyId         int64
 	IsGrafanaAdmin   bool
 }
 

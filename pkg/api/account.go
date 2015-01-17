@@ -18,14 +18,7 @@ func GetAccount(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func UpdateAccount(c *middleware.Context) {
-	cmd := m.UpdateAccountCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Invalid request", nil)
-		return
-	}
-
+func UpdateAccount(c *middleware.Context, cmd m.UpdateAccountCommand) {
 	cmd.AccountId = c.AccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {
