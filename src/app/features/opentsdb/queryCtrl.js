@@ -44,19 +44,19 @@ function (angular, _, kbn) {
 
     $scope.suggestMetrics = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'metrics')
+        .performSuggestQuery(query, 'metrics', $scope.$parent.target)
         .then(callback);
     };
 
     $scope.suggestTagKeys = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'tagk')
+        .performSuggestQuery(query, 'tagk', $scope.$parent.target)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'tagv')
+        .performSuggestQuery(query, 'tagv', $scope.$parent.target)
         .then(callback);
     };
 
