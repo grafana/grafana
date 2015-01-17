@@ -31,12 +31,6 @@ var (
 	UseSQLite3 bool
 )
 
-type DashboardTag struct {
-	Id          int64
-	DashboardId int64
-	Term        string
-}
-
 func init() {
 	tables = make([]interface{}, 0)
 
