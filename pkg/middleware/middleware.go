@@ -58,6 +58,7 @@ func GetContextHandler() macaron.Handler {
 
 				// api key role
 				ctx.UserRole = tokenInfo.Role
+				ctx.ApiKeyId = tokenInfo.Id
 				ctx.UsingAccountId = ctx.AccountId
 				ctx.UsingAccountName = ctx.UserName
 			}
