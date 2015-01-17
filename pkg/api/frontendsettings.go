@@ -46,6 +46,10 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 			}
 		}
 
+		if ds.Type == m.DS_ES {
+			dsMap["index"] = ds.Database
+		}
+
 		datasources[ds.Name] = dsMap
 	}
 
