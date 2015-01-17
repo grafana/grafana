@@ -11,6 +11,7 @@ define([
   './account/collaboratorsCtrl',
   './account/datasourcesCtrl',
   './account/apiKeysCtrl',
+  './account/importCtrl',
   './admin/accountsCtrl',
   './grafanaDatasource/datasource',
 ], function () {});

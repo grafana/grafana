@@ -42,6 +42,10 @@ define([
         templateUrl: 'app/features/account/partials/apikeys.html',
         controller : 'ApiKeysCtrl',
       })
+      .when('/account/import', {
+        templateUrl: 'app/features/account/partials/import.html',
+        controller : 'ImportCtrl',
+      })
       .when('/account', {
         templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',

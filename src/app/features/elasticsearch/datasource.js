@@ -13,7 +13,7 @@ function (angular, _, config, kbn, moment) {
   module.factory('ElasticDatasource', function($q, $http, templateSrv) {
 
     function ElasticDatasource(datasource) {
-      this.type = 'elastic';
+      this.type = 'elasticsearch';
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.name = datasource.name;

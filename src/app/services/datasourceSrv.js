@@ -82,6 +82,10 @@ function (angular, _, config) {
       return this.default;
     };
 
+    this.getAll = function() {
+      return datasources;
+    };
+
     this.getAnnotationSources = function() {
       return annotationSources;
     };

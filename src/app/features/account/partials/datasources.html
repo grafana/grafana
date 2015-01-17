@@ -70,7 +70,7 @@
 							</div>
 							<div class="editor-option">
 								<label class="small">Type</label>
-								<select class="input-medium" ng-model="current.type" ng-options="f for f in ['graphite', 'influxdb', 'opentsdb']" ng-change="typeChanged()"></select>
+								<select class="input-medium" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
 							</div>
 							<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
 						</div>
@@ -100,6 +100,15 @@
 								<div class="editor-option">
 									<label class="small">Password</label>
 									<input type="password" class="input-large" ng-model='current.password' placeholder=""></input>
+								</div>
+							</div>
+						</div>
+						<div class="editor-row" ng-if="current.type === 'elasticsearch'">
+							<div class="section">
+								<h5>Elastic search details</h5>
+								<div class="editor-option">
+									<label class="small">Index name</label>
+									<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
 								</div>
 							</div>
 						</div>

@@ -26,7 +26,7 @@
 							{{annotation.name}}
 						</td>
 						<td style="width: 1%">
-							<a ng-click="edit(annotation)" class="btn btn-success btn-mini">
+							<a ng-click="edit(annotation)" class="btn btn-success btn-small">
 								<i class="fa fa-edit"></i>
 								Edit
 							</a>
@@ -34,7 +34,7 @@
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 						<td style="width: 1%">
-							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
+							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-small">
 								<i class="fa fa-remove"></i>
 							</a>
 						</td>
