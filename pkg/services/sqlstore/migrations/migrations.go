@@ -1,6 +1,6 @@
 package migrations
 
-var migrationList []Migration
+import "time"
 
 // Id              int64
 // Login           string `xorm:"UNIQUE NOT NULL"`
@@ -16,9 +16,11 @@ var migrationList []Migration
 // Created         time.Time
 // Updated         time.Time
 
-func init() {
-	// ------------------------------
-	addMigration(new(RawSqlMigration).Desc("Create account table").
+func AddMigrations(mg *Migrator) {
+
+	// TABLE Account
+	// -------------------------------
+	mg.AddMigration("create account table", new(RawSqlMigration).
 		Sqlite(`
 		  CREATE TABLE account (
 		  	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,25 +36,18 @@ func init() {
 		  )
 		`))
 	// ------------------------------
-	addMigration(new(AddIndexMigration).
+	mg.AddMigration("add index UIX_account.login", new(AddIndexMigration).
 		Name("UIX_account_login").Table("account").Columns("login"))
 	// ------------------------------
-	addMigration(new(AddColumnMigration).Desc("Add name column").
+	mg.AddMigration("add column", new(AddColumnMigration).
 		Table("account").Column("name").Type(DB_TYPE_STRING).Length(255))
 }
 
-func addMigration(m Migration) {
-	migrationList = append(migrationList, m)
-}
-
-type SchemaVersion struct {
-	Version int
-}
-
-type SchemaLog struct {
-	Id      int64
-	Version int64
-	Desc    string
-	Info    string
-	Error   bool
+type MigrationLog struct {
+	Id          int64
+	MigrationId string
+	Sql         string
+	Success     bool
+	Error       string
+	Timestamp   time.Time
 }
