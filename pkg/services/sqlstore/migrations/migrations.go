@@ -23,24 +23,40 @@ func AddMigrations(mg *Migrator) {
 	mg.AddMigration("create account table", new(RawSqlMigration).
 		Sqlite(`
 		  CREATE TABLE account (
-		  	id INTEGER PRIMARY KEY AUTOINCREMENT,
-		  	login TEXT NOT NULL,
-		  	email TEXT NOT NULL
+		  	id                INTEGER PRIMARY KEY AUTOINCREMENT,
+		  	login             TEXT NOT NULL,
+		  	email             TEXT NOT NULL,
+		  	name						  TEXT NULL,
+		  	password		 		  TEXT NULL,
+		  	salt							TEXT NULL,
+		  	company						TEXT NULL,
+		  	using_account_id  INTEGER NULL,
+		  	is_admin					INTEGER NOT NULL,
+		  	created           INTEGER NOT NULL,
+		  	updated           INTEGER NOT NULL
 			)
 		`).
 		Mysql(`
 		  CREATE TABLE account (
-		  	id BIGINT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id),
-		  	login  VARCHAR(255) NOT NULL,
-		  	email  VARCHAR(255) NOT NULL
+		  	id								BIGINT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id),
+		  	login							VARCHAR(255) NOT NULL,
+		  	email							VARCHAR(255) NOT NULL,
+		  	name							VARCHAR(255) NULL,
+		    password					VARCHAR(50) NULL,
+				salt    					VARCHAR(50) NULL,
+				company      			VARCHAR(255) NULL,
+				using_account_id	BIGINT NULL,
+				is_admin	        BOOL NOT NULL,
+				created	          DATETIME NOT NULL,
+				update	          DATETIME NOT NULL
 		  )
 		`))
 	// ------------------------------
 	mg.AddMigration("add index UIX_account.login", new(AddIndexMigration).
 		Name("UIX_account_login").Table("account").Columns("login"))
 	// ------------------------------
-	mg.AddMigration("add column", new(AddColumnMigration).
-		Table("account").Column("name").Type(DB_TYPE_STRING).Length(255))
+	// mg.AddMigration("add column", new(AddColumnMigration).
+	// 	Table("account").Column("name").Type(DB_TYPE_STRING).Length(255))
 }
 
 type MigrationLog struct {
