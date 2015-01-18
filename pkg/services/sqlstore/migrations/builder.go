@@ -13,6 +13,8 @@ const (
 
 type Migration interface {
 	Sql(dialect Dialect) string
+	Id() string
+	SetId(string)
 }
 
 type ColumnType string
@@ -22,7 +24,15 @@ const (
 )
 
 type MigrationBase struct {
-	desc string
+	id string
+}
+
+func (m *MigrationBase) Id() string {
+	return m.id
+}
+
+func (m *MigrationBase) SetId(id string) {
+	m.id = id
 }
 
 type RawSqlMigration struct {
@@ -50,11 +60,6 @@ func (m *RawSqlMigration) Sqlite(sql string) *RawSqlMigration {
 
 func (m *RawSqlMigration) Mysql(sql string) *RawSqlMigration {
 	m.mysql = sql
-	return m
-}
-
-func (m *RawSqlMigration) Desc(desc string) *RawSqlMigration {
-	m.desc = desc
 	return m
 }
 
@@ -90,16 +95,12 @@ func (m *AddColumnMigration) Sql(dialect Dialect) string {
 	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", m.tableName, m.columnName, dialect.ToDBTypeSql(m.columnType, m.length))
 }
 
-func (m *AddColumnMigration) Desc(desc string) *AddColumnMigration {
-	m.desc = desc
-	return m
-}
-
 type AddIndexMigration struct {
 	MigrationBase
 	tableName string
 	columns   string
 	indexName string
+	unique    string
 }
 
 func (m *AddIndexMigration) Name(name string) *AddIndexMigration {
@@ -112,11 +113,16 @@ func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
 	return m
 }
 
+func (m *AddIndexMigration) Unique() *AddIndexMigration {
+	m.unique = "UNIQUE"
+	return m
+}
+
 func (m *AddIndexMigration) Columns(columns ...string) *AddIndexMigration {
 	m.columns = strings.Join(columns, ",")
 	return m
 }
 
 func (m *AddIndexMigration) Sql(dialect Dialect) string {
-	return fmt.Sprintf("CREATE UNIQUE INDEX %s ON %s(%s)", m.indexName, m.tableName, m.columns)
+	return fmt.Sprintf("CREATE %s INDEX %s ON %s(%s)", m.unique, m.indexName, m.tableName, m.columns)
 }

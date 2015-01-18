@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-xorm/xorm"
+	"github.com/torkelo/grafana-pro/pkg/log"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -31,8 +32,10 @@ func cleanDB(x *xorm.Engine) {
 var indexTypes = []string{"Unknown", "", "UNIQUE"}
 
 func TestMigrations(t *testing.T) {
+	log.NewLogger(0, "console", `{"level": 0}`)
+
 	testDBs := [][]string{
-		//[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
+		[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
 		[]string{"sqlite3", ":memory:"},
 	}
 
@@ -46,7 +49,10 @@ func TestMigrations(t *testing.T) {
 				cleanDB(x)
 			}
 
-			err = StartMigration(x)
+			mg := NewMigrator(x)
+			AddMigrations(mg)
+
+			err = mg.Start()
 			So(err, ShouldBeNil)
 
 			tables, err := x.DBMetas()
