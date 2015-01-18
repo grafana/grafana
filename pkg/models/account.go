@@ -10,6 +10,7 @@ var (
 	ErrAccountNotFound = errors.New("Account not found")
 )
 
+// Directly mapped to db schema, Do not change field names lighly
 type Account struct {
 	Id              int64
 	Login           string `xorm:"UNIQUE NOT NULL"`

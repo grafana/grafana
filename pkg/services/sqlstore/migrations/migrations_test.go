@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/go-xorm/xorm"
@@ -27,10 +28,12 @@ func cleanDB(x *xorm.Engine) {
 	}
 }
 
-func TestMigrationsSqlite(t *testing.T) {
+var indexTypes = []string{"Unknown", "", "UNIQUE"}
+
+func TestMigrations(t *testing.T) {
 	testDBs := [][]string{
+		//[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
 		[]string{"sqlite3", ":memory:"},
-		[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
 	}
 
 	for _, testDB := range testDBs {
@@ -43,13 +46,28 @@ func TestMigrationsSqlite(t *testing.T) {
 				cleanDB(x)
 			}
 
-			StartMigration(x)
+			err = StartMigration(x)
+			So(err, ShouldBeNil)
 
 			tables, err := x.DBMetas()
 			So(err, ShouldBeNil)
 
 			So(len(tables), ShouldEqual, 2)
-		})
+			fmt.Printf("\nDB Schema after migration: table count: %v\n", len(tables))
 
+			for _, table := range tables {
+				fmt.Printf("\nTable: %v \n", table.Name)
+				for _, column := range table.Columns() {
+					fmt.Printf("\t %v \n", column.String(x.Dialect()))
+				}
+
+				if len(table.Indexes) > 0 {
+					fmt.Printf("\n\tIndexes:\n")
+					for _, index := range table.Indexes {
+						fmt.Printf("\t %v (%v) %v \n", index.Name, strings.Join(index.Cols, ","), indexTypes[index.Type])
+					}
+				}
+			}
+		})
 	}
 }
