@@ -35,7 +35,7 @@ func TestMigrations(t *testing.T) {
 	log.NewLogger(0, "console", `{"level": 0}`)
 
 	testDBs := [][]string{
-		[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
+		//[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
 		[]string{"sqlite3", ":memory:"},
 	}
 
