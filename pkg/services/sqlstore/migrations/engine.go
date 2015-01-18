@@ -1,19 +1,15 @@
 package migrations
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/sqlsyntax"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/torkelo/grafana-pro/pkg/log"
 )
 
 var x *xorm.Engine
-var dialect sqlsyntax.Dialect
+var dialect Dialect
 
 func getSchemaVersion() (int, error) {
 	exists, err := x.IsTableExist(new(SchemaVersion))
@@ -36,14 +32,16 @@ func getSchemaVersion() (int, error) {
 func setEngineAndDialect(engine *xorm.Engine) {
 	x = engine
 	switch x.DriverName() {
-	case "mysql":
-		dialect = new(sqlsyntax.Mysql)
-	case "sqlite3":
-		dialect = new(sqlsyntax.Sqlite3)
+	case MYSQL:
+		dialect = new(Mysql)
+	case SQLITE:
+		dialect = new(Sqlite3)
 	}
 }
 
 func StartMigration(engine *xorm.Engine) error {
+	log.Info("Starting database schema migration: DB: %v", engine.DriverName())
+
 	setEngineAndDialect(engine)
 
 	_, err := getSchemaVersion()
@@ -60,9 +58,9 @@ func StartMigration(engine *xorm.Engine) error {
 	return nil
 }
 
-func execMigration(m *migration) error {
+func execMigration(m Migration) error {
 	err := inTransaction(func(sess *xorm.Session) error {
-		_, err := sess.Exec(m.getSql(x.DriverName()))
+		_, err := sess.Exec(m.Sql(dialect))
 		if err != nil {
 			return err
 		}
@@ -73,17 +71,6 @@ func execMigration(m *migration) error {
 		return err
 	}
 
-	return verifyMigration(m)
-}
-
-func verifyMigration(m *migration) error {
-	if m.verifyTable != "" {
-		sqlStr, args := dialect.TableCheckSql(m.verifyTable)
-		results, err := x.Query(sqlStr, args...)
-		if err != nil || len(results) == 0 {
-			return errors.New(fmt.Sprintf("Verify failed: table %v does not exist", m.verifyTable))
-		}
-	}
 	return nil
 }
 
