@@ -1,10 +1,10 @@
-openldap:
-  image: cnry/openldap
+mysqltests:
+  image: mysql:latest
   environment:
-    SLAPD_PASSWORD: grafana
-    SLAPD_DOMAIN: grafana.org
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_USER: grafana
+    MYSQL_PASSWORD: password
   ports:
-    - "389:389"
-
-
+    - "3306:3306"
 

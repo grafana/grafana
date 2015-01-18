@@ -8,9 +8,8 @@ import (
 
 func GetAccount(c *middleware.Context) {
 	query := m.GetAccountInfoQuery{Id: c.AccountId}
-	err := bus.Dispatch(&query)
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to fetch collaboratos", err)
 		return
 	}
@@ -31,9 +30,8 @@ func UpdateAccount(c *middleware.Context, cmd m.UpdateAccountCommand) {
 
 func GetOtherAccounts(c *middleware.Context) {
 	query := m.GetOtherAccountsQuery{AccountId: c.AccountId}
-	err := bus.Dispatch(&query)
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to get other accounts", err)
 		return
 	}

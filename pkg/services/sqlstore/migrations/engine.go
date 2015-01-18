@@ -4,8 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-xorm/xorm"
 	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/sqlsyntax"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var x *xorm.Engine
@@ -29,9 +33,18 @@ func getSchemaVersion() (int, error) {
 	return v.Version, err
 }
 
-func StartMigration(engine *xorm.Engine) error {
+func setEngineAndDialect(engine *xorm.Engine) {
 	x = engine
-	dialect = new(sqlsyntax.Sqlite3)
+	switch x.DriverName() {
+	case "mysql":
+		dialect = new(sqlsyntax.Mysql)
+	case "sqlite3":
+		dialect = new(sqlsyntax.Sqlite3)
+	}
+}
+
+func StartMigration(engine *xorm.Engine) error {
+	setEngineAndDialect(engine)
 
 	_, err := getSchemaVersion()
 	if err != nil {
@@ -49,16 +62,21 @@ func StartMigration(engine *xorm.Engine) error {
 
 func execMigration(m *migration) error {
 	err := inTransaction(func(sess *xorm.Session) error {
-		_, err := sess.Exec(m.sqlite)
+		_, err := sess.Exec(m.getSql(x.DriverName()))
 		if err != nil {
 			return err
 		}
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
-	// verify
+
+	return verifyMigration(m)
+}
+
+func verifyMigration(m *migration) error {
 	if m.verifyTable != "" {
 		sqlStr, args := dialect.TableCheckSql(m.verifyTable)
 		results, err := x.Query(sqlStr, args...)
@@ -66,7 +84,6 @@ func execMigration(m *migration) error {
 			return errors.New(fmt.Sprintf("Verify failed: table %v does not exist", m.verifyTable))
 		}
 	}
-
 	return nil
 }
 
