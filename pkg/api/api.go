@@ -28,6 +28,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/datasources/", reqSignedIn, Index)
 	r.Get("/account/collaborators/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
+	r.Get("/account/import/", reqSignedIn, Index)
 	r.Get("/admin", reqSignedIn, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
