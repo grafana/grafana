@@ -12,6 +12,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", CreateUser)
+	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", GetUserInfo)
@@ -90,6 +91,21 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	query.Result = user
 
 	return nil
+}
+
+func UpdateUser(cmd *m.UpdateUserCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+
+		user := m.User{
+			Name:    cmd.Name,
+			Email:   cmd.Email,
+			Login:   cmd.Login,
+			Updated: time.Now(),
+		}
+
+		_, err := sess.Id(cmd.UserId).Update(&user)
+		return err
+	})
 }
 
 func SetUsingAccount(cmd *m.SetUsingAccountCommand) error {
