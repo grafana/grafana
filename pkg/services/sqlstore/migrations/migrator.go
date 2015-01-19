@@ -11,6 +11,8 @@ import (
 )
 
 type Migrator struct {
+	LogLevel log.LogLevel
+
 	x          *xorm.Engine
 	dialect    Dialect
 	migrations []Migration
@@ -19,6 +21,7 @@ type Migrator struct {
 func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
+	mg.LogLevel = log.WARN
 	mg.migrations = make([]Migration, 0)
 
 	switch mg.x.DriverName() {
@@ -64,7 +67,9 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) Start() error {
-	log.Info("Migrator::Starting DB migration")
+	if mg.LogLevel <= log.INFO {
+		log.Info("Migrator:: Starting DB migration")
+	}
 
 	logMap, err := mg.GetMigrationLog()
 	if err != nil {
@@ -85,6 +90,8 @@ func (mg *Migrator) Start() error {
 			Sql:         sql,
 			Timestamp:   time.Now(),
 		}
+
+		log.Debug("Migrator: Executing SQL: \n %v \n", sql)
 
 		if err := mg.exec(m); err != nil {
 			record.Error = err.Error()

@@ -32,12 +32,17 @@ var (
 	UseSQLite3 bool
 )
 
+type TestTable struct {
+	Id1 int `xorm:"pk"`
+	Id2 int `xorm:"pk"`
+}
+
 func init() {
 	tables = make([]interface{}, 0)
 
 	tables = append(tables, new(m.Dashboard),
 		new(m.Collaborator), new(m.DataSource), new(DashboardTag),
-		new(m.Token))
+		new(m.Token), new(TestTable))
 }
 
 func EnsureAdminUser() {
