@@ -58,8 +58,8 @@ type GetAccountUsersQuery struct {
 // Projections and DTOs
 
 type AccountUserDTO struct {
-	AccountId int64  `json:"account_id"`
-	UserId    int64  `json:"user_id"`
+	AccountId int64  `json:"accountId"`
+	UserId    int64  `json:"userId"`
 	Email     string `json:"email"`
 	Login     string `json:"login"`
 	Role      string `json:"role"`

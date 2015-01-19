@@ -24,13 +24,13 @@ func Register(r *macaron.Macaron) {
 	r.Get("/login", Index)
 
 	// authed views
-	r.Get("/user/", reqSignedIn, Index)
+	r.Get("/profile/", reqSignedIn, Index)
 	r.Get("/account/", reqSignedIn, Index)
 	r.Get("/account/datasources/", reqSignedIn, Index)
-	r.Get("/account/collaborators/", reqSignedIn, Index)
+	r.Get("/account/users/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
-	r.Get("/admin", reqSignedIn, Index)
+	r.Get("/admin/users", reqSignedIn, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up
@@ -49,8 +49,6 @@ func Register(r *macaron.Macaron) {
 
 		// account
 		r.Group("/account", func() {
-			//r.Get("/", GetAccount)
-			//r.Post("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
 			r.Put("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
 			r.Get("/users", GetAccountUsers)
 			r.Delete("/users/:id", RemoveAccountUser)
