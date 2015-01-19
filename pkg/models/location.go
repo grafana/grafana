@@ -58,13 +58,13 @@ type DeleteLocationCommand struct {
 // QUERIES
 
 type GetLocationsQuery struct {
-	LocationId int64  `form:"id"`
-	Slug       string `form:"slug"`
-	Name       string `form:"name"`
-	Countery   string `form:"country"`
-	Region     string `form:"region"`
-	Provider   string `form:"provider"`
-	Public     string `form:"public"`
+	LocationId []int64  `form:"id"`
+	Slug       []string `form:"slug"`
+	Name       []string `form:"name"`
+	Country    []string `form:"country"`
+	Region     []string `form:"region"`
+	Provider   []string `form:"provider"`
+	Public     string   `form:"public"`
 
 	AccountId int64
 	Result    []*Location

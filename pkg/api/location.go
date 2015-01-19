@@ -3,15 +3,13 @@ package api
 import (
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
-	"github.com/torkelo/grafana-pro/pkg/log"
+	//"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
 func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
 	query.AccountId = c.UsingAccountId
-
-	log.Info("LocationId: %v, Slug: %v, Public %v", query.LocationId, query.Slug, query.Public)
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query locations", err)

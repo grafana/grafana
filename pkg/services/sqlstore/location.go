@@ -2,7 +2,7 @@ package sqlstore
 
 import (
 	"time"
-
+    "strconv"
 	"github.com/go-xorm/xorm"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -29,23 +29,47 @@ func GetLocationBySlug(query *m.GetLocationBySlugQuery) error {
 func GetLocations(query *m.GetLocationsQuery) error {
 	sess := x.Limit(100, 0).Where("public=1 OR account_id=?", query.AccountId).Asc("name")
 
-	if query.LocationId != 0 {
-		sess.And("id=?", query.LocationId)
+	if len(query.LocationId) > 0 {
+		if len(query.LocationId) > 1 {
+			sess.In("id", query.LocationId)
+		} else {
+			sess.And("id=?", query.LocationId[0])
+		}
 	}
-	if query.Countery != "" {
-		sess.And("country=?", query.Countery)
+	if len(query.Country) > 0 {
+		if len(query.Country) > 1 {
+			sess.In("country", query.Country)
+		} else {
+			sess.And("country=?", query.Country[0])
+		}
 	}
-	if query.Name != "" {
-		sess.And("name=?", query.Name)
+	if len(query.Name) > 0 {
+		if len(query.Name) > 1 {
+			sess.In("name", query.Name)
+		} else {
+			sess.And("name=?", query.Name[0])
+		}
 	}
-	if query.Region != "" {
-		sess.And("region=?", query.Region)
+	if len(query.Region) > 0 {
+		if len(query.Region) > 1 {
+			sess.In("region", query.Region)
+		} else {
+			sess.And("region=?", query.Region[0])
+		}
 	}
-	if query.Provider != "" {
-		sess.And("provider=?", query.Provider)
+	if len(query.Provider) > 0 {
+		if len(query.Provider) > 1 {
+			sess.In("provider", query.Provider)
+		} else {
+			sess.And("provider=?", query.Provider[0])
+		}
 	}
 	if query.Public != "" {
-		sess.And("provider=?", query.Public == "true")
+		if p, err := strconv.ParseBool(query.Public); err != nil {
+			sess.And("public=?", p)
+		} else {
+			return err
+		}
 	}
 
 	query.Result = make([]*m.Location, 0)
