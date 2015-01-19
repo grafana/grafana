@@ -13,7 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetTokenByToken)
 	bus.AddHandler("sql", UpdateToken)
 	bus.AddHandler("sql", DeleteToken)
-	bus.AddHandler("sql", DeleteToken)
+	bus.AddHandler("sql", AddToken)
 }
 
 func GetTokens(query *m.GetTokensQuery) error {
