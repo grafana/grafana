@@ -10,7 +10,7 @@ import (
 )
 
 func RenderToPng(c *middleware.Context) {
-	accountId := c.UsingAccountId
+	accountId := c.AccountId
 	queryReader := util.NewUrlQueryReader(c.Req.URL)
 	queryParams := "?render=1&accountId=" + strconv.FormatInt(accountId, 10) + "&" + c.Req.URL.RawQuery
 

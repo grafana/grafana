@@ -31,10 +31,10 @@ func GetContextHandler() macaron.Handler {
 		}
 
 		// try get account id from request
-		if accountId := getRequestAccountId(ctx); accountId != 0 {
-			query := m.GetSignedInUserQuery{AccountId: accountId}
+		if userId := getRequestUserId(ctx); userId != 0 {
+			query := m.GetSignedInUserQuery{UserId: userId}
 			if err := bus.Dispatch(&query); err != nil {
-				log.Error(3, "Failed to get user by id, %v, %v", accountId, err)
+				log.Error(3, "Failed to get user by id, %v, %v", userId, err)
 			} else {
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = query.Result
@@ -47,20 +47,14 @@ func GetContextHandler() macaron.Handler {
 				return
 			} else {
 				tokenInfo := tokenQuery.Result
-				query := m.GetSignedInUserQuery{AccountId: tokenInfo.AccountId}
-				if err := bus.Dispatch(&query); err != nil {
-					ctx.JsonApiErr(401, "Invalid token", err)
-					return
-				}
 
 				ctx.IsSignedIn = true
-				ctx.SignedInUser = query.Result
+				ctx.SignedInUser = &m.SignedInUser{}
 
-				// api key role
-				ctx.UserRole = tokenInfo.Role
+				// TODO: fix this
+				ctx.AccountRole = tokenInfo.Role
 				ctx.ApiKeyId = tokenInfo.Id
-				ctx.UsingAccountId = ctx.AccountId
-				ctx.UsingAccountName = ctx.UserName
+				ctx.AccountId = tokenInfo.AccountId
 			}
 		}
 

@@ -6,11 +6,11 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-func AdminSearchAccounts(c *middleware.Context) {
+func AdminSearchUsers(c *middleware.Context) {
 	// query := c.QueryStrings("q")
 	// page := c.QueryStrings("p")
 
-	query := m.SearchAccountsQuery{Query: "", Page: 0, Limit: 20}
+	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 20}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to fetch collaboratos", err)
 		return

@@ -23,7 +23,7 @@ func LoginPost(c *middleware.Context) {
 		return
 	}
 
-	userQuery := m.GetAccountByLoginQuery{LoginOrEmail: loginModel.Email}
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: loginModel.Email}
 	err := bus.Dispatch(&userQuery)
 
 	if err != nil {
@@ -31,32 +31,32 @@ func LoginPost(c *middleware.Context) {
 		return
 	}
 
-	account := userQuery.Result
+	user := userQuery.Result
 
-	passwordHashed := util.EncodePassword(loginModel.Password, account.Salt)
-	if passwordHashed != account.Password {
+	passwordHashed := util.EncodePassword(loginModel.Password, user.Salt)
+	if passwordHashed != user.Password {
 		c.JsonApiErr(401, "Invalid username or password", err)
 		return
 	}
 
-	loginUserWithAccount(account, c)
+	loginUserWithUser(user, c)
 
 	var resp = &dtos.LoginResult{}
 	resp.Status = "Logged in"
-	resp.User.Login = account.Login
+	resp.User.Login = user.Login
 
 	c.JSON(200, resp)
 }
 
-func loginUserWithAccount(account *m.Account, c *middleware.Context) {
-	if account == nil {
-		log.Error(3, "Account login with nil account")
+func loginUserWithUser(user *m.User, c *middleware.Context) {
+	if user == nil {
+		log.Error(3, "User login with nil user")
 	}
 
-	c.Session.Set("accountId", account.Id)
+	c.Session.Set("userId", user.Id)
 }
 
 func LogoutPost(c *middleware.Context) {
-	c.Session.Delete("accountId")
+	c.Session.Delete("userId")
 	c.JSON(200, util.DynMap{"status": "logged out"})
 }

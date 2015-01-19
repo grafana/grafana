@@ -30,10 +30,15 @@ func AddMigrations(mg *Migrator) {
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
+	//-------  user table indexes ------------------
+	mg.AddMigration("add unique index UIX_user.login", new(AddIndexMigration).
+		Name("UIX_user_login").Table("user").Columns("login"))
+	mg.AddMigration("add unique index UIX_user.email", new(AddIndexMigration).
+		Name("UIX_user_email").Table("user").Columns("email"))
 
-	//-------  account2 table -------------------
-	mg.AddMigration("create account2 table", new(AddTableMigration).
-		Name("account2").WithColumns(
+	//-------  account table -------------------
+	mg.AddMigration("create account table", new(AddTableMigration).
+		Name("account").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -41,7 +46,7 @@ func AddMigrations(mg *Migrator) {
 	))
 
 	mg.AddMigration("add unique index UIX_account.name", new(AddIndexMigration).
-		Name("UIX_account_name").Table("account2").Columns("name"))
+		Name("UIX_account_name").Table("account").Columns("name"))
 
 	//-------  account_user table -------------------
 	mg.AddMigration("create account_user table", new(AddTableMigration).
@@ -57,27 +62,6 @@ func AddMigrations(mg *Migrator) {
 	mg.AddMigration("add unique index UIX_account_user", new(AddIndexMigration).
 		Name("UIX_account_user").Table("account_user").Columns("account_id", "user_id"))
 
-	//-------  account table -------------------
-	mg.AddMigration("create account table", new(AddTableMigration).
-		Name("account").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "login", Type: DB_NVarchar, Length: 255},
-		&Column{Name: "email", Type: DB_NVarchar, Length: 255},
-		&Column{Name: "name", Type: DB_NVarchar, Length: 255},
-		&Column{Name: "password", Type: DB_NVarchar, Length: 50},
-		&Column{Name: "salt", Type: DB_NVarchar, Length: 50},
-		&Column{Name: "company", Type: DB_NVarchar, Length: 255},
-		&Column{Name: "using_account_id", Type: DB_BigInt},
-		&Column{Name: "is_admin", Type: DB_Bool},
-		&Column{Name: "created", Type: DB_DateTime},
-		&Column{Name: "updated", Type: DB_DateTime},
-	))
-
-	//-------  account table indexes ------------------
-	mg.AddMigration("add unique index UIX_account.login", new(AddIndexMigration).
-		Name("UIX_account_login").Table("account").Columns("login"))
-	mg.AddMigration("add unique index UIX_account.email", new(AddIndexMigration).
-		Name("UIX_account_email").Table("account").Columns("email"))
 }
 
 type MigrationLog struct {

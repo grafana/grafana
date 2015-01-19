@@ -14,18 +14,18 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getRequestAccountId(c *Context) int64 {
-	accountId := c.Session.Get("accountId")
+func getRequestUserId(c *Context) int64 {
+	userId := c.Session.Get("userId")
 
-	if accountId != nil {
-		return accountId.(int64)
+	if userId != nil {
+		return userId.(int64)
 	}
 
 	// TODO: figure out a way to secure this
 	if c.Query("render") == "1" {
-		accountId := c.QueryInt64("accountId")
-		c.Session.Set("accountId", accountId)
-		return accountId
+		userId := c.QueryInt64("userId")
+		c.Session.Set("userId", userId)
+		return userId
 	}
 
 	return 0
@@ -54,7 +54,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 	return func(c *Context) {
 		ok := false
 		for _, role := range roles {
-			if role == c.UserRole {
+			if role == c.AccountRole {
 				ok = true
 				break
 			}

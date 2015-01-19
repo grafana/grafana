@@ -13,87 +13,85 @@ func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 
-		Convey("Given two saved accounts", func() {
-			ac1cmd := m.CreateAccountCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
-			ac2cmd := m.CreateAccountCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
+		Convey("Given two saved users", func() {
+			ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
+			ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
 
-			err := CreateAccount(&ac1cmd)
-			err = CreateAccount(&ac2cmd)
+			err := CreateUser(&ac1cmd)
+			err = CreateUser(&ac2cmd)
 			So(err, ShouldBeNil)
 
 			ac1 := ac1cmd.Result
 			ac2 := ac2cmd.Result
 
-			Convey("Should be able to read account info projection", func() {
-				query := m.GetAccountInfoQuery{Id: ac1.Id}
-				err = GetAccountInfo(&query)
+			Convey("Should be able to read user info projection", func() {
+				query := m.GetUserInfoQuery{UserId: ac1.Id}
+				err = GetUserInfo(&query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Email, ShouldEqual, "ac1@test.com")
 				So(query.Result.Login, ShouldEqual, "ac1")
 			})
 
-			Convey("Can search accounts", func() {
-				query := m.SearchAccountsQuery{Query: ""}
-				err := SearchAccounts(&query)
+			Convey("Can search users", func() {
+				query := m.SearchUsersQuery{Query: ""}
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
 				So(query.Result[1].Email, ShouldEqual, "ac2@test.com")
 			})
 
-			Convey("Given an added collaborator", func() {
-				cmd := m.AddCollaboratorCommand{
-					AccountId:      ac1.Id,
-					CollaboratorId: ac2.Id,
-					Role:           m.ROLE_VIEWER,
+			Convey("Given an added account user", func() {
+				cmd := m.AddAccountUserCommand{
+					AccountId: ac1.AccountId,
+					UserId:    ac2.Id,
+					Role:      m.ROLE_VIEWER,
 				}
 
-				err := AddCollaborator(&cmd)
+				err := AddAccountUser(&cmd)
 				Convey("Should have been saved without error", func() {
 					So(err, ShouldBeNil)
 				})
 
 				Convey("Can get logged in user projection", func() {
-					query := m.GetSignedInUserQuery{AccountId: ac2.Id}
+					query := m.GetSignedInUserQuery{UserId: ac2.Id}
 					err := GetSignedInUser(&query)
 
 					So(err, ShouldBeNil)
-					So(query.Result.AccountId, ShouldEqual, ac2.Id)
-					So(query.Result.UserEmail, ShouldEqual, "ac2@test.com")
-					So(query.Result.UserName, ShouldEqual, "ac2 name")
-					So(query.Result.UserLogin, ShouldEqual, "ac2")
-					So(query.Result.UserRole, ShouldEqual, "Owner")
-					So(query.Result.UsingAccountName, ShouldEqual, "ac2 name")
-					So(query.Result.UsingAccountId, ShouldEqual, ac2.Id)
+					So(query.Result.AccountId, ShouldEqual, ac2.AccountId)
+					So(query.Result.Email, ShouldEqual, "ac2@test.com")
+					So(query.Result.Name, ShouldEqual, "ac2 name")
+					So(query.Result.Login, ShouldEqual, "ac2")
+					So(query.Result.AccountRole, ShouldEqual, "Admin")
+					So(query.Result.AccountName, ShouldEqual, "ac2@test.com")
 					So(query.Result.IsGrafanaAdmin, ShouldBeTrue)
 				})
 
-				Convey("Can get other accounts", func() {
-					query := m.GetOtherAccountsQuery{AccountId: ac2.Id}
-					err := GetOtherAccounts(&query)
+				Convey("Can get user accounts", func() {
+					query := m.GetUserAccountsQuery{UserId: ac2.Id}
+					err := GetUserAccounts(&query)
 
 					So(err, ShouldBeNil)
-					So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
+					So(len(query.Result), ShouldEqual, 2)
 				})
 
 				Convey("Can set using account", func() {
-					cmd := m.SetUsingAccountCommand{AccountId: ac2.Id, UsingAccountId: ac1.Id}
+					cmd := m.SetUsingAccountCommand{UserId: ac2.Id, AccountId: ac1.Id}
 					err := SetUsingAccount(&cmd)
 					So(err, ShouldBeNil)
 
 					Convey("Logged in user query should return correct using account info", func() {
-						query := m.GetSignedInUserQuery{AccountId: ac2.Id}
+						query := m.GetSignedInUserQuery{UserId: ac2.Id}
 						err := GetSignedInUser(&query)
 
 						So(err, ShouldBeNil)
-						So(query.Result.AccountId, ShouldEqual, ac2.Id)
-						So(query.Result.UserEmail, ShouldEqual, "ac2@test.com")
-						So(query.Result.UserName, ShouldEqual, "ac2 name")
-						So(query.Result.UserLogin, ShouldEqual, "ac2")
-						So(query.Result.UsingAccountName, ShouldEqual, "ac1 name")
-						So(query.Result.UsingAccountId, ShouldEqual, ac1.Id)
-						So(query.Result.UserRole, ShouldEqual, "Viewer")
+						So(query.Result.AccountId, ShouldEqual, ac1.Id)
+						So(query.Result.Email, ShouldEqual, "ac2@test.com")
+						So(query.Result.Name, ShouldEqual, "ac2 name")
+						So(query.Result.Login, ShouldEqual, "ac2")
+						So(query.Result.AccountName, ShouldEqual, "ac1@test.com")
+						So(query.Result.AccountRole, ShouldEqual, "Viewer")
 					})
 				})
 			})

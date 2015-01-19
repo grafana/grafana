@@ -8,7 +8,7 @@ import (
 )
 
 func GetDataSources(c *middleware.Context) {
-	query := m.GetDataSourcesQuery{AccountId: c.UsingAccountId}
+	query := m.GetDataSourcesQuery{AccountId: c.AccountId}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
@@ -44,7 +44,7 @@ func DeleteDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd := &m.DeleteDataSourceCommand{Id: id, AccountId: c.UsingAccountId}
+	cmd := &m.DeleteDataSourceCommand{Id: id, AccountId: c.AccountId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -63,7 +63,7 @@ func AddDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.UsingAccountId
+	cmd.AccountId = c.AccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add datasource", err)
@@ -81,7 +81,7 @@ func UpdateDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.UsingAccountId
+	cmd.AccountId = c.AccountId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
