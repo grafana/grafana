@@ -84,7 +84,7 @@ func GetLocations(query *m.GetLocationsQuery) error {
 			if len(values) > 1 {
 				sess.In(k, values)
 			} else if len(values) == 1 {
-				sess.Where(fmt.Sprintf("%s=?", k), values[0])
+				sess.And(fmt.Sprintf("%s=?", k), values[0])
 			}
 		} else {
 			return err
