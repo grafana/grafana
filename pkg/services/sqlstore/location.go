@@ -65,7 +65,7 @@ func GetLocations(query *m.GetLocationsQuery) error {
 		}
 	}
 	if query.Public != "" {
-		if p, err := strconv.ParseBool(query.Public); err != nil {
+		if p, err := strconv.ParseBool(query.Public); err == nil {
 			sess.And("public=?", p)
 		} else {
 			return err
