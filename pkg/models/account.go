@@ -12,19 +12,17 @@ var (
 
 // Directly mapped to db schema, Do not change field names lighly
 type Account struct {
-	Id              int64
-	Login           string `xorm:"UNIQUE NOT NULL"`
-	Email           string `xorm:"UNIQUE NOT NULL"`
-	Name            string
-	FullName        string
-	Password        string
-	IsAdmin         bool
-	Salt            string `xorm:"VARCHAR(10)"`
-	Company         string
-	NextDashboardId int
-	UsingAccountId  int64
-	Created         time.Time
-	Updated         time.Time
+	Id             int64
+	Login          string `xorm:"UNIQUE NOT NULL"`
+	Email          string `xorm:"UNIQUE NOT NULL"`
+	Name           string
+	Password       string
+	IsAdmin        bool
+	Salt           string `xorm:"VARCHAR(10)"`
+	Company        string
+	UsingAccountId int64
+	Created        time.Time
+	Updated        time.Time
 }
 
 // ---------------------

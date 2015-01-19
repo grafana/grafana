@@ -2,61 +2,40 @@ package migrations
 
 import "time"
 
-// Id              int64
-// Login           string `xorm:"UNIQUE NOT NULL"`
-// Email           string `xorm:"UNIQUE NOT NULL"`
-// Name            string
-// FullName        string
-// Password        string
-// IsAdmin         bool
-// Salt            string `xorm:"VARCHAR(10)"`
-// Company         string
-// NextDashboardId int
-// UsingAccountId  int64
-// Created         time.Time
-// Updated         time.Time
-
 func AddMigrations(mg *Migrator) {
 
-	// TABLE Account
-	// -------------------------------
-	mg.AddMigration("create account table", new(RawSqlMigration).
-		Sqlite(`
-		  CREATE TABLE account (
-		  	id                INTEGER PRIMARY KEY AUTOINCREMENT,
-		  	login             TEXT NOT NULL,
-		  	email             TEXT NOT NULL,
-		  	name						  TEXT NULL,
-		  	password		 		  TEXT NULL,
-		  	salt							TEXT NULL,
-		  	company						TEXT NULL,
-		  	using_account_id  INTEGER NULL,
-		  	is_admin					INTEGER NOT NULL,
-		  	created           INTEGER NOT NULL,
-		  	updated           INTEGER NOT NULL
-			)
-		`).
-		Mysql(`
-		  CREATE TABLE account (
-		  	id								BIGINT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id),
-		  	login							VARCHAR(255) NOT NULL,
-		  	email							VARCHAR(255) NOT NULL,
-		  	name							VARCHAR(255) NULL,
-		    password					VARCHAR(50) NULL,
-				salt    					VARCHAR(50) NULL,
-				company      			VARCHAR(255) NULL,
-				using_account_id	BIGINT NULL,
-				is_admin	        BOOL NOT NULL,
-				created	          DATETIME NOT NULL,
-				update	          DATETIME NOT NULL
-		  )
-		`))
-	// ------------------------------
-	mg.AddMigration("add index UIX_account.login", new(AddIndexMigration).
+	//-------  migration_log table -------------------
+	mg.AddMigration("create migration_log table", new(AddTableMigration).
+		Name("migration_log").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "migration_id", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "sql", Type: DB_Text},
+		&Column{Name: "success", Type: DB_Bool},
+		&Column{Name: "error", Type: DB_Text},
+		&Column{Name: "timestamp", Type: DB_DateTime},
+	))
+
+	//-------  account table -------------------
+	mg.AddMigration("create account table", new(AddTableMigration).
+		Name("account").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "login", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "email", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "password", Type: DB_NVarchar, Length: 50},
+		&Column{Name: "salt", Type: DB_NVarchar, Length: 50},
+		&Column{Name: "company", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "using_account_id", Type: DB_BigInt},
+		&Column{Name: "is_admin", Type: DB_Bool},
+		&Column{Name: "created", Type: DB_DateTime},
+		&Column{Name: "updated", Type: DB_DateTime},
+	))
+
+	//-------  account table indexes ------------------
+	mg.AddMigration("add unique index UIX_account.login", new(AddIndexMigration).
 		Name("UIX_account_login").Table("account").Columns("login"))
-	// ------------------------------
-	// mg.AddMigration("add column", new(AddColumnMigration).
-	// 	Table("account").Column("name").Type(DB_TYPE_STRING).Length(255))
+	mg.AddMigration("add unique index UIX_account.email", new(AddIndexMigration).
+		Name("UIX_account_email").Table("account").Columns("email"))
 }
 
 type MigrationLog struct {

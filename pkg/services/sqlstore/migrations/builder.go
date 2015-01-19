@@ -1,28 +1,5 @@
 package migrations
 
-import (
-	"fmt"
-	"strings"
-)
-
-const (
-	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
-	MYSQL    = "mysql"
-)
-
-type Migration interface {
-	Sql(dialect Dialect) string
-	Id() string
-	SetId(string)
-}
-
-type ColumnType string
-
-const (
-	DB_TYPE_STRING ColumnType = "String"
-)
-
 type MigrationBase struct {
 	id string
 }
@@ -65,10 +42,8 @@ func (m *RawSqlMigration) Mysql(sql string) *RawSqlMigration {
 
 type AddColumnMigration struct {
 	MigrationBase
-	tableName  string
-	columnName string
-	columnType ColumnType
-	length     int
+	tableName string
+	column    *Column
 }
 
 func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
@@ -76,35 +51,23 @@ func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
 	return m
 }
 
-func (m *AddColumnMigration) Length(length int) *AddColumnMigration {
-	m.length = length
-	return m
-}
-
-func (m *AddColumnMigration) Column(columnName string) *AddColumnMigration {
-	m.columnName = columnName
-	return m
-}
-
-func (m *AddColumnMigration) Type(columnType ColumnType) *AddColumnMigration {
-	m.columnType = columnType
+func (m *AddColumnMigration) Column(col *Column) *AddColumnMigration {
+	m.column = col
 	return m
 }
 
 func (m *AddColumnMigration) Sql(dialect Dialect) string {
-	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", m.tableName, m.columnName, dialect.ToDBTypeSql(m.columnType, m.length))
+	return dialect.AddColumnSql(m.tableName, m.column)
 }
 
 type AddIndexMigration struct {
 	MigrationBase
 	tableName string
-	columns   string
-	indexName string
-	unique    string
+	index     Index
 }
 
 func (m *AddIndexMigration) Name(name string) *AddIndexMigration {
-	m.indexName = name
+	m.index.Name = name
 	return m
 }
 
@@ -114,15 +77,47 @@ func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
 }
 
 func (m *AddIndexMigration) Unique() *AddIndexMigration {
-	m.unique = "UNIQUE"
+	m.index.Type = UniqueIndex
 	return m
 }
 
 func (m *AddIndexMigration) Columns(columns ...string) *AddIndexMigration {
-	m.columns = strings.Join(columns, ",")
+	m.index.Cols = columns
 	return m
 }
 
 func (m *AddIndexMigration) Sql(dialect Dialect) string {
-	return fmt.Sprintf("CREATE %s INDEX %s ON %s(%s)", m.unique, m.indexName, m.tableName, m.columns)
+	return dialect.CreateIndexSql(m.tableName, &m.index)
+}
+
+type AddTableMigration struct {
+	MigrationBase
+	table Table
+}
+
+func (m *AddTableMigration) Sql(d Dialect) string {
+	return d.CreateTableSql(&m.table)
+}
+
+func (m *AddTableMigration) Name(name string) *AddTableMigration {
+	m.table.Name = name
+	return m
+}
+
+func (m *AddTableMigration) WithColumns(columns ...*Column) *AddTableMigration {
+	for _, col := range columns {
+		m.table.Columns = append(m.table.Columns, col)
+		if col.IsPrimaryKey {
+			m.table.PrimaryKeys = append(m.table.PrimaryKeys, col.Name)
+		}
+	}
+	return m
+}
+
+func (m *AddTableMigration) WithColumn(col *Column) *AddTableMigration {
+	m.table.Columns = append(m.table.Columns, col)
+	if col.IsPrimaryKey {
+		m.table.PrimaryKeys = append(m.table.PrimaryKeys, col.Name)
+	}
+	return m
 }

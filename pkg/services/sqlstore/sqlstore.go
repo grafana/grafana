@@ -9,6 +9,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrations"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
 
@@ -34,7 +35,7 @@ var (
 func init() {
 	tables = make([]interface{}, 0)
 
-	tables = append(tables, new(m.Account), new(m.Dashboard),
+	tables = append(tables, new(m.Dashboard),
 		new(m.Collaborator), new(m.DataSource), new(DashboardTag),
 		new(m.Token))
 }
@@ -76,6 +77,13 @@ func NewEngine() {
 
 func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	x = engine
+
+	migrator := migrations.NewMigrator(x)
+	migrations.AddMigrations(migrator)
+
+	if err := migrator.Start(); err != nil {
+		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
+	}
 
 	if err := x.Sync2(tables...); err != nil {
 		return fmt.Errorf("sync database struct error: %v\n", err)
