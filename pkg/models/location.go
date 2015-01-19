@@ -59,6 +59,7 @@ type DeleteLocationCommand struct {
 
 type GetLocationsQuery struct {
 	AccountId int64
+	Filter    map[string][]string
 	Result    []*Location
 }
 

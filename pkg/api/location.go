@@ -8,7 +8,8 @@ import (
 )
 
 func GetLocations(c *middleware.Context) {
-	query := m.GetLocationsQuery{AccountId: c.UsingAccountId}
+
+	query := m.GetLocationsQuery{AccountId: c.UsingAccountId, Filter: c.Req.URL.Query()}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
