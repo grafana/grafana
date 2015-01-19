@@ -32,24 +32,18 @@ var (
 	UseSQLite3 bool
 )
 
-type TestTable struct {
-	Id1 int `xorm:"pk"`
-	Id2 int `xorm:"pk"`
-}
-
 func init() {
 	tables = make([]interface{}, 0)
 
-	tables = append(tables, new(m.Dashboard),
-		new(m.Collaborator), new(m.DataSource), new(DashboardTag),
-		new(m.Token), new(TestTable))
+	tables = append(tables, new(m.Dashboard), new(m.DataSource), new(DashboardTag),
+		new(m.Token))
 }
 
 func EnsureAdminUser() {
-	adminQuery := m.GetAccountByLoginQuery{LoginOrEmail: setting.AdminUser}
+	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
 
-	if err := bus.Dispatch(&adminQuery); err == m.ErrAccountNotFound {
-		cmd := m.CreateAccountCommand{}
+	if err := bus.Dispatch(&adminQuery); err == m.ErrUserNotFound {
+		cmd := m.CreateUserCommand{}
 		cmd.Login = setting.AdminUser
 		cmd.Email = setting.AdminUser + "@localhost"
 		cmd.Salt = util.GetRandomString(10)

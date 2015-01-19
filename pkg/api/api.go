@@ -13,7 +13,7 @@ import (
 func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
-	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_OWNER)
+	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
 	bind := binding.Bind
 
 	// not logged in views
@@ -24,6 +24,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/login", Index)
 
 	// authed views
+	r.Get("/user/", reqSignedIn, Index)
 	r.Get("/account/", reqSignedIn, Index)
 	r.Get("/account/datasources/", reqSignedIn, Index)
 	r.Get("/account/collaborators/", reqSignedIn, Index)
@@ -38,15 +39,21 @@ func Register(r *macaron.Macaron) {
 
 	// authed api
 	r.Group("/api", func() {
+		// user
+		r.Group("/user", func() {
+			r.Get("/", GetUser)
+			r.Post("/", bind(m.UpdateUserCommand{}), UpdateUser)
+			r.Post("/using/:id", SetUsingAccount)
+			r.Get("/accounts", GetUserAccounts)
+		})
+
 		// account
 		r.Group("/account", func() {
-			r.Get("/", GetAccount)
-			r.Post("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
-			r.Put("/collaborators", bind(m.AddCollaboratorCommand{}), AddCollaborator)
-			r.Get("/collaborators", GetCollaborators)
-			r.Delete("/collaborators/:id", RemoveCollaborator)
-			r.Post("/using/:id", SetUsingAccount)
-			r.Get("/others", GetOtherAccounts)
+			//r.Get("/", GetAccount)
+			//r.Post("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
+			r.Put("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
+			r.Get("/users", GetAccountUsers)
+			r.Delete("/users/:id", RemoveAccountUser)
 		})
 		// Token
 		r.Group("/tokens", func() {
@@ -75,7 +82,7 @@ func Register(r *macaron.Macaron) {
 
 	// admin api
 	r.Group("/api/admin", func() {
-		r.Get("/accounts", AdminSearchAccounts)
+		r.Get("/users", AdminSearchUsers)
 	}, reqGrafanaAdmin)
 
 	// rendering
@@ -94,13 +101,13 @@ func setIndexViewData(c *middleware.Context) error {
 
 	if c.IsSignedIn {
 		currentUser = &dtos.CurrentUser{
-			Login:            c.UserLogin,
-			Email:            c.UserEmail,
-			Name:             c.UserName,
-			UsingAccountName: c.UsingAccountName,
-			GravatarUrl:      dtos.GetGravatarUrl(c.UserEmail),
+			Login:            c.Login,
+			Email:            c.Email,
+			Name:             c.Name,
+			UsingAccountName: c.AccountName,
+			GravatarUrl:      dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:   c.IsGrafanaAdmin,
-			Role:             c.UserRole,
+			Role:             c.AccountRole,
 		}
 	}
 

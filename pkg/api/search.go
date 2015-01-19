@@ -31,7 +31,7 @@ func Search(c *middleware.Context) {
 		query := m.SearchDashboardsQuery{
 			Title:     matches[3],
 			Tag:       matches[2],
-			AccountId: c.UsingAccountId,
+			AccountId: c.AccountId,
 		}
 		err := bus.Dispatch(&query)
 		if err != nil {
