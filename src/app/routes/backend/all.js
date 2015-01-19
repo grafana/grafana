@@ -34,9 +34,9 @@ define([
         templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
-      .when('/account/collaborators', {
-        templateUrl: 'app/features/account/partials/collaborators.html',
-        controller : 'CollaboratorsCtrl',
+      .when('/account/users', {
+        templateUrl: 'app/features/account/partials/users.html',
+        controller : 'AccountUsersCtrl',
       })
       .when('/account/apikeys', {
         templateUrl: 'app/features/account/partials/apikeys.html',
@@ -46,13 +46,13 @@ define([
         templateUrl: 'app/features/account/partials/import.html',
         controller : 'ImportCtrl',
       })
-      .when('/account', {
-        templateUrl: 'app/features/account/partials/account.html',
-        controller : 'AccountCtrl',
+      .when('/profile', {
+        templateUrl: 'app/features/profile/partials/profile.html',
+        controller : 'ProfileCtrl',
       })
-      .when('/admin/accounts', {
-        templateUrl: 'app/features/admin/partials/accounts.html',
-        controller : 'AccountsCtrl',
+      .when('/admin/users', {
+        templateUrl: 'app/features/admin/partials/users.html',
+        controller : 'AdminUsersCtrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
