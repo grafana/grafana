@@ -20,6 +20,7 @@ function (angular, _, config, kbn, moment) {
       this.index = datasource.index;
       this.grafanaDB = datasource.grafanaDB;
       this.searchMaxResults = config.search.max_results || 20;
+      this.withCredentials = datasource.withCredentials;
 
       this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
       this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
@@ -36,8 +37,11 @@ function (angular, _, config, kbn, moment) {
         data: data
       };
 
-      if (this.basicAuth) {
+      if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
+      }
+
+      if (this.basicAuth) {
         options.headers = {
           "Authorization": "Basic " + this.basicAuth
         };
