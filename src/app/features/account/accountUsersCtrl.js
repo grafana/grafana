@@ -26,7 +26,7 @@ function (angular) {
     $scope.removeUser = function(user) {
       backendSrv.request({
         method: 'DELETE',
-        url: '/api/account/users/' + user.id,
+        url: '/api/account/users/' + user.userId
       }).then($scope.get);
     };
 
