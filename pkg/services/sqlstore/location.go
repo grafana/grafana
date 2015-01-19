@@ -59,16 +59,18 @@ func marshalFilters(target string, values []string) ([]interface{}, error) {
 			for _, v := range values {
 				if value, err := f(v); err == nil {
 					response = append(response, value)
+				} else {
+					return nil, err
 				}
 			}
 		} else if len(values) == 1 {
 			if value, err := f(values[0]); err == nil {
 				response = append(response, value)
+			} else {
+				return nil, err
 			}
 		}
-		if len(response) > 0 {
-			return response, nil
-		}
+		return response, nil
 	}
 	return nil, errors.New("invalid filter target")
 }
@@ -84,6 +86,8 @@ func GetLocations(query *m.GetLocationsQuery) error {
 			} else if len(values) == 1 {
 				sess.Where(fmt.Sprintf("%s=?", k), values[0])
 			}
+		} else {
+			return err
 		}
 	}
 
