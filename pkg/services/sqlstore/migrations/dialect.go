@@ -1,52 +1,97 @@
 package migrations
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Dialect interface {
 	DriverName() string
-	ToDBTypeSql(columnType ColumnType, length int) string
+	QuoteStr() string
+	Quote(string) string
+	AndStr() string
+	AutoIncrStr() string
+	OrStr() string
+	EqStr() string
+	ShowCreateNull() bool
+	SqlType(col *Column) string
+
+	CreateIndexSql(tableName string, index *Index) string
+	CreateTableSql(table *Table) string
+	AddColumnSql(tableName string, Col *Column) string
+
 	TableCheckSql(tableName string) (string, []interface{})
 }
 
-type Sqlite3 struct {
+type BaseDialect struct {
+	dialect    Dialect
+	driverName string
 }
 
-type Mysql struct {
+func (d *BaseDialect) DriverName() string {
+	return d.driverName
 }
 
-func (db *Sqlite3) DriverName() string {
-	return SQLITE
+func (b *BaseDialect) ShowCreateNull() bool {
+	return true
 }
 
-func (db *Mysql) DriverName() string {
-	return MYSQL
+func (b *BaseDialect) AndStr() string {
+	return "AND"
 }
 
-func (db *Sqlite3) ToDBTypeSql(columnType ColumnType, length int) string {
-	switch columnType {
-	case DB_TYPE_STRING:
-		return "TEXT"
+func (b *BaseDialect) OrStr() string {
+	return "OR"
+}
+
+func (b *BaseDialect) EqStr() string {
+	return "="
+}
+
+func (b *BaseDialect) CreateTableSql(table *Table) string {
+	var sql string
+	sql = "CREATE TABLE IF NOT EXISTS "
+	sql += b.dialect.Quote(table.Name) + " (\n"
+
+	pkList := table.PrimaryKeys
+
+	for _, col := range table.Columns {
+		if col.IsPrimaryKey && len(pkList) == 1 {
+			sql += col.String(b.dialect)
+		} else {
+			sql += col.StringNoPk(b.dialect)
+		}
+		sql = strings.TrimSpace(sql)
+		sql += "\n, "
 	}
 
-	panic("Unsupported db type")
-}
-
-func (db *Mysql) ToDBTypeSql(columnType ColumnType, length int) string {
-	switch columnType {
-	case DB_TYPE_STRING:
-		return fmt.Sprintf("NVARCHAR(%d)", length)
+	if len(pkList) > 1 {
+		sql += "PRIMARY KEY ( "
+		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
+		sql += " ), "
 	}
 
-	panic("Unsupported db type")
+	sql = sql[:len(sql)-2] + ")"
+	sql += ";"
+	return sql
 }
 
-func (db *Sqlite3) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{tableName}
-	return "SELECT name FROM sqlite_master WHERE type='table' and name = ?", args
+func (db *BaseDialect) AddColumnSql(tableName string, col *Column) string {
+	return fmt.Sprintf("alter table %s ADD COLUMN %s", tableName, col.StringNoPk(db.dialect))
 }
 
-func (db *Mysql) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{"grafana", tableName}
-	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
-	return sql, args
+func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
+	quote := db.dialect.Quote
+	var unique string
+	var idxName string
+	if index.Type == UniqueIndex {
+		unique = " UNIQUE"
+		idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+	} else {
+		idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+	}
+
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
+		quote(idxName), quote(tableName),
+		quote(strings.Join(index.Cols, quote(","))))
 }

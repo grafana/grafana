@@ -23,9 +23,9 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 
 	switch mg.x.DriverName() {
 	case MYSQL:
-		mg.dialect = new(Mysql)
+		mg.dialect = NewMysqlDialect()
 	case SQLITE:
-		mg.dialect = new(Sqlite3)
+		mg.dialect = NewSqlite3Dialect()
 	}
 
 	return mg
@@ -37,20 +37,18 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 }
 
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
+	logMap := make(map[string]MigrationLog)
+	logItems := make([]MigrationLog, 0)
+
 	exists, err := mg.x.IsTableExist(new(MigrationLog))
 	if err != nil {
 		return nil, err
 	}
 
 	if !exists {
-		if err := mg.x.CreateTables(new(MigrationLog)); err != nil {
-			return nil, err
-		}
-		return nil, nil
+		return logMap, nil
 	}
 
-	logMap := make(map[string]MigrationLog)
-	logItems := make([]MigrationLog, 0)
 	if err = mg.x.Find(&logItems); err != nil {
 		return nil, err
 	}
@@ -66,7 +64,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) Start() error {
-	log.Info("Migrator::Start DB migration")
+	log.Info("Migrator::Starting DB migration")
 
 	logMap, err := mg.GetMigrationLog()
 	if err != nil {
@@ -76,13 +74,15 @@ func (mg *Migrator) Start() error {
 	for _, m := range mg.migrations {
 		_, exists := logMap[m.Id()]
 		if exists {
-			log.Info("Migrator:: Skipping migration: %v, Already executed", m.Id())
+			log.Debug("Migrator:: Skipping migration: %v, Already executed", m.Id())
 			continue
 		}
 
+		sql := m.Sql(mg.dialect)
+
 		record := MigrationLog{
 			MigrationId: m.Id(),
-			Sql:         m.Sql(mg.dialect),
+			Sql:         sql,
 			Timestamp:   time.Now(),
 		}
 
