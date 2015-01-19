@@ -83,6 +83,26 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency", 
 		"monitor.enabled")
 
+	if len(query.LocationId) > 0 {
+		// this is a bit complicated because we want to
+		// match only monitors that are enabled in the location,
+		// but we still need to return all of the locations that
+		// the monitor is enabled in.
+		sess.Join("LEFT", []string{"monitor_location", "ml"}, "ml.monitor_id = monitor.id")
+		if len(query.LocationId) > 1 {
+			sess.In("ml.location_id", query.LocationId)
+		} else {
+			sess.And("ml.location_id=?", query.LocationId[0])
+		}
+	}
+	if len(query.Name) > 0 {
+		if len(query.Name) > 1 {
+			sess.In("monitor.name", query.Name)
+		} else {
+			sess.And("monitor.name=?", query.Name[0])
+		}
+	}
+
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)
 	err := sess.Find(&result)

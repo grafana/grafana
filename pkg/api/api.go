@@ -85,7 +85,9 @@ func Register(r *macaron.Macaron) {
 
 		// Monitors
 		r.Group("/monitors", func() {
-			r.Combo("/").Get(GetMonitors).Put(AddMonitor).Post(UpdateMonitor)
+			r.Combo("/").
+				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
+				Put(AddMonitor).Post(UpdateMonitor)
 			r.Get("/:id", GetMonitorById)
 			r.Delete("/:id", DeleteMonitor)
 		})

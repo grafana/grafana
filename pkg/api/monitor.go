@@ -19,11 +19,10 @@ func GetMonitorById(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func GetMonitors(c *middleware.Context) {
-	query := m.GetMonitorsQuery{AccountId: c.UsingAccountId}
-	err := bus.Dispatch(&query)
+func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) {
+	query.AccountId = c.UsingAccountId
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query monitors", err)
 		return
 	}

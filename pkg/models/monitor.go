@@ -123,8 +123,13 @@ type DeleteMonitorCommand struct {
 // QUERIES
 
 type GetMonitorsQuery struct {
-	AccountId int64
-	Result    []*MonitorDTO
+	MonitorId      []int64  `form:"id"`
+	Name           []string `form:"name"`
+	MonitorTypeId  []int64  `form:"monitor_type_id"`
+	LocationId       []int64  `form:"location_id"`
+	Frequency      []int64  `form:"frequency"`
+	AccountId      int64
+	Result         []*MonitorDTO
 }
 
 type GetMonitorByIdQuery struct {
