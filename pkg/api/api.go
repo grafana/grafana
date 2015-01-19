@@ -32,7 +32,6 @@ func Register(r *macaron.Macaron) {
 	r.Get("/location", reqSignedIn, Index)
 	r.Get("/monitor", reqSignedIn, Index)
 
-
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/account/signup", SignUp)
@@ -76,11 +75,14 @@ func Register(r *macaron.Macaron) {
 
 		// locations
 		r.Group("/locations", func() {
-			r.Combo("/").Get(GetLocations).Put(AddLocation).Post(UpdateLocation)
+			r.Combo("/").
+				Get(bind(m.GetLocationsQuery{}), GetLocations).
+				Put(AddLocation).
+				Post(UpdateLocation)
 			r.Get("/:slug", GetLocationBySlug)
 			r.Delete("/:id", DeleteLocation)
 		})
-		
+
 		// Monitors
 		r.Group("/monitors", func() {
 			r.Combo("/").Get(GetMonitors).Put(AddMonitor).Post(UpdateMonitor)

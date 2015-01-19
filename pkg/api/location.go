@@ -3,16 +3,17 @@ package api
 import (
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-func GetLocations(c *middleware.Context) {
+func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
+	query.AccountId = c.UsingAccountId
 
-	query := m.GetLocationsQuery{AccountId: c.UsingAccountId, Filter: c.Req.URL.Query()}
-	err := bus.Dispatch(&query)
+	log.Info("LocationId: %v, Slug: %v, Public %v", query.LocationId, query.Slug, query.Public)
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query locations", err)
 		return
 	}
@@ -20,13 +21,13 @@ func GetLocations(c *middleware.Context) {
 	result := make([]*dtos.Location, len(query.Result))
 	for i, l := range query.Result {
 		result[i] = &dtos.Location{
-			Id:        l.Id,
-			Slug:      l.Slug,
-			Name:      l.Name,
-			Country:   l.Country,
-			Region:    l.Region,
-			Provider:  l.Provider,
-			Public:    l.Public,
+			Id:       l.Id,
+			Slug:     l.Slug,
+			Name:     l.Name,
+			Country:  l.Country,
+			Region:   l.Region,
+			Provider: l.Provider,
+			Public:   l.Public,
 		}
 	}
 	c.JSON(200, result)
@@ -43,13 +44,13 @@ func GetLocationBySlug(c *middleware.Context) {
 	}
 
 	result := &dtos.Location{
-		Id:        query.Result.Id,
-		Slug:      query.Result.Slug,
-		Name:      query.Result.Name,
-		Country:   query.Result.Country,
-		Region:    query.Result.Region,
-		Provider:  query.Result.Provider,
-		Public:    query.Result.Public,
+		Id:       query.Result.Id,
+		Slug:     query.Result.Slug,
+		Name:     query.Result.Name,
+		Country:  query.Result.Country,
+		Region:   query.Result.Region,
+		Provider: query.Result.Provider,
+		Public:   query.Result.Public,
 	}
 
 	c.JSON(200, result)
@@ -89,13 +90,13 @@ func AddLocation(c *middleware.Context) {
 		return
 	}
 	result := &dtos.Location{
-		Id:        cmd.Result.Id,
-		Slug:      cmd.Result.Slug,
-		Name:      cmd.Result.Name,
-		Country:   cmd.Result.Country,
-		Region:    cmd.Result.Region,
-		Provider:  cmd.Result.Provider,
-		Public:    cmd.Public,
+		Id:       cmd.Result.Id,
+		Slug:     cmd.Result.Slug,
+		Name:     cmd.Result.Name,
+		Country:  cmd.Result.Country,
+		Region:   cmd.Result.Region,
+		Provider: cmd.Result.Provider,
+		Public:   cmd.Public,
 	}
 	c.JSON(200, result)
 }

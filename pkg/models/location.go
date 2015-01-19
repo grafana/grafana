@@ -2,9 +2,9 @@ package models
 
 import (
 	"errors"
-	"time"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Typed errors
@@ -58,8 +58,15 @@ type DeleteLocationCommand struct {
 // QUERIES
 
 type GetLocationsQuery struct {
+	LocationId int64  `form:"id"`
+	Slug       string `form:"slug"`
+	Name       string `form:"name"`
+	Countery   string `form:"country"`
+	Region     string `form:"region"`
+	Provider   string `form:"provider"`
+	Public     string `form:"public"`
+
 	AccountId int64
-	Filter    map[string][]string
 	Result    []*Location
 }
 
