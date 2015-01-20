@@ -18,6 +18,15 @@ type Migrator struct {
 	migrations []Migration
 }
 
+type MigrationLog struct {
+	Id          int64
+	MigrationId string
+	Sql         string
+	Success     bool
+	Error       string
+	Timestamp   time.Time
+}
+
 func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
@@ -79,7 +88,9 @@ func (mg *Migrator) Start() error {
 	for _, m := range mg.migrations {
 		_, exists := logMap[m.Id()]
 		if exists {
-			log.Debug("Migrator:: Skipping migration: %v, Already executed", m.Id())
+			if mg.LogLevel <= log.DEBUG {
+				log.Debug("Migrator:: Skipping migration: %v, Already executed", m.Id())
+			}
 			continue
 		}
 
@@ -91,7 +102,9 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		log.Debug("Migrator: Executing SQL: \n %v \n", sql)
+		if mg.LogLevel <= log.DEBUG {
+			log.Debug("Migrator: Executing SQL: \n %v \n", sql)
+		}
 
 		if err := mg.exec(m); err != nil {
 			record.Error = err.Error()
@@ -107,7 +120,9 @@ func (mg *Migrator) Start() error {
 }
 
 func (mg *Migrator) exec(m Migration) error {
-	log.Info("Migrator::exec migration id: %v", m.Id())
+	if mg.LogLevel <= log.INFO {
+		log.Info("Migrator::exec migration id: %v", m.Id())
+	}
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {
 		_, err := sess.Exec(m.Sql(mg.dialect))

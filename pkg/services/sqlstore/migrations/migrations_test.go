@@ -35,7 +35,7 @@ func TestMigrations(t *testing.T) {
 	log.NewLogger(0, "console", `{"level": 0}`)
 
 	testDBs := [][]string{
-		//[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
+		[]string{"mysql", "grafana:password@tcp(localhost:3306)/grafana_tests?charset=utf8"},
 		[]string{"sqlite3", ":memory:"},
 	}
 
@@ -50,6 +50,7 @@ func TestMigrations(t *testing.T) {
 			}
 
 			mg := NewMigrator(x)
+			mg.LogLevel = log.DEBUG
 			AddMigrations(mg)
 
 			err = mg.Start()
@@ -58,7 +59,6 @@ func TestMigrations(t *testing.T) {
 			tables, err := x.DBMetas()
 			So(err, ShouldBeNil)
 
-			//So(len(tables), ShouldEqual, 2)
 			fmt.Printf("\nDB Schema after migration: table count: %v\n", len(tables))
 
 			for _, table := range tables {

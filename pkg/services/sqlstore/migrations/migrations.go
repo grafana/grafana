@@ -3,8 +3,13 @@ package migrations
 import "time"
 
 func AddMigrations(mg *Migrator) {
+	addMigrationLogMigrations(mg)
+	addUserMigrations(mg)
+	addAccountMigrations(mg)
+	addDashboardMigration(mg)
+}
 
-	//-------  migration_log table -------------------
+func addMigrationLogMigrations(mg *Migrator) {
 	mg.AddMigration("create migration_log table", new(AddTableMigration).
 		Name("migration_log").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -14,8 +19,9 @@ func AddMigrations(mg *Migrator) {
 		&Column{Name: "error", Type: DB_Text},
 		&Column{Name: "timestamp", Type: DB_DateTime},
 	))
+}
 
-	//-------  user table -------------------
+func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("create user table", new(AddTableMigration).
 		Name("user").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -30,17 +36,19 @@ func AddMigrations(mg *Migrator) {
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
+
 	//-------  user table indexes ------------------
 	mg.AddMigration("add unique index UIX_user.login", new(AddIndexMigration).
 		Name("UIX_user_login").Table("user").Columns("login"))
 	mg.AddMigration("add unique index UIX_user.email", new(AddIndexMigration).
 		Name("UIX_user_email").Table("user").Columns("email"))
+}
 
-	//-------  account table -------------------
+func addAccountMigrations(mg *Migrator) {
 	mg.AddMigration("create account table", new(AddTableMigration).
 		Name("account").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "name", Type: DB_NVarchar, Length: 255},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
@@ -61,14 +69,36 @@ func AddMigrations(mg *Migrator) {
 
 	mg.AddMigration("add unique index UIX_account_user", new(AddIndexMigration).
 		Name("UIX_account_user").Table("account_user").Columns("account_id", "user_id"))
-
 }
 
-type MigrationLog struct {
-	Id          int64
-	MigrationId string
-	Sql         string
-	Success     bool
-	Error       string
-	Timestamp   time.Time
+type Dashboard struct {
+	Id        int64
+	Slug      string `xorm:"index(IX_AccountIdSlug)"`
+	AccountId int64  `xorm:"index(IX_AccountIdSlug)"`
+
+	Created time.Time
+	Updated time.Time
+
+	Title string
+	Data  map[string]interface{}
+}
+
+func addDashboardMigration(mg *Migrator) {
+	mg.AddMigration("create dashboard table", new(AddTableMigration).
+		Name("dashboard").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "data", Type: DB_Text, Nullable: false},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add unique index UIX_dashboard.account_id", new(AddIndexMigration).
+		Name("UIX_dashboard_account_id").Table("dashboard").Columns("account_id"))
+
+	mg.AddMigration("add unique index UIX_dashboard_account_id_slug", new(AddIndexMigration).
+		Name("UIX_dashboard_account_id_slug").Table("dashboard").Columns("account_id", "slug"))
 }
