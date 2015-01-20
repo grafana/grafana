@@ -1,4 +1,4 @@
-package migrations
+package migrator
 
 const (
 	POSTGRES = "postgres"

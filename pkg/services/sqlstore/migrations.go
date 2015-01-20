@@ -1,12 +1,13 @@
-package migrations
+package sqlstore
 
-import "time"
+import . "github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 
-func AddMigrations(mg *Migrator) {
+func addMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addAccountMigrations(mg)
 	addDashboardMigration(mg)
+	addDataSourceMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
@@ -38,10 +39,10 @@ func addUserMigrations(mg *Migrator) {
 	))
 
 	//-------  user table indexes ------------------
-	mg.AddMigration("add unique index UIX_user.login", new(AddIndexMigration).
-		Name("UIX_user_login").Table("user").Columns("login"))
-	mg.AddMigration("add unique index UIX_user.email", new(AddIndexMigration).
-		Name("UIX_user_email").Table("user").Columns("email"))
+	mg.AddMigration("add unique index user.login", new(AddIndexMigration).
+		Table("user").Columns("login").Unique())
+	mg.AddMigration("add unique index user.email", new(AddIndexMigration).
+		Table("user").Columns("email").Unique())
 }
 
 func addAccountMigrations(mg *Migrator) {
@@ -53,8 +54,8 @@ func addAccountMigrations(mg *Migrator) {
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
 
-	mg.AddMigration("add unique index UIX_account.name", new(AddIndexMigration).
-		Name("UIX_account_name").Table("account").Columns("name"))
+	mg.AddMigration("add unique index account.name", new(AddIndexMigration).
+		Table("account").Columns("name").Unique())
 
 	//-------  account_user table -------------------
 	mg.AddMigration("create account_user table", new(AddTableMigration).
@@ -67,20 +68,8 @@ func addAccountMigrations(mg *Migrator) {
 		&Column{Name: "updated", Type: DB_DateTime},
 	))
 
-	mg.AddMigration("add unique index UIX_account_user", new(AddIndexMigration).
-		Name("UIX_account_user").Table("account_user").Columns("account_id", "user_id"))
-}
-
-type Dashboard struct {
-	Id        int64
-	Slug      string `xorm:"index(IX_AccountIdSlug)"`
-	AccountId int64  `xorm:"index(IX_AccountIdSlug)"`
-
-	Created time.Time
-	Updated time.Time
-
-	Title string
-	Data  map[string]interface{}
+	mg.AddMigration("add unique index account_user_aid_uid", new(AddIndexMigration).
+		Name("aid_uid").Table("account_user").Columns("account_id", "user_id").Unique())
 }
 
 func addDashboardMigration(mg *Migrator) {
@@ -95,10 +84,48 @@ func addDashboardMigration(mg *Migrator) {
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
 
-	//-------  indexes ------------------
-	mg.AddMigration("add unique index UIX_dashboard.account_id", new(AddIndexMigration).
-		Name("UIX_dashboard_account_id").Table("dashboard").Columns("account_id"))
+	mg.AddMigration("create dashboard_tag table", new(AddTableMigration).
+		Name("dashboard_tag").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
+	))
 
-	mg.AddMigration("add unique index UIX_dashboard_account_id_slug", new(AddIndexMigration).
-		Name("UIX_dashboard_account_id_slug").Table("dashboard").Columns("account_id", "slug"))
+	//-------  indexes ------------------
+	mg.AddMigration("add index dashboard.account_id", new(AddIndexMigration).
+		Table("dashboard").Columns("account_id"))
+
+	mg.AddMigration("add unique index dashboard_account_id_slug", new(AddIndexMigration).
+		Table("dashboard").Columns("account_id", "slug").Unique())
+
+	mg.AddMigration("add unique index dashboard_tag.dasboard_id_term", new(AddIndexMigration).
+		Table("dashboard_tag").Columns("dashboard_id", "term").Unique())
+}
+
+func addDataSourceMigration(mg *Migrator) {
+	mg.AddMigration("create data_source table", new(AddTableMigration).
+		Name("data_source").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "url", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "database", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "basic_auth", Type: DB_Bool, Nullable: false},
+		&Column{Name: "basic_auth_user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "basic_auth_password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "is_default", Type: DB_Bool, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index data_source.account_id", new(AddIndexMigration).
+		Table("data_source").Columns("account_id"))
+
+	mg.AddMigration("add unique index data_source.account_id_name", new(AddIndexMigration).
+		Table("data_source").Columns("account_id", "name").Unique())
 }

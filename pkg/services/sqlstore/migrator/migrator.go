@@ -1,4 +1,4 @@
-package migrations
+package migrator
 
 import (
 	"time"
@@ -32,16 +32,7 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg.x = engine
 	mg.LogLevel = log.WARN
 	mg.migrations = make([]Migration, 0)
-
-	switch mg.x.DriverName() {
-	case MYSQL:
-		mg.dialect = NewMysqlDialect()
-	case SQLITE:
-		mg.dialect = NewSqlite3Dialect()
-	case POSTGRES:
-		mg.dialect = NewPostgresDialect()
-	}
-
+	mg.dialect = NewDialect(mg.x.DriverName())
 	return mg
 }
 

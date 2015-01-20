@@ -81,7 +81,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err := SetUsingAccount(&cmd)
 					So(err, ShouldBeNil)
 
-					Convey("Logged in user query should return correct using account info", func() {
+					Convey("SignedInUserQuery with a different account", func() {
 						query := m.GetSignedInUserQuery{UserId: ac2.Id}
 						err := GetSignedInUser(&query)
 
