@@ -1,11 +1,11 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account > Collaborators'"></div>
+<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account > Users'"></div>
 
 <div class="dashboard-edit-view" style="min-height: 500px">
 
 	<div class="dashboard-editor-header">
 		<div class="dashboard-editor-title">
 			<i class="fa fa-users"></i>
-			Collaborators
+			Account users
 		</div>
 	</div>
 
@@ -20,17 +20,17 @@
 								<strong>Username or Email</strong>
 							</li>
 							<li>
-								<input type="text" ng-model="collaborator.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="collaborator@email.com">
+								<input type="text" ng-model="user.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="user@email.com or username">
 							</li>
 							<li class="tight-form-item">
-								Role
+								role
 							</li>
 							<li>
-								<select type="text" ng-model="collaborator.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
+								<select type="text" ng-model="user.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
 								</select>
 							</li>
 							<li>
-								<button class="btn btn-success tight-form-btn" ng-click="addCollaborator()">Add</button>
+								<button class="btn btn-success tight-form-btn" ng-click="addUser()">Add</button>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -42,13 +42,13 @@
 
 		<div class="editor-row row">
 			<table class="grafana-options-table span5">
-				<tr ng-repeat="collaborator in collaborators">
-					<td>{{collaborator.email}}</td>
+				<tr ng-repeat="user in users">
+					<td>{{user.email}}</td>
 					<td>
-						{{collaborator.role}}
+						{{user.role}}
 					</td>
 					<td style="width: 1%">
-						<a ng-click="removeCollaborator(collaborator)" class="btn btn-danger btn-mini">
+						<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
 							<i class="fa fa-remove"></i>
 						</a>
 					</td>

@@ -15,6 +15,13 @@ function (angular) {
       access: 'proxy'
     };
 
+    $scope.types = [
+      { name: 'Graphite', type: 'graphite' },
+      { name: 'InfluxDB', type: 'influxdb' },
+      { name: 'Elasticsearch', type: 'elasticsearch' },
+      { name: 'OpenTSDB', type: 'opentsdb' },
+    ];
+
     $scope.init = function() {
       $scope.reset();
       $scope.editor = {index: 0};
