@@ -15,7 +15,7 @@ import (
 
 var indexTypes = []string{"Unknown", "INDEX", "UNIQUE INDEX"}
 
-func ATestMigrations(t *testing.T) {
+func TestMigrations(t *testing.T) {
 	log.NewLogger(0, "console", `{"level": 0}`)
 
 	testDBs := []sqlutil.TestDB{

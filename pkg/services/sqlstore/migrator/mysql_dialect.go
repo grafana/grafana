@@ -13,6 +13,10 @@ func NewMysqlDialect() *Mysql {
 	return &d
 }
 
+func (db *Mysql) SupportEngine() bool {
+	return true
+}
+
 func (db *Mysql) Quote(name string) string {
 	return "`" + name + "`"
 }

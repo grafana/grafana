@@ -33,11 +33,6 @@ var (
 	UseSQLite3 bool
 )
 
-func init() {
-	tables = make([]interface{}, 0)
-	tables = append(tables, new(m.Token))
-}
-
 func EnsureAdminUser() {
 	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
 
@@ -78,6 +73,7 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	dialect = migrator.NewDialect(x.DriverName())
 
 	migrator := migrator.NewMigrator(x)
+	migrator.LogLevel = log.INFO
 	addMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
