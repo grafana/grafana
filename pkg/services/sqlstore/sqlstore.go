@@ -35,7 +35,7 @@ var (
 func init() {
 	tables = make([]interface{}, 0)
 
-	tables = append(tables, new(m.Dashboard), new(m.DataSource), new(DashboardTag),
+	tables = append(tables, new(m.DataSource), new(DashboardTag),
 		new(m.Token))
 }
 
