@@ -120,7 +120,16 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
-	sess := x.Sql("select count(*) as count, term from dashboard_tag group by term")
+	sql := `SELECT
+					  COUNT(*) as count,
+						term
+					FROM dashboard
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
+					WHERE dashboard.account_id=?
+					GROUP BY term`
+
+	query.Result = make([]*m.DashboardTagCloudItem, 0)
+	sess := x.Sql(sql, query.AccountId)
 	err := sess.Find(&query.Result)
 	return err
 }

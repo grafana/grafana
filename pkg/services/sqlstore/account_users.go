@@ -36,7 +36,8 @@ func GetAccountUsers(query *m.GetAccountUsersQuery) error {
 	sess := x.Table("account_user")
 	sess.Join("INNER", "user", "account_user.user_id=user.id")
 	sess.Where("account_user.account_id=?", query.AccountId)
-	sess.Cols("account_user.account_id", "account_user.user_id", "user.email", "user.login")
+	sess.Cols("account_user.account_id", "account_user.user_id", "user.email", "user.login", "account_user.role")
+	sess.Asc("user.email", "user.login")
 
 	err := sess.Find(&query.Result)
 	return err

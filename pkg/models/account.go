@@ -43,7 +43,7 @@ type GetAccountByIdQuery struct {
 
 type UserAccountDTO struct {
 	AccountId int64    `json:"accountId"`
-	Name      string   `json:"email"`
+	Name      string   `json:"name"`
 	Role      RoleType `json:"role"`
 	IsUsing   bool     `json:"isUsing"`
 }

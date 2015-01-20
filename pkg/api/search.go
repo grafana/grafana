@@ -17,7 +17,7 @@ func Search(c *middleware.Context) {
 	}
 
 	if strings.HasPrefix(queryText, "tags!:") {
-		query := m.GetDashboardTagsQuery{}
+		query := m.GetDashboardTagsQuery{AccountId: c.AccountId}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to get tags from database", err)
