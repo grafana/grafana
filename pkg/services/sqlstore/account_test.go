@@ -59,8 +59,8 @@ func TestAccountDataAccess(t *testing.T) {
 					err := GetSignedInUser(&query)
 
 					So(err, ShouldBeNil)
-					So(query.Result.AccountId, ShouldEqual, ac2.AccountId)
 					So(query.Result.Email, ShouldEqual, "ac2@test.com")
+					So(query.Result.AccountId, ShouldEqual, ac2.AccountId)
 					So(query.Result.Name, ShouldEqual, "ac2 name")
 					So(query.Result.Login, ShouldEqual, "ac2")
 					So(query.Result.AccountRole, ShouldEqual, "Admin")
@@ -74,6 +74,15 @@ func TestAccountDataAccess(t *testing.T) {
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
+				})
+
+				Convey("Can get account users", func() {
+					query := m.GetAccountUsersQuery{AccountId: ac1.AccountId}
+					err := GetAccountUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].Role, ShouldEqual, "Admin")
 				})
 
 				Convey("Can set using account", func() {
