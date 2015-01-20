@@ -13,7 +13,7 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 	accountDataSources := make([]*m.DataSource, 0)
 
 	if c.IsSignedIn {
-		query := m.GetDataSourcesQuery{AccountId: c.UsingAccountId}
+		query := m.GetDataSourcesQuery{AccountId: c.AccountId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
@@ -44,6 +44,10 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 				dsMap["password"] = ds.Password
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
+		}
+
+		if ds.Type == m.DS_ES {
+			dsMap["index"] = ds.Database
 		}
 
 		datasources[ds.Name] = dsMap

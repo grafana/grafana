@@ -9,12 +9,12 @@ import (
 
 func GetTokens(c *middleware.Context) {
 	query := m.GetTokensQuery{AccountId: c.AccountId}
-	err := bus.Dispatch(&query)
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to list tokens", err)
 		return
 	}
+
 	result := make([]*m.TokenDTO, len(query.Result))
 	for i, t := range query.Result {
 		result[i] = &m.TokenDTO{

@@ -11,7 +11,7 @@
 //
 // For more information, please read
 // https://developers.google.com/accounts/docs/OAuth2.
-package google // import "golang.org/x/oauth2/google"
+package google
 
 import (
 	"encoding/json"

@@ -11,60 +11,29 @@ var (
 )
 
 type Account struct {
-	Id              int64
-	Login           string `xorm:"UNIQUE NOT NULL"`
-	Email           string `xorm:"UNIQUE NOT NULL"`
-	Name            string
-	FullName        string
-	Password        string
-	IsAdmin         bool
-	Salt            string `xorm:"VARCHAR(10)"`
-	Company         string
-	NextDashboardId int
-	UsingAccountId  int64
-	Created         time.Time
-	Updated         time.Time
+	Id      int64
+	Name    string
+	Created time.Time
+	Updated time.Time
 }
 
 // ---------------------
 // COMMANDS
 
 type CreateAccountCommand struct {
-	Email    string `json:"email" binding:"required"`
-	Login    string `json:"login"`
-	Password string `json:"password" binding:"required"`
-	Name     string `json:"name"`
-	Company  string `json:"company"`
-	Salt     string `json:"-"`
-	IsAdmin  bool   `json:"-"`
+	Name string `json:"name"`
 
 	Result Account `json:"-"`
 }
 
 type UpdateAccountCommand struct {
-	Email string `json:"email" binding:"required"`
-	Login string `json:"login"`
-	Name  string `json:"name"`
-
-	AccountId int64 `json:"-"`
+	Name      string `json:"name"`
+	AccountId int64  `json:"-"`
 }
 
-type SetUsingAccountCommand struct {
-	AccountId      int64
-	UsingAccountId int64
-}
-
-// ----------------------
-// QUERIES
-
-type GetAccountInfoQuery struct {
-	Id     int64
-	Result AccountDTO
-}
-
-type GetOtherAccountsQuery struct {
-	AccountId int64
-	Result    []*OtherAccountDTO
+type GetUserAccountsQuery struct {
+	UserId int64
+	Result []*UserAccountDTO
 }
 
 type GetAccountByIdQuery struct {
@@ -72,54 +41,9 @@ type GetAccountByIdQuery struct {
 	Result *Account
 }
 
-type GetAccountByLoginQuery struct {
-	LoginOrEmail string
-	Result       *Account
-}
-
-type SearchAccountsQuery struct {
-	Query string
-	Page  int
-	Limit int
-
-	Result []*AccountSearchHitDTO
-}
-
-type GetSignedInUserQuery struct {
-	AccountId int64
-	Result    *SignInUser
-}
-
-// ------------------------
-// DTO & Projections
-type SignInUser struct {
-	AccountId        int64
-	UsingAccountId   int64
-	UsingAccountName string
-	UserRole         RoleType
-	UserLogin        string
-	UserName         string
-	UserEmail        string
-	IsGrafanaAdmin   bool
-}
-
-type OtherAccountDTO struct {
+type UserAccountDTO struct {
 	AccountId int64    `json:"accountId"`
-	Email     string   `json:"email"`
+	Name      string   `json:"email"`
 	Role      RoleType `json:"role"`
 	IsUsing   bool     `json:"isUsing"`
-}
-
-type AccountSearchHitDTO struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Login   string `json:"login"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
-}
-
-type AccountDTO struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Login string `json:"login"`
 }

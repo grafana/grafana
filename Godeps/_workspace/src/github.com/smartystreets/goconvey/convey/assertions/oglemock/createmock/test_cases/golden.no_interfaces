@@ -1,0 +1,1 @@
+Usage: createmock [package] [interface ...]
