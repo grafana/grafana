@@ -8,6 +8,7 @@ func addMigrations(mg *Migrator) {
 	addAccountMigrations(mg)
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
+	addTokenMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
@@ -128,4 +129,21 @@ func addDataSourceMigration(mg *Migrator) {
 
 	mg.AddMigration("add unique index data_source.account_id_name", new(AddIndexMigration).
 		Table("data_source").Columns("account_id", "name").Unique())
+}
+
+func addTokenMigrations(mg *Migrator) {
+	mg.AddMigration("create token table", new(AddTableMigration).
+		Name("token").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "token", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index token.account_id", new(AddIndexMigration).
+		Table("token").Columns("account_id"))
 }

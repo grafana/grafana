@@ -13,6 +13,10 @@ func NewPostgresDialect() *Postgres {
 	return &d
 }
 
+func (db *Postgres) SupportEngine() bool {
+	return false
+}
+
 func (db *Postgres) Quote(name string) string {
 	return "\"" + name + "\""
 }

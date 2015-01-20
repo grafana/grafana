@@ -11,6 +11,10 @@ func NewSqlite3Dialect() *Sqlite3 {
 	return &d
 }
 
+func (db *Sqlite3) SupportEngine() bool {
+	return false
+}
+
 func (db *Sqlite3) Quote(name string) string {
 	return "`" + name + "`"
 }
