@@ -24,8 +24,22 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 			Updated: time.Now(),
 		}
 
-		_, err := sess.Insert(&account)
+		if _, err := sess.Insert(&account); err != nil {
+			return err
+		}
+
+		// create inital admin account user
+		user := m.AccountUser{
+			AccountId: account.Id,
+			UserId:    cmd.UserId,
+			Role:      m.ROLE_ADMIN,
+			Created:   time.Now(),
+			Updated:   time.Now(),
+		}
+
+		_, err := sess.Insert(&user)
 		cmd.Result = account
+
 		return err
 	})
 }
