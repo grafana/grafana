@@ -58,8 +58,8 @@
 		<div class="section">
 			<div class="dashboard-editor-header">
 				<div class="dashboard-editor-title">
-					<i class="fa fa-eye"></i>
-					Active account
+					<i class="fa fa-cubes"></i>
+					 Your accounts
 				</div>
 			</div>
 			<br>
@@ -69,7 +69,9 @@
 					<td>Name: {{ac.name}}</td>
 					<td>Role: {{ac.role}}</td>
 					<td ng-show="ac.isUsing">
-						currently using this account
+						<span class="label label-info">
+							active now
+						</span>
 					</td>
 					<td ng-show="!ac.isUsing">
 						<a ng-click="setUsingAccount(ac)" class="btn btn-success btn-mini">
@@ -78,7 +80,34 @@
 					</td>
 				</tr>
 			</table>
+		</div>
 
+		<div class="section">
+
+			<div class="dashboard-editor-header">
+				<div class="dashboard-editor-title">
+					<i class="fa fa-plus-square"></i>
+					 Add account
+				</div>
+			</div>
+			<br>
+
+			<form name="form">
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							<strong>Account name</strong>
+						</li>
+						<li>
+							<input type="text" ng-model="newAccount.name" required class="input-xlarge tight-form-input" placeholder="account name">
+						</li>
+						<li>
+							<button class="btn btn-success tight-form-btn" ng-click="createAccount()">Create</button>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</form>
 		</div>
 	</div>
 </div>
