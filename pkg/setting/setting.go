@@ -181,7 +181,7 @@ func NewConfigContext() {
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"
-	PhantomDir = "_vendor/phantomjs"
+	PhantomDir = "vendor/phantomjs"
 
 	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(WorkDir, "/data/log"))
 

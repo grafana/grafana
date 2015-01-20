@@ -1,3 +1,0 @@
-#!/bin/bash
-
-docker run -p 389:389 -d -v /var/docker/ldap:/data enalean/ldap-dev
