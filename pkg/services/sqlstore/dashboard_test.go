@@ -95,7 +95,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				err := GetDashboardTags(&query)
 				So(err, ShouldBeNil)
 
-				So(len(query.Result), ShouldEqual, 3)
+				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
 	})

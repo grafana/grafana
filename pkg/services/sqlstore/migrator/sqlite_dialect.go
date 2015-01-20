@@ -1,6 +1,4 @@
-package migrations
-
-import "github.com/go-xorm/core"
+package migrator
 
 type Sqlite3 struct {
 	BaseDialect
@@ -32,7 +30,7 @@ func (db *Sqlite3) SqlType(c *Column) string {
 	case DB_TimeStampz:
 		return DB_Text
 	case DB_Char, DB_Varchar, DB_NVarchar, DB_TinyText, DB_Text, DB_MediumText, DB_LongText:
-		return core.Text
+		return DB_Text
 	case DB_Bit, DB_TinyInt, DB_SmallInt, DB_MediumInt, DB_Int, DB_Integer, DB_BigInt, DB_Bool:
 		return DB_Integer
 	case DB_Float, DB_Double, DB_Real:
@@ -45,7 +43,7 @@ func (db *Sqlite3) SqlType(c *Column) string {
 		c.IsPrimaryKey = true
 		c.IsAutoIncrement = true
 		c.Nullable = false
-		return core.Integer
+		return DB_Integer
 	default:
 		return c.Type
 	}

@@ -8,16 +8,24 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/sqlutil"
 )
 
 func InitTestDB(t *testing.T) {
-	x, err := xorm.NewEngine("sqlite3", ":memory:")
+
+	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
+	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
+	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
 
 	if err != nil {
 		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
 	}
 
-	SetEngine(x, false)
+	sqlutil.CleanDB(x)
+
+	if err := SetEngine(x, false); err != nil {
+		t.Fatal(err)
+	}
 }
 
 type Test struct {

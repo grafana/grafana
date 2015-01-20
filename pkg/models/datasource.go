@@ -25,15 +25,17 @@ type DataSource struct {
 	Id        int64
 	AccountId int64
 
-	Name      string
-	Type      DsType
-	Access    DsAccess
-	Url       string
-	Password  string
-	User      string
-	Database  string
-	BasicAuth bool
-	IsDefault bool
+	Name              string
+	Type              DsType
+	Access            DsAccess
+	Url               string
+	Password          string
+	User              string
+	Database          string
+	BasicAuth         bool
+	BasicAuthUser     string
+	BasicAuthPassword string
+	IsDefault         bool
 
 	Created time.Time
 	Updated time.Time

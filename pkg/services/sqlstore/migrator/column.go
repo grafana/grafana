@@ -1,4 +1,4 @@
-package migrations
+package migrator
 
 // Notice
 // code based on parts from from https://github.com/go-xorm/core/blob/3e0fa232ab5c90996406c0cd7ae86ad0e5ecf85f/column.go

@@ -1,4 +1,9 @@
-package migrations
+package migrator
+
+import (
+	"fmt"
+	"strings"
+)
 
 type MigrationBase struct {
 	id string
@@ -87,6 +92,9 @@ func (m *AddIndexMigration) Columns(columns ...string) *AddIndexMigration {
 }
 
 func (m *AddIndexMigration) Sql(dialect Dialect) string {
+	if m.index.Name == "" {
+		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
+	}
 	return dialect.CreateIndexSql(m.tableName, &m.index)
 }
 

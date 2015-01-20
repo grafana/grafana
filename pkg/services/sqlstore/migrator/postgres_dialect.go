@@ -1,10 +1,6 @@
-package migrations
+package migrator
 
-import (
-	"strconv"
-
-	"github.com/go-xorm/core"
-)
+import "strconv"
 
 type Postgres struct {
 	BaseDialect
@@ -35,16 +31,16 @@ func (db *Postgres) SqlType(c *Column) string {
 	case DB_TinyInt:
 		res = DB_SmallInt
 		return res
-	case DB_MediumInt, core.Int, core.Integer:
+	case DB_MediumInt, DB_Int, DB_Integer:
 		if c.IsAutoIncrement {
 			return DB_Serial
 		}
 		return DB_Integer
-	case DB_Serial, core.BigSerial:
+	case DB_Serial, DB_BigSerial:
 		c.IsAutoIncrement = true
 		c.Nullable = false
 		res = t
-	case DB_Binary, core.VarBinary:
+	case DB_Binary, DB_VarBinary:
 		return DB_Bytea
 	case DB_DateTime:
 		res = DB_TimeStamp
@@ -52,13 +48,13 @@ func (db *Postgres) SqlType(c *Column) string {
 		return "timestamp with time zone"
 	case DB_Float:
 		res = DB_Real
-	case DB_TinyText, core.MediumText, core.LongText:
+	case DB_TinyText, DB_MediumText, DB_LongText:
 		res = DB_Text
 	case DB_NVarchar:
 		res = DB_Varchar
 	case DB_Uuid:
 		res = DB_Uuid
-	case DB_Blob, core.TinyBlob, core.MediumBlob, core.LongBlob:
+	case DB_Blob, DB_TinyBlob, DB_MediumBlob, DB_LongBlob:
 		return DB_Bytea
 	case DB_Double:
 		return "DOUBLE PRECISION"

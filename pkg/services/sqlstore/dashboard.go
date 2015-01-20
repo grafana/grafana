@@ -44,11 +44,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		// insert new tags
 		tags := dash.GetTags()
 		if len(tags) > 0 {
-			tagRows := make([]DashboardTag, len(tags))
 			for _, tag := range tags {
-				tagRows = append(tagRows, DashboardTag{Term: tag, DashboardId: dash.Id})
+				if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+					return err
+				}
 			}
-			sess.InsertMulti(&tagRows)
 		}
 
 		cmd.Result = dash
@@ -120,8 +120,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
-	sess := x.Sql("select count() as count, term from dashboard_tag group by term")
-
+	sess := x.Sql("select count(*) as count, term from dashboard_tag group by term")
 	err := sess.Find(&query.Result)
 	return err
 }

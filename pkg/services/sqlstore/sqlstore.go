@@ -9,7 +9,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrations"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
 
@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	x      *xorm.Engine
-	tables []interface{}
+	x       *xorm.Engine
+	dialect migrator.Dialect
+	tables  []interface{}
 
 	HasEngine bool
 
@@ -34,9 +35,7 @@ var (
 
 func init() {
 	tables = make([]interface{}, 0)
-
-	tables = append(tables, new(m.DataSource), new(DashboardTag),
-		new(m.Token))
+	tables = append(tables, new(m.Token))
 }
 
 func EnsureAdminUser() {
@@ -76,9 +75,10 @@ func NewEngine() {
 
 func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	x = engine
+	dialect = migrator.NewDialect(x.DriverName())
 
-	migrator := migrations.NewMigrator(x)
-	migrations.AddMigrations(migrator)
+	migrator := migrator.NewMigrator(x)
+	addMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
