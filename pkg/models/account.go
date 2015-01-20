@@ -21,8 +21,10 @@ type Account struct {
 // COMMANDS
 
 type CreateAccountCommand struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"Required"`
 
+	// initial admin user for account
+	UserId int64   `json:"-"`
 	Result Account `json:"-"`
 }
 
