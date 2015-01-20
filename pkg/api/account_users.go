@@ -54,6 +54,10 @@ func RemoveAccountUser(c *middleware.Context) {
 	cmd := m.RemoveAccountUserCommand{AccountId: c.AccountId, UserId: userId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrLastAccountAdmin {
+			c.JsonApiErr(400, "Cannot remove last account admin", nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to remove user from account", err)
 	}
 

@@ -103,6 +103,12 @@ func TestAccountDataAccess(t *testing.T) {
 						So(query.Result.AccountRole, ShouldEqual, "Viewer")
 					})
 				})
+
+				Convey("Cannot delete last admin account user", func() {
+					cmd := m.RemoveAccountUserCommand{AccountId: ac1.AccountId, UserId: ac1.Id}
+					err := RemoveAccountUser(&cmd)
+					So(err, ShouldEqual, m.ErrLastAccountAdmin)
+				})
 			})
 		})
 	})
