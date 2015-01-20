@@ -38,6 +38,8 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 		mg.dialect = NewMysqlDialect()
 	case SQLITE:
 		mg.dialect = NewSqlite3Dialect()
+	case POSTGRES:
+		mg.dialect = NewPostgresDialect()
 	}
 
 	return mg
