@@ -10,6 +10,8 @@ func GetMonitorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetMonitorByIdQuery{Id: id, AccountId: c.AccountId}
+	query.IsRaintankAdmin = c.AccountRole == m.ROLE_RAINTANK_ADMIN
+
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Monitor not found", nil)
@@ -21,6 +23,7 @@ func GetMonitorById(c *middleware.Context) {
 
 func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) {
 	query.AccountId = c.AccountId
+	query.IsRaintankAdmin = c.AccountRole == m.ROLE_RAINTANK_ADMIN
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query monitors", err)

@@ -63,7 +63,7 @@ type MonitorSettingDTO struct {
 
 type MonitorDTO struct {
 	Id            int64                `json:"id"`
-	AccountId     int64                `json:"-"`
+	AccountId     int64                `json:"account_id"`
 	Name          string               `json:"name" binding:"required"`
 	Slug          string               `json:"slug"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
@@ -71,6 +71,7 @@ type MonitorDTO struct {
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
+	Offset        int64                `json:"offset"`
 }
 
 type MonitorTypeSettingDTO struct {
@@ -100,6 +101,7 @@ type AddMonitorCommand struct {
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
+	Offset        int64                `json:"-"`
 	Result        *MonitorDTO
 }
 
@@ -112,6 +114,7 @@ type UpdateMonitorCommand struct {
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
+	Offset        int64                `json:"-"`
 }
 
 type DeleteMonitorCommand struct {
@@ -126,16 +129,18 @@ type GetMonitorsQuery struct {
 	MonitorId      []int64  `form:"id"`
 	Name           []string `form:"name"`
 	MonitorTypeId  []int64  `form:"monitor_type_id"`
-	LocationId       []int64  `form:"location_id"`
+	LocationId     []int64  `form:"location_id"`
 	Frequency      []int64  `form:"frequency"`
 	AccountId      int64
+	IsRaintankAdmin bool
 	Result         []*MonitorDTO
 }
 
 type GetMonitorByIdQuery struct {
-	Id        int64
-	AccountId int64
-	Result    *MonitorDTO
+	Id             int64
+	AccountId      int64
+	IsRaintankAdmin bool
+	Result         *MonitorDTO
 }
 
 type GetMonitorTypesQuery struct {

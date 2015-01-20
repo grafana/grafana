@@ -29,16 +29,21 @@ type MonitorWithLocationDTO struct {
 	Slug          string
 	Frequency     int64
 	Enabled       bool
+	Offset        int64
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess := x.Table("monitor")
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	sess.Where("monitor.id=?", query.Id)
+	if query.IsRaintankAdmin != true {
+		sess.And("monitor.account_id=?", query.AccountId)
+	}
+
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.slug",
 		"monitor.monitor_type_id", "monitor.settings",
-		"monitor.frequency", "monitor.enabled")
+		"monitor.frequency", "monitor.enabled", "monitor.offset")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -64,6 +69,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		Settings:      result[0].Settings,
 		Frequency:     result[0].Frequency,
 		Enabled:       result[0].Enabled,
+		Offset:        result[0].Offset,
 
 	}
 	//iterate through all of the results and build out our model.
@@ -77,11 +83,13 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
-	sess.Where("monitor.account_id=?", query.AccountId)
+	if query.IsRaintankAdmin != true {
+		sess.Where("monitor.account_id=?", query.AccountId)
+	}
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.settings",
 		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency", 
-		"monitor.enabled")
+		"monitor.enabled", "monitor.offset")
 
 	if len(query.LocationId) > 0 {
 		// this is a bit complicated because we want to
@@ -128,6 +136,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 				Settings:      row.Settings,
 				Frequency:     row.Frequency,
 				Enabled:       row.Enabled,
+				Offset:        row.Offset,
 			}
 		}
 
@@ -227,7 +236,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
-		sess.In("id", cmd.Locations).Where("account_id=?", cmd.AccountId)
+		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
 		sess.Cols("id")
 		err := sess.Find(&filtered_locations)
 
@@ -287,7 +296,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			AccountId:     cmd.AccountId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        int64(rand.Intn(int(cmd.Frequency) - 1)),
+			Offset:        rand.Int63n(cmd.Frequency - 1),
 			Settings:      cmd.Settings,
 			Created:       time.Now(),
 			Updated:       time.Now(),
@@ -321,6 +330,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
+			Offset:        mon.Offset,
 		}
 		return nil
 	})
@@ -332,7 +342,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
-		sess.In("id", cmd.Locations).Where("account_id=?", cmd.AccountId)
+		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
 		sess.Cols("id")
 		err := sess.Find(&filtered_locations)
 
@@ -407,6 +417,14 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			return err
 		}
 
+		//check if we need to update the time offset for when the monitor should run.
+		if mon.Offset >= mon.Frequency {
+			mon.Offset = rand.Int63n(mon.Frequency - 1)
+			if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
+				return err
+			}
+		}
+
 		var rawSql = "DELETE FROM monitor_location WHERE monitor_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
@@ -420,6 +438,13 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		}
 		sess.Table("monitor_location")
 		_, err = sess.Insert(&monitor_locations)
+
+		if mon.Offset >= mon.Frequency {
+			mon.Offset = rand.Int63n(mon.Frequency - 1)
+			if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
+				return err
+			}
+		}
 
 		return err
 	})

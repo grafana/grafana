@@ -78,8 +78,8 @@ func AddLocation(c *middleware.Context) {
 
 	cmd.AccountId = c.AccountId
 	if cmd.Public {
-		if c.IsGrafanaAdmin != true {
-			c.JsonApiErr(400, "Only admins can make public locations", nil)
+		if c.AccountRole != m.ROLE_RAINTANK_ADMIN {
+			c.JsonApiErr(400, "Only raintank admins can make public locations", nil)
 			return
 		}
 	}
@@ -109,7 +109,7 @@ func UpdateLocation(c *middleware.Context) {
 
 	cmd.AccountId = c.AccountId
 	if cmd.Public {
-		if c.IsGrafanaAdmin != true {
+		if c.AccountRole != m.ROLE_RAINTANK_ADMIN {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}
