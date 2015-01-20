@@ -1,13 +1,10 @@
 package middleware
 
 import (
-	"errors"
-	"strconv"
 	"strings"
 
 	"github.com/Unknwon/macaron"
 
-	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
@@ -17,39 +14,32 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getRequestAccountId(c *Context) (int64, error) {
-	accountId := c.Session.Get("accountId")
+func getRequestUserId(c *Context) int64 {
+	userId := c.Session.Get("userId")
 
-	if accountId != nil {
-		return accountId.(int64), nil
+	if userId != nil {
+		return userId.(int64)
 	}
 
-	// localhost render query
-	urlQuery := c.Req.URL.Query()
-	if len(urlQuery["render"]) > 0 {
-		accId, _ := strconv.ParseInt(urlQuery["accountId"][0], 10, 64)
-		c.Session.Set("accountId", accId)
-		accountId = accId
+	// TODO: figure out a way to secure this
+	if c.Query("render") == "1" {
+		userId := c.QueryInt64("userId")
+		c.Session.Set("userId", userId)
+		return userId
 	}
 
-	// check api token
+	return 0
+}
+
+func getApiToken(c *Context) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 || parts[0] == "Bearer" {
 		token := parts[1]
-		userQuery := m.GetAccountByTokenQuery{Token: token}
-		if err := bus.Dispatch(&userQuery); err != nil {
-			return -1, err
-		}
-		return userQuery.Result.Id, nil
+		return token
 	}
 
-	// anonymous gues user
-	if setting.Anonymous {
-		return setting.AnonymousAccountId, nil
-	}
-
-	return -1, errors.New("Auth: session account id not found")
+	return ""
 }
 
 func authDenied(c *Context) {
@@ -58,6 +48,21 @@ func authDenied(c *Context) {
 	}
 
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func RoleAuth(roles ...m.RoleType) macaron.Handler {
+	return func(c *Context) {
+		ok := false
+		for _, role := range roles {
+			if role == c.AccountRole {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			authDenied(c)
+		}
+	}
 }
 
 func Auth(options *AuthOptions) macaron.Handler {

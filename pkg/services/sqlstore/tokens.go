@@ -10,9 +10,10 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetTokens)
-	bus.AddHandler("sql", AddToken)
+	bus.AddHandler("sql", GetTokenByToken)
 	bus.AddHandler("sql", UpdateToken)
 	bus.AddHandler("sql", DeleteToken)
+	bus.AddHandler("sql", AddToken)
 }
 
 func GetTokens(query *m.GetTokensQuery) error {
@@ -63,4 +64,18 @@ func UpdateToken(cmd *m.UpdateTokenCommand) error {
 		_, err := sess.Where("id=? and account_id=?", t.Id, t.AccountId).Update(&t)
 		return err
 	})
+}
+
+func GetTokenByToken(query *m.GetTokenByTokenQuery) error {
+	var token m.Token
+	has, err := x.Where("token=?", query.Token).Get(&token)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrInvalidToken
+	}
+
+	query.Result = &token
+	return nil
 }

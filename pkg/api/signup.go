@@ -9,7 +9,7 @@ import (
 
 // POST /api/account/signup
 func SignUp(c *middleware.Context) {
-	var cmd m.CreateAccountCommand
+	var cmd m.CreateUserCommand
 
 	if !c.JsonBody(&cmd) {
 		c.JsonApiErr(400, "Validation error", nil)
@@ -21,9 +21,9 @@ func SignUp(c *middleware.Context) {
 	cmd.Password = util.EncodePassword(cmd.Password, cmd.Salt)
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "failed to create account", err)
+		c.JsonApiErr(500, "failed to create user", err)
 		return
 	}
 
-	c.JsonOK("Account created")
+	c.JsonOK("User created")
 }

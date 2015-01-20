@@ -1,0 +1,20 @@
+
+User
+  Id
+  Name
+  Login
+  Email
+  ActiveAccountId
+
+Account
+  Id
+  Name
+  PaymentDetails
+
+AccountUser
+  Id
+  AccountId
+  UserId
+  Role
+
+

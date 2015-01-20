@@ -9,11 +9,13 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrations"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -30,27 +32,20 @@ var (
 	UseSQLite3 bool
 )
 
-type DashboardTag struct {
-	Id          int64
-	DashboardId int64
-	Term        string
-}
-
 func init() {
 	tables = make([]interface{}, 0)
 
-	tables = append(tables, new(m.Account), new(m.Dashboard),
-		new(m.Collaborator), new(m.DataSource), new(DashboardTag),
+	tables = append(tables, new(m.Dashboard), new(m.DataSource), new(DashboardTag),
 		new(m.Location), new(m.Monitor), new(m.MonitorLocation), 
 		new(m.MonitorType), new(m.MonitorTypeSetting),
 		new(m.Token))
 }
 
 func EnsureAdminUser() {
-	adminQuery := m.GetAccountByLoginQuery{LoginOrEmail: setting.AdminUser}
+	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
 
-	if err := bus.Dispatch(&adminQuery); err == m.ErrAccountNotFound {
-		cmd := m.CreateAccountCommand{}
+	if err := bus.Dispatch(&adminQuery); err == m.ErrUserNotFound {
+		cmd := m.CreateUserCommand{}
 		cmd.Login = setting.AdminUser
 		cmd.Email = setting.AdminUser + "@localhost"
 		cmd.Salt = util.GetRandomString(10)
@@ -83,6 +78,13 @@ func NewEngine() {
 
 func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	x = engine
+
+	migrator := migrations.NewMigrator(x)
+	migrations.AddMigrations(migrator)
+
+	if err := migrator.Start(); err != nil {
+		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
+	}
 
 	if err := x.Sync2(tables...); err != nil {
 		return fmt.Errorf("sync database struct error: %v\n", err)
