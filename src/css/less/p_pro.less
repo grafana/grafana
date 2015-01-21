@@ -70,16 +70,55 @@
 }
 
 .login-inner-box {
+  background: @grafanaPanelBackground;
+  h1 {
+    font-size: 1.15em;
+    background: @grafanaTargetBackground;
+    text-align: center;
+    padding: 2px;
+  }
+}
+
+.login-signup-button {
+  width: 45%;
+  text-align: center;
+
+  a {
+    font-weight: bold;
+  }
+  &.login-signup-button-disable {
+    a {
+      color: darken(@linkColor, 35%);
+    }
+  }
+}
+
+.login-oauth {
+  margin-top: 30px;
+  padding: 10px;
+  background: @grafanaTargetBackground;
+  .btn-google {
+    background: #dd4b39;
+    color: white;
+  }
+  .btn-github {
+    background: #555;
+    color: white;
+  }
+}
+
+.login-form {
   width: 50%;
   float: left;
   margin-left: 25%;
   margin-right: 25%;
+  padding-top: 30px;
 }
 
 .login-box {
   width: 700px;
   margin: 100px auto 0 auto;
- }
+}
 
 .login-box-logo {
   text-align: center;
