@@ -30,13 +30,13 @@ type User struct {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email    string
-	Login    string
-	Name     string
-	Company  string
-	Password string
-	Salt     string
-	IsAdmin  bool
+	Email    string `json:"email" binding:"Required"`
+	Login    string `json:"login"`
+	Name     string `json:"name"`
+	Company  string `json:"compay"`
+	Password string `json:"password" binding:"Required"`
+	Salt     string `json:"-"`
+	IsAdmin  bool   `json:"-"`
 
 	Result User `json:"-"`
 }

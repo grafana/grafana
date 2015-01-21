@@ -19,7 +19,7 @@ func Register(r *macaron.Macaron) {
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Post("/logout", LogoutPost)
-	r.Post("/login", LoginPost)
+	r.Post("/login", bind(dtos.LoginCommand{}), LoginPost)
 	r.Get("/login/:name", OAuthLogin)
 	r.Get("/login", Index)
 
@@ -35,7 +35,7 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/account/signup", SignUp)
+	r.Put("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
 
 	// authed api
 	r.Group("/api", func() {
