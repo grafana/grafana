@@ -10,47 +10,66 @@
 		<div class="login-inner-box">
 
 			<form name="loginForm">
-				<input type="text" required ng-model="loginModel.email" id="inputEmail" placeholder="Email">
-
-				<input type="password" required ng-model="loginModel.password" id="inputPassword" placeholder="Password">
-
-				<label class="checkbox">
-					<input type="checkbox" ng-model="loginModel.remember" ng-checked="login.remember"> Remember me
-				</label>
-
-				<button type="submit" ng-click="login()" class="btn btn-success" style="margin-bottom: 20px">
-					Sign in
-				</button>
-			</form>
-
-			<div class="alert alert-error" ng-show="loginError">
-				<button type="button" class="close" data-dismiss="alert">&times;</button>
-				<strong>Login failed:</strong> {{loginError}}
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 80px">
+							User
+						</li>
+						<li>
+							<input type="text" class="input-large tight-form-input" ng-model='login.email' placeholder="email or username"></input>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 80px">
+							Password
+						</li>
+						<li>
+							<input type="password" class="input-large tight-form-input" required ng-model="loginModel.password" id="inputPassword">
+						</li>
+						<li class="tight-form-item">
+							<a href="asd">Forgotten password?</a>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
 			</div>
 
-			<div class="login-oauth text-center">
-				<a class="btn btn-primary" href="login/google" target="_self">
-					Sign in with Google
-				</a>
-				<a class="btn btn-primary" href="login/github" target="_self">
-					Sign in with Github
-				</a>
-			</div>
+			<button type="submit" ng-click="login()" class="btn btn-success" style="margin-bottom: 20px">
+				Sign in
+			</button>
+		</form>
 
-			<div class="register-box text-center">
-				<a href="signup" class="btn btn-info">Sign up now!</a>
-			</div>
+		<div class="alert alert-error" ng-show="loginError">
+			<button type="button" class="close" data-dismiss="alert">&times;</button>
+			<strong>Login failed:</strong> {{loginError}}
 		</div>
 
-		<div class="clearfix"></div>
-	</div>
+		<div class="login-oauth text-center">
+			<a class="btn btn-primary" href="login/google" target="_self">
+				Sign in with Google
+			</a>
+			<a class="btn btn-primary" href="login/github" target="_self">
+				Sign in with Github
+			</a>
+		</div>
 
-	<div class="row" style="margin-top: 100px">
-		<div class="version-footer text-center small">
-			Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-			build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+		<div class="register-box text-center">
+			<a href="signup" class="btn btn-info">Sign up now!</a>
 		</div>
 	</div>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="row" style="margin-top: 100px">
+	<div class="version-footer text-center small">
+		Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
+		build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+	</div>
+</div>
 
 </div>
 
