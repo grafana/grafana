@@ -8,13 +8,7 @@ import (
 )
 
 // POST /api/account/signup
-func SignUp(c *middleware.Context) {
-	var cmd m.CreateUserCommand
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation error", nil)
-		return
-	}
+func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
 
 	cmd.Login = cmd.Email
 	cmd.Salt = util.GetRandomString(10)
@@ -25,5 +19,9 @@ func SignUp(c *middleware.Context) {
 		return
 	}
 
-	c.JsonOK("User created")
+	user := cmd.Result
+
+	loginUserWithUser(&user, c)
+
+	c.JsonOK("User created and logged in")
 }

@@ -9,21 +9,9 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
-type loginJsonModel struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Remember bool   `json:"remember"`
-}
+func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 
-func LoginPost(c *middleware.Context) {
-	var loginModel loginJsonModel
-
-	if !c.JsonBody(&loginModel) {
-		c.JSON(400, util.DynMap{"message": "bad request"})
-		return
-	}
-
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: loginModel.Email}
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.User}
 	err := bus.Dispatch(&userQuery)
 
 	if err != nil {
@@ -33,7 +21,7 @@ func LoginPost(c *middleware.Context) {
 
 	user := userQuery.Result
 
-	passwordHashed := util.EncodePassword(loginModel.Password, user.Salt)
+	passwordHashed := util.EncodePassword(cmd.Password, user.Salt)
 	if passwordHashed != user.Password {
 		c.JsonApiErr(401, "Invalid username or password", err)
 		return
@@ -41,11 +29,7 @@ func LoginPost(c *middleware.Context) {
 
 	loginUserWithUser(user, c)
 
-	var resp = &dtos.LoginResult{}
-	resp.Status = "Logged in"
-	resp.User.Login = user.Login
-
-	c.JSON(200, resp)
+	c.JsonOK("User logged in")
 }
 
 func loginUserWithUser(user *m.User, c *middleware.Context) {
