@@ -81,6 +81,11 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.syncState = function() {
+      if (this.state.editview) {
+        this.$scope.appEvent('show-dash-editor', { scope: this.$scope, editview: this.state.editview });
+        return;
+      }
+
       if (this.panelScopes.length === 0) { return; }
 
       if (this.fullscreen) {

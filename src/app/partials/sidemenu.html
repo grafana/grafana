@@ -8,7 +8,7 @@
 	</div>
 
 	<ul class="sidemenu">
-		<li ng-repeat-start="item in menu">
+		<li ng-repeat-start="item in menu" ng-class="{'active': item.active}">
 			<a href="{{item.href}}" class="sidemenu-item"><i class="{{item.icon}}"></i>{{item.text}}</a>
 		</li>
 		<li ng-repeat-end ng-if="item.active">
@@ -21,31 +21,7 @@
 	</ul>
 </div>
 
-<section class="pro-sidemenu-items">
-	<!-- <a class="pro&#45;sidemenu&#45;link" ng&#45;href="{{appSubUrl}}/"> -->
-		<!-- 	<i class="fa fa&#45;th&#45;large"></i> -->
-		<!-- 	Dashboards -->
-		<!-- </a> -->
-	<!-- <a class="pro&#45;sidemenu&#45;link" href="account/datasources"> -->
-		<!-- 	<i class="fa fa&#45;sitemap"></i> -->
-		<!-- 	Data -->
-		<!-- </a> -->
-	<!-- <a class="pro&#45;sidemenu&#45;link" href="account/users"> -->
-		<!-- 	<i class="fa fa&#45;users"></i>Users -->
-		<!-- </a> -->
-	<!-- <a class="pro&#45;sidemenu&#45;link" href="account/apikeys"> -->
-		<!-- 	<i class="fa fa&#45;key"></i>API Keys -->
-		<!-- </a> -->
-	<!-- <a class="pro&#45;sidemenu&#45;link" href="account/import"> -->
-		<!-- 	<i class="fa fa&#45;download"></i> -->
-		<!-- 	Import -->
-		<!-- </a> -->
-	<!--  -->
-	<!-- <a class="pro&#45;sidemenu&#45;link" href="profile"> -->
-		<!-- 	<i class="fa fa&#45;user"></i> -->
-		<!-- 	Profile -->
-		<!-- </a> -->
-	<!--  -->
+<section class="pro-sidemenu-items" style="position: fixed; bottom: 0; width 200px; left: 0;">
 	<a class="pro-sidemenu-link" href="admin/users" ng-if="grafana.user.isGrafanaAdmin">
 		<i class="fa fa-institution"></i>Admin
 	</a>
@@ -62,7 +38,6 @@
 	<a class="pro-sidemenu-link" href="login?logout">
 		<i class="fa fa-sign-out"></i>Sign out
 	</a>
-
 </section>
 
 </div>
