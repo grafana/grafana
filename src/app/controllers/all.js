@@ -7,6 +7,5 @@ define([
   './inspectCtrl',
   './jsonEditorCtrl',
   './loginCtrl',
-  './signUpCtrl',
   './errorCtrl',
 ], function () {});

@@ -58,10 +58,6 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
-      .when('/signup', {
-        templateUrl: 'app/partials/register.html',
-        controller : 'SignUpCtrl',
-      })
       .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/solo-panel.html',
         controller : 'SoloPanelCtrl',
