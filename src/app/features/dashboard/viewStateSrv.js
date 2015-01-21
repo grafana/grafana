@@ -53,12 +53,13 @@ function (angular, _, $) {
       state.panelId = parseInt(state.panelId) || null;
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
+      state.editview = state.editview || null;
       return state;
     };
 
     DashboardViewState.prototype.serializeToUrl = function() {
       var urlState = _.clone(this.state);
-      urlState.fullscreen = this.state.fullscreen ? true : null,
+      urlState.fullscreen = this.state.fullscreen ? true : null;
       urlState.edit = this.state.edit ? true : null;
       return urlState;
     };
@@ -81,11 +82,6 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.syncState = function() {
-      if (this.state.editview) {
-        this.$scope.appEvent('show-dash-editor', { scope: this.$scope, editview: this.state.editview });
-        return;
-      }
-
       if (this.panelScopes.length === 0) { return; }
 
       if (this.fullscreen) {

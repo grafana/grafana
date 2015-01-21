@@ -4,14 +4,14 @@
 
 .sidemenu {
   list-style: none;
-  background: @bodyBackground;
+  background: @grafanaPanelBackground;
   margin: 0;
   padding: 0;
 }
 
 .sidemenu-links {
   margin: 0;
-  padding: 0;
+  padding: 5px 0;
   list-style: none;
   background: @grafanaTargetFuncBackground;
   li {
@@ -20,19 +20,38 @@
 }
 
 .sidemenu-link {
+  display: block;
   padding: 6px 0 6px 30px;
   font-size: 15px;
-  display: block;
   i {
     padding-right: 15px;
   }
+}
+
+.sidemenu-user {
+  padding: 8px 10px 7px 15px;
+  display: block;
+  width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  .gravatar-missing {
+    display: none;
+  }
+  .gravatar-email {
+    padding-left: 4px;
+  }
+  img {
+    width: 35px;
+    padding-right: 10px;
+  }
+  border-bottom: 1px solid black;
 }
 
 .sidemenu-item {
   font-size: 17px;
   padding: 14px 10px 14px 20px;
   display: block;
-  background: @grafanaPanelBackground;
   i {
     padding-right: 15px;
   }
@@ -63,46 +82,6 @@
 
   .panel-fullscreen {
     left: 200px;
-  }
-}
-
-.pro-sidemenu-items {
-}
-
-.pro-sidemenu-link {
-  font-size: 1.0rem;
-  padding: 14px 10px 14px 20px;
-  display: block;
-  background: @grafanaPanelBackground;
-  color: @grayLight;
-  i {
-    padding-right: 15px;
-  }
-  border-bottom: 1px solid black;
-}
-
-.pro-sidemenu-link:first-child {
- // border-top: 1px solid black;
-}
-
-.pro-side-menu-user {
-  padding-left: 5px;
-  img {
-    width: 49px;
-    padding-right: 10px;
-  }
-}
-
-.gravatar {
-  width: 170px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  .gravatar-missing {
-    display: none;
-  }
-  .gravatar-email {
-    padding-left: 4px;
   }
 }
 

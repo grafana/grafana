@@ -54,12 +54,8 @@ function (angular, $) {
             if (editorScope) { editorScope.dismiss(); }
           }
 
-          scope.onAppEvent('hide-dash-editor', hideEditorPane);
-
-          scope.onAppEvent('show-dash-editor', function(evt, payload) {
-            if (payload.editview) {
-              payload.src = editViewMap[payload.editview];
-            }
+          function showEditorPane(evt, payload, editview) {
+            if (editview) { payload.src = editViewMap[editview]; }
 
             if (lastEditor === payload.src) {
               hideEditorPane();
@@ -80,9 +76,9 @@ function (angular, $) {
               editorScope = null;
               hideScrollbars(false);
 
-              if (payload.editview) {
+              if (editview) {
                 var urlParams = $location.search();
-                if (payload.editview === urlParams.editview) {
+                if (editview === urlParams.editview) {
                   delete urlParams.editview;
                   $location.search(urlParams);
                 }
@@ -96,8 +92,18 @@ function (angular, $) {
             var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');
             elem.append(view);
             $compile(elem.contents())(editorScope);
+          }
+
+          scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
+            if (newValue) {
+              showEditorPane(null, {}, newValue);
+            } else if (oldValue) {
+              hideEditorPane();
+            }
           });
 
+          scope.onAppEvent('hide-dash-editor', hideEditorPane);
+          scope.onAppEvent('show-dash-editor', showEditorPane);
         }
       };
     });

@@ -20,7 +20,8 @@ function (angular, _, $) {
           { text: 'Settings',    editview: 'settings',    icon: "fa fa-cogs" },
           { text: 'Templating',  editview: 'templating',  icon: "fa fa-cogs" },
           { text: 'Annotations', editview: 'annotations', icon: "fa fa-bolt" },
-          { text: 'More', href:"asd", icon: "fa fa-bolt" },
+          { text: 'Export', href:"", icon: "fa fa-bolt" },
+          { text: 'JSON', href:"", icon: "fa fa-bolt" },
         ]
       },
       {
@@ -63,6 +64,7 @@ function (angular, _, $) {
         if (item.startsWith) {
           if (currentPath.indexOf(item.startsWith) === 0) {
             item.active = true;
+            item.href = currentPath;
           }
         }
 
