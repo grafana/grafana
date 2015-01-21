@@ -1,10 +1,13 @@
 <div class="navbar navbar-static-top">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="brand">
-				<a ng-click="toggleSideMenu()">
-				  <img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+			<span class="hamburger">
+				<a class="pointer" ng-click="toggleSideMenu()">
+					<i class="fa fa-bars"></i>
 				</a>
+			</span>
+			<span class="brand">
+				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
 				<span class="page-title">{{dashboard.title}}</span>
 			</span>
 
