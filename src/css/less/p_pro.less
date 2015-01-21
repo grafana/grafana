@@ -2,6 +2,43 @@
   display: none;
 }
 
+.sidemenu {
+  list-style: none;
+  background: @bodyBackground;
+  margin: 0;
+  padding: 0;
+}
+
+.sidemenu-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: @grafanaTargetFuncBackground;
+  li {
+    display: block;
+  }
+}
+
+.sidemenu-link {
+  padding: 6px 0 6px 30px;
+  font-size: 15px;
+  display: block;
+  i {
+    padding-right: 15px;
+  }
+}
+
+.sidemenu-item {
+  font-size: 17px;
+  padding: 14px 10px 14px 20px;
+  display: block;
+  background: @grafanaPanelBackground;
+  i {
+    padding-right: 15px;
+  }
+  border-bottom: 1px solid black;
+}
+
 .pro-sidemenu-open {
   .pro-sidemenu {
     display: block;
