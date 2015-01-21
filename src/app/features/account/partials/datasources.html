@@ -25,7 +25,7 @@
 							<div ng-if="datasources.length === 0">
 								<em>No datasources defined</em>
 							</div>
-							<table class="grafana-options-table">
+							<table class="grafana-options-table" ng-if="datasources.length > 0">
 								<tr>
 									<td><strong>Name<strong></td>
 									<td><strong>Url<strong></td>
