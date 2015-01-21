@@ -2,19 +2,24 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'config',
 ],
-function (angular, _, $) {
+function (angular, _, $, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
   module.controller('SideMenuCtrl', function($scope, $location) {
 
+    $scope.getUrl = function(url) {
+      return config.appSubUrl + url;
+    };
+
     $scope.menu = [
       {
         text: "Dashbord",
-        href: "/",
-        startsWith: '/dashboard/',
+        href: $scope.getUrl("/"),
+        startsWith: config.appSubUrl + '/dashboard/',
         icon: "fa fa-th-large",
         links: [
           { text: 'Settings',    editview: 'settings',    icon: "fa fa-cogs" },
@@ -25,19 +30,19 @@ function (angular, _, $) {
         ]
       },
       {
-        text: "Account", href: "/account",
+        text: "Account", href: $scope.getUrl("/account"),
         icon: "fa fa-shield",
         links: [
-          { text: 'Data sources', href:"/account/datasources", icon: "fa fa-sitemap" },
-          { text: 'Users', href:"/account/users", icon: "fa fa-users" },
-          { text: 'API Keys', href:"/account/apikeys", icon: "fa fa-key" },
+          { text: 'Data sources', href: $scope.getUrl("/account/datasources"), icon: "fa fa-sitemap" },
+          { text: 'Users', href: $scope.getUrl("/account/users"), icon: "fa fa-users" },
+          { text: 'API Keys', href: $scope.getUrl("/account/apikeys"), icon: "fa fa-key" },
         ]
       },
       {
-        text: "Profile", href: "/profile",
+        text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
         links: [
-          { text: 'Password', href:"asd", icon: "fa fa-lock" },
+          { text: 'Password', href:"", icon: "fa fa-lock" },
         ]
       }
     ];
@@ -51,7 +56,7 @@ function (angular, _, $) {
     });
 
     $scope.updateState = function() {
-      var currentPath = $location.path();
+      var currentPath = config.appSubUrl + $location.path();
       var search = $location.search();
 
       _.each($scope.menu, function(item) {
