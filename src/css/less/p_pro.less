@@ -2,6 +2,33 @@
   display: none;
 }
 
+.pro-sidemenu-open {
+  .pro-sidemenu {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    background: @bodyBackground;
+    border-right: 2px solid black;
+    min-height: 100%;
+    z-index: 101;
+  }
+
+  .dashboard-notice {
+    margin-left: 200px;
+    width: auto;
+  }
+
+  .pro-main-view {
+    padding-left: 200px;
+  }
+
+  .panel-fullscreen {
+    left: 200px;
+  }
+}
+
 .sidemenu {
   list-style: none;
   background: @grafanaPanelBackground;
@@ -58,54 +85,66 @@
   border-bottom: 1px solid black;
 }
 
-.pro-sidemenu-open {
-  .pro-sidemenu {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200px;
-    background: @bodyBackground;
-    border-right: 2px solid black;
-    min-height: 100%;
-    z-index: 101;
-  }
 
-  .dashboard-notice {
-    margin-left: 200px;
-    width: auto;
-  }
-
-  .pro-main-view {
-    padding-left: 200px;
-  }
-
-  .panel-fullscreen {
-    left: 200px;
-  }
+.login-form {
+  width: 50%;
+  float: left;
+  margin-left: 25%;
+  margin-right: 25%;
+  padding-top: 50px;
 }
+
+.login-box {
+  width: 700px;
+  margin: 100px auto 0 auto;
+}
+
+.login-box-logo {
+  text-align: center;
+  padding-bottom: 50px;
+}
+
 
 .login-inner-box {
   background: @grafanaPanelBackground;
-  h1 {
-    font-size: 1.15em;
-    background: @grafanaTargetBackground;
-    text-align: center;
-    padding: 2px;
-  }
 }
 
-.login-signup-button {
-  width: 45%;
+.login-tab-header {
+  background: @grafanaTargetBackground;
   text-align: center;
+}
 
-  a {
-    font-weight: bold;
+.btn-login-tab {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  padding: 10px 10px;
+
+  &.active {
+    background: darken(@grafanaTargetBackground, 5%);
+    color: @white;
   }
-  &.login-signup-button-disable {
-    a {
-      color: darken(@linkColor, 35%);
-    }
+
+  &:focus {
+    outline: none;
+  }
+
+  font-weight: bold;
+  display: inline-block;
+  width: 170px;
+  color: @textColor;
+}
+
+.login-submit-button-row {
+  text-align: center;
+  margin-top: 40px;
+  button {
+    padding: 9px 7px;
+    font-size: 14px;
+    font-weight: bold;
+    width: 150px;
+    display: inline-block;
+    border: 1px solid lighten(@btnInverseBackground, 10%);
   }
 }
 
@@ -123,25 +162,4 @@
   }
 }
 
-.login-form {
-  width: 50%;
-  float: left;
-  margin-left: 25%;
-  margin-right: 25%;
-  padding-top: 30px;
-}
-
-.login-box {
-  width: 700px;
-  margin: 100px auto 0 auto;
-}
-
-.login-box-logo {
-  text-align: center;
-  padding-bottom: 50px;
-}
-
-.register-box {
-  margin-top: 100px;
-}
 

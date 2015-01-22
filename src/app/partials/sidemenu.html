@@ -8,7 +8,7 @@
 				<span class="gravatar-email small">{{grafana.user.login}}</span>
 			</a>
 			<ul class="dropdown-menu">
-				<li><a href="/login?logout">Logout</a></li>
+				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
 			</ul>
 		</li>
 		<li ng-repeat-start="item in menu" ng-class="{'active': item.active}">

@@ -16,7 +16,7 @@ function (angular, config) {
     $scope.newUser = {};
 
     $scope.grafana.sidemenu = false;
-    $scope.mode = 'login';
+    $scope.loginMode = true;
 
     // build info view model
     $scope.buildInfo = {
@@ -26,10 +26,26 @@ function (angular, config) {
     };
 
     $scope.submit = function() {
-      if ($scope.mode === 'login') {
+      if ($scope.loginMode) {
         $scope.login();
       } else {
         $scope.signUp();
+      }
+    };
+
+    $scope.getSubmitBtnClass = function() {
+      if ($scope.loginForm.$valid) {
+        return "btn-primary";
+      } else {
+        return "btn-inverse";
+      }
+    };
+
+    $scope.getSubmitBtnText = function() {
+      if ($scope.loginMode) {
+        return "Log in";
+      } else {
+        return "Sign up";
       }
     };
 
@@ -40,11 +56,6 @@ function (angular, config) {
     };
 
     $scope.signUp = function() {
-      if ($scope.mode === 'login') {
-        $scope.mode = 'signup';
-        return;
-      }
-
       if (!$scope.loginForm.$valid) {
         return;
       }
@@ -63,10 +74,6 @@ function (angular, config) {
     };
 
     $scope.login = function() {
-      if ($scope.mode === 'signup') {
-        $scope.mode = 'login';
-        return;
-      }
       delete $scope.loginError;
 
       if (!$scope.loginForm.$valid) {
