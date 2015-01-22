@@ -135,6 +135,25 @@
   color: @textColor;
 }
 
+.password-strength {
+  display: block;
+  width: 50px;
+  overflow: visible;
+  white-space: nowrap;
+  padding-top: 3px;
+  margin-left: 97px;
+  color: darken(@textColor, 20%);
+  border-top: 3px solid @red;
+  &.password-strength-ok {
+    width: 170px;
+    border-top: 3px solid lighten(@yellow, 10%);
+  }
+  &.password-strength-good {
+    width: 254px;
+    border-top: 3px solid lighten(@green, 10%);
+  }
+}
+
 .login-submit-button-row {
   text-align: center;
   margin-top: 40px;

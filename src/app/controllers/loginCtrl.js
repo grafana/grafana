@@ -8,15 +8,27 @@ function (angular, config) {
   var module = angular.module('grafana.controllers');
 
   module.controller('LoginCtrl', function($scope, backendSrv, $location, $routeParams, alertSrv) {
-    $scope.loginModel = {
-      user: '',
-      password: ''
-    };
 
-    $scope.newUser = {};
+    $scope.formModel = {
+      user: '',
+      email: '',
+      password: '',
+    };
 
     $scope.grafana.sidemenu = false;
     $scope.loginMode = true;
+    $scope.submitBtnClass = 'btn-inverse';
+    $scope.submitBtnText = 'Log in';
+    $scope.strengthClass = '';
+
+    $scope.init = function() {
+      if ($routeParams.logout) {
+        $scope.logout();
+      }
+
+      $scope.$watch("loginMode", $scope.loginModeChanged);
+      $scope.passwordChanged();
+    };
 
     // build info view model
     $scope.buildInfo = {
@@ -33,26 +45,29 @@ function (angular, config) {
       }
     };
 
-    $scope.getSubmitBtnClass = function() {
-      if ($scope.loginForm.$valid) {
-        return "btn-primary";
-      } else {
-        return "btn-inverse";
-      }
+    $scope.loginModeChanged = function(newValue) {
+      $scope.submitBtnText = newValue ? 'Log in' : 'Sign up';
     };
 
-    $scope.getSubmitBtnText = function() {
-      if ($scope.loginMode) {
-        return "Log in";
-      } else {
-        return "Sign up";
+    $scope.passwordChanged = function(newValue) {
+      if (!newValue) {
+        $scope.strengthText = "";
+        $scope.strengthClass = "hidden";
+        return;
       }
-    };
+      if (newValue.length < 4) {
+        $scope.strengthText = "strength: weak sauce.";
+        $scope.strengthClass = "password-strength-bad";
+        return;
+      }
+      if (newValue.length <= 6) {
+        $scope.strengthText = "strength: you can do better.";
+        $scope.strengthClass = "password-strength-ok";
+        return;
+      }
 
-    $scope.init = function() {
-      if ($routeParams.logout) {
-        $scope.logout();
-      }
+      $scope.strengthText = "strength: strong like a bull.";
+      $scope.strengthClass = "password-strength-good";
     };
 
     $scope.signUp = function() {
@@ -60,7 +75,7 @@ function (angular, config) {
         return;
       }
 
-      backendSrv.put('/api/user/signup', $scope.newUser).then(function() {
+      backendSrv.put('/api/user/signup', $scope.formModel).then(function() {
         window.location.href = config.appSubUrl + '/';
       });
     };
@@ -80,7 +95,7 @@ function (angular, config) {
         return;
       }
 
-      backendSrv.post('/login', $scope.loginModel).then(function() {
+      backendSrv.post('/login', $scope.formModel).then(function() {
         window.location.href = config.appSubUrl + '/';
       });
     };

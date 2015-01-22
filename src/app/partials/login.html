@@ -23,7 +23,7 @@
 							<strong>User</strong>
             </li>
             <li>
-              <input type="text" class="tight-form-input last" ng-model='loginModel.user' placeholder="email or username" style="width: 246px">
+              <input type="text" class="tight-form-input last" ng-model='formModel.user' placeholder="email or username" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -34,11 +34,11 @@
 							<strong>Password</strong>
             </li>
             <li>
-							<input type="password" class="tight-form-input last" required ng-model="loginModel.password" id="inputPassword" style="width: 246px" placeholder="password">
+							<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 246px" placeholder="password">
             </li>
           </ul>
           <div class="clearfix"></div>
-        </div>
+				</div>
 
 				<div class="tight-form" ng-if="!loginMode">
           <ul class="tight-form-list">
@@ -46,7 +46,7 @@
 							<strong>Email</strong>
             </li>
             <li>
-              <input type="email" class="tight-form-input last" required ng-model='newUser.email' placeholder="email" style="width: 246px">
+              <input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -58,16 +58,21 @@
 							<strong>Password</strong>
             </li>
             <li>
-							<input type="password" class="tight-form-input last" required ng-model='newUser.password' placeholder="password" style="width: 246px">
+							<input type="password" class="tight-form-input last" watch-change="passwordChanged(inputValue)" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
 
+				<div class="password-strength small" ng-if="!loginMode" ng-class="strengthClass">
+					<em>{{strengthText}}</em>
+				</div>
+
 
 				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-class="getSubmitBtnClass()" ng-click="submit();">
-						{{getSubmitBtnText()}}
+					<button type="submit" class="btn" ng-click="submit();"
+						      ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+						{{submitBtnText}}
 					</button>
 				</div>
 			</form>
