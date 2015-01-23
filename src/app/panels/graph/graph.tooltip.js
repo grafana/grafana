@@ -71,7 +71,7 @@ function ($) {
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
-        if (!series.data.length) {
+        if (!series.data.length || (scope.panel.legend.hideEmpty && series.allIsNull)) {
           results.push({ hidden: true });
           continue;
         }
