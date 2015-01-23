@@ -196,6 +196,9 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     $scope.getFormatedValue = function(mainValue) {
+      if(typeof mainValue === 'string'){
+        return mainValue;
+      }
 
       // first check value to text mappings
       for(var i = 0; i < $scope.panel.valueMaps.length; i++) {

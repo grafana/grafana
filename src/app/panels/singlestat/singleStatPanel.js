@@ -69,7 +69,11 @@ function (angular, app, _, $) {
         }
 
         function getBigValueHtml() {
-          var body = '<div class="singlestat-panel-value-container">';
+          var containerClass = 'singlestat-panel-value-container';
+          if (typeof data.mainValue === 'string'){
+            containerClass = 'singlestat-panel-text-value-container';
+          }
+          var body = '<div class="' + containerClass + '">';
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
