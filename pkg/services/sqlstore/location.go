@@ -10,14 +10,14 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetLocations)
-	bus.AddHandler("sql", GetLocationBySlug)
+	bus.AddHandler("sql", GetLocationById)
 	bus.AddHandler("sql", AddLocation)
 	bus.AddHandler("sql", UpdateLocation)
 	bus.AddHandler("sql", DeleteLocation)
 }
 
-func GetLocationBySlug(query *m.GetLocationBySlugQuery) error {
-	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND slug=?", query.AccountId, query.Slug)
+func GetLocationById(query *m.GetLocationByIdQuery) error {
+	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND id=?", query.AccountId, query.Id)
 	has, err := sess.Get(&query.Result)
 
 	if !has {

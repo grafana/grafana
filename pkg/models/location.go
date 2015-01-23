@@ -70,8 +70,8 @@ type GetLocationsQuery struct {
 	Result    []*Location
 }
 
-type GetLocationBySlugQuery struct {
-	Slug      string
+type GetLocationByIdQuery struct {
+	Id        int64
 	AccountId int64
 	Result    Location
 }

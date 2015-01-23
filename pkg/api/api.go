@@ -86,7 +86,7 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetLocationsQuery{}), GetLocations).
 				Put(AddLocation).
 				Post(UpdateLocation)
-			r.Get("/:slug", GetLocationBySlug)
+			r.Get("/:id", GetLocationById)
 			r.Delete("/:id", DeleteLocation)
 		})
 

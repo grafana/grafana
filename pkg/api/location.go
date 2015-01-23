@@ -31,10 +31,10 @@ func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
 	c.JSON(200, result)
 }
 
-func GetLocationBySlug(c *middleware.Context) {
-	slug := c.Params(":slug")
+func GetLocationById(c *middleware.Context) {
+	id := c.ParamsInt64(":id")
 
-	query := m.GetLocationBySlugQuery{Slug: slug, AccountId: c.AccountId}
+	query := m.GetLocationByIdQuery{Id: id, AccountId: c.AccountId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Location not found", nil)
