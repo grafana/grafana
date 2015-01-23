@@ -128,9 +128,11 @@ type DeleteMonitorCommand struct {
 type GetMonitorsQuery struct {
 	MonitorId      []int64  `form:"id"`
 	Name           []string `form:"name"`
+	Slug           []string `form:"slug"`
 	MonitorTypeId  []int64  `form:"monitor_type_id"`
 	LocationId     []int64  `form:"location_id"`
 	Frequency      []int64  `form:"frequency"`
+	Enabled        string   `form:"enabled"`
 	AccountId      int64
 	IsRaintankAdmin bool
 	Result         []*MonitorDTO

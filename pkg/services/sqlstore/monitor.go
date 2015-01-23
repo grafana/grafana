@@ -8,6 +8,7 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"math/rand"
 	"time"
+	"strconv"
 )
 
 func init() {
@@ -110,6 +111,35 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			sess.And("monitor.name=?", query.Name[0])
 		}
 	}
+	if len(query.Slug) > 0 {
+		if len(query.Slug) > 1 {
+			sess.In("monitor.slug", query.Slug)
+		} else {
+			sess.And("monitor.slug=?", query.Slug[0])
+		}
+	}
+	if len(query.MonitorTypeId) > 0 {
+		if len(query.MonitorTypeId) > 1 {
+			sess.In("monitor.monitor_type_id", query.MonitorTypeId)
+		} else {
+			sess.And("monitor.monitor_type_id=?", query.MonitorTypeId[0])
+		}
+	}
+	if len(query.Frequency) > 0 {
+		if len(query.Frequency) > 1 {
+			sess.In("monitor.frequency", query.Frequency)
+		} else {
+			sess.And("monitor.frequency=?", query.Frequency[0])
+		}
+	}
+	if len(query.Enabled) > 0 {
+		if p, err := strconv.ParseBool(query.Enabled); err == nil {
+			sess.And("monitor.enabled=?", p)
+		} else {
+			return err
+		}
+	}
+
 
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)
