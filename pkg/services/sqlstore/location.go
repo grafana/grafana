@@ -64,6 +64,13 @@ func GetLocations(query *m.GetLocationsQuery) error {
 			sess.And("provider=?", query.Provider[0])
 		}
 	}
+	if len(query.Slug) > 0 {
+		if len(query.Slug) > 1 {
+			sess.In("slug", query.Slug)
+		} else {
+			sess.And("slug=?", query.Slug[0])
+		}
+	}
 	if query.Public != "" {
 		if p, err := strconv.ParseBool(query.Public); err == nil {
 			sess.And("public=?", p)
