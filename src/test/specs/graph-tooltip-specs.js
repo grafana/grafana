@@ -19,8 +19,7 @@ define([
       tooltip:  {
         shared: true
       },
-      legend: {
-      },
+      legend: { },
       stack: false
     };
 

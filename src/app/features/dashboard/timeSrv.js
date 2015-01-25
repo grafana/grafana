@@ -112,6 +112,7 @@ define([
       if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
         return false;
       }
+
       if(parse === false) {
         return {
           from: _t.from,
