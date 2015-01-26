@@ -35,22 +35,22 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
-	r.Put("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
 
 	// authed api
 	r.Group("/api", func() {
 		// user
 		r.Group("/user", func() {
 			r.Get("/", GetUser)
-			r.Post("/", bind(m.UpdateUserCommand{}), UpdateUser)
+			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
 			r.Post("/using/:id", SetUsingAccount)
 			r.Get("/accounts", GetUserAccounts)
 		})
 
 		// account
 		r.Group("/account", func() {
-			r.Put("/", bind(m.CreateAccountCommand{}), CreateAccount)
-			r.Put("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
+			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
+			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
 			r.Get("/users", GetAccountUsers)
 			r.Delete("/users/:id", RemoveAccountUser)
 		})
@@ -58,8 +58,8 @@ func Register(r *macaron.Macaron) {
 		r.Group("/tokens", func() {
 			r.Combo("/").
 				Get(GetTokens).
-				Put(bind(m.AddTokenCommand{}), AddToken).
-				Post(bind(m.UpdateTokenCommand{}), UpdateToken)
+				Post(bind(m.AddTokenCommand{}), AddToken).
+				Put(bind(m.UpdateTokenCommand{}), UpdateToken)
 			r.Delete("/:id", DeleteToken)
 		})
 		// Data sources
