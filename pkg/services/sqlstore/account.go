@@ -10,9 +10,25 @@ import (
 )
 
 func init() {
+	bus.AddHandler("sql", GetAccount)
 	bus.AddHandler("sql", CreateAccount)
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", UpdateAccount)
+}
+
+func GetAccount(query *m.GetAccountByIdQuery) error {
+	var account m.Account
+	exists, err := x.Id(query.Id).Get(&account)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return m.ErrAccountNotFound
+	}
+
+	query.Result = &account
+	return nil
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
