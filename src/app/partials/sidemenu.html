@@ -17,7 +17,7 @@
 		<li ng-repeat-end ng-if="item.active">
 			<ul class="sidemenu-links">
 				<li ng-repeat="link in item.links">
-					<a href="{{link.href}}" class="sidemenu-link"><i class="fa fa-angle-right"></i>{{link.text}}</a>
+					<a href="{{link.href}}" class="sidemenu-link" ng-class="{active: link.active}"><i class="fa fa-angle-right"></i>{{link.text}}</a>
 				</li>
 			</ul>
 		</li>

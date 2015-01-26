@@ -33,6 +33,7 @@ function (angular, _, $, config) {
         text: "Account", href: $scope.getUrl("/account"),
         icon: "fa fa-shield",
         links: [
+          { text: 'Info', href: $scope.getUrl("/account"), icon: "fa fa-sitemap" },
           { text: 'Data sources', href: $scope.getUrl("/account/datasources"), icon: "fa fa-sitemap" },
           { text: 'Users', href: $scope.getUrl("/account/users"), icon: "fa fa-users" },
           { text: 'API Keys', href: $scope.getUrl("/account/apikeys"), icon: "fa fa-key" },
@@ -42,6 +43,7 @@ function (angular, _, $, config) {
         text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
         links: [
+          { text: 'Info', href: $scope.getUrl("/profile"), icon: "fa fa-sitemap" },
           { text: 'Password', href:"", icon: "fa fa-lock" },
         ]
       }

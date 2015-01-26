@@ -1,5 +1,8 @@
 .pro-sidemenu {
   display: none;
+  a:focus {
+    text-decoration: none;
+  }
 }
 
 .pro-sidemenu-open {
@@ -50,8 +53,13 @@
   display: block;
   padding: 6px 0 6px 30px;
   font-size: 15px;
+  color: @gray;
   i {
     padding-right: 15px;
+  }
+  &.active {
+    color: white;
+    font-weight: bold;
   }
 }
 
