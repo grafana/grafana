@@ -29,7 +29,7 @@ type CreateAccountCommand struct {
 }
 
 type UpdateAccountCommand struct {
-	Name      string `json:"name"`
+	Name      string `json:"name" binding:"Required"`
 	AccountId int64  `json:"-"`
 }
 
@@ -41,6 +41,11 @@ type GetUserAccountsQuery struct {
 type GetAccountByIdQuery struct {
 	Id     int64
 	Result *Account
+}
+
+type AccountDTO struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type UserAccountDTO struct {

@@ -49,7 +49,9 @@ func Register(r *macaron.Macaron) {
 
 		// account
 		r.Group("/account", func() {
+			r.Get("/", GetAccount)
 			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
+			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
 			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
 			r.Get("/users", GetAccountUsers)
 			r.Delete("/users/:id", RemoveAccountUser)
