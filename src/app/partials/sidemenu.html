@@ -1,45 +1,25 @@
-<section class="pro-sidemenu-items">
-	<div class="dropdown">
-		<a class="pro-sidemenu-link pointer gravatar" data-toggle="dropdown" title="{{grafana.user.email}}">
-			<span class="gravatar-missing">f</span>
-			<img ng-src="{{grafana.user.gravatarUrl}}" width="35"> <span class="gravatar-email small">{{grafana.user.login}}</span>
-		</a>
-		<ul class="dropdown-menu">
-			<li><a href="/login?logout">Logout</a></li>
-		</ul>
-	</div>
-	<a class="pro-sidemenu-link" ng-href="{{appSubUrl}}/">
-		<i class="fa fa-th-large"></i>
-		Dashboards
-	</a>
-	<a class="pro-sidemenu-link" href="account/datasources">
-		<i class="fa fa-sitemap"></i>
-		Data
-	</a>
-	<a class="pro-sidemenu-link" href="account/users">
-		<i class="fa fa-users"></i>Users
-	</a>
-	<a class="pro-sidemenu-link" href="account/apikeys">
-		<i class="fa fa-key"></i>API Keys
-	</a>
-	<a class="pro-sidemenu-link" href="account/import">
-		<i class="fa fa-download"></i>
-		Import
-	</a>
+<div ng-controller="SideMenuCtrl" ng-init="init()">
 
-	<a class="pro-sidemenu-link" href="profile">
-		<i class="fa fa-user"></i>
-		Profile
-	</a>
-
-	<a class="pro-sidemenu-link" href="admin/users" ng-if="grafana.user.isGrafanaAdmin">
-		<i class="fa fa-institution"></i>Admin
-	</a>
-
-  <a class="pro-sidemenu-link" href="login?logout">
-		<i class="fa fa-sign-out"></i>Sign out
-	</a>
-
-</section>
-
+	<ul class="sidemenu">
+		<li class="dropdown">
+			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
+				<span class="gravatar-missing">f</span>
+				<img ng-src="{{grafana.user.gravatarUrl}}" width="35">
+				<span class="gravatar-email small">{{grafana.user.login}}</span>
+			</a>
+			<ul class="dropdown-menu">
+				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
+			</ul>
+		</li>
+		<li ng-repeat-start="item in menu" ng-class="{'active': item.active}">
+			<a href="{{item.href}}" class="sidemenu-item"><i class="{{item.icon}}"></i>{{item.text}}</a>
+		</li>
+		<li ng-repeat-end ng-if="item.active">
+			<ul class="sidemenu-links">
+				<li ng-repeat="link in item.links">
+					<a href="{{link.href}}" class="sidemenu-link" ng-class="{active: link.active}"><i class="fa fa-angle-right"></i>{{link.text}}</a>
+				</li>
+			</ul>
+		</li>
+	</ul>
 </div>

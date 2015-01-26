@@ -293,7 +293,7 @@ function (angular, _, config, gfunc, Parser) {
     function MetricSegment(options) {
       if (options === '*' || options.value === '*') {
         this.value = '*';
-        this.html = $sce.trustAsHtml('<i class="icon-asterisk"><i>');
+        this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
         this.expandable = true;
         return;
       }

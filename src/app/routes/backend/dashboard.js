@@ -21,6 +21,7 @@ function (angular, store) {
       // do we have a previous dash
       if (prevDashPath) {
         $location.path(prevDashPath);
+        return;
       }
 
       var savedRoute = store.get('grafanaDashboardDefault');

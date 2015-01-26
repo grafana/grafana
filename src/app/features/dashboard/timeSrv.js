@@ -19,9 +19,20 @@ define([
       this.time = dashboard.time;
 
       this._initTimeFromUrl();
+      this._parseTime();
 
       if(this.dashboard.refresh) {
         this.set_interval(this.dashboard.refresh);
+      }
+    };
+
+    this._parseTime = function() {
+      // when absolute time is saved in json it is turned to a string
+      if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
+        this.time.from = new Date(this.time.from);
+      }
+      if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
+        this.time.to = new Date(this.time.to);
       }
     };
 
@@ -109,9 +120,7 @@ define([
 
     this.timeRange = function(parse) {
       var _t = this.time;
-      if(_.isUndefined(_t) || _.isUndefined(_t.from)) {
-        return false;
-      }
+
       if(parse === false) {
         return {
           from: _t.from,

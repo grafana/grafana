@@ -7,82 +7,74 @@
 		</div>
 
     <div class="login-inner-box">
-			<h1 ng-if="mode === 'login'">Login</h1>
-			<h1 ng-if="mode === 'signup'">Sign up</h1>
+			<div class="login-tab-header">
+				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
+					Log in
+				</button>
+				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}">
+					Sign up
+				</button>
+			</div>
 
       <form name="loginForm" class="login-form">
-        <div class="tight-form" ng-if="mode === 'login'">
+        <div class="tight-form" ng-if="loginMode">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 80px">
-              User
+							<strong>User</strong>
             </li>
             <li>
-              <input type="text" class="tight-form-input last" ng-model='loginModel.user' placeholder="email or username" style="width: 246px">
+              <input type="text" class="tight-form-input last" ng-model='formModel.user' placeholder="email or username" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
-        <div class="tight-form" ng-if="mode === 'login'">
+        <div class="tight-form" ng-if="loginMode">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 80px">
-              Password
+							<strong>Password</strong>
             </li>
             <li>
-              <input type="password" class="tight-form-input last" required ng-model="loginModel.password" id="inputPassword" style="width: 246px">
+							<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 246px" placeholder="password">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+				</div>
+
+				<div class="tight-form" ng-if="!loginMode">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 80px">
+							<strong>Email</strong>
+            </li>
+            <li>
+              <input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
 
-				<div class="tight-form" ng-if="mode === 'signup'">
+				<div class="tight-form" ng-if="!loginMode">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 80px">
-              Email
+							<strong>Password</strong>
             </li>
             <li>
-              <input type="email" class="tight-form-input last" required ng-model='newUser.email' placeholder="email" style="width: 246px">
+							<input type="password" class="tight-form-input last" watch-change="passwordChanged(inputValue)" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 246px">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
 
-				<div class="tight-form" ng-if="mode === 'signup'">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 80px">
-              Name
-            </li>
-            <li>
-              <input type="text" class="tight-form-input last" ng-model='newUser.name' placeholder="your full name (optional)" style="width: 246px">
-            </li>
-          </ul>
-          <div class="clearfix"></div>
-        </div>
+				<div class="password-strength small" ng-if="!loginMode" ng-class="strengthClass">
+					<em>{{strengthText}}</em>
+				</div>
 
-				<div class="tight-form" ng-if="mode === 'signup'">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 80px">
-              Password
-            </li>
-            <li>
-              <input type="password" class="tight-form-input last" required ng-model='newUser.password' placeholder="" style="width: 246px">
-            </li>
-          </ul>
-          <div class="clearfix"></div>
-        </div>
 
-				<div class="tight-form">
-          <ul class="tight-form-list">
-						<li class="tight-form-item login-signup-button" ng-class="{'login-signup-button-disable': mode === 'signup'}">
-							<a ng-click="login()">Log in</a>
-						</li>
-						<li class="tight-form-item login-signup-button last" ng-class="{'login-signup-button-disable': mode === 'login'}">
-							<a ng-click="signUp()">Sign up</a>
-						</li>
-          </ul>
-          <div class="clearfix"></div>
-        </div>
-
-				<button type="submit" ng-click="submit();" class="hidden"></button>
+				<div class="login-submit-button-row">
+					<button type="submit" class="btn" ng-click="submit();"
+						      ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+						{{submitBtnText}}
+					</button>
+				</div>
 			</form>
 
 			<div class="clearfix"></div>

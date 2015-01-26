@@ -5,6 +5,12 @@ define([
 function (angular, $) {
   'use strict';
 
+  var editViewMap = {
+    'settings': 'app/partials/dasheditor.html',
+    'annotations': 'app/features/annotations/partials/editor.html',
+    'templating': 'app/partials/templating_editor.html',
+  };
+
   angular
     .module('grafana.directives')
     .directive('dashEditorLink', function($timeout) {
@@ -25,7 +31,7 @@ function (angular, $) {
 
   angular
     .module('grafana.directives')
-    .directive('dashEditorView', function($compile) {
+    .directive('dashEditorView', function($compile, $location) {
       return {
         restrict: 'A',
         link: function(scope, elem) {
@@ -48,10 +54,9 @@ function (angular, $) {
             if (editorScope) { editorScope.dismiss(); }
           }
 
-          scope.onAppEvent("dashboard-loaded", hideEditorPane);
-          scope.onAppEvent('hide-dash-editor', hideEditorPane);
+          function showEditorPane(evt, payload, editview) {
+            if (editview) { payload.src = editViewMap[editview]; }
 
-          scope.onAppEvent('show-dash-editor', function(evt, payload) {
             if (lastEditor === payload.src) {
               hideEditorPane();
               return;
@@ -70,6 +75,14 @@ function (angular, $) {
               lastEditor = null;
               editorScope = null;
               hideScrollbars(false);
+
+              if (editview) {
+                var urlParams = $location.search();
+                if (editview === urlParams.editview) {
+                  delete urlParams.editview;
+                  $location.search(urlParams);
+                }
+              }
             };
 
             // hide page scrollbars while edit pane is visible
@@ -79,8 +92,18 @@ function (angular, $) {
             var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');
             elem.append(view);
             $compile(elem.contents())(editorScope);
+          }
+
+          scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
+            if (newValue) {
+              showEditorPane(null, {}, newValue);
+            } else if (oldValue) {
+              hideEditorPane();
+            }
           });
 
+          scope.onAppEvent('hide-dash-editor', hideEditorPane);
+          scope.onAppEvent('show-dash-editor', showEditorPane);
         }
       };
     });

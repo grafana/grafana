@@ -26,12 +26,7 @@ function (angular) {
     };
 
     $scope.addToken = function() {
-      backendSrv.request({
-        method: 'PUT',
-        url: '/api/tokens',
-        data: $scope.token,
-        desc: 'Add token'
-      }).then($scope.getTokens);
+      backendSrv.post('/api/tokens', $scope.token).then($scope.getTokens);
     };
 
     $scope.init();
