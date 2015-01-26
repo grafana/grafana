@@ -124,18 +124,19 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // check panel time overrrides
       if ($scope.panel.timeFrom) {
         if (_.isString($scope.rangeUnparsed.from)) {
-          $scope.panelMeta.timeInfo = "Last " + $scope.panel.timeFrom;
+          $scope.panelMeta.timeInfo = "last " + $scope.panel.timeFrom;
           $scope.rangeUnparsed.from = 'now-' + $scope.panel.timeFrom;
           $scope.range.from = kbn.parseDate($scope.rangeUnparsed.from);
         }
       }
-      // if ($scope.panel.timeShift) {
-      //   // from: now-1h
-      //   // to: now
-      //   // timeshift: 1d
-      //   // from: now-1d-1h
-      //   // to: now-1d
-      // }
+
+      if ($scope.panel.timeShift) {
+        var timeShift = '-' + $scope.panel.timeShift;
+        $scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
+        $scope.range.from = kbn.parseDateMath(timeShift, $scope.range.from);
+        $scope.range.to = kbn.parseDateMath(timeShift, $scope.range.to);
+        $scope.rangeUnparsed = $scope.range;
+      }
 
       if ($scope.panel.maxDataPoints) {
         $scope.resolution = $scope.panel.maxDataPoints;
