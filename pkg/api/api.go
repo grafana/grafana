@@ -14,6 +14,7 @@ func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	reqAccountAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	bind := binding.Bind
 
 	// not logged in views
@@ -55,7 +56,8 @@ func Register(r *macaron.Macaron) {
 			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
 			r.Get("/users", GetAccountUsers)
 			r.Delete("/users/:id", RemoveAccountUser)
-		})
+		}, reqAccountAdmin)
+
 		// Token
 		r.Group("/tokens", func() {
 			r.Combo("/").
@@ -63,20 +65,24 @@ func Register(r *macaron.Macaron) {
 				Post(bind(m.AddTokenCommand{}), AddToken).
 				Put(bind(m.UpdateTokenCommand{}), UpdateToken)
 			r.Delete("/:id", DeleteToken)
-		})
+		}, reqAccountAdmin)
+
 		// Data sources
 		r.Group("/datasources", func() {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
-		})
+		}, reqAccountAdmin)
+
 		// Dashboard
 		r.Group("/dashboard", func() {
 			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 		})
+
 		// Search
 		r.Get("/search/", Search)
+
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
 	}, reqSignedIn)
