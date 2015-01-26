@@ -276,6 +276,7 @@ function (angular, _, $, config, kbn, moment) {
 
         targetValue = targets[this._seriesRefLetters[i]];
         targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
+        targets[this._seriesRefLetters[i]] = targetValue;
 
         clean_options.push("target=" + encodeURIComponent(targetValue));
       }

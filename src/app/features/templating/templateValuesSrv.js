@@ -81,8 +81,8 @@ function (angular, _, kbn) {
 
     this._updateNonQueryVariable = function(variable) {
       // extract options in comma seperated string
-      variable.options = _.map(variable.query.split(/[\s,]+/), function(text) {
-        return { text: text, value: text };
+      variable.options = _.map(variable.query.split(/[,]+/), function(text) {
+        return { text: text.trim(), value: text.trim() };
       });
 
       if (variable.type === 'interval') {
