@@ -33,12 +33,11 @@ function (angular) {
 
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
-
-      backendSrv.post('/api/user/', $scope.user);
+      backendSrv.put('/api/user/', $scope.user);
     };
 
     $scope.createAccount = function() {
-      backendSrv.put('/api/account/', $scope.newAccount).then($scope.getUserAccounts);
+      backendSrv.post('/api/account/', $scope.newAccount).then($scope.getUserAccounts);
     };
 
     $scope.init();

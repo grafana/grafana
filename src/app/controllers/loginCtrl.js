@@ -75,7 +75,7 @@ function (angular, config) {
         return;
       }
 
-      backendSrv.put('/api/user/signup', $scope.formModel).then(function() {
+      backendSrv.post('/api/user/signup', $scope.formModel).then(function() {
         window.location.href = config.appSubUrl + '/';
       });
     };
