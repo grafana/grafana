@@ -16,17 +16,17 @@ function (angular) {
     };
 
     $scope.getTokens = function() {
-      backendSrv.get('/api/tokens').then(function(tokens) {
+      backendSrv.get('/api/auth/keys').then(function(tokens) {
         $scope.tokens = tokens;
       });
     };
 
     $scope.removeToken = function(id) {
-      backendSrv.delete('/api/tokens/'+id).then($scope.getTokens);
+      backendSrv.delete('/api/auth/keys/'+id).then($scope.getTokens);
     };
 
     $scope.addToken = function() {
-      backendSrv.post('/api/tokens', $scope.token).then($scope.getTokens);
+      backendSrv.post('/api/auth/keys', $scope.token).then($scope.getTokens);
     };
 
     $scope.init();
