@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/Unknwon/com"
-	"github.com/Unknwon/goconfig"
 	"github.com/macaron-contrib/session"
+	"gopkg.in/ini.v1"
 
 	"github.com/torkelo/grafana-pro/pkg/log"
 )
@@ -58,18 +58,31 @@ var (
 	StaticRootPath     string
 	EnableGzip         bool
 
+	// Security settings.
+	SecretKey          string
+	LogInRememberDays  int
+	CookieUserName     string
+	CookieRememberName string
+
+	// single account
+	SingleAccountMode  bool
+	DefaultAccountName string
+	DefaultAccountRole string
+
 	// Http auth
-	AdminUser          string
-	AdminPassword      string
-	Anonymous          bool
-	AnonymousAccountId int64
+	AdminUser     string
+	AdminPassword string
+
+	AnonymousEnabled     bool
+	AnonymousAccountName string
+	AnonymousAccountRole string
 
 	// Session settings.
 	SessionOptions session.Options
 
 	// Global setting objects.
 	WorkDir      string
-	Cfg          *goconfig.ConfigFile
+	Cfg          *ini.File
 	ConfRootPath string
 	CustomPath   string // Custom directory path.
 	ProdMode     bool
@@ -121,74 +134,93 @@ func findConfigFiles() []string {
 	return filenames
 }
 
+func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
+	appUrl := section.Key("root_url").MustString("http://localhost:3000/")
+	if appUrl[len(appUrl)-1] != '/' {
+		appUrl += "/"
+	}
+
+	// Check if has app suburl.
+	url, err := url.Parse(AppUrl)
+	if err != nil {
+		log.Fatal(4, "Invalid root_url(%s): %s", appUrl, err)
+	}
+	appSubUrl := strings.TrimSuffix(url.Path, "/")
+
+	return appUrl, appSubUrl
+}
+
 func NewConfigContext() {
 	configFiles := findConfigFiles()
 
 	//log.Info("Loading config files: %v", configFiles)
 	var err error
 
-	Cfg, err = goconfig.LoadConfigFile(configFiles[0])
-	if err != nil {
-		log.Fatal(4, "Fail to parse config file, error: %v", err)
-	}
+	for i, file := range configFiles {
+		if i == 0 {
+			Cfg, err = ini.Load(configFiles[i])
+		} else {
+			err = Cfg.Append(configFiles[i])
+		}
 
-	if len(configFiles) > 1 {
-		err = Cfg.AppendFiles(configFiles[1:]...)
 		if err != nil {
-			log.Fatal(4, "Fail to parse config file, error: %v", err)
+			log.Fatal(4, "Fail to parse config file: %v, error: %v", file, err)
 		}
 	}
 
-	AppName = Cfg.MustValue("", "app_name", "Grafana")
-	AppUrl = Cfg.MustValue("server", "root_url", "http://localhost:3000/")
-	if AppUrl[len(AppUrl)-1] != '/' {
-		AppUrl += "/"
-	}
+	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
+	Env = Cfg.Section("").Key("app_mode").MustString("development")
 
-	// Check if has app suburl.
-	url, err := url.Parse(AppUrl)
-	if err != nil {
-		log.Fatal(4, "Invalid root_url(%s): %s", AppUrl, err)
-	}
-
-	AppSubUrl = strings.TrimSuffix(url.Path, "/")
+	server := Cfg.Section("server")
+	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
 	Protocol = HTTP
-	if Cfg.MustValue("server", "protocol") == "https" {
+	if server.Key("protocol").MustString("http") == "https" {
 		Protocol = HTTPS
-		CertFile = Cfg.MustValue("server", "cert_file")
-		KeyFile = Cfg.MustValue("server", "key_file")
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_file").String()
 	}
-	Domain = Cfg.MustValue("server", "domain", "localhost")
-	HttpAddr = Cfg.MustValue("server", "http_addr", "0.0.0.0")
-	HttpPort = Cfg.MustValue("server", "http_port", "3000")
+
+	Domain = server.Key("domain").MustString("localhost")
+	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
+	HttpPort = server.Key("http_port").MustString("3000")
 
 	port := os.Getenv("PORT")
 	if port != "" {
 		HttpPort = port
 	}
 
-	StaticRootPath = Cfg.MustValue("server", "static_root_path", path.Join(WorkDir, "webapp"))
-	RouterLogging = Cfg.MustBool("server", "router_logging", false)
-	EnableGzip = Cfg.MustBool("server", "enable_gzip")
+	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkDir, "webapp"))
+	RouterLogging = server.Key("router_logging").MustBool(false)
+	EnableGzip = server.Key("enable_gzip").MustBool(false)
 
-	// Http auth
-	AdminUser = Cfg.MustValue("admin", "user", "admin")
-	AdminPassword = Cfg.MustValue("admin", "password", "admin")
-	Anonymous = Cfg.MustBool("auth", "anonymous", false)
-	AnonymousAccountId = Cfg.MustInt64("auth", "anonymous_account_id", 0)
+	security := Cfg.Section("security")
+	SecretKey = security.Key("secret_key").String()
+	LogInRememberDays = security.Key("login_remember_days").MustInt()
+	CookieUserName = security.Key("cookie_username").String()
+	CookieRememberName = security.Key("cookie_remember_name").String()
 
-	if Anonymous && AnonymousAccountId == 0 {
-		log.Fatal(3, "Must specify account id for anonymous access")
-	}
+	// admin
+	AdminUser = security.Key("admin_user").String()
+	AdminPassword = security.Key("admin_password").String()
+
+	// single account
+	SingleAccountMode = Cfg.Section("account.single").Key("enabled").MustBool(false)
+	DefaultAccountName = Cfg.Section("account.single").Key("account_name").MustString("main")
+	DefaultAccountRole = Cfg.Section("account.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+
+	// anonymous access
+	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
+	AnonymousAccountName = Cfg.Section("auth.anonymous").Key("account_name").String()
+	AnonymousAccountRole = Cfg.Section("auth.anonymous").Key("account_role").String()
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"
-	PhantomDir = "_vendor/phantomjs"
+	PhantomDir = "vendor/phantomjs"
 
-	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(WorkDir, "/data/log"))
+	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
 
-	GraphiteUrl = Cfg.MustValue("raintank", "graphite_url", "http://localhost:8888/")
+	GraphiteUrl = Cfg.Section("raintank").Key("graphite_url").MustString("http://localhost:8888/")
 	if GraphiteUrl[len(GraphiteUrl)-1] != '/' {
 		GraphiteUrl += "/"
 	}
@@ -202,14 +234,15 @@ func NewConfigContext() {
 }
 
 func readSessionConfig() {
+	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
-	SessionOptions.Provider = Cfg.MustValueRange("session", "provider", "memory", []string{"memory", "file"})
-	SessionOptions.ProviderConfig = strings.Trim(Cfg.MustValue("session", "provider_config"), "\" ")
-	SessionOptions.CookieName = Cfg.MustValue("session", "cookie_name", "grafana_pro_sess")
+	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql"})
+	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
+	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
-	SessionOptions.Secure = Cfg.MustBool("session", "cookie_secure")
-	SessionOptions.Gclifetime = Cfg.MustInt64("session", "gc_interval_time", 86400)
-	SessionOptions.Maxlifetime = Cfg.MustInt64("session", "session_life_time", 86400)
+	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
+	SessionOptions.Gclifetime = Cfg.Section("session").Key("gc_interval_time").MustInt64(86400)
+	SessionOptions.Maxlifetime = Cfg.Section("session").Key("session_life_time").MustInt64(86400)
 
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)

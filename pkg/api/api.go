@@ -14,14 +14,15 @@ func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	reqAccountAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	bind := binding.Bind
 
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Post("/logout", LogoutPost)
-	r.Post("/login", LoginPost)
+	r.Post("/login", bind(dtos.LoginCommand{}), LoginPost)
 	r.Get("/login/:name", OAuthLogin)
-	r.Get("/login", Index)
+	r.Get("/login", LoginView)
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
@@ -32,50 +33,58 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/import/", reqSignedIn, Index)
 	r.Get("/admin/users", reqSignedIn, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-	r.Get("/location", reqSignedIn, Index)
-	r.Get("/monitor", reqSignedIn, Index)
+	r.Get("/location/", reqSignedIn, Index)
+	r.Get("/monitor/", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/account/signup", SignUp)
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
 
 	// authed api
 	r.Group("/api", func() {
 		// user
 		r.Group("/user", func() {
 			r.Get("/", GetUser)
-			r.Post("/", bind(m.UpdateUserCommand{}), UpdateUser)
+			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
 			r.Post("/using/:id", SetUsingAccount)
 			r.Get("/accounts", GetUserAccounts)
 		})
 
 		// account
 		r.Group("/account", func() {
-			r.Put("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
+			r.Get("/", GetAccount)
+			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
+			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
+			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
 			r.Get("/users", GetAccountUsers)
 			r.Delete("/users/:id", RemoveAccountUser)
-		})
-		// Token
-		r.Group("/tokens", func() {
+		}, reqAccountAdmin)
+
+		// auth api keys
+		r.Group("/auth/keys", func() {
 			r.Combo("/").
-				Get(GetTokens).
-				Put(bind(m.AddTokenCommand{}), AddToken).
-				Post(bind(m.UpdateTokenCommand{}), UpdateToken)
-			r.Delete("/:id", DeleteToken)
-		})
+				Get(GetApiKeys).
+				Post(bind(m.AddApiKeyCommand{}), AddApiKey).
+				Put(bind(m.UpdateApiKeyCommand{}), UpdateApiKey)
+			r.Delete("/:id", DeleteApiKey)
+		}, reqAccountAdmin)
+
 		// Data sources
 		r.Group("/datasources", func() {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
-		})
+		}, reqAccountAdmin)
+
 		// Dashboard
 		r.Group("/dashboard", func() {
 			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 		})
+
 		// Search
 		r.Get("/search/", Search)
+
 		// metrics
 
 		r.Get("/metrics/test", GetTestMetrics)

@@ -7,7 +7,8 @@ import (
 
 // Typed errors
 var (
-	ErrInvalidRoleType = errors.New("Invalid role type")
+	ErrInvalidRoleType  = errors.New("Invalid role type")
+	ErrLastAccountAdmin = errors.New("Cannot remove last account admin")
 )
 
 type RoleType string

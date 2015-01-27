@@ -1,4 +1,4 @@
-package migrations
+package migrator
 
 import (
 	"fmt"
@@ -15,12 +15,26 @@ type Dialect interface {
 	EqStr() string
 	ShowCreateNull() bool
 	SqlType(col *Column) string
+	SupportEngine() bool
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
 	AddColumnSql(tableName string, Col *Column) string
 
 	TableCheckSql(tableName string) (string, []interface{})
+}
+
+func NewDialect(name string) Dialect {
+	switch name {
+	case MYSQL:
+		return NewMysqlDialect()
+	case SQLITE:
+		return NewSqlite3Dialect()
+	case POSTGRES:
+		return NewPostgresDialect()
+	}
+
+	panic("Unsupported database type: " + name)
 }
 
 type BaseDialect struct {
@@ -72,6 +86,10 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 	}
 
 	sql = sql[:len(sql)-2] + ")"
+	if b.dialect.SupportEngine() {
+		sql += " ENGINE=InnoDB DEFAULT CHARSET UTF8 "
+	}
+
 	sql += ";"
 	return sql
 }

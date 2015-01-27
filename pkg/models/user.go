@@ -17,6 +17,7 @@ type User struct {
 	Login    string
 	Password string
 	Salt     string
+	Rands    string
 	Company  string
 
 	IsAdmin   bool
@@ -30,13 +31,12 @@ type User struct {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email    string
-	Login    string
-	Name     string
-	Company  string
-	Password string
-	Salt     string
-	IsAdmin  bool
+	Email    string `json:"email" binding:"Required"`
+	Login    string `json:"login"`
+	Name     string `json:"name"`
+	Company  string `json:"compay"`
+	Password string `json:"password" binding:"Required"`
+	IsAdmin  bool   `json:"-"`
 
 	Result User `json:"-"`
 }
@@ -84,6 +84,9 @@ type SearchUsersQuery struct {
 // DTO & Projections
 
 type SignedInUser struct {
+	IsSignedIn  bool
+	IsAnonymous bool
+
 	UserId         int64
 	AccountId      int64
 	AccountName    string

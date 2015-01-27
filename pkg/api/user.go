@@ -67,7 +67,7 @@ func validateUsingAccount(userId int64, accountId int64) bool {
 func SetUsingAccount(c *middleware.Context) {
 	usingAccountId := c.ParamsInt64(":id")
 
-	if !validateUsingAccount(c.AccountId, usingAccountId) {
+	if !validateUsingAccount(c.UserId, usingAccountId) {
 		c.JsonApiErr(401, "Not a valid account", nil)
 		return
 	}

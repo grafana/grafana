@@ -21,13 +21,15 @@ type Account struct {
 // COMMANDS
 
 type CreateAccountCommand struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"Required"`
 
+	// initial admin user for account
+	UserId int64   `json:"-"`
 	Result Account `json:"-"`
 }
 
 type UpdateAccountCommand struct {
-	Name      string `json:"name"`
+	Name      string `json:"name" binding:"Required"`
 	AccountId int64  `json:"-"`
 }
 
@@ -41,9 +43,19 @@ type GetAccountByIdQuery struct {
 	Result *Account
 }
 
+type GetAccountByNameQuery struct {
+	Name   string
+	Result *Account
+}
+
+type AccountDTO struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
 type UserAccountDTO struct {
 	AccountId int64    `json:"accountId"`
-	Name      string   `json:"email"`
+	Name      string   `json:"name"`
 	Role      RoleType `json:"role"`
 	IsUsing   bool     `json:"isUsing"`
 }

@@ -90,12 +90,12 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard tags", func() {
-				query := m.GetDashboardTagsQuery{}
+				query := m.GetDashboardTagsQuery{AccountId: 1}
 
 				err := GetDashboardTags(&query)
 				So(err, ShouldBeNil)
 
-				So(len(query.Result), ShouldEqual, 3)
+				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
 	})

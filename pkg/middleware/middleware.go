@@ -20,14 +20,18 @@ type Context struct {
 
 	Session session.Store
 
-	IsSignedIn bool
+	IsSignedIn         bool
+	HasAnonymousAccess bool
 }
 
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context, sess session.Store) {
 		ctx := &Context{
-			Context: c,
-			Session: sess,
+			Context:            c,
+			Session:            sess,
+			SignedInUser:       &m.SignedInUser{},
+			IsSignedIn:         false,
+			HasAnonymousAccess: false,
 		}
 
 		// try get account id from request
@@ -36,25 +40,38 @@ func GetContextHandler() macaron.Handler {
 			if err := bus.Dispatch(&query); err != nil {
 				log.Error(3, "Failed to get user by id, %v, %v", userId, err)
 			} else {
-				ctx.IsSignedIn = true
 				ctx.SignedInUser = query.Result
+				ctx.IsSignedIn = true
 			}
-		} else if token := getApiToken(ctx); token != "" {
+		} else if key := getApiKey(ctx); key != "" {
 			// Try API Key auth
-			tokenQuery := m.GetTokenByTokenQuery{Token: token}
-			if err := bus.Dispatch(&tokenQuery); err != nil {
-				ctx.JsonApiErr(401, "Invalid token", err)
+			keyQuery := m.GetApiKeyByKeyQuery{Key: key}
+			if err := bus.Dispatch(&keyQuery); err != nil {
+				ctx.JsonApiErr(401, "Invalid API key", err)
 				return
 			} else {
-				tokenInfo := tokenQuery.Result
+				keyInfo := keyQuery.Result
 
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = &m.SignedInUser{}
 
 				// TODO: fix this
-				ctx.AccountRole = tokenInfo.Role
-				ctx.ApiKeyId = tokenInfo.Id
-				ctx.AccountId = tokenInfo.AccountId
+				ctx.AccountRole = keyInfo.Role
+				ctx.ApiKeyId = keyInfo.Id
+				ctx.AccountId = keyInfo.AccountId
+			}
+		} else if setting.AnonymousEnabled {
+			accountQuery := m.GetAccountByNameQuery{Name: setting.AnonymousAccountName}
+			if err := bus.Dispatch(&accountQuery); err != nil {
+				if err == m.ErrAccountNotFound {
+					log.Error(3, "Anonymous access account name does not exist", nil)
+				}
+			} else {
+				ctx.IsSignedIn = false
+				ctx.HasAnonymousAccess = true
+				ctx.SignedInUser = &m.SignedInUser{}
+				ctx.AccountRole = m.RoleType(setting.AnonymousAccountRole)
+				ctx.AccountId = accountQuery.Result.Id
 			}
 		}
 

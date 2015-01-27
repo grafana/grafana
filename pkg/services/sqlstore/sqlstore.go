@@ -9,9 +9,8 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrations"
+	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 	"github.com/torkelo/grafana-pro/pkg/setting"
-	"github.com/torkelo/grafana-pro/pkg/util"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
@@ -20,8 +19,9 @@ import (
 )
 
 var (
-	x      *xorm.Engine
-	tables []interface{}
+	x       *xorm.Engine
+	dialect migrator.Dialect
+	tables  []interface{}
 
 	HasEngine bool
 
@@ -32,15 +32,6 @@ var (
 	UseSQLite3 bool
 )
 
-func init() {
-	tables = make([]interface{}, 0)
-
-	tables = append(tables, new(m.Dashboard), new(m.DataSource), new(DashboardTag),
-		new(m.Location), new(m.Monitor), new(m.MonitorLocation), 
-		new(m.MonitorType), new(m.MonitorTypeSetting),
-		new(m.Token))
-}
-
 func EnsureAdminUser() {
 	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
 
@@ -48,8 +39,7 @@ func EnsureAdminUser() {
 		cmd := m.CreateUserCommand{}
 		cmd.Login = setting.AdminUser
 		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Salt = util.GetRandomString(10)
-		cmd.Password = util.EncodePassword(setting.AdminPassword, cmd.Salt)
+		cmd.Password = setting.AdminPassword
 		cmd.IsAdmin = true
 
 		if err = bus.Dispatch(&cmd); err != nil {
@@ -78,9 +68,11 @@ func NewEngine() {
 
 func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	x = engine
+	dialect = migrator.NewDialect(x.DriverName())
 
-	migrator := migrations.NewMigrator(x)
-	migrations.AddMigrations(migrator)
+	migrator := migrator.NewMigrator(x)
+	migrator.LogLevel = log.INFO
+	addMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
@@ -142,18 +134,20 @@ func getEngine() (*xorm.Engine, error) {
 }
 
 func LoadConfig() {
-	DbCfg.Type = setting.Cfg.MustValue("database", "type")
+	sec := setting.Cfg.Section("database")
+
+	DbCfg.Type = sec.Key("type").String()
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
 	}
-	DbCfg.Host = setting.Cfg.MustValue("database", "host")
-	DbCfg.Name = setting.Cfg.MustValue("database", "name")
-	DbCfg.User = setting.Cfg.MustValue("database", "user")
+	DbCfg.Host = sec.Key("host").String()
+	DbCfg.Name = sec.Key("name").String()
+	DbCfg.User = sec.Key("user").String()
 	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = setting.Cfg.MustValue("database", "password")
+		DbCfg.Pwd = sec.Key("password").String()
 	}
-	DbCfg.SslMode = setting.Cfg.MustValue("database", "ssl_mode")
-	DbCfg.Path = setting.Cfg.MustValue("database", "path", "data/grafana.db")
+	DbCfg.SslMode = sec.Key("ssl_mode").String()
+	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }
 
 type dbTransactionFunc func(sess *xorm.Session) error

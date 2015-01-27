@@ -8,9 +8,10 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
-type LoginResult struct {
-	Status string      `json:"status"`
-	User   CurrentUser `json:"user"`
+type LoginCommand struct {
+	User     string `json:"user" binding:"Required"`
+	Password string `json:"password" binding:"Required"`
+	Remember bool   `json:"remember"`
 }
 
 type CurrentUser struct {

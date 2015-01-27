@@ -8,3 +8,11 @@ mysqltests:
   ports:
     - "3306:3306"
 
+postgrestest:
+  image: postgres:latest
+  environment:
+    POSTGRES_USER: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+  ports:
+    - "5432:5432"
+

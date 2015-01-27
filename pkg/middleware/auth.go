@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/Unknwon/macaron"
@@ -31,12 +32,12 @@ func getRequestUserId(c *Context) int64 {
 	return 0
 }
 
-func getApiToken(c *Context) string {
+func getApiKey(c *Context) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 || parts[0] == "Bearer" {
-		token := parts[1]
-		return token
+		key := parts[1]
+		return key
 	}
 
 	return ""
@@ -45,6 +46,7 @@ func getApiToken(c *Context) string {
 func authDenied(c *Context) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Access denied", nil)
+		return
 	}
 
 	c.Redirect(setting.AppSubUrl + "/login")
@@ -67,13 +69,13 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
-
-		if !c.IsSignedIn && options.ReqSignedIn {
+		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
 			authDenied(c)
 			return
 		}
 
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+		if !c.IsSignedIn && options.ReqSignedIn && !c.HasAnonymousAccess {
+			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}

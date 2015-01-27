@@ -1,9 +1,6 @@
-package migrations
+package migrator
 
-import (
-	"fmt"
-	"strconv"
-)
+import "strconv"
 
 type Mysql struct {
 	BaseDialect
@@ -14,6 +11,10 @@ func NewMysqlDialect() *Mysql {
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.driverName = MYSQL
 	return &d
+}
+
+func (db *Mysql) SupportEngine() bool {
+	return true
 }
 
 func (db *Mysql) Quote(name string) string {
@@ -69,15 +70,6 @@ func (db *Mysql) SqlType(c *Column) string {
 		res += "(" + strconv.Itoa(c.Length) + ")"
 	}
 	return res
-}
-
-func (db *Mysql) ToDBTypeSql(columnType ColumnType, length int) string {
-	switch columnType {
-	case DB_TYPE_STRING:
-		return fmt.Sprintf("NVARCHAR(%d)", length)
-	}
-
-	panic("Unsupported db type")
 }
 
 func (db *Mysql) TableCheckSql(tableName string) (string, []interface{}) {

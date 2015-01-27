@@ -8,6 +8,8 @@ import (
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
 func init() {
@@ -21,47 +23,76 @@ func init() {
 	bus.AddHandler("sql", GetUserAccounts)
 }
 
+func getAccountIdForNewUser(userEmail string, sess *xorm.Session) (int64, error) {
+	var account m.Account
+
+	if setting.SingleAccountMode {
+		has, err := sess.Where("name=?", setting.DefaultAccountName).Get(&account)
+		if err != nil {
+			return 0, err
+		}
+		if has {
+			return account.Id, nil
+		} else {
+			account.Name = setting.DefaultAccountName
+		}
+	} else {
+		account.Name = userEmail
+	}
+
+	account.Created = time.Now()
+	account.Updated = time.Now()
+
+	if _, err := sess.Insert(&account); err != nil {
+		return 0, err
+	}
+
+	return account.Id, nil
+}
+
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-
-		// create account
-		account := m.Account{
-			Name:    cmd.Email,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if _, err := sess.Insert(&account); err != nil {
+		accountId, err := getAccountIdForNewUser(cmd.Email, sess)
+		if err != nil {
 			return err
 		}
 
 		// create user
 		user := m.User{
 			Email:     cmd.Email,
-			Password:  cmd.Password,
 			Name:      cmd.Name,
 			Login:     cmd.Login,
 			Company:   cmd.Company,
-			Salt:      cmd.Salt,
 			IsAdmin:   cmd.IsAdmin,
-			AccountId: account.Id,
+			AccountId: accountId,
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
 
+		user.Salt = util.GetRandomString(10)
+		user.Rands = util.GetRandomString(10)
+		user.Password = util.EncodePassword(cmd.Password, user.Salt)
+
 		sess.UseBool("is_admin")
+
 		if _, err := sess.Insert(&user); err != nil {
 			return err
 		}
 
 		// create account user link
-		_, err := sess.Insert(&m.AccountUser{
-			AccountId: account.Id,
+		accountUser := m.AccountUser{
+			AccountId: accountId,
 			UserId:    user.Id,
 			Role:      m.ROLE_ADMIN,
 			Created:   time.Now(),
 			Updated:   time.Now(),
-		})
+		}
+
+		if setting.SingleAccountMode {
+			accountUser.Role = m.RoleType(setting.DefaultAccountRole)
+		}
+
+		_, err = sess.Insert(&accountUser)
 
 		cmd.Result = user
 		return err
@@ -150,18 +181,18 @@ func GetUserAccounts(query *m.GetUserAccountsQuery) error {
 
 func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	var rawSql = `SELECT
-	                user.id           as user_id,
-	                user.is_admin     as is_grafana_admin,
-	                user.email        as email,
-	                user.login        as login,
-									user.name         as name,
+	                u.id           as user_id,
+	                u.is_admin     as is_grafana_admin,
+	                u.email        as email,
+	                u.login        as login,
+									u.name         as name,
 	                account.name      as account_name,
 	                account_user.role as account_role,
 	                account.id        as account_id
-	                FROM user
-									LEFT OUTER JOIN account_user on account_user.account_id = user.account_id and account_user.user_id = user.id
-	                LEFT OUTER JOIN account on account.id = user.account_id
-	                WHERE user.id=?`
+	                FROM ` + dialect.Quote("user") + ` as u
+									LEFT OUTER JOIN account_user on account_user.account_id = u.account_id and account_user.user_id = u.id
+	                LEFT OUTER JOIN account on account.id = u.account_id
+	                WHERE u.id=?`
 
 	var user m.SignedInUser
 	sess := x.Table("user")
