@@ -31,12 +31,12 @@ func getRequestUserId(c *Context) int64 {
 	return 0
 }
 
-func getApiToken(c *Context) string {
+func getApiKey(c *Context) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 || parts[0] == "Bearer" {
-		token := parts[1]
-		return token
+		key := parts[1]
+		return key
 	}
 
 	return ""
