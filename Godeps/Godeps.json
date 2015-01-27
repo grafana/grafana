@@ -10,10 +10,6 @@
 			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
 		},
 		{
-			"ImportPath": "github.com/Unknwon/goconfig",
-			"Rev": "897bf5765c8d23edc846fdab2499a63ae64b6277"
-		},
-		{
 			"ImportPath": "github.com/Unknwon/macaron",
 			"Rev": "da7cbddc50b9d33e076fb1eabff13b55c3b85fc5"
 		},
