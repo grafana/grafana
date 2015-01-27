@@ -64,6 +64,11 @@ var (
 	CookieUserName     string
 	CookieRememberName string
 
+	// single account
+	SingleAccountMode  bool
+	DefaultAccountName string
+	DefaultAccountRole string
+
 	// Http auth
 	AdminUser          string
 	AdminPassword      string
@@ -190,7 +195,12 @@ func NewConfigContext() {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 
-	// Http auth
+	// single account
+	SingleAccountMode = Cfg.Section("account.single").Key("enabled").MustBool(false)
+	DefaultAccountName = Cfg.Section("account.single").Key("account_name").MustString("main")
+	DefaultAccountRole = Cfg.Section("account.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+
+	// admin
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 

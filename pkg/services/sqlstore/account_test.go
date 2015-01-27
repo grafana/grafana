@@ -6,6 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 func TestAccountDataAccess(t *testing.T) {
@@ -13,7 +14,34 @@ func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 
+		Convey("Given single account mode", func() {
+			setting.SingleAccountMode = true
+			setting.DefaultAccountName = "test"
+			setting.DefaultAccountRole = "Viewer"
+
+			Convey("Users should be added to default account", func() {
+				ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
+				ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
+
+				err := CreateUser(&ac1cmd)
+				So(err, ShouldBeNil)
+				err = CreateUser(&ac2cmd)
+				So(err, ShouldBeNil)
+
+				q1 := m.GetUserAccountsQuery{UserId: ac1cmd.Result.Id}
+				q2 := m.GetUserAccountsQuery{UserId: ac2cmd.Result.Id}
+				GetUserAccounts(&q1)
+				GetUserAccounts(&q2)
+
+				So(q1.Result[0].AccountId, ShouldEqual, q2.Result[0].AccountId)
+				So(q1.Result[0].Role, ShouldEqual, "Viewer")
+			})
+		})
+
 		Convey("Given two saved users", func() {
+			setting.SingleAccountMode = false
+
+			setting.DefaultAccountName = "test"
 			ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
 

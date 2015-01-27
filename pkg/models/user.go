@@ -36,8 +36,6 @@ type CreateUserCommand struct {
 	Name     string `json:"name"`
 	Company  string `json:"compay"`
 	Password string `json:"password" binding:"Required"`
-	Salt     string `json:"-"`
-	Rands    string `json:"-"`
 	IsAdmin  bool   `json:"-"`
 
 	Result User `json:"-"`
