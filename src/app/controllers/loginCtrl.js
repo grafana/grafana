@@ -7,7 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LoginCtrl', function($scope, backendSrv, $location, $routeParams, alertSrv) {
+  module.controller('LoginCtrl', function($scope, backendSrv, $location, $routeParams) {
 
     $scope.formModel = {
       user: '',
@@ -82,7 +82,6 @@ function (angular, config) {
 
     $scope.logout = function() {
       backendSrv.post('/logout').then(function() {
-        alertSrv.set('Logged out!', '', 'success', 3000);
         $scope.appEvent('logged-out');
         $location.search({});
       });
@@ -95,8 +94,13 @@ function (angular, config) {
         return;
       }
 
-      backendSrv.post('/login', $scope.formModel).then(function() {
-        window.location.href = config.appSubUrl + '/';
+      backendSrv.post('/login', $scope.formModel).then(function(result) {
+        if (result.redirectUrl) {
+          console.log(result);
+          window.location.href = result.redirectUrl;
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
       });
     };
 
