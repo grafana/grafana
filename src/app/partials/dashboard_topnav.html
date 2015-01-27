@@ -3,18 +3,21 @@
 		<div class="container-fluid">
 			<span class="hamburger">
 				<a class="pointer" ng-click="toggleSideMenu()">
-					<i class="fa fa-bars"></i>
+					<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+					Menu
 				</a>
 			</span>
-			<span class="brand">
-				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+			<div class="navbar-header">
+				<div class="navbar-header-breadcrumb">
+					Dashboards <i class="fa fa-angle-right"></i>
+				</div>
 				<a ng-click="openSearch()" class="page-title">
-					{{dashboard.title}}
+					<i class="fa fa-th-large"></i> {{dashboard.title}}
 					<span class="small">
 						<i class="fa fa-angle-down"></i>
 					</span>
 				</a>
-			</span>
+			</div>
 
 			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">
