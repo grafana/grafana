@@ -53,12 +53,13 @@ function (angular, _, $) {
       state.panelId = parseInt(state.panelId) || null;
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
+      state.editview = state.editview || null;
       return state;
     };
 
     DashboardViewState.prototype.serializeToUrl = function() {
       var urlState = _.clone(this.state);
-      urlState.fullscreen = this.state.fullscreen ? true : null,
+      urlState.fullscreen = this.state.fullscreen ? true : null;
       urlState.edit = this.state.edit ? true : null;
       return urlState;
     };

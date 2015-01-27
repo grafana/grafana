@@ -71,7 +71,7 @@ function ($) {
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
-        if (!series.data.length) {
+        if (!series.data.length || (scope.panel.legend.hideEmpty && series.allIsNull)) {
           results.push({ hidden: true });
           continue;
         }
@@ -163,7 +163,7 @@ function ($) {
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-          seriesHtml += '<i class="icon-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
+          seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }
@@ -174,7 +174,7 @@ function ($) {
       else if (item) {
         series = seriesList[item.seriesIndex];
         group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-        group += '<i class="icon-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
+        group += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
 
         if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];

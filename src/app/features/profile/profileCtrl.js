@@ -8,6 +8,8 @@ function (angular) {
 
   module.controller('ProfileCtrl', function($scope, $http, backendSrv) {
 
+    $scope.newAccount = {name: ''};
+
     $scope.init = function() {
       $scope.getUser();
       $scope.getUserAccounts();
@@ -26,17 +28,16 @@ function (angular) {
     };
 
     $scope.setUsingAccount = function(account) {
-      backendSrv.request({
-        method: 'POST',
-        url: '/api/user/using/' + account.accountId,
-        desc: 'Change active account',
-      }).then($scope.getUserAccounts);
+      backendSrv.post('/api/user/using/' + account.accountId).then($scope.getUserAccounts);
     };
 
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
+      backendSrv.put('/api/user/', $scope.user);
+    };
 
-      backendSrv.post('/api/user/', $scope.user);
+    $scope.createAccount = function() {
+      backendSrv.post('/api/account/', $scope.newAccount).then($scope.getUserAccounts);
     };
 
     $scope.init();

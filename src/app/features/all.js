@@ -12,6 +12,7 @@ define([
   './account/datasourcesCtrl',
   './account/apiKeysCtrl',
   './account/importCtrl',
+  './account/accountCtrl',
   './admin/adminUsersCtrl',
   './grafanaDatasource/datasource',
 ], function () {});

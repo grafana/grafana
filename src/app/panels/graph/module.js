@@ -26,6 +26,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/dashboard/partials/panelTime.html');
 
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
     $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
@@ -88,6 +89,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         value_type: 'cumulative',
         shared: false,
       },
+      // time overrides
+      timeFrom: null,
+      timeShift: null,
       // metric queries
       targets: [{}],
       // series color overrides
@@ -114,6 +118,26 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);
+
+      $scope.panelMeta.timeInfo = "";
+
+      // check panel time overrrides
+      if ($scope.panel.timeFrom) {
+        if (_.isString($scope.rangeUnparsed.from)) {
+          $scope.panelMeta.timeInfo = "last " + $scope.panel.timeFrom;
+          $scope.rangeUnparsed.from = 'now-' + $scope.panel.timeFrom;
+          $scope.range.from = kbn.parseDate($scope.rangeUnparsed.from);
+        }
+      }
+
+      if ($scope.panel.timeShift) {
+        var timeShift = '-' + $scope.panel.timeShift;
+        $scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
+        $scope.range.from = kbn.parseDateMath(timeShift, $scope.range.from);
+        $scope.range.to = kbn.parseDateMath(timeShift, $scope.range.to);
+        $scope.rangeUnparsed = $scope.range;
+      }
+
       if ($scope.panel.maxDataPoints) {
         $scope.resolution = $scope.panel.maxDataPoints;
       }

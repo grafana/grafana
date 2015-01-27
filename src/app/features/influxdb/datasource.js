@@ -374,7 +374,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var fromIsAbsolute = from[from.length-1] === 's';
 
       if (until === 'now()' && !fromIsAbsolute) {
-        return 'time > now() - ' + from;
+        return 'time > ' + from;
       }
 
       return 'time > ' + from + ' and time < ' + until;
@@ -382,14 +382,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function getInfluxTime(date) {
       if (_.isString(date)) {
-        if (date === 'now') {
-          return 'now()';
-        }
-        else if (date.indexOf('now') >= 0) {
-          return date.substring(4);
-        }
-
-        date = kbn.parseDate(date);
+        return date.replace('now', 'now()');
       }
 
       return to_utc_epoch_seconds(date);

@@ -30,6 +30,10 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
+      .when('/account', {
+        templateUrl: 'app/features/account/partials/account.html',
+        controller : 'AccountCtrl',
+      })
       .when('/account/datasources', {
         templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
@@ -57,10 +61,6 @@ define([
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
-      })
-      .when('/signup', {
-        templateUrl: 'app/partials/register.html',
-        controller : 'SignUpCtrl',
       })
       .when('/dashboard/solo/:id/', {
         templateUrl: 'app/partials/solo-panel.html',

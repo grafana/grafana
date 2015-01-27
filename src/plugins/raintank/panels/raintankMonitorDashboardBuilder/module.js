@@ -89,7 +89,7 @@ function (angular, app, _, kbn, PanelMeta) {
             "editable": false,
             "monitor": $scope.panel.monitor,
           },
-          {
+          /*{
             "id": 3,
             "dynamic": true,
             "title": "Monitor Events",
@@ -97,7 +97,7 @@ function (angular, app, _, kbn, PanelMeta) {
             "span": 8,
             "editable": true,
             "monitor": $scope.panel.monitor,
-          },
+          },*/
         ],
       });
       $scope.dashboard.rows.push({
@@ -115,7 +115,7 @@ function (angular, app, _, kbn, PanelMeta) {
       _.forEach($scope.monitor.locations, function(lid) {
         var location = locationMap[lid];
         var panelStr = JSON.stringify($scope.monitor_type.panel_template);
-        panelStr = panelStr.replace(/\%location\%/g, location.name);
+        panelStr = panelStr.replace(/\%location\%/g, location.slug);
         panelStr = panelStr.replace(/\%monitor\%/g, $scope.monitor.slug);
         var panel = JSON.parse(panelStr);
         panel.dynamic = true;

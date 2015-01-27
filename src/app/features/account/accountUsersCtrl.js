@@ -24,22 +24,12 @@ function (angular) {
     };
 
     $scope.removeUser = function(user) {
-      backendSrv.request({
-        method: 'DELETE',
-        url: '/api/account/users/' + user.userId
-      }).then($scope.get);
+      backendSrv.delete('/api/account/users/' + user.userId).then($scope.get);
     };
 
     $scope.addUser = function() {
-      if (!$scope.form.$valid) {
-        return;
-      }
-
-      backendSrv.request({
-        method: 'PUT',
-        url: '/api/account/users',
-        data: $scope.user,
-      }).then($scope.get);
+      if (!$scope.form.$valid) { return; }
+      backendSrv.post('/api/account/users', $scope.user).then($scope.get);
     };
 
     $scope.init();

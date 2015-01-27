@@ -45,12 +45,6 @@ function (angular, config, _, $, store) {
         $scope.grafana.sidemenu = false;
         $scope.grafana.user = {};
       });
-
-      $scope.onAppEvent('logged-in', function(evt, user) {
-        $scope.grafana.sidemenu = store.getBool('grafana.sidemenu', true);
-        $scope.grafana.user = user;
-        store.set('grafana.sidemenu', $scope.grafana.sidemenu);
-      });
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
