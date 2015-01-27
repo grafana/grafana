@@ -10,15 +10,31 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetAccount)
+	bus.AddHandler("sql", GetAccountById)
 	bus.AddHandler("sql", CreateAccount)
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", UpdateAccount)
+	bus.AddHandler("sql", GetAccountByName)
 }
 
-func GetAccount(query *m.GetAccountByIdQuery) error {
+func GetAccountById(query *m.GetAccountByIdQuery) error {
 	var account m.Account
 	exists, err := x.Id(query.Id).Get(&account)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return m.ErrAccountNotFound
+	}
+
+	query.Result = &account
+	return nil
+}
+
+func GetAccountByName(query *m.GetAccountByNameQuery) error {
+	var account m.Account
+	exists, err := x.Where("name=?", query.Name).Get(&account)
 	if err != nil {
 		return err
 	}

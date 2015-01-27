@@ -43,6 +43,11 @@ type GetAccountByIdQuery struct {
 	Result *Account
 }
 
+type GetAccountByNameQuery struct {
+	Name   string
+	Result *Account
+}
+
 type AccountDTO struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`

@@ -6,7 +6,6 @@ import (
 
 	"github.com/Unknwon/macaron"
 
-	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
@@ -70,15 +69,13 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
-
-		if !c.IsSignedIn && options.ReqSignedIn {
-			log.Info("AppSubUrl: %v", setting.AppSubUrl)
-			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
+		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
 			authDenied(c)
 			return
 		}
 
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+		if !c.IsSignedIn && options.ReqSignedIn && !c.HasAnonymousAccess {
+			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}
