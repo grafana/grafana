@@ -9,6 +9,15 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
+func LoginView(c *middleware.Context) {
+	if err := setIndexViewData(c); err != nil {
+		c.Handle(500, "Failed to get settings", err)
+		return
+	}
+
+	c.HTML(200, "index")
+}
+
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.User}

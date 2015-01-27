@@ -136,18 +136,20 @@ func getEngine() (*xorm.Engine, error) {
 }
 
 func LoadConfig() {
-	DbCfg.Type = setting.Cfg.MustValue("database", "type")
+	sec := setting.Cfg.Section("database")
+
+	DbCfg.Type = sec.Key("type").String()
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
 	}
-	DbCfg.Host = setting.Cfg.MustValue("database", "host")
-	DbCfg.Name = setting.Cfg.MustValue("database", "name")
-	DbCfg.User = setting.Cfg.MustValue("database", "user")
+	DbCfg.Host = sec.Key("host").String()
+	DbCfg.Name = sec.Key("name").String()
+	DbCfg.User = sec.Key("user").String()
 	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = setting.Cfg.MustValue("database", "password")
+		DbCfg.Pwd = sec.Key("password").String()
 	}
-	DbCfg.SslMode = setting.Cfg.MustValue("database", "ssl_mode")
-	DbCfg.Path = setting.Cfg.MustValue("database", "path", "data/grafana.db")
+	DbCfg.SslMode = sec.Key("ssl_mode").String()
+	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }
 
 type dbTransactionFunc func(sess *xorm.Session) error

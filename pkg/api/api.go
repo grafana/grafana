@@ -22,7 +22,7 @@ func Register(r *macaron.Macaron) {
 	r.Post("/logout", LogoutPost)
 	r.Post("/login", bind(dtos.LoginCommand{}), LoginPost)
 	r.Get("/login/:name", OAuthLogin)
-	r.Get("/login", Index)
+	r.Get("/login", LoginView)
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
