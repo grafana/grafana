@@ -59,6 +59,14 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 		"grafanaDB": true,
 	}
 
+	// add raintank backend.
+	datasources["raintank"] = map[string]interface{}{
+		"type":      "graphite",
+		"grafanaDB": false,
+		"url": "/api/graphite",
+		"default": true,
+	}
+
 	jsonObj := map[string]interface{}{
 		"datasources": datasources,
 		"appSubUrl":   setting.AppSubUrl,
