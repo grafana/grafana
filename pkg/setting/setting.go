@@ -70,10 +70,12 @@ var (
 	DefaultAccountRole string
 
 	// Http auth
-	AdminUser          string
-	AdminPassword      string
-	Anonymous          bool
-	AnonymousAccountId int64
+	AdminUser     string
+	AdminPassword string
+
+	AnonymousEnabled     bool
+	AnonymousAccountName string
+	AnonymousAccountRole string
 
 	// Session settings.
 	SessionOptions session.Options
@@ -195,17 +197,19 @@ func NewConfigContext() {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 
+	// admin
+	AdminUser = security.Key("admin_user").String()
+	AdminPassword = security.Key("admin_password").String()
+
 	// single account
 	SingleAccountMode = Cfg.Section("account.single").Key("enabled").MustBool(false)
 	DefaultAccountName = Cfg.Section("account.single").Key("account_name").MustString("main")
 	DefaultAccountRole = Cfg.Section("account.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 
-	// admin
-	AdminUser = security.Key("admin_user").String()
-	AdminPassword = security.Key("admin_password").String()
-
-	// Anonymous = Cfg.MustBool("auth", "anonymous", false)
-	// AnonymousAccountId = Cfg.MustInt64("auth", "anonymous_account_id", 0)
+	// anonymous access
+	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
+	AnonymousAccountName = Cfg.Section("auth.anonymous").Key("account_name").String()
+	AnonymousAccountRole = Cfg.Section("auth.anonymous").Key("account_role").String()
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"
