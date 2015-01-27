@@ -2,8 +2,10 @@ package util
 
 import (
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"hash"
 )
@@ -26,6 +28,13 @@ func GetRandomString(n int, alphabets ...byte) string {
 func EncodePassword(password string, salt string) string {
 	newPasswd := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
 	return fmt.Sprintf("%x", newPasswd)
+}
+
+// Encode string to md5 hex value.
+func EncodeMd5(str string) string {
+	m := md5.New()
+	m.Write([]byte(str))
+	return hex.EncodeToString(m.Sum(nil))
 }
 
 // http://code.google.com/p/go/source/browse/pbkdf2/pbkdf2.go?repo=crypto

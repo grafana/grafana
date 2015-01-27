@@ -50,6 +50,9 @@ func addUserMigrations(mg *Migrator) {
 		Table("user").Columns("login").Unique())
 	mg.AddMigration("add unique index user.email", new(AddIndexMigration).
 		Table("user").Columns("email").Unique())
+
+	mg.AddMigration("add column user.rands", new(AddColumnMigration).
+		Table("user").Column(&Column{Name: "rands", Type: DB_NVarchar, Length: 255, Nullable: true}))
 }
 
 func addAccountMigrations(mg *Migrator) {

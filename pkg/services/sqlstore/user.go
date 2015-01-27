@@ -43,6 +43,7 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Login:     cmd.Login,
 			Company:   cmd.Company,
 			Salt:      cmd.Salt,
+			Rands:     cmd.Rands,
 			IsAdmin:   cmd.IsAdmin,
 			AccountId: account.Id,
 			Created:   time.Now(),

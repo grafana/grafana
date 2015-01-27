@@ -12,6 +12,7 @@ func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
 
 	cmd.Login = cmd.Email
 	cmd.Salt = util.GetRandomString(10)
+	cmd.Rands = util.GetRandomString(10)
 	cmd.Password = util.EncodePassword(cmd.Password, cmd.Salt)
 
 	if err := bus.Dispatch(&cmd); err != nil {
