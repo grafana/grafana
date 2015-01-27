@@ -39,13 +39,14 @@ func NewOAuthService() {
 	allOauthes := []string{"github", "google"}
 
 	for _, name := range allOauthes {
+		sec := setting.Cfg.Section("auth." + name)
 		info := &setting.OAuthInfo{
-			ClientId:     setting.Cfg.MustValue("auth."+name, "client_id"),
-			ClientSecret: setting.Cfg.MustValue("auth."+name, "client_secret"),
-			Scopes:       setting.Cfg.MustValueArray("auth."+name, "scopes", " "),
-			AuthUrl:      setting.Cfg.MustValue("auth."+name, "auth_url"),
-			TokenUrl:     setting.Cfg.MustValue("auth."+name, "token_url"),
-			Enabled:      setting.Cfg.MustBool("auth."+name, "enabled"),
+			ClientId:     sec.Key("client_id").String(),
+			ClientSecret: sec.Key("client_secret").String(),
+			Scopes:       sec.Key("scopes").Strings(" "),
+			AuthUrl:      sec.Key("auth_url").String(),
+			TokenUrl:     sec.Key("token_url").String(),
+			Enabled:      sec.Key("enabled").MustBool(),
 		}
 
 		if !info.Enabled {
