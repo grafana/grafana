@@ -11,7 +11,6 @@ import (
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 	"github.com/torkelo/grafana-pro/pkg/setting"
-	"github.com/torkelo/grafana-pro/pkg/util"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
@@ -40,9 +39,7 @@ func EnsureAdminUser() {
 		cmd := m.CreateUserCommand{}
 		cmd.Login = setting.AdminUser
 		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Salt = util.GetRandomString(10)
-		cmd.Rands = util.GetRandomString(10)
-		cmd.Password = util.EncodePassword(setting.AdminPassword, cmd.Salt)
+		cmd.Password = setting.AdminPassword
 		cmd.IsAdmin = true
 
 		if err = bus.Dispatch(&cmd); err != nil {
