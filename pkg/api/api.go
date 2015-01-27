@@ -99,6 +99,9 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteMonitor)
 		})
 		r.Get("/monitor_types", GetMonitorTypes)
+
+		r.Any("/graphite/*", GraphiteProxy)
+
 	}, reqSignedIn)
 
 	// admin api

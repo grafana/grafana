@@ -79,6 +79,9 @@ var (
 	// PhantomJs Rendering
 	ImagesDir  string
 	PhantomDir string
+
+	//Raintank Graphite Backend
+	GraphiteUrl string
 )
 
 func init() {
@@ -184,6 +187,16 @@ func NewConfigContext() {
 	PhantomDir = "_vendor/phantomjs"
 
 	LogRootPath = Cfg.MustValue("log", "root_path", path.Join(WorkDir, "/data/log"))
+
+	GraphiteUrl = Cfg.MustValue("raintank", "graphite_url", "http://localhost:8888/")
+	if GraphiteUrl[len(GraphiteUrl)-1] != '/' {
+		GraphiteUrl += "/"
+	}
+	// Check if has app suburl.
+	_, err = url.Parse(GraphiteUrl)
+	if err != nil {
+		log.Fatal(4, "Invalid graphite_url(%s): %s", GraphiteUrl, err)
+	}
 
 	readSessionConfig()
 }
