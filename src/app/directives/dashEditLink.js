@@ -48,7 +48,7 @@ function (angular, $) {
             if (editorScope) { editorScope.dismiss(); }
           }
 
-          scope.onAppEvent("dashboard-loaded", hideEditorPane);
+          scope.$on("$destroy", hideEditorPane);
           scope.onAppEvent('hide-dash-editor', hideEditorPane);
 
           scope.onAppEvent('show-dash-editor', function(evt, payload) {
@@ -65,6 +65,7 @@ function (angular, $) {
             editorScope = payload.scope ? payload.scope.$new() : scope.$new();
 
             editorScope.dismiss = function() {
+              console.log('dismiss: ');
               editorScope.$destroy();
               elem.empty();
               lastEditor = null;
