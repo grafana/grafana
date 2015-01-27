@@ -1,12 +1,19 @@
 package api
 
 import (
+	"net/url"
+
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
+)
+
+const (
+	VIEW_INDEX = "index"
 )
 
 func LoginView(c *middleware.Context) {
@@ -15,7 +22,51 @@ func LoginView(c *middleware.Context) {
 		return
 	}
 
-	c.HTML(200, "index")
+	// Check auto-login.
+	uname := c.GetCookie(setting.CookieUserName)
+	if len(uname) == 0 {
+		c.HTML(200, VIEW_INDEX)
+		return
+	}
+
+	isSucceed := false
+	defer func() {
+		if !isSucceed {
+			log.Trace("auto-login cookie cleared: %s", uname)
+			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
+			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
+			return
+		}
+	}()
+
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
+	if err := bus.Dispatch(&userQuery); err != nil {
+		if err != m.ErrUserNotFound {
+			c.Handle(500, "GetUserByLoginQuery", err)
+		} else {
+			c.HTML(200, VIEW_INDEX)
+		}
+		return
+	}
+
+	user := userQuery.Result
+
+	if val, _ := c.GetSuperSecureCookie(
+		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
+		c.HTML(200, VIEW_INDEX)
+		return
+	}
+
+	isSucceed = true
+	loginUserWithUser(user, c)
+
+	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		c.Redirect(redirectTo)
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/")
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
@@ -36,9 +87,27 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 		return
 	}
 
+	// default to true here for now
+	cmd.Remember = true
+
+	if cmd.Remember {
+		days := 86400 * setting.LogInRememberDays
+		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	}
+
 	loginUserWithUser(user, c)
 
-	c.JsonOK("User logged in")
+	result := map[string]interface{}{
+		"message": "Logged in",
+	}
+
+	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		result["redirectUrl"] = redirectTo
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+	}
+
+	c.JSON(200, result)
 }
 
 func loginUserWithUser(user *m.User, c *middleware.Context) {
@@ -50,6 +119,8 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 }
 
 func LogoutPost(c *middleware.Context) {
-	c.Session.Delete("userId")
-	c.JSON(200, util.DynMap{"status": "logged out"})
+	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
+	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
+	c.Session.Destory(c.Context)
+	c.JsonOK("logged out")
 }

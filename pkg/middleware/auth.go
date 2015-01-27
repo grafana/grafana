@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/Unknwon/macaron"
 
+	"github.com/torkelo/grafana-pro/pkg/log"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
@@ -45,6 +47,7 @@ func getApiKey(c *Context) string {
 func authDenied(c *Context) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Access denied", nil)
+		return
 	}
 
 	c.Redirect(setting.AppSubUrl + "/login")
@@ -69,6 +72,8 @@ func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
 
 		if !c.IsSignedIn && options.ReqSignedIn {
+			log.Info("AppSubUrl: %v", setting.AppSubUrl)
+			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}

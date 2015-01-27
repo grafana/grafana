@@ -41,6 +41,7 @@ func EnsureAdminUser() {
 		cmd.Login = setting.AdminUser
 		cmd.Email = setting.AdminUser + "@localhost"
 		cmd.Salt = util.GetRandomString(10)
+		cmd.Rands = util.GetRandomString(10)
 		cmd.Password = util.EncodePassword(setting.AdminPassword, cmd.Salt)
 		cmd.IsAdmin = true
 
