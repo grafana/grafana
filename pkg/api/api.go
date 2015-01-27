@@ -58,13 +58,13 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/users/:id", RemoveAccountUser)
 		}, reqAccountAdmin)
 
-		// Token
-		r.Group("/tokens", func() {
+		// auth api keys
+		r.Group("/auth/keys", func() {
 			r.Combo("/").
-				Get(GetTokens).
-				Post(bind(m.AddTokenCommand{}), AddToken).
-				Put(bind(m.UpdateTokenCommand{}), UpdateToken)
-			r.Delete("/:id", DeleteToken)
+				Get(GetApiKeys).
+				Post(bind(m.AddApiKeyCommand{}), AddApiKey).
+				Put(bind(m.UpdateApiKeyCommand{}), UpdateApiKey)
+			r.Delete("/:id", DeleteApiKey)
 		}, reqAccountAdmin)
 
 		// Data sources

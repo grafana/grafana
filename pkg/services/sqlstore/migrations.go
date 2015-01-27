@@ -2,13 +2,19 @@ package sqlstore
 
 import . "github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 
+// --- Migration Guide line ---
+// 1. Never change a migration that is committed and pushed to master
+// 2. Always add new migrations (to change or undo previous migrations)
+// 3. Some migraitons are not yet written (rename column, table, drop table, index etc)
+// 4
+
 func addMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addAccountMigrations(mg)
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
-	addTokenMigrations(mg)
+	addApiKeyMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
@@ -131,19 +137,22 @@ func addDataSourceMigration(mg *Migrator) {
 		Table("data_source").Columns("account_id", "name").Unique())
 }
 
-func addTokenMigrations(mg *Migrator) {
-	mg.AddMigration("create token table", new(AddTableMigration).
-		Name("token").WithColumns(
+func addApiKeyMigrations(mg *Migrator) {
+	mg.AddMigration("create api_key table", new(AddTableMigration).
+		Name("api_key").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "token", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
 		&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add index token.account_id", new(AddIndexMigration).
-		Table("token").Columns("account_id"))
+	mg.AddMigration("add index api_key.account_id", new(AddIndexMigration).
+		Table("api_key").Columns("account_id"))
+
+	mg.AddMigration("add index api_key.key", new(AddIndexMigration).
+		Table("api_key").Columns("key").Unique())
 }

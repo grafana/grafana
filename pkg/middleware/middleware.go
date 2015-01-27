@@ -39,22 +39,22 @@ func GetContextHandler() macaron.Handler {
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = query.Result
 			}
-		} else if token := getApiToken(ctx); token != "" {
+		} else if key := getApiKey(ctx); key != "" {
 			// Try API Key auth
-			tokenQuery := m.GetTokenByTokenQuery{Token: token}
-			if err := bus.Dispatch(&tokenQuery); err != nil {
-				ctx.JsonApiErr(401, "Invalid token", err)
+			keyQuery := m.GetApiKeyByKeyQuery{Key: key}
+			if err := bus.Dispatch(&keyQuery); err != nil {
+				ctx.JsonApiErr(401, "Invalid API key", err)
 				return
 			} else {
-				tokenInfo := tokenQuery.Result
+				keyInfo := keyQuery.Result
 
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = &m.SignedInUser{}
 
 				// TODO: fix this
-				ctx.AccountRole = tokenInfo.Role
-				ctx.ApiKeyId = tokenInfo.Id
-				ctx.AccountId = tokenInfo.AccountId
+				ctx.AccountRole = keyInfo.Role
+				ctx.ApiKeyId = keyInfo.Id
+				ctx.AccountId = keyInfo.AccountId
 			}
 		}
 
