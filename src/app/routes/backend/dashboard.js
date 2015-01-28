@@ -45,8 +45,7 @@ function (angular, store) {
       .then(function(dashboard) {
         prevDashPath = $location.path();
         $scope.initDashboard(dashboard, $scope);
-      }).then(null, function(err) {
-        $scope.appEvent('alert-error', ['Load dashboard failed', err]);
+      }).then(null, function() {
         $scope.initDashboard({}, $scope);
       });
 
