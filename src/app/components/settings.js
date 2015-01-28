@@ -34,7 +34,7 @@ function (_, crypto) {
       }
     };
 
-    var settings = _.extend(options, defaults);
+    var settings = _.extend({}, defaults, options);
 
     var parseBasicAuth = function(datasource) {
       var passwordEnd = datasource.url.indexOf('@');
