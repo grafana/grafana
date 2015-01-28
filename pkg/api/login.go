@@ -22,6 +22,10 @@ func LoginView(c *middleware.Context) {
 		return
 	}
 
+	settings := c.Data["Settings"].(map[string]interface{})
+	settings["googleAuthEnabled"] = setting.OAuthService.Google
+	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
+
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
 	if len(uname) == 0 {
