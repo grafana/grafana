@@ -16,6 +16,10 @@ function (angular, config) {
     };
 
     $scope.grafana.sidemenu = false;
+
+    $scope.googleAuthEnabled = config.googleAuthEnabled;
+    $scope.githubAuthEnabled = config.githubAuthEnabled;
+
     $scope.loginMode = true;
     $scope.submitBtnClass = 'btn-inverse';
     $scope.submitBtnText = 'Log in';

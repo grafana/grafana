@@ -34,12 +34,7 @@ function (_, crypto) {
       }
     };
 
-    // This initializes a new hash on purpose, to avoid adding parameters to
-    // config.js without providing sane defaults
-    var settings = {};
-    _.each(defaults, function(value, key) {
-      settings[key] = typeof options[key] !== 'undefined' ? options[key]  : defaults[key];
-    });
+    var settings = _.extend(options, defaults);
 
     var parseBasicAuth = function(datasource) {
       var passwordEnd = datasource.url.indexOf('@');
