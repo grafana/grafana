@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -20,12 +21,12 @@ import (
 )
 
 var (
-	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch    string
-	goos      string
-	noupgrade bool
-	version   string = "2.0.0-alpha"
-	race      bool
+	versionRe  = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch     string
+	goos       string
+	version    string = "2.0.0-alpha"
+	race       bool
+	workingDir string
 )
 
 const minGoVersion = 1.3
@@ -56,6 +57,8 @@ func main() {
 		return
 	}
 
+	workingDir, _ = os.Getwd()
+
 	for _, cmd := range flag.Args() {
 		switch cmd {
 		case "setup":
@@ -64,22 +67,37 @@ func main() {
 		case "build":
 			pkg := "."
 			var tags []string
-			if noupgrade {
-				tags = []string{"noupgrade"}
-			}
 			build(pkg, tags)
 
 		case "test":
-			pkg := "./..."
-			test(pkg)
+			test("./pkg/...")
+
+		case "package":
+			test("./pkg/...")
+			build(".", []string{})
+
+		case "build-ui":
+			buildFrontend()
 
 		case "clean":
-			clean()
 
 		default:
 			log.Fatalf("Unknown command %q", cmd)
 		}
 	}
+}
+
+func ChangeWorkingDir(dir string) {
+	os.Chdir(dir)
+}
+
+func buildFrontend() {
+	ChangeWorkingDir(path.Join(workingDir, "grafana"))
+	defer func() {
+		ChangeWorkingDir(path.Join(workingDir, "../"))
+	}()
+
+	runPrint("grunt")
 }
 
 func setup() {
