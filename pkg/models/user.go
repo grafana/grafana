@@ -84,9 +84,6 @@ type SearchUsersQuery struct {
 // DTO & Projections
 
 type SignedInUser struct {
-	IsSignedIn  bool
-	IsAnonymous bool
-
 	UserId         int64
 	AccountId      int64
 	AccountName    string
