@@ -31,7 +31,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/users/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
-	r.Get("/admin/users", reqSignedIn, Index)
+	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up
@@ -104,18 +104,15 @@ func setIndexViewData(c *middleware.Context) error {
 		return err
 	}
 
-	currentUser := &dtos.CurrentUser{}
-
-	if c.IsSignedIn {
-		currentUser = &dtos.CurrentUser{
-			Login:            c.Login,
-			Email:            c.Email,
-			Name:             c.Name,
-			UsingAccountName: c.AccountName,
-			GravatarUrl:      dtos.GetGravatarUrl(c.Email),
-			IsGrafanaAdmin:   c.IsGrafanaAdmin,
-			Role:             c.AccountRole,
-		}
+	currentUser := &dtos.CurrentUser{
+		IsSignedIn:     c.IsSignedIn,
+		Login:          c.Login,
+		Email:          c.Email,
+		Name:           c.Name,
+		AccountName:    c.AccountName,
+		AccountRole:    c.AccountRole,
+		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
+		IsGrafanaAdmin: c.IsGrafanaAdmin,
 	}
 
 	c.Data["User"] = currentUser
