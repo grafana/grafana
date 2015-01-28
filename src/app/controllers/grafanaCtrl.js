@@ -28,6 +28,7 @@ function (angular, config, _, $, store) {
 
       $scope.dashAlerts = alertSrv;
       $scope.grafana.style = 'dark';
+      $scope.grafana.user = {};
 
       if (window.grafanaBackend) {
         $scope.initBackendFeatures();
@@ -36,10 +37,7 @@ function (angular, config, _, $, store) {
 
     $scope.initBackendFeatures = function() {
       $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
-
-      if (window.grafanaBootData.user.login) {
-        $scope.grafana.user = window.grafanaBootData.user;
-      }
+      $scope.grafana.user = window.grafanaBootData.user;
 
       $scope.onAppEvent('logged-out', function() {
         $scope.grafana.sidemenu = false;

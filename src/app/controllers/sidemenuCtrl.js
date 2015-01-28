@@ -15,39 +15,59 @@ function (angular, _, $, config) {
       return config.appSubUrl + url;
     };
 
-    $scope.menu = [
-      {
-        text: "Dashbord",
-        href: $scope.getUrl("/"),
-        startsWith: config.appSubUrl + '/dashboard/',
-        icon: "fa fa-th-large",
-        links: [
-          { text: 'Settings',    editview: 'settings',    icon: "fa fa-cogs" },
-          { text: 'Templating',  editview: 'templating',  icon: "fa fa-cogs" },
-          { text: 'Annotations', editview: 'annotations', icon: "fa fa-bolt" },
-          { text: 'Export', href:"", icon: "fa fa-bolt" },
-          { text: 'JSON', href:"", icon: "fa fa-bolt" },
-        ]
-      },
-      {
+    $scope.menu = [];
+    $scope.menu.push({
+      text: "Dashbord",
+      href: $scope.getUrl("/"),
+      startsWith: config.appSubUrl + '/dashboard/',
+      icon: "fa fa-th-large",
+      links: [
+        { text: 'Settings',    editview: 'settings'},
+        { text: 'Templating',  editview: 'templating'},
+        { text: 'Annotations', editview: 'annotations'},
+        { text: 'Export', href:""},
+        { text: 'JSON', href:""},
+      ]
+    });
+
+    if ($scope.grafana.user.accountRole === 'Admin') {
+      $scope.menu.push({
         text: "Account", href: $scope.getUrl("/account"),
+        requireRole: "Admin",
         icon: "fa fa-shield",
         links: [
-          { text: 'Info', href: $scope.getUrl("/account"), icon: "fa fa-sitemap" },
-          { text: 'Data sources', href: $scope.getUrl("/account/datasources"), icon: "fa fa-sitemap" },
-          { text: 'Users', href: $scope.getUrl("/account/users"), icon: "fa fa-users" },
-          { text: 'API Keys', href: $scope.getUrl("/account/apikeys"), icon: "fa fa-key" },
+          { text: 'Info',         href: $scope.getUrl("/account")},
+          { text: 'Data sources', href: $scope.getUrl("/account/datasources")},
+          { text: 'Users',        href: $scope.getUrl("/account/users")},
+          { text: 'API Keys',     href: $scope.getUrl("/account/apikeys")},
         ]
-      },
-      {
+      });
+    }
+
+    if ($scope.grafana.user.isSignedIn) {
+      $scope.menu.push({
         text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
+        requireSignedIn: true,
         links: [
-          { text: 'Info', href: $scope.getUrl("/profile"), icon: "fa fa-sitemap" },
+          { text: 'Info',     href: $scope.getUrl("/profile"), icon: "fa fa-sitemap" },
           { text: 'Password', href:"", icon: "fa fa-lock" },
         ]
-      }
-    ];
+      });
+    }
+
+    if ($scope.grafana.user.isGrafanaAdmin) {
+      $scope.menu.push({
+        text: "Admin", href: $scope.getUrl("/admin/users"),
+        icon: "fa fa-cube",
+        requireSignedIn: true,
+        links: [
+          { text: 'Settings', href: $scope.getUrl("/admin/settings")},
+          { text: 'Users',    href: $scope.getUrl("/admin/users"), icon: "fa fa-lock" },
+          { text: 'Log',      href: "", icon: "fa fa-lock" },
+        ]
+      });
+    }
 
     $scope.onAppEvent('$routeUpdate', function() {
       $scope.updateState();
