@@ -36,6 +36,8 @@ var CmdWeb = cli.Command{
 }
 
 func newMacaron() *macaron.Macaron {
+	macaron.Env = setting.Env
+
 	m := macaron.New()
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
