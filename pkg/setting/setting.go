@@ -234,6 +234,4 @@ func readSessionConfig() {
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
-
-	log.Info("Session Service Enabled")
 }
