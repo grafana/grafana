@@ -6,6 +6,9 @@ type Favorite struct {
 	DashboardId int64
 }
 
+// ----------------------
+// COMMANDS
+
 type AddAsFavoriteCommand struct {
 	UserId      int64
 	DashboardId int64
@@ -14,4 +17,13 @@ type AddAsFavoriteCommand struct {
 type RemoveAsFavoriteCommand struct {
 	UserId      int64
 	DashboardId int64
+}
+
+// ---------------------
+// QUERIES
+
+type GetUserFavoritesQuery struct {
+	UserId int64
+
+	Result []Favorite
 }

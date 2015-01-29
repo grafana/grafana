@@ -1,8 +1,8 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/torkelo/grafana-pro/pkg/components/renderer"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
@@ -11,7 +11,7 @@ import (
 
 func RenderToPng(c *middleware.Context) {
 	queryReader := util.NewUrlQueryReader(c.Req.URL)
-	queryParams := "?render=1&userId=" + strconv.FormatInt(c.UserId, 10) + "&" + c.Req.URL.RawQuery
+	queryParams := fmt.Sprintf("?render=1&%s=%d&%s", middleware.SESS_KEY_USERID, c.UserId, c.Req.URL.RawQuery)
 
 	renderOpts := &renderer.RenderOpts{
 		Url:    c.Params("*") + queryParams,

@@ -66,6 +66,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 		return m.ErrDashboardNotFound
 	}
 
+	dashboard.Data["id"] = dashboard.Id
 	query.Result = &dashboard
 
 	return nil
