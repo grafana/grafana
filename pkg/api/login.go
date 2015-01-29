@@ -119,7 +119,7 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 		log.Error(3, "User login with nil user")
 	}
 
-	c.Session.Set("userId", user.Id)
+	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 
 func LogoutPost(c *middleware.Context) {

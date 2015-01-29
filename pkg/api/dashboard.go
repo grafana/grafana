@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -17,9 +18,13 @@ func GetDashboard(c *middleware.Context) {
 		return
 	}
 
-	query.Result.Data["id"] = query.Result.Id
+	dash := query.Result
+	dto := dtos.Dashboard{
+		IsFavorite: false,
+		Dashboard:  dash.Data,
+	}
 
-	c.JSON(200, query.Result.Data)
+	c.JSON(200, dto)
 }
 
 func DeleteDashboard(c *middleware.Context) {

@@ -25,6 +25,11 @@ type CurrentUser struct {
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
 
+type Dashboard struct {
+	IsFavorite bool                   `json:"isFavorite"`
+	Dashboard  map[string]interface{} `json:"dashboard"`
+}
+
 type DataSource struct {
 	Id        int64      `json:"id"`
 	AccountId int64      `json:"accountId"`

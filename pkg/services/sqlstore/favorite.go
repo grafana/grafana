@@ -10,6 +10,7 @@ import (
 func init() {
 	bus.AddHandler("sql", AddAsFavorite)
 	bus.AddHandler("sql", RemoveAsFavorite)
+	bus.AddHandler("sql", GetUserFavorites)
 }
 
 func AddAsFavorite(cmd *m.AddAsFavoriteCommand) error {
@@ -31,4 +32,10 @@ func RemoveAsFavorite(cmd *m.RemoveAsFavoriteCommand) error {
 		_, err := sess.Exec(rawSql, cmd.UserId, cmd.DashboardId)
 		return err
 	})
+}
+
+func GetUserFavorites(query *m.GetUserFavoritesQuery) error {
+	query.Result = make([]m.Favorite, 0)
+	err := x.Where("user_id=?", query.UserId).Find(&query.Result)
+	return err
 }
