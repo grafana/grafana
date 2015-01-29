@@ -80,11 +80,11 @@
 			<div class="clearfix"></div>
 
 			<div class="login-oauth text-center">
-				<a class="btn btn-google" href="login/google" target="_self">
+				<a class="btn btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
 					<i class="fa fa-google"></i>
 					with Google
 				</a>
-				<a class="btn btn-github" href="login/github" target="_self">
+				<a class="btn btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
 					<i class="fa fa-github"></i>
 					with Github
 				</a>

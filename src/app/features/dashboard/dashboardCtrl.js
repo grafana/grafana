@@ -105,7 +105,7 @@ function (angular, $, config, _) {
     };
 
     $scope.checkFeatureToggles = function() {
-      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
+      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable || false;
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {

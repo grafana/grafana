@@ -102,6 +102,7 @@ function (angular, $) {
             }
           });
 
+          scope.$on("$destroy", hideEditorPane);
           scope.onAppEvent('hide-dash-editor', hideEditorPane);
           scope.onAppEvent('show-dash-editor', showEditorPane);
         }

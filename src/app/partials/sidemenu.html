@@ -1,6 +1,6 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
-		<li class="dropdown">
+		<li class="dropdown" ng-if="grafana.user.isSignedIn">
 			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
 				<span class="gravatar-missing">f</span>
 				<img ng-src="{{grafana.user.gravatarUrl}}" width="35">
@@ -9,6 +9,9 @@
 			<ul class="dropdown-menu">
 				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
 			</ul>
+		</li>
+		<li ng-if="!grafana.user.isSignedIn">
+			<a href="login" class="sidemenu-item"><i class="fa fa-sign-in"></i>Sign in</a>
 		</li>
 		<li ng-repeat-start="item in menu" ng-class="{'active': item.active}">
 			<a href="{{item.href}}" class="sidemenu-item"><i class="{{item.icon}}"></i>{{item.text}}</a>

@@ -14,5 +14,6 @@ define([
   './account/importCtrl',
   './account/accountCtrl',
   './admin/adminUsersCtrl',
+  './admin/adminSettingsCtrl',
   './grafanaDatasource/datasource',
 ], function () {});

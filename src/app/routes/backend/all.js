@@ -20,14 +20,14 @@ define([
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
-      .when('/dashboard/temp/:id', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBProvider',
-        reloadOnSearch: false,
-      })
       .when('/dashboard/import/:id', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromImportCtrl',
+        reloadOnSearch: false,
+      })
+      .when('/dashboard/new', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
       .when('/account', {
@@ -53,6 +53,10 @@ define([
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
+      })
+      .when('/admin/settings', {
+        templateUrl: 'app/features/admin/partials/settings.html',
+        controller : 'AdminSettingsCtrl',
       })
       .when('/admin/users', {
         templateUrl: 'app/features/admin/partials/users.html',
