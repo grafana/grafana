@@ -63,6 +63,7 @@ var (
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
+	DisableUserSignUp  bool
 
 	// single account
 	SingleAccountMode  bool
@@ -196,6 +197,7 @@ func NewConfigContext() {
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
+	DisableUserSignUp = security.Key("disable_user_signup").MustBool(false)
 
 	// admin
 	AdminUser = security.Key("admin_user").String()

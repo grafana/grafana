@@ -4,10 +4,15 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 // POST /api/user/signup
 func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
+	if setting.DisableUserSignUp {
+		c.JsonApiErr(401, "User signup is disabled", nil)
+		return
+	}
 
 	cmd.Login = cmd.Email
 

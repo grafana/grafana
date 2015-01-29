@@ -25,6 +25,7 @@ func LoginView(c *middleware.Context) {
 	settings := c.Data["Settings"].(map[string]interface{})
 	settings["googleAuthEnabled"] = setting.OAuthService.Google
 	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
+	settings["disableUserSignUp"] = setting.DisableUserSignUp
 
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
@@ -122,9 +123,9 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 
-func LogoutPost(c *middleware.Context) {
+func Logout(c *middleware.Context) {
 	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
 	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
 	c.Session.Destory(c.Context)
-	c.JsonOK("logged out")
+	c.Redirect(setting.AppSubUrl + "/login")
 }
