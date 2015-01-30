@@ -139,7 +139,7 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	}
 
 	// Check if has app suburl.
-	url, err := url.Parse(AppUrl)
+	url, err := url.Parse(appUrl)
 	if err != nil {
 		log.Fatal(4, "Invalid root_url(%s): %s", appUrl, err)
 	}
