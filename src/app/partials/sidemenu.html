@@ -1,5 +1,11 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
+		<li class="sidemenu-logo-container">
+			<img ng-src="{{appSubUrl}}/img/logo_transparent_200x.png" style="width: 80px">
+			<a ng-click="toggleSideMenu()" class="pull-right pointer">
+				<i class="fa fa-chevron-right"></i>
+			</a>
+		</li>
 		<li class="dropdown" ng-if="grafana.user.isSignedIn">
 			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
 				<span class="gravatar-missing">f</span>

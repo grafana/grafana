@@ -30,6 +30,7 @@ function (angular, config, _, $, store) {
       $scope.grafana.style = 'dark';
       $scope.grafana.user = userSrv.getSignedInUser();
       $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
+      $scope.topnav = { title: 'Grafana' };
 
       $scope.onAppEvent('logged-out', function() {
         $scope.grafana.sidemenu = false;

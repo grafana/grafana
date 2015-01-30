@@ -1,19 +1,23 @@
 <div class="navbar navbar-static-top" ng-controller='DashboardNavCtrl' ng-init="init()">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="hamburger">
-				<a class="pointer" ng-click="toggleSideMenu()">
-					<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-					Menu
-				</a>
-			</span>
-			<div class="navbar-header">
-				<div class="navbar-header-breadcrumb">
-					Dashboards <i class="fa fa-angle-right"></i>
-				</div>
-				<a ng-click="openSearch()" class="page-title">
-					<i class="fa fa-th-large"></i> {{dashboard.title}}
-					<span class="small">
+
+			<div class="top-nav">
+				<span class="top-nav-menu-btn" ng-if="!grafana.sidemenu">
+					<a class="pointer" ng-click="toggleSideMenu()">
+						<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
+						<span>menu</span>
+					</a>
+				</span>
+
+				<span class="top-nav-breadcrumb">
+					<i class="top-nav-icon" ng-class="topnav.icon"></i>
+					<i class="fa fa-angle-right"></i>
+				</span>
+
+				<a ng-click="topnav.titleAction()" class="top-nav-title">
+					{{topnav.title}}
+					<span class="small" ng-show="topnav.titleAction">
 						<i class="fa fa-angle-down"></i>
 					</span>
 				</a>

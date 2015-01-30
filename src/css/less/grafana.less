@@ -47,38 +47,54 @@
 
 .logo-icon {
   width: 24px;
+}
+
+.navbar-inner {
+  padding-left: 0px;
+}
+
+.top-nav {
+  float: left;
+}
+
+.top-nav-menu-btn {
   display: block;
-  padding-right: 5px;
   float: left;
-}
-
-.navbar .brand {
-  margin-left: 0;
-}
-
-.hamburger {
-  float: left;
-  padding: 17px 20px 16px 0;
-  font-size: 1.1em;
-  color: @gray;
-}
-
-.navbar-header {
-  float: left;
-  padding: 10px;
-  .navbar-header-breadcrumb {
-    font-size: 90%;
-    padding-bottom: 4px;
+  padding: 15px 13px 13px 14px;;
+  position: relative;
+  background: @black;
+  font-weight: bold;
+  font-size: 90%;
+  span {
+    position: relative;
+    top: 2px;
   }
 }
 
-.page-title {
- i {
-   padding-right: 6px;
- }
- display: block;
- font-size: 1.3em;
- font-weight: bold;
+.top-nav-breadcrumb {
+  display: block;
+  float: left;
+  padding: 18px 9px 12px 12px;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: darken(@gray, 10%);
+  i {
+    padding-left: 4px;
+  }
+  .fa-angle-right {
+  }
+}
+
+.top-nav-title {
+  display: block;
+  float: left;
+  padding: 18px 10px 10px 0px;
+  font-size: 1.3em;
+  font-weight: bold;
+  i {
+    position: relative;
+    top: 3px;
+  }
 }
 
 .row-button {
