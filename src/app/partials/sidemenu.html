@@ -1,20 +1,10 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
 		<li class="sidemenu-logo-container">
-			<img ng-src="{{appSubUrl}}/img/logo_transparent_200x.png" style="width: 80px">
-			<a ng-click="toggleSideMenu()" class="pull-right pointer">
-				<i class="fa fa-chevron-right"></i>
+			<img ng-src="{{appSubUrl}}/img/logo_transparent_200x.png">
+			<a ng-click="toggleSideMenu()" class="pointer sidemenu-toggle">
+				<i class="fa fa-angle-right"></i>
 			</a>
-		</li>
-		<li class="dropdown" ng-if="grafana.user.isSignedIn">
-			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
-				<span class="gravatar-missing">f</span>
-				<img ng-src="{{grafana.user.gravatarUrl}}" width="35">
-				<span class="gravatar-email small">{{grafana.user.login}}</span>
-			</a>
-			<ul class="dropdown-menu">
-				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
-			</ul>
 		</li>
 		<li ng-if="!grafana.user.isSignedIn">
 			<a href="login" class="sidemenu-item"><i class="fa fa-sign-in"></i>Sign in</a>
@@ -27,6 +17,17 @@
 				<li ng-repeat="link in item.links">
 					<a href="{{link.href}}" class="sidemenu-link" ng-class="{active: link.active}"><i class="fa fa-angle-right"></i>{{link.text}}</a>
 				</li>
+			</ul>
+		</li>
+
+		<li class="dropdown" ng-if="grafana.user.isSignedIn">
+			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
+				<span class="gravatar-missing">f</span>
+				<img ng-src="{{grafana.user.gravatarUrl}}" width="35">
+				<span class="gravatar-email small">{{grafana.user.login}}</span>
+			</a>
+			<ul class="dropdown-menu">
+				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
 			</ul>
 		</li>
 	</ul>

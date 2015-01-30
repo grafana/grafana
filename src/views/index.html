@@ -27,9 +27,9 @@
   <body ng-cloak ng-controller="GrafanaCtrl">
     <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
-		<div class="pro-container" ng-class="{'pro-sidemenu-open': grafana.sidemenu}">
+		<div class="pro-container" ng-class="{'sidemenu-open': grafana.sidemenu}">
 
-			<aside class="pro-sidemenu" ng-if="grafana.sidemenu">
+			<aside class="sidemenu-container" ng-if="grafana.sidemenu">
 				<div ng-include="'app/partials/sidemenu.html'"></div>
 			</aside>
 
