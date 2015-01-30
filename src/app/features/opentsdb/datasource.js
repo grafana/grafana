@@ -175,7 +175,7 @@ function (angular, _, kbn) {
       var match;
       try {
         var parts = expandedQuery.split(/[{}]/);
-        var match = parts[0];
+        match = parts[0];
         if (match.indexOf('*')) {
           // search/lookup doesn't support wildcards, its either a specific metric, or all metrics
           // if there is a wildcard, strip the metric search from the query, but keep it for matching
@@ -202,25 +202,25 @@ function (angular, _, kbn) {
         var resultSet = new Set();
         _.each(searchResult.data.results, function(item) {
           if (type === 'metric') {
-              if ((match === '') || (match === '*')) {
-                resultSet.add(item.metric);
-              } else {
-                var wildPos = match.indexOf('*');
-                if (wildPos != 0) {
-                  var startMatch = match.substring(0, match.indexOf('*'));
-                  var endMatch = match.substring(match.indexOf('*')+1, match.length);
+            if ((match === '') || (match === '*')) {
+              resultSet.add(item.metric);
+            } else {
+              var wildPos = match.indexOf('*');
+              if (wildPos !== 0) {
+                var startMatch = match.substring(0, match.indexOf('*'));
+                var endMatch = match.substring(match.indexOf('*')+1, match.length);
 
-                  var startsWith = (item.metric.indexOf(startMatch) == 0);
-                  var endsWith = (item.metric.indexOf(endMatch, item.metric.length - endMatch.length) !== -1);
-                  if (startsWith && endsWith) {
-                    resultSet.add(item.metric);
-                  }
-                } else if (item.metric === match) {
-                  // this matches only a specific metric name, which isn't very useful
+                var startsWith = (item.metric.indexOf(startMatch) === 0);
+                var endsWith = (item.metric.indexOf(endMatch, item.metric.length - endMatch.length) !== -1);
+                if (startsWith && endsWith) {
                   resultSet.add(item.metric);
                 }
-                // ignore everything else
+              } else if (item.metric === match) {
+                // this matches only a specific metric name, which isn't very useful
+                resultSet.add(item.metric);
               }
+              // ignore everything else
+            }
           } else {
             _.each(_.pairs(item.tags), function(tag) {
               if ((type === 'tagk') && (match === tag[1])) {
@@ -233,19 +233,22 @@ function (angular, _, kbn) {
         });
         // Grunt doesn't like this, I guess because its ECMAScript 6?
         // var resultsOut = [v for (v of resultSet)].sort();
-        return _.map([...resultSet], function(name) {
-          return {
-            text: name,
+        // return _.map([...resultSet], function(name) {
+        var resultsOut = [];
+        resultSet.sort(); // we sort first, because its more work to sort the dict.text property
+        resultSet.forEach(function(k,v) {
+          resultsOut.push({
+            text: v,
             expandable: false
-          };
+          });
         });
+        return resultsOut;
       });
     };
 
     OpenTSDBDatasource.prototype.doSearchLookup = function(type, query, handler) {
       this.lastLookupQuery = query;
       this.lastLookupType = type;
-      var that = this;
 
       var options = {
         method: 'GET',
@@ -254,7 +257,6 @@ function (angular, _, kbn) {
           m: query
         },
       };
-      // console.log(JSON.stringify(options));
 
       return $http(options).then(handler);
     };
