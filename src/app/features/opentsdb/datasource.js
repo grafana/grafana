@@ -94,9 +94,10 @@ function (angular, _, kbn) {
         return that.performSearchLookup(type, target).then(function(lookupResults) {
           // var output = intersect_safe(that.lastLookupResults, result.data);
           var output = intersect_safe(lookupResults, result.data);
-          // console.log("Lookup Results: " + JSON.stringify(that.lastLookupResults));
-          // console.log("Suggest Results: " + JSON.stringify(result.data));
-          // console.log("Merged Results: " + JSON.stringify(output));
+          //console.log("lookupResults: " + JSON.stringify(lookupResults));
+          //console.log("that.lastLookupResults: " + JSON.stringify(that.lastLookupResults));
+          //console.log("result.data: " + JSON.stringify(result.data));
+          //console.log("output: " + JSON.stringify(output));
           return output;
         });
       });
@@ -126,22 +127,15 @@ function (angular, _, kbn) {
       }
       search += '{' + searchTags.join(',') + '}';
 
+      // /api/search/lookup can be an expensive operation, so we cache our most recent results and re-use them is possible
       if ((type === this.lastLookupType) && (this.lastLookupQuery === search)) {
-        return this.lastLookupResults;
+        // goofy promise stuff... so we need to wrap up the result in the promise
+        return $q(function(resolve) {
+          resolve(that.lastLookupResults);
+        });
       }
-      this.lastLookupQuery = search;
-      this.lastLookupType = type;
 
-      var options = {
-        method: 'GET',
-        url: this.url + '/api/search/lookup',
-        params: {
-          m: search
-        },
-      };
-      // console.log(JSON.stringify(options));
-
-      return $http(options).then(function(result) {
+      return this.doSearchLookup(type, search, function(result) {
         // iterate through the results and find all the available/matching tags & values
         var resultSet = new Set();
         _.each(result.data.results, function(lookupResults) {
@@ -165,7 +159,7 @@ function (angular, _, kbn) {
         // var resultsOut = [v for (v of resultSet)].sort();
         var resultsOut = [];
         resultSet.forEach(function(k,v) {
-          resultsOut.add(v);
+          resultsOut.push(v);
         });
         resultsOut.sort();
 
@@ -173,6 +167,96 @@ function (angular, _, kbn) {
         that.lastLookupResults = resultsOut;
         return resultsOut;
       });
+    };
+
+    OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
+      var type = 'metric';
+      var expandedQuery = templateSrv.replace(query);
+      var match;
+      try {
+        var parts = expandedQuery.split(/[{}]/);
+        var match = parts[0];
+        if (match.indexOf('*')) {
+          // search/lookup doesn't support wildcards, its either a specific metric, or all metrics
+          // if there is a wildcard, strip the metric search from the query, but keep it for matching
+          expandedQuery='{'+parts[1]+'}';
+        }
+        var tagString = parts[1];
+        tagString.replace(/(\b[^=]+)=(\b[^,]+|\*)/g, function ($0, key, val) {
+          if (val === '*') {
+            match = key;
+            type = 'tagv';
+          } else if (key === '*') {
+            match = val;
+            type = 'tagk';
+          }
+        });
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      return this.doSearchLookup(type, expandedQuery, function(searchResult) {
+        // iterate through the results and find all the available/matching tags & values
+
+        var resultSet = new Set();
+        _.each(searchResult.data.results, function(item) {
+          if (type === 'metric') {
+              if ((match === '') || (match === '*')) {
+                resultSet.add(item.metric);
+              } else {
+                var wildPos = match.indexOf('*');
+                if (wildPos != 0) {
+                  var startMatch = match.substring(0, match.indexOf('*'));
+                  var endMatch = match.substring(match.indexOf('*')+1, match.length);
+
+                  var startsWith = (item.metric.indexOf(startMatch) == 0);
+                  var endsWith = (item.metric.indexOf(endMatch, item.metric.length - endMatch.length) !== -1);
+                  if (startsWith && endsWith) {
+                    resultSet.add(item.metric);
+                  }
+                } else if (item.metric === match) {
+                  // this matches only a specific metric name, which isn't very useful
+                  resultSet.add(item.metric);
+                }
+                // ignore everything else
+              }
+          } else {
+            _.each(_.pairs(item.tags), function(tag) {
+              if ((type === 'tagk') && (match === tag[1])) {
+                resultSet.add(tag[0]);
+              } else if ((type === 'tagv') && (match === tag[0])) {
+                resultSet.add(tag[1]);
+              }
+            });
+          }
+        });
+        // Grunt doesn't like this, I guess because its ECMAScript 6?
+        // var resultsOut = [v for (v of resultSet)].sort();
+        return _.map([...resultSet], function(name) {
+          return {
+            text: name,
+            expandable: false
+          };
+        });
+      });
+    };
+
+    OpenTSDBDatasource.prototype.doSearchLookup = function(type, query, handler) {
+      this.lastLookupQuery = query;
+      this.lastLookupType = type;
+      var that = this;
+
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/search/lookup',
+        params: {
+          m: query
+        },
+      };
+      // console.log(JSON.stringify(options));
+
+      return $http(options).then(handler);
     };
 
     function transformMetricData(md, groupByTags, options) {
