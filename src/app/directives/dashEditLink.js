@@ -92,7 +92,7 @@ function (angular, $) {
             hideScrollbars(true);
 
             var src = "'" + payload.src + "'";
-            var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');
+            var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
             elem.append(view);
             $compile(elem.contents())(editorScope);
           }
