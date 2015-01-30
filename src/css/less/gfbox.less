@@ -1,9 +1,8 @@
 .gf-box {
-  margin: 30px;
+  margin: 15px;
   background-color: @grafanaPanelBackground;
   position: relative;
   border: 1px solid @grafanaTargetFuncBackground;
-  border-top: none;
 }
 
 .gf-box-header-close-btn {
@@ -30,10 +29,9 @@
 }
 
 .gf-box-header {
+  border-bottom: 1px solid @grafanaTargetFuncBackground;
   overflow: hidden;
   background-color: @grafanaTargetBackground;
-  border-top: 1px solid @grafanaTargetFuncBackground;
-  border-bottom: 1px solid @grafanaTargetFuncBackground;
   .tabs {
     float: left;
   }
@@ -43,8 +41,8 @@
 }
 
 .gf-box-title {
-  border-bottom: 1px solid @fullEditBorder;
   padding-right: 20px;
+  padding-left: 10px;
   float: left;
   color: @linkColor;
   font-size: 18px;

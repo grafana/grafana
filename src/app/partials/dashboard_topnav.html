@@ -2,20 +2,21 @@
 	<div class="navbar-inner">
 		<div class="container-fluid">
 
-			<topnav ng-if="!grafana.editview"
+			<topnav-dash ng-if="!grafana.editview"
 			        title="{{dashboard.title}}"
 			        icon="fa fa-th-large"
 							title-action="openSearch()"
 							toggle="toggleSideMenu()"
 							show-menu-btn="!grafana.sidemenu">
-			</topnav>
+			</topnav-dash>
 
-			<topnav ng-if="grafana.editview"
+			<topnav-dash ng-if="grafana.editview"
+							toggle="toggleSideMenu()"
 			        title="{{grafana.editview.title}}"
 			        icon="fa fa-th-large"
 							section="{{dashboard.title}}"
 							show-menu-btn="!grafana.sidemenu">
-			</topnav>
+			</topnav-dash>
 
 			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">
@@ -34,8 +35,6 @@
 						<i class='fa fa-save'></i>
 					</a>
 				</li>
-
-				<!-- <li class="grafana&#45;menu&#45;home"><a bs&#45;tooltip="'Goto saved default'" data&#45;placement="bottom" href='#/'><i class='fa fa&#45;home'></i></a></li> -->
 
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>

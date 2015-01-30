@@ -1,23 +1,9 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Admin'"></div>
+<topnav toggle="toggleSideMenu()"
+				title="Users"
+				icon="fa fa-cube"
+				section="Admin"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
 
-<div class="dashboard-edit-view" style="min-height: 500px">
-	<div class="editor-row">
-		<div class="section">
-
-			<div class="dashboard-editor-header">
-				<div class="dashboard-editor-title">
-					<i class="fa fa-instiution"></i>
-					System administration
-				</div>
-
-				<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-					<div ng-repeat="tab in ['Settings','Users', 'Log', 'Audit']" data-title="{{tab}}">
-					</div>
-				</div>
-
-			</div>
-
-			</div>
-		</div>
-	</div>
+<div class="gf-box" style="min-height: 500px">
 </div>
