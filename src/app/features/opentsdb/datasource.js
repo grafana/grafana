@@ -235,13 +235,13 @@ function (angular, _, kbn) {
         // var resultsOut = [v for (v of resultSet)].sort();
         // return _.map([...resultSet], function(name) {
         var resultsOut = [];
-        resultSet.sort(); // we sort first, because its more work to sort the dict.text property
         resultSet.forEach(function(k,v) {
           resultsOut.push({
             text: v,
             expandable: false
           });
         });
+        resultsOut.sort();
         return resultsOut;
       });
     };
