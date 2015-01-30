@@ -2,26 +2,20 @@
 	<div class="navbar-inner">
 		<div class="container-fluid">
 
-			<div class="top-nav">
-				<span class="top-nav-menu-btn" ng-if="!grafana.sidemenu">
-					<a class="pointer" ng-click="toggleSideMenu()">
-						<img class="logo-icon" src="img/fav32.png"></img>
-						<span>menu</span>
-					</a>
-				</span>
+			<topnav ng-if="!grafana.editview"
+			        title="{{dashboard.title}}"
+			        icon="fa fa-th-large"
+							title-action="openSearch()"
+							toggle="toggleSideMenu()"
+							show-menu-btn="!grafana.sidemenu">
+			</topnav>
 
-				<span class="top-nav-breadcrumb">
-					<i class="top-nav-icon" ng-class="topnav.icon"></i>
-					<i class="fa fa-angle-right"></i>
-				</span>
-
-				<a ng-click="topnav.titleAction()" class="top-nav-title">
-					{{topnav.title}}
-					<span class="small" ng-show="topnav.titleAction">
-						<i class="fa fa-angle-down"></i>
-					</span>
-				</a>
-			</div>
+			<topnav ng-if="grafana.editview"
+			        title="{{grafana.editview.title}}"
+			        icon="fa fa-th-large"
+							section="{{dashboard.title}}"
+							show-menu-btn="!grafana.sidemenu">
+			</topnav>
 
 			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">

@@ -16,4 +16,5 @@ define([
   './graphiteSegment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
+  './topnav',
 ], function () {});
