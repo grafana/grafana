@@ -34,33 +34,8 @@
 
 .sidemenu {
   list-style: none;
-  background: @grafanaPanelBackground;
   margin: 0;
   padding: 0;
-}
-
-.sidemenu-links {
-  margin: 0;
-  padding: 5px 0;
-  list-style: none;
-  background: @grafanaTargetFuncBackground;
-  li {
-    display: block;
-  }
-}
-
-.sidemenu-link {
-  display: block;
-  padding: 6px 0 6px 30px;
-  font-size: 15px;
-  color: @gray;
-  i {
-    padding-right: 15px;
-  }
-  &.active {
-    color: white;
-    font-weight: bold;
-  }
 }
 
 .sidemenu-user {
@@ -83,14 +58,44 @@
   border-bottom: 1px solid black;
 }
 
-.sidemenu-item {
-  font-size: 17px;
-  padding: 14px 10px 14px 20px;
+.sidemenu-top-btn {
+  padding: 14px 0px 12px 20px;
+  background: @grafanaPanelBackground;
   display: block;
   i {
-    padding-right: 15px;
+    padding-right: 5px;
+    font-size: 170%;
+    color: @gray;
   }
-  border-bottom: 1px solid black;
+  border-bottom: 10px solid @bodyBackground;
+}
+
+.sidemenu-icon {
+  border-radius: 50%;
+  background: black;
+  box-shadow: 0 0 10px 6px #2E2E2E;
+  width: 35px;
+  height: 35px;
+  display: inline-block;
+  i {
+    color: @textColor;
+    position: relative;
+    left: 9px;
+    top: 2px;
+    font-size: 120%;
+  }
+}
+
+.sidemenu-item {
+  color: @orange;
+  line-height: 34px;
+  font-weight: bold;
+  padding: 14px 10px 14px 20px;
+  display: block;
+
+  .sidemenu-item-text {
+    padding-left: 15px;
+  }
 }
 
 .sidemenu-logo-container {

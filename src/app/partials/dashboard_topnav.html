@@ -18,6 +18,21 @@
 							show-menu-btn="!grafana.sidemenu">
 			</topnav-dash>
 
+			<ul class="nav pull-left" style="font-size: 130%">
+				<li>
+					<a href="asd"><i class="fa fa-star-o" style="color: orange;"></i></a>
+				</li>
+				<li>
+					<a href="asd"><i class="fa fa-share-square-o"></i></a>
+				</li>
+				<li>
+					<a href="asd"><i class="fa fa-save"></i></a>
+				</li>
+				<li>
+					<a href="asd"><i class="fa fa-cog"></i></a>
+				</li>
+			</ul>
+
 			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">
 					<a ng-click="exitFullscreen()">
@@ -30,12 +45,12 @@
 					</grafana-simple-panel>
 				</li>
 
-				<li class="dropdown grafana-menu-save">
-					<a bs-tooltip="'Save'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="saveDashboard()">
-						<i class='fa fa-save'></i>
-					</a>
-				</li>
-
+				<!-- <li class="dropdown grafana&#45;menu&#45;save"> -->
+				<!-- 	<a bs&#45;tooltip="'Save'" data&#45;placement="bottom" class="dropdown&#45;toggle" data&#45;toggle="dropdown" ng&#45;click="saveDashboard()"> -->
+				<!-- 		<i class='fa fa&#45;save'></i> -->
+				<!-- 	</a> -->
+				<!-- </li> -->
+        <!--  -->
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>
 						Stop playlist
