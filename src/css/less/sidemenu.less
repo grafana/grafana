@@ -13,7 +13,6 @@
     left: 0;
     width: 200px;
     background: @bodyBackground;
-    border-right: 1px solid black;
     min-height: 100%;
     z-index: 101;
   }
@@ -59,15 +58,15 @@
 }
 
 .sidemenu-top-btn {
-  padding: 14px 0px 12px 20px;
-  background: @grafanaPanelBackground;
   display: block;
+  padding: 14px 0px 10px 20px;
+  background: @grafanaTargetBackground;
+  border: 1px solid rgb(55, 54, 54);
   i {
     padding-right: 5px;
     font-size: 170%;
     color: @gray;
   }
-  border-bottom: 10px solid @bodyBackground;
 }
 
 .sidemenu-icon {

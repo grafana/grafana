@@ -1,6 +1,11 @@
 <div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
 
 	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-bolt"></i>
+			Annotations
+		</div>
+
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
 			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
 			</div>

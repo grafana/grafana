@@ -2,34 +2,41 @@
 	<div class="navbar-inner">
 		<div class="container-fluid">
 
-			<topnav-dash ng-if="!grafana.editview"
-			        title="{{dashboard.title}}"
-			        icon="fa fa-th-large"
-							title-action="openSearch()"
-							toggle="toggleSideMenu()"
-							show-menu-btn="!grafana.sidemenu">
-			</topnav-dash>
+			<div class="top-nav">
+				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
+					<img class="logo-icon" src="img/fav32.png"></img>
+					<i class="fa fa-angle-right"></i>
+				</a>
 
-			<topnav-dash ng-if="grafana.editview"
-							toggle="toggleSideMenu()"
-			        title="{{grafana.editview.title}}"
-			        icon="fa fa-th-large"
-							section="{{dashboard.title}}"
-							show-menu-btn="!grafana.sidemenu">
-			</topnav-dash>
+				<a class="top-nav-dashboards-btn pointer" ng-click="openSearch()">
+					<i class="fa fa-th-large"></i>
+					<i class="fa fa-angle-down"></i>
+				</a>
 
-			<ul class="nav pull-left" style="font-size: 130%">
+				<a ng-click="asd()" class="top-nav-title pointer">
+					 {{dashboard.title}}
+				 </a>
+			 </div>
+
+			<ul class="nav pull-left">
 				<li>
-					<a href="asd"><i class="fa fa-star-o" style="color: orange;"></i></a>
+					<a class="pointer" ng-click="starDashboard()"><i class="fa fa-star-o" style="color: orange;"></i></a>
 				</li>
 				<li>
-					<a href="asd"><i class="fa fa-share-square-o"></i></a>
+					<a class="pointer" ng-click="asd()"><i class="fa fa-share-square-o"></i></a>
 				</li>
 				<li>
-					<a href="asd"><i class="fa fa-save"></i></a>
+					<a ng-click="saveDashboard()"><i class="fa fa-save"></i></a>
 				</li>
-				<li>
-					<a href="asd"><i class="fa fa-cog"></i></a>
+				<li class="dropdown">
+					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
+					<ul class="dropdown-menu">
+						<li><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
+						<li><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
+						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
+						<li><a class="pointer" ng-click="openEditView('settings');">Export</a></li>
+						<li><a class="pointer" ng-click="openEditView('settings');">View JSON</a></li>
+					</ul>
 				</li>
 			</ul>
 

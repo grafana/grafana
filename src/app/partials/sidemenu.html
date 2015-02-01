@@ -1,15 +1,11 @@
 
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
-		<li>
+		<li style="margin-bottom: 15px;">
 			<a class="pointer sidemenu-top-btn" ng-click="toggleSideMenu()">
 				<img class="logo-icon" src="img/fav32.png"></img>
 				<i class="pull-right fa fa-angle-left"></i>
 			</a>
-		</li>
-
-		<li ng-if="!grafana.user.isSignedIn">
-			<a href="login" class="sidemenu-item"><i class="fa fa-sign-in"></i>Sign in</a>
 		</li>
 
 		<li ng-repeat="item in menu" ng-class="{'active': item.active}">

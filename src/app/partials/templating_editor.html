@@ -1,5 +1,11 @@
 <div ng-controller="TemplateEditorCtrl" ng-init="init()">
 	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-code"></i>
+			Templating
+		</div>
+
+
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
 			<div ng-repeat="tab in ['Variables', 'Add', 'Edit']" data-title="{{tab}}">
 			</div>

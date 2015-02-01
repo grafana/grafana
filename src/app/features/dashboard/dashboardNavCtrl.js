@@ -22,7 +22,6 @@ function (angular, _, moment, config, store) {
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
-
     };
 
     $scope.set_default = function() {
@@ -33,6 +32,11 @@ function (angular, _, moment, config, store) {
     $scope.purge_default = function() {
       store.delete('grafanaDashboardDefault');
       alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default','success', 5000);
+    };
+
+    $scope.openEditView = function(editview) {
+      var search = _.extend($location.search(), {editview: editview});
+      $location.search(search);
     };
 
     $scope.saveForSharing = function() {
