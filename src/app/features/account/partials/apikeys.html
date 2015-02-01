@@ -1,15 +1,13 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account'"></div>
+<topnav toggle="toggleSideMenu()"
+				title="API Keys"
+				icon="fa fa-shield"
+				section="Account"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
 
-<div class="dashboard-edit-view" style="min-height: 500px">
+<div class="gf-box" style="min-height: 500px">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
-			<i class="fa fa-key"></i>
-			API Tokens
-		</div>
-	</div>
-
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 		<div class="editor-row">
 			<div class="section">
 				<form name="addTokenrForm" class="form-inline tight-form">

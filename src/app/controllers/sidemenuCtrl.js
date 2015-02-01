@@ -17,17 +17,16 @@ function (angular, _, $, config) {
 
     $scope.menu = [];
     $scope.menu.push({
-      text: "Dashbord",
+      text: "Dashbords",
+      icon: "fa fa-th-large",
       href: $scope.getUrl("/"),
       startsWith: config.appSubUrl + '/dashboard/',
-      icon: "fa fa-th-large",
-      links: [
-        { text: 'Settings',    editview: 'settings'},
-        { text: 'Templating',  editview: 'templating'},
-        { text: 'Annotations', editview: 'annotations'},
-        { text: 'Export', href:""},
-        { text: 'JSON', href:""},
-      ]
+    });
+
+    $scope.menu.push({
+      text: "Data Sources",
+      icon: "fa fa-database",
+      href: $scope.getUrl("/account/datasources"),
     });
 
     if ($scope.grafana.user.accountRole === 'Admin') {
@@ -35,12 +34,16 @@ function (angular, _, $, config) {
         text: "Account", href: $scope.getUrl("/account"),
         requireRole: "Admin",
         icon: "fa fa-shield",
-        links: [
-          { text: 'Info',         href: $scope.getUrl("/account")},
-          { text: 'Data sources', href: $scope.getUrl("/account/datasources")},
-          { text: 'Users',        href: $scope.getUrl("/account/users")},
-          { text: 'API Keys',     href: $scope.getUrl("/account/apikeys")},
-        ]
+      });
+      $scope.menu.push({
+        text: "Users", href: $scope.getUrl("/account/users"),
+        requireRole: "Admin",
+        icon: "fa fa-users",
+      });
+      $scope.menu.push({
+        text: "API Keys", href: $scope.getUrl("/account/apikeys"),
+        requireRole: "Admin",
+        icon: "fa fa-key",
       });
     }
 
@@ -48,11 +51,6 @@ function (angular, _, $, config) {
       $scope.menu.push({
         text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
-        requireSignedIn: true,
-        links: [
-          { text: 'Info',     href: $scope.getUrl("/profile"), icon: "fa fa-sitemap" },
-          { text: 'Password', href:"", icon: "fa fa-lock" },
-        ]
       });
     }
 
@@ -69,6 +67,14 @@ function (angular, _, $, config) {
       });
     }
 
+    if ($scope.grafana.user.isSignedIn) {
+      $scope.menu.push({
+        text: "Sign out", href: $scope.getUrl("/logout"),
+        target: "_self",
+        icon: "fa fa-sign-out",
+      });
+    }
+
     $scope.onAppEvent('$routeUpdate', function() {
       $scope.updateState();
     });
@@ -80,18 +86,21 @@ function (angular, _, $, config) {
     $scope.updateState = function() {
       var currentPath = config.appSubUrl + $location.path();
       var search = $location.search();
+      var activeIndex;
 
-      _.each($scope.menu, function(item) {
+      _.each($scope.menu, function(item, index) {
         item.active = false;
 
         if (item.href === currentPath) {
           item.active = true;
+          activeIndex = index;
         }
 
         if (item.startsWith) {
           if (currentPath.indexOf(item.startsWith) === 0) {
             item.active = true;
             item.href = currentPath;
+            activeIndex = index;
           }
         }
 
@@ -114,6 +123,8 @@ function (angular, _, $, config) {
           }
         });
       });
+
+      //$scope.menu.splice(0, 0, $scope.menu.splice(activeIndex, 1)[0]);
     };
 
     $scope.init = function() {

@@ -1,9 +1,13 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Admin > Users'"></div>
+<topnav toggle="toggleSideMenu()"
+				title="Users"
+				icon="fa fa-cube"
+				section="Admin"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
 
-<div class="dashboard-edit-view" style="min-height: 500px">
+<div class="gf-box" style="min-height: 500px">
 
-	<div class="dashboard-editor-body">
-
+	<div class="gf-box-body">
 		<div class="editor-row row">
 			<div class="section span6">
 				<table class="grafana-options-table">
