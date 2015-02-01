@@ -11,6 +11,7 @@
 @import "tightform.less";
 @import "sidemenu.less";
 @import "gfbox.less";
+@import "navbar.less";
 
 .row-control-inner {
   padding:0px;
@@ -51,70 +52,6 @@
   width: 24px;
 }
 
-.navbar-inner {
-  padding-left: 0px;
-}
-
-.navbar .nav>li>a {
-  padding: 19px 15px 8px;
-}
-
-.top-nav {
-  float: left;
-}
-
-.top-nav-menu-btn {
-  display: block;
-  float: left;
-  padding: 11px 6px 12px 14px;
-  position: relative;
-  border-right: 1px solid @black;
-  font-weight: bold;
-  font-size: 90%;
-  i {
-    font-size: 170%;
-    color: @gray;
-    padding: 0px 0px 0px 6px;
-    position: relative;
-    top: 4px;
-  }
-}
-
-.top-nav-breadcrumb {
-  display: block;
-  float: left;
-  padding: 18px 9px 8px 12px;
-  font-size: 1.4em;
-  font-weight: bold;
-  color: darken(@gray, 10%);
-  i {
-    padding-left: 9px;
-  }
-}
-
-.top-nav-section {
-  display: block;
-  float: left;
-  padding: 19px 9px 8px 0;
-  font-weight: bold;
-  i {
-    padding-left: 8px;
-  }
-}
-
-.top-nav-title {
-  display: block;
-  float: left;
-  padding: 18px 10px 10px 0px;
-  font-size: 1.3em;
-  font-weight: bold;
-  i {
-    padding-left: 4px;
-    position: relative;
-    top: 2px;
-  }
-}
-
 .row-button {
   width: 24px;
 }
@@ -126,24 +63,6 @@
   margin-left: auto;
   margin-right: auto;
   top: 30%;
-}
-
-.grafana-search-metric-actions {
-  visibility: hidden;
-  padding-left: 20px;
-}
-
-.grafana-search-metric-name {
-  white-space: nowrap;
-}
-
-.grafana-search-metric-result:hover {
-  .grafana-search-metric-actions {
-    visibility: visible;
-  }
-  .grafana-search-metric-name {
-    color: @blue;
-  }
 }
 
 .dashboard-fullscreen {

@@ -34,12 +34,16 @@ function (angular, _, $, config) {
         text: "Account", href: $scope.getUrl("/account"),
         requireRole: "Admin",
         icon: "fa fa-shield",
-        links: [
-          { text: 'Info',         href: $scope.getUrl("/account")},
-          { text: 'Data sources', href: $scope.getUrl("/account/datasources")},
-          { text: 'Users',        href: $scope.getUrl("/account/users")},
-          { text: 'API Keys',     href: $scope.getUrl("/account/apikeys")},
-        ]
+      });
+      $scope.menu.push({
+        text: "Users", href: $scope.getUrl("/account/users"),
+        requireRole: "Admin",
+        icon: "fa fa-users",
+      });
+      $scope.menu.push({
+        text: "API Keys", href: $scope.getUrl("/account/apikeys"),
+        requireRole: "Admin",
+        icon: "fa fa-key",
       });
     }
 
@@ -47,13 +51,6 @@ function (angular, _, $, config) {
       $scope.menu.push({
         text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
-      });
-    }
-
-    if ($scope.grafana.user.isSignedIn) {
-      $scope.menu.push({
-        text: "Sign out", href: $scope.getUrl("/logout"),
-        icon: "fa fa-sign-out",
       });
     }
 
@@ -67,6 +64,14 @@ function (angular, _, $, config) {
           { text: 'Users',    href: $scope.getUrl("/admin/users"), icon: "fa fa-lock" },
           { text: 'Log',      href: "", icon: "fa fa-lock" },
         ]
+      });
+    }
+
+    if ($scope.grafana.user.isSignedIn) {
+      $scope.menu.push({
+        text: "Sign out", href: $scope.getUrl("/logout"),
+        target: "_self",
+        icon: "fa fa-sign-out",
       });
     }
 

@@ -13,7 +13,7 @@
 		</li>
 
 		<li ng-repeat="item in menu" ng-class="{'active': item.active}">
-			<a href="{{item.href}}" class="sidemenu-item">
+			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
 				<span class="sidemenu-icon"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>

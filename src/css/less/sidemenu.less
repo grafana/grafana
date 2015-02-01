@@ -1,4 +1,4 @@
-.sidemenu-container {
+.sidemenu-wrapper {
   display: none;
   a:focus {
     text-decoration: none;
@@ -6,7 +6,7 @@
 }
 
 .sidemenu-open {
-  .sidemenu-container {
+  .sidemenu-wrapper {
     display: block;
     position: absolute;
     top: 0;
@@ -23,7 +23,7 @@
     width: auto;
   }
 
-  .pro-main-view {
+  .main-view {
     padding-left: 200px;
   }
 
@@ -95,25 +95,7 @@
 
   .sidemenu-item-text {
     padding-left: 15px;
+    text-shadow: 1px 0px 10px @orange;
   }
-}
-
-.sidemenu-logo-container {
-  background: @grafanaPanelBackground;
-  text-align: center;
-  border-bottom: 1px solid black;
-  img {
-    display: inline-block;
-    width: 102px;
-    padding: 6px 0px 6px 11px;
-  }
-}
-
-.sidemenu-toggle {
-  float: right;
-  display: block;
-  font-size: 200%;
-  padding: 11px 8px 11px 8px;
-  background: @grafanaTargetFuncBackground;
 }
 
