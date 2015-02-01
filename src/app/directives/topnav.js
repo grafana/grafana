@@ -37,9 +37,6 @@ function (angular) {
 
             '<a ng-click="titleAction()" class="top-nav-title">' +
               '{{title}}' +
-              '<span class="small" ng-show="titleAction">' +
-                '<i class="fa fa-angle-down"></i>' +
-              '</span>' +
             '</a>' +
           '</div><div ng-transclude></div></div></div></div>',
         link: function(scope, elem, attrs) {

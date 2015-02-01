@@ -24,10 +24,10 @@
 
   </head>
 
-  <body ng-cloak ng-controller="GrafanaCtrl">
+	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': grafana.sidemenu}">
     <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css" ng-if="grafana.style === 'light'">
 
-		<div class="main-view-wrapper" ng-class="{'sidemenu-open': grafana.sidemenu}">
+		<div class="sidemenu-canvas">
 
 			<aside class="sidemenu-wrapper" ng-if="grafana.sidemenu">
 				<div ng-include="'app/partials/sidemenu.html'"></div>
@@ -44,6 +44,7 @@
 			</div>
 
 			<div ng-view class="main-view"></div>
+			</div>
 
 		</div>
 

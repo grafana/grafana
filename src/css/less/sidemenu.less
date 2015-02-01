@@ -1,5 +1,30 @@
+// body {
+//   position: absolute;
+//   overflow: hidden;
+//   width: 100%;
+//   height: 100%;
+// }
+
+// .sidemenu-canvas {
+//   width: 100%;
+//   height: 100%;
+//   position: relative;
+//   -webkit-transform: translateX(0);
+//   transform: translateX(0);
+//   -webkit-transition: .3s ease all;
+//   transition: .3s ease all;
+// }
+
 .sidemenu-wrapper {
+  position: absolute;
   display: none;
+  top: 0;
+  left: 0;
+  width: 200px;
+  background: @bodyBackground;
+  min-height: 100%;
+  z-index: 101;
+
   a:focus {
     text-decoration: none;
   }
@@ -8,26 +33,20 @@
 .sidemenu-open {
   .sidemenu-wrapper {
     display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200px;
-    background: @bodyBackground;
-    min-height: 100%;
-    z-index: 101;
-  }
-
-  .dashboard-notice {
-    margin-left: 200px;
-    width: auto;
   }
 
   .main-view {
     padding-left: 200px;
   }
 
-  .panel-fullscreen {
-    left: 200px;
+  .sidemenu-canvas {
+    //-webkit-transform: translateX(200px);
+    //transform: translateX(200px);
+  }
+
+  .dashboard-notice {
+    margin-left: 200px;
+    width: auto;
   }
 }
 
