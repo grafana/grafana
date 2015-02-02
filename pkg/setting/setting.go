@@ -63,6 +63,7 @@ var (
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
+	DisableUserSignUp  bool
 
 	// single account
 	SingleAccountMode  bool
@@ -141,7 +142,7 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	}
 
 	// Check if has app suburl.
-	url, err := url.Parse(AppUrl)
+	url, err := url.Parse(appUrl)
 	if err != nil {
 		log.Fatal(4, "Invalid root_url(%s): %s", appUrl, err)
 	}
@@ -199,6 +200,7 @@ func NewConfigContext() {
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
+	DisableUserSignUp = security.Key("disable_user_signup").MustBool(false)
 
 	// admin
 	AdminUser = security.Key("admin_user").String()
@@ -247,6 +249,4 @@ func readSessionConfig() {
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
-
-	log.Info("Session Service Enabled")
 }

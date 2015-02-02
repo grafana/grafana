@@ -6,7 +6,6 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 // Register adds http routes
@@ -19,7 +18,7 @@ func Register(r *macaron.Macaron) {
 
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
-	r.Post("/logout", LogoutPost)
+	r.Get("/logout", Logout)
 	r.Post("/login", bind(dtos.LoginCommand{}), LoginPost)
 	r.Get("/login/:name", OAuthLogin)
 	r.Get("/login", LoginView)
@@ -31,7 +30,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/users/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
-	r.Get("/admin/users", reqSignedIn, Index)
+	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/location/", reqSignedIn, Index)
 	r.Get("/monitor/", reqSignedIn, Index)
@@ -48,6 +47,8 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
 			r.Post("/using/:id", SetUsingAccount)
 			r.Get("/accounts", GetUserAccounts)
+			r.Post("/favorites/dashboard/:id", AddAsFavorite)
+			r.Delete("/favorites/dashboard/:id", RemoveAsFavorite)
 		})
 
 		// account
@@ -122,55 +123,4 @@ func Register(r *macaron.Macaron) {
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
 	r.NotFound(NotFound)
-}
-
-func setIndexViewData(c *middleware.Context) error {
-	settings, err := getFrontendSettings(c)
-	if err != nil {
-		return err
-	}
-
-	currentUser := &dtos.CurrentUser{}
-
-	if c.IsSignedIn {
-		currentUser = &dtos.CurrentUser{
-			Login:            c.Login,
-			Email:            c.Email,
-			Name:             c.Name,
-			UsingAccountName: c.AccountName,
-			GravatarUrl:      dtos.GetGravatarUrl(c.Email),
-			IsGrafanaAdmin:   c.IsGrafanaAdmin,
-			Role:             c.AccountRole,
-		}
-	}
-
-	c.Data["User"] = currentUser
-	c.Data["Settings"] = settings
-	c.Data["AppUrl"] = setting.AppUrl
-	c.Data["AppSubUrl"] = setting.AppSubUrl
-
-	return nil
-}
-
-func Index(c *middleware.Context) {
-	if err := setIndexViewData(c); err != nil {
-		c.Handle(500, "Failed to get settings", err)
-		return
-	}
-
-	c.HTML(200, "index")
-}
-
-func NotFound(c *middleware.Context) {
-	if c.IsApiRequest() {
-		c.JsonApiErr(200, "Not found", nil)
-		return
-	}
-
-	if err := setIndexViewData(c); err != nil {
-		c.Handle(500, "Failed to get settings", err)
-		return
-	}
-
-	c.HTML(404, "index")
 }

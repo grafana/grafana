@@ -6,11 +6,11 @@ import . "github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 // 1. Never change a migration that is committed and pushed to master
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migraitons are not yet written (rename column, table, drop table, index etc)
-// 4
 
 func addMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
+	addFavoritesMigrations(mg)
 	addAccountMigrations(mg)
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
@@ -59,6 +59,18 @@ func addUserMigrations(mg *Migrator) {
 
 	mg.AddMigration("add column user.rands", new(AddColumnMigration).
 		Table("user").Column(&Column{Name: "rands", Type: DB_NVarchar, Length: 255, Nullable: true}))
+}
+
+func addFavoritesMigrations(mg *Migrator) {
+	mg.AddMigration("create favorite table", new(AddTableMigration).
+		Name("favorite").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "user_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+	))
+
+	mg.AddMigration("add unique index favorite.user_id_dashboard_id", new(AddIndexMigration).
+		Table("favorite").Columns("user_id", "dashboard_id").Unique())
 }
 
 func addAccountMigrations(mg *Migrator) {

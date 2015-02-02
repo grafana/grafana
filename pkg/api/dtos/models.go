@@ -15,13 +15,19 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	Login            string     `json:"login"`
-	Email            string     `json:"email"`
-	Role             m.RoleType `json:"role"`
-	Name             string     `json:"name"`
-	UsingAccountName string     `json:"usingAccountName"`
-	IsGrafanaAdmin   bool       `json:"isGrafanaAdmin"`
-	GravatarUrl      string     `json:"gravatarUrl"`
+	IsSignedIn     bool       `json:"isSignedIn"`
+	Login          string     `json:"login"`
+	Email          string     `json:"email"`
+	Name           string     `json:"name"`
+	AccountRole    m.RoleType `json:"accountRole"`
+	AccountName    string     `json:"acountName"`
+	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
+	GravatarUrl    string     `json:"gravatarUrl"`
+}
+
+type Dashboard struct {
+	IsFavorite bool                   `json:"isFavorite"`
+	Dashboard  map[string]interface{} `json:"dashboard"`
 }
 
 type DataSource struct {

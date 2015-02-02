@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/torkelo/grafana-pro/pkg/cmd"
+	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 
 	"github.com/codegangsta/cli"
@@ -30,7 +31,9 @@ func main() {
 	app.Name = "Grafana Backend"
 	app.Usage = "grafana web"
 	app.Version = version
-	app.Commands = []cli.Command{cmd.CmdWeb}
+	app.Commands = []cli.Command{cmd.CmdWeb, cmd.CmdImportJson}
 	app.Flags = append(app.Flags, []cli.Flag{}...)
 	app.Run(os.Args)
+
+	log.Close()
 }

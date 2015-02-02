@@ -83,7 +83,7 @@ func GetContextHandler() macaron.Handler {
 func (ctx *Context) Handle(status int, title string, err error) {
 	if err != nil {
 		log.Error(4, "%s: %v", title, err)
-		if macaron.Env != macaron.PROD {
+		if setting.Env != setting.PROD {
 			ctx.Data["ErrorMsg"] = err
 		}
 	}

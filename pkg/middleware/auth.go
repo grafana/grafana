@@ -16,7 +16,7 @@ type AuthOptions struct {
 }
 
 func getRequestUserId(c *Context) int64 {
-	userId := c.Session.Get("userId")
+	userId := c.Session.Get(SESS_KEY_USERID)
 
 	if userId != nil {
 		return userId.(int64)
@@ -24,8 +24,8 @@ func getRequestUserId(c *Context) int64 {
 
 	// TODO: figure out a way to secure this
 	if c.Query("render") == "1" {
-		userId := c.QueryInt64("userId")
-		c.Session.Set("userId", userId)
+		userId := c.QueryInt64(SESS_KEY_USERID)
+		c.Session.Set(SESS_KEY_USERID, userId)
 		return userId
 	}
 
@@ -70,6 +70,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}
