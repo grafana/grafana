@@ -10,7 +10,7 @@ import . "github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
 func addMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
-	addFavoritesMigrations(mg)
+	addStarMigrations(mg)
 	addAccountMigrations(mg)
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
@@ -55,16 +55,16 @@ func addUserMigrations(mg *Migrator) {
 		Table("user").Column(&Column{Name: "rands", Type: DB_NVarchar, Length: 255, Nullable: true}))
 }
 
-func addFavoritesMigrations(mg *Migrator) {
-	mg.AddMigration("create favorite table", new(AddTableMigration).
-		Name("favorite").WithColumns(
+func addStarMigrations(mg *Migrator) {
+	mg.AddMigration("create star table", new(AddTableMigration).
+		Name("star").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "user_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
 	))
 
-	mg.AddMigration("add unique index favorite.user_id_dashboard_id", new(AddIndexMigration).
-		Table("favorite").Columns("user_id", "dashboard_id").Unique())
+	mg.AddMigration("add unique index star.user_id_dashboard_id", new(AddIndexMigration).
+		Table("star").Columns("user_id", "dashboard_id").Unique())
 }
 
 func addAccountMigrations(mg *Migrator) {

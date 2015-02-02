@@ -25,9 +25,13 @@ type CurrentUser struct {
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
 
+type DashboardMeta struct {
+	IsStarred bool `json:"isStarred"`
+}
+
 type Dashboard struct {
-	IsFavorite bool                   `json:"isFavorite"`
-	Dashboard  map[string]interface{} `json:"dashboard"`
+	Meta  DashboardMeta          `json:"meta"`
+	Model map[string]interface{} `json:"model"`
 }
 
 type DataSource struct {
