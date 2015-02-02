@@ -18,17 +18,17 @@ function (angular, _, kbn) {
       this.editorSrc = 'app/features/grafanaDatasource/partials/query.editor.html';
     }
 
-    GrafanaDatasource.prototype.getDashboard = function(id, isTemp) {
-      var url = '/dashboard/' + id;
+    GrafanaDatasource.prototype.getDashboard = function(slug, isTemp) {
+      var url = '/dashboard/' + slug;
 
       if (isTemp) {
-        url = '/temp/' + id;
+        url = '/temp/' + slug;
       }
 
-      return backendSrv.get('/api/dashboard/' + id)
+      return backendSrv.get('/api/dashboard/' + slug)
         .then(function(data) {
-          if (data) {
-            return angular.fromJson(data);
+          if (data && data.dashboard) {
+            return data.dashboard;
           } else {
             return false;
           }

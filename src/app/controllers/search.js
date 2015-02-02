@@ -154,7 +154,8 @@ function (angular, _, config, $) {
     };
 
     $scope.newDashboard = function() {
-      $location.url('/dashboard/file/empty.json');
+      //$location.path('/dashboard/file/empty.json');
+      $location.url('dashboard/new');
     };
 
   });

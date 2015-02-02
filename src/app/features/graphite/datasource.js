@@ -158,7 +158,6 @@ function (angular, _, $, config, kbn, moment) {
           date = date.replace('M', 'mon');
           return date;
         }
-
         date = kbn.parseDate(date);
       }
 

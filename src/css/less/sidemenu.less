@@ -1,0 +1,119 @@
+// body {
+//   position: absolute;
+//   overflow: hidden;
+//   width: 100%;
+//   height: 100%;
+// }
+
+// .sidemenu-canvas {
+//   width: 100%;
+//   height: 100%;
+//   position: relative;
+//   -webkit-transform: translateX(0);
+//   transform: translateX(0);
+//   -webkit-transition: .3s ease all;
+//   transition: .3s ease all;
+// }
+
+.sidemenu-wrapper {
+  position: absolute;
+  display: none;
+  top: 0;
+  left: 0;
+  width: 200px;
+  background: @bodyBackground;
+  min-height: 100%;
+  z-index: 101;
+
+  a:focus {
+    text-decoration: none;
+  }
+}
+
+.sidemenu-open {
+  .sidemenu-wrapper {
+    display: block;
+  }
+
+  .main-view {
+    padding-left: 200px;
+  }
+
+  .sidemenu-canvas {
+    //-webkit-transform: translateX(200px);
+    //transform: translateX(200px);
+  }
+
+  .dashboard-notice {
+    margin-left: 200px;
+    width: auto;
+  }
+}
+
+.sidemenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidemenu-user {
+  padding: 8px 10px 7px 15px;
+  display: block;
+  width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  .gravatar-missing {
+    display: none;
+  }
+  .gravatar-email {
+    padding-left: 4px;
+  }
+  img {
+    width: 35px;
+    padding-right: 10px;
+  }
+  border-bottom: 1px solid black;
+}
+
+.sidemenu-top-btn {
+  display: block;
+  padding: 14px 0px 10px 20px;
+  background: @grafanaTargetBackground;
+  border: 1px solid rgb(55, 54, 54);
+  i {
+    padding-right: 5px;
+    font-size: 170%;
+    color: @gray;
+  }
+}
+
+.sidemenu-icon {
+  border-radius: 50%;
+  background: black;
+  box-shadow: 0 0 10px 6px #2E2E2E;
+  width: 35px;
+  height: 35px;
+  display: inline-block;
+  i {
+    color: @textColor;
+    position: relative;
+    left: 9px;
+    top: 2px;
+    font-size: 120%;
+  }
+}
+
+.sidemenu-item {
+  color: @orange;
+  line-height: 34px;
+  font-weight: bold;
+  padding: 14px 10px 14px 20px;
+  display: block;
+
+  .sidemenu-item-text {
+    padding-left: 15px;
+    text-shadow: 1px 0px 10px @orange;
+  }
+}
+

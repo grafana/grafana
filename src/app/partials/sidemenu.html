@@ -1,25 +1,37 @@
-<div ng-controller="SideMenuCtrl" ng-init="init()">
 
+<div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
-		<li class="dropdown">
-			<a class="sidemenu-user pointer" data-toggle="dropdown" title="{{grafana.user.email}}">
-				<span class="gravatar-missing">f</span>
-				<img ng-src="{{grafana.user.gravatarUrl}}" width="35">
-				<span class="gravatar-email small">{{grafana.user.login}}</span>
+		<li style="margin-bottom: 15px;">
+			<a class="pointer sidemenu-top-btn" ng-click="toggleSideMenu()">
+				<img class="logo-icon" src="img/fav32.png"></img>
+				<i class="pull-right fa fa-angle-left"></i>
 			</a>
-			<ul class="dropdown-menu">
-				<li><a href="{{appSubUrl}}/login?logout">Logout</a></li>
-			</ul>
 		</li>
-		<li ng-repeat-start="item in menu" ng-class="{'active': item.active}">
-			<a href="{{item.href}}" class="sidemenu-item"><i class="{{item.icon}}"></i>{{item.text}}</a>
+
+		<li ng-repeat="item in menu" ng-class="{'active': item.active}">
+			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
+				<span class="sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="sidemenu-item-text">{{item.text}}</span>
+	   	</a>
 		</li>
-		<li ng-repeat-end ng-if="item.active">
-			<ul class="sidemenu-links">
-				<li ng-repeat="link in item.links">
-					<a href="{{link.href}}" class="sidemenu-link" ng-class="{active: link.active}"><i class="fa fa-angle-right"></i>{{link.text}}</a>
-				</li>
-			</ul>
-		</li>
+
+		<!-- <li ng&#45;repeat&#45;end ng&#45;if="item.active"> -->
+		<!-- 	<ul class="sidemenu&#45;links"> -->
+		<!-- 		<li ng&#45;repeat="link in item.links"> -->
+		<!-- 			<a href="{{link.href}}" class="sidemenu&#45;link" ng&#45;class="{active: link.active}"><i class="fa fa&#45;angle&#45;right"></i>{{link.text}}</a> -->
+		<!-- 		</li> -->
+		<!-- 	</ul> -->
+		<!-- </li> -->
+
+		<!-- <li class="dropdown" ng&#45;if="grafana.user.isSignedIn"> -->
+		<!-- 	<a class="sidemenu&#45;user pointer" data&#45;toggle="dropdown" title="{{grafana.user.email}}"> -->
+		<!-- 		<span class="gravatar&#45;missing">f</span> -->
+		<!-- 		<img ng&#45;src="{{grafana.user.gravatarUrl}}" width="35"> -->
+		<!-- 		<span class="gravatar&#45;email small">{{grafana.user.login}}</span> -->
+		<!-- 	</a> -->
+		<!-- 	<ul class="dropdown&#45;menu"> -->
+		<!-- 		<li><a href="{{appSubUrl}}/?logout">Logout</a></li> -->
+		<!-- 	</ul> -->
+		<!-- </li> -->
 	</ul>
 </div>

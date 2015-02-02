@@ -1,15 +1,23 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Account'"></div>
+<topnav toggle="toggleSideMenu()" icon="fa fa-shield" section="Account" show-menu-btn="!grafana.sidemenu">
+	<!-- <ul class="nav"> -->
+	<!-- 	<li> -->
+	<!-- 		<a href="asd">Details</a> -->
+	<!-- 	</li> -->
+	<!-- 	<li> -->
+	<!-- 		<a href="asd">Data Sources</a> -->
+	<!-- 	</li> -->
+	<!-- 	<li> -->
+	<!-- 		<a href="asd">Users</a> -->
+	<!-- 	</li> -->
+	<!-- 	<li> -->
+	<!-- 		<a href="asd">API Keys</a> -->
+	<!-- 	</li> -->
+	<!-- </ul> -->
+</topnav>
 
-<div class="dashboard-edit-view" style="min-height: 500px">
+<div class="gf-box" style="min-height: 500px">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
-			<i class="fa fa-shield"></i>
-			  Account information
-		</div>
-	</div>
-
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 		<div class="row editor-row">
 			<div class="section">
 				<form name="accountForm">

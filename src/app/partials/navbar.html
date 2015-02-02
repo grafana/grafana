@@ -1,15 +1,17 @@
 <div class="navbar navbar-static-top">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="hamburger">
-				<a class="pointer" ng-click="toggleSideMenu()">
-					<i class="fa fa-bars"></i>
-				</a>
-			</span>
-			<span class="brand">
-				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-				<span class="page-title">{{pageTitle}}</span>
-			</span>
+			<topnav toggle="toggleSideMenu()"
+			        title="{{pageTitle}}"
+							icon="{{pageIcon}}"
+							section="{{pageSection}}"
+							show-menu-btn="!grafana.sidemenu">
+			</topnav>
+			<ul class="nav">
+				<li>
+					<a href="asd">Data Sources</a>
+				</li>
+			</ul>
 		</div>
 	</div>
 </div>

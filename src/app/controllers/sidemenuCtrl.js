@@ -15,47 +15,75 @@ function (angular, _, $, config) {
       return config.appSubUrl + url;
     };
 
-    $scope.menu = [
-      {
-        text: "Dashbord",
-        href: $scope.getUrl("/"),
-        startsWith: config.appSubUrl + '/dashboard/',
-        icon: "fa fa-th-large",
-        links: [
-          { text: 'Settings',    editview: 'settings',    icon: "fa fa-cogs" },
-          { text: 'Templating',  editview: 'templating',  icon: "fa fa-cogs" },
-          { text: 'Annotations', editview: 'annotations', icon: "fa fa-bolt" },
-          { text: 'Export', href:"", icon: "fa fa-bolt" },
-          { text: 'JSON', href:"", icon: "fa fa-bolt" },
-        ]
-      },
-      {
+    $scope.menu = [];
+    $scope.menu.push({
+      text: "Dashbords",
+      icon: "fa fa-th-large",
+      href: $scope.getUrl("/"),
+      startsWith: config.appSubUrl + '/dashboard/',
+    });
+
+    $scope.menu.push({
+      text: "Data Sources",
+      icon: "fa fa-database",
+      href: $scope.getUrl("/account/datasources"),
+    });
+
+    if ($scope.grafana.user.accountRole === 'Admin') {
+      $scope.menu.push({
         text: "Account", href: $scope.getUrl("/account"),
+        requireRole: "Admin",
         icon: "fa fa-shield",
-        links: [
-          { text: 'Info', href: $scope.getUrl("/account"), icon: "fa fa-sitemap" },
-          { text: 'Data sources', href: $scope.getUrl("/account/datasources"), icon: "fa fa-sitemap" },
-          { text: 'Users', href: $scope.getUrl("/account/users"), icon: "fa fa-users" },
-          { text: 'API Keys', href: $scope.getUrl("/account/apikeys"), icon: "fa fa-key" },
-        ]
-      },
-      {
+      });
+      $scope.menu.push({
+        text: "Users", href: $scope.getUrl("/account/users"),
+        requireRole: "Admin",
+        icon: "fa fa-users",
+      });
+      $scope.menu.push({
+        text: "API Keys", href: $scope.getUrl("/account/apikeys"),
+        requireRole: "Admin",
+        icon: "fa fa-key",
+      });
+    }
+
+    if ($scope.grafana.user.isSignedIn) {
+      $scope.menu.push({
         text: "Profile", href: $scope.getUrl("/profile"),
         icon: "fa fa-user",
+      });
+    }
+
+
+    $scope.menu.push({
+      text: "Monitor", href: $scope.getUrl("/monitor"),
+      icon: "fa fa-eye",
+    });
+    $scope.menu.push({
+      text: 'Locations', href: $scope.getUrl("/location"), 
+      icon: "fa fa-globe"
+    });
+
+    if ($scope.grafana.user.isGrafanaAdmin) {
+      $scope.menu.push({
+        text: "Admin", href: $scope.getUrl("/admin/users"),
+        icon: "fa fa-cube",
+        requireSignedIn: true,
         links: [
-          { text: 'Info', href: $scope.getUrl("/profile"), icon: "fa fa-sitemap" },
-          { text: 'Password', href:"", icon: "fa fa-lock" },
+          { text: 'Settings', href: $scope.getUrl("/admin/settings")},
+          { text: 'Users',    href: $scope.getUrl("/admin/users"), icon: "fa fa-lock" },
+          { text: 'Log',      href: "", icon: "fa fa-lock" },
         ]
-      },
-      {
-        text: "Raintank", href: $scope.getUrl("/monitor"),
-        icon: "fa fa-cloud",
-        links: [
-          { text: 'Monitor', href: $scope.getUrl("/monitor"), icon: "fa fa-eye" },
-          { text: 'Locations', href: $scope.getUrl("/location"), icon: "fa fa-globe" },
-        ]
-      }
-    ];
+      });
+    }
+
+    if ($scope.grafana.user.isSignedIn) {
+      $scope.menu.push({
+        text: "Sign out", href: $scope.getUrl("/logout"),
+        target: "_self",
+        icon: "fa fa-sign-out",
+      });
+    }
 
     $scope.onAppEvent('$routeUpdate', function() {
       $scope.updateState();
@@ -68,18 +96,21 @@ function (angular, _, $, config) {
     $scope.updateState = function() {
       var currentPath = config.appSubUrl + $location.path();
       var search = $location.search();
+      var activeIndex;
 
-      _.each($scope.menu, function(item) {
+      _.each($scope.menu, function(item, index) {
         item.active = false;
 
         if (item.href === currentPath) {
           item.active = true;
+          activeIndex = index;
         }
 
         if (item.startsWith) {
           if (currentPath.indexOf(item.startsWith) === 0) {
             item.active = true;
             item.href = currentPath;
+            activeIndex = index;
           }
         }
 
@@ -102,6 +133,8 @@ function (angular, _, $, config) {
           }
         });
       });
+
+      //$scope.menu.splice(0, 0, $scope.menu.splice(activeIndex, 1)[0]);
     };
 
     $scope.init = function() {

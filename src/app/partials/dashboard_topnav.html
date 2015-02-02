@@ -1,20 +1,44 @@
 <div class="navbar navbar-static-top" ng-controller='DashboardNavCtrl' ng-init="init()">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="hamburger">
-				<a class="pointer" ng-click="toggleSideMenu()">
-					<i class="fa fa-bars"></i>
+
+			<div class="top-nav">
+				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
+					<img class="logo-icon" src="img/fav32.png"></img>
+					<i class="fa fa-angle-right"></i>
 				</a>
-			</span>
-			<span class="brand">
-				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-				<a ng-click="openSearch()" class="page-title">
-					{{dashboard.title}}
-					<span class="small">
-						<i class="fa fa-angle-down"></i>
-					</span>
+
+				<a class="top-nav-dashboards-btn pointer" ng-click="openSearch()">
+					<i class="fa fa-th-large"></i>
+					<i class="fa fa-angle-down"></i>
 				</a>
-			</span>
+
+				<a ng-click="asd()" class="top-nav-title pointer">
+					 {{dashboard.title}}
+				 </a>
+			 </div>
+
+			<ul class="nav pull-left">
+				<li>
+					<a class="pointer" ng-click="starDashboard()"><i class="fa fa-star-o" style="color: orange;"></i></a>
+				</li>
+				<li>
+					<a class="pointer" ng-click="asd()"><i class="fa fa-share-square-o"></i></a>
+				</li>
+				<li>
+					<a ng-click="saveDashboard()"><i class="fa fa-save"></i></a>
+				</li>
+				<li class="dropdown">
+					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
+					<ul class="dropdown-menu">
+						<li><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
+						<li><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
+						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
+						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
+						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
+					</ul>
+				</li>
+			</ul>
 
 			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">
@@ -28,14 +52,12 @@
 					</grafana-simple-panel>
 				</li>
 
-				<li class="dropdown grafana-menu-save">
-					<a bs-tooltip="'Save'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="saveDashboard()">
-						<i class='fa fa-save'></i>
-					</a>
-				</li>
-
-				<!-- <li class="grafana&#45;menu&#45;home"><a bs&#45;tooltip="'Goto saved default'" data&#45;placement="bottom" href='#/'><i class='fa fa&#45;home'></i></a></li> -->
-
+				<!-- <li class="dropdown grafana&#45;menu&#45;save"> -->
+				<!-- 	<a bs&#45;tooltip="'Save'" data&#45;placement="bottom" class="dropdown&#45;toggle" data&#45;toggle="dropdown" ng&#45;click="saveDashboard()"> -->
+				<!-- 		<i class='fa fa&#45;save'></i> -->
+				<!-- 	</a> -->
+				<!-- </li> -->
+        <!--  -->
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>
 						Stop playlist

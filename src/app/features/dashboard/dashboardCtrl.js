@@ -61,6 +61,9 @@ function (angular, $, config, _) {
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
       $scope.grafana.style = $scope.dashboard.style;
+      $scope.topnav.title = $scope.dashboard.title;
+      $scope.topnav.icon = "fa fa-th-large";
+      $scope.topnav.titleAction = function() { alert("hej"); };
     };
 
     $scope.isPanel = function(obj) {
@@ -105,7 +108,7 @@ function (angular, $, config, _) {
     };
 
     $scope.checkFeatureToggles = function() {
-      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable;
+      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable || false;
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {

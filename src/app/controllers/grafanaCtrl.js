@@ -10,16 +10,16 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller) {
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope.grafana = {};
-
-    $rootScope.profilingEnabled = store.getBool('profilingEnabled');
-    $rootScope.performance = { loadStart: new Date().getTime() };
-    $rootScope.appSubUrl = config.appSubUrl;
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller, userSrv, $timeout) {
 
     $scope.init = function() {
+      $scope.grafana = {};
+      $scope.grafana.version = grafanaVersion;
       $scope._ = _;
+
+      $rootScope.profilingEnabled = store.getBool('profilingEnabled');
+      $rootScope.performance = { loadStart: new Date().getTime() };
+      $rootScope.appSubUrl = config.appSubUrl;
 
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
 
@@ -28,18 +28,9 @@ function (angular, config, _, $, store) {
 
       $scope.dashAlerts = alertSrv;
       $scope.grafana.style = 'dark';
-
-      if (window.grafanaBackend) {
-        $scope.initBackendFeatures();
-      }
-    };
-
-    $scope.initBackendFeatures = function() {
+      $scope.grafana.user = userSrv.getSignedInUser();
       $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
-
-      if (window.grafanaBootData.user.login) {
-        $scope.grafana.user = window.grafanaBootData.user;
-      }
+      $scope.topnav = { title: 'Grafana' };
 
       $scope.onAppEvent('logged-out', function() {
         $scope.grafana.sidemenu = false;
@@ -54,6 +45,10 @@ function (angular, config, _, $, store) {
     $scope.toggleSideMenu = function() {
       $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
       store.set('grafana.sidemenu', $scope.grafana.sidemenu);
+
+      $timeout(function() {
+        $scope.$broadcast("render");
+      }, 50);
     };
 
     $rootScope.onAppEvent = function(name, callback) {

@@ -6,9 +6,9 @@ function (angular, $) {
   'use strict';
 
   var editViewMap = {
-    'settings': 'app/partials/dasheditor.html',
-    'annotations': 'app/features/annotations/partials/editor.html',
-    'templating': 'app/partials/templating_editor.html',
+    'settings':    { src: 'app/partials/dasheditor.html', title: "Settings" },
+    'annotations': { src: 'app/features/annotations/partials/editor.html', title: "Annotations" },
+    'templating':  { src: 'app/partials/templating_editor.html', title: "Templating" }
   };
 
   angular
@@ -55,7 +55,10 @@ function (angular, $) {
           }
 
           function showEditorPane(evt, payload, editview) {
-            if (editview) { payload.src = editViewMap[editview]; }
+            if (editview) {
+              scope.grafana.editview = editViewMap[editview];
+              payload.src = scope.grafana.editview.src;
+            }
 
             if (lastEditor === payload.src) {
               hideEditorPane();
@@ -89,7 +92,7 @@ function (angular, $) {
             hideScrollbars(true);
 
             var src = "'" + payload.src + "'";
-            var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');
+            var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
             elem.append(view);
             $compile(elem.contents())(editorScope);
           }
@@ -98,10 +101,13 @@ function (angular, $) {
             if (newValue) {
               showEditorPane(null, {}, newValue);
             } else if (oldValue) {
+              scope.grafana.editview = null;
               hideEditorPane();
             }
           });
 
+          scope.grafana.editview = null;
+          scope.$on("$destroy", hideEditorPane);
           scope.onAppEvent('hide-dash-editor', hideEditorPane);
           scope.onAppEvent('show-dash-editor', showEditorPane);
         }

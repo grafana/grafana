@@ -7,8 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LoginCtrl', function($scope, backendSrv, $location, $routeParams) {
-
+  module.controller('LoginCtrl', function($scope, backendSrv) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -16,16 +15,17 @@ function (angular, config) {
     };
 
     $scope.grafana.sidemenu = false;
+
+    $scope.googleAuthEnabled = config.googleAuthEnabled;
+    $scope.githubAuthEnabled = config.githubAuthEnabled;
+    $scope.disableUserSignUp = config.disableUserSignUp;
+
     $scope.loginMode = true;
     $scope.submitBtnClass = 'btn-inverse';
     $scope.submitBtnText = 'Log in';
     $scope.strengthClass = '';
 
     $scope.init = function() {
-      if ($routeParams.logout) {
-        $scope.logout();
-      }
-
       $scope.$watch("loginMode", $scope.loginModeChanged);
       $scope.passwordChanged();
     };
@@ -77,13 +77,6 @@ function (angular, config) {
 
       backendSrv.post('/api/user/signup', $scope.formModel).then(function() {
         window.location.href = config.appSubUrl + '/';
-      });
-    };
-
-    $scope.logout = function() {
-      backendSrv.post('/logout').then(function() {
-        $scope.appEvent('logged-out');
-        $location.search({});
       });
     };
 
