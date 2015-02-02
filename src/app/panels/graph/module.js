@@ -19,7 +19,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
   module.directive('grafanaPanelGraph', function() {
     return {
       controller: 'GraphCtrl',
-      templateUrl: '/app/panels/graph/module.html',
+      templateUrl: 'app/panels/graph/module.html',
     };
   });
 

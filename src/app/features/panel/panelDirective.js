@@ -25,7 +25,7 @@ function (angular, $, config) {
     }).directive('grafanaPanel', function() {
       return {
         restrict: 'E',
-        templateUrl: '/app/features/panel/partials/panel.html',
+        templateUrl: 'app/features/panel/partials/panel.html',
         transclude: true,
         link: function(scope, elem) {
           var panelContainer = elem.find('.panel-container');

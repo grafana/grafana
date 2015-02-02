@@ -16,7 +16,7 @@ function (angular, app, _, require, PanelMeta) {
   module.directive('grafanaPanelText', function() {
     return {
       controller: 'TextPanelCtrl',
-      templateUrl: '/app/panels/text/module.html',
+      templateUrl: 'app/panels/text/module.html',
     };
   });
 

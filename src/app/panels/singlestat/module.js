@@ -16,7 +16,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
   module.directive('grafanaPanelSinglestat', function() {
     return {
       controller: 'SingleStatCtrl',
-      templateUrl: '/app/panels/singlestat/module.html',
+      templateUrl: 'app/panels/singlestat/module.html',
     };
   });
 
