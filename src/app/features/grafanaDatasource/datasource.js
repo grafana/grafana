@@ -61,18 +61,12 @@ function (angular, _, kbn) {
     };
 
     GrafanaDatasource.prototype.deleteDashboard = function(id) {
-      return backendSrv.delete('/api/dashboard/' + id)
-        .then(function(data) {
-          return data.title;
-        });
+      return backendSrv.delete('/api/dashboard/' + id);
     };
 
     GrafanaDatasource.prototype.searchDashboards = function(query) {
       return backendSrv.get('/api/search/', {q: query})
         .then(function(data) {
-          _.each(data.dashboards, function(item) {
-            item.id = item.slug;
-          });
           return data;
         });
     };

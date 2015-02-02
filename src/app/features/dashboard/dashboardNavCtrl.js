@@ -116,10 +116,10 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboardConfirmed = function(options) {
-      var id = options.id;
-      $scope.db.deleteDashboard(id).then(function(id) {
-        $scope.appEvent('dashboard-deleted', id);
-        $scope.appEvent('alert-success', ['Dashboard Deleted', id + ' has been deleted']);
+      var slug = options.slug;
+      $scope.db.deleteDashboard(slug).then(function() {
+        $scope.appEvent('dashboard-deleted', options);
+        $scope.appEvent('alert-success', ['Dashboard Deleted', options.title + ' has been deleted']);
       }, function(err) {
         $scope.appEvent('alert-error', ['Deleted failed', err]);
       });
