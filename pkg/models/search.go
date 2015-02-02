@@ -7,6 +7,7 @@ type SearchResult struct {
 }
 
 type DashboardSearchHit struct {
+	Id    int64    `json:"id"`
 	Title string   `json:"title"`
 	Slug  string   `json:"slug"`
 	Tags  []string `json:"tags"`
