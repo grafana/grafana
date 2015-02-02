@@ -9,7 +9,6 @@ define([
   './keybindings',
   './viewStateSrv',
   './playlistSrv',
-  './panelSrv',
   './soloPanelCtrl',
   './timeSrv',
   './unsavedChangesSrv',

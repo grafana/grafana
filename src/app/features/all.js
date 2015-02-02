@@ -7,6 +7,7 @@ define([
   './opentsdb/datasource',
   './elasticsearch/datasource',
   './dashboard/all',
+  './panel/all',
   './profile/profileCtrl',
   './account/accountUsersCtrl',
   './account/datasourcesCtrl',

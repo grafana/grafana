@@ -16,10 +16,18 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
   var module = angular.module('grafana.panels.graph');
 
+  module.directive('grafanaPanelGraph', function() {
+    return {
+      controller: 'GraphCtrl',
+      templateUrl: '/app/panels/graph/module.html',
+    };
+  });
+
   module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      description: 'Graph panel',
+      panelName: 'Graph',
+      editIcon:  "fa fa-bar-chart",
       fullscreen: true,
       metricsEditor: true
     });

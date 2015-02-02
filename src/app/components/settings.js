@@ -18,7 +18,7 @@ function (_, crypto) {
       panels                        : {
         'graph': { path: 'panels/graph' },
         'singlestat': { path: 'panels/singlestat' },
-        'text': { path: 'panels/text' }
+        'text': { path: 'panels/text' },
       },
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',

@@ -13,10 +13,18 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
   var module = angular.module('grafana.panels.singlestat');
   app.useModule(module);
 
+  module.directive('grafanaPanelSinglestat', function() {
+    return {
+      controller: 'SingleStatCtrl',
+      templateUrl: '/app/panels/singlestat/module.html',
+    };
+  });
+
   module.controller('SingleStatCtrl', function($scope, panelSrv, timeSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      description: 'Singlestat panel',
+      panelName: 'Singlestat',
+      editIcon:  "fa fa-dashboard",
       fullscreen: true,
       metricsEditor: true
     });
@@ -192,7 +200,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       data.colorMap = $scope.panel.colors;
 
       $scope.data = data;
-      $scope.$emit('render');
+      $scope.$broadcast('render');
     };
 
     $scope.getFormatedValue = function(mainValue) {

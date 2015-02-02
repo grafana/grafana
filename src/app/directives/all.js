@@ -1,7 +1,6 @@
 define([
   './arrayJoin',
   './dashUpload',
-  './grafanaPanel',
   './grafanaSimplePanel',
   './ngBlur',
   './dashEditLink',

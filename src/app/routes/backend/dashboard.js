@@ -58,7 +58,7 @@ function (angular, store) {
       $location.path('');
       return;
     }
-    $scope.initDashboard(window.grafanaImportDashboard, $scope);
+    $scope.initDashboard({ meta: {}, model: window.grafanaImportDashboard }, $scope);
   });
 
   module.controller('NewDashboardCtrl', function($scope) {
