@@ -60,6 +60,7 @@ function(angular, _, config) {
     this.open_modal = function() {
       var confirmModal = $modal({
         template: './app/partials/unsaved-changes.html',
+        modalClass: 'confirm-modal',
         persist: true,
         show: false,
         scope: modalScope,

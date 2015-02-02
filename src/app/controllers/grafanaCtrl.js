@@ -27,7 +27,7 @@ function (angular, config, _, $, store) {
       utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana.style = 'dark';
+      $scope.grafana.lightTheme = false;
       $scope.grafana.user = userSrv.getSignedInUser();
       $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
       $scope.topnav = { title: 'Grafana' };
@@ -101,7 +101,7 @@ function (angular, config, _, $, store) {
       }, function() {
       });
 
-      $scope.onAppEvent('setup-dashboard', function() {
+      $scope.onAppEvent('dashboard-loaded', function() {
         count = 0;
 
         setTimeout(function() {

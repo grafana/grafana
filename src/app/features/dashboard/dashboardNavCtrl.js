@@ -144,10 +144,6 @@ function (angular, _, moment, config, store) {
       });
     };
 
-    $scope.styleUpdated = function() {
-      $scope.grafana.style = $scope.dashboard.style;
-    };
-
     $scope.editJson = function() {
       $scope.appEvent('show-json-editor', { object: $scope.dashboard });
     };

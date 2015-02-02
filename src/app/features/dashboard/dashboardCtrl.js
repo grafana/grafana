@@ -60,18 +60,11 @@ function (angular, $, config, _) {
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.grafana.style = $scope.dashboard.style;
-      $scope.topnav.title = $scope.dashboard.title;
-      $scope.topnav.icon = "fa fa-th-large";
-      $scope.topnav.titleAction = function() { alert("hej"); };
+      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
     };
 
-    $scope.isPanel = function(obj) {
-      if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
-        return true;
-      } else {
-        return false;
-      }
+    $scope.styleUpdated = function() {
+      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.add_row = function(dash, row) {
