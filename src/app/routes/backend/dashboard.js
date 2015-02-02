@@ -28,7 +28,7 @@ function (angular, store) {
       if (!savedRoute) {
         $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
           var dashboard = angular.fromJson(result.data);
-          $scope.initDashboard(dashboard, $scope);
+          $scope.initDashboard({model: dashboard, meta: {}}, $scope);
         },function() {
           $scope.initDashboard({}, $scope);
           $scope.appEvent('alert-error', ['Load dashboard failed', '']);
@@ -41,13 +41,15 @@ function (angular, store) {
       }
     }
 
-    db.getDashboard($routeParams.id, isTemp)
-      .then(function(dashboard) {
-        prevDashPath = $location.path();
-        $scope.initDashboard(dashboard, $scope);
-      }).then(null, function() {
-        $scope.initDashboard({}, $scope);
-      });
+    db.getDashboard($routeParams.id, isTemp).then(function(result) {
+      prevDashPath = $location.path();
+      $scope.initDashboard(result, $scope);
+    }).then(null, function() {
+      $scope.initDashboard({
+        meta: {},
+        model: { title: 'Not found' }
+      }, $scope);
+    });
   });
 
   module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
@@ -61,8 +63,11 @@ function (angular, store) {
 
   module.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
-      title: "New dashboard",
-      rows: [{ height: '250px', panels:[] }]
+      meta: {},
+      model: {
+        title: "New dashboard",
+        rows: [{ height: '250px', panels:[] }]
+      },
     }, $scope);
   });
 

@@ -25,14 +25,7 @@ function (angular, _, kbn) {
         url = '/temp/' + slug;
       }
 
-      return backendSrv.get('/api/dashboard/' + slug)
-        .then(function(data) {
-          if (data && data.dashboard) {
-            return data.dashboard;
-          } else {
-            return false;
-          }
-        });
+      return backendSrv.get('/api/dashboard/' + slug);
     };
 
     GrafanaDatasource.prototype.query = function(options) {
@@ -41,6 +34,14 @@ function (angular, _, kbn) {
       var to = kbn.parseDate(options.range.to).getTime();
 
       return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
+    };
+
+    GrafanaDatasource.prototype.starDashboard = function(dashId) {
+      return backendSrv.post('/api/user/stars/dashboard/' + dashId);
+    };
+
+    GrafanaDatasource.prototype.unstarDashboard = function(dashId) {
+      return backendSrv.delete('/api/user/stars/dashboard/' + dashId);
     };
 
     GrafanaDatasource.prototype.saveDashboard = function(dashboard) {

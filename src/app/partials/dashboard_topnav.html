@@ -20,7 +20,9 @@
 
 			<ul class="nav pull-left">
 				<li>
-					<a class="pointer" ng-click="starDashboard()"><i class="fa fa-star-o" style="color: orange;"></i></a>
+					<a class="pointer" ng-click="starDashboard()">
+						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
+					</a>
 				</li>
 				<li>
 					<a class="pointer" ng-click="shareDashboard()"><i class="fa fa-share-square-o"></i></a>

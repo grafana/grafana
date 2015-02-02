@@ -39,6 +39,19 @@ function (angular, _, moment, config, store) {
       $location.search(search);
     };
 
+    $scope.starDashboard = function() {
+      if ($scope.dashboardMeta.isStarred) {
+        $scope.db.unstarDashboard($scope.dashboard.id).then(function() {
+          $scope.dashboardMeta.isStarred = false;
+        });
+      }
+      else {
+        $scope.db.starDashboard($scope.dashboard.id).then(function() {
+          $scope.dashboardMeta.isStarred = true;
+        });
+      }
+    };
+
     $scope.shareDashboard = function() {
       $scope.appEvent('show-modal', {
         src: './app/features/dashboard/partials/shareModal.html',

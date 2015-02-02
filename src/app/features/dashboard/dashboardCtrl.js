@@ -23,12 +23,12 @@ function (angular, $, config, _) {
     $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
     var resizeEventTimeout;
 
-    this.init = function(dashboardData) {
+    this.init = function(dashboard) {
       $scope.availablePanels = config.panels;
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
       $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
-      $scope.setupDashboard(dashboardData);
+      $scope.setupDashboard(dashboard);
     };
 
     $scope.registerWindowResizeEvent = function() {
@@ -38,13 +38,14 @@ function (angular, $, config, _) {
       });
     };
 
-    $scope.setupDashboard = function(dashboardData) {
+    $scope.setupDashboard = function(dashboard) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      $scope.dashboard = dashboardSrv.create(dashboardData);
+      $scope.dashboard = dashboardSrv.create(dashboard.model);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+      $scope.dashboardMeta = dashboard.meta;
 
       // init services
       timeSrv.init($scope.dashboard);
