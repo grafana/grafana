@@ -109,12 +109,11 @@
 				</div>
 			</div>
 
-			<div class="dashboard-editor-footer" style="margin-top: 20px">
-				<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
-				<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
-				<button type="submit" class="btn btn-info" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
-			</div>
-
+			<br>
+			<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
+			<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
+			<button type="submit" class="btn btn-inverse" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
+			<br>
 		</form>
 	</div>
 </div>

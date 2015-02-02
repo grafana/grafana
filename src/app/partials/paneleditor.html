@@ -1,5 +1,5 @@
-<div bindonce class="dashboard-editor-header">
-	<div class="dashboard-editor-title">
+<div bindonce class="gf-box-header">
+	<div class="gf-box-title">
 		<i class="fa fa-text-width"></i>
 		<span bo-text="panel.type+' settings'"></span>
 	</div>
@@ -9,14 +9,14 @@
 		</div>
 	</div>
 
+	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</button>
 </div>
 
-<div class="dashboard-editor-body">
+<div class="gf-box-body">
 	<div ng-repeat="tab in panelMeta.editorTabs" ng-show="editor.index == $index">
 		<div ng-include src="tab.src"></div>
 	</div>
 </div>
 
-<div class="dashboard-editor-footer">
-	<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss()">Close</button>
-</div>

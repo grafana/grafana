@@ -1,12 +1,17 @@
 <div ng-controller="PlaylistCtrl" ng-init="init()">
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
 			<i class="fa fa-play"></i>
 			Start dashboard playlist
 		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+
 	</div>
 
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 
 		<div class="editor-row">
 			<div class="section">
@@ -52,11 +57,11 @@
 					<input type="text" class="input-small" ng-model="timespan" />
 				</div>
 			</div>
-		</div>
-	</div>
 
-	<div class="dashboard-editor-footer">
-		<button class="btn btn-success" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
-		<button type="button" class="btn btn-success pull-right" ng-click="dismiss();">Close</button>
+		</div>
+
+		<br>
+		<button class="btn btn-success pull-right" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
+		<br>
 	</div>
 </div>
