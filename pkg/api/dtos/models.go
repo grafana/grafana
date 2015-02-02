@@ -57,6 +57,10 @@ type MetricQueryResultDataDto struct {
 	DataPoints [][2]float64 `json:"datapoints"`
 }
 
+type UserStars struct {
+	DashboardIds map[string]bool `json:"dashboardIds"`
+}
+
 func GetGravatarUrl(text string) string {
 	if text == "" {
 		return ""

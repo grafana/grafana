@@ -105,6 +105,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		hit, exists := hits[item.Id]
 		if !exists {
 			hit = &m.DashboardSearchHit{
+				Id:    item.Id,
 				Title: item.Title,
 				Slug:  item.Slug,
 				Tags:  []string{},

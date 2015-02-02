@@ -1,6 +1,9 @@
 package api
 
 import (
+	"strconv"
+
+	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -42,4 +45,21 @@ func UnstarDashboard(c *middleware.Context) {
 	}
 
 	c.JsonOK("Dashboard unstarred")
+}
+
+func GetUserStars(c *middleware.Context) {
+	query := m.GetUserStarsQuery{UserId: c.UserId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		c.JsonApiErr(500, "Failed to get user stars", err)
+		return
+	}
+
+	var result dtos.UserStars
+	result.DashboardIds = make(map[string]bool)
+	for _, star := range query.Result {
+		result.DashboardIds[strconv.FormatInt(star.DashboardId, 10)] = true
+	}
+
+	c.JSON(200, &result)
 }
