@@ -39,17 +39,11 @@ function (angular, _, moment, config, store) {
       $location.search(search);
     };
 
-    $scope.saveForSharing = function() {
-      var clone = angular.copy($scope.dashboard);
-      clone.temp = true;
-      $scope.db.saveDashboard(clone)
-        .then(function(result) {
-
-          $scope.share = { url: result.url, title: result.title };
-
-        }, function(err) {
-          alertSrv.set('Save for sharing failed', err, 'error',5000);
-        });
+    $scope.shareDashboard = function() {
+      $scope.appEvent('show-modal', {
+        src: './app/features/dashboard/partials/shareModal.html',
+        scope: $scope.$new(),
+      });
     };
 
     $scope.passwordCache = function(pwd) {

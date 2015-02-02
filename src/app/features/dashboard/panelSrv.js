@@ -24,7 +24,7 @@ function (angular, _) {
 
       $scope.sharePanel = function() {
         $scope.appEvent('show-modal', {
-          src: './app/partials/share-panel.html',
+          src: './app/features/dashboard/partials/shareModal.html',
           scope: $scope.$new()
         });
       };
