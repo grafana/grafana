@@ -1,37 +1,39 @@
 
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 	<ul class="sidemenu">
-		<li style="margin-bottom: 15px;">
+		<li style="margin-bottom: 2px;">
 			<a class="pointer sidemenu-top-btn" ng-click="toggleSideMenu()">
 				<img class="logo-icon" src="img/fav32.png"></img>
 				<i class="pull-right fa fa-angle-left"></i>
 			</a>
 		</li>
 
-		<li ng-repeat="item in menu" ng-class="{'active': item.active}">
+		<li ng-repeat="item in menu">
 			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
 				<span class="sidemenu-icon"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>
 		</li>
 
-		<!-- <li ng&#45;repeat&#45;end ng&#45;if="item.active"> -->
-		<!-- 	<ul class="sidemenu&#45;links"> -->
-		<!-- 		<li ng&#45;repeat="link in item.links"> -->
-		<!-- 			<a href="{{link.href}}" class="sidemenu&#45;link" ng&#45;class="{active: link.active}"><i class="fa fa&#45;angle&#45;right"></i>{{link.text}}</a> -->
-		<!-- 		</li> -->
-		<!-- 	</ul> -->
-		<!-- </li> -->
+		<li ng-if="grafana.user.isSignedIn" style="margin-top:50px">
+			<a href="profile" class="sidemenu-item sidemenu-user">
+				<img ng-src="{{grafana.user.gravatarUrl}}">
+				<span class="sidemenu-item-text">{{grafana.user.name}}</a>
+			</a>
+		</li>
 
-		<!-- <li class="dropdown" ng&#45;if="grafana.user.isSignedIn"> -->
-		<!-- 	<a class="sidemenu&#45;user pointer" data&#45;toggle="dropdown" title="{{grafana.user.email}}"> -->
-		<!-- 		<span class="gravatar&#45;missing">f</span> -->
-		<!-- 		<img ng&#45;src="{{grafana.user.gravatarUrl}}" width="35"> -->
-		<!-- 		<span class="gravatar&#45;email small">{{grafana.user.login}}</span> -->
-		<!-- 	</a> -->
-		<!-- 	<ul class="dropdown&#45;menu"> -->
-		<!-- 		<li><a href="{{appSubUrl}}/?logout">Logout</a></li> -->
-		<!-- 	</ul> -->
-		<!-- </li> -->
+		<li ng-if="grafana.user.isSignedIn">
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="sidemenu-item-text no-icon">Sign out</span>
+	   	</a>
+		</li>
+
+		<li ng-if="!grafana.user.isSignedIn" style="margin-top:50px">
+			<a href="/login" class="sidemenu-item" target="_self">
+				<span class="sidemenu-icon"><i class="fa fa-sign-in"></i></span>
+				<span class="sidemenu-item-text">Sign in</span>
+	   	</a>
+		</li>
+
 	</ul>
 </div>

@@ -31,31 +31,31 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  li {
+    height: 50px;
+  }
 }
 
 .sidemenu-user {
-  padding: 8px 10px 7px 15px;
-  display: block;
-  width: 170px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  .gravatar-missing {
-    display: none;
-  }
-  .gravatar-email {
-    padding-left: 4px;
+  .sidemenu-item-text {
+    width: 110px;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   img {
-    width: 35px;
-    padding-right: 10px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
-  border-bottom: 1px solid black;
 }
 
 .sidemenu-top-btn {
   display: block;
-  padding: 14px 0px 10px 20px;
+  padding: 14px 0px 10px 27px;
   background: @grafanaTargetBackground;
   border: 1px solid rgb(55, 54, 54);
   i {
@@ -67,30 +67,36 @@
 
 .sidemenu-icon {
   border-radius: 50%;
-  background: black;
-  box-shadow: 0 0 10px 6px #2E2E2E;
-  width: 35px;
-  height: 35px;
+  background: #000;
+  box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
+  width: 40px;
+  height: 40px;
   display: inline-block;
   i {
     color: @textColor;
+    opacity: .7;
     position: relative;
-    left: 9px;
-    top: 2px;
-    font-size: 120%;
+    left: 11px;
+    top: 5px;
+    font-size: 135%;
   }
 }
 
 .sidemenu-item {
-  color: @orange;
+  color: #f80;
   line-height: 34px;
+	padding: 14px 10px 14px 20px;
   font-weight: bold;
-  padding: 14px 10px 14px 20px;
-  display: block;
+	display: block;
 
   .sidemenu-item-text {
     padding-left: 15px;
-    text-shadow: 1px 0px 10px @orange;
+    &.no-icon {
+      padding-left: 59px;
+    }
+    //text-shadow: 1px 0 10px #A25803;
+    //text-shadow: 1px 0 10px #f80;
   }
 }
+
 
