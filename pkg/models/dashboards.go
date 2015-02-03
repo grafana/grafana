@@ -15,8 +15,8 @@ var (
 
 type Dashboard struct {
 	Id        int64
-	Slug      string `xorm:"index(IX_AccountIdSlug)"`
-	AccountId int64  `xorm:"index(IX_AccountIdSlug)"`
+	Slug      string
+	AccountId int64
 
 	Created time.Time
 	Updated time.Time

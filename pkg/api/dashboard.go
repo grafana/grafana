@@ -1,10 +1,15 @@
 package api
 
 import (
+	"encoding/json"
+	"os"
+	"path"
+
 	"github.com/torkelo/grafana-pro/pkg/api/dtos"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
 	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
 )
 
@@ -80,4 +85,23 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	}
 
 	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug})
+}
+
+func GetHomeDashboard(c *middleware.Context) {
+	filePath := path.Join(setting.StaticRootPath, "app/dashboards/default.json")
+	file, err := os.Open(filePath)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to load home dashboard", err)
+		return
+	}
+
+	dash := dtos.Dashboard{}
+	dash.Meta.IsHome = true
+	jsonParser := json.NewDecoder(file)
+	if err := jsonParser.Decode(&dash.Model); err != nil {
+		c.JsonApiErr(500, "Failed to load home dashboard", err)
+		return
+	}
+
+	c.JSON(200, &dash)
 }
