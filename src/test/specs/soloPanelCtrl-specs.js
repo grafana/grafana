@@ -1,6 +1,6 @@
 define([
   'helpers',
-  'features/dashboard/soloPanelCtrl',
+  'features/panel/soloPanelCtrl',
   'features/dashboard/dashboardSrv',
 ], function(helpers) {
   'use strict';
@@ -31,16 +31,18 @@ define([
 
       beforeEach(function() {
         var dashboard = {
-          rows: [
-            {
-              panels: [
-                {
-                  id: 23,
-                  some: 'prop'
-                }
-              ]
-            }
-          ]
+          model: {
+            rows: [
+              {
+                panels: [
+                  {
+                    id: 23,
+                    some: 'prop'
+                  }
+                ]
+              }
+            ]
+          }
         };
 
         routeParams.id = 1;
