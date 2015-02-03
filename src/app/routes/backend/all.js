@@ -67,7 +67,7 @@ define([
         controller : 'LoginCtrl',
       })
       .when('/dashboard/solo/:id/', {
-        templateUrl: 'app/partials/solo-panel.html',
+        templateUrl: 'app/features/panel/partials/soloPanel.html',
         controller : 'SoloPanelCtrl',
       })
       .otherwise({

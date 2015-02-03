@@ -16,15 +16,15 @@ function (angular, $) {
       panelId = parseInt(params.panelId);
 
       db.getDashboard($routeParams.id, false)
-        .then(function(dashboardData) {
-          $scope.initPanelScope(dashboardData);
+        .then(function(dashboard) {
+          $scope.initPanelScope(dashboard);
         }).then(null, function(error) {
           $scope.appEvent('alert-error', ['Load panel error', error]);
         });
     };
 
-    $scope.initPanelScope = function(dashboardData) {
-      $scope.dashboard = dashboardSrv.create(dashboardData);
+    $scope.initPanelScope = function(dashboard) {
+      $scope.dashboard = dashboardSrv.create(dashboard.model);
       $scope.grafana.style = $scope.dashboard.style;
       $scope.row = {
         height: $(window).height() + 'px',

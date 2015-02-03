@@ -9,7 +9,6 @@ define([
   './keybindings',
   './viewStateSrv',
   './playlistSrv',
-  './soloPanelCtrl',
   './timeSrv',
   './unsavedChangesSrv',
 ], function () {});
