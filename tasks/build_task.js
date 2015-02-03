@@ -15,7 +15,7 @@ module.exports = function(grunt) {
     'ngtemplates',
     'cssmin:build',
     'build:grafanaVersion',
-    'ngmin:build',
+    'ngAnnotate:build',
     'requirejs:build',
     'concat:js',
     'filerev',
