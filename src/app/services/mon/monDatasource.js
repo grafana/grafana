@@ -2,6 +2,7 @@ define([
   'angular',
   'lodash',
   'kbn',
+  'moment',
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -61,7 +62,7 @@ function (angular, _, kbn) {
             var value = target.condition_value;
             params.dimensions = key + ':' + value;
           }
-          return this.doGetStatisticsRequest(params, target.alias, target.label).then(handleGetStatisticsResponse);
+          return this.doGetStatisticsRequest(params, target.alias, target.label, startTime).then(handleGetStatisticsResponse);
         }
         return [];
       }, this);
@@ -140,7 +141,7 @@ function (angular, _, kbn) {
      * @param alias
      * @returns {promise}
      */
-    MonDatasource.prototype.doGetStatisticsRequest = function (params, alias, label) {
+    MonDatasource.prototype.doGetStatisticsRequest = function (params, alias, label, startTime) {
       var _this = this;
       var deferred = $q.defer();
 
@@ -167,6 +168,7 @@ function (angular, _, kbn) {
         return $http(options).success(function (data) {
           data.alias = alias;
           data.label = label;
+          data.startTime = startTime;
           deferred.resolve(data);
         });
       }, 10);
@@ -238,11 +240,16 @@ function (angular, _, kbn) {
           }
           var datapoints = [];
 
+          var from = moment.utc(new Date(data.startTime).getTime());
+
           if ('statistics' in series) {
             for (var i = 0; i < series.statistics.length; i++) {
               var myDate = new Date(series.statistics[i][timeCol]);
               var result = myDate.getTime();
-              datapoints[i] = [series.statistics[i][index], result];
+              var last = moment.utc(result);
+              if (last > from) {
+                datapoints[i] = [series.statistics[i][index], result];
+              }
             }
           } else {
             for (var j = 0; j < series.measurements.length; j++) {
