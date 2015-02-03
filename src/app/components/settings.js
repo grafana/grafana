@@ -16,9 +16,10 @@ function (_, crypto) {
       datasources                   : {},
       window_title_prefix           : 'Grafana - ',
       panels                        : {
-        'graph': { path: 'panels/graph' },
+        'graph':      { path: 'panels/graph' },
         'singlestat': { path: 'panels/singlestat' },
-        'text': { path: 'panels/text' },
+        'text':       { path: 'panels/text' },
+        'starred':    { path: 'panels/starred', hide: true },
       },
       plugins                       : {},
       default_route                 : '/dashboard/file/default.json',
