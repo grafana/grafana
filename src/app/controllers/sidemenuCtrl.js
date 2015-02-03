@@ -20,7 +20,7 @@ function (angular, _, $, config) {
       text: "Dashbords",
       icon: "fa fa-th-large",
       href: $scope.getUrl("/"),
-      startsWith: config.appSubUrl + '/dashboard/',
+      //startsWith: config.appSubUrl + '/dashboard/',
     });
 
     $scope.menu.push({

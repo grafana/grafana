@@ -2,47 +2,27 @@ define([
   'angular',
   'store',
 ],
-function (angular, store) {
+function (angular) {
   "use strict";
 
   var module = angular.module('grafana.routes');
 
-  // remember previous dashboard
-  var prevDashPath = null;
-
-  module.controller('DashFromDBProvider', function(
-        $scope, $rootScope, datasourceSrv, $routeParams,
-        alertSrv, $http, $location) {
+  module.controller('DashFromDBProvider', function($scope, datasourceSrv, $routeParams, backendSrv) {
 
     var db = datasourceSrv.getGrafanaDB();
-    var isTemp = window.location.href.indexOf('dashboard/temp') !== -1;
 
     if (!$routeParams.id) {
-      // do we have a previous dash
-      if (prevDashPath) {
-        $location.path(prevDashPath);
-        return;
-      }
+      backendSrv.get('api/dashboards/home').then(function(result) {
+        $scope.initDashboard(result, $scope);
+      },function() {
+        $scope.initDashboard({}, $scope);
+        $scope.appEvent('alert-error', ['Load dashboard failed', '']);
+      });
 
-      var savedRoute = store.get('grafanaDashboardDefault');
-      if (!savedRoute) {
-        $http.get("app/dashboards/default.json?" + new Date().getTime()).then(function(result) {
-          var dashboard = angular.fromJson(result.data);
-          $scope.initDashboard({model: dashboard, meta: {}}, $scope);
-        },function() {
-          $scope.initDashboard({}, $scope);
-          $scope.appEvent('alert-error', ['Load dashboard failed', '']);
-        });
-        return;
-      }
-      else {
-        $location.path(savedRoute);
-        return;
-      }
+      return;
     }
 
-    db.getDashboard($routeParams.id, isTemp).then(function(result) {
-      prevDashPath = $location.path();
+    db.getDashboard($routeParams.id, false).then(function(result) {
       $scope.initDashboard(result, $scope);
     }).then(null, function() {
       $scope.initDashboard({
