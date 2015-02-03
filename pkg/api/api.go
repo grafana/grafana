@@ -77,9 +77,10 @@ func Register(r *macaron.Macaron) {
 		}, reqAccountAdmin)
 
 		// Dashboard
-		r.Group("/dashboard", func() {
-			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			r.Post("/", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+		r.Group("/dashboards", func() {
+			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Get("/home", GetHomeDashboard)
 		})
 
 		// Search
