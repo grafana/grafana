@@ -52,7 +52,6 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 
 func (b *InProcBus) Publish(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
-
 	var listeners = b.listeners[msgName]
 	if len(listeners) == 0 {
 		return nil
@@ -61,7 +60,7 @@ func (b *InProcBus) Publish(msg Msg) error {
 	var params = make([]reflect.Value, 1)
 	params[0] = reflect.ValueOf(msg)
 
-	for listenerHandler := range listeners {
+	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
 		err := ret[0].Interface()
 		if err != nil {
@@ -81,12 +80,11 @@ func (b *InProcBus) AddHandler(handler HandlerFunc) {
 func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	eventName := handlerType.In(0).Elem().Name()
-	list, exists := b.listeners[eventName]
+	_, exists := b.listeners[eventName]
 	if !exists {
-		list = make([]HandlerFunc, 0)
-		b.listeners[eventName] = list
+		b.listeners[eventName] = make([]HandlerFunc, 0)
 	}
-	list = append(list, handler)
+	b.listeners[eventName] = append(b.listeners[eventName], handler)
 }
 
 // Package level functions
@@ -101,4 +99,8 @@ func AddEventListener(handler HandlerFunc) {
 
 func Dispatch(msg Msg) error {
 	return globalBus.Dispatch(msg)
+}
+
+func Publish(msg Msg) error {
+	return globalBus.Publish(msg)
 }

@@ -95,6 +95,12 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 		_, err = sess.Insert(&accountUser)
 
 		cmd.Result = user
+		_ = bus.Publish(&m.Notification{
+			EventType: "user.create",
+			Timestamp: user.Created,
+			Priority:  m.PRIO_INFO,
+			Payload:   user,
+		})
 		return err
 	})
 }
@@ -135,6 +141,16 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 		}
 
 		_, err := sess.Id(cmd.UserId).Update(&user)
+		if err == nil {
+			// silently ignore failures to publish events.
+			user.Id = cmd.UserId
+			_ = bus.Publish(&m.Notification{
+				EventType: "user.update",
+				Timestamp: user.Updated,
+				Priority:  m.PRIO_INFO,
+				Payload:   user,
+			})
+		}
 		return err
 	})
 }
