@@ -208,70 +208,6 @@
           "targets": [
             {
               "function": "avg",
-              "column": "value",
-              "series": "disk.space_used_perc",
-              "label": "hostname",
-              "condition_filter": true,
-              "condition_key": "device",
-              "condition_value": "/dev/sda1"
-            }
-          ],
-          "aliasColors": {},
-          "aliasYAxis": {},
-          "title": "Disk"
-        },
-        {
-          "span": 6,
-          "editable": true,
-          "type": "graph",
-          "datasource": null,
-          "renderer": "flot",
-          "x-axis": true,
-          "y-axis": true,
-          "scale": 1,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "grid": {
-            "max": null,
-            "min": null,
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "annotate": {
-            "enable": false
-          },
-          "resolution": 100,
-          "lines": true,
-          "fill": 0,
-          "linewidth": 1,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "percentage": false,
-          "zerofill": true,
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
-          },
-          "targets": [
-            {
-              "function": "avg",
               "label": "hostname",
               "column": "value",
               "series": "mysql.performance.user_time"
@@ -280,70 +216,6 @@
           "aliasColors": {},
           "aliasYAxis": {},
           "title": "Database"
-        },
-        {
-          "span": 6,
-          "editable": true,
-          "type": "graph",
-          "datasource": null,
-          "renderer": "flot",
-          "x-axis": true,
-          "y-axis": true,
-          "scale": 1,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "grid": {
-            "max": null,
-            "min": null,
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "annotate": {
-            "enable": false
-          },
-          "resolution": 100,
-          "lines": true,
-          "fill": 0,
-          "linewidth": 1,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "percentage": false,
-          "zerofill": true,
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
-          },
-          "targets": [
-            {
-              "function": "avg",
-              "column": "value",
-              "series": "net.out_bytes",
-              "label": "hostname",
-              "condition_filter": true,
-              "condition_key": "device",
-              "condition_value": "eth0"
-            }
-          ],
-          "aliasColors": {},
-          "aliasYAxis": {},
-          "title": "Network"
         }
       ],
       "notice": false
@@ -373,7 +245,6 @@
       "enable": true,
       "status": "Stable",
       "time_options": [
-        "5m",
         "15m",
         "1h",
         "6h",
