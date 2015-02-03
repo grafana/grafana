@@ -19,6 +19,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/services/sqlstore"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
+	"github.com/torkelo/grafana-pro/pkg/services/notification"
 )
 
 var CmdWeb = cli.Command{
@@ -81,11 +82,17 @@ func runWeb(c *cli.Context) {
 	social.NewOAuthService()
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
+	var err error
+	if setting.NotificationsEnabled {
+		err = notification.Init(setting.RabbitmqUrl, setting.NotificationsExchange)
+		if err != nil {
+			log.Fatal(4, "Failed to connect to notification queue: %v", err)
+		}
+	}
 
 	m := newMacaron()
 	api.Register(m)
 
-	var err error
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
 	switch setting.Protocol {

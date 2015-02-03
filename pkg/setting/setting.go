@@ -93,6 +93,12 @@ var (
 	// PhantomJs Rendering
 	ImagesDir  string
 	PhantomDir string
+
+	//Notifications
+	NotificationsEnabled bool
+	RabbitmqUrl string
+	NotificationsExchange string
+
 )
 
 func init() {
@@ -218,6 +224,17 @@ func NewConfigContext() {
 	PhantomDir = "vendor/phantomjs"
 
 	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
+
+	// Notifications
+	NotificationsEnabled = Cfg.Section("notifications").Key("enabled").MustBool(false)
+	RabbitmqUrl = Cfg.Section("notifications").Key("rabbitmq_url").MustString("amqp://localhost/")
+	
+	// validate rabbitmqUrl.
+	_, err = url.Parse(RabbitmqUrl)
+	if err != nil {
+		log.Fatal(4, "Invalid rabbitmq_url(%s): %s", RabbitmqUrl, err)
+	}
+	NotificationsExchange = Cfg.Section("notifications").Key("notifications_exchange").MustString("notifications")
 
 	readSessionConfig()
 }
