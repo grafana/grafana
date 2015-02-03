@@ -5,13 +5,18 @@
 			<div class="top-nav">
 				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
 					<img class="logo-icon" src="img/fav32.png"></img>
-					<i class="fa fa-angle-right"></i>
+					<i class="fa fa-bars"></i>
 				</a>
 
-				<a class="top-nav-dashboards-btn pointer" ng-click="openSearch()">
-					<i class="fa fa-th-large"></i>
-					<i class="fa fa-angle-down"></i>
-				</a>
+				<div class="top-nav-dashboards-btn">
+					<a class="pointer" ng-click="openSearch()">
+						<i class="fa fa-th-large"></i>
+						<i class="fa fa-caret-down"></i>
+					</a>
+				</div>
+
+				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
+				</span>
 
 				<a ng-click="asd()" class="top-nav-title pointer">
 					 {{dashboard.title}}

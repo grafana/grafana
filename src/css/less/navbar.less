@@ -11,47 +11,74 @@
   float: left;
 }
 
+.fa.top-nav-breadcrumb-icon {
+  margin: 17px 21px 8px 0px;
+  float: left;
+  font-size: 160%;
+  color: @textColor;
+}
+
 .top-nav-menu-btn {
+  border-radius: 50%;
+  background: black;
   display: block;
   float: left;
-  padding: 11px 9px 11px 14px;
-  background: @grafanaTargetBackground;
-  border: 1px solid rgb(55, 54, 54);
-  i {
-    font-size: 160%;
-    color: darken(@gray, 15%);
-    padding: 0px 0px 0px 0px;
-    position: relative;
-    top: 4px;
+  padding: 4px;
+  margin: 7px 6px 3px 9px;
+  .fa {
+    display: none;
+  }
+  img {
+    width: 30px;
   }
   &:hover {
-    background: lighten(@grafanaTargetBackground, 3%);
+    .fa {
+      display: block;
+      width: 30px;
+      height: 30px;
+      color: @textColor;
+      opacity: .7;
+      position: relative;
+      left: 6px;
+      top: 4px;
+      font-size: 150%;
+    }
+    img {
+      display: none;
+    }
   }
 }
 
 .top-nav-dashboards-btn {
   display: block;
   float: left;
-  padding: 15px 7px 9px 14px;
+  margin: 10px 8px 5px 14px;
+  border-radius: 3px;
   font-size: 1.4em;
   font-weight: bold;
   color: #a2a2a2;
-  margin: 0 18px 0 0;
-  border: 1px solid rgb(55, 54, 54);
-  border-left: none;
-  background: @grafanaTargetBackground;
-  .fa-th-large {
-    font-size: 123%;
+  border: 1px solid #555;
+
+  a {
+    display: inline-block;
+    background: @grafanaTargetFuncBackground;
+    padding: 5px 4px 5px 13px;
+    border: 1px solid #000;
+    border-radius: 3px;
+    color: #a2a2a2;
+
+    &:hover {
+      background: @grafanaTargetFuncHightlight;
+      .fa {
+        color: @linkColorHover
+      }
+    }
   }
-  .fa-angle-down {
+
+  .fa-caret-down {
+    font-size: 60%;
     position: relative;
     top: 4px;
-  }
-  &:hover {
-    background: lighten(@grafanaTargetBackground, 3%);
-    .fa {
-      color: @textColor;
-    }
   }
 }
 
