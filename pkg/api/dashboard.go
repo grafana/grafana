@@ -88,7 +88,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 }
 
 func GetHomeDashboard(c *middleware.Context) {
-	filePath := path.Join(setting.StaticRootPath, "app/dashboards/default.json")
+	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
 	file, err := os.Open(filePath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to load home dashboard", err)
