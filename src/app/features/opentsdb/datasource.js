@@ -49,10 +49,13 @@ function (angular, _, kbn) {
           var result = _.map(response.data, _.bind(function(metricData, index) {
             // try and match the request of each response with the grafana target/query that instantiated it
             var target = _.filter(this.targets, function(t) {
-              var tags = _.clone(t.tags);
-              _.each(tags, function(v, k) {
-                if ((v === "*") || (k === "*")) {
-                  delete tags[k];
+              // before we can do any tag-matching, we need to expand any template variables used in any tags
+              var tags = {};
+              _.each(t.tags, function(v, k) {
+                k = templateSrv.replace(k);
+                v = templateSrv.replace(v);
+                if ((v !== "*") && (k !== "*")) {
+                  tags[k] = v;
                 }
               });
               return _.where([metricData.tags], tags).length > 0;
