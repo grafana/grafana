@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'config',
 ],
-function (angular, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -75,6 +76,10 @@ function (angular, _) {
           return;
         }
         $scope.editorHelpIndex = index;
+      };
+
+      $scope.isNewPanel = function() {
+        return $scope.panel.title === config.new_panel_title;
       };
 
       $scope.toggleFullscreen = function(edit) {

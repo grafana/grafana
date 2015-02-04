@@ -1,9 +1,10 @@
 define([
   'angular',
   'app',
-  'lodash'
+  'lodash',
+  'config'
 ],
-function (angular, app, _) {
+function (angular, app, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -107,11 +108,11 @@ function (angular, app, _) {
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
 
       $scope.panel = {
-        title: 'no title (click here)',
-        error   : false,
-        span    : _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+        title: config.new_panel_title,
+        error: false,
+        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: true,
-        type    : type
+        type: type
       };
 
       function fixRowHeight(height) {

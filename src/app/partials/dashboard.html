@@ -35,8 +35,8 @@
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Add Panel</a>
 									<ul class="dropdown-menu">
-										<li bindonce ng-repeat="name in panelNames">
-											<a ng-click="add_panel_default(name)" bo-text="name"></a>
+										<li bindonce ng-repeat="(key, value) in panels">
+											<a ng-click="add_panel_default(key)" bo-text="value.name"></a>
 										</li>
 									</ul>
 								</li>

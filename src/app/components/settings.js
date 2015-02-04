@@ -16,23 +16,19 @@ function (_, crypto) {
       datasources                   : {},
       window_title_prefix           : 'Grafana - ',
       panels                        : {
-        'graph':      { path: 'panels/graph' },
-        'singlestat': { path: 'panels/singlestat' },
-        'text':       { path: 'panels/text' },
-        'starred':    { path: 'panels/starred', hide: true },
+        'graph':      { path: 'panels/graph',      name: 'Graph' },
+        'singlestat': { path: 'panels/singlestat', name: 'Single stat' },
+        'text':       { path: 'panels/text',       name: 'Text' },
+        'dashlist':   { path: 'panels/dashlist',   name: 'Dashboard list' },
       },
-      plugins                       : {},
-      default_route                 : '/dashboard/file/default.json',
-      playlist_timespan             : "1m",
-      unsaved_changes_warning       : true,
-      search                        : { max_results: 100 },
-      admin                         : {},
-      appSubUrl: "",
-      buildInfo: {
-        version: 'master',
-        commit: 'NA',
-        buildstamp: new Date().getTime()
-      }
+      new_panel_title: 'no title (click here)',
+      plugins: {},
+      default_route: '/dashboard/file/default.json',
+      playlist_timespan: "1m",
+      unsaved_changes_warning: true,
+      search: { max_results: 100 },
+      admin: {},
+      appSubUrl: ""
     };
 
     var settings = _.extend({}, defaults, options);

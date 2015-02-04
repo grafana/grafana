@@ -1,5 +1,5 @@
 {
-  "title": "Grafana Home",
+  "title": "Home",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -24,13 +24,19 @@
       ]
     },
     {
-      "height": "210px",
+      "height": "410px",
       "panels": [
         {
           "id": 2,
           "span": 6,
-          "type": "starred",
+          "type": "dashlist",
           "title": "Starred dashboards"
+        },
+        {
+          "id": 3,
+          "span": 6,
+          "type": "dashlist",
+          "title": "Previously visited dashboards"
         }
       ]
     }

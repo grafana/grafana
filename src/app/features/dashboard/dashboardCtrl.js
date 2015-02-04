@@ -4,7 +4,7 @@ define([
   'config',
   'lodash',
 ],
-function (angular, $, config, _) {
+function (angular, $, config) {
   "use strict";
 
   var module = angular.module('grafana.controllers');
@@ -20,11 +20,11 @@ function (angular, $, config, _) {
       $timeout) {
 
     $scope.editor = { index: 0 };
-    $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
+    $scope.panels = config.panels;
+
     var resizeEventTimeout;
 
     this.init = function(dashboard) {
-      $scope.availablePanels = config.panels;
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
       $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
