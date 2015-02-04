@@ -95,7 +95,7 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 }
 
 func (db *BaseDialect) AddColumnSql(tableName string, col *Column) string {
-	return fmt.Sprintf("alter table %s ADD COLUMN %s", tableName, col.StringNoPk(db.dialect))
+	return fmt.Sprintf("alter table %s ADD COLUMN %s", db.dialect.Quote(tableName), col.StringNoPk(db.dialect))
 }
 
 func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {

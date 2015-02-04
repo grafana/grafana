@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -34,7 +35,7 @@ func AddAccountUser(cmd *m.AddAccountUserCommand) error {
 func GetAccountUsers(query *m.GetAccountUsersQuery) error {
 	query.Result = make([]*m.AccountUserDTO, 0)
 	sess := x.Table("account_user")
-	sess.Join("INNER", "user", "account_user.user_id=user.id")
+	sess.Join("INNER", "user", fmt.Sprintf("account_user.user_id=%s.id", x.Dialect().Quote("user")))
 	sess.Where("account_user.account_id=?", query.AccountId)
 	sess.Cols("account_user.account_id", "account_user.user_id", "user.email", "user.login", "account_user.role")
 	sess.Asc("user.email", "user.login")

@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"strconv"
-
 	"github.com/go-xorm/xorm"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
@@ -23,11 +21,12 @@ func IsStarredByUser(query *m.IsStarredByUserQuery) error {
 	if err != nil {
 		return err
 	}
+
 	if len(results) == 0 {
 		return nil
 	}
 
-	query.Result, _ = strconv.ParseBool(string(results[0]["1"]))
+	query.Result = true
 
 	return nil
 }

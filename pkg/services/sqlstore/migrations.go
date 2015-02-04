@@ -36,7 +36,7 @@ func addUserMigrations(mg *Migrator) {
 		&Column{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
-		&Column{Name: "password", Type: DB_NVarchar, Length: 50, Nullable: true},
+		&Column{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 		&Column{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
 		&Column{Name: "company", Type: DB_NVarchar, Length: 255, Nullable: true},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},

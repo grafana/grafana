@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"bytes"
+
 	"github.com/go-xorm/xorm"
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -80,20 +82,42 @@ type DashboardSearchProjection struct {
 }
 
 func SearchDashboards(query *m.SearchDashboardsQuery) error {
-	titleQuery := "%" + query.Title + "%"
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
 
-	sess := x.Table("dashboard")
-	sess.Join("LEFT OUTER", "dashboard_tag", "dashboard.id=dashboard_tag.dashboard_id")
-	sess.Where("account_id=? AND title LIKE ?", query.AccountId, titleQuery)
-	sess.Cols("dashboard.id", "dashboard.title", "dashboard.slug", "dashboard_tag.term")
-	sess.Limit(100, 0)
+	sql.WriteString(`SELECT
+					  dashboard.id,
+					  dashboard.title,
+					  dashboard.slug,
+					  dashboard_tag.term
+					FROM dashboard
+					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
+
+	if query.IsStarred {
+		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
+	}
+
+	sql.WriteString(` WHERE dashboard.account_id=?`)
+
+	params = append(params, query.AccountId)
+
+	if query.IsStarred {
+		sql.WriteString(` AND star.user_id=?`)
+		params = append(params, query.UserId)
+	}
+
+	if len(query.Title) > 0 {
+		sql.WriteString(" AND dashboard.title LIKE ?")
+		params = append(params, "%"+query.Title+"%")
+	}
 
 	if len(query.Tag) > 0 {
-		sess.And("dashboard_tag.term=?", query.Tag)
+		sql.WriteString(" AND dashboard_tag.term=?")
+		params = append(params, query.Tag)
 	}
 
 	var res []DashboardSearchProjection
-	err := sess.Find(&res)
+	err := x.Sql(sql.String(), params...).Find(&res)
 	if err != nil {
 		return err
 	}
