@@ -319,7 +319,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               types[event.annotation.name] = {
                 level: _.keys(types).length + 1,
                 icon: {
-                  icon: "icon-chevron-down",
+                  icon: "fa fa-chevron-down",
                   size: event.annotation.iconSize,
                   color: event.annotation.iconColor,
                 }

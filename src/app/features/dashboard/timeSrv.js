@@ -94,7 +94,7 @@ define([
 
       // disable refresh if we have an absolute time
       if (time.to !== 'now') {
-        this.old_refresh = this.dashboard.refresh;
+        this.old_refresh = this.dashboard.refresh || this.old_refresh;
         this.set_interval(false);
       }
       else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {

@@ -1,7 +1,7 @@
 module.exports = function(config) {
   return {
     build: {
-      expand:true,
+      expand: true,
       cwd:'<%= tempDir %>',
       src: [
         'app/controllers/**/*.js',
