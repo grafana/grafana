@@ -9,6 +9,7 @@ function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
+  var _aliasRegex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
 
   module.factory('OpenTSDBDatasource', function($q, $http, templateSrv) {
 
@@ -44,9 +45,19 @@ function (angular, _, kbn) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end)
-        .then(_.bind(function(response) {
+        .then(_.bind(function(response, queryIndex) {
           var result = _.map(response.data, _.bind(function(metricData, index) {
-            return transformMetricData(metricData, groupByTags, this.targets[index]);
+            // try and match the request of each response with the grafana target/query that instantiated it
+            var target = _.filter(this.targets, function(t) {
+              var tags = _.clone(t.tags);
+              _.each(tags, function(v, k) {
+                if ((v === "*") || (k === "*")) {
+                  delete tags[k];
+                }
+              });
+              return _.where([metricData.tags], tags).length > 0;
+            });
+            return transformMetricData(metricData, groupByTags, target[0]);
           }, this));
           return { data: result };
         }, options));
@@ -266,15 +277,7 @@ function (angular, _, kbn) {
           tagData = [],
           metricLabel = null;
 
-      if (!_.isEmpty(md.tags)) {
-        _.each(_.pairs(md.tags), function(tag) {
-          if (_.has(groupByTags, tag[0])) {
-            tagData.push(tag[0] + "=" + tag[1]);
-          }
-        });
-      }
-
-      metricLabel = createMetricLabel(md.metric, tagData, options);
+      metricLabel = createMetricLabel(md.metric, md.tags, groupByTags, options);
 
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
@@ -285,13 +288,35 @@ function (angular, _, kbn) {
       return { target: metricLabel, datapoints: dps };
     }
 
-    function createMetricLabel(metric, tagData, options) {
-      if (!_.isUndefined(options) && options.alias) {
-        return options.alias;
+    function expandVariables(text, scope) {
+      return text.replace(_aliasRegex, function(match, g1, g2) {
+        var value = scope[g1 || g2];
+        if (!value) { return match; }
+        return value;
+      });
+    }
+
+
+    function createMetricLabel(metric, tags, groupByTags, options) {
+      var distinctTags = {};
+
+      if (!_.isEmpty(tags)) {
+        _.each(_.pairs(tags), function(tag) {
+          if (_.has(groupByTags, tag[0])) {
+            distinctTags[tag[0]] = tag[1];
+          }
+        });
       }
 
-      if (!_.isEmpty(tagData)) {
-        metric += "{" + tagData.join(", ") + "}";
+      if (!_.isUndefined(options) && options.alias) {
+        var scope = _.clone(tags);
+        scope["metric"] = metric;
+        return expandVariables(options.alias, scope);
+      }
+
+      if (!_.isEmpty(distinctTags)) {
+        var tagText = _.map(distinctTags, function(v, k) { return k+"="+v; });
+        metric += "{" + tagText.join(", ") + "}";
       }
 
       return metric;
