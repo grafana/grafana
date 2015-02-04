@@ -46,10 +46,17 @@ function (angular, _, kbn) {
 
       return this.performTimeSeriesQuery(queries, start, end)
         .then(_.bind(function(response, queryIndex) {
-          var result = _.map(response.data, _.bind(function(metricData, index) {
+          var result = _.map(response.data, _.bind(function(dataset, index) {
             // try and match the request of each response with the grafana target/query that instantiated it
+            // to help clarify; t & target[s] is the query within the grafana interface.  dataset is the OpenTSDB result from the query
             var target = _.filter(this.targets, function(t) {
-              // before we can do any tag-matching, we need to expand any template variables used in any tags
+              if (dataset.metric !== t.metric)
+                return false; // metrics are different, don't bother
+              if (_.size(t.tags) === 0) {
+                return true; // no tags to compare, so cut the trip short
+              }
+              // metrics match, so lets look for differences in tags
+              // but, before we can do any tag-matching, we need to expand any template variables used in any tags
               var tags = {};
               _.each(t.tags, function(v, k) {
                 k = templateSrv.replace(k);
@@ -58,9 +65,9 @@ function (angular, _, kbn) {
                   tags[k] = v;
                 }
               });
-              return _.where([metricData.tags], tags).length > 0;
+              return (_.where([dataset.tags], tags).length > 0);
             });
-            return transformMetricData(metricData, groupByTags, target[0]);
+            return transformMetricData(dataset, groupByTags, target[0]);
           }, this));
           return { data: result };
         }, options));
