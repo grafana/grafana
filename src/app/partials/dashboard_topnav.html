@@ -23,7 +23,7 @@
 				 </a>
 			 </div>
 
-			<ul class="nav pull-left">
+			<ul class="nav pull-left" ng-if="!dashboardMeta.isHome">
 				<li>
 					<a class="pointer" ng-click="starDashboard()">
 						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
