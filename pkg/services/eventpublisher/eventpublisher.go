@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 
 	"github.com/streadway/amqp"
 	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/events"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
@@ -131,14 +131,17 @@ func publish(routingKey string, msgString []byte) {
 }
 
 func eventListener(event interface{}) error {
-	msgString, err := json.Marshal(event)
+	wireEvent, err := events.ToOnWriteEvent(event)
 	if err != nil {
 		return err
 	}
 
-	eventType := reflect.TypeOf(event)
+	msgString, err := json.Marshal(wireEvent)
+	if err != nil {
+		return err
+	}
 
-	routingKey := fmt.Sprintf("%s.%s", "INFO", eventType.Name())
+	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, wireEvent.EventType)
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
 	go publish(routingKey, msgString)
