@@ -1,7 +1,6 @@
 package events
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -22,9 +21,6 @@ func TestEventCreation(t *testing.T) {
 		wire, _ := ToOnWriteEvent(e)
 		So(e.Timestamp.Unix(), ShouldEqual, wire.Timestamp.Unix())
 		So(wire.EventType, ShouldEqual, "TestEvent")
-
-		json, _ := json.Marshal(wire)
-		So(string(json), ShouldEqual, `{"event_type":"TestEvent","priority":"INFO","timestamp":"2009-01-08T14:25:23.000000223+01:00","payload":{"Timestamp":"2009-01-08T14:25:23.000000223+01:00"}}`)
 	})
 
 }
