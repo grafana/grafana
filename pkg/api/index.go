@@ -23,6 +23,10 @@ func setIndexViewData(c *middleware.Context) error {
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
 	}
 
+	if len(currentUser.Name) == 0 {
+		currentUser.Name = currentUser.Login
+	}
+
 	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl

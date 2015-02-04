@@ -47,8 +47,9 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
 			r.Post("/using/:id", SetUsingAccount)
 			r.Get("/accounts", GetUserAccounts)
-			r.Post("/favorites/dashboard/:id", AddAsFavorite)
-			r.Delete("/favorites/dashboard/:id", RemoveAsFavorite)
+			r.Get("/stars/", GetUserStars)
+			r.Post("/stars/dashboard/:id", StarDashboard)
+			r.Delete("/stars/dashboard/:id", UnstarDashboard)
 		})
 
 		// account
@@ -78,9 +79,10 @@ func Register(r *macaron.Macaron) {
 		}, reqAccountAdmin)
 
 		// Dashboard
-		r.Group("/dashboard", func() {
-			r.Combo("/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			r.Post("/", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+		r.Group("/dashboards", func() {
+			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Get("/home", GetHomeDashboard)
 		})
 
 		// Search

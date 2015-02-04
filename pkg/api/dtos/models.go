@@ -25,9 +25,14 @@ type CurrentUser struct {
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
 
+type DashboardMeta struct {
+	IsStarred bool `json:"isStarred"`
+	IsHome    bool `json:"isHome"`
+}
+
 type Dashboard struct {
-	IsFavorite bool                   `json:"isFavorite"`
-	Dashboard  map[string]interface{} `json:"dashboard"`
+	Meta  DashboardMeta          `json:"meta"`
+	Model map[string]interface{} `json:"model"`
 }
 
 type DataSource struct {
@@ -51,6 +56,10 @@ type MetricQueryResultDto struct {
 type MetricQueryResultDataDto struct {
 	Target     string       `json:"target"`
 	DataPoints [][2]float64 `json:"datapoints"`
+}
+
+type UserStars struct {
+	DashboardIds map[string]bool `json:"dashboardIds"`
 }
 
 func GetGravatarUrl(text string) string {
