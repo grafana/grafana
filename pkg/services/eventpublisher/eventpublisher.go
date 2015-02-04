@@ -1,25 +1,28 @@
-package notification
+package eventpublisher
 
 import (
-	"fmt"
-	"time"
 	"encoding/json"
+	"fmt"
+	"log"
+	"reflect"
+	"time"
+
 	"github.com/streadway/amqp"
 	"github.com/torkelo/grafana-pro/pkg/bus"
-	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/torkelo/grafana-pro/pkg/setting"
 )
 
 var (
-	url string
+	url      string
 	exchange string
-	conn *amqp.Connection
-	channel *amqp.Channel
+	conn     *amqp.Connection
+	channel  *amqp.Channel
 )
 
 func getConnection() (*amqp.Connection, error) {
 	c, err := amqp.Dial(url)
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
 	return c, err
 }
@@ -31,25 +34,35 @@ func getChannel() (*amqp.Channel, error) {
 	}
 
 	err = ch.ExchangeDeclare(
-		exchange,     // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
+		exchange, // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 	return ch, err
 }
 
-func Init(rabbitUrl string, exchangeName string) error {
-	url = rabbitUrl
-	exchange = exchangeName
-	bus.AddEventListener(NotificationHandler)
-	return Setup()
+func Init() {
+	sec := setting.Cfg.Section("event_publisher")
+
+	if !sec.Key("enabled").MustBool(false) {
+		return
+	}
+
+	url = sec.Key("rabbitmq_url").String()
+	exchange = sec.Key("exchange").String()
+	bus.AddWildcardListener(eventListener)
+
+	if err := Setup(); err != nil {
+		log.Fatal(4, "Failed to connect to notification queue: %v", err)
+		return
+	}
 }
 
 // Every connection should declare the topology they expect
@@ -82,7 +95,7 @@ func Setup() error {
 			//could not create channel, so lets close the connection
 			// and re-create.
 			_ = conn.Close()
-			
+
 			for err != nil {
 				time.Sleep(2 * time.Second)
 				fmt.Println("attempting to reconnect to rabbitmq.")
@@ -92,39 +105,42 @@ func Setup() error {
 		}
 	}()
 
-    return nil
+	return nil
 }
 
-func Publish(routingKey string, msgString []byte) {
+func publish(routingKey string, msgString []byte) {
 	err := channel.Publish(
-		exchange,      //exchange
-		routingKey,   // routing key
-		false,       // mandatory
+		exchange,   //exchange
+		routingKey, // routing key
+		false,      // mandatory
 		false,      // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
-			Body: msgString,
+			Body:        msgString,
 		},
 	)
 	if err != nil {
 		// failures are most likely because the connection was lost.
-		// the connection will be re-established, so just keep 
+		// the connection will be re-established, so just keep
 		// retrying every 2seconds until we successfully publish.
 		time.Sleep(2 * time.Second)
-		fmt.Println("publish failed, retrying.");
-		Publish(routingKey, msgString)
+		fmt.Println("publish failed, retrying.")
+		publish(routingKey, msgString)
 	}
 	return
 }
 
-func NotificationHandler(event *m.Notification) error {
+func eventListener(event interface{}) error {
 	msgString, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	routingKey := fmt.Sprintf("%s.%s", event.Priority, event.EventType)
+
+	eventType := reflect.TypeOf(event)
+
+	routingKey := fmt.Sprintf("%s.%s", "INFO", eventType.Name())
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
-	go Publish(routingKey, msgString)
+	go publish(routingKey, msgString)
 	return nil
 }

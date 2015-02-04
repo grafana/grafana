@@ -149,27 +149,3 @@ func LoadConfig() {
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }
-
-type dbTransactionFunc func(sess *xorm.Session) error
-
-func inTransaction(callback dbTransactionFunc) error {
-	var err error
-
-	sess := x.NewSession()
-	defer sess.Close()
-
-	if err = sess.Begin(); err != nil {
-		return err
-	}
-
-	err = callback(sess)
-
-	if err != nil {
-		sess.Rollback()
-		return err
-	} else if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}

@@ -16,10 +16,10 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/api"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
+	"github.com/torkelo/grafana-pro/pkg/services/eventpublisher"
 	"github.com/torkelo/grafana-pro/pkg/services/sqlstore"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
-	"github.com/torkelo/grafana-pro/pkg/services/notification"
 )
 
 var CmdWeb = cli.Command{
@@ -82,13 +82,9 @@ func runWeb(c *cli.Context) {
 	social.NewOAuthService()
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
+	eventpublisher.Init()
+
 	var err error
-	if setting.NotificationsEnabled {
-		err = notification.Init(setting.RabbitmqUrl, setting.NotificationsExchange)
-		if err != nil {
-			log.Fatal(4, "Failed to connect to notification queue: %v", err)
-		}
-	}
 
 	m := newMacaron()
 	api.Register(m)
