@@ -22,29 +22,35 @@
   border-radius: 50%;
   background: black;
   display: block;
+  position: relative;
   float: left;
+  width: 30px;
+  height: 30px;
   padding: 4px;
   margin: 7px 6px 3px 9px;
   .fa {
-    display: none;
+    color: @textColor;
+    width: 30px;
+    height: 30px;
+    left: 10px;
+    top: 8px;
+    font-size: 150%;
+    opacity: 0;
+    position: absolute;
+    transition: opacity .25s ease-in-out;
   }
   img {
     width: 30px;
+    position: absolute;
+    opacity: 1;
+    transition: opacity .25s ease-in-out;
   }
   &:hover {
     .fa {
-      display: block;
-      width: 30px;
-      height: 30px;
-      color: @textColor;
       opacity: .7;
-      position: relative;
-      left: 6px;
-      top: 4px;
-      font-size: 150%;
     }
     img {
-      display: none;
+      opacity: 0;
     }
   }
 }
