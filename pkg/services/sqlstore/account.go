@@ -6,6 +6,7 @@ import (
 	"github.com/go-xorm/xorm"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/events"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 )
 
@@ -48,7 +49,7 @@ func GetAccountByName(query *m.GetAccountByNameQuery) error {
 }
 
 func CreateAccount(cmd *m.CreateAccountCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 
 		account := m.Account{
 			Name:    cmd.Name,
@@ -60,7 +61,6 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 			return err
 		}
 
-		// create inital admin account user
 		user := m.AccountUser{
 			AccountId: account.Id,
 			UserId:    cmd.UserId,
@@ -72,6 +72,8 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 		_, err := sess.Insert(&user)
 		cmd.Result = account
 
+		sess.publishAfterCommit(&events.AccountCreated{})
+
 		// silently ignore failures to publish events.
 		_ = bus.Publish(&m.Notification{
 			EventType: "account.create",
@@ -79,7 +81,7 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 			Priority:  m.PRIO_INFO,
 			Payload:   account,
 		})
-		 
+
 		return err
 	})
 }

@@ -93,12 +93,6 @@ var (
 	// PhantomJs Rendering
 	ImagesDir  string
 	PhantomDir string
-
-	//Notifications
-	NotificationsEnabled bool
-	RabbitmqUrl string
-	NotificationsExchange string
-
 )
 
 func init() {
@@ -228,7 +222,7 @@ func NewConfigContext() {
 	// Notifications
 	NotificationsEnabled = Cfg.Section("notifications").Key("enabled").MustBool(false)
 	RabbitmqUrl = Cfg.Section("notifications").Key("rabbitmq_url").MustString("amqp://localhost/")
-	
+
 	// validate rabbitmqUrl.
 	_, err = url.Parse(RabbitmqUrl)
 	if err != nil {
