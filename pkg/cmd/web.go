@@ -85,7 +85,6 @@ func runWeb(c *cli.Context) {
 	eventpublisher.Init()
 
 	var err error
-
 	m := newMacaron()
 	api.Register(m)
 
