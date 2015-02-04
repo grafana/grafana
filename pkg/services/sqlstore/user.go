@@ -69,9 +69,11 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Updated:   time.Now(),
 		}
 
-		user.Salt = util.GetRandomString(10)
-		user.Rands = util.GetRandomString(10)
-		user.Password = util.EncodePassword(cmd.Password, user.Salt)
+		if len(cmd.Password) > 0 {
+			user.Salt = util.GetRandomString(10)
+			user.Rands = util.GetRandomString(10)
+			user.Password = util.EncodePassword(cmd.Password, user.Salt)
+		}
 
 		sess.UseBool("is_admin")
 

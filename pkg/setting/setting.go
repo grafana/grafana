@@ -148,6 +148,10 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	return appUrl, appSubUrl
 }
 
+func AbsUrlTo(relativeUrl string) string {
+	return AppUrl + relativeUrl
+}
+
 func NewConfigContext() {
 	configFiles := findConfigFiles()
 
