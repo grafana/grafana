@@ -7,6 +7,7 @@ import (
 	"github.com/go-xorm/xorm"
 
 	"github.com/torkelo/grafana-pro/pkg/bus"
+	"github.com/torkelo/grafana-pro/pkg/events"
 	m "github.com/torkelo/grafana-pro/pkg/models"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/util"
@@ -23,7 +24,7 @@ func init() {
 	bus.AddHandler("sql", GetUserAccounts)
 }
 
-func getAccountIdForNewUser(userEmail string, sess *xorm.Session) (int64, error) {
+func getAccountIdForNewUser(userEmail string, sess *session) (int64, error) {
 	var account m.Account
 
 	if setting.SingleAccountMode {
@@ -51,7 +52,7 @@ func getAccountIdForNewUser(userEmail string, sess *xorm.Session) (int64, error)
 }
 
 func CreateUser(cmd *m.CreateUserCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 		accountId, err := getAccountIdForNewUser(cmd.Email, sess)
 		if err != nil {
 			return err
@@ -92,16 +93,20 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			accountUser.Role = m.RoleType(setting.DefaultAccountRole)
 		}
 
-		_, err = sess.Insert(&accountUser)
+		if _, err = sess.Insert(&accountUser); err != nil {
+			return err
+		}
+
+		sess.publishAfterCommit(&events.UserCreated{
+			Timestamp: user.Created,
+			Id:        user.Id,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
+		})
 
 		cmd.Result = user
-		_ = bus.Publish(&m.Notification{
-			EventType: "user.create",
-			Timestamp: user.Created,
-			Priority:  m.PRIO_INFO,
-			Payload:   user,
-		})
-		return err
+		return nil
 	})
 }
 
@@ -131,7 +136,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 }
 
 func UpdateUser(cmd *m.UpdateUserCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 
 		user := m.User{
 			Name:    cmd.Name,
@@ -140,18 +145,19 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 			Updated: time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Update(&user)
-		if err == nil {
-			// silently ignore failures to publish events.
-			user.Id = cmd.UserId
-			_ = bus.Publish(&m.Notification{
-				EventType: "user.update",
-				Timestamp: user.Updated,
-				Priority:  m.PRIO_INFO,
-				Payload:   user,
-			})
+		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+			return err
 		}
-		return err
+
+		sess.publishAfterCommit(&events.UserUpdated{
+			Timestamp: user.Created,
+			Id:        user.Id,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
+		})
+
+		return nil
 	})
 }
 

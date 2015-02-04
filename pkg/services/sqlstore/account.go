@@ -92,7 +92,7 @@ func UpdateAccount(cmd *m.UpdateAccountCommand) error {
 			return err
 		}
 
-		sess.publishAfterCommit(events.AccountUpdated{
+		sess.publishAfterCommit(&events.AccountUpdated{
 			Timestamp: account.Updated,
 			Id:        account.Id,
 			Name:      account.Name,

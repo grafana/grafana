@@ -43,12 +43,13 @@ func EnsureAdminUser() {
 		cmd.IsAdmin = true
 
 		if err = bus.Dispatch(&cmd); err != nil {
-			log.Fatal(3, "Failed to create default admin user", err)
+			log.Error(3, "Failed to create default admin user", err)
+			return
 		}
 
 		log.Info("Created default admin user: %v", setting.AdminUser)
 	} else if err != nil {
-		log.Fatal(3, "Could not determine if admin user exists: %v", err)
+		log.Error(3, "Could not determine if admin user exists: %v", err)
 	}
 }
 
