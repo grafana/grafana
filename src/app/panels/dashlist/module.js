@@ -36,7 +36,6 @@ function (angular, app, _, config, PanelMeta) {
     $scope.init = function() {
       panelSrv.init($scope);
 
-
       if ($scope.isNewPanel()) {
         $scope.panel.title = "Starred Dashboards";
       }
