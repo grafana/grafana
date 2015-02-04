@@ -16,6 +16,7 @@ import (
 	"github.com/torkelo/grafana-pro/pkg/api"
 	"github.com/torkelo/grafana-pro/pkg/log"
 	"github.com/torkelo/grafana-pro/pkg/middleware"
+	"github.com/torkelo/grafana-pro/pkg/services/eventpublisher"
 	"github.com/torkelo/grafana-pro/pkg/services/sqlstore"
 	"github.com/torkelo/grafana-pro/pkg/setting"
 	"github.com/torkelo/grafana-pro/pkg/social"
@@ -81,11 +82,12 @@ func runWeb(c *cli.Context) {
 	social.NewOAuthService()
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
+	eventpublisher.Init()
 
+	var err error
 	m := newMacaron()
 	api.Register(m)
 
-	var err error
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
 	switch setting.Protocol {

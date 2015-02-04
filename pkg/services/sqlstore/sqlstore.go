@@ -43,12 +43,13 @@ func EnsureAdminUser() {
 		cmd.IsAdmin = true
 
 		if err = bus.Dispatch(&cmd); err != nil {
-			log.Fatal(3, "Failed to create default admin user", err)
+			log.Error(3, "Failed to create default admin user", err)
+			return
 		}
 
 		log.Info("Created default admin user: %v", setting.AdminUser)
 	} else if err != nil {
-		log.Fatal(3, "Could not determine if admin user exists: %v", err)
+		log.Error(3, "Could not determine if admin user exists: %v", err)
 	}
 }
 
@@ -148,28 +149,4 @@ func LoadConfig() {
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
-}
-
-type dbTransactionFunc func(sess *xorm.Session) error
-
-func inTransaction(callback dbTransactionFunc) error {
-	var err error
-
-	sess := x.NewSession()
-	defer sess.Close()
-
-	if err = sess.Begin(); err != nil {
-		return err
-	}
-
-	err = callback(sess)
-
-	if err != nil {
-		sess.Rollback()
-		return err
-	} else if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return nil
 }
