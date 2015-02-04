@@ -12,7 +12,7 @@ function (angular) {
     var db = datasourceSrv.getGrafanaDB();
 
     if (!$routeParams.id) {
-      backendSrv.get('api/dashboards/home').then(function(result) {
+      backendSrv.get('/api/dashboards/home').then(function(result) {
         $scope.initDashboard(result, $scope);
       },function() {
         $scope.initDashboard({}, $scope);
