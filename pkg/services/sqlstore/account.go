@@ -72,7 +72,9 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 		_, err := sess.Insert(&user)
 		cmd.Result = account
 
-		sess.publishAfterCommit(&events.AccountCreated{})
+		sess.publishAfterCommit(&events.AccountCreated{
+			Name: account.Name,
+		})
 
 		// silently ignore failures to publish events.
 		_ = bus.Publish(&m.Notification{
