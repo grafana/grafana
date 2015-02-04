@@ -23,13 +23,12 @@ function (angular, _, $, config) {
       //startsWith: config.appSubUrl + '/dashboard/',
     });
 
-    $scope.menu.push({
-      text: "Data Sources",
-      icon: "fa fa-database",
-      href: $scope.getUrl("/account/datasources"),
-    });
-
     if ($scope.grafana.user.accountRole === 'Admin') {
+      $scope.menu.push({
+        text: "Data Sources",
+        icon: "fa fa-database",
+        href: $scope.getUrl("/account/datasources"),
+      });
       $scope.menu.push({
         text: "Account", href: $scope.getUrl("/account"),
         requireRole: "Admin",

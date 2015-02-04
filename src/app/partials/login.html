@@ -11,7 +11,7 @@
 				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
 					Log in
 				</button>
-				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-if="!disableUserSignUp">
+				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
 					Sign up
 				</button>
 			</div>
