@@ -3,8 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
-
 	"github.com/torkelo/grafana-pro/pkg/bus"
 	"github.com/torkelo/grafana-pro/pkg/events"
 	m "github.com/torkelo/grafana-pro/pkg/models"
@@ -73,15 +71,9 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 		cmd.Result = account
 
 		sess.publishAfterCommit(&events.AccountCreated{
-			Name: account.Name,
-		})
-
-		// silently ignore failures to publish events.
-		_ = bus.Publish(&m.Notification{
-			EventType: "account.create",
 			Timestamp: account.Created,
-			Priority:  m.PRIO_INFO,
-			Payload:   account,
+			Id:        account.Id,
+			Name:      account.Name,
 		})
 
 		return err
@@ -89,24 +81,23 @@ func CreateAccount(cmd *m.CreateAccountCommand) error {
 }
 
 func UpdateAccount(cmd *m.UpdateAccountCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 
 		account := m.Account{
 			Name:    cmd.Name,
 			Updated: time.Now(),
 		}
 
-		_, err := sess.Id(cmd.AccountId).Update(&account)
-		if err == nil {
-			// silently ignore failures to publish events.
-			account.Id = cmd.AccountId
-			_ = bus.Publish(&m.Notification{
-				EventType: "account.update",
-				Timestamp: account.Updated,
-				Priority:  m.PRIO_INFO,
-				Payload:   account,
-			})
+		if _, err := sess.Id(cmd.AccountId).Update(&account); err != nil {
+			return err
 		}
-		return err
+
+		sess.publishAfterCommit(events.AccountUpdated{
+			Timestamp: account.Updated,
+			Id:        account.Id,
+			Name:      account.Name,
+		})
+
+		return nil
 	})
 }
