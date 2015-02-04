@@ -89,7 +89,6 @@ function (angular, config) {
 
       backendSrv.post('/login', $scope.formModel).then(function(result) {
         if (result.redirectUrl) {
-          console.log(result);
           window.location.href = result.redirectUrl;
         } else {
           window.location.href = config.appSubUrl + '/';

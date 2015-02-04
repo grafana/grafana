@@ -11,7 +11,13 @@ function (angular, app, _, kbn, PanelMeta) {
   var module = angular.module('grafana.panels.raintankMonitorEventsPanel', []);
   app.useModule(module);
 
-  var converter;
+  app.useModule(module);
+    module.directive('grafanaPanelRaintankmonitoreventspanel', function() {
+    return {
+      controller: 'raintankMonitorEventsPanel',
+      templateUrl: 'plugins/raintank/panels/raintankMonitorEventsPanel/module.html',
+    };
+  });
 
   module.controller('raintankMonitorEventsPanel', function($scope, panelSrv, $q, timeSrv, raintankServiceEvent) {
     console.log('raintankMonitorEventsPanel');

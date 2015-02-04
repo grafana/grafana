@@ -23,12 +23,12 @@ function (angular, $, config, _) {
     $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
     var resizeEventTimeout;
 
-    this.init = function(dashboardData) {
+    this.init = function(dashboard) {
       $scope.availablePanels = config.panels;
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
       $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
-      $scope.setupDashboard(dashboardData);
+      $scope.setupDashboard(dashboard);
     };
 
     $scope.registerWindowResizeEvent = function() {
@@ -38,13 +38,15 @@ function (angular, $, config, _) {
       });
     };
 
-    $scope.setupDashboard = function(dashboardData) {
+    $scope.setupDashboard = function(dashboard) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      $scope.dashboard = dashboardSrv.create(dashboardData);
+      $scope.dashboard = dashboardSrv.create(dashboard.model);
+      console.log($scope.dashboard);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+      $scope.dashboardMeta = dashboard.meta;
 
       // init services
       timeSrv.init($scope.dashboard);
@@ -60,18 +62,11 @@ function (angular, $, config, _) {
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.grafana.style = $scope.dashboard.style;
-      $scope.topnav.title = $scope.dashboard.title;
-      $scope.topnav.icon = "fa fa-th-large";
-      $scope.topnav.titleAction = function() { alert("hej"); };
+      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
     };
 
-    $scope.isPanel = function(obj) {
-      if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
-        return true;
-      } else {
-        return false;
-      }
+    $scope.styleUpdated = function() {
+      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.add_row = function(dash, row) {

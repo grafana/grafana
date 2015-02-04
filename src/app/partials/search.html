@@ -49,12 +49,9 @@
 			<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 
 			<div class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
-				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
+				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.slug)">
 
 				<div class="search-result-actions small">
-					<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
-						<i class="fa fa-share"></i> share &nbsp;&nbsp;&nbsp;
-					</a>
 					<a ng-click="deleteDashboard(row, $event)">
 						<i class="fa fa-remove"></i> delete
 					</a>
@@ -64,6 +61,7 @@
 					<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name  class="label label-tag">
 						{{tag}}
 					</a>
+					<i class="fa" ng-class="{'fa-star': starredIds[row.id], 'fa-star-o': !starredIds[row.id]}"></i>
 				</div>
 
 				<a class="search-result-link">

@@ -20,7 +20,7 @@ function (angular, _, $, config) {
       text: "Dashbords",
       icon: "fa fa-th-large",
       href: $scope.getUrl("/"),
-      startsWith: config.appSubUrl + '/dashboard/',
+      //startsWith: config.appSubUrl + '/dashboard/',
     });
 
     $scope.menu.push({
@@ -47,14 +47,6 @@ function (angular, _, $, config) {
       });
     }
 
-    if ($scope.grafana.user.isSignedIn) {
-      $scope.menu.push({
-        text: "Profile", href: $scope.getUrl("/profile"),
-        icon: "fa fa-user",
-      });
-    }
-
-
     $scope.menu.push({
       text: "Monitor", href: $scope.getUrl("/monitor"),
       icon: "fa fa-eye",
@@ -77,40 +69,21 @@ function (angular, _, $, config) {
       });
     }
 
-    if ($scope.grafana.user.isSignedIn) {
-      $scope.menu.push({
-        text: "Sign out", href: $scope.getUrl("/logout"),
-        target: "_self",
-        icon: "fa fa-sign-out",
-      });
-    }
-
-    $scope.onAppEvent('$routeUpdate', function() {
-      $scope.updateState();
-    });
-
-    $scope.onAppEvent('$routeChangeSuccess', function() {
-      $scope.updateState();
-    });
-
     $scope.updateState = function() {
       var currentPath = config.appSubUrl + $location.path();
       var search = $location.search();
-      var activeIndex;
 
-      _.each($scope.menu, function(item, index) {
+      _.each($scope.menu, function(item) {
         item.active = false;
 
         if (item.href === currentPath) {
           item.active = true;
-          activeIndex = index;
         }
 
         if (item.startsWith) {
           if (currentPath.indexOf(item.startsWith) === 0) {
             item.active = true;
             item.href = currentPath;
-            activeIndex = index;
           }
         }
 
@@ -134,7 +107,6 @@ function (angular, _, $, config) {
         });
       });
 
-      //$scope.menu.splice(0, 0, $scope.menu.splice(activeIndex, 1)[0]);
     };
 
     $scope.init = function() {

@@ -1,12 +1,16 @@
-<div class="modal-body">
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
+<div class="modal-body gf-box-no-margin">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
 			<i class="fa fa-keyboard-o"></i>
 			Keyboard shutcuts
 		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
 	</div>
 
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 		<table class="shortcut-table">
 			<tr>
 				<th></th>
@@ -45,6 +49,3 @@
 
 </div>
 
-<div class="modal-footer">
-	<button type="button" class="btn btn-info" ng-click="dismiss()">Close</button>
-</div>

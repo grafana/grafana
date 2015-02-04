@@ -39,17 +39,24 @@ function (angular, _, moment, config, store) {
       $location.search(search);
     };
 
-    $scope.saveForSharing = function() {
-      var clone = angular.copy($scope.dashboard);
-      clone.temp = true;
-      $scope.db.saveDashboard(clone)
-        .then(function(result) {
-
-          $scope.share = { url: result.url, title: result.title };
-
-        }, function(err) {
-          alertSrv.set('Save for sharing failed', err, 'error',5000);
+    $scope.starDashboard = function() {
+      if ($scope.dashboardMeta.isStarred) {
+        $scope.db.unstarDashboard($scope.dashboard.id).then(function() {
+          $scope.dashboardMeta.isStarred = false;
         });
+      }
+      else {
+        $scope.db.starDashboard($scope.dashboard.id).then(function() {
+          $scope.dashboardMeta.isStarred = true;
+        });
+      }
+    };
+
+    $scope.shareDashboard = function() {
+      $scope.appEvent('show-modal', {
+        src: './app/features/dashboard/partials/shareModal.html',
+        scope: $scope.$new(),
+      });
     };
 
     $scope.passwordCache = function(pwd) {
@@ -109,10 +116,10 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboardConfirmed = function(options) {
-      var id = options.id;
-      $scope.db.deleteDashboard(id).then(function(id) {
-        $scope.appEvent('dashboard-deleted', id);
-        $scope.appEvent('alert-success', ['Dashboard Deleted', id + ' has been deleted']);
+      var slug = options.slug;
+      $scope.db.deleteDashboard(slug).then(function() {
+        $scope.appEvent('dashboard-deleted', options);
+        $scope.appEvent('alert-success', ['Dashboard Deleted', options.title + ' has been deleted']);
       }, function(err) {
         $scope.appEvent('alert-error', ['Deleted failed', err]);
       });
@@ -142,10 +149,6 @@ function (angular, _, moment, config, store) {
         from: moment.utc(from).toDate(),
         to: moment.utc(to).toDate(),
       });
-    };
-
-    $scope.styleUpdated = function() {
-      $scope.grafana.style = $scope.dashboard.style;
     };
 
     $scope.editJson = function() {

@@ -1,15 +1,19 @@
-<div ng-include="'app/partials/navbar.html'" ng-init="pageTitle='Import'"></div>
+<topnav toggle="toggleSideMenu()"
+				title="Import"
+				icon="fa fa-download"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
 
-<div class="dashboard-edit-view" style="min-height: 500px">
+<div class="gf-box" style="min-height: 500px">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
 			<i class="fa fa-th-large"></i>
 			Import Dashboards
 		</div>
 	</div>
 
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 
 		<div class="editor-row">
 			<div class="section">

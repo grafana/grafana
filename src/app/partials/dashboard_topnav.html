@@ -5,13 +5,18 @@
 			<div class="top-nav">
 				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
 					<img class="logo-icon" src="img/fav32.png"></img>
-					<i class="fa fa-angle-right"></i>
+					<i class="fa fa-bars"></i>
 				</a>
 
-				<a class="top-nav-dashboards-btn pointer" ng-click="openSearch()">
-					<i class="fa fa-th-large"></i>
-					<i class="fa fa-angle-down"></i>
-				</a>
+				<div class="top-nav-dashboards-btn">
+					<a class="pointer" ng-click="openSearch()">
+						<i class="fa fa-th-large"></i>
+						<i class="fa fa-caret-down"></i>
+					</a>
+				</div>
+
+				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
+				</span>
 
 				<a ng-click="asd()" class="top-nav-title pointer">
 					 {{dashboard.title}}
@@ -20,10 +25,12 @@
 
 			<ul class="nav pull-left">
 				<li>
-					<a class="pointer" ng-click="starDashboard()"><i class="fa fa-star-o" style="color: orange;"></i></a>
+					<a class="pointer" ng-click="starDashboard()">
+						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
+					</a>
 				</li>
 				<li>
-					<a class="pointer" ng-click="asd()"><i class="fa fa-share-square-o"></i></a>
+					<a class="pointer" ng-click="shareDashboard()"><i class="fa fa-share-square-o"></i></a>
 				</li>
 				<li>
 					<a ng-click="saveDashboard()"><i class="fa fa-save"></i></a>
@@ -52,12 +59,6 @@
 					</grafana-simple-panel>
 				</li>
 
-				<!-- <li class="dropdown grafana&#45;menu&#45;save"> -->
-				<!-- 	<a bs&#45;tooltip="'Save'" data&#45;placement="bottom" class="dropdown&#45;toggle" data&#45;toggle="dropdown" ng&#45;click="saveDashboard()"> -->
-				<!-- 		<i class='fa fa&#45;save'></i> -->
-				<!-- 	</a> -->
-				<!-- </li> -->
-        <!--  -->
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>
 						Stop playlist

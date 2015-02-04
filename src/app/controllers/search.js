@@ -18,6 +18,7 @@ function (angular, _, config, $) {
       $scope.query = { query: 'title:' };
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
+      $scope.starsPromise = $scope.grafana.user.getStars();
 
       // events
       $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
@@ -64,38 +65,26 @@ function (angular, _, config, $) {
       $scope.selectedIndex = Math.max(Math.min($scope.selectedIndex + direction, $scope.resultCount - 1), 0);
     };
 
-    $scope.goToDashboard = function(id) {
+    $scope.goToDashboard = function(slug) {
       $location.search({});
-      $location.path("/dashboard/db/" + id);
-    };
-
-    $scope.shareDashboard = function(title, id, $event) {
-      $event.stopPropagation();
-      var baseUrl = window.location.href.replace(window.location.hash,'');
-
-      $scope.share = {
-        title: title,
-        url: baseUrl + '#dashboard/db/' + encodeURIComponent(id)
-      };
+      $location.path("/dashboard/db/" + slug);
     };
 
     $scope.searchDashboards = function(queryString) {
-      // bookeeping for determining stale search requests
-      var searchId = $scope.currentSearchId + 1;
-      $scope.currentSearchId = searchId > $scope.currentSearchId ? searchId : $scope.currentSearchId;
+      $scope.currentSearchId = $scope.currentSearchId + 1;
+      var localSearchId = $scope.currentSearchId;
 
       return $scope.db.searchDashboards(queryString)
         .then(function(results) {
-          // since searches are async, it's possible that these results are not for the latest search. throw
-          // them away if so
-          if (searchId < $scope.currentSearchId) {
-            return;
-          }
+          if (localSearchId < $scope.currentSearchId) { return; }
 
-          $scope.tagsOnly = results.tagsOnly;
-          $scope.results.dashboards = results.dashboards;
-          $scope.results.tags = results.tags;
-          $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+          $scope.starsPromise.then(function(stars) {
+            $scope.starredIds = stars.dashboardIds;
+            $scope.tagsOnly = results.tagsOnly;
+            $scope.results.dashboards = results.dashboards;
+            $scope.results.tags = results.tags;
+            $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+          });
         });
     };
 
@@ -125,11 +114,11 @@ function (angular, _, config, $) {
 
     $scope.deleteDashboard = function(dash, evt) {
       evt.stopPropagation();
-      $scope.appEvent('delete-dashboard', { id: dash.id, title: dash.title });
+      $scope.appEvent('delete-dashboard', { slug: dash.slug, title: dash.title });
     };
 
-    $scope.dashboardDeleted = function(evt, id) {
-      var dash = _.findWhere($scope.results.dashboards, {id: id});
+    $scope.dashboardDeleted = function(evt, payload) {
+      var dash = _.findWhere($scope.results.dashboards, { slug: payload.slug });
       $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 
@@ -154,7 +143,6 @@ function (angular, _, config, $) {
     };
 
     $scope.newDashboard = function() {
-      //$location.path('/dashboard/file/empty.json');
       $location.url('dashboard/new');
     };
 

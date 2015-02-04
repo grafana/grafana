@@ -19,20 +19,13 @@ function (angular, _, kbn) {
     }
 
     GrafanaDatasource.prototype.getDashboard = function(slug, isTemp) {
-      var url = '/dashboard/' + slug;
+      var url = '/dashboards/' + slug;
 
       if (isTemp) {
         url = '/temp/' + slug;
       }
 
-      return backendSrv.get('/api/dashboard/' + slug)
-        .then(function(data) {
-          if (data && data.dashboard) {
-            return data.dashboard;
-          } else {
-            return false;
-          }
-        });
+      return backendSrv.get('/api/dashboards/db/' + slug);
     };
 
     GrafanaDatasource.prototype.query = function(options) {
@@ -43,13 +36,21 @@ function (angular, _, kbn) {
       return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
     };
 
+    GrafanaDatasource.prototype.starDashboard = function(dashId) {
+      return backendSrv.post('/api/user/stars/dashboard/' + dashId);
+    };
+
+    GrafanaDatasource.prototype.unstarDashboard = function(dashId) {
+      return backendSrv.delete('/api/user/stars/dashboard/' + dashId);
+    };
+
     GrafanaDatasource.prototype.saveDashboard = function(dashboard) {
       // remove id if title has changed
       if (dashboard.title !== dashboard.originalTitle) {
         dashboard.id = null;
       }
 
-      return backendSrv.post('/api/dashboard/', { dashboard: dashboard })
+      return backendSrv.post('/api/dashboards/db/', { dashboard: dashboard })
         .then(function(data) {
           return { title: dashboard.title, url: '/dashboard/db/' + data.slug };
         }, function(err) {
@@ -60,18 +61,12 @@ function (angular, _, kbn) {
     };
 
     GrafanaDatasource.prototype.deleteDashboard = function(id) {
-      return backendSrv.delete('/api/dashboard/' + id)
-        .then(function(data) {
-          return data.title;
-        });
+      return backendSrv.delete('/api/dashboards/db/' + id);
     };
 
     GrafanaDatasource.prototype.searchDashboards = function(query) {
       return backendSrv.get('/api/search/', {q: query})
         .then(function(data) {
-          _.each(data.dashboards, function(item) {
-            item.id = item.slug;
-          });
           return data;
         });
     };

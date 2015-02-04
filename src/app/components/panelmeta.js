@@ -6,6 +6,8 @@ function () {
   function PanelMeta(options) {
     this.description = options.description;
     this.fullscreen = options.fullscreen;
+    this.editIcon = options.editIcon;
+    this.panelName = options.panelName;
     this.menu = [];
     this.editorTabs = [];
     this.extendedMenu = [];

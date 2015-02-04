@@ -10,8 +10,14 @@ function (angular, app, _, kbn, PanelMeta) {
 
   var module = angular.module('grafana.panels.raintankMonitorDashboardBuilder', []);
   app.useModule(module);
-
-  module.controller('raintankMonitorDashboardBuilder', function($scope, panelSrv, backendSrv) {
+    module.directive('grafanaPanelRaintankmonitordashboardbuilder', function() {
+      console.log("grafanaPanelRaintankMonitorDashboardBuilder");
+    return {
+      controller: 'raintankMonitorDashboardBuilderCtrl',
+      templateUrl: 'plugins/raintank/panels/raintankMonitorDashboardBuilder/module.html',
+    };
+  });
+  module.controller('raintankMonitorDashboardBuilderCtrl', function($scope, panelSrv, backendSrv) {
     $scope.panelMeta = new PanelMeta({
       description : "Monitor Dashboard Builder",
     });
