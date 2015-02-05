@@ -117,6 +117,10 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		params = append(params, query.Tag)
 	}
 
+	if query.Limit == 0 || query.Limit > 10000 {
+		query.Limit = 300
+	}
+
 	sql.WriteString(fmt.Sprintf(" LIMIT %d", query.Limit))
 
 	var res []DashboardSearchProjection

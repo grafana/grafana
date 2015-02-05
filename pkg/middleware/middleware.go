@@ -89,7 +89,6 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	}
 
 	ctx.Data["Title"] = title
-
 	ctx.HTML(status, strconv.Itoa(status))
 }
 

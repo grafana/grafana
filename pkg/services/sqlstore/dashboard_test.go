@@ -53,7 +53,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to search for dashboard", func() {
 				query := m.SearchDashboardsQuery{
-					Title:     "%test%",
+					Title:     "test",
 					AccountId: 1,
 				}
 
