@@ -7,7 +7,7 @@ define([
 function (angular, $, config, _) {
   "use strict";
 
-  var module = angular.module('grafana.routes');
+  var module = angular.module('grafana.routes.standalone');
 
   module.config(function($routeProvider) {
     $routeProvider
@@ -15,10 +15,16 @@ function (angular, $, config, _) {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromFileProvider',
         reloadOnSearch: false,
+      })
+      .when('/dashboard/new', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromFileProvider',
+        reloadOnSearch: false,
+        newDashboard: true,
       });
   });
 
-  module.controller('DashFromFileProvider', function($scope, $rootScope, $http, $routeParams, alertSrv) {
+  module.controller('DashFromFileProvider', function($scope, $rootScope, $http, $routeParams, $route) {
 
     var renderTemplate = function(json,params) {
       var _r;
@@ -46,12 +52,17 @@ function (angular, $, config, _) {
         }
         return result.data;
       },function() {
-        alertSrv.set('Error',"Could not load <i>dashboards/"+file+"</i>. Please make sure it exists" ,'error');
+        $scope.appEvent('alert-error', ["Dashboard load failed", "Could not load <i>dashboards/"+file+"</i>. Please make sure it exists"]);
         return false;
       });
     };
 
-    file_load($routeParams.jsonFile).then(function(result) {
+    var fileToLoad = $routeParams.jsonFile;
+    if ($route.current.newDashboard) {
+      fileToLoad = 'empty.json';
+    }
+
+    file_load(fileToLoad).then(function(result) {
       $scope.initDashboard(result, $scope);
     });
 

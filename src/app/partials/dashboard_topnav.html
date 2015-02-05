@@ -1,12 +1,53 @@
-<div class="navbar navbar-static-top">
+<div class="navbar navbar-static-top" ng-controller='DashboardNavCtrl' ng-init="init()">
 	<div class="navbar-inner">
 		<div class="container-fluid">
-			<span class="brand">
-				<img class="logo-icon" src="img/fav32.png" bs-tooltip="'Grafana'" data-placement="bottom"></img>
-				<span class="page-title">{{dashboard.title}}</span>
-			</span>
-			<ul class="nav pull-right" ng-controller='DashboardNavCtrl' ng-init="init()">
 
+			<div class="top-nav">
+				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
+					<img class="logo-icon" src="img/fav32.png"></img>
+					<i class="fa fa-bars"></i>
+				</a>
+
+				<div class="top-nav-dashboards-btn">
+					<a class="pointer" ng-click="openSearch()">
+						<i class="fa fa-th-large"></i>
+						<i class="fa fa-caret-down"></i>
+					</a>
+				</div>
+
+				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
+				</span>
+
+				<a ng-click="asd()" class="top-nav-title pointer">
+					 {{dashboard.title}}
+				 </a>
+			 </div>
+
+			<ul class="nav pull-left" ng-if="!dashboardMeta.isHome">
+				<li>
+					<a class="pointer" ng-click="starDashboard()">
+						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
+					</a>
+				</li>
+				<li>
+					<a class="pointer" ng-click="shareDashboard()"><i class="fa fa-share-square-o"></i></a>
+				</li>
+				<li>
+					<a ng-click="saveDashboard()"><i class="fa fa-save"></i></a>
+				</li>
+				<li class="dropdown">
+					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
+					<ul class="dropdown-menu">
+						<li><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
+						<li><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
+						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
+						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
+						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
+					</ul>
+				</li>
+			</ul>
+
+			<ul class="nav pull-right">
 				<li ng-show="dashboardViewState.fullscreen">
 					<a ng-click="exitFullscreen()">
 						Back to dashboard
@@ -17,55 +58,6 @@
 					<grafana-simple-panel type="pulldown.type" ng-cloak>
 					</grafana-simple-panel>
 				</li>
-
-				<li class="dropdown grafana-menu-save">
-					<a bs-tooltip="'Save'" data-placement="bottom" class="dropdown-toggle" data-toggle="dropdown" ng-click="openSaveDropdown()">
-						<i class='fa fa-save'></i>
-					</a>
-
-					<ul class="save-dashboard-dropdown dropdown-menu" ng-if="saveDropdownOpened">
-						<li>
-							<form class="input-prepend nomargin save-dashboard-dropdown-save-form">
-								<input class='input-medium' ng-model="dashboard.title" type="text" />
-								<button class="btn" ng-click="saveDashboard()"><i class="fa fa-save"></i></button>
-							</form>
-						</li>
-
-						<li>
-							<a class="link" ng-click="set_default()">Save as Home</a>
-						</li>
-						<li>
-							<a class="link" ng-click="purge_default()">Reset Home</a>
-						</li>
-						<li ng-show="!isFavorite">
-							<a class="link" ng-click="markAsFavorite()">Mark as favorite</a>
-						</li>
-						<li ng-show="isFavorite">
-							<a class="link" ng-click="removeAsFavorite()">Remove as favorite</a>
-						</li>
-						<li>
-							<a class="link" ng-click="editJson()">Dashboard JSON</a>
-						</li>
-						<li>
-							<a class="link" ng-click="exportDashboard()">Export dashboard</a>
-						</li>
-						<li ng-show="db.saveTemp">
-							<a bs-tooltip="'Share'" data-placement="bottom" ng-click="saveForSharing()" config-modal="app/partials/dashLoaderShare.html">
-								Share temp copy
-							</a>
-						</li>
-					</ul>
-				</li>
-
-				<li class="dropdown grafana-menu-load">
-					<a ng-click="openSearch()" bs-tooltip="'Search'" data-placement="bottom">
-						<i class='fa fa-folder-open'></i>
-					</a>
-				</li>
-
-				<li class="grafana-menu-home"><a bs-tooltip="'Goto saved default'" data-placement="bottom" href='#/'><i class='fa fa-home'></i></a></li>
-
-				<li class="grafana-menu-edit" ng-show="dashboard.editable" bs-tooltip="'Configure dashboard'" data-placement="bottom"><a class="link" dash-editor-link="app/partials/dasheditor.html"><i class='fa fa-cog pointer'></i></a></li>
 
 				<li class="grafana-menu-stop-playlist hide">
 					<a class='small' ng-click='stopPlaylist(2)'>

@@ -10,30 +10,45 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller) {
-
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope._ = _;
-    $rootScope.profilingEnabled = store.getBool('profilingEnabled');
-    $rootScope.performance = { loadStart: new Date().getTime() };
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller, userSrv, $timeout) {
 
     $scope.init = function() {
+      $scope.grafana = {};
+      $scope.grafana.version = grafanaVersion;
+      $scope._ = _;
+
+      $rootScope.profilingEnabled = store.getBool('profilingEnabled');
+      $rootScope.performance = { loadStart: new Date().getTime() };
+      $rootScope.appSubUrl = config.appSubUrl;
+
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
 
       alertSrv.init();
       utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana = { style: 'dark' };
-    };
+      $scope.grafana.lightTheme = false;
+      $scope.grafana.user = userSrv.getSignedInUser();
+      $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
+      $scope.topnav = { title: 'Grafana' };
 
-    $scope.toggleConsole = function() {
-      $scope.consoleEnabled = !$scope.consoleEnabled;
-      store.set('grafanaConsole', $scope.consoleEnabled);
+      $scope.onAppEvent('logged-out', function() {
+        $scope.grafana.sidemenu = false;
+        $scope.grafana.user = {};
+      });
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
+    };
+
+    $scope.toggleSideMenu = function() {
+      $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
+      store.set('grafana.sidemenu', $scope.grafana.sidemenu);
+
+      $timeout(function() {
+        $scope.$broadcast("render");
+      }, 50);
     };
 
     $rootScope.onAppEvent = function(name, callback) {
@@ -81,7 +96,11 @@ function (angular, config, _, $, store) {
     $scope.initProfiling = function() {
       var count = 0;
 
-      $scope.$watch(function digestCounter() { count++; }, function() { });
+      $scope.$watch(function digestCounter() {
+        count++;
+      }, function() {
+      });
+
       $scope.onAppEvent('dashboard-loaded', function() {
         count = 0;
 

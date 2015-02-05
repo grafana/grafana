@@ -1,88 +1,92 @@
 module.exports = function(config,grunt) {
   'use strict';
 
-  var _c = {
-    build: {
-      options: {
-        appDir: '<%= tempDir %>',
-        dir: '<%= destDir %>',
+  function buildRequireJsOptions() {
 
-        mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-        modules: [], // populated below
+    var options = {
+      appDir: '<%= tempDir %>',
+      dir:  '<%= destDir %>',
+      mainConfigFile: '<%= tempDir %>/app/components/require.<%= mode %>.js',
+      baseUrl: './app',
+      paths: config.modeOptions.requirejs.paths,
 
-        optimize: 'none',
-        optimizeCss: 'none',
-        optimizeAllPluginResources: false,
+      modules: [], // populated below,
 
-        paths: { config: '../config.sample' }, // fix, fallbacks need to be specified
+      optimize: 'none',
+      optimizeCss: 'none',
+      optimizeAllPluginResources: false,
 
-        removeCombined: true,
-        findNestedDependencies: true,
-        normalizeDirDefines: 'all',
-        inlineText: true,
-        skipPragmas: true,
+      removeCombined: true,
+      findNestedDependencies: true,
+      normalizeDirDefines: 'all',
+      inlineText: true,
+      skipPragmas: true,
 
-        done: function (done, output) {
-          var duplicates = require('rjs-build-analysis').duplicates(output);
+      done: function (done, output) {
+        var duplicates = require('rjs-build-analysis').duplicates(output);
 
-          if (duplicates.length > 0) {
-            grunt.log.subhead('Duplicates found in requirejs build:');
-            grunt.log.warn(duplicates);
-            done(new Error('r.js built duplicate modules, please check the excludes option.'));
-          }
-
-          done();
+        if (duplicates.length > 0) {
+          grunt.log.subhead('Duplicates found in requirejs build:');
+          grunt.log.warn(duplicates);
+          done(new Error('r.js built duplicate modules, please check the excludes option.'));
         }
-      }
-    }
-  };
 
-  // setup the modules require will build
-  var requireModules = _c.build.options.modules = [
+        done();
+      }
+    };
+
+    // setup the modules require will build
+    var requireModules = options.modules = [
     {
       // main/common module
       name: 'app',
-      include: [
-        'css',
-        'kbn',
-        'text',
-        'jquery',
-        'angular',
-        'settings',
-        'bootstrap',
-        'modernizr',
-        'timepicker',
-        'datepicker',
-        'lodash',
-        'jquery.flot',
-        'angular-strap',
-        'angular-dragdrop',
-        'services/all',
-        'features/all',
-        'directives/all',
-        'filters/all',
-        'controllers/all',
-        'routes/standalone/default',
-        'components/partials',
-      ]
-    }
-  ];
+        include: [
+          'css',
+          'kbn',
+          'text',
+          'jquery',
+          'angular',
+          'settings',
+          'bootstrap',
+          'modernizr',
+          'timepicker',
+          'datepicker',
+          'lodash',
+          'jquery.flot',
+          'angular-strap',
+          'angular-dragdrop',
+          'services/all',
+          'features/all',
+          'directives/all',
+          'filters/all',
+          'controllers/all',
+          'routes/standalone/all',
+          'routes/backend/all',
+          'components/partials',
+        ]
+      }
+    ];
 
-  var fs = require('fs');
-  var panelPath = config.srcDir+'/app/panels';
+    var fs = require('fs');
+    var panelPath = config.srcDir+'/app/panels';
 
-  // create a module for each directory in src/app/panels/
-  fs.readdirSync(panelPath).forEach(function (panelName) {
-    requireModules[0].include.push('panels/'+panelName+'/module');
-    requireModules[0].include.push('text!panels/'+panelName+'/module.html');
-  });
-
-  // exclude the literal config definition from all modules
-  requireModules
-    .forEach(function (module) {
-      module.excludeShallow = module.excludeShallow || [];
-      module.excludeShallow.push('config');
+    // create a module for each directory in src/app/panels/
+    fs.readdirSync(panelPath).forEach(function (panelName) {
+      requireModules[0].include.push('panels/'+panelName+'/module');
+      requireModules[0].include.push('text!panels/'+panelName+'/module.html');
     });
 
-  return _c;
+    if (config.modeOptions.requirejs.excludeConfig) {
+      // exclude the literal config definition from all modules
+      requireModules
+        .forEach(function (module) {
+          module.excludeShallow = module.excludeShallow || [];
+          module.excludeShallow.push('config');
+        });
+    }
+
+    return { options: options };
+  }
+
+  return { build: buildRequireJsOptions() };
 };

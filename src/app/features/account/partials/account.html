@@ -1,0 +1,35 @@
+<topnav toggle="toggleSideMenu()" icon="fa fa-shield" section="Account" show-menu-btn="!grafana.sidemenu">
+</topnav>
+
+<div class="gf-box" style="min-height: 500px">
+
+	<div class="gf-box-body">
+		<div class="row editor-row">
+			<div class="section">
+				<form name="accountForm">
+					<div>
+						<div class="tight-form">
+							<ul class="tight-form-list">
+								<li class="tight-form-item" style="width: 120px">
+									<strong>Account name</strong>
+								</li>
+								<li>
+									<input type="text" required ng-model="account.name" class="input-xlarge tight-form-input last" >
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<br>
+
+					<panel-loader type="'test'"></panel-loader>
+
+					<br>
+					<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+

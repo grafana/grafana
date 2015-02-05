@@ -23,6 +23,10 @@
   }
 }
 
+.tight-form-btn {
+  padding: 8px 12px;
+}
+
 // old graphite-segment-list
 .tight-form-list {
   list-style: none;
@@ -121,15 +125,20 @@ input[type=text].tight-form-clear-input {
   border-right: 1px solid @grafanaTargetSegmentBorder;
 }
 
-//[type=text].grafana-target-segment-input, [type=number].grafana-target-segment-input {
-[type=text].tight-form-input, [type=number].tight-form-input {
-  border: none;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
-  margin: 0px;
-  border-radius: 0;
-  padding: 8px 4px;
-  &.last {
-    border-right: none;
+[type=text],
+[type=email],
+[type=number],
+[type=password] {
+
+  &.tight-form-input {
+    border: none;
+    border-right: 1px solid @grafanaTargetSegmentBorder;
+    margin: 0px;
+    border-radius: 0;
+    padding: 8px 4px;
+    &.last {
+      border-right: none;
+    }
   }
 }
 

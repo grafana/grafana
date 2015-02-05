@@ -35,8 +35,8 @@
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Add Panel</a>
 									<ul class="dropdown-menu">
-										<li bindonce ng-repeat="name in panelNames">
-											<a ng-click="add_panel_default(name)" bo-text="name"></a>
+										<li bindonce ng-repeat="(key, value) in panels">
+											<a ng-click="add_panel_default(key)" bo-text="value.name"></a>
 										</li>
 									</ul>
 								</li>
@@ -79,12 +79,11 @@
 					</div>
 
 					<!-- Panels, draggable needs to be disabled in fullscreen because Firefox bug -->
-					<div ng-repeat="(name, panel) in row.panels"
-						class="panel"
+					<div ng-repeat="(name, panel) in row.panels" class="panel"
 						ui-draggable="{{!dashboardViewState.fullscreen}}" drag="panel.id"
 						ui-on-Drop="onDrop($data, row, panel)"
-						drag-handle-class="drag-handle" panel-width ng-model="panel">
-						<grafana-panel type="panel.type" ng-cloak></grafana-panel>
+						drag-handle-class="drag-handle" panel-width>
+						<panel-loader type="panel.type" class="panel-margin"></panel-loader>
 					</div>
 
 					<div panel-drop-zone class="panel panel-drop-zone"

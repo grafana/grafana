@@ -5,11 +5,15 @@
   position: relative;
 }
 
-.panel-container {
-  padding: 0px 0px 0px 0px;
-  background: @grafanaPanelBackground;
+.panel-margin {
   margin: 5px;
+  display: block;
+}
+
+.panel-container {
+  background: @grafanaPanelBackground;
   position: relative;
+  border: 1px solid @grayDark;
   &:hover {
     .panel-actions {
       display: block;
@@ -88,24 +92,32 @@
   position: fixed;
   left: 0px;
   right: 0px;
-  top: 51px;
+  top: 60px;
   height: 100%;
-  padding: 0 10px;
-  background: @grafanaPanelBackground;
-  overflow-y: scroll;
+  padding: 0;
+  overflow-y: auto;
   height: 100%;
-
-  .panel-content {
-    padding-bottom: 130px;
-  }
 
   .dropdown-menu {
     margin-bottom: 70px;
   }
 
+  .panel-container {
+    margin: 15px;
+  }
+
   .panel-menu {
     top: 0px;
   }
+
+  .panel-title-container {
+    padding: 8px;
+  }
+}
+
+.panel-full-edit {
+  margin-top: 30px;
+  padding-bottom: 130px;
 }
 
 .panel-menu {

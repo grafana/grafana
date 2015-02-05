@@ -5,6 +5,12 @@ define([
 function (angular, $) {
   'use strict';
 
+  var editViewMap = {
+    'settings':    { src: 'app/partials/dasheditor.html', title: "Settings" },
+    'annotations': { src: 'app/features/annotations/partials/editor.html', title: "Annotations" },
+    'templating':  { src: 'app/partials/templating_editor.html', title: "Templating" }
+  };
+
   angular
     .module('grafana.directives')
     .directive('dashEditorLink', function($timeout) {
@@ -25,7 +31,7 @@ function (angular, $) {
 
   angular
     .module('grafana.directives')
-    .directive('dashEditorView', function($compile) {
+    .directive('dashEditorView', function($compile, $location) {
       return {
         restrict: 'A',
         link: function(scope, elem) {
@@ -48,10 +54,12 @@ function (angular, $) {
             if (editorScope) { editorScope.dismiss(); }
           }
 
-          scope.$on("$destroy", hideEditorPane);
-          scope.onAppEvent('hide-dash-editor', hideEditorPane);
+          function showEditorPane(evt, payload, editview) {
+            if (editview) {
+              scope.grafana.editview = editViewMap[editview];
+              payload.src = scope.grafana.editview.src;
+            }
 
-          scope.onAppEvent('show-dash-editor', function(evt, payload) {
             if (lastEditor === payload.src) {
               hideEditorPane();
               return;
@@ -65,23 +73,43 @@ function (angular, $) {
             editorScope = payload.scope ? payload.scope.$new() : scope.$new();
 
             editorScope.dismiss = function() {
-              console.log('dismiss: ');
               editorScope.$destroy();
               elem.empty();
               lastEditor = null;
               editorScope = null;
               hideScrollbars(false);
+
+              if (editview) {
+                var urlParams = $location.search();
+                if (editview === urlParams.editview) {
+                  delete urlParams.editview;
+                  $location.search(urlParams);
+                }
+              }
             };
 
             // hide page scrollbars while edit pane is visible
             hideScrollbars(true);
 
             var src = "'" + payload.src + "'";
-            var view = $('<div class="dashboard-edit-view" ng-include="' + src + '"></div>');
+            var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
             elem.append(view);
             $compile(elem.contents())(editorScope);
+          }
+
+          scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
+            if (newValue) {
+              showEditorPane(null, {}, newValue);
+            } else if (oldValue) {
+              scope.grafana.editview = null;
+              hideEditorPane();
+            }
           });
 
+          scope.grafana.editview = null;
+          scope.$on("$destroy", hideEditorPane);
+          scope.onAppEvent('hide-dash-editor', hideEditorPane);
+          scope.onAppEvent('show-dash-editor', showEditorPane);
         }
       };
     });

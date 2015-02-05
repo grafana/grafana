@@ -109,10 +109,12 @@ require([
     }
   }
 
+
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
+  angular.module('grafana.routes', ['ngRoute']);
 
   var specs = [
     'specs/lexer-specs',
@@ -135,7 +137,8 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs'
+    'specs/dashboardViewStateSrv-specs',
+    'specs/soloPanelCtrl-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

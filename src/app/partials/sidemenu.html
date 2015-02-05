@@ -1,0 +1,39 @@
+
+<div ng-controller="SideMenuCtrl" ng-init="init()">
+	<ul class="sidemenu">
+		<li style="margin-bottom: 2px;">
+			<a class="pointer sidemenu-top-btn" ng-click="toggleSideMenu()">
+				<img class="logo-icon" src="img/fav32.png"></img>
+				<i class="pull-right fa fa-angle-left"></i>
+			</a>
+		</li>
+
+		<li ng-repeat="item in menu">
+			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
+				<span class="sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="sidemenu-item-text">{{item.text}}</span>
+	   	</a>
+		</li>
+
+		<li ng-if="grafana.user.isSignedIn" style="margin-top:50px">
+			<a href="profile" class="sidemenu-item sidemenu-user">
+				<img ng-src="{{grafana.user.gravatarUrl}}">
+				<span class="sidemenu-item-text">{{grafana.user.name}}</a>
+			</a>
+		</li>
+
+		<li ng-if="grafana.user.isSignedIn">
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="sidemenu-item-text no-icon">Sign out</span>
+	   	</a>
+		</li>
+
+		<li ng-if="!grafana.user.isSignedIn" style="margin-top:50px">
+			<a href="/login" class="sidemenu-item" target="_self">
+				<span class="sidemenu-icon"><i class="fa fa-sign-in"></i></span>
+				<span class="sidemenu-item-text">Sign in</span>
+	   	</a>
+		</li>
+
+	</ul>
+</div>

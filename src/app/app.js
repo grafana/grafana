@@ -49,8 +49,7 @@ function (angular, $, _, appLevelRequire, config) {
     return module;
   };
 
-  app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
-    $routeProvider.otherwise({ redirectTo: config.default_route });
+  app.config(function($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
@@ -68,7 +67,16 @@ function (angular, $, _, appLevelRequire, config) {
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters'];
+
+  if (window.grafanaBackend) {
+    module_types.push('routes');
+    angular.module('grafana.routes.standalone', []);
+  }
+  else {
+    module_types.push('routes.standalone');
+    angular.module('grafana.routes', []);
+  }
 
   _.each(module_types, function (type) {
     var module_name = 'grafana.'+type;
@@ -85,7 +93,8 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/standalone/default',
+    'routes/standalone/all',
+    'routes/backend/all',
   ];
 
   _.each(config.plugins.dependencies, function(dep) {

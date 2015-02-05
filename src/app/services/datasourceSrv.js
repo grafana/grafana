@@ -66,6 +66,9 @@ function (angular, _, config) {
       case 'elasticsearch':
         Datasource = $injector.get('ElasticDatasource');
         break;
+      case 'grafana':
+        Datasource = $injector.get('GrafanaDatasource');
+        break;
       default:
         Datasource = $injector.get(ds.type);
       }
@@ -77,6 +80,10 @@ function (angular, _, config) {
       if (datasources[name]) { return datasources[name]; }
 
       return this.default;
+    };
+
+    this.getAll = function() {
+      return datasources;
     };
 
     this.getAnnotationSources = function() {

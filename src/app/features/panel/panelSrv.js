@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'config',
 ],
-function (angular, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -24,7 +25,7 @@ function (angular, _) {
 
       $scope.sharePanel = function() {
         $scope.appEvent('show-modal', {
-          src: './app/partials/share-panel.html',
+          src: './app/features/dashboard/partials/shareModal.html',
           scope: $scope.$new()
         });
       };
@@ -75,6 +76,10 @@ function (angular, _) {
           return;
         }
         $scope.editorHelpIndex = index;
+      };
+
+      $scope.isNewPanel = function() {
+        return $scope.panel.title === config.new_panel_title;
       };
 
       $scope.toggleFullscreen = function(edit) {

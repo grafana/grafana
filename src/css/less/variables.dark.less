@@ -13,11 +13,10 @@
 @grayLighter:           #BBBFC2;
 @white:                 #fff;
 
-
 // Accent colors
 // -------------------------
 @blue:                  #33B5E5;
-@blueDark:              #0099CC;
+@blueDark:              #0086b3;
 @green:                 #669900;
 @red:                   #CC3900;
 @yellow:                #ECBB13;
@@ -29,9 +28,6 @@
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: @grayDarker;
-
-// Tabs
-@fullEditBorder:          #555;
 
 // Graphite Target Editor
 @grafanaTargetBorder:         @black;
@@ -111,12 +107,12 @@
 
 // Buttons
 // -------------------------
-@btnBackground:                     @grayLight;
+@btnBackground:                     @grayDark;
 @btnBackgroundHighlight:            darken(@grayLight, 15%);
 @btnBorder:                         #bbb;
 
-@btnPrimaryBackground:              lighten(@blue, 5%);
-@btnPrimaryBackgroundHighlight:     darken(@blue, 5%);
+@btnPrimaryBackground:              lighten(@blueDark, 5%);
+@btnPrimaryBackgroundHighlight:     darken(@blueDark, 5%);
 
 @btnInfoBackground:                 lighten(@purple, 5%);
 @btnInfoBackgroundHighlight:        darken(@purple, 5%);
@@ -130,8 +126,8 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              lighten(@black, 5%);
-@btnInverseBackgroundHighlight:     darken(@black, 5%);
+@btnInverseBackground:              @grayDark;
+@btnInverseBackgroundHighlight:     lighten(@grayDark, 5%);
 
 
 // Forms

@@ -4,7 +4,7 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "1.9.1",
+  "version": "2.0.0-alpha",
   "repository": {
     "type": "git",
     "url": "http://github.com/torkelo/grafana.git"
@@ -16,7 +16,7 @@
     "grunt-angular-templates": "^0.5.5",
     "grunt-cli": "~0.1.13",
     "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-compress": "~0.5.2",
+    "grunt-contrib-compress": "~0.13.0",
     "grunt-contrib-concat": "^0.4.0",
     "grunt-contrib-connect": "~0.5.0",
     "grunt-contrib-copy": "~0.5.0",
@@ -33,7 +33,7 @@
     "grunt-ng-annotate": "^0.9.2",
     "grunt-ngmin": "0.0.3",
     "grunt-string-replace": "~0.2.4",
-    "grunt-usemin": "^2.1.1",
+    "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
     "karma": "~0.12.21",
     "karma-chrome-launcher": "~0.1.4",
@@ -65,6 +65,7 @@
   "dependencies": {
     "grunt-jscs": "^0.8.1",
     "karma-sinon": "^1.0.3",
+    "lodash": "^2.4.1",
     "sinon": "^1.10.3"
   }
 }

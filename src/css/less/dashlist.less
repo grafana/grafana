@@ -1,0 +1,22 @@
+.dashlist-item {
+
+}
+
+.dashlist-link {
+  display: block;
+  margin: 5px;
+  padding: 7px;
+  background-color: @grafanaTargetBackground;
+  border: 1px solid @grafanaTargetBorder;
+  .fa {
+    float: right;
+    padding-top: 3px;
+  }
+  .fa-star {
+    color: @orange;
+  }
+
+  &:hover {
+    background-color: @grafanaTargetFuncBackground;
+  }
+}

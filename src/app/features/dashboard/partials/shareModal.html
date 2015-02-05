@@ -1,0 +1,35 @@
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="SharePanelCtrl">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-share"></i>
+			Share
+		</div>
+
+		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+			<div ng-repeat="tab in ['Link']" data-title="{{tab}}">
+			</div>
+		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="gf-box-body">
+		<div class="editor-row">
+			<editor-opt-bool text="Current time range" model="forCurrent" change="buildUrl()"></editor-opt-bool>
+			<editor-opt-bool text="To this panel only" model="toPanel" change="buildUrl()"></editor-opt-bool>
+			<editor-opt-bool text="Include template variables" model="includeTemplateVars" change="buildUrl()"></editor-opt-bool>
+		</div>
+
+		<div class="editor-row" style="margin-top: 20px;">
+			<input type="text" data-share-panel-url class="input input-fluid" ng-model='shareUrl'></input>
+		</div>
+
+		<div class="editor-row" style="margin-top: 20px;">
+			<a href="{{imageUrl}}" target="_blank">Link to rendered image</a>
+		</div>
+	</div>
+
+</div>
+

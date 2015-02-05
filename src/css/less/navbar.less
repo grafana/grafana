@@ -1,0 +1,126 @@
+.navbar-inner {
+  padding-left: 0px;
+}
+
+.navbar .nav>li>a {
+  padding: 17px 15px 11px;
+  .fa { font-size: 115%; }
+}
+
+.top-nav {
+  float: left;
+}
+
+.fa.top-nav-breadcrumb-icon {
+  margin: 15px 21px 8px 0px;
+  float: left;
+  font-size: 160%;
+  color: @textColor;
+}
+
+.top-nav-menu-btn {
+  border-radius: 50%;
+  background: black;
+  display: block;
+  position: relative;
+  float: left;
+  width: 30px;
+  height: 30px;
+  padding: 4px;
+  margin: 7px 6px 3px 9px;
+  .fa {
+    color: @textColor;
+    width: 30px;
+    height: 30px;
+    left: 10px;
+    top: 8px;
+    font-size: 150%;
+    opacity: 0;
+    position: absolute;
+    transition: opacity .35s ease-in-out;
+  }
+  img {
+    width: 30px;
+    position: absolute;
+    opacity: 1;
+    transition: opacity .35s ease-in-out;
+  }
+  &:hover {
+    .fa {
+      opacity: .7;
+    }
+    img {
+      opacity: 0;
+    }
+  }
+}
+
+.top-nav-dashboards-btn {
+  display: block;
+  float: left;
+  margin: 9px 8px 5px 14px;
+  border-radius: 3px;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #a2a2a2;
+  border: 1px solid #555;
+
+  a {
+    display: inline-block;
+    background: @grafanaTargetFuncBackground;
+    padding: 5px 4px 5px 13px;
+    border: 1px solid #000;
+    border-radius: 3px;
+    color: #a2a2a2;
+
+    &:hover {
+      background: @grafanaTargetFuncHightlight;
+      .fa {
+        color: @linkColorHover
+      }
+    }
+  }
+
+  .fa-caret-down {
+    font-size: 60%;
+    position: relative;
+    top: 4px;
+  }
+}
+
+.top-nav-breadcrumb {
+  display: block;
+  float: left;
+  padding: 18px 9px 8px 12px;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: darken(@gray, 10%);
+  i {
+    padding-left: 9px;
+  }
+}
+
+.top-nav-section {
+  display: block;
+  float: left;
+  padding: 19px 9px 8px 0;
+  font-weight: bold;
+  i {
+    padding-left: 8px;
+  }
+}
+
+.top-nav-title {
+  display: block;
+  float: left;
+  padding: 16px 10px 10px 0px;
+  font-size: 1.3em;
+  font-weight: bold;
+  i {
+    padding-left: 4px;
+    position: relative;
+    top: 2px;
+  }
+}
+
+

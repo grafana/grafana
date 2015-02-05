@@ -12,9 +12,12 @@ function (angular, _) {
     $scope.init = function() {
       $scope.editor = { index: 0 };
       $scope.forCurrent = true;
-      $scope.toPanel = true;
-      $scope.includeTemplateVars = true;
 
+      if ($scope.panel) {
+        $scope.toPanel = true;
+      }
+
+      $scope.includeTemplateVars = true;
       $scope.buildUrl();
     };
 
@@ -26,7 +29,6 @@ function (angular, _) {
         baseUrl = baseUrl.substring(0, queryStart);
       }
 
-      var panelId = $scope.panel.id;
       var params = angular.copy($location.search());
 
       var range = timeSrv.timeRangeForUrl();
@@ -50,7 +52,7 @@ function (angular, _) {
       }
 
       if ($scope.toPanel) {
-        params.panelId = panelId;
+        params.panelId = $scope.panel.id;
         params.fullscreen = true;
       } else {
         delete params.panelId;
@@ -68,7 +70,10 @@ function (angular, _) {
         }
       });
 
-      $scope.shareUrl = baseUrl + "?" + paramsArray.join('&') ;
+      $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
+      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
+      $scope.imageUrl += '&width=1000';
+      $scope.imageUrl += '&height=500';
 
       $timeout(function() {
         var input = $element.find('[data-share-panel-url]');

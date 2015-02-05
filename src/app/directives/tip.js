@@ -20,6 +20,21 @@ function (angular, kbn) {
 
   angular
     .module('grafana.directives')
+    .directive('watchChange', function() {
+      return {
+        scope: { onchange: '&watchChange' },
+        link: function(scope, element) {
+          element.on('input', function() {
+            scope.$apply(function () {
+              scope.onchange({ inputValue: element.val() });
+            });
+          });
+        }
+      };
+    });
+
+  angular
+    .module('grafana.directives')
     .directive('editorOptBool', function($compile) {
       return {
         restrict: 'E',

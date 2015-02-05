@@ -1,4 +1,6 @@
 module.exports = function(config) {
+  "use strict";
+
   return {
     cssDark: {
       src: [
@@ -28,7 +30,7 @@ module.exports = function(config) {
     js: {
       src: [
         '<%= destDir %>/vendor/require/require.js',
-        '<%= destDir %>/app/components/require.config.js',
+        '<%= destDir %>/app/components/require.<%= mode %>.js',
         '<%= destDir %>/app/app.js',
       ],
       dest: '<%= destDir %>/app/app.js'

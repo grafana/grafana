@@ -1,11 +1,14 @@
-<div class="dashboard-editor-header">
-	<div class="dashboard-editor-title">
+<div class="gf-box-header">
+	<div class="gf-box-title">
 		<i class="fa fa-clock-o"></i>
 		Custom time range
 	</div>
+	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</button>
 </div>
 
-<div class="dashboard-editor-body">
+<div class="gf-box-body">
 	<style>
 		.timepicker-to-column {
 			margin-top: 10px;
@@ -73,12 +76,9 @@
 		</form>
 		<div class="clearfix"></div>
 	</div>
-</div>
 
-<div class="dashboard-editor-footer">
 	<form name="input" style="margin-bottom:0">
 		<span class="" ng-hide="input.$valid">Invalid date or range</span>
 		<button ng-click="setAbsoluteTimeFilter(validate(temptime));dismiss();" ng-disabled="!input.$valid" class="btn btn-success">Apply</button>
-		<button ng-click="dismiss();" class="btn btn-success pull-right">Cancel</button>
 	</form>
 </div>

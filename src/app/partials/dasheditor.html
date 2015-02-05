@@ -1,7 +1,7 @@
-<div class="dashboard-editor-header">
-	<div class="dashboard-editor-title">
+<div class="gf-box-header">
+	<div class="gf-box-title">
 		<i class="fa fa-cogs"></i>
-		Dashboard settings
+		Settings
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
@@ -11,9 +11,13 @@
 		</div>
 	</div>
 
+	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</button>
+
 </div>
 
-<div class="dashboard-editor-body">
+<div class="gf-box-body">
 
 		<div ng-if="editor.index == 0">
 			<div class="editor-row">
@@ -93,14 +97,12 @@
 	<div class="clearfix"></div>
 </div>
 
-<div class="dashboard-editor-footer">
+<div class="gf-box-footer">
 	<div class="grafana-version-info" ng-show="editor.index === 0">
 		<span class="editor-option small">
-			Grafana version: {{grafanaVersion}} &nbsp;&nbsp;
+			Grafana version: {{grafana.version}} &nbsp;&nbsp;
 		</span>
 		<span grafana-version-check>
 		</span>
 	</div>
-
-	<button type="button" class="btn btn-success pull-right" ng-click="editor.index=0;dismiss();reset_panel();dashboard.emit_refresh()">Close</button>
 </div>

@@ -1,0 +1,103 @@
+<div class="container">
+
+	<div class="login-box">
+
+		<div class="login-box-logo">
+			<img src="img/logo_transparent_200x75.png">
+		</div>
+
+    <div class="login-inner-box">
+			<div class="login-tab-header">
+				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
+					Log in
+				</button>
+				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
+					Sign up
+				</button>
+			</div>
+
+      <form name="loginForm" class="login-form">
+        <div class="tight-form" ng-if="loginMode">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 80px">
+							<strong>User</strong>
+            </li>
+            <li>
+              <input type="text" name="username" class="tight-form-input last" required ng-model='formModel.user' placeholder="email or username" style="width: 246px">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tight-form" ng-if="loginMode">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 80px">
+							<strong>Password</strong>
+            </li>
+            <li>
+							<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 246px" placeholder="password">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+				</div>
+
+				<div class="tight-form" ng-if="!loginMode">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 80px">
+							<strong>Email</strong>
+            </li>
+            <li>
+              <input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 246px">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+				<div class="tight-form" ng-if="!loginMode">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 80px">
+							<strong>Password</strong>
+            </li>
+            <li>
+							<input type="password" class="tight-form-input last" watch-change="passwordChanged(inputValue)" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 246px">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+
+				<div class="password-strength small" ng-if="!loginMode" ng-class="strengthClass">
+					<em>{{strengthText}}</em>
+				</div>
+
+
+				<div class="login-submit-button-row">
+					<button type="submit" class="btn" ng-click="submit();"
+						      ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+						{{submitBtnText}}
+					</button>
+				</div>
+			</form>
+
+			<div class="clearfix"></div>
+
+			<div class="login-oauth text-center">
+				<a class="btn btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
+					<i class="fa fa-google"></i>
+					with Google
+				</a>
+				<a class="btn btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
+					<i class="fa fa-github"></i>
+					with Github
+				</a>
+			</div>
+	</div>
+
+	<div class="row" style="margin-top: 100px">
+		<div class="version-footer text-center small">
+			Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
+			build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+		</div>
+	</div>
+
+</div>
+
+

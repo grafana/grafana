@@ -2,12 +2,12 @@ module.exports = function(config) {
   return {
     zip: {
       options: {
-        archive: '<%= tempDir %>/<%= pkg.name %>-latest.zip'
+        archive: '<%= destDir %>/<%= pkg.name %>-latest.zip'
       },
       files : [
         {
           expand: true,
-          cwd: '<%= destDir %>',
+          cwd: '<%= tempDir %>',
           src: ['**/*'],
           dest: '<%= pkg.name %>/',
         },
@@ -20,12 +20,12 @@ module.exports = function(config) {
     },
     tgz: {
       options: {
-        archive: '<%= tempDir %>/<%= pkg.name %>-latest.tar.gz'
+        archive: '<%= destDir %>/<%= pkg.name %>-latest.tar.gz'
       },
       files : [
         {
           expand: true,
-          cwd: '<%= destDir %>',
+          cwd: '<%= tempDir %>',
           src: ['**/*'],
           dest: '<%= pkg.name %>/',
         },
@@ -38,12 +38,12 @@ module.exports = function(config) {
     },
     zip_release: {
       options: {
-        archive: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.zip'
+        archive: '<%= destDir %>/<%= pkg.name %><%= modeOptions.zipSuffix %>-<%= pkg.version %>.zip'
       },
       files : [
         {
           expand: true,
-          cwd: '<%= destDir %>',
+          cwd: '<%= tempDir %>',
           src: ['**/*'],
           dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },
@@ -56,12 +56,12 @@ module.exports = function(config) {
     },
     tgz_release: {
       options: {
-        archive: '<%= tempDir %>/<%= pkg.name %>-<%= pkg.version %>.tar.gz'
+        archive: '<%= destDir %>/<%= pkg.name %><%= modeOptions.zipSuffix %>-<%= pkg.version %>.tar.gz'
       },
       files : [
         {
           expand: true,
-          cwd: '<%= destDir %>',
+          cwd: '<%= tempDir %>',
           src: ['**/*'],
           dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },

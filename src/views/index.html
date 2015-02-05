@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Grafana</title>
+
+    <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css" title="Dark">
+    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
+		<base href="[[.AppSubUrl]]/" />
+
+		<script type="text/javascript">
+			window.grafanaBackend = true;
+		</script>
+
+		<!-- build:js app/app.js -->
+    <script src="[[.AppSubUrl]]/public/vendor/require/require.js"></script>
+    <script src="[[.AppSubUrl]]/public/app/components/require.backend.js"></script>
+    <!-- endbuild -->
+
+    <script>require(['app'], function (app) { app.boot(); })</script>
+
+  </head>
+
+	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': grafana.sidemenu}">
+		<link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css" ng-if="grafana.lightTheme">
+
+		<div class="sidemenu-canvas">
+
+			<aside class="sidemenu-wrapper" ng-if="grafana.sidemenu">
+				<div ng-include="'app/partials/sidemenu.html'"></div>
+			</aside>
+
+			<div class="page-alert-list">
+				<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
+					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
+						<i class="fa fa-times-circle"></i>
+					</button>
+					<div class="alert-title">{{alert.title}}</div>
+					<div ng-bind-html='alert.text'></div>
+				</div>
+			</div>
+
+			<div ng-view class="main-view"></div>
+			</div>
+
+		</div>
+
+  </body>
+
+	<script>
+		window.grafanaBootData = {
+			user:[[.User]],
+			settings: [[.Settings]],
+		};
+	</script>
+</html>

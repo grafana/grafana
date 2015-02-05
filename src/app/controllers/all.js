@@ -6,4 +6,7 @@ define([
   './graphiteImport',
   './inspectCtrl',
   './jsonEditorCtrl',
+  './loginCtrl',
+  './sidemenuCtrl',
+  './errorCtrl',
 ], function () {});

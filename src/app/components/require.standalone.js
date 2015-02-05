@@ -1,9 +1,6 @@
-/**
- * Bootstrap require with the needed config, then load the app.js module.
- */
 require.config({
-  baseUrl: 'app',
   urlArgs: 'bust=' + (new Date().getTime()),
+  baseUrl: 'app',
 
   paths: {
     config:                   ['../config', '../config.sample'],
@@ -47,7 +44,6 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
-
   },
   shim: {
 

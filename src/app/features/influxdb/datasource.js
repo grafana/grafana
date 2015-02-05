@@ -15,7 +15,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   module.factory('InfluxDatasource', function($q, $http, templateSrv) {
 
     function InfluxDatasource(datasource) {
-      this.type = 'influxDB';
+      this.type = 'influxdb';
       this.urls = datasource.urls;
       this.username = datasource.username;
       this.password = datasource.password;

@@ -1,6 +1,6 @@
+@import "login.less";
 @import "submenu.less";
 @import "graph.less";
-@import "console.less";
 @import "bootstrap-tagsinput.less";
 @import "tables_lists.less";
 @import "search.less";
@@ -8,6 +8,10 @@
 @import "forms.less";
 @import "singlestat.less";
 @import "tightform.less";
+@import "sidemenu.less";
+@import "gfbox.less";
+@import "navbar.less";
+@import "dashlist.less";
 
 .row-control-inner {
   padding:0px;
@@ -44,19 +48,6 @@
   }
 }
 
-.logo-icon {
-  width: 24px;
-  padding: 13px 11px 0 0;
-  display: block;
-  float: left;
-}
-
-.page-title {
- padding: 15px 0;
- display: block;
- float: left;
-}
-
 .row-button {
   width: 24px;
 }
@@ -68,24 +59,6 @@
   margin-left: auto;
   margin-right: auto;
   top: 30%;
-}
-
-.grafana-search-metric-actions {
-  visibility: hidden;
-  padding-left: 20px;
-}
-
-.grafana-search-metric-name {
-  white-space: nowrap;
-}
-
-.grafana-search-metric-result:hover {
-  .grafana-search-metric-actions {
-    visibility: visible;
-  }
-  .grafana-search-metric-name {
-    color: @blue;
-  }
 }
 
 .dashboard-fullscreen {
@@ -241,46 +214,6 @@
 }
 .tooltip-inner {
   max-width: 400px;
-}
-
-.dashboard-edit-view {
-  padding: 20px;
-  background-color: @grafanaPanelBackground;
-  position: relative;
-}
-
-.dashboard-editor-body {
-  padding: 20px 10px;
-  min-height: 100px;
-}
-
-.dashboard-editor-footer {
-  overflow: hidden;
-}
-
-.dashboard-editor-header {
-  overflow: hidden;
-  .tabs {
-    float: left;
-  }
-  .nav {
-    margin: 0;
-  }
-}
-
-.dashboard-editor-title {
-  border-bottom: 1px solid @fullEditBorder;
-  padding-right: 20px;
-  float: left;
-  color: @linkColor;
-  font-size: 20px;
-  font-weight: normal;
-  line-height: 38px;
-  margin: 0;
-  .fa {
-    padding: 0 8px 0 5px;
-    color: @textColor;
-  }
 }
 
 .grafana-version-info {

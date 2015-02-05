@@ -53,12 +53,13 @@ function (angular, _, $) {
       state.panelId = parseInt(state.panelId) || null;
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
+      state.editview = state.editview || null;
       return state;
     };
 
     DashboardViewState.prototype.serializeToUrl = function() {
       var urlState = _.clone(this.state);
-      urlState.fullscreen = this.state.fullscreen ? true : null,
+      urlState.fullscreen = this.state.fullscreen ? true : null;
       urlState.edit = this.state.edit ? true : null;
       return urlState;
     };
@@ -117,7 +118,7 @@ function (angular, _, $) {
           self.$scope.dashboard.emit_refresh();
         }
         else {
-          self.fullscreenPanel.$emit('render');
+          self.fullscreenPanel.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
@@ -138,7 +139,7 @@ function (angular, _, $) {
       panelScope.fullscreen = true;
 
       $timeout(function() {
-        panelScope.$emit('render');
+        panelScope.$broadcast('render');
       });
     };
 

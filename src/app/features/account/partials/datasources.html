@@ -1,0 +1,119 @@
+<topnav toggle="toggleSideMenu()"
+				title="Data sources"
+				icon="fa fa-shield"
+				section="Account"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
+
+<div class="gf-box" style="min-height: 500px">
+	<div class="gf-box-header">
+		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+			</div>
+		</div>
+	</div>
+
+	<form name="editForm">
+		<div class="gf-box-body">
+			<div class="editor-row row" ng-if="editor.index == 0">
+				<div class="span8">
+					<div ng-if="datasources.length === 0">
+						<em>No datasources defined</em>
+					</div>
+					<table class="grafana-options-table" ng-if="datasources.length > 0">
+						<tr>
+							<td><strong>Name</strong></td>
+							<td><strong>Url</strong></td>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr ng-repeat="ds in datasources">
+							<td style="width:1%">
+								<i class="fa fa-database"></i> &nbsp;
+								{{ds.name}}
+							</td>
+							<td style="width:90%">
+								{{ds.url}}
+							</td>
+							<td style="width:2%" class="text-center">
+								<span ng-if="ds.isDefault">
+									<span class="label label-info">default</span>
+								</span>
+							</td>
+							<td style="width: 1%">
+								<a ng-click="edit(ds)" class="btn btn-success btn-mini">
+									<i class="fa fa-edit"></i>
+									Edit
+								</a>
+							</td>
+							<td style="width: 1%">
+								<a ng-click="remove(ds)" class="btn btn-danger btn-mini">
+									<i class="fa fa-remove"></i>
+								</a>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+
+			<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Data source name</label>
+						<input type="text" class="input-large" ng-model='current.name' placeholder="production" required></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Type</label>
+						<select class="input-medium" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
+					</div>
+					<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
+				</div>
+
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Url</label>
+						<input type="text" class="input-xxlarge" ng-model='current.url' placeholder="http://my.graphite.com:8080" required></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Access method <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
+						<select class="input-medium" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+					</div>
+				</div>
+
+				<div class="editor-row" ng-if="current.type === 'influxdb'">
+					<div class="section">
+						<h5>InfluxDB Details</h5>
+						<div class="editor-option">
+							<label class="small">Database name</label>
+							<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
+						</div>
+						<div class="editor-option">
+							<label class="small">User</label>
+							<input type="text" class="input-large" ng-model='current.user' placeholder=""></input>
+						</div>
+						<div class="editor-option">
+							<label class="small">Password</label>
+							<input type="password" class="input-large" ng-model='current.password' placeholder=""></input>
+						</div>
+					</div>
+				</div>
+				<div class="editor-row" ng-if="current.type === 'elasticsearch'">
+					<div class="section">
+						<h5>Elastic search details</h5>
+						<div class="editor-option">
+							<label class="small">Index name</label>
+							<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<br>
+			<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
+			<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
+			<button type="submit" class="btn btn-inverse" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
+			<br>
+		</form>
+	</div>
+</div>

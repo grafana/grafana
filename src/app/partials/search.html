@@ -1,7 +1,7 @@
-<div ng-controller="SearchCtrl" ng-init="init()">
+<div ng-controller="SearchCtrl" ng-init="init()" class="search-box">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title" style="border: 0; line-height: 41px;">
+	<div class="gf-box-header">
+		<div class="gf-box-title" style="border: 0; line-height: 41px;">
 			<i class="fa fa-search"></i>
 			Search
 		</div>
@@ -30,7 +30,6 @@
 	</div>
 
 	<div ng-if="!showImport">
-		<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 		<div class="search-results-container" ng-if="tagsOnly">
 			<div class="row">
 				<div class="span6 offset1">
@@ -47,13 +46,12 @@
 		</div>
 
 		<div class="search-results-container" ng-if="!tagsOnly">
+			<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
+
 			<div class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
-				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.id)">
+				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.slug)">
 
 				<div class="search-result-actions small">
-					<a ng-click="shareDashboard(row.id, row.id, $event)" config-modal="app/partials/dashLoaderShare.html">
-						<i class="fa fa-share"></i> share &nbsp;&nbsp;&nbsp;
-					</a>
 					<a ng-click="deleteDashboard(row, $event)">
 						<i class="fa fa-remove"></i> delete
 					</a>
@@ -63,6 +61,7 @@
 					<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name  class="label label-tag">
 						{{tag}}
 					</a>
+					<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
 				</div>
 
 				<a class="search-result-link">

@@ -1,0 +1,127 @@
+<topnav toggle="toggleSideMenu()"
+				title="Details"
+				icon="fa fa-user"
+				section="Profile"
+				show-menu-btn="!grafana.sidemenu">
+</topnav>
+
+
+<div class="editor-row">
+	<div class="section">
+
+		<div class="gf-box">
+			<div class="gf-box-header">
+				<div class="gf-box-title">
+					<i class="fa fa-user"></i>
+					Personal information
+				</div>
+			</div>
+
+			<div class="gf-box-body">
+				<div class="row">
+					<form name="userForm">
+						<div>
+							<div class="tight-form">
+								<ul class="tight-form-list">
+									<li class="tight-form-item" style="width: 80px">
+										<strong>Name</strong>
+									</li>
+									<li>
+										<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
+									</li>
+								</ul>
+								<div class="clearfix"></div>
+							</div>
+							<div class="tight-form" style="margin-top: 10px">
+								<ul class="tight-form-list">
+									<li class="tight-form-item" style="width: 80px">
+										<strong>Email</strong>
+									</li>
+									<li>
+										<input type="text" required ng-model="user.email" class="input-xxlarge tight-form-input last" >
+									</li>
+								</ul>
+								<div class="clearfix"></div>
+							</div>
+							<div class="tight-form" style="margin-top: 10px">
+								<ul class="tight-form-list">
+									<li class="tight-form-item" style="width: 80px">
+										<strong>Username</strong>
+									</li>
+									<li>
+										<input type="text" required ng-model="user.login" class="input-xxlarge tight-form-input last" >
+									</li>
+								</ul>
+								<div class="clearfix"></div>
+							</div>
+						</div>
+
+						<br>
+						<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="section">
+
+		<div class="gf-box">
+			<div class="gf-box-header">
+				<div class="gf-box-title">
+					<i class="fa fa-shield"></i>
+					Your accounts
+				</div>
+			</div>
+			<div class="gf-box-body">
+				<table class="grafana-options-table">
+					<tr ng-repeat="ac in accounts">
+						<td>Name: {{ac.name}}</td>
+						<td>Role: {{ac.role}}</td>
+						<td ng-show="ac.isUsing">
+							<span class="label label-info">
+								active now
+							</span>
+						</td>
+						<td ng-show="!ac.isUsing">
+							<a ng-click="setUsingAccount(ac)" class="btn btn-success btn-mini">
+								Select
+							</a>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div class="section">
+		<div class="gf-box">
+			<div class="gf-box-header">
+				<div class="gf-box-title">
+					<i class="fa fa-plus-square"></i>
+					Add account
+				</div>
+			</div>
+			<div class="gf-box-body">
+				<form name="form">
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item">
+								<strong>Account name</strong>
+							</li>
+							<li>
+								<input type="text" ng-model="newAccount.name" required class="input-xlarge tight-form-input" placeholder="account name">
+							</li>
+							<li>
+								<button class="btn btn-success tight-form-btn" ng-click="createAccount()">Create</button>
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+
