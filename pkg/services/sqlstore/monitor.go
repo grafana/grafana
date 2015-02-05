@@ -140,6 +140,10 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 		}
 	}
 
+	if (query.Modulo > 0) {
+		sess.And("(monitor.id % ?) = ?", query.Modulo, query.ModuloOffset)
+	}
+
 
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)

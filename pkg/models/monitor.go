@@ -133,6 +133,8 @@ type GetMonitorsQuery struct {
 	LocationId     []int64  `form:"location_id"`
 	Frequency      []int64  `form:"frequency"`
 	Enabled        string   `form:"enabled"`
+	Modulo         int64    `form:"modulo"`
+	ModuloOffset   int64    `form:"modulo_offset"`
 	AccountId      int64
 	IsRaintankAdmin bool
 	Result         []*MonitorDTO
