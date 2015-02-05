@@ -1,0 +1,9 @@
+mysqltests:
+  image: mysql:latest
+  environment:
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_USER: grafana
+    MYSQL_PASSWORD: password
+  ports:
+    - "3306:3306"

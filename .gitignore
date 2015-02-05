@@ -12,3 +12,11 @@ src/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+
+data/sessions
+data/*.db
+data/log
+/bin/*
+/grafana-pro
+
+grafana.custom.ini

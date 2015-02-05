@@ -1,0 +1,57 @@
+box: wercker/golang
+
+steps:
+  - wercker/npm-install@0.9.3
+  - wercker/step-grunt
+
+build:
+  steps:
+    # Workspace
+    - setup-go-workspace
+    - script:
+        name: install godep
+        code: |
+          go get -u github.com/tools/godep
+          go install github.com/tools/godep
+    # Build the project
+    - script:
+        name: build backend
+        code: |
+          go run build.go build
+    # Test the project
+    - script:
+        name: test backend
+        code: |
+          go run build.go test
+    # frontend
+    - npm-install:
+        cwd: grafana/
+    - grunt:
+        cwd: grafana/
+        tasks: release --mode=backend
+    - script:
+        name: copy output
+        code: |-
+          rsync -rv "$WERCKER_SOURCE_DIR/grafana/dist/" "$WERCKER_OUTPUT_DIR"
+deploy:
+  steps:
+    - add-to-known_hosts:
+        hostname: play.grafana.org
+    - mktemp:
+        envvar: PRIVATEKEY_PATH
+    - create-file:
+        name: write key
+        filename: $PRIVATEKEY_PATH
+        content: $GRAFANA_PLAY_PRIVATE
+        overwrite: true
+        hide-from-log: true
+    - script:
+        name: transfer application
+        code: |
+          pwd
+          ls -la
+          scp -i $PRIVATEKEY_PATH -o StrictHostKeyChecking=no -o UserKnownHostsFile=no * deploy@play.grafana.org:/home/deploy/
+    - script:
+        name: deploy application
+        code: ssh -i $PRIVATEKEY_PATH -l deploy -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no play.grafana.org ./wercker_deploy.sh
+
