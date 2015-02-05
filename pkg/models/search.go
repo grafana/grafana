@@ -25,6 +25,7 @@ type SearchDashboardsQuery struct {
 	Tag       string
 	AccountId int64
 	UserId    int64
+	Limit     int
 	IsStarred bool
 
 	Result []*DashboardSearchHit

@@ -33,6 +33,11 @@ func setIsStarredFlagOnSearchResults(c *middleware.Context, hits []*m.DashboardS
 func Search(c *middleware.Context) {
 	queryText := c.Query("q")
 	starred := c.Query("starred")
+	limit := c.QueryInt("limit")
+
+	if limit == 0 {
+		limit = 200
+	}
 
 	result := m.SearchResult{
 		Dashboards: []*m.DashboardSearchHit{},
@@ -58,6 +63,7 @@ func Search(c *middleware.Context) {
 			Title:     matches[3],
 			Tag:       matches[2],
 			UserId:    c.UserId,
+			Limit:     limit,
 			IsStarred: starred == "1",
 			AccountId: c.AccountId,
 		}

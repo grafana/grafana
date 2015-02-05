@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
@@ -115,6 +116,8 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		sql.WriteString(" AND dashboard_tag.term=?")
 		params = append(params, query.Tag)
 	}
+
+	sql.WriteString(fmt.Sprintf(" LIMIT %d", query.Limit))
 
 	var res []DashboardSearchProjection
 	err := x.Sql(sql.String(), params...).Find(&res)

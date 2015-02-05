@@ -31,6 +31,7 @@ function (angular, app, _, config, PanelMeta) {
     var defaults = {
       mode: 'starred',
       query: '',
+      limit: 10,
       tag: '',
     };
 
@@ -51,7 +52,9 @@ function (angular, app, _, config, PanelMeta) {
     };
 
     $scope.get_data = function() {
-      var params = {};
+      var params = {
+        limit: $scope.panel.limit
+      };
       if ($scope.panel.mode === 'starred') {
         params.starred = 1;
       } else {
