@@ -18,7 +18,6 @@ function (angular, _, config, $) {
       $scope.query = { query: 'title:' };
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
-      $scope.starsPromise = $scope.grafana.user.getStars();
 
       // events
       $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
@@ -78,13 +77,10 @@ function (angular, _, config, $) {
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
-          $scope.starsPromise.then(function(stars) {
-            $scope.starredIds = stars.dashboardIds;
-            $scope.tagsOnly = results.tagsOnly;
-            $scope.results.dashboards = results.dashboards;
-            $scope.results.tags = results.tags;
-            $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
-          });
+          $scope.tagsOnly = results.tagsOnly;
+          $scope.results.dashboards = results.dashboards;
+          $scope.results.tags = results.tags;
+          $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
         });
     };
 

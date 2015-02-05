@@ -26,8 +26,15 @@ function (angular, app, _, config, PanelMeta) {
       fullscreen: true,
     });
 
+    $scope.panelMeta.addEditorTab('Options', 'app/panels/dashlist/editor.html');
+
     var defaults = {
+      mode: 'starred',
+      query: '',
+      tag: '',
     };
+
+    $scope.modes = ['starred', 'search'];
 
     _.defaults($scope.panel, defaults);
 
@@ -44,7 +51,14 @@ function (angular, app, _, config, PanelMeta) {
     };
 
     $scope.get_data = function() {
-      backendSrv.get('/api/search', { starred: 1 }).then(function(result) {
+      var params = {};
+      if ($scope.panel.mode === 'starred') {
+        params.starred = 1;
+      } else {
+        params.q = "tags:" + $scope.panel.tag + " AND title:" + $scope.panel.query;
+      }
+
+      backendSrv.get('/api/search', params).then(function(result) {
         $scope.dashList = result.dashboards;
         $scope.panelMeta.loading = false;
       });

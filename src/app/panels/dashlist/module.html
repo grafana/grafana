@@ -6,7 +6,7 @@
 				{{dash.title}}
 			</span>
 			<span class="dashlist-star">
-				<i class="fa fa-star"></i>
+				<i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': !dash.isStarred}"></i>
 			</span>
 		</a>
 	</div>

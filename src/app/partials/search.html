@@ -61,7 +61,7 @@
 					<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name  class="label label-tag">
 						{{tag}}
 					</a>
-					<i class="fa" ng-class="{'fa-star': starredIds[row.id], 'fa-star-o': !starredIds[row.id]}"></i>
+					<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
 				</div>
 
 				<a class="search-result-link">
