@@ -11,7 +11,7 @@ module.exports = function (grunt) {
     docsDir: 'docs/'
   };
 
-  config.mode = grunt.option('mode') || 'standalone';
+  config.mode = grunt.option('mode') || 'backend';
   config.modeOptions = {
     zipSuffix: '',
     requirejs: {

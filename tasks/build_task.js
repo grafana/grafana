@@ -35,14 +35,13 @@ module.exports = function(grunt) {
       });
       grunt.config('clean.dest_dir', ['<%= destDir %>']);
       grunt.config('copy.backend_bin', {
-        cwd: '../bin',
+        cwd: 'bin',
         expand: true,
         src: ['grafana'],
         options: { mode: true},
         dest: '<%= tempDir %>'
       });
       grunt.config('copy.backend_files', {
-        cwd: '../',
         expand: true,
         src: ['conf/*', 'vendor/**/*', '!conf/grafana.dev.ini'],
         dest: '<%= tempDir %>'

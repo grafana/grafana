@@ -24,15 +24,13 @@ build:
         code: |
           go run build.go test
     # frontend
-    - npm-install:
-        cwd: grafana/
+    - npm-install
     - grunt:
-        cwd: grafana/
-        tasks: release --mode=backend
+        tasks: release
     - script:
         name: copy output
         code: |-
-          rsync -rv "$WERCKER_SOURCE_DIR/grafana/dist/" "$WERCKER_OUTPUT_DIR"
+          rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
 deploy:
   steps:
     - add-to-known_hosts:
