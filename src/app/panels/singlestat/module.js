@@ -21,7 +21,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       metricsEditor: true
     });
 
-    $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
+    $scope.fontSizes = ['20%','30%','35%','40%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
     $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
 
