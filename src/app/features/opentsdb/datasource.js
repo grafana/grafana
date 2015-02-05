@@ -45,13 +45,14 @@ function (angular, _, kbn) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end)
-        .then(_.bind(function(response, queryIndex) {
-          var result = _.map(response.data, _.bind(function(dataset, index) {
+        .then(_.bind(function(response) {
+          var result = _.map(response.data, _.bind(function(dataset) {
             // try and match the request of each response with the grafana target/query that instantiated it
             // to help clarify; t & target[s] is the query within the grafana interface.  dataset is the OpenTSDB result from the query
             var target = _.filter(this.targets, function(t) {
-              if (dataset.metric !== t.metric)
+              if (dataset.metric !== t.metric) {
                 return false; // metrics are different, don't bother
+              }
               if (_.size(t.tags) === 0) {
                 return true; // no tags to compare, so cut the trip short
               }
@@ -284,7 +285,6 @@ function (angular, _, kbn) {
 
     function transformMetricData(md, groupByTags, options) {
       var dps = [],
-          tagData = [],
           metricLabel = null;
 
       metricLabel = createMetricLabel(md.metric, md.tags, groupByTags, options);
@@ -305,7 +305,6 @@ function (angular, _, kbn) {
         return value;
       });
     }
-
 
     function createMetricLabel(metric, tags, groupByTags, options) {
       var distinctTags = {};
