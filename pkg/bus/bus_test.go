@@ -2,6 +2,7 @@ package bus
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -62,7 +63,7 @@ func TestEventListeners(t *testing.T) {
 
 	if err != nil {
 		t.Fatal("Publish event failed " + err.Error())
-	} else if count != 0 {
-		t.Fatal("Publish event failed, listeners called: %v, expected: %v", count, 11)
+	} else if count != 11 {
+		t.Fatal(fmt.Sprintf("Publish event failed, listeners called: %v, expected: %v", count, 11))
 	}
 }
