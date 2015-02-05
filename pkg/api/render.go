@@ -20,10 +20,11 @@ func RenderToPng(c *middleware.Context) {
 	}
 
 	renderOpts.Url = "http://localhost:3000/" + renderOpts.Url
-
 	pngPath, err := renderer.RenderToPng(renderOpts)
+
 	if err != nil {
-		c.HTML(500, "error.html", nil)
+		c.Handle(500, "Failed to render to png", err)
+		return
 	}
 
 	c.Resp.Header().Set("Content-Type", "image/png")

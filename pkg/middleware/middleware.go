@@ -88,12 +88,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 		}
 	}
 
-	switch status {
-	case 404:
-		ctx.Data["Title"] = "Page Not Found"
-	case 500:
-		ctx.Data["Title"] = "Internal Server Error"
-	}
+	ctx.Data["Title"] = title
 
 	ctx.HTML(status, strconv.Itoa(status))
 }
