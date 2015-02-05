@@ -31,7 +31,6 @@
     "grunt-git-describe": "~2.3.2",
     "grunt-karma": "~0.8.3",
     "grunt-ng-annotate": "^0.9.2",
-    "grunt-ngmin": "0.0.3",
     "grunt-string-replace": "~0.2.4",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
