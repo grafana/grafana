@@ -29,7 +29,7 @@ type UnstarDashboardCommand struct {
 type GetUserStarsQuery struct {
 	UserId int64
 
-	Result []Star
+	Result map[int64]bool // dashboard ids
 }
 
 type IsStarredByUserQuery struct {

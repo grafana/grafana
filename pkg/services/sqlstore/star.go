@@ -61,7 +61,13 @@ func UnstarDashboard(cmd *m.UnstarDashboardCommand) error {
 }
 
 func GetUserStars(query *m.GetUserStarsQuery) error {
-	query.Result = make([]m.Star, 0)
-	err := x.Where("user_id=?", query.UserId).Find(&query.Result)
+	var stars = make([]m.Star, 0)
+	err := x.Where("user_id=?", query.UserId).Find(&stars)
+
+	query.Result = make(map[int64]bool)
+	for _, star := range stars {
+		query.Result[star.DashboardId] = true
+	}
+
 	return err
 }
