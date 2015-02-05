@@ -91,7 +91,7 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Updated:   time.Now(),
 		}
 
-		if setting.SingleAccountMode {
+		if setting.SingleAccountMode && !user.IsAdmin {
 			accountUser.Role = m.RoleType(setting.DefaultAccountRole)
 		}
 
