@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RenderOpts struct {

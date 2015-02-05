@@ -3,13 +3,13 @@ package api
 import (
 	"net/url"
 
-	"github.com/torkelo/grafana-pro/pkg/api/dtos"
-	"github.com/torkelo/grafana-pro/pkg/bus"
-	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/middleware"
-	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/setting"
-	"github.com/torkelo/grafana-pro/pkg/util"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (

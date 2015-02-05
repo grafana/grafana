@@ -1,5 +1,0 @@
-# Security
-- OAuth and email, unique?
-- Form authentication token
-- Password hash
-- Account security for png rendering

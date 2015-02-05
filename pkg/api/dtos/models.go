@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	m "github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type LoginCommand struct {

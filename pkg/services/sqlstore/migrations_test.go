@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/go-xorm/xorm"
-	"github.com/torkelo/grafana-pro/pkg/log"
-	. "github.com/torkelo/grafana-pro/pkg/services/sqlstore/migrator"
-	"github.com/torkelo/grafana-pro/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/log"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

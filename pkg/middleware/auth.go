@@ -6,8 +6,8 @@ import (
 
 	"github.com/Unknwon/macaron"
 
-	m "github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/setting"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AuthOptions struct {
