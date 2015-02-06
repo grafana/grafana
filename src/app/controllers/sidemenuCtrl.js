@@ -35,6 +35,15 @@ function (angular, _, $, config) {
       });
     }
 
+    $scope.menu.push({
+      text: "Monitor", href: $scope.getUrl("/monitor"),
+      icon: "fa fa-eye",
+    });
+    $scope.menu.push({
+      text: 'Locations', href: $scope.getUrl("/location"), 
+      icon: "fa fa-globe"
+    });
+
     if ($scope.grafana.user.isGrafanaAdmin) {
       $scope.menu.push({
         text: "Admin", href: $scope.getUrl("/admin/users"),

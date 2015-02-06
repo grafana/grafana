@@ -44,6 +44,7 @@ function (angular, $, config) {
       $rootScope.performance.panelsRendered = 0;
 
       $scope.dashboard = dashboardSrv.create(dashboard.model);
+      console.log($scope.dashboard);
       $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
       $scope.dashboardMeta = dashboard.meta;
 
