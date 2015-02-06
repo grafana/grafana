@@ -5,7 +5,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	m "github.com/torkelo/grafana-pro/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 func insertTestDashboard(title string, accountId int64, tags ...interface{}) *m.Dashboard {

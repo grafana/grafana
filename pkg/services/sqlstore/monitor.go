@@ -3,9 +3,9 @@ package sqlstore
 import (
 	"fmt"
 	"github.com/go-xorm/xorm"
-	"github.com/torkelo/grafana-pro/pkg/bus"
-	"github.com/torkelo/grafana-pro/pkg/log"
-	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"math/rand"
 	"time"
 	"strconv"

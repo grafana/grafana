@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/torkelo/grafana-pro/pkg/cmd"
-	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/grafana/grafana/pkg/cmd"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/codegangsta/cli"
 )

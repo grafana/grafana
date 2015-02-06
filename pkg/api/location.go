@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/torkelo/grafana-pro/pkg/api/dtos"
-	"github.com/torkelo/grafana-pro/pkg/bus"
-	//"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/middleware"
-	m "github.com/torkelo/grafana-pro/pkg/models"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
+	//"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {

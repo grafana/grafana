@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/streadway/amqp"
-	"github.com/torkelo/grafana-pro/pkg/bus"
-	"github.com/torkelo/grafana-pro/pkg/events"
-	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (

@@ -15,7 +15,7 @@ import (
 	"github.com/macaron-contrib/session"
 	"gopkg.in/ini.v1"
 
-	"github.com/torkelo/grafana-pro/pkg/log"
+	"github.com/grafana/grafana/pkg/log"
 )
 
 type Scheme string

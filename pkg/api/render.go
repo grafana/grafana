@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/torkelo/grafana-pro/pkg/components/renderer"
-	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/util"
+	"github.com/grafana/grafana/pkg/components/renderer"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func RenderToPng(c *middleware.Context) {

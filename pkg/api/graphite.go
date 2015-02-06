@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/setting"
-	"github.com/torkelo/grafana-pro/pkg/util"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"strconv"
 )
 

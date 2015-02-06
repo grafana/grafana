@@ -13,13 +13,13 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/macaron-contrib/session"
 
-	"github.com/torkelo/grafana-pro/pkg/api"
-	"github.com/torkelo/grafana-pro/pkg/log"
-	"github.com/torkelo/grafana-pro/pkg/middleware"
-	"github.com/torkelo/grafana-pro/pkg/services/eventpublisher"
-	"github.com/torkelo/grafana-pro/pkg/services/sqlstore"
-	"github.com/torkelo/grafana-pro/pkg/setting"
-	"github.com/torkelo/grafana-pro/pkg/social"
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/social"
 )
 
 var CmdWeb = cli.Command{

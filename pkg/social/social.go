@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/torkelo/grafana-pro/pkg/models"
-	"github.com/torkelo/grafana-pro/pkg/setting"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"golang.org/x/oauth2"
 )

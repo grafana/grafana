@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/Unknwon/macaron"
-	"github.com/torkelo/grafana-pro/pkg/log"
+	"github.com/grafana/grafana/pkg/log"
 )
 
 var isWindows bool
