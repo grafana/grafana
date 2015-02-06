@@ -20,10 +20,12 @@ issues to fix and polish missing. But feedback on what is done and bug reports w
 ```
 go get github.com/grafana/grafana
 ```
+The above will give an error saying there is no go code. That is because the new backend parts are in the develop branch.
 
 Building
 ```
 cd $GOPATH/src/github.com/grafana/grafana
+git checkout -t origin/develop
 go run build.go setup (only needed once to install godep)
 go run build.go build
 ```
@@ -43,7 +45,7 @@ npm install -g grunt-cli
 grunt
 ```
 
-To rebuild on source change:
+To rebuild on source change (requires that you executed godep restore)
 ```
 go get github.com/Unknwon/bra
 bra run
