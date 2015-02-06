@@ -14,9 +14,7 @@ src/css/*.min.css
 *.swp
 .idea/
 
-data/sessions
-data/*.db
-data/log
+/data/*
 /bin/*
 /grafana-pro
 

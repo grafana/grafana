@@ -81,7 +81,7 @@ func Search(c *middleware.Context) {
 
 		result.Dashboards = query.Result
 		for _, dash := range result.Dashboards {
-			dash.Url = setting.AbsUrlTo("dashboard/db/" + dash.Slug)
+			dash.Url = setting.ToAbsUrl("dashboard/db/" + dash.Slug)
 		}
 	}
 

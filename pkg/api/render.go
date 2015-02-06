@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -19,7 +20,7 @@ func RenderToPng(c *middleware.Context) {
 		Height: queryReader.Get("height", "400"),
 	}
 
-	renderOpts.Url = "http://localhost:3000/" + renderOpts.Url
+	renderOpts.Url = setting.ToAbsUrl(renderOpts.Url)
 	pngPath, err := renderer.RenderToPng(renderOpts)
 
 	if err != nil {
