@@ -10,7 +10,7 @@ Graphite, InfluxDB & OpenTSDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
 
-# Grafana 2.0 Alpha branch [![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
+# Grafana 2.0 Alpha branch [![wercker status](https://app.wercker.com/status/1de5ea38f93fd2dfa2eb8b8ba58b6df1/s "wercker status")](https://app.wercker.com/project/bykey/1de5ea38f93fd2dfa2eb8b8ba58b6df1)
 
 Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
 issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
