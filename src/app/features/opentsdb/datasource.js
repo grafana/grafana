@@ -28,10 +28,9 @@ function (angular, _, kbn) {
       if (options.interval.match(/\.[0-9]+s/)) {
         options.interval = parseFloat(options.interval)*1000 + "ms";
       }
-      _.each(options.targets, function(target){
+      _.each(options.targets, function(target) {
           qs.push(convertTargetToQuery(target, options.interval));
-        }
-        );
+      });
       var queries = _.compact(qs);
 
       // No valid targets, return the empty result to save a round trip.
