@@ -15,21 +15,14 @@ Graphite, InfluxDB & OpenTSDB.
 [![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
 
 ## building and running
-Before trying to build make sure the grafana frontend git submodule is loaded.
-
-By clone recursive
 
 ```
-git clone --recursive <this_repo>
-```
-
-In case of after clone
-```
-git submodule update --init
+go get github.com/grafana/grafana
 ```
 
 Building
 ```
+cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup (only needed once to install godep)
 go run build.go build
 ```
@@ -44,7 +37,6 @@ go build -o ./bin/grafana .
 To build less to css for frontend:
 
 ```
-cd grafana
 npm install
 npm install -g grunt-cli
 grunt
@@ -53,9 +45,17 @@ grunt
 To rebuild on source change:
 ```
 go get github.com/Unknwon/bra
-
 bra run
 ```
+
+Running
+```
+./bin/grafana web
+```
+Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+
+Config
+Create a grafana.custom.ini in the conf directory to override default configuration options. You only need to add the options you want to override.
 
 
 ## Features
