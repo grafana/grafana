@@ -29,7 +29,7 @@ function (angular, _, kbn) {
         options.interval = parseFloat(options.interval)*1000 + "ms";
       }
       _.each(options.targets, function(target) {
-          qs.push(convertTargetToQuery(target, options.interval));
+        qs.push(convertTargetToQuery(target, options.interval));
       });
       var queries = _.compact(qs);
 
