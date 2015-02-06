@@ -10,9 +10,10 @@ Graphite, InfluxDB & OpenTSDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
 
-# Grafana 2.0 Branch
+# Grafana 2.0 Alpha branch [![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
 
-[![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
+Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
+issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
 
 ## building and running
 
@@ -54,8 +55,20 @@ Running
 ```
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
 
-Config
-Create a grafana.custom.ini in the conf directory to override default configuration options. You only need to add the options you want to override.
+### Config
+Create a grafana.custom.ini in the conf directory to override default configuration options.
+You only need to add the options you want to override. Config files are applied in the order of:
+1. grafana.ini
+2. grafana.dev.ini (if found)
+3. grafana.custom.ini
+
+### Docs
+There is no docs for the configuration and new UI views, or the account / user model yet. But a quick note
+is that Grafana 2.0 has a multi tenant account & user model where Dashboards, data sources, api keys, etc are
+tied to an account and not to a specific user. Users are coupled to accounts via an account user role (Admin, Editor, Viewer).
+The default configuration is set to a single account mode to make this user & account model easier to handle in a single account setup.
+User sign ups are automatically added to a main account with the Editor role (this can be overriden in the config file). The default
+grafana admin user that is created on first startup also creates the main account.
 
 
 ## Features
