@@ -12,6 +12,7 @@ var (
 
 type User struct {
 	Id       int64
+	Version  int
 	Email    string
 	Name     string
 	Login    string

@@ -17,6 +17,7 @@ type Dashboard struct {
 	Id        int64
 	Slug      string
 	AccountId int64
+	Version   int
 
 	Created time.Time
 	Updated time.Time

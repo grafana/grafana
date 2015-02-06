@@ -33,11 +33,13 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("create user table", new(AddTableMigration).
 		Name("user").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "version", Type: DB_Int, Nullable: false},
 		&Column{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 		&Column{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 		&Column{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
+		&Column{Name: "rands", Type: DB_NVarchar, Length: 50, Nullable: true},
 		&Column{Name: "company", Type: DB_NVarchar, Length: 255, Nullable: true},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "is_admin", Type: DB_Bool, Nullable: false},
@@ -50,9 +52,6 @@ func addUserMigrations(mg *Migrator) {
 		Table("user").Columns("login").Unique())
 	mg.AddMigration("add unique index user.email", new(AddIndexMigration).
 		Table("user").Columns("email").Unique())
-
-	mg.AddMigration("add column user.rands", new(AddColumnMigration).
-		Table("user").Column(&Column{Name: "rands", Type: DB_NVarchar, Length: 255, Nullable: true}))
 }
 
 func addStarMigrations(mg *Migrator) {
@@ -71,6 +70,7 @@ func addAccountMigrations(mg *Migrator) {
 	mg.AddMigration("create account table", new(AddTableMigration).
 		Name("account").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "version", Type: DB_Int, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
@@ -98,6 +98,7 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("create dashboard table", new(AddTableMigration).
 		Name("dashboard").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "version", Type: DB_Int, Nullable: false},
 		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "data", Type: DB_Text, Nullable: false},
@@ -129,6 +130,7 @@ func addDataSourceMigration(mg *Migrator) {
 		Name("data_source").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "version", Type: DB_Int, Nullable: false},
 		&Column{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},

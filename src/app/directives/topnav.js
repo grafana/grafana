@@ -13,7 +13,6 @@ function (angular) {
         transclude: true,
         scope: {
           title: "@",
-          section: "@",
           titleAction: "&",
           toggle: "&",
           showMenuBtn: "=",
@@ -23,17 +22,12 @@ function (angular) {
           '<div class="top-nav">' +
             '<a class="top-nav-menu-btn pointer" ng-if="showMenuBtn" ng-click="toggle()">' +
               '<img class="logo-icon" src="img/fav32.png"></img> ' +
-              '<i class="fa fa-angle-right"></i>' +
+              '<i class="fa fa-bars"></i>' +
             '</a>' +
 
-            '<span class="top-nav-breadcrumb">' +
-              '<i class="top-nav-icon" ng-class="icon"></i>' +
+            '<span class="icon-circle top-nav-icon"">' +
+              '<i ng-class="icon"></i>' +
             '</span>' +
-
-           '<span class="top-nav-section" ng-show="section">' +
-              '{{section}}' +
-              '<i class="fa fa-angle-right"></i>' +
-           '</span>' +
 
             '<a ng-click="titleAction()" class="top-nav-title">' +
               '{{title}}' +

@@ -23,6 +23,7 @@ type DsAccess string
 
 type DataSource struct {
 	Id        int64
+	Version   int
 	AccountId int64
 
 	Name              string

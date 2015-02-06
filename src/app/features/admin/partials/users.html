@@ -1,42 +1,44 @@
 <topnav toggle="toggleSideMenu()"
-				title="Users"
+				title="Admin"
 				icon="fa fa-cube"
-				section="Admin"
 				show-menu-btn="!grafana.sidemenu">
 </topnav>
 
-<div class="gf-box" style="min-height: 500px">
+<div class="admin-page">
+	<h2> Users </h2>
+	<div class="gf-box" style="min-height: 500px">
 
-	<div class="gf-box-body">
-		<div class="editor-row row">
-			<div class="section span6">
-				<table class="grafana-options-table">
-					<tr>
-						<th style="text-align:left">Id</th>
-						<th>Login</th>
-						<th>Email</th>
-						<th>Name</th>
-						<th>Admin</th>
-						<th></th>
-					</tr>
-					<tr ng-repeat="user in users">
-						<td>{{user.id}}</td>
-						<td>{{user.login}}</td>
-						<td>{{user.email}}</td>
-						<td>{{user.name}}</td>
-						<td>{{user.isAdmin}}</td>
-						<td style="width: 1%">
-							<a ng-click="edit(variable)" class="btn btn-success btn-small">
-								<i class="fa fa-edit"></i>
-								Edit
-							</a>
-							&nbsp;&nbsp;
-							<a ng-click="delete(variable)" class="btn btn-danger btn-small">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
+		<div class="gf-box-body">
+			<div class="editor-row row">
+				<div class="section span6">
+					<table class="grafana-options-table">
+						<tr>
+							<th style="text-align:left">Id</th>
+							<th>Login</th>
+							<th>Email</th>
+							<th>Name</th>
+							<th>Admin</th>
+							<th></th>
+						</tr>
+						<tr ng-repeat="user in users">
+							<td>{{user.id}}</td>
+							<td>{{user.login}}</td>
+							<td>{{user.email}}</td>
+							<td>{{user.name}}</td>
+							<td>{{user.isAdmin}}</td>
+							<td style="width: 1%">
+								<a ng-click="edit(variable)" class="btn btn-success btn-small">
+									<i class="fa fa-edit"></i>
+									Edit
+								</a>
+								&nbsp;&nbsp;
+								<a ng-click="delete(variable)" class="btn btn-danger btn-small">
+									<i class="fa fa-remove"></i>
+								</a>
+							</td>
+						</tr>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>

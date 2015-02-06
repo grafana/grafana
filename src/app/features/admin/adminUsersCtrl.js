@@ -27,7 +27,6 @@ function (angular) {
           backendSrv.delete('/api/admin/users/delete/' + user.id);
         }
       });
-
     };
 
     $scope.init();

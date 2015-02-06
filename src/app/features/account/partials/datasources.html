@@ -1,11 +1,10 @@
 <topnav toggle="toggleSideMenu()"
 				title="Data sources"
-				icon="fa fa-shield"
-				section="Account"
+				icon="fa fa-database"
 				show-menu-btn="!grafana.sidemenu">
 </topnav>
 
-<div class="gf-box" style="min-height: 500px">
+<div class="gf-box" style="min-height: 500px; max-width: 900px">
 	<div class="gf-box-header">
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
 			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
@@ -117,3 +116,4 @@
 		</form>
 	</div>
 </div>
+

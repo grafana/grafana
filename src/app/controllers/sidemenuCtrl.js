@@ -17,10 +17,9 @@ function (angular, _, $, config) {
 
     $scope.menu = [];
     $scope.menu.push({
-      text: "Dashbords",
+      text: "Dashboards",
       icon: "fa fa-th-large",
       href: $scope.getUrl("/"),
-      //startsWith: config.appSubUrl + '/dashboard/',
     });
 
     if ($scope.grafana.user.accountRole === 'Admin') {
@@ -33,16 +32,6 @@ function (angular, _, $, config) {
         text: "Account", href: $scope.getUrl("/account"),
         requireRole: "Admin",
         icon: "fa fa-shield",
-      });
-      $scope.menu.push({
-        text: "Users", href: $scope.getUrl("/account/users"),
-        requireRole: "Admin",
-        icon: "fa fa-users",
-      });
-      $scope.menu.push({
-        text: "API Keys", href: $scope.getUrl("/account/apikeys"),
-        requireRole: "Admin",
-        icon: "fa fa-key",
       });
     }
 

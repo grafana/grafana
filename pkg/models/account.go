@@ -12,6 +12,7 @@ var (
 
 type Account struct {
 	Id      int64
+	Version int
 	Name    string
 	Created time.Time
 	Updated time.Time
