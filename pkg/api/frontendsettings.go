@@ -59,6 +59,14 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 		"grafanaDB": true,
 	}
 
+	// add raintank backend.
+	datasources["raintank"] = map[string]interface{}{
+		"type":      "graphite",
+		"grafanaDB": false,
+		"url": "/api/graphite",
+		"default": true,
+	}
+
 	jsonObj := map[string]interface{}{
 		"datasources": datasources,
 		"appSubUrl":   setting.AppSubUrl,
@@ -66,6 +74,16 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,
 			"buildstamp": setting.BuildStamp,
+		},
+		//TODO: this should loaded from the config file.
+		"plugins": map[string]interface{}{
+			"dependencies": []string{"raintank/all"},
+			"panels": map[string]interface{}{
+				"raintankMonitorDescription": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorDescription" },
+				"raintankMonitorEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorEventsPanel" },
+				"raintankMonitorDashboardBuilder": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorDashboardBuilder" },
+				"raintankMetricEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankMetricEventsPanel" },
+			},
 		},
 	}
 

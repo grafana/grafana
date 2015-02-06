@@ -15,6 +15,12 @@ func addMigrations(mg *Migrator) {
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
+	addLocationMigrations(mg)
+	addMonitorTypeMigrations(mg)
+	addMonitorTypeSettingMigrations(mg)
+	addMonitorMigrations(mg)
+	addMonitorLocationMigrations(mg)
+
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
@@ -173,3 +179,95 @@ func addApiKeyMigrations(mg *Migrator) {
 	mg.AddMigration("add index api_key.key", new(AddIndexMigration).
 		Table("api_key").Columns("key").Unique())
 }
+
+func addLocationMigrations(mg *Migrator) {
+	mg.AddMigration("create location table", new(AddTableMigration).
+		Name("location").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "country", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "region", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "provider", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "public", Type: DB_Bool, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+
+	mg.AddMigration("add unique index location.account_id_slug", new(AddIndexMigration).
+		Table("location").Columns("account_id", "slug").Unique())
+}
+
+func addMonitorTypeMigrations(mg *Migrator) {
+	mg.AddMigration("create monitor_type table", new(AddTableMigration).
+		Name("monitor_type").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "panel_template", Type: DB_NVarchar, Length: 2048, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+}
+
+func addMonitorTypeSettingMigrations(mg *Migrator) {
+	mg.AddMigration("create monitor_type_setting table", new(AddTableMigration).
+		Name("monitor_type_setting").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "variable", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: true},
+		&Column{Name: "data_type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "conditions", Type: DB_NVarchar, Length: 1024, Nullable: false},
+		&Column{Name: "default_value", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "required", Type: DB_Bool, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index monitor_type_setting.monitor_type_id", new(AddIndexMigration).
+		Table("monitor_type_setting").Columns("monitor_type_id"))
+}
+
+func addMonitorMigrations(mg *Migrator) {
+	mg.AddMigration("create monitor table", new(AddTableMigration).
+		Name("monitor").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
+		&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index monitor.monitor_type_id", new(AddIndexMigration).
+		Table("monitor").Columns("monitor_type_id"))
+
+	mg.AddMigration("add unique index monitor.account_id_slug", new(AddIndexMigration).
+		Table("monitor").Columns("account_id", "slug").Unique())
+}
+
+func addMonitorLocationMigrations(mg *Migrator) {
+	mg.AddMigration("create monitor_location table", new(AddTableMigration).
+		Name("monitor_location").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+		&Column{Name: "location_id", Type: DB_BigInt, Nullable: false},
+	))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index monitor_location.monitor_id_location_id", new(AddIndexMigration).
+		Table("monitor_location").Columns("monitor_id", "location_id"))
+}
+

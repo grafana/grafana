@@ -32,7 +32,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/import/", reqSignedIn, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-
+	r.Get("/location/", reqSignedIn, Index)
+	r.Get("/monitor/", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
@@ -50,8 +51,8 @@ func Register(r *macaron.Macaron) {
 		})
 
 		// account
+		r.Get("/account", GetAccount)
 		r.Group("/account", func() {
-			r.Get("/", GetAccount)
 			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
 			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
 			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
@@ -87,6 +88,29 @@ func Register(r *macaron.Macaron) {
 
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
+
+		// locations
+		r.Group("/locations", func() {
+			r.Combo("/").
+				Get(bind(m.GetLocationsQuery{}), GetLocations).
+				Put(AddLocation).
+				Post(UpdateLocation)
+			r.Get("/:id", GetLocationById)
+			r.Delete("/:id", DeleteLocation)
+		})
+
+		// Monitors
+		r.Group("/monitors", func() {
+			r.Combo("/").
+				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
+				Put(AddMonitor).Post(UpdateMonitor)
+			r.Get("/:id", GetMonitorById)
+			r.Delete("/:id", DeleteMonitor)
+		})
+		r.Get("/monitor_types", GetMonitorTypes)
+
+		r.Any("/graphite/*", GraphiteProxy)
+
 	}, reqSignedIn)
 
 	// admin api

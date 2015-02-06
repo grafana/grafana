@@ -17,6 +17,7 @@ const (
 	ROLE_VIEWER RoleType = "Viewer"
 	ROLE_EDITOR RoleType = "Editor"
 	ROLE_ADMIN  RoleType = "Admin"
+	ROLE_RAINTANK_ADMIN RoleType = "RaintankAdmin"
 )
 
 func (r RoleType) IsValid() bool {
