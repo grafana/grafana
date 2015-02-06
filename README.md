@@ -58,6 +58,7 @@ Open grafana in your browser (default http://localhost:3000) and login with admi
 ### Config
 Create a grafana.custom.ini in the conf directory to override default configuration options.
 You only need to add the options you want to override. Config files are applied in the order of:
+
 1. grafana.ini
 2. grafana.dev.ini (if found)
 3. grafana.custom.ini
