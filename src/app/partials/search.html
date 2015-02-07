@@ -7,11 +7,11 @@
 		</span>
 		<div class="search-switches">
 			<i class="fa fa-filter"></i>
-			<a class="pointer" ng-click="showStarred()" tabindex="2">
+			<a class="pointer" href="javascript:void();" ng-click="showStarred()" tabindex="2">
 				<i class="fa fa-remove" ng-show="query.starred"></i>
 				starred
 			</a> |
-			<a class="pointer" ng-click="showTags()" tabindex="3">
+			<a class="pointer" href="javascript:void();" ng-click="showTags()" tabindex="3">
 				<i class="fa fa-remove" ng-show="query.tagcloud"></i>
 				tags
 			</a>
@@ -43,28 +43,22 @@
 		<div class="search-results-container" ng-if="!query.tagcloud">
 			<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
 
-			<div class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
-				ng-class="{'selected': $index === selectedIndex }" ng-click="goToDashboard(row.slug)">
+			<a class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
+				ng-class="{'selected': $index === selectedIndex }" ng-href="{{row.url}}">
 
-				<div class="search-result-actions small">
-					<a ng-click="deleteDashboard(row, $event)">
-						<i class="fa fa-remove"></i> delete
-					</a>
-				</div>
-
-				<div class="search-result-tags">
-					<a ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
+				<span class="search-result-tags">
+					<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
 						{{tag}}
-					</a>
+					</span>
 					<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
-				</div>
+				</span>
 
-				<a class="search-result-link">
-					<i class="fa fa-th-large"></i>
+				<span class="search-result-link">
+					<i class="fa fa-th-large" ng-show="!row.isHome"></i>
+					<i class="fa fa-home" ng-show="row.isHome"></i>
 					<span bo-text="row.title"></span>
-				</a>
-
-			</div>
+				</span>
+			</a>
 		</div>
 	</div>
 

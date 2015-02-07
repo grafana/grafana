@@ -103,23 +103,21 @@ function (angular, _, moment, config, store) {
         });
     };
 
-    $scope.deleteDashboard = function(evt, options) {
+    $scope.deleteDashboard = function() {
       if (!$scope.isAdmin()) { return false; }
 
       $scope.appEvent('confirm-modal', {
         title: 'Delete dashboard',
-        text: 'Do you want to delete dashboard ' + options.title + '?',
+        text: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
         onConfirm: function() {
-          $scope.deleteDashboardConfirmed(options);
+          $scope.deleteDashboardConfirmed();
         }
       });
     };
 
-    $scope.deleteDashboardConfirmed = function(options) {
-      var slug = options.slug;
-      $scope.db.deleteDashboard(slug).then(function() {
-        $scope.appEvent('dashboard-deleted', options);
-        $scope.appEvent('alert-success', ['Dashboard Deleted', options.title + ' has been deleted']);
+    $scope.deleteDashboardConfirmed = function() {
+      $scope.db.deleteDashboard($scope.dashboardMeta.slug).then(function() {
+        $scope.appEvent('alert-success', ['Dashboard Deleted', $scope.dashboard.title + ' has been deleted']);
       }, function(err) {
         $scope.appEvent('alert-error', ['Deleted failed', err]);
       });

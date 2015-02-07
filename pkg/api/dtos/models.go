@@ -26,8 +26,9 @@ type CurrentUser struct {
 }
 
 type DashboardMeta struct {
-	IsStarred bool `json:"isStarred"`
-	IsHome    bool `json:"isHome"`
+	IsStarred bool   `json:"isStarred"`
+	IsHome    bool   `json:"isHome"`
+	Slug      string `json:"slug"`
 }
 
 type Dashboard struct {

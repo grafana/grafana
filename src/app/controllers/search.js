@@ -19,9 +19,6 @@ function (angular, _, config, $) {
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
-      // events
-      $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
-
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
         $scope.query.query = '';
@@ -77,6 +74,10 @@ function (angular, _, config, $) {
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
+          if ($scope.query.query === "") {
+            results.dashboards.splice(0, 1, { title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          }
+
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
           $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
@@ -110,16 +111,6 @@ function (angular, _, config, $) {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
       $scope.searchDashboards();
-    };
-
-    $scope.deleteDashboard = function(dash, evt) {
-      evt.stopPropagation();
-      $scope.appEvent('delete-dashboard', { slug: dash.slug, title: dash.title });
-    };
-
-    $scope.dashboardDeleted = function(evt, payload) {
-      var dash = _.findWhere($scope.results.dashboards, { slug: payload.slug });
-      $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {

@@ -3,11 +3,16 @@
   top: 33px;
   margin: 15px;
   z-index: 1000;
-  position: fixed;
+  position: absolute;
   width: 700px;
   box-shadow: 0px 0px 55px 0px black;
   padding: 10px;
-  font-size: 16px;
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 }
 
 // Search
@@ -34,9 +39,7 @@
   line-height: 28px;
 
   .search-result-item:hover, .search-result-item.selected {
-    .search-result-link, .search-result-link > .fa {
-      color: @grafanaListHighlight;
-    }
+    background-color: @grafanaListHighlight;
   }
 
   .selected {
@@ -56,30 +59,21 @@
 
   .search-result-link {
     color: @grafanaListMainLinkColor;
-    .fa-th-large {
+    .fa {
       padding-right: 10px;
-      color: @grafanaListHighlightContrast;
     }
   }
 
-  .search-result-item:nth-child(odd) {
-    background-color: @grafanaListAccent;
-  }
-
   .search-result-item {
+    display: block;
     padding: 3px 10px;
     white-space: nowrap;
-    border-bottom: 1px solid @grafanaListBorderBottom;
-    border-top: 1px solid @grafanaListBorderTop;
+    background-color: @grafanaListBackground;
+    margin-bottom: 4px;
   }
 
   .search-result-tags {
     float: right;
-    .label-tag {
-      margin-left: 6px;
-      font-size: 11px;
-      padding: 2px 6px;
-    }
   }
 
   .search-result-actions {
