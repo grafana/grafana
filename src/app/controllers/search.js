@@ -15,7 +15,7 @@ function (angular, _, config, $) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
-      $scope.query = { query: 'title:' };
+      $scope.query = { query: '' };
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
@@ -24,7 +24,7 @@ function (angular, _, config, $) {
 
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-        $scope.query.query = 'title:';
+        $scope.query.query = '';
         $scope.search();
       }, 100);
 
@@ -52,7 +52,7 @@ function (angular, _, config, $) {
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.search({});
-          $location.path("/dashboard/db/" + selectedDash.id);
+          $location.path("/dashboard/db/" + selectedDash.slug);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
@@ -69,11 +69,11 @@ function (angular, _, config, $) {
       $location.path("/dashboard/db/" + slug);
     };
 
-    $scope.searchDashboards = function(queryString) {
+    $scope.searchDashboards = function() {
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
-      return $scope.db.searchDashboards(queryString)
+      return $scope.db.searchDashboards($scope.query)
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
@@ -98,14 +98,19 @@ function (angular, _, config, $) {
       $scope.tagsOnly = !$scope.tagsOnly;
       $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.selectedIndex = -1;
+      $scope.search();
+    };
+
+    $scope.showStarred = function() {
+      $scope.query.starred = !$scope.query.starred;
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.search();
     };
 
     $scope.search = function() {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
-      $scope.searchDashboards($scope.query.query);
+      $scope.searchDashboards();
     };
 
     $scope.deleteDashboard = function(dash, evt) {

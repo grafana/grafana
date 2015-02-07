@@ -1,18 +1,29 @@
+.gf-box.search-container {
+  left: 54px;
+  top: 33px;
+  margin: 15px;
+  z-index: 1000;
+  position: fixed;
+  width: 700px;
+  box-shadow: 0px 0px 55px 0px black;
+  padding: 10px;
+  font-size: 16px;
+}
+
 // Search
-.grafana-search-panel {
-  .search-field-wrapper {
-    padding: 6px 10px;
-    input {
-      width: 100%;
-    }
-    button {
-      margin: 0 4px 0 0;
-    }
-    > span {
-      display: block;
-      overflow: hidden;
-      padding-right: 25px;
-    }
+.search-field-wrapper {
+  padding-bottom: 10px;
+  input {
+    width: 100%;
+    padding: 18px 8px;
+    box-sizing: border-box;
+  }
+  button {
+    margin: 0 4px 0 0;
+  }
+  > span {
+    display: block;
+    overflow: hidden;
   }
 }
 
@@ -49,7 +60,7 @@
       padding-right: 10px;
       color: @grafanaListHighlightContrast;
     }
-   }
+  }
 
   .search-result-item:nth-child(odd) {
     background-color: @grafanaListAccent;
@@ -60,7 +71,6 @@
     white-space: nowrap;
     border-bottom: 1px solid @grafanaListBorderBottom;
     border-top: 1px solid @grafanaListBorderTop;
-    border-left: 1px solid @grafanaListBorderBottom;
   }
 
   .search-result-tags {
@@ -78,14 +88,20 @@
   }
 }
 
-.search-tagview-switch {
+.search-switches {
   position: absolute;
-  top: 6px;
-  right: 24px;
-  color: darken(@linkColor, 30%);
-  &.active {
-    color: @linkColor;
+  top: 19px;
+  color: @textColor;
+  right: 21px;
+  a {
+    color: @textColor;
+    &.active {
+      color: @linkColor;
+    }
   }
 }
 
+.search-button-row {
+  padding-top: 20px;
+}
 

@@ -93,6 +93,11 @@ function (angular, $) {
 
             var src = "'" + payload.src + "'";
             var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
+
+            if (payload.cssClass) {
+              view.addClass(payload.cssClass);
+            }
+
             elem.append(view);
             $compile(elem.contents())(editorScope);
           }
