@@ -1,9 +1,6 @@
 package api
 
 import (
-	"regexp"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -31,7 +28,9 @@ func setIsStarredFlagOnSearchResults(c *middleware.Context, hits []*m.DashboardS
 }
 
 func Search(c *middleware.Context) {
-	queryText := c.Query("q")
+	query := c.Query("query")
+	tag := c.Query("tag")
+	tagcloud := c.Query("tagcloud")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
 
@@ -44,7 +43,7 @@ func Search(c *middleware.Context) {
 		Tags:       []*m.DashboardTagCloudItem{},
 	}
 
-	if strings.HasPrefix(queryText, "tags!:") {
+	if tagcloud == "true" {
 
 		query := m.GetDashboardTagsQuery{AccountId: c.AccountId}
 		err := bus.Dispatch(&query)
@@ -56,15 +55,12 @@ func Search(c *middleware.Context) {
 		result.TagsOnly = true
 
 	} else {
-
-		searchQueryRegEx, _ := regexp.Compile(`(tags:(\w*)\sAND\s)?(?:title:)?(.*)?`)
-		matches := searchQueryRegEx.FindStringSubmatch(queryText)
 		query := m.SearchDashboardsQuery{
-			Title:     matches[3],
-			Tag:       matches[2],
+			Title:     query,
+			Tag:       tag,
 			UserId:    c.UserId,
 			Limit:     limit,
-			IsStarred: starred == "1",
+			IsStarred: starred == "true",
 			AccountId: c.AccountId,
 		}
 

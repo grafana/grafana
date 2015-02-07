@@ -41,7 +41,7 @@ function (angular, _, config, $) {
         $scope.moveSelection(-1);
       }
       if (evt.keyCode === 13) {
-        if ($scope.tagsOnly) {
+        if ($scope.query.tagcloud) {
           var tag = $scope.results.tags[$scope.selectedIndex];
           if (tag) {
             $scope.filterByTag(tag.term);
@@ -77,7 +77,6 @@ function (angular, _, config, $) {
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
-          $scope.tagsOnly = results.tagsOnly;
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
           $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
@@ -85,7 +84,8 @@ function (angular, _, config, $) {
     };
 
     $scope.filterByTag = function(tag, evt) {
-      $scope.query.query = "tags:" + tag + " AND title:";
+      $scope.query.tag = tag;
+      $scope.query.tagcloud = false;
       $scope.search();
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       if (evt) {
@@ -95,8 +95,7 @@ function (angular, _, config, $) {
     };
 
     $scope.showTags = function() {
-      $scope.tagsOnly = !$scope.tagsOnly;
-      $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
+      $scope.query.tagcloud = !$scope.query.tagcloud;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.search();
     };
@@ -178,21 +177,22 @@ function (angular, _, config, $) {
       return hash;
     }
 
-    return function (scope, element) {
-      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
-      var hash = djb2(name.toLowerCase());
-      var colors = [
-        "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
-        "#508642","#447EBC","#C15C17","#890F02","#757575",
-        "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
-        "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
-        "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
-        "#58140C","#052B51","#511749","#3F2B5B",
-      ];
-      var color = colors[Math.abs(hash % colors.length)];
-      element.css("background-color", color);
+    return {
+      scope: { tag: "=" },
+      link: function (scope, element) {
+        var name = scope.tag;
+        var hash = djb2(name.toLowerCase());
+        var colors = [
+          "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
+          "#508642","#447EBC","#C15C17","#890F02","#757575",
+          "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
+          "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
+          "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
+          "#58140C","#052B51","#511749","#3F2B5B",
+        ];
+        var color = colors[Math.abs(hash % colors.length)];
+        element.css("background-color", color);
+      }
     };
-
   });
-
 });
