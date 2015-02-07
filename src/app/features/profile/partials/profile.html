@@ -55,9 +55,9 @@
 
 		<table class="grafana-options-table">
 			<tr ng-repeat="ac in accounts">
-				<td style="width: 98%">Name: {{ac.name}}</td>
-				<td>Role: {{ac.role}}</td>
-				<td>
+				<td style="width: 98%"><strong>Name: </strong> {{ac.name}}</td>
+				<td><strong>Role: </strong> {{ac.role}}</td>
+				<td class="nobg max-width-btns">
 					<span class="btn btn-primary" ng-show="ac.isUsing">
 						Current
 					</span>

@@ -3,13 +3,22 @@
 
   tr:nth-child(odd) td {
     background-color: @grafanaListAccent;
+    &.nobg {
+      background-color: transparent;
+      border:none;
+      border-left: 1px solid @grafanaListBorderBottom;
+    }
   }
 
-  td, th {
-    text-align: left;
+  td {
     padding: 5px 10px;
     white-space: nowrap;
     border-bottom: 1px solid @grafanaListBorderBottom;
+    &.nobg {
+      background-color: transparent;
+      border:none;
+      border-left: 1px solid @grafanaListBorderBottom;
+    }
   }
 
   tr:first-child {
@@ -24,6 +33,17 @@
 
   td:last-child {
     border-right: 1px solid @grafanaListBorderBottom;
+  }
+
+  .max-width-btns {
+    .btn {
+      width: 100%;
+    }
+  }
+
+  strong {
+    font-weight: normal;
+    color: @white;
   }
 }
 
