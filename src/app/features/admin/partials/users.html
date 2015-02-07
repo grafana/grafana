@@ -1,11 +1,12 @@
-<topnav toggle="toggleSideMenu()"
-				title="Admin"
-				icon="fa fa-cube"
-				show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="fa fa-cube" title="Admin" show-menu-btn="!grafana.sidemenu" subnav="true">
+	<ul class="nav">
+		<li><a href="admin">Settings</a></li>
+		<li class="active"><a href="admin/users">Users</a></li>
+	</ul>
 </topnav>
 
 <div class="admin-page">
-	<h2> Users </h2>
+	<h2>Users</h2>
 	<div class="gf-box" style="min-height: 500px">
 
 		<div class="gf-box-body">
