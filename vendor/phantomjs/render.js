@@ -21,6 +21,8 @@ page.viewportSize = {
   height: params.height || '400'
 };
 
+var tries = 0;
+
 page.open(params.url, function (status) {
   console.log('Loading a web page: ' + params.url);
 
@@ -29,11 +31,12 @@ page.open(params.url, function (status) {
       return $('canvas').length > 0;
     });
 
-    if (canvas) {
+    if (canvas || tries === 5) {
       page.render(params.png);
       phantom.exit();
     }
     else {
+      tries++;
       setTimeout(checkIsReady, 10);
     }
   }

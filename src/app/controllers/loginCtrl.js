@@ -7,14 +7,14 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LoginCtrl', function($scope, backendSrv) {
+  module.controller('LoginCtrl', function($scope, backendSrv, contextSrv) {
     $scope.formModel = {
       user: '',
       email: '',
       password: '',
     };
 
-    $scope.grafana.sidemenu = false;
+    contextSrv.setSideMenuState(false);
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;

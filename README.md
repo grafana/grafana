@@ -10,7 +10,7 @@ Graphite, InfluxDB & OpenTSDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
 
-# Grafana 2.0 Alpha branch [![wercker status](https://app.wercker.com/status/0f109051cfaf2a6d94c0eebdc0dcaeae/s "wercker status")](https://app.wercker.com/project/bykey/0f109051cfaf2a6d94c0eebdc0dcaeae)
+# Grafana 2.0 Alpha branch [![wercker status](https://app.wercker.com/status/1de5ea38f93fd2dfa2eb8b8ba58b6df1/s "wercker status")](https://app.wercker.com/project/bykey/1de5ea38f93fd2dfa2eb8b8ba58b6df1)
 
 Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
 issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
@@ -20,10 +20,12 @@ issues to fix and polish missing. But feedback on what is done and bug reports w
 ```
 go get github.com/grafana/grafana
 ```
+The above will give an error saying there is no go code. That is because the new backend parts are in the develop branch.
 
 Building
 ```
 cd $GOPATH/src/github.com/grafana/grafana
+git checkout -t origin/develop
 go run build.go setup (only needed once to install godep)
 go run build.go build
 ```
@@ -43,7 +45,7 @@ npm install -g grunt-cli
 grunt
 ```
 
-To rebuild on source change:
+To rebuild on source change (requires that you executed godep restore)
 ```
 go get github.com/Unknwon/bra
 bra run

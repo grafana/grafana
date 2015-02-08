@@ -7,15 +7,15 @@ function (angular) {
 
   angular
     .module('grafana.directives')
-    .directive('topnav', function() {
+    .directive('topnav', function($rootScope, contextSrv) {
       return {
         restrict: 'E',
         transclude: true,
         scope: {
           title: "@",
+          section: "@",
           titleAction: "&",
-          toggle: "&",
-          showMenuBtn: "=",
+          subnav: "=",
         },
         template:
           '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
@@ -29,12 +29,23 @@ function (angular) {
               '<i ng-class="icon"></i>' +
             '</span>' +
 
+            '<span ng-show="section">' +
+              '<span class="top-nav-title">{{section}}</span>' +
+              '<i class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
+            '</span>' +
+
             '<a ng-click="titleAction()" class="top-nav-title">' +
               '{{title}}' +
             '</a>' +
+            '<i ng-show="subnav" class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
           '</div><div ng-transclude></div></div></div></div>',
         link: function(scope, elem, attrs) {
           scope.icon = attrs.icon;
+          scope.showMenuBtn = !contextSrv.sidemenu;
+
+          scope.toggle = function() {
+            $rootScope.appEvent('toggle-sidemenu');
+          };
         }
       };
     });

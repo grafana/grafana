@@ -7,9 +7,7 @@ steps:
 build:
   steps:
     # Workspace
-    - setup-go-workspace:
-        package_dir: github.com/grafana/grafana
-
+    - setup-go-workspace
     - script:
         name: install godep
         code: |

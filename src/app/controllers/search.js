@@ -15,16 +15,13 @@ function (angular, _, config, $) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
-      $scope.query = { query: 'title:' };
+      $scope.query = { query: '' };
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
-      // events
-      $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
-
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-        $scope.query.query = 'title:';
+        $scope.query.query = '';
         $scope.search();
       }, 100);
 
@@ -41,7 +38,7 @@ function (angular, _, config, $) {
         $scope.moveSelection(-1);
       }
       if (evt.keyCode === 13) {
-        if ($scope.tagsOnly) {
+        if ($scope.query.tagcloud) {
           var tag = $scope.results.tags[$scope.selectedIndex];
           if (tag) {
             $scope.filterByTag(tag.term);
@@ -52,7 +49,7 @@ function (angular, _, config, $) {
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.search({});
-          $location.path("/dashboard/db/" + selectedDash.id);
+          $location.path("/dashboard/db/" + selectedDash.slug);
           setTimeout(function() {
             $('body').click(); // hack to force dropdown to close;
           });
@@ -69,15 +66,18 @@ function (angular, _, config, $) {
       $location.path("/dashboard/db/" + slug);
     };
 
-    $scope.searchDashboards = function(queryString) {
+    $scope.searchDashboards = function() {
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
-      return $scope.db.searchDashboards(queryString)
+      return $scope.db.searchDashboards($scope.query)
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
-          $scope.tagsOnly = results.tagsOnly;
+          if ($scope.query.query === "" && !$scope.query.starred) {
+            results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          }
+
           $scope.results.dashboards = results.dashboards;
           $scope.results.tags = results.tags;
           $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
@@ -85,7 +85,8 @@ function (angular, _, config, $) {
     };
 
     $scope.filterByTag = function(tag, evt) {
-      $scope.query.query = "tags:" + tag + " AND title:";
+      $scope.query.tag = tag;
+      $scope.query.tagcloud = false;
       $scope.search();
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       if (evt) {
@@ -95,27 +96,21 @@ function (angular, _, config, $) {
     };
 
     $scope.showTags = function() {
-      $scope.tagsOnly = !$scope.tagsOnly;
-      $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
+      $scope.query.tagcloud = !$scope.query.tagcloud;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.selectedIndex = -1;
+      $scope.search();
+    };
+
+    $scope.showStarred = function() {
+      $scope.query.starred = !$scope.query.starred;
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.search();
     };
 
     $scope.search = function() {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
-      $scope.searchDashboards($scope.query.query);
-    };
-
-    $scope.deleteDashboard = function(dash, evt) {
-      evt.stopPropagation();
-      $scope.appEvent('delete-dashboard', { slug: dash.slug, title: dash.title });
-    };
-
-    $scope.dashboardDeleted = function(evt, payload) {
-      var dash = _.findWhere($scope.results.dashboards, { slug: payload.slug });
-      $scope.results.dashboards = _.without($scope.results.dashboards, dash);
+      $scope.searchDashboards();
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
@@ -173,21 +168,22 @@ function (angular, _, config, $) {
       return hash;
     }
 
-    return function (scope, element) {
-      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
-      var hash = djb2(name.toLowerCase());
-      var colors = [
-        "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
-        "#508642","#447EBC","#C15C17","#890F02","#757575",
-        "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
-        "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
-        "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
-        "#58140C","#052B51","#511749","#3F2B5B",
-      ];
-      var color = colors[Math.abs(hash % colors.length)];
-      element.css("background-color", color);
+    return {
+      scope: { tag: "=" },
+      link: function (scope, element) {
+        var name = scope.tag;
+        var hash = djb2(name.toLowerCase());
+        var colors = [
+          "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
+          "#508642","#447EBC","#C15C17","#890F02","#757575",
+          "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
+          "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
+          "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
+          "#58140C","#052B51","#511749","#3F2B5B",
+        ];
+        var color = colors[Math.abs(hash % colors.length)];
+        element.css("background-color", color);
+      }
     };
-
   });
-
 });

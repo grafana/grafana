@@ -27,16 +27,17 @@
 							<i class="fa fa-bolt"></i> &nbsp;
 							{{annotation.name}}
 						</td>
-						<td style="width: 1%">
-							<a ng-click="edit(annotation)" class="btn btn-success btn-small">
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+
+						<td style="width: 1%" class="nobg">
+							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
 								<i class="fa fa-edit"></i>
 								Edit
 							</a>
 						</td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-						<td style="width: 1%">
-							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-small">
+						<td style="width: 1%" class="nobg">
+							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
 								<i class="fa fa-remove"></i>
 							</a>
 						</td>

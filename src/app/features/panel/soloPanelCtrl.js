@@ -25,10 +25,12 @@ function (angular, $) {
 
     $scope.initPanelScope = function(dashboard) {
       $scope.dashboard = dashboardSrv.create(dashboard.model);
-      $scope.grafana.style = $scope.dashboard.style;
+      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
+
       $scope.row = {
         height: $(window).height() + 'px',
       };
+
       $scope.test = "Hej";
       $scope.$index = 0;
       $scope.panel = $scope.getPanelById(panelId);

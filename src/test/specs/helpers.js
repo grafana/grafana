@@ -34,7 +34,7 @@ define([
       return inject(function($controller, $rootScope, $q, $location) {
         self.scope = $rootScope.$new();
         self.$location = $location;
-        self.scope.grafana = {};
+        self.scope.contextSrv = {};
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.dashboard = {};

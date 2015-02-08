@@ -20,16 +20,16 @@
     <script src="[[.AppSubUrl]]/public/app/components/require.backend.js"></script>
     <!-- endbuild -->
 
-    <script>require(['app'], function (app) { app.boot(); })</script>
 
   </head>
 
-	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': grafana.sidemenu}">
+	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
+
 		<link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css" ng-if="grafana.lightTheme">
 
 		<div class="sidemenu-canvas">
 
-			<aside class="sidemenu-wrapper" ng-if="grafana.sidemenu">
+			<aside class="sidemenu-wrapper" ng-if="contextSrv.sidemenu">
 				<div ng-include="'app/partials/sidemenu.html'"></div>
 			</aside>
 
@@ -55,5 +55,9 @@
 			user:[[.User]],
 			settings: [[.Settings]],
 		};
+
+    require(['app'], function (app) {
+	    app.boot();
+    })
 	</script>
 </html>

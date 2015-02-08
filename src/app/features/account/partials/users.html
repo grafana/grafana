@@ -1,53 +1,56 @@
-<topnav toggle="toggleSideMenu()" title="Users" icon="fa fa-shield" section="Account" show-menu-btn="!grafana.sidemenu"></topnav>
+<topnav title="Account" icon="fa fa-shield" subnav="true">
+	<ul class="nav">
+		<li><a href="account">Overview</a></li>
+		<li class="active"><a href="account/users">Users</a></li>
+		<li><a href="account/import">Import</a></li>
+	</ul>
+</topnav>
 
-<div class="gf-box" style="min-height: 500px">
+<div class="page-container">
+	<div class="page">
 
-	<div class="gf-box-body">
+		<h2>Account users</h2>
 
-		<div class="editor-row">
-			<div class="section">
-				<form name="form">
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 160px">
-								<strong>Username or Email</strong>
-							</li>
-							<li>
-								<input type="text" ng-model="user.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="user@email.com or username">
-							</li>
-							<li class="tight-form-item">
-								role
-							</li>
-							<li>
-								<select type="text" ng-model="user.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
-								</select>
-							</li>
-							<li>
-								<button class="btn btn-success tight-form-btn" ng-click="addUser()">Add</button>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-				</form>
+
+		<form name="form">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 160px">
+						<strong>Username or Email</strong>
+					</li>
+					<li>
+						<input type="text" ng-model="user.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="user@email.com or username">
+					</li>
+					<li class="tight-form-item">
+						role
+					</li>
+					<li>
+						<select type="text" ng-model="user.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
+						</select>
+					</li>
+					<li>
+						<button class="btn btn-success tight-form-btn" ng-click="addUser()">Add</button>
+					</li>
+					<div class="clearfix"></div>
+				</ul>
 			</div>
-		</div>
+		</form>
 
+		<br>
 
-		<div class="editor-row row">
-			<table class="grafana-options-table span5">
-				<tr ng-repeat="user in users">
-					<td>{{user.email}}</td>
-					<td>
-						{{user.role}}
-					</td>
-					<td style="width: 1%">
-						<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</table>
-		</div>
+		<table class="grafana-options-table">
+			<tr ng-repeat="user in users">
+				<td>{{user.email}}</td>
+				<td>
+					{{user.role}}
+				</td>
+				<td style="width: 1%">
+					<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
 
 	</div>
 </div>

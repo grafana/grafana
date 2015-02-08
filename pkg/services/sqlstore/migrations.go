@@ -178,6 +178,9 @@ func addApiKeyMigrations(mg *Migrator) {
 
 	mg.AddMigration("add index api_key.key", new(AddIndexMigration).
 		Table("api_key").Columns("key").Unique())
+
+	mg.AddMigration("add index api_key.account_id_name", new(AddIndexMigration).
+		Table("api_key").Columns("account_id", "name").Unique())
 }
 
 func addLocationMigrations(mg *Migrator) {

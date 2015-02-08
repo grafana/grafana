@@ -151,7 +151,7 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	return appUrl, appSubUrl
 }
 
-func AbsUrlTo(relativeUrl string) string {
+func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 

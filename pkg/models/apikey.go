@@ -20,8 +20,8 @@ type ApiKey struct {
 // ---------------------
 // COMMANDS
 type AddApiKeyCommand struct {
-	Name      string   `json:"name" binding:"required"`
-	Role      RoleType `json:"role" binding:"required"`
+	Name      string   `json:"name" binding:"Required"`
+	Role      RoleType `json:"role" binding:"Required"`
 	AccountId int64    `json:"-"`
 	Key       string   `json:"-"`
 

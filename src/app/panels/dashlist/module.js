@@ -55,10 +55,12 @@ function (angular, app, _, config, PanelMeta) {
       var params = {
         limit: $scope.panel.limit
       };
+
       if ($scope.panel.mode === 'starred') {
-        params.starred = 1;
+        params.starred = "true";
       } else {
-        params.q = "tags:" + $scope.panel.tag + " AND title:" + $scope.panel.query;
+        params.query = $scope.panel.query;
+        params.tag = $scope.panel.tag;
       }
 
       backendSrv.get('/api/search', params).then(function(result) {

@@ -65,7 +65,7 @@ function (angular, _, kbn) {
     };
 
     GrafanaDatasource.prototype.searchDashboards = function(query) {
-      return backendSrv.get('/api/search/', {q: query})
+      return backendSrv.get('/api/search/', query)
         .then(function(data) {
           return data;
         });

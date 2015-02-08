@@ -3,7 +3,7 @@
 		<div class="container-fluid">
 
 			<div class="top-nav">
-				<a class="pointer top-nav-menu-btn" ng-if="!grafana.sidemenu" ng-click="toggleSideMenu()">
+				<a class="pointer top-nav-menu-btn" ng-if="!contextSrv.sidemenu" ng-click="contextSrv.toggleSideMenu()">
 					<img class="logo-icon" src="img/fav32.png"></img>
 					<i class="fa fa-bars"></i>
 				</a>
@@ -43,6 +43,7 @@
 						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
+						<li><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
 			</ul>

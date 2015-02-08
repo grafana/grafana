@@ -44,6 +44,7 @@ module.exports = function(grunt) {
       grunt.config('copy.backend_files', {
         expand: true,
         src: ['conf/*', 'vendor/**/*', '!conf/grafana.dev.ini'],
+        options: { mode: true},
         dest: '<%= tempDir %>'
       });
       grunt.task.run('copy:dist_to_tmp');

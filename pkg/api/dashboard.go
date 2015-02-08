@@ -45,7 +45,7 @@ func GetDashboard(c *middleware.Context) {
 	dash := query.Result
 	dto := dtos.Dashboard{
 		Model: dash.Data,
-		Meta:  dtos.DashboardMeta{IsStarred: isStarred},
+		Meta:  dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
 	}
 
 	c.JSON(200, dto)

@@ -54,9 +54,9 @@ define([
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
       })
-      .when('/admin/settings', {
-        templateUrl: 'app/features/admin/partials/settings.html',
-        controller : 'AdminSettingsCtrl',
+      .when('/admin', {
+        templateUrl: 'app/features/admin/partials/admin.html',
+        controller : 'AdminCtrl',
       })
       .when('/admin/users', {
         templateUrl: 'app/features/admin/partials/users.html',
