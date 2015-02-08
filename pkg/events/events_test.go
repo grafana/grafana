@@ -18,7 +18,7 @@ func TestEventCreation(t *testing.T) {
 			Timestamp: time.Unix(1231421123, 223),
 		}
 
-		wire, _ := ToOnWriteEvent(e)
+		wire, _ := ToOnWriteEvent(&e)
 		So(e.Timestamp.Unix(), ShouldEqual, wire.Timestamp.Unix())
 		So(wire.EventType, ShouldEqual, "TestEvent")
 	})
