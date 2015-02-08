@@ -42,7 +42,7 @@ function (angular, _, config) {
         $scope.panel.span = Math.min(Math.max($scope.panel.span + span, 1), 12);
 
         $timeout(function() {
-          $scope.$emit('render');
+          $scope.$broadcast('render');
         });
       };
 
