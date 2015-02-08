@@ -32,7 +32,7 @@ type EventBase interface {
 }
 
 func ToOnWriteEvent(event interface{}) (*OnTheWireEvent, error) {
-	eventType := reflect.TypeOf(event)
+	eventType := reflect.TypeOf(event).Elem()
 
 	wireEvent := OnTheWireEvent{
 		Priority:  PRIO_INFO,
@@ -40,7 +40,7 @@ func ToOnWriteEvent(event interface{}) (*OnTheWireEvent, error) {
 		Payload:   event,
 	}
 
-	baseField := reflect.ValueOf(event).FieldByName("Timestamp")
+	baseField := reflect.Indirect(reflect.ValueOf(event)).FieldByName("Timestamp")
 	if baseField.IsValid() {
 		wireEvent.Timestamp = baseField.Interface().(time.Time)
 	} else {
