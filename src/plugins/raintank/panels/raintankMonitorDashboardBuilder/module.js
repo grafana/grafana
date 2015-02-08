@@ -11,16 +11,18 @@ function (angular, app, _, kbn, PanelMeta) {
   var module = angular.module('grafana.panels.raintankMonitorDashboardBuilder', []);
   app.useModule(module);
     module.directive('grafanaPanelRaintankmonitordashboardbuilder', function() {
-      console.log("grafanaPanelRaintankMonitorDashboardBuilder");
     return {
       controller: 'raintankMonitorDashboardBuilderCtrl',
       templateUrl: 'plugins/raintank/panels/raintankMonitorDashboardBuilder/module.html',
     };
   });
-  module.controller('raintankMonitorDashboardBuilderCtrl', function($scope, panelSrv, backendSrv) {
+  module.controller('raintankMonitorDashboardBuilderCtrl', function($scope, $routeParams, panelSrv, backendSrv) {
     $scope.panelMeta = new PanelMeta({
       description : "Monitor Dashboard Builder",
+      editIcon:  "fa fa-text-width",
+      fullscreen: true,
     });
+    $scope.panelMeta.addEditorTab('Options', 'plugins/raintank/panels/raintankMonitorDashboardBuilder/editor.html');
 
     // Set and populate defaults
     var _d = {
@@ -31,7 +33,7 @@ function (angular, app, _, kbn, PanelMeta) {
     };
 
     _.defaults($scope.panel, _d);
-
+    $scope.panel.monitor = $routeParams.monitor;
     $scope.init = function() {
       panelSrv.init(this);
       if ($scope.panel.refreshOnLoad) {
@@ -40,11 +42,14 @@ function (angular, app, _, kbn, PanelMeta) {
       $scope.$on('refresh', $scope.render);
       backendSrv.get('/api/locations').then(function(locations) {
         $scope.locations = locations;
-        $scope.render();
+        if ($scope.panel.monitor) {
+          $scope.render();
+        }
       });
     };
 
     $scope.render = function() {
+      console.log($scope.panel);
       if ($scope.panel.refreshOnRender || ! $scope.panel.panelsLoaded) {
         backendSrv.get('/api/monitors/'+$scope.panel.monitor).then(function(monitor) {
           $scope.monitor = monitor;
