@@ -74,8 +74,8 @@ function (angular, _, config, $) {
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
-          if ($scope.query.query === "") {
-            results.dashboards.splice(0, 1, { title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          if ($scope.query.query === "" && !$scope.query.starred) {
+            results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
           }
 
           $scope.results.dashboards = results.dashboards;

@@ -2,7 +2,7 @@ define([
   './alertSrv',
   './utilSrv',
   './datasourceSrv',
-  './userSrv',
+  './contextSrv',
   './timer',
   './keyboardManager',
   './popoverSrv',

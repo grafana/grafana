@@ -8,13 +8,13 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ErrorCtrl', function($scope) {
+  module.controller('ErrorCtrl', function($scope, contextSrv) {
 
-    var showSideMenu = $scope.grafana.sidemenu;
-    $scope.grafana.sidemenu = false;
+    var showSideMenu = contextSrv.sidemenu;
+    contextSrv.sidemenu = false;
 
     $scope.$on('$destroy', function() {
-      $scope.grafana.sidemenu = showSideMenu;
+      $scope.contextSrv.sidemenu = showSideMenu;
     });
 
   });

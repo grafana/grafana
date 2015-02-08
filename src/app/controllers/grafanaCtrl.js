@@ -10,11 +10,11 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller, userSrv, $timeout) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
 
     $scope.init = function() {
-      $scope.grafana = {};
-      $scope.grafana.version = grafanaVersion;
+      $scope.contextSrv = contextSrv;
+
       $scope._ = _;
 
       $rootScope.profilingEnabled = store.getBool('profilingEnabled');
@@ -27,28 +27,10 @@ function (angular, config, _, $, store) {
       utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana.lightTheme = false;
-      $scope.grafana.user = userSrv.getSignedInUser();
-      $scope.grafana.sidemenu = store.getBool('grafana.sidemenu');
-      $scope.topnav = { title: 'Grafana' };
-
-      $scope.onAppEvent('logged-out', function() {
-        $scope.grafana.sidemenu = false;
-        $scope.grafana.user = {};
-      });
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
-    };
-
-    $scope.toggleSideMenu = function() {
-      $scope.grafana.sidemenu = !$scope.grafana.sidemenu;
-      store.set('grafana.sidemenu', $scope.grafana.sidemenu);
-
-      $timeout(function() {
-        $scope.$broadcast("render");
-      }, 50);
     };
 
     $rootScope.onAppEvent = function(name, callback) {

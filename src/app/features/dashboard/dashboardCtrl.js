@@ -61,11 +61,11 @@ function (angular, $, config) {
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
+      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.styleUpdated = function() {
-      $scope.grafana.lightTheme = $scope.dashboard.style === 'light';
+      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.add_row = function(dash, row) {

@@ -56,8 +56,8 @@ function (angular, $) {
 
           function showEditorPane(evt, payload, editview) {
             if (editview) {
-              scope.grafana.editview = editViewMap[editview];
-              payload.src = scope.grafana.editview.src;
+              scope.contextSrv.editview = editViewMap[editview];
+              payload.src = scope.contextSrv.editview.src;
             }
 
             if (lastEditor === payload.src) {
@@ -106,12 +106,12 @@ function (angular, $) {
             if (newValue) {
               showEditorPane(null, {}, newValue);
             } else if (oldValue) {
-              scope.grafana.editview = null;
+              scope.contextSrv.editview = null;
               hideEditorPane();
             }
           });
 
-          scope.grafana.editview = null;
+          scope.contextSrv.editview = null;
           scope.$on("$destroy", hideEditorPane);
           scope.onAppEvent('hide-dash-editor', hideEditorPane);
           scope.onAppEvent('show-dash-editor', showEditorPane);

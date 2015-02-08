@@ -9,7 +9,7 @@ function (angular, _, $, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SideMenuCtrl', function($scope, $location) {
+  module.controller('SideMenuCtrl', function($scope, $location, contextSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
@@ -22,7 +22,7 @@ function (angular, _, $, config) {
       href: $scope.getUrl("/"),
     });
 
-    if ($scope.grafana.user.accountRole === 'Admin') {
+    if (contextSrv.hasRole('Admin')) {
       $scope.menu.push({
         text: "Data Sources",
         icon: "fa fa-database",
@@ -35,7 +35,7 @@ function (angular, _, $, config) {
       });
     }
 
-    if ($scope.grafana.user.isGrafanaAdmin) {
+    if (contextSrv.user.isGrafanaAdmin) {
       $scope.menu.push({
         text: "Admin", href: $scope.getUrl("/admin/users"),
         icon: "fa fa-cube",

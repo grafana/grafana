@@ -7,7 +7,7 @@ function (angular) {
 
   angular
     .module('grafana.directives')
-    .directive('topnav', function() {
+    .directive('topnav', function($rootScope, contextSrv) {
       return {
         restrict: 'E',
         transclude: true,
@@ -15,8 +15,6 @@ function (angular) {
           title: "@",
           section: "@",
           titleAction: "&",
-          toggle: "&",
-          showMenuBtn: "=",
           subnav: "=",
         },
         template:
@@ -43,6 +41,11 @@ function (angular) {
           '</div><div ng-transclude></div></div></div></div>',
         link: function(scope, elem, attrs) {
           scope.icon = attrs.icon;
+          scope.showMenuBtn = !contextSrv.sidemenu;
+
+          scope.toggle = function() {
+            $rootScope.appEvent('toggle-sidemenu');
+          };
         }
       };
     });
