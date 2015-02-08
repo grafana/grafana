@@ -6,42 +6,31 @@
 	</ul>
 </topnav>
 
-<div class="gf-box" style="min-height: 500px">
+<div class="page-container">
+	<div class="page">
+		<h2>Import dashboards</h2>
 
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-th-large"></i>
-			Import Dashboards
-		</div>
-	</div>
-
-	<div class="gf-box-body">
-
-		<div class="editor-row">
-			<div class="section">
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 150px">
-							<strong>Dashboard source</strong>
-						</li>
-						<li>
-							<select type="text" ng-model="sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-							</select>
-						</li>
-						<li class="tight-form-item">
-							<strong>Destination</strong>
-						</li>
-						<li>
-							<select type="text" ng-model="destName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-							</select>
-						</li>
-						<li>
-							<button class="btn btn-success tight-form-btn" ng-click="startImport()">Import</button>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 150px">
+					<strong>Dashboard source</strong>
+				</li>
+				<li>
+					<select type="text" ng-model="sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
+					</select>
+				</li>
+				<li class="tight-form-item">
+					<strong>Destination</strong>
+				</li>
+				<li>
+					<select type="text" ng-model="destName" class="input-medium tight-form-input" ng-options="f for f in datasources">
+					</select>
+				</li>
+				<li>
+					<button class="btn btn-success tight-form-btn" ng-click="startImport()">Import</button>
+				</li>
+				<div class="clearfix"></div>
+			</ul>
 		</div>
 
 		<div class="editor-row" ng-if="importing">
