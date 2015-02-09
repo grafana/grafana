@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+ 	"github.com/grafana/grafana/pkg/events"
 	"math/rand"
 	"time"
 	"strconv"
@@ -371,8 +372,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 }
 
 func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
-
-	return inTransaction(func(sess *xorm.Session) error {
+        return inTransaction2(func(sess *session) error {
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
@@ -445,18 +445,15 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Frequency:     cmd.Frequency,
 		}
 
+		//check if we need to update the time offset for when the monitor should run.
+		if mon.Offset >= mon.Frequency {
+			mon.Offset = rand.Int63n(mon.Frequency - 1)
+		}
+
 		mon.UpdateMonitorSlug()
 		sess.UseBool("enabled")
 		if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
 			return err
-		}
-
-		//check if we need to update the time offset for when the monitor should run.
-		if mon.Offset >= mon.Frequency {
-			mon.Offset = rand.Int63n(mon.Frequency - 1)
-			if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
-				return err
-			}
 		}
 
 		var rawSql = "DELETE FROM monitor_location WHERE monitor_id=?"
@@ -473,12 +470,20 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		sess.Table("monitor_location")
 		_, err = sess.Insert(&monitor_locations)
 
-		if mon.Offset >= mon.Frequency {
-			mon.Offset = rand.Int63n(mon.Frequency - 1)
-			if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
-				return err
-			}
-		}
+		sess.publishAfterCommit(&events.MonitorUpdated{
+                        Timestamp:     mon.Updated,
+                        Id:            mon.Id,
+			AccountId:     mon.AccountId,
+                        Name:          mon.Name,
+			Slug:          mon.Slug,
+                        MonitorTypeId: mon.MonitorTypeId,
+                        Locations:     cmd.Locations,
+                        Settings:      mon.Settings,
+                        Frequency:     mon.Frequency,
+                        Enabled:       mon.Enabled,
+                        Offset:        mon.Offset,
+                        Updated:       mon.Updated,
+                });
 
 		return err
 	})
