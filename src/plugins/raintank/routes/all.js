@@ -20,6 +20,10 @@ function (angular, jquery, _, config) {
         templateUrl: 'plugins/raintank/features/admin/partials/locations.html',
         controller : 'LocationCtrl',
       })
+      .when('/sites', {
+        templateUrl: 'plugins/raintank/features/admin/partials/sites.html',
+        controller : 'SitesCtrl',
+      })
       .when('/monitor', {
         templateUrl: 'plugins/raintank/features/admin/partials/monitors.html',
         controller : 'MonitorCtrl',

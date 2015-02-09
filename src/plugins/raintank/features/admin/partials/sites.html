@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Location" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="fa fa-sitemap" section="Site" show-menu-btn="!grafana.sidemenu">
 	<!-- <ul class="nav"> -->
 	<!-- 	<li> -->
 	<!-- 		<a href="asd">Details</a> -->
@@ -23,7 +23,7 @@
 				<div class="dashboard-editor-header">
 					<div class="dashboard-editor-title">
 						<i class="icon icon-sitemap"></i>
-						Locations
+						Sites
 					</div>
 
 					<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
@@ -38,32 +38,23 @@
 
 						<div class="editor-row row" ng-if="editor.index == 0">
 							<div class="span8">
-								<div ng-if="locations.length === 0">
-									<em>No locations defined</em>
+								<div ng-if="sites.length === 0">
+									<em>No sites defined</em>
 								</div>
 								<table class="grafana-options-table">
-									<tr ng-repeat="loc in locations">
+									<tr ng-repeat="site in sites">
 										<td style="width:1%">
 											<i class="icon-hdd"></i> &nbsp;
-											name: {{loc.name}}
-										</td>
-										<td style="width:90%">
-											region: {{loc.region}}
-										</td>
-										<td style="width:90%">
-											country: {{loc.country}}
-										</td>
-										<td style="width:90%">
-											provider: {{loc.provider}}
+											name: {{site.name}}
 										</td>
 										<td style="width: 1%">
-											<a ng-click="edit(loc)" class="btn btn-success btn-mini">
+											<a ng-click="edit(site)" class="btn btn-success btn-mini">
 												<i class="fa fa-edit"></i>
 												Edit
 											</a>
 										</td>
-										<td style="width: 1%" ng-hide="loc.public">
-											<a ng-click="remove(loc)" class="btn btn-danger btn-mini">
+										<td style="width: 1%">
+											<a ng-click="remove(site)" class="btn btn-danger btn-mini">
 												<i class="fa fa-remove"></i>
 											</a>
 										</td>
@@ -75,27 +66,10 @@
 						<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
 							<div class="editor-row">
 								<div class="editor-option">
-									<label class="small">Location name</label>
+									<label class="small">Site name</label>
 									<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
 								</div>
-								<div class="editor-option">
-									<label class="small">Region</label>
-									<select class="input-medium" ng-model="current.region" ng-options="r for r in ['AMER', 'APAC', 'EMEA']"></select>
-								</div>
 							</div>
-
-							<div class="editor-row">
-								<div class="editor-option">
-									<label class="small">Country</label>
-									<input type="text" class="input-xxlarge" ng-model='current.country' placeholder="country" required></input>
-								</div>
-								<div class="editor-option">
-									<label class="small">Provider</label>
-									<input type="text" class="input-xxlarge" ng-model='current.provider' placeholder="provider" required></input>
-								</div>
-							</div>
-
-							
 						</div>
 
 						<div class="dashboard-editor-footer" style="margin-top: 20px">

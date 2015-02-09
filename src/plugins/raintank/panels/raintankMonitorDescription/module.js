@@ -22,26 +22,20 @@ function (angular, app, _, kbn, PanelMeta) {
   module.controller('raintankMonitorDescription', function($scope, panelSrv, backendSrv) {
     $scope.panelMeta = new PanelMeta({
       description : "Raintank Monitor details.",
-      fullscreenView: true
+      fullscreen: true
     });
     $scope.panelMeta.addEditorTab('Monitor ID', 'plugins/raintank/panels/raintankMonitorDescription/editor.html');
-    $scope.reloadPanels = false;
     // Set and populate defaults
     var _d = {
-      service: null,
+      monitor: null,
     };
 
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
       panelSrv.init(this);
-      $scope.panelsLoaded = false;
       $scope.$on('refresh', $scope.render);
-      //initialize our list of locations.
-      backendSrv.get('/api/locations').then(function(locations) {
-        $scope.locations = locations;
-        $scope.render();
-      });
+      $scope.render();
     };
 
     $scope.render = function() {
@@ -61,9 +55,6 @@ function (angular, app, _, kbn, PanelMeta) {
           });
         });
       }
-    };
-
-    $scope.openEditor = function() {
     };
 
     $scope.init();

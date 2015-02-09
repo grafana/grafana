@@ -36,6 +36,10 @@ function (angular, _, $, config) {
     }
 
     $scope.menu.push({
+      text: 'Sites', href: $scope.getUrl("/sites"), 
+      icon: "fa fa-sitemap"
+    });
+    $scope.menu.push({
       text: "Monitor", href: $scope.getUrl("/monitor"),
       icon: "fa fa-eye",
     });

@@ -28,7 +28,9 @@ function (angular, _) {
 
       $scope.monitors = [];
       $scope.monitor_types = {};
+      $scope.sites = {};
       $scope.getMonitorTypes();
+      $scope.getSites();
       $scope.getMonitors()
      
       $scope.$watch('editor.index', function(newVal) {
@@ -91,6 +93,16 @@ function (angular, _) {
         $scope.monitor_types = typesMap;
       });
     };
+    $scope.getSites = function() {
+      backendSrv.get('/api/sites').then(function(sites) {
+        var sitesMap = {};
+        _.forEach(sites, function(site) {
+          sitesMap[site.id] = site;
+        });
+        $scope.sites = sitesMap;
+      });
+    };
+
     $scope.remove = function(mon) {
       backendSrv.delete('/api/monitors/' + mon.id).then(function() {
         $scope.getMonitors();

@@ -2,14 +2,14 @@ package sqlstore
 
 import (
 	"fmt"
-	"github.com/go-xorm/xorm"
+	"math/rand"
+	"time"
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
  	"github.com/grafana/grafana/pkg/events"
-	"math/rand"
-	"time"
-	"strconv"
 )
 
 func init() {
@@ -23,6 +23,7 @@ func init() {
 
 type MonitorWithLocationDTO struct {
 	Id            int64
+	SiteId        int64
 	AccountId     int64
 	Name          string
 	MonitorTypeId int64
@@ -45,7 +46,8 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.slug",
 		"monitor.monitor_type_id", "monitor.settings",
-		"monitor.frequency", "monitor.enabled", "monitor.offset")
+		"monitor.frequency", "monitor.enabled", "monitor.offset",
+		"monitor.site_id")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -63,6 +65,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 
 	query.Result = &m.MonitorDTO{
 		Id:            result[0].Id,
+		SiteId:        result[0].SiteId,
 		AccountId:     result[0].AccountId,
 		Name:          result[0].Name,
 		Slug:          result[0].Slug,
@@ -91,7 +94,15 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.settings",
 		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency", 
-		"monitor.enabled", "monitor.offset")
+		"monitor.enabled", "monitor.offset", "monitor.site_id")
+
+	if len(query.SiteId) > 0 {
+		if len(query.SiteId) > 1 {
+			sess.In("monitor.site_id", query.SiteId)
+		} else {
+			sess.And("monitor.site_id=?", query.SiteId[0])
+		}
+	}
 
 	if len(query.LocationId) > 0 {
 		// this is a bit complicated because we want to
@@ -163,6 +174,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			var monitorLocations []int64
 			monitors[row.Id] = &m.MonitorDTO{
 				Id:            row.Id,
+				SiteId:        row.SiteId,
 				AccountId:     row.AccountId,
 				Name:          row.Name,
 				Slug:          row.Slug,
@@ -252,10 +264,29 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 }
 
 func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
+ 		q := m.GetMonitorByIdQuery{
+                	Id: cmd.Id,
+                        AccountId: cmd.AccountId,
+                }
+		err := GetMonitorById(&q)
+ 		if err != nil {
+			return err
+		}
+			
 		var rawSql = "DELETE FROM monitor WHERE id=? and account_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
-		return err
+		_, err = sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		if err != nil {
+			return err
+		}
+		sess.publishAfterCommit(&events.MonitorRemoved{
+                        Timestamp:     time.Now(),
+                        Id:            q.Result.Id,
+			SiteId:        q.Result.SiteId,
+			AccountId:     q.Result.AccountId,
+                        Locations:     q.Result.Locations,
+                });
+		return nil
 	})
 }
 
@@ -266,7 +297,7 @@ type locationList struct {
 
 func AddMonitor(cmd *m.AddMonitorCommand) error {
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 		//validate locations.
 		
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
@@ -328,6 +359,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
 
 		mon := &m.Monitor{
+			SiteId:        cmd.SiteId,
 			AccountId:     cmd.AccountId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
@@ -357,6 +389,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
+			SiteId:        mon.SiteId,
 			AccountId:     mon.AccountId,
 			Name:          mon.Name,
 			Slug:          mon.Slug,
@@ -367,6 +400,20 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Enabled:       mon.Enabled,
 			Offset:        mon.Offset,
 		}
+                sess.publishAfterCommit(&events.MonitorCreated{
+                        Timestamp:     mon.Updated,
+                        Id:            mon.Id,
+			SiteId:        mon.SiteId,
+                        AccountId:     mon.AccountId,
+                        Name:          mon.Name,
+                        Slug:          mon.Slug,
+                        MonitorTypeId: mon.MonitorTypeId,
+                        Locations:     cmd.Locations,
+                        Settings:      mon.Settings,
+                        Frequency:     mon.Frequency,
+                        Enabled:       mon.Enabled,
+                        Offset:        mon.Offset,
+                });
 		return nil
 	})
 }
@@ -436,6 +483,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		mon := &m.Monitor{
 			Id:            cmd.Id,
+			SiteId:        cmd.SiteId,
 			AccountId:     cmd.AccountId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
@@ -473,6 +521,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		sess.publishAfterCommit(&events.MonitorUpdated{
                         Timestamp:     mon.Updated,
                         Id:            mon.Id,
+			SiteId:        mon.SiteId,
 			AccountId:     mon.AccountId,
                         Name:          mon.Name,
 			Slug:          mon.Slug,

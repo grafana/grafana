@@ -37,6 +37,7 @@ type Monitor struct {
 	Id            int64
 	AccountId     int64  `xorm:"not null unique(uix_AccountIdSlug)"`
 	Slug          string `xorm:"not null unique(uix_AccountIdSlug)"`
+        SiteId        int64
 	Name          string
 	MonitorTypeId int64
 	Offset        int64
@@ -64,6 +65,7 @@ type MonitorSettingDTO struct {
 type MonitorDTO struct {
 	Id            int64                `json:"id"`
 	AccountId     int64                `json:"account_id"`
+	SiteId        int64                `json:"site_id"`
 	Name          string               `json:"name" binding:"required"`
 	Slug          string               `json:"slug"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
@@ -95,6 +97,7 @@ type MonitorTypeDTO struct {
 
 type AddMonitorCommand struct {
 	AccountId     int64                `json:"-"`
+	SiteId        int64                `json:"site_id" binding:"required"`
 	Name          string               `json:"name" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
@@ -107,6 +110,7 @@ type AddMonitorCommand struct {
 
 type UpdateMonitorCommand struct {
 	Id            int64                `json:"id" binding:"required"`
+	SiteId        int64                `json:"site_id" binding:"required"`
 	AccountId     int64                `json:"-"`
 	Name          string               `json:"name" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
@@ -127,6 +131,7 @@ type DeleteMonitorCommand struct {
 
 type GetMonitorsQuery struct {
 	MonitorId      []int64  `form:"id"`
+        SiteId         []int64  `form:"site_id"`
 	Name           []string `form:"name"`
 	Slug           []string `form:"slug"`
 	MonitorTypeId  []int64  `form:"monitor_type_id"`

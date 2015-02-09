@@ -34,6 +34,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/location/", reqSignedIn, Index)
 	r.Get("/monitor/", reqSignedIn, Index)
+	r.Get("/site/", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
@@ -106,6 +107,12 @@ func Register(r *macaron.Macaron) {
 				Put(AddMonitor).Post(UpdateMonitor)
 			r.Get("/:id", GetMonitorById)
 			r.Delete("/:id", DeleteMonitor)
+		})
+		// sites
+		r.Group("/sites", func() {
+			r.Combo("/").Get(GetSites).Put(AddSite).Post(UpdateSite)
+			r.Get("/:id", GetSiteById)
+			r.Delete("/:id", DeleteSite)
 		})
 		r.Get("/monitor_types", GetMonitorTypes)
 

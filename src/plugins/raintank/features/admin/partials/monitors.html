@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-shield" section="Account" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="fa fa-eye" section="Monitor" show-menu-btn="!grafana.sidemenu">
 	<!-- <ul class="nav"> -->
 	<!-- 	<li> -->
 	<!-- 		<a href="asd">Details</a> -->
@@ -50,7 +50,10 @@
 												{{mon.name}}
 											</a>
 										</td>
-										<td style="width:90%">
+										<td style="width:10%">
+											{{sites[mon.site_id].name}}
+										</td>
+										<td style="width:50%">
 											{{monitor_types[mon.monitor_type_id].name}}
 										</td>
 										<td style="width:90%">
@@ -73,6 +76,13 @@
 						</div>
 
 						<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
+							<div class="editor-row">
+								<div class="editor-option">
+									<label class="small">Site</label>
+									<select class="input-medium" ng-model="current.site_id" ng-options="s.id as s.name for (id, s) in sites"></select>
+                                                                </div>
+                                                        </div>
+
 							<div class="editor-row">
 								<div class="editor-option">
 									<label class="small">Name</label>

@@ -20,6 +20,7 @@ func addMigrations(mg *Migrator) {
 	addMonitorTypeSettingMigrations(mg)
 	addMonitorMigrations(mg)
 	addMonitorLocationMigrations(mg)
+	addSiteMigrations(mg)
 
 }
 
@@ -241,6 +242,7 @@ func addMonitorMigrations(mg *Migrator) {
 	mg.AddMigration("create monitor table", new(AddTableMigration).
 		Name("monitor").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "site_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
@@ -259,6 +261,11 @@ func addMonitorMigrations(mg *Migrator) {
 
 	mg.AddMigration("add unique index monitor.account_id_slug", new(AddIndexMigration).
 		Table("monitor").Columns("account_id", "slug").Unique())
+	
+	//------ new columns ----------------
+	mg.AddMigration("add siteId column to monitor table", new(AddColumnMigration).
+		Table("monitor").Column(&Column{Name: "site_id", Type: DB_BigInt, Nullable: true},
+	))
 }
 
 func addMonitorLocationMigrations(mg *Migrator) {
@@ -272,5 +279,22 @@ func addMonitorLocationMigrations(mg *Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add index monitor_location.monitor_id_location_id", new(AddIndexMigration).
 		Table("monitor_location").Columns("monitor_id", "location_id"))
+}
+
+func addSiteMigrations(mg *Migrator) {
+	mg.AddMigration("create site table", new(AddTableMigration).
+		Name("site").WithColumns(
+		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+                &Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+                &Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+                &Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+	))
+
+	 //-------  indexes ------------------
+        mg.AddMigration("add unique index site.account_id_slug", new(AddIndexMigration).
+                Table("site").Columns("account_id", "slug").Unique(),
+	)
 }
 
