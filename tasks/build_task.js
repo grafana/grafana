@@ -43,7 +43,7 @@ module.exports = function(grunt) {
       });
       grunt.config('copy.backend_files', {
         expand: true,
-        src: ['conf/*', 'vendor/**/*', '!conf/grafana.dev.ini'],
+        src: ['conf/grafana.ini', 'vendor/**/*'],
         options: { mode: true},
         dest: '<%= tempDir %>'
       });

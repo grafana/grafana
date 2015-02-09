@@ -15,6 +15,11 @@ Graphite, InfluxDB & OpenTSDB.
 Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
 issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
 
+## Try it out with docker
+```
+docker run -i -p 3000:3000 grafana/grafana:develop
+```
+
 ## building and running
 
 ```
