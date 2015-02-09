@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+        "unicode"
+        "strings"
 
 	"github.com/streadway/amqp"
 	"github.com/grafana/grafana/pkg/bus"
@@ -141,9 +143,39 @@ func eventListener(event interface{}) error {
 		return err
 	}
 
-	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, wireEvent.EventType)
+	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, CamelToDotted(wireEvent.EventType))
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
 	go publish(routingKey, msgString)
 	return nil
+}
+
+// CamelToDotted
+func CamelToDotted(s string) string {
+	var result string
+	var words []string
+	var lastPos int
+	rs := []rune(s)
+
+	for i := 0; i < len(rs); i++ {
+		if i > 0 && unicode.IsUpper(rs[i]) {
+			words = append(words, s[lastPos:i])
+			lastPos = i
+		}
+	}
+
+	// append the last word
+	if s[lastPos:] != "" {
+		words = append(words, s[lastPos:])
+	}
+
+	for k, word := range words {
+		if k > 0 {
+			result += "."
+		}
+
+		result += strings.ToLower(word)
+	}
+
+	return result
 }
