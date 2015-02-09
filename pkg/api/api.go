@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/macaron-contrib/binding"
 )
 
 // Register adds http routes
@@ -61,10 +61,8 @@ func Register(r *macaron.Macaron) {
 
 		// auth api keys
 		r.Group("/auth/keys", func() {
-			r.Combo("/").
-				Get(GetApiKeys).
-				Post(bind(m.AddApiKeyCommand{}), AddApiKey).
-				Put(bind(m.UpdateApiKeyCommand{}), UpdateApiKey)
+			r.Get("/", GetApiKeys)
+			r.Post("/", bind(m.AddApiKeyCommand{}), AddApiKey)
 			r.Delete("/:id", DeleteApiKey)
 		}, reqAccountAdmin)
 

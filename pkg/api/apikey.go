@@ -21,7 +21,6 @@ func GetApiKeys(c *middleware.Context) {
 			Id:   t.Id,
 			Name: t.Name,
 			Role: t.Role,
-			Key:  t.Key,
 		}
 	}
 	c.JSON(200, result)
@@ -59,25 +58,7 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) {
 		Id:   cmd.Result.Id,
 		Name: cmd.Result.Name,
 		Role: cmd.Result.Role,
-		Key:  cmd.Result.Key,
 	}
 
 	c.JSON(200, result)
-}
-
-func UpdateApiKey(c *middleware.Context, cmd m.UpdateApiKeyCommand) {
-	if !cmd.Role.IsValid() {
-		c.JsonApiErr(400, "Invalid role specified", nil)
-		return
-	}
-
-	cmd.AccountId = c.AccountId
-
-	err := bus.Dispatch(&cmd)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to update api key", err)
-		return
-	}
-
-	c.JsonOK("API key updated")
 }
