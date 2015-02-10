@@ -44,15 +44,14 @@ func GetSites(query *m.GetSitesQuery) error {
 	if err != nil {
 		return err
 	}
-	query.Result = make([]*m.SiteDTO, len(result))
-	count := 0
+	query.Result = make([]*m.SiteDTO, 0)
 	for _, row := range result {
-		query.Result[count] = &m.SiteDTO{
+		query.Result = append(query.Result, &m.SiteDTO{
 			Id:        row.Id,
 			AccountId: row.AccountId,
 			Name:      row.Name,
 			Slug:      row.Slug,
-		}
+		})
 	}
 	return nil
 }
@@ -78,10 +77,12 @@ func AddSite(cmd *m.AddSiteCommand) error {
 			Name:      site.Name,
 		}
 		sess.publishAfterCommit(&events.SiteCreated{
+			SitePayload:events.SitePayload{
+				Id:            site.Id,
+				AccountId:     site.AccountId,
+				Name:          site.Name,
+			},
                         Timestamp:     site.Updated,
-                        Id:            site.Id,
-                        AccountId:     site.AccountId,
-                        Name:          site.Name,
                 });
 		return nil
 	})
@@ -89,6 +90,16 @@ func AddSite(cmd *m.AddSiteCommand) error {
 
 func UpdateSite(cmd *m.UpdateSiteCommand) error {
         return inTransaction2(func(sess *session) error {
+		q := m.GetSiteByIdQuery{
+                        Id: cmd.Id,
+                        AccountId: cmd.AccountId,
+                }
+                err := GetSiteById(&q)
+                if err != nil {
+                        return err
+                }
+                lastState := q.Result
+
                 site := &m.Site{
                         AccountId: cmd.AccountId,
                         Name:      cmd.Name,
@@ -97,7 +108,7 @@ func UpdateSite(cmd *m.UpdateSiteCommand) error {
                 }
                 site.UpdateSiteSlug()
 
-		_, err := sess.Where("id=? and account_id=?", site.Id, site.AccountId).Update(site)
+		_, err = sess.Where("id=? and account_id=?", site.Id, site.AccountId).Update(site)
 		if err != nil {
                         return err
                 }
@@ -109,10 +120,17 @@ func UpdateSite(cmd *m.UpdateSiteCommand) error {
                         Name:      site.Name,
                 }
 		sess.publishAfterCommit(&events.SiteUpdated{
+			SitePayload:events.SitePayload{
+				Id:            site.Id,
+				AccountId:     site.AccountId,
+				Name:          site.Name,
+			},
                         Timestamp:     site.Updated,
-                        Id:            site.Id,
-                        AccountId:     site.AccountId,
-                        Name:          site.Name,
+			LastState:     &events.SitePayload{
+				Id:        lastState.Id,
+				AccountId: lastState.AccountId,
+				Name:      lastState.Name,
+			},
                 });
                 return nil
         })
@@ -120,8 +138,17 @@ func UpdateSite(cmd *m.UpdateSiteCommand) error {
 
 func DeleteSite(cmd *m.DeleteSiteCommand) error {
 	return inTransaction2(func(sess *session) error {
+		q := m.GetSiteByIdQuery{
+                        Id: cmd.Id,
+                        AccountId: cmd.AccountId,
+                }
+                err := GetSiteById(&q)
+                if err != nil {
+                        return err
+                }
+
 		var rawSql = "DELETE FROM site WHERE id=? and account_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		_, err = sess.Exec(rawSql, cmd.Id, cmd.AccountId)
 		if err != nil {
 			return err
 		}

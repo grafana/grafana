@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	_ "github.com/grafana/grafana/pkg/services/raintankdashbuilder"
 )
 
 var CmdWeb = cli.Command{

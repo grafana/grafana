@@ -402,17 +402,19 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
                 sess.publishAfterCommit(&events.MonitorCreated{
                         Timestamp:     mon.Updated,
-                        Id:            mon.Id,
-			SiteId:        mon.SiteId,
-                        AccountId:     mon.AccountId,
-                        Name:          mon.Name,
-                        Slug:          mon.Slug,
-                        MonitorTypeId: mon.MonitorTypeId,
-                        Locations:     cmd.Locations,
-                        Settings:      mon.Settings,
-                        Frequency:     mon.Frequency,
-                        Enabled:       mon.Enabled,
-                        Offset:        mon.Offset,
+                        MonitorPayload:events.MonitorPayload{
+				Id:            mon.Id,
+				SiteId:        mon.SiteId,
+				AccountId:     mon.AccountId,
+				Name:          mon.Name,
+				Slug:          mon.Slug,
+				MonitorTypeId: mon.MonitorTypeId,
+				Locations:     cmd.Locations,
+				Settings:      mon.Settings,
+				Frequency:     mon.Frequency,
+				Enabled:       mon.Enabled,
+				Offset:        mon.Offset,
+			},
                 });
 		return nil
 	})
@@ -420,12 +422,22 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
         return inTransaction2(func(sess *session) error {
+		q := m.GetMonitorByIdQuery{
+                        Id: cmd.Id,
+                        AccountId: cmd.AccountId,
+                }
+                err := GetMonitorById(&q)
+                if err != nil {
+                        return err
+                }
+		lastState := q.Result
+
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
 		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
 		sess.Cols("id")
-		err := sess.Find(&filtered_locations)
+		err = sess.Find(&filtered_locations)
 
 		if err != nil {
 			return err
@@ -519,19 +531,34 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		_, err = sess.Insert(&monitor_locations)
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
+			MonitorPayload:events.MonitorPayload{
+                                Id:            mon.Id,
+                                SiteId:        mon.SiteId,
+                                AccountId:     mon.AccountId,
+                                Name:          mon.Name,
+                                Slug:          mon.Slug,
+                                MonitorTypeId: mon.MonitorTypeId,
+                                Locations:     cmd.Locations,
+                                Settings:      mon.Settings,
+                                Frequency:     mon.Frequency,
+                                Enabled:       mon.Enabled,
+                                Offset:        mon.Offset,
+                        },
                         Timestamp:     mon.Updated,
-                        Id:            mon.Id,
-			SiteId:        mon.SiteId,
-			AccountId:     mon.AccountId,
-                        Name:          mon.Name,
-			Slug:          mon.Slug,
-                        MonitorTypeId: mon.MonitorTypeId,
-                        Locations:     cmd.Locations,
-                        Settings:      mon.Settings,
-                        Frequency:     mon.Frequency,
-                        Enabled:       mon.Enabled,
-                        Offset:        mon.Offset,
-                        Updated:       mon.Updated,
+			Updated:       mon.Updated,
+			LastState:     &events.MonitorPayload{
+				Id:            lastState.Id,
+				SiteId:        lastState.SiteId,
+				AccountId:     lastState.AccountId,
+				Name:          lastState.Name,
+				Slug:          lastState.Slug,
+				MonitorTypeId: lastState.MonitorTypeId,
+				Locations:     lastState.Locations,
+				Settings:      lastState.Settings,
+				Frequency:     lastState.Frequency,
+				Enabled:       lastState.Enabled,
+				Offset:        lastState.Offset,
+			},
                 });
 
 		return err
