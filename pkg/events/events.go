@@ -3,7 +3,6 @@ package events
 import (
 	"reflect"
 	"time"
-        m "github.com/grafana/grafana/pkg/models"
 )
 
 // Events can be passed to external systems via for example AMPQ
@@ -79,44 +78,6 @@ type UserUpdated struct {
 	Email     string    `json:"email"`
 }
 
-type MonitorUpdated struct {
-	Timestamp     time.Time              `json:"timestamp"`
-	Id            int64                  `json:"id"`
-	SiteId        int64                  `json:"site_id"`
-	AccountId     int64                  `json:"account_id"`
-	Name          string                 `json:"name"`
-	Slug          string                 `json:"slug"`
-	MonitorTypeId int64                  `json:"monitor_type_id"`
-	Locations     []int64                `json:"locations"`
-	Settings      []*m.MonitorSettingDTO `json:"settings"`
-	Frequency     int64                  `json:"frequency"`
-	Enabled       bool                   `json:"enabled"`
-	Offset        int64                  `json:"offset"`
-        Updated       time.Time              `json:"updated"`
-}
-
-type MonitorCreated struct {
-        Timestamp     time.Time              `json:"timestamp"`
-        Id            int64                  `json:"id"`
-	SiteId        int64                  `json:"site_id"`
-        AccountId     int64                  `json:"account_id"`
-        Name          string                 `json:"name"`
-        Slug          string                 `json:"slug"`
-        MonitorTypeId int64                  `json:"monitor_type_id"`
-        Locations     []int64                `json:"locations"`
-        Settings      []*m.MonitorSettingDTO `json:"settings"`
-        Frequency     int64                  `json:"frequency"`
-        Enabled       bool                   `json:"enabled"`
-        Offset        int64                  `json:"offset"`
-}
-
-type MonitorRemoved struct {
-        Timestamp     time.Time              `json:"timestamp"`
-        Id            int64                  `json:"id"`
-	SiteId        int64                  `json:"site_id"`
-        AccountId     int64                  `json:"account_id"`
-        Locations     []int64                `json:"locations"`
-}
 
 
 

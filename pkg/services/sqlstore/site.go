@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/events"
 )
 
 func init() {
@@ -76,6 +77,12 @@ func AddSite(cmd *m.AddSiteCommand) error {
 			Slug:      site.Slug,
 			Name:      site.Name,
 		}
+		sess.publishAfterCommit(&events.SiteCreated{
+                        Timestamp:     site.Updated,
+                        Id:            site.Id,
+                        AccountId:     site.AccountId,
+                        Name:          site.Name,
+                });
 		return nil
 	})
 }
@@ -101,6 +108,12 @@ func UpdateSite(cmd *m.UpdateSiteCommand) error {
                         Slug:      site.Slug,
                         Name:      site.Name,
                 }
+		sess.publishAfterCommit(&events.SiteUpdated{
+                        Timestamp:     site.Updated,
+                        Id:            site.Id,
+                        AccountId:     site.AccountId,
+                        Name:          site.Name,
+                });
                 return nil
         })
 }
@@ -109,6 +122,14 @@ func DeleteSite(cmd *m.DeleteSiteCommand) error {
 	return inTransaction2(func(sess *session) error {
 		var rawSql = "DELETE FROM site WHERE id=? and account_id=?"
 		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		if err != nil {
+			return err
+		}
+		sess.publishAfterCommit(&events.SiteRemoved{
+                        Timestamp:     time.Now(),
+                        Id:            cmd.Id,
+			AccountId:     cmd.AccountId,
+                });
 		return err
 	})
 }
