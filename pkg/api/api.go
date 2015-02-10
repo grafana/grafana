@@ -31,6 +31,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
+	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
+	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up

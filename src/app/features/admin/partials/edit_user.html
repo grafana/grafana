@@ -2,8 +2,8 @@
 	<ul class="nav">
 		<li><a href="admin">Settings</a></li>
 		<li><a href="admin/users">Users</a></li>
-		<li ng-class="{active: createMode}"><a href="admin/users/new">Create user</a></li>
-		<li class="active" ng-show="!createMode"><a href="admin/users/new">Edit user</a></li>
+		<li ng-class="{active: createMode}"><a href="admin/users/create">Create user</a></li>
+		<li class="active" ng-show="!createMode"><a href="admin/users/edit/{{user_id}}">Edit user</a></li>
 	</ul>
 </topnav>
 
