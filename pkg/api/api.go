@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/macaron-contrib/binding"
 )
 
 // Register adds http routes
@@ -72,8 +72,9 @@ func Register(r *macaron.Macaron) {
 		r.Group("/datasources", func() {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
-			r.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		}, reqAccountAdmin)
+
+		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
