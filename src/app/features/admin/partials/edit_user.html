@@ -1,0 +1,74 @@
+<topnav icon="fa fa-cube" title="Admin" subnav="true">
+	<ul class="nav">
+		<li><a href="admin">Settings</a></li>
+		<li><a href="admin/users">Users</a></li>
+		<li ng-class="{active: createMode}"><a href="admin/users/new">Create user</a></li>
+		<li class="active" ng-show="!createMode"><a href="admin/users/new">Edit user</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2 ng-show="createMode">
+			Create a new user
+		</h2>
+
+		<h2 ng-show="!createMode">
+			Edit user
+		</h2>
+
+		<form name="userForm">
+			<div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Name</strong>
+						</li>
+						<li>
+							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form" style="margin-top: 5px">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Email</strong>
+						</li>
+						<li>
+							<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form" style="margin-top: 5px">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Username</strong>
+						</li>
+						<li>
+							<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
+				<div class="tight-form" style="margin-top: 5px" ng-if="createMode">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Password</strong>
+						</li>
+						<li>
+							<input type="password" required ng-model="user.password" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+
+			<br>
+			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="createMode">Create</button>
+			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+		</form>
+	</div>
+</div>

@@ -93,6 +93,9 @@ func Register(r *macaron.Macaron) {
 	// admin api
 	r.Group("/api/admin", func() {
 		r.Get("/users", AdminSearchUsers)
+		r.Get("/users/:id", AdminGetUser)
+		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
+		r.Put("/users/:id", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
 	}, reqGrafanaAdmin)
 
 	// rendering

@@ -15,6 +15,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", CreateUser)
+	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", SetUsingAccount)
@@ -112,9 +113,24 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 	})
 }
 
+func GetUserById(query *m.GetUserByIdQuery) error {
+	user := new(m.User)
+	has, err := x.Id(query.Id).Get(user)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
 func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	if query.LoginOrEmail == "" {
-		return m.ErrAccountNotFound
+		return m.ErrUserNotFound
 	}
 
 	user := new(m.User)

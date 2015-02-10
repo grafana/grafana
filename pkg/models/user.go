@@ -63,6 +63,11 @@ type GetUserByLoginQuery struct {
 	Result       *User
 }
 
+type GetUserByIdQuery struct {
+	Id     int64
+	Result *User
+}
+
 type GetSignedInUserQuery struct {
 	UserId int64
 	Result *SignedInUser

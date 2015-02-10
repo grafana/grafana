@@ -62,6 +62,14 @@ define([
         templateUrl: 'app/features/admin/partials/users.html',
         controller : 'AdminUsersCtrl',
       })
+      .when('/admin/users/create', {
+        templateUrl: 'app/features/admin/partials/edit_user.html',
+        controller : 'AdminEditUserCtrl',
+      })
+      .when('/admin/users/edit/:id', {
+        templateUrl: 'app/features/admin/partials/edit_user.html',
+        controller : 'AdminEditUserCtrl',
+      })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
