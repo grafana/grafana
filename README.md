@@ -19,6 +19,7 @@ issues to fix and polish missing. But feedback on what is done and bug reports w
 ```
 docker run -i -p 3000:3000 grafana/grafana:develop
 ```
+The default admin user is admin/admin.
 
 ## building and running
 
