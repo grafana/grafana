@@ -106,6 +106,7 @@ func importDashboard(path string, accountId int64) error {
 	if err := jsonParser.Decode(&dash.Data); err != nil {
 		return err
 	}
+	dash.Data["id"] = nil
 
 	cmd := m.SaveDashboardCommand{
 		AccountId: accountId,
