@@ -81,6 +81,7 @@ func AddSite(cmd *m.AddSiteCommand) error {
 				Id:            site.Id,
 				AccountId:     site.AccountId,
 				Name:          site.Name,
+				Slug:          site.Slug,
 			},
                         Timestamp:     site.Updated,
                 });
@@ -108,28 +109,30 @@ func UpdateSite(cmd *m.UpdateSiteCommand) error {
                 }
                 site.UpdateSiteSlug()
 
-		_, err = sess.Where("id=? and account_id=?", site.Id, site.AccountId).Update(site)
+		_, err = sess.Id(cmd.Id).Update(site)
 		if err != nil {
                         return err
                 }
 
                 cmd.Result = &m.SiteDTO{
-                        Id:        site.Id,
+                        Id:        cmd.Id,
                         AccountId: site.AccountId,
                         Slug:      site.Slug,
                         Name:      site.Name,
                 }
 		sess.publishAfterCommit(&events.SiteUpdated{
 			SitePayload:events.SitePayload{
-				Id:            site.Id,
+				Id:            cmd.Id,
 				AccountId:     site.AccountId,
 				Name:          site.Name,
+				Slug:          site.Slug,
 			},
                         Timestamp:     site.Updated,
 			LastState:     &events.SitePayload{
 				Id:        lastState.Id,
 				AccountId: lastState.AccountId,
 				Name:      lastState.Name,
+				Slug:      lastState.Slug,
 			},
                 });
                 return nil
