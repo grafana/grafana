@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserAccounts)
+	bus.AddHandler("sql", DeleteUser)
 }
 
 func getAccountIdForNewUser(userEmail string, sess *session) (int64, error) {
@@ -255,4 +257,12 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	sess.Cols("id", "email", "name", "login", "is_admin")
 	err := sess.Find(&query.Result)
 	return err
+}
+
+func DeleteUser(cmd *m.DeleteUserCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = fmt.Sprintf("DELETE FROM %s WHERE id=?", x.Dialect().Quote("user"))
+		_, err := sess.Exec(rawSql, cmd.UserId)
+		return err
+	})
 }

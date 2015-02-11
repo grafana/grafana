@@ -50,6 +50,10 @@ type UpdateUserCommand struct {
 	UserId int64 `json:"-"`
 }
 
+type DeleteUserCommand struct {
+	UserId int64
+}
+
 type SetUsingAccountCommand struct {
 	UserId    int64
 	AccountId int64

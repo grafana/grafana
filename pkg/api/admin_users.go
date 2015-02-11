@@ -8,9 +8,6 @@ import (
 )
 
 func AdminSearchUsers(c *middleware.Context) {
-	// query := c.QueryStrings("q")
-	// page := c.QueryStrings("p")
-
 	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 20}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to fetch users", err)
@@ -92,4 +89,17 @@ func AdminUpdateUser(c *middleware.Context, form dtos.AdminUpdateUserForm) {
 	}
 
 	c.JsonOK("User updated")
+}
+
+func AdminDeleteUser(c *middleware.Context) {
+	userId := c.ParamsInt64(":id")
+
+	cmd := m.DeleteUserCommand{UserId: userId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to delete user", err)
+		return
+	}
+
+	c.JsonOK("User deleted")
 }

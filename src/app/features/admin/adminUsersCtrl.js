@@ -24,7 +24,9 @@ function (angular) {
         title: 'Delete user',
         text: 'Are you sure you want to delete user: ' + user.login,
         onConfirm: function() {
-          backendSrv.delete('/api/admin/users/delete/' + user.id);
+          backendSrv.delete('/api/admin/users/' + user.id).then(function() {
+            $scope.getUsers();
+          });
         }
       });
     };

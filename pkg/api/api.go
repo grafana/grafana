@@ -98,6 +98,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
 		r.Put("/users/:id", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
+		r.Delete("/users/:id", AdminDeleteUser)
 	}, reqGrafanaAdmin)
 
 	// rendering
