@@ -11,15 +11,17 @@ var (
 )
 
 type User struct {
-	Id       int64
-	Version  int
-	Email    string
-	Name     string
-	Login    string
-	Password string
-	Salt     string
-	Rands    string
-	Company  string
+	Id            int64
+	Version       int
+	Email         string
+	Name          string
+	Login         string
+	Password      string
+	Salt          string
+	Rands         string
+	Company       string
+	EmailVerified bool
+	Theme         string
 
 	IsAdmin   bool
 	AccountId int64
