@@ -24,6 +24,7 @@ function (angular, kbn) {
                   return;
                 }
                 var title = kbn.slugifyForUrl(window.grafanaImportDashboard.title);
+                window.grafanaImportDashboard.id = null;
                 $location.path('/dashboard/import/' + title);
               });
             };
