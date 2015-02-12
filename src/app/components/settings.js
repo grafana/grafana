@@ -18,6 +18,7 @@ function (_, crypto) {
       panels                        : {
         'graph': { path: 'panels/graph' },
         'singlestat': { path: 'panels/singlestat' },
+        'piechart': { path: 'panels/piechart' },
         'text': { path: 'panels/text' }
       },
       plugins                       : {},
