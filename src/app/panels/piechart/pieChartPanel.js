@@ -74,8 +74,7 @@ function (angular, app, _, $) {
               show: true,
               labelFormatter: function(label, series) {
                 return label + " - " + series.data[0][1];
-              },
-              margin: '25px'
+              }
             };
           }
 
