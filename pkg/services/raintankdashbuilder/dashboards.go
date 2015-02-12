@@ -1,17 +1,24 @@
 package raintankdashbuilder
 
-import  (
-	"fmt"
+import (
 	"bytes"
+	"encoding/json"
 	"path"
 	"regexp"
 	"strings"
 	"text/template"
-	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	metricMap = map[string]string{
+		"http":  "total",
+		"https": "total",
+		"ping":  "avg",
+		"dns":   "time",
+	}
 )
 
 type SiteSummaryData struct {
@@ -20,16 +27,28 @@ type SiteSummaryData struct {
 	AccountId int64
 	Title     string
 	Tags      string
+	Monitors  []*m.MonitorDTO
 	Panels    []*SummaryPanel
 }
 
 type SummaryPanel struct {
-	Id           int64
-	Title        string
-	Protocol     string
-	Slug         string
-	Metric       string
-	Last         bool
+	Id       int64
+	Title    string
+	Protocol string
+	Slug     string
+	Metric   string
+	Last     bool
+}
+
+type MonitorSummaryData struct {
+	DashId    int64
+	SiteId    int64
+	AccountId int64
+	Slug      string
+	Title     string
+	Tags      string
+	Protocol  string
+	Metric    string
 }
 
 func DashboardSlug(name string) string {
@@ -40,28 +59,15 @@ func DashboardSlug(name string) string {
 }
 
 func SiteSummary(data *SiteSummaryData) (map[string]interface{}, error) {
-	query := m.GetMonitorsQuery{
-		SiteId: []int64{data.SiteId},
-		AccountId: data.AccountId,
-	}
-	if err := bus.Dispatch(&query); err != nil {
-                return nil, err
-        }
-	metricMap := map[string]string{
-		"http": "total",
-		"https": "total",
-		"ping":  "avg",
-		"dns":   "time",
-	}
-	protoMap := map[int64]string{
-		1: "http",
-	}
 	count := 0
-	numPanels := len(query.Result)
-	for _, mon := range query.Result {
+	numPanels := len(data.Monitors)
+	for _, mon := range data.Monitors {
 		count++
-		fmt.Println("found monitor %d", mon.Id)
-		proto := protoMap[mon.MonitorTypeId]
+		proto, err := getMonitorTypeName(mon.MonitorTypeId)
+		if err != nil {
+			return nil, err
+		}
+		proto = strings.ToLower(proto)
 		data.Panels = append(data.Panels, &SummaryPanel{
 			Id:       int64(count),
 			Title:    mon.Name,
@@ -90,4 +96,22 @@ func SiteSummary(data *SiteSummaryData) (map[string]interface{}, error) {
 	return dashboard, nil
 }
 
-
+func MonitorSummary(data *MonitorSummaryData) (map[string]interface{}, error) {
+	data.Metric = metricMap[data.Protocol]
+	filePath := path.Join(setting.StaticRootPath, "dashboards/monitorSummary.json.tmpl")
+	tmpl, err := template.ParseFiles(filePath)
+	if err != nil {
+		return nil, err
+	}
+	var dashboardStr bytes.Buffer
+	err = tmpl.Execute(&dashboardStr, &data)
+	if err != nil {
+		return nil, err
+	}
+	var dashboard map[string]interface{}
+	err = json.Unmarshal(dashboardStr.Bytes(), &dashboard)
+	if err != nil {
+		return nil, err
+	}
+	return dashboard, nil
+}

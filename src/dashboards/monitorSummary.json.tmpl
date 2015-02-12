@@ -14,7 +14,6 @@
       "editable": false,
       "height": "250px",
       "panels": [
-{{range .Panels}}
         {
           "aliasColors": {},
           "annotate": {
@@ -35,7 +34,7 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "id": {{.Id}},
+          "id": 1,
           "legend": {
             "avg": false,
             "current": false,
@@ -79,8 +78,7 @@
             "bytes"
           ],
           "zerofill": true
-        }{{if not .Last}},{{end}}
-{{end}}
+        }
       ]
     }
   ],

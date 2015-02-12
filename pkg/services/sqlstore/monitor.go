@@ -3,13 +3,13 @@ package sqlstore
 import (
 	"fmt"
 	"math/rand"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
- 	"github.com/grafana/grafana/pkg/events"
 )
 
 func init() {
@@ -75,7 +75,6 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		Frequency:     result[0].Frequency,
 		Enabled:       result[0].Enabled,
 		Offset:        result[0].Offset,
-
 	}
 	//iterate through all of the results and build out our model.
 	for _, row := range result {
@@ -93,7 +92,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	}
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.settings",
-		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency", 
+		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency",
 		"monitor.enabled", "monitor.offset", "monitor.site_id")
 
 	if len(query.SiteId) > 0 {
@@ -152,10 +151,9 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 		}
 	}
 
-	if (query.Modulo > 0) {
+	if query.Modulo > 0 {
 		sess.And("(monitor.id % ?) = ?", query.Modulo, query.ModuloOffset)
 	}
-
 
 	// Because of the join, we get back set or rows.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -265,27 +263,28 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 
 func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
- 		q := m.GetMonitorByIdQuery{
-                	Id: cmd.Id,
-                        AccountId: cmd.AccountId,
-                }
+		q := m.GetMonitorByIdQuery{
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+		}
 		err := GetMonitorById(&q)
- 		if err != nil {
+		if err != nil {
 			return err
 		}
-			
+
 		var rawSql = "DELETE FROM monitor WHERE id=? and account_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id, cmd.AccountId)
 		if err != nil {
 			return err
 		}
 		sess.publishAfterCommit(&events.MonitorRemoved{
-                        Timestamp:     time.Now(),
-                        Id:            q.Result.Id,
-			SiteId:        q.Result.SiteId,
-			AccountId:     q.Result.AccountId,
-                        Locations:     q.Result.Locations,
-                });
+			Timestamp: time.Now(),
+			Id:        q.Result.Id,
+			Name:      q.Result.Name,
+			SiteId:    q.Result.SiteId,
+			AccountId: q.Result.AccountId,
+			Locations: q.Result.Locations,
+		})
 		return nil
 	})
 }
@@ -299,7 +298,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 	return inTransaction2(func(sess *session) error {
 		//validate locations.
-		
+
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
 		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
@@ -377,9 +376,9 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			return err
 		}
 		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.Locations))
-		for _,l := range cmd.Locations {
+		for _, l := range cmd.Locations {
 			monitor_locations = append(monitor_locations, &m.MonitorLocation{
-				MonitorId: mon.Id,
+				MonitorId:  mon.Id,
 				LocationId: l,
 			})
 		}
@@ -400,9 +399,9 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Enabled:       mon.Enabled,
 			Offset:        mon.Offset,
 		}
-                sess.publishAfterCommit(&events.MonitorCreated{
-                        Timestamp:     mon.Updated,
-                        MonitorPayload:events.MonitorPayload{
+		sess.publishAfterCommit(&events.MonitorCreated{
+			Timestamp: mon.Updated,
+			MonitorPayload: events.MonitorPayload{
 				Id:            mon.Id,
 				SiteId:        mon.SiteId,
 				AccountId:     mon.AccountId,
@@ -415,21 +414,21 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
 			},
-                });
+		})
 		return nil
 	})
 }
 
 func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
-        return inTransaction2(func(sess *session) error {
+	return inTransaction2(func(sess *session) error {
 		q := m.GetMonitorByIdQuery{
-                        Id: cmd.Id,
-                        AccountId: cmd.AccountId,
-                }
-                err := GetMonitorById(&q)
-                if err != nil {
-                        return err
-                }
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+		}
+		err := GetMonitorById(&q)
+		if err != nil {
+			return err
+		}
 		lastState := q.Result
 
 		//validate locations.
@@ -521,9 +520,9 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			return err
 		}
 		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.Locations))
-		for _,l := range cmd.Locations {
+		for _, l := range cmd.Locations {
 			monitor_locations = append(monitor_locations, &m.MonitorLocation{
-				MonitorId: cmd.Id,
+				MonitorId:  cmd.Id,
 				LocationId: l,
 			})
 		}
@@ -531,22 +530,22 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		_, err = sess.Insert(&monitor_locations)
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
-			MonitorPayload:events.MonitorPayload{
-                                Id:            mon.Id,
-                                SiteId:        mon.SiteId,
-                                AccountId:     mon.AccountId,
-                                Name:          mon.Name,
-                                Slug:          mon.Slug,
-                                MonitorTypeId: mon.MonitorTypeId,
-                                Locations:     cmd.Locations,
-                                Settings:      mon.Settings,
-                                Frequency:     mon.Frequency,
-                                Enabled:       mon.Enabled,
-                                Offset:        mon.Offset,
-                        },
-                        Timestamp:     mon.Updated,
-			Updated:       mon.Updated,
-			LastState:     &events.MonitorPayload{
+			MonitorPayload: events.MonitorPayload{
+				Id:            mon.Id,
+				SiteId:        mon.SiteId,
+				AccountId:     mon.AccountId,
+				Name:          mon.Name,
+				Slug:          mon.Slug,
+				MonitorTypeId: mon.MonitorTypeId,
+				Locations:     cmd.Locations,
+				Settings:      mon.Settings,
+				Frequency:     mon.Frequency,
+				Enabled:       mon.Enabled,
+				Offset:        mon.Offset,
+			},
+			Timestamp: mon.Updated,
+			Updated:   mon.Updated,
+			LastState: &events.MonitorPayload{
 				Id:            lastState.Id,
 				SiteId:        lastState.SiteId,
 				AccountId:     lastState.AccountId,
@@ -559,7 +558,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Enabled:       lastState.Enabled,
 				Offset:        lastState.Offset,
 			},
-                });
+		})
 
 		return err
 	})

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/events"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -18,8 +18,8 @@ func init() {
 
 func GetSiteById(query *m.GetSiteByIdQuery) error {
 	var result m.Site
-        sess := x.Limit(100, 0).Where("account_id=? AND id=?", query.AccountId, query.Id)
- 	has, err := sess.Get(&result)
+	sess := x.Limit(100, 0).Where("account_id=? AND id=?", query.AccountId, query.Id)
+	has, err := sess.Get(&result)
 
 	if !has {
 		return m.ErrSiteNotFound
@@ -28,10 +28,10 @@ func GetSiteById(query *m.GetSiteByIdQuery) error {
 		return err
 	}
 	query.Result = &m.SiteDTO{
-		Id:            result.Id,
-		AccountId:     result.AccountId,
-		Name:          result.Name,
-		Slug:          result.Slug,
+		Id:        result.Id,
+		AccountId: result.AccountId,
+		Name:      result.Name,
+		Slug:      result.Slug,
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func AddSite(cmd *m.AddSiteCommand) error {
 			Updated:   time.Now(),
 		}
 		site.UpdateSiteSlug()
-		
+
 		if _, err := sess.Insert(site); err != nil {
 			return err
 		}
@@ -77,78 +77,78 @@ func AddSite(cmd *m.AddSiteCommand) error {
 			Name:      site.Name,
 		}
 		sess.publishAfterCommit(&events.SiteCreated{
-			SitePayload:events.SitePayload{
-				Id:            site.Id,
-				AccountId:     site.AccountId,
-				Name:          site.Name,
-				Slug:          site.Slug,
+			SitePayload: events.SitePayload{
+				Id:        site.Id,
+				AccountId: site.AccountId,
+				Name:      site.Name,
+				Slug:      site.Slug,
 			},
-                        Timestamp:     site.Updated,
-                });
+			Timestamp: site.Updated,
+		})
 		return nil
 	})
 }
 
 func UpdateSite(cmd *m.UpdateSiteCommand) error {
-        return inTransaction2(func(sess *session) error {
+	return inTransaction2(func(sess *session) error {
 		q := m.GetSiteByIdQuery{
-                        Id: cmd.Id,
-                        AccountId: cmd.AccountId,
-                }
-                err := GetSiteById(&q)
-                if err != nil {
-                        return err
-                }
-                lastState := q.Result
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+		}
+		err := GetSiteById(&q)
+		if err != nil {
+			return err
+		}
+		lastState := q.Result
 
-                site := &m.Site{
-                        AccountId: cmd.AccountId,
-                        Name:      cmd.Name,
-                        Created:   time.Now(),
-                        Updated:   time.Now(),
-                }
-                site.UpdateSiteSlug()
+		site := &m.Site{
+			AccountId: cmd.AccountId,
+			Name:      cmd.Name,
+			Created:   time.Now(),
+			Updated:   time.Now(),
+		}
+		site.UpdateSiteSlug()
 
 		_, err = sess.Id(cmd.Id).Update(site)
 		if err != nil {
-                        return err
-                }
+			return err
+		}
 
-                cmd.Result = &m.SiteDTO{
-                        Id:        cmd.Id,
-                        AccountId: site.AccountId,
-                        Slug:      site.Slug,
-                        Name:      site.Name,
-                }
+		cmd.Result = &m.SiteDTO{
+			Id:        cmd.Id,
+			AccountId: site.AccountId,
+			Slug:      site.Slug,
+			Name:      site.Name,
+		}
 		sess.publishAfterCommit(&events.SiteUpdated{
-			SitePayload:events.SitePayload{
-				Id:            cmd.Id,
-				AccountId:     site.AccountId,
-				Name:          site.Name,
-				Slug:          site.Slug,
+			SitePayload: events.SitePayload{
+				Id:        cmd.Id,
+				AccountId: site.AccountId,
+				Name:      site.Name,
+				Slug:      site.Slug,
 			},
-                        Timestamp:     site.Updated,
-			LastState:     &events.SitePayload{
+			Timestamp: site.Updated,
+			LastState: &events.SitePayload{
 				Id:        lastState.Id,
 				AccountId: lastState.AccountId,
 				Name:      lastState.Name,
 				Slug:      lastState.Slug,
 			},
-                });
-                return nil
-        })
+		})
+		return nil
+	})
 }
 
 func DeleteSite(cmd *m.DeleteSiteCommand) error {
 	return inTransaction2(func(sess *session) error {
 		q := m.GetSiteByIdQuery{
-                        Id: cmd.Id,
-                        AccountId: cmd.AccountId,
-                }
-                err := GetSiteById(&q)
-                if err != nil {
-                        return err
-                }
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+		}
+		err := GetSiteById(&q)
+		if err != nil {
+			return err
+		}
 
 		var rawSql = "DELETE FROM site WHERE id=? and account_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id, cmd.AccountId)
@@ -156,10 +156,11 @@ func DeleteSite(cmd *m.DeleteSiteCommand) error {
 			return err
 		}
 		sess.publishAfterCommit(&events.SiteRemoved{
-                        Timestamp:     time.Now(),
-                        Id:            cmd.Id,
-			AccountId:     cmd.AccountId,
-                });
+			Timestamp: time.Now(),
+			Id:        cmd.Id,
+			AccountId: cmd.AccountId,
+			Name:      q.Result.Name,
+		})
 		return err
 	})
 }
