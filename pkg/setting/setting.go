@@ -98,15 +98,10 @@ var (
 func init() {
 	IsWindows = runtime.GOOS == "windows"
 	log.NewLogger(0, "console", `{"level": 0}`)
-}
-
-func getWorkDir() string {
-	p, _ := filepath.Abs(".")
-	return p
+	WorkDir, _ = filepath.Abs(".")
 }
 
 func findConfigFiles() []string {
-	WorkDir = getWorkDir()
 	ConfRootPath = path.Join(WorkDir, "conf")
 	filenames := make([]string, 0)
 
@@ -152,6 +147,10 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
+func loadEnvVariableOverrides() {
+
+}
+
 func NewConfigContext() {
 	configFiles := findConfigFiles()
 
@@ -169,6 +168,8 @@ func NewConfigContext() {
 			log.Fatal(4, "Fail to parse config file: %v, error: %v", file, err)
 		}
 	}
+
+	loadEnvVariableOverrides()
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")

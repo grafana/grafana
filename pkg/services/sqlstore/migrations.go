@@ -50,9 +50,6 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add email_verified flag", new(AddColumnMigration).
 		Table("user").Column(&Column{Name: "email_verified", Type: DB_Bool, Nullable: true}))
 
-	mg.AddMigration("Add email_verified flag", new(AddColumnMigration).
-		Table("user").Column(&Column{Name: "email_verified", Type: DB_Bool, Nullable: true}))
-
 	mg.AddMigration("Add user.theme column", new(AddColumnMigration).
 		Table("user").Column(&Column{Name: "theme", Type: DB_Varchar, Nullable: true, Length: 20}))
 
