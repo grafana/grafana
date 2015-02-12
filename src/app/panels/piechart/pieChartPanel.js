@@ -66,12 +66,11 @@ function (angular, app, _, $) {
 
           elem.append(plotCanvas);
 
-          $.plot(plotCanvas, scope.data.orig, options);
+          $.plot(plotCanvas, scope.data, options);
         }
 
         function render() {
           if (!scope.data) { return; }
-          if (!scope.data.orig) { return; }
 
           data = scope.data;
           panel = scope.panel;
