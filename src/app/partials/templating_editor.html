@@ -94,6 +94,12 @@
 								<input type="text" class="input-xxlarge" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
 							</div>
 						</div>
+						<div class="editor-row">
+							<div class="editor-option">
+								<label class="small">Labels seperated by comma (empty labels will be filled with values)</label>
+								<input type="text" class="input-xxlarge" ng-model='current.queryLabel' ng-blur="runQuery()" placeholder="label1, label10, label20"></input>
+							</div>
+						</div>
 					</div>
 
 					<div ng-show="current.type === 'query'">
