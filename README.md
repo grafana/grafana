@@ -43,7 +43,8 @@ godep restore (will pull down all golang lib dependecies in your current GOPATH)
 go build -o ./bin/grafana .
 ```
 
-To build less to css for frontend:
+To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
 npm install
