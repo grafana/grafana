@@ -32,8 +32,8 @@ Building
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 git checkout -t origin/develop
-go run build.go setup (only needed once to install godep)
-godep restore (will pull down all golang lib dependecies in your current GOPATH)
+go run build.go setup            (only needed once to install godep)
+godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
 go build .
 ```
 
