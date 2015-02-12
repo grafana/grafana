@@ -32,9 +32,9 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/import/", reqSignedIn, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-	r.Get("/location/", reqSignedIn, Index)
-	r.Get("/monitor/", reqSignedIn, Index)
-	r.Get("/site/", reqSignedIn, Index)
+	r.Get("/network/locations", reqSignedIn, Index)
+	r.Get("/network/monitors", reqSignedIn, Index)
+	r.Get("/network/sites", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)

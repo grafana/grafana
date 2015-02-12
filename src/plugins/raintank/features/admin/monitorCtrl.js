@@ -21,8 +21,8 @@ function (angular, _) {
     $scope.init = function() {
       $scope.reset();
       $scope.editor = {index: 0};
-      
-       //TODO, move locations to services
+      $scope.search= {query: ""};
+
       $scope.locations = {};
       $scope.getLocations();
 

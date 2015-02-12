@@ -1,86 +1,69 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-sitemap" section="Site" show-menu-btn="!grafana.sidemenu">
-	<!-- <ul class="nav"> -->
-	<!-- 	<li> -->
-	<!-- 		<a href="asd">Details</a> -->
-	<!-- 	</li> -->
-	<!-- 	<li> -->
-	<!-- 		<a href="asd">Data Sources</a> -->
-	<!-- 	</li> -->
-	<!-- 	<li> -->
-	<!-- 		<a href="asd">Users</a> -->
-	<!-- 	</li> -->
-	<!-- 	<li> -->
-	<!-- 		<a href="asd">API Keys</a> -->
-	<!-- 	</li> -->
-	<!-- </ul> -->
+<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Network" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li ><a href="network/monitors">Monitors</a></li>
+		<li class="active"><a href="network/sites">Sites</a></li>
+		<li ><a href="network/locations">Locations</a></li>
+	</ul>
 </topnav>
 
-<div class="gf-box" style="min-height: 500px">
-	<div class="gf-box-body">
-		<div class="editor-row">
-			<div class="section">
+<div class="gf-box" style="min-height: 500px; max-width: 900px">
+	<div class="gf-box-header">
+		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+			</div>
+		</div>
+		<div ng-if="editor.index == 0">
+			<div class="editor-option" style="float:right;">
+				<input type="text" class="input-large" ng-model='search.query' placeholder="Search"></input>
+			</div>
+		</div>
+	</div>
 
-				<div class="dashboard-editor-header">
-					<div class="dashboard-editor-title">
-						<i class="icon icon-sitemap"></i>
-						Sites
+	<form name="editForm">
+		<div class="gf-box-body">
+
+			<div class="editor-row row" ng-if="editor.index == 0">
+				<div class="span8">
+					<div ng-if="sites.length === 0">
+						<em>No sites defined</em>
 					</div>
-
-					<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-						<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
-						</div>
-					</div>
-
-				</div>
-
-				<form name="editForm">
-					<div class="dashboard-editor-body">
-
-						<div class="editor-row row" ng-if="editor.index == 0">
-							<div class="span8">
-								<div ng-if="sites.length === 0">
-									<em>No sites defined</em>
-								</div>
-								<table class="grafana-options-table">
-									<tr ng-repeat="site in sites">
-										<td style="width:1%">
-											<i class="icon-hdd"></i> &nbsp;
-											name: {{site.name}}
-										</td>
-										<td style="width: 1%">
-											<a ng-click="edit(site)" class="btn btn-success btn-mini">
-												<i class="fa fa-edit"></i>
-												Edit
-											</a>
-										</td>
-										<td style="width: 1%">
-											<a ng-click="remove(site)" class="btn btn-danger btn-mini">
-												<i class="fa fa-remove"></i>
-											</a>
-										</td>
-									</tr>
-								</table>
-							</div>
-						</div>
-
-						<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
-							<div class="editor-row">
-								<div class="editor-option">
-									<label class="small">Site name</label>
-									<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
-								</div>
-							</div>
-						</div>
-
-						<div class="dashboard-editor-footer" style="margin-top: 20px">
-							<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
-							<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
-							<button type="submit" class="btn btn-info" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
-						</div>
-
-					</form>
+					<table class="grafana-options-table">
+						<tr ng-repeat="site in sites |filter:search.query">
+							<td style="width:90%">
+								<i class="icon-hdd"></i> &nbsp;
+								name: {{site.name}}
+							</td>
+							<td style="width: 1%">
+								<a ng-click="edit(site)" class="btn btn-success btn-mini">
+									<i class="fa fa-edit"></i>
+									Edit
+								</a>
+							</td>
+							<td style="width: 1%">
+								<a ng-click="remove(site)" class="btn btn-danger btn-mini">
+									<i class="fa fa-remove"></i>
+								</a>
+							</td>
+						</tr>
+					</table>
 				</div>
 			</div>
-		</div>	
+
+			<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Site name</label>
+						<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
+					</div>
+				</div>
+			</div>
+
+			<div class="dashboard-editor-footer" style="margin-top: 20px">
+				<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
+				<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
+				<button type="submit" class="btn btn-info" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
+			</div>
+
+		</form>
 	</div>
 </div>

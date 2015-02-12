@@ -15,6 +15,7 @@ function (angular) {
     $scope.init = function() {
       $scope.reset();
       $scope.editor = {index: 0};
+      $scope.search = {query: ""};
       $scope.sites = [];
       $scope.getSites();
 

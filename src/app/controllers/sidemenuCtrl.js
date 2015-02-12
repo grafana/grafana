@@ -36,16 +36,8 @@ function (angular, _, $, config) {
     }
 
     $scope.menu.push({
-      text: 'Sites', href: $scope.getUrl("/sites"), 
-      icon: "fa fa-sitemap"
-    });
-    $scope.menu.push({
-      text: "Monitor", href: $scope.getUrl("/monitor"),
-      icon: "fa fa-eye",
-    });
-    $scope.menu.push({
-      text: 'Locations', href: $scope.getUrl("/location"), 
-      icon: "fa fa-globe"
+      text: "Network", href: $scope.getUrl("/network/monitors"),
+      icon: "fa fa-cloud",
     });
 
     if (contextSrv.user.isGrafanaAdmin) {
