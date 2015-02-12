@@ -48,21 +48,36 @@ function (angular, app, _, $) {
           var plotCss = {};
           plotCss.position = 'absolute';
 
-          plotCss.top = '5px';
-          plotCss.left = '-5px';
+          plotCss.top = '10px';
+          plotCss.left = '10px';
           plotCss.width = (width - 10) + 'px';
           plotCss.height = (height - 45) + 'px';
 
           plotCanvas.css(plotCss);
 
           var options = {
+            legend: { show: false },
             series: {
-              pie:  {
-                innerRadius: 0.5,
-                show: true
-              },
-            },
+              pie: {
+                show: true,
+                label: { show: false }
+              }
+            }
           };
+
+          if (panel.pieType === 'donut') {
+            options.series.pie.innerRadius = 0.5;
+          }
+
+          if (panel.legend.show) {
+            options.legend = {
+              show: true,
+              labelFormatter: function(label, series) {
+                return label + " - " + series.data[0][1];
+              },
+              margin: '25px'
+            };
+          }
 
           elem.append(plotCanvas);
 

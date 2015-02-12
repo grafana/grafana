@@ -21,10 +21,15 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       metricsEditor: true
     });
 
-    // $scope.panelMeta.addEditorTab('Options', 'app/panels/piechart/editor.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/panels/piechart/editor.html');
 
     // Set and populate defaults
-    var _d = {};
+    var _d = {
+      legend: {
+        show: false
+      },
+      pieType: 'pie'
+    };
 
     _.defaults($scope.panel, _d);
     $scope.unitFormats = kbn.getUnitFormats();
