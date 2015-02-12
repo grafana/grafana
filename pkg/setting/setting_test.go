@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -17,6 +18,15 @@ func TestLoadingSettings(t *testing.T) {
 			NewConfigContext()
 
 			So(AppName, ShouldEqual, "Grafana")
+			So(AdminUser, ShouldEqual, "admin")
 		})
+
+		Convey("Should be able to override via environment variables", func() {
+			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			NewConfigContext()
+
+			So(AdminUser, ShouldEqual, "superduper")
+		})
+
 	})
 }

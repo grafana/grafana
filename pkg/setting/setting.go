@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -148,7 +149,19 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func loadEnvVariableOverrides() {
+	for _, section := range Cfg.Sections() {
+		for _, key := range section.Keys() {
+			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
+			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
+			envKey := fmt.Sprintf("GF_%s_%s", sectionName, keyName)
+			envValue := os.Getenv(envKey)
 
+			if len(envValue) > 0 {
+				log.Info("Setting: ENV override found: %s", envKey)
+				key.SetValue(envValue)
+			}
+		}
+	}
 }
 
 func NewConfigContext() {
