@@ -33,14 +33,8 @@ Building
 cd $GOPATH/src/github.com/grafana/grafana
 git checkout -t origin/develop
 go run build.go setup (only needed once to install godep)
-go run build.go build
-```
-
-For quicker builds:
-
-```
 godep restore (will pull down all golang lib dependecies in your current GOPATH)
-go build -o ./bin/grafana .
+go build .
 ```
 
 To build less to css for the frontend you will need a recent version of of node (v0.12.0),
