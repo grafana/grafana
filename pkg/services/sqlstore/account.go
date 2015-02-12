@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -14,6 +15,12 @@ func init() {
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", UpdateAccount)
 	bus.AddHandler("sql", GetAccountByName)
+	bus.AddHandler("sql", GetAccountsQuery)
+	bus.AddHandler("sql", DeleteAccount)
+}
+
+func GetAccountsQuery(query *m.GetAccountsQuery) error {
+	return x.Find(&query.Result)
 }
 
 func GetAccountById(query *m.GetAccountByIdQuery) error {
@@ -97,6 +104,31 @@ func UpdateAccount(cmd *m.UpdateAccountCommand) error {
 			Id:        account.Id,
 			Name:      account.Name,
 		})
+
+		return nil
+	})
+}
+
+func DeleteAccount(cmd *m.DeleteAccountCommand) error {
+	return inTransaction2(func(sess *session) error {
+
+		deletes := []string{
+			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE account_id = ?)",
+			"DELETE FROM dashboard_tag WHERE EXISTS (SELECT 1 FROM dashboard WHERE account_id = ?)",
+			"DELETE FROM dashboard WHERE account_id = ?",
+			"DELETE FROM api_key WHERE account_id = ?",
+			"DELETE FROM data_source WHERE account_id = ?",
+			"DELETE FROM account_user WHERE account_id = ?",
+			"DELETE FROM account WHERE id = ?",
+		}
+
+		for _, sql := range deletes {
+			log.Trace(sql)
+			_, err := sess.Exec(sql, cmd.Id)
+			if err != nil {
+				return err
+			}
+		}
 
 		return nil
 	})

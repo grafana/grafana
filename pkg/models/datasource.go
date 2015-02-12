@@ -9,6 +9,7 @@ const (
 	DS_GRAPHITE      = "graphite"
 	DS_INFLUXDB      = "influxdb"
 	DS_ES            = "elasticsearch"
+	DS_OPENTSDB      = "opentsdb"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -89,6 +90,12 @@ type GetDataSourcesQuery struct {
 
 type GetDataSourceByIdQuery struct {
 	Id        int64
+	AccountId int64
+	Result    DataSource
+}
+
+type GetDataSourceByNameQuery struct {
+	Name      string
 	AccountId int64
 	Result    DataSource
 }

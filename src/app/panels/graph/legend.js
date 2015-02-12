@@ -78,7 +78,7 @@ function (angular, app, _, kbn, $) {
           var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
 
           if (panel.legend.sort === statName) {
-            var cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa-caret-up' ;
+            var cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up' ;
             html += ' <span class="' + cssClass + '"></span>';
           }
 

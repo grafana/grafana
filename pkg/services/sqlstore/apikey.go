@@ -66,7 +66,7 @@ func UpdateApiKey(cmd *m.UpdateApiKeyCommand) error {
 
 func GetApiKeyByKey(query *m.GetApiKeyByKeyQuery) error {
 	var apikey m.ApiKey
-	has, err := x.Where("key=?", query.Key).Get(&apikey)
+	has, err := x.Where("`key`=?", query.Key).Get(&apikey)
 
 	if err != nil {
 		return err

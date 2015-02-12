@@ -11,15 +11,17 @@ var (
 )
 
 type User struct {
-	Id       int64
-	Version  int
-	Email    string
-	Name     string
-	Login    string
-	Password string
-	Salt     string
-	Rands    string
-	Company  string
+	Id            int64
+	Version       int
+	Email         string
+	Name          string
+	Login         string
+	Password      string
+	Salt          string
+	Rands         string
+	Company       string
+	EmailVerified bool
+	Theme         string
 
 	IsAdmin   bool
 	AccountId int64
@@ -50,6 +52,10 @@ type UpdateUserCommand struct {
 	UserId int64 `json:"-"`
 }
 
+type DeleteUserCommand struct {
+	UserId int64
+}
+
 type SetUsingAccountCommand struct {
 	UserId    int64
 	AccountId int64
@@ -61,6 +67,11 @@ type SetUsingAccountCommand struct {
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
 	Result       *User
+}
+
+type GetUserByIdQuery struct {
+	Id     int64
+	Result *User
 }
 
 type GetSignedInUserQuery struct {

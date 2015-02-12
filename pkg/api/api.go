@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/macaron-contrib/binding"
 )
 
 // Register adds http routes
@@ -30,7 +30,10 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/users/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
+	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
+	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
+	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/network/locations", reqSignedIn, Index)
 	r.Get("/network/monitors", reqSignedIn, Index)
@@ -74,8 +77,10 @@ func Register(r *macaron.Macaron) {
 		r.Group("/datasources", func() {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
-			r.Any("/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
+			r.Get("/:id", GetDataSourceById)
 		}, reqAccountAdmin)
+
+		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
@@ -122,7 +127,12 @@ func Register(r *macaron.Macaron) {
 
 	// admin api
 	r.Group("/api/admin", func() {
+		r.Get("/settings", AdminGetSettings)
 		r.Get("/users", AdminSearchUsers)
+		r.Get("/users/:id", AdminGetUser)
+		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
+		r.Put("/users/:id", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
+		r.Delete("/users/:id", AdminDeleteUser)
 	}, reqGrafanaAdmin)
 
 	// rendering

@@ -17,5 +17,6 @@ src/css/*.min.css
 /data/*
 /bin/*
 /grafana-pro
+/grafana
 
 grafana.custom.ini

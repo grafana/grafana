@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -101,15 +102,10 @@ var (
 func init() {
 	IsWindows = runtime.GOOS == "windows"
 	log.NewLogger(0, "console", `{"level": 0}`)
-}
-
-func getWorkDir() string {
-	p, _ := filepath.Abs(".")
-	return p
+	WorkDir, _ = filepath.Abs(".")
 }
 
 func findConfigFiles() []string {
-	WorkDir = getWorkDir()
 	ConfRootPath = path.Join(WorkDir, "conf")
 	filenames := make([]string, 0)
 
@@ -155,10 +151,29 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func NewConfigContext() {
+func loadEnvVariableOverrides() {
+	for _, section := range Cfg.Sections() {
+		for _, key := range section.Keys() {
+			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
+			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
+			envKey := fmt.Sprintf("GF_%s_%s", sectionName, keyName)
+			envValue := os.Getenv(envKey)
+
+			if len(envValue) > 0 {
+				log.Info("Setting: ENV override found: %s", envKey)
+				key.SetValue(envValue)
+			}
+		}
+	}
+}
+
+func NewConfigContext(config string) {
 	configFiles := findConfigFiles()
 
-	//log.Info("Loading config files: %v", configFiles)
+	if config != "" {
+		configFiles = append(configFiles, config)
+	}
+
 	var err error
 
 	for i, file := range configFiles {
@@ -172,6 +187,8 @@ func NewConfigContext() {
 			log.Fatal(4, "Fail to parse config file: %v, error: %v", file, err)
 		}
 	}
+
+	loadEnvVariableOverrides()
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
@@ -189,11 +206,6 @@ func NewConfigContext() {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-
-	port := os.Getenv("PORT")
-	if port != "" {
-		HttpPort = port
-	}
 
 	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkDir, "webapp"))
 	RouterLogging = server.Key("router_logging").MustBool(false)

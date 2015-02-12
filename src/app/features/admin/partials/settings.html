@@ -1,0 +1,34 @@
+<topnav icon="fa fa-cube" title="Admin" subnav="true">
+	<ul class="nav">
+		<li class="active"><a href="admin/settings">Settings</a></li>
+		<li><a href="admin/users">Users</a></li>
+		<li><a href="admin/users/create">Create user</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2>
+			System settings
+		</h2>
+
+		<div class="grafana-info-box span8" style="margin: 20px 0 25px 0">
+			These system settings are defined in grafana.ini or grafana.custom.ini (or overriden in ENV variables).
+			To change these you currently need to restart grafana.
+		</div>
+
+		<table class="grafana-options-table">
+			<tr ng-repeat-start="(secName, secValue) in settings">
+				<td class="admin-settings-section">{{secName}}</td>
+				<td></td>
+			</tr>
+			<tr ng-repeat="(keyName, keyValue) in secValue" ng-repeat-end>
+				<td style="padding-left: 25px;">{{keyName}}</td>
+				<td>{{keyValue}}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+
+

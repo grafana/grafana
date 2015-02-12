@@ -10,13 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-var CmdImportJson = cli.Command{
-	Name:        "import-json",
-	Usage:       "grafana import",
+var ImportDashboard = cli.Command{
+	Name:        "dashboards:import",
+	Usage:       "imports dashboards in JSON from a directory",
 	Description: "Starts Grafana import process",
 	Action:      runImport,
 	Flags: []cli.Flag{
@@ -24,50 +22,35 @@ var CmdImportJson = cli.Command{
 			Name:  "dir",
 			Usage: "path to folder containing json dashboards",
 		},
-		cli.StringFlag{
-			Name:  "account",
-			Usage: "Account name to save dashboards under",
-		},
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
 	},
 }
 
 func runImport(c *cli.Context) {
 	dir := c.String("dir")
 	if len(dir) == 0 {
-		log.Error(3, "Missing command flag --dir")
-		return
+		log.ConsoleFatalf("Missing command flag --dir")
 	}
 
 	file, err := os.Stat(dir)
 	if os.IsNotExist(err) {
-		log.Error(3, "Directory does not exist: %v", dir)
-		return
+		log.ConsoleFatalf("Directory does not exist: %v", dir)
 	}
 
 	if !file.IsDir() {
-		log.Error(3, "%v is not a directory", dir)
-		return
+		log.ConsoleFatalf("%v is not a directory", dir)
 	}
 
-	accountName := c.String("account")
-	if len(accountName) == 0 {
-		log.Error(3, "Missing command flag --account")
-		return
+	if !c.Args().Present() {
+		log.ConsoleFatal("Account name arg is required")
 	}
 
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	accountName := c.Args().First()
+
+	initRuntime(c)
 
 	accountQuery := m.GetAccountByNameQuery{Name: accountName}
 	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.Error(3, "Failed to find account", err)
-		return
+		log.ConsoleFatalf("Failed to find account", err)
 	}
 
 	accountId := accountQuery.Result.Id
@@ -81,19 +64,19 @@ func runImport(c *cli.Context) {
 		}
 		if strings.HasSuffix(f.Name(), ".json") {
 			if err := importDashboard(path, accountId); err != nil {
-				log.Error(3, "Failed to import dashboard file: %v,  err: %v", path, err)
+				log.ConsoleFatalf("Failed to import dashboard file: %v,  err: %v", path, err)
 			}
 		}
 		return nil
 	}
 
 	if err := filepath.Walk(dir, visitor); err != nil {
-		log.Error(3, "failed to scan dir for json files: %v", err)
+		log.ConsoleFatalf("Failed to scan dir for json files: %v", err)
 	}
 }
 
 func importDashboard(path string, accountId int64) error {
-	log.Info("Importing %v", path)
+	log.ConsoleInfof("Importing %v", path)
 
 	reader, err := os.Open(path)
 	if err != nil {
@@ -106,6 +89,7 @@ func importDashboard(path string, accountId int64) error {
 	if err := jsonParser.Decode(&dash.Data); err != nil {
 		return err
 	}
+	dash.Data["id"] = nil
 
 	cmd := m.SaveDashboardCommand{
 		AccountId: accountId,

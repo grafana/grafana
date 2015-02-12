@@ -15,6 +15,12 @@ Graphite, InfluxDB & OpenTSDB.
 Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
 issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
 
+## Try it out with docker
+```
+docker run -i -p 3000:3000 grafana/grafana:develop
+```
+The default admin user is admin/admin.
+
 ## building and running
 
 ```
@@ -26,18 +32,13 @@ Building
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 git checkout -t origin/develop
-go run build.go setup (only needed once to install godep)
-go run build.go build
+go run build.go setup            (only needed once to install godep)
+godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+go build .
 ```
 
-For quicker builds:
-
-```
-godep restore (will pull down all golang lib dependecies in your current GOPATH)
-go build -o ./bin/grafana .
-```
-
-To build less to css for frontend:
+To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
 npm install

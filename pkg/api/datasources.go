@@ -9,9 +9,8 @@ import (
 
 func GetDataSources(c *middleware.Context) {
 	query := m.GetDataSourcesQuery{AccountId: c.AccountId}
-	err := bus.Dispatch(&query)
 
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query datasources", err)
 		return
 	}
@@ -34,6 +33,34 @@ func GetDataSources(c *middleware.Context) {
 	}
 
 	c.JSON(200, result)
+}
+
+func GetDataSourceById(c *middleware.Context) {
+	query := m.GetDataSourceByIdQuery{
+		Id:        c.ParamsInt64(":id"),
+		AccountId: c.AccountId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		c.JsonApiErr(500, "Failed to query datasources", err)
+		return
+	}
+
+	ds := query.Result
+
+	c.JSON(200, &dtos.DataSource{
+		Id:        ds.Id,
+		AccountId: ds.AccountId,
+		Name:      ds.Name,
+		Url:       ds.Url,
+		Type:      ds.Type,
+		Access:    ds.Access,
+		Password:  ds.Password,
+		Database:  ds.Database,
+		User:      ds.User,
+		BasicAuth: ds.BasicAuth,
+		IsDefault: ds.IsDefault,
+	})
 }
 
 func DeleteDataSource(c *middleware.Context) {
