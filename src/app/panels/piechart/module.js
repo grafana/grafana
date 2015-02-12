@@ -25,16 +25,14 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     // Set and populate defaults
     var _d = {
-      pieType: 'pie'
+      pieType: 'pie',
+      targets: [{}],
+      cacheTimeout: null,
+      interval: null,
+      maxDataPoints: 3
     };
 
     _.defaults($scope.panel, _d);
-    $scope.unitFormats = kbn.getUnitFormats();
-
-    $scope.setUnitFormat = function(subItem) {
-      $scope.panel.format = subItem.value;
-      $scope.render();
-    };
 
     $scope.init = function() {
       panelSrv.init($scope);
@@ -82,7 +80,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
         alias: seriesData.target,
       });
 
-      series.flotpairs = series.getFlotPairs($scope.panel.nullPointMode);
+      series.flotpairs = series.getFlotPairs('connected');
 
       return series;
     };
