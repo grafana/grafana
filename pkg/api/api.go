@@ -30,6 +30,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/account/users/", reqSignedIn, Index)
 	r.Get("/account/apikeys/", reqSignedIn, Index)
 	r.Get("/account/import/", reqSignedIn, Index)
+	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
@@ -94,6 +95,7 @@ func Register(r *macaron.Macaron) {
 
 	// admin api
 	r.Group("/api/admin", func() {
+		r.Get("/settings", AdminGetSettings)
 		r.Get("/users", AdminSearchUsers)
 		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
