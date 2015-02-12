@@ -29,7 +29,7 @@ function (angular, app, _, $) {
               height = parseInt(height.replace('px', ''), 10);
             }
 
-            height -= 5; // padding
+            height -= 10; // padding
             height -= panel.title ? 24 : 9; // subtract panel title bar
 
             elem.css('height', height + 'px');
@@ -41,7 +41,7 @@ function (angular, app, _, $) {
         }
 
         function addPieChart() {
-          var width = elem.width() + 20;
+          var width = elem.width() + 0;
           var height = elem.height() || 200;
 
           var plotCanvas = $('<div></div>');
@@ -50,8 +50,8 @@ function (angular, app, _, $) {
 
           plotCss.top = '10px';
           plotCss.left = '10px';
-          plotCss.width = (width - 10) + 'px';
-          plotCss.height = (height - 45) + 'px';
+          plotCss.width = (width - 20) + 'px';
+          plotCss.height = (height - 20) + 'px';
 
           plotCanvas.css(plotCss);
 
@@ -62,6 +62,9 @@ function (angular, app, _, $) {
                 show: true,
                 label: { show: false }
               }
+            },
+            grid: {
+              hoverable: true
             }
           };
 
