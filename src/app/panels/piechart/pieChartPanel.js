@@ -12,7 +12,7 @@ function (angular, app, _, $) {
   var module = angular.module('grafana.panels.piechart', []);
   app.useModule(module);
 
-  module.directive('piechartPanel', function($location, linkSrv, $timeout) {
+  module.directive('piechartPanel', function() {
 
     return {
       link: function(scope, elem) {
@@ -72,18 +72,22 @@ function (angular, app, _, $) {
             options.series.pie.innerRadius = 0.5;
           }
 
-          if (panel.legend.show) {
-            options.legend = {
-              show: true,
-              labelFormatter: function(label, series) {
-                return label + " - " + series.data[0][1];
-              }
-            };
-          }
+          var tooltip = $('<div id="tooltip">');
 
           elem.append(plotCanvas);
 
           $.plot(plotCanvas, scope.data, options);
+
+          plotCanvas.bind("plothover", function(event, pos, obj) {
+            if (!obj) {
+              tooltip.detach();
+              return;
+            }
+
+            var body = '<div class="graph-tooltip small">'+ obj.series.label + ': ' + obj.series.data[0][1] + '</div>';
+            tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
+          });
+
         }
 
         function render() {
@@ -98,42 +102,8 @@ function (angular, app, _, $) {
 
           elem.html(body);
           addPieChart();
-
-          elem.toggleClass('pointer', panel.links.length > 0);
         }
 
-        // drilldown link tooltip
-        var drilldownTooltip = $('<div id="tooltip" class="">gello</div>"');
-
-        elem.mouseleave(function() {
-          if (panel.links.length === 0) { return;}
-          drilldownTooltip.detach();
-        });
-
-        elem.click(function() {
-          if (panel.links.length === 0) { return; }
-
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0]);
-          if (linkInfo.href[0] === '#') { linkInfo.href = linkInfo.href.substring(1); }
-
-          if (linkInfo.href.indexOf('http') === 0) {
-            window.location.href = linkInfo.href;
-          } else {
-            $timeout(function() {
-              $location.url(linkInfo.href);
-            });
-          }
-
-          drilldownTooltip.detach();
-        });
-
-        elem.mousemove(function(e) {
-          if (panel.links.length === 0) { return;}
-
-          drilldownTooltip.text('click to go to: ' + panel.links[0].title);
-
-          drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
-        });
       }
     };
   });

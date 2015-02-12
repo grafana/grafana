@@ -25,9 +25,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     // Set and populate defaults
     var _d = {
-      legend: {
-        show: false
-      },
       pieType: 'pie'
     };
 
