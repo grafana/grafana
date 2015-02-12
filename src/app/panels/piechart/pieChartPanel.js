@@ -62,9 +62,6 @@ function (angular, app, _, $) {
                 show: true,
                 label: { show: false }
               }
-            },
-            grid: {
-              hoverable: true
             }
           };
 
@@ -72,22 +69,9 @@ function (angular, app, _, $) {
             options.series.pie.innerRadius = 0.5;
           }
 
-          var tooltip = $('<div id="tooltip">');
-
           elem.append(plotCanvas);
 
           $.plot(plotCanvas, scope.data, options);
-
-          plotCanvas.bind("plothover", function(event, pos, obj) {
-            if (!obj) {
-              tooltip.detach();
-              return;
-            }
-
-            var body = '<div class="graph-tooltip small">'+ obj.series.label + ': ' + obj.series.data[0][1] + '</div>';
-            tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
-          });
-
         }
 
         function render() {
@@ -98,14 +82,9 @@ function (angular, app, _, $) {
 
           setElementHeight();
 
-          var body = '<div></div>';
-
-          elem.html(body);
           addPieChart();
         }
-
       }
     };
   });
-
 });
