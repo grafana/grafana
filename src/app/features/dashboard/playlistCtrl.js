@@ -27,15 +27,24 @@ function (angular, _, config) {
 
       $scope.db.searchDashboards(query).then(function(results) {
         $scope.searchHits = results.dashboards;
+        $scope.filterHits();
+      });
+    };
+
+    $scope.filterHits = function() {
+      $scope.filteredHits = _.reject($scope.searchHits, function(dash) {
+        return _.findWhere($scope.playlist, {slug: dash.slug});
       });
     };
 
     $scope.addDashboard = function(dashboard) {
       $scope.playlist.push(dashboard);
+      $scope.filterHits();
     };
 
     $scope.removeDashboard = function(dashboard) {
       $scope.playlist = _.without($scope.playlist, dashboard);
+      $scope.filterHits();
     };
 
     $scope.start = function() {
