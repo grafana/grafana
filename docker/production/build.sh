@@ -5,7 +5,7 @@ cd ../../
 
 go run build.go build
 
-npm grunt release
+grunt release
 
 docker build --tag "grafana/grafana:develop" .
 
