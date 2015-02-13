@@ -210,12 +210,15 @@ func addMonitorTypeMigrations(mg *Migrator) {
 		Name("monitor_type").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "panel_template", Type: DB_NVarchar, Length: 2048, Nullable: false},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
 
-	//-------  indexes ------------------
+	//-------  data ------------------
+	mg.AddMigration("insert http type into monitor_type table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type values(1,'HTTP',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type values(1,'HTTP',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+
 }
 
 func addMonitorTypeSettingMigrations(mg *Migrator) {
@@ -236,13 +239,23 @@ func addMonitorTypeSettingMigrations(mg *Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add index monitor_type_setting.monitor_type_id", new(AddIndexMigration).
 		Table("monitor_type_setting").Columns("monitor_type_id"))
+
+	//-------  data ------------------
+	mg.AddMigration("insert http.host type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'host','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'host','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert http.path type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'path','Path','String','{}','/',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'path','Path','String','{}','/',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert http.port type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 }
 
 func addMonitorMigrations(mg *Migrator) {
 	mg.AddMigration("create monitor table", new(AddTableMigration).
 		Name("monitor").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "site_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
 		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
@@ -261,11 +274,10 @@ func addMonitorMigrations(mg *Migrator) {
 
 	mg.AddMigration("add unique index monitor.account_id_slug", new(AddIndexMigration).
 		Table("monitor").Columns("account_id", "slug").Unique())
-	
+
 	//------ new columns ----------------
 	mg.AddMigration("add siteId column to monitor table", new(AddColumnMigration).
-		Table("monitor").Column(&Column{Name: "site_id", Type: DB_BigInt, Nullable: true},
-	))
+		Table("monitor").Column(&Column{Name: "site_id", Type: DB_BigInt, Nullable: true}))
 }
 
 func addMonitorLocationMigrations(mg *Migrator) {
@@ -286,15 +298,14 @@ func addSiteMigrations(mg *Migrator) {
 		Name("site").WithColumns(
 		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-                &Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-                &Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-                &Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 	))
 
-	 //-------  indexes ------------------
-        mg.AddMigration("add unique index site.account_id_slug", new(AddIndexMigration).
-                Table("site").Columns("account_id", "slug").Unique(),
+	//-------  indexes ------------------
+	mg.AddMigration("add unique index site.account_id_slug", new(AddIndexMigration).
+		Table("site").Columns("account_id", "slug").Unique(),
 	)
 }
-
