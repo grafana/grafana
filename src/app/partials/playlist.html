@@ -12,56 +12,88 @@
 	</div>
 
 	<div class="gf-box-body">
-
-		<div class="editor-row">
-			<div class="section">
-				<div class="editor-option">
-					<table class="table table-striped span4">
-						<tr>
-							<th>Dashboard</th>
-							<th>Include</th>
-							<th style="white-space: nowrap;">Remove as favorite</th>
-						</tr>
-						<tr ng-repeat="dashboard in favDashboards">
-							<td style="white-space: nowrap;">
-								{{dashboard.title}}
-							</td>
-							<td style="text-align: center">
-								<input id="dash-{{$index}}" class="cr1" type="checkbox" ng-model="dashboard.include" ng-checked="dashboard.include" />
-								<label for="dash-{{$index}}" class="cr1"></label>
-							</td>
-							<td style="text-align: center">
-								<i class="fa fa-remove pointer" ng-click="removeAsFavorite(dashboard)"></i>
-							</td>
-						</tr>
-						<tr ng-hide="favDashboards.length">
-							<td colspan="3">
-								<i class="fa fa-warning"></i> No dashboards marked as favorites
-							</td>
-						</tr>
-					</table>
-				</div>
-				<div class="editor-option">
-					<div class="span4">
-						<span><i class="fa fa-question-circle"></i>
-							dashboards available in the playlist are only the ones marked as favorites (stored in local browser storage).
-							to mark a dashboard as favorite, use save icon in the menu and in the dropdown select mark as favorite
-							<br/><br/>
-						</span>
+		<div class="row" style="margin-bottom: 10px;">
+			<div class="span6">
+				<div style="display: inline-block">
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item">
+								Search
+							</li>
+							<li>
+								<input type="text" class="tight-form-input input-xlarge last" ng-model="searchQuery" placeholder="query or empty for starred" ng-change="search()">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
 					</div>
 				</div>
-				<div class="editor-option">
-					<label>
-						Timespan between change
-					</label>
-					<input type="text" class="input-small" ng-model="timespan" />
-				</div>
 			</div>
+			<div class="span6">
+				<h5>Playlist dashboards</h5>
+			</div>
+		</div>
 
+		<div class="row">
+			<div class="span6">
+				<table class="grafana-options-table">
+					<tr ng-repeat="dashboard in searchHits">
+						<td style="white-space: nowrap;">
+							{{dashboard.title}}
+						</td>
+						<td style="text-align: center">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="addDashboard(dashboard)">
+								<i class="fa fa-arrow-right"></i>
+							</button>
+						</td>
+					</tr>
+					<tr ng-hide="searchHits.length">
+						<td colspan="3">
+							<i class="fa fa-warning"></i> No dashboards found
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="span6">
+				<table class="grafana-options-table">
+					<tr ng-repeat="dashboard in playlist">
+						<td style="white-space: nowrap;">
+							{{dashboard.title}}
+						</td>
+						<td style="text-align: center">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
+								<i class="fa fa-remove"></i>
+							</button>
+						</td>
+					</tr>
+					<tr ng-hide="searchHits.length">
+						<td colspan="3">
+							<i class="fa fa-warning"></i> No dashboards found
+						</td>
+					</tr>
+				</table>
+			</div>
 		</div>
 
 		<br>
-		<button class="btn btn-success pull-right" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
 		<br>
+		<div class="pull-left">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						Timespan between dashboard change
+					</li>
+					<li>
+						<input type="text" class="tight-form-input input-small" ng-model="timespan" />
+					</li>
+					<li>
+						<button class="btn btn-success tight-form-btn" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+		<div class="clearfix"></div>
+
 	</div>
 </div>

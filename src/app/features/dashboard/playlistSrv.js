@@ -61,6 +61,8 @@ function (angular, _, kbn, store) {
     };
 
     this.start = function(dashboards, timespan) {
+      this.stop();
+
       var interval = kbn.interval_to_ms(timespan);
       var index = 0;
 
@@ -69,8 +71,10 @@ function (angular, _, kbn, store) {
       timerInstance = setInterval(function() {
         $rootScope.$apply(function() {
           angular.element(window).unbind('resize');
-          $location.search({});
-          $location.path(dashboards[index % dashboards.length].url);
+          var dash = dashboards[index % dashboards.length];
+          var relativeUrl = dash.url.substring($location.absUrl().length - $location.url().length);
+          $location.url(relativeUrl);
+
           index++;
         });
       }, interval);

@@ -20,6 +20,7 @@ func AdminGetSettings(c *middleware.Context) {
 			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") {
 				value = "************"
 			}
+
 			jsonSec[keyName] = value
 		}
 	}
