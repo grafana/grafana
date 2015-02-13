@@ -23,35 +23,31 @@ function (angular, app, _, $) {
         });
 
         function setElementHeight() {
-          try {
-            var height = scope.height || panel.height || scope.row.height;
-            if (_.isString(height)) {
-              height = parseInt(height.replace('px', ''), 10);
-            }
-
-            height -= 10; // padding
-            height -= panel.title ? 24 : 9; // subtract panel title bar
-
-            elem.css('height', height + 'px');
-
-            return true;
-          } catch(e) { // IE throws errors sometimes
-            return false;
+          var height = scope.height || panel.height || scope.row.height;
+          if (_.isString(height)) {
+            height = parseInt(height.replace('px', ''), 10);
           }
+
+          height -= 10; // padding
+          height -= panel.title ? 24 : 9; // subtract panel title bar
+
+          elem.css('height', height + 'px');
         }
 
         function addPieChart() {
-          var width = elem.width() + 0;
-          var height = elem.height() || 200;
+          var width = elem.width();
+          var height = elem.height();
+
+          var size = Math.min(width, height);
 
           var plotCanvas = $('<div></div>');
           var plotCss = {};
-          plotCss.position = 'absolute';
 
+          plotCss.position = 'absolute';
           plotCss.top = '10px';
           plotCss.left = '10px';
-          plotCss.width = (width - 20) + 'px';
-          plotCss.height = (height - 20) + 'px';
+          plotCss.width = (size - 20) + 'px';
+          plotCss.height = (size - 20) + 'px';
 
           plotCanvas.css(plotCss);
 
@@ -81,6 +77,9 @@ function (angular, app, _, $) {
           panel = scope.panel;
 
           setElementHeight();
+
+          var body = $('<div>');
+          elem.html(body);
 
           addPieChart();
         }

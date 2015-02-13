@@ -26,10 +26,12 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     // Set and populate defaults
     var _d = {
       pieType: 'pie',
+      legend: { show: false },
       targets: [{}],
       cacheTimeout: null,
       interval: null,
       maxDataPoints: 3
+
     };
 
     _.defaults($scope.panel, _d);
