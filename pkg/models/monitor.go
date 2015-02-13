@@ -15,11 +15,10 @@ var (
 )
 
 type MonitorType struct {
-	Id            int64
-	Name          string
-	PanelTemplate map[string]interface{}
-	Created       time.Time
-	Updated       time.Time
+	Id      int64
+	Name    string
+	Created time.Time
+	Updated time.Time
 }
 
 type MonitorTypeSetting struct {
@@ -37,7 +36,7 @@ type Monitor struct {
 	Id            int64
 	AccountId     int64  `xorm:"not null unique(uix_AccountIdSlug)"`
 	Slug          string `xorm:"not null unique(uix_AccountIdSlug)"`
-        SiteId        int64
+	SiteId        int64
 	Name          string
 	MonitorTypeId int64
 	Offset        int64
@@ -86,10 +85,9 @@ type MonitorTypeSettingDTO struct {
 }
 
 type MonitorTypeDTO struct {
-	Id            int64                    `json:"id"`
-	Name          string                   `json:"name"`
-	PanelTemplate map[string]interface{}   `json:"panel_template"`
-	Settings      []*MonitorTypeSettingDTO `json:"settings"`
+	Id       int64                    `json:"id"`
+	Name     string                   `json:"name"`
+	Settings []*MonitorTypeSettingDTO `json:"settings"`
 }
 
 // ----------------------
@@ -130,26 +128,26 @@ type DeleteMonitorCommand struct {
 // QUERIES
 
 type GetMonitorsQuery struct {
-	MonitorId      []int64  `form:"id"`
-        SiteId         []int64  `form:"site_id"`
-	Name           []string `form:"name"`
-	Slug           []string `form:"slug"`
-	MonitorTypeId  []int64  `form:"monitor_type_id"`
-	LocationId     []int64  `form:"location_id"`
-	Frequency      []int64  `form:"frequency"`
-	Enabled        string   `form:"enabled"`
-	Modulo         int64    `form:"modulo"`
-	ModuloOffset   int64    `form:"modulo_offset"`
-	AccountId      int64
+	MonitorId       []int64  `form:"id"`
+	SiteId          []int64  `form:"site_id"`
+	Name            []string `form:"name"`
+	Slug            []string `form:"slug"`
+	MonitorTypeId   []int64  `form:"monitor_type_id"`
+	LocationId      []int64  `form:"location_id"`
+	Frequency       []int64  `form:"frequency"`
+	Enabled         string   `form:"enabled"`
+	Modulo          int64    `form:"modulo"`
+	ModuloOffset    int64    `form:"modulo_offset"`
+	AccountId       int64
 	IsRaintankAdmin bool
-	Result         []*MonitorDTO
+	Result          []*MonitorDTO
 }
 
 type GetMonitorByIdQuery struct {
-	Id             int64
-	AccountId      int64
+	Id              int64
+	AccountId       int64
 	IsRaintankAdmin bool
-	Result         *MonitorDTO
+	Result          *MonitorDTO
 }
 
 type GetMonitorTypesQuery struct {

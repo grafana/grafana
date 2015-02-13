@@ -200,22 +200,21 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 }
 
 type MonitorTypeWithSettingsDTO struct {
-	Id            int64
-	Name          string
-	PanelTemplate map[string]interface{}
-	Variable      string
-	Description   string
-	Required      bool
-	DataType      string
-	Conditions    map[string]interface{}
-	DefaultValue  string
+	Id           int64
+	Name         string
+	Variable     string
+	Description  string
+	Required     bool
+	DataType     string
+	Conditions   map[string]interface{}
+	DefaultValue string
 }
 
 func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 	sess := x.Table("monitor_type")
 	sess.Limit(100, 0).Asc("name")
 	sess.Join("LEFT", "monitor_type_setting", "monitor_type_setting.monitor_type_id=monitor_type.id")
-	sess.Cols("monitor_type.id", "monitor_type.name", "monitor_type.panel_template",
+	sess.Cols("monitor_type.id", "monitor_type.name",
 		"monitor_type_setting.variable", "monitor_type_setting.description",
 		"monitor_type_setting.required", "monitor_type_setting.data_type",
 		"monitor_type_setting.conditions", "monitor_type_setting.default_value")
@@ -234,10 +233,9 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 			//this is the first time we have seen this monitorId
 			var typeSettings []*m.MonitorTypeSettingDTO
 			types[row.Id] = &m.MonitorTypeDTO{
-				Id:            row.Id,
-				Name:          row.Name,
-				PanelTemplate: row.PanelTemplate,
-				Settings:      typeSettings,
+				Id:       row.Id,
+				Name:     row.Name,
+				Settings: typeSettings,
 			}
 		}
 
