@@ -14,6 +14,11 @@ func init() {
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", UpdateAccount)
 	bus.AddHandler("sql", GetAccountByName)
+	bus.AddHandler("sql", GetAccountsQuery)
+}
+
+func GetAccountsQuery(query *m.GetAccountsQuery) error {
+	return x.Find(&query.Result)
 }
 
 func GetAccountById(query *m.GetAccountByIdQuery) error {
