@@ -380,6 +380,10 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				LocationId: l,
 			})
 		}
+		if len(monitor_locations) == 0 {
+			err = fmt.Errorf("No monitor locations chosen")
+			return err
+		}
 		sess.Table("monitor_location")
 		if _, err = sess.Insert(&monitor_locations); err != nil {
 			return err
