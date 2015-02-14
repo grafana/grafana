@@ -40,7 +40,7 @@ type ConsoleWriter struct {
 // create ConsoleWriter returning as LoggerInterface.
 func NewConsole() LoggerInterface {
 	return &ConsoleWriter{
-		lg:    log.New(os.Stdout, "", log.Ldate|log.Ltime),
+		lg:    log.New(os.Stderr, "", log.Ldate|log.Ltime),
 		Level: TRACE,
 	}
 }
