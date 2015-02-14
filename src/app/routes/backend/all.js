@@ -38,6 +38,14 @@ define([
         templateUrl: 'app/features/account/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
+      .when('/account/datasources/edit/:id', {
+        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+        controller : 'DataSourceEditCtrl',
+      })
+      .when('/account/datasources/new', {
+        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+        controller : 'DataSourceEditCtrl',
+      })
       .when('/account/users', {
         templateUrl: 'app/features/account/partials/users.html',
         controller : 'AccountUsersCtrl',

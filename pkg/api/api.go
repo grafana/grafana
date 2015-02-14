@@ -75,6 +75,7 @@ func Register(r *macaron.Macaron) {
 		r.Group("/datasources", func() {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
+			r.Get("/:id", GetDataSourceById)
 		}, reqAccountAdmin)
 
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)

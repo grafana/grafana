@@ -37,7 +37,7 @@ function (angular, _, $, config) {
 
     if (contextSrv.user.isGrafanaAdmin) {
       $scope.menu.push({
-        text: "Admin", href: $scope.getUrl("/admin/users"),
+        text: "Admin", href: $scope.getUrl("/admin/settings"),
         icon: "fa fa-cube",
         requireSignedIn: true,
       });
