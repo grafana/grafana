@@ -31,9 +31,11 @@ func main() {
 	app.Name = "Grafana Backend"
 	app.Usage = "grafana web"
 	app.Version = version
-	app.Commands = []cli.Command{cmd.Web, cmd.ImportJson,
+	app.Commands = []cli.Command{
 		cmd.ListAccounts, cmd.CreateAccount, cmd.DeleteAccount,
-		cmd.ListDataSources, cmd.CreateDataSource, cmd.DescribeDataSource, cmd.DeleteDataSource}
+		cmd.ImportDashboard,
+		cmd.ListDataSources, cmd.CreateDataSource, cmd.DescribeDataSource, cmd.DeleteDataSource,
+		cmd.Web}
 	app.Flags = append(app.Flags, []cli.Flag{
 		cli.StringFlag{
 			Name:  "config",

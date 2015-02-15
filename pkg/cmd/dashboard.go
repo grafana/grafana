@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ImportJson = cli.Command{
+var ImportDashboard = cli.Command{
 	Name:        "dashboard:import",
 	Usage:       "imports dashboards in JSON from a directory",
 	Description: "Starts Grafana import process",
