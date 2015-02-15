@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var CmdImportJson = cli.Command{
+var ImportJson = cli.Command{
 	Name:        "import-json",
 	Usage:       "grafana import",
 	Description: "Starts Grafana import process",

@@ -12,7 +12,7 @@ import (
 	"text/tabwriter"
 )
 
-var CmdListAccounts = cli.Command{
+var ListAccounts = cli.Command{
 	Name:        "account",
 	Usage:       "list accounts",
 	Description: "Lists the accounts in the system",
@@ -26,7 +26,7 @@ var CmdListAccounts = cli.Command{
 	},
 }
 
-var CmdCreateAccount = cli.Command{
+var CreateAccount = cli.Command{
 	Name:        "account:create",
 	Usage:       "create a new account",
 	Description: "Creates a new account",
@@ -40,7 +40,7 @@ var CmdCreateAccount = cli.Command{
 	},
 }
 
-var CmdDeleteAccount = cli.Command{
+var DeleteAccount = cli.Command{
 	Name:        "account:delete",
 	Usage:       "delete an existing account",
 	Description: "Deletes an existing account",

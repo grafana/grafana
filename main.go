@@ -31,8 +31,8 @@ func main() {
 	app.Name = "Grafana Backend"
 	app.Usage = "grafana web"
 	app.Version = version
-	app.Commands = []cli.Command{cmd.CmdWeb, cmd.CmdImportJson,
-		cmd.CmdListAccounts, cmd.CmdCreateAccount, cmd.CmdDeleteAccount}
+	app.Commands = []cli.Command{cmd.Web, cmd.ImportJson,
+		cmd.ListAccounts, cmd.CreateAccount, cmd.DeleteAccount}
 	app.Flags = append(app.Flags, []cli.Flag{}...)
 	app.Run(os.Args)
 

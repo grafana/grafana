@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/social"
 )
 
-var CmdWeb = cli.Command{
+var Web = cli.Command{
 	Name:        "web",
 	Usage:       "grafana web",
 	Description: "Starts Grafana backend & web server",
