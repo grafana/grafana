@@ -33,7 +33,7 @@ func main() {
 	app.Version = version
 	app.Commands = []cli.Command{cmd.Web, cmd.ImportJson,
 		cmd.ListAccounts, cmd.CreateAccount, cmd.DeleteAccount,
-		cmd.ListDataSources, cmd.DescribeDataSource}
+		cmd.ListDataSources, cmd.CreateDataSource, cmd.DescribeDataSource}
 	app.Flags = append(app.Flags, []cli.Flag{
 		cli.StringFlag{
 			Name:  "config",

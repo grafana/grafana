@@ -19,6 +19,41 @@ var (
 		Description: "Lists the datasources in the system",
 		Action:      listDatasources,
 	}
+	CreateDataSource = cli.Command{
+		Name:        "datasource:create",
+		Usage:       "creates a new datasource",
+		Description: "Creates a new datasource",
+		Action:      createDataSource,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "type",
+				Value: "graphite",
+				Usage: fmt.Sprintf("Datasource type [%s,%s,%s,%s]",
+					m.DS_GRAPHITE, m.DS_INFLUXDB, m.DS_ES, m.DS_OPENTSDB),
+			},
+			cli.StringFlag{
+				Name:  "access",
+				Value: "proxy",
+				Usage: "Datasource access [proxy,direct]",
+			},
+			cli.BoolFlag{
+				Name:  "default",
+				Usage: "Make this the default datasource",
+			},
+			cli.StringFlag{
+				Name:  "db",
+				Usage: "InfluxDB DB",
+			},
+			cli.StringFlag{
+				Name:  "user",
+				Usage: "InfluxDB username",
+			},
+			cli.StringFlag{
+				Name:  "password",
+				Usage: "InfluxDB password",
+			},
+		},
+	}
 	DescribeDataSource = cli.Command{
 		Name:        "datasource:info",
 		Usage:       "describe the details of a datasource",
@@ -26,6 +61,68 @@ var (
 		Action:      describeDataSource,
 	}
 )
+
+func createDataSource(c *cli.Context) {
+	setting.NewConfigContext()
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
+
+	if len(c.Args()) != 3 {
+		log.ConsoleFatal("Missing required arguments")
+	}
+
+	name := c.Args().First()
+	ds := c.Args()[1]
+	url := c.Args()[2]
+	dsType := c.String("type")
+	dsAccess := c.String("access")
+	dsDefault := c.Bool("default")
+
+	accountQuery := m.GetAccountByNameQuery{Name: name}
+	if err := bus.Dispatch(&accountQuery); err != nil {
+		log.ConsoleFatalf("Failed to find account: %s", err)
+	}
+
+	accountId := accountQuery.Result.Id
+
+	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
+	if err := bus.Dispatch(&query); err != nil {
+		if err != m.ErrDataSourceNotFound {
+			log.ConsoleFatalf("Failed to query for existing datasource: %s", err)
+		}
+	}
+
+	if query.Result.Id > 0 {
+		log.ConsoleFatalf("DataSource %s already exists", ds)
+	}
+
+	cmd := m.AddDataSourceCommand{
+		AccountId: accountId,
+		Name:      ds,
+		Url:       url,
+		Type:      m.DsType(dsType),
+		Access:    m.DsAccess(dsAccess),
+		IsDefault: dsDefault,
+	}
+
+	switch dsType {
+	case m.DS_INFLUXDB:
+		db := c.String("db")
+		if db == "" {
+			log.ConsoleFatal("db name is required for influxdb datasources")
+		}
+		cmd.Database = db
+		cmd.User = c.String("user")
+		cmd.Password = c.String("password")
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.ConsoleFatalf("Failed to create datasource: %s", err)
+	}
+	datasource := cmd.Result
+
+	log.ConsoleInfof("Datasource %s created", datasource.Name)
+}
 
 func listDatasources(c *cli.Context) {
 	setting.NewConfigContext()
@@ -80,7 +177,7 @@ func describeDataSource(c *cli.Context) {
 
 	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
 	if err := bus.Dispatch(&query); err != nil {
-		log.ConsoleFatalf("Failed to find accounts: %s", err)
+		log.ConsoleFatalf("Failed to find datasource: %s", err)
 	}
 	datasource := query.Result
 

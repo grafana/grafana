@@ -9,6 +9,7 @@ const (
 	DS_GRAPHITE      = "graphite"
 	DS_INFLUXDB      = "influxdb"
 	DS_ES            = "elasticsearch"
+	DS_OPENTSDB      = "opentsdb"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
