@@ -60,6 +60,12 @@ var (
 		Description: "Describes the details of a datasource",
 		Action:      describeDataSource,
 	}
+	DeleteDataSource = cli.Command{
+		Name:        "datasource:delete",
+		Usage:       "Deletes a datasource",
+		Description: "Deletes a datasource",
+		Action:      deleteDataSource,
+	}
 )
 
 func createDataSource(c *cli.Context) {
@@ -197,4 +203,37 @@ func describeDataSource(c *cli.Context) {
 		fmt.Fprintf(w, "INDEX\t%s\n", datasource.Database)
 	}
 	w.Flush()
+}
+
+func deleteDataSource(c *cli.Context) {
+	setting.NewConfigContext()
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
+
+	if len(c.Args()) != 2 {
+		log.ConsoleFatal("Account and datasource name args are required")
+	}
+
+	name := c.Args().First()
+	ds := c.Args()[1]
+
+	accountQuery := m.GetAccountByNameQuery{Name: name}
+	if err := bus.Dispatch(&accountQuery); err != nil {
+		log.ConsoleFatalf("Failed to find account: %s", err)
+	}
+
+	accountId := accountQuery.Result.Id
+
+	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
+	if err := bus.Dispatch(&query); err != nil {
+		log.ConsoleFatalf("Failed to find datasource: %s", err)
+	}
+	datasource := query.Result
+
+	cmd := m.DeleteDataSourceCommand{AccountId: accountId, Id: datasource.Id}
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.ConsoleFatalf("Failed to delete datasource: %s", err)
+	}
+
+	log.ConsoleInfof("DataSource %s deleted", ds)
 }
