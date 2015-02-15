@@ -30,19 +30,16 @@ var ImportJson = cli.Command{
 func runImport(c *cli.Context) {
 	dir := c.String("dir")
 	if len(dir) == 0 {
-		log.Error(3, "Missing command flag --dir")
-		return
+		log.ConsoleFatalf("Missing command flag --dir")
 	}
 
 	file, err := os.Stat(dir)
 	if os.IsNotExist(err) {
-		log.Error(3, "Directory does not exist: %v", dir)
-		return
+		log.ConsoleFatalf("Directory does not exist: %v", dir)
 	}
 
 	if !file.IsDir() {
-		log.Error(3, "%v is not a directory", dir)
-		return
+		log.ConsoleFatalf("%v is not a directory", dir)
 	}
 
 	if !c.Args().Present() {
@@ -57,8 +54,7 @@ func runImport(c *cli.Context) {
 
 	accountQuery := m.GetAccountByNameQuery{Name: accountName}
 	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.Error(3, "Failed to find account", err)
-		return
+		log.ConsoleFatalf("Failed to find account", err)
 	}
 
 	accountId := accountQuery.Result.Id
@@ -72,19 +68,19 @@ func runImport(c *cli.Context) {
 		}
 		if strings.HasSuffix(f.Name(), ".json") {
 			if err := importDashboard(path, accountId); err != nil {
-				log.Error(3, "Failed to import dashboard file: %v,  err: %v", path, err)
+				log.ConsoleFatalf("Failed to import dashboard file: %v,  err: %v", path, err)
 			}
 		}
 		return nil
 	}
 
 	if err := filepath.Walk(dir, visitor); err != nil {
-		log.Error(3, "failed to scan dir for json files: %v", err)
+		log.ConsoleFatalf("Failed to scan dir for json files: %v", err)
 	}
 }
 
 func importDashboard(path string, accountId int64) error {
-	log.Info("Importing %v", path)
+	log.ConsoleInfof("Importing %v", path)
 
 	reader, err := os.Open(path)
 	if err != nil {
