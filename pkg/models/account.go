@@ -29,6 +29,10 @@ type CreateAccountCommand struct {
 	Result Account `json:"-"`
 }
 
+type DeleteAccountCommand struct {
+	Id int64
+}
+
 type UpdateAccountCommand struct {
 	Name      string `json:"name" binding:"Required"`
 	AccountId int64  `json:"-"`

@@ -40,6 +40,20 @@ var CmdCreateAccount = cli.Command{
 	},
 }
 
+var CmdDeleteAccount = cli.Command{
+	Name:        "account:delete",
+	Usage:       "delete an existing account",
+	Description: "Deletes an existing account",
+	Action:      deleteAccount,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "config",
+			Value: "grafana.ini",
+			Usage: "path to config file",
+		},
+	},
+}
+
 func listAccounts(c *cli.Context) {
 	setting.NewConfigContext()
 	sqlstore.NewEngine()
@@ -84,4 +98,28 @@ func createAccount(c *cli.Context) {
 	}
 
 	log.ConsoleInfof("Account %s created for admin user %s\n", name, adminUser.Email)
+}
+
+func deleteAccount(c *cli.Context) {
+	setting.NewConfigContext()
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
+
+	if !c.Args().Present() {
+		log.ConsoleFatal("Account name arg is required")
+	}
+
+	name := c.Args().First()
+	accountQuery := m.GetAccountByNameQuery{Name: name}
+	if err := bus.Dispatch(&accountQuery); err != nil {
+		log.ConsoleFatalf("Failed to find account: %s", err)
+	}
+
+	accountId := accountQuery.Result.Id
+	cmd := m.DeleteAccountCommand{Id: accountId}
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.ConsoleFatalf("Failed to delete account: %s", err)
+	}
+
+	log.ConsoleInfof("Account %s deleted", name)
 }
