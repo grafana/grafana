@@ -34,7 +34,13 @@ func main() {
 	app.Commands = []cli.Command{cmd.Web, cmd.ImportJson,
 		cmd.ListAccounts, cmd.CreateAccount, cmd.DeleteAccount,
 		cmd.ListDataSources}
-	app.Flags = append(app.Flags, []cli.Flag{}...)
+	app.Flags = append(app.Flags, []cli.Flag{
+		cli.StringFlag{
+			Name:  "config",
+			Value: "grafana.ini",
+			Usage: "path to config file",
+		},
+	}...)
 	app.Run(os.Args)
 
 	log.Close()

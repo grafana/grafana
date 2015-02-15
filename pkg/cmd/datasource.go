@@ -17,13 +17,6 @@ var ListDataSources = cli.Command{
 	Usage:       "list datasources",
 	Description: "Lists the datasources in the system",
 	Action:      listDatasources,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 func listDatasources(c *cli.Context) {

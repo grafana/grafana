@@ -17,13 +17,6 @@ var ListAccounts = cli.Command{
 	Usage:       "list accounts",
 	Description: "Lists the accounts in the system",
 	Action:      listAccounts,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 var CreateAccount = cli.Command{
@@ -31,13 +24,6 @@ var CreateAccount = cli.Command{
 	Usage:       "create a new account",
 	Description: "Creates a new account",
 	Action:      createAccount,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 var DeleteAccount = cli.Command{
@@ -45,13 +31,6 @@ var DeleteAccount = cli.Command{
 	Usage:       "delete an existing account",
 	Description: "Deletes an existing account",
 	Action:      deleteAccount,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 func listAccounts(c *cli.Context) {

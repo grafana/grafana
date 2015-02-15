@@ -27,13 +27,6 @@ var Web = cli.Command{
 	Usage:       "grafana web",
 	Description: "Starts Grafana backend & web server",
 	Action:      runWeb,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 func newMacaron() *macaron.Macaron {

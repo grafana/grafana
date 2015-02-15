@@ -28,11 +28,6 @@ var ImportJson = cli.Command{
 			Name:  "account",
 			Usage: "Account name to save dashboards under",
 		},
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
 	},
 }
 
