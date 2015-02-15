@@ -93,6 +93,12 @@ type GetDataSourceByIdQuery struct {
 	Result    DataSource
 }
 
+type GetDataSourceByNameQuery struct {
+	Name      string
+	AccountId int64
+	Result    DataSource
+}
+
 // ---------------------
 // EVENTS
 type DataSourceCreatedEvent struct {
