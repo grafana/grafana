@@ -47,8 +47,7 @@ func listAccounts(c *cli.Context) {
 
 	accountsQuery := m.GetAccountsQuery{}
 	if err := bus.Dispatch(&accountsQuery); err != nil {
-		log.Error(3, "Failed to find accounts", err)
-		return
+		log.ConsoleFatalf("Failed to find accounts: %s", err)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 4, ' ', 0)
@@ -66,8 +65,7 @@ func createAccount(c *cli.Context) {
 	sqlstore.EnsureAdminUser()
 
 	if !c.Args().Present() {
-		fmt.Printf("Account name arg is required\n")
-		return
+		log.ConsoleFatal("Account name arg is required")
 	}
 
 	name := c.Args().First()
@@ -75,16 +73,15 @@ func createAccount(c *cli.Context) {
 	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
 
 	if err := bus.Dispatch(&adminQuery); err == m.ErrUserNotFound {
-		log.Error(3, "Failed to find default admin user", err)
-		return
+		log.ConsoleFatalf("Failed to find default admin user: %s", err)
 	}
 
 	adminUser := adminQuery.Result
 
 	cmd := m.CreateAccountCommand{Name: name, UserId: adminUser.Id}
 	if err := bus.Dispatch(&cmd); err != nil {
-		log.Error(3, "Failed to create account", err)
-		return
+		log.ConsoleFatalf("Failed to create account: %s", err)
 	}
-	fmt.Printf("Account %s created for admin user %s\n", name, adminUser.Email)
+
+	log.ConsoleInfof("Account %s created for admin user %s\n", name, adminUser.Email)
 }
