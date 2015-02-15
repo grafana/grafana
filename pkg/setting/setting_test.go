@@ -15,7 +15,7 @@ func TestLoadingSettings(t *testing.T) {
 	Convey("Testing loading settings from ini file", t, func() {
 
 		Convey("Given the default ini files", func() {
-			NewConfigContext()
+			NewConfigContext("")
 
 			So(AppName, ShouldEqual, "Grafana")
 			So(AdminUser, ShouldEqual, "admin")
@@ -23,7 +23,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override via environment variables", func() {
 			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-			NewConfigContext()
+			NewConfigContext("")
 
 			So(AdminUser, ShouldEqual, "superduper")
 		})

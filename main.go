@@ -39,8 +39,7 @@ func main() {
 	app.Flags = append(app.Flags, []cli.Flag{
 		cli.StringFlag{
 			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
+			Usage: "path to grafana.ini config file",
 		},
 	}...)
 	app.Run(os.Args)

@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ImportDashboard = cli.Command{
@@ -48,9 +46,7 @@ func runImport(c *cli.Context) {
 
 	accountName := c.Args().First()
 
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	accountQuery := m.GetAccountByNameQuery{Name: accountName}
 	if err := bus.Dispatch(&accountQuery); err != nil {

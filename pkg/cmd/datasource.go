@@ -6,8 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"os"
 	"text/tabwriter"
 )
@@ -69,9 +67,7 @@ var (
 )
 
 func createDataSource(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if len(c.Args()) != 3 {
 		log.ConsoleFatal("Missing required arguments")
@@ -131,9 +127,7 @@ func createDataSource(c *cli.Context) {
 }
 
 func listDatasources(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if !c.Args().Present() {
 		log.ConsoleFatal("Account name arg is required")
@@ -163,9 +157,7 @@ func listDatasources(c *cli.Context) {
 }
 
 func describeDataSource(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if len(c.Args()) != 2 {
 		log.ConsoleFatal("Account and datasource name args are required")
@@ -206,9 +198,7 @@ func describeDataSource(c *cli.Context) {
 }
 
 func deleteDataSource(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if len(c.Args()) != 2 {
 		log.ConsoleFatal("Account and datasource name args are required")

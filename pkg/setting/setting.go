@@ -164,8 +164,12 @@ func loadEnvVariableOverrides() {
 	}
 }
 
-func NewConfigContext() {
+func NewConfigContext(config string) {
 	configFiles := findConfigFiles()
+
+	if config != "" {
+		configFiles = append(configFiles, config)
+	}
 
 	//log.Info("Loading config files: %v", configFiles)
 	var err error

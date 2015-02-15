@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"os"
 	"text/tabwriter"
@@ -34,9 +33,7 @@ var DeleteAccount = cli.Command{
 }
 
 func listAccounts(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	accountsQuery := m.GetAccountsQuery{}
 	if err := bus.Dispatch(&accountsQuery); err != nil {
@@ -53,9 +50,7 @@ func listAccounts(c *cli.Context) {
 }
 
 func createAccount(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if !c.Args().Present() {
 		log.ConsoleFatal("Account name arg is required")
@@ -80,9 +75,7 @@ func createAccount(c *cli.Context) {
 }
 
 func deleteAccount(c *cli.Context) {
-	setting.NewConfigContext()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
+	initRuntime(c)
 
 	if !c.Args().Present() {
 		log.ConsoleFatal("Account name arg is required")
