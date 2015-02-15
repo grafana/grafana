@@ -24,10 +24,6 @@ var ImportJson = cli.Command{
 			Name:  "dir",
 			Usage: "path to folder containing json dashboards",
 		},
-		cli.StringFlag{
-			Name:  "account",
-			Usage: "Account name to save dashboards under",
-		},
 	},
 }
 
@@ -49,11 +45,11 @@ func runImport(c *cli.Context) {
 		return
 	}
 
-	accountName := c.String("account")
-	if len(accountName) == 0 {
-		log.Error(3, "Missing command flag --account")
-		return
+	if !c.Args().Present() {
+		log.ConsoleFatal("Account name arg is required")
 	}
+
+	accountName := c.Args().First()
 
 	setting.NewConfigContext()
 	sqlstore.NewEngine()
