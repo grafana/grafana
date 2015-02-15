@@ -15,8 +15,8 @@ import (
 )
 
 var ImportJson = cli.Command{
-	Name:        "import-json",
-	Usage:       "grafana import",
+	Name:        "dashboard:import",
+	Usage:       "imports dashboards in JSON from a directory",
 	Description: "Starts Grafana import process",
 	Action:      runImport,
 	Flags: []cli.Flag{
