@@ -43,7 +43,7 @@ func listAccounts(c *cli.Context) {
 		log.ConsoleFatalf("Failed to find accounts: %s", err)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 4, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 8, 1, 4, ' ', 0)
 
 	fmt.Fprintf(w, "ID\tNAME\n")
 	for _, account := range accountsQuery.Result {

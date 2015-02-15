@@ -49,7 +49,7 @@ func listDatasources(c *cli.Context) {
 		log.ConsoleFatalf("Failed to find datasources: %s", err)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 4, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 8, 1, 4, ' ', 0)
 
 	fmt.Fprintf(w, "ID\tNAME\tURL\tTYPE\tACCESS\tDEFAULT\n")
 	for _, ds := range query.Result {
@@ -84,7 +84,7 @@ func describeDataSource(c *cli.Context) {
 	}
 	datasource := query.Result
 
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 4, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 8, 1, 4, ' ', 0)
 	fmt.Fprintf(w, "NAME\t%s\n", datasource.Name)
 	fmt.Fprintf(w, "URL\t%s\n", datasource.Url)
 	fmt.Fprintf(w, "DEFAULT\t%t\n", datasource.IsDefault)
