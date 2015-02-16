@@ -2,31 +2,33 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/codegangsta/cli"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"os"
-	"text/tabwriter"
 )
 
 var ListAccounts = cli.Command{
-	Name:        "account",
+	Name:        "accounts",
 	Usage:       "list accounts",
 	Description: "Lists the accounts in the system",
 	Action:      listAccounts,
 }
 
 var CreateAccount = cli.Command{
-	Name:        "account:create",
+	Name:        "accounts:create",
 	Usage:       "create a new account",
 	Description: "Creates a new account",
 	Action:      createAccount,
 }
 
 var DeleteAccount = cli.Command{
-	Name:        "account:delete",
+	Name:        "accounts:delete",
 	Usage:       "delete an existing account",
 	Description: "Deletes an existing account",
 	Action:      deleteAccount,

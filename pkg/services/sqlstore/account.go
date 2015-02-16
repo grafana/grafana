@@ -119,7 +119,6 @@ func DeleteAccount(cmd *m.DeleteAccountCommand) error {
 			"DELETE FROM api_key WHERE account_id = ?",
 			"DELETE FROM data_source WHERE account_id = ?",
 			"DELETE FROM account_user WHERE account_id = ?",
-			"DELETE FROM user WHERE account_id = ?",
 			"DELETE FROM account WHERE id = ?",
 		}
 

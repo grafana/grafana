@@ -2,23 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"os"
-	"text/tabwriter"
 )
 
 var (
 	ListDataSources = cli.Command{
-		Name:        "datasource",
+		Name:        "datasources",
 		Usage:       "list datasources",
 		Description: "Lists the datasources in the system",
 		Action:      listDatasources,
 	}
 	CreateDataSource = cli.Command{
-		Name:        "datasource:create",
+		Name:        "datasources:create",
 		Usage:       "creates a new datasource",
 		Description: "Creates a new datasource",
 		Action:      createDataSource,

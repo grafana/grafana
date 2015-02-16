@@ -13,7 +13,7 @@ import (
 )
 
 var ImportDashboard = cli.Command{
-	Name:        "dashboard:import",
+	Name:        "dashboards:import",
 	Usage:       "imports dashboards in JSON from a directory",
 	Description: "Starts Grafana import process",
 	Action:      runImport,

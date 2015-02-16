@@ -171,7 +171,6 @@ func NewConfigContext(config string) {
 		configFiles = append(configFiles, config)
 	}
 
-	//log.Info("Loading config files: %v", configFiles)
 	var err error
 
 	for i, file := range configFiles {
