@@ -61,8 +61,9 @@
 				<div class="editor-row">
 					<div class="editor-option">
 						<label class="small">Site</label>
-						<select class="input-medium" ng-model="current.site_id" ng-options="s.id as s.name for (id, s) in sites"></select>
+						<select class="input-medium" ng-model="current.site_id" ng-options="s.id as s.name for (id, s) in sites" required></select>
                     </div>
+
                 </div>
 
 				<div class="editor-row">
@@ -96,14 +97,14 @@
 				<div class="editor-row">
 					
 					<div class="editor-option" ng-repeat="setting in monitor_types[current.monitor_type_id].settings | filter:{required: 'true'}">
-						<label class="small">{{setting.variable}}</label>
+						<label class="small">{{setting.description}}</label>
 						<raintank-setting definition="setting" target="currentSettingByVariable(setting.variable)">
 					</div>
 				</div>
 				<div class="editor-row">
 					
 					<div class="editor-option" ng-repeat="setting in monitor_types[current.monitor_type_id].settings | filter:{required: 'false'}">
-						<label class="small">{{setting.variable}}</label>
+						<label class="small">{{setting.description}}</label>
 						<raintank-setting definition="setting" target="currentSettingByVariable(setting.variable)">
 					</div>
 				</div>

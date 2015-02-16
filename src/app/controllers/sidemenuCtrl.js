@@ -21,7 +21,10 @@ function (angular, _, $, config) {
       icon: "fa fa-th-large",
       href: $scope.getUrl("/"),
     });
-
+    $scope.menu.push({
+      text: "Network", href: $scope.getUrl("/network/monitors"),
+      icon: "fa fa-cloud",
+    });
     if (contextSrv.hasRole('Admin')) {
       $scope.menu.push({
         text: "Data Sources",
@@ -34,11 +37,6 @@ function (angular, _, $, config) {
         icon: "fa fa-shield",
       });
     }
-
-    $scope.menu.push({
-      text: "Network", href: $scope.getUrl("/network/monitors"),
-      icon: "fa fa-cloud",
-    });
 
     if (contextSrv.user.isGrafanaAdmin) {
       $scope.menu.push({

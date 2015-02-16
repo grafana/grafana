@@ -33,7 +33,7 @@ define([
                     tmpl = '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="form-control">';
                     break;
                 case 'Boolean':
-                    tmpl = '<input type="checkbox" ng-true-value="true" ng-false-value="false" ng-model="target.value" class="form-control">'
+                    tmpl = '<input type="checkbox" ng-true-value="\'true\'" ng-false-value="\'false\'" ng-model="target.value" class="form-control">'
                     break;
                 case 'Enum':
                     tmpl = '<select ng-model="target.value" class="form-control" ng-options="e for e in definition.conditions.values" ng-required="definition.required">'

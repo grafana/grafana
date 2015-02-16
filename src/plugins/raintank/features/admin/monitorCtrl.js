@@ -11,6 +11,7 @@ function (angular, _) {
 
     var defaults = {
       name: '',
+      site: null,
       monitor_type_id: 1,
       locations: [],
       settings: [],
