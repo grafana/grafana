@@ -224,6 +224,15 @@ func addMonitorTypeMigrations(mg *Migrator) {
 	mg.AddMigration("insert http type into monitor_type table", new(RawSqlMigration).
 		Sqlite("INSERT INTO monitor_type values(1,'HTTP',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type values(1,'HTTP',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https type into monitor_type table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type values(2,'HTTPS',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type values(2,'HTTPS',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert ping type into monitor_type table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type values(3,'Ping',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type values(3,'Ping',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert dns type into monitor_type table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type values(4,'DNS',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type values(4,'DNS',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 
 }
 
@@ -256,6 +265,58 @@ func addMonitorTypeSettingMigrations(mg *Migrator) {
 	mg.AddMigration("insert http.port type_settings into monitor_type_setting table", new(RawSqlMigration).
 		Sqlite("INSERT INTO monitor_type_setting values(null,1,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,1,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert http.method type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert http.headers type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'headers','Headers','Text','{}','Accept-Encoding: gzip\nUser-Agent: raintank collector\n',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'headers','Headers','Text','{}','Accept-Encoding: gzip\nUser-Agent: raintank collector\n',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert http.expectRegex type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,1,'expectRegex','Content Match','String','{}','',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,1,'expectRegex','Content Match','String','{}','',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+
+	mg.AddMigration("insert https.host type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'host','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'host','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.path type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'path','Path','String','{}','/',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'path','Path','String','{}','/',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.validateCert type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'validateCert','Validate SSL Certificate','Boolean','{}','true',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'validateCert','Validate SSL Certificate','Boolean','{}','true',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.port type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.method type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.headers type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'headers','Headers','Text','{}','Accept-Encoding: gzip\nUser-Agent: raintank collector\n',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'headers','Headers','Text','{}','Accept-Encoding: gzip\nUser-Agent: raintank collector\n',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert https.expectRegex type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'expectRegex','Content Match','String','{}','',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'expectRegex','Content Match','String','{}','',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+
+	mg.AddMigration("insert ping.hostname type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,3,'hostname','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,3,'hostname','Hostname','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+
+	mg.AddMigration("insert dns.name type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,4,'name','Record Name','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,4,'name','Record Name','String','{}','',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert dns.type type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,4,'type','Record Tyoe','Enum','{\"values\": [\"A\",\"AAAA\",\"CNAME\",\"MX\",\"NS\",\"PTR\",\"SOA\",\"SRV\",\"TXT\"]}','A',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,4,'type','Record Type','Enum','{\"values\": [\"A\",\"AAAA\",\"CNAME\",\"MX\",\"NS\",\"PTR\",\"SOA\",\"SRV\",\"TXT\"]}','A',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert dns.server type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,4,'server','Server','String','{}','8.8.8.8',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,4,'server','Server','String','{}','8.8.8.8',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert dns.port type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,4,'port','port','Number','{}','53',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,4,'port','Port','Number','{}','53',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+	mg.AddMigration("insert dns.protocol type_settings into monitor_type_setting table", new(RawSqlMigration).
+		Sqlite("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+
 }
 
 func addMonitorMigrations(mg *Migrator) {
