@@ -204,11 +204,6 @@ func NewConfigContext(config string) {
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
 
-	port := os.Getenv("PORT")
-	if port != "" {
-		HttpPort = port
-	}
-
 	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkDir, "webapp"))
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
