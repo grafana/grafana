@@ -2,9 +2,8 @@ define([
   'angular',
   'lodash',
   'config',
-  'jquery'
 ],
-function (angular, _, config, $) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -29,7 +28,7 @@ function (angular, _, config, $) {
 
     $scope.keyDown = function (evt) {
       if (evt.keyCode === 27) {
-        $scope.appEvent('hide-dash-editor');
+        $scope.dismiss();
       }
       if (evt.keyCode === 40) {
         $scope.moveSelection(1);
@@ -50,9 +49,6 @@ function (angular, _, config, $) {
         if (selectedDash) {
           $location.search({});
           $location.path("/dashboard/db/" + selectedDash.slug);
-          setTimeout(function() {
-            $('body').click(); // hack to force dropdown to close;
-          });
         }
       }
     };

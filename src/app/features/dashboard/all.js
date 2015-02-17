@@ -11,4 +11,5 @@ define([
   './playlistSrv',
   './timeSrv',
   './unsavedChangesSrv',
+  './directives/dashSearchView',
 ], function () {});

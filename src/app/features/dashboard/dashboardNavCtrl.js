@@ -80,7 +80,7 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.openSearch = function() {
-      $scope.appEvent('show-dash-editor', { src: 'app/partials/search.html', cssClass: 'search-container' });
+      $scope.appEvent('show-dash-search');
     };
 
     $scope.saveDashboard = function() {
