@@ -48,18 +48,13 @@ function (angular, _, config) {
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.search({});
-          $location.path("/dashboard/db/" + selectedDash.slug);
+          $location.path(selectedDash.url);
         }
       }
     };
 
     $scope.moveSelection = function(direction) {
       $scope.selectedIndex = Math.max(Math.min($scope.selectedIndex + direction, $scope.resultCount - 1), 0);
-    };
-
-    $scope.goToDashboard = function(slug) {
-      $location.search({});
-      $location.path("/dashboard/db/" + slug);
     };
 
     $scope.searchDashboards = function() {
@@ -70,13 +65,16 @@ function (angular, _, config) {
         .then(function(results) {
           if (localSearchId < $scope.currentSearchId) { return; }
 
-          if ($scope.query.query === "" && !$scope.query.starred) {
-            results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
-          }
-
-          $scope.results.dashboards = results.dashboards;
-          $scope.results.tags = results.tags;
           $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+          $scope.results.tags = results.tags;
+          $scope.results.dashboards = _.map(results.dashboards, function(dash) {
+            dash.url = 'dashboard/db/' + dash.slug;
+            return dash;
+          });
+
+          if ($scope.query.query === "" && !$scope.query.starred) {
+            $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          }
         });
     };
 
