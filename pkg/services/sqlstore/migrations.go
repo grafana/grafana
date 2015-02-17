@@ -345,6 +345,10 @@ func addMonitorMigrations(mg *Migrator) {
 	//------ new columns ----------------
 	mg.AddMigration("add siteId column to monitor table", new(AddColumnMigration).
 		Table("monitor").Column(&Column{Name: "site_id", Type: DB_BigInt, Nullable: true}))
+
+	mg.AddMigration("add namespace column to monitor table", new(AddColumnMigration).
+		Table("monitor").Column(&Column{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: true}))
+
 }
 
 func addMonitorLocationMigrations(mg *Migrator) {

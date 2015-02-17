@@ -33,6 +33,7 @@ type MonitorWithLocationDTO struct {
 	Frequency     int64
 	Enabled       bool
 	Offset        int64
+	Namespace     string
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -47,7 +48,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		"monitor.account_id", "monitor.name", "monitor.slug",
 		"monitor.monitor_type_id", "monitor.settings",
 		"monitor.frequency", "monitor.enabled", "monitor.offset",
-		"monitor.site_id")
+		"monitor.site_id", "monitor.namespace")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -75,6 +76,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		Frequency:     result[0].Frequency,
 		Enabled:       result[0].Enabled,
 		Offset:        result[0].Offset,
+		Namespace:     result[0].Namespace,
 	}
 	//iterate through all of the results and build out our model.
 	for _, row := range result {
@@ -93,7 +95,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.account_id", "monitor.name", "monitor.settings",
 		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency",
-		"monitor.enabled", "monitor.offset", "monitor.site_id")
+		"monitor.enabled", "monitor.offset", "monitor.site_id", "monitor.namespace")
 
 	if len(query.SiteId) > 0 {
 		if len(query.SiteId) > 1 {
@@ -182,6 +184,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 				Frequency:     row.Frequency,
 				Enabled:       row.Enabled,
 				Offset:        row.Offset,
+				Namespace:     row.Namespace,
 			}
 		}
 
@@ -366,6 +369,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Updated:       time.Now(),
 			Frequency:     cmd.Frequency,
 			Enabled:       cmd.Enabled,
+			Namespace:     cmd.Namespace,
 		}
 
 		mon.UpdateMonitorSlug()
@@ -400,6 +404,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
 			Offset:        mon.Offset,
+			Namespace:     mon.Namespace,
 		}
 		sess.publishAfterCommit(&events.MonitorCreated{
 			Timestamp: mon.Updated,
@@ -415,6 +420,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
+				Namespace:     mon.Namespace,
 			},
 		})
 		return nil
@@ -504,6 +510,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Updated:       time.Now(),
 			Enabled:       cmd.Enabled,
 			Frequency:     cmd.Frequency,
+			Namespace:     cmd.Namespace,
 		}
 
 		//check if we need to update the time offset for when the monitor should run.
@@ -544,6 +551,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
+				Namespace:     mon.Namespace,
 			},
 			Timestamp: mon.Updated,
 			Updated:   mon.Updated,
@@ -559,6 +567,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Frequency:     lastState.Frequency,
 				Enabled:       lastState.Enabled,
 				Offset:        lastState.Offset,
+				Namespace:     lastState.Namespace,
 			},
 		})
 

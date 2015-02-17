@@ -66,6 +66,11 @@ func AddMonitor(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.AccountId
+	if (c.IsGrafanaAdmin) {
+		cmd.Namespace = "public"
+	} else {
+		cmd.Namespace = "network"
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add monitor", err)
@@ -84,7 +89,12 @@ func UpdateMonitor(c *middleware.Context) {
 	}
 
 	cmd.AccountId = c.AccountId
-
+	if (c.IsGrafanaAdmin) {
+		cmd.Namespace = "public"
+	} else {
+		cmd.Namespace = "network"
+	}
+	
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update monitor", err)

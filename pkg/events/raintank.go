@@ -20,6 +20,7 @@ type MonitorPayload struct {
 	Frequency     int64                  `json:"frequency"`
 	Enabled       bool                   `json:"enabled"`
 	Offset        int64                  `json:"offset"`
+	Namespace     string                 `json:"namespace"`
 }
 
 type MonitorUpdated struct {

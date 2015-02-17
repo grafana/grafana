@@ -43,6 +43,7 @@ type Monitor struct {
 	Frequency     int64
 	Enabled       bool
 	Settings      []*MonitorSettingDTO
+	Namespace     string
 	Created       time.Time
 	Updated       time.Time
 }
@@ -73,6 +74,7 @@ type MonitorDTO struct {
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"offset"`
+	Namespace     string               `json:"namespace"`
 }
 
 type MonitorTypeSettingDTO struct {
@@ -103,6 +105,7 @@ type AddMonitorCommand struct {
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"-"`
+	Namespace     string               `json:"-"`
 	Result        *MonitorDTO
 }
 
@@ -117,6 +120,7 @@ type UpdateMonitorCommand struct {
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"-"`
+	Namespace     string               `json:"-"`
 }
 
 type DeleteMonitorCommand struct {
