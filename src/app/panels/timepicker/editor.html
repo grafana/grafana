@@ -18,7 +18,10 @@
 					</li>
 					<li>
 						<input type="text" class="input-mini tight-form-input last"
-						  ng-model="panel.nowDelay" placeholder="0m" bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'" data-placement="right">
+						  ng-model="panel.nowDelay" placeholder="0m"
+						  valid-time-span
+							bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
+							data-placement="right">
 				  </li>
 				</ul>
 				<div class="clearfix"></div>

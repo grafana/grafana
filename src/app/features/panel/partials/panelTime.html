@@ -12,8 +12,8 @@
 					Last
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" placeholder="1h"
-					  empty-to-null ng-model="panel.timeFrom"
+					<input type="text" class="input-small tight-form-input last" placeholder="1h"
+					  empty-to-null ng-model="panel.timeFrom" valid-time-span
 					  ng-change="get_data()" ng-model-onblur>
 				</li>
 			</ul>
@@ -31,8 +31,8 @@
 					Amount
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" placeholder="1h"
-					empty-to-null ng-model="panel.timeShift"
+					<input type="text" class="input-small tight-form-input last" placeholder="1h"
+					empty-to-null ng-model="panel.timeShift" valid-time-span
 					ng-change="get_data()" ng-model-onblur>
 				</li>
 			</ul>

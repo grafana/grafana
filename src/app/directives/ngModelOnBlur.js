@@ -1,5 +1,8 @@
-define(['angular'],
-function (angular) {
+define([
+  'angular',
+  'kbn'
+],
+function (angular, kbn) {
   'use strict';
 
   angular
@@ -32,6 +35,19 @@ function (angular) {
             if(viewValue === "") { return null; }
             return viewValue;
           });
+        }
+      };
+    })
+    .directive('validTimeSpan', function() {
+      return {
+        require: 'ngModel',
+        link: function(scope, elm, attrs, ctrl) {
+          ctrl.$validators.integer = function(modelValue, viewValue) {
+            if (ctrl.$isEmpty(modelValue)) {
+              return true;
+            }
+            return kbn.isValidTimeSpan(viewValue);
+          };
         }
       };
     });
