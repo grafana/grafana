@@ -32,12 +32,13 @@ type SiteSummaryData struct {
 }
 
 type SummaryPanel struct {
-	Id       int64
-	Title    string
-	Protocol string
-	Slug     string
-	Metric   string
-	Last     bool
+	Id        int64
+	Title     string
+	Protocol  string
+	Slug      string
+	Metric    string
+	Namespace string
+	Last      bool
 }
 
 type MonitorSummaryData struct {
@@ -49,6 +50,7 @@ type MonitorSummaryData struct {
 	Tags      string
 	Protocol  string
 	Metric    string
+	Namespace string
 }
 
 func DashboardSlug(name string) string {
@@ -69,12 +71,13 @@ func SiteSummary(data *SiteSummaryData) (map[string]interface{}, error) {
 		}
 		proto = strings.ToLower(proto)
 		data.Panels = append(data.Panels, &SummaryPanel{
-			Id:       int64(count),
-			Title:    mon.Name,
-			Slug:     mon.Slug,
-			Protocol: proto,
-			Metric:   metricMap[proto],
-			Last:     (count == numPanels),
+			Id:        int64(count),
+			Title:     mon.Name,
+			Slug:      mon.Slug,
+			Protocol:  proto,
+			Metric:    metricMap[proto],
+			Namespace: mon.Namespace,
+			Last:      (count == numPanels),
 		})
 	}
 

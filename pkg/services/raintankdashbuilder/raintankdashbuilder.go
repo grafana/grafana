@@ -276,6 +276,7 @@ func MonitorCreated(event *events.MonitorCreated) error {
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Summary", event.Name),
 		Tags:      fmt.Sprintf("[\"%s\", \"%s\"]", siteName, monitorTypeName),
+		Namespace: event.Namespace,
 		Protocol:  strings.ToLower(monitorTypeName),
 	})
 	if err != nil {
@@ -393,6 +394,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Summary", event.Name),
 		Tags:      tagStr,
+		Namespace: event.Namespace,
 		Protocol:  strings.ToLower(monitorTypeName),
 	})
 	if err != nil {
