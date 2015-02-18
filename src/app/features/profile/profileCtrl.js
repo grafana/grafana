@@ -1,7 +1,8 @@
 define([
   'angular',
+  'config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -28,7 +29,9 @@ function (angular) {
     };
 
     $scope.setUsingAccount = function(account) {
-      backendSrv.post('/api/user/using/' + account.accountId).then($scope.getUserAccounts);
+      backendSrv.post('/api/user/using/' + account.accountId).then(function() {
+        window.location.href = config.appSubUrl + '/profile';
+      });
     };
 
     $scope.update = function() {
