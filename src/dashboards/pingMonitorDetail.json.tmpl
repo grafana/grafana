@@ -1,0 +1,159 @@
+{
+  "title": "{{.Title}}",
+  {{if .DashId}}"id": {{.DashId}},{{end}}
+  "tags": {{.Tags}},
+  "style": "dark",
+  "timezone": "browser",
+  "editable": false,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "title": "Locations",
+      "collapse": false,
+      "editable": false,
+      "height": "250px",
+      "panels": [
+{{range .Panels}}
+        {
+          "aliasColors": {
+            "avg": "#508642",
+            "max": "#890F02",
+            "min": "#890F02",
+            "loss": "#1F78C1"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": false,
+          "datasource": "raintank",
+          "editable": false,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftMax": null,
+            "leftMin": null,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": {{.Id}},
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [
+             {
+              "alias": "max",
+              "lines": false,
+              "zindex": -3,
+              "fillBelowTo": "min"
+            },
+            {
+              "alias": "min",
+              "lines": false,
+              "zindex": -3
+            },
+            {
+              "alias": "loss",
+              "yaxis": 2,
+              "bars": true,
+              "lines": false
+            },
+            {
+              "alias": "avg"
+            }
+          ],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+               "target": "aliasByNode({{.Namespace}}.ping.{{.Slug}}.{{.Location}}.{avg,min,max,loss}, 4)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "{{.Title}}",
+          "tooltip": {
+            "query_as_alias": true,
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "ms",
+            "percent"
+          ],
+          "zerofill": true
+        }{{if not .Last}},{{end}}
+{{end}}
+      ]
+    }
+  ],
+  "nav": [
+    {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "version": 6,
+  "hideAllLegends": false
+}

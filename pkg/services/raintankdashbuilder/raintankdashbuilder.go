@@ -292,7 +292,34 @@ func MonitorCreated(event *events.MonitorCreated) error {
 		return err
 	}
 	//create monitorDetailDashboard
-
+	locQuery := m.GetLocationsQuery{
+		AccountId: event.AccountId,
+		LocationId: event.Locations,
+	}
+	err = bus.Dispatch(&locQuery)
+	if err != nil {
+		return err
+	}
+	monitorDetail, err := MonitorDetail(&MonitorDetailData{
+		SiteId:    event.SiteId,
+		AccountId: event.AccountId,
+		Slug:      event.Slug,
+		Title:     fmt.Sprintf("%s Monitor Detail", event.Name),
+		Tags:      fmt.Sprintf("[\"%s\", \"%s\"]", siteName, monitorTypeName),
+		Namespace: event.Namespace,
+		Locations: locQuery.Result,
+		Protocol:  strings.ToLower(monitorTypeName),
+	})
+	if err != nil {
+		return err
+	}
+	cmd = m.SaveDashboardCommand{
+		Dashboard: monitorDetail,
+		AccountId: event.AccountId,
+	}
+	if err = SaveDashboard(&cmd); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -410,7 +437,83 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 		return err
 	}
 
+	locQuery := m.GetLocationsQuery{
+		AccountId: event.AccountId,
+		LocationId: event.Locations,
+	}
+	err = bus.Dispatch(&locQuery)
+	if err != nil {
+		return err
+	}
+
 	//update monitorDetailDashboard
+
+	title = fmt.Sprintf("%s Monitor Detail", event.Name)
+	slug = DashboardSlug(title)
+
+	query = m.GetDashboardQuery{Slug: slug, AccountId: event.AccountId}
+	err = bus.Dispatch(&query)
+	if err != nil {
+		if err == m.ErrDashboardNotFound {
+			query.Result = &m.Dashboard{}
+		} else {
+			return err
+		}
+	}
+	tags = make([]string, 0)
+	if query.Result.Id > 0 {
+		tags = query.Result.GetTags()
+	} else {
+		if len(oldTags) > 0 {
+			tags = oldTags
+		}
+	}
+
+	tagMap = make(map[string]bool)
+
+	for _, t := range tags {
+		// If the siteName has changed, dont copy accross
+		// the tag for the old site.
+		if t != oldSiteName {
+			tagMap[fmt.Sprintf("\"%s\"", t)] = true
+		}
+	}
+
+	for _, t := range requiredTags {
+		tagMap[fmt.Sprintf("\"%s\"", t)] = true
+	}
+
+	tagList = make([]string, 0)
+
+	for k, _ := range tagMap {
+		tagList = append(tagList, k)
+	}
+
+	tagStr = fmt.Sprintf("[%s]", strings.Join(tagList, ","))
+
+	monitorDetail, err := MonitorDetail(&MonitorDetailData{
+		DashId:    query.Result.Id,
+		SiteId:    event.SiteId,
+		AccountId: event.AccountId,
+		Slug:      event.Slug,
+		Title:     fmt.Sprintf("%s Monitor Detail", event.Name),
+		Tags:      tagStr,
+		Namespace: event.Namespace,
+		Locations: locQuery.Result,
+		Protocol:  strings.ToLower(monitorTypeName),
+	})
+	if err != nil {
+		return err
+	}
+
+	cmd = m.SaveDashboardCommand{
+		Dashboard: monitorDetail,
+		AccountId: event.AccountId,
+	}
+
+	if err = SaveDashboard(&cmd); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -429,5 +532,11 @@ func MonitorRemoved(event *events.MonitorRemoved) error {
 	}
 
 	//remove monitorDetailDashboard
+	title = fmt.Sprintf("%s Monitor Detail", event.Name)
+	slug = DashboardSlug(title)
+	cmd = m.DeleteDashboardCommand{Slug: slug, AccountId: event.AccountId}
+	if err := bus.Dispatch(&cmd); err != nil {
+		return err
+	}
 	return nil
 }
