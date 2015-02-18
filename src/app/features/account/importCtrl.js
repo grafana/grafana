@@ -43,6 +43,10 @@ function (angular, _) {
         $scope.importing = true;
         $scope.imported = [];
         $scope.next();
+      }, function(err) {
+        var resp = err.message || err.statusText || 'Unknown error';
+        var message = "Failed to load dashboards from selected data source, response from server was: " + resp;
+        $scope.appEvent('alert-error', ['Import failed', message]);
       });
     };
 
