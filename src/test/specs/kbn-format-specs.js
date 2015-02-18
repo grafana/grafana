@@ -74,10 +74,17 @@ define([
       var date = kbn.parseDateMath('-2d', new Date(2014,1,5));
       expect(date.getTime()).to.equal(new Date(2014, 1, 3).getTime());
     });
+
     it('should handle multiple math expressions', function() {
       var date = kbn.parseDateMath('-2d-6h', new Date(2014, 1, 5));
       expect(date.toString()).to.equal(new Date(2014, 1, 2, 18).toString());
     });
+
+    it('should return false when invalid expression', function() {
+      var date = kbn.parseDateMath('2', new Date(2014, 1, 5));
+      expect(date).to.equal(false);
+    });
+
   });
 
 });

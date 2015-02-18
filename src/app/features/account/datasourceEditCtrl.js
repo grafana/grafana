@@ -58,7 +58,6 @@ function (angular) {
 
       backendSrv.put('/api/datasources', $scope.current)
         .then(function() {
-          $scope.editor.index = 0;
           $scope.getDatasources();
         });
     };

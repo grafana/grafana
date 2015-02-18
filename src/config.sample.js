@@ -86,12 +86,6 @@ define(['settings'], function(Settings) {
       // Example: "1m", "1h"
       playlist_timespan: "1m",
 
-      // If you want to specify password before saving, please specify it below
-      // The purpose of this password is not security, but to stop some users from accidentally changing dashboards
-      admin: {
-        password: ''
-      },
-
       // Change window title prefix from 'Grafana - <dashboard title>'
       window_title_prefix: 'Grafana - ',
 

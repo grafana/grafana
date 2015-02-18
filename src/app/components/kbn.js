@@ -197,6 +197,11 @@ function($, _, moment) {
     return kbn.parseDateMath(mathString, time);
   };
 
+  kbn._timespanRegex = /^\d+[h,m,M,w,s,H,d]$/;
+  kbn.isValidTimeSpan = function(str) {
+    return kbn._timespanRegex.test(str);
+  };
+
   kbn.parseDateMath = function(mathString, time, roundUp) {
     var dateTime = moment(time);
     for (var i = 0; i < mathString.length;) {

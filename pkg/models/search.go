@@ -11,7 +11,6 @@ type DashboardSearchHit struct {
 	Title     string   `json:"title"`
 	Slug      string   `json:"slug"`
 	Tags      []string `json:"tags"`
-	Url       string   `json:"url"`
 	IsStarred bool     `json:"isStarred"`
 }
 

@@ -40,7 +40,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+f', function() {
-        scope.appEvent('show-dash-editor', { src: 'app/partials/search.html', cssClass: 'search-container' });
+        scope.appEvent('show-dash-search');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+o', function() {
