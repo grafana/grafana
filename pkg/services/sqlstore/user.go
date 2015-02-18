@@ -139,7 +139,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	if strings.Contains(query.LoginOrEmail, "@") {
 		user = &m.User{Email: query.LoginOrEmail}
 	} else {
-		user = &m.User{Login: strings.ToLower(query.LoginOrEmail)}
+		user = &m.User{Login: query.LoginOrEmail}
 	}
 
 	has, err := x.Get(user)
