@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DataSourceEditCtrl', function($scope, $http, backendSrv, $routeParams, $location) {
+  module.controller('DataSourceEditCtrl', function($scope, $http, backendSrv, $routeParams, $location, datasourceSrv) {
 
     var defaults = {
       name: '',
@@ -41,12 +41,19 @@ function (angular) {
       });
     };
 
+    $scope.updateFrontendSettings = function() {
+      backendSrv.get('/api/frontend/settings').then(function(settings) {
+        datasourceSrv.init(settings.datasources);
+      });
+    };
+
     $scope.update = function() {
       if (!$scope.editForm.$valid) {
         return;
       }
 
       backendSrv.post('/api/datasources', $scope.current).then(function() {
+        $scope.updateFrontendSettings();
         $location.path("account/datasources");
       });
     };
@@ -56,10 +63,10 @@ function (angular) {
         return;
       }
 
-      backendSrv.put('/api/datasources', $scope.current)
-        .then(function() {
-          $scope.getDatasources();
-        });
+      backendSrv.put('/api/datasources', $scope.current).then(function() {
+        $scope.updateFrontendSettings();
+        $location.path("account/datasources");
+      });
     };
 
     $scope.init();

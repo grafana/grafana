@@ -7,7 +7,7 @@ import (
 )
 
 func setIndexViewData(c *middleware.Context) error {
-	settings, err := getFrontendSettings(c)
+	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) {
+func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
 	accountDataSources := make([]*m.DataSource, 0)
 
 	if c.IsSignedIn {
@@ -70,4 +70,14 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 	}
 
 	return jsonObj, nil
+}
+
+func GetFrontendSettings(c *middleware.Context) {
+	settings, err := getFrontendSettingsMap(c)
+	if err != nil {
+		c.JsonApiErr(400, "Failed to get frontend settings", err)
+		return
+	}
+
+	c.JSON(200, settings)
 }

@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv) {
+  module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv, $location) {
     $scope.user = {};
 
     $scope.init = function() {
@@ -28,9 +28,13 @@ function (angular) {
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
       if ($scope.createMode) {
-        backendSrv.post('/api/admin/users', $scope.user);
+        backendSrv.post('/api/admin/users', $scope.user).then(function() {
+          $location.path('/admin/users');
+        });
       } else {
-        backendSrv.put('/api/admin/users/' + $scope.user_id, $scope.user);
+        backendSrv.put('/api/admin/users/' + $scope.user_id, $scope.user).then(function() {
+          $location.path('/admin/users');
+        });
       }
     };
 

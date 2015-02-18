@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DataSourcesCtrl', function($scope, $http, backendSrv) {
+  module.controller('DataSourcesCtrl', function($scope, $http, backendSrv, datasourceSrv) {
 
     $scope.init = function() {
       $scope.datasources = [];
@@ -23,6 +23,10 @@ function (angular) {
     $scope.remove = function(ds) {
       backendSrv.delete('/api/datasources/' + ds.id).then(function() {
         $scope.getDatasources();
+
+        backendSrv.get('/api/frontend/settings').then(function(settings) {
+          datasourceSrv.init(settings.datasources);
+        });
       });
     };
 

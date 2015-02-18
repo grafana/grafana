@@ -78,6 +78,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", GetDataSourceById)
 		}, reqAccountAdmin)
 
+		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
