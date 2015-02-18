@@ -46,11 +46,6 @@ function (_) {
     //   return datasource;
     // };
     //
-    // var parseMultipleHosts = function(datasource) {
-    //   datasource.urls = _.map(datasource.url.split(","), function (url) { return url.trim(); });
-    //   return datasource;
-    // };
-    //
     // _.each(settings.datasources, function(datasource, key) {
     //   datasource.name = key;
     //   if (datasource.url) { parseBasicAuth(datasource); }

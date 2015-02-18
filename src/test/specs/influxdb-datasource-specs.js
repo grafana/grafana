@@ -11,7 +11,7 @@ define([
     beforeEach(ctx.providePhase(['templateSrv']));
     beforeEach(ctx.createService('InfluxDatasource'));
     beforeEach(function() {
-      ctx.ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
+      ctx.ds = new ctx.service({ url: '', user: 'test', password: 'mupp' });
     });
 
     describe('When querying influxdb with one target using query editor target spec', function() {
