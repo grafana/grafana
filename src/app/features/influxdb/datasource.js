@@ -16,7 +16,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxdb';
-      this.urls = datasource.urls;
+      this.urls = _.map(datasource.url.split(','), function(url) {
+        return url.trim();
+      });
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
