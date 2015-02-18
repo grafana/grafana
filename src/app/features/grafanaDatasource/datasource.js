@@ -45,11 +45,6 @@ function (angular, _, kbn) {
     };
 
     GrafanaDatasource.prototype.saveDashboard = function(dashboard) {
-      // remove id if title has changed
-      if (dashboard.title !== dashboard.originalTitle) {
-        dashboard.id = null;
-      }
-
       return backendSrv.post('/api/dashboards/db/', { dashboard: dashboard })
         .then(function(data) {
           return { title: dashboard.title, url: '/dashboard/db/' + data.slug };

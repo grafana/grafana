@@ -20,7 +20,6 @@ define([
 
     describe('shareUrl with current time range and panel', function() {
 
-
       it('should generate share url relative time', function() {
         ctx.$location.path('/test');
         ctx.scope.panel = { id: 22 };
