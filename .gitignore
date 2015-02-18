@@ -13,6 +13,7 @@ src/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+*.iml
 
 /data/*
 /bin/*
