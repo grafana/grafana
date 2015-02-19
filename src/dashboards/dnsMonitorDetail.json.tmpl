@@ -80,13 +80,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode({{.Namespace}}.http.{{.Slug}}.{{.Location}}.time, 4)"
+              "target": "aliasByNode({{.Namespace}}.dns.{{.Slug}}.{{.Location}}.time, 4)"
             },
              {
-              "target": "alias({{.Namespace}}.http.{{.Slug}}.{{.Location}}.state, 'down')"
+              "target": "alias({{.Namespace}}.dns.{{.Slug}}.{{.Location}}.state, 'down')"
             },
             {
-              "target": "alias(scale(offset({{.Namespace}}.http.{{.Slug}}.{{.Location}}.state, -1), -1), 'up')"
+              "target": "alias(scale(offset({{.Namespace}}.dns.{{.Slug}}.{{.Location}}.state, -1), -1), 'up')"
             }
           ],
           "timeFrom": null,
