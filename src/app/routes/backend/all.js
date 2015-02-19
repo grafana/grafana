@@ -62,6 +62,10 @@ define([
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
       })
+      .when('/profile/password', {
+        templateUrl: 'app/features/profile/partials/password.html',
+        controller : 'ChangePasswordCtrl',
+      })
       .when('/admin/settings', {
         templateUrl: 'app/features/admin/partials/settings.html',
         controller : 'AdminSettingsCtrl',

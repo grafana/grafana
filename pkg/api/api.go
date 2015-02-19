@@ -50,6 +50,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/accounts", GetUserAccounts)
 			r.Post("/stars/dashboard/:id", StarDashboard)
 			r.Delete("/stars/dashboard/:id", UnstarDashboard)
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
 		})
 
 		// account

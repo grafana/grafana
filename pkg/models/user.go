@@ -52,6 +52,13 @@ type UpdateUserCommand struct {
 	UserId int64 `json:"-"`
 }
 
+type ChangeUserPasswordCommand struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+
+	UserId int64 `json:"-"`
+}
+
 type DeleteUserCommand struct {
 	UserId int64
 }

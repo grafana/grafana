@@ -9,6 +9,7 @@ define([
   './dashboard/all',
   './panel/all',
   './profile/profileCtrl',
+  './profile/changePasswordCtrl',
   './account/all',
   './admin/all',
   './grafanaDatasource/datasource',

@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", CreateUser)
 	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
+	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", SetUsingAccount)
 	bus.AddHandler("sql", GetUserInfo)
@@ -176,6 +177,22 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 			Login:     user.Login,
 			Email:     user.Email,
 		})
+
+		return nil
+	})
+}
+
+func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
+	return inTransaction2(func(sess *session) error {
+
+		user := m.User{
+			Password: cmd.NewPassword,
+			Updated:  time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+			return err
+		}
 
 		return nil
 	})

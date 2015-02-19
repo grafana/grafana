@@ -120,7 +120,7 @@ function (angular, _, kbn) {
     }
 
     function convertTargetToQuery(target) {
-      if (!target.metric) {
+      if (!target.metric || target.hide) {
         return null;
       }
 

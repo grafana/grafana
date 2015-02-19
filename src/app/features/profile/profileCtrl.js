@@ -7,7 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ProfileCtrl', function($scope, $http, backendSrv) {
+  module.controller('ProfileCtrl', function($scope, backendSrv) {
 
     $scope.newAccount = {name: ''};
 

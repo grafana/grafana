@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetUser(c *middleware.Context) {
@@ -83,4 +84,34 @@ func SetUsingAccount(c *middleware.Context) {
 	}
 
 	c.JsonOK("Active account changed")
+}
+
+func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) {
+	userQuery := m.GetUserByIdQuery{Id: c.UserId}
+
+	if err := bus.Dispatch(&userQuery); err != nil {
+		c.JsonApiErr(500, "Could not read user from database", err)
+		return
+	}
+
+	passwordHashed := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	if passwordHashed != userQuery.Result.Password {
+		c.JsonApiErr(401, "Invalid old password", nil)
+		return
+	}
+
+	if len(cmd.NewPassword) < 4 {
+		c.JsonApiErr(400, "New password too short", nil)
+		return
+	}
+
+	cmd.UserId = c.UserId
+	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to change user password", err)
+		return
+	}
+
+	c.JsonOK("User password changed")
 }
