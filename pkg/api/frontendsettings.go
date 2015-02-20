@@ -80,9 +80,8 @@ func getFrontendSettings(c *middleware.Context) (map[string]interface{}, error) 
 			"dependencies": []string{"raintank/all"},
 			"panels": map[string]interface{}{
 				"raintankMonitorDescription": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorDescription" },
-				"raintankMonitorEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorEventsPanel" },
+				"raintankEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankEventsPanel" },
 				"raintankMonitorDashboardBuilder": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorDashboardBuilder" },
-				"raintankMetricEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankMetricEventsPanel" },
 			},
 		},
 	}

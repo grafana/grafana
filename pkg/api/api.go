@@ -119,8 +119,13 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", GetSiteById)
 			r.Delete("/:id", DeleteSite)
 		})
-		r.Get("/monitor_types", GetMonitorTypes)
 
+		r.Get("/monitor_types", GetMonitorTypes)
+		
+		//Events
+		r.Get("/events", bind(m.GetEventsQuery{}), GetEvents)
+
+		//Get Graph data from Graphite.
 		r.Any("/graphite/*", GraphiteProxy)
 
 	}, reqSignedIn)
