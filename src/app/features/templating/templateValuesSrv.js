@@ -85,7 +85,7 @@ function (angular, _, kbn) {
       var labels = variable.queryLabel ? variable.queryLabel.split(/,/) : [];
       // split values on commas only if they are not between {}. It allows to create
       // custom variables that, used on Graphite, can selectively switch groups of metrics
-      var values = variable.query ? variable.query.match(/(\{(?:[^\{]+)*\}|[^,]+)/g) : [];
+      var values = variable.query ? variable.query.match(/(\{.*?\}|[^,]+)/g) : [];
       for (var index = 0; index < values.length; index++) {
         //undefined or empty labels must be filled with values
         var label = (typeof labels[index] === 'undefined' || labels[index] === '') ?
