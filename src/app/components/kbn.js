@@ -372,10 +372,21 @@ function($, _, moment) {
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
   kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
-  kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', 'GJ', 'TJ', 'PJ', 'EJ', 'ZJ', 'YJ']);
-  kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', 'GW', 'TW', 'PW', 'EW', 'ZW', 'YW']);
+  kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
+  kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
+  kbn.valueFormats.kwatt = kbn.formatFuncCreator(1000, [' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
+  kbn.valueFormats.watth = kbn.formatFuncCreator(1000, [' Wh', ' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
+  kbn.valueFormats.kwatth = kbn.formatFuncCreator(1000, [' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
   kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
   kbn.valueFormats.none = kbn.toFixed;
+  kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
+  kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
+  kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
+  kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
+  kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
+  kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
+  kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
+  kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
@@ -498,6 +509,7 @@ function($, _, moment) {
           {text: 'none' , value: 'none'},
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
+          {text: 'ppm', value: 'ppm'},
         ]
       },
       {
@@ -514,8 +526,8 @@ function($, _, moment) {
         submenu: [
           {text: 'bits', value: 'bits'},
           {text: 'bytes', value: 'bytes'},
-          {text: 'kilo bytes', value: 'kbytes'},
-          {text: 'mega bytes', value: 'mbytes'},
+          {text: 'kilobytes', value: 'kbytes'},
+          {text: 'megabytes', value: 'mbytes'},
         ]
       },
       {
@@ -528,9 +540,29 @@ function($, _, moment) {
       {
         text: 'energy',
         submenu: [
-          {text: 'watt', value: 'watt'},
-          {text: 'joule', value: 'joule'},
-          {text: 'eV', value: 'ev'},
+          {text: 'watt (W)',              value: 'watt'},
+          {text: 'kilowatt (kW)',         value: 'kwatt'},
+          {text: 'watt-hour (Wh)',        value: 'watth'},
+          {text: 'kilowatt-hour (kWh)',   value: 'kwatth'},
+          {text: 'joule (J)',             value: 'joule'},
+          {text: 'electron volt (eV)',    value: 'ev'},
+        ]
+      },
+      {
+        text: 'weather',
+        submenu: [
+          {text: 'Celcius (°C)',         value: 'celsius'  },
+          {text: 'Farenheit (°F)',       value: 'farenheit'},
+          {text: 'Humidity (%H)',        value: 'humidity' },
+        ]
+      },
+      {
+        text: 'velocity',
+        submenu: [
+          {text: 'm/s',  value: 'velocityms'  },
+          {text: 'km/h', value: 'velocitykmh'  },
+          {text: 'mph',  value: 'velocitymph'  },
+          {text: 'knot (kn)', value: 'velocityknot'  },
         ]
       },
     ];
