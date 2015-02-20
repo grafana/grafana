@@ -69,6 +69,7 @@ type MonitorDetailData struct {
 
 type DetailPanel struct {
 	Id        int64
+	SiteId    int64
 	Title     string
 	Protocol  string
 	Slug      string
@@ -95,7 +96,7 @@ func SiteSummary(data *SiteSummaryData) (map[string]interface{}, error) {
 		}
 		proto = strings.ToLower(proto)
 		data.Panels = append(data.Panels, &SummaryPanel{
-			Id:        int64(count),
+			Id:        int64(count) + 1,
 			Title:     mon.Name,
 			Slug:      mon.Slug,
 			Protocol:  proto,
@@ -149,7 +150,8 @@ func MonitorDetail(data *MonitorDetailData) (map[string]interface{}, error) {
 	for _, loc := range data.Locations {
 		count++
 		data.Panels = append(data.Panels, &DetailPanel{
-			Id:        int64(count),
+			Id:        int64(count) + 1,
+			SiteId:    data.SiteId,
 			Title:     loc.Name,
 			Slug:      data.Slug,
 			Protocol:  data.Protocol,

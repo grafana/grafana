@@ -15,6 +15,16 @@
       "height": "250px",
       "panels": [
         {
+          "editable": true,
+          "error": false,
+          "filter": "site_id:{{.SiteId}} AND monitor:{{.Slug}}",
+          "id": 1,
+          "size": 100,
+          "span": 12,
+          "title": "Events",
+          "type": "raintankEventsPanel"
+        },
+        {
           "aliasColors": {},
           "annotate": {
             "enable": false
@@ -34,7 +44,7 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "id": 1,
+          "id": 2,
           "legend": {
             "avg": false,
             "current": false,

@@ -14,6 +14,16 @@
       "editable": false,
       "height": "250px",
       "panels": [
+        {
+          "editable": true,
+          "error": false,
+          "filter": "site_id:{{.SiteId}}",
+          "id": 1,
+          "size": 100,
+          "span": 12,
+          "title": "Events",
+          "type": "raintankEventsPanel"
+        },
 {{range .Panels}}
         {
           "aliasColors": {},
