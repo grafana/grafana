@@ -1,7 +1,10 @@
 <div class="submenu-controls" ng-controller="SubmenuCtrl">
-	<div class="tight-form" style="border-top: none">
+	<div class="tight-form borderless">
 
 		<ul class="tight-form-list" ng-if="dashboard.templating.enable">
+			<li class="tight-form-item">
+				<strong>Variables:</strong>
+			</li>
 			<li ng-repeat-start="variable in variables" class="tight-form-item template-param-name">
 				<span class="template-variable ">
 					${{variable.name}}:
@@ -13,6 +16,7 @@
 		</ul>
 
 		<ul class="tight-form-list" ng-if="dashboard.annotations.enable">
+			<strong>ANNOTATIONS</strong>
 			<li ng-repeat="annotation in dashboard.annotations.list" class="tight-form-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 				<a ng-click="disableAnnotation(annotation)">
 					<i class="annotation-color-icon fa fa-bolt"></i>
