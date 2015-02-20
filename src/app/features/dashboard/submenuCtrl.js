@@ -18,6 +18,7 @@ function (angular, _) {
       $scope.panel = $scope.pulldown;
       $scope.row = $scope.pulldown;
       $scope.variables = $scope.dashboard.templating.list;
+      $scope.annotations = $scope.dashboard.templating.list;
     };
 
     $scope.disableAnnotation = function (annotation) {

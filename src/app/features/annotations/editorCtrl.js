@@ -64,11 +64,13 @@ function (angular, _, $) {
       $scope.annotations.push($scope.currentAnnotation);
       $scope.reset();
       $scope.editor.index = 0;
+      $scope.updateSubmenuVisibility();
     };
 
     $scope.removeAnnotation = function(annotation) {
       var index = _.indexOf($scope.annotations, annotation);
       $scope.annotations.splice(index, 1);
+      $scope.updateSubmenuVisibility();
     };
 
   });
