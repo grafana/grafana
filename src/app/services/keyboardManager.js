@@ -1,7 +1,8 @@
 define([
-  'angular'
+  'angular',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -252,6 +253,13 @@ function (angular) {
         elt['on' + opt['type']] = fct;
       }
     };
+
+    keyboardManagerService.unbindAll = function() {
+      _.each(keyboardManagerService.keyboardEvent, function(value, key) {
+        keyboardManagerService.unbind(key);
+      });
+    };
+
     // Remove the shortcut - just specify the shortcut and I will remove the binding
     keyboardManagerService.unbind = function (label) {
       label = label.toLowerCase();
