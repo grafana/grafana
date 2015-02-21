@@ -12,13 +12,7 @@ function(angular, $) {
     this.shortcuts = function(scope) {
 
       scope.$on('$destroy', function() {
-        keyboardManager.unbind('ctrl+f');
-        keyboardManager.unbind('ctrl+h');
-        keyboardManager.unbind('ctrl+s');
-        keyboardManager.unbind('ctrl+r');
-        keyboardManager.unbind('ctrl+z');
-        keyboardManager.unbind('ctrl+o');
-        keyboardManager.unbind('esc');
+        keyboardManager.unbindAll();
       });
 
       var helpModalScope = null;
