@@ -1,8 +1,8 @@
 {
-	"ImportPath": "github.com/torkelo/grafana-pro",
-	"GoVersion": "go1.3",
+	"ImportPath": "github.com/grafana/grafana",
+	"GoVersion": "go1.4",
 	"Packages": [
-		"./pkg/..."
+		"./..."
 	],
 	"Deps": [
 		{
@@ -12,6 +12,14 @@
 		{
 			"ImportPath": "github.com/Unknwon/macaron",
 			"Rev": "da7cbddc50b9d33e076fb1eabff13b55c3b85fc5"
+		},
+		{
+			"ImportPath": "github.com/araddon/gou",
+			"Rev": "83835b52401515352c9234fecfa61e55aaab793b"
+		},
+		{
+			"ImportPath": "github.com/bitly/go-hostpool",
+			"Rev": "e83c9e8d24926d4897baaaac1c9428e07bacb377"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -50,13 +58,18 @@
 			"Rev": "65b8817c40cb5bdce08673a15fd2a648c2ba0e16"
 		},
 		{
+			"ImportPath": "github.com/mattbaird/elastigo/lib",
+			"Comment": "v1.0-139-gba038c1",
+			"Rev": "ba038c10f634af5e7f3bd27b81bd8c37af844edf"
+		},
+		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "d10e2c8f62100097910367dee90a9bd89d426a44"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-356-gfbc0a1c",
-			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
+			"Comment": "1.5.0-376-g507d829",
+			"Rev": "507d82961b11be9fc3c07aeb0fc338be0b757775"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",

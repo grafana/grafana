@@ -2,6 +2,25 @@
 // are referenced in the convey package for use with the So(...) method.
 package assertions
 
+// By default we use this serializer to provide a JSON representation
+// of failure results on selected assertions so the web UI can display
+// a convenient diff.
+var serializer Serializer = newSerializer()
+
+// StandaloneMode provides control over JSON serialization of failures. When
+// using the assertions in this package outside of the convey package JSON results
+// aren't generally helpful. In that case, call this function with a value of 'true'
+// (maybe in an 'init' function) before using the So function (below) for standalone
+// assertions. Calling this function with a value of 'false' will restore the default
+// JSON serialization behavior.
+func StandaloneMode(yes bool) {
+	if yes {
+		serializer = new(noopSerializer)
+	} else {
+		serializer = newSerializer()
+	}
+}
+
 // This function is not used by the goconvey library. It's actually a convenience method
 // for running assertions on arbitrary arguments outside of any testing context, like for
 // application logging. It allows you to perform assertion-like behavior (and get nicely
@@ -19,8 +38,6 @@ package assertions
 //   }
 //
 func So(actual interface{}, assert assertion, expected ...interface{}) (bool, string) {
-	serializer = noop
-
 	if result := so(actual, assert, expected...); len(result) == 0 {
 		return true, result
 	} else {
