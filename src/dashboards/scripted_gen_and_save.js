@@ -3,7 +3,7 @@
 /*
  * Complex scripted dashboard
  * This script generates a dashboard object that Grafana can load. It also takes a number of user
- * supplied URL parameters (int ARGS variable)
+ * supplied URL parameters (in the ARGS variable)
  *
  * Return a dashboard object, or a function
  *
@@ -13,7 +13,7 @@
 
 'use strict';
 
-// accessable variables in this scope
+// accessible variables in this scope
 var window, document, ARGS, $, jQuery, moment, kbn, services, _;
 
 // default datasource
