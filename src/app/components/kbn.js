@@ -326,11 +326,15 @@ function($, _, moment) {
       }
 
       var steps = 0;
+      var limit = extArray.length;
 
       while (Math.abs(size) >= factor) {
         steps++;
         size /= factor;
+
+        if (steps >= limit) { return "NA"; }
       }
+
       if (steps > 0) {
         decimals = scaledDecimals + (3 * steps);
       }
