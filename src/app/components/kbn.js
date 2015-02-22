@@ -168,14 +168,22 @@ function($, _, moment) {
     if(_.isDate(text)) {
       return text;
     }
-    var time,
-      mathString = "",
-      index,
-      parseString;
+
+    var time;
+    var mathString = "";
+    var index;
+    var parseString;
+
     if (text.substring(0,3) === "now") {
       time = new Date();
-      mathString = text.substring("now".length);
-    } else {
+      mathString = text.substring(3);
+    }
+    else if (text.substring(0,5) === 'today') {
+      time = new Date();
+      time.setHours(0,0,0,0);
+      mathString = text.substring(5);
+    }
+    else {
       index = text.indexOf("||");
       parseString;
       if (index === -1) {
