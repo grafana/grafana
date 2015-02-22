@@ -72,6 +72,10 @@ function (angular, $, config) {
       $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
     };
 
+    $scope.broadcastRefresh = function() {
+      $rootScope.$broadcast('refresh');
+    };
+
     $scope.add_row = function(dash, row) {
       dash.rows.push(row);
     };

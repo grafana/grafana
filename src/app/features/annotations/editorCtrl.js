@@ -58,6 +58,7 @@ function (angular, _, $) {
     $scope.update = function() {
       $scope.reset();
       $scope.editor.index = 0;
+      $scope.broadcastRefresh();
     };
 
     $scope.add = function() {
@@ -65,12 +66,14 @@ function (angular, _, $) {
       $scope.reset();
       $scope.editor.index = 0;
       $scope.updateSubmenuVisibility();
+      $scope.broadcastRefresh();
     };
 
     $scope.removeAnnotation = function(annotation) {
       var index = _.indexOf($scope.annotations, annotation);
       $scope.annotations.splice(index, 1);
       $scope.updateSubmenuVisibility();
+      $scope.broadcastRefresh();
     };
 
   });

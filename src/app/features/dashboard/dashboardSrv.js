@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function($rootScope)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data) {
 
@@ -130,10 +130,6 @@ function (angular, $, kbn, _, moment) {
       return this.timezone === 'browser' ?
               moment(date).format(format) :
               moment.utc(date).format(format);
-    };
-
-    p.emit_refresh = function() {
-      $rootScope.$broadcast('refresh');
     };
 
     p._updateSchema = function(old) {
