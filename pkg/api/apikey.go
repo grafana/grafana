@@ -8,7 +8,7 @@ import (
 )
 
 func GetApiKeys(c *middleware.Context) {
-	query := m.GetApiKeysQuery{AccountId: c.AccountId}
+	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to list api keys", err)
@@ -30,7 +30,7 @@ func GetApiKeys(c *middleware.Context) {
 func DeleteApiKey(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteApiKeyCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -47,7 +47,7 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 	cmd.Key = util.GetRandomString(64)
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -71,7 +71,7 @@ func UpdateApiKey(c *middleware.Context, cmd m.UpdateApiKeyCommand) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

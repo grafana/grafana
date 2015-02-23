@@ -66,18 +66,18 @@ var (
 	CookieRememberName string
 	DisableUserSignUp  bool
 
-	// single account
-	SingleAccountMode  bool
-	DefaultAccountName string
-	DefaultAccountRole string
+	// single organization
+	SingleOrgMode  bool
+	DefaultOrgName string
+	DefaultOrgRole string
 
 	// Http auth
 	AdminUser     string
 	AdminPassword string
 
-	AnonymousEnabled     bool
-	AnonymousAccountName string
-	AnonymousAccountRole string
+	AnonymousEnabled bool
+	AnonymousOrgName string
+	AnonymousOrgRole string
 
 	// Session settings.
 	SessionOptions session.Options
@@ -220,14 +220,14 @@ func NewConfigContext(config string) {
 	AdminPassword = security.Key("admin_password").String()
 
 	// single account
-	SingleAccountMode = Cfg.Section("account.single").Key("enabled").MustBool(false)
-	DefaultAccountName = Cfg.Section("account.single").Key("account_name").MustString("main")
-	DefaultAccountRole = Cfg.Section("account.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	SingleOrgMode = Cfg.Section("organization.single").Key("enabled").MustBool(false)
+	DefaultOrgName = Cfg.Section("organization.single").Key("org_name").MustString("main")
+	DefaultOrgRole = Cfg.Section("organization.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
-	AnonymousAccountName = Cfg.Section("auth.anonymous").Key("account_name").String()
-	AnonymousAccountRole = Cfg.Section("auth.anonymous").Key("account_role").String()
+	AnonymousOrgName = Cfg.Section("auth.anonymous").Key("org_name").String()
+	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
 
 	// PhantomJS rendering
 	ImagesDir = "data/png"

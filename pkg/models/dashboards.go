@@ -14,10 +14,10 @@ var (
 )
 
 type Dashboard struct {
-	Id        int64
-	Slug      string
-	AccountId int64
-	Version   int
+	Id      int64
+	Slug    string
+	OrgId   int64
+	Version int
 
 	Created time.Time
 	Updated time.Time
@@ -53,7 +53,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = cmd.Dashboard
 	dash.Title = dash.Data["title"].(string)
-	dash.AccountId = cmd.AccountId
+	dash.OrgId = cmd.OrgId
 	dash.UpdateSlug()
 
 	if dash.Data["id"] != nil {
@@ -80,14 +80,14 @@ func (dash *Dashboard) UpdateSlug() {
 
 type SaveDashboardCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard"`
-	AccountId int64                  `json:"-"`
+	OrgId     int64                  `json:"-"`
 
 	Result *Dashboard
 }
 
 type DeleteDashboardCommand struct {
-	Slug      string
-	AccountId int64
+	Slug  string
+	OrgId int64
 }
 
 //
@@ -95,8 +95,8 @@ type DeleteDashboardCommand struct {
 //
 
 type GetDashboardQuery struct {
-	Slug      string
-	AccountId int64
+	Slug  string
+	OrgId int64
 
 	Result *Dashboard
 }

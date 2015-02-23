@@ -8,7 +8,7 @@ import (
 )
 
 func GetDataSources(c *middleware.Context) {
-	query := m.GetDataSourcesQuery{AccountId: c.AccountId}
+	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query datasources", err)
@@ -19,7 +19,7 @@ func GetDataSources(c *middleware.Context) {
 	for i, ds := range query.Result {
 		result[i] = &dtos.DataSource{
 			Id:        ds.Id,
-			AccountId: ds.AccountId,
+			OrgId:     ds.OrgId,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -37,8 +37,8 @@ func GetDataSources(c *middleware.Context) {
 
 func GetDataSourceById(c *middleware.Context) {
 	query := m.GetDataSourceByIdQuery{
-		Id:        c.ParamsInt64(":id"),
-		AccountId: c.AccountId,
+		Id:    c.ParamsInt64(":id"),
+		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -50,7 +50,7 @@ func GetDataSourceById(c *middleware.Context) {
 
 	c.JSON(200, &dtos.DataSource{
 		Id:        ds.Id,
-		AccountId: ds.AccountId,
+		OrgId:     ds.OrgId,
 		Name:      ds.Name,
 		Url:       ds.Url,
 		Type:      ds.Type,
@@ -71,7 +71,7 @@ func DeleteDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd := &m.DeleteDataSourceCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteDataSourceCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -90,7 +90,7 @@ func AddDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add datasource", err)
@@ -108,7 +108,7 @@ func UpdateDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

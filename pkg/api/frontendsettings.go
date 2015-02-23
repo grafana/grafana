@@ -10,22 +10,22 @@ import (
 )
 
 func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
-	accountDataSources := make([]*m.DataSource, 0)
+	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.IsSignedIn {
-		query := m.GetDataSourcesQuery{AccountId: c.AccountId}
+		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
 			return nil, err
 		}
 
-		accountDataSources = query.Result
+		orgDataSources = query.Result
 	}
 
 	datasources := make(map[string]interface{})
 
-	for _, ds := range accountDataSources {
+	for _, ds := range orgDataSources {
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {

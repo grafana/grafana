@@ -20,58 +20,59 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
-	bus.AddHandler("sql", SetUsingAccount)
+	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserInfo)
 	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
-	bus.AddHandler("sql", GetUserAccounts)
+	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DeleteUser)
+	bus.AddHandler("sql", SetUsingOrg)
 }
 
-func getAccountIdForNewUser(userEmail string, sess *session) (int64, error) {
-	var account m.Account
+func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
+	var org m.Org
 
-	if setting.SingleAccountMode {
-		has, err := sess.Where("name=?", setting.DefaultAccountName).Get(&account)
+	if setting.SingleOrgMode {
+		has, err := sess.Where("name=?", setting.DefaultOrgName).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
-			return account.Id, nil
+			return org.Id, nil
 		} else {
-			account.Name = setting.DefaultAccountName
+			org.Name = setting.DefaultOrgName
 		}
 	} else {
-		account.Name = userEmail
+		org.Name = userEmail
 	}
 
-	account.Created = time.Now()
-	account.Updated = time.Now()
+	org.Created = time.Now()
+	org.Updated = time.Now()
 
-	if _, err := sess.Insert(&account); err != nil {
+	if _, err := sess.Insert(&org); err != nil {
 		return 0, err
 	}
 
-	return account.Id, nil
+	return org.Id, nil
 }
 
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction2(func(sess *session) error {
-		accountId, err := getAccountIdForNewUser(cmd.Email, sess)
+		orgId, err := getOrgIdForNewUser(cmd.Email, sess)
 		if err != nil {
 			return err
 		}
 
 		// create user
 		user := m.User{
-			Email:     cmd.Email,
-			Name:      cmd.Name,
-			Login:     cmd.Login,
-			Company:   cmd.Company,
-			IsAdmin:   cmd.IsAdmin,
-			AccountId: accountId,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+			Email:   cmd.Email,
+			Name:    cmd.Name,
+			Login:   cmd.Login,
+			Company: cmd.Company,
+			IsAdmin: cmd.IsAdmin,
+			OrgId:   orgId,
+			Created: time.Now(),
+			Updated: time.Now(),
 		}
 
 		if len(cmd.Password) > 0 {
@@ -86,20 +87,20 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			return err
 		}
 
-		// create account user link
-		accountUser := m.AccountUser{
-			AccountId: accountId,
-			UserId:    user.Id,
-			Role:      m.ROLE_ADMIN,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+		// create org user link
+		orgUser := m.OrgUser{
+			OrgId:   orgId,
+			UserId:  user.Id,
+			Role:    m.ROLE_ADMIN,
+			Created: time.Now(),
+			Updated: time.Now(),
 		}
 
-		if setting.SingleAccountMode && !user.IsAdmin {
-			accountUser.Role = m.RoleType(setting.DefaultAccountRole)
+		if setting.SingleOrgMode && !user.IsAdmin {
+			orgUser.Role = m.RoleType(setting.DefaultOrgRole)
 		}
 
-		if _, err = sess.Insert(&accountUser); err != nil {
+		if _, err = sess.Insert(&orgUser); err != nil {
 			return err
 		}
 
@@ -198,12 +199,12 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 	})
 }
 
-func SetUsingAccount(cmd *m.SetUsingAccountCommand) error {
+func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
-		user.AccountId = cmd.AccountId
+		user.OrgId = cmd.OrgId
 		_, err := sess.Id(user.Id).Update(&user)
 		return err
 	})
@@ -228,12 +229,12 @@ func GetUserInfo(query *m.GetUserInfoQuery) error {
 	return err
 }
 
-func GetUserAccounts(query *m.GetUserAccountsQuery) error {
-	query.Result = make([]*m.UserAccountDTO, 0)
-	sess := x.Table("account_user")
-	sess.Join("INNER", "account", "account_user.account_id=account.id")
-	sess.Where("account_user.user_id=?", query.UserId)
-	sess.Cols("account.name", "account_user.role", "account_user.account_id")
+func GetUserOrgList(query *m.GetUserOrgListQuery) error {
+	query.Result = make([]*m.UserOrgDTO, 0)
+	sess := x.Table("org_user")
+	sess.Join("INNER", "org", "org_user.org_id=org.id")
+	sess.Where("org_user.user_id=?", query.UserId)
+	sess.Cols("org.name", "org_user.role", "org_user.account_id")
 	err := sess.Find(&query.Result)
 	return err
 }
@@ -245,12 +246,12 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                u.email        as email,
 	                u.login        as login,
 									u.name         as name,
-	                account.name      as account_name,
-	                account_user.role as account_role,
-	                account.id        as account_id
+	                org.name       as org_name,
+	                org_user.role  as org_role,
+	                org.id         as org_id
 	                FROM ` + dialect.Quote("user") + ` as u
-									LEFT OUTER JOIN account_user on account_user.account_id = u.account_id and account_user.user_id = u.id
-	                LEFT OUTER JOIN account on account.id = u.account_id
+									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
+	                LEFT OUTER JOIN org on org.id = u.org_id
 	                WHERE u.id=?`
 
 	var user m.SignedInUser

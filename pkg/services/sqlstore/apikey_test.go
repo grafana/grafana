@@ -14,7 +14,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved api key", func() {
-			cmd := m.AddApiKeyCommand{AccountId: 1, Key: "hello"}
+			cmd := m.AddApiKeyCommand{OrgId: 1, Key: "hello"}
 			err := AddApiKey(&cmd)
 			So(err, ShouldBeNil)
 

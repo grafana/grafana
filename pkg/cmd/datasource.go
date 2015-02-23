@@ -81,14 +81,14 @@ func createDataSource(c *cli.Context) {
 	dsAccess := c.String("access")
 	dsDefault := c.Bool("default")
 
-	accountQuery := m.GetAccountByNameQuery{Name: name}
-	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.ConsoleFatalf("Failed to find account: %s", err)
+	orgQuery := m.GetOrgByNameQuery{Name: name}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.ConsoleFatalf("Failed to find organization: %s", err)
 	}
 
-	accountId := accountQuery.Result.Id
+	orgId := orgQuery.Result.Id
 
-	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
+	query := m.GetDataSourceByNameQuery{OrgId: orgId, Name: ds}
 	if err := bus.Dispatch(&query); err != nil {
 		if err != m.ErrDataSourceNotFound {
 			log.ConsoleFatalf("Failed to query for existing datasource: %s", err)
@@ -100,7 +100,7 @@ func createDataSource(c *cli.Context) {
 	}
 
 	cmd := m.AddDataSourceCommand{
-		AccountId: accountId,
+		OrgId:     orgId,
 		Name:      ds,
 		Url:       url,
 		Type:      m.DsType(dsType),
@@ -135,14 +135,14 @@ func listDatasources(c *cli.Context) {
 	}
 
 	name := c.Args().First()
-	accountQuery := m.GetAccountByNameQuery{Name: name}
-	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.ConsoleFatalf("Failed to find account: %s", err)
+	orgQuery := m.GetOrgByNameQuery{Name: name}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.ConsoleFatalf("Failed to find organization: %s", err)
 	}
 
-	accountId := accountQuery.Result.Id
+	orgId := orgQuery.Result.Id
 
-	query := m.GetDataSourcesQuery{AccountId: accountId}
+	query := m.GetDataSourcesQuery{OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		log.ConsoleFatalf("Failed to find datasources: %s", err)
 	}
@@ -161,20 +161,20 @@ func describeDataSource(c *cli.Context) {
 	initRuntime(c)
 
 	if len(c.Args()) != 2 {
-		log.ConsoleFatal("Account and datasource name args are required")
+		log.ConsoleFatal("Organization and datasource name args are required")
 	}
 
 	name := c.Args().First()
 	ds := c.Args()[1]
 
-	accountQuery := m.GetAccountByNameQuery{Name: name}
-	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.ConsoleFatalf("Failed to find account: %s", err)
+	orgQuery := m.GetOrgByNameQuery{Name: name}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.ConsoleFatalf("Failed to find organization: %s", err)
 	}
 
-	accountId := accountQuery.Result.Id
+	orgId := orgQuery.Result.Id
 
-	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
+	query := m.GetDataSourceByNameQuery{OrgId: orgId, Name: ds}
 	if err := bus.Dispatch(&query); err != nil {
 		log.ConsoleFatalf("Failed to find datasource: %s", err)
 	}
@@ -208,20 +208,20 @@ func deleteDataSource(c *cli.Context) {
 	name := c.Args().First()
 	ds := c.Args()[1]
 
-	accountQuery := m.GetAccountByNameQuery{Name: name}
-	if err := bus.Dispatch(&accountQuery); err != nil {
-		log.ConsoleFatalf("Failed to find account: %s", err)
+	orgQuery := m.GetOrgByNameQuery{Name: name}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.ConsoleFatalf("Failed to find organization: %s", err)
 	}
 
-	accountId := accountQuery.Result.Id
+	orgId := orgQuery.Result.Id
 
-	query := m.GetDataSourceByNameQuery{AccountId: accountId, Name: ds}
+	query := m.GetDataSourceByNameQuery{OrgId: orgId, Name: ds}
 	if err := bus.Dispatch(&query); err != nil {
 		log.ConsoleFatalf("Failed to find datasource: %s", err)
 	}
 	datasource := query.Result
 
-	cmd := m.DeleteDataSourceCommand{AccountId: accountId, Id: datasource.Id}
+	cmd := m.DeleteDataSourceCommand{OrgId: orgId, Id: datasource.Id}
 	if err := bus.Dispatch(&cmd); err != nil {
 		log.ConsoleFatalf("Failed to delete datasource: %s", err)
 	}

@@ -44,7 +44,7 @@ func Search(c *middleware.Context) {
 
 	if tagcloud == "true" {
 
-		query := m.GetDashboardTagsQuery{AccountId: c.AccountId}
+		query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to get tags from database", err)
@@ -60,7 +60,7 @@ func Search(c *middleware.Context) {
 			UserId:    c.UserId,
 			Limit:     limit,
 			IsStarred: starred == "true",
-			AccountId: c.AccountId,
+			OrgId:     c.OrgId,
 		}
 
 		err := bus.Dispatch(&query)

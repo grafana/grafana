@@ -23,8 +23,8 @@ type User struct {
 	EmailVerified bool
 	Theme         string
 
-	IsAdmin   bool
-	AccountId int64
+	IsAdmin bool
+	OrgId   int64
 
 	Created time.Time
 	Updated time.Time
@@ -63,9 +63,9 @@ type DeleteUserCommand struct {
 	UserId int64
 }
 
-type SetUsingAccountCommand struct {
-	UserId    int64
-	AccountId int64
+type SetUsingOrgCommand struct {
+	UserId int64
+	OrgId  int64
 }
 
 // ----------------------
@@ -99,14 +99,19 @@ type SearchUsersQuery struct {
 	Result []*UserSearchHitDTO
 }
 
+type GetUserOrgListQuery struct {
+	UserId int64
+	Result []*UserOrgDTO
+}
+
 // ------------------------
 // DTO & Projections
 
 type SignedInUser struct {
 	UserId         int64
-	AccountId      int64
-	AccountName    string
-	AccountRole    RoleType
+	OrgId          int64
+	OrgName        string
+	OrgRole        RoleType
 	Login          string
 	Name           string
 	Email          string

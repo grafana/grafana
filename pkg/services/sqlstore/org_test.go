@@ -15,11 +15,11 @@ func TestAccountDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given single account mode", func() {
-			setting.SingleAccountMode = true
-			setting.DefaultAccountName = "test"
-			setting.DefaultAccountRole = "Viewer"
+			setting.SingleOrgMode = true
+			setting.DefaultOrgName = "test"
+			setting.DefaultOrgRole = "Viewer"
 
-			Convey("Users should be added to default account", func() {
+			Convey("Users should be added to default organization", func() {
 				ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 				ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
@@ -33,15 +33,15 @@ func TestAccountDataAccess(t *testing.T) {
 				GetUserAccounts(&q1)
 				GetUserAccounts(&q2)
 
-				So(q1.Result[0].AccountId, ShouldEqual, q2.Result[0].AccountId)
+				So(q1.Result[0].OrgId, ShouldEqual, q2.Result[0].OrgId)
 				So(q1.Result[0].Role, ShouldEqual, "Viewer")
 			})
 		})
 
 		Convey("Given two saved users", func() {
-			setting.SingleAccountMode = false
+			setting.SingleOrgMode = false
+			setting.DefaultOrgName = "test"
 
-			setting.DefaultAccountName = "test"
 			ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
 

@@ -56,22 +56,23 @@ func GetContextHandler() macaron.Handler {
 				ctx.SignedInUser = &m.SignedInUser{}
 
 				// TODO: fix this
-				ctx.AccountRole = keyInfo.Role
+				ctx.OrgRole = keyInfo.Role
 				ctx.ApiKeyId = keyInfo.Id
-				ctx.AccountId = keyInfo.AccountId
+				ctx.OrgId = keyInfo.OrgId
 			}
 		} else if setting.AnonymousEnabled {
-			accountQuery := m.GetAccountByNameQuery{Name: setting.AnonymousAccountName}
-			if err := bus.Dispatch(&accountQuery); err != nil {
-				if err == m.ErrAccountNotFound {
-					log.Error(3, "Anonymous access account name does not exist", nil)
+			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+			if err := bus.Dispatch(&orgQuery); err != nil {
+				if err == m.ErrOrgNotFound {
+					log.Error(3, "Anonymous access organization name does not exist", nil)
 				}
 			} else {
 				ctx.IsSignedIn = false
 				ctx.HasAnonymousAccess = true
 				ctx.SignedInUser = &m.SignedInUser{}
-				ctx.AccountRole = m.RoleType(setting.AnonymousAccountRole)
-				ctx.AccountId = accountQuery.Result.Id
+				ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+				ctx.OrgId = orgQuery.Result.Id
+				ctx.OrgName = orgQuery.Result.Name
 			}
 		}
 

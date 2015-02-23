@@ -6,7 +6,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func AddOrgUser(c *middleware.Context, cmd m.AddAccountUserCommand) {
+func AddOrgUser(c *middleware.Context, cmd m.AddOrgUserCommand) {
 	if !cmd.Role.IsValid() {
 		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
@@ -26,19 +26,19 @@ func AddOrgUser(c *middleware.Context, cmd m.AddAccountUserCommand) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 	cmd.UserId = userToAdd.Id
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Could not add user to account", err)
+		c.JsonApiErr(500, "Could not add user to organization", err)
 		return
 	}
 
-	c.JsonOK("User added to account")
+	c.JsonOK("User added to organization")
 }
 
 func GetOrgUsers(c *middleware.Context) {
-	query := m.GetAccountUsersQuery{AccountId: c.AccountId}
+	query := m.GetOrgUsersQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to get account user", err)
@@ -51,15 +51,15 @@ func GetOrgUsers(c *middleware.Context) {
 func RemoveOrgUser(c *middleware.Context) {
 	userId := c.ParamsInt64(":id")
 
-	cmd := m.RemoveAccountUserCommand{AccountId: c.AccountId, UserId: userId}
+	cmd := m.RemoveOrgUserCommand{OrgId: c.OrgId, UserId: userId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrLastAccountAdmin {
-			c.JsonApiErr(400, "Cannot remove last account admin", nil)
+		if err == m.ErrLastOrgAdmin {
+			c.JsonApiErr(400, "Cannot remove last organization admin", nil)
 			return
 		}
-		c.JsonApiErr(500, "Failed to remove user from account", err)
+		c.JsonApiErr(500, "Failed to remove user from organization", err)
 	}
 
-	c.JsonOK("User removed from account")
+	c.JsonOK("User removed from organization")
 }

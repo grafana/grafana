@@ -19,8 +19,8 @@ type CurrentUser struct {
 	Login          string     `json:"login"`
 	Email          string     `json:"email"`
 	Name           string     `json:"name"`
-	AccountRole    m.RoleType `json:"accountRole"`
-	AccountName    string     `json:"accountName"`
+	OrgRole        m.RoleType `json:"orgRole"`
+	OrgName        string     `json:"orgName"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
@@ -38,7 +38,7 @@ type Dashboard struct {
 
 type DataSource struct {
 	Id        int64      `json:"id"`
-	AccountId int64      `json:"accountId"`
+	OrgId     int64      `json:"orgId"`
 	Name      string     `json:"name"`
 	Type      m.DsType   `json:"type"`
 	Access    m.DsAccess `json:"access"`

@@ -23,9 +23,9 @@ type DsType string
 type DsAccess string
 
 type DataSource struct {
-	Id        int64
-	AccountId int64
-	Version   int
+	Id      int64
+	OrgId   int64
+	Version int
 
 	Name              string
 	Type              DsType
@@ -48,7 +48,7 @@ type DataSource struct {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	AccountId int64 `json:"-"`
+	OrgId     int64 `json:"-"`
 	Name      string
 	Type      DsType
 	Access    DsAccess
@@ -64,7 +64,7 @@ type AddDataSourceCommand struct {
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
 	Id        int64
-	AccountId int64
+	OrgId     int64
 	Name      string
 	Type      DsType
 	Access    DsAccess
@@ -76,28 +76,28 @@ type UpdateDataSourceCommand struct {
 }
 
 type DeleteDataSourceCommand struct {
-	Id        int64
-	AccountId int64
+	Id    int64
+	OrgId int64
 }
 
 // ---------------------
 // QUERIES
 
 type GetDataSourcesQuery struct {
-	AccountId int64
-	Result    []*DataSource
+	OrgId  int64
+	Result []*DataSource
 }
 
 type GetDataSourceByIdQuery struct {
-	Id        int64
-	AccountId int64
-	Result    DataSource
+	Id     int64
+	OrgId  int64
+	Result DataSource
 }
 
 type GetDataSourceByNameQuery struct {
-	Name      string
-	AccountId int64
-	Result    DataSource
+	Name   string
+	OrgId  int64
+	Result DataSource
 }
 
 // ---------------------
