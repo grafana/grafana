@@ -41,10 +41,31 @@
   list-style: none;
   margin: 0;
   padding: 0;
+
   li {
-    height: 50px;
+    margin-bottom: 7px;
+  }
+
+  &.sidemenu-small {
+    font-size: 14px;
+
+    .icon-circle {
+      width: 28px;
+      height: 28px;
+      i {
+        top: 1px;
+        left: 6px;
+        font-size: 110%;
+      }
+    }
+
+    .sidemenu-item {
+      color: @textColor;
+      line-height: 28px;
+    }
   }
 }
+
 
 .sidemenu-user {
   .sidemenu-item-text {
@@ -57,8 +78,8 @@
   }
   img {
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
     box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
 }
@@ -93,8 +114,8 @@
     color: @textColor;
     opacity: .7;
     position: relative;
-    left: 11px;
-    top: 1px;
+    left: 7px;
+    top: 2px;
     font-size: 125%;
   }
 }
@@ -104,8 +125,8 @@
 
 .sidemenu-item {
   color: #f80;
-  line-height: 41px;
-	padding: 14px 10px 14px 20px;
+  line-height: 40px;
+	padding: 0px 10px 0px 20px;
 	display: block;
 
   .sidemenu-item-text {

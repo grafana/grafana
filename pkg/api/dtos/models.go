@@ -20,7 +20,7 @@ type CurrentUser struct {
 	Email          string     `json:"email"`
 	Name           string     `json:"name"`
 	AccountRole    m.RoleType `json:"accountRole"`
-	AccountName    string     `json:"acountName"`
+	AccountName    string     `json:"accountName"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
