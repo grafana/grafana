@@ -34,28 +34,28 @@ define([
         templateUrl: 'app/features/dashboard/partials/import.html',
         controller : 'DashboardImportCtrl',
       })
-      .when('/account', {
-        templateUrl: 'app/features/account/partials/account.html',
-        controller : 'AccountCtrl',
-      })
-      .when('/account/datasources', {
-        templateUrl: 'app/features/account/partials/datasources.html',
+      .when('/datasources', {
+        templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
-      .when('/account/datasources/edit/:id', {
-        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+      .when('/datasources/edit/:id', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
       })
-      .when('/account/datasources/new', {
-        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+      .when('/datasources/new', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
       })
-      .when('/account/users', {
-        templateUrl: 'app/features/account/partials/users.html',
-        controller : 'AccountUsersCtrl',
+      .when('/org', {
+        templateUrl: 'app/features/org/partials/orgDetails.html',
+        controller : 'OrgDetailsCtrl',
       })
-      .when('/account/apikeys', {
-        templateUrl: 'app/features/account/partials/apikeys.html',
+      .when('/org/users', {
+        templateUrl: 'app/features/org/partials/orgUsers.html',
+        controller : 'OrgUsersCtrl',
+      })
+      .when('/org/apikeys', {
+        templateUrl: 'app/features/org/partials/orgApiKeys.html',
         controller : 'ApiKeysCtrl',
       })
       .when('/profile', {

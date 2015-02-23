@@ -1,7 +1,7 @@
 <topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="account">Overview</a></li>
-		<li><a href="account/users">Users</a></li>
+		<li class="active"><a href="org">Overview</a></li>
+		<li><a href="org/users">Users</a></li>
 	</ul>
 </topnav>
 
@@ -15,10 +15,10 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Account name</strong>
+							<strong>Name</strong>
 						</li>
 						<li>
-							<input type="text" required ng-model="account.name" class="input-xxlarge tight-form-input last" >
+							<input type="text" required ng-model="org.name" class="input-xxlarge tight-form-input last" >
 						</li>
 					</ul>
 					<div class="clearfix"></div>
@@ -33,7 +33,7 @@
 		</h2>
 
 		<div ng-controller="ApiKeysCtrl">
-			<form name="addTokenrForm" class="form-inline tight-form">
+			<form name="addTokenrForm" class="form-inline tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 100px">
 						Add a key

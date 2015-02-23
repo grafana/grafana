@@ -6,7 +6,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetAccount(c *middleware.Context) {
+func GetOrg(c *middleware.Context) {
 	query := m.GetAccountByIdQuery{Id: c.AccountId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -27,7 +27,7 @@ func GetAccount(c *middleware.Context) {
 	c.JSON(200, &account)
 }
 
-func CreateAccount(c *middleware.Context, cmd m.CreateAccountCommand) {
+func CreateOrg(c *middleware.Context, cmd m.CreateAccountCommand) {
 	cmd.UserId = c.UserId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -38,7 +38,7 @@ func CreateAccount(c *middleware.Context, cmd m.CreateAccountCommand) {
 	c.JsonOK("Account created")
 }
 
-func UpdateAccount(c *middleware.Context, cmd m.UpdateAccountCommand) {
+func UpdateOrg(c *middleware.Context, cmd m.UpdateAccountCommand) {
 	cmd.AccountId = c.AccountId
 
 	if err := bus.Dispatch(&cmd); err != nil {

@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ApiKeysCtrl', function($scope, $http, backendSrv) {
+  module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv) {
 
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
     $scope.token = { role: 'Viewer' };

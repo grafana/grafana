@@ -54,13 +54,13 @@ func Register(r *macaron.Macaron) {
 		})
 
 		// account
-		r.Group("/account", func() {
-			r.Get("/", GetAccount)
-			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
-			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
-			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
-			r.Get("/users", GetAccountUsers)
-			r.Delete("/users/:id", RemoveAccountUser)
+		r.Group("/org", func() {
+			r.Get("/", GetOrg)
+			r.Post("/", bind(m.CreateAccountCommand{}), CreateOrg)
+			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateOrg)
+			r.Post("/users", bind(m.AddAccountUserCommand{}), AddOrgUser)
+			r.Get("/users", GetOrgUsers)
+			r.Delete("/users/:id", RemoveOrgUser)
 		}, reqAccountAdmin)
 
 		// auth api keys

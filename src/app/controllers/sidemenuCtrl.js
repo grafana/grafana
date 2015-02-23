@@ -26,10 +26,10 @@ function (angular, _, $, config) {
       $scope.menu.push({
         text: "Data Sources",
         icon: "fa fa-fw fa-database",
-        href: $scope.getUrl("/account/datasources"),
+        href: $scope.getUrl("/datasources"),
       });
       $scope.menu.push({
-        text: "Organization", href: $scope.getUrl("/account"),
+        text: "Organization", href: $scope.getUrl("/org"),
         icon: "fa fa-fw fa-users",
       });
     }

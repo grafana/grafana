@@ -6,7 +6,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func AddAccountUser(c *middleware.Context, cmd m.AddAccountUserCommand) {
+func AddOrgUser(c *middleware.Context, cmd m.AddAccountUserCommand) {
 	if !cmd.Role.IsValid() {
 		c.JsonApiErr(400, "Invalid role specified", nil)
 		return
@@ -37,7 +37,7 @@ func AddAccountUser(c *middleware.Context, cmd m.AddAccountUserCommand) {
 	c.JsonOK("User added to account")
 }
 
-func GetAccountUsers(c *middleware.Context) {
+func GetOrgUsers(c *middleware.Context) {
 	query := m.GetAccountUsersQuery{AccountId: c.AccountId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -48,7 +48,7 @@ func GetAccountUsers(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func RemoveAccountUser(c *middleware.Context) {
+func RemoveOrgUser(c *middleware.Context) {
 	userId := c.ParamsInt64(":id")
 
 	cmd := m.RemoveAccountUserCommand{AccountId: c.AccountId, UserId: userId}

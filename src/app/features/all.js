@@ -10,7 +10,7 @@ define([
   './panel/all',
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
-  './account/all',
+  './org/all',
   './admin/all',
   './grafanaDatasource/datasource',
 ], function () {});

@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AccountUsersCtrl', function($scope, $http, backendSrv) {
+  module.controller('OrgUsersCtrl', function($scope, $http, backendSrv) {
 
     $scope.user = {
       loginOrEmail: '',
@@ -18,18 +18,18 @@ function (angular) {
     };
 
     $scope.get = function() {
-      backendSrv.get('/api/account/users').then(function(users) {
+      backendSrv.get('/api/org/users').then(function(users) {
         $scope.users = users;
       });
     };
 
     $scope.removeUser = function(user) {
-      backendSrv.delete('/api/account/users/' + user.userId).then($scope.get);
+      backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
     };
 
     $scope.addUser = function() {
       if (!$scope.form.$valid) { return; }
-      backendSrv.post('/api/account/users', $scope.user).then($scope.get);
+      backendSrv.post('/api/org/users', $scope.user).then($scope.get);
     };
 
     $scope.init();
