@@ -12,3 +12,7 @@ type AdminUpdateUserForm struct {
 	Login string `json:"login"`
 	Name  string `json:"name"`
 }
+
+type AdminUpdateUserPasswordForm struct {
+	Password string `json:"password" binding:"Required"`
+}

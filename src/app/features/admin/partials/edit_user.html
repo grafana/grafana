@@ -2,18 +2,14 @@
 	<ul class="nav">
 		<li><a href="admin/settings">Settings</a></li>
 		<li><a href="admin/users">Users</a></li>
-		<li ng-class="{active: createMode}"><a href="admin/users/create">Create user</a></li>
-		<li class="active" ng-show="!createMode"><a href="admin/users/edit/{{user_id}}">Edit user</a></li>
+		<li><a href="admin/users/create">Create user</a></li>
+		<li class="active"><a href="admin/users/edit/{{user_id}}">Edit user</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
-		<h2 ng-show="createMode">
-			Create a new user
-		</h2>
-
-		<h2 ng-show="!createMode">
+		<h2>
 			Edit user
 		</h2>
 
@@ -52,14 +48,25 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
+			</div>
 
-				<div class="tight-form" style="margin-top: 5px" ng-if="createMode">
+			<br>
+			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+		</form>
+
+		<h2>
+			Change password
+		</h2>
+
+		<form name="passwordForm">
+			<div>
+				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Password</strong>
+							<strong>New password</strong>
 						</li>
 						<li>
-							<input type="password" required ng-model="user.password" class="input-xxlarge tight-form-input last" >
+							<input type="password" required ng-minlength="4" ng-model="password" class="input-xxlarge tight-form-input last">
 						</li>
 					</ul>
 					<div class="clearfix"></div>
@@ -67,8 +74,8 @@
 			</div>
 
 			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="createMode">Create</button>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+			<button type="submit" class="pull-right btn btn-success" ng-click="setPassword()">Change password</button>
 		</form>
 	</div>
+
 </div>

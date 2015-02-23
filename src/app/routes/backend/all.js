@@ -75,7 +75,7 @@ define([
         controller : 'AdminUsersCtrl',
       })
       .when('/admin/users/create', {
-        templateUrl: 'app/features/admin/partials/edit_user.html',
+        templateUrl: 'app/features/admin/partials/new_user.html',
         controller : 'AdminEditUserCtrl',
       })
       .when('/admin/users/edit/:id', {
