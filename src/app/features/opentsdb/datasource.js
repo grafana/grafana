@@ -24,7 +24,14 @@ function (angular, _, kbn) {
     OpenTSDBDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.range.from);
       var end = convertToTSDBTime(options.range.to);
-      var queries = _.compact(_.map(options.targets, convertTargetToQuery));
+      var qs = [];
+      if (options.interval.match(/\.[0-9]+s/)) {
+        options.interval = parseFloat(options.interval)*1000 + "ms";
+      }
+      _.each(options.targets, function(target) {
+        qs.push(convertTargetToQuery(target, options.interval));
+      });
+      var queries = _.compact(qs);
 
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
@@ -119,7 +126,7 @@ function (angular, _, kbn) {
       return metric;
     }
 
-    function convertTargetToQuery(target) {
+    function convertTargetToQuery(target, interval) {
       if (!target.metric) {
         return null;
       }
@@ -149,7 +156,8 @@ function (angular, _, kbn) {
       }
 
       if (target.shouldDownsample) {
-        query.downsample = templateSrv.replace(target.downsampleInterval) + "-" + target.downsampleAggregator;
+        var buf =  target.downsampleInterval || interval;
+        query.downsample = templateSrv.replace(buf) + "-" + target.downsampleAggregator;
       }
 
       query.tags = angular.copy(target.tags);
