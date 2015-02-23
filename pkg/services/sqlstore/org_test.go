@@ -14,7 +14,7 @@ func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 
-		Convey("Given single account mode", func() {
+		Convey("Given single org mode", func() {
 			setting.SingleOrgMode = true
 			setting.DefaultOrgName = "test"
 			setting.DefaultOrgRole = "Viewer"
@@ -28,10 +28,10 @@ func TestAccountDataAccess(t *testing.T) {
 				err = CreateUser(&ac2cmd)
 				So(err, ShouldBeNil)
 
-				q1 := m.GetUserAccountsQuery{UserId: ac1cmd.Result.Id}
-				q2 := m.GetUserAccountsQuery{UserId: ac2cmd.Result.Id}
-				GetUserAccounts(&q1)
-				GetUserAccounts(&q2)
+				q1 := m.GetUserOrgListQuery{UserId: ac1cmd.Result.Id}
+				q2 := m.GetUserOrgListQuery{UserId: ac2cmd.Result.Id}
+				GetUserOrgList(&q1)
+				GetUserOrgList(&q2)
 
 				So(q1.Result[0].OrgId, ShouldEqual, q2.Result[0].OrgId)
 				So(q1.Result[0].Role, ShouldEqual, "Viewer")
@@ -70,14 +70,14 @@ func TestAccountDataAccess(t *testing.T) {
 				So(query.Result[1].Email, ShouldEqual, "ac2@test.com")
 			})
 
-			Convey("Given an added account user", func() {
-				cmd := m.AddAccountUserCommand{
-					AccountId: ac1.AccountId,
-					UserId:    ac2.Id,
-					Role:      m.ROLE_VIEWER,
+			Convey("Given an added org user", func() {
+				cmd := m.AddOrgUserCommand{
+					OrgId:  ac1.OrgId,
+					UserId: ac2.Id,
+					Role:   m.ROLE_VIEWER,
 				}
 
-				err := AddAccountUser(&cmd)
+				err := AddOrgUser(&cmd)
 				Convey("Should have been saved without error", func() {
 					So(err, ShouldBeNil)
 				})
@@ -88,54 +88,54 @@ func TestAccountDataAccess(t *testing.T) {
 
 					So(err, ShouldBeNil)
 					So(query.Result.Email, ShouldEqual, "ac2@test.com")
-					So(query.Result.AccountId, ShouldEqual, ac2.AccountId)
+					So(query.Result.OrgId, ShouldEqual, ac2.OrgId)
 					So(query.Result.Name, ShouldEqual, "ac2 name")
 					So(query.Result.Login, ShouldEqual, "ac2")
-					So(query.Result.AccountRole, ShouldEqual, "Admin")
-					So(query.Result.AccountName, ShouldEqual, "ac2@test.com")
+					So(query.Result.OrgRole, ShouldEqual, "Admin")
+					So(query.Result.OrgName, ShouldEqual, "ac2@test.com")
 					So(query.Result.IsGrafanaAdmin, ShouldBeTrue)
 				})
 
-				Convey("Can get user accounts", func() {
-					query := m.GetUserAccountsQuery{UserId: ac2.Id}
-					err := GetUserAccounts(&query)
+				Convey("Can get user organizations", func() {
+					query := m.GetUserOrgListQuery{UserId: ac2.Id}
+					err := GetUserOrgList(&query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
 				})
 
-				Convey("Can get account users", func() {
-					query := m.GetAccountUsersQuery{AccountId: ac1.AccountId}
-					err := GetAccountUsers(&query)
+				Convey("Can get organization users", func() {
+					query := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					err := GetOrgUsers(&query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
 					So(query.Result[0].Role, ShouldEqual, "Admin")
 				})
 
-				Convey("Can set using account", func() {
-					cmd := m.SetUsingAccountCommand{UserId: ac2.Id, AccountId: ac1.Id}
-					err := SetUsingAccount(&cmd)
+				Convey("Can set using org", func() {
+					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.Id}
+					err := SetUsingOrg(&cmd)
 					So(err, ShouldBeNil)
 
-					Convey("SignedInUserQuery with a different account", func() {
+					Convey("SignedInUserQuery with a different org", func() {
 						query := m.GetSignedInUserQuery{UserId: ac2.Id}
 						err := GetSignedInUser(&query)
 
 						So(err, ShouldBeNil)
-						So(query.Result.AccountId, ShouldEqual, ac1.Id)
+						So(query.Result.OrgId, ShouldEqual, ac1.Id)
 						So(query.Result.Email, ShouldEqual, "ac2@test.com")
 						So(query.Result.Name, ShouldEqual, "ac2 name")
 						So(query.Result.Login, ShouldEqual, "ac2")
-						So(query.Result.AccountName, ShouldEqual, "ac1@test.com")
-						So(query.Result.AccountRole, ShouldEqual, "Viewer")
+						So(query.Result.OrgName, ShouldEqual, "ac1@test.com")
+						So(query.Result.OrgRole, ShouldEqual, "Viewer")
 					})
 				})
 
 				Convey("Cannot delete last admin account user", func() {
-					cmd := m.RemoveAccountUserCommand{AccountId: ac1.AccountId, UserId: ac1.Id}
-					err := RemoveAccountUser(&cmd)
-					So(err, ShouldEqual, m.ErrLastAccountAdmin)
+					cmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id}
+					err := RemoveOrgUser(&cmd)
+					So(err, ShouldEqual, m.ErrLastOrgAdmin)
 				})
 			})
 		})

@@ -129,3 +129,21 @@ func (m *AddTableMigration) WithColumn(col *Column) *AddTableMigration {
 	}
 	return m
 }
+
+type RenameColumnMigration struct {
+	MigrationBase
+	tableName string
+	oldName   string
+	newName   string
+}
+
+func (m *RenameColumnMigration) Table(tableName string) *RenameColumnMigration {
+	m.tableName = tableName
+	return m
+}
+
+func (m *RenameColumnMigration) Rename(oldName string, newName string) *RenameColumnMigration {
+	m.oldName = oldName
+	m.newName = newName
+	return m
+}
