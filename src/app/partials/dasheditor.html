@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Import']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows']" data-title="{{tab}}">
 		</div>
 		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
@@ -70,11 +70,7 @@
 			</div>
 		</div>
 
-		<div ng-if="editor.index == 2">
-			<ng-include src="'app/partials/import.html'"></ng-include>
-		</div>
-
-		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 3+$index">
+		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 2+$index">
 			<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
 			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
 		</div>

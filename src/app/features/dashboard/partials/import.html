@@ -7,7 +7,7 @@
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Import dashboard
+			Import file
 			<span><tip>Load dashboard JSON layout from file</tip></span>
 		</h2>
 
@@ -23,7 +23,7 @@
 
 		<h2>Migrate dashboards</h2>
 
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 150px">
 					<strong>Dashboard source</strong>
@@ -62,6 +62,9 @@
 				</div>
 			</section>
 		</div>
+
+		<div ng-include="'app/features/dashboard/partials/graphiteImport.html'"></div>
+
 	</div>
 </div>
 

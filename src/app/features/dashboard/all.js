@@ -13,5 +13,6 @@ define([
   './timeSrv',
   './unsavedChangesSrv',
   './directives/dashSearchView',
+  './graphiteImportCtrl',
   './importCtrl',
 ], function () {});
