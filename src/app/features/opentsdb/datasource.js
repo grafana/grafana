@@ -25,12 +25,14 @@ function (angular, _, kbn) {
       var start = convertToTSDBTime(options.range.from);
       var end = convertToTSDBTime(options.range.to);
       var qs = [];
+
       if (options.interval.match(/\.[0-9]+s/)) {
         options.interval = parseFloat(options.interval)*1000 + "ms";
       }
       _.each(options.targets, function(target) {
         qs.push(convertTargetToQuery(target, options.interval));
       });
+
       var queries = _.compact(qs);
 
       // No valid targets, return the empty result to save a round trip.
@@ -155,7 +157,7 @@ function (angular, _, kbn) {
         }
       }
 
-      if (target.shouldDownsample) {
+      if (!target.disableDownsampling) {
         var buf =  target.downsampleInterval || interval;
         query.downsample = templateSrv.replace(buf) + "-" + target.downsampleAggregator;
       }
