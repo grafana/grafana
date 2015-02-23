@@ -22,6 +22,7 @@ function (angular, app, _, kbn, PanelMeta) {
   module.controller('raintankEventsPanel', function($scope, panelSrv, timeSrv, backendSrv) {
     console.log('raintankEventsPanel');
     $scope.panelMeta = new PanelMeta({
+      panelName: 'Raintank Events',
       description : "Events",
       fullscreen: true
     });
@@ -51,6 +52,10 @@ function (angular, app, _, kbn, PanelMeta) {
     };
 
     $scope.getEvents = function() {
+      if ($scope.panel.filter.indexOf(":", $scope.panel.filter.length - 1) !== -1) {
+        //filter ends with a colon. elasticsearch will send a 500error for this.
+        return;
+      }
       var params = {
         query: $scope.panel.filter,
         start: $scope.range.from.getTime(),

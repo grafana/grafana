@@ -21,6 +21,7 @@ function (angular, app, _, kbn, PanelMeta) {
 
   module.controller('raintankMonitorDescription', function($scope, panelSrv, backendSrv) {
     $scope.panelMeta = new PanelMeta({
+      panelName: 'Monitor Description',
       description : "Raintank Monitor details.",
       fullscreen: true
     });
