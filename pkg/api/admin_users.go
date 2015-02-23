@@ -9,7 +9,7 @@ import (
 )
 
 func AdminSearchUsers(c *middleware.Context) {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 20}
+	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to fetch users", err)
 		return
