@@ -23,7 +23,7 @@ import (
 
 var Web = cli.Command{
 	Name:        "web",
-	Usage:       "grafana web",
+	Usage:       "Starts Grafana backend & web server",
 	Description: "Starts Grafana backend & web server",
 	Action:      runWeb,
 }

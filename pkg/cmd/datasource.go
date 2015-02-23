@@ -54,13 +54,13 @@ var (
 		},
 	}
 	DescribeDataSource = cli.Command{
-		Name:        "datasource:info",
+		Name:        "datasources:info",
 		Usage:       "describe the details of a datasource",
 		Description: "Describes the details of a datasource",
 		Action:      describeDataSource,
 	}
 	DeleteDataSource = cli.Command{
-		Name:        "datasource:delete",
+		Name:        "datasources:delete",
 		Usage:       "Deletes a datasource",
 		Description: "Deletes a datasource",
 		Action:      deleteDataSource,
