@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ImportCtrl', function($scope, $http, backendSrv, datasourceSrv) {
+  module.controller('DashboardImportCtrl', function($scope, $http, backendSrv, datasourceSrv) {
 
     $scope.init = function() {
       $scope.datasources = [];

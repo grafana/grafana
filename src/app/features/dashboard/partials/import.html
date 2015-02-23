@@ -1,14 +1,27 @@
-<topnav icon="fa fa-shield" title="Account" subnav="true">
+<topnav icon="fa fa-th-large" title="Dashboards" subnav="true">
 	<ul class="nav">
-		<li><a href="account">Overview</a></li>
-		<li><a href="account/users">Users</a></li>
-		<li class="active"><a href="account/import">Import</a></li>
+		<li class="active"><a href="import">Import</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
-		<h2>Import dashboards</h2>
+		<h2>
+			Import dashboard
+			<span><tip>Load dashboard JSON layout from file</tip></span>
+		</h2>
+
+		<div class="editor-row">
+			<div class="section">
+				<div class="editor-option">
+					<form>
+						<input type="file" id="dashupload" dash-upload/><br>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<h2>Migrate dashboards</h2>
 
 		<div class="tight-form">
 			<ul class="tight-form-list">

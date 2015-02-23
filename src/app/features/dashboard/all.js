@@ -13,4 +13,5 @@ define([
   './timeSrv',
   './unsavedChangesSrv',
   './directives/dashSearchView',
+  './importCtrl',
 ], function () {});

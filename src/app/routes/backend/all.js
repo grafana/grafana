@@ -30,6 +30,10 @@ define([
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
+      .when('/dashboard/import', {
+        templateUrl: 'app/features/dashboard/partials/import.html',
+        controller : 'DashboardImportCtrl',
+      })
       .when('/account', {
         templateUrl: 'app/features/account/partials/account.html',
         controller : 'AccountCtrl',
@@ -53,10 +57,6 @@ define([
       .when('/account/apikeys', {
         templateUrl: 'app/features/account/partials/apikeys.html',
         controller : 'ApiKeysCtrl',
-      })
-      .when('/account/import', {
-        templateUrl: 'app/features/account/partials/import.html',
-        controller : 'ImportCtrl',
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',

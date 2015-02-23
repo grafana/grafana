@@ -3,6 +3,5 @@ define([
   './datasourcesCtrl',
   './datasourceEditCtrl',
   './apiKeysCtrl',
-  './importCtrl',
   './accountCtrl',
 ], function () {});
