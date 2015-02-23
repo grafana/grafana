@@ -26,9 +26,6 @@ function (angular, _, kbn) {
       var end = convertToTSDBTime(options.range.to);
       var qs = [];
 
-      if (options.interval.match(/\.[0-9]+s/)) {
-        options.interval = parseFloat(options.interval)*1000 + "ms";
-      }
       _.each(options.targets, function(target) {
         qs.push(convertTargetToQuery(target, options.interval));
       });
@@ -158,8 +155,13 @@ function (angular, _, kbn) {
       }
 
       if (!target.disableDownsampling) {
-        var buf =  target.downsampleInterval || interval;
-        query.downsample = templateSrv.replace(buf) + "-" + target.downsampleAggregator;
+        interval =  templateSrv.replace(target.downsampleInterval || interval);
+
+        if (interval.match(/\.[0-9]+s/)) {
+          interval = parseFloat(interval)*1000 + "ms";
+        }
+
+        query.downsample = interval + "-" + target.downsampleAggregator;
       }
 
       query.tags = angular.copy(target.tags);
