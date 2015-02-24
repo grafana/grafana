@@ -15,9 +15,8 @@ func addDropAllIndicesMigrations(mg *Migrator, versionSuffix string, table Table
 
 func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) {
 	for _, index := range table.Indices {
-		migration := NewAddIndexMigration(table, index)
 		migrationId := fmt.Sprintf("create index %s - %s", index.XName(table.Name), versionSuffix)
-		mg.AddMigration(migrationId, migration)
+		mg.AddMigration(migrationId, NewAddIndexMigration(table, index))
 	}
 }
 
