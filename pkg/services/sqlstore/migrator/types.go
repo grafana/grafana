@@ -30,6 +30,7 @@ type Table struct {
 	Name        string
 	Columns     []*Column
 	PrimaryKeys []string
+	Indices     []*Index
 }
 
 const (
@@ -44,6 +45,10 @@ type Index struct {
 }
 
 func (index *Index) XName(tableName string) string {
+	if index.Name == "" {
+		index.Name = fmt.Sprintf("%s", strings.Join(index.Cols, "_"))
+	}
+
 	if !strings.HasPrefix(index.Name, "UQE_") &&
 		!strings.HasPrefix(index.Name, "IDX_") {
 		if index.Type == UniqueIndex {

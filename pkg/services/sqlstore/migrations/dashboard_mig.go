@@ -3,79 +3,87 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addDashboardMigration(mg *Migrator) {
-	mg.AddMigration("create dashboard table", new(AddTableMigration).
-		Name("dashboard").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "version", Type: DB_Int, Nullable: false},
-		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "data", Type: DB_Text, Nullable: false},
-		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-	))
+	var dashboardV1 = Table{
+		Name: "dashboard",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "version", Type: DB_Int, Nullable: false},
+			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "data", Type: DB_Text, Nullable: false},
+			&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"account_id"}},
+			&Index{Cols: []string{"account_id", "slug"}, Type: UniqueIndex},
+		},
+	}
 
-	mg.AddMigration("create dashboard_tag table", new(AddTableMigration).
-		Name("dashboard_tag").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-		&Column{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
-	))
+	mg.AddMigration("create dashboard table", NewAddTableMigration(dashboardV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add index dashboard.account_id", new(AddIndexMigration).
-		Table("dashboard").Columns("account_id"))
+	mg.AddMigration("add index dashboard.account_id", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[0]))
+	mg.AddMigration("add unique index dashboard_account_id_slug", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[1]))
 
-	mg.AddMigration("add unique index dashboard_account_id_slug", new(AddIndexMigration).
-		Table("dashboard").Columns("account_id", "slug").Unique())
+	dashboardTagV1 := Table{
+		Name: "dashboard_tag",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"dashboard_id", "term"}, Type: UniqueIndex},
+		},
+	}
 
-	mg.AddMigration("add unique index dashboard_tag.dasboard_id_term", new(AddIndexMigration).
-		Table("dashboard_tag").Columns("dashboard_id", "term").Unique())
+	mg.AddMigration("create dashboard_tag table", NewAddTableMigration(dashboardTagV1))
+	mg.AddMigration("add unique index dashboard_tag.dasboard_id_term", NewAddIndexMigration(dashboardTagV1, dashboardTagV1.Indices[0]))
 
 	// ---------------------
 	// account -> org changes
 
-	//-------  drop indexes ------------------
-	mg.AddMigration("drop index dashboard.account_id", new(DropIndexMigration).
-		Table("dashboard").Columns("account_id"))
-
-	mg.AddMigration("drop unique index dashboard_account_id_slug", new(DropIndexMigration).
-		Table("dashboard").Columns("account_id", "slug").Unique())
-
-	mg.AddMigration("drop unique index dashboard_tag.dasboard_id_term", new(DropIndexMigration).
-		Table("dashboard_tag").Columns("dashboard_id", "term").Unique())
-
+	//-------  drop dashboard indexes ------------------
+	addDropAllIndicesMigrations(mg, "v1", dashboardTagV1)
 	//------- rename table ------------------
-	mg.AddMigration("rename table dashboard to dashboard_old", new(RenameTableMigration).
-		Rename("dashboard", "dashboard_old"))
+	addTableRenameMigration(mg, "dashboard", "dashboard_v1", "v1")
 
-	//------- recreate table with new column names ------------------
-	mg.AddMigration("create dashboard table v2", new(AddTableMigration).
-		Name("dashboard").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "version", Type: DB_Int, Nullable: false},
-		&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "data", Type: DB_Text, Nullable: false},
-		&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-	))
+	// dashboard v2
+	var dashboardV2 = Table{
+		Name: "dashboard",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "version", Type: DB_Int, Nullable: false},
+			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "data", Type: DB_Text, Nullable: false},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"org_id"}},
+			&Index{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+		},
+	}
 
-	//-------  dashboard table indexes ------------------
-	mg.AddMigration("add index dashboard.org_id", new(AddIndexMigration).
-		Table("dashboard").Columns("org_id"))
+	// recreate table
+	mg.AddMigration("create dashboard v2", NewAddTableMigration(dashboardV2))
+	// recreate indices
+	addTableIndicesMigrations(mg, "v2", dashboardV2)
+	// copy data
+	mg.AddMigration("copy dashboard v1 to v2", NewCopyTableDataMigration("dashboard", "dashboard_v1", map[string]string{
+		"id":      "id",
+		"version": "version",
+		"slug":    "slug",
+		"title":   "title",
+		"data":    "data",
+		"org_id":  "account_id",
+		"created": "created",
+		"updated": "updated",
+	}))
 
-	mg.AddMigration("add unique index dashboard_org_id_slug", new(AddIndexMigration).
-		Table("dashboard").Columns("org_id", "slug").Unique())
-
-	mg.AddMigration("add unique index dashboard_tag.dasboard_id_term v2", new(AddIndexMigration).
-		Table("dashboard_tag").Columns("dashboard_id", "term").Unique())
-
-	//------- copy data from table -------------------
-	mg.AddMigration("copy data from dashboard_old table", new(CopyTableDataMigration).
-		Source("dashboard_old", "id, version, slug, title, data, account_id, created, updated").
-		Target("dashboard", "id, version, slug, title, data, org_id, created, updated"))
-
-	mg.AddMigration("Drop old table dashboard_old", new(DropTableMigration).Table("dashboard_old"))
+	mg.AddMigration("drop table dashboard_v1", NewDropTableMigration("dashboard_v1"))
 }

@@ -73,12 +73,11 @@ func (m *AddColumnMigration) Sql(dialect Dialect) string {
 type AddIndexMigration struct {
 	MigrationBase
 	tableName string
-	index     Index
+	index     *Index
 }
 
-func (m *AddIndexMigration) Name(name string) *AddIndexMigration {
-	m.index.Name = name
-	return m
+func NewAddIndexMigration(table Table, index *Index) *AddIndexMigration {
+	return &AddIndexMigration{tableName: table.Name, index: index}
 }
 
 func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
@@ -92,26 +91,23 @@ func (m *AddIndexMigration) Unique() *AddIndexMigration {
 }
 
 func (m *AddIndexMigration) Columns(columns ...string) *AddIndexMigration {
+	m.index = &Index{}
 	m.index.Cols = columns
 	return m
 }
 
 func (m *AddIndexMigration) Sql(dialect Dialect) string {
-	if m.index.Name == "" {
-		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
-	}
-	return dialect.CreateIndexSql(m.tableName, &m.index)
+	return dialect.CreateIndexSql(m.tableName, m.index)
 }
 
 type DropIndexMigration struct {
 	MigrationBase
 	tableName string
-	index     Index
+	index     *Index
 }
 
-func (m *DropIndexMigration) Name(name string) *DropIndexMigration {
-	m.index.Name = name
-	return m
+func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
+	return &DropIndexMigration{tableName: table.Name, index: index}
 }
 
 func (m *DropIndexMigration) Table(tableName string) *DropIndexMigration {
@@ -125,6 +121,7 @@ func (m *DropIndexMigration) Unique() *DropIndexMigration {
 }
 
 func (m *DropIndexMigration) Columns(columns ...string) *DropIndexMigration {
+	m.index = &Index{}
 	m.index.Cols = columns
 	return m
 }
@@ -133,7 +130,7 @@ func (m *DropIndexMigration) Sql(dialect Dialect) string {
 	if m.index.Name == "" {
 		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
 	}
-	return dialect.DropIndexSql(m.tableName, &m.index)
+	return dialect.DropIndexSql(m.tableName, m.index)
 }
 
 type AddTableMigration struct {
@@ -141,8 +138,17 @@ type AddTableMigration struct {
 	table Table
 }
 
+func NewAddTableMigration(table Table) *AddTableMigration {
+	return &AddTableMigration{table: table}
+}
+
 func (m *AddTableMigration) Sql(d Dialect) string {
 	return d.CreateTableSql(&m.table)
+}
+
+func (m *AddTableMigration) Table(table Table) *AddTableMigration {
+	m.table = table
+	return m
 }
 
 func (m *AddTableMigration) Name(name string) *AddTableMigration {
@@ -173,9 +179,8 @@ type DropTableMigration struct {
 	tableName string
 }
 
-func (m *DropTableMigration) Table(tableName string) *DropTableMigration {
-	m.tableName = tableName
-	return m
+func NewDropTableMigration(tableName string) *DropTableMigration {
+	return &DropTableMigration{tableName: tableName}
 }
 
 func (m *DropTableMigration) Sql(d Dialect) string {
@@ -186,6 +191,10 @@ type RenameTableMigration struct {
 	MigrationBase
 	oldName string
 	newName string
+}
+
+func NewRenameTableMigration(oldName string, newName string) *RenameTableMigration {
+	return &RenameTableMigration{oldName: oldName, newName: newName}
 }
 
 func (m *RenameTableMigration) IfTableExists(tableName string) *RenameTableMigration {
@@ -207,19 +216,17 @@ type CopyTableDataMigration struct {
 	MigrationBase
 	sourceTable string
 	targetTable string
-	sourceCols  string
-	targetCols  string
+	sourceCols  []string
+	targetCols  []string
+	colMap      map[string]string
 }
 
-func (m *CopyTableDataMigration) Source(tableName string, cols string) *CopyTableDataMigration {
-	m.sourceTable = tableName
-	m.sourceCols = cols
-	return m
-}
-
-func (m *CopyTableDataMigration) Target(tableName string, cols string) *CopyTableDataMigration {
-	m.targetTable = tableName
-	m.targetCols = cols
+func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap map[string]string) *CopyTableDataMigration {
+	m := &CopyTableDataMigration{sourceTable: sourceTable, targetTable: targetTable}
+	for key, value := range colMap {
+		m.targetCols = append(m.targetCols, key)
+		m.sourceCols = append(m.sourceCols, value)
+	}
 	return m
 }
 

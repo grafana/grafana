@@ -3,70 +3,73 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addApiKeyMigrations(mg *Migrator) {
-	mg.AddMigration("create api_key table", new(AddTableMigration).
-		Name("api_key").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
-		&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-	))
+	apiKeyV1 := Table{
+		Name: "api_key",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
+			&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"account_id"}},
+			&Index{Cols: []string{"key"}, Type: UniqueIndex},
+			&Index{Cols: []string{"account_id", "name"}, Type: UniqueIndex},
+		},
+	}
 
-	//-------  indexes ------------------
-	mg.AddMigration("add index api_key.account_id", new(AddIndexMigration).
-		Table("api_key").Columns("account_id"))
-
-	mg.AddMigration("add index api_key.key", new(AddIndexMigration).
-		Table("api_key").Columns("key").Unique())
-
-	mg.AddMigration("add index api_key.account_id_name", new(AddIndexMigration).
-		Table("api_key").Columns("account_id", "name").Unique())
+	// create table
+	mg.AddMigration("create api_key table", NewAddTableMigration(apiKeyV1))
+	// create indices
+	mg.AddMigration("add index api_key.account_id", NewAddIndexMigration(apiKeyV1, apiKeyV1.Indices[0]))
+	mg.AddMigration("add index api_key.key", NewAddIndexMigration(apiKeyV1, apiKeyV1.Indices[1]))
+	mg.AddMigration("add index api_key.account_id_name", NewAddIndexMigration(apiKeyV1, apiKeyV1.Indices[2]))
 
 	// ---------------------
 	// account -> org changes
 
-	//-------  drop indexes ------------------
-	mg.AddMigration("drop index api_key.account_id", new(DropIndexMigration).
-		Table("api_key").Columns("account_id"))
+	// drop indexes
+	addDropAllIndicesMigrations(mg, "v1", apiKeyV1)
+	// rename table
+	addTableRenameMigration(mg, "api_key", "api_key_v1", "v1")
 
-	mg.AddMigration("drop index api_key.key", new(DropIndexMigration).
-		Table("api_key").Columns("key").Unique())
+	apiKeyV2 := Table{
+		Name: "api_key",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
+			&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"org_id"}},
+			&Index{Cols: []string{"key"}, Type: UniqueIndex},
+			&Index{Cols: []string{"org_id", "name"}, Type: UniqueIndex},
+		},
+	}
 
-	mg.AddMigration("drop index api_key.account_id_name", new(DropIndexMigration).
-		Table("api_key").Columns("account_id", "name").Unique())
+	// create v2 table
+	mg.AddMigration("create api_key table v2", NewAddTableMigration(apiKeyV2))
 
-	//------- rename table ------------------
-	mg.AddMigration("rename table api_key to api_key_old", new(RenameTableMigration).
-		Rename("api_key", "api_key_old"))
+	// add v2 indíces
+	addTableIndicesMigrations(mg, "v2", apiKeyV2)
 
-	//------- recreate table with new column names ------------------
-	mg.AddMigration("create api_key table v2", new(AddTableMigration).
-		Name("api_key").WithColumns(
-		&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-		&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-		&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
-		&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
-		&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-		&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-	))
+	//------- copy data from v1 to v2 -------------------
+	mg.AddMigration("copy api_key v1 to v2", NewCopyTableDataMigration("api_key", "api_key_v1", map[string]string{
+		"id":      "id",
+		"org_id":  "account_id",
+		"name":    "name",
+		"key":     "key",
+		"role":    "role",
+		"created": "created",
+		"updated": "updated",
+	}))
 
-	//------- recreate indexes ------------------
-	mg.AddMigration("add index api_key.org_id", new(AddIndexMigration).
-		Table("api_key").Columns("org_id"))
-
-	mg.AddMigration("add index api_key.key v2", new(AddIndexMigration).
-		Table("api_key").Columns("key").Unique())
-
-	mg.AddMigration("add index api_key.org_id_name", new(AddIndexMigration).
-		Table("api_key").Columns("org_id", "name").Unique())
-
-	//------- copy data from old api_key_old -------------------
-	mg.AddMigration("copy data from old api_key table", new(CopyTableDataMigration).
-		Source("api_key_old", "id, account_id, name, key, role, created, updated").
-		Target("api_key", "id, org_id, name, key, role, created, updated"))
-
-	mg.AddMigration("Drop old table api_key_old", new(DropTableMigration).Table("api_key_old"))
+	mg.AddMigration("Drop old table api_key_v1", NewDropTableMigration("api_key_v1"))
 }
