@@ -20,8 +20,12 @@ type Dialect interface {
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
 	AddColumnSql(tableName string, Col *Column) string
+	CopyTableData(sourceTable string, targetTable string, sourceCols string, targetCols string) string
+	DropTable(tableName string) string
+	DropIndexSql(tableName string, index *Index) string
 
 	TableCheckSql(tableName string) (string, []interface{})
+	RenameTable(oldName string, newName string) string
 }
 
 func NewDialect(name string) Dialect {
@@ -112,4 +116,26 @@ func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
+}
+
+func (db *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols string, targetCols string) string {
+	quote := db.dialect.Quote
+	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetCols, sourceCols, quote(sourceTable))
+}
+
+func (db *BaseDialect) DropTable(tableName string) string {
+	quote := db.dialect.Quote
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
+}
+
+func (db *BaseDialect) RenameTable(oldName string, newName string) string {
+	quote := db.dialect.Quote
+	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
+}
+
+func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
+	quote := db.dialect.Quote
+	var name string
+	name = index.XName(tableName)
+	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }

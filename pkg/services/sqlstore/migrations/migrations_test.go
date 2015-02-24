@@ -1,4 +1,4 @@
-package sqlstore
+package migrations
 
 import (
 	"fmt"

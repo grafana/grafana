@@ -118,6 +118,17 @@ func (mg *Migrator) exec(m Migration) error {
 	}
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {
+
+		condition := m.GetCondition()
+		if condition != nil {
+			sql, args := condition.Sql(mg.dialect)
+			results, err := sess.Query(sql, args...)
+			if err != nil || len(results) == 0 {
+				log.Info("Migrator: skipping migration id: %v, condition not fulfilled", m.Id())
+				return nil
+			}
+		}
+
 		_, err := sess.Exec(m.Sql(mg.dialect))
 		if err != nil {
 			log.Error(3, "Migrator: exec FAILED migration id: %v, err: %v", m.Id(), err)
