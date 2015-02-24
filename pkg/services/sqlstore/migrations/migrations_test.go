@@ -32,7 +32,7 @@ func TestMigrations(t *testing.T) {
 
 			mg := NewMigrator(x)
 			mg.LogLevel = log.DEBUG
-			addMigrations(mg)
+			AddMigrations(mg)
 
 			err = mg.Start()
 			So(err, ShouldBeNil)

@@ -55,7 +55,7 @@ func addOrgMigrations(mg *Migrator) {
 		"name":    "name",
 		"created": "created",
 		"updated": "updated",
-	}))
+	}).IfTableExists("account"))
 
 	mg.AddMigration("copy data account_user to org_user", NewCopyTableDataMigration("org_user", "account_user", map[string]string{
 		"id":      "id",
@@ -64,7 +64,7 @@ func addOrgMigrations(mg *Migrator) {
 		"role":    "role",
 		"created": "created",
 		"updated": "updated",
-	}))
+	}).IfTableExists("account_user"))
 
 	mg.AddMigration("Drop old table account", NewDropTableMigration("account"))
 	mg.AddMigration("Drop old table account_user", NewDropTableMigration("account_user"))

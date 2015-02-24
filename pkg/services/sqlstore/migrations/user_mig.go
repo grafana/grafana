@@ -26,20 +26,11 @@ func addUserMigrations(mg *Migrator) {
 		},
 	}
 
+	// create table
 	mg.AddMigration("create user table", NewAddTableMigration(userV1))
-
-	mg.AddMigration("Add email_verified flag", new(AddColumnMigration).
-		Table("user").Column(&Column{Name: "email_verified", Type: DB_Bool, Nullable: true}))
-
-	mg.AddMigration("Add user.theme column", new(AddColumnMigration).
-		Table("user").Column(&Column{Name: "theme", Type: DB_Varchar, Nullable: true, Length: 20}))
-
-	//-------  user table indexes ------------------
-	mg.AddMigration("add unique index user.login", new(AddIndexMigration).
-		Table("user").Columns("login").Unique())
-
-	mg.AddMigration("add unique index user.email", new(AddIndexMigration).
-		Table("user").Columns("email").Unique())
+	// add indices
+	mg.AddMigration("add unique index user.login", NewAddIndexMigration(userV1, userV1.Indices[0]))
+	mg.AddMigration("add unique index user.email", NewAddIndexMigration(userV1, userV1.Indices[1]))
 
 	// ---------------------
 	// account -> org changes

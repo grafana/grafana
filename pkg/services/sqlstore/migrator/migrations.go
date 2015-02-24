@@ -85,17 +85,6 @@ func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
 	return m
 }
 
-func (m *AddIndexMigration) Unique() *AddIndexMigration {
-	m.index.Type = UniqueIndex
-	return m
-}
-
-func (m *AddIndexMigration) Columns(columns ...string) *AddIndexMigration {
-	m.index = &Index{}
-	m.index.Cols = columns
-	return m
-}
-
 func (m *AddIndexMigration) Sql(dialect Dialect) string {
 	return dialect.CreateIndexSql(m.tableName, m.index)
 }
@@ -108,22 +97,6 @@ type DropIndexMigration struct {
 
 func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
 	return &DropIndexMigration{tableName: table.Name, index: index}
-}
-
-func (m *DropIndexMigration) Table(tableName string) *DropIndexMigration {
-	m.tableName = tableName
-	return m
-}
-
-func (m *DropIndexMigration) Unique() *DropIndexMigration {
-	m.index.Type = UniqueIndex
-	return m
-}
-
-func (m *DropIndexMigration) Columns(columns ...string) *DropIndexMigration {
-	m.index = &Index{}
-	m.index.Cols = columns
-	return m
 }
 
 func (m *DropIndexMigration) Sql(dialect Dialect) string {
@@ -139,39 +112,16 @@ type AddTableMigration struct {
 }
 
 func NewAddTableMigration(table Table) *AddTableMigration {
+	for _, col := range table.Columns {
+		if col.IsPrimaryKey {
+			table.PrimaryKeys = append(table.PrimaryKeys, col.Name)
+		}
+	}
 	return &AddTableMigration{table: table}
 }
 
 func (m *AddTableMigration) Sql(d Dialect) string {
 	return d.CreateTableSql(&m.table)
-}
-
-func (m *AddTableMigration) Table(table Table) *AddTableMigration {
-	m.table = table
-	return m
-}
-
-func (m *AddTableMigration) Name(name string) *AddTableMigration {
-	m.table.Name = name
-	return m
-}
-
-func (m *AddTableMigration) WithColumns(columns ...*Column) *AddTableMigration {
-	for _, col := range columns {
-		m.table.Columns = append(m.table.Columns, col)
-		if col.IsPrimaryKey {
-			m.table.PrimaryKeys = append(m.table.PrimaryKeys, col.Name)
-		}
-	}
-	return m
-}
-
-func (m *AddTableMigration) WithColumn(col *Column) *AddTableMigration {
-	m.table.Columns = append(m.table.Columns, col)
-	if col.IsPrimaryKey {
-		m.table.PrimaryKeys = append(m.table.PrimaryKeys, col.Name)
-	}
-	return m
 }
 
 type DropTableMigration struct {

@@ -234,7 +234,7 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 	sess := x.Table("org_user")
 	sess.Join("INNER", "org", "org_user.org_id=org.id")
 	sess.Where("org_user.user_id=?", query.UserId)
-	sess.Cols("org.name", "org_user.role", "org_user.account_id")
+	sess.Cols("org.name", "org_user.role", "org_user.org_id")
 	err := sess.Find(&query.Result)
 	return err
 }
