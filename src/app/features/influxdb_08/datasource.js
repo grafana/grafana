@@ -12,18 +12,16 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource_08', function($q, $http, templateSrv) {
 
     function InfluxDatasource(datasource) {
-      this.type = 'influxdb';
+      this.type = 'influxdb_08';
       this.urls = _.map(datasource.url.split(','), function(url) {
         return url.trim();
       });
-
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
-      this.database = datasource.database;
       this.basicAuth = datasource.basicAuth;
       this.grafanaDB = datasource.grafanaDB;
 
@@ -57,7 +55,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias);
+        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
         return this._seriesQuery(query).then(handleResponse);
 
       }, this);
@@ -100,7 +98,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         query = '/' + query + '/';
       }
 
-      return this._seriesQuery('SHOW MEASUREMENTS').then(function(data) {
+      return this._seriesQuery('list series ' + query).then(function(data) {
         if (!data || data.length === 0) {
           return [];
         }
@@ -147,27 +145,23 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     InfluxDatasource.prototype._seriesQuery = function(query) {
-      return this._influxRequest('GET', '/query', {
+      return this._influxRequest('GET', '/series', {
         q: query,
       });
     };
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
-      var self = this;
+      var _this = this;
       var deferred = $q.defer();
 
       retry(deferred, function() {
-        var currentUrl = self.urls.shift();
-        self.urls.push(currentUrl);
+        var currentUrl = _this.urls.shift();
+        _this.urls.push(currentUrl);
 
         var params = {
-          u: self.username,
-          p: self.password,
+          u: _this.username,
+          p: _this.password,
         };
-
-        if (self.database) {
-          params.db = self.database;
-        }
 
         if (method === 'GET') {
           _.extend(params, data);
@@ -179,13 +173,12 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           url:    currentUrl + url,
           params: params,
           data:   data,
-          precision: "ms",
           inspect: { type: 'influxdb' },
         };
 
         options.headers = options.headers || {};
-        if (self.basicAuth) {
-          options.headers.Authorization = 'Basic ' + self.basicAuth;
+        if (_this.basicAuth) {
+          options.headers.Authorization = 'Basic ' + _this.basicAuth;
         }
 
         return $http(options).success(function (data) {
@@ -367,8 +360,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    function handleInfluxQueryResponse(alias, seriesList) {
-      var influxSeries = new InfluxSeries({ seriesList: seriesList, alias: alias });
+    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
+      var influxSeries = new InfluxSeries({
+        seriesList: seriesList,
+        alias: alias,
+        groupByField: groupByField
+      });
+
       return influxSeries.getTimeSeries();
     }
 

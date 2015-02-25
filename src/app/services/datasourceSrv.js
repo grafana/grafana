@@ -10,6 +10,7 @@ function (angular, _, config) {
   var typeMap = {
     'graphite': 'GraphiteDatasource',
     'influxdb': 'InfluxDatasource',
+    'influxdb_08': 'InfluxDatasource_08',
     'elasticsearch': 'ElasticDatasource',
     'opentsdb': 'OpenTSDBDatasource',
     'grafana': 'GrafanaDatasource',

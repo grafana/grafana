@@ -7,6 +7,7 @@ function (_) {
   function InfluxSeries(options) {
     this.seriesList = options.seriesList;
     this.alias = options.alias;
+    this.groupByField = options.groupByField;
     this.annotation = options.annotation;
   }
 
@@ -15,20 +16,51 @@ function (_) {
   p.getTimeSeries = function() {
     var output = [];
     var self = this;
-
-    console.log(self.seriesList);
-    if (!self.seriesList || !self.seriesList.results || !self.seriesList.results[0]) {
-      return output;
-    }
-
-    this.seriesList = self.seriesList.results[0].series;
+    var i;
 
     _.each(self.seriesList, function(series) {
-      var datapoints = [];
-      for (var i = 0; i < series.values.length; i++) {
-        datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
+      var seriesName;
+      var timeCol = series.columns.indexOf('time');
+      var valueCol = 1;
+      var groupByCol = -1;
+
+      if (self.groupByField) {
+        groupByCol = series.columns.indexOf(self.groupByField);
       }
-      output.push({ target: series.name, datapoints: datapoints });
+
+      // find value column
+      _.each(series.columns, function(column, index) {
+        if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
+          valueCol = index;
+        }
+      });
+
+      var groups = {};
+
+      if (self.groupByField) {
+        groups = _.groupBy(series.points, function (point) {
+          return point[groupByCol];
+        });
+      }
+      else {
+        groups[series.columns[valueCol]] = series.points;
+      }
+
+      _.each(groups, function(groupPoints, key) {
+        var datapoints = [];
+        for (i = 0; i < groupPoints.length; i++) {
+          var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
+          datapoints[i] = [metricValue, groupPoints[i][timeCol]];
+        }
+
+        seriesName = series.name + '.' + key;
+
+        if (self.alias) {
+          seriesName = self.createNameForSeries(series.name, key);
+        }
+
+        output.push({ target: seriesName, datapoints: datapoints });
+      });
     });
 
     return output;

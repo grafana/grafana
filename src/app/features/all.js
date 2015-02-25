@@ -4,6 +4,7 @@ define([
   './templating/templateSrv',
   './graphite/datasource',
   './influxdb/datasource',
+  './influxdb_08/datasource',
   './opentsdb/datasource',
   './elasticsearch/datasource',
   './dashboard/all',

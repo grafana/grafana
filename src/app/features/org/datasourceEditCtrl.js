@@ -18,7 +18,8 @@ function (angular) {
 
     $scope.types = [
       { name: 'Graphite', type: 'graphite' },
-      { name: 'InfluxDB', type: 'influxdb' },
+      { name: 'InfluxDB 0.9.x (Experimental support)', type: 'influxdb' },
+      { name: 'InfluxDB 0.8.x', type: 'influxdb_08' },
       { name: 'Elasticsearch', type: 'elasticsearch' },
       { name: 'OpenTSDB', type: 'opentsdb' },
     ];

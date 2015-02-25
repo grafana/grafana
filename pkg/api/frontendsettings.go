@@ -38,11 +38,20 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"default": ds.IsDefault,
 		}
 
-		if ds.Type == m.DS_INFLUXDB {
+		if ds.Type == m.DS_INFLUXDB_08 {
 			if ds.Access == m.DS_ACCESS_DIRECT {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password
 				dsMap["url"] = url + "/db/" + ds.Database
+			}
+		}
+
+		if ds.Type == m.DS_INFLUXDB {
+			if ds.Access == m.DS_ACCESS_DIRECT {
+				dsMap["username"] = ds.User
+				dsMap["password"] = ds.Password
+				dsMap["database"] = ds.Database
+				dsMap["url"] = url
 			}
 		}
 

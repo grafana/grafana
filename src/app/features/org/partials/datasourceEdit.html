@@ -19,7 +19,7 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Type</label>
-					<select class="input-medium" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
+					<select class="input-large" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
 				</div>
 				<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
 			</div>

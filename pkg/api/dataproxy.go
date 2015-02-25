@@ -26,6 +26,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			reqQueryVals.Add("u", ds.User)
 			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
+		} else if ds.Type == m.DS_INFLUXDB_08 {
+			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+			reqQueryVals.Add("db", ds.Database)
+			reqQueryVals.Add("u", ds.User)
+			reqQueryVals.Add("p", ds.Password)
+			req.URL.RawQuery = reqQueryVals.Encode()
 		} else {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}

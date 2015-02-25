@@ -30,7 +30,7 @@ function (angular, _) {
         delete target.groupby_field_add;
       }
 
-      $scope.rawQuery = true;
+      $scope.rawQuery = false;
 
       $scope.functions = [
         'count', 'mean', 'sum', 'min',
