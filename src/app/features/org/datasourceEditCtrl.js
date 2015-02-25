@@ -54,7 +54,7 @@ function (angular) {
 
       backendSrv.post('/api/datasources', $scope.current).then(function() {
         $scope.updateFrontendSettings();
-        $location.path("account/datasources");
+        $location.path("datasources");
       });
     };
 
@@ -65,7 +65,7 @@ function (angular) {
 
       backendSrv.put('/api/datasources', $scope.current).then(function() {
         $scope.updateFrontendSettings();
-        $location.path("account/datasources");
+        $location.path("datasources");
       });
     };
 

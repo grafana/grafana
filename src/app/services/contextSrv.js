@@ -28,7 +28,7 @@ function (angular, _, store) {
     });
 
     this.hasRole = function(role) {
-      return this.user.accountRole === role;
+      return this.user.orgRole === role;
     };
 
     this.setSideMenuState = function(state) {

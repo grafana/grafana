@@ -13,8 +13,8 @@ function (angular) {
     };
 
     $scope.getOrgInfo = function() {
-      backendSrv.get('/api/org').then(function(account) {
-        $scope.org = account;
+      backendSrv.get('/api/org').then(function(org) {
+        $scope.org = org;
       });
     };
 

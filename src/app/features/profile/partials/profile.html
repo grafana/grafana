@@ -51,34 +51,34 @@
 			<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
 		</form>
 
-		<h2>Your accounts</h2>
+		<h2>Your Organizations</h2>
 
 		<table class="grafana-options-table">
-			<tr ng-repeat="ac in accounts">
-				<td style="width: 98%"><strong>Name: </strong> {{ac.name}}</td>
-				<td><strong>Role: </strong> {{ac.role}}</td>
+			<tr ng-repeat="org in orgs">
+				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
+				<td><strong>Role: </strong> {{org.role}}</td>
 				<td class="nobg max-width-btns">
-					<span class="btn btn-primary" ng-show="ac.isUsing">
+					<span class="btn btn-primary" ng-show="org.isUsing">
 						Current
 					</span>
-					<a ng-click="setUsingAccount(ac)" class="btn btn-inverse" ng-show="!ac.isUsing">
+					<a ng-click="setUsingOrg(org)" class="btn btn-inverse" ng-show="!org.isUsing">
 						Select
 					</a>
 				</td>
 			</tr>
 		</table>
 
-		<h2 style="margin-top: 30px;">Add account</h2>
+		<h2 style="margin-top: 30px;">Add Organization</h2>
 
 		<form name="form">
 			<div>
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px;">
-							<strong>Account name</strong>
+							<strong>Org. name</strong>
 						</li>
 						<li>
-							<input type="text" ng-model="newAccount.name" required class="input-xxlarge tight-form-input last" placeholder="account name">
+							<input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="organization name">
 						</li>
 						<li>
 						</li>
@@ -87,7 +87,7 @@
 				</div>
 			</div>
 			<br>
-			<button class="btn btn-success pull-right" ng-click="createAccount()">Create</button>
+			<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
 		</form>
 
 	</div>

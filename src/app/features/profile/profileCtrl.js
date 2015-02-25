@@ -9,11 +9,11 @@ function (angular, config) {
 
   module.controller('ProfileCtrl', function($scope, backendSrv) {
 
-    $scope.newAccount = {name: ''};
+    $scope.newOrg = {name: ''};
 
     $scope.init = function() {
       $scope.getUser();
-      $scope.getUserAccounts();
+      $scope.getUserOrgs();
     };
 
     $scope.getUser = function() {
@@ -22,14 +22,14 @@ function (angular, config) {
       });
     };
 
-    $scope.getUserAccounts = function() {
-      backendSrv.get('/api/user/accounts').then(function(accounts) {
-        $scope.accounts = accounts;
+    $scope.getUserOrgs = function() {
+      backendSrv.get('/api/user/orgs').then(function(orgs) {
+        $scope.orgs = orgs;
       });
     };
 
-    $scope.setUsingAccount = function(account) {
-      backendSrv.post('/api/user/using/' + account.accountId).then(function() {
+    $scope.setUsingOrg = function(org) {
+      backendSrv.post('/api/user/using/' + org.orgId).then(function() {
         window.location.href = config.appSubUrl + '/profile';
       });
     };
@@ -39,8 +39,8 @@ function (angular, config) {
       backendSrv.put('/api/user/', $scope.user);
     };
 
-    $scope.createAccount = function() {
-      backendSrv.post('/api/account/', $scope.newAccount).then($scope.getUserAccounts);
+    $scope.createOrg = function() {
+      backendSrv.post('/api/org/', $scope.newOrg).then($scope.getUserOrgs);
     };
 
     $scope.init();
