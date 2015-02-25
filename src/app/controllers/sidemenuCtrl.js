@@ -53,6 +53,7 @@ function (angular, _, $, config) {
 
         $scope.bottomLinks.push({
           text: "Sign out",
+          target: "_self",
           icon: "fa fa-fw fa-sign-out",
           href: $scope.getUrl("/logout"),
         });
@@ -90,6 +91,7 @@ function (angular, _, $, config) {
       $scope.bottomLinks.push({
         text: "Sign out",
         icon: "fa fa-fw fa-sign-out",
+        target: "_self",
         href: $scope.getUrl("/logout"),
       });
     };
