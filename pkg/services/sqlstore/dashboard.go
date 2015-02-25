@@ -171,7 +171,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	sess := x.NewSession()
 	defer sess.Close()
 
-	rawSql := "DELETE FROM Dashboard WHERE org_id=? and slug=?"
+	rawSql := "DELETE FROM dashboard WHERE org_id=? and slug=?"
 	_, err := sess.Exec(rawSql, cmd.OrgId, cmd.Slug)
 
 	return err
