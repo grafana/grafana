@@ -9,6 +9,16 @@
 			</a>
 		</li>
 
+		<li class="sidemenu-system-section" ng-if="systemSection">
+			<div class="sidemenu-system-section-inner">
+				<i class="fa fa-fw fa-cubes"></i>
+				<div class="sidemenu-section-text-wrapper">
+					<div class="sidemenu-section-heading">Grafana Admin</div>
+					<div class="sidemenu-section-tagline">v {{grafanaVersion}}</div>
+				</div>
+			</div>
+		</li>
+
 		<li ng-repeat="item in mainLinks">
 			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
 				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
@@ -18,13 +28,7 @@
 	</ul>
 
 	<ul class="sidemenu sidemenu-small"  style="margin-top:50px">
-		<!-- <li> -->
-		<!-- 	<a href="profile" class="sidemenu&#45;item sidemenu&#45;user"> -->
-		<!-- 		<img ng&#45;src="{{contextSrv.user.gravatarUrl}}"> -->
-		<!-- 		<span class="sidemenu&#45;item&#45;text">{{contextSrv.user.name}}</a> -->
-		<!-- 	</a> -->
-		<!-- </li> -->
-    <!--  -->
+
 		<li ng-repeat="item in bottomLinks">
 			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
 				<img ng-if="item.imgSrc" ng-src="{{item.imgSrc}}">
@@ -33,25 +37,5 @@
 	   	</a>
 		</li>
 
-		<!-- <li ng&#45;if="contextSrv.user.isGrafanaAdmin"> -->
-		<!-- 	<a href="admin/settings" class="sidemenu&#45;item"> -->
-		<!-- 		<span class="icon&#45;circle sidemenu&#45;icon"><i class="fa fw&#45;fw fa&#45;cogs"></i></span> -->
-		<!-- 		<span class="sidemenu&#45;item&#45;text">System Admin</span> -->
-		<!-- 	</a> -->
-		<!-- </li> -->
-    <!--  -->
-		<!-- <li> -->
-		<!-- 	<a href="logout" class="sidemenu&#45;item" target="_self"> -->
-		<!-- 		<span class="icon&#45;circle sidemenu&#45;icon"><i class="fa fa&#45;fw fa&#45;sign&#45;out"></i></span> -->
-		<!-- 		<span class="sidemenu&#45;item&#45;text">Sign out</span> -->
-		<!-- 	</a> -->
-		<!-- </li> -->
-    <!--  -->
-		<!-- <li ng&#45;if="!contextSrv.user.isSignedIn" style="margin&#45;top:50px"> -->
-		<!-- 	<a href="/login" class="sidemenu&#45;item" target="_self"> -->
-		<!-- 		<span class="sidemenu&#45;icon"><i class="fa fa&#45;fw fa&#45;sign&#45;in"></i></span> -->
-		<!-- 		<span class="sidemenu&#45;item&#45;text">Sign in</span> -->
-		<!-- 	</a> -->
-		<!-- </li> -->
 	</ul>
 </div>
