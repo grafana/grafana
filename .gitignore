@@ -21,3 +21,4 @@ src/css/*.min.css
 /grafana
 
 grafana.custom.ini
+fig.yml

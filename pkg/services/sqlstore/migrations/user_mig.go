@@ -57,7 +57,7 @@ func addUserMigrations(mg *Migrator) {
 			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "is_admin", Type: DB_Bool, Nullable: false},
 			&Column{Name: "email_verified", Type: DB_Bool, Nullable: true},
-			&Column{Name: "theme", Type: DB_NVarchar, Nullable: true},
+			&Column{Name: "theme", Type: DB_NVarchar, Length: 255, Nullable: true},
 			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},

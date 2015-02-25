@@ -125,7 +125,7 @@ func (mg *Migrator) exec(m Migration) error {
 			results, err := sess.Query(sql, args...)
 			if err != nil || len(results) == 0 {
 				log.Info("Migrator: skipping migration id: %v, condition not fulfilled", m.Id())
-				return nil
+				return sess.Rollback()
 			}
 		}
 
