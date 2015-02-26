@@ -50,6 +50,10 @@
     font-size: 14px;
 
     .icon-circle {
+      border-radius: 50%;
+      background: @iconContainerBackground;
+      box-shadow: @iconContainerShadow;
+      border: @iconContainerBorder;
       width: 28px;
       height: 28px;
       i {
@@ -60,7 +64,7 @@
     }
 
     .sidemenu-item {
-      color: @textColor;
+      // color: @textColor;
       line-height: 28px;
     }
   }
@@ -88,10 +92,11 @@
   display: block;
   padding: 8px 0 4px 22px;
   background-color: @navbarBackground;
-  border-right: 3px solid black;
+  border-right: 3px solid @bodyBackground;
   img {
     border-radius: 50%;
-    background: black;
+    background: @iconContainerBackground;
+    border: 1px solid @bodyBackground;
     width: 30px;
     padding: 4px;
   }
@@ -99,14 +104,11 @@
     padding-right: 5px;
     padding-top: 5px;
     font-size: 170%;
-    color: @gray;
+    color: @textColor;
   }
 }
 
 .icon-circle {
-  border-radius: 50%;
-  background: #000;
-  box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   width: 40px;
   height: 40px;
   display: inline-block;
@@ -115,8 +117,8 @@
     opacity: .7;
     position: relative;
     left: 7px;
-    top: 2px;
-    font-size: 125%;
+    top: 3px;
+    font-size: 150%;
   }
 }
 
@@ -124,17 +126,18 @@
 }
 
 .sidemenu-item {
-  color: #f80;
+  color: @grayLight;
   line-height: 40px;
 	padding: 0px 10px 0px 20px;
 	display: block;
 
   .sidemenu-item-text {
     padding-left: 15px;
+    transition: color 100ms ease-out;
+
     &.no-icon {
       padding-left: 59px;
     }
   }
 }
-
 

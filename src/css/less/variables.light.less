@@ -32,7 +32,9 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: @white;
+@grafanaPanelBackground: 	@white;
+@grafanaPanelBorder: 		solid 1px @grayLight;
+@grafanaTriggerBorder:		solid 1px @grayLight;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -61,7 +63,7 @@
 // -------------------------
 @linkColor:             darken(@textColor, 20%);
 @linkColorDisabled:     lighten(@linkColor,30%);
-@linkColorHover:        @blue;
+@linkColorHover:        @gray;
 
 
 // Typography
@@ -97,11 +99,11 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  transparent;
+@grafanaListBackground:  	lighten(@grayLight,35%);
 @grafanaListAccent:         @grayLighter;
 @grafanaListBorderTop:      #eee;
 @grafanaListBorderBottom:   #efefef;
-@grafanaListHighlight:      @blue;
+@grafanaListHighlight:      lighten(@grayLight,20%);
 @grafanaListHighlightContrast: #ddd;
 @grafanaListMainLinkColor: @textColor;
 
@@ -142,6 +144,12 @@
 @btnInverseBackground:              lighten(@black, 5%);
 @btnInverseBackgroundHighlight:     darken(@black, 5%);
 
+@iconContainerBackground:			@white;
+@iconContainerBackgroundHighlight:	lighten(@white, 5%);
+@iconContainerBorder:				solid 1px rgba(0,0,0, 0.05);
+@iconContainerShadow:				0 0 14px 2px rgba(0,0,0, 0.05);
+
+
 
 // Forms
 // -------------------------
@@ -164,8 +172,8 @@
 @dropdownLinkColorHover:        @white;
 @dropdownLinkColorActive:       @white;
 
-@dropdownLinkBackgroundActive:  @blue;
-@dropdownLinkBackgroundHover:   @blue;
+@dropdownLinkBackgroundActive:  lighten(@grayLight,20%);
+@dropdownLinkBackgroundHover:   lighten(@grayLight,20%);
 
 
 
@@ -216,14 +224,14 @@
 @navbarCollapseWidth:             979px;
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
-@navbarHeight:                    50px;
+@navbarHeight:                    52px;
 @navbarBackgroundHighlight:       #f8f8f8;
 @navbarBackground:                #f8f8f8;
-@navbarBorder:                    darken(@navbarBackground, 6.5%);
+@navbarBorder:                    none;
 
 @navbarText:                      #666;
 @navbarLinkColor:                 #666;
-@navbarLinkColorHover:            @blue;
+@navbarLinkColorHover:            #333;
 @navbarLinkColorActive:           #555;
 @navbarLinkBackgroundHover:       transparent;
 @navbarLinkBackgroundActive:      darken(@navbarBackground, 6.5%);
@@ -286,7 +294,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       #000;
+@tooltipBackground:       #333;
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        darken(@white,11%);
