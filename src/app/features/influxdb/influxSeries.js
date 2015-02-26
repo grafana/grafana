@@ -28,7 +28,17 @@ function (_) {
       for (var i = 0; i < series.values.length; i++) {
         datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
       }
-      output.push({ target: series.name, datapoints: datapoints });
+
+      var seriesName = series.name;
+      var tags = _.map(series.tags, function(value, key) {
+        return key + ': ' + value;
+      });
+
+      if (tags.length > 0) {
+        seriesName = seriesName + ' {' + tags.join(', ') + '}';
+      }
+
+      output.push({ target: seriesName, datapoints: datapoints });
     });
 
     return output;
