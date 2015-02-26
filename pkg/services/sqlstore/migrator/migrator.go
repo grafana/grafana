@@ -5,9 +5,9 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/log"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/grafana/grafana/pkg/log"
 )
 
 type Migrator struct {
@@ -70,7 +70,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 
 func (mg *Migrator) Start() error {
 	if mg.LogLevel <= log.INFO {
-		log.Info("Migrator:: Starting DB migration")
+		log.Info("Migrator: Starting DB migration")
 	}
 
 	logMap, err := mg.GetMigrationLog()
@@ -82,7 +82,7 @@ func (mg *Migrator) Start() error {
 		_, exists := logMap[m.Id()]
 		if exists {
 			if mg.LogLevel <= log.DEBUG {
-				log.Debug("Migrator:: Skipping migration: %v, Already executed", m.Id())
+				log.Debug("Migrator: Skipping migration: %v, Already executed", m.Id())
 			}
 			continue
 		}
@@ -114,13 +114,24 @@ func (mg *Migrator) Start() error {
 
 func (mg *Migrator) exec(m Migration) error {
 	if mg.LogLevel <= log.INFO {
-		log.Info("Migrator::exec migration id: %v", m.Id())
+		log.Info("Migrator: exec migration id: %v", m.Id())
 	}
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {
+
+		condition := m.GetCondition()
+		if condition != nil {
+			sql, args := condition.Sql(mg.dialect)
+			results, err := sess.Query(sql, args...)
+			if err != nil || len(results) == 0 {
+				log.Info("Migrator: skipping migration id: %v, condition not fulfilled", m.Id())
+				return sess.Rollback()
+			}
+		}
+
 		_, err := sess.Exec(m.Sql(mg.dialect))
 		if err != nil {
-			log.Error(3, "Migrator::exec FAILED migration id: %v, err: %v", m.Id(), err)
+			log.Error(3, "Migrator: exec FAILED migration id: %v, err: %v", m.Id(), err)
 			return err
 		}
 		return nil

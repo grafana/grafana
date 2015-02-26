@@ -11,18 +11,20 @@ var (
 )
 
 type User struct {
-	Id       int64
-	Version  int
-	Email    string
-	Name     string
-	Login    string
-	Password string
-	Salt     string
-	Rands    string
-	Company  string
+	Id            int64
+	Version       int
+	Email         string
+	Name          string
+	Login         string
+	Password      string
+	Salt          string
+	Rands         string
+	Company       string
+	EmailVerified bool
+	Theme         string
 
-	IsAdmin   bool
-	AccountId int64
+	IsAdmin bool
+	OrgId   int64
 
 	Created time.Time
 	Updated time.Time
@@ -50,9 +52,25 @@ type UpdateUserCommand struct {
 	UserId int64 `json:"-"`
 }
 
-type SetUsingAccountCommand struct {
-	UserId    int64
-	AccountId int64
+type ChangeUserPasswordCommand struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+
+	UserId int64 `json:"-"`
+}
+
+type UpdateUserPermissionsCommand struct {
+	IsGrafanaAdmin bool
+	UserId         int64 `json:"-"`
+}
+
+type DeleteUserCommand struct {
+	UserId int64
+}
+
+type SetUsingOrgCommand struct {
+	UserId int64
+	OrgId  int64
 }
 
 // ----------------------
@@ -61,6 +79,11 @@ type SetUsingAccountCommand struct {
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
 	Result       *User
+}
+
+type GetUserByIdQuery struct {
+	Id     int64
+	Result *User
 }
 
 type GetSignedInUserQuery struct {
@@ -81,14 +104,19 @@ type SearchUsersQuery struct {
 	Result []*UserSearchHitDTO
 }
 
+type GetUserOrgListQuery struct {
+	UserId int64
+	Result []*UserOrgDTO
+}
+
 // ------------------------
 // DTO & Projections
 
 type SignedInUser struct {
 	UserId         int64
-	AccountId      int64
-	AccountName    string
-	AccountRole    RoleType
+	OrgId          int64
+	OrgName        string
+	OrgRole        RoleType
 	Login          string
 	Name           string
 	Email          string
@@ -97,9 +125,10 @@ type SignedInUser struct {
 }
 
 type UserDTO struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Login string `json:"login"`
+	Email          string `json:"email"`
+	Name           string `json:"name"`
+	Login          string `json:"login"`
+	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 
 type UserSearchHitDTO struct {

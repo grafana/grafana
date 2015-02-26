@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function($rootScope)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data) {
 
@@ -91,6 +91,10 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
+    p.hasTemplateVarsOrAnnotations = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0;
+    };
+
     p.getPanelInfoById = function(panelId) {
       var result = {};
       _.each(this.rows, function(row) {
@@ -126,10 +130,6 @@ function (angular, $, kbn, _, moment) {
       return this.timezone === 'browser' ?
               moment(date).format(format) :
               moment.utc(date).format(format);
-    };
-
-    p.emit_refresh = function() {
-      $rootScope.$broadcast('refresh');
     };
 
     p._updateSchema = function(old) {
@@ -215,15 +215,11 @@ function (angular, $, kbn, _, moment) {
 
       if (oldVersion < 6) {
         // move pulldowns to new schema
-        var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
         var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
-        if (filtering) {
-          this.templating.enable = filtering.enable;
-        }
+
         if (annotations) {
           this.annotations = {
-            list: annotations.annotations,
-            enable: annotations.enable
+            list: annotations.annotations || [],
           };
         }
 

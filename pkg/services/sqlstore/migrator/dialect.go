@@ -20,8 +20,12 @@ type Dialect interface {
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
 	AddColumnSql(tableName string, Col *Column) string
+	CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string
+	DropTable(tableName string) string
+	DropIndexSql(tableName string, index *Index) string
 
 	TableCheckSql(tableName string) (string, []interface{})
+	RenameTable(oldName string, newName string) string
 }
 
 func NewDialect(name string) Dialect {
@@ -101,15 +105,47 @@ func (db *BaseDialect) AddColumnSql(tableName string, col *Column) string {
 func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
 	var unique string
-	var idxName string
 	if index.Type == UniqueIndex {
 		unique = " UNIQUE"
-		idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
-	} else {
-		idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 	}
+
+	idxName := index.XName(tableName)
 
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
+}
+
+func (db *BaseDialect) QuoteColList(cols []string) string {
+	var sourceColsSql = ""
+	for _, col := range cols {
+		sourceColsSql += db.dialect.Quote(col)
+		sourceColsSql += "\n, "
+	}
+	return strings.TrimSuffix(sourceColsSql, "\n, ")
+}
+
+func (db *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string {
+	sourceColsSql := db.QuoteColList(sourceCols)
+	targetColsSql := db.QuoteColList(targetCols)
+
+	quote := db.dialect.Quote
+	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetColsSql, sourceColsSql, quote(sourceTable))
+}
+
+func (db *BaseDialect) DropTable(tableName string) string {
+	quote := db.dialect.Quote
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
+}
+
+func (db *BaseDialect) RenameTable(oldName string, newName string) string {
+	quote := db.dialect.Quote
+	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
+}
+
+func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
+	quote := db.dialect.Quote
+	var name string
+	name = index.XName(tableName)
+	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }

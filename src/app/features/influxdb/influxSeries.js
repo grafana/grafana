@@ -7,7 +7,6 @@ function (_) {
   function InfluxSeries(options) {
     this.seriesList = options.seriesList;
     this.alias = options.alias;
-    this.groupByField = options.groupByField;
     this.annotation = options.annotation;
   }
 
@@ -16,51 +15,30 @@ function (_) {
   p.getTimeSeries = function() {
     var output = [];
     var self = this;
-    var i;
+
+    console.log(self.seriesList);
+    if (!self.seriesList || !self.seriesList.results || !self.seriesList.results[0]) {
+      return output;
+    }
+
+    this.seriesList = self.seriesList.results[0].series;
 
     _.each(self.seriesList, function(series) {
-      var seriesName;
-      var timeCol = series.columns.indexOf('time');
-      var valueCol = 1;
-      var groupByCol = -1;
-
-      if (self.groupByField) {
-        groupByCol = series.columns.indexOf(self.groupByField);
+      var datapoints = [];
+      for (var i = 0; i < series.values.length; i++) {
+        datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
       }
 
-      // find value column
-      _.each(series.columns, function(column, index) {
-        if (column !== 'time' && column !== 'sequence_number' && column !== self.groupByField) {
-          valueCol = index;
-        }
+      var seriesName = series.name;
+      var tags = _.map(series.tags, function(value, key) {
+        return key + ': ' + value;
       });
 
-      var groups = {};
-
-      if (self.groupByField) {
-        groups = _.groupBy(series.points, function (point) {
-          return point[groupByCol];
-        });
-      }
-      else {
-        groups[series.columns[valueCol]] = series.points;
+      if (tags.length > 0) {
+        seriesName = seriesName + ' {' + tags.join(', ') + '}';
       }
 
-      _.each(groups, function(groupPoints, key) {
-        var datapoints = [];
-        for (i = 0; i < groupPoints.length; i++) {
-          var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
-          datapoints[i] = [metricValue, groupPoints[i][timeCol]];
-        }
-
-        seriesName = series.name + '.' + key;
-
-        if (self.alias) {
-          seriesName = self.createNameForSeries(series.name, key);
-        }
-
-        output.push({ target: seriesName, datapoints: datapoints });
-      });
+      output.push({ target: seriesName, datapoints: datapoints });
     });
 
     return output;

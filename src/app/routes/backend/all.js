@@ -30,37 +30,64 @@ define([
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/account', {
-        templateUrl: 'app/features/account/partials/account.html',
-        controller : 'AccountCtrl',
+      .when('/dashboard/import', {
+        templateUrl: 'app/features/dashboard/partials/import.html',
+        controller : 'DashboardImportCtrl',
       })
-      .when('/account/datasources', {
-        templateUrl: 'app/features/account/partials/datasources.html',
+      .when('/datasources', {
+        templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
-      .when('/account/users', {
-        templateUrl: 'app/features/account/partials/users.html',
-        controller : 'AccountUsersCtrl',
+      .when('/datasources/edit/:id', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        controller : 'DataSourceEditCtrl',
       })
-      .when('/account/apikeys', {
-        templateUrl: 'app/features/account/partials/apikeys.html',
-        controller : 'ApiKeysCtrl',
+      .when('/datasources/new', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        controller : 'DataSourceEditCtrl',
       })
-      .when('/account/import', {
-        templateUrl: 'app/features/account/partials/import.html',
-        controller : 'ImportCtrl',
+      .when('/org', {
+        templateUrl: 'app/features/org/partials/orgDetails.html',
+        controller : 'OrgDetailsCtrl',
+      })
+      .when('/org/new', {
+        templateUrl: 'app/features/org/partials/newOrg.html',
+        controller : 'NewOrgCtrl',
+      })
+      .when('/org/users', {
+        templateUrl: 'app/features/org/partials/orgUsers.html',
+        controller : 'OrgUsersCtrl',
+      })
+      .when('/org/apikeys', {
+        templateUrl: 'app/features/org/partials/orgApiKeys.html',
+        controller : 'OrgApiKeysCtrl',
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
       })
-      .when('/admin', {
-        templateUrl: 'app/features/admin/partials/admin.html',
-        controller : 'AdminCtrl',
+      .when('/profile/password', {
+        templateUrl: 'app/features/profile/partials/password.html',
+        controller : 'ChangePasswordCtrl',
+      })
+      .when('/admin/settings', {
+        templateUrl: 'app/features/admin/partials/settings.html',
+        controller : 'AdminSettingsCtrl',
       })
       .when('/admin/users', {
         templateUrl: 'app/features/admin/partials/users.html',
         controller : 'AdminUsersCtrl',
+      })
+      .when('/admin/users/create', {
+        templateUrl: 'app/features/admin/partials/new_user.html',
+        controller : 'AdminEditUserCtrl',
+      })
+      .when('/admin/users/edit/:id', {
+        templateUrl: 'app/features/admin/partials/edit_user.html',
+        controller : 'AdminEditUserCtrl',
+      })
+      .when('/admin/orgs', {
+        templateUrl: 'app/features/admin/partials/orgs.html',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',

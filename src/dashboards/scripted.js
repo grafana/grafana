@@ -3,7 +3,7 @@
 /*
  * Complex scripted dashboard
  * This script generates a dashboard object that Grafana can load. It also takes a number of user
- * supplied URL parameters (int ARGS variable)
+ * supplied URL parameters (in the ARGS variable)
  *
  * Return a dashboard object, or a function
  *
@@ -13,7 +13,7 @@
 
 'use strict';
 
-// accessable variables in this scope
+// accessible variables in this scope
 var window, document, ARGS, $, jQuery, moment, kbn;
 
 // Setup some variables
@@ -31,7 +31,7 @@ dashboard = {
 dashboard.title = 'Scripted dash';
 
 // Set default time
-// time can be overriden in the url using from/to parameteres, but this is
+// time can be overriden in the url using from/to parameters, but this is
 // handled automatically in grafana core during dashboard initialization
 dashboard.time = {
   from: "now-6h",

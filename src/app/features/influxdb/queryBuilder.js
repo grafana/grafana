@@ -52,15 +52,7 @@ function () {
 
   p._modifyRawQuery = function () {
     var query = this.target.query.replace(";", "");
-
-    var queryElements = query.split(" ");
-    var lowerCaseQueryElements = query.toLowerCase().split(" ");
-
-    if (lowerCaseQueryElements[1].indexOf(',') !== -1) {
-      this.groupByField = lowerCaseQueryElements[1].replace(',', '');
-    }
-
-    return queryElements.join(" ");
+    return query;
   };
 
   return InfluxQueryBuilder;

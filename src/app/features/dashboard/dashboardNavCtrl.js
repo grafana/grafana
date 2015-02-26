@@ -65,27 +65,15 @@ function (angular, _, moment, config, store) {
       window.sessionStorage["grafanaAdminPassword"] = pwd;
     };
 
-    $scope.isAdmin = function() {
-      if (!config.admin || !config.admin.password) { return true; }
-      if ($scope.passwordCache() === config.admin.password) { return true; }
-
-      var password = window.prompt("Admin password", "");
-      $scope.passwordCache(password);
-
-      if (password === config.admin.password) { return true; }
-
-      alertSrv.set('Save failed', 'Password incorrect', 'error');
-
-      return false;
+    $scope.openSearch = function() {
+      $scope.appEvent('show-dash-search');
     };
 
-    $scope.openSearch = function() {
-      $scope.appEvent('show-dash-editor', { src: 'app/partials/search.html', cssClass: 'search-container' });
+    $scope.dashboardTitleAction = function() {
+      $scope.appEvent('hide-dash-editor');
     };
 
     $scope.saveDashboard = function() {
-      if (!$scope.isAdmin()) { return false; }
-
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)
         .then(function(result) {
@@ -96,7 +84,7 @@ function (angular, _, moment, config, store) {
             $location.path(result.url);
           }
 
-          $rootScope.$emit('dashboard-saved', $scope.dashboard);
+          $scope.appEvent('dashboard-saved', $scope.dashboard);
 
         }, function(err) {
           $scope.appEvent('alert-error', ['Save failed', err]);
@@ -104,8 +92,6 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboard = function() {
-      if (!$scope.isAdmin()) { return false; }
-
       $scope.appEvent('confirm-modal', {
         title: 'Delete dashboard',
         text: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
@@ -120,6 +106,16 @@ function (angular, _, moment, config, store) {
         $scope.appEvent('alert-success', ['Dashboard Deleted', $scope.dashboard.title + ' has been deleted']);
       }, function(err) {
         $scope.appEvent('alert-error', ['Deleted failed', err]);
+      });
+    };
+
+    $scope.cloneDashboard = function() {
+      var newScope = $rootScope.$new();
+      newScope.clone = angular.copy($scope.dashboard);
+
+      $scope.appEvent('show-modal', {
+        src: './app/features/dashboard/partials/cloneDashboard.html',
+        scope: newScope,
       });
     };
 

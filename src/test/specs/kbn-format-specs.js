@@ -25,6 +25,7 @@ define([
 
   describeValueFormat('none', 2.75e-10, 0, 10, '3e-10');
   describeValueFormat('none', 0, 0, 2, '0');
+  describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');
   describeValueFormat('ns', 2558, 50, 0, '2.56 µs');
@@ -74,10 +75,17 @@ define([
       var date = kbn.parseDateMath('-2d', new Date(2014,1,5));
       expect(date.getTime()).to.equal(new Date(2014, 1, 3).getTime());
     });
+
     it('should handle multiple math expressions', function() {
       var date = kbn.parseDateMath('-2d-6h', new Date(2014, 1, 5));
       expect(date.toString()).to.equal(new Date(2014, 1, 2, 18).toString());
     });
+
+    it('should return false when invalid expression', function() {
+      var date = kbn.parseDateMath('2', new Date(2014, 1, 5));
+      expect(date).to.equal(false);
+    });
+
   });
 
 });

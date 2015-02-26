@@ -1,5 +1,10 @@
 package migrator
 
+import (
+	"fmt"
+	"strings"
+)
+
 const (
 	POSTGRES = "postgres"
 	SQLITE   = "sqlite3"
@@ -10,6 +15,7 @@ type Migration interface {
 	Sql(dialect Dialect) string
 	Id() string
 	SetId(string)
+	GetCondition() MigrationCondition
 }
 
 type SQLType string
@@ -24,6 +30,7 @@ type Table struct {
 	Name        string
 	Columns     []*Column
 	PrimaryKeys []string
+	Indices     []*Index
 }
 
 const (
@@ -35,6 +42,21 @@ type Index struct {
 	Name string
 	Type int
 	Cols []string
+}
+
+func (index *Index) XName(tableName string) string {
+	if index.Name == "" {
+		index.Name = fmt.Sprintf("%s", strings.Join(index.Cols, "_"))
+	}
+
+	if !strings.HasPrefix(index.Name, "UQE_") &&
+		!strings.HasPrefix(index.Name, "IDX_") {
+		if index.Type == UniqueIndex {
+			return fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+		}
+		return fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+	}
+	return index.Name
 }
 
 var (

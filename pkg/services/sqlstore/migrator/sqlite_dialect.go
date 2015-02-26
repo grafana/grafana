@@ -1,5 +1,7 @@
 package migrator
 
+import "fmt"
+
 type Sqlite3 struct {
 	BaseDialect
 }
@@ -56,4 +58,11 @@ func (db *Sqlite3) SqlType(c *Column) string {
 func (db *Sqlite3) TableCheckSql(tableName string) (string, []interface{}) {
 	args := []interface{}{tableName}
 	return "SELECT name FROM sqlite_master WHERE type='table' and name = ?", args
+}
+
+func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
+	quote := db.Quote
+	//var unique string
+	idxName := index.XName(tableName)
+	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }

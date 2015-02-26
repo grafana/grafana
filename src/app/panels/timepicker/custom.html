@@ -44,7 +44,7 @@
 	</style>
 
 	<div class="timepicker form-horizontal">
-		<form name="input">
+		<form name="timeForm" style="margin-bottom: 0">
 
 			<div class="timepicker-from-column">
 				<label class="small">From</label>
@@ -73,12 +73,9 @@
 				</div>
 			</div>
 
+			<br>
+			<button ng-click="setAbsoluteTimeFilter(validate(temptime));dismiss();" ng-disabled="!timeForm.$valid" class="btn btn-success">Apply</button>
+			<span class="" ng-hide="input.$valid">Invalid date or range</span>
 		</form>
-		<div class="clearfix"></div>
 	</div>
-
-	<form name="input" style="margin-bottom:0">
-		<span class="" ng-hide="input.$valid">Invalid date or range</span>
-		<button ng-click="setAbsoluteTimeFilter(validate(temptime));dismiss();" ng-disabled="!input.$valid" class="btn btn-success">Apply</button>
-	</form>
 </div>

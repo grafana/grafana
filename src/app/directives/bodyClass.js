@@ -1,9 +1,8 @@
 define([
   'angular',
-  'app',
   'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   angular
@@ -35,9 +34,8 @@ function (angular) {
             }
           });
 
-          $scope.$watch('playlist_active', function() {
-            elem.toggleClass('hide-controls', $scope.playlist_active === true);
-            elem.toggleClass('playlist-active', $scope.playlist_active === true);
+          $scope.$watch('playlistSrv', function(newValue) {
+            elem.toggleClass('playlist-active', _.isObject(newValue));
           });
         }
       };

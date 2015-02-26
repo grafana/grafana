@@ -15,10 +15,21 @@ func init() {
 	bus.AddHandler("sql", DeleteDataSource)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
+	bus.AddHandler("sql", GetDataSourceByName)
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=? AND id=?", query.AccountId, query.Id)
+	sess := x.Limit(100, 0).Where("org_id=? AND id=?", query.OrgId, query.Id)
+	has, err := sess.Get(&query.Result)
+
+	if !has {
+		return m.ErrDataSourceNotFound
+	}
+	return err
+}
+
+func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
+	sess := x.Limit(100, 0).Where("org_id=? AND name=?", query.OrgId, query.Name)
 	has, err := sess.Get(&query.Result)
 
 	if !has {
@@ -28,7 +39,7 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
-	sess := x.Limit(100, 0).Where("account_id=?", query.AccountId).Asc("name")
+	sess := x.Limit(100, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
@@ -36,8 +47,8 @@ func GetDataSources(query *m.GetDataSourcesQuery) error {
 
 func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "DELETE FROM data_source WHERE id=? and account_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
+		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		return err
 	})
 }
@@ -46,7 +57,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		ds := &m.DataSource{
-			AccountId: cmd.AccountId,
+			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Type:      cmd.Type,
 			Access:    cmd.Access,
@@ -74,8 +85,8 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *m.DataSource, sess *xorm.Session) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default = 0 WHERE account_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, ds.AccountId, ds.Id); err != nil {
+		rawSql := "UPDATE data_source SET is_default = 0 WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSql, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}
@@ -87,7 +98,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		ds := &m.DataSource{
 			Id:        cmd.Id,
-			AccountId: cmd.AccountId,
+			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Type:      cmd.Type,
 			Access:    cmd.Access,
@@ -101,7 +112,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 
 		sess.UseBool("is_default")
 
-		_, err := sess.Where("id=? and account_id=?", ds.Id, ds.AccountId).Update(ds)
+		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)
 		if err != nil {
 			return err
 		}

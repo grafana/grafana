@@ -17,23 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
 
-var CmdWeb = cli.Command{
+var Web = cli.Command{
 	Name:        "web",
-	Usage:       "grafana web",
+	Usage:       "Starts Grafana backend & web server",
 	Description: "Starts Grafana backend & web server",
 	Action:      runWeb,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Value: "grafana.ini",
-			Usage: "path to config file",
-		},
-	},
 }
 
 func newMacaron() *macaron.Macaron {
@@ -78,10 +70,9 @@ func runWeb(c *cli.Context) {
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
 
-	setting.NewConfigContext()
+	initRuntime(c)
+
 	social.NewOAuthService()
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
 	eventpublisher.Init()
 
 	var err error

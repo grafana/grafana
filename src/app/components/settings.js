@@ -1,8 +1,7 @@
 define([
   'lodash',
-  'crypto',
 ],
-function (_, crypto) {
+function (_) {
   "use strict";
 
   return function Settings (options) {
@@ -27,55 +26,31 @@ function (_, crypto) {
       playlist_timespan: "1m",
       unsaved_changes_warning: true,
       search: { max_results: 100 },
-      admin: {},
       appSubUrl: ""
     };
 
     var settings = _.extend({}, defaults, options);
 
-    var parseBasicAuth = function(datasource) {
-      var passwordEnd = datasource.url.indexOf('@');
-      if (passwordEnd > 0) {
-        var userStart = datasource.url.indexOf('//') + 2;
-        var userAndPassword = datasource.url.substring(userStart, passwordEnd);
-        var bytes = crypto.charenc.Binary.stringToBytes(userAndPassword);
-        datasource.basicAuth = crypto.util.bytesToBase64(bytes);
-
-        var urlHead = datasource.url.substring(0, userStart);
-        datasource.url = urlHead + datasource.url.substring(passwordEnd + 1);
-      }
-
-      return datasource;
-    };
-
-    var parseMultipleHosts = function(datasource) {
-      datasource.urls = _.map(datasource.url.split(","), function (url) { return url.trim(); });
-      return datasource;
-    };
-
-    // backward compatible with old config
-    if (options.graphiteUrl) {
-      settings.datasources.graphite = {
-        type: 'graphite',
-        url: options.graphiteUrl,
-        default: true
-      };
-    }
-
-    if (options.elasticsearch) {
-      settings.datasources.elasticsearch = {
-        type: 'elasticsearch',
-        url: options.elasticsearch,
-        index: options.grafana_index,
-        grafanaDB: true
-      };
-    }
-
-    _.each(settings.datasources, function(datasource, key) {
-      datasource.name = key;
-      if (datasource.url) { parseBasicAuth(datasource); }
-      if (datasource.type === 'influxdb') { parseMultipleHosts(datasource); }
-    });
+    // var parseBasicAuth = function(datasource) {
+    //   var passwordEnd = datasource.url.indexOf('@');
+    //   if (passwordEnd > 0) {
+    //     var userStart = datasource.url.indexOf('//') + 2;
+    //     var userAndPassword = datasource.url.substring(userStart, passwordEnd);
+    //     var bytes = crypto.charenc.Binary.stringToBytes(userAndPassword);
+    //     datasource.basicAuth = crypto.util.bytesToBase64(bytes);
+    //
+    //     var urlHead = datasource.url.substring(0, userStart);
+    //     datasource.url = urlHead + datasource.url.substring(passwordEnd + 1);
+    //   }
+    //
+    //   return datasource;
+    // };
+    //
+    // _.each(settings.datasources, function(datasource, key) {
+    //   datasource.name = key;
+    //   if (datasource.url) { parseBasicAuth(datasource); }
+    //   if (datasource.type === 'influxdb') { parseMultipleHosts(datasource); }
+    // });
 
     if (settings.plugins.panels) {
       _.extend(settings.panels, settings.plugins.panels);

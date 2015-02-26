@@ -7,7 +7,7 @@ import (
 )
 
 func setIndexViewData(c *middleware.Context) error {
-	settings, err := getFrontendSettings(c)
+	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return err
 	}
@@ -17,8 +17,8 @@ func setIndexViewData(c *middleware.Context) error {
 		Login:          c.Login,
 		Email:          c.Email,
 		Name:           c.Name,
-		AccountName:    c.AccountName,
-		AccountRole:    c.AccountRole,
+		OrgName:        c.OrgName,
+		OrgRole:        c.OrgRole,
 		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
 	}

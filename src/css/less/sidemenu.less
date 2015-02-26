@@ -1,7 +1,12 @@
+.sidemenu-canvas {
+  position: relative;
+}
+
 .sidemenu-wrapper {
   position: absolute;
   display: none;
   top: 0;
+  bottom: 0;
   left: 0;
   width: 200px;
   background: @bodyBackground;
@@ -36,10 +41,32 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  li {
-    height: 50px;
+
+  >li {
+    margin-bottom: 9px;
+  }
+
+  &.sidemenu-small {
+    font-size: 14px;
+
+    .icon-circle {
+      width: 28px;
+      height: 28px;
+      i {
+        top: 1px;
+        left: 4px;
+        font-size: 110%;
+      }
+    }
+
+    .sidemenu-item {
+      color: @textColor;
+      line-height: 28px;
+      padding-left: 25px;
+    }
   }
 }
+
 
 .sidemenu-user {
   .sidemenu-item-text {
@@ -50,13 +77,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  img {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
-}
 
 .sidemenu-top-btn {
   display: block;
@@ -88,8 +109,8 @@
     color: @textColor;
     opacity: .7;
     position: relative;
-    left: 11px;
-    top: 5px;
+    left: 7px;
+    top: 2px;
     font-size: 125%;
   }
 }
@@ -99,8 +120,8 @@
 
 .sidemenu-item {
   color: #f80;
-  line-height: 34px;
-	padding: 14px 10px 14px 20px;
+  line-height: 40px;
+	padding: 0px 10px 0px 20px;
 	display: block;
 
   .sidemenu-item-text {
@@ -108,9 +129,44 @@
     &.no-icon {
       padding-left: 59px;
     }
-    //text-shadow: 1px 0 10px #A25803;
-    //text-shadow: 1px 0 10px #f80;
+  }
+  img {
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
 }
 
+.sidemenu-system-section {
+  background-color: @blueDark;
+  color: @white;
+  padding: 3px 0;
+  margin-left: 10px;
+  margin-right: 10px;
+  border-radius: 2px;
 
+  .sidemenu-system-section-inner {
+    border: 2px solid black;
+    border-left: none;
+    border-right: none;
+    padding: 4px;
+    overflow: hidden;
+  }
+
+  .fa {
+    float: left;
+    font-size: 120%;
+    line-height: 41px;
+    padding: 0 15px;
+  }
+}
+.sidemenu-section-tagline {
+  font-style: italic;
+  font-size: 75%;
+  line-height: 10px;
+}
+
+.sidemenu-section-text-wrapper {
+  padding-top: 4px;
+}

@@ -12,13 +12,7 @@ function(angular, $) {
     this.shortcuts = function(scope) {
 
       scope.$on('$destroy', function() {
-        keyboardManager.unbind('ctrl+f');
-        keyboardManager.unbind('ctrl+h');
-        keyboardManager.unbind('ctrl+s');
-        keyboardManager.unbind('ctrl+r');
-        keyboardManager.unbind('ctrl+z');
-        keyboardManager.unbind('ctrl+o');
-        keyboardManager.unbind('esc');
+        keyboardManager.unbindAll();
       });
 
       var helpModalScope = null;
@@ -40,13 +34,13 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+f', function() {
-        scope.appEvent('show-dash-editor', { src: 'app/partials/search.html', cssClass: 'search-container' });
+        scope.appEvent('show-dash-search');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+o', function() {
         var current = scope.dashboard.sharedCrosshair;
         scope.dashboard.sharedCrosshair = !current;
-        scope.dashboard.emit_refresh('refresh');
+        scope.broadcastRefresh();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+l', function() {
@@ -63,7 +57,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+r', function() {
-        scope.dashboard.emit_refresh();
+        scope.broadcastRefresh();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+z', function(evt) {

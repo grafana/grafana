@@ -9,8 +9,20 @@
     padding: 0; margin: 0;
   }
 
-  &:last-child {
+  &:last-child, &.last {
     border-bottom: 1px solid @grafanaTargetBorder;
+  }
+
+  &.borderless {
+    background: transparent;
+    border: none;
+  }
+}
+
+.borderless {
+  .tight-form-item,
+  .tight-form-input {
+    border: none;
   }
 }
 
@@ -27,7 +39,6 @@
   padding: 8px 12px;
 }
 
-// old graphite-segment-list
 .tight-form-list {
   list-style: none;
   margin: 0;
@@ -40,7 +51,6 @@
   margin-top: 35px;
 }
 
-// old grafana-target-segment {
 .tight-form-item {
   padding: 8px 7px;
   display: inline-block;
@@ -53,7 +63,6 @@
     padding-top: 25px;
   }
 
-  // old .grafana-target-hidden & {
   .tight-form-disabled & {
     color: @grafanaTargetColorHide;
   }
@@ -77,9 +86,14 @@
   &.last {
     border-right: none;
   }
+
+  .fa-caret-down {
+    font-size: 75%;
+    position: relative;
+    top: 1px;
+  }
 }
 
-//.grafana-target-segment-icon {
 .tight-form-item-icon {
   i {
     width: 15px;
@@ -88,7 +102,6 @@
   }
 }
 
-//.grafana-target-function {
 .tight-form-func {
   background: @grafanaTargetFuncBackground;
   > a {
@@ -105,7 +118,6 @@
   }
 }
 
-//input[type=text].grafana-function-param-input {
 input[type=text].tight-form-func-param {
   background: transparent;
   border: none;
@@ -113,7 +125,6 @@ input[type=text].tight-form-func-param {
   padding: 0;
 }
 
-//input[type=text].grafana-target-text-input {
 input[type=text].tight-form-clear-input {
   padding: 8px 7px;
   border: none;
@@ -142,7 +153,6 @@ input[type=text].tight-form-clear-input {
   }
 }
 
-//input[type=checkbox].grafana-target-option-checkbox {
 input[type=checkbox].tight-form-checkbox {
   margin: 0;
 }
@@ -159,7 +169,6 @@ select.tight-form-input {
   }
 }
 
-//.graphite-func-controls {
 .tight-form-func-controls {
   display: none;
   text-align: center;

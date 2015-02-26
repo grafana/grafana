@@ -9,87 +9,118 @@ function (angular, _, $, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SideMenuCtrl', function($scope, $location, contextSrv) {
+  module.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
     };
 
-    $scope.menu = [];
-    $scope.menu.push({
-      text: "Dashboards",
-      icon: "fa fa-th-large",
-      href: $scope.getUrl("/"),
-    });
-
-    if (contextSrv.hasRole('Admin')) {
-      $scope.menu.push({
-        text: "Data Sources",
-        icon: "fa fa-database",
-        href: $scope.getUrl("/account/datasources"),
+    $scope.setupMainNav = function() {
+      $scope.mainLinks.push({
+        text: "Dashboards",
+        icon: "fa fa-fw fa-th-large",
+        href: $scope.getUrl("/"),
       });
-      $scope.menu.push({
-        text: "Account", href: $scope.getUrl("/account"),
-        requireRole: "Admin",
-        icon: "fa fa-shield",
-      });
-    }
 
-    if (contextSrv.user.isGrafanaAdmin) {
-      $scope.menu.push({
-        text: "Admin", href: $scope.getUrl("/admin/users"),
-        icon: "fa fa-cube",
-        requireSignedIn: true,
-        links: [
-          { text: 'Settings', href: $scope.getUrl("/admin/settings")},
-          { text: 'Users',    href: $scope.getUrl("/admin/users"), icon: "fa fa-lock" },
-          { text: 'Log',      href: "", icon: "fa fa-lock" },
-        ]
-      });
-    }
+      if (contextSrv.hasRole('Admin')) {
+        $scope.mainLinks.push({
+          text: "Data Sources",
+          icon: "fa fa-fw fa-database",
+          href: $scope.getUrl("/datasources"),
+        });
+      }
+    };
 
-    $scope.updateState = function() {
-      var currentPath = config.appSubUrl + $location.path();
-      var search = $location.search();
+    $scope.loadOrgs = function() {
+      $scope.orgMenu = [];
 
-      _.each($scope.menu, function(item) {
-        item.active = false;
+      if (contextSrv.hasRole('Admin')) {
+        $scope.orgMenu.push({
+          text: "Organization settings",
+          href: $scope.getUrl("/org"),
+        });
+        $scope.orgMenu.push({
+          text: "Users",
+          href: $scope.getUrl("/org/users"),
+        });
+        $scope.orgMenu.push({
+          text: "API Keys",
+          href: $scope.getUrl("/org/apikeys"),
+        });
+      }
 
-        if (item.href === currentPath) {
-          item.active = true;
-        }
+      if ($scope.orgMenu.length > 0) {
+        $scope.orgMenu.push({ cssClass: 'divider' });
+      }
 
-        if (item.startsWith) {
-          if (currentPath.indexOf(item.startsWith) === 0) {
-            item.active = true;
-            item.href = currentPath;
-          }
-        }
-
-        _.each(item.links, function(link) {
-          link.active = false;
-
-          if (link.editview) {
-            var params = {};
-            _.each(search, function(value, key) {
-              if (value !== null) { params[key] = value; }
-            });
-
-            params.editview = link.editview;
-            link.href = currentPath + '?' + $.param(params);
+      backendSrv.get('/api/user/orgs').then(function(orgs) {
+        _.each(orgs, function(org) {
+          if (org.isUsing) {
+            return;
           }
 
-          if (link.href === currentPath) {
-            item.active = true;
-            link.active = true;
-          }
+          $scope.orgMenu.push({
+            text: "Switch to " + org.name,
+            icon: "fa fa-fw fa-random",
+            click: function() {
+              $scope.switchOrg(org.orgId);
+            }
+          });
+        });
+
+        $scope.orgMenu.push({
+          text: "New Organization",
+          icon: "fa fa-fw fa-plus",
+          href: $scope.getUrl('/org/new')
         });
       });
+    };
 
+    $scope.switchOrg = function(orgId) {
+      backendSrv.post('/api/user/using/' + orgId).then(function() {
+        window.location.href = $scope.getUrl('/');
+      });
+    };
+
+    $scope.setupAdminNav = function() {
+      $scope.systemSection = true;
+      $scope.grafanaVersion = config.buildInfo.version;
+
+      $scope.mainLinks.push({
+        text: "System info",
+        icon: "fa fa-fw fa-info",
+        href: $scope.getUrl("/admin/settings"),
+      });
+
+      $scope.mainLinks.push({
+        text: "Global Users",
+        icon: "fa fa-fw fa-user",
+        href: $scope.getUrl("/admin/users"),
+      });
+
+      $scope.mainLinks.push({
+        text: "Global Orgs",
+        icon: "fa fa-fw fa-users",
+        href: $scope.getUrl("/admin/orgs"),
+      });
+    };
+
+    $scope.updateMenu = function() {
+      $scope.systemSection = false;
+      $scope.mainLinks = [];
+      $scope.orgMenu = [];
+
+      var currentPath = $location.path();
+      if (currentPath.indexOf('/admin') === 0) {
+        $scope.setupAdminNav();
+      } else {
+        $scope.setupMainNav();
+      }
     };
 
     $scope.init = function() {
-      $scope.updateState();
+      $scope.updateMenu();
+      $scope.$on('$routeChangeSuccess', $scope.updateMenu);
     };
   });
 

@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TODO: this needs to be cached or improved somehow
@@ -45,7 +44,7 @@ func Search(c *middleware.Context) {
 
 	if tagcloud == "true" {
 
-		query := m.GetDashboardTagsQuery{AccountId: c.AccountId}
+		query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to get tags from database", err)
@@ -61,7 +60,7 @@ func Search(c *middleware.Context) {
 			UserId:    c.UserId,
 			Limit:     limit,
 			IsStarred: starred == "true",
-			AccountId: c.AccountId,
+			OrgId:     c.OrgId,
 		}
 
 		err := bus.Dispatch(&query)
@@ -76,9 +75,6 @@ func Search(c *middleware.Context) {
 		}
 
 		result.Dashboards = query.Result
-		for _, dash := range result.Dashboards {
-			dash.Url = setting.ToAbsUrl("dashboard/db/" + dash.Slug)
-		}
 	}
 
 	c.JSON(200, result)

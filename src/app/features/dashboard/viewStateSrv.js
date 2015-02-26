@@ -115,7 +115,7 @@ function (angular, _, $) {
 
       $timeout(function() {
         if (self.oldTimeRange !== self.fullscreenPanel.range) {
-          self.$scope.dashboard.emit_refresh();
+          self.$scope.broadcastRefresh();
         }
         else {
           self.fullscreenPanel.$broadcast('render');

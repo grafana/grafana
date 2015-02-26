@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Features', 'Import']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows']" data-title="{{tab}}">
 		</div>
 		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
@@ -33,6 +33,8 @@
 						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
 					</div>
 					<editor-opt-bool text="Hide controls (CTRL+H)" model="dashboard.hideControls"></editor-opt-bool>
+          <editor-opt-bool text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-opt-bool>
+					<editor-opt-bool text="Editable" model="dashboard.editable"></editor-opt-bool>
 				</div>
 			</div>
 			<div class="editor-row">
@@ -68,26 +70,7 @@
 			</div>
 		</div>
 
-		<div ng-if="editor.index == 2">
-			<div class="editor-row">
-				<div class="section">
-					<editor-opt-bool text="Templating" model="dashboard.templating.enable" change="checkFeatureToggles()"></editor-opt-bool>
-					<editor-opt-bool text="Annotations" model="dashboard.annotations.enable" change="checkFeatureToggles()"></editor-opt-bool>
-					<div class="editor-option text-center" ng-repeat="pulldown in dashboard.nav">
-						<label class="small" style="text-transform:capitalize;">{{pulldown.type}}</label>
-						<input class="cr1" id="pulldown{{pulldown.type}}" type="checkbox" ng-model="pulldown.enable" ng-checked="pulldown.enable">
-						<label for="pulldown{{pulldown.type}}" class="cr1"></label>
-					</div>
-          <editor-opt-bool text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-opt-bool>
-				</div>
-			</div>
-		</div>
-
-		<div ng-if="editor.index == 3">
-			<ng-include src="'app/partials/import.html'"></ng-include>
-		</div>
-
-		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 4+$index">
+		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 2+$index">
 			<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
 			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
 		</div>

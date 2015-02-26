@@ -11,7 +11,6 @@ type DashboardSearchHit struct {
 	Title     string   `json:"title"`
 	Slug      string   `json:"slug"`
 	Tags      []string `json:"tags"`
-	Url       string   `json:"url"`
 	IsStarred bool     `json:"isStarred"`
 }
 
@@ -23,7 +22,7 @@ type DashboardTagCloudItem struct {
 type SearchDashboardsQuery struct {
 	Title     string
 	Tag       string
-	AccountId int64
+	OrgId     int64
 	UserId    int64
 	Limit     int
 	IsStarred bool
@@ -32,6 +31,6 @@ type SearchDashboardsQuery struct {
 }
 
 type GetDashboardTagsQuery struct {
-	AccountId int64
-	Result    []*DashboardTagCloudItem
+	OrgId  int64
+	Result []*DashboardTagCloudItem
 }

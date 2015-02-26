@@ -17,11 +17,18 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
+		req.Host = target.Host
 
 		reqQueryVals := req.URL.Query()
 
 		if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(target.Path, "db/"+ds.Database+"/"+proxyPath)
+			reqQueryVals.Add("u", ds.User)
+			reqQueryVals.Add("p", ds.Password)
+			req.URL.RawQuery = reqQueryVals.Encode()
+		} else if ds.Type == m.DS_INFLUXDB_08 {
+			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+			reqQueryVals.Add("db", ds.Database)
 			reqQueryVals.Add("u", ds.User)
 			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
@@ -38,8 +45,8 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetDataSourceByIdQuery{
-		Id:        id,
-		AccountId: c.AccountId,
+		Id:    id,
+		OrgId: c.OrgId,
 	}
 
 	err := bus.Dispatch(&query)

@@ -56,7 +56,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 	return func(c *Context) {
 		ok := false
 		for _, role := range roles {
-			if role == c.AccountRole {
+			if role == c.OrgRole {
 				ok = true
 				break
 			}

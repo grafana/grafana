@@ -13,9 +13,12 @@ src/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+*.iml
 
 /data/*
 /bin/*
 /grafana-pro
+/grafana
 
 grafana.custom.ini
+fig.yml

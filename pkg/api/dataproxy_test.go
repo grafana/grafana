@@ -10,7 +10,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func TestAccountDataAccess(t *testing.T) {
+func TestDataSourceProxy(t *testing.T) {
 
 	Convey("When getting graphite datasource proxy", t, func() {
 		ds := m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}

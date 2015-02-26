@@ -3,7 +3,6 @@ define([
   './pulldown',
   './search',
   './metricKeys',
-  './graphiteImport',
   './inspectCtrl',
   './jsonEditorCtrl',
   './loginCtrl',

@@ -12,6 +12,8 @@
 @import "navbar.less";
 @import "gfbox.less";
 @import "dashlist.less";
+@import "admin.less";
+@import "validation.less";
 
 .row-control-inner {
   padding:0px;
@@ -24,9 +26,6 @@
   .row-tab {
     display: none;
   }
-  .submenu-controls {
-    display: none;
-  }
   .add-row-panel-hint {
     display: none;
   }
@@ -34,13 +33,11 @@
 
 .playlist-active {
   .grafana-menu-zoom-out,
-  .grafana-menu-save,
-  .grafana-menu-load,
   .add-row-panel-hint,
-  .grafana-menu-home,
   .grafana-menu-refresh,
-  .grafana-menu-edit {
-    display: none;
+  .top-nav-dashboards-btn,
+  .top-nav-dash-actions {
+    display:none;
   }
 
   .grafana-menu-stop-playlist {

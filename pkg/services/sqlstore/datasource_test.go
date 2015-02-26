@@ -42,16 +42,16 @@ func TestDataAccess(t *testing.T) {
 		Convey("Can add datasource", func() {
 
 			err := AddDataSource(&m.AddDataSourceCommand{
-				AccountId: 10,
-				Type:      m.DS_INFLUXDB,
-				Access:    m.DS_ACCESS_DIRECT,
-				Url:       "http://test",
-				Database:  "site",
+				OrgId:    10,
+				Type:     m.DS_INFLUXDB,
+				Access:   m.DS_ACCESS_DIRECT,
+				Url:      "http://test",
+				Database: "site",
 			})
 
 			So(err, ShouldBeNil)
 
-			query := m.GetDataSourcesQuery{AccountId: 10}
+			query := m.GetDataSourcesQuery{OrgId: 10}
 			err = GetDataSources(&query)
 			So(err, ShouldBeNil)
 
@@ -59,33 +59,33 @@ func TestDataAccess(t *testing.T) {
 
 			ds := query.Result[0]
 
-			So(ds.AccountId, ShouldEqual, 10)
+			So(ds.OrgId, ShouldEqual, 10)
 			So(ds.Database, ShouldEqual, "site")
 		})
 
 		Convey("Given a datasource", func() {
 
 			AddDataSource(&m.AddDataSourceCommand{
-				AccountId: 10,
-				Type:      m.DS_GRAPHITE,
-				Access:    m.DS_ACCESS_DIRECT,
-				Url:       "http://test",
+				OrgId:  10,
+				Type:   m.DS_GRAPHITE,
+				Access: m.DS_ACCESS_DIRECT,
+				Url:    "http://test",
 			})
 
-			query := m.GetDataSourcesQuery{AccountId: 10}
+			query := m.GetDataSourcesQuery{OrgId: 10}
 			GetDataSources(&query)
 			ds := query.Result[0]
 
 			Convey("Can delete datasource", func() {
-				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, AccountId: ds.AccountId})
+				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
 				GetDataSources(&query)
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
-			Convey("Can not delete datasource with wrong accountId", func() {
-				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, AccountId: 123123})
+			Convey("Can not delete datasource with wrong orgId", func() {
+				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, OrgId: 123123})
 				So(err, ShouldBeNil)
 
 				GetDataSources(&query)

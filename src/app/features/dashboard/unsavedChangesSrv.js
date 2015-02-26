@@ -88,8 +88,11 @@ function(angular, _, config) {
       _.each(current.templating.list, function(value, index) {
         value.current = null;
         value.options = null;
-        original.templating.list[index].current = null;
-        original.templating.list[index].options = null;
+
+        if (original.templating.list.length > index) {
+          original.templating.list[index].current = null;
+          original.templating.list[index].options = null;
+        }
       });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });

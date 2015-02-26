@@ -7,11 +7,11 @@
 		</span>
 		<div class="search-switches">
 			<i class="fa fa-filter"></i>
-			<a class="pointer" href="javascript:void();" ng-click="showStarred()" tabindex="2">
+			<a class="pointer" href="javascript:void 0;" ng-click="showStarred()" tabindex="2">
 				<i class="fa fa-remove" ng-show="query.starred"></i>
 				starred
 			</a> |
-			<a class="pointer" href="javascript:void();" ng-click="showTags()" tabindex="3">
+			<a class="pointer" href="javascript:void 0;" ng-click="showTags()" tabindex="3">
 				<i class="fa fa-remove" ng-show="query.tagcloud"></i>
 				tags
 			</a>
@@ -62,26 +62,15 @@
 		</div>
 	</div>
 
-	<div class="editor-row" ng-if="showImport">
-		<div class="section">
-			<div class="editor-option">
-				<h5>Local File <tip>Load dashboard JSON layout from file</tip></h5>
-				<form>
-					<input type="file" id="dashupload" dash-upload/><br>
-				</form>
-			</div>
-		</div>
-	</div>
-
 	<div class="search-button-row">
 		<button class="btn btn-inverse pull-left" ng-click="newDashboard()">
 			<i class="fa fa-plus"></i>
 			New
 		</button>
-		<button class="btn btn-inverse pull-left" ng-click="toggleImport($event)">
+		<a class="btn btn-inverse pull-left" href="dashboard/import">
 			<i class="fa fa-download"></i>
 			Import
-		</button>
+		</a>
 		<button class="btn btn-inverse pull-left" dash-editor-link="app/partials/playlist.html" editor-scope="isolated">
 			<i class="fa fa-play"></i>
 			Playlist

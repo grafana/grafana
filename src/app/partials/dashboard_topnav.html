@@ -18,22 +18,22 @@
 				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
 				</span>
 
-				<a ng-click="asd()" class="top-nav-title pointer">
-					 {{dashboard.title}}
-				 </a>
-			 </div>
+				<a ng-click="dashboardTitleAction()" class="top-nav-title pointer">
+					{{dashboard.title}}
+				</a>
+			</div>
 
-			<ul class="nav pull-left" ng-if="!dashboardMeta.isHome">
+			<ul class="nav pull-left top-nav-dash-actions" ng-if="!dashboardMeta.isHome">
 				<li>
 					<a class="pointer" ng-click="starDashboard()">
 						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
 					</a>
 				</li>
 				<li>
-					<a class="pointer" ng-click="shareDashboard()"><i class="fa fa-share-square-o"></i></a>
+					<a class="pointer" ng-click="shareDashboard()" bs-tooltip="'Share dashboard'" data-placement="bottom"><i class="fa fa-share-square-o"></i></a>
 				</li>
 				<li>
-					<a ng-click="saveDashboard()"><i class="fa fa-save"></i></a>
+					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
 				<li class="dropdown">
 					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
@@ -43,8 +43,21 @@
 						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
+						<li><a class="pointer" ng-click="cloneDashboard();">Clone dashboard</a></li>
 						<li><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
+				</li>
+			</ul>
+
+			<ul class="nav dash-playlist-actions" ng-if="playlistSrv">
+				<li>
+					<a ng-click="playlistSrv.prev()"><i class="fa fa-step-backward"></i></a>
+				</li>
+				<li>
+					<a ng-click="playlistSrv.stop()"><i class="fa fa-stop"></i></a>
+				</li>
+				<li>
+					<a ng-click="playlistSrv.next()"><i class="fa fa-step-forward"></i></a>
 				</li>
 			</ul>
 
@@ -58,12 +71,6 @@
 				<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
 					<grafana-simple-panel type="pulldown.type" ng-cloak>
 					</grafana-simple-panel>
-				</li>
-
-				<li class="grafana-menu-stop-playlist hide">
-					<a class='small' ng-click='stopPlaylist(2)'>
-						Stop playlist
-					</a>
 				</li>
 
 			</ul>

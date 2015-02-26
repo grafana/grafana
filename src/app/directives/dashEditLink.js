@@ -118,5 +118,4 @@ function (angular, $) {
         }
       };
     });
-
 });

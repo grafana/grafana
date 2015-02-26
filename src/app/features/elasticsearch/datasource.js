@@ -68,7 +68,7 @@ function (angular, _, config, kbn, moment) {
       var titleField = annotation.titleField || 'desc';
       var textField = annotation.textField || null;
 
-      range[annotation.timeField]= {
+      range[timeField]= {
         from: rangeUnparsed.from,
         to: rangeUnparsed.to,
       };

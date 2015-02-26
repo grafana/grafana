@@ -1,6 +1,7 @@
 define([
   './dashboardCtrl',
   './dashboardNavCtrl',
+  './cloneDashboardCtrl',
   './playlistCtrl',
   './rowCtrl',
   './sharePanelCtrl',
@@ -11,4 +12,7 @@ define([
   './playlistSrv',
   './timeSrv',
   './unsavedChangesSrv',
+  './directives/dashSearchView',
+  './graphiteImportCtrl',
+  './importCtrl',
 ], function () {});
