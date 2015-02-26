@@ -23,7 +23,7 @@
           "span": 12,
           "title": "Events",
           "type": "raintankEventsPanel"
-        },
+        }{{if .Panels}},
 {{range .Panels}}
         {
           "aliasColors": {},
@@ -90,6 +90,7 @@
           ],
           "zerofill": true
         }{{if not .Last}},{{end}}
+{{end}}
 {{end}}
       ]
     }
