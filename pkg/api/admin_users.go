@@ -29,9 +29,10 @@ func AdminGetUser(c *middleware.Context) {
 	}
 
 	result := m.UserDTO{
-		Name:  query.Result.Name,
-		Email: query.Result.Email,
-		Login: query.Result.Login,
+		Name:           query.Result.Name,
+		Email:          query.Result.Email,
+		Login:          query.Result.Login,
+		IsGrafanaAdmin: query.Result.IsAdmin,
 	}
 
 	c.JSON(200, result)
@@ -120,6 +121,22 @@ func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPas
 	}
 
 	c.JsonOK("User password updated")
+}
+
+func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUserPermissionsForm) {
+	userId := c.ParamsInt64(":id")
+
+	cmd := m.UpdateUserPermissionsCommand{
+		UserId:         userId,
+		IsGrafanaAdmin: form.IsGrafanaAdmin,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to update user permissions", err)
+		return
+	}
+
+	c.JsonOK("User permissions updated")
 }
 
 func AdminDeleteUser(c *middleware.Context) {

@@ -27,6 +27,7 @@ func init() {
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", SetUsingOrg)
+	bus.AddHandler("sql", UpdateUserPermissions)
 }
 
 func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
@@ -281,6 +282,18 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		var rawSql = fmt.Sprintf("DELETE FROM %s WHERE id=?", x.Dialect().Quote("user"))
 		_, err := sess.Exec(rawSql, cmd.UserId)
+		return err
+	})
+}
+
+func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		user := m.User{}
+		sess.Id(cmd.UserId).Get(&user)
+
+		user.IsAdmin = cmd.IsGrafanaAdmin
+		sess.UseBool("is_admin")
+		_, err := sess.Id(user.Id).Update(&user)
 		return err
 	})
 }

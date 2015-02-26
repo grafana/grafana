@@ -8,6 +8,7 @@ function (angular) {
 
   module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv, $location) {
     $scope.user = {};
+    $scope.permissions = {};
 
     $scope.init = function() {
       if ($routeParams.id) {
@@ -19,6 +20,7 @@ function (angular) {
       backendSrv.get('/api/admin/users/' + id).then(function(user) {
         $scope.user = user;
         $scope.user_id = id;
+        $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
       });
     };
 
@@ -27,6 +29,14 @@ function (angular) {
 
       var payload = { password: $scope.password };
       backendSrv.put('/api/admin/users/' + $scope.user_id + '/password', payload).then(function() {
+        $location.path('/admin/users');
+      });
+    };
+
+    $scope.updatePermissions = function() {
+      var payload = $scope.permissions;
+
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(function() {
         $location.path('/admin/users');
       });
     };

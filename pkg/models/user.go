@@ -59,6 +59,11 @@ type ChangeUserPasswordCommand struct {
 	UserId int64 `json:"-"`
 }
 
+type UpdateUserPermissionsCommand struct {
+	IsGrafanaAdmin bool
+	UserId         int64 `json:"-"`
+}
+
 type DeleteUserCommand struct {
 	UserId int64
 }
@@ -120,9 +125,10 @@ type SignedInUser struct {
 }
 
 type UserDTO struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Login string `json:"login"`
+	Email          string `json:"email"`
+	Name           string `json:"name"`
+	Login          string `json:"login"`
+	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 
 type UserSearchHitDTO struct {

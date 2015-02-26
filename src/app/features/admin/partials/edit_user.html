@@ -1,6 +1,5 @@
-<topnav icon="fa fa-fw fa-cogs" title="System Admin" subnav="true">
+<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
 	<ul class="nav">
-		<li><a href="admin/settings">Settings</a></li>
 		<li><a href="admin/users">Users</a></li>
 		<li><a href="admin/users/create">Create user</a></li>
 		<li class="active"><a href="admin/users/edit/{{user_id}}">Edit user</a></li>
@@ -10,7 +9,7 @@
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Edit user
+			User details
 		</h2>
 
 		<form name="userForm">
@@ -74,8 +73,26 @@
 			</div>
 
 			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="setPassword()">Change password</button>
+			<button type="submit" class="pull-right btn btn-success" ng-click="setPassword()">Update</button>
 		</form>
-	</div>
 
+		<h2>
+			Permissions
+		</h2>
+
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item last">
+					Grafana Admin&nbsp;
+					<input class="cr1" id="permissions.isGrafanaAdmin" type="checkbox"
+					ng-model="permissions.isGrafanaAdmin" ng-checked="permissions.isGrafanaAdmin">
+					<label for="permissions.isGrafanaAdmin" class="cr1"></label>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<br>
+		<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
+
+	</div>
 </div>

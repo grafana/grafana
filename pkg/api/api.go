@@ -104,6 +104,7 @@ func Register(r *macaron.Macaron) {
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
 		r.Put("/users/:id/details", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
 		r.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
+		r.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		r.Delete("/users/:id", AdminDeleteUser)
 	}, reqGrafanaAdmin)
 
