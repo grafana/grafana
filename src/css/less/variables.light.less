@@ -20,7 +20,8 @@
 
 // Accent colors
 // -------------------------
-@blue:                  #007FFF;
+@blueOrig:              #007FFF;
+@blue:             		#2AB2E4; 
 @blueDark:              #75CAEB;
 @green:                 #28B62C;
 @red:                   #FF4136;
@@ -44,11 +45,11 @@
 @fullEditBorder:          @grayLighter;
 
 // Graphite Target Editor
-@grafanaTargetBorder:         @submenuBackground;
-@grafanaTargetBackground:     @white;
+@grafanaTargetBorder:         #ddd;
+@grafanaTargetBackground:     #efefef;
 @grafanaTargetColor:          @textColor;
 @grafanaTargetColorHide:      lighten(@textColor, 25%);
-@grafanaTargetSegmentBorder:  @submenuBackground;
+@grafanaTargetSegmentBorder:  #ddd;
 
 @grafanaTargetFuncBackground: darken(@grafanaTargetBackground, 5%);
 @grafanaTargetFuncHightlight: darken(@grafanaTargetBackground, 10%);
@@ -56,14 +57,14 @@
 // Scaffolding
 // -------------------------
 @bodyBackground:        #EAEAEA;
-@textColor:             #666;
+@textColor:             @gray;
 
 
 // Links
 // -------------------------
-@linkColor:             darken(@textColor, 20%);
+@linkColor:             @gray;
 @linkColorDisabled:     lighten(@linkColor,30%);
-@linkColorHover:        @gray;
+@linkColorHover:        @grayDarker;
 
 
 // Typography
@@ -73,6 +74,7 @@
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
@@ -99,13 +101,13 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  	lighten(@grayLight,35%);
-@grafanaListAccent:         @grayLighter;
-@grafanaListBorderTop:      #eee;
-@grafanaListBorderBottom:   #efefef;
-@grafanaListHighlight:      lighten(@grayLight,20%);
+@grafanaListBackground:  	   lighten(@grayLight,20%);
+@grafanaListAccent:            lighten(@grayLight,10%);
+@grafanaListBorderTop:         #eee;
+@grafanaListBorderBottom:      #eee;
+@grafanaListHighlight:         lighten(@grayLight,10%);
 @grafanaListHighlightContrast: #ddd;
-@grafanaListMainLinkColor: @textColor;
+@grafanaListMainLinkColor:     @textColor;
 
 
 // Tables
@@ -172,8 +174,8 @@
 @dropdownLinkColorHover:        @white;
 @dropdownLinkColorActive:       @white;
 
-@dropdownLinkBackgroundActive:  lighten(@grayLight,20%);
-@dropdownLinkBackgroundHover:   lighten(@grayLight,20%);
+@dropdownLinkBackgroundActive:  @blue;
+@dropdownLinkBackgroundHover:   @blue;
 
 
 
