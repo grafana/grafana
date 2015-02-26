@@ -285,8 +285,8 @@ func addMonitorTypeSettingMigrations(mg *Migrator) {
 		Sqlite("INSERT INTO monitor_type_setting values(null,2,'validateCert','Validate SSL Certificate','Boolean','{}','true',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,2,'validateCert','Validate SSL Certificate','Boolean','{}','true',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 	mg.AddMigration("insert https.port type_settings into monitor_type_setting table", new(RawSqlMigration).
-		Sqlite("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
-		Mysql("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','80',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+		Sqlite("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','443',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO monitor_type_setting values(null,2,'port','Port','Number','{}','443',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 	mg.AddMigration("insert https.method type_settings into monitor_type_setting table", new(RawSqlMigration).
 		Sqlite("INSERT INTO monitor_type_setting values(null,2,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,2,'method','Method','Enum','{\"values\": [\"GET\", \"POST\",\"PUT\",\"DELETE\", \"HEAD\"]}','GET',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
