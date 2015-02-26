@@ -1,4 +1,3 @@
-
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 
 	<ul class="sidemenu sidemenu-main">
@@ -27,13 +26,65 @@
 		</li>
 	</ul>
 
-	<ul class="sidemenu sidemenu-small"  style="margin-top:50px">
-		<li ng-repeat="item in bottomLinks">
-			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
-				<img ng-if="item.imgSrc" ng-src="{{item.imgSrc}}">
-				<span class="icon-circle sidemenu-icon" ng-if="item.icon"><i class="{{item.icon}}"></i></span>
-				<span class="sidemenu-item-text">{{item.text}}</span>
+	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="!systemSection">
+
+		<li>
+			<a href="profile" class="sidemenu-item">
+				<img ng-src="{{contextSrv.user.gravatarUrl}}">
+				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
+	   	</a>
+		</li>
+
+		<li class="dropdown">
+			<a class="sidemenu-item pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
+				<span class="sidemenu-item-text">
+					{{contextSrv.user.orgName}}
+					<i class="fa fa-caret-down small"></i>
+				</span>
+	   	</a>
+			<ul class="dropdown-menu" role="menu" style="left: 65px">
+				<li ng-repeat="menuItem in orgMenu" ng-class="menuItem.cssClass">
+					<a href="{{menuItem.href}}" ng-if="menuItem.href">
+						<i class="{{menuItem.icon}}" ng-if="menuItem.icon"></i>
+						{{menuItem.text}}
+					</a>
+					<a ng-click="menuItem.click()" ng-if="menuItem.click">
+						<i class="{{menuItem.icon}}"></i>
+						{{menuItem.text}}
+					</a>
+				</li>
+			</ul>
+		</li>
+
+		<li ng-if="contextSrv.isGrafanaAdmin">
+			<a href="admin/settings" class="sidemenu-item">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cog"></i></span>
+				<span class="sidemenu-item-text">Grafana admin</span>
+	   	</a>
+		</li>
+
+		<li>
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
+				<span class="sidemenu-item-text">Sign out</span>
 	   	</a>
 		</li>
 	</ul>
+
+	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="systemSection">
+		<li>
+			<a href="{{appSubUrl}}/" class="sidemenu-item">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-backward"></i></span>
+				<span class="sidemenu-item-text">Exit admin</span>
+	   	</a>
+		</li>
+		<li>
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
+				<span class="sidemenu-item-text">Sign out</span>
+	   	</a>
+		</li>
+	</ul>
+
 </div>

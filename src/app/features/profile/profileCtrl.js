@@ -9,8 +9,6 @@ function (angular, config) {
 
   module.controller('ProfileCtrl', function($scope, backendSrv) {
 
-    $scope.newOrg = {name: ''};
-
     $scope.init = function() {
       $scope.getUser();
       $scope.getUserOrgs();
@@ -37,10 +35,6 @@ function (angular, config) {
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
       backendSrv.put('/api/user/', $scope.user);
-    };
-
-    $scope.createOrg = function() {
-      backendSrv.post('/api/org/', $scope.newOrg).then($scope.getUserOrgs);
     };
 
     $scope.init();

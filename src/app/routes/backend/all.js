@@ -50,13 +50,17 @@ define([
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
       })
+      .when('/org/new', {
+        templateUrl: 'app/features/org/partials/newOrg.html',
+        controller : 'NewOrgCtrl',
+      })
       .when('/org/users', {
         templateUrl: 'app/features/org/partials/orgUsers.html',
         controller : 'OrgUsersCtrl',
       })
       .when('/org/apikeys', {
         templateUrl: 'app/features/org/partials/orgApiKeys.html',
-        controller : 'ApiKeysCtrl',
+        controller : 'OrgApiKeysCtrl',
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',

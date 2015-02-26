@@ -9,7 +9,7 @@ function (angular, _, $, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SideMenuCtrl', function($scope, $location, contextSrv) {
+  module.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
@@ -29,35 +29,57 @@ function (angular, _, $, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+    };
 
-      if (contextSrv.user.isSignedIn) {
-        $scope.bottomLinks.push({
-          text: contextSrv.user.name,
-          imgSrc: contextSrv.user.gravatarUrl,
-          href: $scope.getUrl("/profile"),
-        });
+    $scope.loadOrgs = function() {
+      $scope.orgMenu = [];
 
-        $scope.bottomLinks.push({
-          text: contextSrv.user.orgName,
+      if (contextSrv.hasRole('Admin')) {
+        $scope.orgMenu.push({
+          text: "Organization settings",
           href: $scope.getUrl("/org"),
-          icon: "fa fa-fw fa-users",
         });
-
-        if (contextSrv.hasRole('Admin')) {
-          $scope.bottomLinks.push({
-            text: "Grafana admin",
-            icon: "fa fa-fw fa-cog",
-            href: $scope.getUrl("/admin/settings"),
-          });
-        }
-
-        $scope.bottomLinks.push({
-          text: "Sign out",
-          target: "_self",
-          icon: "fa fa-fw fa-sign-out",
-          href: $scope.getUrl("/logout"),
+        $scope.orgMenu.push({
+          text: "Users",
+          href: $scope.getUrl("/org/users"),
+        });
+        $scope.orgMenu.push({
+          text: "API Keys",
+          href: $scope.getUrl("/org/apikeys"),
         });
       }
+
+      if ($scope.orgMenu.length > 0) {
+        $scope.orgMenu.push({ cssClass: 'divider' });
+      }
+
+      backendSrv.get('/api/user/orgs').then(function(orgs) {
+        _.each(orgs, function(org) {
+          if (org.isUsing) {
+            return;
+          }
+
+          $scope.orgMenu.push({
+            text: "Switch to " + org.name,
+            icon: "fa fa-fw fa-random",
+            click: function() {
+              $scope.switchOrg(org.orgId);
+            }
+          });
+        });
+
+        $scope.orgMenu.push({
+          text: "New Organization",
+          icon: "fa fa-fw fa-plus",
+          href: $scope.getUrl('/org/new')
+        });
+      });
+    };
+
+    $scope.switchOrg = function(orgId) {
+      backendSrv.post('/api/user/using/' + orgId).then(function() {
+        window.location.href = $scope.getUrl('/');
+      });
     };
 
     $scope.setupAdminNav = function() {
@@ -81,25 +103,12 @@ function (angular, _, $, config) {
         icon: "fa fa-fw fa-users",
         href: $scope.getUrl("/admin/orgs"),
       });
-
-      $scope.bottomLinks.push({
-        text: "Exit admin",
-        icon: "fa fa-fw fa-backward",
-        href: $scope.getUrl("/"),
-      });
-
-      $scope.bottomLinks.push({
-        text: "Sign out",
-        icon: "fa fa-fw fa-sign-out",
-        target: "_self",
-        href: $scope.getUrl("/logout"),
-      });
     };
 
     $scope.updateMenu = function() {
       $scope.systemSection = false;
       $scope.mainLinks = [];
-      $scope.bottomLinks = [];
+      $scope.orgMenu = [];
 
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {

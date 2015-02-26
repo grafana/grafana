@@ -1,21 +1,20 @@
 <topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="org">Overview</a></li>
-		<li><a href="org/users">Users</a></li>
+		<li class="active"><a href="org">Info</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 
-		<h2>Organization Details</h2>
+		<h2>Organization info</h2>
 
 		<form name="orgForm">
 			<div>
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Name</strong>
+							<strong>Org. name</strong>
 						</li>
 						<li>
 							<input type="text" required ng-model="org.name" class="input-xxlarge tight-form-input last" >
@@ -23,51 +22,44 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Address 1</strong>
+						</li>
+						<li>
+							<input type="text" required ng-model="org.address1" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>Address 2</strong>
+						</li>
+						<li>
+							<input type="text" required ng-model="org.address2" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							<strong>City</strong>
+						</li>
+						<li>
+							<input type="text" required ng-model="org.city" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
 			</div>
 			<br>
 			<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
 		</form>
-
-		<h2>
-			API Keys
-		</h2>
-
-		<div ng-controller="OrgApiKeysCtrl">
-			<form name="addTokenrForm" class="form-inline tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Add a key
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
-					</li>
-					<li class="tight-form-item">
-						Role
-					</li>
-					<li>
-						<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
-					</li>
-					<li style="float: right">
-						<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
-					</li>
-					<div class="clearfix"></div>
-				</ul>
-			</form>
-		<br>
-
-		<table class="grafana-options-table">
-			<tr ng-repeat="t in tokens">
-				<td>{{t.name}}</td>
-				<td>{{t.role}}</td>
-				<td>{{t.key}}</td>
-				<td style="width: 1%">
-					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
-	</div>
 
 	</div>
 </div>

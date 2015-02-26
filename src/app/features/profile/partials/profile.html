@@ -1,4 +1,4 @@
-<topnav title="{{contextSrv.user.name}}" section="Profile" icon="fa fa-user" subnav="true">
+<topnav title="{{contextSrv.user.name}}" section="Profile" icon="fa fw fa-user" subnav="true">
 	<ul class="nav">
 		<li class="active"><a href="profile">Overview</a></li>
 		<li><a href="profile/password">Change password</a></li>
@@ -67,28 +67,6 @@
 				</td>
 			</tr>
 		</table>
-
-		<h2 style="margin-top: 30px;">Add Organization</h2>
-
-		<form name="form">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px;">
-							<strong>Org. name</strong>
-						</li>
-						<li>
-							<input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="organization name">
-						</li>
-						<li>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
-			<br>
-			<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
-		</form>
 
 	</div>
 </div>
