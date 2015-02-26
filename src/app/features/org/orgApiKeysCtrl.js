@@ -26,7 +26,16 @@ function (angular) {
     };
 
     $scope.addToken = function() {
-      backendSrv.post('/api/auth/keys', $scope.token).then($scope.getTokens);
+      backendSrv.post('/api/auth/keys', $scope.token).then(function(result) {
+
+        var modalScope = $scope.$new(true);
+        modalScope.key = result.key;
+
+        $scope.appEvent('show-modal', {
+          src: './app/features/org/partials/apikeyModal.html',
+          scope: modalScope
+        });
+      });
     };
 
     $scope.init();

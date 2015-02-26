@@ -9,6 +9,7 @@ import (
 	"github.com/macaron-contrib/session"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,22 +44,34 @@ func GetContextHandler() macaron.Handler {
 				ctx.SignedInUser = query.Result
 				ctx.IsSignedIn = true
 			}
-		} else if key := getApiKey(ctx); key != "" {
-			// Try API Key auth
-			keyQuery := m.GetApiKeyByKeyQuery{Key: key}
+		} else if keyString := getApiKey(ctx); keyString != "" {
+			// base64 decode key
+			decoded, err := apikeygen.Decode(keyString)
+			if err != nil {
+				ctx.JsonApiErr(401, "Invalid API key", err)
+				return
+			}
+			// fetch key
+			keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 			if err := bus.Dispatch(&keyQuery); err != nil {
 				ctx.JsonApiErr(401, "Invalid API key", err)
 				return
 			} else {
-				keyInfo := keyQuery.Result
+				apikey := keyQuery.Result
+
+				// validate api key
+				if !apikeygen.IsValid(decoded, apikey.Key) {
+					ctx.JsonApiErr(401, "Invalid API key", err)
+					return
+				}
 
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = &m.SignedInUser{}
 
 				// TODO: fix this
-				ctx.OrgRole = keyInfo.Role
-				ctx.ApiKeyId = keyInfo.Id
-				ctx.OrgId = keyInfo.OrgId
+				ctx.OrgRole = apikey.Role
+				ctx.ApiKeyId = apikey.Id
+				ctx.OrgId = apikey.OrgId
 			}
 		} else if setting.AnonymousEnabled {
 			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}

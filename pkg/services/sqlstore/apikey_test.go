@@ -14,13 +14,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved api key", func() {
-			cmd := m.AddApiKeyCommand{OrgId: 1, Key: "hello"}
+			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
 			err := AddApiKey(&cmd)
 			So(err, ShouldBeNil)
 
-			Convey("Should be able to get key by key", func() {
-				query := m.GetApiKeyByKeyQuery{Key: "hello"}
-				err = GetApiKeyByKey(&query)
+			Convey("Should be able to get key by name", func() {
+				query := m.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
+				err = GetApiKeyByName(&query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldNotBeNil)

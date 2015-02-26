@@ -1,0 +1,44 @@
+<div class="modal-body gf-box gf-box-no-margin">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-key"></i>
+			API Key Created
+		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="gf-box-body" style="min-height: 0px;">
+
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<strong>Key</strong>
+				</li>
+				<li class="tight-form-item last">
+					{{key}}
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<br>
+		<br>
+
+		<div class="grafana-info-box" style="text-align: left">
+			You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.
+			<br>
+			<br>
+			You can authenticate request using the Authorization HTTP header, example:
+			<br>
+			<br>
+			<pre class="small" style="overflow: hidden">
+curl -H "Authorization: Bearer your_key_above" http://your.grafana.com/api/dashboards/db/mydash
+			</pre>
+		</div>
+
+	</div>
+
+</div>
+

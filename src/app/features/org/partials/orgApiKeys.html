@@ -31,13 +31,16 @@
 				<div class="clearfix"></div>
 			</ul>
 		</form>
-		<br>
 
-		<table class="grafana-options-table">
+		<table class="grafana-options-table" style="width: 250px">
+			<tr>
+				<th style="text-align: left">Name</th>
+				<th style="text-align: left">Role</th>
+				<th></th>
+			</tr>
 			<tr ng-repeat="t in tokens">
 				<td>{{t.name}}</td>
 				<td>{{t.role}}</td>
-				<td>{{t.key}}</td>
 				<td style="width: 1%">
 					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
 						<i class="fa fa-remove"></i>

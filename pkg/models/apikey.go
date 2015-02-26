@@ -49,9 +49,10 @@ type GetApiKeysQuery struct {
 	Result []*ApiKey
 }
 
-type GetApiKeyByKeyQuery struct {
-	Key    string
-	Result *ApiKey
+type GetApiKeyByNameQuery struct {
+	KeyName string
+	OrgId   int64
+	Result  *ApiKey
 }
 
 // ------------------------

@@ -10,8 +10,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetApiKeys)
-	bus.AddHandler("sql", GetApiKeyByKey)
-	bus.AddHandler("sql", UpdateApiKey)
+	bus.AddHandler("sql", GetApiKeyByName)
 	bus.AddHandler("sql", DeleteApiKey)
 	bus.AddHandler("sql", AddApiKey)
 }
@@ -50,23 +49,9 @@ func AddApiKey(cmd *m.AddApiKeyCommand) error {
 	})
 }
 
-func UpdateApiKey(cmd *m.UpdateApiKeyCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		t := m.ApiKey{
-			Id:      cmd.Id,
-			OrgId:   cmd.OrgId,
-			Name:    cmd.Name,
-			Role:    cmd.Role,
-			Updated: time.Now(),
-		}
-		_, err := sess.Where("id=? and org_id=?", t.Id, t.OrgId).Update(&t)
-		return err
-	})
-}
-
-func GetApiKeyByKey(query *m.GetApiKeyByKeyQuery) error {
+func GetApiKeyByName(query *m.GetApiKeyByNameQuery) error {
 	var apikey m.ApiKey
-	has, err := x.Where("`key`=?", query.Key).Get(&apikey)
+	has, err := x.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&apikey)
 
 	if err != nil {
 		return err
