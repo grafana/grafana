@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	_ "github.com/grafana/grafana/pkg/services/sitediscovery"
 )
 
 func GetSiteById(c *middleware.Context) {
@@ -58,8 +60,15 @@ func AddSite(c *middleware.Context) {
 		c.JsonApiErr(500, "Failed to add site", err)
 		return
 	}
+	site := cmd.Result
+	discoverCmd := m.SiteDiscoveryCommand{Site: site}
+	if err := bus.Dispatch(&discoverCmd); err != nil {
+		fmt.Println("Failed to discover site.", err)
+		//Nothing more to do, the site was created so 
+		// we still need to return a 200 response.
+	}
 
-	c.JSON(200, cmd.Result)
+	c.JSON(200, discoverCmd.Result)
 }
 
 func UpdateSite(c *middleware.Context) {

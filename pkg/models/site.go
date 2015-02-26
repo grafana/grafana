@@ -30,12 +30,27 @@ type SiteDTO struct {
 	Name      string    `json:"name"`
 }
 
+type NewSiteDTO struct {
+	Site              *SiteDTO  `json:"site"`
+	SuggestedMonitors []*SuggestedMonitor `json:"suggested_monitors"`
+}
+
+type SuggestedMonitor struct {
+	Name          string              `json:"name"`
+	MonitorTypeId int64               `json:"monitor_type_id"`
+	Settings      []MonitorSettingDTO `json:"settings"`
+}
+
 // ----------------------
 // COMMANDS
+type SiteDiscoveryCommand struct {
+	Site   *SiteDTO 
+	Result *NewSiteDTO
+}
 
 type AddSiteCommand struct {
-	AccountId int64  `json:"-"`
-	Name      string `json:"name"`
+	AccountId int64                 `json:"-"`
+	Name      string                `json:"name"`
 	Result    *SiteDTO
 }
 
