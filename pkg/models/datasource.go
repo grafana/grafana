@@ -20,7 +20,6 @@ var (
 	ErrDataSourceNotFound = errors.New("Data source not found")
 )
 
-type DsType string
 type DsAccess string
 
 type DataSource struct {
@@ -29,7 +28,7 @@ type DataSource struct {
 	Version int
 
 	Name              string
-	Type              DsType
+	Type              string
 	Access            DsAccess
 	Url               string
 	Password          string
@@ -51,7 +50,7 @@ type DataSource struct {
 type AddDataSourceCommand struct {
 	OrgId     int64 `json:"-"`
 	Name      string
-	Type      DsType
+	Type      string
 	Access    DsAccess
 	Url       string
 	Password  string
@@ -67,7 +66,7 @@ type UpdateDataSourceCommand struct {
 	Id        int64
 	OrgId     int64
 	Name      string
-	Type      DsType
+	Type      string
 	Access    DsAccess
 	Url       string
 	Password  string

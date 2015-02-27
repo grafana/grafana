@@ -51,10 +51,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
         });
 
-        scope.$on('refresh', function() {
-          scope.get_data();
-        });
-
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;

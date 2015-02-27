@@ -97,10 +97,6 @@ function (angular, $, _, appLevelRequire, config) {
     'routes/backend/all',
   ];
 
-  _.each(config.plugins.dependencies, function(dep) {
-    preBootRequires.push('../plugins/' + dep);
-  });
-
   app.boot = function() {
     require(preBootRequires, function () {
 

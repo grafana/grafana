@@ -7,37 +7,27 @@ function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
-  var typeMap = {
-    'graphite': 'GraphiteDatasource',
-    'influxdb': 'InfluxDatasource',
-    'influxdb_08': 'InfluxDatasource_08',
-    'elasticsearch': 'ElasticDatasource',
-    'opentsdb': 'OpenTSDBDatasource',
-    'grafana': 'GrafanaDatasource',
-  };
-
-  var plugins = {
-    datasources: {
-      'graphite': {
-        'serviceName': 'GraphiteDatasource',
-        'module': 'features/graphite/datasource'
-      }
-    }
-  };
 
   module.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
     this.datasources = {};
+    this.metricSources = [];
+    this.annotationSources = [];
+    this.grafanaDB = new ($injector.get("GrafanaDatasource"));
 
     this.init = function(dsSettingList) {
       config.datasources = dsSettingList;
-    };
 
-    this.datasourceFactory = function(ds) {
-      var type = typeMap[ds.type] || ds.type;
-      var Datasource = $injector.get(type);
-      return new Datasource(ds);
+      _.each(config.datasources, function(value, key) {
+        if (value.meta && value.meta.metrics) {
+          self.metricSources.push({ value: key, name: key });
+        }
+      });
+
+      if (!config.defaultDatasource) {
+        $rootScope.appEvent('alert-error', ["No default data source found", ""]);
+      }
     };
 
     this.get = function(name) {
@@ -53,18 +43,16 @@ function (angular, _, config) {
     };
 
     this.loadDatasource = function(name) {
-      var datasourceConfig = config.datasources[name];
-      var pluginDef = plugins.datasources[datasourceConfig.type];
-
-      if (!pluginDef) {
-        throw { message: "No plugin definition for data source: " + name };
-      }
-
+      var dsConfig = config.datasources[name];
       var deferred = $q.defer();
+
+      var pluginDef = dsConfig.meta;
 
       $rootScope.require([pluginDef.module], function() {
         var AngularService = $injector.get(pluginDef.serviceName);
-        var instance = new AngularService(datasourceConfig);
+        var instance = new AngularService(dsConfig, pluginDef);
+        instance.meta = pluginDef;
+        instance.name = name;
         self.datasources[name] = instance;
         deferred.resolve(instance);
       });

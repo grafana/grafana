@@ -40,7 +40,7 @@ type DataSource struct {
 	Id        int64      `json:"id"`
 	OrgId     int64      `json:"orgId"`
 	Name      string     `json:"name"`
-	Type      m.DsType   `json:"type"`
+	Type      string     `json:"type"`
 	Access    m.DsAccess `json:"access"`
 	Url       string     `json:"url"`
 	Password  string     `json:"password"`

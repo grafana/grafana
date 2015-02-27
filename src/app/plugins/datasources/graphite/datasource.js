@@ -17,18 +17,12 @@ function (angular, _, $, config, kbn, moment) {
   module.factory('GraphiteDatasource', function($q, $http, templateSrv) {
 
     function GraphiteDatasource(datasource) {
-      this.type = 'graphite';
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.name = datasource.name;
       this.cacheTimeout = datasource.cacheTimeout;
       this.withCredentials = datasource.withCredentials;
       this.render_method = datasource.render_method || 'POST';
-
-      this.supportAnnotations = true;
-      this.supportMetrics = true;
-      this.editorSrc = 'app/features/graphite/partials/query.editor.html';
-      this.annotationEditorSrc = 'app/features/graphite/partials/annotations.editor.html';
     }
 
     GraphiteDatasource.prototype.query = function(options) {

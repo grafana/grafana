@@ -15,23 +15,14 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   module.factory('InfluxDatasource_08', function($q, $http, templateSrv) {
 
     function InfluxDatasource(datasource) {
-      this.type = 'influxdb_08';
       this.urls = _.map(datasource.url.split(','), function(url) {
         return url.trim();
       });
+
       this.username = datasource.username;
       this.password = datasource.password;
       this.name = datasource.name;
       this.basicAuth = datasource.basicAuth;
-      this.grafanaDB = datasource.grafanaDB;
-
-      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
-      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
-
-      this.supportAnnotations = true;
-      this.supportMetrics = true;
-      this.editorSrc = 'app/features/influxdb_08/partials/query.editor.html';
-      this.annotationEditorSrc = 'app/features/influxdb_08/partials/annotations.editor.html';
     }
 
     InfluxDatasource.prototype.query = function(options) {

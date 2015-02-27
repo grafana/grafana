@@ -74,7 +74,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
-      $scope.$on('refresh', $scope.get_data);
     };
 
     $scope.updateTimeRange = function () {
@@ -84,7 +83,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
-    $scope.get_data = function() {
+    $scope.refreshData = function(datasource) {
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -95,7 +94,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
         cacheTimeout: $scope.panel.cacheTimeout
       };
 
-      return $scope.datasource.query(metricsQuery)
+      return datasource.query(metricsQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           console.log("err");

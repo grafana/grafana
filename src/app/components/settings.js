@@ -52,14 +52,6 @@ function (_) {
     //   if (datasource.type === 'influxdb') { parseMultipleHosts(datasource); }
     // });
 
-    if (settings.plugins.panels) {
-      _.extend(settings.panels, settings.plugins.panels);
-    }
-
-    if (!settings.plugins.dependencies) {
-      settings.plugins.dependencies = [];
-    }
-
     return settings;
   };
 });

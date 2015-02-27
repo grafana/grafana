@@ -24,7 +24,7 @@ define([
           ]
         }));
         ctx.scope.render = sinon.spy();
-        ctx.scope.get_data();
+        ctx.scope.refreshData(ctx.datasource);
         ctx.scope.$digest();
       });
 
@@ -36,7 +36,7 @@ define([
       describe('get_data failure following success', function() {
         beforeEach(function() {
           ctx.datasource.query = sinon.stub().returns(ctx.$q.reject('Datasource Error'));
-          ctx.scope.get_data();
+          ctx.scope.refreshData(ctx.datasource);
           ctx.scope.$digest();
         });
 

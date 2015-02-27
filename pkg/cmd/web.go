@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
@@ -74,6 +75,7 @@ func runWeb(c *cli.Context) {
 
 	social.NewOAuthService()
 	eventpublisher.Init()
+	plugins.Init()
 
 	var err error
 	m := newMacaron()

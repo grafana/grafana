@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginMeta struct {
@@ -15,7 +17,7 @@ type PluginMeta struct {
 }
 
 var (
-	List []*PluginMeta
+	DataSources map[string]interface{}
 )
 
 type PluginScanner struct {
@@ -23,8 +25,12 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Scan(pluginDir string) error {
-	List = make([]*PluginMeta, 0)
+func Init() {
+	scan(path.Join(setting.StaticRootPath, "app/plugins"))
+}
+
+func scan(pluginDir string) error {
+	DataSources = make(map[string]interface{})
 
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
@@ -51,31 +57,43 @@ func (scanner *PluginScanner) walker(path string, f os.FileInfo, err error) erro
 	}
 
 	if f.Name() == "plugin.json" {
-		pluginMeta, err := loadPluginMeta(path)
+		err := scanner.loadPluginJson(path)
 		if err != nil {
 			log.Error(3, "Failed to load plugin json file: %v,  err: %v", path, err)
 			scanner.errors = append(scanner.errors, err)
-		} else {
-			List = append(List, pluginMeta)
 		}
 	}
 	return nil
 }
 
-func loadPluginMeta(path string) (*PluginMeta, error) {
+func (scanner *PluginScanner) loadPluginJson(path string) error {
 	reader, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer reader.Close()
 
 	jsonParser := json.NewDecoder(reader)
 
-	pluginMeta := &PluginMeta{}
-	if err := jsonParser.Decode(pluginMeta); err != nil {
-		return nil, err
+	pluginJson := make(map[string]interface{})
+	if err := jsonParser.Decode(&pluginJson); err != nil {
+		return err
 	}
 
-	return pluginMeta, nil
+	pluginType, exists := pluginJson["pluginType"]
+	if !exists {
+		return errors.New("Did not find pluginType property in plugin.json")
+	}
+
+	if pluginType == "datasource" {
+		datasourceType, exists := pluginJson["type"]
+		if !exists {
+			return errors.New("Did not find type property in plugin.json")
+		}
+
+		DataSources[datasourceType.(string)] = pluginJson
+	}
+
+	return nil
 }

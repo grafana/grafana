@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,6 +38,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"type": ds.Type,
 			"url":  url,
 		}
+
+		meta, exists := plugins.DataSources[ds.Type]
+		if !exists {
+			//return nil, errors.New(fmt.Sprintf("Could not find plugin definition for data source: %v", ds.Type))
+		}
+
+		dsMap["meta"] = meta
 
 		if ds.IsDefault {
 			defaultDatasource = ds.Name

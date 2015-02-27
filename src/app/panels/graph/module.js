@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv, datasourceSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -169,7 +169,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
-    $scope.get_data = function() {
+    $scope.refreshData = function(datasource) {
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -183,17 +183,15 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return datasourceSrv.get($scope.panel.datasource).then(function(ds) {
-        return ds.query(metricsQuery)
-          .then($scope.dataHandler)
-          .then(null, function(err) {
-            $scope.panelMeta.loading = false;
-            $scope.panelMeta.error = err.message || "Timeseries data request error";
-            $scope.inspector.error = err;
-            $scope.seriesList = [];
-            $scope.render([]);
-          });
-      });
+      return datasource.query(metricsQuery)
+        .then($scope.dataHandler)
+        .then(null, function(err) {
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
+          $scope.inspector.error = err;
+          $scope.seriesList = [];
+          $scope.render([]);
+        });
     };
 
     $scope.dataHandler = function(results) {
@@ -230,8 +228,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-        alias: alias,
-        color: color,
+          alias: alias,
+          color: color,
       });
 
       if (datapoints && datapoints.length > 0) {

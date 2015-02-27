@@ -57,12 +57,10 @@ function (angular, _, config) {
 
       $scope.setDatasource = function(datasource) {
         $scope.panel.datasource = datasource;
-        $scope.datasource = datasourceSrv.get(datasource);
-
-        if (!$scope.datasource) {
-          $scope.panelMeta.error = "Cannot find datasource " + datasource;
-          return;
-        }
+        debugger;
+        datasourceSrv.get(datasource).then(function(ds) {
+          $scope.datasource = ds;
+        });
       };
 
       $scope.changeDatasource = function(datasource) {
@@ -90,28 +88,37 @@ function (angular, _, config) {
         return $scope.dashboardViewState.fullscreen && !$scope.fullscreen;
       };
 
+      $scope.get_data = function() {
+        if ($scope.otherPanelInFullscreenMode()) { return; }
+
+        delete $scope.panelMeta.error;
+        $scope.panelMeta.loading = true;
+
+        if ($scope.datasource) {
+          return $scope.refreshData($scope.datasource);
+        }
+
+        datasourceSrv.get($scope.panel.datasource).then(function(datasource) {
+          $scope.datasource = datasource;
+          return $scope.refreshData($scope.datasource);
+        });
+      };
+
+      if ($scope.refreshData) {
+        $scope.$on("refresh", $scope.get_data);
+      }
+
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
 
-      // $scope.datasources = datasourceSrv.getMetricSources();
-      // $scope.setDatasource($scope.panel.datasource);
       $scope.dashboardViewState.registerPanel($scope);
+      $scope.datasources = datasourceSrv.getMetricSources();
 
-      if ($scope.get_data) {
-        var panel_get_data = $scope.get_data;
-        $scope.get_data = function() {
-          if ($scope.otherPanelInFullscreenMode()) { return; }
-
-          delete $scope.panelMeta.error;
-          $scope.panelMeta.loading = true;
-
-          panel_get_data();
-        };
-
-        if (!$scope.skipDataOnInit) {
+      if (!$scope.skipDataOnInit) {
+        $timeout(function() {
           $scope.get_data();
-        }
+        }, 30);
       }
     };
   });
