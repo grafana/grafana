@@ -71,6 +71,10 @@
 						<label class="small">Name</label>
 						<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
 					</div>
+					<div class="editor-option" ng-if="contextSrv.isGrafanaAdmin">
+						<label class="small">Namespace</label>
+						<input type="text" class="input-large" ng-model='current.namespace' placeholder="namespace" required></input>
+					</div>
 					<div class="editor-option">
 						<label class="small">Type</label>
 						<select class="input-medium" ng-model="current.monitor_type_id" ng-options="t.id as t.name for (id, t) in monitor_types" ng-change="typeChanged()" ng-disabled="editor.index == 2"></select>
