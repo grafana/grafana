@@ -24,6 +24,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	datasources := make(map[string]interface{})
+	var defaultDatasource string
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
@@ -33,9 +34,12 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		}
 
 		var dsMap = map[string]interface{}{
-			"type":    ds.Type,
-			"url":     url,
-			"default": ds.IsDefault,
+			"type": ds.Type,
+			"url":  url,
+		}
+
+		if ds.IsDefault {
+			defaultDatasource = ds.Name
 		}
 
 		if ds.Type == m.DS_INFLUXDB_08 {
@@ -69,8 +73,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	jsonObj := map[string]interface{}{
-		"datasources": datasources,
-		"appSubUrl":   setting.AppSubUrl,
+		"defaultDatasource": defaultDatasource,
+		"datasources":       datasources,
+		"appSubUrl":         setting.AppSubUrl,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,

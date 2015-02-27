@@ -7,9 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('DashFromDBProvider', function($scope, datasourceSrv, $routeParams, backendSrv) {
-
-    var db = datasourceSrv.getGrafanaDB();
+  module.controller('DashFromDBProvider', function($scope, $routeParams, backendSrv) {
 
     if (!$routeParams.id) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
@@ -22,9 +20,9 @@ function (angular) {
       return;
     }
 
-    db.getDashboard($routeParams.id, false).then(function(result) {
+    return backendSrv.get('/api/dashboards/db/' + $routeParams.id).then(function(result) {
       $scope.initDashboard(result, $scope);
-    }).then(null, function() {
+    }, function() {
       $scope.initDashboard({
         meta: {},
         model: { title: 'Not found' }

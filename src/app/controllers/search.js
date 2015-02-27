@@ -8,14 +8,13 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv, $timeout) {
+  module.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
       $scope.query = { query: '', tag: '', starred: false };
-      $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
       $timeout(function() {
@@ -61,21 +60,20 @@ function (angular, _, config) {
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
-      return $scope.db.searchDashboards($scope.query)
-        .then(function(results) {
-          if (localSearchId < $scope.currentSearchId) { return; }
+      return backendSrv.get('/api/search', $scope.query).then(function(results) {
+        if (localSearchId < $scope.currentSearchId) { return; }
 
-          $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
-          $scope.results.tags = results.tags;
-          $scope.results.dashboards = _.map(results.dashboards, function(dash) {
-            dash.url = 'dashboard/db/' + dash.slug;
-            return dash;
-          });
-
-          if ($scope.queryHasNoFilters()) {
-            $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
-          }
+        $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+        $scope.results.tags = results.tags;
+        $scope.results.dashboards = _.map(results.dashboards, function(dash) {
+          dash.url = 'dashboard/db/' + dash.slug;
+          return dash;
         });
+
+        if ($scope.queryHasNoFilters()) {
+          $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+        }
+      });
     };
 
     $scope.queryHasNoFilters = function() {
@@ -118,13 +116,13 @@ function (angular, _, config) {
         height: '250px',
         editable: true,
         panels: [
-          {
-            type: 'graphite',
-            title: 'test',
-            span: 12,
-            targets: [{ target: metricId }]
-          }
-        ]
+      {
+        type: 'graphite',
+        title: 'test',
+        span: 12,
+        targets: [{ target: metricId }]
+      }
+      ]
       });
     };
 

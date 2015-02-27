@@ -1,0 +1,7 @@
+{
+  "type": "datasource",
+  "name": "My Data source",
+  "keyName": "graphite"
+  "serviceName": "MyDataSource",
+  "editPartial": "./partials/edit.html",
+}

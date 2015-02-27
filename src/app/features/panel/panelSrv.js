@@ -94,8 +94,8 @@ function (angular, _, config) {
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
 
-      $scope.datasources = datasourceSrv.getMetricSources();
-      $scope.setDatasource($scope.panel.datasource);
+      // $scope.datasources = datasourceSrv.getMetricSources();
+      // $scope.setDatasource($scope.panel.datasource);
       $scope.dashboardViewState.registerPanel($scope);
 
       if ($scope.get_data) {

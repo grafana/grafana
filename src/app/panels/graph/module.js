@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv, datasourceSrv) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -183,15 +183,17 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query(metricsQuery)
-        .then($scope.dataHandler)
-        .then(null, function(err) {
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
-          $scope.seriesList = [];
-          $scope.render([]);
-        });
+      return datasourceSrv.get($scope.panel.datasource).then(function(ds) {
+        return ds.query(metricsQuery)
+          .then($scope.dataHandler)
+          .then(null, function(err) {
+            $scope.panelMeta.loading = false;
+            $scope.panelMeta.error = err.message || "Timeseries data request error";
+            $scope.inspector.error = err;
+            $scope.seriesList = [];
+            $scope.render([]);
+          });
+      });
     };
 
     $scope.dataHandler = function(results) {

@@ -16,46 +16,22 @@ function (angular, _, config) {
     'grafana': 'GrafanaDatasource',
   };
 
-  module.service('datasourceSrv', function($q, $http, $injector) {
+  var plugins = {
+    datasources: {
+      'graphite': {
+        'serviceName': 'GraphiteDatasource',
+        'module': 'features/graphite/datasource'
+      }
+    }
+  };
+
+  module.service('datasourceSrv', function($q, $injector, $rootScope) {
+    var self = this;
+
+    this.datasources = {};
 
     this.init = function(dsSettingList) {
       config.datasources = dsSettingList;
-
-      this.datasources = {};
-      this.metricSources = [];
-      this.annotationSources = [];
-
-      _.each(dsSettingList, function(value, key) {
-        var ds = this.datasourceFactory(value);
-        ds.name = key;
-        if (value.default) {
-          this.default = ds;
-          ds.default = true;
-        }
-        this.datasources[key] = ds;
-      }, this);
-
-      if (!this.default) {
-        this.default = this.datasources[_.keys(this.datasources)[0]];
-        this.default.default = true;
-      }
-
-      // create list of different source types
-      _.each(this.datasources, function(value, key) {
-        if (value.supportMetrics) {
-          this.metricSources.push({
-            name: value.name,
-            value: value.default ? null : key,
-            default: value.default,
-          });
-        }
-        if (value.supportAnnotations) {
-          this.annotationSources.push({ name: key, editorSrc: value.annotationEditorSrc });
-        }
-        if (value.grafanaDB) {
-          this.grafanaDB = value;
-        }
-      }, this);
     };
 
     this.datasourceFactory = function(ds) {
@@ -65,10 +41,35 @@ function (angular, _, config) {
     };
 
     this.get = function(name) {
-      if (!name) { return this.default; }
-      if (this.datasources[name]) { return this.datasources[name]; }
+      if (!name) {
+        return this.get(config.defaultDatasource);
+      }
 
-      return this.default;
+      if (this.datasources[name]) {
+        return $q.when(this.datasources[name]);
+      }
+
+      return this.loadDatasource(name);
+    };
+
+    this.loadDatasource = function(name) {
+      var datasourceConfig = config.datasources[name];
+      var pluginDef = plugins.datasources[datasourceConfig.type];
+
+      if (!pluginDef) {
+        throw { message: "No plugin definition for data source: " + name };
+      }
+
+      var deferred = $q.defer();
+
+      $rootScope.require([pluginDef.module], function() {
+        var AngularService = $injector.get(pluginDef.serviceName);
+        var instance = new AngularService(datasourceConfig);
+        self.datasources[name] = instance;
+        deferred.resolve(instance);
+      });
+
+      return deferred.promise;
     };
 
     this.getAll = function() {

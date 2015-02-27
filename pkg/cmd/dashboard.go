@@ -83,6 +83,8 @@ func importDashboard(path string, orgId int64) error {
 		return err
 	}
 
+	defer reader.Close()
+
 	dash := m.NewDashboard("temp")
 	jsonParser := json.NewDecoder(reader)
 
