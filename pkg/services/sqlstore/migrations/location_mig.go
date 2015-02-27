@@ -55,7 +55,8 @@ func addLocationMigration(mg *Migrator) {
 	mg.AddMigration("create location table v2", NewAddTableMigration(locationV2))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add unique index location.org_id_slug", NewAddIndexMigration(locationV2, locationV2.Indices[0]))
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v2", locationV2)
 
 	mg.AddMigration("copy location v1 to v2", NewCopyTableDataMigration("location", "location_v1", map[string]string{
 		"id":       "id",

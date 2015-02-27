@@ -47,7 +47,7 @@ func addSiteMigration(mg *Migrator) {
 	mg.AddMigration("create site table v2", NewAddTableMigration(siteV2))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add unique index site.org_id_slug", NewAddIndexMigration(siteV2, siteV2.Indices[0]))
+	addTableIndicesMigrations(mg, "v2", siteV2)
 
 	mg.AddMigration("copy site v1 to v2", NewCopyTableDataMigration("site", "site_v1", map[string]string{
 		"id":              "id",
