@@ -47,7 +47,6 @@ class AlexaTopSites(object):
         r = requests.get(url, params=params)
         if r.status_code != requests.codes.ok:
             raise Exception("Request to ats.amazonaws.com failed.")
-        
         sites = []
         root = etree.fromstring(r.content)
         namespaces = { "aws": 'http://ats.amazonaws.com/doc/2005-11-21'}
@@ -63,6 +62,7 @@ class AlexaTopSites(object):
             "AWSAccessKeyId": self.key,
             "Action": "TopSites",
             "Count": "%d" % count,
+            "CountryCode": "US",
             "ResponseGroup": "Country",
             "SignatureMethod": "HmacSHA256",
             "SignatureVersion": "2",
@@ -126,7 +126,7 @@ class RaintankApi(object):
         return r.json()
 
     def deleteMonitor(self, monitorId):
-        r = self.reqeust("DELETE", "/api/monitors/%s" % monitorId)
+        r = self.request("DELETE", "/api/monitors/%s" % monitorId)
         if r.status_code != requests.codes.ok:
             raise Exception("Request for monitors failed.")
         return True
@@ -173,9 +173,10 @@ for site in sites:
     seenSites[siteName] = True
 
 if args.delete:
+    print "removing sites not in the list"
     for mon in monitors:
-        if monitor['name'] not in seenSites:
-            print "%s is not in the alexa list." % monitor['name']
-
+        if mon['name'] not in seenSites:
+            print "%s is not in the alexa list." % mon['name']
+            raintank.deleteMonitor(mon['id'])
 
 
