@@ -32,9 +32,9 @@ func main() {
 	app.Usage = "grafana web"
 	app.Version = version
 	app.Commands = []cli.Command{
-		cmd.ListAccounts,
-		cmd.CreateAccount,
-		cmd.DeleteAccount,
+		cmd.ListOrgs,
+		cmd.CreateOrg,
+		cmd.DeleteOrg,
 		cmd.ImportDashboard,
 		cmd.ListDataSources,
 		cmd.CreateDataSource,

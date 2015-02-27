@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -9,8 +10,8 @@ import (
 func GetMonitorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	query := m.GetMonitorByIdQuery{Id: id, AccountId: c.AccountId}
-	query.IsRaintankAdmin = c.AccountRole == m.ROLE_RAINTANK_ADMIN
+	query := m.GetMonitorByIdQuery{Id: id, OrgId: c.OrgId}
+	query.IsRaintankAdmin = c.OrgRole == m.ROLE_RAINTANK_ADMIN
 
 	err := bus.Dispatch(&query)
 	if err != nil {
@@ -22,8 +23,8 @@ func GetMonitorById(c *middleware.Context) {
 }
 
 func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) {
-	query.AccountId = c.AccountId
-	query.IsRaintankAdmin = c.AccountRole == m.ROLE_RAINTANK_ADMIN
+	query.OrgId = c.OrgId
+	query.IsRaintankAdmin = c.OrgRole == m.ROLE_RAINTANK_ADMIN
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query monitors", err)
@@ -46,7 +47,7 @@ func GetMonitorTypes(c *middleware.Context) {
 func DeleteMonitor(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteMonitorCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteMonitorCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -65,10 +66,12 @@ func AddMonitor(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
-	if (c.IsGrafanaAdmin) {
-		cmd.Namespace = "public"
-	} else {
+	cmd.OrgId = c.OrgId
+	if (! c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public")) {
+		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
+		return
+	} 
+	if cmd.Namespace == "" {
 		cmd.Namespace = "network"
 	}
 
@@ -88,10 +91,12 @@ func UpdateMonitor(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
-	if (c.IsGrafanaAdmin) {
-		cmd.Namespace = "public"
-	} else {
+	cmd.OrgId = c.OrgId
+	if (! c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public")) {
+		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
+		return
+	} 
+	if cmd.Namespace == "" {
 		cmd.Namespace = "network"
 	}
 	

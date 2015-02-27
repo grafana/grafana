@@ -1,0 +1,74 @@
+<topnav title="Data sources" icon="fa fa-fw fa-database" subnav="true">
+	<ul class="nav">
+		<li><a href="datasources">Overview</a></li>
+		<li ng-class="{active: isNew}"><a href="datasources/new">Add new</a></li>
+		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">Edit</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2 ng-show="isNew">Add data source</h2>
+		<h2 ng-show="!isNew">Edit {{current.name}}</h2>
+
+		<form name="editForm">
+			<div class="editor-row">
+				<div class="editor-option">
+					<label class="small">Data source name</label>
+					<input type="text" class="input-large" ng-model='current.name' placeholder="production" required></input>
+				</div>
+				<div class="editor-option">
+					<label class="small">Type</label>
+					<select class="input-large" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
+				</div>
+				<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
+			</div>
+
+			<div class="editor-row">
+				<div class="editor-option">
+					<label class="small">Url</label>
+					<input type="text" class="input-xxlarge" ng-model='current.url' placeholder="http://my.graphite.com:8080" required></input>
+				</div>
+				<div class="editor-option">
+					<label class="small">Access method <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
+					<select class="input-medium" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+				</div>
+			</div>
+
+			<div class="editor-row" ng-if="current.type === 'influxdb'">
+				<div class="section">
+					<h5>InfluxDB Details</h5>
+					<div class="editor-option">
+						<label class="small">Database name</label>
+						<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">User</label>
+						<input type="text" class="input-large" ng-model='current.user' placeholder=""></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Password</label>
+						<input type="password" class="input-large" ng-model='current.password' placeholder=""></input>
+					</div>
+				</div>
+			</div>
+
+			<div class="editor-row" ng-if="current.type === 'elasticsearch'">
+				<div class="section">
+					<h5>Elastic search details</h5>
+					<div class="editor-option">
+						<label class="small">Index name</label>
+						<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
+					</div>
+				</div>
+			</div>
+
+			<br>
+
+			<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="add()">Add</button>
+			<button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="update()">Update</button>
+			<a class="btn btn-inverse" ng-show="!isNew" href="account/datasources">Cancel</a>
+			<br>
+		</form>
+	</div>
+</div>

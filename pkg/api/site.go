@@ -11,7 +11,7 @@ import (
 func GetSiteById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	query := m.GetSiteByIdQuery{Id: id, AccountId: c.AccountId}
+	query := m.GetSiteByIdQuery{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(&query)
 	if err != nil {
@@ -23,7 +23,7 @@ func GetSiteById(c *middleware.Context) {
 }
 
 func GetSites(c *middleware.Context) {
-	query := m.GetSitesQuery{AccountId: c.AccountId}
+	query := m.GetSitesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query sites", err)
@@ -35,7 +35,7 @@ func GetSites(c *middleware.Context) {
 func DeleteSite(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteSiteCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteSiteCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -54,7 +54,7 @@ func AddSite(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add site", err)
@@ -79,7 +79,7 @@ func UpdateSite(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

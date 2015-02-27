@@ -27,7 +27,7 @@ func GetEventsQuery(query *m.GetEventsQuery) error {
 	                    },
 	                    map[string]interface{}{
 	                        "term": map[string]int64{
-	                            "account_id": query.AccountId,
+	                            "org_id": query.OrgId,
 	                        },
 	                    },
 	                },

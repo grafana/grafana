@@ -1,7 +1,7 @@
 <div class="editor-row" style="margin-top: 10px;">
 
   <div  ng-repeat="target in panel.targets"
-        class="tight-form-container"
+        style="margin-bottom: 10px;"
         ng-class="{'tight-form-disabled': target.hide}"
         ng-controller="OpenTSDBQueryCtrl"
         ng-init="init()">
@@ -43,14 +43,18 @@
       </ul>
 
       <ul class="tight-form-list" role="menu">
+				<li class="tight-form-item" style="width: 86px">
+					Metric
+				</li>
         <li>
           <input type="text"
-                 class="tight-form-input"
+                 class="input-large tight-form-input"
                  ng-model="target.metric"
                  spellcheck='false'
                  bs-typeahead="suggestMetrics"
                  placeholder="metric name"
                  data-min-length=0 data-items=100
+								 ng-model-onblur
                  ng-blur="targetBlur()"
                  >
           <a bs-tooltip="target.errors.metric"
@@ -75,49 +79,7 @@
           </a>
         </li>
 
-        <li class="tight-form-item">
-            Rate:
-            <input type="checkbox"
-                   class="tight-form-checkbox"
-                   ng-model="target.shouldComputeRate"
-                   ng-change="targetBlur()"
-                   >
-        </li>
-        <li class="tight-form-item" ng-hide="!target.shouldComputeRate">
-          Counter:
-          <input type="checkbox"
-                 class="tight-form-checkbox"
-                 ng-disabled="!target.shouldComputeRate"
-                 ng-model="target.isCounter"
-                 ng-change="targetBlur()">
-        </li>
-        <li class="tight-form-item" ng-hide="!target.isCounter">
-          Counter Max:
-        </li>
-        <li ng-hide="!target.isCounter">
-          <input type="text"
-                 class="tight-form-input input-medium"
-                 ng-disabled="!target.shouldComputeRate"
-                 ng-model="target.counterMax"
-                 spellcheck='false'
-                 placeholder="Counter max value"
-                 ng-blur="targetBlur()"
-                 />
-        </li>
-        <li class="tight-form-item" ng-hide="!target.isCounter">
-          Counter Reset Value:
-        </li>
-        <li ng-hide="!target.isCounter">
-          <input type="text"
-                 class="tight-form-input input-medium"
-                 ng-disabled="!target.shouldComputeRate"
-                 ng-model="target.counterResetValue"
-                 spellcheck='false'
-                 placeholder="Counter reset value"
-                 ng-blur="targetBlur()"
-                 />
-        </li>
-        <li class="tight-form-item">
+				<li class="tight-form-item">
           Alias:
         </li>
 				<li>
@@ -137,32 +99,30 @@
     </div>
 
     <div class="tight-form">
-      <ul class="tight-form-list" role="menu">
+			<ul class="tight-form-list" role="menu">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item" style="width: 86px">
+					Down sample
+				</li>
+
+				<li>
+          <input type="text"
+                 class="input-large tight-form-input"
+                 ng-model="target.downsampleInterval"
+								 ng-model-onblur
+                 ng-change="targetBlur()"
+                 placeholder="interval (empty = auto)"
+                 >
+        </li>
 
         <li class="tight-form-item">
-          Downsample:
-          <input type="checkbox"
-                 class="tight-form-checkbox"
-                 ng-model="target.shouldDownsample"
-                 ng-change="targetBlur(target)"
-                 >
-        </li>
-
-        <li ng-hide="!target.shouldDownsample">
-          <input type="text"
-                 class="input-small tight-form-input"
-                 ng-disabled="!target.shouldDownsample"
-                 ng-model="target.downsampleInterval"
-                 ng-change="targetBlur()"
-                 placeholder="interval"
-                 >
-        </li>
-
-        <li class="tight-form-item" ng-hide="!target.shouldDownsample">
           Aggregator
         </li>
 
-        <li ng-hide="!target.shouldDownsample">
+        <li>
           <select ng-model="target.downsampleAggregator"
                   class="tight-form-input input-small"
                   ng-options="agg for agg in aggregators"
@@ -170,8 +130,25 @@
           </select>
         </li>
 
-        <li class="tight-form-item">
-            Tags:
+				<li class="tight-form-item">
+					Disable downsampling&nbsp;
+					<input class="cr1" id="target.disableDownsampling" type="checkbox"
+					ng-model="target.disableDownsampling" ng-checked="target.disableDownsampling" ng-change="targetBlur()">
+					<label for="target.disableDownsampling" class="cr1"></label>
+				</li>
+
+			</ul>
+      <div class="clearfix"></div>
+    </div>
+
+		<div class="tight-form">
+			<ul class="tight-form-list" role="menu">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item" style="width: 86px">
+           Tags
         </li>
         <li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
           {{key}}&nbsp;=&nbsp;{{value}}
@@ -202,7 +179,7 @@
                    ng-model="target.currentTagValue"
                    placeholder="value">
             <a ng-click="addTag()">
-              <i class="fa fa-plus"></i>
+							add tag
             </a>
             <a bs-tooltip="target.errors.tags"
                style="color: rgb(229, 189, 28)"
@@ -213,5 +190,60 @@
       </ul>
       <div class="clearfix"></div>
     </div>
+
+		<div class="tight-form">
+			<ul class="tight-form-list" role="menu">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item" style="width: 86px">
+					Rate&nbsp;
+					<input class="cr1" id="target.shouldComputeRate" type="checkbox"
+					ng-model="target.shouldComputeRate" ng-checked="target.shouldComputeRate" ng-change="targetBlur()">
+					<label for="target.shouldComputeRate" class="cr1"></label>
+				</li>
+
+        <li class="tight-form-item" ng-hide="!target.shouldComputeRate">
+					Counter&nbsp;
+					<input class="cr1" id="target.isCounter" type="checkbox"
+					ng-model="target.isCounter" ng-checked="target.isCounter" ng-change="targetBlur()">
+					<label for="target.isCounter" class="cr1"></label>
+				</li>
+
+				<li class="tight-form-item" ng-hide="!target.isCounter">
+          Counter Max:
+        </li>
+
+        <li ng-hide="!target.isCounter">
+          <input type="text"
+                 class="tight-form-input input-small"
+                 ng-disabled="!target.shouldComputeRate"
+                 ng-model="target.counterMax"
+                 spellcheck='false'
+                 placeholder="max value"
+								 ng-model-onblur
+                 ng-blur="targetBlur()"
+                 />
+        </li>
+        <li class="tight-form-item" ng-hide="!target.isCounter">
+          Reset Value:
+        </li>
+        <li ng-hide="!target.isCounter">
+          <input type="text"
+                 class="tight-form-input input-small"
+                 ng-disabled="!target.shouldComputeRate"
+                 ng-model="target.counterResetValue"
+                 spellcheck='false'
+                 placeholder="reset value"
+								 ng-model-onblur
+                 ng-blur="targetBlur()"
+                 />
+        </li>
+			</ul>
+
+      <div class="clearfix"></div>
+    </div>
+
   </div>
 </div>

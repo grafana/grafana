@@ -9,7 +9,7 @@ import (
 )
 
 func GetEvents(c *middleware.Context, query m.GetEventsQuery) {
-	query.AccountId = c.AccountId
+	query.OrgId = c.OrgId
 
 	if query.End == 0 {
 		query.End = time.Now().Unix() * 1000

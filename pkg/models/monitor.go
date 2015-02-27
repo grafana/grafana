@@ -34,8 +34,8 @@ type MonitorTypeSetting struct {
 
 type Monitor struct {
 	Id            int64
-	AccountId     int64  `xorm:"not null unique(uix_AccountIdSlug)"`
-	Slug          string `xorm:"not null unique(uix_AccountIdSlug)"`
+	OrgId         int64  `xorm:"not null unique(uix_OrgIdSlug)"`
+	Slug          string `xorm:"not null unique(uix_OrgIdSlug)"`
 	SiteId        int64
 	Name          string
 	MonitorTypeId int64
@@ -64,7 +64,7 @@ type MonitorSettingDTO struct {
 
 type MonitorDTO struct {
 	Id            int64                `json:"id"`
-	AccountId     int64                `json:"account_id"`
+	OrgId         int64                `json:"org_id"`
 	SiteId        int64                `json:"site_id"`
 	Name          string               `json:"name" binding:"required"`
 	Slug          string               `json:"slug"`
@@ -96,7 +96,7 @@ type MonitorTypeDTO struct {
 // COMMANDS
 
 type AddMonitorCommand struct {
-	AccountId     int64                `json:"-"`
+	OrgId         int64                `json:"-"`
 	SiteId        int64                `json:"site_id" binding:"required"`
 	Name          string               `json:"name" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
@@ -112,7 +112,7 @@ type AddMonitorCommand struct {
 type UpdateMonitorCommand struct {
 	Id            int64                `json:"id" binding:"required"`
 	SiteId        int64                `json:"site_id" binding:"required"`
-	AccountId     int64                `json:"-"`
+	OrgId         int64                `json:"-"`
 	Name          string               `json:"name" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
@@ -125,7 +125,7 @@ type UpdateMonitorCommand struct {
 
 type DeleteMonitorCommand struct {
 	Id        int64 `json:"id" binding:"required"`
-	AccountId int64 `json:"-"`
+	OrgId     int64 `json:"-"`
 }
 
 // ---------------------
@@ -142,14 +142,14 @@ type GetMonitorsQuery struct {
 	Enabled         string   `form:"enabled"`
 	Modulo          int64    `form:"modulo"`
 	ModuloOffset    int64    `form:"modulo_offset"`
-	AccountId       int64
+	OrgId           int64
 	IsRaintankAdmin bool
 	Result          []*MonitorDTO
 }
 
 type GetMonitorByIdQuery struct {
 	Id              int64
-	AccountId       int64
+	OrgId           int64
 	IsRaintankAdmin bool
 	Result          *MonitorDTO
 }

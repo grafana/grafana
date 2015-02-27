@@ -14,8 +14,8 @@ var (
 
 type Site struct {
 	Id        int64
-	AccountId int64  `xorm:"not null unique(uix_site_for_account)"`
-	Slug      string `xorm:"not null unique(uix_site_for_account)"` // The account being given access to
+	OrgId     int64  `xorm:"not null unique(uix_site_for_org)"`
+	Slug      string `xorm:"not null unique(uix_site_for_org)"` // The account being given access to
 	Name      string
 	Created   time.Time
 	Updated   time.Time
@@ -25,7 +25,7 @@ type Site struct {
 // DTOs
 type SiteDTO struct {
 	Id        int64     `json:"id"`
-	AccountId int64     `json:"account_id"`
+	OrgId     int64     `json:"org_id"`
 	Slug      string    `json:"slug"`
 	Name      string    `json:"name"`
 }
@@ -49,34 +49,34 @@ type SiteDiscoveryCommand struct {
 }
 
 type AddSiteCommand struct {
-	AccountId int64                 `json:"-"`
+	OrgId     int64                 `json:"-"`
 	Name      string                `json:"name"`
 	Result    *SiteDTO
 }
 
 type UpdateSiteCommand struct {
 	Id        int64  `json:"id" binding:"required"`
-	AccountId int64  `json:"-"`
+	OrgId     int64  `json:"-"`
 	Name      string `json:"name"`
 	Result    *SiteDTO
 }
 
 type DeleteSiteCommand struct {
 	Id        int64 `json:"id" binding:"required"`
-	AccountId int64 `json:"-"`
+	OrgId     int64 `json:"-"`
 }
 
 // ---------------------
 // QUERIES
 
 type GetSitesQuery struct {
-	AccountId int64
+	OrgId     int64
 	Result    []*SiteDTO
 }
 
 type GetSiteByIdQuery struct {
 	Id        int64
-	AccountId int64
+	OrgId     int64
 	Result    *SiteDTO
 }
 

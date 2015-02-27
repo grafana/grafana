@@ -17,7 +17,7 @@ func GraphiteProxy(c *middleware.Context) {
 	director := func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
-		req.Header.Add("X-Account-Id", strconv.FormatInt(c.AccountId, 10))
+		req.Header.Add("X-Org-Id", strconv.FormatInt(c.OrgId, 10))
 		req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		
 	}

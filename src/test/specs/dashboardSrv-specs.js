@@ -157,8 +157,6 @@ define([
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.templating.enable).to.be(true);
-      expect(model.annotations.enable).to.be(true);
       expect(model.annotations.list[0].name).to.be('old');
     });
 

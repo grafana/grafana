@@ -8,9 +8,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func insertTestDashboard(title string, accountId int64, tags ...interface{}) *m.Dashboard {
+func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
-		AccountId: accountId,
+		OrgId: orgId,
 		Dashboard: map[string]interface{}{
 			"id":    nil,
 			"title": title,
@@ -40,8 +40,8 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to get dashboard", func() {
 				query := m.GetDashboardQuery{
-					Slug:      "test-dash-23",
-					AccountId: 1,
+					Slug:  "test-dash-23",
+					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
@@ -53,8 +53,8 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to search for dashboard", func() {
 				query := m.SearchDashboardsQuery{
-					Title:     "test",
-					AccountId: 1,
+					Title: "test",
+					OrgId: 1,
 				}
 
 				err := SearchDashboards(&query)
@@ -66,8 +66,8 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to search for dashboards using tags", func() {
-				query1 := m.SearchDashboardsQuery{Tag: "webapp", AccountId: 1}
-				query2 := m.SearchDashboardsQuery{Tag: "tagdoesnotexist", AccountId: 1}
+				query1 := m.SearchDashboardsQuery{Tag: "webapp", OrgId: 1}
+				query2 := m.SearchDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
 
 				err := SearchDashboards(&query1)
 				err = SearchDashboards(&query2)
@@ -79,7 +79,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should not be able to save dashboard with same name", func() {
 				cmd := m.SaveDashboardCommand{
-					AccountId: 1,
+					OrgId: 1,
 					Dashboard: map[string]interface{}{
 						"id":    nil,
 						"title": "test dash 23",
@@ -92,7 +92,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to get dashboard tags", func() {
-				query := m.GetDashboardTagsQuery{AccountId: 1}
+				query := m.GetDashboardTagsQuery{OrgId: 1}
 
 				err := GetDashboardTags(&query)
 				So(err, ShouldBeNil)
@@ -113,7 +113,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to search for starred dashboards", func() {
-					query := m.SearchDashboardsQuery{AccountId: 1, UserId: 10, IsStarred: true}
+					query := m.SearchDashboardsQuery{OrgId: 1, UserId: 10, IsStarred: true}
 					err := SearchDashboards(&query)
 
 					So(err, ShouldBeNil)

@@ -25,11 +25,11 @@ func Register(r *macaron.Macaron) {
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
-	r.Get("/account/", reqSignedIn, Index)
-	r.Get("/account/datasources/", reqSignedIn, Index)
-	r.Get("/account/users/", reqSignedIn, Index)
-	r.Get("/account/apikeys/", reqSignedIn, Index)
-	r.Get("/account/import/", reqSignedIn, Index)
+	r.Get("/org/", reqSignedIn, Index)
+	r.Get("/datasources/", reqSignedIn, Index)
+	r.Get("/org/users/", reqSignedIn, Index)
+	r.Get("/org/apikeys/", reqSignedIn, Index)
+	r.Get("/dashboard/import/", reqSignedIn, Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
@@ -48,28 +48,27 @@ func Register(r *macaron.Macaron) {
 		r.Group("/user", func() {
 			r.Get("/", GetUser)
 			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
-			r.Post("/using/:id", SetUsingAccount)
-			r.Get("/accounts", GetUserAccounts)
+			r.Post("/using/:id", UserSetUsingOrg)
+			r.Get("/orgs", GetUserOrgList)
 			r.Post("/stars/dashboard/:id", StarDashboard)
 			r.Delete("/stars/dashboard/:id", UnstarDashboard)
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
 		})
 
-		// account
-		r.Get("/account", GetAccount)
-		r.Group("/account", func() {
-			r.Post("/", bind(m.CreateAccountCommand{}), CreateAccount)
-			r.Put("/", bind(m.UpdateAccountCommand{}), UpdateAccount)
-			r.Post("/users", bind(m.AddAccountUserCommand{}), AddAccountUser)
-			r.Get("/users", GetAccountUsers)
-			r.Delete("/users/:id", RemoveAccountUser)
+		// Org
+		r.Get("/", GetOrg)
+		r.Group("/org", func() {
+			r.Post("/", bind(m.CreateOrgCommand{}), CreateOrg)
+			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
+			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
+			r.Get("/users", GetOrgUsers)
+			r.Delete("/users/:id", RemoveOrgUser)
 		}, reqAccountAdmin)
 
 		// auth api keys
 		r.Group("/auth/keys", func() {
-			r.Combo("/").
-				Get(GetApiKeys).
-				Post(bind(m.AddApiKeyCommand{}), AddApiKey).
-				Put(bind(m.UpdateApiKeyCommand{}), UpdateApiKey)
+			r.Get("/", GetApiKeys)
+			r.Post("/", bind(m.AddApiKeyCommand{}), AddApiKey)
 			r.Delete("/:id", DeleteApiKey)
 		}, reqAccountAdmin)
 
@@ -80,6 +79,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", GetDataSourceById)
 		}, reqAccountAdmin)
 
+		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
@@ -136,7 +136,9 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users", AdminSearchUsers)
 		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		r.Put("/users/:id", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
+		r.Put("/users/:id/details", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
+		r.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
+		r.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		r.Delete("/users/:id", AdminDeleteUser)
 	}, reqGrafanaAdmin)
 

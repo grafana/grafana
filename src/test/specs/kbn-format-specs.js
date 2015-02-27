@@ -25,6 +25,7 @@ define([
 
   describeValueFormat('none', 2.75e-10, 0, 10, '3e-10');
   describeValueFormat('none', 0, 0, 2, '0');
+  describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');
   describeValueFormat('ns', 2558, 50, 0, '2.56 µs');

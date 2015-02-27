@@ -50,13 +50,13 @@ func ToOnWriteEvent(event interface{}) (*OnTheWireEvent, error) {
 	return &wireEvent, nil
 }
 
-type AccountCreated struct {
+type OrgCreated struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
 }
 
-type AccountUpdated struct {
+type OrgUpdated struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`

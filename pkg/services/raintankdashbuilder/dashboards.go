@@ -25,7 +25,7 @@ var (
 type SiteSummaryData struct {
 	SiteId    int64
 	DashId    int64
-	AccountId int64
+	OrgId     int64
 	Title     string
 	Tags      string
 	Monitors  []*m.MonitorDTO
@@ -45,7 +45,7 @@ type SummaryPanel struct {
 type MonitorSummaryData struct {
 	DashId    int64
 	SiteId    int64
-	AccountId int64
+	OrgId     int64
 	Slug      string
 	Title     string
 	Tags      string
@@ -58,7 +58,7 @@ type MonitorDetailData struct {
 	SiteId    int64
 	DashId    int64
 	Slug      string
-	AccountId int64
+	OrgId     int64
 	Title     string
 	Tags      string
 	Namespace string

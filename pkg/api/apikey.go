@@ -1,14 +1,15 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetApiKeys(c *middleware.Context) {
-	query := m.GetApiKeysQuery{AccountId: c.AccountId}
+	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to list api keys", err)
@@ -21,7 +22,6 @@ func GetApiKeys(c *middleware.Context) {
 			Id:   t.Id,
 			Name: t.Name,
 			Role: t.Role,
-			Key:  t.Key,
 		}
 	}
 	c.JSON(200, result)
@@ -30,7 +30,7 @@ func GetApiKeys(c *middleware.Context) {
 func DeleteApiKey(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteApiKeyCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -47,37 +47,20 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
-	cmd.Key = util.GetRandomString(64)
+	cmd.OrgId = c.OrgId
+
+	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)
+	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add API key", err)
 		return
 	}
 
-	result := &m.ApiKeyDTO{
-		Id:   cmd.Result.Id,
+	result := &dtos.NewApiKeyResult{
 		Name: cmd.Result.Name,
-		Role: cmd.Result.Role,
-		Key:  cmd.Result.Key,
+		Key:  newKeyInfo.ClientSecret,
 	}
 
 	c.JSON(200, result)
-}
-
-func UpdateApiKey(c *middleware.Context, cmd m.UpdateApiKeyCommand) {
-	if !cmd.Role.IsValid() {
-		c.JsonApiErr(400, "Invalid role specified", nil)
-		return
-	}
-
-	cmd.AccountId = c.AccountId
-
-	err := bus.Dispatch(&cmd)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to update api key", err)
-		return
-	}
-
-	c.JsonOK("API key updated")
 }

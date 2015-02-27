@@ -69,6 +69,10 @@ function (angular, _, moment, config, store) {
       $scope.appEvent('show-dash-search');
     };
 
+    $scope.dashboardTitleAction = function() {
+      $scope.appEvent('hide-dash-editor');
+    };
+
     $scope.saveDashboard = function() {
       var clone = angular.copy($scope.dashboard);
       $scope.db.saveDashboard(clone)

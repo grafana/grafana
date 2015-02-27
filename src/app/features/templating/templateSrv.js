@@ -45,6 +45,9 @@ function (angular, _) {
     };
 
     this.containsVariable = function(str, variableName) {
+      if (!str) {
+        return false;
+      }
       return str.indexOf('$' + variableName) !== -1 || str.indexOf('[[' + variableName + ']]') !== -1;
     };
 

@@ -5,10 +5,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func AdminSearchUsers(c *middleware.Context) {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 20}
+	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to fetch users", err)
 		return
@@ -28,9 +29,10 @@ func AdminGetUser(c *middleware.Context) {
 	}
 
 	result := m.UserDTO{
-		Name:  query.Result.Name,
-		Email: query.Result.Email,
-		Login: query.Result.Login,
+		Name:           query.Result.Name,
+		Email:          query.Result.Email,
+		Login:          query.Result.Login,
+		IsGrafanaAdmin: query.Result.IsAdmin,
 	}
 
 	c.JSON(200, result)
@@ -89,6 +91,52 @@ func AdminUpdateUser(c *middleware.Context, form dtos.AdminUpdateUserForm) {
 	}
 
 	c.JsonOK("User updated")
+}
+
+func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPasswordForm) {
+	userId := c.ParamsInt64(":id")
+
+	if len(form.Password) < 4 {
+		c.JsonApiErr(400, "New password too short", nil)
+		return
+	}
+
+	userQuery := m.GetUserByIdQuery{Id: userId}
+
+	if err := bus.Dispatch(&userQuery); err != nil {
+		c.JsonApiErr(500, "Could not read user from database", err)
+		return
+	}
+
+	passwordHashed := util.EncodePassword(form.Password, userQuery.Result.Salt)
+
+	cmd := m.ChangeUserPasswordCommand{
+		UserId:      userId,
+		NewPassword: passwordHashed,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to update user password", err)
+		return
+	}
+
+	c.JsonOK("User password updated")
+}
+
+func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUserPermissionsForm) {
+	userId := c.ParamsInt64(":id")
+
+	cmd := m.UpdateUserPermissionsCommand{
+		UserId:         userId,
+		IsGrafanaAdmin: form.IsGrafanaAdmin,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to update user permissions", err)
+		return
+	}
+
+	c.JsonOK("User permissions updated")
 }
 
 func AdminDeleteUser(c *middleware.Context) {

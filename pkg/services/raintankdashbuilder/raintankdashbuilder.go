@@ -25,10 +25,10 @@ func init() {
 }
 
 func SiteCreated(event *events.SiteCreated) error {
-	fmt.Printf("Site %s created by account %d, need to create dashboards\n", event.Name, event.AccountId)
+	fmt.Printf("Site %s created by account %d, need to create dashboards\n", event.Name, event.OrgId)
 	siteSummary, err := SiteSummary(&SiteSummaryData{
 		SiteId:    event.Id,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Title:     fmt.Sprintf("%s Site Summary", event.Name),
 		Tags:      fmt.Sprintf("[\"%s\"]", event.Name),
 	})
@@ -40,7 +40,7 @@ func SiteCreated(event *events.SiteCreated) error {
 
 	cmd := m.SaveDashboardCommand{
 		Dashboard: siteSummary,
-		AccountId: event.AccountId,
+		OrgId: event.OrgId,
 	}
 	return SaveDashboard(&cmd)
 }
@@ -54,10 +54,10 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 }
 
 func SiteUpdated(event *events.SiteUpdated) error {
-	fmt.Printf("Site %d updated by account %d, need to update dashboards\n", event.Id, event.AccountId)
+	fmt.Printf("Site %d updated by account %d, need to update dashboards\n", event.Id, event.OrgId)
 	monQuery := m.GetMonitorsQuery{
 		SiteId:    []int64{event.Id},
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 	}
 	if err := bus.Dispatch(&monQuery); err != nil {
 		return err
@@ -70,7 +70,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 		oldName = event.LastState.Name
 		oldTitle := fmt.Sprintf("%s Site Summary", event.LastState.Name)
 		oldSlug := DashboardSlug(oldTitle)
-		query := m.GetDashboardQuery{Slug: oldSlug, AccountId: event.AccountId}
+		query := m.GetDashboardQuery{Slug: oldSlug, OrgId: event.OrgId}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			if err != m.ErrDashboardNotFound {
@@ -78,7 +78,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 			}
 		} else {
 			oldTags = query.Result.GetTags()
-			cmd := m.DeleteDashboardCommand{Slug: oldSlug, AccountId: event.AccountId}
+			cmd := m.DeleteDashboardCommand{Slug: oldSlug, OrgId: event.OrgId}
 			if err := bus.Dispatch(&cmd); err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 			//we need to update all of the tags for each of the monitorDashboards`
 			title := fmt.Sprintf("%s Monitor Summary", mon.Name)
 			slug := DashboardSlug(title)
-			query = m.GetDashboardQuery{Slug: slug, AccountId: event.AccountId}
+			query = m.GetDashboardQuery{Slug: slug, OrgId: event.OrgId}
 			err := bus.Dispatch(&query)
 			if err != nil {
 				if err != m.ErrDashboardNotFound {
@@ -121,7 +121,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 
 				cmd := m.SaveDashboardCommand{
 					Dashboard: dashboard,
-					AccountId: event.AccountId,
+					OrgId:     event.OrgId,
 				}
 				err = SaveDashboard(&cmd)
 				if err != nil {
@@ -135,7 +135,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 	title := fmt.Sprintf("%s Site Summary", event.Name)
 	slug := DashboardSlug(title)
 
-	query := m.GetDashboardQuery{Slug: slug, AccountId: event.AccountId}
+	query := m.GetDashboardQuery{Slug: slug, OrgId: event.OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		if err == m.ErrDashboardNotFound {
@@ -174,7 +174,7 @@ func SiteUpdated(event *events.SiteUpdated) error {
 	siteSummary, err := SiteSummary(&SiteSummaryData{
 		SiteId:    event.Id,
 		DashId:    query.Result.Id,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Title:     title,
 		Tags:      fmt.Sprintf("[%s]", strings.Join(tags, ",")),
 		Monitors:  monitors,
@@ -186,22 +186,22 @@ func SiteUpdated(event *events.SiteUpdated) error {
 
 	cmd := m.SaveDashboardCommand{
 		Dashboard: siteSummary,
-		AccountId: event.AccountId,
+		OrgId: event.OrgId,
 	}
 	return SaveDashboard(&cmd)
 
 }
 
 func SiteRemoved(event *events.SiteRemoved) error {
-	fmt.Printf("Site %s removed by account %d, need to delete dashboards\n", event.Name, event.AccountId)
+	fmt.Printf("Site %s removed by account %d, need to delete dashboards\n", event.Name, event.OrgId)
 	title := fmt.Sprintf("%s Site Summary", event.Name)
 	slug := DashboardSlug(title)
-	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: event.AccountId}
+	cmd := m.DeleteDashboardCommand{Slug: slug, OrgId: event.OrgId}
 	return bus.Dispatch(&cmd)
 }
 
-func updateSite(id int64, accountId int64) error {
-	query := m.GetSiteByIdQuery{Id: id, AccountId: accountId}
+func updateSite(id int64, OrgId int64) error {
+	query := m.GetSiteByIdQuery{Id: id, OrgId: OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		return err
@@ -209,13 +209,13 @@ func updateSite(id int64, accountId int64) error {
 	e := events.SiteUpdated{
 		SitePayload: events.SitePayload{
 			Id:        query.Result.Id,
-			AccountId: query.Result.AccountId,
+			OrgId:     query.Result.OrgId,
 			Name:      query.Result.Name,
 			Slug:      query.Result.Slug,
 		},
 		LastState: &events.SitePayload{
 			Id:        query.Result.Id,
-			AccountId: query.Result.AccountId,
+			OrgId:     query.Result.OrgId,
 			Name:      query.Result.Name,
 			Slug:      query.Result.Slug,
 		},
@@ -223,8 +223,8 @@ func updateSite(id int64, accountId int64) error {
 	return SiteUpdated(&e)
 }
 
-func getSiteName(id int64, accountId int64) (string, error) {
-	query := m.GetSiteByIdQuery{Id: id, AccountId: accountId}
+func getSiteName(id int64, OrgId int64) (string, error) {
+	query := m.GetSiteByIdQuery{Id: id, OrgId: OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		return "", err
@@ -256,12 +256,12 @@ func getMonitorTypeName(id int64) (string, error) {
 }
 
 func MonitorCreated(event *events.MonitorCreated) error {
-	fmt.Printf("Monitor %s created by account %d, need to create dashboards\n", event.Name, event.AccountId)
+	fmt.Printf("Monitor %s created by account %d, need to create dashboards\n", event.Name, event.OrgId)
 	//need to update the siteDashboard
-	if err := updateSite(event.SiteId, event.AccountId); err != nil {
+	if err := updateSite(event.SiteId, event.OrgId); err != nil {
 		return err
 	}
-	siteName, err := getSiteName(event.SiteId, event.AccountId)
+	siteName, err := getSiteName(event.SiteId, event.OrgId)
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,7 @@ func MonitorCreated(event *events.MonitorCreated) error {
 	//create MonitorSummaryDashboard
 	monitorSummary, err := MonitorSummary(&MonitorSummaryData{
 		SiteId:    event.SiteId,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Summary", event.Name),
 		Tags:      fmt.Sprintf("[\"%s\", \"%s\"]", siteName, monitorTypeName),
@@ -286,14 +286,14 @@ func MonitorCreated(event *events.MonitorCreated) error {
 
 	cmd := m.SaveDashboardCommand{
 		Dashboard: monitorSummary,
-		AccountId: event.AccountId,
+		OrgId: event.OrgId,
 	}
 	if err = SaveDashboard(&cmd); err != nil {
 		return err
 	}
 	//create monitorDetailDashboard
 	locQuery := m.GetLocationsQuery{
-		AccountId: event.AccountId,
+		OrgId:      event.OrgId,
 		LocationId: event.Locations,
 	}
 	err = bus.Dispatch(&locQuery)
@@ -302,7 +302,7 @@ func MonitorCreated(event *events.MonitorCreated) error {
 	}
 	monitorDetail, err := MonitorDetail(&MonitorDetailData{
 		SiteId:    event.SiteId,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Detail", event.Name),
 		Tags:      fmt.Sprintf("[\"%s\", \"%s\"]", siteName, monitorTypeName),
@@ -315,7 +315,7 @@ func MonitorCreated(event *events.MonitorCreated) error {
 	}
 	cmd = m.SaveDashboardCommand{
 		Dashboard: monitorDetail,
-		AccountId: event.AccountId,
+		OrgId: event.OrgId,
 	}
 	if err = SaveDashboard(&cmd); err != nil {
 		return err
@@ -324,14 +324,14 @@ func MonitorCreated(event *events.MonitorCreated) error {
 }
 
 func MonitorUpdated(event *events.MonitorUpdated) error {
-	fmt.Printf("Monitor %s updated by account %d, need to update dashboards\n", event.Name, event.AccountId)
-	siteName, err := getSiteName(event.SiteId, event.AccountId)
+	fmt.Printf("Monitor %s updated by account %d, need to update dashboards\n", event.Name, event.OrgId)
+	siteName, err := getSiteName(event.SiteId, event.OrgId)
 	if err != nil {
 		return err
 	}
 	oldSiteName := ""
 	if event.LastState.SiteId != event.SiteId {
-		oldSiteName, err = getSiteName(event.LastState.SiteId, event.AccountId)
+		oldSiteName, err = getSiteName(event.LastState.SiteId, event.OrgId)
 		if err != nil {
 			return err
 		}
@@ -343,13 +343,13 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 
 	//update the site summary dashboard
 	if event.LastState.SiteId != event.SiteId {
-		err := updateSite(event.LastState.SiteId, event.AccountId)
+		err := updateSite(event.LastState.SiteId, event.OrgId)
 		if err != nil {
 			return err
 		}
 	}
 
-	if err := updateSite(event.SiteId, event.AccountId); err != nil {
+	if err := updateSite(event.SiteId, event.OrgId); err != nil {
 		return err
 	}
 
@@ -359,7 +359,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 	if event.LastState.Name != event.Name {
 		oldTitle := fmt.Sprintf("%s Monitor Summary", event.LastState.Name)
 		oldSlug := DashboardSlug(oldTitle)
-		query := m.GetDashboardQuery{Slug: oldSlug, AccountId: event.AccountId}
+		query := m.GetDashboardQuery{Slug: oldSlug, OrgId: event.OrgId}
 		err := bus.Dispatch(&query)
 		if err != nil {
 			if err != m.ErrDashboardNotFound {
@@ -367,7 +367,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 			}
 		} else {
 			oldTags = query.Result.GetTags()
-			cmd := m.DeleteDashboardCommand{Slug: oldSlug, AccountId: event.AccountId}
+			cmd := m.DeleteDashboardCommand{Slug: oldSlug, OrgId: event.OrgId}
 			if err := bus.Dispatch(&cmd); err != nil {
 				return err
 			}
@@ -377,7 +377,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 	title := fmt.Sprintf("%s Monitor Summary", event.Name)
 	slug := DashboardSlug(title)
 
-	query := m.GetDashboardQuery{Slug: slug, AccountId: event.AccountId}
+	query := m.GetDashboardQuery{Slug: slug, OrgId: event.OrgId}
 	err = bus.Dispatch(&query)
 	if err != nil {
 		if err == m.ErrDashboardNotFound {
@@ -417,7 +417,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 	monitorSummary, err := MonitorSummary(&MonitorSummaryData{
 		DashId:    query.Result.Id,
 		SiteId:    event.SiteId,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Summary", event.Name),
 		Tags:      tagStr,
@@ -431,14 +431,14 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 
 	cmd := m.SaveDashboardCommand{
 		Dashboard: monitorSummary,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 	}
 	if err = SaveDashboard(&cmd); err != nil {
 		return err
 	}
 
 	locQuery := m.GetLocationsQuery{
-		AccountId: event.AccountId,
+		OrgId:      event.OrgId,
 		LocationId: event.Locations,
 	}
 	err = bus.Dispatch(&locQuery)
@@ -451,7 +451,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 	title = fmt.Sprintf("%s Monitor Detail", event.Name)
 	slug = DashboardSlug(title)
 
-	query = m.GetDashboardQuery{Slug: slug, AccountId: event.AccountId}
+	query = m.GetDashboardQuery{Slug: slug, OrgId: event.OrgId}
 	err = bus.Dispatch(&query)
 	if err != nil {
 		if err == m.ErrDashboardNotFound {
@@ -494,7 +494,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 	monitorDetail, err := MonitorDetail(&MonitorDetailData{
 		DashId:    query.Result.Id,
 		SiteId:    event.SiteId,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 		Slug:      event.Slug,
 		Title:     fmt.Sprintf("%s Monitor Detail", event.Name),
 		Tags:      tagStr,
@@ -508,7 +508,7 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 
 	cmd = m.SaveDashboardCommand{
 		Dashboard: monitorDetail,
-		AccountId: event.AccountId,
+		OrgId:     event.OrgId,
 	}
 
 	if err = SaveDashboard(&cmd); err != nil {
@@ -518,15 +518,15 @@ func MonitorUpdated(event *events.MonitorUpdated) error {
 }
 
 func MonitorRemoved(event *events.MonitorRemoved) error {
-	fmt.Printf("Monitor %d removed by account %d, need to remove dashboards\n", event.Id, event.AccountId)
-	if err := updateSite(event.SiteId, event.AccountId); err != nil {
+	fmt.Printf("Monitor %d removed by account %d, need to remove dashboards\n", event.Id, event.OrgId)
+	if err := updateSite(event.SiteId, event.OrgId); err != nil {
 		return err
 	}
 
 	//remove monitorSummaryDashboard
 	title := fmt.Sprintf("%s Monitor Summary", event.Name)
 	slug := DashboardSlug(title)
-	cmd := m.DeleteDashboardCommand{Slug: slug, AccountId: event.AccountId}
+	cmd := m.DeleteDashboardCommand{Slug: slug, OrgId: event.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
 		return err
 	}
@@ -534,7 +534,7 @@ func MonitorRemoved(event *events.MonitorRemoved) error {
 	//remove monitorDetailDashboard
 	title = fmt.Sprintf("%s Monitor Detail", event.Name)
 	slug = DashboardSlug(title)
-	cmd = m.DeleteDashboardCommand{Slug: slug, AccountId: event.AccountId}
+	cmd = m.DeleteDashboardCommand{Slug: slug, OrgId: event.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
 		return err
 	}

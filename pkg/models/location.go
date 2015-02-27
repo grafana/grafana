@@ -15,7 +15,7 @@ var (
 
 type Location struct {
 	Id        int64
-	AccountId int64  `xorm:"not null unique(uix_location_for_account)"`
+	OrgId     int64  `xorm:"not null unique(uix_location_for_account)"`
 	Slug      string `xorm:"not null unique(uix_location_for_account)"` // The account being given access to
 	Name      string
 	Country   string
@@ -30,7 +30,7 @@ type Location struct {
 // COMMANDS
 
 type AddLocationCommand struct {
-	AccountId int64  `json:"-"`
+	OrgId     int64  `json:"-"`
 	Name      string `json:"name"`
 	Country   string `json:"country"`
 	Region    string `json:"region"`
@@ -41,7 +41,7 @@ type AddLocationCommand struct {
 
 type UpdateLocationCommand struct {
 	Id        int64  `json:"id" binding:"required"`
-	AccountId int64  `json:"-"`
+	OrgId     int64  `json:"-"`
 	Name      string `json:"name"`
 	Country   string `json:"country"`
 	Region    string `json:"region"`
@@ -51,7 +51,7 @@ type UpdateLocationCommand struct {
 
 type DeleteLocationCommand struct {
 	Id        int64 `json:"id" binding:"required"`
-	AccountId int64 `json:"-"`
+	OrgId     int64 `json:"-"`
 }
 
 // ---------------------
@@ -66,13 +66,13 @@ type GetLocationsQuery struct {
 	Provider   []string `form:"provider"`
 	Public     string   `form:"public"`
 
-	AccountId int64
+	OrgId      int64
 	Result    []*Location
 }
 
 type GetLocationByIdQuery struct {
 	Id        int64
-	AccountId int64
+	OrgId     int64
 	Result    Location
 }
 

@@ -11,7 +11,7 @@ import (
 type MonitorPayload struct {
 	Id            int64                  `json:"id"`
 	SiteId        int64                  `json:"site_id"`
-	AccountId     int64                  `json:"account_id"`
+	OrgId         int64                  `json:"org_id"`
 	Name          string                 `json:"name"`
 	Slug          string                 `json:"slug"`
 	MonitorTypeId int64                  `json:"monitor_type_id"`
@@ -40,13 +40,13 @@ type MonitorRemoved struct {
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
 	SiteId    int64     `json:"site_id"`
-	AccountId int64     `json:"account_id"`
+	OrgId     int64     `json:"org_id"`
 	Locations []int64   `json:"locations"`
 }
 
 type SitePayload struct {
 	Id        int64  `json:"id"`
-	AccountId int64  `json:"account_id"`
+	OrgId     int64  `json:"org_id"`
 	Slug      string `json:"slug"`
 	Name      string `json:"name"`
 }
@@ -66,5 +66,5 @@ type SiteRemoved struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
-	AccountId int64     `json:"account_id"`
+	OrgId     int64     `json:"org_id"`
 }

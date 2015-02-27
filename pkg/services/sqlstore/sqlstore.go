@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -73,7 +74,7 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 
 	migrator := migrator.NewMigrator(x)
 	migrator.LogLevel = log.INFO
-	addMigrations(migrator)
+	migrations.AddMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)

@@ -14,7 +14,7 @@ function (angular, _, config) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
-      $scope.query = { query: '' };
+      $scope.query = { query: '', tag: '', starred: false };
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
@@ -72,10 +72,15 @@ function (angular, _, config) {
             return dash;
           });
 
-          if ($scope.query.query === "" && !$scope.query.starred) {
+          if ($scope.queryHasNoFilters()) {
             $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
           }
         });
+    };
+
+    $scope.queryHasNoFilters = function() {
+      var query = $scope.query;
+      return query.query === '' && query.starred === false && query.tag === '';
     };
 
     $scope.filterByTag = function(tag, evt) {

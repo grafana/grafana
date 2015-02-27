@@ -20,6 +20,8 @@ function (angular, _, store) {
     this.version = grafanaVersion;
     this.lightTheme = false;
     this.user = new User();
+    this.isSignedIn = this.user.isSignedIn;
+    this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.sidemenu = store.getBool('grafana.sidemenu');
 
     // events
@@ -28,7 +30,7 @@ function (angular, _, store) {
     });
 
     this.hasRole = function(role) {
-      return this.user.accountRole === role;
+      return this.user.orgRole === role;
     };
 
     this.setSideMenuState = function(state) {

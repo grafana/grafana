@@ -1,7 +1,6 @@
-<topnav icon="fa fa-cube" title="Admin" subnav="true">
+<topnav icon="fa fa-fw fa-user" title="Global users" subnav="true">
 	<ul class="nav">
-		<li><a href="admin/settings">Settings</a></li>
-		<li class="active"><a href="admin/users">Users</a></li>
+		<li class="active"><a href="admin/users">Overview</a></li>
 		<li><a href="admin/users/create">Create user</a></li>
 	</ul>
 </topnav>
@@ -18,7 +17,7 @@
 				<th>Name</th>
 				<th>Login</th>
 				<th>Email</th>
-				<th>Admin</th>
+				<th style="white-space: nowrap">Grafana Admin</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="user in users">

@@ -17,7 +17,7 @@ func init() {
 }
 
 func GetLocationById(query *m.GetLocationByIdQuery) error {
-	sess := x.Limit(100, 0).Where("(public=1 OR account_id=?) AND id=?", query.AccountId, query.Id)
+	sess := x.Limit(100, 0).Where("(public=1 OR org_id=?) AND id=?", query.OrgId, query.Id)
 	has, err := sess.Get(&query.Result)
 
 	if !has {
@@ -27,7 +27,7 @@ func GetLocationById(query *m.GetLocationByIdQuery) error {
 }
 
 func GetLocations(query *m.GetLocationsQuery) error {
-	sess := x.Limit(100, 0).Where("public=1 OR account_id=?", query.AccountId).Asc("name")
+	sess := x.Limit(100, 0).Where("public=1 OR org_id=?", query.OrgId).Asc("name")
 
 	if len(query.LocationId) > 0 {
 		if len(query.LocationId) > 1 {
@@ -86,8 +86,8 @@ func GetLocations(query *m.GetLocationsQuery) error {
 
 func DeleteLocation(cmd *m.DeleteLocationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "DELETE FROM location WHERE id=? and account_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		var rawSql = "DELETE FROM location WHERE id=? and org_id=?"
+		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		return err
 	})
 }
@@ -96,7 +96,7 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
-			AccountId: cmd.AccountId,
+			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Country:   cmd.Country,
 			Region:    cmd.Region,
@@ -119,7 +119,7 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
 			Id:        cmd.Id,
-			AccountId: cmd.AccountId,
+			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Country:   cmd.Country,
 			Region:    cmd.Region,
@@ -128,7 +128,7 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 			Updated:   time.Now(),
 		}
 		l.UpdateLocationSlug()
-		_, err := sess.Where("id=? and account_id=?", l.Id, l.AccountId).Update(l)
+		_, err := sess.Where("id=? and org_id=?", l.Id, l.OrgId).Update(l)
 		return err
 	})
 }

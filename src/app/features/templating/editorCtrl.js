@@ -36,6 +36,7 @@ function (angular, _) {
       if ($scope.isValid()) {
         $scope.variables.push($scope.current);
         $scope.update();
+        $scope.updateSubmenuVisibility();
       }
     };
 
@@ -104,6 +105,7 @@ function (angular, _) {
     $scope.removeVariable = function(variable) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
+      $scope.updateSubmenuVisibility();
     };
 
   });

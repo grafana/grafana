@@ -1,18 +1,17 @@
 define([
   'angular',
+  'config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ProfileCtrl', function($scope, $http, backendSrv) {
-
-    $scope.newAccount = {name: ''};
+  module.controller('ProfileCtrl', function($scope, backendSrv) {
 
     $scope.init = function() {
       $scope.getUser();
-      $scope.getUserAccounts();
+      $scope.getUserOrgs();
     };
 
     $scope.getUser = function() {
@@ -21,23 +20,21 @@ function (angular) {
       });
     };
 
-    $scope.getUserAccounts = function() {
-      backendSrv.get('/api/user/accounts').then(function(accounts) {
-        $scope.accounts = accounts;
+    $scope.getUserOrgs = function() {
+      backendSrv.get('/api/user/orgs').then(function(orgs) {
+        $scope.orgs = orgs;
       });
     };
 
-    $scope.setUsingAccount = function(account) {
-      backendSrv.post('/api/user/using/' + account.accountId).then($scope.getUserAccounts);
+    $scope.setUsingOrg = function(org) {
+      backendSrv.post('/api/user/using/' + org.orgId).then(function() {
+        window.location.href = config.appSubUrl + '/profile';
+      });
     };
 
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
       backendSrv.put('/api/user/', $scope.user);
-    };
-
-    $scope.createAccount = function() {
-      backendSrv.post('/api/account/', $scope.newAccount).then($scope.getUserAccounts);
     };
 
     $scope.init();

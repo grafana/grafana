@@ -1,6 +1,9 @@
 package migrator
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Postgres struct {
 	BaseDialect
@@ -83,4 +86,10 @@ func (db *Postgres) TableCheckSql(tableName string) (string, []interface{}) {
 	args := []interface{}{"grafana", tableName}
 	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
 	return sql, args
+}
+
+func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
+	quote := db.Quote
+	idxName := index.XName(tableName)
+	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }

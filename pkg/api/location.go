@@ -9,7 +9,7 @@ import (
 )
 
 func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
-	query.AccountId = c.AccountId
+	query.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query locations", err)
@@ -34,7 +34,7 @@ func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
 func GetLocationById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	query := m.GetLocationByIdQuery{Id: id, AccountId: c.AccountId}
+	query := m.GetLocationByIdQuery{Id: id, OrgId: c.OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Location not found", nil)
@@ -57,7 +57,7 @@ func GetLocationById(c *middleware.Context) {
 func DeleteLocation(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
-	cmd := &m.DeleteLocationCommand{Id: id, AccountId: c.AccountId}
+	cmd := &m.DeleteLocationCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -76,9 +76,9 @@ func AddLocation(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 	if cmd.Public {
-		if c.AccountRole != m.ROLE_RAINTANK_ADMIN {
+		if c.OrgRole != m.ROLE_RAINTANK_ADMIN {
 			c.JsonApiErr(400, "Only raintank admins can make public locations", nil)
 			return
 		}
@@ -107,9 +107,9 @@ func UpdateLocation(c *middleware.Context) {
 		return
 	}
 
-	cmd.AccountId = c.AccountId
+	cmd.OrgId = c.OrgId
 	if cmd.Public {
-		if c.AccountRole != m.ROLE_RAINTANK_ADMIN {
+		if c.OrgRole != m.ROLE_RAINTANK_ADMIN {
 			c.JsonApiErr(400, "Only admins can make public locations", nil)
 			return
 		}

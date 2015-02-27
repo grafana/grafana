@@ -30,37 +30,45 @@ define([
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/account', {
-        templateUrl: 'app/features/account/partials/account.html',
-        controller : 'AccountCtrl',
+      .when('/dashboard/import', {
+        templateUrl: 'app/features/dashboard/partials/import.html',
+        controller : 'DashboardImportCtrl',
       })
-      .when('/account/datasources', {
-        templateUrl: 'app/features/account/partials/datasources.html',
+      .when('/datasources', {
+        templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
       })
-      .when('/account/datasources/edit/:id', {
-        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+      .when('/datasources/edit/:id', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
       })
-      .when('/account/datasources/new', {
-        templateUrl: 'app/features/account/partials/datasourceEdit.html',
+      .when('/datasources/new', {
+        templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
       })
-      .when('/account/users', {
-        templateUrl: 'app/features/account/partials/users.html',
-        controller : 'AccountUsersCtrl',
+      .when('/org', {
+        templateUrl: 'app/features/org/partials/orgDetails.html',
+        controller : 'OrgDetailsCtrl',
       })
-      .when('/account/apikeys', {
-        templateUrl: 'app/features/account/partials/apikeys.html',
-        controller : 'ApiKeysCtrl',
+      .when('/org/new', {
+        templateUrl: 'app/features/org/partials/newOrg.html',
+        controller : 'NewOrgCtrl',
       })
-      .when('/account/import', {
-        templateUrl: 'app/features/account/partials/import.html',
-        controller : 'ImportCtrl',
+      .when('/org/users', {
+        templateUrl: 'app/features/org/partials/orgUsers.html',
+        controller : 'OrgUsersCtrl',
+      })
+      .when('/org/apikeys', {
+        templateUrl: 'app/features/org/partials/orgApiKeys.html',
+        controller : 'OrgApiKeysCtrl',
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
+      })
+      .when('/profile/password', {
+        templateUrl: 'app/features/profile/partials/password.html',
+        controller : 'ChangePasswordCtrl',
       })
       .when('/admin/settings', {
         templateUrl: 'app/features/admin/partials/settings.html',
@@ -71,12 +79,15 @@ define([
         controller : 'AdminUsersCtrl',
       })
       .when('/admin/users/create', {
-        templateUrl: 'app/features/admin/partials/edit_user.html',
+        templateUrl: 'app/features/admin/partials/new_user.html',
         controller : 'AdminEditUserCtrl',
       })
       .when('/admin/users/edit/:id', {
         templateUrl: 'app/features/admin/partials/edit_user.html',
         controller : 'AdminEditUserCtrl',
+      })
+      .when('/admin/orgs', {
+        templateUrl: 'app/features/admin/partials/orgs.html',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',

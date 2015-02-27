@@ -41,19 +41,19 @@ func runImport(c *cli.Context) {
 	}
 
 	if !c.Args().Present() {
-		log.ConsoleFatal("Account name arg is required")
+		log.ConsoleFatal("Organization name arg is required")
 	}
 
-	accountName := c.Args().First()
+	orgName := c.Args().First()
 
 	initRuntime(c)
 
-	accountQuery := m.GetAccountByNameQuery{Name: accountName}
-	if err := bus.Dispatch(&accountQuery); err != nil {
+	orgQuery := m.GetOrgByNameQuery{Name: orgName}
+	if err := bus.Dispatch(&orgQuery); err != nil {
 		log.ConsoleFatalf("Failed to find account", err)
 	}
 
-	accountId := accountQuery.Result.Id
+	orgId := orgQuery.Result.Id
 
 	visitor := func(path string, f os.FileInfo, err error) error {
 		if err != nil {
@@ -63,7 +63,7 @@ func runImport(c *cli.Context) {
 			return nil
 		}
 		if strings.HasSuffix(f.Name(), ".json") {
-			if err := importDashboard(path, accountId); err != nil {
+			if err := importDashboard(path, orgId); err != nil {
 				log.ConsoleFatalf("Failed to import dashboard file: %v,  err: %v", path, err)
 			}
 		}
@@ -75,7 +75,7 @@ func runImport(c *cli.Context) {
 	}
 }
 
-func importDashboard(path string, accountId int64) error {
+func importDashboard(path string, orgId int64) error {
 	log.ConsoleInfof("Importing %v", path)
 
 	reader, err := os.Open(path)
@@ -92,7 +92,7 @@ func importDashboard(path string, accountId int64) error {
 	dash.Data["id"] = nil
 
 	cmd := m.SaveDashboardCommand{
-		AccountId: accountId,
+		OrgId:     orgId,
 		Dashboard: dash.Data,
 	}
 

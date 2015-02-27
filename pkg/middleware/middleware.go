@@ -9,6 +9,7 @@ import (
 	"github.com/macaron-contrib/session"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,35 +44,48 @@ func GetContextHandler() macaron.Handler {
 				ctx.SignedInUser = query.Result
 				ctx.IsSignedIn = true
 			}
-		} else if key := getApiKey(ctx); key != "" {
-			// Try API Key auth
-			keyQuery := m.GetApiKeyByKeyQuery{Key: key}
+		} else if keyString := getApiKey(ctx); keyString != "" {
+			// base64 decode key
+			decoded, err := apikeygen.Decode(keyString)
+			if err != nil {
+				ctx.JsonApiErr(401, "Invalid API key", err)
+				return
+			}
+			// fetch key
+			keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 			if err := bus.Dispatch(&keyQuery); err != nil {
 				ctx.JsonApiErr(401, "Invalid API key", err)
 				return
 			} else {
-				keyInfo := keyQuery.Result
+				apikey := keyQuery.Result
+
+				// validate api key
+				if !apikeygen.IsValid(decoded, apikey.Key) {
+					ctx.JsonApiErr(401, "Invalid API key", err)
+					return
+				}
 
 				ctx.IsSignedIn = true
 				ctx.SignedInUser = &m.SignedInUser{}
 
 				// TODO: fix this
-				ctx.AccountRole = keyInfo.Role
-				ctx.ApiKeyId = keyInfo.Id
-				ctx.AccountId = keyInfo.AccountId
+				ctx.OrgRole = apikey.Role
+				ctx.ApiKeyId = apikey.Id
+				ctx.OrgId = apikey.OrgId
 			}
 		} else if setting.AnonymousEnabled {
-			accountQuery := m.GetAccountByNameQuery{Name: setting.AnonymousAccountName}
-			if err := bus.Dispatch(&accountQuery); err != nil {
-				if err == m.ErrAccountNotFound {
-					log.Error(3, "Anonymous access account name does not exist", nil)
+			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+			if err := bus.Dispatch(&orgQuery); err != nil {
+				if err == m.ErrOrgNotFound {
+					log.Error(3, "Anonymous access organization name does not exist", nil)
 				}
 			} else {
 				ctx.IsSignedIn = false
 				ctx.HasAnonymousAccess = true
 				ctx.SignedInUser = &m.SignedInUser{}
-				ctx.AccountRole = m.RoleType(setting.AnonymousAccountRole)
-				ctx.AccountId = accountQuery.Result.Id
+				ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+				ctx.OrgId = orgQuery.Result.Id
+				ctx.OrgName = orgQuery.Result.Name
 			}
 		}
 

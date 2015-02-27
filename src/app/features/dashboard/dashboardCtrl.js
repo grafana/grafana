@@ -52,12 +52,16 @@ function (angular, $, config) {
       timeSrv.init($scope.dashboard);
       templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
 
-      $scope.checkFeatureToggles();
       dashboardKeybindings.shortcuts($scope);
 
+      $scope.updateSubmenuVisibility();
       $scope.setWindowTitleAndTheme();
 
       $scope.appEvent("dashboard-loaded", $scope.dashboard);
+    };
+
+    $scope.updateSubmenuVisibility = function() {
+      $scope.submenuEnabled = $scope.dashboard.hasTemplateVarsOrAnnotations();
     };
 
     $scope.setWindowTitleAndTheme = function() {
@@ -67,6 +71,10 @@ function (angular, $, config) {
 
     $scope.styleUpdated = function() {
       $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
+    };
+
+    $scope.broadcastRefresh = function() {
+      $rootScope.$broadcast('refresh');
     };
 
     $scope.add_row = function(dash, row) {
@@ -100,10 +108,6 @@ function (angular, $, config) {
       editScope.object = options.object;
       editScope.updateHandler = options.updateHandler;
       $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
-    };
-
-    $scope.checkFeatureToggles = function() {
-      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable || false;
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {

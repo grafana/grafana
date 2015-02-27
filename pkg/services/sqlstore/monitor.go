@@ -24,7 +24,7 @@ func init() {
 type MonitorWithLocationDTO struct {
 	Id            int64
 	SiteId        int64
-	AccountId     int64
+	OrgId         int64
 	Name          string
 	MonitorTypeId int64
 	LocationId    int64
@@ -41,11 +41,11 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	sess.Where("monitor.id=?", query.Id)
 	if query.IsRaintankAdmin != true {
-		sess.And("monitor.account_id=?", query.AccountId)
+		sess.And("monitor.org_id=?", query.OrgId)
 	}
 
 	sess.Cols("monitor_location.location_id", "monitor.id",
-		"monitor.account_id", "monitor.name", "monitor.slug",
+		"monitor.org_id", "monitor.name", "monitor.slug",
 		"monitor.monitor_type_id", "monitor.settings",
 		"monitor.frequency", "monitor.enabled", "monitor.offset",
 		"monitor.site_id", "monitor.namespace")
@@ -67,7 +67,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	query.Result = &m.MonitorDTO{
 		Id:            result[0].Id,
 		SiteId:        result[0].SiteId,
-		AccountId:     result[0].AccountId,
+		OrgId:         result[0].OrgId,
 		Name:          result[0].Name,
 		Slug:          result[0].Slug,
 		MonitorTypeId: result[0].MonitorTypeId,
@@ -90,10 +90,10 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	sess.Join("LEFT", "monitor_location", "monitor_location.monitor_id=monitor.id")
 	if query.IsRaintankAdmin != true {
-		sess.Where("monitor.account_id=?", query.AccountId)
+		sess.Where("monitor.org_id=?", query.OrgId)
 	}
 	sess.Cols("monitor_location.location_id", "monitor.id",
-		"monitor.account_id", "monitor.name", "monitor.settings",
+		"monitor.org_id", "monitor.name", "monitor.settings",
 		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency",
 		"monitor.enabled", "monitor.offset", "monitor.site_id", "monitor.namespace")
 
@@ -175,7 +175,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			monitors[row.Id] = &m.MonitorDTO{
 				Id:            row.Id,
 				SiteId:        row.SiteId,
-				AccountId:     row.AccountId,
+				OrgId:         row.OrgId,
 				Name:          row.Name,
 				Slug:          row.Slug,
 				MonitorTypeId: row.MonitorTypeId,
@@ -266,15 +266,15 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
 		q := m.GetMonitorByIdQuery{
 			Id:        cmd.Id,
-			AccountId: cmd.AccountId,
+			OrgId: cmd.OrgId,
 		}
 		err := GetMonitorById(&q)
 		if err != nil {
 			return err
 		}
 
-		var rawSql = "DELETE FROM monitor WHERE id=? and account_id=?"
-		_, err = sess.Exec(rawSql, cmd.Id, cmd.AccountId)
+		var rawSql = "DELETE FROM monitor WHERE id=? and org_id=?"
+		_, err = sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 			Id:        q.Result.Id,
 			Name:      q.Result.Name,
 			SiteId:    q.Result.SiteId,
-			AccountId: q.Result.AccountId,
+			OrgId:     q.Result.OrgId,
 			Locations: q.Result.Locations,
 		})
 		return nil
@@ -302,7 +302,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
-		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
+		sess.In("id", cmd.Locations).Where("org_id=? or public=1", cmd.OrgId)
 		sess.Cols("id")
 		err := sess.Find(&filtered_locations)
 
@@ -360,7 +360,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 		mon := &m.Monitor{
 			SiteId:        cmd.SiteId,
-			AccountId:     cmd.AccountId,
+			OrgId:         cmd.OrgId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
 			Offset:        rand.Int63n(cmd.Frequency - 1),
@@ -395,7 +395,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
 			SiteId:        mon.SiteId,
-			AccountId:     mon.AccountId,
+			OrgId:         mon.OrgId,
 			Name:          mon.Name,
 			Slug:          mon.Slug,
 			MonitorTypeId: mon.MonitorTypeId,
@@ -411,7 +411,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			MonitorPayload: events.MonitorPayload{
 				Id:            mon.Id,
 				SiteId:        mon.SiteId,
-				AccountId:     mon.AccountId,
+				OrgId:         mon.OrgId,
 				Name:          mon.Name,
 				Slug:          mon.Slug,
 				MonitorTypeId: mon.MonitorTypeId,
@@ -431,7 +431,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
 		q := m.GetMonitorByIdQuery{
 			Id:        cmd.Id,
-			AccountId: cmd.AccountId,
+			OrgId: cmd.OrgId,
 		}
 		err := GetMonitorById(&q)
 		if err != nil {
@@ -442,7 +442,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
-		sess.In("id", cmd.Locations).Where("account_id=? or public=1", cmd.AccountId)
+		sess.In("id", cmd.Locations).Where("org_id=? or public=1", cmd.OrgId)
 		sess.Cols("id")
 		err = sess.Find(&filtered_locations)
 
@@ -503,7 +503,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		mon := &m.Monitor{
 			Id:            cmd.Id,
 			SiteId:        cmd.SiteId,
-			AccountId:     cmd.AccountId,
+			OrgId:         cmd.OrgId,
 			Name:          cmd.Name,
 			MonitorTypeId: cmd.MonitorTypeId,
 			Settings:      cmd.Settings,
@@ -520,7 +520,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		mon.UpdateMonitorSlug()
 		sess.UseBool("enabled")
-		if _, err = sess.Where("id=? and account_id=?", mon.Id, mon.AccountId).Update(mon); err != nil {
+		if _, err = sess.Where("id=? and org_id=?", mon.Id, mon.OrgId).Update(mon); err != nil {
 			return err
 		}
 
@@ -542,7 +542,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			MonitorPayload: events.MonitorPayload{
 				Id:            mon.Id,
 				SiteId:        mon.SiteId,
-				AccountId:     mon.AccountId,
+				OrgId:         mon.OrgId,
 				Name:          mon.Name,
 				Slug:          mon.Slug,
 				MonitorTypeId: mon.MonitorTypeId,
@@ -558,7 +558,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			LastState: &events.MonitorPayload{
 				Id:            lastState.Id,
 				SiteId:        lastState.SiteId,
-				AccountId:     lastState.AccountId,
+				OrgId:         lastState.OrgId,
 				Name:          lastState.Name,
 				Slug:          lastState.Slug,
 				MonitorTypeId: lastState.MonitorTypeId,

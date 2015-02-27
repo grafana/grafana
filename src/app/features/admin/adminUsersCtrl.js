@@ -9,7 +9,6 @@ function (angular) {
   module.controller('AdminUsersCtrl', function($scope, backendSrv) {
 
     $scope.init = function() {
-      $scope.accounts = [];
       $scope.getUsers();
     };
 
