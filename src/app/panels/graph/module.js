@@ -85,6 +85,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         min: false,
         max: false,
         current: false,
+        last: false,
         total: false,
         avg: false
       },
@@ -169,7 +170,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
-    $scope.refreshData = function(datasource) {
+    $scope.get_data = function() {
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -183,7 +184,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return datasource.query(metricsQuery)
+      return $scope.datasource.query(metricsQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
@@ -228,8 +229,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-          alias: alias,
-          color: color,
+        alias: alias,
+        color: color,
       });
 
       if (datapoints && datapoints.length > 0) {
@@ -331,7 +332,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
     $scope.legendValuesOptionChanged = function() {
       var legend = $scope.panel.legend;
-      legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+      legend.values = legend.min || legend.max || legend.avg || legend.current || legent.last || legend.total;
       $scope.render();
     };
 
