@@ -1,5 +1,5 @@
 define([
-  'features/graphite/parser'
+  'plugins/datasource/graphite/parser'
 ], function(Parser) {
   'use strict';
 

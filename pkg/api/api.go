@@ -27,6 +27,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/profile/", reqSignedIn, Index)
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
+	r.Get("/datasources/edit/*", reqSignedIn, Index)
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
@@ -75,6 +76,7 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
+			r.Get("/plugins", GetDataSourcePlugins)
 		}, reqAccountAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)

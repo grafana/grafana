@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func GetDataSources(c *middleware.Context) {
@@ -117,4 +118,8 @@ func UpdateDataSource(c *middleware.Context) {
 	}
 
 	c.JsonOK("Datasource updated")
+}
+
+func GetDataSourcePlugins(c *middleware.Context) {
+	c.JSON(200, plugins.DataSources)
 }

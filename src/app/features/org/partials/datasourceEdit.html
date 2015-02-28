@@ -19,7 +19,7 @@
 				</div>
 				<div class="editor-option">
 					<label class="small">Type</label>
-					<select class="input-large" ng-model="current.type" ng-options="f.type as f.name for f in types" ng-change="typeChanged()"></select>
+					<select class="input-large" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 				</div>
 				<editor-opt-bool text="Mark as default" model="current.isDefault" change="render()"></editor-opt-bool>
 			</div>
@@ -27,7 +27,7 @@
 			<div class="editor-row">
 				<div class="editor-option">
 					<label class="small">Url</label>
-					<input type="text" class="input-xxlarge" ng-model='current.url' placeholder="http://my.graphite.com:8080" required></input>
+					<input type="text" style="width: 450px" ng-model='current.url' placeholder="http://my.graphite.com:8080" required></input>
 				</div>
 				<div class="editor-option">
 					<label class="small">Access method <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
@@ -35,33 +35,7 @@
 				</div>
 			</div>
 
-			<div class="editor-row" ng-if="current.type === 'influxdb'">
-				<div class="section">
-					<h5>InfluxDB Details</h5>
-					<div class="editor-option">
-						<label class="small">Database name</label>
-						<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
-					</div>
-					<div class="editor-option">
-						<label class="small">User</label>
-						<input type="text" class="input-large" ng-model='current.user' placeholder=""></input>
-					</div>
-					<div class="editor-option">
-						<label class="small">Password</label>
-						<input type="password" class="input-large" ng-model='current.password' placeholder=""></input>
-					</div>
-				</div>
-			</div>
-
-			<div class="editor-row" ng-if="current.type === 'elasticsearch'">
-				<div class="section">
-					<h5>Elastic search details</h5>
-					<div class="editor-option">
-						<label class="small">Index name</label>
-						<input type="text" class="input-large" required ng-model='current.database' placeholder=""></input>
-					</div>
-				</div>
-			</div>
+			<div ng-include="datasourceMeta.partials.config" ng-if="datasourceMeta.partials.config"></div>
 
 			<br>
 

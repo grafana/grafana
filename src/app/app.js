@@ -15,7 +15,7 @@ define([
   'extend-jquery',
   'bindonce',
 ],
-function (angular, $, _, appLevelRequire, config) {
+function (angular, $, _, appLevelRequire) {
 
   "use strict";
 

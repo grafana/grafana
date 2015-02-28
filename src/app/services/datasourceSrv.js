@@ -11,13 +11,14 @@ function (angular, _, config) {
   module.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
-    this.datasources = {};
-    this.metricSources = [];
-    this.annotationSources = [];
     this.grafanaDB = new ($injector.get("GrafanaDatasource"));
 
     this.init = function(dsSettingList) {
       config.datasources = dsSettingList;
+
+      this.datasources = {};
+      this.metricSources = [];
+      this.annotationSources = [];
 
       _.each(config.datasources, function(value, key) {
         if (value.meta && value.meta.metrics) {

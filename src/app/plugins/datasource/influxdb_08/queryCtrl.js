@@ -9,7 +9,7 @@ function (angular, _) {
 
   var seriesList = null;
 
-  module.controller('InfluxQueryCtrl', function($scope, $timeout) {
+  module.controller('InfluxQueryCtrl_08', function($scope, $timeout) {
 
     $scope.init = function() {
       var target = $scope.target;
