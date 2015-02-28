@@ -68,6 +68,7 @@ function (_, kbn) {
     this.stats.min = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
+    this.stats.last = null;
     this.allIsNull = true;
 
     var ignoreNulls = fillStyle === 'connected';
@@ -84,6 +85,8 @@ function (_, kbn) {
         if (nullAsZero) {
           currentValue = 0;
         }
+      } else {
+        this.stats.last = currentValue;
       }
 
       if (_.isNumber(currentValue)) {
