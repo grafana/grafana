@@ -3,7 +3,7 @@
 }
 
 .navbar .nav>li>a {
-  padding: 17px 15px 11px;
+  padding: 17px 15px 13px;
   .fa { font-size: 115%; }
 }
 
@@ -20,8 +20,9 @@
 }
 
 .top-nav-menu-btn {
+  border: 1px solid @bodyBackground;
   border-radius: 50%;
-  background: black;
+  background: @iconContainerBackground;
   display: block;
   position: relative;
   float: left;
@@ -64,7 +65,7 @@
   font-size: 1.4em;
   font-weight: bold;
   color: #a2a2a2;
-  border: 1px solid #555;
+  border: @grafanaTriggerBorder;
   a {
     display: inline-block;
     background: @grafanaTargetFuncBackground;
@@ -75,7 +76,7 @@
     &:hover {
       background: @grafanaTargetFuncHightlight;
       .fa {
-        color: @linkColorHover
+        color: @linkColorHover;
       }
     }
   }
