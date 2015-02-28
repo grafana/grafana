@@ -81,6 +81,10 @@ function (angular, _, config) {
       return this.get('/api/search', query);
     };
 
+    this.getDashboard = function(slug) {
+      return this.get('/api/dashboards/db/' + slug);
+    };
+
     this.saveDashboard = function(dash) {
       return this.post('/api/dashboards/db/', {dashboard: dash});
     };

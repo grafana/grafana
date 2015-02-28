@@ -9,7 +9,7 @@ function (angular) {
 
   module.controller('DashFromDBProvider', function($scope, $routeParams, backendSrv) {
 
-    if (!$routeParams.id) {
+    if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
         $scope.initDashboard(result, $scope);
       },function() {
@@ -20,7 +20,7 @@ function (angular) {
       return;
     }
 
-    return backendSrv.get('/api/dashboards/db/' + $routeParams.id).then(function(result) {
+    return backendSrv.getDashboard($routeParams.slug).then(function(result) {
       $scope.initDashboard(result, $scope);
     }, function() {
       $scope.initDashboard({

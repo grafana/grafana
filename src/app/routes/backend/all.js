@@ -15,12 +15,12 @@ define([
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
-      .when('/dashboard/db/:id', {
+      .when('/dashboard/db/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromDBProvider',
         reloadOnSearch: false,
       })
-      .when('/dashboard/import/:id', {
+      .when('/dashboard/import/:file', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
@@ -93,7 +93,7 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
-      .when('/dashboard/solo/:id/', {
+      .when('/dashboard/solo/:slug/', {
         templateUrl: 'app/features/panel/partials/soloPanel.html',
         controller : 'SoloPanelCtrl',
       })
