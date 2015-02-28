@@ -170,7 +170,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
 
-    $scope.get_data = function() {
+    $scope.refreshData = function(datasource) {
       $scope.updateTimeRange();
 
       var metricsQuery = {
@@ -184,7 +184,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query(metricsQuery)
+      return datasource.query(metricsQuery)
         .then($scope.dataHandler)
         .then(null, function(err) {
           $scope.panelMeta.loading = false;
@@ -229,8 +229,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-        alias: alias,
-        color: color,
+          alias: alias,
+          color: color,
       });
 
       if (datapoints && datapoints.length > 0) {
