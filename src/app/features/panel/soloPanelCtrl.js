@@ -17,8 +17,8 @@ function (angular, $) {
       backendSrv.getDashboard($routeParams.slug)
         .then(function(dashboard) {
           $scope.initPanelScope(dashboard);
-        }).then(null, function(error) {
-          $scope.appEvent('alert-error', ['Load panel error', error]);
+        }).then(null, function(err) {
+          $scope.appEvent('alert-error', ['Load panel error', err.message]);
         });
     };
 
