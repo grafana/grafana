@@ -14,6 +14,6 @@ func TestPluginScans(t *testing.T) {
 		err := scan(path)
 
 		So(err, ShouldBeNil)
-		So(len(DataSources), ShouldEqual, 1)
+		So(len(DataSources), ShouldBeGreaterThan, 1)
 	})
 }
