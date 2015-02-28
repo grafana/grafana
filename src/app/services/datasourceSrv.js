@@ -20,13 +20,15 @@ function (angular, _, config) {
 
       _.each(config.datasources, function(value, key) {
         if (value.meta && value.meta.metrics) {
-          self.metricSources.push({ value: key, name: key });
+          self.metricSources.push({
+            value: key === config.defaultDatasource ? null : key,
+            name: key
+          });
+        }
+        if (value.meta && value.meta.annotations) {
+          self.annotationSources.push(value);
         }
       });
-
-      if (!config.defaultDatasource) {
-        $rootScope.appEvent('alert-error', ["No default data source found", ""]);
-      }
     };
 
     this.get = function(name) {
