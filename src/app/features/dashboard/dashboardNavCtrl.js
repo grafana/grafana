@@ -20,10 +20,12 @@ function (angular, _, moment, config, store) {
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
 
       $scope.onAppEvent('zoom-out', function() {
-        $scope.zoom(2);
+        timeSrv.zoom(2);
       });
 
     };
+
+    $scope.zoom = timeSrv.zoom;
 
     $scope.set_default = function() {
       store.set('grafanaDashboardDefault', $location.path());
@@ -117,27 +119,6 @@ function (angular, _, moment, config, store) {
     $scope.exportDashboard = function() {
       var blob = new Blob([angular.toJson($scope.dashboard, true)], { type: "application/json;charset=utf-8" });
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
-    };
-
-    $scope.zoom = function(factor) {
-      var range = timeSrv.timeRange();
-
-      var timespan = (range.to.valueOf() - range.from.valueOf());
-      var center = range.to.valueOf() - timespan/2;
-
-      var to = (center + (timespan*factor)/2);
-      var from = (center - (timespan*factor)/2);
-
-      if(to > Date.now() && range.to <= Date.now()) {
-        var offset = to - Date.now();
-        from = from - offset;
-        to = Date.now();
-      }
-
-      timeSrv.setTime({
-        from: moment.utc(from).toDate(),
-        to: moment.utc(to).toDate(),
-      });
     };
 
     $scope.styleUpdated = function() {
