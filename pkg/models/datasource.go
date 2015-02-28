@@ -38,6 +38,7 @@ type DataSource struct {
 	BasicAuthUser     string
 	BasicAuthPassword string
 	IsDefault         bool
+	JsonData          map[string]interface{}
 
 	Created time.Time
 	Updated time.Time
@@ -63,16 +64,18 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Id        int64
-	OrgId     int64
-	Name      string
-	Type      string
-	Access    DsAccess
-	Url       string
-	Password  string
-	User      string
-	Database  string
-	IsDefault bool
+	Id        int64                  `json:"id" binding:"Required"`
+	Name      string                 `json:"name" binding:"Required"`
+	Type      string                 `json:"type" binding:"Required"`
+	Access    DsAccess               `json:"access" binding:"Required"`
+	Url       string                 `json:"url"`
+	Password  string                 `json:"password"`
+	User      string                 `json:"user"`
+	Database  string                 `json:"database"`
+	IsDefault bool                   `json:"isDefault"`
+	JsonData  map[string]interface{} `json:"jsonData"`
+
+	OrgId int64 `json:"-"`
 }
 
 type DeleteDataSourceCommand struct {

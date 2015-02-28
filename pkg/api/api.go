@@ -73,7 +73,7 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
+			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)

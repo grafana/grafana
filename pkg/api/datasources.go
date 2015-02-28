@@ -61,6 +61,7 @@ func GetDataSourceById(c *middleware.Context) {
 		User:      ds.User,
 		BasicAuth: ds.BasicAuth,
 		IsDefault: ds.IsDefault,
+		JsonData:  ds.JsonData,
 	})
 }
 
@@ -101,14 +102,7 @@ func AddDataSource(c *middleware.Context) {
 	c.JsonOK("Datasource added")
 }
 
-func UpdateDataSource(c *middleware.Context) {
-	cmd := m.UpdateDataSourceCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)

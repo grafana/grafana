@@ -106,8 +106,9 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			User:      cmd.User,
 			Password:  cmd.Password,
 			Database:  cmd.Database,
-			Updated:   time.Now(),
 			IsDefault: cmd.IsDefault,
+			JsonData:  cmd.JsonData,
+			Updated:   time.Now(),
 		}
 
 		sess.UseBool("is_default")

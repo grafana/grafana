@@ -38,17 +38,18 @@ type Dashboard struct {
 }
 
 type DataSource struct {
-	Id        int64      `json:"id"`
-	OrgId     int64      `json:"orgId"`
-	Name      string     `json:"name"`
-	Type      string     `json:"type"`
-	Access    m.DsAccess `json:"access"`
-	Url       string     `json:"url"`
-	Password  string     `json:"password"`
-	User      string     `json:"user"`
-	Database  string     `json:"database"`
-	BasicAuth bool       `json:"basicAuth"`
-	IsDefault bool       `json:"isDefault"`
+	Id        int64                  `json:"id"`
+	OrgId     int64                  `json:"orgId"`
+	Name      string                 `json:"name"`
+	Type      string                 `json:"type"`
+	Access    m.DsAccess             `json:"access"`
+	Url       string                 `json:"url"`
+	Password  string                 `json:"password"`
+	User      string                 `json:"user"`
+	Database  string                 `json:"database"`
+	BasicAuth bool                   `json:"basicAuth"`
+	IsDefault bool                   `json:"isDefault"`
+	JsonData  map[string]interface{} `json:"jsonData"`
 }
 
 type MetricQueryResultDto struct {
