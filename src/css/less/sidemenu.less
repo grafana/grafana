@@ -47,6 +47,12 @@
     margin-bottom: 9px;
   }
 
+  .fa-caret-down {
+    position: relative;
+    top: 2px;
+    font-size: 90%;
+  }
+
   &.sidemenu-small {
     font-size: 14px;
 
@@ -73,16 +79,13 @@
 }
 
 
-.sidemenu-user {
-  .sidemenu-item-text {
-    width: 110px;
-    display: inline-block;
-    vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  }
+.sidemenu-item-text {
+  width: 110px;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .sidemenu-top-btn {
   display: block;
@@ -118,17 +121,15 @@
   }
 }
 
-.sidemenu-icon {
-}
-
 .sidemenu-item {
   color: @linkColor;
   line-height: 40px;
-	padding: 0px 10px 0px 20px;
-	display: block;
+  padding: 0px 10px 0px 20px;
+  display: block;
+  white-space: nowrap;
 
   .sidemenu-item-text {
-    padding-left: 15px;
+    padding-left: 11px;
     transition: color 100ms ease-out;
 
     &.no-icon {

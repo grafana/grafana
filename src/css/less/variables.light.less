@@ -21,7 +21,7 @@
 // Accent colors
 // -------------------------
 @blueOrig:              #007FFF;
-@blue:             		#2AB2E4; 
+@blue:             	   	#2AB2E4;
 @blueDark:              #75CAEB;
 @green:                 #28B62C;
 @red:                   #FF4136;
@@ -34,8 +34,8 @@
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: 	@white;
-@grafanaPanelBorder: 		solid 1px @grayLight;
-@grafanaTriggerBorder:		solid 1px @grayLight;
+@grafanaPanelBorder: 		  solid 1px #ddd;
+@grafanaTriggerBorder:		solid 1px @grayLighter;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -101,11 +101,11 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  	   lighten(@grayLight,20%);
-@grafanaListAccent:            lighten(@grayLight,10%);
+@grafanaListBackground:  	     darken(@grayLighter,5%);
+@grafanaListAccent:            darken(@grayLighter,8%);
 @grafanaListBorderTop:         #eee;
 @grafanaListBorderBottom:      #eee;
-@grafanaListHighlight:         lighten(@grayLight,10%);
+@grafanaListHighlight:         darken(@grayLighter,10%);
 @grafanaListHighlightContrast: #ddd;
 @grafanaListMainLinkColor:     @textColor;
 
@@ -146,11 +146,10 @@
 @btnInverseBackground:              @gray;
 @btnInverseBackgroundHighlight:     darken(@gray, 10%);
 
-@iconContainerBackground:			@white;
+@iconContainerBackground:			      @white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);
-@iconContainerBorder:				solid 1px rgba(0,0,0, 0.05);
-@iconContainerShadow:				0 0 14px 2px rgba(0,0,0, 0.05);
-
+@iconContainerBorder:				        1px solid rgba(0,0,0, 0.05);
+@iconContainerShadow:				        0 0 14px 2px rgba(0,0,0, 0.05);
 
 
 // Forms
