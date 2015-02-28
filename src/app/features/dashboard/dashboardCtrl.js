@@ -65,11 +65,6 @@ function (angular, $, config) {
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
-    };
-
-    $scope.styleUpdated = function() {
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.broadcastRefresh = function() {

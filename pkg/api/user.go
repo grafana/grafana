@@ -8,7 +8,7 @@ import (
 )
 
 func GetUser(c *middleware.Context) {
-	query := m.GetUserInfoQuery{UserId: c.UserId}
+	query := m.GetUserProfileQuery{UserId: c.UserId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to get user", err)

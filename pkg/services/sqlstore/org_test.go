@@ -53,8 +53,8 @@ func TestAccountDataAccess(t *testing.T) {
 			ac2 := ac2cmd.Result
 
 			Convey("Should be able to read user info projection", func() {
-				query := m.GetUserInfoQuery{UserId: ac1.Id}
-				err = GetUserInfo(&query)
+				query := m.GetUserProfileQuery{UserId: ac1.Id}
+				err = GetUserProfile(&query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Email, ShouldEqual, "ac1@test.com")
