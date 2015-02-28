@@ -17,11 +17,10 @@ function (angular, _, kbn) {
 
       angular.element(window).unbind('resize');
       var dash = self.dashboards[self.index % self.dashboards.length];
-      var relativeUrl = dash.url.substring($location.absUrl().length - $location.url().length);
 
-      $location.url(relativeUrl);
+      $location.url('dashboard/db/' + dash.slug);
+
       self.index++;
-
       self.cancelPromise = $timeout(self.next, self.interval);
     };
 
@@ -31,13 +30,16 @@ function (angular, _, kbn) {
     };
 
     this.start = function(dashboards, timespan) {
-      this.stop();
+      self.stop();
 
+      self.index = 0;
       self.interval = kbn.interval_to_ms(timespan);
+
       self.dashboards = dashboards;
       $rootScope.playlistSrv = this;
 
       self.cancelPromise = $timeout(self.next, self.interval);
+      self.next();
     };
 
     this.stop = function() {

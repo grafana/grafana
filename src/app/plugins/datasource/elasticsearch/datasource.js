@@ -18,15 +18,10 @@ function (angular, _, config, kbn, moment) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
-      this.grafanaDB = datasource.grafanaDB;
       this.searchMaxResults = config.search.max_results || 20;
 
       this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
       this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
-
-      this.annotationEditorSrc = 'app/features/elasticsearch/partials/annotations.editor.html';
-      this.supportAnnotations = true;
-      this.supportMetrics = false;
     }
 
     ElasticDatasource.prototype._request = function(method, url, index, data) {

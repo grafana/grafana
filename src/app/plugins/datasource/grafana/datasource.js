@@ -11,11 +11,6 @@ function (angular, _, kbn) {
   module.factory('GrafanaDatasource', function($q, backendSrv) {
 
     function GrafanaDatasource() {
-      this.type = 'grafana';
-      this.grafanaDB = true;
-      this.name = "grafana";
-      this.supportMetrics = true;
-      this.editorSrc = 'app/features/grafanaDatasource/partials/query.editor.html';
     }
 
     GrafanaDatasource.prototype.getDashboard = function(slug, isTemp) {

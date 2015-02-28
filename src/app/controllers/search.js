@@ -60,7 +60,7 @@ function (angular, _, config) {
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
-      return backendSrv.get('/api/search', $scope.query).then(function(results) {
+      return backendSrv.search($scope.query).then(function(results) {
         if (localSearchId < $scope.currentSearchId) { return; }
 
         $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
