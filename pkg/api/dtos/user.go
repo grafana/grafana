@@ -20,3 +20,10 @@ type AdminUpdateUserPasswordForm struct {
 type AdminUpdateUserPermissionsForm struct {
 	IsGrafanaAdmin bool `json:"IsGrafanaAdmin" binding:"Required"`
 }
+
+type AdminUserListItem struct {
+	Email          string `json:"email"`
+	Name           string `json:"name"`
+	Login          string `json:"login"`
+	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+}

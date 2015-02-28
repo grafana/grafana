@@ -19,6 +19,7 @@ type CurrentUser struct {
 	Login          string     `json:"login"`
 	Email          string     `json:"email"`
 	Name           string     `json:"name"`
+	LightTheme     bool       `json:"lightTheme"`
 	OrgRole        m.RoleType `json:"orgRole"`
 	OrgName        string     `json:"orgName"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
