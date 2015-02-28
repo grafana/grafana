@@ -38,6 +38,7 @@
 
 .sidemenu {
   font-size: 16px;
+  font-weight: @baseFontWeight;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -46,10 +47,20 @@
     margin-bottom: 9px;
   }
 
+  .fa-caret-down {
+    position: relative;
+    top: 2px;
+    font-size: 90%;
+  }
+
   &.sidemenu-small {
     font-size: 14px;
 
     .icon-circle {
+      border-radius: 50%;
+      background: @iconContainerBackground;
+      box-shadow: @iconContainerShadow;
+      border: @iconContainerBorder;
       width: 28px;
       height: 28px;
       i {
@@ -60,7 +71,7 @@
     }
 
     .sidemenu-item {
-      color: @textColor;
+      // color: @textColor;
       line-height: 28px;
       padding-left: 25px;
     }
@@ -68,25 +79,23 @@
 }
 
 
-.sidemenu-user {
-  .sidemenu-item-text {
-    width: 110px;
-    display: inline-block;
-    vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  }
+.sidemenu-item-text {
+  width: 110px;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .sidemenu-top-btn {
   display: block;
   padding: 8px 0 4px 22px;
   background-color: @navbarBackground;
-  border-right: 3px solid black;
+  border-right: 3px solid @bodyBackground;
   img {
     border-radius: 50%;
-    background: black;
+    background: @iconContainerBackground;
+    border: 1px solid @bodyBackground;
     width: 30px;
     padding: 4px;
   }
@@ -94,38 +103,35 @@
     padding-right: 5px;
     padding-top: 5px;
     font-size: 170%;
-    color: @gray;
+    color: @linkColor;
   }
 }
 
 .icon-circle {
-  border-radius: 50%;
-  background: #000;
-  box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   width: 40px;
   height: 40px;
   display: inline-block;
   i {
-    color: @textColor;
+    color: @linkColor;
     opacity: .7;
     position: relative;
     left: 7px;
-    top: 2px;
-    font-size: 125%;
+    top: 3px;
+    font-size: 150%;
   }
 }
 
-.sidemenu-icon {
-}
-
 .sidemenu-item {
-  color: #f80;
+  color: @linkColor;
   line-height: 40px;
-	padding: 0px 10px 0px 20px;
-	display: block;
+  padding: 0px 10px 0px 20px;
+  display: block;
+  white-space: nowrap;
 
   .sidemenu-item-text {
-    padding-left: 15px;
+    padding-left: 11px;
+    transition: color 100ms ease-out;
+
     &.no-icon {
       padding-left: 59px;
     }
