@@ -97,9 +97,8 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      var datasource = datasourceSrv.get(variable.datasource);
-      return datasource.metricFindQuery(variable.query)
-        .then(function (results) {
+      return datasourceSrv.get(variable.datasource).then(function(datasource) {
+        return datasource.metricFindQuery(variable.query).then(function (results) {
           variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
@@ -117,6 +116,7 @@ function (angular, _, kbn) {
 
           return self.setVariableValue(variable, variable.options[0], true);
         });
+      });
     };
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
@@ -149,19 +149,19 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-      case 'wildcard':
-        allValue = '*';
-        break;
-      case 'regex wildcard':
-        allValue = '.*';
-        break;
-      case 'regex values':
-        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
-        break;
-      default:
-        allValue = '{';
-        allValue += _.pluck(variable.options, 'text').join(',');
-        allValue += '}';
+        case 'wildcard':
+          allValue = '*';
+          break;
+        case 'regex wildcard':
+          allValue = '.*';
+          break;
+        case 'regex values':
+          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+          break;
+        default:
+          allValue = '{';
+          allValue += _.pluck(variable.options, 'text').join(',');
+          allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});

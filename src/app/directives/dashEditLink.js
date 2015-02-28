@@ -107,7 +107,9 @@ function (angular, $) {
               showEditorPane(null, {}, newValue);
             } else if (oldValue) {
               scope.contextSrv.editview = null;
-              hideEditorPane();
+              if (lastEditor === editViewMap[oldValue]) {
+                hideEditorPane();
+              }
             }
           });
 

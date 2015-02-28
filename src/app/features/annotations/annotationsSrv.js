@@ -12,6 +12,7 @@ define([
     var promiseCached;
     var list = [];
     var timezone;
+    var self = this;
 
     this.init = function() {
       $rootScope.onAppEvent('refresh', this.clearCache);
@@ -33,15 +34,15 @@ define([
       }
 
       timezone = dashboard.timezone;
-      var annotations = _.where(dashboard.annotations.list, { enable: true });
+      var annotations = _.where(dashboard.annotations.list, {enable: true});
 
       var promises  = _.map(annotations, function(annotation) {
-        var datasource = datasourceSrv.get(annotation.datasource);
-
-        return datasource.annotationQuery(annotation, rangeUnparsed)
-          .then(this.receiveAnnotationResults)
-          .then(null, errorHandler);
-      }, this);
+        return datasourceSrv.get(annotation.datasource).then(function(datasource) {
+          return datasource.annotationQuery(annotation, rangeUnparsed)
+            .then(self.receiveAnnotationResults)
+            .then(null, errorHandler);
+        }, this);
+      });
 
       promiseCached = $q.all(promises)
         .then(function() {
