@@ -77,5 +77,9 @@ function (angular, _, config) {
       });
     };
 
+    this.saveDashboard = function(dash) {
+      return this.post('/api/dashboards/db/', {dashboard: dash});
+    };
+
   });
 });

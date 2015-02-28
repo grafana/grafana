@@ -90,10 +90,6 @@ function (angular, _, kbn) {
     function validateTarget(target) {
       var errs = {};
 
-      if (!target.metric) {
-        errs.metric = "You must supply a metric name.";
-      }
-
       if (target.shouldDownsample) {
         try {
           if (target.downsampleInterval) {

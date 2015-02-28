@@ -8,7 +8,7 @@
 	<div class="page">
 		<h2>
 			Import file
-			<span><tip>Load dashboard JSON layout from file</tip></span>
+			<em style="font-size: 14px;padding-left: 10px;"> <i class="fa fa-info-circle"></i> Load dashboard from local .json file</em>
 		</h2>
 
 		<div class="editor-row">
@@ -21,7 +21,10 @@
 			</div>
 		</div>
 
-		<h2>Migrate dashboards</h2>
+		<h2>
+			Migrate dashboards
+			<em style="font-size: 14px;padding-left: 10px;"><i class="fa fa-info-circle"></i> Import dashboards from Elasticsearch or InfluxDB</em>
+		</h2>
 
 		<div class="tight-form last">
 			<ul class="tight-form-list">
@@ -32,14 +35,7 @@
 					<select type="text" ng-model="sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
 					</select>
 				</li>
-				<li class="tight-form-item">
-					<strong>Destination</strong>
-				</li>
-				<li>
-					<select type="text" ng-model="destName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-					</select>
-				</li>
-				<li>
+				<li style="float: right">
 					<button class="btn btn-success tight-form-btn" ng-click="startImport()">Import</button>
 				</li>
 				<div class="clearfix"></div>

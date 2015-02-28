@@ -11,8 +11,6 @@ function (angular, _, config) {
   module.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
-    this.grafanaDB = new ($injector.get("GrafanaDatasource"));
-
     this.init = function(dsSettingList) {
       config.datasources = dsSettingList;
 
@@ -45,6 +43,10 @@ function (angular, _, config) {
 
     this.loadDatasource = function(name) {
       var dsConfig = config.datasources[name];
+      if (!dsConfig) {
+        return $q.reject({message: "Datasource named " + name + " was not found"});
+      }
+
       var deferred = $q.defer();
 
       var pluginDef = dsConfig.meta;
@@ -62,7 +64,7 @@ function (angular, _, config) {
     };
 
     this.getAll = function() {
-      return this.datasources;
+      return config.datasources;
     };
 
     this.getAnnotationSources = function() {
@@ -71,10 +73,6 @@ function (angular, _, config) {
 
     this.getMetricSources = function() {
       return this.metricSources;
-    };
-
-    this.getGrafanaDB = function() {
-      return this.grafanaDB;
     };
 
     this.init(config.datasources);

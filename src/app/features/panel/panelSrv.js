@@ -100,6 +100,9 @@ function (angular, _, config) {
         datasourceSrv.get($scope.panel.datasource).then(function(datasource) {
           $scope.datasource = datasource;
           return $scope.refreshData($scope.datasource);
+        }, function(err) {
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.error = err.message;
         });
       };
 

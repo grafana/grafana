@@ -6,32 +6,20 @@ define([
   'store',
   'filesaver'
 ],
-function (angular, _, moment, config, store) {
+function (angular, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, datasourceSrv, timeSrv) {
+  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, timeSrv) {
 
     $scope.init = function() {
-      $scope.db = datasourceSrv.getGrafanaDB();
-
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
 
       $scope.onAppEvent('zoom-out', function() {
         $scope.zoom(2);
       });
-    };
-
-    $scope.set_default = function() {
-      store.set('grafanaDashboardDefault', $location.path());
-      alertSrv.set('Home Set','This page has been set as your default dashboard','success',5000);
-    };
-
-    $scope.purge_default = function() {
-      store.delete('grafanaDashboardDefault');
-      alertSrv.set('Local Default Clear','Your default dashboard has been reset to the default','success', 5000);
     };
 
     $scope.openEditView = function(editview) {
@@ -41,12 +29,12 @@ function (angular, _, moment, config, store) {
 
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
-        $scope.db.unstarDashboard($scope.dashboard.id).then(function() {
-          $scope.dashboardMeta.isStarred = false;
+        backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
+          $scope.dashboardMeta.isStarred = true;
         });
       }
       else {
-        $scope.db.starDashboard($scope.dashboard.id).then(function() {
+        backendSrv.post('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
           $scope.dashboardMeta.isStarred = true;
         });
       }
@@ -59,12 +47,6 @@ function (angular, _, moment, config, store) {
       });
     };
 
-    $scope.passwordCache = function(pwd) {
-      if (!window.sessionStorage) { return null; }
-      if (!pwd) { return window.sessionStorage["grafanaAdminPassword"]; }
-      window.sessionStorage["grafanaAdminPassword"] = pwd;
-    };
-
     $scope.openSearch = function() {
       $scope.appEvent('show-dash-search');
     };
@@ -75,20 +57,18 @@ function (angular, _, moment, config, store) {
 
     $scope.saveDashboard = function() {
       var clone = angular.copy($scope.dashboard);
-      $scope.db.saveDashboard(clone)
-        .then(function(result) {
-          $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + result.title]);
 
-          if (result.url !== $location.path()) {
-            $location.search({});
-            $location.path(result.url);
-          }
+      backendSrv.saveDashboard(clone).then(function(data) {
+        $scope.appEvent('dashboard-saved', $scope.dashboard);
 
-          $scope.appEvent('dashboard-saved', $scope.dashboard);
+        var dashboardUrl = '/dashboard/db/' + data.slug;
 
-        }, function(err) {
-          $scope.appEvent('alert-error', ['Save failed', err]);
-        });
+        if (dashboardUrl !== $location.path()) {
+          $location.url(dashboardUrl);
+        }
+
+        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+      });
     };
 
     $scope.deleteDashboard = function() {
@@ -102,10 +82,9 @@ function (angular, _, moment, config, store) {
     };
 
     $scope.deleteDashboardConfirmed = function() {
-      $scope.db.deleteDashboard($scope.dashboardMeta.slug).then(function() {
+      backendSrv.delete('/api/dashboards/db/' + $scope.dashboardMeta.slug).then(function() {
         $scope.appEvent('alert-success', ['Dashboard Deleted', $scope.dashboard.title + ' has been deleted']);
-      }, function(err) {
-        $scope.appEvent('alert-error', ['Deleted failed', err]);
+        $location.url('/');
       });
     };
 
@@ -147,21 +126,6 @@ function (angular, _, moment, config, store) {
 
     $scope.editJson = function() {
       $scope.appEvent('show-json-editor', { object: $scope.dashboard });
-    };
-
-    $scope.openSaveDropdown = function() {
-      $scope.isFavorite = playlistSrv.isCurrentFavorite($scope.dashboard);
-      $scope.saveDropdownOpened = true;
-    };
-
-    $scope.markAsFavorite = function() {
-      playlistSrv.markAsFavorite($scope.dashboard);
-      $scope.isFavorite = true;
-    };
-
-    $scope.removeAsFavorite = function() {
-      playlistSrv.removeAsFavorite($scope.dashboard);
-      $scope.isFavorite = false;
     };
 
     $scope.stopPlaylist = function() {

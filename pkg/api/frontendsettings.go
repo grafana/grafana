@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -41,7 +43,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 		meta, exists := plugins.DataSources[ds.Type]
 		if !exists {
-			//return nil, errors.New(fmt.Sprintf("Could not find plugin definition for data source: %v", ds.Type))
+			return nil, errors.New(fmt.Sprintf("Could not find plugin definition for data source: %v", ds.Type))
 		}
 
 		dsMap["meta"] = meta
@@ -75,9 +77,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	// add grafana backend data source
+	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
 	datasources["grafana"] = map[string]interface{}{
-		"type":      "grafana",
-		"grafanaDB": true,
+		"type": "grafana",
+		"meta": grafanaDatasourceMeta,
+	}
+
+	if defaultDatasource == "" {
+		defaultDatasource = "grafana"
 	}
 
 	jsonObj := map[string]interface{}{
