@@ -7,7 +7,12 @@
 
     <title>Grafana</title>
 
-    <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css" title="Dark">
+		[[if .User.LightTheme]]
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
+		[[else]]
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
+		[[end]]
+
     <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />
 
@@ -19,14 +24,9 @@
     <script src="[[.AppSubUrl]]/public/vendor/require/require.js"></script>
     <script src="[[.AppSubUrl]]/public/app/components/require.backend.js"></script>
     <!-- endbuild -->
-
-
   </head>
 
 	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
-
-		<link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css" ng-if="contextSrv.lightTheme">
-
 		<div class="sidemenu-canvas">
 
 			<aside class="sidemenu-wrapper" ng-if="contextSrv.sidemenu">

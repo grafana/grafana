@@ -17,6 +17,7 @@ function (angular, config) {
     $scope.getUser = function() {
       backendSrv.get('/api/user').then(function(user) {
         $scope.user = user;
+        $scope.user.theme = user.theme || 'dark';
       });
     };
 

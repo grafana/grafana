@@ -8,7 +8,7 @@ function (angular, _, $) {
 
   angular
     .module('grafana.directives')
-    .directive('influxdbFuncEditor', function($compile) {
+    .directive('influxdbFuncEditor08', function($compile) {
 
       var funcSpanTemplate = '<a gf-dropdown="functionMenu" class="dropdown-toggle" ' +
                              'data-toggle="dropdown">{{target.function}}</a><span>(</span>';

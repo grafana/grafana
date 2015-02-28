@@ -19,6 +19,12 @@
   }
 }
 
+.spaced-form {
+  .tight-form {
+    margin: 7px 0;
+  }
+}
+
 .borderless {
   .tight-form-item,
   .tight-form-input {
@@ -140,13 +146,13 @@ input[type=text].tight-form-clear-input {
 [type=email],
 [type=number],
 [type=password] {
-
   &.tight-form-input {
     border: none;
     border-right: 1px solid @grafanaTargetSegmentBorder;
     margin: 0px;
     border-radius: 0;
-    padding: 8px 4px;
+    padding: 18px 6px;
+    box-sizing: border-box;
     &.last {
       border-right: none;
     }
@@ -163,7 +169,7 @@ select.tight-form-input {
   margin: 0px;
   border-radius: 0;
   height: 36px;
-  padding: 8px 5px;
+  padding: 8px 3px;
   &.last {
     border-right: none;
   }

@@ -19,7 +19,7 @@ function (angular, _, kbn) {
       }
 
       if (!$scope.target.downsampleAggregator) {
-        $scope.target.downsampleAggregator = 'sum';
+        $scope.target.downsampleAggregator = 'avg';
       }
 
       $scope.$on('typeahead-updated', function() {

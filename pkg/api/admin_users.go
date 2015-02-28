@@ -28,7 +28,7 @@ func AdminGetUser(c *middleware.Context) {
 		return
 	}
 
-	result := m.UserDTO{
+	result := dtos.AdminUserListItem{
 		Name:           query.Result.Name,
 		Email:          query.Result.Email,
 		Login:          query.Result.Login,

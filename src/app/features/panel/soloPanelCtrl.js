@@ -24,7 +24,6 @@ function (angular, $) {
 
     $scope.initPanelScope = function(dashboard) {
       $scope.dashboard = dashboardSrv.create(dashboard.model);
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
 
       $scope.row = {
         height: $(window).height() + 'px',
