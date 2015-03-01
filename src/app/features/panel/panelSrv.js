@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
 
     this.init = function($scope) {
       if (!$scope.panel.span) { $scope.panel.span = 12; }
@@ -88,21 +88,27 @@ function (angular, _, config) {
         return $scope.dashboardViewState.fullscreen && !$scope.fullscreen;
       };
 
+      $scope.getCurrentDatasource = function() {
+       if ($scope.datasource) {
+          return $q.when($scope.datasource);
+        }
+
+        return datasourceSrv.get($scope.panel.datasource);
+      };
+
       $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
 
-        if ($scope.datasource) {
-          return $scope.refreshData($scope.datasource);
-        }
-
-        datasourceSrv.get($scope.panel.datasource).then(function(datasource) {
+        $scope.getCurrentDatasource().then(function(datasource) {
           $scope.datasource = datasource;
+
           return $scope.refreshData($scope.datasource).then(function() {
             $scope.panelMeta.loading = false;
           });
+
         }, function(err) {
           console.log('Panel data error:', err);
           $scope.panelMeta.loading = false;

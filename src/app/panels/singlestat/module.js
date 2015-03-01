@@ -88,7 +88,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      $scope.panelMeta.loading = false;
       $scope.series = _.map(results.data, $scope.seriesHandler);
       $scope.render();
     };
