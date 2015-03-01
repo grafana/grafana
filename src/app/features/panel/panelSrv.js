@@ -7,6 +7,7 @@ function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv) {
 
     this.init = function($scope) {
@@ -99,10 +100,14 @@ function (angular, _, config) {
 
         datasourceSrv.get($scope.panel.datasource).then(function(datasource) {
           $scope.datasource = datasource;
-          return $scope.refreshData($scope.datasource);
+          return $scope.refreshData($scope.datasource).then(function() {
+            $scope.panelMeta.loading = false;
+          });
         }, function(err) {
+          console.log('Panel data error:', err);
           $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message;
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
+          $scope.inspector.error = err;
         });
       };
 

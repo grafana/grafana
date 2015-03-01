@@ -20,7 +20,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
   });
 
-  module.controller('SingleStatCtrl', function($scope, panelSrv, timeSrv) {
+  module.controller('SingleStatCtrl', function($scope, panelSrv, panelHelper) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Singlestat',
@@ -32,6 +32,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
     $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     // Set and populate defaults
     var _d = {
@@ -76,31 +77,12 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       panelSrv.init($scope);
     };
 
-    $scope.updateTimeRange = function () {
-      $scope.range = timeSrv.timeRange();
-      $scope.rangeUnparsed = timeSrv.timeRange(false);
-      $scope.resolution = $scope.panel.maxDataPoints;
-      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
-    };
-
     $scope.refreshData = function(datasource) {
-      $scope.updateTimeRange();
+      panelHelper.updateTimeRange($scope);
 
-      var metricsQuery = {
-        range: $scope.rangeUnparsed,
-        interval: $scope.interval,
-        targets: $scope.panel.targets,
-        maxDataPoints: $scope.resolution,
-        cacheTimeout: $scope.panel.cacheTimeout
-      };
-
-      return datasource.query(metricsQuery)
+      return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler)
-        .then(null, function(err) {
-          console.log("err");
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+        .then(null, function() {
           $scope.render();
         });
     };
