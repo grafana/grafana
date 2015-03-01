@@ -24,6 +24,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
     $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/dashboard/partials/panelTime.html');
 
     // Set and populate defaults
     var _d = {
@@ -72,6 +73,24 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);
+
+      // check panel time overrrides
+      if ($scope.panel.timeFrom) {
+        if (_.isString($scope.rangeUnparsed.from)) {
+          $scope.panelMeta.timeInfo = "last " + $scope.panel.timeFrom;
+          $scope.rangeUnparsed.from = 'now-' + $scope.panel.timeFrom;
+          $scope.range.from = kbn.parseDate($scope.rangeUnparsed.from);
+        }
+      }
+
+      if ($scope.panel.timeShift) {
+        var timeShift = '-' + $scope.panel.timeShift;
+        $scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
+        $scope.range.from = kbn.parseDateMath(timeShift, $scope.range.from);
+        $scope.range.to = kbn.parseDateMath(timeShift, $scope.range.to);
+        $scope.rangeUnparsed = $scope.range;
+      }
+
       $scope.resolution = $scope.panel.maxDataPoints;
       $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
     };
