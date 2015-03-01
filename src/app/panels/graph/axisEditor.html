@@ -206,6 +206,12 @@
 					<label for="panel.legend.current" class="cr1"></label>
 				</li>
 				<li class="tight-form-item last">
+					Last&nbsp;
+					<input class="cr1" id="panel.legend.last" type="checkbox"
+					ng-model="panel.legend.last" ng-checked="panel.legend.last" ng-change="legendValuesOptionChanged()">
+					<label for="panel.legend.last" class="cr1"></label>
+				</li>
+				<li class="tight-form-item last">
 					Total&nbsp;
 					<input class="cr1" id="panel.legend.total" type="checkbox"
 					ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="legendValuesOptionChanged()">
