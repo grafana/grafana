@@ -54,6 +54,10 @@ function (angular, _, kbn, $) {
 
         scope.rangeUnparsed = scope.range;
       }
+
+      if (scope.panel.hideTimeOverride) {
+        scope.panelMeta.timeInfo = '';
+      }
     };
 
     this.issueMetricQuery = function(scope, datasource) {
