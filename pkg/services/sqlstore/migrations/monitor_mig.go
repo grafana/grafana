@@ -56,7 +56,7 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},Indices: []*Index{
 			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+			&Index{Cols: []string{"org_id", "slug", "monitor_type_id"}, Type: UniqueIndex},
 		},
 	}
 
