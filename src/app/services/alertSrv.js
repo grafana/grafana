@@ -64,6 +64,7 @@ function (angular, _) {
       scope.title = payload.title;
       scope.text = payload.text;
       scope.onConfirm = payload.onConfirm;
+      scope.icon = payload.icon || "fa-check";
 
       var confirmModal = $modal({
         template: './app/partials/confirm_modal.html',

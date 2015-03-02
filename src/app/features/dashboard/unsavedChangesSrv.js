@@ -83,6 +83,8 @@ function(angular, _, config) {
       // ignore timespan changes
       current.time = original.time = {};
       current.refresh = original.refresh;
+      // ignore version
+      current.version = original.version;
 
       // ignore template variable values
       _.each(current.templating.list, function(value, index) {

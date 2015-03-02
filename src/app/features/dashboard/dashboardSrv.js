@@ -18,6 +18,10 @@ function (angular, $, kbn, _, moment) {
         data = {};
       }
 
+      if (!data.id && data.version) {
+        data.schemaVersion = data.version;
+      }
+
       this.id = data.id || null;
       this.title = data.title || 'No Title';
       this.originalTitle = this.title;
@@ -33,8 +37,8 @@ function (angular, $, kbn, _, moment) {
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
+      this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
-      this.hideAllLegends = data.hideAllLegends || false;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -134,9 +138,9 @@ function (angular, $, kbn, _, moment) {
 
     p._updateSchema = function(old) {
       var i, j, k;
-      var oldVersion = this.version;
+      var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.version = 6;
+      this.schemaVersion = 6;
 
       if (oldVersion === 6) {
         return;

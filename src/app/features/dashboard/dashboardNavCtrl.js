@@ -55,10 +55,11 @@ function (angular, _, moment) {
       $scope.appEvent('hide-dash-editor');
     };
 
-    $scope.saveDashboard = function() {
+    $scope.saveDashboard = function(options) {
       var clone = angular.copy($scope.dashboard);
 
-      backendSrv.saveDashboard(clone).then(function(data) {
+      backendSrv.saveDashboard(clone, options).then(function(data) {
+        $scope.dashboard.version = data.version;
         $scope.appEvent('dashboard-saved', $scope.dashboard);
 
         var dashboardUrl = '/dashboard/db/' + data.slug;
@@ -68,7 +69,35 @@ function (angular, _, moment) {
         }
 
         $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-      });
+      }, $scope.handleSaveDashError);
+    };
+
+    $scope.handleSaveDashError = function(err) {
+      if (err.data && err.data.status === "version-mismatch" ) {
+        err.isHandled = true;
+
+        $scope.appEvent('confirm-modal', {
+          title: 'Someone else has updated this dashboard!',
+          text: "Do you STILL want to save?",
+          icon: "fa-warning",
+          onConfirm: function() {
+            $scope.saveDashboard({overwrite: true});
+          }
+        });
+      }
+
+      if (err.data && err.data.status === "name-exists" ) {
+        err.isHandled = true;
+
+        $scope.appEvent('confirm-modal', {
+          title: 'Another dashboard with the same name exists',
+          text: "Do you STILL want to save and ovewrite it?",
+          icon: "fa-warning",
+          onConfirm: function() {
+            $scope.saveDashboard({overwrite: true});
+          }
+        });
+      }
     };
 
     $scope.deleteDashboard = function() {

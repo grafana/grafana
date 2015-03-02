@@ -85,8 +85,9 @@ function (angular, _, config) {
       return this.get('/api/dashboards/db/' + slug);
     };
 
-    this.saveDashboard = function(dash) {
-      return this.post('/api/dashboards/db/', {dashboard: dash});
+    this.saveDashboard = function(dash, options) {
+      options = (options || {});
+      return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
     };
 
   });

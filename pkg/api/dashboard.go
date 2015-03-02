@@ -77,14 +77,18 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
-			c.JsonApiErr(400, "Dashboard with the same title already exists", nil)
+			c.JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
+			return
+		}
+		if err == m.ErrDashboardVersionMismatch {
+			c.JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 			return
 		}
 		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
 
-	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug})
+	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
 }
 
 func GetHomeDashboard(c *middleware.Context) {
