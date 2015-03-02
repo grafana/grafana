@@ -17,9 +17,9 @@
 
 DAEMON_NAME="grafana"
 DAEMON_USER="grafana"
-DAEMON_PATH="%BIN_PATH%"
+DAEMON_PATH="/opt/grafana/current/grafana"
 DAEMON_OPTS="web"
-DAEMON_PWD="/opt/grafana"
+DAEMON_PWD="/opt/grafana/current"
 DAEMON_PID="/var/run/${DAEMON_NAME}.pid"
 DAEMON_NICE=0
 DAEMON_LOG='/var/log/grafana/grafana.log'
@@ -43,7 +43,7 @@ do_start() {
                                 --nicelevel $DAEMON_NICE \
                                 --chdir "${DAEMON_PWD}" \
                                 --pidfile "${DAEMON_PID}" --make-pidfile \
-                                --exec "${DAEMON_PATH}" -- -c $DAEMON_OPTS
+                                --exec "${DAEMON_PATH}" -- $DAEMON_OPTS
                         result=$?
                 else
                         start-stop-daemon --start --quiet --oknodo --background \
@@ -51,7 +51,7 @@ do_start() {
                                 --chdir "${DAEMON_PWD}" \
                                 --pidfile "${DAEMON_PID}" --make-pidfile \
                                 --chuid "${DAEMON_USER}" \
-                                --exec  "${DAEMON_PATH}" -- -c ${DAEMON_OPTS}
+                                --exec  "${DAEMON_PATH}" -- $DAEMON_OPTS
                         result=$?
                 fi
                 log_end_msg $result

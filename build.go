@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ var (
 	versionRe  = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch     string
 	goos       string
-	version    string = "2.0.0-alpha"
+	version    string = "v1"
 	race       bool
 	workingDir string
 
@@ -40,6 +41,9 @@ func main() {
 	log.SetFlags(0)
 
 	ensureGoPath()
+	readVersionFromPackageJson()
+
+	log.Printf("Version: %s\n", version)
 
 	//os.Setenv("PATH", fmt.Sprintf("%s%cbin%c%s", os.Getenv("GOPATH"), os.PathSeparator, os.PathListSeparator, os.Getenv("PATH")))
 
@@ -69,10 +73,10 @@ func main() {
 			test("./pkg/...")
 
 		case "package":
-			//checkCleanTree()
-			//test("./pkg/...")
-			//build(".", []string{})
-			//buildFrontend()
+			checkCleanTree()
+			test("./pkg/...")
+			build(".", []string{})
+			buildFrontend()
 			createRpmAndDeb()
 
 		case "build-ui":
@@ -84,6 +88,24 @@ func main() {
 			log.Fatalf("Unknown command %q", cmd)
 		}
 	}
+}
+
+func readVersionFromPackageJson() {
+	reader, err := os.Open("package.json")
+	if err != nil {
+		log.Fatal("Failed to open package.json")
+		return
+	}
+	defer reader.Close()
+
+	jsonObj := map[string]interface{}{}
+	jsonParser := json.NewDecoder(reader)
+
+	if err := jsonParser.Decode(&jsonObj); err != nil {
+		log.Fatal("Failed to decode package.json")
+	}
+
+	version = jsonObj["version"].(string)
 }
 
 func createRpmAndDeb() {
@@ -122,22 +144,23 @@ func createRpmAndDeb() {
 
 func GeneratePostInstallScript(path string) {
 	content := `
-rm -f $INSTALL_ROOT_DIR/grafana
-rm -f $INSTALL_ROOT_DIR/init.sh
-ln -s $INSTALL_ROOT_DIR/versions/$VERSION/grafana $INSTALL_ROOT_DIR/grafana
-ln -s $INSTALL_ROOT_DIR/versions/$VERSION/scripts/init.sh $INSTALL_ROOT_DIR/init.sh
+rm -f $INSTALL_ROOT_DIR/current
+ln -s $INSTALL_ROOT_DIR/versions/$VERSION/ $INSTALL_ROOT_DIR/current
+
 if [ ! -L /etc/init.d/grafana ]; then
-    ln -sfn $INSTALL_ROOT_DIR/init.sh /etc/init.d/grafana
-    chmod +x /etc/init.d/grafana
-    if which update-rc.d > /dev/null 2>&1 ; then
-        update-rc.d -f grafana remove
-        update-rc.d grafana defaults
-    else
-        chkconfig --add grafana
-    fi
+    ln -sfn $INSTALL_ROOT_DIR/current/scripts/init.sh /etc/init.d/grafana
 fi
+
+chmod +x /etc/init.d/grafana
+if which update-rc.d > /dev/null 2>&1 ; then
+   update-rc.d -f grafana remove
+   update-rc.d grafana defaults
+else
+   chkconfig --add grafana
+fi
+
 if ! id grafana >/dev/null 2>&1; then
-        useradd --system -U -M grafana
+   useradd --system -U -M grafana
 fi
 chown -R -L grafana:grafana $INSTALL_ROOT_DIR
 chmod -R a+rX $INSTALL_ROOT_DIR
