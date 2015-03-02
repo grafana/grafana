@@ -181,7 +181,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         options.headers = options.headers || {};
         if (self.basicAuth) {
-          options.headers.Authorization = 'Basic ' + self.basicAuth;
+          options.headers.Authorization = self.basicAuth;
         }
 
         return $http(options).success(function (data) {

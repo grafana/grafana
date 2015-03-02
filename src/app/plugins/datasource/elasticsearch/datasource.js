@@ -34,7 +34,7 @@ function (angular, _, config, kbn, moment) {
       if (this.basicAuth) {
         options.withCredentials = true;
         options.headers = {
-          "Authorization": "Basic " + this.basicAuth
+          "Authorization": this.basicAuth
         };
       }
 

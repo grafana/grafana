@@ -57,17 +57,21 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		ds := &m.DataSource{
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Type:      cmd.Type,
-			Access:    cmd.Access,
-			Url:       cmd.Url,
-			User:      cmd.User,
-			Password:  cmd.Password,
-			Database:  cmd.Database,
-			IsDefault: cmd.IsDefault,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+			OrgId:             cmd.OrgId,
+			Name:              cmd.Name,
+			Type:              cmd.Type,
+			Access:            cmd.Access,
+			Url:               cmd.Url,
+			User:              cmd.User,
+			Password:          cmd.Password,
+			Database:          cmd.Database,
+			IsDefault:         cmd.IsDefault,
+			BasicAuth:         cmd.BasicAuth,
+			BasicAuthUser:     cmd.BasicAuthUser,
+			BasicAuthPassword: cmd.BasicAuthPassword,
+			JsonData:          cmd.JsonData,
+			Created:           time.Now(),
+			Updated:           time.Now(),
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -97,21 +101,25 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		ds := &m.DataSource{
-			Id:        cmd.Id,
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Type:      cmd.Type,
-			Access:    cmd.Access,
-			Url:       cmd.Url,
-			User:      cmd.User,
-			Password:  cmd.Password,
-			Database:  cmd.Database,
-			IsDefault: cmd.IsDefault,
-			JsonData:  cmd.JsonData,
-			Updated:   time.Now(),
+			Id:                cmd.Id,
+			OrgId:             cmd.OrgId,
+			Name:              cmd.Name,
+			Type:              cmd.Type,
+			Access:            cmd.Access,
+			Url:               cmd.Url,
+			User:              cmd.User,
+			Password:          cmd.Password,
+			Database:          cmd.Database,
+			IsDefault:         cmd.IsDefault,
+			BasicAuth:         cmd.BasicAuth,
+			BasicAuthUser:     cmd.BasicAuthUser,
+			BasicAuthPassword: cmd.BasicAuthPassword,
+			JsonData:          cmd.JsonData,
+			Updated:           time.Now(),
 		}
 
 		sess.UseBool("is_default")
+		sess.UseBool("basic_auth")
 
 		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)
 		if err != nil {

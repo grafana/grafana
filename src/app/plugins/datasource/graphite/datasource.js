@@ -212,7 +212,7 @@ function (angular, _, $, config, kbn, moment) {
       }
       if (this.basicAuth) {
         options.headers = options.headers || {};
-        options.headers.Authorization = 'Basic ' + this.basicAuth;
+        options.headers.Authorization = this.basicAuth;
       }
 
       options.url = this.url + options.url;

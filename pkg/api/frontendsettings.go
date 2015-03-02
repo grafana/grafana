@@ -10,6 +10,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
@@ -53,16 +54,18 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if ds.Type == m.DS_INFLUXDB_08 {
-			if ds.Access == m.DS_ACCESS_DIRECT {
+		if ds.Access == m.DS_ACCESS_DIRECT {
+			if ds.BasicAuth {
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+			}
+
+			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
-		}
 
-		if ds.Type == m.DS_INFLUXDB {
-			if ds.Access == m.DS_ACCESS_DIRECT {
+			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password
 				dsMap["database"] = ds.Database

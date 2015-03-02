@@ -35,6 +35,10 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		} else {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}
+
+		if ds.BasicAuth {
+			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director}

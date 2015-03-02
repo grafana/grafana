@@ -50,18 +50,20 @@ func GetDataSourceById(c *middleware.Context) {
 	ds := query.Result
 
 	c.JSON(200, &dtos.DataSource{
-		Id:        ds.Id,
-		OrgId:     ds.OrgId,
-		Name:      ds.Name,
-		Url:       ds.Url,
-		Type:      ds.Type,
-		Access:    ds.Access,
-		Password:  ds.Password,
-		Database:  ds.Database,
-		User:      ds.User,
-		BasicAuth: ds.BasicAuth,
-		IsDefault: ds.IsDefault,
-		JsonData:  ds.JsonData,
+		Id:                ds.Id,
+		OrgId:             ds.OrgId,
+		Name:              ds.Name,
+		Url:               ds.Url,
+		Type:              ds.Type,
+		Access:            ds.Access,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		IsDefault:         ds.IsDefault,
+		JsonData:          ds.JsonData,
 	})
 }
 
@@ -84,14 +86,7 @@ func DeleteDataSource(c *middleware.Context) {
 	c.JsonOK("Data source deleted")
 }
 
-func AddDataSource(c *middleware.Context) {
-	cmd := m.AddDataSourceCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {

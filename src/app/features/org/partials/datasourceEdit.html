@@ -41,7 +41,9 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-			<div class="tight-form last">
+
+			<h5>Http settings</h5>
+			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 80px">
 						Url
@@ -54,6 +56,31 @@
 					</li>
 					<li>
 						<select class="input-medium tight-form-input" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 80px">
+						Basic Auth
+					</li>
+					<li class="tight-form-item">
+						Enable&nbsp;
+						<input class="cr1" id="current.basicAuth" type="checkbox" ng-model="current.basicAuth" ng-checked="current.basicAuth">
+						<label for="current.basicAuth" class="cr1"></label>
+					</li>
+					<li class="tight-form-item" ng-if="current.basicAuth">
+						User
+					</li>
+					<li ng-if="current.basicAuth">
+						<input type="text" class="tight-form-input input-medium" style="width: 139px" ng-model='current.basicAuthUser' placeholder="user" required></input>
+					</li>
+					<li class="tight-form-item" style="width: 67px" ng-if="current.basicAuth">
+						Password
+					</li>
+					<li ng-if="current.basicAuth">
+						<input type="password" class="tight-form-input input-medium" ng-model='current.basicAuthPassword' placeholder="password" required></input>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
