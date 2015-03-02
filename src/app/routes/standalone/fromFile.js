@@ -41,7 +41,7 @@ function (angular, $, config, _) {
 
     var file_load = function(file) {
       return $http({
-        url: "app/dashboards/"+file.replace(/\.(?!json)/,"/")+'?' + new Date().getTime(),
+        url: "/dashboards/"+file.replace(/\.(?!json)/,"/")+'?' + new Date().getTime(),
         method: "GET",
         transformResponse: function(response) {
           return renderTemplate(response,$routeParams);
@@ -63,7 +63,7 @@ function (angular, $, config, _) {
     }
 
     file_load(fileToLoad).then(function(result) {
-      $scope.initDashboard(result, $scope);
+      $scope.initDashboard({meta: {}, model: result}, $scope);
     });
 
   });

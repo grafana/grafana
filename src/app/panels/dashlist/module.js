@@ -61,9 +61,8 @@ function (angular, app, _, config, PanelMeta) {
         params.tag = $scope.panel.tag;
       }
 
-      backendSrv.get('/api/search', params).then(function(result) {
+      return backendSrv.search(params).then(function(result) {
         $scope.dashList = result.dashboards;
-        $scope.panelMeta.loading = false;
       });
     };
 

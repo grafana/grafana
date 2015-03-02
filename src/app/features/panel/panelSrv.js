@@ -105,9 +105,12 @@ function (angular, _, config) {
         $scope.getCurrentDatasource().then(function(datasource) {
           $scope.datasource = datasource;
 
-          return $scope.refreshData($scope.datasource).then(function() {
+          var promise = $scope.refreshData($scope.datasource);
+          if (promise) {
+            promise.then(function() { $scope.panelMeta.loading = false; });
+          } else {
             $scope.panelMeta.loading = false;
-          });
+          }
 
         }, function(err) {
           console.log('Panel data error:', err);
