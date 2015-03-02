@@ -73,7 +73,8 @@ func main() {
 			test("./pkg/...")
 
 		case "package":
-			checkCleanTree()
+			clean()
+			//verifyGitRepoIsClean()
 			test("./pkg/...")
 			build(".", []string{})
 			buildFrontend()
@@ -83,6 +84,7 @@ func main() {
 			buildFrontend()
 
 		case "clean":
+			clean()
 
 		default:
 			log.Fatalf("Unknown command %q", cmd)
@@ -173,7 +175,7 @@ chown -R -L grafana:grafana $GRAFANA_LOG_DIR
 	ioutil.WriteFile(path, []byte(content), 0644)
 }
 
-func checkCleanTree() {
+func verifyGitRepoIsClean() {
 	rs, err := runError("git", "ls-files", "--modified")
 	if err != nil {
 		log.Fatalf("Failed to check if git tree was clean, %v, %v\n", string(rs), err)
@@ -184,7 +186,7 @@ func checkCleanTree() {
 		log.Fatalf("Git repository has modified files, aborting")
 	}
 
-	log.Fatalf("Git repository is clean")
+	log.Println("Git repository is clean")
 }
 
 func ensureGoPath() {
@@ -264,7 +266,9 @@ func rmr(paths ...string) {
 
 func clean() {
 	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana-pro", goos, goarch)))
+	rmr("dist")
+	rmr("tmp")
+	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafan", goos, goarch)))
 }
 
 func setBuildEnv() {

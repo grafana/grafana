@@ -93,8 +93,7 @@ function (angular, $, _, appLevelRequire) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/standalone/all',
-    'routes/backend/all',
+    'routes/all',
   ];
 
   app.boot = function() {
