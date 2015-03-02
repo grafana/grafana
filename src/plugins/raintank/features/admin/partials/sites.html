@@ -9,7 +9,7 @@
 <div class="gf-box" style="min-height: 500px; max-width: 900px">
 	<div class="gf-box-header">
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
+			<div ng-repeat="tab in ['Overview', 'Add', 'Edit', 'Suggested Monitors']" data-title="{{tab}}">
 			</div>
 		</div>
 		<div ng-if="editor.index == 0">
@@ -21,8 +21,9 @@
 
 	<form name="editForm">
 		<div class="gf-box-body">
-
 			<div class="editor-row row" ng-if="editor.index == 0">
+			
+
 				<div class="span8">
 					<div ng-if="sites.length === 0">
 						<em>No sites defined</em>
@@ -58,12 +59,62 @@
 				</div>
 			</div>
 
+
+			<div ng-if="editor.index == 3" ng-repeat="suggested in suggested_monitors" style="border: 1px solid white; margin-top: 5px; padding: 5px;">
+				<a ng-click="removeSuggestion($index)" class="btn btn-danger btn-mini" style="float:right;">
+					<i class="fa fa-remove"></i>
+				</a>
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Name</label>
+						<input type="text" class="input-large" ng-model='suggested.name' placeholder="name" required></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Type</label>
+						<select class="input-medium" ng-model="suggested.monitor_type_id" ng-options="t.id as t.name for (id, t) in monitor_types" disabled="disabled"></select>
+					</div>
+				</div>
+
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Locations</label>
+						<select class="input-medium" ng-model="suggested.locations" ng-options="l.id as l.name for (id, l) in locations" multiple></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Frequency</label>
+						<input type="number" class="input-large" ng-model='suggested.frequency' placeholder="Frequency" required></input>
+					</div>
+					<div class="editor-option">
+						<label class="small">Enabled</label>
+						<input type="checkbox" class="input-large" ng-model='suggested.enabled' required></input>
+					</div>
+				</div>
+				<div class="dashboard-editor-header">
+					<div class="dashboard-editor-title">Settings</div>
+				</div>
+				<div class="editor-row">
+					
+					<div class="editor-option" ng-repeat="setting in monitor_types[suggested.monitor_type_id].settings | filter:{required: 'true'}">
+						<label class="small">{{setting.description}}</label>
+						<raintank-setting definition="setting" target="currentSettingByVariable(suggested, setting.variable)">
+					</div>
+				</div>
+				<div class="editor-row">
+					
+					<div class="editor-option" ng-repeat="setting in monitor_types[suggested.monitor_type_id].settings | filter:{required: 'false'}">
+						<label class="small">{{setting.description}}</label>
+						<raintank-setting definition="setting" target="currentSettingByVariable(suggested, setting.variable)">
+					</div>
+				</div>
+				
+			</div>
 			<div class="dashboard-editor-footer" style="margin-top: 20px">
+				<button type="submit" class="btn btn-success" ng-show="editor.index === 3" ng-click="provision()">Provision</button>
+				<button type="submit" class="btn btn-info" ng-show="editor.index === 3" ng-click="cancel()">Cancel</button>
 				<button type="submit" class="btn btn-success" ng-show="editor.index === 1" ng-click="add()">Add</button>
 				<button type="submit" class="btn btn-success" ng-show="editor.index === 2 && !currentIsNew" ng-click="update()">Update</button>
 				<button type="submit" class="btn btn-info" ng-show="editor.index === 2 && !currentIsNew" ng-click="cancel()">Cancel</button>
 			</div>
-
-		</form>
-	</div>
+		</div>
+	</form>
 </div>
