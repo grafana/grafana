@@ -64,6 +64,7 @@ func addLocationMigration(mg *Migrator) {
 		"slug":     "slug",
 		"name":     "name",
 		"country":  "country",
+		"region":   "region",
 		"provider": "provider",
 		"public":   "public",
 		"created":  "created",

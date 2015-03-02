@@ -42,7 +42,7 @@ func addApiKeyMigrations(mg *Migrator) {
 			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
+			&Column{Name: "key", Type: DB_Varchar, Length: 255, Nullable: false},
 			&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
