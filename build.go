@@ -8,10 +8,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -27,6 +27,10 @@ var (
 	version    string = "2.0.0-alpha"
 	race       bool
 	workingDir string
+
+	installRoot   = "/opt/grafana"
+	configRoot    = "/etc/grafana"
+	grafanaLogDir = "/var/log/grafana"
 )
 
 const minGoVersion = 1.3
@@ -35,15 +39,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	if os.Getenv("GOPATH") == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
-		log.Println("GOPATH is", gopath)
-		os.Setenv("GOPATH", gopath)
-	}
+	ensureGoPath()
 
 	//os.Setenv("PATH", fmt.Sprintf("%s%cbin%c%s", os.Getenv("GOPATH"), os.PathSeparator, os.PathListSeparator, os.Getenv("PATH")))
 
@@ -73,8 +69,11 @@ func main() {
 			test("./pkg/...")
 
 		case "package":
-			test("./pkg/...")
-			build(".", []string{})
+			//checkCleanTree()
+			//test("./pkg/...")
+			//build(".", []string{})
+			//buildFrontend()
+			createRpmAndDeb()
 
 		case "build-ui":
 			buildFrontend()
@@ -87,17 +86,102 @@ func main() {
 	}
 }
 
+func createRpmAndDeb() {
+	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
+	postInstallScriptPath, _ := ioutil.TempFile("", "postinstall")
+
+	versionFolder := filepath.Join(packageRoot, installRoot, "versions", version)
+	runError("mkdir", "-p", versionFolder)
+	runError("mkdir", "-p", filepath.Join(packageRoot, configRoot))
+
+	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
+
+	fmt.Printf("PackageDir: %v\n", versionFolder)
+
+	GeneratePostInstallScript(postInstallScriptPath.Name())
+	fmt.Printf("script_path: %v\n", postInstallScriptPath.Name())
+
+	args := []string{
+		"-s", "dir",
+		"-t", "deb",
+		"--description", "Grafana",
+		"-C", packageRoot,
+		"--vendor", "Grafana",
+		"--url", "http://grafana.org",
+		"--license", "Apache 2.0",
+		"--maintainer", "contact@grafana.org",
+		"--after-install", postInstallScriptPath.Name(),
+		"--name", "grafana",
+		"--version", version,
+		"-p", "./dist",
+		".",
+	}
+
+	runPrint("fpm", args...)
+}
+
+func GeneratePostInstallScript(path string) {
+	content := `
+rm -f $INSTALL_ROOT_DIR/grafana
+rm -f $INSTALL_ROOT_DIR/init.sh
+ln -s $INSTALL_ROOT_DIR/versions/$VERSION/grafana $INSTALL_ROOT_DIR/grafana
+ln -s $INSTALL_ROOT_DIR/versions/$VERSION/scripts/init.sh $INSTALL_ROOT_DIR/init.sh
+if [ ! -L /etc/init.d/grafana ]; then
+    ln -sfn $INSTALL_ROOT_DIR/init.sh /etc/init.d/grafana
+    chmod +x /etc/init.d/grafana
+    if which update-rc.d > /dev/null 2>&1 ; then
+        update-rc.d -f grafana remove
+        update-rc.d grafana defaults
+    else
+        chkconfig --add grafana
+    fi
+fi
+if ! id grafana >/dev/null 2>&1; then
+        useradd --system -U -M grafana
+fi
+chown -R -L grafana:grafana $INSTALL_ROOT_DIR
+chmod -R a+rX $INSTALL_ROOT_DIR
+mkdir -p $GRAFANA_LOG_DIR
+chown -R -L grafana:grafana $GRAFANA_LOG_DIR
+`
+	content = strings.Replace(content, "$INSTALL_ROOT_DIR", installRoot, -1)
+	content = strings.Replace(content, "$VERSION", version, -1)
+	content = strings.Replace(content, "$GRAFANA_LOG_DIR", grafanaLogDir, -1)
+	ioutil.WriteFile(path, []byte(content), 0644)
+}
+
+func checkCleanTree() {
+	rs, err := runError("git", "ls-files", "--modified")
+	if err != nil {
+		log.Fatalf("Failed to check if git tree was clean, %v, %v\n", string(rs), err)
+		return
+	}
+	count := len(string(rs))
+	if count > 0 {
+		log.Fatalf("Git repository has modified files, aborting")
+	}
+
+	log.Fatalf("Git repository is clean")
+}
+
+func ensureGoPath() {
+	if os.Getenv("GOPATH") == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
+		log.Println("GOPATH is", gopath)
+		os.Setenv("GOPATH", gopath)
+	}
+}
+
 func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
 }
 
 func buildFrontend() {
-	ChangeWorkingDir(path.Join(workingDir, "grafana"))
-	defer func() {
-		ChangeWorkingDir(path.Join(workingDir, "../"))
-	}()
-
-	runPrint("grunt")
+	runPrint("grunt", "release")
 }
 
 func setup() {

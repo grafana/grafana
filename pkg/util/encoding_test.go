@@ -11,6 +11,6 @@ func TestEncoding(t *testing.T) {
 	Convey("When generating base64 header", t, func() {
 		result := GetBasicAuthHeader("grafana", "1234")
 
-		So(result, ShouldEqual, "Z3JhZmFuYToxMjM0")
+		So(result, ShouldEqual, "Basic Z3JhZmFuYToxMjM0")
 	})
 }
