@@ -72,12 +72,15 @@ func main() {
 		case "test":
 			test("./pkg/...")
 
+		case "latest":
+			version += "-" + getGitSha()
+
 		case "package":
-			//clean()
+			clean()
 			//verifyGitRepoIsClean()
-			//test("./pkg/...")
-			//build(".", []string{})
-			//buildFrontend()
+			test("./pkg/...")
+			build(".", []string{})
+			buildFrontend()
 			createRpmAndDeb()
 
 		case "build-ui":
