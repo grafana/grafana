@@ -29,7 +29,7 @@ build:
           sudo gem install fpm
           sudo apt-get update
           sudo apt-get install -y rpm
-          go run build.go package
+          go run build.go latest package
     # save packages
     - script:
         name: copy output
@@ -43,6 +43,7 @@ build:
         bucket-url: $AWS_S3_BUCKET
         source-dir: dist/
         delete-removed: false
+
 deploy:
   steps:
     - add-to-known_hosts:
