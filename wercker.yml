@@ -3,38 +3,51 @@ box: wercker/golang
 steps:
   - wercker/npm-install@0.9.3
   - wercker/step-grunt
+  - wercker/s3sync
 
 build:
   steps:
     # Workspace
-    - setup-go-workspace
-    - script:
-        name: build setup
-        code: |
-         go run build.go setup
-    # Build the project
-    - script:
-        name: build
-        code: |
-          go run build.go clean test build
-    # frontend
-    - npm-install
-    - grunt:
-        tasks: release
-    # create packages
+    # - setup-go-workspace
+    # - script:
+    #     name: build setup
+    #     code: |
+    #      go run build.go setup
+    # # Build the project
+    # - script:
+    #     name: build
+    #     code: |
+    #       go run build.go clean test build
+    # # frontend
+    # - npm-install
+    # - grunt:
+    #     tasks: release
+    # # create packages
+    # - script:
+    #     name: create packages
+    #     code: |
+    #       sudo gem install fpm
+    #       sudo apt-get update
+    #       sudo apt-get install -y rpm
+    #       go run build.go package
+    # # save packages
+    # - script:
+    #     name: copy output
+    #     code: |-
+    #       rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
+    #
     - script:
         name: create packages
         code: |
-          sudo gem install fpm
-          sudo apt-get update
-          sudo apt-get install -y rpm
-          go run build.go package
-    # save packages
-    - script:
-        name: copy output
-        code: |-
-          rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
+          mkdir dist
+          touch dist/my_file.txt
 
+   - s3sync:
+        key-id: $AWS_S3_KEY
+        key-secret: $AWS_S3_SECRET
+        bucket-url: $AWS_S3_BUCKET
+        source-dir: $WERCKER_SOURCE_DIR/dist/
+        delete-removed: false
 deploy:
   steps:
     - add-to-known_hosts:
