@@ -1,4 +1,4 @@
-box: grafana-build-box
+box: torkelo/grafana-build-box
 
 steps:
   - wercker/npm-install@0.9.3
