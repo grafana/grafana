@@ -1,4 +1,4 @@
-box: torkelo/grafana-build-box
+box: wercker/golang
 
 steps:
   - wercker/npm-install@0.9.3
@@ -12,6 +12,8 @@ build:
         name: build setup
         code: |
           go run build.go setup
+          apt-get install ruby-dev gcc
+          gem install fpm
     # Build the project
     - script:
         name: build backend
