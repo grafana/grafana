@@ -39,14 +39,14 @@ build:
     - script:
         name: create packages
         code: |
-          mkdir dist
+          mkdir -p dist
           touch dist/my_file.txt
 
     - s3sync:
         key-id: $AWS_S3_KEY
         key-secret: $AWS_S3_SECRET
         bucket-url: $AWS_S3_BUCKET
-        source-dir: ./dist/
+        source-dir: dist/
         delete-removed: false
 deploy:
   steps:
