@@ -5,8 +5,12 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
+	"strconv"
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
@@ -68,6 +72,7 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 
 func runWeb(c *cli.Context) {
 	initRuntime(c)
+	writePIDFile(c)
 
 	social.NewOAuthService()
 	eventpublisher.Init()
@@ -90,5 +95,24 @@ func runWeb(c *cli.Context) {
 
 	if err != nil {
 		log.Fatal(4, "Fail to start server: %v", err)
+	}
+}
+
+func writePIDFile(c *cli.Context) {
+	path := c.GlobalString("pidfile")
+	if path == "" {
+		return
+	}
+
+	// Ensure the required directory structure exists.
+	err := os.MkdirAll(filepath.Dir(path), 0700)
+	if err != nil {
+		log.Fatal(3, "Failed to verify pid directory", err)
+	}
+
+	// Retrieve the PID and write it.
+	pid := strconv.Itoa(os.Getpid())
+	if err := ioutil.WriteFile(path, []byte(pid), 0644); err != nil {
+		log.Fatal(3, "Failed to write pidfile", err)
 	}
 }

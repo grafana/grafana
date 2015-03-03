@@ -73,11 +73,11 @@ func main() {
 			test("./pkg/...")
 
 		case "package":
-			clean()
+			//clean()
 			//verifyGitRepoIsClean()
-			test("./pkg/...")
-			build(".", []string{})
-			buildFrontend()
+			//test("./pkg/...")
+			//build(".", []string{})
+			//buildFrontend()
 			createRpmAndDeb()
 
 		case "build-ui":
@@ -121,24 +121,22 @@ func createRpmAndDeb() {
 	runError("mkdir", "-p", configDir)
 
 	// copy sample ini file to /etc/opt/grafana
-	runError("cp", "conf/sample.ini", filepath.Join(configDir, "grafana.ini"))
+	configFile := filepath.Join(configDir, "grafana.ini")
+	runError("cp", "conf/sample.ini", configFile)
 	// copy release files
 	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
 
-	fmt.Printf("PackageDir: %v\n", versionFolder)
-
 	GeneratePostInstallScript(postInstallScriptPath.Name())
-	fmt.Printf("script_path: %v\n", postInstallScriptPath.Name())
 
 	args := []string{
 		"-s", "dir",
-		"-t", "deb",
 		"--description", "Grafana",
 		"-C", packageRoot,
 		"--vendor", "Grafana",
 		"--url", "http://grafana.org",
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
+		"--config-files", filepath.Join(configRoot, "grafana.ini"),
 		"--after-install", postInstallScriptPath.Name(),
 		"--name", "grafana",
 		"--version", version,
@@ -146,7 +144,11 @@ func createRpmAndDeb() {
 		".",
 	}
 
-	runPrint("fpm", args...)
+	fmt.Println("Creating debian package")
+	runPrint("fpm", append([]string{"-t", "deb"}, args...)...)
+
+	fmt.Println("Creating redhat/centos package")
+	runPrint("fpm", append([]string{"-t", "rpm"}, args...)...)
 }
 
 func GeneratePostInstallScript(path string) {

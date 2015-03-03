@@ -8,7 +8,8 @@ module.exports = function (grunt) {
     srcDir: 'src',
     destDir: 'dist',
     tempDir: 'tmp',
-    docsDir: 'docs/'
+    docsDir: 'docs/',
+    arch: grunt.option('arch') || 'x86_64',
   };
 
   // load plugins

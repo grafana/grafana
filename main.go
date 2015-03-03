@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/signal"
 	"runtime"
 	"strconv"
 
@@ -27,6 +28,13 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		<-c
+		os.Exit(0)
+	}()
+
 	app := cli.NewApp()
 	app.Name = "Grafana Backend"
 	app.Usage = "grafana web"
@@ -46,7 +54,12 @@ func main() {
 			Name:  "config",
 			Usage: "path to grafana.ini config file",
 		},
+		cli.StringFlag{
+			Name:  "pidfile",
+			Usage: "path to pidfile",
+		},
 	}...)
+
 	app.Run(os.Args)
 
 	log.Close()
