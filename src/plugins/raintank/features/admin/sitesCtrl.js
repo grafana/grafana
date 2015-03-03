@@ -109,7 +109,7 @@ function (angular) {
       var defaults = {
         name: '',
         namespace: 'network',
-        site: payload.site.id,
+        site_id: payload.site.id,
         monitor_type_id: 1,
         locations: locations,
         settings: [],
