@@ -1,4 +1,4 @@
-box: wercker/golang
+box: grafana-build-box
 
 steps:
   - wercker/npm-install@0.9.3
@@ -6,23 +6,6 @@ steps:
 
 build:
   steps:
-    script: |
-      export RUBYVERSION=2.0.0-p594
-      sudo apt-get update
-      sudo apt-get install git zlib1g-dev libreadline-dev libqtwebkit-dev
-      sudo apt-get remove ruby1.9.1
-      cd $HOME
-      mkdir rubyinstall
-      cd rubyinstall
-      wget ftp://ftp.ruby-lang.org/pub/ruby/2.0/ruby-$RUBYVERSION.tar.gz
-      tar xzvf ruby-$RUBYVERSION.tar.gz
-      cd ruby-$RUBYVERSION
-      ./configure --with-readline-dir=/usr/include/readline --with-openssl-dir=/usr/include/openssl
-      make
-      make test
-      sudo make install
-      cd $HOME
-      rm -fr rubyinstall
     # Workspace
     - setup-go-workspace
     - script:
