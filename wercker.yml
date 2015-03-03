@@ -39,8 +39,8 @@ build:
     - script:
         name: create packages
         code: |
-          mkdir -p dist
-          touch dist/my_file.txt
+          mkdir -p $WERCKER_ROOT/dist
+          echo test > $WERCKER_ROOT/dist/my_file.txt
 
     - s3sync:
         key-id: $AWS_S3_KEY
