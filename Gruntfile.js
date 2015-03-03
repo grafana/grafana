@@ -11,22 +11,6 @@ module.exports = function (grunt) {
     docsDir: 'docs/'
   };
 
-  config.mode = grunt.option('mode') || 'backend';
-  config.modeOptions = {
-    zipSuffix: '',
-    requirejs: {
-      paths: { config: '../config.sample' },
-      excludeConfig: true,
-    }
-  };
-
-  if (config.mode === 'backend') {
-    grunt.log.writeln('Setting backend build mode');
-    config.modeOptions.zipSuffix = '-backend';
-    config.modeOptions.requirejs.paths = {};
-    config.modeOptions.requirejs.excludeConfig = false;
-  }
-
   // load plugins
   require('load-grunt-tasks')(grunt);
 

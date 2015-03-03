@@ -30,7 +30,7 @@ var (
 	workingDir string
 
 	installRoot   = "/opt/grafana"
-	configRoot    = "/etc/grafana"
+	configRoot    = "/etc/opt/grafana"
 	grafanaLogDir = "/var/log/grafana"
 )
 
@@ -115,9 +115,14 @@ func createRpmAndDeb() {
 	postInstallScriptPath, _ := ioutil.TempFile("", "postinstall")
 
 	versionFolder := filepath.Join(packageRoot, installRoot, "versions", version)
-	runError("mkdir", "-p", versionFolder)
-	runError("mkdir", "-p", filepath.Join(packageRoot, configRoot))
+	configDir := filepath.Join(packageRoot, configRoot)
 
+	runError("mkdir", "-p", versionFolder)
+	runError("mkdir", "-p", configDir)
+
+	// copy sample ini file to /etc/opt/grafana
+	runError("cp", "conf/sample.ini", filepath.Join(configDir, "grafana.ini"))
+	// copy release files
 	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
 
 	fmt.Printf("PackageDir: %v\n", versionFolder)
@@ -268,7 +273,7 @@ func clean() {
 	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("dist")
 	rmr("tmp")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafan", goos, goarch)))
+	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
 }
 
 func setBuildEnv() {
