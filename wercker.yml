@@ -9,10 +9,9 @@ build:
     # Workspace
     - setup-go-workspace
     - script:
-        name: install godep
+        name: build setup
         code: |
-          go get -u github.com/tools/godep
-          go install github.com/tools/godep
+          go run build.go setup
     # Build the project
     - script:
         name: build backend
