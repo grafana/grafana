@@ -73,7 +73,7 @@ function (angular, _, moment) {
     };
 
     $scope.handleSaveDashError = function(err) {
-      if (err.data && err.data.status === "version-mismatch" ) {
+      if (err.data && err.data.status === "version-mismatch") {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
@@ -86,7 +86,7 @@ function (angular, _, moment) {
         });
       }
 
-      if (err.data && err.data.status === "name-exists" ) {
+      if (err.data && err.data.status === "name-exists") {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {

@@ -5,6 +5,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'jshint:source',
     'jshint:tests',
+    'jscs',
     'karma:test',
     'clean:on_start',
     'less:src',
@@ -40,7 +41,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/defaults.ini', 'vendor/**/*', 'scripts/*'],
+      src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/**/*', 'scripts/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
