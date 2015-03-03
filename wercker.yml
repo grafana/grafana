@@ -42,7 +42,7 @@ build:
           mkdir dist
           touch dist/my_file.txt
 
-   - s3sync:
+    - s3sync:
         key-id: $AWS_S3_KEY
         key-secret: $AWS_S3_SECRET
         bucket-url: $AWS_S3_BUCKET
