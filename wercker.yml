@@ -12,7 +12,7 @@ build:
         name: build setup
         code: |
           go run build.go setup
-          apt-get install ruby-dev gcc
+          apt-get install -y ruby-dev gcc
           gem install fpm
     # Build the project
     - script:
