@@ -67,6 +67,7 @@ func main() {
 		case "build":
 			pkg := "."
 			var tags []string
+			clean()
 			build(pkg, tags)
 
 		case "test":
@@ -76,11 +77,7 @@ func main() {
 			version += "-" + getGitSha()
 
 		case "package":
-			clean()
 			//verifyGitRepoIsClean()
-			test("./pkg/...")
-			build(".", []string{})
-			buildFrontend()
 			createRpmAndDeb()
 
 		case "build-ui":

@@ -12,26 +12,27 @@ build:
         name: build setup
         code: |
           go run build.go setup
-          sudo apt-get install -y ruby-dev gcc
           sudo gem install fpm
     # Build the project
     - script:
-        name: build backend
+        name: build
         code: |
-          go run build.go build
-    # Test the project
-    - script:
-        name: test backend
-        code: |
-          go run build.go test
+          go run build.go clean test build
     # frontend
     - npm-install
     - grunt:
         tasks: release
+    # create packages
+    - script:
+        name: create packages
+        code: |
+          go run build.go package
+    # save packages
     - script:
         name: copy output
         code: |-
           rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
+
 deploy:
   steps:
     - add-to-known_hosts:
