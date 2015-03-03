@@ -8,7 +8,7 @@ steps:
 build:
   steps:
     # Workspace
-    # - setup-go-workspace
+    - setup-go-workspace
     # - script:
     #     name: build setup
     #     code: |
@@ -39,14 +39,14 @@ build:
     - script:
         name: create packages
         code: |
-          mkdir $WERCKER_OUTPUT_DIR/dist
-          touch $WERCKER_OUTPUT_DIR/dist/my_file.txt
+          mkdir dist
+          touch dist/my_file.txt
 
     - s3sync:
         key-id: $AWS_S3_KEY
         key-secret: $AWS_S3_SECRET
         bucket-url: $AWS_S3_BUCKET
-        source-dir: $WERCKER_OUTPUT_DIR/dist/
+        source-dir: ./dist/
         delete-removed: false
 deploy:
   steps:
