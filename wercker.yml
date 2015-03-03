@@ -11,8 +11,7 @@ build:
     - script:
         name: build setup
         code: |
-          go run build.go setup
-          sudo gem install fpm
+         go run build.go setup
     # Build the project
     - script:
         name: build
@@ -26,6 +25,8 @@ build:
     - script:
         name: create packages
         code: |
+          sudo gem install fpm
+          sudo apt-get install -y rpm
           go run build.go package
     # save packages
     - script:
