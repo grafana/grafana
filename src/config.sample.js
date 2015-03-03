@@ -22,14 +22,14 @@ define(['settings'], function(Settings) {
         influxdb: {
           type: 'influxdb',
           url: "http://my_influxdb_server:8086/db/database_name",
-          username: 'admin',
-          password: 'admin',
+          username: 'root',
+          password: 'root',
         },
         grafana: {
           type: 'influxdb',
           url: "http://my_influxdb_server:8086/db/grafana",
-          username: 'admin',
-          password: 'admin',
+          username: 'root',
+          password: 'root',
           grafanaDB: true
         },
       },
