@@ -9,38 +9,33 @@ build:
   steps:
     # Workspace
     - setup-go-workspace
-    # - script:
-    #     name: build setup
-    #     code: |
-    #      go run build.go setup
-    # # Build the project
-    # - script:
-    #     name: build
-    #     code: |
-    #       go run build.go clean test build
-    # # frontend
-    # - npm-install
-    # - grunt:
-    #     tasks: release
-    # # create packages
-    # - script:
-    #     name: create packages
-    #     code: |
-    #       sudo gem install fpm
-    #       sudo apt-get update
-    #       sudo apt-get install -y rpm
-    #       go run build.go package
-    # # save packages
-    # - script:
-    #     name: copy output
-    #     code: |-
-    #       rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
-    #
+    - script:
+        name: build setup
+        code: |
+         go run build.go setup
+    # Build the project
+    - script:
+        name: build
+        code: |
+          go run build.go clean test build
+    # frontend
+    - npm-install
+    - grunt:
+        tasks: release
+    # create packages
     - script:
         name: create packages
         code: |
-          mkdir -p $WERCKER_ROOT/dist
-          echo test > $WERCKER_ROOT/dist/my_file.txt
+          sudo gem install fpm
+          sudo apt-get update
+          sudo apt-get install -y rpm
+          go run build.go package
+    # save packages
+    - script:
+        name: copy output
+        code: |-
+          cp $WERCKER_SOURCE_DIR/dist $WERCKER_ROOT
+          rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
 
     - s3sync:
         key-id: $AWS_S3_KEY
