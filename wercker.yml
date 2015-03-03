@@ -12,8 +12,8 @@ build:
         name: build setup
         code: |
           go run build.go setup
-          apt-get install -y ruby-dev gcc
-          gem install fpm
+          sudo apt-get install -y ruby-dev gcc
+          sudo gem install fpm
     # Build the project
     - script:
         name: build backend
