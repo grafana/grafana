@@ -39,14 +39,14 @@ build:
     - script:
         name: create packages
         code: |
-          mkdir $WERCKER_SOURCE_DIR/dist
-          touch $WERCKER_SOURCE_DIR/dist/my_file.txt
+          mkdir $WERCKER_OUTPUT_DIR/dist
+          touch $WERCKER_OUTPUT_DIR/dist/my_file.txt
 
     - s3sync:
         key-id: $AWS_S3_KEY
         key-secret: $AWS_S3_SECRET
         bucket-url: $AWS_S3_BUCKET
-        source-dir: $WERCKER_SOURCE_DIR/dist/
+        source-dir: $WERCKER_OUTPUT_DIR/dist/
         delete-removed: false
 deploy:
   steps:
