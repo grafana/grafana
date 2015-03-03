@@ -34,7 +34,7 @@ build:
     - script:
         name: copy output
         code: |-
-          cp $WERCKER_SOURCE_DIR/dist $WERCKER_ROOT
+          cp -r $WERCKER_SOURCE_DIR/dist/ $WERCKER_ROOT/
           rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
 
     - s3sync:

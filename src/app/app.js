@@ -67,16 +67,7 @@ function (angular, $, _, appLevelRequire) {
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters'];
-
-  if (window.grafanaBackend) {
-    module_types.push('routes');
-    angular.module('grafana.routes.standalone', []);
-  }
-  else {
-    module_types.push('routes.standalone');
-    angular.module('grafana.routes', []);
-  }
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
     var module_name = 'grafana.'+type;
