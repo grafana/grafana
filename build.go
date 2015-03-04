@@ -70,7 +70,6 @@ func main() {
 
 		case "test":
 			test("./pkg/...")
-			grunt("test")
 
 		case "latest":
 			version += "-" + getGitSha()
