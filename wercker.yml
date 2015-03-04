@@ -31,18 +31,17 @@ build:
     - script:
         name: copy output
         code: |-
-          cp -r $WERCKER_SOURCE_DIR/dist/ $WERCKER_ROOT/
           rsync -rv "$WERCKER_SOURCE_DIR/dist/" "$WERCKER_OUTPUT_DIR"
 
+deploy:
+  steps:
     - s3sync:
         key-id: $AWS_S3_KEY
         key-secret: $AWS_S3_SECRET
         bucket-url: $AWS_S3_BUCKET
-        source-dir: dist/
+        source-dir: ./
         delete-removed: false
 
-deploy:
-  steps:
     - add-to-known_hosts:
         hostname: play.grafana.org
     - mktemp:
