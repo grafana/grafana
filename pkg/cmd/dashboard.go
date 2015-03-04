@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,18 +13,33 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-var ImportDashboard = cli.Command{
-	Name:        "dashboards:import",
-	Usage:       "imports dashboards in JSON from a directory",
-	Description: "Starts Grafana import process",
-	Action:      runImport,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "dir",
-			Usage: "path to folder containing json dashboards",
+var (
+	ImportDashboard = cli.Command{
+		Name:        "dashboards:import",
+		Usage:       "imports dashboards in JSON from a directory",
+		Description: "Starts Grafana import process",
+		Action:      runImport,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "dir",
+				Usage: "path to folder containing json dashboards",
+			},
 		},
-	},
-}
+	}
+
+	ExportDashboard = cli.Command{
+		Name:        "dashboards:export",
+		Usage:       "exports dashboards in JSON from a directory",
+		Description: "Starts Grafana export process",
+		Action:      runExport,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "dir",
+				Usage: "path to folder containing json dashboards",
+			},
+		},
+	}
+)
 
 func runImport(c *cli.Context) {
 	dir := c.String("dir")
@@ -103,4 +119,89 @@ func importDashboard(path string, orgId int64) error {
 	}
 
 	return nil
+}
+
+func runExport(c *cli.Context) {
+	initRuntime(c)
+
+	if !c.Args().Present() {
+		log.ConsoleFatal("Account name arg is required")
+	}
+
+	name := c.Args().First()
+	orgQuery := m.GetOrgByNameQuery{Name: name}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.ConsoleFatalf("Failed to find organization: %s", err)
+	}
+
+	orgId := orgQuery.Result.Id
+
+	dir := c.String("dir")
+	dash := c.Args().Get(1)
+
+	query := m.SearchDashboardsQuery{OrgId: orgId, Title: dash}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		log.ConsoleFatalf("Failed to find dashboards: %s", err)
+		return
+	}
+
+	if dir == "" && len(query.Result) > 1 {
+		log.ConsoleFatalf("Dashboard title '%s' returned too many results. "+
+			"Use --dir <dir> or a more specific title", dash)
+		return
+	}
+
+	for _, v := range query.Result {
+		f := os.Stdout
+		if dir != "" {
+			dest := filepath.Join(dir, v.Slug+".json")
+			f, err = os.Create(dest)
+			if err != nil {
+				log.ConsoleFatalf("Unable to create file: %s", err)
+			}
+			log.ConsoleInfof("Exporting '%s' dashboard to %s", v.Title, dest)
+		}
+
+		exportDashboard(f, orgId, v.Slug)
+
+		if dir != "" {
+			if err := f.Sync(); err != nil {
+				log.ConsoleFatalf("Unable to sync file: %s", err)
+			}
+
+			if err := f.Close(); err != nil {
+				log.ConsoleFatalf("Unable to close file: %s", err)
+			}
+		}
+	}
+	if dir != "" {
+		log.ConsoleInfof("Exported %d dashboards to %s", len(query.Result), dir)
+	}
+}
+
+func exportDashboard(w io.Writer, orgId int64, slug string) {
+	query := m.GetDashboardQuery{Slug: slug, OrgId: orgId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		log.ConsoleFatalf("Failed to find dashboard: %s", err)
+		return
+	}
+
+	out, err := json.MarshalIndent(query.Result.Data, "", "  ")
+	if err != nil {
+		log.ConsoleFatalf("Failed to marshal dashboard: %s", err)
+		return
+	}
+
+	n, err := w.Write(out)
+	if err != nil {
+		log.ConsoleFatalf("Failed to write dashboard: %s", err)
+		return
+	}
+
+	if n != len(out) {
+		log.ConsoleFatalf("Failed to write dashboard: wrote %d expected %d", n, len(out))
+		return
+	}
 }
