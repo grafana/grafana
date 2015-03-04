@@ -15,6 +15,8 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
 	"github.com/macaron-contrib/session"
+	_ "github.com/macaron-contrib/session/mysql"
+	_ "github.com/macaron-contrib/session/postgres"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
