@@ -5,7 +5,6 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -70,6 +69,7 @@ func main() {
 
 		case "test":
 			test("./pkg/...")
+			grunt("test")
 
 		case "latest":
 			version += "-" + getGitSha()
@@ -89,21 +89,27 @@ func main() {
 }
 
 func readVersionFromPackageJson() {
-	reader, err := os.Open("package.json")
+	v, err := runError("git", "describe", "--tags", "--dirty")
 	if err != nil {
-		log.Fatal("Failed to open package.json")
-		return
+		return "unknown-ver"
 	}
-	defer reader.Close()
+	version = v
 
-	jsonObj := map[string]interface{}{}
-	jsonParser := json.NewDecoder(reader)
-
-	if err := jsonParser.Decode(&jsonObj); err != nil {
-		log.Fatal("Failed to decode package.json")
-	}
-
-	version = jsonObj["version"].(string)
+	// reader, err := os.Open("package.json")
+	// if err != nil {
+	// 	log.Fatal("Failed to open package.json")
+	// 	return
+	// }
+	// defer reader.Close()
+	//
+	// jsonObj := map[string]interface{}{}
+	// jsonParser := json.NewDecoder(reader)
+	//
+	// if err := jsonParser.Decode(&jsonObj); err != nil {
+	// 	log.Fatal("Failed to decode package.json")
+	// }
+	//
+	// version = jsonObj["version"].(string)
 }
 
 func createRpmAndDeb() {
