@@ -45,8 +45,6 @@ func main() {
 
 	log.Printf("Version: %s\n", version)
 
-	//os.Setenv("PATH", fmt.Sprintf("%s%cbin%c%s", os.Getenv("GOPATH"), os.PathSeparator, os.PathListSeparator, os.Getenv("PATH")))
-
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.BoolVar(&race, "race", race, "Use race detector")
@@ -72,16 +70,15 @@ func main() {
 
 		case "test":
 			test("./pkg/...")
+			grunt("test")
 
 		case "latest":
 			version += "-" + getGitSha()
 
 		case "package":
 			//verifyGitRepoIsClean()
+			grunt("release", "--pkgVer="+version)
 			createRpmAndDeb()
-
-		case "build-ui":
-			buildFrontend()
 
 		case "clean":
 			clean()
@@ -212,8 +209,8 @@ func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
 }
 
-func buildFrontend() {
-	runPrint("grunt", "release")
+func grunt(params ...string) {
+	runPrint("./node_modules/grunt-cli/bin/grunt", params...)
 }
 
 func setup() {

@@ -12,6 +12,8 @@ module.exports = function (grunt) {
     arch: grunt.option('arch') || 'x86_64',
   };
 
+  config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
+
   // load plugins
   require('load-grunt-tasks')(grunt);
 

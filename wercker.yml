@@ -20,8 +20,6 @@ build:
           go run build.go clean test build
     # frontend
     - npm-install
-    - grunt:
-        tasks: release
     # create packages
     - script:
         name: create packages
