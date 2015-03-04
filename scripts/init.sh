@@ -20,7 +20,7 @@ fi
 DAEMON_NAME="grafana"
 DAEMON_USER="grafana"
 DAEMON_PATH="/opt/grafana/current/grafana"
-DAEMON_OPTS="--config=/etc/opt/grafana/grafana.ini web"
+DAEMON_OPTS="--config=/etc/grafana/grafana.ini web"
 DAEMON_PWD="/opt/grafana/current"
 DAEMON_PID="/var/run/${DAEMON_NAME}.pid"
 DAEMON_NICE=0

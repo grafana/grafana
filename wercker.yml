@@ -21,12 +21,12 @@ build:
           go run build.go clean test build
    # create packages
     - script:
-        name: create packages
+        name: create packages latest
         code: |
           sudo gem install fpm
           sudo apt-get update
           sudo apt-get install -y rpm
-          go run build.go latest package
+          go run build.go package latest
     # save packages
     - script:
         name: copy output

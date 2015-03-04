@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ var (
 	workingDir string
 
 	installRoot   = "/opt/grafana"
-	configRoot    = "/etc/opt/grafana"
+	configRoot    = "/etc/grafana"
 	grafanaLogDir = "/var/log/grafana"
 )
 
@@ -71,13 +72,13 @@ func main() {
 			test("./pkg/...")
 			grunt("test")
 
-		case "latest":
-			version += "-" + getGitSha()
-
 		case "package":
 			//verifyGitRepoIsClean()
 			grunt("release", "--pkgVer="+version)
 			createRpmAndDeb()
+
+		case "latest":
+			makeLatestDistCopies()
 
 		case "clean":
 			clean()
@@ -88,28 +89,28 @@ func main() {
 	}
 }
 
-func readVersionFromPackageJson() {
-	v, err := runError("git", "describe", "--tags", "--dirty")
-	if err != nil {
-		return "unknown-ver"
-	}
-	version = v
+func makeLatestDistCopies() {
+	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
+	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x84_64.rpm")
+	runError("cp", "dist/grafana-"+version+".x86_64.tar.gz", "dist/grafana-latest.x84_64.tar.gz")
+}
 
-	// reader, err := os.Open("package.json")
-	// if err != nil {
-	// 	log.Fatal("Failed to open package.json")
-	// 	return
-	// }
-	// defer reader.Close()
-	//
-	// jsonObj := map[string]interface{}{}
-	// jsonParser := json.NewDecoder(reader)
-	//
-	// if err := jsonParser.Decode(&jsonObj); err != nil {
-	// 	log.Fatal("Failed to decode package.json")
-	// }
-	//
-	// version = jsonObj["version"].(string)
+func readVersionFromPackageJson() {
+	reader, err := os.Open("package.json")
+	if err != nil {
+		log.Fatal("Failed to open package.json")
+		return
+	}
+	defer reader.Close()
+
+	jsonObj := map[string]interface{}{}
+	jsonParser := json.NewDecoder(reader)
+
+	if err := jsonParser.Decode(&jsonObj); err != nil {
+		log.Fatal("Failed to decode package.json")
+	}
+
+	version = jsonObj["version"].(string)
 }
 
 func createRpmAndDeb() {
@@ -345,6 +346,7 @@ func runError(cmd string, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.TrimSpace(bs), nil
 }
 
