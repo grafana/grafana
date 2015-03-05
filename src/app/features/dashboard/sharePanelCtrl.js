@@ -88,7 +88,7 @@ function (angular, _, require, config) {
     return function(scope, elem) {
       require(['ZeroClipboard'], function(ZeroClipboard) {
         ZeroClipboard.config({
-          swfPath: config.appSubUrl + 'public/vendor/ZeroClipboard.swf'
+          swfPath: config.appSubUrl + '/public/vendor/ZeroClipboard.swf'
         });
         new ZeroClipboard(elem[0]);
       });
