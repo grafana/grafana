@@ -84,8 +84,8 @@ func addMonitorMigration(mg *Migrator) {
 	mg.AddMigration("drop table monitor_v1", NewDropTableMigration("monitor_v1"))
 
 	mg.AddMigration("reset monitor.namespace to namespace.slug", new(RawSqlMigration).
-		Sqlite("UPDATE monitor_test set namespace=namespace || '.'' || slug").
-		Mysql("UPDATE monitor_test set namespace=CONCAT(namespace, '.', slug)"))
+		Sqlite("UPDATE monitor set namespace=namespace || '.'' || slug").
+		Mysql("UPDATE monitor set namespace=CONCAT(namespace, '.', slug)"))
 
 	// ---------------------
 	// site -> endpoint changes
@@ -122,7 +122,7 @@ func addMonitorMigration(mg *Migrator) {
 	// copy data
 	mg.AddMigration("copy monitor v2 to v3", NewCopyTableDataMigration("monitor", "monitor_v2", map[string]string{
 		"id":              "id",
-		"site_id":         "endpoint_id",
+		"endpoint_id":     "site_id",
 		"org_id":          "org_id",
 		"namespace":       "namespace",
 		"monitor_type_id": "monitor_type_id",

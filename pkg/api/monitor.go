@@ -71,9 +71,6 @@ func AddMonitor(c *middleware.Context) {
 		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
 		return
 	}
-	if cmd.Namespace == "" {
-		cmd.Namespace = "network."
-	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add monitor", err)
