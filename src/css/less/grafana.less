@@ -257,5 +257,35 @@
 }
 
 .confirm-modal {
+  border: 1px solid @grafanaTargetFuncBackground;
   max-width: 500px;
+  background-color: @modalBackground;
+  text-align: center;
+
+  .modal-close {
+    float: right;
+    font-size: 140%;
+    padding: 10px;
+  }
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: @green;
+    padding-bottom: 20px;
+  }
+  .confirm-modal-title {
+    font-size: 18px;
+    color: @linkColor;
+    margin-bottom: 15px;
+  }
+  .confirm-modal-text {
+    font-size: 16px;
+    margin-bottom: 25px;
+  }
+  .confirm-modal-buttons {
+    margin-bottom: 35px;
+    button {
+      margin-right: 5px
+    }
+  }
 }

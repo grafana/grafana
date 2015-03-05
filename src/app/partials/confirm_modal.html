@@ -1,23 +1,45 @@
-<div class="modal-body gf-box gf-box-no-margin">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa {{icon}}"></i>
-			{{title}}
-		</div>
+<div class="modal-body">
+
+	<a class="modal-close" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</a>
+
+	<div class="confirm-modal-icon">
+		<i class="fa {{icon}}"></i>
 	</div>
 
-	<div class="gf-box-body" style="min-height: 0px;">
-		<p class="row-fluid text-center large">
-			{{text}}
-			<br>
-			<br>
-		</p>
-		<div class="row-fluid">
-		<span class="span4"></span>
-		<button type="button" class="btn btn-primary span2" ng-click="dismiss()">No</button>
-	  <button type="button" class="btn btn-danger span2" ng-click="onConfirm();dismiss();">Yes</button>
-		<span class="span4"></span>
-  </div>
+	<div class="confirm-modal-title">
+		{{title}}
+	</div>
+
+	<div class="confirm-modal-text">
+		{{text}}
+	</div>
+
+	<div class="confirm-modal-buttons">
+		<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
+		<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">Save &amp; Overwrite</button>
+	</div>
+
+	<!-- <div class="gf&#45;box&#45;header"> -->
+	<!-- 	<div class="gf&#45;box&#45;title"> -->
+	<!-- 		<i class="fa {{icon}}"></i> -->
+	<!-- 		{{title}} -->
+	<!-- 	</div> -->
+	<!-- </div> -->
+  <!--  -->
+	<!-- <div class="gf&#45;box&#45;body" style="min&#45;height: 0px;"> -->
+	<!-- 	<p class="row&#45;fluid text&#45;center large"> -->
+	<!-- 		{{text}} -->
+	<!-- 		<br> -->
+	<!-- 		<br> -->
+	<!-- 	</p> -->
+	<!-- 	<div class="row&#45;fluid"> -->
+	<!-- 	<span class="span4"></span> -->
+	<!-- 	<button type="button" class="btn btn&#45;primary span2" ng&#45;click="dismiss()">No</button> -->
+	<!--   <button type="button" class="btn btn&#45;danger span2" ng&#45;click="onConfirm();dismiss();">Yes</button> -->
+	<!-- 	<span class="span4"></span> -->
+  <!-- </div> -->
 
 </div>
 
