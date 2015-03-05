@@ -31,13 +31,6 @@ function (angular, $, config, _) {
       $scope.setupDashboard(dashboardData);
     };
 
-    $scope.registerWindowResizeEvent = function() {
-      angular.element(window).bind('resize', function() {
-        $timeout.cancel(resizeEventTimeout);
-        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
-      });
-    };
-
     $scope.setupDashboard = function(dashboardData) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
@@ -125,6 +118,16 @@ function (angular, $, config, _) {
       }
 
       $rootScope.$broadcast('render');
+    };
+
+    $scope.registerWindowResizeEvent = function() {
+      angular.element(window).bind('resize', function() {
+        $timeout.cancel(resizeEventTimeout);
+        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
+      });
+      $scope.$on('$destroy', function() {
+        angular.element(window).unbind('resize');
+      });
     };
 
   });

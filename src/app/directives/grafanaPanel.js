@@ -37,14 +37,6 @@ function (angular, $, config) {
           var getter = $parse(attr.type), panelType = getter($scope);
           var newScope = $scope.$new();
 
-          $scope.kbnJqUiDraggableOptions = {
-            revert: 'invalid',
-            helper: function() {
-              return $('<div style="width:200px;height:100px;background: rgba(100,100,100,0.50);"/>');
-            },
-            placeholder: 'keep'
-          };
-
           // compile the module and uncloack. We're done
           function loadModule($module) {
             $module.appendTo(elem);
