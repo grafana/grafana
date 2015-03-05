@@ -140,7 +140,7 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 		if err != nil {
 			return err
 		}
-		if len(monitorQuery.Result) < 1 {
+		if len(monitorQuery.Result) > 0 {
 			return m.ErrWithMonitorsDelete
 		}
 
