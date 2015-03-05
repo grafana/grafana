@@ -66,7 +66,6 @@ function (angular, kbn) {
           var label = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
                            attrs.text + tip + '</label>';
 
-
           var template = '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
                           '       ng-model="' + attrs.model + '"' + ngchange +
                           '       ng-checked="' + attrs.model + '"></input>' +
