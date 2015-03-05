@@ -374,10 +374,11 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (min && max && ticks) {
             var secPerTick = ((max - min) / ticks) / 1000;
 
+            console.log('secPerTick', secPerTick);
             if (secPerTick <= 45) {
               return "%H:%M:%S";
             }
-            if (secPerTick <= 3600) {
+            if (secPerTick <= 7200) {
               return "%H:%M";
             }
             if (secPerTick <= 80000) {
