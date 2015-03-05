@@ -13,6 +13,7 @@ require.config({
     text:                     '../vendor/require/text',
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
+    ZeroClipboard:            '../vendor/ZeroClipboard',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular/angular-route',
     'angular-sanitize':       '../vendor/angular/angular-sanitize',
@@ -54,6 +55,10 @@ require.config({
 
     crypto: {
       exports: 'Crypto'
+    },
+
+    ZeroClipboard: {
+      exports: 'ZeroClipboard'
     },
 
     angular: {

@@ -63,13 +63,21 @@ function (angular, kbn) {
         link: function(scope, elem, attrs) {
           var ngchange = attrs.change ? (' ng-change="' + attrs.change + '"') : '';
           var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
+          var label = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
+                           attrs.text + tip + '</label>';
 
-          var template = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
-                           attrs.text + tip + '</label>' +
-                          '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
+
+          var template = '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
                           '       ng-model="' + attrs.model + '"' + ngchange +
                           '       ng-checked="' + attrs.model + '"></input>' +
                           ' <label for="' + scope.$id + attrs.model + '" class="cr1"></label>';
+
+          if (attrs.position === "front") {
+            template = label + template;
+          } else {
+            template = template + label;
+          }
+
           elem.replaceWith($compile(angular.element(template))(scope));
         }
       };

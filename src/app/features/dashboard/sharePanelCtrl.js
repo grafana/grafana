@@ -1,8 +1,9 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  'require',
 ],
-function (angular, _) {
+function (angular, _, require) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -19,6 +20,7 @@ function (angular, _) {
 
       $scope.includeTemplateVars = true;
       $scope.buildUrl();
+
     };
 
     $scope.buildUrl = function() {
@@ -72,19 +74,21 @@ function (angular, _) {
 
       $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
       $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
+
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
-
-      $timeout(function() {
-        var input = $element.find('[data-share-panel-url]');
-        input.focus();
-        input.select();
-      }, 10);
-
     };
 
     $scope.init();
 
+  });
+
+  module.directive('clipboardButton',function() {
+    return function(scope, elem) {
+      require(['ZeroClipboard'], function(ZeroClipboard) {
+        new ZeroClipboard(elem[0]);
+      });
+    };
   });
 
 });
