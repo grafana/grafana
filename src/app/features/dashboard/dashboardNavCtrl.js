@@ -105,6 +105,8 @@ function (angular, _, moment) {
     $scope.deleteDashboard = function() {
       $scope.appEvent('confirm-modal', {
         title: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
+        icon: 'fa-trash',
+        yesText: 'Delete',
         onConfirm: function() {
           $scope.deleteDashboardConfirmed();
         }
