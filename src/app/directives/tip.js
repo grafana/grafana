@@ -55,4 +55,24 @@ function (angular, kbn) {
       };
     });
 
+  angular
+    .module('grafana.directives')
+    .directive('editorCheckbox', function($compile) {
+      return {
+        restrict: 'E',
+        link: function(scope, elem, attrs) {
+          var ngchange = attrs.change ? (' ng-change="' + attrs.change + '"') : '';
+          var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
+
+          var template = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
+                           attrs.text + tip + '</label>' +
+                          '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
+                          '       ng-model="' + attrs.model + '"' + ngchange +
+                          '       ng-checked="' + attrs.model + '"></input>' +
+                          ' <label for="' + scope.$id + attrs.model + '" class="cr1"></label>';
+          elem.replaceWith($compile(angular.element(template))(scope));
+        }
+      };
+    });
+
 });

@@ -131,10 +131,7 @@
         </li>
 
 				<li class="tight-form-item">
-					Disable downsampling&nbsp;
-					<input class="cr1" id="target.disableDownsampling" type="checkbox"
-					ng-model="target.disableDownsampling" ng-checked="target.disableDownsampling" ng-change="targetBlur()">
-					<label for="target.disableDownsampling" class="cr1"></label>
+					<editor-checkbox text="Disable downsampling" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
 				</li>
 
 			</ul>
@@ -198,17 +195,11 @@
 				</li>
 
 				<li class="tight-form-item" style="width: 86px">
-					Rate&nbsp;
-					<input class="cr1" id="target.shouldComputeRate" type="checkbox"
-					ng-model="target.shouldComputeRate" ng-checked="target.shouldComputeRate" ng-change="targetBlur()">
-					<label for="target.shouldComputeRate" class="cr1"></label>
+					<editor-checkbox text="Rate" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
 				</li>
 
         <li class="tight-form-item" ng-hide="!target.shouldComputeRate">
-					Counter&nbsp;
-					<input class="cr1" id="target.isCounter" type="checkbox"
-					ng-model="target.isCounter" ng-checked="target.isCounter" ng-change="targetBlur()">
-					<label for="target.isCounter" class="cr1"></label>
+					<editor-checkbox text="Counter" model="target.isCounter" change="targetBlur()"></editor-checkbox>
 				</li>
 
 				<li class="tight-form-item" ng-hide="!target.isCounter">
