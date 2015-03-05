@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
-        "unicode"
-        "strings"
+	"unicode"
 
-	"github.com/streadway/amqp"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/streadway/amqp"
 )
 
 var (

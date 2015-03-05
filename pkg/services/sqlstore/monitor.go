@@ -23,17 +23,15 @@ func init() {
 
 type MonitorWithLocationDTO struct {
 	Id            int64
-	SiteId        int64
+	EndpointId    int64
 	OrgId         int64
-	Name          string
+	Namespace     string
 	MonitorTypeId int64
 	LocationId    int64
 	Settings      []*m.MonitorSettingDTO
-	Slug          string
 	Frequency     int64
 	Enabled       bool
 	Offset        int64
-	Namespace     string
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -45,10 +43,10 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	}
 
 	sess.Cols("monitor_location.location_id", "monitor.id",
-		"monitor.org_id", "monitor.name", "monitor.slug",
+		"monitor.org_id", "monitor.namespace",
 		"monitor.monitor_type_id", "monitor.settings",
 		"monitor.frequency", "monitor.enabled", "monitor.offset",
-		"monitor.site_id", "monitor.namespace")
+		"monitor.endpoint_id")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -66,17 +64,15 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 
 	query.Result = &m.MonitorDTO{
 		Id:            result[0].Id,
-		SiteId:        result[0].SiteId,
+		EndpointId:    result[0].EndpointId,
 		OrgId:         result[0].OrgId,
-		Name:          result[0].Name,
-		Slug:          result[0].Slug,
+		Namespace:     result[0].Namespace,
 		MonitorTypeId: result[0].MonitorTypeId,
 		Locations:     monitorLocations,
 		Settings:      result[0].Settings,
 		Frequency:     result[0].Frequency,
 		Enabled:       result[0].Enabled,
 		Offset:        result[0].Offset,
-		Namespace:     result[0].Namespace,
 	}
 	//iterate through all of the results and build out our model.
 	for _, row := range result {
@@ -93,15 +89,15 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 		sess.Where("monitor.org_id=?", query.OrgId)
 	}
 	sess.Cols("monitor_location.location_id", "monitor.id",
-		"monitor.org_id", "monitor.name", "monitor.settings",
-		"monitor.monitor_type_id", "monitor.slug", "monitor.frequency",
-		"monitor.enabled", "monitor.offset", "monitor.site_id", "monitor.namespace")
+		"monitor.org_id", "monitor.namespace", "monitor.settings",
+		"monitor.monitor_type_id", "monitor.frequency",
+		"monitor.enabled", "monitor.offset", "monitor.endpoint_id")
 
-	if len(query.SiteId) > 0 {
-		if len(query.SiteId) > 1 {
-			sess.In("monitor.site_id", query.SiteId)
+	if len(query.EndpointId) > 0 {
+		if len(query.EndpointId) > 1 {
+			sess.In("monitor.endpoint_id", query.EndpointId)
 		} else {
-			sess.And("monitor.site_id=?", query.SiteId[0])
+			sess.And("monitor.endpoint_id=?", query.EndpointId[0])
 		}
 	}
 
@@ -115,20 +111,6 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			sess.In("ml.location_id", query.LocationId)
 		} else {
 			sess.And("ml.location_id=?", query.LocationId[0])
-		}
-	}
-	if len(query.Name) > 0 {
-		if len(query.Name) > 1 {
-			sess.In("monitor.name", query.Name)
-		} else {
-			sess.And("monitor.name=?", query.Name[0])
-		}
-	}
-	if len(query.Slug) > 0 {
-		if len(query.Slug) > 1 {
-			sess.In("monitor.slug", query.Slug)
-		} else {
-			sess.And("monitor.slug=?", query.Slug[0])
 		}
 	}
 	if len(query.MonitorTypeId) > 0 {
@@ -174,17 +156,15 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			var monitorLocations []int64
 			monitors[row.Id] = &m.MonitorDTO{
 				Id:            row.Id,
-				SiteId:        row.SiteId,
+				EndpointId:    row.EndpointId,
 				OrgId:         row.OrgId,
-				Name:          row.Name,
-				Slug:          row.Slug,
+				Namespace:     row.Namespace,
 				MonitorTypeId: row.MonitorTypeId,
 				Locations:     monitorLocations,
 				Settings:      row.Settings,
 				Frequency:     row.Frequency,
 				Enabled:       row.Enabled,
 				Offset:        row.Offset,
-				Namespace:     row.Namespace,
 			}
 		}
 
@@ -265,7 +245,7 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
 		q := m.GetMonitorByIdQuery{
-			Id:        cmd.Id,
+			Id:    cmd.Id,
 			OrgId: cmd.OrgId,
 		}
 		err := GetMonitorById(&q)
@@ -273,6 +253,14 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 			return err
 		}
 
+		endpointQuery := m.GetEndpointByIdQuery{
+			Id:    q.Result.EndpointId,
+			OrgId: cmd.OrgId,
+		}
+		err = GetEndpointById(&endpointQuery)
+		if err != nil {
+			return err
+		}
 		var rawSql = "DELETE FROM monitor WHERE id=? and org_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		if err != nil {
@@ -281,8 +269,11 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 		sess.publishAfterCommit(&events.MonitorRemoved{
 			Timestamp: time.Now(),
 			Id:        q.Result.Id,
-			Name:      q.Result.Name,
-			SiteId:    q.Result.SiteId,
+			Endpoint: events.EndpointPayload{
+				Id:    endpointQuery.Result.Id,
+				OrgId: endpointQuery.Result.OrgId,
+				Name:  endpointQuery.Result.Name,
+			},
 			OrgId:     q.Result.OrgId,
 			Locations: q.Result.Locations,
 		})
@@ -298,13 +289,21 @@ type locationList struct {
 func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 	return inTransaction2(func(sess *session) error {
-		//validate locations.
+		//validate Endpoint.
+		endpointQuery := m.GetEndpointByIdQuery{
+			Id:    cmd.EndpointId,
+			OrgId: cmd.OrgId,
+		}
+		err := GetEndpointById(&endpointQuery)
+		if err != nil {
+			return err
+		}
 
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
 		sess.Table("location")
 		sess.In("id", cmd.Locations).Where("org_id=? or public=1", cmd.OrgId)
 		sess.Cols("id")
-		err := sess.Find(&filtered_locations)
+		err = sess.Find(&filtered_locations)
 
 		if err != nil {
 			return err
@@ -358,10 +357,14 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			}
 		}
 
+		if cmd.Namespace == "" {
+			cmd.Namespace = fmt.Sprintf("network.%s", endpointQuery.Result.Name)
+		}
+
 		mon := &m.Monitor{
-			SiteId:        cmd.SiteId,
+			EndpointId:    cmd.EndpointId,
 			OrgId:         cmd.OrgId,
-			Name:          cmd.Name,
+			Namespace:     cmd.Namespace,
 			MonitorTypeId: cmd.MonitorTypeId,
 			Offset:        rand.Int63n(cmd.Frequency - 1),
 			Settings:      cmd.Settings,
@@ -369,10 +372,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Updated:       time.Now(),
 			Frequency:     cmd.Frequency,
 			Enabled:       cmd.Enabled,
-			Namespace:     cmd.Namespace,
 		}
-
-		mon.UpdateMonitorSlug()
 
 		if _, err := sess.Insert(mon); err != nil {
 			return err
@@ -394,33 +394,33 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
-			SiteId:        mon.SiteId,
+			EndpointId:    mon.EndpointId,
 			OrgId:         mon.OrgId,
-			Name:          mon.Name,
-			Slug:          mon.Slug,
+			Namespace:     mon.Namespace,
 			MonitorTypeId: mon.MonitorTypeId,
 			Locations:     cmd.Locations,
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
 			Offset:        mon.Offset,
-			Namespace:     mon.Namespace,
 		}
 		sess.publishAfterCommit(&events.MonitorCreated{
 			Timestamp: mon.Updated,
 			MonitorPayload: events.MonitorPayload{
-				Id:            mon.Id,
-				SiteId:        mon.SiteId,
+				Id: mon.Id,
+				Endpoint: events.EndpointPayload{
+					Id:    endpointQuery.Result.Id,
+					OrgId: endpointQuery.Result.OrgId,
+					Name:  endpointQuery.Result.Name,
+				},
 				OrgId:         mon.OrgId,
-				Name:          mon.Name,
-				Slug:          mon.Slug,
+				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
 				Locations:     cmd.Locations,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
-				Namespace:     mon.Namespace,
 			},
 		})
 		return nil
@@ -429,15 +429,30 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
-		q := m.GetMonitorByIdQuery{
-			Id:        cmd.Id,
+		//validate Endpoint.
+		endpointQuery := m.GetEndpointByIdQuery{
+			Id:    cmd.EndpointId,
 			OrgId: cmd.OrgId,
 		}
-		err := GetMonitorById(&q)
+		err := GetEndpointById(&endpointQuery)
+		if err != nil {
+			return err
+		}
+		currentEndpoint := endpointQuery.Result
+
+		q := m.GetMonitorByIdQuery{
+			Id:    cmd.Id,
+			OrgId: cmd.OrgId,
+		}
+		err = GetMonitorById(&q)
 		if err != nil {
 			return err
 		}
 		lastState := q.Result
+
+		if lastState.EndpointId != cmd.EndpointId {
+			return m.ErrorEndpointCantBeChanged
+		}
 
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.Locations))
@@ -500,17 +515,20 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			}
 		}
 
+		if cmd.Namespace == "" {
+			cmd.Namespace = fmt.Sprintf("network.%s", currentEndpoint.Name)
+		}
+
 		mon := &m.Monitor{
 			Id:            cmd.Id,
-			SiteId:        cmd.SiteId,
+			EndpointId:    cmd.EndpointId,
 			OrgId:         cmd.OrgId,
-			Name:          cmd.Name,
+			Namespace:     cmd.Namespace,
 			MonitorTypeId: cmd.MonitorTypeId,
 			Settings:      cmd.Settings,
 			Updated:       time.Now(),
 			Enabled:       cmd.Enabled,
 			Frequency:     cmd.Frequency,
-			Namespace:     cmd.Namespace,
 		}
 
 		//check if we need to update the time offset for when the monitor should run.
@@ -518,7 +536,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			mon.Offset = rand.Int63n(mon.Frequency - 1)
 		}
 
-		mon.UpdateMonitorSlug()
 		sess.UseBool("enabled")
 		if _, err = sess.Where("id=? and org_id=?", mon.Id, mon.OrgId).Update(mon); err != nil {
 			return err
@@ -540,34 +557,38 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
-				Id:            mon.Id,
-				SiteId:        mon.SiteId,
+				Id: mon.Id,
+				Endpoint: events.EndpointPayload{
+					Id:    currentEndpoint.Id,
+					OrgId: currentEndpoint.OrgId,
+					Name:  currentEndpoint.Name,
+				},
 				OrgId:         mon.OrgId,
-				Name:          mon.Name,
-				Slug:          mon.Slug,
+				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
 				Locations:     cmd.Locations,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
-				Namespace:     mon.Namespace,
 			},
 			Timestamp: mon.Updated,
 			Updated:   mon.Updated,
 			LastState: &events.MonitorPayload{
-				Id:            lastState.Id,
-				SiteId:        lastState.SiteId,
+				Id: lastState.Id,
+				Endpoint: events.EndpointPayload{
+					Id:    currentEndpoint.Id,
+					OrgId: currentEndpoint.OrgId,
+					Name:  currentEndpoint.Name,
+				},
 				OrgId:         lastState.OrgId,
-				Name:          lastState.Name,
-				Slug:          lastState.Slug,
+				Namespace:     lastState.Namespace,
 				MonitorTypeId: lastState.MonitorTypeId,
 				Locations:     lastState.Locations,
 				Settings:      lastState.Settings,
 				Frequency:     lastState.Frequency,
 				Enabled:       lastState.Enabled,
 				Offset:        lastState.Offset,
-				Namespace:     lastState.Namespace,
 			},
 		})
 

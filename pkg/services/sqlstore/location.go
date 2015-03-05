@@ -1,11 +1,11 @@
 package sqlstore
 
 import (
-	"time"
-	"strconv"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"strconv"
+	"time"
 )
 
 func init() {
@@ -96,14 +96,14 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Country:   cmd.Country,
-			Region:    cmd.Region,
-			Provider:  cmd.Provider,
-			Public:    cmd.Public,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+			OrgId:    cmd.OrgId,
+			Name:     cmd.Name,
+			Country:  cmd.Country,
+			Region:   cmd.Region,
+			Provider: cmd.Provider,
+			Public:   cmd.Public,
+			Created:  time.Now(),
+			Updated:  time.Now(),
 		}
 		l.UpdateLocationSlug()
 		if _, err := sess.Insert(l); err != nil {
@@ -118,14 +118,14 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Location{
-			Id:        cmd.Id,
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Country:   cmd.Country,
-			Region:    cmd.Region,
-			Provider:  cmd.Provider,
-			Public:    cmd.Public,
-			Updated:   time.Now(),
+			Id:       cmd.Id,
+			OrgId:    cmd.OrgId,
+			Name:     cmd.Name,
+			Country:  cmd.Country,
+			Region:   cmd.Region,
+			Provider: cmd.Provider,
+			Public:   cmd.Public,
+			Updated:  time.Now(),
 		}
 		l.UpdateLocationSlug()
 		_, err := sess.Where("id=? and org_id=?", l.Id, l.OrgId).Update(l)

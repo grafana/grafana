@@ -1,10 +1,10 @@
 package api
 
 import (
-	"strings"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"strings"
 )
 
 func GetMonitorById(c *middleware.Context) {
@@ -67,12 +67,12 @@ func AddMonitor(c *middleware.Context) {
 	}
 
 	cmd.OrgId = c.OrgId
-	if (! c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public")) {
+	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
 		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
 		return
-	} 
+	}
 	if cmd.Namespace == "" {
-		cmd.Namespace = "network"
+		cmd.Namespace = "network."
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -92,14 +92,11 @@ func UpdateMonitor(c *middleware.Context) {
 	}
 
 	cmd.OrgId = c.OrgId
-	if (! c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public")) {
+	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
 		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
 		return
-	} 
-	if cmd.Namespace == "" {
-		cmd.Namespace = "network"
 	}
-	
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update monitor", err)

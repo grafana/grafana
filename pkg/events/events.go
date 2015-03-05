@@ -77,7 +77,3 @@ type UserUpdated struct {
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
 }
-
-
-
-

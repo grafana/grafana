@@ -16,11 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
-	_ "github.com/grafana/grafana/pkg/services/raintankdashbuilder"
-	"github.com/grafana/grafana/pkg/services/elasticstore"
 )
 
 var Web = cli.Command{
@@ -78,7 +77,7 @@ func runWeb(c *cli.Context) {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	elasticstore.Init()
-	
+
 	var err error
 	m := newMacaron()
 	api.Register(m)

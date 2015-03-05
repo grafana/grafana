@@ -12,40 +12,40 @@ func init() {
 
 func GetEventsQuery(query *m.GetEventsQuery) error {
 	query.Result = make([]map[string]interface{}, 0)
-	esQuery := map[string]interface{} {
-		"query": map[string]interface{} {
+	esQuery := map[string]interface{}{
+		"query": map[string]interface{}{
 			"filtered": map[string]interface{}{
-	            "filter": map[string]interface{}{
-	                "and": []map[string]interface{} {
-	                    map[string]interface{}{ 
-	                        "range": map[string]interface{}{
-	                            "timestamp": map[string]interface{}{
-	                                "gte": query.Start,
-	                                "lte": query.End,
-	                            },
-	                        },
-	                    },
-	                    map[string]interface{}{
-	                        "term": map[string]int64{
-	                            "org_id": query.OrgId,
-	                        },
-	                    },
-	                },
-	            },
-	            "query": map[string]interface{} {
-		            "query_string": map[string]string {
-		            	"query": query.Query,
-		            },
-		        },
-	        },
-	    },
+				"filter": map[string]interface{}{
+					"and": []map[string]interface{}{
+						map[string]interface{}{
+							"range": map[string]interface{}{
+								"timestamp": map[string]interface{}{
+									"gte": query.Start,
+									"lte": query.End,
+								},
+							},
+						},
+						map[string]interface{}{
+							"term": map[string]int64{
+								"org_id": query.OrgId,
+							},
+						},
+					},
+				},
+				"query": map[string]interface{}{
+					"query_string": map[string]string{
+						"query": query.Query,
+					},
+				},
+			},
+		},
 	}
-	out, err  := es.Search("events", "", map[string]interface{}{"size": query.Size, "sort": "timestamp:desc"}, esQuery)
+	out, err := es.Search("events", "", map[string]interface{}{"size": query.Size, "sort": "timestamp:desc"}, esQuery)
 	if err != nil {
 		return err
 	}
 	for _, hit := range out.Hits.Hits {
-		var source  map[string]interface{}
+		var source map[string]interface{}
 		err = json.Unmarshal(*hit.Source, &source)
 		if err != nil {
 			return err

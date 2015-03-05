@@ -10,17 +10,15 @@ import (
 
 type MonitorPayload struct {
 	Id            int64                  `json:"id"`
-	SiteId        int64                  `json:"site_id"`
 	OrgId         int64                  `json:"org_id"`
-	Name          string                 `json:"name"`
-	Slug          string                 `json:"slug"`
+	Endpoint      EndpointPayload        `json:"endpoint"`
+	Namespace     string                 `json:"namespace"`
 	MonitorTypeId int64                  `json:"monitor_type_id"`
 	Locations     []int64                `json:"locations"`
 	Settings      []*m.MonitorSettingDTO `json:"settings"`
 	Frequency     int64                  `json:"frequency"`
 	Enabled       bool                   `json:"enabled"`
 	Offset        int64                  `json:"offset"`
-	Namespace     string                 `json:"namespace"`
 }
 
 type MonitorUpdated struct {
@@ -36,33 +34,31 @@ type MonitorCreated struct {
 }
 
 type MonitorRemoved struct {
-	Timestamp time.Time `json:"timestamp"`
-	Id        int64     `json:"id"`
-	Name      string    `json:"name"`
-	SiteId    int64     `json:"site_id"`
-	OrgId     int64     `json:"org_id"`
-	Locations []int64   `json:"locations"`
+	Timestamp time.Time       `json:"timestamp"`
+	Id        int64           `json:"id"`
+	Endpoint  EndpointPayload `json:"endpoint"`
+	OrgId     int64           `json:"org_id"`
+	Locations []int64         `json:"locations"`
 }
 
-type SitePayload struct {
-	Id        int64  `json:"id"`
-	OrgId     int64  `json:"org_id"`
-	Slug      string `json:"slug"`
-	Name      string `json:"name"`
+type EndpointPayload struct {
+	Id    int64  `json:"id"`
+	OrgId int64  `json:"org_id"`
+	Name  string `json:"name"`
 }
 
-type SiteUpdated struct {
-	SitePayload
-	Timestamp time.Time    `json:"timestamp"`
-	LastState *SitePayload `json:"last_state"`
+type EndpointUpdated struct {
+	EndpointPayload
+	Timestamp time.Time        `json:"timestamp"`
+	LastState *EndpointPayload `json:"last_state"`
 }
 
-type SiteCreated struct {
-	SitePayload
+type EndpointCreated struct {
+	EndpointPayload
 	Timestamp time.Time `json:"timestamp"`
 }
 
-type SiteRemoved struct {
+type EndpointRemoved struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`

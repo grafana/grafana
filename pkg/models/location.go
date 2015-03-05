@@ -14,44 +14,44 @@ var (
 )
 
 type Location struct {
-	Id        int64
-	OrgId     int64  `xorm:"not null unique(uix_location_for_account)"`
-	Slug      string `xorm:"not null unique(uix_location_for_account)"` // The account being given access to
-	Name      string
-	Country   string
-	Region    string
-	Provider  string
-	Public    bool
-	Created   time.Time
-	Updated   time.Time
+	Id       int64
+	OrgId    int64  `xorm:"not null unique(uix_location_for_account)"`
+	Slug     string `xorm:"not null unique(uix_location_for_account)"` // The account being given access to
+	Name     string
+	Country  string
+	Region   string
+	Provider string
+	Public   bool
+	Created  time.Time
+	Updated  time.Time
 }
 
 // ----------------------
 // COMMANDS
 
 type AddLocationCommand struct {
-	OrgId     int64  `json:"-"`
-	Name      string `json:"name"`
-	Country   string `json:"country"`
-	Region    string `json:"region"`
-	Provider  string `json:"provider"`
-	Public    bool   `json:"public"`
-	Result    *Location
+	OrgId    int64  `json:"-"`
+	Name     string `json:"name"`
+	Country  string `json:"country"`
+	Region   string `json:"region"`
+	Provider string `json:"provider"`
+	Public   bool   `json:"public"`
+	Result   *Location
 }
 
 type UpdateLocationCommand struct {
-	Id        int64  `json:"id" binding:"required"`
-	OrgId     int64  `json:"-"`
-	Name      string `json:"name"`
-	Country   string `json:"country"`
-	Region    string `json:"region"`
-	Provider  string `json:"provider"`
-	Public    bool   `json:"public"`
+	Id       int64  `json:"id" binding:"required"`
+	OrgId    int64  `json:"-"`
+	Name     string `json:"name"`
+	Country  string `json:"country"`
+	Region   string `json:"region"`
+	Provider string `json:"provider"`
+	Public   bool   `json:"public"`
 }
 
 type DeleteLocationCommand struct {
-	Id        int64 `json:"id" binding:"required"`
-	OrgId     int64 `json:"-"`
+	Id    int64 `json:"id" binding:"required"`
+	OrgId int64 `json:"-"`
 }
 
 // ---------------------
@@ -66,14 +66,14 @@ type GetLocationsQuery struct {
 	Provider   []string `form:"provider"`
 	Public     string   `form:"public"`
 
-	OrgId      int64
-	Result    []*Location
+	OrgId  int64
+	Result []*Location
 }
 
 type GetLocationByIdQuery struct {
-	Id        int64
-	OrgId     int64
-	Result    Location
+	Id     int64
+	OrgId  int64
+	Result Location
 }
 
 func (location *Location) UpdateLocationSlug() {

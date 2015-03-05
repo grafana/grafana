@@ -2,8 +2,6 @@ package models
 
 import (
 	"errors"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -12,6 +10,7 @@ var (
 	ErrMonitorNotFound         = errors.New("Monitor not found")
 	ErrMonitorLocationsInvalid = errors.New("Invalid Location specified for Monitor")
 	ErrMonitorSettingsInvalid  = errors.New("Invald variables used in Monitor Settings")
+	ErrorEndpointCantBeChanged = errors.New("A monitor's endpoint_id can not be changed.")
 )
 
 type MonitorType struct {
@@ -23,8 +22,8 @@ type MonitorType struct {
 
 type MonitorTypeSetting struct {
 	Id            int64
-	MonitorTypeId int64  `xorm:"not null unique(uix_MonitorTypeSettingVariable)"`
-	Variable      string `xorm:"not null unique(uix_MonitorTypeSettingVariable)"`
+	MonitorTypeId int64
+	Variable      string
 	Description   string
 	Required      bool
 	DataType      string
@@ -34,24 +33,22 @@ type MonitorTypeSetting struct {
 
 type Monitor struct {
 	Id            int64
-	OrgId         int64  `xorm:"not null unique(uix_OrgIdSlug)"`
-	Slug          string `xorm:"not null unique(uix_OrgIdSlug)"`
-	SiteId        int64
-	Name          string
+	OrgId         int64
+	EndpointId    int64
+	Namespace     string
 	MonitorTypeId int64
 	Offset        int64
 	Frequency     int64
 	Enabled       bool
 	Settings      []*MonitorSettingDTO
-	Namespace     string
 	Created       time.Time
 	Updated       time.Time
 }
 
 type MonitorLocation struct {
 	Id         int64
-	MonitorId  int64 `xorm:"not null unique(uix_MonitorLocation)"`
-	LocationId int64 `xorm:"not null unique(uix_MonitorLocation)"`
+	MonitorId  int64
+	LocationId int64
 }
 
 // ---------------
@@ -65,16 +62,14 @@ type MonitorSettingDTO struct {
 type MonitorDTO struct {
 	Id            int64                `json:"id"`
 	OrgId         int64                `json:"org_id"`
-	SiteId        int64                `json:"site_id"`
-	Name          string               `json:"name" binding:"required"`
-	Slug          string               `json:"slug"`
+	EndpointId    int64                `json:"endpoint_id"`
+	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"offset"`
-	Namespace     string               `json:"namespace"`
 }
 
 type MonitorTypeSettingDTO struct {
@@ -97,51 +92,47 @@ type MonitorTypeDTO struct {
 
 type AddMonitorCommand struct {
 	OrgId         int64                `json:"-"`
-	SiteId        int64                `json:"site_id" binding:"required"`
-	Name          string               `json:"name" binding:"required"`
+	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
+	Namespace     string               `json:"namespace"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"-"`
-	Namespace     string               `json:"-"`
 	Result        *MonitorDTO
 }
 
 type UpdateMonitorCommand struct {
 	Id            int64                `json:"id" binding:"required"`
-	SiteId        int64                `json:"site_id" binding:"required"`
+	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	OrgId         int64                `json:"-"`
-	Name          string               `json:"name" binding:"required"`
+	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
 	Offset        int64                `json:"-"`
-	Namespace     string               `json:"-"`
 }
 
 type DeleteMonitorCommand struct {
-	Id        int64 `json:"id" binding:"required"`
-	OrgId     int64 `json:"-"`
+	Id    int64 `json:"id" binding:"required"`
+	OrgId int64 `json:"-"`
 }
 
 // ---------------------
 // QUERIES
 
 type GetMonitorsQuery struct {
-	MonitorId       []int64  `form:"id"`
-	SiteId          []int64  `form:"site_id"`
-	Name            []string `form:"name"`
-	Slug            []string `form:"slug"`
-	MonitorTypeId   []int64  `form:"monitor_type_id"`
-	LocationId      []int64  `form:"location_id"`
-	Frequency       []int64  `form:"frequency"`
-	Enabled         string   `form:"enabled"`
-	Modulo          int64    `form:"modulo"`
-	ModuloOffset    int64    `form:"modulo_offset"`
+	MonitorId       []int64 `form:"id"`
+	EndpointId      []int64 `form:"endpoint_id"`
+	MonitorTypeId   []int64 `form:"monitor_type_id"`
+	LocationId      []int64 `form:"location_id"`
+	Frequency       []int64 `form:"frequency"`
+	Enabled         string  `form:"enabled"`
+	Modulo          int64   `form:"modulo"`
+	ModuloOffset    int64   `form:"modulo_offset"`
 	OrgId           int64
 	IsRaintankAdmin bool
 	Result          []*MonitorDTO
@@ -161,11 +152,4 @@ type GetMonitorTypesQuery struct {
 type GetMonitorTypeByIdQuery struct {
 	Id     int64
 	Result *MonitorTypeDTO
-}
-
-func (monitor *Monitor) UpdateMonitorSlug() {
-	name := strings.ToLower(monitor.Name)
-	re := regexp.MustCompile("[^\\w ]+")
-	re2 := regexp.MustCompile("\\s")
-	monitor.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
 }

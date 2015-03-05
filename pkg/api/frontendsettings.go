@@ -72,8 +72,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources["raintank"] = map[string]interface{}{
 		"type":      "graphite",
 		"grafanaDB": false,
-		"url": "/api/graphite",
-		"default": true,
+		"url":       "/api/graphite",
+		"default":   true,
 	}
 
 	jsonObj := map[string]interface{}{
@@ -88,8 +88,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"plugins": map[string]interface{}{
 			"dependencies": []string{"raintank/all"},
 			"panels": map[string]interface{}{
-				"raintankMonitorDescription": map[string]string{ "path": "../plugins/raintank/panels/raintankMonitorDescription", "name": "Raintank Monitor Description" },
-				"raintankEventsPanel": map[string]string{ "path": "../plugins/raintank/panels/raintankEventsPanel", "name": "Raintank Events" },
+				"raintankMonitorDescription": map[string]string{"path": "../plugins/raintank/panels/raintankMonitorDescription", "name": "Raintank Monitor Description"},
+				"raintankEventsPanel":        map[string]string{"path": "../plugins/raintank/panels/raintankEventsPanel", "name": "Raintank Events"},
 			},
 		},
 	}

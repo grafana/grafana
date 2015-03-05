@@ -17,7 +17,7 @@ func AddMigrations(mg *Migrator) {
 	addApiKeyMigrations(mg)
 	addLocationMigration(mg)
 	addMonitorMigration(mg)
-	addSiteMigration(mg)
+	addEndpointMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

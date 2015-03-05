@@ -1,24 +1,24 @@
-package sitediscovery
+package endpointdiscovery
 
 import (
 	"errors"
-	"net"
 	"fmt"
-	"strings"
-	"net/http"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"net"
+	"net/http"
+	"strings"
 )
 
 func init() {
-	bus.AddHandler("site", DiscoverSite)
+	bus.AddHandler("endpoint", DiscoverEndpoint)
 }
 
-func DiscoverSite(cmd *m.SiteDiscoveryCommand) error {
-	cmd.Result = &m.NewSiteDTO{Site: cmd.Site}
+func DiscoverEndpoint(cmd *m.EndpointDiscoveryCommand) error {
+	cmd.Result = &m.NewEndpointDTO{Endpoint: cmd.Endpoint}
 	monitors := make([]*m.SuggestedMonitor, 0)
 
-	domain, err := getHostName(cmd.Site.Name)
+	domain, err := getHostName(cmd.Endpoint.Name)
 	if err != nil {
 		return err
 	}
@@ -29,14 +29,14 @@ func DiscoverSite(cmd *m.SiteDiscoveryCommand) error {
 	} else {
 		monitors = append(monitors, pingMonitor)
 	}
-	
+
 	httpMonitor, err := DiscoverHttp(domain)
 	if err != nil {
 		fmt.Println("failed to discover HTTP", err)
 	} else {
 		monitors = append(monitors, httpMonitor)
 	}
-	
+
 	httpsMonitor, err := DiscoverHttps(domain)
 	if err != nil {
 		fmt.Println("failed to discover HTTPS", err)
@@ -63,7 +63,7 @@ func DiscoverPing(domain string) (*m.SuggestedMonitor, error) {
 		m.MonitorSettingDTO{Variable: "hostname", Value: domain},
 	}
 
-	return &m.SuggestedMonitor{Name: domain, MonitorTypeId: 3, Settings: settings}, nil
+	return &m.SuggestedMonitor{MonitorTypeId: 3, Settings: settings}, nil
 }
 
 func DiscoverHttp(domain string) (*m.SuggestedMonitor, error) {
@@ -83,7 +83,7 @@ func DiscoverHttp(domain string) (*m.SuggestedMonitor, error) {
 		m.MonitorSettingDTO{Variable: "host", Value: requestUrl.Host},
 		m.MonitorSettingDTO{Variable: "path", Value: requestUrl.Path},
 	}
-	return &m.SuggestedMonitor{Name: domain, MonitorTypeId: 1, Settings: settings}, nil
+	return &m.SuggestedMonitor{MonitorTypeId: 1, Settings: settings}, nil
 }
 
 func DiscoverHttps(domain string) (*m.SuggestedMonitor, error) {
@@ -98,7 +98,7 @@ func DiscoverHttps(domain string) (*m.SuggestedMonitor, error) {
 		m.MonitorSettingDTO{Variable: "host", Value: requestUrl.Host},
 		m.MonitorSettingDTO{Variable: "path", Value: requestUrl.Path},
 	}
-	return &m.SuggestedMonitor{Name: domain, MonitorTypeId: 2, Settings: settings}, nil
+	return &m.SuggestedMonitor{MonitorTypeId: 2, Settings: settings}, nil
 }
 
 func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
@@ -118,13 +118,13 @@ func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
 			break
 		}
 	}
-		
+
 	settings := []m.MonitorSettingDTO{
 		m.MonitorSettingDTO{Variable: "name", Value: recordName},
 		m.MonitorSettingDTO{Variable: "type", Value: recordType},
 		m.MonitorSettingDTO{Variable: "server", Value: server},
 	}
-	return &m.SuggestedMonitor{Name: domain, MonitorTypeId: 4, Settings: settings}, nil
+	return &m.SuggestedMonitor{MonitorTypeId: 4, Settings: settings}, nil
 }
 
 func getHostName(domainName string) (string, error) {

@@ -26,7 +26,7 @@ func addLocationMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	mg.AddMigration("add unique index location.account_id_slug", NewAddIndexMigration(locationV1, locationV1.Indices[0]))
-	
+
 	// ---------------------
 	// account -> org changes
 	//-------  drop dashboard indexes ------------------
