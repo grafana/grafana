@@ -1,7 +1,7 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Network" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li ><a href="network/monitors">Monitors</a></li>
-		<li class="active"><a href="network/sites">Sites</a></li>
+		<li class="active"><a href="network/endpoints">Endpoints</a></li>
 		<li ><a href="network/locations">Locations</a></li>
 	</ul>
 </topnav>
@@ -25,23 +25,23 @@
 			
 
 				<div class="span8">
-					<div ng-if="sites.length === 0">
-						<em>No sites defined</em>
+					<div ng-if="endpoints.length === 0">
+						<em>No endpoints defined</em>
 					</div>
 					<table class="grafana-options-table">
-						<tr ng-repeat="site in sites |filter:search.query">
+						<tr ng-repeat="endpoint in endpoints |filter:search.query">
 							<td style="width:90%">
 								<i class="icon-hdd"></i> &nbsp;
-								name: {{site.name}}
+								name: {{endpoint.name}}
 							</td>
 							<td style="width: 1%">
-								<a ng-click="edit(site)" class="btn btn-success btn-mini">
+								<a ng-click="edit(endpoint)" class="btn btn-success btn-mini">
 									<i class="fa fa-edit"></i>
 									Edit
 								</a>
 							</td>
 							<td style="width: 1%">
-								<a ng-click="remove(site)" class="btn btn-danger btn-mini">
+								<a ng-click="remove(endpoint)" class="btn btn-danger btn-mini">
 									<i class="fa fa-remove"></i>
 								</a>
 							</td>
@@ -53,7 +53,7 @@
 			<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
 				<div class="editor-row">
 					<div class="editor-option">
-						<label class="small">Site name</label>
+						<label class="small">Endpoint name</label>
 						<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
 					</div>
 				</div>
@@ -65,10 +65,6 @@
 					<i class="fa fa-remove"></i>
 				</a>
 				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Name</label>
-						<input type="text" class="input-large" ng-model='suggested.name' placeholder="name" required></input>
-					</div>
 					<div class="editor-option">
 						<label class="small">Type</label>
 						<select class="input-medium" ng-model="suggested.monitor_type_id" ng-options="t.id as t.name for (id, t) in monitor_types" disabled="disabled"></select>

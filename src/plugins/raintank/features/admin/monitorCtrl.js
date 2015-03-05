@@ -11,8 +11,8 @@ function (angular, _) {
 
     var defaults = {
       name: '',
-      namespace: 'network',
-      site: null,
+      namespace: 'network.site',
+      endpoint_id: null,
       monitor_type_id: 1,
       locations: [],
       settings: [],
@@ -30,10 +30,10 @@ function (angular, _) {
 
       $scope.monitors = [];
       $scope.monitor_types = {};
-      $scope.sites = {};
+      $scope.endpoints = {};
       $scope.getMonitorTypes();
-      $scope.getSites();
-      $scope.getMonitors()
+      $scope.getEndpoints();
+      $scope.getMonitors();
      
       $scope.$watch('editor.index', function(newVal) {
         if (newVal !== 2) {
@@ -95,13 +95,13 @@ function (angular, _) {
         $scope.monitor_types = typesMap;
       });
     };
-    $scope.getSites = function() {
-      backendSrv.get('/api/sites').then(function(sites) {
-        var sitesMap = {};
-        _.forEach(sites, function(site) {
-          sitesMap[site.id] = site;
+    $scope.getEndpoints = function() {
+      backendSrv.get('/api/endpoints').then(function(endpoints) {
+        var endpointsMap = {};
+        _.forEach(endpoints, function(endpoint) {
+          endpointsMap[endpoint.id] = endpoint;
         });
-        $scope.sites = sitesMap;
+        $scope.endpoints = endpointsMap;
       });
     };
 
@@ -132,7 +132,9 @@ function (angular, _) {
 
     $scope.typeChanged = function() {
       $scope.current.settings = [];
-      console.log($scope.current);
+    }
+    $scope.endpointChanged = function() {
+      $scope.current.namespace = "network."+ $scope.endpoints[$scope.current.endpoint_id].name;
     }
 
     $scope.currentSettingByVariable = function(variable) {

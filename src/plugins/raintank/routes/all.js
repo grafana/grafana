@@ -15,9 +15,9 @@ function (angular, jquery, _, config) {
         templateUrl: 'plugins/raintank/features/admin/partials/locations.html',
         controller : 'LocationCtrl',
       })
-      .when('/network/sites', {
-        templateUrl: 'plugins/raintank/features/admin/partials/sites.html',
-        controller : 'SitesCtrl',
+      .when('/network/endpoints', {
+        templateUrl: 'plugins/raintank/features/admin/partials/endpoints.html',
+        controller : 'EndpointsCtrl',
       })
       .when('/network/monitors', {
         templateUrl: 'plugins/raintank/features/admin/partials/monitors.html',

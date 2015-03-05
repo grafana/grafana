@@ -1,7 +1,7 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Network" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li class="active"><a href="network/monitors">Monitors</a></li>
-		<li ><a href="network/sites">Sites</a></li>
+		<li ><a href="network/endpoints">Endpoints</a></li>
 		<li ><a href="network/locations">Locations</a></li>
 	</ul>
 </topnav>
@@ -29,11 +29,8 @@
 					</div>
 					<table class="grafana-options-table">
 						<tr ng-repeat="mon in monitors | filter:search.query">
-							<td style="width:1%">
-								{{mon.name}}
-							</td>
 							<td style="width:10%">
-								{{sites[mon.site_id].name}}
+								{{endpoints[mon.endpoint_id].name}}
 							</td>
 							<td style="width:50%">
 								{{monitor_types[mon.monitor_type_id].name}}
@@ -60,17 +57,13 @@
 			<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
 				<div class="editor-row">
 					<div class="editor-option">
-						<label class="small">Site</label>
-						<select class="input-medium" ng-model="current.site_id" ng-options="s.id as s.name for (id, s) in sites" required></select>
+						<label class="small">Endpoint</label>
+						<select class="input-medium" ng-model="current.endpoint_id" ng-options="s.id as s.name for (id, s) in endpoints" required ng-change="endpointChanged()"></select>
                     </div>
 
                 </div>
 
 				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Name</label>
-						<input type="text" class="input-large" ng-model='current.name' placeholder="name" required></input>
-					</div>
 					<div class="editor-option" ng-if="contextSrv.isGrafanaAdmin">
 						<label class="small">Namespace</label>
 						<input type="text" class="input-large" ng-model='current.namespace' placeholder="namespace" required></input>

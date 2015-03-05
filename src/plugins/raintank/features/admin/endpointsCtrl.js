@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SitesCtrl', function($scope, $http, backendSrv) {
+  module.controller('EndpointsCtrl', function($scope, $http, backendSrv) {
 
     var defaults = {
       name: '',
@@ -16,8 +16,8 @@ function (angular) {
       $scope.reset();
       $scope.editor = {index: 0};
       $scope.search = {query: ""};
-      $scope.sites = [];
-      $scope.getSites();
+      $scope.endpoints = [];
+      $scope.getEndpoints();
       $scope.getLocations();
       $scope.getMonitorTypes();
       $scope.$watch('editor.index', function(newVal) {
@@ -73,8 +73,8 @@ function (angular) {
       $scope.suggested_monitors = null;
     };
 
-    $scope.edit = function(site) {
-      $scope.current = site;
+    $scope.edit = function(endpoint) {
+      $scope.current = endpoint;
       $scope.currentIsNew = false;
       $scope.editor.index = 2;
     };
@@ -84,19 +84,19 @@ function (angular) {
       $scope.editor.index = 0;
     };
 
-    $scope.getSites = function() {
-      backendSrv.get('/api/sites').then(function(sites) {
-        $scope.sites = sites;
+    $scope.getEndpoints = function() {
+      backendSrv.get('/api/endpoints').then(function(endpoints) {
+        $scope.endpoints = endpoints;
       });
     };
-    $scope.remove = function(site) {
-      backendSrv.delete('/api/sites/' + site.id).then(function() {
-        $scope.getSites();
+    $scope.remove = function(endpoint) {
+      backendSrv.delete('/api/endpoints/' + endpoint.id).then(function() {
+        $scope.getEndpoints();
       });
     };
 
     $scope.update = function() {
-      backendSrv.post('/api/sites', $scope.current).then(function() {
+      backendSrv.post('/api/endpoints', $scope.current).then(function() {
         $scope.editor.index = 0;
         $scope.getLocations();
       });
@@ -107,9 +107,7 @@ function (angular) {
         locations.push(parseInt(loc));
       })
       var defaults = {
-        name: '',
-        namespace: 'network',
-        site_id: payload.site.id,
+        endpoint_id: payload.endpoint.id,
         monitor_type_id: 1,
         locations: locations,
         settings: [],
@@ -142,9 +140,9 @@ function (angular) {
         return;
       }
 
-      backendSrv.put('/api/sites', $scope.current)
+      backendSrv.put('/api/endpoints', $scope.current)
         .then(function(resp) {
-          $scope.getSites();
+          $scope.getEndpoints();
           $scope.editor.index = 3;
           $scope.suggested_monitors = $scope.parseSuggestions(resp);
         });
