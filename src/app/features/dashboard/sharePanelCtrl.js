@@ -2,8 +2,9 @@ define([
   'angular',
   'lodash',
   'require',
+  'config',
 ],
-function (angular, _, require) {
+function (angular, _, require, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -86,6 +87,9 @@ function (angular, _, require) {
   module.directive('clipboardButton',function() {
     return function(scope, elem) {
       require(['ZeroClipboard'], function(ZeroClipboard) {
+        ZeroClipboard.config({
+          swfPath: config.appSubUrl + 'public/vendor/ZeroClipboard.swf'
+        });
         new ZeroClipboard(elem[0]);
       });
     };
