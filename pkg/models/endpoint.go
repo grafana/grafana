@@ -8,6 +8,7 @@ import (
 // Typed errors
 var (
 	ErrEndpointNotFound = errors.New("Endpoint not found")
+	ErrWithMonitorsDelete = errors.New("Endpoint can't be deleted as it still has monitors")
 )
 
 type Endpoint struct {

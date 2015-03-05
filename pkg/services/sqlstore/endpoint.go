@@ -132,11 +132,23 @@ func UpdateEndpoint(cmd *m.UpdateEndpointCommand) error {
 
 func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 	return inTransaction2(func(sess *session) error {
+		monitorQuery := m.GetMonitorsQuery{
+			OrgId: cmd.OrgId,
+			EndpointId: []int64{cmd.Id},
+		}
+		err := GetMonitors(&monitorQuery)
+		if err != nil {
+			return err
+		}
+		if len(monitorQuery.Result) < 1 {
+			return m.ErrWithMonitorsDelete
+		}
+
 		q := m.GetEndpointByIdQuery{
 			Id:    cmd.Id,
 			OrgId: cmd.OrgId,
 		}
-		err := GetEndpointById(&q)
+		err = GetEndpointById(&q)
 		if err != nil {
 			return err
 		}
