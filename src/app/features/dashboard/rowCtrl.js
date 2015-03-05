@@ -49,8 +49,7 @@ function (angular, app, _, config) {
 
     $scope.delete_row = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Delete row',
-        text: 'Are you sure you want to delete this row?',
+        title: 'Are you sure you want to delete this row?',
         onConfirm: function() {
           $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
         }
@@ -82,8 +81,7 @@ function (angular, app, _, config) {
 
     $scope.remove_panel_from_row = function(row, panel) {
       $scope.appEvent('confirm-modal', {
-        title: 'Remove panel',
-        text: 'Are you sure you want to remove this panel?',
+        title: 'Are you sure you want to remove this panel?',
         onConfirm: function() {
           row.panels = _.without(row.panels, panel);
         }

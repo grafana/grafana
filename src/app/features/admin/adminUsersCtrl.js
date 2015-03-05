@@ -20,8 +20,7 @@ function (angular) {
 
     $scope.deleteUser = function(user) {
       $scope.appEvent('confirm-modal', {
-        title: 'Delete user',
-        text: 'Are you sure you want to delete user: ' + user.login,
+        title: 'Do you want to delete ' + user.login + '?',
         onConfirm: function() {
           backendSrv.delete('/api/admin/users/' + user.id).then(function() {
             $scope.getUsers();

@@ -17,29 +17,9 @@
 	</div>
 
 	<div class="confirm-modal-buttons">
-		<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
-		<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">Save &amp; Overwrite</button>
+		<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
+		<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">{{yesText}}</button>
 	</div>
-
-	<!-- <div class="gf&#45;box&#45;header"> -->
-	<!-- 	<div class="gf&#45;box&#45;title"> -->
-	<!-- 		<i class="fa {{icon}}"></i> -->
-	<!-- 		{{title}} -->
-	<!-- 	</div> -->
-	<!-- </div> -->
-  <!--  -->
-	<!-- <div class="gf&#45;box&#45;body" style="min&#45;height: 0px;"> -->
-	<!-- 	<p class="row&#45;fluid text&#45;center large"> -->
-	<!-- 		{{text}} -->
-	<!-- 		<br> -->
-	<!-- 		<br> -->
-	<!-- 	</p> -->
-	<!-- 	<div class="row&#45;fluid"> -->
-	<!-- 	<span class="span4"></span> -->
-	<!-- 	<button type="button" class="btn btn&#45;primary span2" ng&#45;click="dismiss()">No</button> -->
-	<!--   <button type="button" class="btn btn&#45;danger span2" ng&#45;click="onConfirm();dismiss();">Yes</button> -->
-	<!-- 	<span class="span4"></span> -->
-  <!-- </div> -->
 
 </div>
 

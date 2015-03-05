@@ -78,7 +78,8 @@ function (angular, _, moment) {
 
         $scope.appEvent('confirm-modal', {
           title: 'Someone else has updated this dashboard!',
-          text: "Do you STILL want to save?",
+          text: "Would you still like to save this dashboard?",
+          yesText: "Save & Overwrite",
           icon: "fa-warning",
           onConfirm: function() {
             $scope.saveDashboard({overwrite: true});
@@ -91,7 +92,8 @@ function (angular, _, moment) {
 
         $scope.appEvent('confirm-modal', {
           title: 'Another dashboard with the same name exists',
-          text: "Do you STILL want to save and ovewrite it?",
+          text: "Would you still like to save this dashboard?",
+          yesText: "Save & Overwrite",
           icon: "fa-warning",
           onConfirm: function() {
             $scope.saveDashboard({overwrite: true});
@@ -102,8 +104,7 @@ function (angular, _, moment) {
 
     $scope.deleteDashboard = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Delete dashboard',
-        text: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
+        title: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
         onConfirm: function() {
           $scope.deleteDashboardConfirmed();
         }
