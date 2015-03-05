@@ -19,12 +19,12 @@ type MonitorPayload struct {
 	Frequency     int64                  `json:"frequency"`
 	Enabled       bool                   `json:"enabled"`
 	Offset        int64                  `json:"offset"`
+	Updated       time.Time       `json:"updated"`
 }
 
 type MonitorUpdated struct {
 	MonitorPayload
 	Timestamp time.Time       `json:"timestamp"`
-	Updated   time.Time       `json:"updated"`
 	LastState *MonitorPayload `json:"last_state"`
 }
 

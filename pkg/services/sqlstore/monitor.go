@@ -32,6 +32,7 @@ type MonitorWithLocationDTO struct {
 	Frequency     int64
 	Enabled       bool
 	Offset        int64
+	Updated       time.Time
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -46,7 +47,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		"monitor.org_id", "monitor.namespace",
 		"monitor.monitor_type_id", "monitor.settings",
 		"monitor.frequency", "monitor.enabled", "monitor.offset",
-		"monitor.endpoint_id")
+		"monitor.endpoint_id, monitor.updated")
 
 	//store the results into an array of maps.
 	result := make([]*MonitorWithLocationDTO, 0)
@@ -73,6 +74,7 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		Frequency:     result[0].Frequency,
 		Enabled:       result[0].Enabled,
 		Offset:        result[0].Offset,
+		Updated:       result[0].Updated,
 	}
 	//iterate through all of the results and build out our model.
 	for _, row := range result {
@@ -91,7 +93,8 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess.Cols("monitor_location.location_id", "monitor.id",
 		"monitor.org_id", "monitor.namespace", "monitor.settings",
 		"monitor.monitor_type_id", "monitor.frequency",
-		"monitor.enabled", "monitor.offset", "monitor.endpoint_id")
+		"monitor.enabled", "monitor.offset", "monitor.endpoint_id",
+		"monitor.updated")
 
 	if len(query.EndpointId) > 0 {
 		if len(query.EndpointId) > 1 {
@@ -165,6 +168,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 				Frequency:     row.Frequency,
 				Enabled:       row.Enabled,
 				Offset:        row.Offset,
+				Updated:       row.Updated,
 			}
 		}
 
@@ -403,6 +407,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
 			Offset:        mon.Offset,
+			Updated:       mon.Updated,
 		}
 		sess.publishAfterCommit(&events.MonitorCreated{
 			Timestamp: mon.Updated,
@@ -421,6 +426,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
+				Updated:       mon.Updated,
 			},
 		})
 		return nil
@@ -571,9 +577,9 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
 				Offset:        mon.Offset,
+				Updated:       mon.Updated,
 			},
 			Timestamp: mon.Updated,
-			Updated:   mon.Updated,
 			LastState: &events.MonitorPayload{
 				Id: lastState.Id,
 				Endpoint: events.EndpointPayload{
@@ -589,6 +595,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Frequency:     lastState.Frequency,
 				Enabled:       lastState.Enabled,
 				Offset:        lastState.Offset,
+				Updated:       lastState.Updated,
 			},
 		})
 
