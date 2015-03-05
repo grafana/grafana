@@ -129,10 +129,10 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
       return panelHelper.issueMetricQuery($scope, datasource)
-        .then($scope.dataHandler)
-        .then(null, function() {
+        .then($scope.dataHandler, function(err) {
           $scope.seriesList = [];
           $scope.render([]);
+          throw err;
         });
     };
 
