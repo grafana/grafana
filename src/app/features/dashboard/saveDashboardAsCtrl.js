@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CloneDashboardCtrl', function($scope, backendSrv, $location) {
+  module.controller('SaveDashboardAsCtrl', function($scope, backendSrv, $location) {
 
     $scope.init = function() {
       $scope.clone.id = null;

@@ -120,12 +120,12 @@ function (angular, _, moment) {
       });
     };
 
-    $scope.cloneDashboard = function() {
+    $scope.saveDashboardAs = function() {
       var newScope = $rootScope.$new();
       newScope.clone = angular.copy($scope.dashboard);
 
       $scope.appEvent('show-modal', {
-        src: './app/features/dashboard/partials/cloneDashboard.html',
+        src: './app/features/dashboard/partials/saveDashboardAs.html',
         scope: newScope,
       });
     };
