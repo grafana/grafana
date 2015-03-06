@@ -17,8 +17,10 @@ function (angular) {
     $scope.saveClone = function() {
       backendSrv.saveDashboard($scope.clone)
         .then(function(result) {
-          $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + result.title]);
-          $location.url(result.url);
+          $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + $scope.clone.title]);
+
+          $location.url('/dashboard/db/' + result.slug);
+
           $scope.appEvent('dashboard-saved', $scope.clone);
           $scope.dismiss();
         });
