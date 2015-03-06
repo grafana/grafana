@@ -43,6 +43,7 @@ func main() {
 		cmd.ListOrgs,
 		cmd.CreateOrg,
 		cmd.DeleteOrg,
+		cmd.ExportDashboard,
 		cmd.ImportDashboard,
 		cmd.ListDataSources,
 		cmd.CreateDataSource,
