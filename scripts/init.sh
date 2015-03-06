@@ -1,5 +1,11 @@
 #! /usr/bin/env bash
 
+# chkconfig: 2345 80 05
+# description: Grafana web server & backend
+# processname: grafana
+# config: /etc/grafana/grafana.ini
+# pidfile: /var/run/grafana.pid
+
 ### BEGIN INIT INFO
 # Provides:          grafana
 # Required-Start:    $all
