@@ -1,0 +1,67 @@
+<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+
+</topnav>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<span>Endpoints</span>
+	<div style="float: right;">
+		<a  class="btn btn-success" href="endpoints/new">New Endpoint</a>
+	</div>
+</div>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div class="editor-row">
+		<div class="editor-option">
+			<label class="small">Filter by:</label>
+			<select class="input-medium" ng-model="endpoint_filter" ng-options="field for field in ['All Endpoints']">
+			</select>
+			<select class="input-medium" ng-model="location_filter" ng-options="l.id as l.name for (id, l) in locations">
+				<option value="" label="All Location Tags">All Location Tags</option>
+			</select>
+		</div>
+		<div class="editor-option" style="float: right;">
+			<label class="small">Sort By:</label>
+			<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['Endpoint']">
+			</select>
+		</div>
+	</div>
+</div>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div ng-if="endpoints.length === 0">
+		<em>No endpoints defined</em>
+	</div>
+	<div class="gf-box" ng-repeat="endpoint in endpoints | orderBy:sort_field">
+		<div class="gf-box-header" style="overflow: visible; padding:5px;">
+			<span style="margin: 10px;">{{endpoint.name}}</span>
+			<div class="dropdown" style="float: right;">
+				<a data-toggle="dropdown">
+					<i class="fa fa-fw fa-ellipsis-v"></i>
+				</a>
+				<ul class="dropdown-menu" role="menu">
+					<li>
+						<a href="endpoints/{{endpoint.id}}/summary">
+							View
+						</a>
+					</li>
+					<li>
+						<a href="endpoints/{{endpoint.id}}/config">
+							Edit
+						</a>
+					</li>
+					<li>
+						<a ng-click="remove(endpoint)">
+							Delete
+						</a>
+					</li>
+				</ul>
+			</div>
+			<div style="float:right;">
+				<span class="tag label label-tag">Tags</span>
+			</div>
+		</div>
+		<div class="gf-box-body" style="min-height: 50px; padding: 5px;">
+			<div style="border: 1px solid white; display: inline-block; width: 190px; height: 70px; padding:5px;">Panel</div>
+			<div style="border: 1px solid white; display: inline-block; width: 190px; height: 70px; padding:5px;">Panel</div>
+			<div style="border: 1px solid white; display: inline-block; width: 190px; height: 70px; padding:5px;">Panel</div>
+			<div style="border: 1px solid white; display: inline-block; width: 228px; height: 70px; padding:5px;">Panel</div>
+		</div>
+	</div>
+</div>

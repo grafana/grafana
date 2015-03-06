@@ -22,9 +22,14 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/"),
       });
       $scope.mainLinks.push({
-        text: "Network", 
+        text: "Endpoints", 
         icon: "fa fa-fw fa-cloud",
-        href: $scope.getUrl("/network/monitors"),
+        href: $scope.getUrl("/endpoints"),
+      });
+      $scope.mainLinks.push({
+        text: "Locations", 
+        icon: "fa fa-fw fa-globe",
+        href: $scope.getUrl("/locations"),
       });
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({

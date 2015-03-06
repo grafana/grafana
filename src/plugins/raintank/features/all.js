@@ -1,5 +1,7 @@
 define([
-  './admin/locationCtrl',
-  './admin/monitorCtrl',
-  './admin/endpointsCtrl',
+  './locationCtrl',
+  './monitorCtrl',
+  './endpointsCtrl',
+  './endpointConfCtrl',
+  './endpointViewCtrl',
 ], function () {});

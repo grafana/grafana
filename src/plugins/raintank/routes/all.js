@@ -11,18 +11,26 @@ function (angular, jquery, _, config) {
 
   module.config(function($routeProvider) {
     $routeProvider
-      .when('/network/locations', {
-        templateUrl: 'plugins/raintank/features/admin/partials/locations.html',
+      .when('/locations', {
+        templateUrl: 'plugins/raintank/features/partials/locations.html',
         controller : 'LocationCtrl',
       })
-      .when('/network/endpoints', {
-        templateUrl: 'plugins/raintank/features/admin/partials/endpoints.html',
+      .when('/endpoints', {
+        templateUrl: 'plugins/raintank/features/partials/endpoints.html',
         controller : 'EndpointsCtrl',
       })
-      .when('/network/monitors', {
-        templateUrl: 'plugins/raintank/features/admin/partials/monitors.html',
-        controller : 'MonitorCtrl',
-      });
+      .when('/endpoints/new', {
+        templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',
+        controller : 'EndpointConfCtrl',
+      })
+      .when('/endpoints/view/:id', {
+        templateUrl: 'plugins/raintank/features/partials/endpoints_view.html',
+        controller : 'EndpointViewCtrl',
+      })
+      .when('/endpoints/edit/:id', {
+        templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',
+        controller : 'EndpointConfCtrl',
+      })
   });
 });
  

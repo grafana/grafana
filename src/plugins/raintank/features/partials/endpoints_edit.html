@@ -1,0 +1,72 @@
+<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li class="active" ng-hide="endpoint.id"><a href="endpoints/new">New</a></li>
+		<li class="active" ng-show="endpoint.id"><a href="endpoints/edit/:id">Edit</a></li>
+	</ul>
+</topnav>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<form name="endpointForm">
+		<div class="gf-box">
+			<div class="gf-box-header">
+				<div style="padding:10px;">General Settings</div>
+			</div>
+			<div class="gf-box-body" style="min-height: 50px">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Site Name</label>
+						<input type="text" class="input-medium" ng-model="endpoint.name" required></input>
+					</div>
+				</div>
+				<div class="editor-row" ng-show="endpoint.id">
+					<button type="submit" class="btn btn-success" ng-click="updateEndpoint(endpoint)">Update Settings</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="gf-box" ng-repeat="monitor_type in monitor_types">
+			<div class="gf-box-header">
+				<div style="padding:10px;">{{monitor_type.name}}</div>
+			</div>
+			<div class="gf-box-body">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Enabled</label>
+						<input type="checkbox" class="input-xxlarge" ng-model="checks[monitor_type.id].enabled" required></input>
+					</div>
+				</div>
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Locations</label>
+						<select class="input-medium" ng-model="checks[monitor_type.id].locationGroup" ng-options="l for l in locationGroups"></select>
+					</div>
+					<div class="editor-option">
+						<label class="small">Frequency</label>
+						Every <select class="input-small" ng-model="checks[monitor_type.id].frequency" ng-options="f for f in [10, 30, 60, 120]"></select> seconds
+					</div>
+				</div>
+				<div class="editor-row">
+					<div class="editor-option" ng-repeat="setting in monitor_type.settings | filter:{required: 'true'}">
+						<label class="small">{{setting.description}}</label>
+						<raintank-setting definition="setting" target="currentSettingByVariable(checks[monitor_type.id], setting.variable)">
+					</div>
+				</div>
+				<div class="editor-row">
+					<div class="editor-option" ng-repeat="setting in monitor_type.settings | filter:{required: 'false'}">
+						<label class="small">{{setting.description}}</label>
+						<raintank-setting definition="setting" target="currentSettingByVariable(checks[monitor_type.id], setting.variable)">
+					</div>
+				</div>
+				<div class="editor-row" ng-show="endpoint.id">
+					<button type="submit" class="btn btn-success" ng-click="updateCheck(checks[monitor_type.id])">Update Latency Check</button>
+				</div>
+			</div>
+		</div>
+		<div class="dashboard-editor-footer" style="margin-top: 20px" ng-hide="endpoint.id">
+			<button type="submit" class="btn btn-info" ng-click="cancel()">Cancel</button>
+			<button type="submit" class="btn btn-success" ng-click="add()">Add</button>
+		</div>
+		
+	</form>
+</div>
+
+			
