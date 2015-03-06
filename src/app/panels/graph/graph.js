@@ -197,6 +197,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               hoverable: true,
               color: '#c8c8c8',
               margin: { left: 0, right: 0 },
+              markings: panel.grid.markings
             },
             selection: {
               mode: "x",
@@ -237,7 +238,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               console.log('flotcharts error', e);
             }
           }
-
           if (shouldDelayDraw(panel)) {
             // temp fix for legends on the side, need to render twice to get dimensions right
             callPlot();
@@ -453,13 +453,21 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         new GraphTooltip(elem, dashboard, scope, function() {
           return sortedSeries;
         });
-
         elem.bind("plotselected", function (event, ranges) {
+                var colors = {
+                ok: "#003300",
+                warn:"#B26B00",
+                crit: "#880000",
+              }
           scope.$apply(function() {
-            timeSrv.setTime({
+            if (ranges.mark ) {
+              scope.panel.grid.markings.push({xaxis: { from: ranges.xaxis.from, to:ranges.xaxis.to }, color: colors[ranges.mark]});
+              scope.$broadcast("render");
+            } else {            timeSrv.setTime({
               from  : moment.utc(ranges.xaxis.from).toDate(),
               to    : moment.utc(ranges.xaxis.to).toDate(),
             });
+          }
           });
         });
       }

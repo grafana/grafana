@@ -14,7 +14,10 @@ function (angular, $, _) {
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
             '<span class="panel-links-icon"></span>' +
             '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
-          '</span>';
+          '</span>' +
+            '<div id="panel-title-mark-ok" style="background-color:#003300;">mark-OK</div>' +
+            '<div id="panel-title-mark-warn" style="background-color:#B26B00;">mark-WARN</div>' +
+            '<div id="panel-title-mark-crit" style="background-color:#880000;">mark-CRIT</div>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';

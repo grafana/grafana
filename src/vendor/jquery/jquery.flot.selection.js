@@ -143,10 +143,31 @@ The plugin allso adds the following methods to the plot object:
             // no more dragging
             selection.active = false;
             updateSelection(e);
+            function landedOn(ev, el) {
+                boundL = el.offset().left;
+                boundR = el.offset().left + el[0].offsetWidth;
+                boundT = el.offset().top;
+                boundB = el.offset().top + el[0].offsetHeight;
 
-            if (selectionIsSane())
-                triggerSelectedEvent();
-            else {
+                if (e.pageX >= boundL && e.pageX <= boundR && e.pageY >= boundT && e.pageY <= boundB) {
+                    return true;
+                }
+                return false;
+            }
+            // TODO: the coordinates are the ones from the actual mouseup, not from
+            // the on-graph selected area, which stops updating
+            // when you leave the graph. this difference can be confusing.
+            if (selectionIsSane()) {
+                mark = 0;
+                if (landedOn(e, $("#panel-title-mark-ok"))) {
+                    mark = "ok";
+                } else if (landedOn(e, $("#panel-title-mark-warn"))) {
+                    mark = "warn";
+                }else if (landedOn(e, $("#panel-title-mark-crit"))) {
+                    mark = "crit";
+                }
+                 triggerSelectedEvent(mark);
+            } else {
                 // this counts as a clear
                 plot.getPlaceholder().trigger("plotunselected", [ ]);
                 plot.getPlaceholder().trigger("plotselecting", [ null ]);
@@ -171,11 +192,11 @@ The plugin allso adds the following methods to the plot object:
             return r;
         }
 
-        function triggerSelectedEvent() {
+        function triggerSelectedEvent(mark) {
             var r = getSelection();
-
+            if(mark)
+                r.mark = mark;
             plot.getPlaceholder().trigger("plotselected", [ r ]);
-
             // backwards-compat stuff, to be removed in future
             if (r.xaxis && r.yaxis)
                 plot.getPlaceholder().trigger("selected", [ { x1: r.xaxis.from, y1: r.yaxis.from, x2: r.xaxis.to, y2: r.yaxis.to } ]);
