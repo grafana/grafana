@@ -5,7 +5,9 @@ machine:
 dependencies:
   override:
     - go get github.com/tools/godep
+    - npm install
 
 test:
   override:
-    - godep test -v ./pkg/...
+    - godep go test -v ./pkg/...
+    - ./node_modules/grunt-cli/bin/grunt test
