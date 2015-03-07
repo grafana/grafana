@@ -1,9 +1,16 @@
 machine:
   services:
     - docker
+  environment:
+    GOPATH: "/home/ubuntu/.go_workspace"
+    ORG_PATH: "github.com/grafana"
+    REPO_PATH: "${ORG_PATH}/grafana"
 
 dependencies:
   override:
+    - rm -rf ${GOPATH}/src/${REPO_PATH}
+    - mkdir -p ${GOPATH}/src/${ORG_PATH}
+    - cp -r ../grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
     - npm install
 
