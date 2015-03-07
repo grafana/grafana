@@ -21,9 +21,8 @@ dependencies:
 
 test:
   override:
-    - echo "test"
-    # - godep go test -v ./pkg/...
-    # - ./node_modules/grunt-cli/bin/grunt test
+     - godep go test -v ./pkg/...
+     - ./node_modules/grunt-cli/bin/grunt test
 
 deployment:
   develop:
