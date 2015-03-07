@@ -2,10 +2,10 @@ machine:
   services:
     - docker
 
-build:
+dependencies:
   override:
-    - go run build.go build
+    - go get github.com/tools/godep
 
 test:
   override:
-    - go test -v ./pkg/...
+    - godep test -v ./pkg/...
