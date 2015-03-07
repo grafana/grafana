@@ -1,10 +1,13 @@
 #!/bin/bash
 
-docker kill gfbuild
-docker rm gfbuild
+docker info && docker version
+mkdir -p ~/docker
 
-docker build --tag "grafana/buildcontainer" docker/buildcontainer
+# cache some Docker images to make builds faster
+if [[ -e ~/docker/centos.tar ]]; then
+  docker load -i ~/docker/centos.tar;
+else
+  docker build --tag "grafana/buildcontainer" docker/buildcontainer
+fi
 
-docker run -i -t \
-  -v /home/ubuntu/.go_workspace:/go \
-  --name gfbuild grafana/buildcontainer
+
