@@ -73,8 +73,8 @@ func main() {
 
 		case "package":
 			//verifyGitRepoIsClean()
-			grunt("release", "--pkgVer="+version)
 			createRpmAndDeb()
+			grunt("release", "--pkgVer="+version)
 
 		case "latest":
 			makeLatestDistCopies()

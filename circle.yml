@@ -30,3 +30,4 @@ deployment:
     owner: grafana
     commands:
       - ./docker/buildcontainer/run_circle.sh
+      - go run build.go package latest
