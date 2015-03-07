@@ -1,0 +1,6 @@
+machine:
+  services:
+    - docker
+
+test:
+  - go test -v ./pkg/...

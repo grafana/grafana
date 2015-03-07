@@ -64,9 +64,8 @@ func main() {
 
 		case "build":
 			pkg := "."
-			var tags []string
 			clean()
-			build(pkg, tags)
+			build(pkg, []string{})
 
 		case "test":
 			test("./pkg/...")
