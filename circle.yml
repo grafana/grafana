@@ -21,8 +21,9 @@ test:
     # - ./node_modules/grunt-cli/bin/grunt test
 
 deployment:
-  branch: develop
-  owner: grafana
-  commands:
-    - cd ./docker/buildcontainer/
-    - ./build_circle.sh
+  develop:
+    branch: develop
+    owner: grafana
+    commands:
+      - cd ./docker/buildcontainer/
+      - ./build_circle.sh
