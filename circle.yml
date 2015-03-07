@@ -2,6 +2,10 @@ machine:
   services:
     - docker
 
+build:
+  override:
+    - go run build.go build
+
 test:
   override:
     - go test -v ./pkg/...
