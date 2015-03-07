@@ -16,5 +16,13 @@ dependencies:
 
 test:
   override:
-    - godep go test -v ./pkg/...
-    - ./node_modules/grunt-cli/bin/grunt test
+    - echo "test"
+    # - godep go test -v ./pkg/...
+    # - ./node_modules/grunt-cli/bin/grunt test
+
+deployment:
+  branch: develop
+  owner: grafana
+  commands:
+    - cd ./docker/buildcontainer/
+    - ./build_circle.sh
