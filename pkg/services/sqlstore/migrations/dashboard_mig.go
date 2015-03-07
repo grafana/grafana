@@ -6,18 +6,18 @@ func addDashboardMigration(mg *Migrator) {
 	var dashboardV1 = Table{
 		Name: "dashboard",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "version", Type: DB_Int, Nullable: false},
-			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "data", Type: DB_Text, Nullable: false},
-			&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "version", Type: DB_Int, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "data", Type: DB_Text, Nullable: false},
+			{Name: "account_id", Type: DB_BigInt, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"account_id"}},
-			&Index{Cols: []string{"account_id", "slug"}, Type: UniqueIndex},
+			{Cols: []string{"account_id"}},
+			{Cols: []string{"account_id", "slug"}, Type: UniqueIndex},
 		},
 	}
 
@@ -30,12 +30,12 @@ func addDashboardMigration(mg *Migrator) {
 	dashboardTagV1 := Table{
 		Name: "dashboard_tag",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+			{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"dashboard_id", "term"}, Type: UniqueIndex},
+			{Cols: []string{"dashboard_id", "term"}, Type: UniqueIndex},
 		},
 	}
 
@@ -54,18 +54,18 @@ func addDashboardMigration(mg *Migrator) {
 	var dashboardV2 = Table{
 		Name: "dashboard",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "version", Type: DB_Int, Nullable: false},
-			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "data", Type: DB_Text, Nullable: false},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "version", Type: DB_Int, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "data", Type: DB_Text, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"org_id"}},
-			&Index{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
 		},
 	}
 

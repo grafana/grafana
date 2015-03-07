@@ -6,18 +6,18 @@ func addApiKeyMigrations(mg *Migrator) {
 	apiKeyV1 := Table{
 		Name: "api_key",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
-			&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "account_id", Type: DB_BigInt, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
+			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"account_id"}},
-			&Index{Cols: []string{"key"}, Type: UniqueIndex},
-			&Index{Cols: []string{"account_id", "name"}, Type: UniqueIndex},
+			{Cols: []string{"account_id"}},
+			{Cols: []string{"key"}, Type: UniqueIndex},
+			{Cols: []string{"account_id", "name"}, Type: UniqueIndex},
 		},
 	}
 
@@ -39,18 +39,18 @@ func addApiKeyMigrations(mg *Migrator) {
 	apiKeyV2 := Table{
 		Name: "api_key",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
-			&Column{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
+			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"org_id"}},
-			&Index{Cols: []string{"key"}, Type: UniqueIndex},
-			&Index{Cols: []string{"org_id", "name"}, Type: UniqueIndex},
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"key"}, Type: UniqueIndex},
+			{Cols: []string{"org_id", "name"}, Type: UniqueIndex},
 		},
 	}
 

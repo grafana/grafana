@@ -21,12 +21,12 @@ func addMigrationLogMigrations(mg *Migrator) {
 	migrationLogV1 := Table{
 		Name: "migration_log",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "migration_id", Type: DB_NVarchar, Length: 255},
-			&Column{Name: "sql", Type: DB_Text},
-			&Column{Name: "success", Type: DB_Bool},
-			&Column{Name: "error", Type: DB_Text},
-			&Column{Name: "timestamp", Type: DB_DateTime},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "migration_id", Type: DB_NVarchar, Length: 255},
+			{Name: "sql", Type: DB_Text},
+			{Name: "success", Type: DB_Bool},
+			{Name: "error", Type: DB_Text},
+			{Name: "timestamp", Type: DB_DateTime},
 		},
 	}
 
@@ -37,12 +37,12 @@ func addStarMigrations(mg *Migrator) {
 	starV1 := Table{
 		Name: "star",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "user_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "user_id", Type: DB_BigInt, Nullable: false},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"user_id", "dashboard_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id", "dashboard_id"}, Type: UniqueIndex},
 		},
 	}
 
