@@ -25,5 +25,4 @@ deployment:
     branch: develop
     owner: grafana
     commands:
-      - cd ./docker/buildcontainer/
-      - ./build_circle.sh
+      - ./docker/buildcontainer/build_circle.sh
