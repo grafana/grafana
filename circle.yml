@@ -10,7 +10,7 @@ dependencies:
   cache_directories:
     - "~/docker"
   pre:
-    ./docker/buildcontainer/build_circle.sh
+    - ./docker/buildcontainer/build_circle.sh
 
   override:
     - rm -rf ${GOPATH}/src/${REPO_PATH}
