@@ -7,15 +7,10 @@ machine:
     REPO_PATH: "${ORG_PATH}/grafana"
 
 dependencies:
-  cache_directories:
-    - "~/docker"
-  pre:
-    - ./docker/buildcontainer/build_circle.sh
-
   override:
     - rm -rf ${GOPATH}/src/${REPO_PATH}
     - mkdir -p ${GOPATH}/src/${ORG_PATH}
-    - cp -r ../grafana ${GOPATH}/src/${ORG_PATH}
+    - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
     - npm install
 
@@ -23,11 +18,3 @@ test:
   override:
      - godep go test -v ./pkg/...
      - ./node_modules/grunt-cli/bin/grunt test
-
-deployment:
-  develop:
-    branch: develop
-    owner: grafana
-    commands:
-      - ./docker/buildcontainer/run_circle.sh
-      - go run build.go package latest
