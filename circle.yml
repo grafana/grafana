@@ -3,4 +3,5 @@ machine:
     - docker
 
 test:
-  - go test -v ./pkg/...
+  override:
+    - go test -v ./pkg/...
