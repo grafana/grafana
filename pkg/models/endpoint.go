@@ -7,7 +7,7 @@ import (
 
 // Typed errors
 var (
-	ErrEndpointNotFound = errors.New("Endpoint not found")
+	ErrEndpointNotFound   = errors.New("Endpoint not found")
 	ErrWithMonitorsDelete = errors.New("Endpoint can't be deleted as it still has monitors")
 )
 
@@ -19,12 +19,20 @@ type Endpoint struct {
 	Updated time.Time
 }
 
+type EndpointTag struct {
+	Id         int64
+	OrgId      int64
+	EndpointId int64
+	Tag        string
+}
+
 // ---------------
 // DTOs
 type EndpointDTO struct {
-	Id    int64  `json:"id"`
-	OrgId int64  `json:"org_id"`
-	Name  string `json:"name"`
+	Id    int64    `json:"id"`
+	OrgId int64    `json:"org_id"`
+	Name  string   `json:"name"`
+	Tags  []string `json:"tags"`
 }
 
 type NewEndpointDTO struct {
@@ -45,15 +53,17 @@ type EndpointDiscoveryCommand struct {
 }
 
 type AddEndpointCommand struct {
-	OrgId  int64  `json:"-"`
-	Name   string `json:"name"`
+	OrgId  int64    `json:"-"`
+	Name   string   `json:"name"`
+	Tags   []string `json:"tags"`
 	Result *EndpointDTO
 }
 
 type UpdateEndpointCommand struct {
-	Id     int64  `json:"id" binding:"required"`
-	OrgId  int64  `json:"-"`
-	Name   string `json:"name"`
+	Id     int64    `json:"id" binding:"required"`
+	OrgId  int64    `json:"-"`
+	Name   string   `json:"name"`
+	Tags   []string `json:"tags"`
 	Result *EndpointDTO
 }
 
@@ -67,6 +77,7 @@ type DeleteEndpointCommand struct {
 
 type GetEndpointsQuery struct {
 	OrgId  int64
+	Tag    []string
 	Result []*EndpointDTO
 }
 

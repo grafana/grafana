@@ -19,7 +19,7 @@ type MonitorPayload struct {
 	Frequency     int64                  `json:"frequency"`
 	Enabled       bool                   `json:"enabled"`
 	Offset        int64                  `json:"offset"`
-	Updated       time.Time       `json:"updated"`
+	Updated       time.Time              `json:"updated"`
 }
 
 type MonitorUpdated struct {
@@ -42,9 +42,10 @@ type MonitorRemoved struct {
 }
 
 type EndpointPayload struct {
-	Id    int64  `json:"id"`
-	OrgId int64  `json:"org_id"`
-	Name  string `json:"name"`
+	Id    int64    `json:"id"`
+	OrgId int64    `json:"org_id"`
+	Name  string   `json:"name"`
+	Tags  []string `json:"tags"`
 }
 
 type EndpointUpdated struct {
@@ -63,4 +64,5 @@ type EndpointRemoved struct {
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
 	OrgId     int64     `json:"org_id"`
+	Tags      []string  `json:"tags"`
 }

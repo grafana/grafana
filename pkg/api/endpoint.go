@@ -22,8 +22,8 @@ func GetEndpointById(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
-func GetEndpoints(c *middleware.Context) {
-	query := m.GetEndpointsQuery{OrgId: c.OrgId}
+func GetEndpoints(c *middleware.Context, query m.GetEndpointsQuery) {
+	query.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query endpoints", err)

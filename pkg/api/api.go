@@ -115,7 +115,7 @@ func Register(r *macaron.Macaron) {
 		})
 		// endpoints
 		r.Group("/endpoints", func() {
-			r.Combo("/").Get(GetEndpoints).Put(AddEndpoint).Post(UpdateEndpoint)
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).Put(AddEndpoint).Post(UpdateEndpoint)
 			r.Get("/:id", GetEndpointById)
 			r.Delete("/:id", DeleteEndpoint)
 		})
