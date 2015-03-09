@@ -31,7 +31,7 @@ page.open(params.url, function (status) {
       return $('canvas').length > 0;
     });
 
-    if (canvas || tries === 10) {
+    if (canvas || tries === 100) {
       page.render(params.png);
       phantom.exit();
     }
