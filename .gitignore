@@ -1,6 +1,7 @@
 node_modules
 coverage/
 .aws-config.json
+awsconfig
 /dist
 /tmp
 
