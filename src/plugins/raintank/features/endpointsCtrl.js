@@ -15,7 +15,8 @@ function (angular) {
     $scope.init = function() {
       $scope.reset();
       $scope.editor = {index: 0};
-      $scope.search = {query: ""};
+      $scope.endpoint_filter = '';
+      $scope.location_filter = '';
       $scope.endpoints = [];
       $scope.getEndpoints();
       $scope.getLocations();
@@ -27,7 +28,15 @@ function (angular) {
       });
       
     };
-
+    $scope.endpointTags = function() {
+      var map = {};
+      _.forEach($scope.endpoints, function(endpoint) {
+        _.forEach(endpoint.tags, function(tag) {
+          map[tag] = true;
+        });
+      });
+      return Object.keys(map);
+    }
     $scope.getLocations = function() {
       var locationMap = {};
       backendSrv.get('/api/locations').then(function(locations) {

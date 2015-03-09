@@ -10,11 +10,12 @@
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<div class="editor-row">
 		<div class="editor-option">
-			<label class="small">Filter by:</label>
-			<select class="input-medium" ng-model="endpoint_filter" ng-options="field for field in ['All Endpoints']">
+			<label class="small">Filter by Endpoint Tag:</label>
+			<select class="input-medium" ng-model="endpoint_filter" ng-options="tag for tag in endpointTags()">
+				<option value="" label="All Tags">All Endpoints</option>
 			</select>
 			<select class="input-medium" ng-model="location_filter" ng-options="l.id as l.name for (id, l) in locations">
-				<option value="" label="All Location Tags">All Location Tags</option>
+				<option value="*" label="All Location Tags">All Location Tags</option>
 			</select>
 		</div>
 		<div class="editor-option" style="float: right;">
@@ -28,7 +29,7 @@
 	<div ng-if="endpoints.length === 0">
 		<em>No endpoints defined</em>
 	</div>
-	<div class="gf-box" ng-repeat="endpoint in endpoints | orderBy:sort_field">
+	<div class="gf-box" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | orderBy:sort_field">
 		<div class="gf-box-header" style="overflow: visible; padding:5px;">
 			<span style="margin: 10px;">{{endpoint.name}}</span>
 			<div class="dropdown" style="float: right;">
@@ -53,9 +54,9 @@
 					</li>
 				</ul>
 			</div>
-			<div style="float:right;">
-				<span class="tag label label-tag">Tags</span>
-			</div>
+			<span style="float: right;">
+				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in endpoint.tags">{{tag}}</span>
+			</span>
 		</div>
 		<div class="gf-box-body" style="min-height: 50px; padding: 5px;">
 			<div style="border: 1px solid white; display: inline-block; width: 190px; height: 70px; padding:5px;">Panel</div>

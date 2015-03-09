@@ -144,11 +144,8 @@ function (angular) {
       });
     };
 
-    $scope.update = function() {
-      backendSrv.post('/api/endpoints', $scope.current).then(function() {
-        $scope.editor.index = 0;
-        $scope.getLocations();
-      });
+    $scope.updateEndpoint = function() {
+      backendSrv.post('/api/endpoints', $scope.endpoint);
     };
     $scope.getLocationsByGroup = function(group) {
       if (group in $scope.locationsByGroup) {
