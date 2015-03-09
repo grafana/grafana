@@ -6,8 +6,6 @@
     "Suffix": "index.html"
   },
   "RoutingRules": [
-    { "Condition": { "KeyPrefixEquals": "en/latest/" }, "Redirect": { "HostName": "$BUCKET", "ReplaceKeyPrefixWith": "" } },
-    { "Condition": { "KeyPrefixEquals": "en/master/" }, "Redirect": { "HostName": "$BUCKET", "ReplaceKeyPrefixWith": "" } },
     { "Condition": { "KeyPrefixEquals": "jsearch/index.html" }, "Redirect": { "HostName": "$BUCKET", "ReplaceKeyPrefixWith": "jsearch/" } }
   ]
 }

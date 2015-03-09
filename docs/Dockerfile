@@ -15,9 +15,9 @@ COPY ./VERSION VERSION
 #COPY ./image/spec/v1.md /docs/sources/reference/image-spec-v1.md
 
 # TODO: don't do this - look at merging the yml file in build.sh
-COPY ./mkdocs.yml mkdocs.yml
+COPY ./mkdocs.yml /docs/mkdocs.yml
 
-COPY ./s3_website.json s3_website.json
+COPY ./s3_website.json /docs/s3_website.json
 
 # Then build everything together, ready for mkdocs
 RUN /docs/build.sh

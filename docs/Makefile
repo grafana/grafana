@@ -36,7 +36,9 @@ docs-shell: docs-build
 	$(DOCKER_RUN_DOCS) -p $(if $(DOCSPORT),$(DOCSPORT):)8000 "$(DOCKER_DOCS_IMAGE)" bash
 
 docs-release: docs-build
-	$(DOCKER_RUN_DOCS) -e OPTIONS -e BUILD_ROOT -e DISTRIBUTION_ID "$(DOCKER_DOCS_IMAGE)" ./release.sh
+	$(DOCKER_RUN_DOCS) -e OPTIONS -e BUILD_ROOT -e DISTRIBUTION_ID \
+		-v $(CURDIR)/awsconfig:/docs/awsconfig \
+		"$(DOCKER_DOCS_IMAGE)" ./release.sh
 
 docs-test: docs-build
 	$(DOCKER_RUN_DOCS) "$(DOCKER_DOCS_IMAGE)" ./test.sh
