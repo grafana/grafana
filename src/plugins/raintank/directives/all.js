@@ -15,10 +15,8 @@ define([
         template: '<div></div>',
         replace: true,
         link: function(scope,element, attrs) {
-            console.log(scope);
             var tmpl;
             if (scope.target.value == null) {
-                console.log('setting default value for: ' + scope.definition.variable);
                 scope.target.value = scope.definition.default_value;
             }
             switch (scope.definition.data_type) {
