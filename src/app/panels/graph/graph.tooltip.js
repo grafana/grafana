@@ -96,7 +96,7 @@ function ($) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
-      var group, value, timestamp, hoverInfo, i, series, seriesHtml;
+      var toolHtml, value, timestamp, hoverInfo, i, series;
 
       if(dashboard.sharedCrosshair){
         scope.appEvent('setCrosshair',  { pos: pos, scope: scope });
@@ -106,12 +106,13 @@ function ($) {
         return;
       }
 
+      toolHtml = '';
       if (scope.panel.tooltip.shared) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
-        seriesHtml = '';
+
         timestamp = dashboard.formatDate(seriesHoverInfo.time);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
@@ -124,19 +125,20 @@ function ($) {
           series = seriesList[i];
           value = series.formatValue(hoverInfo.value);
 
-          seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-          seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
-          seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
+          toolHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
+          toolHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
+          toolHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
+
+
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(timestamp, seriesHtml, pos);
       }
       // single series tooltip
       else if (item) {
         series = seriesList[item.seriesIndex];
-        group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-        group += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
+        toolHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
+        toolHtml += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
 
         if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];
@@ -147,14 +149,26 @@ function ($) {
 
         value = series.formatValue(value);
         timestamp = dashboard.formatDate(item.datapoint[0]);
-        group += '<div class="graph-tooltip-value">' + value + '</div>';
+        toolHtml += '<div class="graph-tooltip-value">' + value + '</div>';
+        toolHtml += '</div>';
 
-        self.showTooltip(timestamp, group, pos);
       }
-      // no hit
-      else {
-        $tooltip.detach();
+      if(toolHtml) {
+        toolHtml += '<br>Active markings:'
+
+        for(i = 0; i < scope.panel.grid.markings.length; i++) {
+        var m = scope.panel.grid.markings[i]
+        if (pos.x >= m.from && pos.x <= m.to) {
+          // should probably precompute the human friendly datetimes
+          toolHtml += '<br/>' + dashboard.formatDate(m.from) + " - " + dashboard.formatDate(m.to) + ": " + m.state + '<a href="del">delete</a>';
+        }
       }
+      self.showTooltip(timestamp, toolHtml, pos);
+                          // no hit
+                        } else {
+                          $tooltip.detach();
+                        }
+
     });
   }
 
