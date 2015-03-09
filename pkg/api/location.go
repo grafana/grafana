@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -15,20 +14,7 @@ func GetLocations(c *middleware.Context, query m.GetLocationsQuery) {
 		c.JsonApiErr(500, "Failed to query locations", err)
 		return
 	}
-
-	result := make([]*dtos.Location, len(query.Result))
-	for i, l := range query.Result {
-		result[i] = &dtos.Location{
-			Id:       l.Id,
-			Slug:     l.Slug,
-			Name:     l.Name,
-			Country:  l.Country,
-			Region:   l.Region,
-			Provider: l.Provider,
-			Public:   l.Public,
-		}
-	}
-	c.JSON(200, result)
+	c.JSON(200, query.Result)
 }
 
 func GetLocationById(c *middleware.Context) {
@@ -41,17 +27,7 @@ func GetLocationById(c *middleware.Context) {
 		return
 	}
 
-	result := &dtos.Location{
-		Id:       query.Result.Id,
-		Slug:     query.Result.Slug,
-		Name:     query.Result.Name,
-		Country:  query.Result.Country,
-		Region:   query.Result.Region,
-		Provider: query.Result.Provider,
-		Public:   query.Result.Public,
-	}
-
-	c.JSON(200, result)
+	c.JSON(200, query.Result)
 }
 
 func DeleteLocation(c *middleware.Context) {
@@ -87,33 +63,19 @@ func AddLocation(c *middleware.Context) {
 		c.JsonApiErr(500, "Failed to add location", err)
 		return
 	}
-	result := &dtos.Location{
-		Id:       cmd.Result.Id,
-		Slug:     cmd.Result.Slug,
-		Name:     cmd.Result.Name,
-		Country:  cmd.Result.Country,
-		Region:   cmd.Result.Region,
-		Provider: cmd.Result.Provider,
-		Public:   cmd.Public,
-	}
-	c.JSON(200, result)
+
+	c.JSON(200, cmd.Result)
 }
 
 func UpdateLocation(c *middleware.Context) {
 	cmd := m.UpdateLocationCommand{}
-
 	if !c.JsonBody(&cmd) {
 		c.JsonApiErr(400, "Validation failed", nil)
 		return
 	}
 
 	cmd.OrgId = c.OrgId
-	if cmd.Public {
-		if c.OrgRole != m.ROLE_RAINTANK_ADMIN {
-			c.JsonApiErr(400, "Only admins can make public locations", nil)
-			return
-		}
-	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update location", err)

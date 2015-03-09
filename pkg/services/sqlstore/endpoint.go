@@ -58,7 +58,6 @@ func GetEndpoints(query *m.GetEndpointsQuery) error {
 	sess := x.Table("endpoint")
 	sess.Join("LEFT", "endpoint_tag", "endpoint_tag.endpoint_id=endpoint.id")
 	sess.Where("endpoint.org_id=?", query.OrgId).Asc("name")
-	//sess.Omit("endpoint_tag.org_id", "endpoint_tag.id")
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
 		// match only monitors that are enabled in the location,
