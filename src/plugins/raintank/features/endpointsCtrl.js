@@ -37,6 +37,11 @@ function (angular) {
       });
       return Object.keys(map);
     }
+
+    $scope.setEndpointFilter = function(tag) {
+      $scope.endpoint_filter = tag;
+    };
+    
     $scope.getLocations = function() {
       var locationMap = {};
       backendSrv.get('/api/locations').then(function(locations) {

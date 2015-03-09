@@ -55,7 +55,7 @@
 				</ul>
 			</div>
 			<span style="float: right;">
-				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in endpoint.tags">{{tag}}</span>
+				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in endpoint.tags"><a ng-click="setEndpointFilter(tag)">{{tag}}</a></span>
 			</span>
 		</div>
 		<div class="gf-box-body" style="min-height: 50px; padding: 5px;">
