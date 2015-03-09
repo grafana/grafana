@@ -153,22 +153,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           var panel = scope.panel;
           var stack = panel.stack ? true : null;
-          var colors = {
-            ok: "#003300",
-            warn:"#B26B00",
-            crit: "#880000"
-          }
-          var markings = [];
-          for (i = 0; i <panel.grid.markings.length; i++) {
-            var m = panel.grid.markings[i];
-            markings.push({
-              xaxis: {
-                from: m.from,
-                to:m.to
-              },
-              color: colors[m.state]
-            });
-          }
 
           // Populate element
           var options = {
@@ -213,7 +197,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
               hoverable: true,
               color: '#c8c8c8',
               margin: { left: 0, right: 0 },
-              markings: markings
             },
             selection: {
               mode: "x",
@@ -353,6 +336,18 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             types: types
           };
         }
+         function addMarkings(options) {
+          if(!markings || markings.length === 0) {
+            return;
+          }
+          _.each(markings, function(event) {
+             options.grid.markings.push({
+                color: "green",
+                lineWidth: 1,
+                xaxis: { from: event.min, to: event.max }
+            });
+          });
+        }
 
         function configureAxisOptions(data, options) {
           var defaults = {
@@ -472,12 +467,11 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
             if (ranges.mark ) {
-              scope.panel.grid.markings.push({
+              scope.appEvent("marked-region", {
                 from: ranges.xaxis.from,
                 to:ranges.xaxis.to,
                 state: ranges.mark
               });
-              scope.$broadcast("render");
             } else {
               timeSrv.setTime({
               from  : moment.utc(ranges.xaxis.from).toDate(),

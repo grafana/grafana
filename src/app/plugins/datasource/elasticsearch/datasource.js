@@ -123,6 +123,71 @@ function (angular, _, config, kbn, moment) {
         return list;
       });
     };
+     ElasticDatasource.prototype.markingsQuery = function(annotation, rangeUnparsed) {
+      var range = {};
+      var fromField = annotation.fromField || '@from';
+      var toField = annotation.toField || '@to';
+      var queryString = annotation.query || '*';
+      var statusField = annotation.statusField || 'status';
+      var textField = annotation.textField || null;
+
+      var queryInterpolated = templateSrv.replace(queryString);
+      var filter = {
+        "bool": {
+          "must": {
+            "or": [
+              {
+                "range": fromField: {
+                  from: rangeUnparsed.from,
+                  to: rangeUnparsed.to,
+                }
+              },
+              {
+                "range": toField: {
+                  from: rangeUnparsed.from,
+                  to: rangeUnparsed.to,
+                }
+              }
+            ]
+          }
+        }
+      };
+      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
+      var data = {
+        "fields": [timeField, "_source"],
+        "query" : { "filtered": { "query" : query, "filter": filter } },
+        "size": 100
+      };
+
+      return this._request('POST', '/_search', annotation.index, data).then(function(results) {
+        var list = [];
+        var hits = results.data.hits.hits;
+
+        for (var i = 0; i < hits.length; i++) {
+          var source = hits[i]._source;
+          var fields = hits[i].fields;
+          var time = source[timeField];
+
+          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+            time = fields[timeField];
+          }
+
+          var event = {
+            annotation: annotation,
+            from: moment.utc(123).valueOf(),
+            to: moment.utc(123).valueOf(),
+            title: getFieldFromSource(source, titleField),
+            tags: getFieldFromSource(source, tagsField),
+            text: getFieldFromSource(source, textField)
+          };
+
+          list.push(event);
+        }
+        return list;
+      });
+    };
+
+
 
     ElasticDatasource.prototype._getDashboardWithSlug = function(id) {
       return this._get('/dashboard/' + kbn.slugifyForUrl(id))
@@ -180,6 +245,25 @@ function (angular, _, config, kbn, moment) {
             throw 'Failed to save to elasticsearch';
           });
       }
+    };
+
+   ElasticDatasource.prototype.saveMarking = function(marking) {
+      var data = {
+        topic: marking.topic,
+        from: marking.from,
+        to: marking.to,
+        state: marking.state
+      };
+
+        var id = topic + "_" + from + "_" + to + "_" + state;
+        var self = this;
+
+        return this._request('PUT', '/marking/' + id, this.index, data)
+          .then(function(results) {
+            return { url: '/marking/db/' + id };
+          }, function() {
+            throw 'Failed to save to elasticsearch';
+          });
     };
 
     ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title, id) {
