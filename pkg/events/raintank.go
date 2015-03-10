@@ -14,6 +14,8 @@ type MonitorPayload struct {
 	Endpoint      EndpointPayload        `json:"endpoint"`
 	Namespace     string                 `json:"namespace"`
 	MonitorTypeId int64                  `json:"monitor_type_id"`
+	LocationIds   []int64                `json:"location_ids"`
+	LocationTags  []string               `json:"location_tags"`
 	Locations     []int64                `json:"locations"`
 	Settings      []*m.MonitorSettingDTO `json:"settings"`
 	Frequency     int64                  `json:"frequency"`
@@ -34,11 +36,12 @@ type MonitorCreated struct {
 }
 
 type MonitorRemoved struct {
-	Timestamp time.Time       `json:"timestamp"`
-	Id        int64           `json:"id"`
-	Endpoint  EndpointPayload `json:"endpoint"`
-	OrgId     int64           `json:"org_id"`
-	Locations []int64         `json:"locations"`
+	Timestamp    time.Time       `json:"timestamp"`
+	Id           int64           `json:"id"`
+	Endpoint     EndpointPayload `json:"endpoint"`
+	OrgId        int64           `json:"org_id"`
+	LocationIds  []int64         `json:"locations_ids"`
+	LocationTags []string        `json:"locations_tags"`
 }
 
 type EndpointPayload struct {

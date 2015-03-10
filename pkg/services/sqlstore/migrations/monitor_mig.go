@@ -263,4 +263,23 @@ func addMonitorMigration(mg *Migrator) {
 		Sqlite("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 
+	// add endpoint_tags
+	var monitorLocationTagV1 = Table{
+		Name: "monitor_location_tag",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"org_id", "monitor_id"}},
+			&Index{Cols: []string{"monitor_id", "tag"}, Type: UniqueIndex},
+		},
+	}
+	mg.AddMigration("create monitor_location_tag table v1", NewAddTableMigration(monitorLocationTagV1))
+
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", monitorLocationTagV1)
+
 }

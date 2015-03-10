@@ -50,6 +50,11 @@ type MonitorLocation struct {
 	MonitorId  int64
 	LocationId int64
 }
+type MonitorLocationTag struct {
+	Id          int64
+	MonitorId   int64
+	LocationTag string
+}
 
 // ---------------
 // DTOs
@@ -65,6 +70,8 @@ type MonitorDTO struct {
 	EndpointId    int64                `json:"endpoint_id"`
 	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
+	LocationIds   []int64              `json:"location_ids"`
+	LocationTags  []string             `json:"location_tags"`
 	Locations     []int64              `json:"locations"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
@@ -96,7 +103,8 @@ type AddMonitorCommand struct {
 	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Namespace     string               `json:"namespace"`
-	Locations     []int64              `json:"locations"`
+	LocationIds   []int64              `json:"location_ids"`
+	LocationTags  []string             `json:"location_tags"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
@@ -110,7 +118,8 @@ type UpdateMonitorCommand struct {
 	OrgId         int64                `json:"-"`
 	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	Locations     []int64              `json:"locations"`
+	LocationIds   []int64              `json:"location_ids"`
+	LocationTags  []string             `json:"location_tags"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
