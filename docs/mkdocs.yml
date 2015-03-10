@@ -1,0 +1,54 @@
+site_name: Grafana Documentation
+#site_url: http://docs.grafana.com/
+site_url: /
+site_description: Documentation for Grafana, The Graphite and Influxdb dashboard and graph composer
+site_favicon: img/fav32.png
+
+dev_addr: '0.0.0.0:8000'
+
+repo_url: https://github.com/grafana/grafana/
+
+docs_dir: sources
+
+include_search: true
+
+use_absolute_urls: true
+
+# theme: docker
+theme_dir: ./theme/mkdocs/
+theme_center_lead: false
+
+copyright: Copyright &copy; 2014-2015, Coding Instinct AB.
+google_analytics: ['UA-47280256-1', 'grafana.org']
+
+
+pages:
+
+# Introduction:
+- ['index.md', 'About', 'Grafana']
+- ['installation/installation.md', 'Installation', 'Install & Configure']
+- ['installation/provisioning.md', 'Installation', 'Provisioning']
+- ['installation/performance.md', 'Installation', 'Performance tips']
+- ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']
+
+- ['features/intro.md', 'User Guides', 'Getting started']
+- ['features/graphs.md', 'User Guides', 'Graph options']
+- ['features/annotations.md', 'User Guides', 'Annotations']
+- ['features/time_range.md', 'User Guides', 'Time range controls']
+- ['features/search.md', 'User Guides', 'Search features']
+- ['features/templated_dashboards.md', 'User Guides', 'Templated dashboards']
+- ['features/scripted_dashboards.md', 'User Guides', 'Scripted dashboards']
+- ['features/playlist.md', 'User Guides', 'Playlist']
+- ['features/export_import.md', 'User Guides', 'Import & Export']
+- ['screencasts/index.md', 'User Guides', 'Screencasts']
+
+- ['features/graphite.md', 'Metric Queries', 'Graphite guide']
+- ['features/influxdb.md', 'Metric Queries', 'InfluxDB guide']
+- ['features/opentsdb.md', 'Metric Queries', 'OpenTSDB guide']
+
+- ['contributing/building_from_source.md', 'Contribute', 'Building from souce']
+- ['contributing/cla.md', 'Contribute', 'Contributor License Agreement']
+
+- ['support/index.md', 'Support', 'Support']
+
+- ['jsearch.md', '**HIDDEN**']

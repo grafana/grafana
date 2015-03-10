@@ -1,7 +1,9 @@
 node_modules
 coverage/
 .aws-config.json
-dist
+awsconfig
+/dist
+/tmp
 
 # locally required config files
 web.config
@@ -12,3 +14,10 @@ src/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+*.iml
+
+/data/*
+/bin/*
+
+conf/custom.ini
+fig.yml

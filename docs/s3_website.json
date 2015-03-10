@@ -1,0 +1,11 @@
+{
+  "ErrorDocument": {
+    "Key": "jsearch/index.html"
+  },
+  "IndexDocument": {
+    "Suffix": "index.html"
+  },
+  "RoutingRules": [
+    { "Condition": { "KeyPrefixEquals": "jsearch/index.html" }, "Redirect": { "HostName": "$BUCKET", "ReplaceKeyPrefixWith": "jsearch/" } }
+  ]
+}
