@@ -6,10 +6,10 @@ page_keywords: grafana, installation, documentation
 
 # Installation
 Grafana is easily installed via a Debian/Ubuntu package (.deb), via Redhat/Centos package (.rpm) or manually via
-a tar that contains all required files and binaries. If there is not a package or binary for you specific platform you might be able
+a tar that contains all required files and binaries. If you can't find a package or binary for your platform you might be able
 to build one your self, read [build from source](../project/building_from_source) instructions for more information.
 
-## From Ubuntu & Debian package
+## Ubuntu & Debian
 Start by [downloading](http://grafana.org/download/builds) the latest `.deb` package.
 
 To install the package:
@@ -18,7 +18,7 @@ To install the package:
 sudo dpkg -i grafana_latest_amd64.deb
 ```
 
-## From Redhat & Centos package
+## Redhat & Centos
 Start by [downloading](http://grafana.org/download/builds) the latest `.rpm` package.
 
 ```
@@ -66,5 +66,24 @@ that is optional. For small to medium setups sqlite3 should suffice.
 ## Install using provisioning
 If you prefer to install grafana via Puppet, Ansible, Docker or Chef. [This page](provisioning) has compiled a
 list of repositories for different provisioning systems
+
+## Install from offical docker image
+
+Grafana has an offical docker container.
+
+```
+docker run -i -p 3000:3000 grafana/grafana:develop
+
+```
+
+All grafana configuration settings can be defined using ENVIRONMENT variables, this is especially useful when using the
+above container.
+
+## Configuration
+
+
+
+
+
 
 
