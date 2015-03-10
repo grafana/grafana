@@ -7,7 +7,7 @@ module.exports = function(config) {
       cwd: '<%= destDir %>',
       options: {
         quite: true,
-        compress: true,
+        compress: {},
         preserveComments: false,
         banner: '<%= meta.banner %>'
       }
