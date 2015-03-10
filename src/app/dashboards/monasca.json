@@ -355,8 +355,66 @@
           },
           "targets": [
             {
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.aggregation-bolt.execute-count.filtering-bolt_alarm-creation-stream",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.aggregation-bolt.execute-count.filtering-bolt_default",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.aggregation-bolt.execute-count.system_tick",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.filtering-bolt.execute-count.event-bolt_metric-alarm-events",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.filtering-bolt.execute-count.metrics-spout_default",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.thresholding-bolt.execute-count.aggregation-bolt_default",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
               "function": "none",
-              "column": "value"
+              "column": "value",
+              "series": "monasca.storm.metrics.thresholding-bolt.execute-count.event-bolt_alarm-definition-events",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
             }
           ],
           "aliasColors": {},
@@ -502,8 +560,48 @@
           },
           "targets": [
             {
-              "function": "none",
-              "column": "value"
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.system.memory_heap.committedBytes",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.system.memory_nonHeap.committedBytes",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.system.newWorkerEvent",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.system.startTimeSecs",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
+            },
+            {
+              "target": "",
+              "function": "count",
+              "column": "value",
+              "series": "monasca.storm.metrics.system.GC_ConcurrentMarkSweep.timeMs",
+              "condition_filter": true,
+              "condition_key": "component",
+              "condition_value": "storm"
             }
           ],
           "aliasColors": {},
