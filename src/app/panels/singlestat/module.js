@@ -209,7 +209,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
         }
         // value/number to text mapping
         var value = parseFloat(map.value);
-        if (value === mainValue) {
+        if (value === parseFloat(mainValue)) {
           return map.text;
         }
       }
