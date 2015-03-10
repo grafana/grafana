@@ -23,7 +23,7 @@ To the right of each row you have two colored rectangles, hover over these to ge
 
 ## Drag drop panels
 Click and drag the panel title to start a drag and drop action.
-![](/animated_gifs/drag_drop.gif)
+![](/img/animated_gifs/drag_drop.gif)
 
 ## Tips and shortcuts
 
