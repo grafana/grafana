@@ -77,6 +77,10 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
+        if (!data instanceof Array) {
+         data = data['elements']
+        }
+
         var columns = [];
         for (var i = 0; i < data.length; i++) {
           var dimensions = data[i].dimensions;
@@ -95,6 +99,10 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
+        if (!data instanceof Array) {
+          data = data['elements']
+        }
+
         var values = [];
         for (var i = 0; i < data.length; i++) {
           var dimensions = data[i].dimensions;
@@ -112,6 +120,9 @@ function (angular, _, kbn) {
       return this.doGetMetricsRequest(null).then(function (data) {
         if (!data) {
           return [];
+        }
+        if (!data instanceof Array) {
+          data = data['elements']
         }
         var names = [];
         for (var i = 0; i < data.length; i++) {
@@ -219,6 +230,9 @@ function (angular, _, kbn) {
     function handleGetStatisticsResponse(data) {
       var output = [];
 
+      if (!data instanceof Array) {
+        data = data['elements']
+      }
       _.each(data, function (series) {
         var timeCol = series.columns.indexOf('timestamp');
 
