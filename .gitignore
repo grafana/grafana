@@ -18,8 +18,7 @@ src/css/*.min.css
 
 /data/*
 /bin/*
-/grafana-pro
-/grafana
 
 conf/custom.ini
 fig.yml
+
