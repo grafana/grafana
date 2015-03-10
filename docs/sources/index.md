@@ -4,10 +4,10 @@ page_keywords: grafana, introduction, documentation, about
 
 # About Grafana
 
-Grafana is a general purpose dashboard and graph composer. Its focused on providing
-rich ways to visualize time series metrics, mainly though graphs. It currently
-has rich support for for [Graphite](http://graphite.readthedocs.org/en/latest/), [InfluxDB](http://influxdb.org)
-and [OpenTSDB](http://opentsdb.net). But supports other data sources via plugins.
+Grafana is a general purpose dashboard and graph composer. It's focused on providing
+rich ways to visualize time series metrics, mainly though graphs but supports other ways to visualize data through
+a pluggable panel architecture. It currently has rich support for for [Graphite](http://graphite.readthedocs.org/en/latest/),
+[InfluxDB](http://influxdb.org) and [OpenTSDB](http://opentsdb.net). But supports other data sources via plugins.
 
 It is most common usage is for infrastructure monitoring, application monitoring and metric analytics. But Grafana
 has an open architecture and design that enabled is to be used in other domains as well, like home automation,

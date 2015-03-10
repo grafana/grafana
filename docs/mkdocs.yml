@@ -31,23 +31,23 @@ pages:
 - ['installation/performance.md', 'Installation', 'Performance tips']
 - ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']
 
-- ['guides/intro.md', 'User Guides', 'Getting started']
+- ['guides/gettingstarted.md', 'User Guides', 'Getting started']
 - ['guides/screencasts.md', 'User Guides', 'Screencasts']
 
-- ['reference/graphs.md', 'Reference', 'Graph options']
+- ['reference/graph.md', 'Reference', 'Graph options']
 - ['reference/annotations.md', 'Reference', 'Annotations']
-- ['reference/time_range.md', 'Reference', 'Time range controls']
+- ['reference/timerange.md', 'Reference', 'Time range controls']
 - ['reference/search.md', 'Reference', 'Dashboard Search']
-- ['reference/templated_dashboards.md', 'Reference', 'Templated dashboards']
-- ['reference/scripted_dashboards.md', 'Reference', 'Scripted dashboards']
+- ['reference/templating.md', 'Reference', 'Templated dashboards']
+- ['reference/scripting.md', 'Reference', 'Scripted dashboards']
 - ['reference/playlist.md', 'Reference', 'Playlist']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 
-- ['datasources/graphite.md', 'Data Sources', 'Graphite guide']
-- ['datasources/influxdb.md', 'Data Sources', 'InfluxDB guide']
-- ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB guide']
+- ['datasources/graphite.md', 'Data Sources', 'Graphite']
+- ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
+- ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 
-- ['contributing/building_from_source.md', 'Project', 'Building from souce']
-- ['contributing/cla.md', 'Project', 'Contributor License Agreement']
+- ['project/building_from_source.md', 'Project', 'Building from souce']
+- ['project/cla.md', 'Project', 'Contributor License Agreement']
 
 - ['jsearch.md', '**HIDDEN**']
