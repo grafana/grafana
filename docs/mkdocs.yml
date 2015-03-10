@@ -47,7 +47,7 @@ pages:
 - ['features/opentsdb.md', 'Metric Queries', 'OpenTSDB guide']
 
 - ['contributing/building_from_source.md', 'Contribute', 'Building from souce']
-- ['contributing/cla.html.slim', 'Contribute', 'Contributor License Agreement']
+- ['contributing/cla.md', 'Contribute', 'Contributor License Agreement']
 
 - ['support/index.md', 'Support', 'Support']
 

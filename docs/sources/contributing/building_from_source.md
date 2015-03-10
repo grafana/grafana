@@ -1,5 +1,7 @@
 ---
-title: Building from source
+page_title: Building from source
+page_description: Building from source Grafana.
+page_keywords: grafana, build, contribute, documentation
 ---
 
 # Building from source
