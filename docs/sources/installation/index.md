@@ -6,13 +6,7 @@ page_keywords: grafana, installation, documentation
 
 # Installation
 
-Grafana is a frontend for [Graphite](http://graphite.readthedocs.org/en/latest/), [InfluxDB](http://influxdb.org)
-and [OpenTSDB](http://opentsdb.net) with powerfull visualization features for time series data.
-You will need either a Graphite, InfluxDB or OpenTSDB server for Grafana to be of any use.
-
-## Download
-
-[Download](/download) the latest release. The release package contain a subfolder, for example **grafana-1.7.0**. The
+[Download](http://grafana.org/download) the latest release. The release package contain a subfolder, for example **grafana-1.7.0**. The
 contents of this folder should be hosted by a web server, for example nginx, apache, IIS. The standard release
 packages does not contain a web server to host Grafana.
 
