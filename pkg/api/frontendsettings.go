@@ -16,7 +16,7 @@ import (
 func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
-	if c.IsSignedIn {
+	if c.OrgId != 0 {
 		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 

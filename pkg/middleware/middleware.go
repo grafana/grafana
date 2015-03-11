@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -21,18 +20,18 @@ type Context struct {
 
 	Session session.Store
 
-	IsSignedIn         bool
-	HasAnonymousAccess bool
+	IsSignedIn     bool
+	AllowAnonymous bool
 }
 
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context, sess session.Store) {
 		ctx := &Context{
-			Context:            c,
-			Session:            sess,
-			SignedInUser:       &m.SignedInUser{},
-			IsSignedIn:         false,
-			HasAnonymousAccess: false,
+			Context:        c,
+			Session:        sess,
+			SignedInUser:   &m.SignedInUser{},
+			IsSignedIn:     false,
+			AllowAnonymous: false,
 		}
 
 		// try get account id from request
@@ -76,12 +75,10 @@ func GetContextHandler() macaron.Handler {
 		} else if setting.AnonymousEnabled {
 			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 			if err := bus.Dispatch(&orgQuery); err != nil {
-				if err == m.ErrOrgNotFound {
-					log.Error(3, "Anonymous access organization name does not exist", nil)
-				}
+				log.Error(3, "Anonymous access organization error", nil)
 			} else {
 				ctx.IsSignedIn = false
-				ctx.HasAnonymousAccess = true
+				ctx.AllowAnonymous = true
 				ctx.SignedInUser = &m.SignedInUser{}
 				ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 				ctx.OrgId = orgQuery.Result.Id
@@ -140,10 +137,4 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	}
 
 	ctx.JSON(status, resp)
-}
-
-func (ctx *Context) JsonBody(model interface{}) bool {
-	b, _ := ctx.Req.Body().Bytes()
-	err := json.Unmarshal(b, &model)
-	return err == nil
 }

@@ -47,15 +47,11 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 // TODO: need to cache datasources
 func ProxyDataSourceRequest(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
+	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
 
-	query := m.GetDataSourceByIdQuery{
-		Id:    id,
-		OrgId: c.OrgId,
-	}
-
-	err := bus.Dispatch(&query)
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		return
 	}
 
 	proxyPath := c.Params("*")

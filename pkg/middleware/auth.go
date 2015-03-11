@@ -23,7 +23,7 @@ func getRequestUserId(c *Context) int64 {
 	}
 
 	// TODO: figure out a way to secure this
-	if c.Query("render") == "1" {
+	if c.Req.URL.Query().Get("render") == "1" {
 		userId := c.QueryInt64(SESS_KEY_USERID)
 		c.Session.Set(SESS_KEY_USERID, userId)
 		return userId
@@ -75,7 +75,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 			return
 		}
 
-		if !c.IsSignedIn && options.ReqSignedIn && !c.HasAnonymousAccess {
+		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
