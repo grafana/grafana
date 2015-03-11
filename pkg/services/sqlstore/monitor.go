@@ -30,6 +30,7 @@ type MonitorWithLocationDTO struct {
 	MonitorTypeId int64
 	LocationIds   string
 	LocationTags  string
+	TagLocations  string
 	Settings      []*m.MonitorSettingDTO
 	Frequency     int64
 	Enabled       bool
@@ -41,16 +42,26 @@ type MonitorWithLocationDTO struct {
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
-	rawSql := `SELECT
-	 	GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
-		GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
-		monitor.*
-	FROM monitor
-	LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
-	LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
-	WHERE monitor.id=?
+	rawSql := `
+SELECT
+    GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
+    GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
+    GROUP_CONCAT(DISTINCT(location_tags.location_id)) as tag_locations,
+    monitor.*
+FROM monitor
+    LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
+    LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
+    LEFT JOIN 
+        (SELECT
+            location.id AS location_id,
+            location_tag.tag as tag
+        FROM location
+        LEFT JOIN location_tag ON location.id = location_tag.location_id
+        WHERE (location.public=1 OR location.org_id=?) AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)) as location_tags
+    ON location_tags.tag = monitor_location_tag.tag
+WHERE monitor.id=?
 	`
-	rawParams = append(rawParams, query.Id)
+	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
 	
 	if query.IsRaintankAdmin != true {
 		rawSql += "AND monitor.org_id=?\n"
@@ -68,19 +79,35 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	}
 	result := results[0]
 
-	monitorLocations := make([]int64, 0)
+	monitorLocationIds := make([]int64, 0)
+	monitorLocationsMap := make(map[int64]bool)
 	for _, l := range strings.Split(result.LocationIds, ",") {
 		i, err := strconv.ParseInt(l, 10, 64)
 		if err != nil {
 			return err
 		}
-		monitorLocations = append(monitorLocations, i)
+		monitorLocationIds = append(monitorLocationIds, i)
+		monitorLocationsMap[i] = true
 	}
 
 	monitorLocationTags := make([]string, 0)
 	if result.LocationTags != "" {
 		monitorLocationTags = strings.Split(result.LocationTags, ",")
+		for _, l := range strings.Split(result.TagLocations, ",") {
+			i, err := strconv.ParseInt(l, 10, 64)
+			if err != nil {
+				return err
+			}
+			monitorLocationsMap[i] = true
+		}
 	}
+
+	mergedLocations := make([]int64, len(monitorLocationsMap))
+	count := 0
+	for k := range monitorLocationsMap {
+		mergedLocations[count] = k
+		count += 1
+	} 
 
 	query.Result = &m.MonitorDTO{
 		Id:            result.Id,
@@ -88,8 +115,9 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 		OrgId:         result.OrgId,
 		Namespace:     result.Namespace,
 		MonitorTypeId: result.MonitorTypeId,
-		LocationIds:   monitorLocations,
+		LocationIds:   monitorLocationIds,
 		LocationTags:  monitorLocationTags,
+		Locations:     mergedLocations,
 		Settings:      result.Settings,
 		Frequency:     result.Frequency,
 		Enabled:       result.Enabled,
@@ -103,15 +131,25 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
-	rawSql := `SELECT
-	 	GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
-		GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
-		monitor.*
-	FROM monitor
-	LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
-	LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
-	`
-
+	rawSql := `
+SELECT
+    GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
+    GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
+    GROUP_CONCAT(DISTINCT(location_tags.location_id)) as tag_locations,
+    monitor.*
+FROM monitor
+    LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
+    LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
+    LEFT JOIN 
+        (SELECT
+            location.id AS location_id,
+            location_tag.tag as tag
+        FROM location
+        LEFT JOIN location_tag ON location.id = location_tag.location_id
+        WHERE (location.public=1 OR location.org_id=?) AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)) as location_tags
+    ON location_tags.tag = monitor_location_tag.tag
+`
+	rawParams = append(rawParams, query.OrgId, query.OrgId)
 	whereSql := make([]string, 0)
 	if query.IsRaintankAdmin != true {
 		whereSql = append(whereSql, "monitor.org_id=?")
@@ -146,20 +184,35 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	monitors := make([]*m.MonitorDTO, 0)
 	//iterate through all of the results and build out our checks model.
 	for _, row := range result {
-		monitorLocations := make([]int64, 0)
+		monitorLocationIds := make([]int64, 0)
+		monitorLocationsMap := make(map[int64]bool)
 		for _, l := range strings.Split(row.LocationIds, ",") {
-			if l != "" {
+			i, err := strconv.ParseInt(l, 10, 64)
+			if err != nil {
+				return err
+			}
+			monitorLocationIds = append(monitorLocationIds, i)
+			monitorLocationsMap[i] = true
+		}
+
+		monitorLocationTags := make([]string, 0)
+		if row.LocationTags != "" {
+			monitorLocationTags = strings.Split(row.LocationTags, ",")
+			for _, l := range strings.Split(row.TagLocations, ",") {
 				i, err := strconv.ParseInt(l, 10, 64)
 				if err != nil {
 					return err
 				}
-				monitorLocations = append(monitorLocations, i)
+				monitorLocationsMap[i] = true
 			}
 		}
-		monitorLocationTags := make([]string, 0)
-		if row.LocationTags != "" {
-			monitorLocationTags = strings.Split(row.LocationTags, ",")
-		}
+
+		mergedLocations := make([]int64, len(monitorLocationsMap))
+		count := 0
+		for k := range monitorLocationsMap {
+			mergedLocations[count] = k
+			count += 1
+		} 
 
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:            row.Id,
@@ -167,8 +220,9 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 			OrgId:         row.OrgId,
 			Namespace:     row.Namespace,
 			MonitorTypeId: row.MonitorTypeId,
-			LocationIds:   monitorLocations,
+			LocationIds:   monitorLocationIds,
 			LocationTags:  monitorLocationTags,
+			Locations:     mergedLocations,
 			Settings:      row.Settings,
 			Frequency:     row.Frequency,
 			Enabled:       row.Enabled,
