@@ -2,6 +2,8 @@ package sqlstore
 
 import (
 	"errors"
+	"strings"
+	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -22,111 +24,134 @@ type LocationWithTag struct {
 	OrgId     int64
 	Name      string
 	Slug      string
-	Tag       string
+	Tags      string
 	Latitude  float64
 	Longitude float64
+	Public    bool
 	Created   time.Time
 	Updated   time.Time
 }
 
 func GetLocationById(query *m.GetLocationByIdQuery) error {
-	result := make([]LocationWithTag, 0)
 	sess := x.Table("location")
-	sess.Join("LEFT", "location_tag", "location_tag.location_id=location.id")
-	sess.Where("(location.public=1 OR location.org_id=?) AND location.id=? AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.org_id is NULL)", query.OrgId, query.Id, query.OrgId)
-
-	err := sess.Find(&result)
-
-	if len(result) < 1 {
+	rawParams := make([]interface{}, 0)
+	rawSql := `SELECT
+		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
+		location.*
+	FROM location
+	LEFT JOIN location_tag ON location.id = location_tag.location_id
+	WHERE 
+		(location.public=1 OR location.org_id=?) 
+	AND
+		location.id=?
+	AND 
+		(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)
+	GROUP BY location.id
+	`
+	rawParams = append(rawParams, query.OrgId, query.Id, query.OrgId)
+	results := make([]LocationWithTag, 0)
+	err := sess.Sql(rawSql, rawParams...).Find(&results)
+	if err != nil {
+		return err
+	}
+	if len(results) < 1 {
 		return m.ErrLocationNotFound
 	}
 
+	result := results[0]
+
 	tags := make([]string, 0)
-	for _, row := range result {
-		if row.Tag != "" {
-			tags = append(tags, row.Tag)
-		}
+	if result.Tags != "" {
+		tags = strings.Split(result.Tags, ",")
 	}
 
 	query.Result = &m.LocationDTO{
-		Id:        result[0].Id,
-		OrgId:     result[0].OrgId,
-		Name:      result[0].Name,
-		Slug:      result[0].Slug,
+		Id:        result.Id,
+		OrgId:     result.OrgId,
+		Name:      result.Name,
+		Slug:      result.Slug,
 		Tags:      tags,
-		Latitude:  result[0].Latitude,
-		Longitude: result[0].Longitude,
+		Latitude:  result.Latitude,
+		Longitude: result.Longitude,
+		Public:    result.Public,
 	}
 
 	return err
 }
 
 func GetLocations(query *m.GetLocationsQuery) error {
-	result := make([]LocationWithTag, 0)
 	sess := x.Table("location")
-	sess.Join("LEFT", "location_tag", "location_tag.location_id=location.id")
-	sess.Where("(location.public=1 OR location.org_id=?) AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.org_id is NULL)", query.OrgId, query.OrgId)
+	rawParams := make([]interface{}, 0)
+	rawSql := `SELECT
+		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
+		location.*
+	FROM location
+	LEFT JOIN location_tag ON location.id = location_tag.location_id
+	`
+	whereSql := make([]string, 0)
+	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)","(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)")
+	rawParams = append(rawParams, query.OrgId, query.OrgId)
 
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
 		// match only locations that have the tag(s),
 		// but we still need to return all of the tags that
 		// the location has.
-		sess.Join("LEFT", []string{"location_tag", "lt"}, "lt.location_id = location.id")
-		if len(query.Tag) > 1 {
-			sess.In("lt.tag", query.Tag)
-		} else {
-			sess.And("lt.tag=?", query.Tag[0])
+		rawSql += "LEFT JOIN location_tag AS lt ON lt.location_id = location.id\n"
+		p := make([]string, len(query.Tag))
+		for i, t := range query.Tag {
+			p[i] = "?"
+			rawParams = append(rawParams, t)
 		}
+		whereSql = append(whereSql, fmt.Sprintf("lt.tag IN (%s)", strings.Join(p, ",")))
 	}
 	if len(query.Name) > 0 {
-		if len(query.Name) > 1 {
-			sess.In("name", query.Name)
-		} else {
-			sess.And("name=?", query.Name[0])
+		p := make([]string, len(query.Name))
+		for i, t := range query.Name {
+			p[i] = "?"
+			rawParams = append(rawParams, t)
 		}
+		whereSql = append(whereSql, fmt.Sprintf("location.name IN (%s)", strings.Join(p, ",")))
 	}
 	if query.Public != "" {
 		if p, err := strconv.ParseBool(query.Public); err == nil {
-			sess.And("public=?", p)
+			whereSql = append(whereSql, "location.public=?")
+			rawParams = append(rawParams, p)
 		} else {
 			return err
 		}
 	}
 
-	err := sess.Find(&result)
+	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
+	rawSql += " GROUP BY location.id"
+
+	result := make([]LocationWithTag, 0)
+	err := sess.Sql(rawSql, rawParams...).Find(&result)
 	if err != nil {
 		return err
 	}
 
-	locations := make(map[int64]*m.LocationDTO)
+	locations := make([]*m.LocationDTO, len(result))
 
 	//iterate through all of the results and build out our locations model.
-	for _, row := range result {
-		if _, ok := locations[row.Id]; ok != true {
-			//this is the first time we have seen this endpointId
-			locationTags := make([]string, 0)
-			locations[row.Id] = &m.LocationDTO{
-				Id:        row.Id,
-				OrgId:     row.OrgId,
-				Name:      row.Name,
-				Slug:      row.Slug,
-				Latitude:  row.Latitude,
-				Longitude: row.Longitude,
-				Tags:      locationTags,
-			}
+	for i, row := range result {
+		tags := make([]string, 0)
+		if row.Tags != "" {
+			tags = strings.Split(row.Tags, ",")
 		}
-		if row.Tag != "" {
-			locations[row.Id].Tags = append(locations[row.Id].Tags, row.Tag)
+		locations[i] = &m.LocationDTO{
+			Id:        row.Id,
+			OrgId:     row.OrgId,
+			Name:      row.Name,
+			Slug:      row.Slug,
+			Latitude:  row.Latitude,
+			Longitude: row.Longitude,
+			Tags:      tags,
+			Public:    row.Public,
 		}
 	}
 
-	query.Result = make([]*m.LocationDTO, len(locations))
-	count := 0
-	for _, v := range locations {
-		query.Result[count] = v
-		count++
-	}
+	query.Result = locations
 	return nil
 }
 
