@@ -2,12 +2,12 @@ package sqlstore
 
 import (
 	"errors"
-	"strings"
 	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -89,7 +89,7 @@ func GetLocations(query *m.GetLocationsQuery) error {
 	LEFT JOIN location_tag ON location.id = location_tag.location_id
 	`
 	whereSql := make([]string, 0)
-	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)","(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)")
+	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)", "(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)")
 	rawParams = append(rawParams, query.OrgId, query.OrgId)
 
 	if len(query.Tag) > 0 {

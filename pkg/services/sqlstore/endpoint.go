@@ -1,12 +1,12 @@
 package sqlstore
 
 import (
-	"time"
-	"strings"
 	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -21,7 +21,7 @@ type EndpointWithTag struct {
 	Id      int64
 	OrgId   int64
 	Name    string
-	Tags     string
+	Tags    string
 	Created time.Time
 	Updated time.Time
 }
@@ -75,7 +75,7 @@ func GetEndpoints(query *m.GetEndpointsQuery) error {
 	whereSql := make([]string, 0)
 	whereSql = append(whereSql, "endpoint.org_id=?")
 	rawParams = append(rawParams, query.OrgId)
-	
+
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
 		// match only endpoints that have one of the specified tags
