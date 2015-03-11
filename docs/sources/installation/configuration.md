@@ -19,7 +19,7 @@ or specified using `ENV` variables.
 > at `/etc/grafana/grafana.ini`. This path is specified in the grafana init.d script using `--config` file
 > parameter.
 
-
+<hr>
 ## [server]
 
 ### http_addr
@@ -43,6 +43,7 @@ google or github oauth authentication (for the callback url to be correct).
 The path to the directory where the frontend files (html & js & css). Default to `public` which is
 why the Grafana binary needs to be executed with working directory set to the installation path.
 
+<hr>
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other things). By default it is configured to
@@ -70,7 +71,8 @@ The database user's password (not applicable for `sqlite3`).
 ### ssl_mode
 For `postgres` only, either "disable", "require" or "verify-full".
 
-## Security
+<hr>
+## [security]
 
 ### admin_user
 The name of the default grafana admin user (who has full permissions). Defaults to `admin`.
@@ -78,15 +80,31 @@ The name of the default grafana admin user (who has full permissions). Defaults 
 ### admin_password
 The password of the default grafana admin.  Defaults to `admin`.
 
-### disable_user_signup
-Set to `false` to prohibit users from creating user accounts. Defaults to `false`.
-
 ### login_remember_days
 The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 Used for signing keep me logged in / remember me cookies.
 
+<hr>
+## [user]
+
+### allow_sign_up
+Set to `false` to prohibit users from being able to sign up / create user accounts. Defaults to `true`.
+The admin can still create users from the [Grafana Admin Pages](../reference/admin.md)
+
+### allow_org_create
+Set to `false` to prohibit users from creating new organizations. Defaults to `true`.
+
+### auto_assign_org
+Set to `true` to automatically add new users to the main organization (id 1). When set to `false`,
+new users will automatically cause a new organization to be created for that new user.
+
+### auto_assign_org_role
+The role new users will be assigned for the main organization (if the above setting is set to true).
+Defaults to `Viewer`, other valid options are `Admin` and `Editor`.
+
+<hr>
 ## [session]
 
 ### provider
