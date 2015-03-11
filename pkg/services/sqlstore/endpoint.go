@@ -78,22 +78,16 @@ func GetEndpoints(query *m.GetEndpointsQuery) error {
 	
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
-		// match only monitors that are enabled in the location,
-		// but we still need to return all of the locations that
-		// the monitor is enabled in.
+		// match only endpoints that have one of the specified tags
+		// but we still need to return all of the tags that
+		// the endpoint has.
 		rawSql += "LEFT JOIN endpoint_tag AS et ON et.endpoint_id = endpoint.id\n"
-
-		if len(query.Tag) > 1 {
-			p := make([]string, len(query.Tag))
-			for i, t := range query.Tag {
-				p[i] = "?"
-				rawParams = append(rawParams, t)
-			}
-			whereSql = append(whereSql, fmt.Sprintf("et.tag IN (%s)", strings.Join(p, ",")))
-		} else {
-			whereSql = append(whereSql, "et.tag = ?")
-			rawParams = append(rawParams, query.Tag[0])
+		p := make([]string, len(query.Tag))
+		for i, t := range query.Tag {
+			p[i] = "?"
+			rawParams = append(rawParams, t)
 		}
+		whereSql = append(whereSql, fmt.Sprintf("et.tag IN (%s)", strings.Join(p, ",")))
 	}
 
 	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
