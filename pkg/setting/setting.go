@@ -198,7 +198,7 @@ func NewConfigContext(config string) {
 	if server.Key("protocol").MustString("http") == "https" {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
