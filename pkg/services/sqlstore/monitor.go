@@ -42,8 +42,8 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
 	rawSql := `SELECT
-	 	GROUP_CONCAT(monitor_location.location_id) as location_ids,
-		GROUP_CONCAT(monitor_location_tag.tag) as location_tags,
+	 	GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
+		GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
 		monitor.*
 	FROM monitor
 	LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
@@ -104,8 +104,8 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
 	rawSql := `SELECT
-	 	GROUP_CONCAT(monitor_location.location_id) as location_ids,
-		GROUP_CONCAT(monitor_location_tag.tag) as location_tags,
+	 	GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
+		GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
 		monitor.*
 	FROM monitor
 	LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id

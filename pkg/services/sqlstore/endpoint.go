@@ -2,7 +2,8 @@ package sqlstore
 
 import (
 	"time"
-
+	"strings"
+	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -20,85 +21,107 @@ type EndpointWithTag struct {
 	Id      int64
 	OrgId   int64
 	Name    string
-	Tag     string
+	Tags     string
 	Created time.Time
 	Updated time.Time
 }
 
 func GetEndpointById(query *m.GetEndpointByIdQuery) error {
-	result := make([]EndpointWithTag, 0)
 	sess := x.Table("endpoint")
-	sess.Join("LEFT", "endpoint_tag", "endpoint_tag.endpoint_id=endpoint.id")
-	sess.Where("endpoint.org_id=? AND endpoint.id=?", query.OrgId, query.Id)
-	err := sess.Find(&result)
+	rawParams := make([]interface{}, 0)
+	rawSql := `SELECT
+		GROUP_CONCAT(DISTINCT(endpoint_tag.tag)) as tags,
+		endpoint.*
+	FROM endpoint
+	LEFT JOIN endpoint_tag ON endpoint.id = endpoint_tag.endpoint_id
+	WHERE endpoint.org_id=? AND endpoint.id=?
+	GROUP BY endpoint.id
+	`
+	rawParams = append(rawParams, query.OrgId, query.Id)
 
-	if len(result) < 1 {
-		return m.ErrEndpointNotFound
-	}
+	results := make([]*EndpointWithTag, 0)
+	err := sess.Sql(rawSql, rawParams...).Find(&results)
 	if err != nil {
 		return err
 	}
+	if len(results) < 1 {
+		return m.ErrEndpointNotFound
+	}
+	result := results[0]
+
 	tags := make([]string, 0)
-	for _, row := range result {
-		if row.Tag != "" {
-			tags = append(tags, row.Tag)
-		}
+	if result.Tags != "" {
+		tags = strings.Split(result.Tags, ",")
 	}
 	query.Result = &m.EndpointDTO{
-		Id:    result[0].Id,
-		OrgId: result[0].OrgId,
-		Name:  result[0].Name,
+		Id:    result.Id,
+		OrgId: result.OrgId,
+		Name:  result.Name,
 		Tags:  tags,
 	}
 	return nil
 }
 
 func GetEndpoints(query *m.GetEndpointsQuery) error {
-	result := make([]EndpointWithTag, 0)
 	sess := x.Table("endpoint")
-	sess.Join("LEFT", "endpoint_tag", "endpoint_tag.endpoint_id=endpoint.id")
-	sess.Where("endpoint.org_id=?", query.OrgId).Asc("name")
+	rawParams := make([]interface{}, 0)
+	rawSql := `SELECT
+		GROUP_CONCAT(DISTINCT(endpoint_tag.tag)) as tags,
+		endpoint.*
+	FROM endpoint
+	LEFT JOIN endpoint_tag ON endpoint.id = endpoint_tag.endpoint_id
+	`
+
+	whereSql := make([]string, 0)
+	whereSql = append(whereSql, "endpoint.org_id=?")
+	rawParams = append(rawParams, query.OrgId)
+	
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
 		// match only monitors that are enabled in the location,
 		// but we still need to return all of the locations that
 		// the monitor is enabled in.
-		sess.Join("LEFT", []string{"endpoint_tag", "et"}, "et.endpoint_id = endpoint.id")
+		rawSql += "LEFT JOIN endpoint_tag AS et ON et.endpoint_id = endpoint.id\n"
+
 		if len(query.Tag) > 1 {
-			sess.In("et.tag", query.Tag)
+			p := make([]string, len(query.Tag))
+			for i, t := range query.Tag {
+				p[i] = "?"
+				rawParams = append(rawParams, t)
+			}
+			whereSql = append(whereSql, fmt.Sprintf("et.tag IN (%s)", strings.Join(p, ",")))
 		} else {
-			sess.And("et.tag=?", query.Tag[0])
+			whereSql = append(whereSql, "et.tag = ?")
+			rawParams = append(rawParams, query.Tag[0])
 		}
 	}
-	err := sess.Find(&result)
+
+	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
+	rawSql += " GROUP BY endpoint.id"
+
+	result := make([]*EndpointWithTag, 0)
+	err := sess.Sql(rawSql, rawParams...).Find(&result)
 	if err != nil {
 		return err
 	}
 
-	endpoints := make(map[int64]*m.EndpointDTO)
-	//iterate through all of the results and build out our checks model.
+	endpoints := make([]*m.EndpointDTO, 0)
+	//iterate through all of the results and build out our model.
 	for _, row := range result {
-		if _, ok := endpoints[row.Id]; ok != true {
-			//this is the first time we have seen this endpointId
-			endpointTags := make([]string, 0)
-			endpoints[row.Id] = &m.EndpointDTO{
-				Id:    row.Id,
-				OrgId: row.OrgId,
-				Name:  row.Name,
-				Tags:  endpointTags,
-			}
+		tags := make([]string, 0)
+		if row.Tags != "" {
+			tags = strings.Split(row.Tags, ",")
 		}
-		if row.Tag != "" {
-			endpoints[row.Id].Tags = append(endpoints[row.Id].Tags, row.Tag)
-		}
+		endpoints = append(endpoints, &m.EndpointDTO{
+			Id:    row.Id,
+			OrgId: row.OrgId,
+			Name:  row.Name,
+			Tags:  tags,
+		})
 	}
 
-	query.Result = make([]*m.EndpointDTO, len(endpoints))
-	count := 0
-	for _, v := range endpoints {
-		query.Result[count] = v
-		count++
-	}
+	query.Result = endpoints
+
 	return nil
 }
 
