@@ -5,6 +5,13 @@ awsconfig
 /dist
 /tmp
 
+docs/AWS_S3_BUCKET
+docs/GIT_BRANCH
+docs/VERSION
+docs/GITCOMMIT
+docs/changed-files
+docs/changed-files
+
 # locally required config files
 web.config
 config.js
