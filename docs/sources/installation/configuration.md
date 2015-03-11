@@ -19,6 +19,22 @@ or specified using `ENV` variables.
 > at `/etc/grafana/grafana.ini`. This path is specified in the grafana init.d script using `--config` file
 > parameter.
 
+## Using ENV variables
+All options in the config file (listed below) can be overriden using ENV variables using the syntax:
+
+    GF_<SectionName>_<KeyName>
+
+Where the section name is the text within the brackets. Everything should be upper case.
+
+Example, given this config setting:
+
+    [security]
+    admin_user = admin
+
+Then you can override that using:
+
+    export GF_SECURITY_ADMIN_USER=true
+
 <hr>
 ## [server]
 
@@ -157,7 +173,6 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
 
 Restart the grafana backend. You should now see a google login button on the login page. You can
 now login or signup with your google accounts.
-
 
 <hr>
 ## [session]
