@@ -26,7 +26,8 @@ pages:
 
 # Introduction:
 - ['index.md', 'About', 'Grafana']
-- ['installation/index.md', 'Installation', 'Install & Configure']
+- ['installation/index.md', 'Installation', 'Installation']
+- ['installation/configuration.md', 'Installation', 'Configuration']
 - ['installation/provisioning.md', 'Installation', 'Provisioning']
 - ['installation/performance.md', 'Installation', 'Performance tips']
 - ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']

@@ -14,24 +14,17 @@ Start by [downloading](http://grafana.org/download/builds) the latest `.deb` pac
 
 To install the package:
 
-```
-sudo dpkg -i grafana_latest_amd64.deb
-```
+    $ sudo dpkg -i grafana_latest_amd64.deb
 
 ## Redhat & Centos
 Start by [downloading](http://grafana.org/download/builds) the latest `.rpm` package.
 
-```
-sudo rpm -Uvh grafana-latest-1.x86_64.rpm
-```
+    $ sudo rpm -Uvh grafana-latest-1.x86_64.rpm
 
 On Redhat/RHEL 5.10 you need to add the grafana user before executing the above.
 Execute this to add a grafana user:
 
-```
-sudo useradd -r grafana
-
-```
+    sudo useradd -r grafana
 
 ### Package details
 The `.deb` and the `rpm` package install will do the following
@@ -71,17 +64,15 @@ list of repositories for different provisioning systems
 
 Grafana has an offical docker container.
 
-```
-docker run -i -p 3000:3000 grafana/grafana:develop
-
-```
+    $ docker run -i -p 3000:3000 grafana/grafana:develop
 
 All grafana configuration settings can be defined using ENVIRONMENT variables, this is especially useful when using the
 above container.
 
 ## Configuration
 
-
+The backend web server has a number of configuration options. Go the [Configuration](configuration) page for details
+on all those options.
 
 
 
