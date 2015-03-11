@@ -31,9 +31,10 @@ It also gives us the option to relicense the code with a more permissive license
 If you have more questions, shoot us an email or drop by #grafana on IRC (freenode).
 
 Many thanks to [RethinkDB](http://rethinkdb.com) for permission to re-use their CLA!
-h2 Terms of the Agreement
 
----
+## Terms of the Agreement
+
+<hr>
 
 This Contributor License Agreement (“Agreement”) is entered into between Coding Instinct AB,
 a Swedish corporation (“Grafana,” “we” or “us” etc.) and you (as defined and further identified below).
