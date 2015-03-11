@@ -25,7 +25,7 @@ func LoginView(c *middleware.Context) {
 	settings := c.Data["Settings"].(map[string]interface{})
 	settings["googleAuthEnabled"] = setting.OAuthService.Google
 	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
-	settings["disableUserSignUp"] = setting.DisableUserSignUp
+	settings["disableUserSignUp"] = !setting.AllowUserSignUp
 
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)

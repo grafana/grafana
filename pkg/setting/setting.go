@@ -64,12 +64,12 @@ var (
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
-	DisableUserSignUp  bool
 
-	// single organization
-	SingleOrgMode  bool
-	DefaultOrgName string
-	DefaultOrgRole string
+	// User settings
+	AllowUserSignUp    bool
+	AllowUserOrgCreate bool
+	AutoAssignOrg      bool
+	AutoAssignOrgRole  string
 
 	// Http auth
 	AdminUser     string
@@ -214,16 +214,15 @@ func NewConfigContext(config string) {
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
-	DisableUserSignUp = security.Key("disable_user_signup").MustBool(false)
-
 	// admin
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 
-	// single account
-	SingleOrgMode = Cfg.Section("organization.single").Key("enabled").MustBool(false)
-	DefaultOrgName = Cfg.Section("organization.single").Key("org_name").MustString("main")
-	DefaultOrgRole = Cfg.Section("organization.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	users := Cfg.Section("users")
+	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
+	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
+	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)

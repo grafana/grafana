@@ -33,15 +33,17 @@ func init() {
 func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 	var org m.Org
 
-	if setting.SingleOrgMode {
-		has, err := sess.Where("name=?", setting.DefaultOrgName).Get(&org)
+	if setting.AutoAssignOrg {
+		// right now auto assign to org with id 1
+		has, err := sess.Where("id=?", 1).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
 			return org.Id, nil
 		} else {
-			org.Name = setting.DefaultOrgName
+			org.Name = "Main org."
+			org.Id = 1
 		}
 	} else {
 		org.Name = userEmail
@@ -97,8 +99,8 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Updated: time.Now(),
 		}
 
-		if setting.SingleOrgMode && !user.IsAdmin {
-			orgUser.Role = m.RoleType(setting.DefaultOrgRole)
+		if setting.AutoAssignOrg && !user.IsAdmin {
+			orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
 		}
 
 		if _, err = sess.Insert(&orgUser); err != nil {

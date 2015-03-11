@@ -9,7 +9,7 @@ import (
 
 // POST /api/user/signup
 func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
-	if setting.DisableUserSignUp {
+	if !setting.AllowUserSignUp {
 		c.JsonApiErr(401, "User signup is disabled", nil)
 		return
 	}
