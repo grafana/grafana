@@ -105,6 +105,61 @@ The role new users will be assigned for the main organization (if the above sett
 Defaults to `Viewer`, other valid options are `Admin` and `Editor`.
 
 <hr>
+## [auth.anonymous]
+
+### enabled
+Set to `true` to enable anonymous access. Defaults to `false`
+### org_name
+Set the organization name that should be used for anonymous users. If you change your organization name
+in the Grafana UI this setting needs to be updated to match the new name.
+### org_role
+Specify role for anonymous users. Defaults to `Viewer`, other valid options are `Editor` and `Admin`.
+
+
+## [auth.github]
+You need to create a github application (you find this under the github profile page). When
+you create the application you will need to specify a callback URL. Specify this as callback:
+
+    http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
+
+This callback url must match the full http address that you use in your browser to access grafana, but
+with the prefix path of `/login/github`. When the github application is created you will get a
+Client ID and a Client Secret. Specify these in the grafana config file. Example:
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+
+Restart the grafana backend. You should now see a github login button on the login page. You can
+now login or signup with your github accounts.
+
+## [auth.google]
+You need to create a google project. You can do this in the [Google Developer Console](https://console.developers.google.com/project).
+When you create the project you will need to specify a callback URL. Specify this as callback:
+
+    http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
+
+This callback url must match the full http address that you use in your browser to access grafana, but
+with the prefix path of `/login/google`. When the google project is created you will get a
+Client ID and a Client Secret. Specify these in the grafana config file. Example:
+
+    [auth.google]
+    enabled = true
+    client_id = YOUR_GOOGLE_APP_CLIENT_ID
+    client_secret = YOUR_GOOGLE_APP_CLIENT_SECRET
+    scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+    auth_url = https://accounts.google.com/o/oauth2/auth
+    token_url = https://accounts.google.com/o/oauth2/token
+
+Restart the grafana backend. You should now see a google login button on the login page. You can
+now login or signup with your google accounts.
+
+
+<hr>
 ## [session]
 
 ### provider
@@ -118,6 +173,7 @@ This option should be configured differently depending on what type of session p
 
 if you use mysql or postgres as session store you need to create the session table manually.
 Mysql Example:
+
     CREATE TABLE `session` (
         `key`       CHAR(16) NOT NULL,
         `data`      BLOB,
