@@ -49,7 +49,7 @@ function (_) {
       _.each(groups, function(groupPoints, key) {
         var datapoints = [];
         for (i = 0; i < groupPoints.length; i++) {
-          var metricValue = isNaN(groupPoints[i][valueCol]) ? null : groupPoints[i][valueCol];
+          var metricValue = groupPoints[i][valueCol];
           datapoints[i] = [metricValue, groupPoints[i][timeCol]];
         }
 
