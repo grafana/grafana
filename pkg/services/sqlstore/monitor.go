@@ -119,17 +119,12 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	}
 
 	if len(query.EndpointId) > 0 {
-		if len(query.EndpointId) > 1 {
-			whereSql = append(whereSql, "monitor.id IN (?)")
-			endpointStr := make([]string, len(query.EndpointId))
-			for _, id := range query.EndpointId {
-				endpointStr = append(endpointStr, strconv.FormatInt(id, 10))
-			}
-			rawParams = append(rawParams, strings.Join(endpointStr, ","))
-		} else {
-			whereSql = append(whereSql, "monitor.id=?")
-			rawParams = append(rawParams, query.EndpointId[0])
+		p := make([]string, len(query.EndpointId))
+		for i, e := range query.EndpointId {
+			p[i] = "?"
+			rawParams = append(rawParams, e)
 		}
+		whereSql = append(whereSql, fmt.Sprintf("monitor.id IN (%s)", strings.Join(p, ",")))
 	}
 
 	if query.Modulo > 0 {
