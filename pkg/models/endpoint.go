@@ -77,7 +77,7 @@ type DeleteEndpointCommand struct {
 
 type GetEndpointsQuery struct {
 	OrgId  int64
-	Tag    []string   `form:"tag"`
+	Tag    []string `form:"tag"`
 	Result []*EndpointDTO
 }
 
