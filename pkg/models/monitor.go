@@ -51,9 +51,9 @@ type MonitorLocation struct {
 	LocationId int64
 }
 type MonitorLocationTag struct {
-	Id          int64
-	MonitorId   int64
-	LocationTag string
+	Id        int64
+	MonitorId int64
+	Tag       string
 }
 
 // ---------------

@@ -62,7 +62,7 @@ FROM monitor
 WHERE monitor.id=?
 	`
 	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
-	
+
 	if query.IsRaintankAdmin != true {
 		rawSql += "AND monitor.org_id=?\n"
 		rawParams = append(rawParams, query.OrgId)
@@ -73,21 +73,21 @@ WHERE monitor.id=?
 	results := make([]*MonitorWithLocationDTO, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&results)
 	if err != nil {
-		log.Info("error getting results.")
-		fmt.Print(err)
 		return err
 	}
 	result := results[0]
 
 	monitorLocationIds := make([]int64, 0)
 	monitorLocationsMap := make(map[int64]bool)
-	for _, l := range strings.Split(result.LocationIds, ",") {
-		i, err := strconv.ParseInt(l, 10, 64)
-		if err != nil {
-			return err
+	if result.LocationIds != "" {
+		for _, l := range strings.Split(result.LocationIds, ",") {
+			i, err := strconv.ParseInt(l, 10, 64)
+			if err != nil {
+				return err
+			}
+			monitorLocationIds = append(monitorLocationIds, i)
+			monitorLocationsMap[i] = true
 		}
-		monitorLocationIds = append(monitorLocationIds, i)
-		monitorLocationsMap[i] = true
 	}
 
 	monitorLocationTags := make([]string, 0)
@@ -107,7 +107,7 @@ WHERE monitor.id=?
 	for k := range monitorLocationsMap {
 		mergedLocations[count] = k
 		count += 1
-	} 
+	}
 
 	query.Result = &m.MonitorDTO{
 		Id:            result.Id,
@@ -176,8 +176,6 @@ FROM monitor
 	result := make([]*MonitorWithLocationDTO, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&result)
 	if err != nil {
-		log.Info("error getting results.")
-		fmt.Print(err)
 		return err
 	}
 
@@ -186,13 +184,15 @@ FROM monitor
 	for _, row := range result {
 		monitorLocationIds := make([]int64, 0)
 		monitorLocationsMap := make(map[int64]bool)
-		for _, l := range strings.Split(row.LocationIds, ",") {
-			i, err := strconv.ParseInt(l, 10, 64)
-			if err != nil {
-				return err
+		if row.LocationIds != "" {
+			for _, l := range strings.Split(row.LocationIds, ",") {
+				i, err := strconv.ParseInt(l, 10, 64)
+				if err != nil {
+					return err
+				}
+				monitorLocationIds = append(monitorLocationIds, i)
+				monitorLocationsMap[i] = true
 			}
-			monitorLocationIds = append(monitorLocationIds, i)
-			monitorLocationsMap[i] = true
 		}
 
 		monitorLocationTags := make([]string, 0)
@@ -212,7 +212,7 @@ FROM monitor
 		for k := range monitorLocationsMap {
 			mergedLocations[count] = k
 			count += 1
-		} 
+		}
 
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:            row.Id,
@@ -259,8 +259,6 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 	result := make([]*MonitorTypeWithSettingsDTO, 0)
 	err := sess.Find(&result)
 	if err != nil {
-		log.Info("error getting results.")
-		fmt.Print(err)
 		return err
 	}
 	types := make(map[int64]*m.MonitorTypeDTO)
@@ -366,13 +364,15 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
 
 		filtered_locations := make([]*locationList, 0, len(cmd.LocationIds))
-		sess.Table("location")
-		sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
-		sess.Cols("id")
-		err = sess.Find(&filtered_locations)
+		if len(cmd.LocationIds) > 0 {
+			sess.Table("location")
+			sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
+			sess.Cols("id")
+			err = sess.Find(&filtered_locations)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(filtered_locations) < len(cmd.LocationIds) {
@@ -443,21 +443,36 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		if _, err := sess.Insert(mon); err != nil {
 			return err
 		}
-		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.LocationIds))
-		for _, l := range cmd.LocationIds {
-			monitor_locations = append(monitor_locations, &m.MonitorLocation{
-				MonitorId:  mon.Id,
-				LocationId: l,
-			})
+
+		if len(cmd.LocationIds) > 0 {
+			monitor_locations := make([]*m.MonitorLocation, len(cmd.LocationIds))
+			for i, l := range cmd.LocationIds {
+				monitor_locations[i] = &m.MonitorLocation{
+					MonitorId:  mon.Id,
+					LocationId: l,
+				}
+			}
+			sess.Table("monitor_location")
+			if _, err := sess.Insert(&monitor_locations); err != nil {
+				return err
+			}
 		}
-		if len(monitor_locations) == 0 {
-			err = fmt.Errorf("No monitor locations chosen")
-			return err
+
+		if len(cmd.LocationTags) > 0 {
+			monitor_location_tags := make([]*m.MonitorLocationTag, len(cmd.LocationTags))
+			for i, t := range cmd.LocationTags {
+				monitor_location_tags[i] = &m.MonitorLocationTag{
+					MonitorId: mon.Id,
+					Tag:       t,
+				}
+			}
+
+			sess.Table("monitor_location_tag")
+			if _, err := sess.Insert(&monitor_location_tags); err != nil {
+				return err
+			}
 		}
-		sess.Table("monitor_location")
-		if _, err = sess.Insert(&monitor_locations); err != nil {
-			return err
-		}
+
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
 			EndpointId:    mon.EndpointId,
@@ -465,6 +480,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Namespace:     mon.Namespace,
 			MonitorTypeId: mon.MonitorTypeId,
 			LocationIds:   cmd.LocationIds,
+			LocationTags:  cmd.LocationTags,
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
@@ -484,6 +500,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
 				LocationIds:   cmd.LocationIds,
+				LocationTags:  cmd.LocationTags,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
@@ -524,13 +541,15 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		//validate locations.
 		filtered_locations := make([]*locationList, 0, len(cmd.LocationIds))
-		sess.Table("location")
-		sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
-		sess.Cols("id")
-		err = sess.Find(&filtered_locations)
+		if len(cmd.LocationIds) > 0 {
+			sess.Table("location")
+			sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
+			sess.Cols("id")
+			err = sess.Find(&filtered_locations)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(filtered_locations) < len(cmd.LocationIds) {
@@ -549,6 +568,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			log.Info("no monitorType settings found for type: %d", cmd.MonitorTypeId)
 			return m.ErrMonitorSettingsInvalid
 		}
+
 		// push the typeSettings into a Map with the variable name as key
 		settingMap := make(map[string]*m.MonitorTypeSetting)
 		for _, s := range typeSettings {
@@ -613,15 +633,38 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
 		}
-		monitor_locations := make([]*m.MonitorLocation, 0, len(cmd.LocationIds))
-		for _, l := range cmd.LocationIds {
-			monitor_locations = append(monitor_locations, &m.MonitorLocation{
-				MonitorId:  cmd.Id,
-				LocationId: l,
-			})
+		if len(cmd.LocationIds) > 0 {
+			monitor_locations := make([]*m.MonitorLocation, len(cmd.LocationIds))
+			for i, l := range cmd.LocationIds {
+				monitor_locations[i] = &m.MonitorLocation{
+					MonitorId:  cmd.Id,
+					LocationId: l,
+				}
+			}
+			sess.Table("monitor_location")
+			if _, err := sess.Insert(&monitor_locations); err != nil {
+				return err
+			}
 		}
-		sess.Table("monitor_location")
-		_, err = sess.Insert(&monitor_locations)
+
+		rawSql = "DELETE FROM monitor_location_tag WHERE monitor_id=?"
+		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
+			return err
+		}
+		if len(cmd.LocationTags) > 0 {
+			monitor_location_tags := make([]*m.MonitorLocationTag, len(cmd.LocationTags))
+			for i, t := range cmd.LocationTags {
+				monitor_location_tags[i] = &m.MonitorLocationTag{
+					MonitorId: cmd.Id,
+					Tag:       t,
+				}
+			}
+
+			sess.Table("monitor_location_tag")
+			if _, err := sess.Insert(&monitor_location_tags); err != nil {
+				return err
+			}
+		}
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
@@ -635,6 +678,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
 				LocationIds:   cmd.LocationIds,
+				LocationTags:  cmd.LocationTags,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
