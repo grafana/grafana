@@ -9,7 +9,7 @@ rich ways to visualize time series metrics, mainly though graphs but supports ot
 a pluggable panel architecture. It currently has rich support for for [Graphite](http://graphite.readthedocs.org/en/latest/),
 [InfluxDB](http://influxdb.org) and [OpenTSDB](http://opentsdb.net). But supports other data sources via plugins.
 
-It is most common usage is for infrastructure monitoring, application monitoring and metric analytics. But Grafana
+It is most commonly used for infrastructure monitoring, application monitoring and metric analytics. But Grafana
 has an open architecture and design that enabled is to be used in other domains as well, like home automation,
 weather and industrial sensors analytics.
 

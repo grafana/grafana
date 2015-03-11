@@ -44,4 +44,7 @@ docs-test: docs-build
 	$(DOCKER_RUN_DOCS) "$(DOCKER_DOCS_IMAGE)" ./test.sh
 
 docs-build:
+  git fetch https://github.com/grafana/grafana.git docs-1.x && git diff --name-status FETCH_HEAD...HEAD -- . > /changed-files
+	echo "$(GIT_BRANCH)" > docs/GIT_BRANCH
+	echo "$(GITCOMMIT)" > docs/GITCOMMIT
 	docker build -t "$(DOCKER_DOCS_IMAGE)" .
