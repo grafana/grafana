@@ -53,6 +53,7 @@ function (angular, _, moment) {
 
     $scope.dashboardTitleAction = function() {
       $scope.appEvent('hide-dash-editor');
+      $scope.exitFullscreen();
     };
 
     $scope.saveDashboard = function(options) {
