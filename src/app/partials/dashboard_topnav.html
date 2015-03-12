@@ -11,16 +11,11 @@
 				<div class="top-nav-dashboards-btn">
 					<a class="pointer" ng-click="openSearch()">
 						<i class="fa fa-th-large"></i>
+						<span class="top-nav-title pointer">{{dashboard.title}}</span>
 						<i class="fa fa-caret-down"></i>
 					</a>
 				</div>
 
-				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
-				</span>
-
-				<a ng-click="dashboardTitleAction()" class="top-nav-title pointer">
-					{{dashboard.title}}
-				</a>
 			</div>
 
 			<ul class="nav pull-left top-nav-dash-actions" ng-if="!dashboardMeta.isHome">

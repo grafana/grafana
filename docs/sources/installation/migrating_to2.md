@@ -9,7 +9,13 @@ page_keywords: grafana, installation, migration, documentation
 Grafana 2.x is pretty different from v1.x in that Grafana 2.x has its own backend and its own
 database to store dashboards and users in.
 
-## Import dashboards
+## Adding Data sources
+
+Data sources in Grafana v2.0 are no longer configured via the `config.js` file. That config file is no more.
+You add data sources via UI or via the [HTTP API](../reference/http_api). Go the `Data Sources` view via the side menu.
+The side menu can be toggled via the Grafana icon in the top header (to the right).
+
+## Importing dashboards
 
 ### From Elasticsearch
 Start by going to the `Data Sources` view and add your elasticsearch datasource. Specify the elasticsearch
@@ -38,5 +44,4 @@ In the Import view you find the section `Migrate dashboards`. Pick the datasourc
 and click the `Import` button.
 
 ![](/img/v2/migrate_dashboards.jpg)
-
 

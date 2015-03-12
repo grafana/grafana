@@ -20,13 +20,13 @@ This is a guide that descriptes some of changes and new features that can be fou
 5. Share current dashboard (Make sure the dashboard is saved before)
 6. Save current dashboard
 7. Settings dropdown
-  - Dashboard settings
-  - Annotations
-  - Templating
-  - Export (exports current dashboard to json file)
-  - View JSON (view current dashboard json model)
-  - Save As... (Copy & Save current dashboard under a new name)
-  - Delete dashboard
+    - Dashboard settings
+    - Annotations
+    - Templating
+    - Export (exports current dashboard to json file)
+    - View JSON (view current dashboard json model)
+    - Save As... (Copy & Save current dashboard under a new name)
+    - Delete dashboard
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.

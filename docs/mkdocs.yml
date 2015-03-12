@@ -46,6 +46,7 @@ pages:
 - ['reference/playlist.md', 'Reference', 'Playlist']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Grafana Admin']
+- ['reference/admin.md', 'Reference', 'HTTP API']
 
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
