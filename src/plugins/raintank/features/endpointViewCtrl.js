@@ -25,7 +25,6 @@ function (angular) {
           $scope.reset();
         }
       });
-      
     };
 
     $scope.getLocations = function() {
@@ -62,7 +61,7 @@ function (angular) {
           found = true;
         }
       });
-      if (! found ) {
+      if (! found) {
         monitor.settings.push(s);
       }
       return s;
@@ -117,7 +116,6 @@ function (angular) {
       _.forEach(payload.suggested_monitors, function(suggestion) {
         _.defaults(suggestion, defaults);
       });
-      console.log(payload);
       return payload.suggested_monitors;
     }
 
@@ -134,6 +132,5 @@ function (angular) {
         });
     };
     $scope.init();
-
   });
 });

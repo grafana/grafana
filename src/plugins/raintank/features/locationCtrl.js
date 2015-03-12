@@ -27,7 +27,6 @@ function (angular) {
           $scope.reset();
         }
       });
-      
     };
 
     $scope.reset = function() {
@@ -76,6 +75,5 @@ function (angular) {
         });
     };
     $scope.init();
-
   });
 });

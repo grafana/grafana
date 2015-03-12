@@ -90,7 +90,7 @@ function (angular) {
           found = true;
         }
       });
-      if (! found ) {
+      if (! found) {
         monitor.settings.push(s);
       }
       return s;
@@ -174,7 +174,7 @@ function (angular) {
       backendSrv.post('/api/monitors', monitor);
     }
 
-     $scope.parseSuggestions = function(payload) {
+    $scope.parseSuggestions = function(payload) {
       var locations = [];
       _.forEach(Object.keys($scope.locations), function(loc) {
         locations.push(parseInt(loc));

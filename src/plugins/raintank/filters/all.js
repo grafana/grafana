@@ -7,12 +7,12 @@ define(['angular', 'lodash'], function (angular, _) {
     return function(items, tag) {
       var filtered = [];
       if (!tag) {
-      	return items;
+        return items;
       }
       _.forEach((items || []), function(item) {
-      	if (_.indexOf(item.tags, tag) >= 0) {
-      		filtered.push(item);
-      	}
+        if (_.indexOf(item.tags, tag) >= 0) {
+          filtered.push(item);
+        }
       });
       return filtered;
     };

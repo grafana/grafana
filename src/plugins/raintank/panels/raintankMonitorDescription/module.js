@@ -12,7 +12,7 @@ function (angular, app, _, kbn, PanelMeta) {
   app.useModule(module);
 
   app.useModule(module);
-    module.directive('grafanaPanelRaintankmonitordescription', function() {
+  module.directive('grafanaPanelRaintankmonitordescription', function() {
     return {
       controller: 'raintankMonitorDescription',
       templateUrl: 'plugins/raintank/panels/raintankMonitorDescription/module.html',

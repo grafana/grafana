@@ -22,12 +22,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/"),
       });
       $scope.mainLinks.push({
-        text: "Endpoints", 
+        text: "Endpoints",
         icon: "fa fa-fw fa-cloud",
         href: $scope.getUrl("/endpoints"),
       });
       $scope.mainLinks.push({
-        text: "Locations", 
+        text: "Locations",
         icon: "fa fa-fw fa-globe",
         href: $scope.getUrl("/locations"),
       });

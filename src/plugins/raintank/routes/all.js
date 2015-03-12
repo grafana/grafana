@@ -33,4 +33,3 @@ function (angular, jquery, _, config) {
       })
   });
 });
- 

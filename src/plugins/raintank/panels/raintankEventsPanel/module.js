@@ -12,7 +12,7 @@ function (angular, app, _, kbn, PanelMeta) {
   app.useModule(module);
 
   app.useModule(module);
-    module.directive('grafanaPanelRaintankeventspanel', function() {
+  module.directive('grafanaPanelRaintankeventspanel', function() {
     return {
       controller: 'raintankEventsPanel',
       templateUrl: 'plugins/raintank/panels/raintankEventsPanel/module.html',
@@ -27,7 +27,6 @@ function (angular, app, _, kbn, PanelMeta) {
       fullscreen: true
     });
     $scope.panelMeta.addEditorTab('Filter', 'plugins/raintank/panels/raintankEventsPanel/editor.html');
-
 
     // Set and populate defaults
     var _d = {
@@ -70,5 +69,4 @@ function (angular, app, _, kbn, PanelMeta) {
 
     $scope.init();
   });
-
 });
