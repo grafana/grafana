@@ -25,7 +25,7 @@ define([
     };
 
     this.getAnnotations = function(rangeUnparsed, dashboard) {
-      if (!dashboard.annotations.enable) {
+      if (dashboard.annotations.list.length === 0) {
         return $q.when(null);
       }
 
