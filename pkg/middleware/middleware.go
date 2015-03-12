@@ -75,7 +75,7 @@ func GetContextHandler() macaron.Handler {
 		} else if setting.AnonymousEnabled {
 			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 			if err := bus.Dispatch(&orgQuery); err != nil {
-				log.Error(3, "Anonymous access organization error", nil)
+				log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 			} else {
 				ctx.IsSignedIn = false
 				ctx.AllowAnonymous = true
