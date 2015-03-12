@@ -42,7 +42,7 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 		if has {
 			return org.Id, nil
 		} else {
-			org.Name = "Main org."
+			org.Name = "Main Org."
 			org.Id = 1
 		}
 	} else {
