@@ -343,7 +343,7 @@ function($, _, moment) {
         if (steps >= limit) { return "NA"; }
       }
 
-      if (steps > 0) {
+      if (steps > 0 && scaledDecimals !== null) {
         decimals = scaledDecimals + (3 * steps);
       }
 
@@ -400,6 +400,14 @@ function($, _, moment) {
   kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
   kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
 
+  kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
+    if (scaledDecimals === null) {
+      return kbn.toFixed(value, decimals) + ext;
+    } else {
+      return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
+    }
+  };
+
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
 
@@ -408,22 +416,22 @@ function($, _, moment) {
     }
     // Less than 1 min
     else if (Math.abs(size) < 60000) {
-      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " s";
+      return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, " s");
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600000) {
-      return kbn.toFixed(size / 60000, scaledDecimals + 5) + " min";
+      return kbn.toFixedScaled(size / 60000, decimals, scaledDecimals, 5, " min");
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400000) {
-      return kbn.toFixed(size / 3600000, scaledDecimals + 7) + " hour";
+      return kbn.toFixedScaled(size / 3600000, decimals, scaledDecimals, 7, " hour");
     }
     // Less than one year, devide in days
     else if (Math.abs(size) < 31536000000) {
-      return kbn.toFixed(size / 86400000, scaledDecimals + 8) + " day";
+      return kbn.toFixedScaled(size / 86400000, decimals, scaledDecimals, 8, " day");
     }
 
-    return kbn.toFixed(size / 31536000000, scaledDecimals + 10) + " year";
+    return kbn.toFixedScaled(size / 31536000000, decimals, scaledDecimals, 10, " year");
   };
 
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
@@ -434,22 +442,22 @@ function($, _, moment) {
     }
     // Less than 1 hour, devide in minutes
     else if (Math.abs(size) < 3600) {
-      return kbn.toFixed(size / 60, scaledDecimals + 1) + " min";
+      return kbn.toFixedScaled(size / 60, decimals, scaledDecimals, 1, " min");
     }
     // Less than one day, devide in hours
     else if (Math.abs(size) < 86400) {
-      return kbn.toFixed(size / 3600, scaledDecimals + 4) + " hour";
+      return kbn.toFixedScaled(size / 3600, decimals, scaledDecimals, 4, " hour");
     }
     // Less than one week, devide in days
     else if (Math.abs(size) < 604800) {
-      return kbn.toFixed(size / 86400, scaledDecimals + 5) + " day";
+      return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 5, " day");
     }
     // Less than one year, devide in week
     else if (Math.abs(size) < 31536000) {
-      return kbn.toFixed(size / 604800, scaledDecimals + 6) + " week";
+      return kbn.toFixedScaled(size / 604800, decimals, scaledDecimals, 6, " week");
     }
 
-    return kbn.toFixed(size / 3.15569e7, scaledDecimals + 7) + " year";
+    return kbn.toFixedScaled(size / 3.15569e7, decimals, scaledDecimals, 7, " year");
   };
 
   kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
@@ -459,10 +467,10 @@ function($, _, moment) {
       return kbn.toFixed(size, decimals) + " µs";
     }
     else if (Math.abs(size) < 1000000) {
-      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " ms";
+      return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, " ms");
     }
     else {
-      return kbn.toFixed(size / 1000000, scaledDecimals + 6) + " s";
+      return kbn.toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, " s");
     }
   };
 
@@ -473,16 +481,16 @@ function($, _, moment) {
       return kbn.toFixed(size, decimals) + " ns";
     }
     else if (Math.abs(size) < 1000000) {
-      return kbn.toFixed(size / 1000, scaledDecimals + 3) + " µs";
+      return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, " µs");
     }
     else if (Math.abs(size) < 1000000000) {
-      return kbn.toFixed(size / 1000000, scaledDecimals + 6) + " ms";
+      return kbn.toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, " ms");
     }
     else if (Math.abs(size) < 60000000000){
-      return kbn.toFixed(size / 1000000000, scaledDecimals + 9) + " s";
+      return kbn.toFixedScaled(size / 1000000000, decimals, scaledDecimals, 9, " s");
     }
     else {
-      return kbn.toFixed(size / 60000000000, scaledDecimals + 12) + " m";
+      return kbn.toFixedScaled(size / 60000000000, decimals, scaledDecimals, 12, " min");
     }
   };
 

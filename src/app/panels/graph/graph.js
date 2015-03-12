@@ -113,11 +113,17 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var axis = yaxis[series.yaxis - 1];
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
 
-            // legend and tooltip gets one more decimal precision
-            // than graph legend ticks
-            var tickDecimals = (axis.tickDecimals || -1) + 1;
+            // decimal override
+            if (scope.panel.decimals) {
+              series.updateLegendValues(formater, scope.panel.decimals, null);
+            } else {
+              // auto decimals
+              // legend and tooltip gets one more decimal precision
+              // than graph legend ticks
+              var tickDecimals = (axis.tickDecimals || -1) + 1;
+              series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
+            }
 
-            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
             if(!scope.$$phase) { scope.$digest(); }
           }
 

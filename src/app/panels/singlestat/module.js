@@ -123,6 +123,9 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     $scope.getDecimalsForValue = function(value) {
+      if ($scope.panel.decimals) {
+        return { decimals: $scope.panel.decimals, scaledDecimals: null };
+      }
 
       var delta = value / 2;
       var dec = -Math.floor(Math.log(delta) / Math.LN10);

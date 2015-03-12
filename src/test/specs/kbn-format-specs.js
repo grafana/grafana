@@ -37,6 +37,22 @@ define([
     });
   });
 
+  describe('kbn ms format when scaled decimals is null do not use it', function() {
+    it('should use specified decimals', function() {
+      var str = kbn.valueFormats['ms'](10000086.123, 1, null);
+      expect(str).to.be('2.8 hour');
+    });
+  });
+
+  describe('kbn kbytes format when scaled decimals is null do not use it', function() {
+    it('should use specified decimals', function() {
+      var str = kbn.valueFormats['kbytes'](10000000, 3, null);
+      expect(str).to.be('9.537 GiB');
+    });
+  });
+
+
+
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {
       var range = { from: kbn.parseDate('now-1h'), to: kbn.parseDate('now') };
