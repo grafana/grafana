@@ -77,7 +77,7 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
-        if (!data instanceof Array) {
+        if (!(data instanceof Array)) {
          data = data['elements']
         }
 
@@ -99,7 +99,7 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
-        if (!data instanceof Array) {
+        if (!(data instanceof Array)) {
           data = data['elements']
         }
 
@@ -121,7 +121,7 @@ function (angular, _, kbn) {
         if (!data) {
           return [];
         }
-        if (!data instanceof Array) {
+        if (!(data instanceof Array)) {
           data = data['elements']
         }
         var names = [];
@@ -230,7 +230,7 @@ function (angular, _, kbn) {
     function handleGetStatisticsResponse(data) {
       var output = [];
 
-      if (!data instanceof Array) {
+      if (!(data instanceof Array)) {
         data = data['elements']
       }
       _.each(data, function (series) {
