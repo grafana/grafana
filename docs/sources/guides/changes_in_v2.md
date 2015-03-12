@@ -99,8 +99,8 @@ Here you can update your user details, UI Theme and change password.
 ## PNG rendering
 
 In the panel share dialog you now have access to a link that will render the panel to a PNG image.
-The panel is rendered on the backend via phantomjs (headless browser). This requires that you metric
-data source is accessable from your Grafana server host machine.
+The panel is rendered on the backend via phantomjs (headless browser). This requires that your metric
+data source is accessible from your Grafana server host machine.
 
 ![](/img/v2/share_dialog_image_highlight.jpg)
 
