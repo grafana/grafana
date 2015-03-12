@@ -230,7 +230,9 @@ function (angular, _, kbn) {
     function handleGetStatisticsResponse(data) {
       var output = [];
 
+      var arg1 = data
       if (!(data instanceof Array)) {
+        arg1 = data
         data = data['elements']
       }
       _.each(data, function (series) {
@@ -242,11 +244,11 @@ function (angular, _, kbn) {
           }
 
           var target;
-          if (data.label) {
-            target = series.dimensions[data.label];
+          if (arg1.label) {
+            target = series.dimensions[arg1.label];
           }
           else {
-            target = data.alias || series.name + "." + column + '(';
+            target = arg1.alias || series.name + "." + column + '(';
             for (var dimension in series.dimensions) {
               target += dimension + '=' + series.dimensions[dimension] + ',';
             }
@@ -254,7 +256,7 @@ function (angular, _, kbn) {
           }
           var datapoints = [];
 
-          var from = moment.utc(new Date(data.startTime).getTime());
+          var from = moment.utc(new Date(arg1.startTime).getTime());
 
           if ('statistics' in series) {
             for (var i = 0; i < series.statistics.length; i++) {
