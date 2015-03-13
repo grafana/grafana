@@ -58,13 +58,7 @@ function (angular, _, config) {
 
       $scope.setDatasource = function(datasource) {
         $scope.panel.datasource = datasource;
-        datasourceSrv.get(datasource).then(function(ds) {
-          $scope.datasource = ds;
-        });
-      };
-
-      $scope.changeDatasource = function(datasource) {
-        $scope.setDatasource(datasource);
+        $scope.datasource = null;
         $scope.get_data();
       };
 
