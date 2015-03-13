@@ -86,17 +86,19 @@ function (_, kbn) {
         }
       }
 
-      if (_.isNumber(currentValue)) {
-        this.stats.total += currentValue;
-        this.allIsNull = false;
-      }
+      if (currentValue !== null) {
+        if (_.isNumber(currentValue)) {
+          this.stats.total += currentValue;
+          this.allIsNull = false;
+        }
 
-      if (currentValue > this.stats.max) {
-        this.stats.max = currentValue;
-      }
+        if (currentValue > this.stats.max) {
+          this.stats.max = currentValue;
+        }
 
-      if (currentValue < this.stats.min) {
-        this.stats.min = currentValue;
+        if (currentValue < this.stats.min) {
+          this.stats.min = currentValue;
+        }
       }
 
       result.push([currentTime, currentValue]);
