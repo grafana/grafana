@@ -19,10 +19,30 @@ module.exports = function(grunt) {
     'requirejs:build',
     'concat:js',
     'filerev',
+    'remapFilerev',
     'usemin',
     'clean:temp',
     'uglify:dest'
   ]);
+
+
+  // task to add [[.AppSubUrl]] to reved path
+  grunt.registerTask('remapFilerev', function(){
+    var root = grunt.config().destDir;
+    var summary = grunt.filerev.summary;
+    var fixed = {};
+
+    for(var key in summary){
+      if(summary.hasOwnProperty(key)){
+
+        var orig = key.replace(root, root+'/[[.AppSubUrl]]');
+        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]');
+        fixed[orig] = revved;
+      }
+    }
+
+    grunt.filerev.summary = fixed;
+  });
 
   grunt.registerTask('build-post-process', function() {
     grunt.config('copy.dist_to_tmp', {
