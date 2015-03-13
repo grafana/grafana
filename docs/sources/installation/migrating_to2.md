@@ -12,7 +12,7 @@ database to store dashboards and users in.
 ## Adding Data sources
 
 Data sources in Grafana v2.0 are no longer configured via the `config.js` file. That config file is no more.
-You add data sources via UI or via the [HTTP API](../reference/http_api). Go the `Data Sources` view via the side menu.
+You add data sources via UI or via the [HTTP API](../reference/http_api.md). Go the `Data Sources` view via the side menu.
 The side menu can be toggled via the Grafana icon in the top header (to the right).
 
 ## Importing dashboards

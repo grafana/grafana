@@ -12,7 +12,7 @@ To switch to a regular text box click the pen icon to the right.
 
 ## Installing Graphite
 
-## Add a Graphite data source to grafana
+## Adding the data source to Grafana
 
 ## Metric editor
 
