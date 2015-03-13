@@ -30,7 +30,7 @@ function (angular, _, moment) {
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
         backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
-          $scope.dashboardMeta.isStarred = true;
+          $scope.dashboardMeta.isStarred = false;
         });
       }
       else {
