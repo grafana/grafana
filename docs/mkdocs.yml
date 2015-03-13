@@ -37,7 +37,9 @@ pages:
 - ['guides/changes_in_v2.md', 'User Guides', 'Changes and New Features in v2.0']
 - ['guides/screencasts.md', 'User Guides', 'Screencasts']
 
-- ['reference/graph.md', 'Reference', 'Graph options']
+- ['reference/graph.md', 'Reference', 'Graph Panel']
+- ['reference/singlestat.md', 'Reference', 'Singlestat Panel']
+- ['reference/dashlist.md', 'Reference', 'Dashlist Panel']
 - ['reference/annotations.md', 'Reference', 'Annotations']
 - ['reference/timerange.md', 'Reference', 'Time range controls']
 - ['reference/search.md', 'Reference', 'Dashboard Search']

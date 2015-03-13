@@ -1,8 +1,10 @@
----
-title: Docs - Graphing
+----
+page_title: Graph Panel
+page_description: Graph Panel Reference
+page_keywords: grafana, graph, panel, documentation
 ---
 
-# Graphing
+# Graph Panel
 
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
@@ -83,11 +85,13 @@ Additional values can be shown along-side the legend names:
 - ``Min`` - Minimum of all values returned from metric query
 - ``Max`` - Maximum of all values returned from the metric query
 - ``Avg`` - Average of all values returned from metric query
-- ``Decimals`` - Controls how many decimals are displayed for legend values
+- ``Decimals`` - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
-This means that if your series represents a rate, for example requests / second then the Total in the legend will
-not represent the total number of requests. It is just the sum of all data points.
-
+The legend values are calculated client side by Grafana and depend on what type of
+aggregation or point consolidation you metric query is using. All the above legend values cannot
+be correct at the same time. For example if you plot a rate like requests/second, this is probably
+using average as aggregator, then the Total in the legend will not represent the total number of requests.
+It is just the sum of all data data points received by Grafana.
 
 ## Display styles
 
