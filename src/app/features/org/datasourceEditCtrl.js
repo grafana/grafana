@@ -10,6 +10,8 @@ function (angular) {
 
   module.controller('DataSourceEditCtrl', function($scope, $q, backendSrv, $routeParams, $location, datasourceSrv) {
 
+    $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
+
     var defaults = {
       name: '',
       type: 'graphite',
