@@ -126,6 +126,7 @@ function (angular, $, kbn, _, moment) {
 
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
+      return newPanel;
     };
 
     p.formatDate = function(date, format) {
