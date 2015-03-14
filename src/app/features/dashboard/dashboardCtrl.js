@@ -31,25 +31,30 @@ function (angular, $, config) {
       $scope.setupDashboard(dashboard);
     };
 
-    $scope.setupDashboard = function(dashboard) {
+    $scope.setupDashboard = function(data) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      $scope.dashboard = dashboardSrv.create(dashboard.model);
-      $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-      $scope.dashboardMeta = dashboard.meta;
+      var dashboard = dashboardSrv.create(data.model);
 
       // init services
-      timeSrv.init($scope.dashboard);
-      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
+      timeSrv.init(dashboard);
 
-      dashboardKeybindings.shortcuts($scope);
+      // template values service needs to initialize completely before
+      // the rest of the dashboard can load
+      templateValuesSrv.init(dashboard).then(function() {
+        $scope.dashboard = dashboard;
+        $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+        $scope.dashboardMeta = data.meta;
 
-      $scope.updateSubmenuVisibility();
-      $scope.setWindowTitleAndTheme();
+        dashboardKeybindings.shortcuts($scope);
 
-      $scope.appEvent("dashboard-loaded", $scope.dashboard);
+        $scope.updateSubmenuVisibility();
+        $scope.setWindowTitleAndTheme();
+
+        $scope.appEvent("dashboard-loaded", $scope.dashboard);
+      });
     };
 
     $scope.updateSubmenuVisibility = function() {

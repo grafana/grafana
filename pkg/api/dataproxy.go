@@ -44,7 +44,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 	return &httputil.ReverseProxy{Director: director}
 }
 
-// TODO: need to cache datasources
+//ProxyDataSourceRequest TODO need to cache datasources
 func ProxyDataSourceRequest(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}

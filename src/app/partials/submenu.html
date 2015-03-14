@@ -4,7 +4,7 @@
 
 		<ul class="tight-form-list" ng-if="dashboard.templating.list.length > 0">
 			<li class="tight-form-item">
-				<strong>Variables:</strong>
+				<strong>VARIABLES:</strong>
 			</li>
 			<li ng-repeat-start="variable in variables" class="tight-form-item template-param-name">
 				<span class="template-variable ">
@@ -21,7 +21,7 @@
 
 		<ul class="tight-form-list" ng-if="dashboard.annotations.list.length > 0">
 			<li class="tight-form-item">
-				<strong>Annotations:</strong>
+				<strong>ANNOTATIONS:</strong>
 			</li>
 			<li ng-repeat="annotation in dashboard.annotations.list" class="tight-form-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 				<a ng-click="disableAnnotation(annotation)">
