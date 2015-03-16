@@ -56,7 +56,7 @@ func Register(r *macaron.Macaron) {
 		})
 
 		// Org
-		r.Get("/", GetOrg)
+		r.Get("/org", GetOrg)
 		r.Group("/org", func() {
 			r.Post("/", bind(m.CreateOrgCommand{}), CreateOrg)
 			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
