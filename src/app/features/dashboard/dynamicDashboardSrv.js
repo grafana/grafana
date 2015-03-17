@@ -13,6 +13,25 @@ function (angular, _) {
       this.handlePanelRepeats(dashboard);
     };
 
+    this.update = function(dashboard) {
+      this.removeLinkedPanels(dashboard);
+      this.handlePanelRepeats(dashboard);
+    };
+
+    this.removeLinkedPanels = function(dashboard) {
+      var i, j, row, panel;
+      for (i = 0; i < dashboard.rows.length; i++) {
+        row = dashboard.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (panel.linked) {
+            row.panels = _.without(row.panels, panel);
+            j = j - 1;
+          }
+        }
+      }
+    };
+
     this.handlePanelRepeats = function(dashboard) {
       var i, j, row, panel;
       for (i = 0; i < dashboard.rows.length; i++) {
@@ -37,6 +56,7 @@ function (angular, _) {
         if (index > 0) {
           var copy = dashboard.duplicatePanel(panel, row);
           copy.repeat = null;
+          copy.linked = true;
           copy.scopedVars = {};
           copy.scopedVars[variable.name] = option;
         } else {

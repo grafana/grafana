@@ -32,7 +32,7 @@ function (angular, _, kbn) {
           var option = _.findWhere(variable.options, { text: urlValue });
           option = option || { text: urlValue, value: urlValue };
 
-          var promise = this.setVariableValue(variable, option, true);
+          var promise = this.setVariableValue(variable, option);
           this.updateAutoInterval(variable);
 
           promises.push(promise);
@@ -60,17 +60,10 @@ function (angular, _, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, recursive) {
+    this.setVariableValue = function(variable, option) {
       variable.current = option;
-
       templateSrv.updateTemplateData();
-
-      return this.updateOptionsInChildVariables(variable)
-        .then(function() {
-          if (!recursive) {
-            $rootScope.$broadcast('refresh');
-          }
-        });
+      return this.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
@@ -117,11 +110,11 @@ function (angular, _, kbn) {
           if (variable.current) {
             var currentOption = _.findWhere(variable.options, { text: variable.current.text });
             if (currentOption) {
-              return self.setVariableValue(variable, currentOption, true);
+              return self.setVariableValue(variable, currentOption);
             }
           }
 
-          return self.setVariableValue(variable, variable.options[0], true);
+          return self.setVariableValue(variable, variable.options[0]);
         });
       });
     };
