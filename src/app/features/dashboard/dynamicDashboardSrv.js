@@ -33,9 +33,15 @@ function (angular, _) {
         return;
       }
 
+      dashboard.scopedVars = {
+        panel: {}
+      };
+
       _.each(variable.options, function(option) {
         var copy = dashboard.duplicatePanel(panel, row);
         copy.repeat = null;
+        dashboard.scopedVars.panel[panel.id] = {};
+        dashboard.scopedVars.panel[panel.id][variable.name] = option.value;
         console.log('duplicatePanel');
       });
     };

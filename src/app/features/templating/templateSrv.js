@@ -63,13 +63,18 @@ function (angular, _) {
       });
     };
 
-    this.replace = function(target) {
+    this.replace = function(target, scopedVars) {
       if (!target) { return; }
 
       var value;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
+        if (scopedVars) {
+          value = scopedVars[g1 || g2];
+          if (value) { return value; }
+        }
+
         value = self._values[g1 || g2];
         if (!value) { return match; }
 
