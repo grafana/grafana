@@ -76,6 +76,14 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 		_, err := sess.Insert(&user)
 		cmd.Result = org
 
+		locationCmd := m.CopyPublicLocationTagsCmd{
+			OrgId: org.Id,
+		}
+		err = CopyPublicLocationTags(&locationCmd)
+		if err != nil {
+			return err
+		}
+
 		sess.publishAfterCommit(&events.OrgCreated{
 			Timestamp: org.Created,
 			Id:        org.Id,

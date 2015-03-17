@@ -39,16 +39,14 @@ func GetLocationById(query *m.GetLocationByIdQuery) error {
 		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
 		location.*
 	FROM location
-	LEFT JOIN location_tag ON location.id = location_tag.location_id
+	LEFT JOIN location_tag ON location.id = location_tag.location_id AND location_tag.org_id=?
 	WHERE 
-		(location.public=1 OR location.org_id=?) 
+		(location.public=1 || location.org_id=?)
 	AND
 		location.id=?
-	AND 
-		(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)
 	GROUP BY location.id
 	`
-	rawParams = append(rawParams, query.OrgId, query.Id, query.OrgId)
+	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
 	results := make([]LocationWithTag, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&results)
 	if err != nil {
@@ -86,18 +84,18 @@ func GetLocations(query *m.GetLocationsQuery) error {
 		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
 		location.*
 	FROM location
-	LEFT JOIN location_tag ON location.id = location_tag.location_id
+	LEFT JOIN location_tag ON location.id = location_tag.location_id AND location_tag.org_id=?
 	`
+	rawParams = append(rawParams, query.OrgId)
 	whereSql := make([]string, 0)
-	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)", "(location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)")
-	rawParams = append(rawParams, query.OrgId, query.OrgId)
-
+	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)")
+	rawParams = append(rawParams, query.OrgId)
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
 		// match only locations that have the tag(s),
 		// but we still need to return all of the tags that
 		// the location has.
-		rawSql += "LEFT JOIN location_tag AS lt ON lt.location_id = location.id\n"
+		rawSql += "LEFT JOIN location_tag AS lt ON lt.location_id = location.id AND location.org_id = location_tag.org_id\n"
 		p := make([]string, len(query.Tag))
 		for i, t := range query.Tag {
 			p[i] = "?"
@@ -212,6 +210,35 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 	})
 }
 
+func CopyPublicLocationTags(cmd *m.CopyPublicLocationTagsCmd) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		sess.Table("location_tag")
+		sess.Join("INNER", "location", "location.id=location_tag.location_id")
+		sess.Where("location.public=1")
+		result := make([]*m.LocationTag, 0)
+		err := sess.Find(&result)
+		if err != nil {
+			return err
+		}
+
+		if len(result) > 0 {
+			locationTags := make([]m.LocationTag, len(result))
+			for i, locationTag := range result {
+				locationTags[i] = m.LocationTag{
+					OrgId:      cmd.OrgId,
+					LocationId: locationTag.LocationId,
+					Tag:        locationTag.Tag,
+				}
+			}
+			sess.Table("location_tag")
+			if _, err := sess.Insert(&locationTags); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
@@ -245,29 +272,13 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 			return err
 		}
 
-		tagsMap := make(map[string]bool)
-		if locationQuery.Result.Public && locationQuery.Result.OrgId != cmd.OrgId {
-			ownerTags := make([]m.LocationTag, 0)
-			sess.Table("location_tag")
-			sess.Where("location_id=? AND org_id=?", cmd.Id, locationQuery.Result.OrgId)
-			err = sess.Find(&ownerTags)
-
-			for _, tag := range ownerTags {
-				tagsMap[tag.Tag] = true
-			}
-		}
-
 		locationTags := make([]m.LocationTag, 0, len(cmd.Tags))
 		for _, tag := range cmd.Tags {
-			//only add the Tag to the DB if the owner of the location
-			// does not already have a tag with the same name.
-			if _, ok := tagsMap[tag]; !ok {
-				locationTags = append(locationTags, m.LocationTag{
-					OrgId:      cmd.OrgId,
-					LocationId: cmd.Id,
-					Tag:        tag,
-				})
-			}
+			locationTags = append(locationTags, m.LocationTag{
+				OrgId:      cmd.OrgId,
+				LocationId: cmd.Id,
+				Tag:        tag,
+			})
 		}
 		if len(locationTags) > 0 {
 			sess.Table("location_tag")
