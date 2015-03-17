@@ -31,33 +31,30 @@ function (angular, $, config) {
       $scope.setupDashboard(dashboard);
     };
 
-    $scope.registerWindowResizeEvent = function() {
-      angular.element(window).bind('resize', function() {
-        $timeout.cancel(resizeEventTimeout);
-        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
-      });
-    };
-
-    $scope.setupDashboard = function(dashboard) {
+    $scope.setupDashboard = function(data) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      $scope.dashboard = dashboardSrv.create(dashboard.model);
-      console.log($scope.dashboard);
-      $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-      $scope.dashboardMeta = dashboard.meta;
+      var dashboard = dashboardSrv.create(data.model);
 
       // init services
-      timeSrv.init($scope.dashboard);
-      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
+      timeSrv.init(dashboard);
 
-      dashboardKeybindings.shortcuts($scope);
+      // template values service needs to initialize completely before
+      // the rest of the dashboard can load
+      templateValuesSrv.init(dashboard).then(function() {
+        $scope.dashboard = dashboard;
+        $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+        $scope.dashboardMeta = data.meta;
 
-      $scope.updateSubmenuVisibility();
-      $scope.setWindowTitleAndTheme();
+        dashboardKeybindings.shortcuts($scope);
 
-      $scope.appEvent("dashboard-loaded", $scope.dashboard);
+        $scope.updateSubmenuVisibility();
+        $scope.setWindowTitleAndTheme();
+
+        $scope.appEvent("dashboard-loaded", $scope.dashboard);
+      });
     };
 
     $scope.updateSubmenuVisibility = function() {
@@ -66,11 +63,6 @@ function (angular, $, config) {
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
-    };
-
-    $scope.styleUpdated = function() {
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
     };
 
     $scope.broadcastRefresh = function() {
@@ -127,6 +119,16 @@ function (angular, $, config) {
       }
 
       $rootScope.$broadcast('render');
+    };
+
+    $scope.registerWindowResizeEvent = function() {
+      angular.element(window).bind('resize', function() {
+        $timeout.cancel(resizeEventTimeout);
+        resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
+      });
+      $scope.$on('$destroy', function() {
+        angular.element(window).unbind('resize');
+      });
     };
 
   });

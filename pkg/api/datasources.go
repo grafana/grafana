@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func GetDataSources(c *middleware.Context) {
@@ -49,17 +50,20 @@ func GetDataSourceById(c *middleware.Context) {
 	ds := query.Result
 
 	c.JSON(200, &dtos.DataSource{
-		Id:        ds.Id,
-		OrgId:     ds.OrgId,
-		Name:      ds.Name,
-		Url:       ds.Url,
-		Type:      ds.Type,
-		Access:    ds.Access,
-		Password:  ds.Password,
-		Database:  ds.Database,
-		User:      ds.User,
-		BasicAuth: ds.BasicAuth,
-		IsDefault: ds.IsDefault,
+		Id:                ds.Id,
+		OrgId:             ds.OrgId,
+		Name:              ds.Name,
+		Url:               ds.Url,
+		Type:              ds.Type,
+		Access:            ds.Access,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		IsDefault:         ds.IsDefault,
+		JsonData:          ds.JsonData,
 	})
 }
 
@@ -82,14 +86,7 @@ func DeleteDataSource(c *middleware.Context) {
 	c.JsonOK("Data source deleted")
 }
 
-func AddDataSource(c *middleware.Context) {
-	cmd := m.AddDataSourceCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -100,14 +97,7 @@ func AddDataSource(c *middleware.Context) {
 	c.JsonOK("Datasource added")
 }
 
-func UpdateDataSource(c *middleware.Context) {
-	cmd := m.UpdateDataSourceCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
@@ -117,4 +107,8 @@ func UpdateDataSource(c *middleware.Context) {
 	}
 
 	c.JsonOK("Datasource updated")
+}
+
+func GetDataSourcePlugins(c *middleware.Context) {
+	c.JSON(200, plugins.DataSources)
 }

@@ -8,12 +8,11 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PlaylistCtrl', function($scope, playlistSrv, datasourceSrv) {
+  module.controller('PlaylistCtrl', function($scope, playlistSrv, backendSrv) {
 
     $scope.init = function() {
       $scope.playlist = [];
       $scope.timespan = config.playlist_timespan;
-      $scope.db = datasourceSrv.getGrafanaDB();
       $scope.search();
     };
 
@@ -25,7 +24,7 @@ function (angular, _, config) {
         query.starred = false;
       }
 
-      $scope.db.searchDashboards(query).then(function(results) {
+      backendSrv.search(query).then(function(results) {
         $scope.searchHits = results.dashboards;
         $scope.filterHits();
       });

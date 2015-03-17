@@ -1,0 +1,15 @@
+{
+  "pluginType": "datasource",
+  "name": "Grafana (for testing)",
+
+  "type": "grafana",
+  "serviceName": "GrafanaDatasource",
+
+  "module": "plugins/datasource/grafana/datasource",
+
+  "partials": {
+    "query": "app/plugins/datasource/grafana/partials/query.editor.html"
+  },
+
+  "metrics": true
+}

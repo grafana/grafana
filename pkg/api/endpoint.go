@@ -46,14 +46,7 @@ func DeleteEndpoint(c *middleware.Context) {
 	c.JsonOK("endpoint deleted")
 }
 
-func AddEndpoint(c *middleware.Context) {
-	cmd := m.AddEndpointCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -71,13 +64,7 @@ func AddEndpoint(c *middleware.Context) {
 	c.JSON(200, discoverCmd.Result)
 }
 
-func UpdateEndpoint(c *middleware.Context) {
-	cmd := m.UpdateEndpointCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
+func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) {
 
 	cmd.OrgId = c.OrgId
 

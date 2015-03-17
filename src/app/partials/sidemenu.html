@@ -28,7 +28,7 @@
 
 	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="!systemSection">
 
-		<li>
+		<li ng-if="contextSrv.user.isSignedIn">
 			<a href="profile" class="sidemenu-item">
 				<img ng-src="{{contextSrv.user.gravatarUrl}}">
 				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
@@ -38,10 +38,7 @@
 		<li class="dropdown">
 			<a class="sidemenu-item pointer" data-toggle="dropdown" ng-click="loadOrgs()">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
-				<span class="sidemenu-item-text">
-					{{contextSrv.user.orgName}}
-					<i class="fa fa-caret-down small"></i>
-				</span>
+				<span class="sidemenu-item-text">{{contextSrv.user.orgName}}</span><i class="fa fa-caret-down small"></i>
 	   	</a>
 			<ul class="dropdown-menu" role="menu" style="left: 65px">
 				<li ng-repeat="menuItem in orgMenu" ng-class="menuItem.cssClass">
@@ -64,10 +61,17 @@
 	   	</a>
 		</li>
 
-		<li>
+		<li ng-if="contextSrv.isSignedIn">
 			<a href="logout" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
 				<span class="sidemenu-item-text">Sign out</span>
+	   	</a>
+		</li>
+
+		<li ng-if="!contextSrv.isSignedIn">
+			<a href="login" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
+				<span class="sidemenu-item-text">Sign in</span>
 	   	</a>
 		</li>
 	</ul>

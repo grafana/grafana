@@ -13,6 +13,7 @@ function (angular, $, _) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
             '<span class="panel-links-icon"></span>' +
+            '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
           '</span>';
 
       function createMenuTemplate($scope) {

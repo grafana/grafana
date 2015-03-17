@@ -19,7 +19,7 @@ function (angular, _) {
         link: function() {
         }
       };
-    }).controller('PanelLinkEditorCtrl', function($scope, datasourceSrv) {
+    }).controller('PanelLinkEditorCtrl', function($scope, backendSrv) {
 
       $scope.panel.links = $scope.panel.links || [];
 
@@ -30,11 +30,10 @@ function (angular, _) {
         });
       };
 
-      $scope.searchDashboards = function(query, callback) {
-        var ds = datasourceSrv.getGrafanaDB();
-        if (ds === null) { return; }
+      $scope.searchDashboards = function(queryStr, callback) {
+        var query = {query: queryStr};
 
-        ds.searchDashboards(query).then(function(result) {
+        backendSrv.search(query).then(function(result) {
           var dashboards = _.map(result.dashboards, function(dash) {
             return dash.title;
           });

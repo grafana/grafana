@@ -27,6 +27,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/profile/", reqSignedIn, Index)
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
+	r.Get("/datasources/edit/*", reqSignedIn, Index)
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
@@ -35,9 +36,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-	r.Get("/network/locations", reqSignedIn, Index)
-	r.Get("/network/monitors", reqSignedIn, Index)
-	r.Get("/network/endpoints", reqSignedIn, Index)
+	r.Get("/locations", reqSignedIn, Index)
+	r.Get("/endpoints", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
@@ -74,9 +74,13 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Combo("/").Get(GetDataSources).Put(AddDataSource).Post(UpdateDataSource)
+			r.Combo("/").
+				Get(GetDataSources).
+				Put(bind(m.AddDataSourceCommand{}), AddDataSource).
+				Post(bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
+			r.Get("/plugins", GetDataSourcePlugins)
 		}, reqAccountAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
@@ -99,25 +103,28 @@ func Register(r *macaron.Macaron) {
 		r.Group("/locations", func() {
 			r.Combo("/").
 				Get(bind(m.GetLocationsQuery{}), GetLocations).
-				Put(AddLocation).
-				Post(UpdateLocation)
+				Put(reqEditorRole, bind(m.AddLocationCommand{}), AddLocation).
+				Post(reqEditorRole, bind(m.UpdateLocationCommand{}), UpdateLocation)
 			r.Get("/:id", GetLocationById)
-			r.Delete("/:id", DeleteLocation)
+			r.Delete("/:id", reqEditorRole, DeleteLocation)
 		})
 
 		// Monitors
 		r.Group("/monitors", func() {
 			r.Combo("/").
 				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
-				Put(AddMonitor).Post(UpdateMonitor)
+				Put(reqEditorRole, bind(m.AddMonitorCommand{}), AddMonitor).
+				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), UpdateMonitor)
 			r.Get("/:id", GetMonitorById)
-			r.Delete("/:id", DeleteMonitor)
+			r.Delete("/:id", reqEditorRole, DeleteMonitor)
 		})
 		// endpoints
 		r.Group("/endpoints", func() {
-			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).Put(AddEndpoint).Post(UpdateEndpoint)
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).
+				Put(reqEditorRole, bind(m.AddEndpointCommand{}), AddEndpoint).
+				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), UpdateEndpoint)
 			r.Get("/:id", GetEndpointById)
-			r.Delete("/:id", DeleteEndpoint)
+			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
 		})
 
 		r.Get("/monitor_types", GetMonitorTypes)

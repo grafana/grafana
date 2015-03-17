@@ -70,6 +70,7 @@ a.text-success:hover { color: darken(@green, 10%); }
 	.nav > .active > a:hover,
 	.nav > .active > a:focus {
 		.box-shadow(none);
+    border-bottom: 1px solid @blue;
 		background-color: @navbarLinkBackgroundHover;
 	}
 
@@ -315,6 +316,9 @@ div.subnav {
 	&.disabled {
 		box-shadow: inset 0 2px 4px rgba(0,0,0,.15),~" "0 1px 2px rgba(0,0,0,.05);
 	}
+}
+
+.btn-inverse {
 }
 
 .btn-large {

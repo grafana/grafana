@@ -210,33 +210,32 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 	})
 }
 
-func CopyPublicLocationTags(cmd *m.CopyPublicLocationTagsCmd) error {
-	return inTransaction(func(sess *xorm.Session) error {
+func CopyPublicLocationTags(orgId int64, sess *session) error {
+	sess.Table("location_tag")
+	sess.Join("INNER", "location", "location.id=location_tag.location_id")
+	sess.Where("location.public=1").And("location.org_id=location_tag.org_id")
+	result := make([]*m.LocationTag, 0)
+	err := sess.Find(&result)
+	if err != nil {
+		return err
+	}
+
+	if len(result) > 0 {
+		locationTags := make([]m.LocationTag, len(result))
+		for i, locationTag := range result {
+			locationTags[i] = m.LocationTag{
+				OrgId:      orgId,
+				LocationId: locationTag.LocationId,
+				Tag:        locationTag.Tag,
+			}
+		}
 		sess.Table("location_tag")
-		sess.Join("INNER", "location", "location.id=location_tag.location_id")
-		sess.Where("location.public=1")
-		result := make([]*m.LocationTag, 0)
-		err := sess.Find(&result)
-		if err != nil {
+		if _, err := sess.Insert(&locationTags); err != nil {
 			return err
 		}
+	}
+	return nil
 
-		if len(result) > 0 {
-			locationTags := make([]m.LocationTag, len(result))
-			for i, locationTag := range result {
-				locationTags[i] = m.LocationTag{
-					OrgId:      cmd.OrgId,
-					LocationId: locationTag.LocationId,
-					Tag:        locationTag.Tag,
-				}
-			}
-			sess.Table("location_tag")
-			if _, err := sess.Insert(&locationTags); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 func UpdateLocation(cmd *m.UpdateLocationCommand) error {

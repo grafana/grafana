@@ -29,7 +29,7 @@ func TestDataSourceProxy(t *testing.T) {
 
 	Convey("When getting influxdb datasource proxy", t, func() {
 		ds := m.DataSource{
-			Type:     m.DS_INFLUXDB,
+			Type:     m.DS_INFLUXDB_08,
 			Url:      "http://influxdb:8083",
 			Database: "site",
 			User:     "user",

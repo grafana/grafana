@@ -103,7 +103,7 @@ func createDataSource(c *cli.Context) {
 		OrgId:     orgId,
 		Name:      ds,
 		Url:       url,
-		Type:      m.DsType(dsType),
+		Type:      dsType,
 		Access:    m.DsAccess(dsAccess),
 		IsDefault: dsDefault,
 	}

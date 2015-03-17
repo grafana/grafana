@@ -71,10 +71,6 @@ type DeleteLocationCommand struct {
 	OrgId int64 `json:"-"`
 }
 
-type CopyPublicLocationTagsCmd struct {
-	OrgId int64
-}
-
 // ---------------------
 // QUERIES
 

@@ -38,7 +38,7 @@ function (angular) {
         $scope.locations = locations;
       });
     };
-    
+
     $scope.remove = function(loc) {
       backendSrv.delete('/api/locations/' + loc.id).then(function() {
         $scope.getLocations();

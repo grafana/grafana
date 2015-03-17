@@ -48,6 +48,7 @@ type UpdateUserCommand struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Login string `json:"login"`
+	Theme string `json:"theme"`
 
 	UserId int64 `json:"-"`
 }
@@ -91,9 +92,9 @@ type GetSignedInUserQuery struct {
 	Result *SignedInUser
 }
 
-type GetUserInfoQuery struct {
+type GetUserProfileQuery struct {
 	UserId int64
-	Result UserDTO
+	Result UserProfileDTO
 }
 
 type SearchUsersQuery struct {
@@ -120,14 +121,16 @@ type SignedInUser struct {
 	Login          string
 	Name           string
 	Email          string
+	Theme          string
 	ApiKeyId       int64
 	IsGrafanaAdmin bool
 }
 
-type UserDTO struct {
+type UserProfileDTO struct {
 	Email          string `json:"email"`
 	Name           string `json:"name"`
 	Login          string `json:"login"`
+	Theme          string `json:"theme"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 

@@ -5,7 +5,6 @@ module.exports = function(grunt) {
   grunt.registerTask('release', [
     'build',
     'build-post-process',
-    'compress:zip_release',
     'compress:tgz_release',
   ]);
 

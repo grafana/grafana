@@ -15,7 +15,7 @@ define([
   'extend-jquery',
   'bindonce',
 ],
-function (angular, $, _, appLevelRequire, config) {
+function (angular, $, _, appLevelRequire) {
 
   "use strict";
 
@@ -67,16 +67,7 @@ function (angular, $, _, appLevelRequire, config) {
     'pasvaz.bindonce'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters'];
-
-  if (window.grafanaBackend) {
-    module_types.push('routes');
-    angular.module('grafana.routes.standalone', []);
-  }
-  else {
-    module_types.push('routes.standalone');
-    angular.module('grafana.routes', []);
-  }
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
   _.each(module_types, function (type) {
     var module_name = 'grafana.'+type;
@@ -93,13 +84,9 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/standalone/all',
-    'routes/backend/all',
+    'routes/all',
+    '../plugins/raintank/all'
   ];
-
-  _.each(config.plugins.dependencies, function(dep) {
-    preBootRequires.push('../plugins/' + dep);
-  });
 
   app.boot = function() {
     require(preBootRequires, function () {

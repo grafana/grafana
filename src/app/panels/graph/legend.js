@@ -143,13 +143,13 @@ function (angular, app, _, kbn, $) {
             html += '<a>' + series.label + '</a>';
             html += '</div>';
 
-            var avg = series.formatValue(series.stats.avg);
-            var current = series.formatValue(series.stats.current);
-            var min = series.formatValue(series.stats.min);
-            var max = series.formatValue(series.stats.max);
-            var total = series.formatValue(series.stats.total);
-
             if (panel.legend.values) {
+              var avg = series.formatValue(series.stats.avg);
+              var current = series.formatValue(series.stats.current);
+              var min = series.formatValue(series.stats.min);
+              var max = series.formatValue(series.stats.max);
+              var total = series.formatValue(series.stats.total);
+
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
               if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }

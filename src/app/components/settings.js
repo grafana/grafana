@@ -30,7 +30,9 @@ function (_) {
     };
 
     var settings = _.extend({}, defaults, options);
-
+    if (settings.plugins.panels) {
+      _.extend(settings.panels, settings.plugins.panels);
+    }
     // var parseBasicAuth = function(datasource) {
     //   var passwordEnd = datasource.url.indexOf('@');
     //   if (passwordEnd > 0) {
@@ -51,14 +53,6 @@ function (_) {
     //   if (datasource.url) { parseBasicAuth(datasource); }
     //   if (datasource.type === 'influxdb') { parseMultipleHosts(datasource); }
     // });
-
-    if (settings.plugins.panels) {
-      _.extend(settings.panels, settings.plugins.panels);
-    }
-
-    if (!settings.plugins.dependencies) {
-      settings.plugins.dependencies = [];
-    }
 
     return settings;
   };

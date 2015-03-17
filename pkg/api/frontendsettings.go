@@ -1,18 +1,22 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
-	if c.IsSignedIn {
+	if c.OrgId != 0 {
 		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 
@@ -24,6 +28,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	datasources := make(map[string]interface{})
+	var defaultDatasource string
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
@@ -33,21 +38,34 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		}
 
 		var dsMap = map[string]interface{}{
-			"type":    ds.Type,
-			"url":     url,
-			"default": ds.IsDefault,
+			"type": ds.Type,
+			"name": ds.Name,
+			"url":  url,
 		}
 
-		if ds.Type == m.DS_INFLUXDB_08 {
-			if ds.Access == m.DS_ACCESS_DIRECT {
+		meta, exists := plugins.DataSources[ds.Type]
+		if !exists {
+			return nil, errors.New(fmt.Sprintf("Could not find plugin definition for data source: %v", ds.Type))
+		}
+
+		dsMap["meta"] = meta
+
+		if ds.IsDefault {
+			defaultDatasource = ds.Name
+		}
+
+		if ds.Access == m.DS_ACCESS_DIRECT {
+			if ds.BasicAuth {
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+			}
+
+			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
-		}
 
-		if ds.Type == m.DS_INFLUXDB {
-			if ds.Access == m.DS_ACCESS_DIRECT {
+			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password
 				dsMap["database"] = ds.Database
@@ -63,9 +81,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	// add grafana backend data source
+	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
 	datasources["grafana"] = map[string]interface{}{
-		"type":      "grafana",
-		"grafanaDB": true,
+		"type": "grafana",
+		"meta": grafanaDatasourceMeta,
+	}
+
+	if defaultDatasource == "" {
+		defaultDatasource = "grafana"
 	}
 
 	// add raintank backend.
@@ -77,8 +100,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	jsonObj := map[string]interface{}{
-		"datasources": datasources,
-		"appSubUrl":   setting.AppSubUrl,
+		"defaultDatasource": defaultDatasource,
+		"datasources":       datasources,
+		"appSubUrl":         setting.AppSubUrl,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,

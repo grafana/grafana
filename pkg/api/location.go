@@ -44,15 +44,9 @@ func DeleteLocation(c *middleware.Context) {
 	c.JsonOK("location deleted")
 }
 
-func AddLocation(c *middleware.Context) {
-	cmd := m.AddLocationCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func AddLocation(c *middleware.Context, cmd m.AddLocationCommand) {
 	cmd.OrgId = c.OrgId
+
 	if cmd.Public {
 		if c.OrgRole != m.ROLE_RAINTANK_ADMIN {
 			c.JsonApiErr(400, "Only raintank admins can make public locations", nil)
@@ -67,13 +61,7 @@ func AddLocation(c *middleware.Context) {
 	c.JSON(200, cmd.Result)
 }
 
-func UpdateLocation(c *middleware.Context) {
-	cmd := m.UpdateLocationCommand{}
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func UpdateLocation(c *middleware.Context, cmd m.UpdateLocationCommand) {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)

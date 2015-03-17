@@ -21,12 +21,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 
 		reqQueryVals := req.URL.Query()
 
-		if ds.Type == m.DS_INFLUXDB {
+		if ds.Type == m.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinUrlFragments(target.Path, "db/"+ds.Database+"/"+proxyPath)
 			reqQueryVals.Add("u", ds.User)
 			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
-		} else if ds.Type == m.DS_INFLUXDB_08 {
+		} else if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 			reqQueryVals.Add("db", ds.Database)
 			reqQueryVals.Add("u", ds.User)
@@ -35,23 +35,23 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		} else {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}
+
+		if ds.BasicAuth {
+			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director}
 }
 
-// TODO: need to cache datasources
+//ProxyDataSourceRequest TODO need to cache datasources
 func ProxyDataSourceRequest(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
+	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
 
-	query := m.GetDataSourceByIdQuery{
-		Id:    id,
-		OrgId: c.OrgId,
-	}
-
-	err := bus.Dispatch(&query)
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		return
 	}
 
 	proxyPath := c.Params("*")

@@ -7,7 +7,7 @@ define([
 
   describe('SoloPanelCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
-    var datasource = {};
+    var backendSrv = {};
     var routeParams = {};
     var search = {};
 
@@ -20,9 +20,8 @@ define([
           return search;
         }
       },
-      datasourceSrv: {
-        getGrafanaDB: sinon.stub().returns(datasource)
-      }
+      templateValuesSrv: { init: sinon.stub() },
+      backendSrv: backendSrv
     }));
 
     beforeEach(ctx.createControllerPhase('SoloPanelCtrl'));
@@ -47,7 +46,7 @@ define([
 
         routeParams.id = 1;
         search.panelId = 23;
-        datasource.getDashboard = sinon.stub().returns(ctx.$q.when(dashboard));
+        backendSrv.getDashboard = sinon.stub().returns(ctx.$q.when(dashboard));
 
         ctx.scope.init();
         ctx.scope.$digest();

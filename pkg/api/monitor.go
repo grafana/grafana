@@ -58,15 +58,9 @@ func DeleteMonitor(c *middleware.Context) {
 	c.JsonOK("monitor deleted")
 }
 
-func AddMonitor(c *middleware.Context) {
-	cmd := m.AddMonitorCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
 	cmd.OrgId = c.OrgId
+
 	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
 		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
 		return
@@ -80,15 +74,9 @@ func AddMonitor(c *middleware.Context) {
 	c.JSON(200, cmd.Result)
 }
 
-func UpdateMonitor(c *middleware.Context) {
-	cmd := m.UpdateMonitorCommand{}
-
-	if !c.JsonBody(&cmd) {
-		c.JsonApiErr(400, "Validation failed", nil)
-		return
-	}
-
+func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 	cmd.OrgId = c.OrgId
+
 	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
 		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
 		return

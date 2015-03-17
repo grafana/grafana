@@ -76,10 +76,7 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 		_, err := sess.Insert(&user)
 		cmd.Result = org
 
-		locationCmd := m.CopyPublicLocationTagsCmd{
-			OrgId: org.Id,
-		}
-		err = CopyPublicLocationTags(&locationCmd)
+		err = CopyPublicLocationTags(org.Id, sess)
 		if err != nil {
 			return err
 		}

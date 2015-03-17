@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -123,81 +123,22 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.render();
     };
 
-    $scope.applyPanelTimeOverrides = function() {
-      $scope.panelMeta.timeInfo = '';
-
-      // check panel time overrrides
-      if ($scope.panel.timeFrom) {
-        if (!kbn.isValidTimeSpan($scope.panel.timeFrom)) {
-          $scope.panelMeta.timeInfo = 'invalid time override';
-          return;
-        }
-
-        if (_.isString($scope.rangeUnparsed.from)) {
-          $scope.panelMeta.timeInfo = "last " + $scope.panel.timeFrom;
-          $scope.rangeUnparsed.from = 'now-' + $scope.panel.timeFrom;
-          $scope.range.from = kbn.parseDate($scope.rangeUnparsed.from);
-        }
-      }
-
-      if ($scope.panel.timeShift) {
-        if (!kbn.isValidTimeSpan($scope.panel.timeFrom)) {
-          $scope.panelMeta.timeInfo = 'invalid timeshift';
-          return;
-        }
-
-        var timeShift = '-' + $scope.panel.timeShift;
-        $scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
-        $scope.range.from = kbn.parseDateMath(timeShift, $scope.range.from);
-        $scope.range.to = kbn.parseDateMath(timeShift, $scope.range.to);
-
-        $scope.rangeUnparsed = $scope.range;
-      }
-    };
-
-    $scope.updateTimeRange = function () {
-      $scope.range = timeSrv.timeRange();
-      $scope.rangeUnparsed = timeSrv.timeRange(false);
-      $scope.applyPanelTimeOverrides();
-
-      if ($scope.panel.maxDataPoints) {
-        $scope.resolution = $scope.panel.maxDataPoints;
-      }
-      else {
-        $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
-      }
-      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
-    };
-
-    $scope.get_data = function() {
-      $scope.updateTimeRange();
-
-      var metricsQuery = {
-        range: $scope.rangeUnparsed,
-        interval: $scope.interval,
-        targets: $scope.panel.targets,
-        format: $scope.panel.renderer === 'png' ? 'png' : 'json',
-        maxDataPoints: $scope.resolution,
-        cacheTimeout: $scope.panel.cacheTimeout
-      };
+    $scope.refreshData = function(datasource) {
+      panelHelper.updateTimeRange($scope);
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query(metricsQuery)
-        .then($scope.dataHandler)
-        .then(null, function(err) {
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+      return panelHelper.issueMetricQuery($scope, datasource)
+        .then($scope.dataHandler, function(err) {
           $scope.seriesList = [];
           $scope.render([]);
+          throw err;
         });
     };
 
     $scope.dataHandler = function(results) {
       // png renderer returns just a url
       if (_.isString(results)) {
-        $scope.panelMeta.loading = false;
         $scope.render(results);
         return;
       }
@@ -228,8 +169,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-        alias: alias,
-        color: color,
+          alias: alias,
+          color: color,
       });
 
       if (datapoints && datapoints.length > 0) {

@@ -38,7 +38,7 @@ define([
           scenario.setupFn();
           var ds = {};
           ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
-          ctx.datasourceSrv.get = sinon.stub().returns(ds);
+          ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
 
           ctx.service.updateOptions(scenario.variable);
           ctx.$rootScope.$digest();

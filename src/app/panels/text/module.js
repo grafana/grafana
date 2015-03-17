@@ -43,7 +43,11 @@ function (angular, app, _, require, PanelMeta) {
     $scope.init = function() {
       panelSrv.init($scope);
       $scope.ready = false;
-      $scope.$on('refresh', $scope.render);
+      $scope.render();
+    };
+
+    $scope.refreshData = function() {
+      $scope.panelMeta.loading = false;
       $scope.render();
     };
 

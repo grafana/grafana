@@ -1,0 +1,16 @@
+{
+  "pluginType": "datasource",
+  "name": "Elasticsearch",
+
+  "type": "elasticsearch",
+  "serviceName": "ElasticDatasource",
+
+  "module": "plugins/datasource/elasticsearch/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/elasticsearch/partials/config.html",
+    "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
+  },
+
+  "annotations": true
+}

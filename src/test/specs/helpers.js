@@ -14,7 +14,13 @@ define([
     this.templateSrv = new TemplateSrvStub();
     this.datasourceSrv = {
       getMetricSources: function() {},
-      get: function() { return self.datasource; }
+      get: function() {
+        return {
+          then: function(callback) {
+            callback(self.datasource);
+          }
+        };
+      }
     };
 
     this.providePhase = function(mocks) {

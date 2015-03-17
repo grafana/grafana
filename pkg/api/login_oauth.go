@@ -56,7 +56,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// create account if missing
 	if err == m.ErrUserNotFound {
-		if setting.DisableUserSignUp {
+		if !setting.AllowUserSignUp {
 			ctx.Redirect(setting.AppSubUrl + "/login")
 			return
 		}

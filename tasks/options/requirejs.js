@@ -6,9 +6,8 @@ module.exports = function(config,grunt) {
     var options = {
       appDir: '<%= tempDir %>',
       dir:  '<%= destDir %>',
-      mainConfigFile: '<%= tempDir %>/app/components/require.<%= mode %>.js',
+      mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
       baseUrl: './app',
-      paths: config.modeOptions.requirejs.paths,
 
       modules: [], // populated below,
 
@@ -60,8 +59,7 @@ module.exports = function(config,grunt) {
           'directives/all',
           'filters/all',
           'controllers/all',
-          'routes/standalone/all',
-          'routes/backend/all',
+          'routes/all',
           'components/partials',
         ]
       }
@@ -75,15 +73,6 @@ module.exports = function(config,grunt) {
       requireModules[0].include.push('panels/'+panelName+'/module');
       requireModules[0].include.push('text!panels/'+panelName+'/module.html');
     });
-
-    if (config.modeOptions.requirejs.excludeConfig) {
-      // exclude the literal config definition from all modules
-      requireModules
-        .forEach(function (module) {
-          module.excludeShallow = module.excludeShallow || [];
-          module.excludeShallow.push('config');
-        });
-    }
 
     return { options: options };
   }

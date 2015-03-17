@@ -15,9 +15,8 @@ func TestAccountDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given single org mode", func() {
-			setting.SingleOrgMode = true
-			setting.DefaultOrgName = "test"
-			setting.DefaultOrgRole = "Viewer"
+			setting.AutoAssignOrg = true
+			setting.AutoAssignOrgRole = "Viewer"
 
 			Convey("Users should be added to default organization", func() {
 				ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
@@ -39,8 +38,7 @@ func TestAccountDataAccess(t *testing.T) {
 		})
 
 		Convey("Given two saved users", func() {
-			setting.SingleOrgMode = false
-			setting.DefaultOrgName = "test"
+			setting.AutoAssignOrg = false
 
 			ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
@@ -53,8 +51,8 @@ func TestAccountDataAccess(t *testing.T) {
 			ac2 := ac2cmd.Result
 
 			Convey("Should be able to read user info projection", func() {
-				query := m.GetUserInfoQuery{UserId: ac1.Id}
-				err = GetUserInfo(&query)
+				query := m.GetUserProfileQuery{UserId: ac1.Id}
+				err = GetUserProfile(&query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Email, ShouldEqual, "ac1@test.com")

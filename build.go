@@ -5,13 +5,14 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -24,9 +25,13 @@ var (
 	versionRe  = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch     string
 	goos       string
-	version    string = "2.0.0-alpha"
+	version    string = "v1"
 	race       bool
 	workingDir string
+
+	installRoot   = "/opt/grafana"
+	configRoot    = "/etc/grafana"
+	grafanaLogDir = "/var/log/grafana"
 )
 
 const minGoVersion = 1.3
@@ -35,17 +40,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	if os.Getenv("GOPATH") == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
-		log.Println("GOPATH is", gopath)
-		os.Setenv("GOPATH", gopath)
-	}
+	ensureGoPath()
+	readVersionFromPackageJson()
 
-	//os.Setenv("PATH", fmt.Sprintf("%s%cbin%c%s", os.Getenv("GOPATH"), os.PathSeparator, os.PathListSeparator, os.Getenv("PATH")))
+	log.Printf("Version: %s\n", version)
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
@@ -66,20 +64,23 @@ func main() {
 
 		case "build":
 			pkg := "."
-			var tags []string
-			build(pkg, tags)
+			clean()
+			build(pkg, []string{})
 
 		case "test":
 			test("./pkg/...")
+			grunt("test")
 
 		case "package":
-			test("./pkg/...")
-			build(".", []string{})
+			//verifyGitRepoIsClean()
+			grunt("release", "--pkgVer="+version)
+			createRpmAndDeb()
 
-		case "build-ui":
-			buildFrontend()
+		case "latest":
+			makeLatestDistCopies()
 
 		case "clean":
+			clean()
 
 		default:
 			log.Fatalf("Unknown command %q", cmd)
@@ -87,17 +88,134 @@ func main() {
 	}
 }
 
+func makeLatestDistCopies() {
+	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
+	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x84_64.rpm")
+	runError("cp", "dist/grafana-"+version+".x86_64.tar.gz", "dist/grafana-latest.x84_64.tar.gz")
+}
+
+func readVersionFromPackageJson() {
+	reader, err := os.Open("package.json")
+	if err != nil {
+		log.Fatal("Failed to open package.json")
+		return
+	}
+	defer reader.Close()
+
+	jsonObj := map[string]interface{}{}
+	jsonParser := json.NewDecoder(reader)
+
+	if err := jsonParser.Decode(&jsonObj); err != nil {
+		log.Fatal("Failed to decode package.json")
+	}
+
+	version = jsonObj["version"].(string)
+}
+
+func createRpmAndDeb() {
+	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
+	postInstallScriptPath, _ := ioutil.TempFile("", "postinstall")
+
+	versionFolder := filepath.Join(packageRoot, installRoot, "versions", version)
+	configDir := filepath.Join(packageRoot, configRoot)
+
+	runError("mkdir", "-p", versionFolder)
+	runError("mkdir", "-p", configDir)
+
+	// copy sample ini file to /etc/opt/grafana
+	configFile := filepath.Join(configDir, "grafana.ini")
+	runError("cp", "conf/sample.ini", configFile)
+	// copy release files
+	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
+
+	GeneratePostInstallScript(postInstallScriptPath.Name())
+
+	args := []string{
+		"-s", "dir",
+		"--description", "Grafana",
+		"-C", packageRoot,
+		"--vendor", "Grafana",
+		"--url", "http://grafana.org",
+		"--license", "Apache 2.0",
+		"--maintainer", "contact@grafana.org",
+		"--config-files", filepath.Join(configRoot, "grafana.ini"),
+		"--after-install", postInstallScriptPath.Name(),
+		"--name", "grafana",
+		"--version", version,
+		"-p", "./dist",
+		".",
+	}
+
+	fmt.Println("Creating debian package")
+	runPrint("fpm", append([]string{"-t", "deb"}, args...)...)
+
+	fmt.Println("Creating redhat/centos package")
+	runPrint("fpm", append([]string{"-t", "rpm"}, args...)...)
+}
+
+func GeneratePostInstallScript(path string) {
+	content := `
+rm -f $INSTALL_ROOT_DIR/current
+ln -s $INSTALL_ROOT_DIR/versions/$VERSION/ $INSTALL_ROOT_DIR/current
+
+if [ ! -L /etc/init.d/grafana ]; then
+    ln -sfn $INSTALL_ROOT_DIR/current/scripts/init.sh /etc/init.d/grafana
+fi
+
+chmod +x /etc/init.d/grafana
+if which update-rc.d > /dev/null 2>&1 ; then
+   update-rc.d -f grafana remove
+   update-rc.d grafana defaults
+else
+   chkconfig --add grafana
+fi
+
+if ! id grafana >/dev/null 2>&1; then
+   useradd --system -U -M grafana
+fi
+chown -R -L grafana:grafana $INSTALL_ROOT_DIR
+chmod -R a+rX $INSTALL_ROOT_DIR
+mkdir -p $GRAFANA_LOG_DIR
+chown -R -L grafana:grafana $GRAFANA_LOG_DIR
+`
+	content = strings.Replace(content, "$INSTALL_ROOT_DIR", installRoot, -1)
+	content = strings.Replace(content, "$VERSION", version, -1)
+	content = strings.Replace(content, "$GRAFANA_LOG_DIR", grafanaLogDir, -1)
+	ioutil.WriteFile(path, []byte(content), 0644)
+}
+
+func verifyGitRepoIsClean() {
+	rs, err := runError("git", "ls-files", "--modified")
+	if err != nil {
+		log.Fatalf("Failed to check if git tree was clean, %v, %v\n", string(rs), err)
+		return
+	}
+	count := len(string(rs))
+	if count > 0 {
+		log.Fatalf("Git repository has modified files, aborting")
+	}
+
+	log.Println("Git repository is clean")
+}
+
+func ensureGoPath() {
+	if os.Getenv("GOPATH") == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
+		log.Println("GOPATH is", gopath)
+		os.Setenv("GOPATH", gopath)
+	}
+}
+
 func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
 }
 
-func buildFrontend() {
-	ChangeWorkingDir(path.Join(workingDir, "grafana"))
-	defer func() {
-		ChangeWorkingDir(path.Join(workingDir, "../"))
-	}()
-
-	runPrint("grunt")
+func grunt(params ...string) {
+	runPrint("./node_modules/grunt-cli/bin/grunt", params...)
 }
 
 func setup() {
@@ -157,7 +275,9 @@ func rmr(paths ...string) {
 
 func clean() {
 	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana-pro", goos, goarch)))
+	rmr("dist")
+	rmr("tmp")
+	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
 }
 
 func setBuildEnv() {
@@ -225,6 +345,7 @@ func runError(cmd string, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.TrimSpace(bs), nil
 }
 

@@ -5,17 +5,23 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
-	"time"
+	"path/filepath"
+	"strconv"
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
 	"github.com/macaron-contrib/session"
+	_ "github.com/macaron-contrib/session/mysql"
+	_ "github.com/macaron-contrib/session/postgres"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/setting"
@@ -69,14 +75,13 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 }
 
 func runWeb(c *cli.Context) {
-	log.Info("Starting Grafana")
-	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
-
 	initRuntime(c)
+	writePIDFile(c)
 
 	social.NewOAuthService()
 	eventpublisher.Init()
 	elasticstore.Init()
+	plugins.Init()
 
 	var err error
 	m := newMacaron()
@@ -95,5 +100,24 @@ func runWeb(c *cli.Context) {
 
 	if err != nil {
 		log.Fatal(4, "Fail to start server: %v", err)
+	}
+}
+
+func writePIDFile(c *cli.Context) {
+	path := c.GlobalString("pidfile")
+	if path == "" {
+		return
+	}
+
+	// Ensure the required directory structure exists.
+	err := os.MkdirAll(filepath.Dir(path), 0700)
+	if err != nil {
+		log.Fatal(3, "Failed to verify pid directory", err)
+	}
+
+	// Retrieve the PID and write it.
+	pid := strconv.Itoa(os.Getpid())
+	if err := ioutil.WriteFile(path, []byte(pid), 0644); err != nil {
+		log.Fatal(3, "Failed to write pidfile", err)
 	}
 }

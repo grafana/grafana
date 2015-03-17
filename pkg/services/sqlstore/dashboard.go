@@ -28,13 +28,30 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			return err
 		}
 
-		if hasExisting && dash.Id != existing.Id {
-			return m.ErrDashboardWithSameNameExists
+		if hasExisting {
+			// another dashboard with same name
+			if dash.Id != existing.Id {
+				if cmd.Overwrite {
+					dash.Id = existing.Id
+				} else {
+					return m.ErrDashboardWithSameNameExists
+				}
+			}
+			// check for is someone else has written in between
+			if dash.Version != existing.Version {
+				if cmd.Overwrite {
+					dash.Version = existing.Version
+				} else {
+					return m.ErrDashboardVersionMismatch
+				}
+			}
 		}
 
 		if dash.Id == 0 {
 			_, err = sess.Insert(dash)
 		} else {
+			dash.Version += 1
+			dash.Data["version"] = dash.Version
 			_, err = sess.Id(dash.Id).Update(dash)
 		}
 

@@ -7,25 +7,23 @@ function (angular, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('SoloPanelCtrl', function($scope, $rootScope, datasourceSrv, $routeParams, dashboardSrv, timeSrv, $location) {
+  module.controller('SoloPanelCtrl', function($scope, backendSrv, $routeParams, dashboardSrv, timeSrv, $location, templateValuesSrv) {
     var panelId;
 
     $scope.init = function() {
-      var db = datasourceSrv.getGrafanaDB();
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
-      db.getDashboard($routeParams.id, false)
+      backendSrv.getDashboard($routeParams.slug)
         .then(function(dashboard) {
           $scope.initPanelScope(dashboard);
-        }).then(null, function(error) {
-          $scope.appEvent('alert-error', ['Load panel error', error]);
+        }).then(null, function(err) {
+          $scope.appEvent('alert-error', ['Load panel error', err.message]);
         });
     };
 
     $scope.initPanelScope = function(dashboard) {
       $scope.dashboard = dashboardSrv.create(dashboard.model);
-      $scope.contextSrv.lightTheme = $scope.dashboard.style === 'light';
 
       $scope.row = {
         height: $(window).height() + 'px',
@@ -41,12 +39,10 @@ function (angular, $) {
       }
 
       $scope.panel.span = 12;
-      $scope.dashboardViewState = {
-        registerPanel: function() {
-        }
-      };
+      $scope.dashboardViewState = { registerPanel: function() { }, state: {}};
 
       timeSrv.init($scope.dashboard);
+      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
     };
 
     $scope.getPanelById = function(id) {

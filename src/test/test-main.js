@@ -5,7 +5,7 @@ require.config({
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
     helpers:               '../test/specs/helpers',
-    config:                ['../config', '../config.sample'],
+    config:                'components/config',
     kbn:                   'components/kbn',
     store:                 'components/store',
 

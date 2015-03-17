@@ -47,11 +47,9 @@ function (angular, app, _, config, PanelMeta) {
       if ($scope.isNewPanel()) {
         $scope.panel.title = "Starred Dashboards";
       }
-
-      $scope.$on('refresh', $scope.get_data);
     };
 
-    $scope.get_data = function() {
+    $scope.refreshData = function() {
       var params = {
         limit: $scope.panel.limit
       };
@@ -63,9 +61,8 @@ function (angular, app, _, config, PanelMeta) {
         params.tag = $scope.panel.tag;
       }
 
-      backendSrv.get('/api/search', params).then(function(result) {
+      return backendSrv.search(params).then(function(result) {
         $scope.dashList = result.dashboards;
-        $scope.panelMeta.loading = false;
       });
     };
 

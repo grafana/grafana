@@ -71,7 +71,6 @@ function (angular, $) {
                 scope.onUpdate(scope.model);
               }
             }
-              
           });
 
           scope.$watch("model", function() {

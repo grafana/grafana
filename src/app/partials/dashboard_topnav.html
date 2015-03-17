@@ -11,16 +11,11 @@
 				<div class="top-nav-dashboards-btn">
 					<a class="pointer" ng-click="openSearch()">
 						<i class="fa fa-th-large"></i>
+						<span class="dashboard-title">{{dashboard.title}}</span>
 						<i class="fa fa-caret-down"></i>
 					</a>
 				</div>
 
-				<span class="fa fa-angle-right top-nav-breadcrumb-icon">
-				</span>
-
-				<a ng-click="dashboardTitleAction()" class="top-nav-title pointer">
-					{{dashboard.title}}
-				</a>
 			</div>
 
 			<ul class="nav pull-left top-nav-dash-actions" ng-if="!dashboardMeta.isHome">
@@ -43,7 +38,7 @@
 						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
-						<li><a class="pointer" ng-click="cloneDashboard();">Clone dashboard</a></li>
+						<li><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
 						<li><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
@@ -62,17 +57,10 @@
 			</ul>
 
 			<ul class="nav pull-right">
-				<li ng-show="dashboardViewState.fullscreen">
-					<a ng-click="exitFullscreen()">
-						Back to dashboard
-					</a>
-				</li>
-
 				<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
 					<grafana-simple-panel type="pulldown.type" ng-cloak>
 					</grafana-simple-panel>
 				</li>
-
 			</ul>
 		</div>
 	</div>

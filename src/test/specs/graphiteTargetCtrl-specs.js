@@ -1,7 +1,7 @@
 define([
   'helpers',
-  'features/graphite/gfunc',
-  'features/graphite/queryCtrl'
+  'plugins/datasource/graphite/gfunc',
+  'plugins/datasource/graphite/queryCtrl'
 ], function(helpers, gfunc) {
   'use strict';
 

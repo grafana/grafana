@@ -7,7 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ProfileCtrl', function($scope, backendSrv) {
+  module.controller('ProfileCtrl', function($scope, backendSrv, contextSrv, $location) {
 
     $scope.init = function() {
       $scope.getUser();
@@ -17,6 +17,8 @@ function (angular, config) {
     $scope.getUser = function() {
       backendSrv.get('/api/user').then(function(user) {
         $scope.user = user;
+        $scope.user.theme = user.theme || 'dark';
+        $scope.old_theme = $scope.user.theme;
       });
     };
 
@@ -34,7 +36,13 @@ function (angular, config) {
 
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
-      backendSrv.put('/api/user/', $scope.user);
+
+      backendSrv.put('/api/user/', $scope.user).then(function() {
+        contextSrv.user.name = $scope.user.name || $scope.user.login;
+        if ($scope.old_theme !== $scope.user.theme) {
+          window.location.href = config.appSubUrl + $location.path();
+        }
+      });
     };
 
     $scope.init();

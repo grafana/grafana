@@ -51,10 +51,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
         });
 
-        scope.$on('refresh', function() {
-          scope.get_data();
-        });
-
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
@@ -117,11 +113,17 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var axis = yaxis[series.yaxis - 1];
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
 
-            // legend and tooltip gets one more decimal precision
-            // than graph legend ticks
-            var tickDecimals = (axis.tickDecimals || -1) + 1;
+            // decimal override
+            if (scope.panel.decimals) {
+              series.updateLegendValues(formater, scope.panel.decimals, null);
+            } else {
+              // auto decimals
+              // legend and tooltip gets one more decimal precision
+              // than graph legend ticks
+              var tickDecimals = (axis.tickDecimals || -1) + 1;
+              series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
+            }
 
-            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
             if(!scope.$$phase) { scope.$digest(); }
           }
 
@@ -377,7 +379,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             if (secPerTick <= 45) {
               return "%H:%M:%S";
             }
-            if (secPerTick <= 3600) {
+            if (secPerTick <= 7200) {
               return "%H:%M";
             }
             if (secPerTick <= 80000) {

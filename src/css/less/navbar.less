@@ -3,7 +3,7 @@
 }
 
 .navbar .nav>li>a {
-  padding: 17px 15px 11px;
+  padding: 17px 15px 13px;
   .fa { font-size: 115%; }
 }
 
@@ -13,15 +13,16 @@
 }
 
 .fa.top-nav-breadcrumb-icon {
-  margin: 17px 0 6px 5px;
+  margin: 18px 0 6px 5px;
   float: left;
   font-size: 120%;
   color: @textColor;
 }
 
 .top-nav-menu-btn {
+  border: 1px solid @bodyBackground;
   border-radius: 50%;
-  background: black;
+  background: @iconContainerBackground;
   display: block;
   position: relative;
   float: left;
@@ -59,12 +60,11 @@
 .top-nav-dashboards-btn {
   display: block;
   float: left;
-  margin: 9px 8px 5px 14px;
+  margin: 9px 18px 5px 14px;
   border-radius: 3px;
   font-size: 1.4em;
-  font-weight: bold;
   color: #a2a2a2;
-  border: 1px solid #555;
+  border: @grafanaTriggerBorder;
   a {
     display: inline-block;
     background: @grafanaTargetFuncBackground;
@@ -75,15 +75,26 @@
     &:hover {
       background: @grafanaTargetFuncHightlight;
       .fa {
-        color: @linkColorHover
+        color: @linkColor;
       }
     }
+  }
+
+  .fa-th-large {
+    position: relative;
+    top: 2px;
   }
 
   .fa-caret-down {
     font-size: 60%;
     position: relative;
     top: 4px;
+  }
+
+  .dashboard-title {
+    padding: 0px 6px 5px 5px;
+    color: @linkColorHover;
+    font-size: 17px;
   }
 }
 
@@ -106,14 +117,8 @@
 .top-nav-title {
   display: block;
   float: left;
-  padding: 17px 10px 10px 13px;
-  font-weight: bold;
-  color: @textColor;
-  i {
-    padding-left: 4px;
-    position: relative;
-    top: 2px;
-  }
+  font-size: 17px;
+  padding: 18px 10px 10px 13px;
+  color: @linkColor;
 }
-
 

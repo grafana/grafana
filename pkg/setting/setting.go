@@ -64,12 +64,12 @@ var (
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
-	DisableUserSignUp  bool
 
-	// single organization
-	SingleOrgMode  bool
-	DefaultOrgName string
-	DefaultOrgRole string
+	// User settings
+	AllowUserSignUp    bool
+	AllowUserOrgCreate bool
+	AutoAssignOrg      bool
+	AutoAssignOrgRole  string
 
 	// Http auth
 	AdminUser     string
@@ -97,6 +97,7 @@ var (
 
 	//Raintank Graphite Backend
 	GraphiteUrl string
+	configFiles []string
 )
 
 func init() {
@@ -105,30 +106,32 @@ func init() {
 	WorkDir, _ = filepath.Abs(".")
 }
 
-func findConfigFiles() []string {
+func findConfigFiles(customConfigFile string) {
 	ConfRootPath = path.Join(WorkDir, "conf")
-	filenames := make([]string, 0)
+	configFiles = make([]string, 0)
 
-	configFile := path.Join(ConfRootPath, "grafana.ini")
+	configFile := path.Join(ConfRootPath, "defaults.ini")
 	if com.IsFile(configFile) {
-		filenames = append(filenames, configFile)
+		configFiles = append(configFiles, configFile)
 	}
 
-	configFile = path.Join(ConfRootPath, "grafana.dev.ini")
+	configFile = path.Join(ConfRootPath, "dev.ini")
 	if com.IsFile(configFile) {
-		filenames = append(filenames, configFile)
+		configFiles = append(configFiles, configFile)
 	}
 
-	configFile = path.Join(ConfRootPath, "grafana.custom.ini")
+	configFile = path.Join(ConfRootPath, "custom.ini")
 	if com.IsFile(configFile) {
-		filenames = append(filenames, configFile)
+		configFiles = append(configFiles, configFile)
 	}
 
-	if len(filenames) == 0 {
+	if customConfigFile != "" {
+		configFiles = append(configFiles, customConfigFile)
+	}
+
+	if len(configFiles) == 0 {
 		log.Fatal(3, "Could not find any config file")
 	}
-
-	return filenames
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -168,11 +171,7 @@ func loadEnvVariableOverrides() {
 }
 
 func NewConfigContext(config string) {
-	configFiles := findConfigFiles()
-
-	if config != "" {
-		configFiles = append(configFiles, config)
-	}
+	findConfigFiles(config)
 
 	var err error
 
@@ -189,6 +188,7 @@ func NewConfigContext(config string) {
 	}
 
 	loadEnvVariableOverrides()
+	initLogging()
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
@@ -200,7 +200,7 @@ func NewConfigContext(config string) {
 	if server.Key("protocol").MustString("http") == "https" {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
@@ -216,16 +216,15 @@ func NewConfigContext(config string) {
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
-	DisableUserSignUp = security.Key("disable_user_signup").MustBool(false)
-
 	// admin
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 
-	// single account
-	SingleOrgMode = Cfg.Section("organization.single").Key("enabled").MustBool(false)
-	DefaultOrgName = Cfg.Section("organization.single").Key("org_name").MustString("main")
-	DefaultOrgRole = Cfg.Section("organization.single").Key("default_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	users := Cfg.Section("users")
+	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
+	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
+	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -235,8 +234,6 @@ func NewConfigContext(config string) {
 	// PhantomJS rendering
 	ImagesDir = "data/png"
 	PhantomDir = "vendor/phantomjs"
-
-	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
 
 	GraphiteUrl = Cfg.Section("raintank").Key("graphite_url").MustString("http://localhost:8888/")
 	if GraphiteUrl[len(GraphiteUrl)-1] != '/' {
@@ -264,5 +261,78 @@ func readSessionConfig() {
 
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
+	}
+}
+
+var logLevels = map[string]string{
+	"Trace":    "0",
+	"Debug":    "1",
+	"Info":     "2",
+	"Warn":     "3",
+	"Error":    "4",
+	"Critical": "5",
+}
+
+func initLogging() {
+	// Get and check log mode.
+	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
+	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
+	LogConfigs = make([]string, len(LogModes))
+	for i, mode := range LogModes {
+		mode = strings.TrimSpace(mode)
+		sec, err := Cfg.GetSection("log." + mode)
+		if err != nil {
+			log.Fatal(4, "Unknown log mode: %s", mode)
+		}
+
+		// Log level.
+		levelName := Cfg.Section("log."+mode).Key("level").In("Trace",
+			[]string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"})
+		level, ok := logLevels[levelName]
+		if !ok {
+			log.Fatal(4, "Unknown log level: %s", levelName)
+		}
+
+		// Generate log configuration.
+		switch mode {
+		case "console":
+			LogConfigs[i] = fmt.Sprintf(`{"level":%s}`, level)
+		case "file":
+			logPath := sec.Key("file_name").MustString(path.Join(LogRootPath, "grafana.log"))
+			os.MkdirAll(path.Dir(logPath), os.ModePerm)
+			LogConfigs[i] = fmt.Sprintf(
+				`{"level":%s,"filename":"%s","rotate":%v,"maxlines":%d,"maxsize":%d,"daily":%v,"maxdays":%d}`, level,
+				logPath,
+				sec.Key("log_rotate").MustBool(true),
+				sec.Key("max_lines").MustInt(1000000),
+				1<<uint(sec.Key("max_size_shift").MustInt(28)),
+				sec.Key("daily_rotate").MustBool(true),
+				sec.Key("max_days").MustInt(7))
+		case "conn":
+			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"reconnectOnMsg":%v,"reconnect":%v,"net":"%s","addr":"%s"}`, level,
+				sec.Key("reconnect_on_msg").MustBool(),
+				sec.Key("reconnect").MustBool(),
+				sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
+				sec.Key("addr").MustString(":7020"))
+		case "smtp":
+			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"username":"%s","password":"%s","host":"%s","sendTos":"%s","subject":"%s"}`, level,
+				sec.Key("user").MustString("example@example.com"),
+				sec.Key("passwd").MustString("******"),
+				sec.Key("host").MustString("127.0.0.1:25"),
+				sec.Key("receivers").MustString("[]"),
+				sec.Key("subject").MustString("Diagnostic message from serve"))
+		case "database":
+			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"driver":"%s","conn":"%s"}`, level,
+				sec.Key("driver").String(),
+				sec.Key("conn").String())
+		}
+
+		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, LogConfigs[i])
+	}
+}
+
+func LogLoadedConfigFiles() {
+	for _, file := range configFiles {
+		log.Info("Config: Loaded from %s", file)
 	}
 }

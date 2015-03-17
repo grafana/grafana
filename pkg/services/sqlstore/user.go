@@ -21,7 +21,7 @@ func init() {
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", SetUsingOrg)
-	bus.AddHandler("sql", GetUserInfo)
+	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
@@ -33,15 +33,17 @@ func init() {
 func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 	var org m.Org
 
-	if setting.SingleOrgMode {
-		has, err := sess.Where("name=?", setting.DefaultOrgName).Get(&org)
+	if setting.AutoAssignOrg {
+		// right now auto assign to org with id 1
+		has, err := sess.Where("id=?", 1).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
 			return org.Id, nil
 		} else {
-			org.Name = setting.DefaultOrgName
+			org.Name = "Main Org."
+			org.Id = 1
 		}
 	} else {
 		org.Name = userEmail
@@ -53,6 +55,14 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 	if _, err := sess.Insert(&org); err != nil {
 		return 0, err
 	}
+	if err := CopyPublicLocationTags(org.Id, sess); err != nil {
+		return 0, err
+	}
+	sess.publishAfterCommit(&events.OrgCreated{
+		Timestamp: org.Created,
+		Id:        org.Id,
+		Name:      org.Name,
+	})
 
 	return org.Id, nil
 }
@@ -97,8 +107,8 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Updated: time.Now(),
 		}
 
-		if setting.SingleOrgMode && !user.IsAdmin {
-			orgUser.Role = m.RoleType(setting.DefaultOrgRole)
+		if setting.AutoAssignOrg && !user.IsAdmin {
+			orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
 		}
 
 		if _, err = sess.Insert(&orgUser); err != nil {
@@ -165,6 +175,7 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 			Name:    cmd.Name,
 			Email:   cmd.Email,
 			Login:   cmd.Login,
+			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
 
@@ -211,7 +222,7 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	})
 }
 
-func GetUserInfo(query *m.GetUserInfoQuery) error {
+func GetUserProfile(query *m.GetUserProfileQuery) error {
 	var user m.User
 	has, err := x.Id(query.UserId).Get(&user)
 
@@ -221,10 +232,11 @@ func GetUserInfo(query *m.GetUserInfoQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	query.Result = m.UserDTO{
+	query.Result = m.UserProfileDTO{
 		Name:  user.Name,
 		Email: user.Email,
 		Login: user.Login,
+		Theme: user.Theme,
 	}
 
 	return err
@@ -247,6 +259,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                u.email        as email,
 	                u.login        as login,
 									u.name         as name,
+									u.theme        as theme,
 	                org.name       as org_name,
 	                org_user.role  as org_role,
 	                org.id         as org_id

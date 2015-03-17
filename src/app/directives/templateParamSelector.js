@@ -75,6 +75,11 @@ function (angular, app, _, $) {
             $button.focus();
           });
 
+          $scope.$on('$destroy', function() {
+            $button.unbind();
+            typeahead.destroy();
+          });
+
           $compile(elem.contents())($scope);
         }
       };

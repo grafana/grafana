@@ -1956,7 +1956,7 @@
       return items ? this.process(items) : this
     }
 
-  , process: function (items) {
+    , process: function (items) {
       var that = this
 
       items = $.grep(items, function (item) {
@@ -2050,6 +2050,11 @@
         .on('click', $.proxy(this.click, this))
         .on('mouseenter', 'li', $.proxy(this.mouseenter, this))
         .on('mouseleave', 'li', $.proxy(this.mouseleave, this))
+    },
+
+    destroy: function () {
+      this.$element.off().removeData('typeahead');
+      this.$menu.off();
     }
 
   , eventSupported: function(eventName) {

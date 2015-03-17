@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -73,4 +74,9 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 		}
 	}
 	return dk[:keyLen]
+}
+
+func GetBasicAuthHeader(user string, password string) string {
+	var userAndPass = user + ":" + password
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(userAndPass))
 }

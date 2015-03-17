@@ -77,5 +77,18 @@ function (angular, _, config) {
       });
     };
 
+    this.search = function(query) {
+      return this.get('/api/search', query);
+    };
+
+    this.getDashboard = function(slug) {
+      return this.get('/api/dashboards/db/' + slug);
+    };
+
+    this.saveDashboard = function(dash, options) {
+      options = (options || {});
+      return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
+    };
+
   });
 });

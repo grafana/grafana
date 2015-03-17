@@ -8,24 +8,10 @@ module.exports = function (grunt) {
     srcDir: 'src',
     destDir: 'dist',
     tempDir: 'tmp',
-    docsDir: 'docs/'
+    arch: grunt.option('arch') || 'x86_64',
   };
 
-  config.mode = grunt.option('mode') || 'backend';
-  config.modeOptions = {
-    zipSuffix: '',
-    requirejs: {
-      paths: { config: '../config.sample' },
-      excludeConfig: true,
-    }
-  };
-
-  if (config.mode === 'backend') {
-    grunt.log.writeln('Setting backend build mode');
-    config.modeOptions.zipSuffix = '-backend';
-    config.modeOptions.requirejs.paths = {};
-    config.modeOptions.requirejs.excludeConfig = false;
-  }
+  config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
   // load plugins
   require('load-grunt-tasks')(grunt);

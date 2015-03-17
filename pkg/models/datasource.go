@@ -20,7 +20,6 @@ var (
 	ErrDataSourceNotFound = errors.New("Data source not found")
 )
 
-type DsType string
 type DsAccess string
 
 type DataSource struct {
@@ -29,7 +28,7 @@ type DataSource struct {
 	Version int
 
 	Name              string
-	Type              DsType
+	Type              string
 	Access            DsAccess
 	Url               string
 	Password          string
@@ -39,6 +38,7 @@ type DataSource struct {
 	BasicAuthUser     string
 	BasicAuthPassword string
 	IsDefault         bool
+	JsonData          map[string]interface{}
 
 	Created time.Time
 	Updated time.Time
@@ -49,31 +49,41 @@ type DataSource struct {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	OrgId     int64 `json:"-"`
-	Name      string
-	Type      DsType
-	Access    DsAccess
-	Url       string
-	Password  string
-	Database  string
-	User      string
-	IsDefault bool
+	Name              string                 `json:"name" binding:"Required"`
+	Type              string                 `json:"type" binding:"Required"`
+	Access            DsAccess               `json:"access" binding:"Required"`
+	Url               string                 `json:"url"`
+	Password          string                 `json:"password"`
+	Database          string                 `json:"database"`
+	User              string                 `json:"user"`
+	BasicAuth         bool                   `json:"basicAuth"`
+	BasicAuthUser     string                 `json:"basicAuthUser"`
+	BasicAuthPassword string                 `json:"basicAuthPassword"`
+	IsDefault         bool                   `json:"isDefault"`
+	JsonData          map[string]interface{} `json:"jsonData"`
+
+	OrgId int64 `json:"-"`
 
 	Result *DataSource
 }
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Id        int64
-	OrgId     int64
-	Name      string
-	Type      DsType
-	Access    DsAccess
-	Url       string
-	Password  string
-	User      string
-	Database  string
-	IsDefault bool
+	Id                int64                  `json:"id" binding:"Required"`
+	Name              string                 `json:"name" binding:"Required"`
+	Type              string                 `json:"type" binding:"Required"`
+	Access            DsAccess               `json:"access" binding:"Required"`
+	Url               string                 `json:"url"`
+	Password          string                 `json:"password"`
+	User              string                 `json:"user"`
+	Database          string                 `json:"database"`
+	BasicAuth         bool                   `json:"basicAuth"`
+	BasicAuthUser     string                 `json:"basicAuthUser"`
+	BasicAuthPassword string                 `json:"basicAuthPassword"`
+	IsDefault         bool                   `json:"isDefault"`
+	JsonData          map[string]interface{} `json:"jsonData"`
+
+	OrgId int64 `json:"-"`
 }
 
 type DeleteDataSourceCommand struct {
