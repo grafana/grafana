@@ -1,0 +1,55 @@
+<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
+</topnav>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div class="editor-row">
+		<div class="editor-option">
+			<label class="small">Filter by Collector Tag:</label>
+			<select class="input-medium" ng-model="collector_filter" ng-options="loc for loc in collectorTags()">
+				<option value="" label="All Tags">All Collectors</option>
+			</select>
+			<select class="input-medium" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
+			</select>
+		</div>
+		<div class="editor-option" style="float: right;">
+			<label class="small">Sort By:</label>
+			<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['Collector']">
+			</select>
+		</div>
+	</div>
+</div>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div ng-if="collectors.length === 0">
+		<em>No collectors defined</em>
+	</div>
+	<div class="gf-box" ng-repeat="collector in collectors | filterByTag:collector_filter | orderBy:sort_field">
+		<div class="gf-box-header" style="overflow: visible; padding:5px;">
+			<span style="margin: 10px;"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
+			<img src="img/raintank_small.png" width="20px" height="20px" ng-if="collector.public"></img>
+			<div class="dropdown" style="float: right;">
+				<a data-toggle="dropdown">
+					<i class="fa fa-fw fa-ellipsis-v"></i>
+				</a>
+				<ul class="dropdown-menu" role="menu">
+					<li>
+						<a href="collectors/summary/{{collector.id}}">
+							View
+						</a>
+					</li>
+					<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+						<a href="collectors/edit/{{collector.id}}">
+							Edit
+						</a>
+					</li>
+					<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+						<a ng-click="remove(collector)">
+							Delete
+						</a>
+					</li>
+				</ul>
+			</div>
+			<span style="float: right;">
+				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in collector.tags"><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
+			</span>
+		</div>
+	</div>
+</div>

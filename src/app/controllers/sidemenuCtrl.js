@@ -27,9 +27,9 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/endpoints"),
       });
       $scope.mainLinks.push({
-        text: "Locations",
+        text: "Collectors",
         icon: "fa fa-fw fa-globe",
-        href: $scope.getUrl("/locations"),
+        href: $scope.getUrl("/collectors"),
       });
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({

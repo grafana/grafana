@@ -1,19 +1,19 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Locations" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li>
 			<div style="margin-top:10px;">
 				<form style="margin-bottom:0px;">
-					<select ng-model="location" ng-options="l as l.name for l in locations" ng-change="setLocation(location.id)"></select>
+					<select ng-model="collector" ng-options="c as c.name for c in collectors" ng-change="setLocation(collector.id)"></select>
 				</form>
 			</div>
 		</li>
-		<li class="active"><a href="locations/summary/{{location.id}}">Summary</a></li>
-		<li ng-hide="location.public && !contextSrv.isGrafanaAdmin"><a href="locations/edit/{{location.id}}">Edit</a></li>
+		<li class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
+		<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Edit</a></li>
 	</ul>
 </topnav>
 
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
-	<form name="locationForm">
+	<form name="collectorForm">
 		<div class="gf-box" style="width: 400px; display: inline-block">
 			<div class="gf-box-header">
 				<div style="padding:10px;">Current Status</div>
@@ -29,7 +29,7 @@
 			<div class="gf-box-body" style="min-height: 50px">
 				<div class="editor-row">
 					<div class="editor-option">
-						<bootstrap-tagsinput ng-model="location.tags" tagclass="label label-tag" placeholder="add tags" on-update="tagsUpdated">
+						<bootstrap-tagsinput ng-model="collector.tags" tagclass="label label-tag" placeholder="add tags" on-update="tagsUpdated">
 						</bootstrap-tagsinput>
 						<tip>Press enter to a add tag</tip>
 					</div>
@@ -41,8 +41,8 @@
 				<div style="padding:10px;">Exposure</div>
 			</div>
 			<div class="gf-box-body" style="min-height: 50px">
-				<span ng-show="location.public">Public</span>
-				<span ng-hide="location.public">Private</span>
+				<span ng-show="collector.public">Public</span>
+				<span ng-hide="collector.public">Private</span>
 			</div>
 		</div>
 		<div class="gf-box" style="width: 400px; display: inline-block">

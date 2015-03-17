@@ -1,6 +1,6 @@
 define([
-  './locationCtrl',
-  './locationSummaryCtrl',
+  './collectorCtrl',
+  './collectorSummaryCtrl',
   './endpointsCtrl',
   './endpointConfCtrl',
   './endpointViewCtrl',

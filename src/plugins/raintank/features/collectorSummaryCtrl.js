@@ -7,33 +7,33 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LocationSummaryCtrl', function($scope, $http, backendSrv, $location, $routeParams) {
+  module.controller('CollectorSummaryCtrl', function($scope, $http, backendSrv, $location, $routeParams) {
     $scope.init = function() {
-      $scope.locations = [];
+      $scope.collectors = [];
       $scope.monitors = {};
-      $scope.location = null;
-      var promise = $scope.getLocations();
+      $scope.collector = null;
+      var promise = $scope.getCollectors();
       promise.then(function() {
-        $scope.getLocation($routeParams.id);
+        $scope.getCollector($routeParams.id);
       });
 
     };
 
-    $scope.getLocations = function() {
+    $scope.getCollectors = function() {
       var promise = backendSrv.get('/api/locations')
-      promise.then(function(locations) {
-        $scope.locations = locations;
+      promise.then(function(collectors) {
+        $scope.collectors = collectors;
       });
       return promise;
     };
     $scope.tagsUpdated = function(newVal) {
-      backendSrv.post("/api/locations", $scope.location);
+      backendSrv.post("/api/locations", $scope.collector);
     }
-    $scope.getLocation = function(id) {
-      _.forEach($scope.locations, function(location) {
-        if (location.id == id) {
-          $scope.location = location;
-          //get monitors for this location.
+    $scope.getCollector = function(id) {
+      _.forEach($scope.collectors, function(collector) {
+        if (collector.id == id) {
+          $scope.collector = collector;
+          //get monitors for this collector.
           backendSrv.get('/api/monitors?location_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
@@ -43,7 +43,7 @@ function (angular, _) {
       });
     };
 
-    $scope.setLocation = function(id) {
+    $scope.setCollector = function(id) {
       $location.path('/locations/summary/'+id);
     }
 

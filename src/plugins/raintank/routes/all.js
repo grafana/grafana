@@ -11,13 +11,13 @@ function (angular, jquery, _, config) {
 
   module.config(function($routeProvider) {
     $routeProvider
-      .when('/locations', {
-        templateUrl: 'plugins/raintank/features/partials/locations.html',
-        controller : 'LocationCtrl',
+      .when('/collectors', {
+        templateUrl: 'plugins/raintank/features/partials/collectors.html',
+        controller : 'CollectorCtrl',
       })
-      .when('/locations/summary/:id', {
-        templateUrl: 'plugins/raintank/features/partials/locations_summary.html',
-        controller : 'LocationSummaryCtrl',
+      .when('/collectors/summary/:id', {
+        templateUrl: 'plugins/raintank/features/partials/collectors_summary.html',
+        controller : 'CollectorSummaryCtrl',
       })
       .when('/endpoints', {
         templateUrl: 'plugins/raintank/features/partials/endpoints.html',
