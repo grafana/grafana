@@ -149,13 +149,17 @@ function (angular) {
           }
           settings.push({variable: setting.variable, value: val});
         });
+        var frequency = 10;
+        if ($scope.monitor_types[type_id].name.indexOf("HTTP") == 0) {
+          frequency = 60;
+        }
         $scope.monitors[type_id] = {
           endpoint_id: null,
           monitor_type_id: type_id,
           collectorGroup: 'all',
           settings: settings,
           enabled: false,
-          frequency: 10,
+          frequency: frequency,
         };
       });
     };
