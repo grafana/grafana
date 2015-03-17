@@ -14,7 +14,7 @@ function (angular) {
 
     $scope.init = function() {
       $scope.endpoint_filter = '';
-      $scope.collector_filter = '';
+      $scope.status_filter = "All Statuses";
       $scope.sort_field = 'name';
       $scope.endpoints = [];
       $scope.getEndpoints();

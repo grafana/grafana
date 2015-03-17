@@ -2,7 +2,6 @@
 
 </topnav>
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
-	<span>Endpoints</span>
 	<div style="float: right;">
 		<a  class="btn btn-success" href="endpoints/new">New Endpoint</a>
 	</div>
@@ -14,8 +13,7 @@
 			<select class="input-medium" ng-model="endpoint_filter" ng-options="tag for tag in endpointTags()">
 				<option value="" label="All Tags">All Endpoints</option>
 			</select>
-			<select class="input-medium" ng-model="collector_filter" ng-options="c.id as c.name for (id, c) in collectors">
-				<option value="*" label="All Collector Tags">All Location Tags</option>
+			<select class="input-medium" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
 			</select>
 		</div>
 		<div class="editor-option" style="float: right;">
