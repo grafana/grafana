@@ -36,7 +36,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-	r.Get("/locations", reqSignedIn, Index)
+	r.Get("/collectors", reqSignedIn, Index)
 	r.Get("/endpoints", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
@@ -99,14 +99,14 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
 
-		// locations
-		r.Group("/locations", func() {
+		// collectors
+		r.Group("/collectors", func() {
 			r.Combo("/").
-				Get(bind(m.GetLocationsQuery{}), GetLocations).
-				Put(reqEditorRole, bind(m.AddLocationCommand{}), AddLocation).
-				Post(reqEditorRole, bind(m.UpdateLocationCommand{}), UpdateLocation)
-			r.Get("/:id", GetLocationById)
-			r.Delete("/:id", reqEditorRole, DeleteLocation)
+				Get(bind(m.GetCollectorsQuery{}), GetCollectors).
+				Put(reqEditorRole, bind(m.AddCollectorCommand{}), AddCollector).
+				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), UpdateCollector)
+			r.Get("/:id", GetCollectorById)
+			r.Delete("/:id", reqEditorRole, DeleteCollector)
 		})
 
 		// Monitors

@@ -55,7 +55,7 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 	if _, err := sess.Insert(&org); err != nil {
 		return 0, err
 	}
-	if err := CopyPublicLocationTags(org.Id, sess); err != nil {
+	if err := CopyPublicCollectorTags(org.Id, sess); err != nil {
 		return 0, err
 	}
 	sess.publishAfterCommit(&events.OrgCreated{

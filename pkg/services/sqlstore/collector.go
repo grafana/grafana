@@ -12,14 +12,14 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetLocations)
-	bus.AddHandler("sql", GetLocationById)
-	bus.AddHandler("sql", AddLocation)
-	bus.AddHandler("sql", UpdateLocation)
-	bus.AddHandler("sql", DeleteLocation)
+	bus.AddHandler("sql", GetCollectors)
+	bus.AddHandler("sql", GetCollectorById)
+	bus.AddHandler("sql", AddCollector)
+	bus.AddHandler("sql", UpdateCollector)
+	bus.AddHandler("sql", DeleteCollector)
 }
 
-type LocationWithTag struct {
+type CollectorWithTag struct {
 	Id        int64
 	OrgId     int64
 	Name      string
@@ -32,28 +32,28 @@ type LocationWithTag struct {
 	Updated   time.Time
 }
 
-func GetLocationById(query *m.GetLocationByIdQuery) error {
-	sess := x.Table("location")
+func GetCollectorById(query *m.GetCollectorByIdQuery) error {
+	sess := x.Table("collector")
 	rawParams := make([]interface{}, 0)
 	rawSql := `SELECT
-		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
-		location.*
-	FROM location
-	LEFT JOIN location_tag ON location.id = location_tag.location_id AND location_tag.org_id=?
+		GROUP_CONCAT(DISTINCT(collector_tag.tag)) as tags,
+		collector.*
+	FROM collector
+	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
 	WHERE 
-		(location.public=1 || location.org_id=?)
+		(collector.public=1 || collector.org_id=?)
 	AND
-		location.id=?
-	GROUP BY location.id
+		collector.id=?
+	GROUP BY collector.id
 	`
 	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
-	results := make([]LocationWithTag, 0)
+	results := make([]CollectorWithTag, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&results)
 	if err != nil {
 		return err
 	}
 	if len(results) < 1 {
-		return m.ErrLocationNotFound
+		return m.ErrCollectorNotFound
 	}
 
 	result := results[0]
@@ -63,7 +63,7 @@ func GetLocationById(query *m.GetLocationByIdQuery) error {
 		tags = strings.Split(result.Tags, ",")
 	}
 
-	query.Result = &m.LocationDTO{
+	query.Result = &m.CollectorDTO{
 		Id:        result.Id,
 		OrgId:     result.OrgId,
 		Name:      result.Name,
@@ -77,25 +77,25 @@ func GetLocationById(query *m.GetLocationByIdQuery) error {
 	return err
 }
 
-func GetLocations(query *m.GetLocationsQuery) error {
-	sess := x.Table("location")
+func GetCollectors(query *m.GetCollectorsQuery) error {
+	sess := x.Table("collector")
 	rawParams := make([]interface{}, 0)
 	rawSql := `SELECT
-		GROUP_CONCAT(DISTINCT(location_tag.tag)) as tags,
-		location.*
-	FROM location
-	LEFT JOIN location_tag ON location.id = location_tag.location_id AND location_tag.org_id=?
+		GROUP_CONCAT(DISTINCT(collector_tag.tag)) as tags,
+		collector.*
+	FROM collector
+	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
 	`
 	rawParams = append(rawParams, query.OrgId)
 	whereSql := make([]string, 0)
-	whereSql = append(whereSql, "(location.public=1 OR location.org_id=?)")
+	whereSql = append(whereSql, "(collector.public=1 OR collector.org_id=?)")
 	rawParams = append(rawParams, query.OrgId)
 	if len(query.Tag) > 0 {
 		// this is a bit complicated because we want to
-		// match only locations that have the tag(s),
+		// match only collectors that have the tag(s),
 		// but we still need to return all of the tags that
-		// the location has.
-		rawSql += "LEFT JOIN location_tag AS lt ON lt.location_id = location.id AND location.org_id = location_tag.org_id\n"
+		// the collector has.
+		rawSql += "LEFT JOIN collector_tag AS lt ON lt.collector_id = collector.id AND collector.org_id = collector_tag.org_id\n"
 		p := make([]string, len(query.Tag))
 		for i, t := range query.Tag {
 			p[i] = "?"
@@ -109,11 +109,11 @@ func GetLocations(query *m.GetLocationsQuery) error {
 			p[i] = "?"
 			rawParams = append(rawParams, t)
 		}
-		whereSql = append(whereSql, fmt.Sprintf("location.name IN (%s)", strings.Join(p, ",")))
+		whereSql = append(whereSql, fmt.Sprintf("collector.name IN (%s)", strings.Join(p, ",")))
 	}
 	if query.Public != "" {
 		if p, err := strconv.ParseBool(query.Public); err == nil {
-			whereSql = append(whereSql, "location.public=?")
+			whereSql = append(whereSql, "collector.public=?")
 			rawParams = append(rawParams, p)
 		} else {
 			return err
@@ -121,23 +121,23 @@ func GetLocations(query *m.GetLocationsQuery) error {
 	}
 
 	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
-	rawSql += " GROUP BY location.id"
+	rawSql += " GROUP BY collector.id"
 
-	result := make([]LocationWithTag, 0)
+	result := make([]CollectorWithTag, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&result)
 	if err != nil {
 		return err
 	}
 
-	locations := make([]*m.LocationDTO, len(result))
+	collectors := make([]*m.CollectorDTO, len(result))
 
-	//iterate through all of the results and build out our locations model.
+	//iterate through all of the results and build out our collectors model.
 	for i, row := range result {
 		tags := make([]string, 0)
 		if row.Tags != "" {
 			tags = strings.Split(row.Tags, ",")
 		}
-		locations[i] = &m.LocationDTO{
+		collectors[i] = &m.CollectorDTO{
 			Id:        row.Id,
 			OrgId:     row.OrgId,
 			Name:      row.Name,
@@ -149,30 +149,30 @@ func GetLocations(query *m.GetLocationsQuery) error {
 		}
 	}
 
-	query.Result = locations
+	query.Result = collectors
 	return nil
 }
 
-func DeleteLocation(cmd *m.DeleteLocationCommand) error {
+func DeleteCollector(cmd *m.DeleteCollectorCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		//Query the location to make sure we own it.
-		locationQuery := m.GetLocationByIdQuery{
+		//Query the collector to make sure we own it.
+		collectorQuery := m.GetCollectorByIdQuery{
 			Id:    cmd.Id,
 			OrgId: cmd.OrgId,
 		}
-		err := GetLocationById(&locationQuery)
+		err := GetCollectorById(&collectorQuery)
 		if err != nil {
 			return err
 		}
-		if locationQuery.OrgId != cmd.OrgId {
-			return errors.New("Permision Denined. You do not own this Location.")
+		if collectorQuery.OrgId != cmd.OrgId {
+			return errors.New("Permision Denined. You do not own this Collector.")
 		}
 
-		var rawSql = "DELETE FROM location_tag WHERE location_id=?"
+		var rawSql = "DELETE FROM collector_tag WHERE collector_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
 		}
-		rawSql = "DELETE FROM location WHERE id=?"
+		rawSql = "DELETE FROM collector WHERE id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
 		}
@@ -180,10 +180,10 @@ func DeleteLocation(cmd *m.DeleteLocationCommand) error {
 	})
 }
 
-func AddLocation(cmd *m.AddLocationCommand) error {
+func AddCollector(cmd *m.AddCollectorCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
-		l := &m.Location{
+		l := &m.Collector{
 			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Public:    cmd.Public,
@@ -192,12 +192,12 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
-		l.UpdateLocationSlug()
+		l.UpdateCollectorSlug()
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
 
-		cmd.Result = &m.LocationDTO{
+		cmd.Result = &m.CollectorDTO{
 			Id:        l.Id,
 			OrgId:     l.OrgId,
 			Name:      l.Name,
@@ -210,27 +210,27 @@ func AddLocation(cmd *m.AddLocationCommand) error {
 	})
 }
 
-func CopyPublicLocationTags(orgId int64, sess *session) error {
-	sess.Table("location_tag")
-	sess.Join("INNER", "location", "location.id=location_tag.location_id")
-	sess.Where("location.public=1").And("location.org_id=location_tag.org_id")
-	result := make([]*m.LocationTag, 0)
+func CopyPublicCollectorTags(orgId int64, sess *session) error {
+	sess.Table("collector_tag")
+	sess.Join("INNER", "collector", "collector.id=collector_tag.collector_id")
+	sess.Where("collector.public=1").And("collector.org_id=collector_tag.org_id")
+	result := make([]*m.CollectorTag, 0)
 	err := sess.Find(&result)
 	if err != nil {
 		return err
 	}
 
 	if len(result) > 0 {
-		locationTags := make([]m.LocationTag, len(result))
-		for i, locationTag := range result {
-			locationTags[i] = m.LocationTag{
-				OrgId:      orgId,
-				LocationId: locationTag.LocationId,
-				Tag:        locationTag.Tag,
+		collectorTags := make([]m.CollectorTag, len(result))
+		for i, collectorTag := range result {
+			collectorTags[i] = m.CollectorTag{
+				OrgId:       orgId,
+				CollectorId: collectorTag.CollectorId,
+				Tag:         collectorTag.Tag,
 			}
 		}
-		sess.Table("location_tag")
-		if _, err := sess.Insert(&locationTags); err != nil {
+		sess.Table("collector_tag")
+		if _, err := sess.Insert(&collectorTags); err != nil {
 			return err
 		}
 	}
@@ -238,22 +238,22 @@ func CopyPublicLocationTags(orgId int64, sess *session) error {
 
 }
 
-func UpdateLocation(cmd *m.UpdateLocationCommand) error {
+func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
-		//Query the location to make sure we own it.
-		locationQuery := m.GetLocationByIdQuery{
+		//Query the collector to make sure we own it.
+		collectorQuery := m.GetCollectorByIdQuery{
 			Id:    cmd.Id,
 			OrgId: cmd.OrgId,
 		}
-		err := GetLocationById(&locationQuery)
+		err := GetCollectorById(&collectorQuery)
 		if err != nil {
 			return err
 		}
 
-		//the location can only be edited by those who own it.
-		if locationQuery.Result.OrgId == cmd.OrgId {
-			l := &m.Location{
+		//the collector can only be edited by those who own it.
+		if collectorQuery.Result.OrgId == cmd.OrgId {
+			l := &m.Collector{
 				Id:        cmd.Id,
 				OrgId:     cmd.OrgId,
 				Latitude:  cmd.Latitude,
@@ -266,22 +266,22 @@ func UpdateLocation(cmd *m.UpdateLocationCommand) error {
 			}
 		}
 
-		rawSql := "DELETE FROM location_tag WHERE location_id=? and org_id=?"
+		rawSql := "DELETE FROM collector_tag WHERE collector_id=? and org_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
 			return err
 		}
 
-		locationTags := make([]m.LocationTag, 0, len(cmd.Tags))
+		collectorTags := make([]m.CollectorTag, 0, len(cmd.Tags))
 		for _, tag := range cmd.Tags {
-			locationTags = append(locationTags, m.LocationTag{
-				OrgId:      cmd.OrgId,
-				LocationId: cmd.Id,
-				Tag:        tag,
+			collectorTags = append(collectorTags, m.CollectorTag{
+				OrgId:       cmd.OrgId,
+				CollectorId: cmd.Id,
+				Tag:         tag,
 			})
 		}
-		if len(locationTags) > 0 {
-			sess.Table("location_tag")
-			if _, err := sess.Insert(&locationTags); err != nil {
+		if len(collectorTags) > 0 {
+			sess.Table("collector_tag")
+			if _, err := sess.Insert(&collectorTags); err != nil {
 				return err
 			}
 		}

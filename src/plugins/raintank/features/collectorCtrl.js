@@ -34,13 +34,13 @@ function (angular) {
     };
 
     $scope.getCollectors = function() {
-      backendSrv.get('/api/locations').then(function(collectors) {
+      backendSrv.get('/api/collectors').then(function(collectors) {
         $scope.collectors = collectors;
       });
     };
 
     $scope.remove = function(loc) {
-      backendSrv.delete('/api/locations/' + loc.id).then(function() {
+      backendSrv.delete('/api/collectors/' + loc.id).then(function() {
         $scope.getCollectors();
       });
     };

@@ -2,7 +2,7 @@ package migrations
 
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-func addLocationMigration(mg *Migrator) {
+func addCollectorMigration(mg *Migrator) {
 	//location
 	var locationV1 = Table{
 		Name: "location",
@@ -133,4 +133,68 @@ func addLocationMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", locationTagV1)
+
+	var collectorV1 = Table{
+		Name: "collector",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			&Column{Name: "latitude", Type: DB_Float, Nullable: true},
+			&Column{Name: "longitude", Type: DB_Float, Nullable: true},
+			&Column{Name: "public", Type: DB_Bool, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+		},
+	}
+	mg.AddMigration("create collector table v1", NewAddTableMigration(collectorV1))
+
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", collectorV1)
+
+	mg.AddMigration("copy location v3 to collector v1", NewCopyTableDataMigration("collector", "location", map[string]string{
+		"id":        "id",
+		"org_id":    "org_id",
+		"slug":      "slug",
+		"name":      "name",
+		"public":    "public",
+		"latitude":  "latitude",
+		"longitude": "longitude",
+		"created":   "created",
+		"updated":   "updated",
+	}))
+
+	mg.AddMigration("drop table location v3", NewDropTableMigration("location"))
+
+	// add location_tag
+	var collectorTagV1 = Table{
+		Name: "collector_tag",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"org_id", "collector_id"}},
+			&Index{Cols: []string{"collector_id", "org_id", "tag"}, Type: UniqueIndex},
+		},
+	}
+	mg.AddMigration("create collector_tag table v1", NewAddTableMigration(collectorTagV1))
+
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", collectorTagV1)
+
+	mg.AddMigration("copy location_tag v1 to collector_tag v1", NewCopyTableDataMigration("collector_tag", "location_tag", map[string]string{
+		"id":           "id",
+		"org_id":       "org_id",
+		"collector_id": "location_id",
+		"tag":          "tag",
+	}))
+
+	mg.AddMigration("drop table locationTag v1", NewDropTableMigration("location_tag"))
 }

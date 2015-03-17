@@ -9,11 +9,11 @@ import (
 
 // Typed errors
 var (
-	ErrLocationNotFound           = errors.New("Location not found")
-	ErrLocationWithSameCodeExists = errors.New("A Location with the same code already exists")
+	ErrCollectorNotFound           = errors.New("Collector not found")
+	ErrCollectorWithSameCodeExists = errors.New("A Collector with the same code already exists")
 )
 
-type Location struct {
+type Collector struct {
 	Id        int64
 	OrgId     int64
 	Slug      string
@@ -25,16 +25,16 @@ type Location struct {
 	Updated   time.Time
 }
 
-type LocationTag struct {
-	Id         int64
-	OrgId      int64
-	LocationId int64
-	Tag        string
+type CollectorTag struct {
+	Id          int64
+	OrgId       int64
+	CollectorId int64
+	Tag         string
 }
 
 // ----------------------
 // DTO
-type LocationDTO struct {
+type CollectorDTO struct {
 	Id        int64    `json:"id"`
 	OrgId     int64    `json:"org_id"`
 	Slug      string   `json:"slug"`
@@ -48,16 +48,16 @@ type LocationDTO struct {
 // ----------------------
 // COMMANDS
 
-type AddLocationCommand struct {
+type AddCollectorCommand struct {
 	OrgId     int64   `json:"-"`
 	Name      string  `json:"name"`
 	Public    bool    `json:"public"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
-	Result    *LocationDTO
+	Result    *CollectorDTO
 }
 
-type UpdateLocationCommand struct {
+type UpdateCollectorCommand struct {
 	Id        int64    `json:"id" binding:"required"`
 	OrgId     int64    `json:"-"`
 	Tags      []string `json:"tags"`
@@ -66,7 +66,7 @@ type UpdateLocationCommand struct {
 	Longitude float64  `json:"longitude"`
 }
 
-type DeleteLocationCommand struct {
+type DeleteCollectorCommand struct {
 	Id    int64 `json:"id" binding:"required"`
 	OrgId int64 `json:"-"`
 }
@@ -74,24 +74,24 @@ type DeleteLocationCommand struct {
 // ---------------------
 // QUERIES
 
-type GetLocationsQuery struct {
+type GetCollectorsQuery struct {
 	Slug   []string `form:"slug"`
 	Name   []string `form:"name"`
 	Tag    []string `form:"tag"`
 	Public string   `form:"public"`
 	OrgId  int64
-	Result []*LocationDTO
+	Result []*CollectorDTO
 }
 
-type GetLocationByIdQuery struct {
+type GetCollectorByIdQuery struct {
 	Id     int64
 	OrgId  int64
-	Result *LocationDTO
+	Result *CollectorDTO
 }
 
-func (location *Location) UpdateLocationSlug() {
-	name := strings.ToLower(location.Name)
+func (collector *Collector) UpdateCollectorSlug() {
+	name := strings.ToLower(collector.Name)
 	re := regexp.MustCompile("[^\\w ]+")
 	re2 := regexp.MustCompile("\\s")
-	location.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
+	collector.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
 }

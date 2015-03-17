@@ -7,10 +7,10 @@ import (
 
 // Typed errors
 var (
-	ErrMonitorNotFound         = errors.New("Monitor not found")
-	ErrMonitorLocationsInvalid = errors.New("Invalid Location specified for Monitor")
-	ErrMonitorSettingsInvalid  = errors.New("Invald variables used in Monitor Settings")
-	ErrorEndpointCantBeChanged = errors.New("A monitor's endpoint_id can not be changed.")
+	ErrMonitorNotFound          = errors.New("Monitor not found")
+	ErrMonitorCollectorsInvalid = errors.New("Invalid Collector specified for Monitor")
+	ErrMonitorSettingsInvalid   = errors.New("Invald variables used in Monitor Settings")
+	ErrorEndpointCantBeChanged  = errors.New("A monitor's endpoint_id can not be changed.")
 )
 
 type MonitorType struct {
@@ -45,12 +45,12 @@ type Monitor struct {
 	Updated       time.Time
 }
 
-type MonitorLocation struct {
-	Id         int64
-	MonitorId  int64
-	LocationId int64
+type MonitorCollector struct {
+	Id          int64
+	MonitorId   int64
+	CollectorId int64
 }
-type MonitorLocationTag struct {
+type MonitorCollectorTag struct {
 	Id        int64
 	MonitorId int64
 	Tag       string
@@ -70,9 +70,9 @@ type MonitorDTO struct {
 	EndpointId    int64                `json:"endpoint_id"`
 	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	LocationIds   []int64              `json:"location_ids"`
-	LocationTags  []string             `json:"location_tags"`
-	Locations     []int64              `json:"locations"`
+	CollectorIds  []int64              `json:"collector_ids"`
+	CollectorTags []string             `json:"collector_tags"`
+	Collectors    []int64              `json:"collectors"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
@@ -103,8 +103,8 @@ type AddMonitorCommand struct {
 	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	Namespace     string               `json:"namespace"`
-	LocationIds   []int64              `json:"location_ids"`
-	LocationTags  []string             `json:"location_tags"`
+	CollectorIds  []int64              `json:"collector_ids"`
+	CollectorTags []string             `json:"collector_tags"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
@@ -118,8 +118,8 @@ type UpdateMonitorCommand struct {
 	OrgId         int64                `json:"-"`
 	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	LocationIds   []int64              `json:"location_ids"`
-	LocationTags  []string             `json:"location_tags"`
+	CollectorIds  []int64              `json:"collector_ids"`
+	CollectorTags []string             `json:"collector_tags"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
@@ -138,7 +138,7 @@ type GetMonitorsQuery struct {
 	MonitorId       []int64 `form:"id"`
 	EndpointId      []int64 `form:"endpoint_id"`
 	MonitorTypeId   []int64 `form:"monitor_type_id"`
-	LocationId      []int64 `form:"location_id"`
+	CollectorId     []int64 `form:"collector_id"`
 	Frequency       []int64 `form:"frequency"`
 	Enabled         string  `form:"enabled"`
 	Modulo          int64   `form:"modulo"`

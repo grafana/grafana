@@ -20,21 +20,21 @@ function (angular, _) {
     };
 
     $scope.getCollectors = function() {
-      var promise = backendSrv.get('/api/locations')
+      var promise = backendSrv.get('/api/collectors')
       promise.then(function(collectors) {
         $scope.collectors = collectors;
       });
       return promise;
     };
     $scope.tagsUpdated = function(newVal) {
-      backendSrv.post("/api/locations", $scope.collector);
+      backendSrv.post("/api/collectors", $scope.collector);
     }
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
         if (collector.id == id) {
           $scope.collector = collector;
           //get monitors for this collector.
-          backendSrv.get('/api/monitors?location_id='+id).then(function(monitors) {
+          backendSrv.get('/api/monitors?collector_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
             });
@@ -44,7 +44,7 @@ function (angular, _) {
     };
 
     $scope.setCollector = function(id) {
-      $location.path('/locations/summary/'+id);
+      $location.path('/collectors/summary/'+id);
     }
 
     $scope.init();

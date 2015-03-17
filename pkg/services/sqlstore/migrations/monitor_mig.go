@@ -281,4 +281,53 @@ func addMonitorMigration(mg *Migrator) {
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorLocationTagV1)
 
+	//monitorCollector
+	var monitorCollectorV1 = Table{
+		Name: "monitor_collector",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"monitor_id", "collector_id"}},
+		},
+	}
+	mg.AddMigration("create monitor_collector table", NewAddTableMigration(monitorCollectorV1))
+
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", monitorCollectorV1)
+	mg.AddMigration("copy monitor_location v1 to monitor_collector v1", NewCopyTableDataMigration("monitor_collector", "monitor_location", map[string]string{
+		"id":           "id",
+		"monitor_id":   "monitor_id",
+		"collector_id": "location_id",
+	}))
+
+	mg.AddMigration("drop table monitor_location v1", NewDropTableMigration("monitor_location"))
+
+	// add monitor_collector_tags
+	var monitorCollectorTagV1 = Table{
+		Name: "monitor_collector_tag",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"monitor_id"}},
+			&Index{Cols: []string{"monitor_id", "tag"}, Type: UniqueIndex},
+		},
+	}
+	mg.AddMigration("create monitor_collector_tag table v1", NewAddTableMigration(monitorCollectorTagV1))
+
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", monitorCollectorTagV1)
+	mg.AddMigration("copy monitor_location_tag v1 to monitor_collector_tag v1", NewCopyTableDataMigration("monitor_collector_tag", "monitor_location_tag", map[string]string{
+		"id":         "id",
+		"monitor_id": "monitor_id",
+		"tag":        "tag",
+	}))
+
+	mg.AddMigration("drop table monitor_location_tag v1", NewDropTableMigration("monitor_location_tag"))
+
 }

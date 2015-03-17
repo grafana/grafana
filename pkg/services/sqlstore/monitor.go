@@ -22,15 +22,15 @@ func init() {
 	bus.AddHandler("sql", DeleteMonitor)
 }
 
-type MonitorWithLocationDTO struct {
+type MonitorWithCollectorDTO struct {
 	Id            int64
 	EndpointId    int64
 	OrgId         int64
 	Namespace     string
 	MonitorTypeId int64
-	LocationIds   string
-	LocationTags  string
-	TagLocations  string
+	CollectorIds  string
+	CollectorTags string
+	TagCollectors string
 	Settings      []*m.MonitorSettingDTO
 	Frequency     int64
 	Enabled       bool
@@ -44,21 +44,21 @@ func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	rawParams := make([]interface{}, 0)
 	rawSql := `
 SELECT
-    GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
-    GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
-    GROUP_CONCAT(DISTINCT(location_tags.location_id)) as tag_locations,
+    GROUP_CONCAT(DISTINCT(monitor_collector.collector_id)) as collector_ids,
+    GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
+    GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     monitor.*
 FROM monitor
-    LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
-    LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
+    LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
+    LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN 
         (SELECT
-            location.id AS location_id,
-            location_tag.tag as tag
-        FROM location
-        LEFT JOIN location_tag ON location.id = location_tag.location_id
-        WHERE (location.public=1 OR location.org_id=?) AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)) as location_tags
-    ON location_tags.tag = monitor_location_tag.tag
+            collector.id AS collector_id,
+            collector_tag.tag as tag
+        FROM collector
+        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
+        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id = collector.org_id OR collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
+    ON collector_tags.tag = monitor_collector_tag.tag
 WHERE monitor.id=?
 	`
 	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
@@ -70,42 +70,42 @@ WHERE monitor.id=?
 	rawSql += "GROUP BY monitor.id"
 
 	//store the results into an array of maps.
-	results := make([]*MonitorWithLocationDTO, 0)
+	results := make([]*MonitorWithCollectorDTO, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&results)
 	if err != nil {
 		return err
 	}
 	result := results[0]
 
-	monitorLocationIds := make([]int64, 0)
-	monitorLocationsMap := make(map[int64]bool)
-	if result.LocationIds != "" {
-		for _, l := range strings.Split(result.LocationIds, ",") {
+	monitorCollectorIds := make([]int64, 0)
+	monitorCollectorsMap := make(map[int64]bool)
+	if result.CollectorIds != "" {
+		for _, l := range strings.Split(result.CollectorIds, ",") {
 			i, err := strconv.ParseInt(l, 10, 64)
 			if err != nil {
 				return err
 			}
-			monitorLocationIds = append(monitorLocationIds, i)
-			monitorLocationsMap[i] = true
+			monitorCollectorIds = append(monitorCollectorIds, i)
+			monitorCollectorsMap[i] = true
 		}
 	}
 
-	monitorLocationTags := make([]string, 0)
-	if result.LocationTags != "" {
-		monitorLocationTags = strings.Split(result.LocationTags, ",")
-		for _, l := range strings.Split(result.TagLocations, ",") {
+	monitorCollectorTags := make([]string, 0)
+	if result.CollectorTags != "" {
+		monitorCollectorTags = strings.Split(result.CollectorTags, ",")
+		for _, l := range strings.Split(result.TagCollectors, ",") {
 			i, err := strconv.ParseInt(l, 10, 64)
 			if err != nil {
 				return err
 			}
-			monitorLocationsMap[i] = true
+			monitorCollectorsMap[i] = true
 		}
 	}
 
-	mergedLocations := make([]int64, len(monitorLocationsMap))
+	mergedCollectors := make([]int64, len(monitorCollectorsMap))
 	count := 0
-	for k := range monitorLocationsMap {
-		mergedLocations[count] = k
+	for k := range monitorCollectorsMap {
+		mergedCollectors[count] = k
 		count += 1
 	}
 
@@ -115,9 +115,9 @@ WHERE monitor.id=?
 		OrgId:         result.OrgId,
 		Namespace:     result.Namespace,
 		MonitorTypeId: result.MonitorTypeId,
-		LocationIds:   monitorLocationIds,
-		LocationTags:  monitorLocationTags,
-		Locations:     mergedLocations,
+		CollectorIds:  monitorCollectorIds,
+		CollectorTags: monitorCollectorTags,
+		Collectors:    mergedCollectors,
 		Settings:      result.Settings,
 		Frequency:     result.Frequency,
 		Enabled:       result.Enabled,
@@ -133,21 +133,21 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 	rawParams := make([]interface{}, 0)
 	rawSql := `
 SELECT
-    GROUP_CONCAT(DISTINCT(monitor_location.location_id)) as location_ids,
-    GROUP_CONCAT(DISTINCT(monitor_location_tag.tag)) as location_tags,
-    GROUP_CONCAT(DISTINCT(location_tags.location_id)) as tag_locations,
+    GROUP_CONCAT(DISTINCT(monitor_collector.collector_id)) as collector_ids,
+    GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
+    GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     monitor.*
 FROM monitor
-    LEFT JOIN monitor_location ON monitor.id = monitor_location.monitor_id
-    LEFT JOIN monitor_location_tag ON monitor.id = monitor_location_tag.monitor_id
+    LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
+    LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN 
         (SELECT
-            location.id AS location_id,
-            location_tag.tag as tag
-        FROM location
-        LEFT JOIN location_tag ON location.id = location_tag.location_id
-        WHERE (location.public=1 OR location.org_id=?) AND (location_tag.org_id = location.org_id OR location_tag.org_id=? OR location_tag.id is NULL)) as location_tags
-    ON location_tags.tag = monitor_location_tag.tag
+            collector.id AS collector_id,
+            collector_tag.tag as tag
+        FROM collector
+        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
+        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id = collector.org_id OR collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
+    ON collector_tags.tag = monitor_collector_tag.tag
 `
 	rawParams = append(rawParams, query.OrgId, query.OrgId)
 	whereSql := make([]string, 0)
@@ -173,7 +173,7 @@ FROM monitor
 	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
 	rawSql += " GROUP BY monitor.id"
 
-	result := make([]*MonitorWithLocationDTO, 0)
+	result := make([]*MonitorWithCollectorDTO, 0)
 	err := sess.Sql(rawSql, rawParams...).Find(&result)
 	if err != nil {
 		return err
@@ -182,35 +182,35 @@ FROM monitor
 	monitors := make([]*m.MonitorDTO, 0)
 	//iterate through all of the results and build out our checks model.
 	for _, row := range result {
-		monitorLocationIds := make([]int64, 0)
-		monitorLocationsMap := make(map[int64]bool)
-		if row.LocationIds != "" {
-			for _, l := range strings.Split(row.LocationIds, ",") {
+		monitorCollectorIds := make([]int64, 0)
+		monitorCollectorsMap := make(map[int64]bool)
+		if row.CollectorIds != "" {
+			for _, l := range strings.Split(row.CollectorIds, ",") {
 				i, err := strconv.ParseInt(l, 10, 64)
 				if err != nil {
 					return err
 				}
-				monitorLocationIds = append(monitorLocationIds, i)
-				monitorLocationsMap[i] = true
+				monitorCollectorIds = append(monitorCollectorIds, i)
+				monitorCollectorsMap[i] = true
 			}
 		}
 
-		monitorLocationTags := make([]string, 0)
-		if row.LocationTags != "" {
-			monitorLocationTags = strings.Split(row.LocationTags, ",")
-			for _, l := range strings.Split(row.TagLocations, ",") {
+		monitorCollectorTags := make([]string, 0)
+		if row.CollectorTags != "" {
+			monitorCollectorTags = strings.Split(row.CollectorTags, ",")
+			for _, l := range strings.Split(row.TagCollectors, ",") {
 				i, err := strconv.ParseInt(l, 10, 64)
 				if err != nil {
 					return err
 				}
-				monitorLocationsMap[i] = true
+				monitorCollectorsMap[i] = true
 			}
 		}
 
-		mergedLocations := make([]int64, len(monitorLocationsMap))
+		mergedCollectors := make([]int64, len(monitorCollectorsMap))
 		count := 0
-		for k := range monitorLocationsMap {
-			mergedLocations[count] = k
+		for k := range monitorCollectorsMap {
+			mergedCollectors[count] = k
 			count += 1
 		}
 
@@ -220,9 +220,9 @@ FROM monitor
 			OrgId:         row.OrgId,
 			Namespace:     row.Namespace,
 			MonitorTypeId: row.MonitorTypeId,
-			LocationIds:   monitorLocationIds,
-			LocationTags:  monitorLocationTags,
-			Locations:     mergedLocations,
+			CollectorIds:  monitorCollectorIds,
+			CollectorTags: monitorCollectorTags,
+			Collectors:    mergedCollectors,
 			Settings:      row.Settings,
 			Frequency:     row.Frequency,
 			Enabled:       row.Enabled,
@@ -318,12 +318,12 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 		if err != nil {
 			return err
 		}
-		rawSql = "DELETE FROM monitor_location WHERE monitor_id=?"
+		rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id)
 		if err != nil {
 			return err
 		}
-		rawSql = "DELETE FROM monitor_location_tag WHERE monitor_id=?"
+		rawSql = "DELETE FROM monitor_collector_tag WHERE monitor_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id)
 		if err != nil {
 			return err
@@ -337,16 +337,16 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 				OrgId: endpointQuery.Result.OrgId,
 				Name:  endpointQuery.Result.Name,
 			},
-			OrgId:        q.Result.OrgId,
-			LocationIds:  q.Result.LocationIds,
-			LocationTags: q.Result.LocationTags,
+			OrgId:         q.Result.OrgId,
+			CollectorIds:  q.Result.CollectorIds,
+			CollectorTags: q.Result.CollectorTags,
 		})
 		return nil
 	})
 }
 
-// store location list query result
-type locationList struct {
+// store collector list query result
+type collectorList struct {
 	Id int64
 }
 
@@ -363,20 +363,20 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			return err
 		}
 
-		filtered_locations := make([]*locationList, 0, len(cmd.LocationIds))
-		if len(cmd.LocationIds) > 0 {
-			sess.Table("location")
-			sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
+		filtered_collectors := make([]*collectorList, 0, len(cmd.CollectorIds))
+		if len(cmd.CollectorIds) > 0 {
+			sess.Table("collector")
+			sess.In("id", cmd.CollectorIds).Where("org_id=? or public=1", cmd.OrgId)
 			sess.Cols("id")
-			err = sess.Find(&filtered_locations)
+			err = sess.Find(&filtered_collectors)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		if len(filtered_locations) < len(cmd.LocationIds) {
-			return m.ErrMonitorLocationsInvalid
+		if len(filtered_collectors) < len(cmd.CollectorIds) {
+			return m.ErrMonitorCollectorsInvalid
 		}
 
 		//get settings definition for thie monitorType.
@@ -444,31 +444,31 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			return err
 		}
 
-		if len(cmd.LocationIds) > 0 {
-			monitor_locations := make([]*m.MonitorLocation, len(cmd.LocationIds))
-			for i, l := range cmd.LocationIds {
-				monitor_locations[i] = &m.MonitorLocation{
-					MonitorId:  mon.Id,
-					LocationId: l,
+		if len(cmd.CollectorIds) > 0 {
+			monitor_collectors := make([]*m.MonitorCollector, len(cmd.CollectorIds))
+			for i, l := range cmd.CollectorIds {
+				monitor_collectors[i] = &m.MonitorCollector{
+					MonitorId:   mon.Id,
+					CollectorId: l,
 				}
 			}
-			sess.Table("monitor_location")
-			if _, err := sess.Insert(&monitor_locations); err != nil {
+			sess.Table("monitor_collector")
+			if _, err := sess.Insert(&monitor_collectors); err != nil {
 				return err
 			}
 		}
 
-		if len(cmd.LocationTags) > 0 {
-			monitor_location_tags := make([]*m.MonitorLocationTag, len(cmd.LocationTags))
-			for i, t := range cmd.LocationTags {
-				monitor_location_tags[i] = &m.MonitorLocationTag{
+		if len(cmd.CollectorTags) > 0 {
+			monitor_collector_tags := make([]*m.MonitorCollectorTag, len(cmd.CollectorTags))
+			for i, t := range cmd.CollectorTags {
+				monitor_collector_tags[i] = &m.MonitorCollectorTag{
 					MonitorId: mon.Id,
 					Tag:       t,
 				}
 			}
 
-			sess.Table("monitor_location_tag")
-			if _, err := sess.Insert(&monitor_location_tags); err != nil {
+			sess.Table("monitor_collector_tag")
+			if _, err := sess.Insert(&monitor_collector_tags); err != nil {
 				return err
 			}
 		}
@@ -479,8 +479,8 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			OrgId:         mon.OrgId,
 			Namespace:     mon.Namespace,
 			MonitorTypeId: mon.MonitorTypeId,
-			LocationIds:   cmd.LocationIds,
-			LocationTags:  cmd.LocationTags,
+			CollectorIds:  cmd.CollectorIds,
+			CollectorTags: cmd.CollectorTags,
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
@@ -499,8 +499,8 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				OrgId:         mon.OrgId,
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
-				LocationIds:   cmd.LocationIds,
-				LocationTags:  cmd.LocationTags,
+				CollectorIds:  cmd.CollectorIds,
+				CollectorTags: cmd.CollectorTags,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
@@ -539,21 +539,21 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			return m.ErrorEndpointCantBeChanged
 		}
 
-		//validate locations.
-		filtered_locations := make([]*locationList, 0, len(cmd.LocationIds))
-		if len(cmd.LocationIds) > 0 {
-			sess.Table("location")
-			sess.In("id", cmd.LocationIds).Where("org_id=? or public=1", cmd.OrgId)
+		//validate collectors.
+		filtered_collectors := make([]*collectorList, 0, len(cmd.CollectorIds))
+		if len(cmd.CollectorIds) > 0 {
+			sess.Table("collector")
+			sess.In("id", cmd.CollectorIds).Where("org_id=? or public=1", cmd.OrgId)
 			sess.Cols("id")
-			err = sess.Find(&filtered_locations)
+			err = sess.Find(&filtered_collectors)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		if len(filtered_locations) < len(cmd.LocationIds) {
-			return m.ErrMonitorLocationsInvalid
+		if len(filtered_collectors) < len(cmd.CollectorIds) {
+			return m.ErrMonitorCollectorsInvalid
 		}
 
 		//get settings definition for thie monitorType.
@@ -629,39 +629,39 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			return err
 		}
 
-		var rawSql = "DELETE FROM monitor_location WHERE monitor_id=?"
+		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
 		}
-		if len(cmd.LocationIds) > 0 {
-			monitor_locations := make([]*m.MonitorLocation, len(cmd.LocationIds))
-			for i, l := range cmd.LocationIds {
-				monitor_locations[i] = &m.MonitorLocation{
-					MonitorId:  cmd.Id,
-					LocationId: l,
+		if len(cmd.CollectorIds) > 0 {
+			monitor_collectors := make([]*m.MonitorCollector, len(cmd.CollectorIds))
+			for i, l := range cmd.CollectorIds {
+				monitor_collectors[i] = &m.MonitorCollector{
+					MonitorId:   cmd.Id,
+					CollectorId: l,
 				}
 			}
-			sess.Table("monitor_location")
-			if _, err := sess.Insert(&monitor_locations); err != nil {
+			sess.Table("monitor_collector")
+			if _, err := sess.Insert(&monitor_collectors); err != nil {
 				return err
 			}
 		}
 
-		rawSql = "DELETE FROM monitor_location_tag WHERE monitor_id=?"
+		rawSql = "DELETE FROM monitor_collector_tag WHERE monitor_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err
 		}
-		if len(cmd.LocationTags) > 0 {
-			monitor_location_tags := make([]*m.MonitorLocationTag, len(cmd.LocationTags))
-			for i, t := range cmd.LocationTags {
-				monitor_location_tags[i] = &m.MonitorLocationTag{
+		if len(cmd.CollectorTags) > 0 {
+			monitor_collector_tags := make([]*m.MonitorCollectorTag, len(cmd.CollectorTags))
+			for i, t := range cmd.CollectorTags {
+				monitor_collector_tags[i] = &m.MonitorCollectorTag{
 					MonitorId: cmd.Id,
 					Tag:       t,
 				}
 			}
 
-			sess.Table("monitor_location_tag")
-			if _, err := sess.Insert(&monitor_location_tags); err != nil {
+			sess.Table("monitor_collector_tag")
+			if _, err := sess.Insert(&monitor_collector_tags); err != nil {
 				return err
 			}
 		}
@@ -677,8 +677,8 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				OrgId:         mon.OrgId,
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
-				LocationIds:   cmd.LocationIds,
-				LocationTags:  cmd.LocationTags,
+				CollectorIds:  cmd.CollectorIds,
+				CollectorTags: cmd.CollectorTags,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
@@ -696,8 +696,8 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				OrgId:         lastState.OrgId,
 				Namespace:     lastState.Namespace,
 				MonitorTypeId: lastState.MonitorTypeId,
-				LocationIds:   lastState.LocationIds,
-				LocationTags:  lastState.LocationTags,
+				CollectorIds:  lastState.CollectorIds,
+				CollectorTags: lastState.CollectorTags,
 				Settings:      lastState.Settings,
 				Frequency:     lastState.Frequency,
 				Enabled:       lastState.Enabled,
