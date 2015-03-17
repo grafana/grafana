@@ -23,7 +23,7 @@
 	</div>
 	<div class="gf-box" ng-repeat="location in locations | filterByTag:location_filter | orderBy:sort_field">
 		<div class="gf-box-header" style="overflow: visible; padding:5px;">
-			<span style="margin: 10px;">{{location.name}}</span>
+			<span style="margin: 10px;"><a href="locations/summary/{{location.id}}">{{location.name}}</a></span>
 			<img src="img/raintank_small.png" width="20px" height="20px" ng-if="location.public"></img>
 			<div class="dropdown" style="float: right;">
 				<a data-toggle="dropdown">

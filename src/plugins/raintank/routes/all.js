@@ -27,9 +27,9 @@ function (angular, jquery, _, config) {
         templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',
         controller : 'EndpointConfCtrl',
       })
-      .when('/endpoints/view/:id', {
-        templateUrl: 'plugins/raintank/features/partials/endpoints_view.html',
-        controller : 'EndpointViewCtrl',
+      .when('/endpoints/summary/:id', {
+        templateUrl: 'plugins/raintank/features/partials/endpoints_summary.html',
+        controller : 'EndpointSummaryCtrl',
       })
       .when('/endpoints/edit/:id', {
         templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',

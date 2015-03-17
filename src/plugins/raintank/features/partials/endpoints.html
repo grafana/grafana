@@ -31,14 +31,14 @@
 	</div>
 	<div class="gf-box" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | orderBy:sort_field">
 		<div class="gf-box-header" style="overflow: visible; padding:5px;">
-			<span style="margin: 10px;">{{endpoint.name}}</span>
+			<span style="margin: 10px;"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
 			<div class="dropdown" style="float: right;">
 				<a data-toggle="dropdown">
 					<i class="fa fa-fw fa-ellipsis-v"></i>
 				</a>
 				<ul class="dropdown-menu" role="menu">
 					<li>
-						<a href="endpoints/{{endpoint.id}}/summary">
+						<a href="endpoints/summary/{{endpoint.id}}">
 							View
 						</a>
 					</li>

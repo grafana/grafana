@@ -4,4 +4,5 @@ define([
   './endpointsCtrl',
   './endpointConfCtrl',
   './endpointViewCtrl',
+  './endpointSummaryCtrl'
 ], function () {});
