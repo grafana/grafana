@@ -61,7 +61,7 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 		Id:        org.Id,
 		Name:      org.Name,
 	})
-	
+
 	return org.Id, nil
 }
 
