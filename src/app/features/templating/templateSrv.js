@@ -72,7 +72,7 @@ function (angular, _) {
       return target.replace(this._regex, function(match, g1, g2) {
         if (scopedVars) {
           value = scopedVars[g1 || g2];
-          if (value) { return value; }
+          if (value) { return value.value; }
         }
 
         value = self._values[g1 || g2];
@@ -82,7 +82,7 @@ function (angular, _) {
       });
     };
 
-    this.replaceWithText = function(target) {
+    this.replaceWithText = function(target, scopedVars) {
       if (!target) { return; }
 
       var value;
@@ -90,6 +90,11 @@ function (angular, _) {
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
+        if (scopedVars) {
+          var option = scopedVars[g1 || g2];
+          if (option) { return option.text; }
+        }
+
         value = self._values[g1 || g2];
         text = self._texts[g1 || g2];
         if (!value) { return match; }

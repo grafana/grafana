@@ -33,15 +33,16 @@ function (angular, _) {
         return;
       }
 
-      dashboard.scopedVars = {
-        panel: {}
-      };
-
-      _.each(variable.options, function(option) {
-        var copy = dashboard.duplicatePanel(panel, row);
-        copy.repeat = null;
-        dashboard.scopedVars.panel[panel.id] = {};
-        dashboard.scopedVars.panel[panel.id][variable.name] = option.value;
+      _.each(variable.options, function(option, index) {
+        if (index > 0) {
+          var copy = dashboard.duplicatePanel(panel, row);
+          copy.repeat = null;
+          copy.scopedVars = {};
+          copy.scopedVars[variable.name] = option;
+        } else {
+          panel.scopedVars = {};
+          panel.scopedVars[variable.name] = option;
+        }
         console.log('duplicatePanel');
       });
     };

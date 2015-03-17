@@ -36,7 +36,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(graphOptions, options.panelId);
+        var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -231,7 +231,7 @@ function (angular, _, $, config, kbn, moment) {
       '#Y', '#Z'
     ];
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(options, panelId) {
+    GraphiteDatasource.prototype.buildGraphiteParams = function(options, scopedVars) {
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
@@ -252,7 +252,7 @@ function (angular, _, $, config, kbn, moment) {
           continue;
         }
 
-        targetValue = templateSrv.replace(target.target, panelId);
+        targetValue = templateSrv.replace(target.target, scopedVars);
         targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
         targets[this._seriesRefLetters[i]] = targetValue;
       }

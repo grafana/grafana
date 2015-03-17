@@ -35,8 +35,13 @@ define([
       });
 
       it('should replace $test with scoped value', function() {
-        var target = _templateSrv.replace('this.$test.filters', {'test': 'mupp'});
+        var target = _templateSrv.replace('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
         expect(target).to.be('this.mupp.filters');
+      });
+
+      it('should replace $test with scoped text', function() {
+        var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.asd.filters');
       });
     });
 
