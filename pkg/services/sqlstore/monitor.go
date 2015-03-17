@@ -162,7 +162,7 @@ FROM monitor
 			p[i] = "?"
 			rawParams = append(rawParams, e)
 		}
-		whereSql = append(whereSql, fmt.Sprintf("monitor.id IN (%s)", strings.Join(p, ",")))
+		whereSql = append(whereSql, fmt.Sprintf("monitor.endpoint_id IN (%s)", strings.Join(p, ",")))
 	}
 
 	if query.Modulo > 0 {
@@ -304,15 +304,6 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 		if err != nil {
 			return err
 		}
-
-		endpointQuery := m.GetEndpointByIdQuery{
-			Id:    q.Result.EndpointId,
-			OrgId: cmd.OrgId,
-		}
-		err = GetEndpointById(&endpointQuery)
-		if err != nil {
-			return err
-		}
 		var rawSql = "DELETE FROM monitor WHERE id=? and org_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		if err != nil {
@@ -333,9 +324,8 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 			Timestamp: time.Now(),
 			Id:        q.Result.Id,
 			Endpoint: events.EndpointPayload{
-				Id:    endpointQuery.Result.Id,
-				OrgId: endpointQuery.Result.OrgId,
-				Name:  endpointQuery.Result.Name,
+				Id:    q.Result.EndpointId,
+				OrgId: cmd.OrgId,
 			},
 			OrgId:         q.Result.OrgId,
 			CollectorIds:  q.Result.CollectorIds,
