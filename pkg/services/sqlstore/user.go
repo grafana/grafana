@@ -55,11 +55,13 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 	if _, err := sess.Insert(&org); err != nil {
 		return 0, err
 	}
+
 	sess.publishAfterCommit(&events.OrgCreated{
 		Timestamp: org.Created,
 		Id:        org.Id,
 		Name:      org.Name,
 	})
+	
 	return org.Id, nil
 }
 
