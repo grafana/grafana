@@ -14,11 +14,11 @@ function (angular) {
 
     $scope.init = function() {
       $scope.endpoint_filter = '';
-      $scope.location_filter = '';
+      $scope.collector_filter = '';
       $scope.sort_field = 'name';
       $scope.endpoints = [];
       $scope.getEndpoints();
-      $scope.getLocations();
+      $scope.getCollectors();
       $scope.getMonitorTypes();
     };
 
@@ -36,13 +36,13 @@ function (angular) {
       $scope.endpoint_filter = tag;
     };
 
-    $scope.getLocations = function() {
-      var locationMap = {};
-      backendSrv.get('/api/locations').then(function(locations) {
-        _.forEach(locations, function(loc) {
-          locationMap[loc.id] = loc;
+    $scope.getCollectors = function() {
+      var collectorMap = {};
+      backendSrv.get('/api/collectors').then(function(collectors) {
+        _.forEach(collectors, function(loc) {
+          collectorMap[loc.id] = loc;
         });
-        $scope.locations = locationMap;
+        $scope.collectors = collectorMap;
       });
     };
 

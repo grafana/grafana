@@ -23,7 +23,7 @@ function (angular) {
         $scope.reset();
       }
       $scope.checks = {};
-      $scope.getLocations();
+      $scope.getCollectors();
       $scope.getMonitorTypes();
       $scope.$watch('endpoint.name', function(newVal, oldVal) {
         for (var id in $scope.monitors) {
@@ -37,16 +37,16 @@ function (angular) {
       });
     };
 
-    $scope.getLocations = function() {
-      var locationMap = {};
-      $scope.locationGroups = ["all"];
-      $scope.locationsByGroup = {"all": []};
-      backendSrv.get('/api/locations').then(function(locations) {
-        _.forEach(locations, function(loc) {
-          locationMap[loc.id] = loc;
-          $scope.locationsByGroup.all.push(loc.id);
+    $scope.getCollectors = function() {
+      var collectorMap = {};
+      $scope.collectorGroups = ["all"];
+      $scope.collectorsByGroup = {"all": []};
+      backendSrv.get('/api/collectors').then(function(collectors) {
+        _.forEach(collectors, function(c) {
+          collectorMap[c.id] = c;
+          $scope.collectorsByGroup.all.push(c.id);
         });
-        $scope.locations = locationMap;
+        $scope.collectors = collectorMap;
       });
     };
 
@@ -67,7 +67,7 @@ function (angular) {
             $scope.monitors[type.id] = {
               endpoint_id: null,
               monitor_type_id: type.id,
-              locationGroup: 'all',
+              collectorGroup: 'all',
               settings: settings,
               enabled: false,
               frequency: 10,
@@ -105,7 +105,7 @@ function (angular) {
 
     $scope.cancel = function() {
       $scope.reset();
-      location.back();
+      collector.back();
     };
     $scope.getEndpoints = function() {
       var promise = backendSrv.get('/api/endpoints')
@@ -152,7 +152,7 @@ function (angular) {
         $scope.monitors[type_id] = {
           endpoint_id: null,
           monitor_type_id: type_id,
-          locationGroup: 'all',
+          collectorGroup: 'all',
           settings: settings,
           enabled: false,
           frequency: 10,
@@ -163,17 +163,17 @@ function (angular) {
     $scope.updateEndpoint = function() {
       backendSrv.post('/api/endpoints', $scope.endpoint);
     };
-    $scope.getLocationsByGroup = function(group) {
-      if (group in $scope.locationsByGroup) {
-        return $scope.locationsByGroup[group];
+    $scope.getCollectorsByGroup = function(group) {
+      if (group in $scope.collectorsByGroup) {
+        return $scope.collectorsByGroup[group];
       }
     };
     $scope.save = function() {
       var promises = [];
       _.forEach($scope.monitors, function(monitor) {
         monitor.endpoint_id = $scope.endpoint.id;
-        monitor.locations = $scope.getLocationsByGroup(monitor.locationGroup);
-        delete monitor.locationGroup;
+        monitor.collector_ids = $scope.getCollectorsByGroup(monitor.collectorGroup);
+        delete monitor.collectorGroup;
         if (monitor.id) {
           promises.push(backendSrv.post('/api/monitors', monitor));
         } else if (monitor.enabled) {
@@ -191,14 +191,14 @@ function (angular) {
     }
 
     $scope.parseSuggestions = function(payload) {
-      var locations = [];
-      _.forEach(Object.keys($scope.locations), function(loc) {
-        locations.push(parseInt(loc));
+      var collectors = [];
+      _.forEach(Object.keys($scope.collectors), function(loc) {
+        collectors.push(parseInt(loc));
       });
       var defaults = {
         endpoint_id: payload.endpoint.id,
         monitor_type_id: 1,
-        locationGroup: 'all',
+        collectorGroup: 'all',
         settings: [],
         enabled: true,
         frequency: 10,
