@@ -15,6 +15,10 @@ function (angular, jquery, _, config) {
         templateUrl: 'plugins/raintank/features/partials/locations.html',
         controller : 'LocationCtrl',
       })
+      .when('/locations/summary/:id', {
+        templateUrl: 'plugins/raintank/features/partials/locations_summary.html',
+        controller : 'LocationSummaryCtrl',
+      })
       .when('/endpoints', {
         templateUrl: 'plugins/raintank/features/partials/endpoints.html',
         controller : 'EndpointsCtrl',

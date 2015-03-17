@@ -13,9 +13,12 @@ function (angular) {
     };
 
     $scope.init = function() {
+      $scope.endpoints = [];
       if ("id" in $routeParams) {
-        $scope.getEndpoint($routeParams.id);
-        $scope.monitors = {};
+        $scope.getEndpoints().then(function() {
+          $scope.getEndpoint($routeParams.id);
+          $scope.monitors = {};
+        });
       } else {
         $scope.reset();
       }
@@ -104,18 +107,31 @@ function (angular) {
       $scope.reset();
       location.back();
     };
-
+    $scope.getEndpoints = function() {
+      var promise = backendSrv.get('/api/endpoints')
+      promise.then(function(endpoints) {
+        $scope.endpoints = endpoints;
+      });
+      return promise;
+    }
     $scope.getEndpoint = function(id) {
-      backendSrv.get('/api/endpoints/'+id).then(function(endpoint) {
-        $scope.endpoint = endpoint;
-        //get monitors for this endpoint.
-        backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
-          _.forEach(monitors, function(monitor) {
-            $scope.monitors[monitor.monitor_type_id] = monitor;
+      _.forEach($scope.endpoints, function(endpoint) {
+        if (endpoint.id == id) {
+          $scope.endpoint = endpoint;
+          //get monitors for this endpoint.
+          backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
+            _.forEach(monitors, function(monitor) {
+              $scope.monitors[monitor.monitor_type_id] = monitor;
+            });
           });
-        });
+        }
       });
     };
+
+    $scope.setEndpoint = function(id) {
+      $location.path('/endpoints/edit/'+id);
+    }
+
     $scope.remove = function(endpoint) {
       backendSrv.delete('/api/endpoints/' + endpoint.id).then(function() {
         $scope.getEndpoints();

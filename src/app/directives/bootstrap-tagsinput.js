@@ -27,7 +27,8 @@ function (angular, $) {
       return {
         restrict: 'EA',
         scope: {
-          model: '=ngModel'
+          model: '=ngModel',
+          onUpdate: '=onUpdate'
         },
         template: '<select multiple></select>',
         replace: false,
@@ -56,6 +57,9 @@ function (angular, $) {
           select.on('itemAdded', function(event) {
             if (scope.model.indexOf(event.item) === -1) {
               scope.model.push(event.item);
+              if (angular.isFunction(scope.onUpdate)) {
+                scope.onUpdate(scope.model);
+              }
             }
           });
 
@@ -63,7 +67,11 @@ function (angular, $) {
             var idx = scope.model.indexOf(event.item);
             if (idx !== -1) {
               scope.model.splice(idx, 1);
+              if (angular.isFunction(scope.onUpdate)) {
+                scope.onUpdate(scope.model);
+              }
             }
+              
           });
 
           scope.$watch("model", function() {

@@ -1,9 +1,12 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
-	<ul class="nav">
-		<li class="active" ng-hide="endpoint.id"><a href="endpoints/new">New</a></li>
-		<li class="active" ng-show="endpoint.id"><a href="endpoints/edit/:id">Edit</a></li>
-	</ul>
 </topnav>
+
+<div>
+	<form>
+		<select ng-model="endpoint" ng-options="e as e.name for e in endpoints" ng-change="setEndpoint(endpoint.id)"></select>
+	</form>
+</div>
+
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<form name="endpointForm">
 		<div class="gf-box">

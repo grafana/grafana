@@ -6,32 +6,25 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LocationCtrl', function($scope, $http, backendSrv) {
-
-    var defaults = {
-      name: '',
-      region: 'AMER',
-      country: 'US',
-      provider: 'Custom'
-    };
-
+  module.controller('LocationCtrl', function($scope, $http, backendSrv, contextSrv) {
     $scope.init = function() {
-      $scope.reset();
-      $scope.editor = {index: 0};
-      $scope.search = {query: ""};
+      $scope.location_filter = "";
+      $scope.status_filter = "All Statuses";
+      $scope.sort_field = "Location";
       $scope.locations = [];
       $scope.getLocations();
-
-      $scope.$watch('editor.index', function(newVal) {
-        if (newVal !== 2) {
-          $scope.reset();
-        }
-      });
     };
-
-    $scope.reset = function() {
-      $scope.current = angular.copy(defaults);
-      $scope.currentIsNew = true;
+    $scope.locationTags = function() {
+      var map = {};
+      _.forEach($scope.locations, function(location) {
+        _.forEach(location.tags, function(tag) {
+          map[tag] = true;
+        });
+      });
+      return Object.keys(map);
+    }
+    $scope.setLocationFilter = function(tag) {
+      $scope.location_filter = tag;
     };
 
     $scope.edit = function(loc) {
@@ -40,40 +33,18 @@ function (angular) {
       $scope.editor.index = 2;
     };
 
-    $scope.cancel = function() {
-      $scope.reset();
-      $scope.editor.index = 0;
-    };
-
     $scope.getLocations = function() {
       backendSrv.get('/api/locations').then(function(locations) {
         $scope.locations = locations;
       });
     };
+    
     $scope.remove = function(loc) {
       backendSrv.delete('/api/locations/' + loc.id).then(function() {
         $scope.getLocations();
       });
     };
 
-    $scope.update = function() {
-      backendSrv.post('/api/locations', $scope.current).then(function() {
-        $scope.editor.index = 0;
-        $scope.getLocations();
-      });
-    };
-
-    $scope.add = function() {
-      if (!$scope.editForm.$valid) {
-        return;
-      }
-
-      backendSrv.put('/api/locations', $scope.current)
-        .then(function() {
-          $scope.editor.index = 0;
-          $scope.getLocations();
-        });
-    };
     $scope.init();
   });
 });

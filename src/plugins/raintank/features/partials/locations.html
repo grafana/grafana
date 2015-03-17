@@ -1,51 +1,55 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Network" show-menu-btn="!grafana.sidemenu">
-	<ul class="nav">
-		<li ><a href="network/monitors">Monitors</a></li>
-		<li ><a href="network/sites">Sites</a></li>
-		<li class="active"><a href="network/locations">Locations</a></li>
-	</ul>
+<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Locations" show-menu-btn="!grafana.sidemenu">
 </topnav>
-
-<div class="gf-box" style="min-height: 500px; max-width: 900px">
-	<div class="gf-box-header">
-		<div class="editor-option" style="float:right;">
-			<input type="text" class="input-large" ng-model='search.query' placeholder="Search"></input>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div class="editor-row">
+		<div class="editor-option">
+			<label class="small">Filter by Location Tag:</label>
+			<select class="input-medium" ng-model="location_filter" ng-options="loc for loc in locationTags()">
+				<option value="" label="All Tags">All Locations</option>
+			</select>
+			<select class="input-medium" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
+			</select>
+		</div>
+		<div class="editor-option" style="float: right;">
+			<label class="small">Sort By:</label>
+			<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['Location']">
+			</select>
 		</div>
 	</div>
-
-    <div class="gf-box-body">
-		<div class="span8">
-			<div ng-if="locations.length === 0">
-				<em>No locations defined</em>
-			</div>
-			<table class="grafana-options-table">
-				<tr ng-repeat="loc in locations | filter:search.query">
-					<td style="width:1%">
-						<i class="icon-hdd"></i> &nbsp;
-						name: {{loc.name}}
-					</td>
-					<td style="width:90%">
-						region: {{loc.region}}
-					</td>
-					<td style="width:90%">
-						country: {{loc.country}}
-					</td>
-					<td style="width:90%">
-						provider: {{loc.provider}}
-					</td>
-					<td style="width: 1%">
-						<a ng-click="edit(loc)" class="btn btn-success btn-mini" ng-hide="loc.public">
-							<i class="fa fa-edit"></i>
+</div>
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div ng-if="locations.length === 0">
+		<em>No locations defined</em>
+	</div>
+	<div class="gf-box" ng-repeat="location in locations | filterByTag:location_filter | orderBy:sort_field">
+		<div class="gf-box-header" style="overflow: visible; padding:5px;">
+			<span style="margin: 10px;">{{location.name}}</span>
+			<img src="img/raintank_small.png" width="20px" height="20px" ng-if="location.public"></img>
+			<div class="dropdown" style="float: right;">
+				<a data-toggle="dropdown">
+					<i class="fa fa-fw fa-ellipsis-v"></i>
+				</a>
+				<ul class="dropdown-menu" role="menu">
+					<li>
+						<a href="locations/summary/{{location.id}}">
+							View
+						</a>
+					</li>
+					<li ng-hide="location.public && !contextSrv.isGrafanaAdmin">
+						<a href="locations/edit/{{location.id}}">
 							Edit
 						</a>
-					</td>
-					<td style="width: 1%" ng-hide="loc.public">
-						<a ng-click="remove(loc)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
+					</li>
+					<li ng-hide="location.public && !contextSrv.isGrafanaAdmin">
+						<a ng-click="remove(location)">
+							Delete
 						</a>
-					</td>
-				</tr>
-			</table>
+					</li>
+				</ul>
+			</div>
+			<span style="float: right;">
+				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in location.tags"><a ng-click="setLocationFilter(tag)">{{tag}}</a></span>
+			</span>
 		</div>
 	</div>
 </div>
