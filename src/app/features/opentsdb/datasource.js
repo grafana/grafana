@@ -48,7 +48,9 @@ function (angular, _, kbn) {
 
       return this.performTimeSeriesQuery(queries, start, end)
         .then(_.bind(function(response) {
+          var metricToTargetMapping = mapMetricsToTargets(response.data, this.targets);
           var result = _.map(response.data, _.bind(function(metricData, index) {
+            index = metricToTargetMapping[index];
             return transformMetricData(metricData, groupByTags, this.targets[index]);
           }, this));
           return { data: result };
@@ -182,6 +184,17 @@ function (angular, _, kbn) {
       date = kbn.parseDate(date);
 
       return date.getTime();
+    }
+
+    function mapMetricsToTargets(metrics, targets) {
+      return _.map(metrics, function(metricData) {
+        return _.findIndex(targets, _.bind(function(target) {
+          return (target.metric === this.metric &&
+          _.all(target.tags, _.bind(function(tagV, tagK) {
+            return this.tags[tagK] === tagV;
+          }, this)));
+        }, metricData));
+      });
     }
 
     return OpenTSDBDatasource;
