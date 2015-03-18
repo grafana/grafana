@@ -63,7 +63,7 @@ WHERE monitor.id=?
 	`
 	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Id)
 
-	if query.IsRaintankAdmin != true {
+	if !query.IsGrafanaAdmin {
 		rawSql += "AND monitor.org_id=?\n"
 		rawParams = append(rawParams, query.OrgId)
 	}
@@ -151,7 +151,7 @@ FROM monitor
 `
 	rawParams = append(rawParams, query.OrgId, query.OrgId)
 	whereSql := make([]string, 0)
-	if query.IsRaintankAdmin != true {
+	if !query.IsGrafanaAdmin {
 		whereSql = append(whereSql, "monitor.org_id=?")
 		rawParams = append(rawParams, query.OrgId)
 	}

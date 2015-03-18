@@ -65,7 +65,7 @@ func GetContextHandler() macaron.Handler {
 				}
 
 				ctx.IsSignedIn = true
-				ctx.SignedInUser = &m.SignedInUser{}
+				ctx.SignedInUser = &m.SignedInUser{IsGrafanaAdmin: apikey.IsAdmin}
 
 				// TODO: fix this
 				ctx.OrgRole = apikey.Role

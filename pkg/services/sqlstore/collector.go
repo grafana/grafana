@@ -258,6 +258,7 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				OrgId:     cmd.OrgId,
 				Latitude:  cmd.Latitude,
 				Longitude: cmd.Longitude,
+				Public:    cmd.Public,
 				Updated:   time.Now(),
 			}
 			_, err := sess.Where("id=? and org_id=?", l.Id, l.OrgId).Update(l)

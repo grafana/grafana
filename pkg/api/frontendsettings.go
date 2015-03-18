@@ -94,9 +94,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	// add raintank backend.
 	graphiteMeta, _ := plugins.DataSources["graphite"]
 	datasources["raintank"] = map[string]interface{}{
-		"type":      "graphite",
-		"meta": 	graphiteMeta,
-		"url":       "/api/graphite",
+		"type": "graphite",
+		"meta": graphiteMeta,
+		"url":  "/api/graphite",
 	}
 
 	jsonObj := map[string]interface{}{

@@ -135,24 +135,24 @@ type DeleteMonitorCommand struct {
 // QUERIES
 
 type GetMonitorsQuery struct {
-	MonitorId       []int64 `form:"id"`
-	EndpointId      []int64 `form:"endpoint_id"`
-	MonitorTypeId   []int64 `form:"monitor_type_id"`
-	CollectorId     []int64 `form:"collector_id"`
-	Frequency       []int64 `form:"frequency"`
-	Enabled         string  `form:"enabled"`
-	Modulo          int64   `form:"modulo"`
-	ModuloOffset    int64   `form:"modulo_offset"`
-	OrgId           int64
-	IsRaintankAdmin bool
-	Result          []*MonitorDTO
+	MonitorId      []int64 `form:"id"`
+	EndpointId     []int64 `form:"endpoint_id"`
+	MonitorTypeId  []int64 `form:"monitor_type_id"`
+	CollectorId    []int64 `form:"collector_id"`
+	Frequency      []int64 `form:"frequency"`
+	Enabled        string  `form:"enabled"`
+	Modulo         int64   `form:"modulo"`
+	ModuloOffset   int64   `form:"modulo_offset"`
+	OrgId          int64
+	IsGrafanaAdmin bool
+	Result         []*MonitorDTO
 }
 
 type GetMonitorByIdQuery struct {
-	Id              int64
-	OrgId           int64
-	IsRaintankAdmin bool
-	Result          *MonitorDTO
+	Id             int64
+	OrgId          int64
+	IsGrafanaAdmin bool
+	Result         *MonitorDTO
 }
 
 type GetMonitorTypesQuery struct {

@@ -44,6 +44,7 @@ func addApiKeyMigrations(mg *Migrator) {
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "key", Type: DB_Varchar, Length: 255, Nullable: false},
 			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "is_admin", Type: DB_Bool, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},

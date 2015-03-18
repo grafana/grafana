@@ -14,10 +14,9 @@ var (
 type RoleType string
 
 const (
-	ROLE_VIEWER         RoleType = "Viewer"
-	ROLE_EDITOR         RoleType = "Editor"
-	ROLE_ADMIN          RoleType = "Admin"
-	ROLE_RAINTANK_ADMIN RoleType = "RaintankAdmin"
+	ROLE_VIEWER RoleType = "Viewer"
+	ROLE_EDITOR RoleType = "Editor"
+	ROLE_ADMIN  RoleType = "Admin"
 )
 
 func (r RoleType) IsValid() bool {

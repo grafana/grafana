@@ -11,7 +11,7 @@ func GetMonitorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetMonitorByIdQuery{Id: id, OrgId: c.OrgId}
-	query.IsRaintankAdmin = c.OrgRole == m.ROLE_RAINTANK_ADMIN
+	query.IsGrafanaAdmin = c.IsGrafanaAdmin
 
 	err := bus.Dispatch(&query)
 	if err != nil {
@@ -24,7 +24,7 @@ func GetMonitorById(c *middleware.Context) {
 
 func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) {
 	query.OrgId = c.OrgId
-	query.IsRaintankAdmin = c.OrgRole == m.ROLE_RAINTANK_ADMIN
+	query.IsGrafanaAdmin = c.IsGrafanaAdmin
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(500, "Failed to query monitors", err)
