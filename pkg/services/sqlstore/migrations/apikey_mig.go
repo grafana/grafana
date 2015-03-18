@@ -76,6 +76,6 @@ func addApiKeyMigrations(mg *Migrator) {
 
 	//------ add RaintankAdmin api_key for collectors.-------------
 	mg.AddMigration("insert raintankAdmin key into api_key table", new(RawSqlMigration).
-		Sqlite("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','RaintankAdmin',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
-		Mysql("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','RaintankAdmin',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
+		Sqlite("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','Editor',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','Editor',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 }
