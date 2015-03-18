@@ -95,7 +95,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // tooltip options
       tooltip       : {
         value_type: 'cumulative',
-        shared: false,
+        shared: true,
       },
       // time overrides
       timeFrom: null,
