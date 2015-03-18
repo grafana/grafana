@@ -84,4 +84,44 @@ function (angular, app, _, $) {
         }
       };
     });
+
+  angular
+    .module('grafana.directives')
+    .directive('variableValueSelect', function($compile, $window, $timeout) {
+      return {
+        scope: {
+          variable: "=",
+        },
+        templateUrl: 'app/features/dashboard/partials/variableValueSelect.html',
+        link: function(scope, elem) {
+          var bodyEl = angular.element($window.document.body);
+
+          scope.show = function() {
+            scope.selectorOpen = true;
+            scope.giveFocus = 1;
+
+            $timeout(function() {
+              bodyEl.on('click', scope.bodyOnClick);
+            }, 0, false);
+          };
+
+          scope.hide = function() {
+            scope.selectorOpen = false;
+            bodyEl.off('click', scope.bodyOnClick);
+          };
+
+
+          scope.bodyOnClick = function(e) {
+            var dropdown = elem.find('.variable-value-dropdown');
+            if (dropdown.has(e.target).length === 0) {
+              scope.$apply(scope.hide);
+            }
+          };
+
+          scope.$on('$destroy', function() {
+          });
+        },
+      };
+    });
+
 });

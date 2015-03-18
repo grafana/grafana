@@ -136,24 +136,6 @@ function (angular, _, config) {
 
   });
 
-  module.directive('xngFocus', function() {
-    return function(scope, element, attrs) {
-      element.click(function(e) {
-        e.stopPropagation();
-      });
-
-      scope.$watch(attrs.xngFocus,function (newValue) {
-        if (!newValue) {
-          return;
-        }
-        setTimeout(function() {
-          element.focus();
-          var pos = element.val().length * 2;
-          element[0].setSelectionRange(pos, pos);
-        }, 200);
-      },true);
-    };
-  });
 
   module.directive('tagColorFromName', function() {
 
