@@ -53,10 +53,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       y_formats    : ['short', 'short'],
       // grid options
       grid          : {
+        leftScale: 1,
         leftMax: null,
         rightMax: null,
         leftMin: null,
         rightMin: null,
+        rightScale: 1,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -113,6 +115,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.annotate, _d.annotate);
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
+
+    $scope.scaleTypes = {'linear': 1, 'log (base 10)': 2};
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
