@@ -88,15 +88,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	if defaultDatasource == "" {
-		defaultDatasource = "grafana"
+		defaultDatasource = "raintank"
 	}
 
 	// add raintank backend.
+	graphiteMeta, _ := plugins.DataSources["graphite"]
 	datasources["raintank"] = map[string]interface{}{
 		"type":      "graphite",
-		"grafanaDB": false,
+		"meta": 	graphiteMeta,
 		"url":       "/api/graphite",
-		"default":   true,
 	}
 
 	jsonObj := map[string]interface{}{
