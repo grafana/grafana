@@ -63,12 +63,7 @@ func AddCollector(c *middleware.Context, cmd m.AddCollectorCommand) {
 
 func UpdateCollector(c *middleware.Context, cmd m.UpdateCollectorCommand) {
 	cmd.OrgId = c.OrgId
-	if cmd.Public {
-		if !c.IsGrafanaAdmin {
-			c.JsonApiErr(400, "Only admins can make public collectors", nil)
-			return
-		}
-	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update collector", err)
