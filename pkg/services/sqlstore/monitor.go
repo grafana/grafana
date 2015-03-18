@@ -57,7 +57,7 @@ FROM monitor
             collector_tag.tag as tag
         FROM collector
         LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
-        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id = collector.org_id OR collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
+        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
     ON collector_tags.tag = monitor_collector_tag.tag
 WHERE monitor.id=?
 	`
@@ -146,7 +146,7 @@ FROM monitor
             collector_tag.tag as tag
         FROM collector
         LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
-        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id = collector.org_id OR collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
+        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
     ON collector_tags.tag = monitor_collector_tag.tag
 `
 	rawParams = append(rawParams, query.OrgId, query.OrgId)
@@ -170,7 +170,9 @@ FROM monitor
 		rawParams = append(rawParams, query.Modulo, query.ModuloOffset)
 	}
 
-	rawSql += "WHERE " + strings.Join(whereSql, " AND ")
+	if len(whereSql) > 0 {
+		rawSql += "WHERE " + strings.Join(whereSql, " AND ")
+	}
 	rawSql += " GROUP BY monitor.id"
 
 	result := make([]*MonitorWithCollectorDTO, 0)
@@ -462,7 +464,24 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				return err
 			}
 		}
+		// get collectorIds from tags
+		tagCollectors, err := getCollectorIdsFromTags(cmd.OrgId, cmd.CollectorTags, sess)
+		if err != nil {
+			return err
+		}
 
+		collectorIdMap := make(map[int64]bool)
+		collectorList := make([]int64, 0)
+		for _,id := range cmd.CollectorIds {
+			collectorIdMap[id] = true
+			collectorList = append(collectorList, id)
+		}
+		
+		for _,id := range tagCollectors {
+			if _,ok := collectorIdMap[id]; !ok {
+				collectorList = append(collectorList, id)
+			}
+		}
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
 			EndpointId:    mon.EndpointId,
@@ -471,6 +490,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			MonitorTypeId: mon.MonitorTypeId,
 			CollectorIds:  cmd.CollectorIds,
 			CollectorTags: cmd.CollectorTags,
+			Collectors:    collectorList,
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
@@ -656,6 +676,25 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			}
 		}
 
+		// get collectorIds from tags
+		tagCollectors, err := getCollectorIdsFromTags(cmd.OrgId, cmd.CollectorTags, sess)
+		if err != nil {
+			return err
+		}
+
+		collectorIdMap := make(map[int64]bool)
+		collectorList := make([]int64, 0)
+		for _,id := range cmd.CollectorIds {
+			collectorIdMap[id] = true
+			collectorList = append(collectorList, id)
+		}
+		
+		for _,id := range tagCollectors {
+			if _,ok := collectorIdMap[id]; !ok {
+				collectorList = append(collectorList, id)
+			}
+		}
+
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
 				Id: mon.Id,
@@ -669,6 +708,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				MonitorTypeId: mon.MonitorTypeId,
 				CollectorIds:  cmd.CollectorIds,
 				CollectorTags: cmd.CollectorTags,
+				Collectors:    collectorList,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
@@ -688,6 +728,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				MonitorTypeId: lastState.MonitorTypeId,
 				CollectorIds:  lastState.CollectorIds,
 				CollectorTags: lastState.CollectorTags,
+				Collectors:    lastState.Collectors,
 				Settings:      lastState.Settings,
 				Frequency:     lastState.Frequency,
 				Enabled:       lastState.Enabled,
@@ -699,3 +740,45 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		return err
 	})
 }
+
+type CollectorId struct {
+	CollectorId int64
+}
+
+func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64, error) {
+	result := make([]int64, 0)
+	if len(tags) < 1 {
+		return result, nil
+	}
+	params := make([]interface{}, 0)
+	rawSql := `SELECT DISTINCT(collector.id) AS collector_id
+	FROM collector
+	INNER JOIN collector_tag ON collector.id = collector_tag.collector_id 
+	WHERE (collector.public=1 OR collector.org_id=?) 
+		AND collector_tag.org_id=?
+	`
+	
+	params = append(params, orgId, orgId)
+
+	p := make([]string, len(tags))
+	for i, t := range tags {
+		p[i] = "?"
+		params = append(params, t)
+	}
+	rawSql += fmt.Sprintf("AND collector_tag.tag IN (%s)", strings.Join(p, ","))
+
+	results := make([]CollectorId, 0)
+	if err := sess.Sql(rawSql, params...).Find(&results); err != nil {
+		return result, err
+	}
+
+	if len(results) > 0 {
+		for _, r := range results {
+			result = append(result, r.CollectorId)
+		}
+	}
+
+	return result, nil
+}
+
+
