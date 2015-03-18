@@ -111,9 +111,9 @@
                     <li>
                         <input type="text"
                                class="input-mini grafana-target-segment-input"
-                               ng-model="target.interval"
-                               placeholder="{{interval}}"
-                               bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+                               ng-model="target.period"
+                               placeholder="300"
+                               bs-tooltip="'Grouping in seconds.  Defaults to 300 if blank'"
                                spellcheck='false'
                                ng-model-onblur ng-change="get_data()" >
                     </li>

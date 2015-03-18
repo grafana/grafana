@@ -57,11 +57,15 @@ function (angular, _, kbn) {
           if (target.series !== '') {
             params.name = target.series;
           }
+          if (target.period !== '') {
+            params.period = target.period;
+          }
           if (target.condition_key && target.condition_value) {
             var key = target.condition_key;
             var value = target.condition_value;
             params.dimensions = key + ':' + value;
           }
+          params.merge_metrics = 'true';
           return this.doGetStatisticsRequest(params, target.alias, target.label, startTime).then(handleGetStatisticsResponse);
         }
         return [];
@@ -244,11 +248,14 @@ function (angular, _, kbn) {
           }
 
           var target;
-          if (arg1.label) {
+          if (arg1.alias) {
+            target = arg1.alias
+          }
+          else if (arg1.label) {
             target = series.dimensions[arg1.label];
           }
           else {
-            target = arg1.alias || series.name + "." + column + '(';
+            target = series.name + "." + column + '(';
             for (var dimension in series.dimensions) {
               target += dimension + '=' + series.dimensions[dimension] + ',';
             }
