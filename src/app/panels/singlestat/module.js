@@ -93,7 +93,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
           console.log("err");
           $scope.panelMeta.loading = false;
           $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+          $scope.inspector.errors = [err];
           $scope.render();
         });
     };

@@ -35,28 +35,28 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
 
-      var promises = _.map(options.targets, function(target) {
-        if (target.hide || !((target.series && target.column) || target.query)) {
-          return [];
-        }
+      var promises = _.chain(options.targets)
+        .filter(function(target) { return !(target.hide || !((target.series && target.column) || target.query)); })
+        .map(function(target) {
 
-        // build query
-        var queryBuilder = new InfluxQueryBuilder(target);
-        var query = queryBuilder.build();
+          // build query
+          var queryBuilder = new InfluxQueryBuilder(target);
+          var query = queryBuilder.build();
 
-        // replace grafana variables
-        query = query.replace('$timeFilter', timeFilter);
-        query = query.replace(/\$interval/g, (target.interval || options.interval));
+          // replace grafana variables
+          query = query.replace('$timeFilter', timeFilter);
+          query = query.replace(/\$interval/g, (target.interval || options.interval));
 
-        // replace templated variables
-        query = templateSrv.replace(query);
+          // replace templated variables
+          query = templateSrv.replace(query);
 
-        var alias = target.alias ? templateSrv.replace(target.alias) : '';
+          var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
-        return this._seriesQuery(query).then(handleResponse);
+          var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
+          return this._seriesQuery(query).then(handleResponse);
 
-      }, this);
+        }, this)
+        .value();
 
       return queryPromiseCombiner(promises);
     };
