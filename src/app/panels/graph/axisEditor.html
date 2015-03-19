@@ -34,7 +34,7 @@
 					Scale type
 				</li>
 				<li>
-					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftScale" ng-options="v as k for (k, v) in scaleTypes" ng-change="render()"></select>
+					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Label
@@ -79,7 +79,7 @@
 					Scale type
 				</li>
 				<li>
-					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightScale" ng-options="v as k for (k, v) in scaleTypes" ng-change="render()"></select>
+					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Label
