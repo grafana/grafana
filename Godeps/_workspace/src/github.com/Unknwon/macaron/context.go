@@ -23,9 +23,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -182,6 +184,11 @@ func (ctx *Context) Query(name string) string {
 	return ctx.Req.Form.Get(name)
 }
 
+// QueryTrim querys and trims spaces form parameter.
+func (ctx *Context) QueryTrim(name string) string {
+	return strings.TrimSpace(ctx.Query(name))
+}
+
 // QueryStrings returns a list of results by given query name.
 func (ctx *Context) QueryStrings(name string) []string {
 	if ctx.Req.Form == nil {
@@ -210,9 +217,21 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return com.StrTo(ctx.Query(name)).MustInt64()
 }
 
+// QueryFloat64 returns query result in float64 type.
+func (ctx *Context) QueryFloat64(name string) float64 {
+	v, _ := strconv.ParseFloat(ctx.Query(name), 64)
+	return v
+}
+
 // Params returns value of given param name.
-// e.g. ctx.Params(":uid")
+// e.g. ctx.Params(":uid") or ctx.Params("uid")
 func (ctx *Context) Params(name string) string {
+	if len(name) == 0 {
+		return ""
+	}
+	if name[0] != '*' && name[0] != ':' {
+		name = ":" + name
+	}
 	return ctx.params[name]
 }
 
@@ -242,12 +261,20 @@ func (ctx *Context) ParamsInt64(name string) int64 {
 	return com.StrTo(ctx.Params(name)).MustInt64()
 }
 
+// ParamsFloat64 returns params result in int64 type.
+// e.g. ctx.ParamsFloat64(":uid")
+func (ctx *Context) ParamsFloat64(name string) float64 {
+	v, _ := strconv.ParseFloat(ctx.Params(name), 64)
+	return v
+}
+
 // GetFile returns information about user upload file by given form field name.
 func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader, error) {
 	return ctx.Req.FormFile(name)
 }
 
 // SetCookie sets given cookie value to response header.
+// FIXME: IE support? http://golanghome.com/post/620#reply2
 func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
 	cookie := http.Cookie{}
 	cookie.Name = name
@@ -264,23 +291,19 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 		}
 	}
 
-	// default "/"
+	cookie.Path = "/"
 	if len(others) > 1 {
 		if v, ok := others[1].(string); ok && len(v) > 0 {
 			cookie.Path = v
 		}
-	} else {
-		cookie.Path = "/"
 	}
 
-	// default empty
 	if len(others) > 2 {
 		if v, ok := others[2].(string); ok && len(v) > 0 {
 			cookie.Domain = v
 		}
 	}
 
-	// default empty
 	if len(others) > 3 {
 		switch v := others[3].(type) {
 		case bool:
@@ -292,7 +315,6 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 		}
 	}
 
-	// default false. for session cookie default true
 	if len(others) > 4 {
 		if v, ok := others[4].(bool); ok && v {
 			cookie.HttpOnly = true
@@ -320,6 +342,12 @@ func (ctx *Context) GetCookieInt(name string) int {
 // GetCookieInt64 returns cookie result in int64 type.
 func (ctx *Context) GetCookieInt64(name string) int64 {
 	return com.StrTo(ctx.GetCookie(name)).MustInt64()
+}
+
+// GetCookieFloat64 returns cookie result in float64 type.
+func (ctx *Context) GetCookieFloat64(name string) float64 {
+	v, _ := strconv.ParseFloat(ctx.GetCookie(name), 64)
+	return v
 }
 
 var defaultCookieSecret string
@@ -368,6 +396,14 @@ func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
 	return string(text), err == nil
 }
 
+func (ctx *Context) setRawContentHeader() {
+	ctx.Resp.Header().Set("Content-Description", "Raw content")
+	ctx.Resp.Header().Set("Content-Type", "text/plain")
+	ctx.Resp.Header().Set("Expires", "0")
+	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
+	ctx.Resp.Header().Set("Pragma", "public")
+}
+
 // ServeContent serves given content to response.
 func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interface{}) {
 	modtime := time.Now()
@@ -377,12 +413,33 @@ func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interfa
 			modtime = v
 		}
 	}
-	ctx.Resp.Header().Set("Content-Description", "Raw content")
-	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	ctx.Resp.Header().Set("Expires", "0")
-	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
-	ctx.Resp.Header().Set("Pragma", "public")
+
+	ctx.setRawContentHeader()
 	http.ServeContent(ctx.Resp, ctx.Req.Request, name, modtime, r)
+}
+
+// ServeFileContent serves given file as content to response.
+func (ctx *Context) ServeFileContent(file string, names ...string) {
+	var name string
+	if len(names) > 0 {
+		name = names[0]
+	} else {
+		name = path.Base(file)
+	}
+
+	f, err := os.Open(file)
+	if err != nil {
+		if Env == PROD {
+			http.Error(ctx.Resp, "Internal Server Error", 500)
+		} else {
+			http.Error(ctx.Resp, err.Error(), 500)
+		}
+		return
+	}
+	defer f.Close()
+
+	ctx.setRawContentHeader()
+	http.ServeContent(ctx.Resp, ctx.Req.Request, name, time.Now(), f)
 }
 
 // ServeFile serves given file to response.

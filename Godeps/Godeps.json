@@ -11,7 +11,7 @@
 		},
 		{
 			"ImportPath": "github.com/Unknwon/macaron",
-			"Rev": "da7cbddc50b9d33e076fb1eabff13b55c3b85fc5"
+			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -72,8 +72,8 @@
 		},
 		{
 			"ImportPath": "gopkg.in/ini.v1",
-			"Comment": "v0-10-g28ad8c4",
-			"Rev": "28ad8c408ba20e5c86b06d64cd2cc9248f640a83"
+			"Comment": "v0-16-g1772191",
+			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
 		}
 	]
 }

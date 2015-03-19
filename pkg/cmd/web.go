@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
@@ -68,6 +69,9 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 		macaron.StaticOptions{
 			SkipLogging: true,
 			Prefix:      prefix,
+			Expires: func() string {
+				return time.Now().UTC().Format(http.TimeFormat)
+			},
 		},
 	))
 }
