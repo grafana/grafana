@@ -10,18 +10,6 @@ function (angular, _) {
   module.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
 
-    function getParametersFromQueryString(queryString) {
-      var result = [];
-      var parameters = queryString.split("&");
-      for (var i = 0; i < parameters.length; i++) {
-        var keyValue = parameters[i].split("=");
-        if (keyValue[1].length > 0) {
-          result.push({ key: keyValue[0], value: window.unescape(keyValue[1]) });
-        }
-      }
-      return result;
-    }
-
     $scope.init = function () {
       $scope.editor = { index: 0 };
 
@@ -41,7 +29,7 @@ function (angular, _) {
             return {key: key, value: value};
           });
 
-          error.requestParamters = requestParameters;
+          error.requestParameters = requestParameters;
         }
       });
 

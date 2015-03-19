@@ -59,11 +59,12 @@
       <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
     </div>
   </div>
-</div>
 
-<div class="section">
+  <div class="section">
     <h5>Errors</h5>
     <editor-opt-bool text="Hide Error Icon" model="panel.hideErrorIcon" change="render()" tip="If series query error occurs, this will suppress the warning icon"></editor-opt-bool>
+  </div>
+
 </div>
 
 

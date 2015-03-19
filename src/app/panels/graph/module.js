@@ -207,7 +207,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       $scope.seriesList = [];
       $scope.render([]);
-    }
+    };
 
     $scope.dataHandlerPartialFailure = function(errors) {
       var combinedErrorMessage = _.reduce(errors, function(prev, curr) {
@@ -217,7 +217,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.panelMeta.loading = false;
       $scope.panelMeta.error = combinedErrorMessage || "Timeseries data request error";
       $scope.inspector.errors = errors;
-    }
+    };
 
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
