@@ -11,7 +11,7 @@ import (
 type MonitorPayload struct {
 	Id            int64                  `json:"id"`
 	OrgId         int64                  `json:"org_id"`
-	Endpoint      EndpointPayload        `json:"endpoint"`
+	EndpointId    int64                  `json:"endpoint_id"`
 	Namespace     string                 `json:"namespace"`
 	MonitorTypeId int64                  `json:"monitor_type_id"`
 	CollectorIds  []int64                `json:"collector_ids"`
@@ -38,7 +38,7 @@ type MonitorCreated struct {
 type MonitorRemoved struct {
 	Timestamp     time.Time       `json:"timestamp"`
 	Id            int64           `json:"id"`
-	Endpoint      EndpointPayload `json:"endpoint"`
+	EndpointId    int64           `json:"endpoint_id"`
 	OrgId         int64           `json:"org_id"`
 	CollectorIds  []int64         `json:"collectors_ids"`
 	CollectorTags []string        `json:"collectors_tags"`

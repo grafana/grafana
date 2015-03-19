@@ -324,11 +324,8 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 
 		sess.publishAfterCommit(&events.MonitorRemoved{
 			Timestamp: time.Now(),
-			Id:        q.Result.Id,
-			Endpoint: events.EndpointPayload{
-				Id:    q.Result.EndpointId,
-				OrgId: cmd.OrgId,
-			},
+			Id:            q.Result.Id,
+			EndpointId:    q.Result.EndpointId,
 			OrgId:         q.Result.OrgId,
 			CollectorIds:  q.Result.CollectorIds,
 			CollectorTags: q.Result.CollectorTags,
@@ -500,17 +497,14 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		sess.publishAfterCommit(&events.MonitorCreated{
 			Timestamp: mon.Updated,
 			MonitorPayload: events.MonitorPayload{
-				Id: mon.Id,
-				Endpoint: events.EndpointPayload{
-					Id:    endpointQuery.Result.Id,
-					OrgId: endpointQuery.Result.OrgId,
-					Name:  endpointQuery.Result.Name,
-				},
+				Id:            mon.Id,
+				EndpointId:    mon.EndpointId,
 				OrgId:         mon.OrgId,
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
 				CollectorIds:  cmd.CollectorIds,
 				CollectorTags: cmd.CollectorTags,
+				Collectors:    collectorList,
 				Settings:      mon.Settings,
 				Frequency:     mon.Frequency,
 				Enabled:       mon.Enabled,
@@ -697,12 +691,8 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
-				Id: mon.Id,
-				Endpoint: events.EndpointPayload{
-					Id:    currentEndpoint.Id,
-					OrgId: currentEndpoint.OrgId,
-					Name:  currentEndpoint.Name,
-				},
+				Id:            mon.Id,
+				EndpointId:    mon.EndpointId,
 				OrgId:         mon.OrgId,
 				Namespace:     mon.Namespace,
 				MonitorTypeId: mon.MonitorTypeId,
@@ -718,11 +708,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Timestamp: mon.Updated,
 			LastState: &events.MonitorPayload{
 				Id: lastState.Id,
-				Endpoint: events.EndpointPayload{
-					Id:    currentEndpoint.Id,
-					OrgId: currentEndpoint.OrgId,
-					Name:  currentEndpoint.Name,
-				},
+				EndpointId:    lastState.EndpointId,
 				OrgId:         lastState.OrgId,
 				Namespace:     lastState.Namespace,
 				MonitorTypeId: lastState.MonitorTypeId,
