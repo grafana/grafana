@@ -31,6 +31,12 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
+					Scale type
+				</li>
+				<li>
+					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftScale" ng-options="v as k for (k, v) in scaleTypes" ng-change="render()"></select>
+				</li>
+				<li class="tight-form-item">
 					Label
 				</li>
 				<li>
@@ -68,6 +74,12 @@
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
 					empty-to-null ng-model="panel.grid.rightMin"
 					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item">
+					Scale type
+				</li>
+				<li>
+					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightScale" ng-options="v as k for (k, v) in scaleTypes" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Label

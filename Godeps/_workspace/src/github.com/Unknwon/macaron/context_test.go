@@ -76,35 +76,53 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("Render HTML", func() {
-			m.Get("/html", func(ctx *Context) {
-				ctx.HTML(304, "hello", "Unknwon") // 304 for logger test.
+
+			Convey("Normal HTML", func() {
+				m.Get("/html", func(ctx *Context) {
+					ctx.HTML(304, "hello", "Unknwon") // 304 for logger test.
+				})
+
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/html", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 			})
 
-			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/html", nil)
-			So(err, ShouldBeNil)
-			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
+			Convey("HTML template set", func() {
+				m.Get("/html2", func(ctx *Context) {
+					ctx.Data["Name"] = "Unknwon"
+					ctx.HTMLSet(200, "basic2", "hello2")
+				})
 
-			m.Get("/html2", func(ctx *Context) {
-				ctx.Data["Name"] = "Unknwon"
-				ctx.HTMLSet(200, "basic2", "hello2")
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/html2", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 			})
 
-			resp = httptest.NewRecorder()
-			req, err = http.NewRequest("GET", "/html2", nil)
-			So(err, ShouldBeNil)
-			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
+			Convey("With layout", func() {
+				m.Get("/layout", func(ctx *Context) {
+					ctx.HTML(200, "hello", "Unknwon", HTMLOptions{"layout"})
+				})
+
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/layout", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "head<h1>Hello Unknwon</h1>foot")
+			})
 		})
 
 		Convey("Parse from and query", func() {
 			m.Get("/query", func(ctx *Context) string {
 				var buf bytes.Buffer
-				buf.WriteString(ctx.Query("name") + " ")
+				buf.WriteString(ctx.QueryTrim("name") + " ")
 				buf.WriteString(ctx.QueryEscape("name") + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
+				buf.WriteString(com.ToStr(ctx.QueryFloat64("float64")) + " ")
 				return buf.String()
 			})
 			m.Get("/query2", func(ctx *Context) string {
@@ -115,10 +133,10 @@ func Test_Context(t *testing.T) {
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123", nil)
+			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123&float64=1.25", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 ")
+			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 1.25 ")
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/query2?list=item1&list=item2", nil)
@@ -128,21 +146,23 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("URL parameter", func() {
-			m.Get("/:name/:int/:int64", func(ctx *Context) string {
+			m.Get("/:name/:int/:int64/:float64", func(ctx *Context) string {
 				var buf bytes.Buffer
-				ctx.SetParams(":name", ctx.Params(":name"))
+				ctx.SetParams("name", ctx.Params("name"))
+				buf.WriteString(ctx.Params(""))
 				buf.WriteString(ctx.Params(":name") + " ")
 				buf.WriteString(ctx.ParamsEscape(":name") + " ")
 				buf.WriteString(com.ToStr(ctx.ParamsInt(":int")) + " ")
 				buf.WriteString(com.ToStr(ctx.ParamsInt64(":int64")) + " ")
+				buf.WriteString(com.ToStr(ctx.ParamsFloat64(":float64")) + " ")
 				return buf.String()
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/user/1/13", nil)
+			req, err := http.NewRequest("GET", "/user/1/13/1.24", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "user user 1 13 ")
+			So(resp.Body.String(), ShouldEqual, "user user 1 13 1.24 ")
 		})
 
 		Convey("Get file", func() {
@@ -158,26 +178,29 @@ func Test_Context(t *testing.T) {
 
 		Convey("Set and get cookie", func() {
 			m.Get("/set", func(ctx *Context) {
-				ctx.SetCookie("user", "Unknwon", 1)
+				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true)
+				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
+				ctx.SetCookie("user", "Unknwon", int64(1))
 			})
 
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/set", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Max-Age=1")
+			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Domain=localhost; Max-Age=1; HttpOnly; Secure")
 
 			m.Get("/get", func(ctx *Context) string {
 				ctx.GetCookie("404")
 				So(ctx.GetCookieInt("uid"), ShouldEqual, 1)
 				So(ctx.GetCookieInt64("uid"), ShouldEqual, 1)
+				So(ctx.GetCookieFloat64("balance"), ShouldEqual, 1.25)
 				return ctx.GetCookie("user")
 			})
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/get", nil)
 			So(err, ShouldBeNil)
-			req.Header.Set("Cookie", "user=Unknwon; uid=1")
+			req.Header.Set("Cookie", "user=Unknwon; uid=1; balance=1.25")
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "Unknwon")
 		})
@@ -229,6 +252,39 @@ func Test_Context(t *testing.T) {
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
+		})
+
+		Convey("Serve file content", func() {
+			m.Get("/file", func(ctx *Context) {
+				ctx.ServeFileContent("fixtures/custom_funcs/index.tmpl")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/file", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
+
+			m.Get("/file2", func(ctx *Context) {
+				ctx.ServeFileContent("fixtures/custom_funcs/index.tmpl", "ok.tmpl")
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/file2", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
+
+			m.Get("/file3", func(ctx *Context) {
+				ctx.ServeFileContent("404.tmpl")
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/file3", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "open 404.tmpl: no such file or directory\n")
+			So(resp.Code, ShouldEqual, 500)
 		})
 
 		Convey("Serve content", func() {

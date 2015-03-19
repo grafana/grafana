@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -28,32 +28,32 @@ import (
 // that are passed into this function.
 type ReturnHandler func(*Context, []reflect.Value)
 
-func defaultReturnHandler() ReturnHandler {
-	return func(ctx *Context, vals []reflect.Value) {
-		rv := ctx.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-		res := rv.Interface().(http.ResponseWriter)
-		var responseVal reflect.Value
-		if len(vals) > 1 && vals[0].Kind() == reflect.Int {
-			res.WriteHeader(int(vals[0].Int()))
-			responseVal = vals[1]
-		} else if len(vals) > 0 {
-			responseVal = vals[0]
-		}
-		if canDeref(responseVal) {
-			responseVal = responseVal.Elem()
-		}
-		if isByteSlice(responseVal) {
-			res.Write(responseVal.Bytes())
-		} else {
-			res.Write([]byte(responseVal.String()))
-		}
-	}
+func canDeref(val reflect.Value) bool {
+	return val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr
 }
 
 func isByteSlice(val reflect.Value) bool {
 	return val.Kind() == reflect.Slice && val.Type().Elem().Kind() == reflect.Uint8
 }
 
-func canDeref(val reflect.Value) bool {
-	return val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr
+func defaultReturnHandler() ReturnHandler {
+	return func(ctx *Context, vals []reflect.Value) {
+		rv := ctx.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
+		res := rv.Interface().(http.ResponseWriter)
+		var respVal reflect.Value
+		if len(vals) > 1 && vals[0].Kind() == reflect.Int {
+			res.WriteHeader(int(vals[0].Int()))
+			respVal = vals[1]
+		} else if len(vals) > 0 {
+			respVal = vals[0]
+		}
+		if canDeref(respVal) {
+			respVal = respVal.Elem()
+		}
+		if isByteSlice(respVal) {
+			res.Write(respVal.Bytes())
+		} else {
+			res.Write([]byte(respVal.String()))
+		}
+	}
 }

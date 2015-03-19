@@ -99,7 +99,7 @@ function ($) {
       var group, value, timestamp, hoverInfo, i, series, seriesHtml;
 
       if(dashboard.sharedCrosshair){
-        scope.appEvent('setCrosshair',  { pos: pos, scope: scope });
+        scope.appEvent('setCrosshair', { pos: pos, scope: scope });
       }
 
       if (seriesList.length === 0) {

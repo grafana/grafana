@@ -1,4 +1,5 @@
 // Copyright 2013 Martini Authors
+// Copyright 2013 oxtoacart
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -32,9 +33,38 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
-
-	"github.com/Unknwon/macaron/bpool"
 )
+
+// BufferPool implements a pool of bytes.Buffers in the form of a bounded channel.
+type BufferPool struct {
+	c chan *bytes.Buffer
+}
+
+// NewBufferPool creates a new BufferPool bounded to the given size.
+func NewBufferPool(size int) (bp *BufferPool) {
+	return &BufferPool{
+		c: make(chan *bytes.Buffer, size),
+	}
+}
+
+// Get gets a Buffer from the BufferPool, or creates a new one if none are available
+// in the pool.
+func (bp *BufferPool) Get() (b *bytes.Buffer) {
+	select {
+	case b = <-bp.c:
+	// reuse existing buffer
+	default:
+		// create new buffer
+		b = bytes.NewBuffer([]byte{})
+	}
+	return
+}
+
+// Put returns the given Buffer to the BufferPool.
+func (bp *BufferPool) Put(b *bytes.Buffer) {
+	b.Reset()
+	bp.c <- b
+}
 
 const (
 	ContentType    = "Content-Type"
@@ -50,7 +80,7 @@ const (
 
 var (
 	// Provides a temporary buffer to execute templates into and catch errors.
-	bufpool = bpool.NewBufferPool(64)
+	bufpool = NewBufferPool(64)
 
 	// Included helper functions for use when rendering html
 	helperFuncs = template.FuncMap{
@@ -392,8 +422,10 @@ func (r *TplRender) RW() http.ResponseWriter {
 }
 
 func (r *TplRender) JSON(status int, v interface{}) {
-	var result []byte
-	var err error
+	var (
+		result []byte
+		err    error
+	)
 	if r.Opt.IndentJSON {
 		result, err = json.MarshalIndent(v, "", "  ")
 	} else {
