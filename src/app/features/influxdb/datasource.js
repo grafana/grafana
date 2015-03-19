@@ -58,9 +58,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       }, this);
 
-      return $q.all(promises).then(function(results) {
-        return { data: _.flatten(results) };
-      });
+      return queryPromiseCombiner(promises);
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
@@ -390,6 +388,44 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function to_utc_epoch_seconds(date) {
       return (date.getTime() / 1000).toFixed(0) + 's';
+    }
+
+    function queryPromiseCombiner(promises) {
+      var stackTrace = null;
+
+      // classify promises as either successes or failures
+      var classifiedPromises =
+        _.map(promises, function(promise) {
+          return promise
+            .then(
+              function(value) {
+                return { isSuccessful: true, value: value };
+              },
+              function(error) {
+                if (stackTrace === null) {
+                  // creating self contained error in order to establish stack trace
+                  try { throw new Error('Promise failed'); } catch(e) { stackTrace = e.stack;  }
+                }
+
+                error.stack = stackTrace;
+                return { isSuccessful: false, error: error };
+              }
+            );
+        });
+
+      // when all promises classified
+      return $q.all(classifiedPromises).then(function(results) {
+        var promiseDict = _.groupBy(results, 'isSuccessful');
+        var successes = _.pluck(promiseDict[true], 'value') || [];
+        successes = _.flatten(successes);
+
+        var errors = _.pluck(promiseDict[false], 'error') || [];
+
+        return {
+          data: successes,
+          errors: errors
+        };
+      });
     }
 
     return InfluxDatasource;
