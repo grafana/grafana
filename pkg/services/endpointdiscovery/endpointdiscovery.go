@@ -114,9 +114,14 @@ func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
 			}
 			domain = strings.Join(parts[1:], ".")
 		} else {
-			server = strings.TrimSuffix(nameservers[0].Host, ".")
+			servers := make([]string, len(nameservers))
+			for i, ns := range nameservers {
+				s := strings.TrimSuffix(ns.Host, ".")
+				servers[i] = s
+			}
+			server = strings.Join(servers, ",")
 			break
-		}
+		}	
 	}
 
 	settings := []m.MonitorSettingDTO{
