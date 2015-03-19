@@ -351,7 +351,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             show: scope.panel['y-axis'],
             min: scope.panel.grid.leftMin,
             index: 1,
-            scale: scope.panel.grid.leftScale,
+            logBase: scope.panel.grid.leftLogBase,
             max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
           };
 
@@ -360,7 +360,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
-            secondY.scale = scope.panel.grid.rightScale;
+            secondY.logBase = scope.panel.grid.rightLogBase;
             secondY.position = 'right';
             secondY.min = scope.panel.grid.rightMin;
             secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
@@ -375,7 +375,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         }
 
         function applyLogScale(axis, data) {
-          if (axis.scale !== 2) {
+          if (axis.logBase !== 10) {
             return;
           }
 
@@ -393,22 +393,23 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             }
 
             if (max === null) {
-              max = 10000000000;
+              max = Number.MAX_VALUE;
             }
           }
 
-          axis.ticks = [0, 1];
+          axis.min = axis.min !== null ? axis.min : 1;
+          axis.ticks = [1];
           var tick = 1;
 
           while (true) {
-            tick = tick*10;
+            tick = tick * axis.logBase;
             axis.ticks.push(tick);
             if (tick > max) {
               break;
             }
           }
 
-          axis.transform = function(v) { return Math.log(v+0.1); };
+          axis.transform = function(v) { return Math.log(v+0.001); };
           axis.inverseTransform  = function (v) { return Math.pow(10,v); };
         }
 
