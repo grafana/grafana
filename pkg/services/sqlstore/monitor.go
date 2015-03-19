@@ -323,7 +323,7 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 		}
 
 		sess.publishAfterCommit(&events.MonitorRemoved{
-			Timestamp: time.Now(),
+			Timestamp:     time.Now(),
 			Id:            q.Result.Id,
 			EndpointId:    q.Result.EndpointId,
 			OrgId:         q.Result.OrgId,
@@ -469,13 +469,13 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 
 		collectorIdMap := make(map[int64]bool)
 		collectorList := make([]int64, 0)
-		for _,id := range cmd.CollectorIds {
+		for _, id := range cmd.CollectorIds {
 			collectorIdMap[id] = true
 			collectorList = append(collectorList, id)
 		}
-		
-		for _,id := range tagCollectors {
-			if _,ok := collectorIdMap[id]; !ok {
+
+		for _, id := range tagCollectors {
+			if _, ok := collectorIdMap[id]; !ok {
 				collectorList = append(collectorList, id)
 			}
 		}
@@ -678,13 +678,13 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		collectorIdMap := make(map[int64]bool)
 		collectorList := make([]int64, 0)
-		for _,id := range cmd.CollectorIds {
+		for _, id := range cmd.CollectorIds {
 			collectorIdMap[id] = true
 			collectorList = append(collectorList, id)
 		}
-		
-		for _,id := range tagCollectors {
-			if _,ok := collectorIdMap[id]; !ok {
+
+		for _, id := range tagCollectors {
+			if _, ok := collectorIdMap[id]; !ok {
 				collectorList = append(collectorList, id)
 			}
 		}
@@ -707,7 +707,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			},
 			Timestamp: mon.Updated,
 			LastState: &events.MonitorPayload{
-				Id: lastState.Id,
+				Id:            lastState.Id,
 				EndpointId:    lastState.EndpointId,
 				OrgId:         lastState.OrgId,
 				Namespace:     lastState.Namespace,
@@ -743,7 +743,7 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 	WHERE (collector.public=1 OR collector.org_id=?) 
 		AND collector_tag.org_id=?
 	`
-	
+
 	params = append(params, orgId, orgId)
 
 	p := make([]string, len(tags))
@@ -766,5 +766,3 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 
 	return result, nil
 }
-
-

@@ -121,7 +121,7 @@ func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
 			}
 			server = strings.Join(servers, ",")
 			break
-		}	
+		}
 	}
 
 	settings := []m.MonitorSettingDTO{

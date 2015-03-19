@@ -36,12 +36,12 @@ type MonitorCreated struct {
 }
 
 type MonitorRemoved struct {
-	Timestamp     time.Time       `json:"timestamp"`
-	Id            int64           `json:"id"`
-	EndpointId    int64           `json:"endpoint_id"`
-	OrgId         int64           `json:"org_id"`
-	CollectorIds  []int64         `json:"collectors_ids"`
-	CollectorTags []string        `json:"collectors_tags"`
+	Timestamp     time.Time `json:"timestamp"`
+	Id            int64     `json:"id"`
+	EndpointId    int64     `json:"endpoint_id"`
+	OrgId         int64     `json:"org_id"`
+	CollectorIds  []int64   `json:"collectors_ids"`
+	CollectorTags []string  `json:"collectors_tags"`
 }
 
 type EndpointPayload struct {
