@@ -14,9 +14,10 @@ import (
 )
 
 type RenderOpts struct {
-	Url    string
-	Width  string
-	Height string
+	Url       string
+	Width     string
+	Height    string
+	SessionId string
 }
 
 func RenderToPng(params *RenderOpts) (string, error) {
@@ -26,7 +27,9 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, getHash(params.Url)))
 	pngPath = pngPath + ".png"
 
-	cmd := exec.Command(binPath, scriptPath, "url="+params.Url, "width="+params.Width, "height="+params.Height, "png="+pngPath)
+	cmd := exec.Command(binPath, scriptPath, "url="+params.Url, "width="+params.Width,
+		"height="+params.Height, "png="+pngPath, "cookiename="+setting.SessionOptions.CookieName,
+		"domain="+setting.Domain, "sessionid="+params.SessionId)
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
