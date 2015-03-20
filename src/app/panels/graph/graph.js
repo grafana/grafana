@@ -351,7 +351,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             show: scope.panel['y-axis'],
             min: scope.panel.grid.leftMin,
             index: 1,
-            logBase: scope.panel.grid.leftLogBase,
+            logBase: scope.panel.grid.leftLogBase || 1,
             max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
           };
 
@@ -360,7 +360,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
-            secondY.logBase = scope.panel.grid.rightLogBase;
+            secondY.logBase = scope.panel.grid.rightLogBase || 2,
             secondY.position = 'right';
             secondY.min = scope.panel.grid.rightMin;
             secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
@@ -375,7 +375,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         }
 
         function applyLogScale(axis, data) {
-          if (axis.logBase !== 10) {
+          if (axis.logBase === 1) {
             return;
           }
 
@@ -391,26 +391,30 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
                 }
               }
             }
-
-            if (max === null) {
+            if (max === void 0) {
               max = Number.MAX_VALUE;
             }
           }
 
           axis.min = axis.min !== null ? axis.min : 1;
           axis.ticks = [1];
-          var tick = 1;
+          var nextTick = 1;
 
           while (true) {
-            tick = tick * axis.logBase;
-            axis.ticks.push(tick);
-            if (tick > max) {
+            nextTick = nextTick * axis.logBase;
+            axis.ticks.push(nextTick);
+            if (nextTick > max) {
               break;
             }
           }
 
-          axis.transform = function(v) { return Math.log(v+0.001); };
-          axis.inverseTransform  = function (v) { return Math.pow(10,v); };
+          if (axis.logBase === 10) {
+            axis.transform = function(v) { return Math.log(v+0.0001); };
+            axis.inverseTransform  = function (v) { return Math.pow(10,v); };
+          } else {
+            axis.transform = function(v) { return Math.log(v+0.0001) / Math.log(axis.logBase); };
+            axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
+          }
         }
 
         function configureAxisMode(axis, format) {
