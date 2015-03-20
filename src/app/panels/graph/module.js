@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -130,6 +130,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
+      if ($scope.panel.snapshotData) {
+        $scope.annotationsPromise = $q.when([]);
+        $scope.dataHandler($scope.panel.snapshotData);
+        return;
+      }
+
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
       return panelHelper.issueMetricQuery($scope, datasource)
@@ -141,6 +147,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
+      if ($scope.dashboard.snapshot) {
+        $scope.panel.snapshotData = results;
+      }
       // png renderer returns just a url
       if (_.isString(results)) {
         $scope.render(results);
@@ -285,6 +294,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     panelSrv.init($scope);
+
   });
 
 });
