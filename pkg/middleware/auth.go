@@ -22,13 +22,6 @@ func getRequestUserId(c *Context) int64 {
 		return userId.(int64)
 	}
 
-	// TODO: figure out a way to secure this
-	if c.Req.URL.Query().Get("render") == "1" {
-		userId := c.QueryInt64(SESS_KEY_USERID)
-		c.Session.Set(SESS_KEY_USERID, userId)
-		return userId
-	}
-
 	return 0
 }
 

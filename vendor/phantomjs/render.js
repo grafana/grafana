@@ -9,12 +9,18 @@ args.forEach(function(arg) {
   params[parts[1]] = parts[2];
 });
 
-var usage = "url=<url> png=<filename> width=<width> height=<height>";
+var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
 
-if (!params.url || !params.png) {
+if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
   console.log(usage);
   phantom.exit();
 }
+
+phantom.addCookie({
+  'name': params.cookiename,
+  'value': params.sessionid,
+  'domain': params.domain
+});
 
 page.viewportSize = {
   width: params.width || '800',

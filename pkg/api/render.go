@@ -12,12 +12,13 @@ import (
 
 func RenderToPng(c *middleware.Context) {
 	queryReader := util.NewUrlQueryReader(c.Req.URL)
-	queryParams := fmt.Sprintf("?render=1&%s=%d&%s", middleware.SESS_KEY_USERID, c.UserId, c.Req.URL.RawQuery)
+	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
 	renderOpts := &renderer.RenderOpts{
-		Url:    c.Params("*") + queryParams,
-		Width:  queryReader.Get("width", "800"),
-		Height: queryReader.Get("height", "400"),
+		Url:       c.Params("*") + queryParams,
+		Width:     queryReader.Get("width", "800"),
+		Height:    queryReader.Get("height", "400"),
+		SessionId: c.Session.ID(),
 	}
 
 	renderOpts.Url = setting.ToAbsUrl(renderOpts.Url)
