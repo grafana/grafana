@@ -10,13 +10,13 @@ function (angular, _) {
   module.service('dynamicDashboardSrv', function()  {
 
     this.init = function(dashboard) {
-      this.removeLinkedPanels(dashboard);
       this.handlePanelRepeats(dashboard);
+      this.handleRowRepeats(dashboard);
     };
 
     this.update = function(dashboard) {
-      this.removeLinkedPanels(dashboard);
       this.handlePanelRepeats(dashboard);
+      this.handleRowRepeats(dashboard);
     };
 
     this.removeLinkedPanels = function(dashboard) {
@@ -26,7 +26,6 @@ function (angular, _) {
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
           if (panel.linked) {
-            console.log('removing panel: ' + panel.id);
             row.panels = _.without(row.panels, panel);
             j = j - 1;
           }
@@ -35,6 +34,8 @@ function (angular, _) {
     };
 
     this.handlePanelRepeats = function(dashboard) {
+      this.removeLinkedPanels(dashboard);
+
       var i, j, row, panel;
       for (i = 0; i < dashboard.rows.length; i++) {
         row = dashboard.rows[i];
@@ -45,6 +46,68 @@ function (angular, _) {
           }
         }
       }
+    };
+
+    this.removeLinkedRows = function(dashboard) {
+      var i, row;
+      for (i = 0; i < dashboard.rows.length; i++) {
+        row = dashboard.rows[i];
+        if (row.linked) {
+          dashboard.rows = _.without(dashboard.rows, row);
+          i = i - 1;
+        }
+      }
+    };
+
+    this.handleRowRepeats = function(dashboard) {
+      this.removeLinkedRows(dashboard);
+      var i, row;
+      for (i = 0; i < dashboard.rows.length; i++) {
+        row = dashboard.rows[i];
+        if (row.repeat) {
+          this.repeatRow(row, dashboard);
+        }
+      }
+    };
+
+    this.repeatRow = function(row, dashboard) {
+      console.log('repeat row');
+      var variables = dashboard.templating.list;
+      var variable = _.findWhere(variables, {name: row.repeat.replace('$', '')});
+      if (!variable) {
+        return;
+      }
+
+      var selected, copy, i, panel;
+      if (variable.current.text === 'All') {
+        selected = variable.options.slice(1, variable.options.length);
+      } else {
+        selected = _.filter(variable.options, {selected: true});
+      }
+
+      _.each(selected, function(option, index) {
+        if (index > 0) {
+          copy = angular.copy(row);
+          copy.repeat = null;
+          copy.linked = true;
+
+          // set new panel ids
+          for (i = 0; i < copy.panels.length; i++) {
+            panel = row.panels[i];
+            panel.id = dashboard.getNextPanelId();
+          }
+
+          dashboard.rows.push(copy);
+        } else {
+          copy = row;
+        }
+
+        for (i = 0; i < copy.panels.length; i++) {
+          panel = row.panels[i];
+          panel.scopedVars = {};
+          panel.scopedVars[variable.name] = option;
+        }
+      });
     };
 
     this.repeatPanel = function(panel, row, dashboard) {
@@ -75,7 +138,6 @@ function (angular, _) {
         console.log('duplicatePanel');
       });
     };
-
 
   });
 
