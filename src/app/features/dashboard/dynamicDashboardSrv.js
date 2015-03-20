@@ -10,6 +10,7 @@ function (angular, _) {
   module.service('dynamicDashboardSrv', function()  {
 
     this.init = function(dashboard) {
+      this.removeLinkedPanels(dashboard);
       this.handlePanelRepeats(dashboard);
     };
 
@@ -25,6 +26,7 @@ function (angular, _) {
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
           if (panel.linked) {
+            console.log('removing panel: ' + panel.id);
             row.panels = _.without(row.panels, panel);
             j = j - 1;
           }
@@ -52,7 +54,14 @@ function (angular, _) {
         return;
       }
 
-      _.each(variable.options, function(option, index) {
+      var selected;
+      if (variable.current.text === 'All') {
+        selected = variable.options.slice(1, variable.options.length);
+      } else {
+        selected = _.filter(variable.options, {selected: true});
+      }
+
+      _.each(selected, function(option, index) {
         if (index > 0) {
           var copy = dashboard.duplicatePanel(panel, row);
           copy.repeat = null;

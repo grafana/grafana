@@ -102,7 +102,6 @@ function (angular, app, _, $) {
             scope.selectorOpen = true;
             scope.giveFocus = 1;
             scope.oldCurrentText = variable.current.text;
-
             var currentValues = variable.current.value;
 
             if (_.isString(currentValues)) {
@@ -110,11 +109,10 @@ function (angular, app, _, $) {
             }
 
             scope.options = _.map(variable.options, function(option) {
-              var op = {text: option.text, value: option.value};
               if (_.indexOf(currentValues, option.value) >= 0) {
-                op.selected = true;
+                option.selected = true;
               }
-              return op;
+              return option;
             });
 
             $timeout(function() {
