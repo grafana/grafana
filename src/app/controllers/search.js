@@ -136,7 +136,6 @@ function (angular, _, config) {
 
   });
 
-
   module.directive('tagColorFromName', function() {
 
     function djb2(str) {

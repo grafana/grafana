@@ -43,5 +43,21 @@
 
   .variable-option {
     display: block;
+    .fa {
+      font-size: 130%;
+      position: relative;
+      top: 2px;
+      padding-right: 6px;
+    }
+    .fa-check-square-o { display: none; }
+
+    &.selected {
+      .fa-square-o {
+        display: none;
+      }
+      .fa-check-square-o {
+        display: inline-block;
+      }
+    }
   }
 }

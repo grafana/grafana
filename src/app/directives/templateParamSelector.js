@@ -123,7 +123,9 @@ function (angular, app, _, $) {
           };
 
           scope.optionSelected = function(option) {
-            if (!variable.multi) {
+            option.selected = !option.selected;
+
+            if (!variable.multi || option.text === 'All') {
               _.each(scope.options, function(other) {
                 if (option !== other) {
                   other.selected = false;
@@ -133,19 +135,16 @@ function (angular, app, _, $) {
 
             var selected = _.filter(scope.options, {selected: true});
 
+            // enfore the first selected if no option is selected
             if (selected.length === 0) {
-              // encode the first selected if no option is selected
               scope.options[0].selected = true;
-              $timeout(function() {
-                scope.optionSelected(scope.options[0]);
-              });
-              return;
+              selected = [scope.options[0]];
             }
 
             if (selected.length > 1) {
               if (selected[0].text === 'All') {
+                selected[0].selected = false;
                 selected = selected.slice(1, selected.length);
-                debugger;
               }
             }
 
@@ -160,6 +159,7 @@ function (angular, app, _, $) {
             }
 
             scope.updateLinkText();
+            scope.onUpdated();
           };
 
           scope.hide = function() {
@@ -187,7 +187,7 @@ function (angular, app, _, $) {
             scope.linkText += variable.current.text;
           };
 
-          scope.$watchGroup(['variable.hideLabel', 'variable.name', 'variable.label'], function() {
+          scope.$watchGroup(['variable.hideLabel', 'variable.name', 'variable.label', 'variable.current.text'], function() {
             scope.updateLinkText();
           });
         },
