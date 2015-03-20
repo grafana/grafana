@@ -5,7 +5,7 @@
 }
 
 .submenu-controls {
-  margin: 10px 10px 0 10px;
+  margin: 15px 0px 10px 13px;
 }
 
 .annotation-disabled, .annotation-disabled a {
@@ -18,3 +18,46 @@
   }
 }
 
+.variable-value-link {
+  font-size: 16px;
+  margin-right: 20px;
+}
+
+.variable-value-dropdown {
+  position: absolute;
+  top: 43px;
+  min-width: 200px;
+  height: 400px;
+  background: @grafanaPanelBackground;
+  box-shadow: 0px 0px 55px 0px black;
+  border: 1px solid @grafanaTargetFuncBackground;
+  z-index: 1000;
+  padding: 10px;
+
+  .variable-options-container {
+    height: 350px;
+    overflow: auto;
+    display: block;
+    line-height: 28px;
+  }
+
+  .variable-option {
+    display: block;
+    .fa {
+      font-size: 130%;
+      position: relative;
+      top: 2px;
+      padding-right: 6px;
+    }
+    .fa-check-square-o { display: none; }
+
+    &.selected {
+      .fa-square-o {
+        display: none;
+      }
+      .fa-check-square-o {
+        display: inline-block;
+      }
+    }
+  }
+}

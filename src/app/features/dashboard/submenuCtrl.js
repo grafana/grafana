@@ -26,8 +26,8 @@ function (angular, _) {
       $rootScope.$broadcast('refresh');
     };
 
-    $scope.setVariableValue = function(param, option) {
-      templateValuesSrv.setVariableValue(param, option).then(function() {
+    $scope.variableUpdated = function(variable) {
+      templateValuesSrv.variableUpdated(variable).then(function() {
         dynamicDashboardSrv.update($scope.dashboard);
         $rootScope.$broadcast('refresh');
       });

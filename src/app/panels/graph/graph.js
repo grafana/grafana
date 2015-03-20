@@ -27,6 +27,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         var dashboard = scope.dashboard;
         var data, annotations;
         var sortedSeries;
+        var graphHeight;
         var legendSideLastValue = null;
         scope.crosshairEmiter = false;
 
@@ -64,19 +65,19 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
         function setElementHeight() {
           try {
-            var height = scope.height || scope.panel.height || scope.row.height;
-            if (_.isString(height)) {
-              height = parseInt(height.replace('px', ''), 10);
+            graphHeight = scope.height || scope.panel.height || scope.row.height;
+            if (_.isString(graphHeight)) {
+              graphHeight = parseInt(graphHeight.replace('px', ''), 10);
             }
 
-            height -= 5; // padding
-            height -= scope.panel.title ? 24 : 9; // subtract panel title bar
+            graphHeight -= 5; // padding
+            graphHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
 
             if (scope.panel.legend.show && !scope.panel.legend.rightSide) {
-              height = height - 26; // subtract one line legend
+              graphHeight = graphHeight - 26; // subtract one line legend
             }
 
-            elem.css('height', height + 'px');
+            elem.css('height', graphHeight + 'px');
 
             return true;
           } catch(e) { // IE throws errors sometimes
@@ -349,6 +350,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             position: 'left',
             show: scope.panel['y-axis'],
             min: scope.panel.grid.leftMin,
+            index: 1,
+            logBase: scope.panel.grid.leftLogBase,
             max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
           };
 
@@ -356,14 +359,58 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
+            secondY.index = 2,
+            secondY.logBase = scope.panel.grid.rightLogBase;
             secondY.position = 'right';
             secondY.min = scope.panel.grid.rightMin;
             secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
             options.yaxes.push(secondY);
+
+            applyLogScale(options.yaxes[1], data);
             configureAxisMode(options.yaxes[1], scope.panel.y_formats[1]);
           }
 
+          applyLogScale(options.yaxes[0], data);
           configureAxisMode(options.yaxes[0], scope.panel.y_formats[0]);
+        }
+
+        function applyLogScale(axis, data) {
+          if (axis.logBase !== 10) {
+            return;
+          }
+
+          var series, i;
+          var max = axis.max;
+
+          if (max === null) {
+            for (i = 0; i < data.length; i++) {
+              series = data[i];
+              if (series.yaxis === axis.index) {
+                if (max < series.stats.max) {
+                  max = series.stats.max;
+                }
+              }
+            }
+
+            if (max === null) {
+              max = Number.MAX_VALUE;
+            }
+          }
+
+          axis.min = axis.min !== null ? axis.min : 1;
+          axis.ticks = [1];
+          var tick = 1;
+
+          while (true) {
+            tick = tick * axis.logBase;
+            axis.ticks.push(tick);
+            if (tick > max) {
+              break;
+            }
+          }
+
+          axis.transform = function(v) { return Math.log(v+0.001); };
+          axis.inverseTransform  = function (v) { return Math.pow(10,v); };
         }
 
         function configureAxisMode(axis, format) {
@@ -411,44 +458,44 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
 
           switch(scope.panel.y_formats[0]) {
-          case 'bytes':
-            url += '&yUnitSystem=binary';
-            break;
-          case 'bits':
-            url += '&yUnitSystem=binary';
-            break;
-          case 'bps':
-            url += '&yUnitSystem=si';
-            break;
-          case 'Bps':
-            url += '&yUnitSystem=si';
-            break;
-          case 'short':
-            url += '&yUnitSystem=si';
-            break;
-          case 'joule':
-            url += '&yUnitSystem=si';
-            break;
-          case 'watt':
-            url += '&yUnitSystem=si';
-            break;
-          case 'ev':
-            url += '&yUnitSystem=si';
-            break;
-          case 'none':
-            url += '&yUnitSystem=none';
-            break;
+            case 'bytes':
+              url += '&yUnitSystem=binary';
+              break;
+            case 'bits':
+              url += '&yUnitSystem=binary';
+              break;
+            case 'bps':
+              url += '&yUnitSystem=si';
+              break;
+            case 'Bps':
+              url += '&yUnitSystem=si';
+              break;
+            case 'short':
+              url += '&yUnitSystem=si';
+              break;
+            case 'joule':
+              url += '&yUnitSystem=si';
+              break;
+            case 'watt':
+              url += '&yUnitSystem=si';
+              break;
+            case 'ev':
+              url += '&yUnitSystem=si';
+              break;
+            case 'none':
+              url += '&yUnitSystem=none';
+              break;
           }
 
           switch(scope.panel.nullPointMode) {
-          case 'connected':
-            url += '&lineMode=connected';
-            break;
-          case 'null':
-            break; // graphite default lineMode
-          case 'null as zero':
-            url += "&drawNullAsZero=true";
-            break;
+            case 'connected':
+              url += '&lineMode=connected';
+              break;
+            case 'null':
+              break; // graphite default lineMode
+            case 'null as zero':
+              url += "&drawNullAsZero=true";
+              break;
           }
 
           url += scope.panel.steppedLine ? '&lineMode=staircase' : '';

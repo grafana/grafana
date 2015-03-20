@@ -66,6 +66,11 @@ function (angular, _, kbn) {
       return this.updateOptionsInChildVariables(variable);
     };
 
+    this.variableUpdated = function(variable) {
+      templateSrv.updateTemplateData();
+      return this.updateOptionsInChildVariables(variable);
+    };
+
     this.updateOptionsInChildVariables = function(updatedVariable) {
       var promises = _.map(self.variables, function(otherVariable) {
         if (otherVariable === updatedVariable) {

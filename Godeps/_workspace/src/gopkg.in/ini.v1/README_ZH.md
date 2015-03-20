@@ -27,6 +27,12 @@
 cfg, err := ini.Load([]byte("raw data"), "filename")
 ```
 
+或者从一个空白的文件开始：
+
+```go
+cfg := ini.Empty()
+```
+
 当您在一开始无法决定需要加载哪些数据源时，仍可以使用 **Append()** 在需要的时候加载它们。
 
 ```go
@@ -53,7 +59,7 @@ section, err := cfg.GetSection("")
 section := cfg.Section("")
 ```
 
-如果不小心判断错了，要获取的分区其实是不存在的，那会发生什么呢？没事的，它会返回一个空的分区对象。
+如果不小心判断错了，要获取的分区其实是不存在的，那会发生什么呢？没事的，它会自动创建并返回一个对应的分区对象给您。
 
 创建一个分区：
 
@@ -112,6 +118,9 @@ val := cfg.Section("").Key("key name").String()
 获取其它类型的值：
 
 ```go
+// 布尔值的规则：
+// true 当值为：1, t, T, TRUE, true, True, YES, yes, Yes, ON, on, On
+// false 当值为：0, f, F, FALSE, false, False, NO, no, No, OFF, off, Off
 v, err = cfg.Section("").Key("BOOL").Bool()
 v, err = cfg.Section("").Key("FLOAT64").Float64()
 v, err = cfg.Section("").Key("INT").Int()
@@ -171,10 +180,21 @@ v = cfg.Section("").Key("STRING").In("default", []string{"str", "arr", "types"})
 v = cfg.Section("").Key("FLOAT64").InFloat64(1.1, []float64{1.25, 2.5, 3.75})
 v = cfg.Section("").Key("INT").InInt(5, []int{10, 20, 30})
 v = cfg.Section("").Key("INT64").InInt64(10, []int64{10, 20, 30})
-v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3})
+v = cfg.Section("").Key("TIME").InTimeFormat(time.RFC3339, time.Now(), []time.Time{time1, time2, time3})
+v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3}) // RFC3339
 ```
 
 如果获取到的值不是候选值的任意一个，则会返回默认值，而默认值不需要是候选值中的一员。
+
+验证获取的值是否在指定范围内：
+
+```go
+vals = cfg.Section("").Key("FLOAT64").RangeFloat64(0.0, 1.1, 2.2)
+vals = cfg.Section("").Key("INT").RangeInt(0, 10, 20)
+vals = cfg.Section("").Key("INT64").RangeInt64(0, 10, 20)
+vals = cfg.Section("").Key("TIME").RangeTimeFormat(time.RFC3339, time.Now(), minTime, maxTime)
+vals = cfg.Section("").Key("TIME").RangeTime(time.Now(), minTime, maxTime) // RFC3339
+```
 
 自动分割键值为切片（slice）：
 
@@ -288,6 +308,16 @@ func main() {
 	err = cfg.Section("Note").MapTo(n)
 	// ...
 }
+```
+
+结构的字段怎么设置默认值呢？很简单，只要在映射之前对指定字段进行赋值就可以了。如果键未找到或者类型错误，该值不会发生改变。
+
+```go
+// ...
+p := &Person{
+	Name: "Joe",
+}
+// ...
 ```
 
 #### 名称映射器（Name Mapper）
