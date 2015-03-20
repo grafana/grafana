@@ -145,6 +145,7 @@ function (angular, app, _, $) {
             if (selected.length > 1) {
               if (selected[0].text === 'All') {
                 selected = selected.slice(1, selected.length);
+                debugger;
               }
             }
 

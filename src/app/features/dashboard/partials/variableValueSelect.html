@@ -13,10 +13,9 @@
 
 	<div class="variable-options-container" ng-if="!query.tagcloud">
 		<div class="variable-option pointer" bindonce ng-repeat="option in options"
-				ng-class="{'selected': $index === selectedIndex }" ng-href="{{row.url}}">
-				<input class="cr1" id="var.option.{{$id}}" type="checkbox" ng-model="option.selected" ng-checked="option.selected" ng-change="optionSelected(option)">
-				<label for="var.option.{{$id}}" class="cr1"></label>
-				<label for="var.option.{{$id}}" class="checkbox-label">{{option.text}}</label>
+				ng-class="{'selected': selected}" ng-href="{{row.url}}">
+				<i class="variable-option-check"></i>
+				<label for="var.option.{{$id}}" label">{{option.text}}</label>
 			</div>
 		</div>
 	</div>
