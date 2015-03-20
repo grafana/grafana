@@ -1,11 +1,10 @@
 <div class="submenu-controls" ng-controller="SubmenuCtrl">
 	<div class="tight-form borderless">
 
-
 		<ul class="tight-form-list" ng-if="dashboard.templating.list.length > 0">
 
 			<li ng-repeat="variable in variables" class="tight-form-item template-param-name dropdown">
-				<variable-value-select variable="variable"></variable-value-select>
+				<variable-value-select variable="variable" on-updated="variableUpdated(variable)"></variable-value-select>
 			</li>
 
 			<!-- <li class="dropdown" ng&#45;repeat&#45;end> -->
