@@ -104,7 +104,7 @@ function (angular, _) {
 
         for (i = 0; i < copy.panels.length; i++) {
           panel = row.panels[i];
-          panel.scopedVars = {};
+          panel.scopedVars = panel.scopedVars || {};
           panel.scopedVars[variable.name] = option;
         }
       });
