@@ -9,7 +9,7 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('SharePanelCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
@@ -79,6 +79,17 @@ function (angular, _, require, config) {
       $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
+    };
+
+    $scope.snapshot = function() {
+      $scope.dashboard.snapshot = true;
+      $rootScope.$broadcast('refresh');
+
+      $timeout(function() {
+        $scope.exportDashboard();
+        $scope.dashboard.snapshot = false;
+        $scope.appEvent('dashboard-snapshot-cleanup');
+      }, 1000);
     };
 
     $scope.init();

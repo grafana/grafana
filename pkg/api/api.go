@@ -41,6 +41,10 @@ func Register(r *macaron.Macaron) {
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
 
+	// dashboard snapshots
+	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
+	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
+
 	// authed api
 	r.Group("/api", func() {
 		// user

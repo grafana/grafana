@@ -5,6 +5,7 @@ define([
   './playlistCtrl',
   './rowCtrl',
   './sharePanelCtrl',
+  './shareSnapshotCtrl',
   './submenuCtrl',
   './dashboardSrv',
   './keybindings',

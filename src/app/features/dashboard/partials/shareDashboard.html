@@ -2,11 +2,11 @@
 	<div class="gf-box-header">
 		<div class="gf-box-title">
 			<i class="fa fa-share"></i>
-			Share
+			Share Dashboard
 		</div>
 
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Link']" data-title="{{tab}}">
+			<div ng-repeat="tab in ['Link', 'Snapshot sharing']" data-title="{{tab}}">
 			</div>
 		</div>
 
@@ -43,6 +43,19 @@
 				</div>
 			</div>
 		</div>
+	</div>
+
+	<div class="gf-box-body" ng-if="editor.index === 1" ng-controller="ShareSnapshotCtrl">
+		<h5>Share dashboard and data with anyone</h5>
+		<p>
+			<em>
+				This will create a snapshot of the dashboard and the data currently visible. It will be saved and you will
+				get a link, anyone with this link will be able view view the dashboard and the data currently visible.
+			</em>
+		</p>
+
+		<button class="btn btn-success btn" ng-click="snapshot()">Create snapshot</button>
+
 	</div>
 
 </div>
