@@ -35,6 +35,10 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
+      .when('/dashboard/snapshots/:key', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromSnapshotCtrl',
+      })
       .when('/dashboard/new', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'NewDashboardCtrl',

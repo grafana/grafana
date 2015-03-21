@@ -54,7 +54,33 @@
 			</em>
 		</p>
 
-		<button class="btn btn-success btn" ng-click="snapshot()">Create snapshot</button>
+		<div ng-if="!snapshotUrl" style="margin-bottom: 20px;">
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Snapshot name
+					</li>
+					<li>
+						<input type="text" ng-model="snapshot.name" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+		<div class="gf-form" ng-if="snapshotUrl">
+			<div class="gf-form-row">
+				<button class="btn btn-inverse pull-right" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+				<span class="gf-fluid-input">
+					<input type="text" data-share-panel-url class="input" ng-model='snapshotUrl'></input>
+				</span>
+			</div>
+		</div>
+
+		<button class="btn btn-success btn" ng-click="createSnapshot()" ng-if="!snapshotUrl" ng-disabled="loading">
+			Create snapshot
+			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+		</button>
 
 	</div>
 

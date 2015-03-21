@@ -1,13 +1,14 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func CreateDashboardSnapshotCommand(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
+func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	cmd.Key = util.GetRandomString(20)
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -29,5 +30,10 @@ func GetDashboardSnapshot(c *middleware.Context) {
 		return
 	}
 
-	c.JSON(200, query.Result)
+	dto := dtos.Dashboard{
+		Model: query.Result.Dashboard,
+		Meta:  dtos.DashboardMeta{IsSnapshot: true},
+	}
+
+	c.JSON(200, dto)
 }
