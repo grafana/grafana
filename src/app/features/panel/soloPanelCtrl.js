@@ -7,10 +7,22 @@ function (angular, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('SoloPanelCtrl', function($scope, backendSrv, $routeParams, dashboardSrv, timeSrv, $location, templateValuesSrv) {
+  module.controller('SoloPanelCtrl',
+    function(
+      $scope,
+      backendSrv,
+      $routeParams,
+      dashboardSrv,
+      timeSrv,
+      $location,
+      templateValuesSrv,
+      contextSrv) {
+
     var panelId;
 
     $scope.init = function() {
+      contextSrv.sidemenu = false;
+
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
@@ -26,7 +38,7 @@ function (angular, $) {
       $scope.dashboard = dashboardSrv.create(dashboard.model);
 
       $scope.row = {
-        height: $(window).height() + 'px',
+        height: ($(window).height() - 10) + 'px',
       };
 
       $scope.test = "Hej";
