@@ -72,8 +72,11 @@ function (angular, _, require, config) {
       });
 
       $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
-      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
 
+      $scope.soloUrl = $scope.shareUrl.replace('/dashboard/db/', '/dashboard/solo/');
+      $scope.iframeHtml = '<iframe src="' + $scope.soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+
+      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };
