@@ -396,8 +396,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             }
           }
 
-          axis.min = axis.min !== null ? axis.min : 1;
-          axis.ticks = [1];
+          axis.min = axis.min !== null ? axis.min : 0;
+          axis.ticks = [0, 1];
           var nextTick = 1;
 
           while (true) {
@@ -409,10 +409,10 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
 
           if (axis.logBase === 10) {
-            axis.transform = function(v) { return Math.log(v+0.0001); };
+            axis.transform = function(v) { return Math.log(v+0.1); };
             axis.inverseTransform  = function (v) { return Math.pow(10,v); };
           } else {
-            axis.transform = function(v) { return Math.log(v+0.0001) / Math.log(axis.logBase); };
+            axis.transform = function(v) { return Math.log(v+0.1) / Math.log(axis.logBase); };
             axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
           }
         }
