@@ -41,7 +41,7 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 	FROM collector
 	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
 	WHERE 
-		(collector.public=1 || collector.org_id=?)
+		(collector.public=1 OR collector.org_id=?)
 	AND
 		collector.id=?
 	GROUP BY collector.id
@@ -205,6 +205,7 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Tags:      make([]string, 0),
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
+			public:    l.public,
 		}
 		return nil
 	})
