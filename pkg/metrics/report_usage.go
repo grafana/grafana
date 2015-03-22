@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -13,7 +14,7 @@ import (
 func StartUsageReportLoop() chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.NewTicker(10 * time.Minute)
 	for {
 		select {
 		case <-ticker.C:
@@ -25,9 +26,11 @@ func StartUsageReportLoop() chan struct{} {
 func sendUsageStats() {
 	log.Trace("Sending anonymous usage stats to stats.grafana.org")
 
+	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
+
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
-		"version": setting.BuildVersion,
+		"version": version,
 		"metrics": metrics,
 	}
 
