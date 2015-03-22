@@ -153,9 +153,9 @@ define([
 
       it('should apply axis transform and ticks', function() {
         var axis = ctx.plotOptions.yaxes[0];
-        expect(axis.transform(100)).to.be(Math.log(100+0.0001));
-        expect(axis.ticks[0]).to.be(1);
-        expect(axis.ticks[1]).to.be(10);
+        expect(axis.transform(100)).to.be(Math.log(100+0.1));
+        expect(axis.ticks[0]).to.be(0);
+        expect(axis.ticks[1]).to.be(1);
       });
     });
 
