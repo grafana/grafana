@@ -14,7 +14,7 @@ import (
 func StartUsageReportLoop() chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	ticker := time.NewTicker(10 * time.Minute)
+	ticker := time.NewTicker(time.Hour)
 	for {
 		select {
 		case <-ticker.C:
