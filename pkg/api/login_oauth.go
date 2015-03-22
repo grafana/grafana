@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -80,6 +81,8 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
+
+	metrics.M_Api_Login_OAuth.Inc(1)
 
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
