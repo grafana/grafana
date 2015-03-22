@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,8 +22,6 @@ func StartUsageReportLoop() chan struct{} {
 }
 
 func sendUsageStats() {
-	log.Trace("Sending anonymous usage stats to stats.grafana.org")
-
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
 		"version": setting.BuildVersion,
@@ -56,5 +53,5 @@ func sendUsageStats() {
 
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
 
-	go client.Post("http://stats.grafana.org/grafana-usage-report", "application/json", data)
+	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
 }
