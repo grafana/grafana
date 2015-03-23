@@ -21,7 +21,7 @@ function (angular) {
         var dash = angular.copy($scope.dashboard);
         dash.title = $scope.snapshot.name;
 
-        dash.forEachPanel(function(panel){
+        dash.forEachPanel(function(panel) {
           panel.targets = [];
           panel.links = [];
         });
