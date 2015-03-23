@@ -67,6 +67,16 @@ function (angular, $, kbn, _, moment) {
       return max + 1;
     };
 
+    p.forEachPanel = function(callback) {
+      var i, j, row;
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          callback(row.panels[j], row);
+        }
+      }
+    };
+
     p.rowSpan = function(row) {
       return _.reduce(row.panels, function(p,v) {
         return p + v.span;
