@@ -12,17 +12,29 @@ function (angular) {
       name: $scope.dashboard.title
     };
 
-    $scope.createSnapshot = function() {
+    $scope.createSnapshot = function(makePublic) {
       $scope.dashboard.snapshot = true;
       $scope.loading = true;
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
         var dash = angular.copy($scope.dashboard);
-        backendSrv.post('/api/snapshots/', {dashboard: dash}).then(function(results) {
+        dash.title = $scope.snapshot.name;
+
+        var apiUrl = '/api/snapshots';
+
+        if (makePublic) {
+          apiUrl = 'http://snapshots.raintank.io/api/snapshots';
+        }
+
+        backendSrv.post(apiUrl, {dashboard: dash}).then(function(results) {
           $scope.loading = false;
 
           var baseUrl = $location.absUrl().replace($location.url(), "");
+          if (makePublic) {
+            baseUrl = 'http://snapshots.raintank.io';
+          }
+
           $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
 
         }, function() {

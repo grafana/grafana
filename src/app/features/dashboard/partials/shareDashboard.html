@@ -82,6 +82,11 @@
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
 		</button>
 
+		<button class="btn btn-primary btn" ng-click="createSnapshot(true)" ng-if="!snapshotUrl" ng-disabled="loading">
+			Create Public snapshot (snapshots.raintank.io)
+			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+		</button>
+
 	</div>
 
 </div>
