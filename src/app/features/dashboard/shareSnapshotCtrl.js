@@ -18,42 +18,44 @@ function (angular) {
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        var dash = angular.copy($scope.dashboard);
-        dash.title = $scope.snapshot.name;
+        $scope.saveSnapshot(makePublic);
+      }, 2000);
+    };
 
-        dash.forEachPanel(function(panel) {
-          panel.targets = [];
-          panel.links = [];
-        });
+    $scope.saveSnapshot = function(makePublic) {
+      var dash = angular.copy($scope.dashboard);
+      dash.title = $scope.snapshot.name;
 
-        // cleanup snapshotData
-        $scope.dashboard.snapshot = false;
-        $scope.dashboard.forEachPanel(function(panel) {
-          delete panel.snapshotData;
-        });
+      dash.forEachPanel(function(panel) {
+        panel.targets = [];
+        panel.links = [];
+      });
 
-        var apiUrl = '/api/snapshots';
+      // cleanup snapshotData
+      $scope.dashboard.snapshot = false;
+      $scope.dashboard.forEachPanel(function(panel) {
+        delete panel.snapshotData;
+      });
 
+      var apiUrl = '/api/snapshots';
+
+      if (makePublic) {
+        apiUrl = 'http://snapshots.raintank.io/api/snapshots';
+      }
+
+      backendSrv.post(apiUrl, {dashboard: dash}).then(function(results) {
+        $scope.loading = false;
+
+        var baseUrl = $location.absUrl().replace($location.url(), "");
         if (makePublic) {
-          apiUrl = 'http://snapshots.raintank.io/api/snapshots';
+          baseUrl = 'http://snapshots.raintank.io';
         }
 
-        backendSrv.post(apiUrl, {dashboard: dash}).then(function(results) {
-          $scope.loading = false;
+        $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
 
-          var baseUrl = $location.absUrl().replace($location.url(), "");
-          if (makePublic) {
-            baseUrl = 'http://snapshots.raintank.io';
-          }
-
-          $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
-
-        }, function() {
-          $scope.loading = false;
-        });
-
-
-      }, 2000);
+      }, function() {
+        $scope.loading = false;
+      });
     };
 
   });
