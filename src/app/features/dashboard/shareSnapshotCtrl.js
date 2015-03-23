@@ -26,6 +26,12 @@ function (angular) {
           panel.links = [];
         });
 
+        // cleanup snapshotData
+        $scope.dashboard.snapshot = false;
+        $scope.dashboard.forEachPanel(function(panel) {
+          delete panel.snapshotData;
+        });
+
         var apiUrl = '/api/snapshots';
 
         if (makePublic) {
@@ -46,8 +52,7 @@ function (angular) {
           $scope.loading = false;
         });
 
-        $scope.dashboard.snapshot = false;
-        $scope.appEvent('dashboard-snapshot-cleanup');
+
       }, 2000);
     };
 
