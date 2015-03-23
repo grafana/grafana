@@ -1,5 +1,5 @@
 define([
-  'services/influxdb/influxSeries'
+  'features/influxdb/influxSeries'
 ], function(InfluxSeries) {
   'use strict';
 
@@ -79,6 +79,27 @@ define([
       });
 
     });
+
+    describe('given an alias format and many segments', function() {
+      var series = new InfluxSeries({
+        seriesList: [
+          {
+            columns: ['time', 'mean', 'sequence_number'],
+            name: 'a0.a1.a2.a3.a4.a5.a6.a7.a8.a9.a10.a11.a12',
+            points: [[1402596000, 10, 1], [1402596001, 12, 2]]
+          }
+        ],
+        alias: '$5.$11.mean'
+      });
+
+      var result = series.getTimeSeries();
+
+      it('should generate correct series name', function() {
+        expect(result[0].target).to.be('a5.a11.mean');
+      });
+
+    });
+
 
     describe('given an alias format with group by field', function() {
       var series = new InfluxSeries({

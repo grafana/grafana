@@ -7,6 +7,7 @@
 @import "panel.less";
 @import "forms.less";
 @import "singlestat.less";
+@import "tightform.less";
 
 .row-control-inner {
   padding:0px;
@@ -66,7 +67,7 @@
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  top: 200px;
+  top: 30%;
 }
 
 .grafana-search-metric-actions {
@@ -87,29 +88,6 @@
   }
 }
 
-.yaxisLabel {
-  top: 50%;
-  left: -20px;
-  transform: rotate(-90deg);
-  -o-transform: rotate(-90deg);
-  -ms-transform: rotate(-90deg);
-  -moz-transform: rotate(-90deg);
-  -webkit-transform: rotate(-90deg);
-  transform-origin: 0 0;
-  -o-transform-origin: 0 0;
-  -ms-transform-origin: 0 0;
-  -moz-transform-origin: 0 0;
-  -webkit-transform-origin: 0 0;
-}
-
-.axisLabel {
-  color: @textColor;
-  font-size: @fontSizeSmall;
-  position: absolute;
-  text-align: center;
-  font-size: 12px;
-}
-
 .dashboard-fullscreen {
   .main-view-container {
     overflow: hidden;
@@ -122,198 +100,6 @@
 
 .histogram-chart {
   position:relative;
-}
-
-.grafana-target:last-child {
-  border-bottom: 1px solid @grafanaTargetBorder;
-}
-
-.grafana-target-inner {
-  border-top: 1px solid @grafanaTargetBorder;
-  border-left: 1px solid @grafanaTargetBorder;
-  border-right: 1px solid @grafanaTargetBorder;
-  background: @grafanaTargetBackground;
-  width: 100%;
-}
-
-.grafana-target-onoff {
-  display: inline-block;
-  padding: 5px 7px;
-  display: inline-block;
-}
-
-.grafana-segment-list {
-  list-style: none;
-  margin: 0;
-  margin-right: 90px;
-  >li {
-    float: left;
-  }
-}
-
-.grafana-metric-options {
-  margin-top: 35px;
-}
-
-// fix for fixed positioned panel & scrolling
-.grafana-segment-dropdown-menu {
-  margin-bottom: 70px;
-}
-
-.grafana-target-segment {
-  padding: 8px 7px;
-  display: inline-block;
-  font-weight: normal;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
-  color: @grafanaTargetColor;
-  display: inline-block;
-
-  .has-open-function & {
-    padding-top: 25px;
-  }
-
-  .grafana-target-hidden & {
-    color: @grafanaTargetColorHide;
-  }
-
-  &:hover, &:focus {
-    text-decoration: none;
-  }
-  &a:hover {
-    background: @grafanaTargetFuncBackground;
-  }
-
-  &.template-param-name {
-    border-right: none;
-    padding-right: 3px;
-  }
-  &.annotation-segment {
-    padding: 8px 15px;
-  }
-
-}
-
-.grafana-target-segment-icon {
-  i {
-    width: 15px;
-    text-align: center;
-    display: inline-block;
-  }
-}
-
-.grafana-target-function {
-  background: @grafanaTargetFuncBackground;
-  > a {
-    color: @grafanaTargetColor;
-  }
-  > a:hover {
-    color: @linkColor;
-  }
-
-  &.show-function-controls {
-    padding-top: 5px;
-    min-width: 100px;
-    text-align: center;
-  }
-}
-
-input[type=text].grafana-function-param-input {
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.grafana-target-controls {
-  float: right;
-  list-style: none;
-  margin: 0;
-  text-align: right;
-
-  >li {
-    display: inline-block;
-    white-space: nowrap;
-  }
-
-  .icon {
-    position: relative;
-    top: 8px;
-  }
-
-  a {
-    padding: 8px 7px;
-    color: @grafanaTargetColor;
-    font-size: 16px;
-
-    .grafana-target-hidden & {
-      color: @grafanaTargetColorHide;
-    }
-
-    &:hover, &:focus {
-      text-decoration: none;
-    }
-  }
-}
-
-input[type=text].grafana-target-text-input {
-  padding: 8px 7px;
-  border: none;
-  margin: 0px;
-  background: transparent;
-  float: left;
-  color: @grafanaTargetColor;
-  border-radius: 0;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
-}
-
-input[type=text].grafana-target-segment-input {
-  border: none;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
-  margin: 0px;
-  border-radius: 0;
-  padding: 8px 4px;
-}
-
-input[type=checkbox].grafana-target-option-checkbox {
-  margin: 0;
-}
-
-select.grafana-target-segment-input {
-  border: none;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
-  margin: 0px;
-  border-radius: 0;
-  height: 36px;
-  padding: 8px 5px;
-}
-
-.grafana-target .dropdown {
-  padding: 0; margin: 0;
-}
-
-.graphite-func-controls {
-  display: none;
-  text-align: center;
-
-  .icon-arrow-left {
-    float: left;
-    position: relative;
-    top: 2px;
-  }
-  .icon-arrow-right {
-    float: right;
-    position: relative;
-    top: 2px;
-  }
-  .icon-remove {
-    margin-left: 10px;
-  }
-}
-
-.grafana-target {
-  .popover-content {
-    padding: 0;
-  }
 }
 
 .scrollable {
@@ -370,6 +156,7 @@ select.grafana-target-segment-input {
   background: inherit;
   border: none;
   color: inherit;
+  padding: 0;
 }
 
 .sp-replacer:hover, .sp-replacer.sp-active {
@@ -437,6 +224,9 @@ select.grafana-target-segment-input {
   max-height: 600px;
   overflow: hidden;
   line-height: 14px;
+  a {
+    color: @tooltipLinkColor;
+  }
 }
 
 .grafana-tooltip hr {
@@ -444,8 +234,6 @@ select.grafana-target-segment-input {
  color: #c8c8c8;
  margin: 0px;
  border-bottom:0px solid #c8c8c8;
- /*height:0px;
- background-color: rgb(58, 57, 57);*/
 }
 
 .tooltip.in {
@@ -489,7 +277,7 @@ select.grafana-target-segment-input {
   font-weight: normal;
   line-height: 38px;
   margin: 0;
-  .icon {
+  .fa {
     padding: 0 8px 0 5px;
     color: @textColor;
   }

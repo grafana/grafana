@@ -1,6 +1,6 @@
 define([
-  './helpers',
-  'services/graphite/graphiteDatasource'
+  'helpers',
+  'features/graphite/datasource'
 ], function(helpers) {
   'use strict';
 
@@ -72,6 +72,13 @@ define([
           targets: [{target: 'series1'}, {target: 'series2'}, {target: 'asPercent(#A,#B)'}]
         });
         expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
+      });
+
+      it('should replace target placeholder when nesting query references', function() {
+        var results = ctx.ds.buildGraphiteParams({
+          targets: [{target: 'series1'}, {target: 'sumSeries(#A)'}, {target: 'asPercent(#A,#B)'}]
+        });
+        expect(results[2]).to.be('target=' + encodeURIComponent("asPercent(series1,sumSeries(series1))"));
       });
 
       it('should fix wrong minute interval parameters', function() {

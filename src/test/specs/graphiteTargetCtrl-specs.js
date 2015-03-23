@@ -1,16 +1,16 @@
 define([
-  './helpers',
-  'services/graphite/gfunc',
-  'controllers/graphiteTarget'
+  'helpers',
+  'features/graphite/gfunc',
+  'features/graphite/queryCtrl'
 ], function(helpers, gfunc) {
   'use strict';
 
-  describe('GraphiteTargetCtrl', function() {
+  describe('GraphiteQueryCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
     beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('GraphiteTargetCtrl'));
+    beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
 
     beforeEach(function() {
       ctx.scope.target = {
@@ -134,6 +134,22 @@ define([
       it('should have correct func params', function() {
         expect(ctx.scope.functions[0].params.length).to.be(1);
       });
+    });
+
+    describe('when getting altSegments and metricFindQuery retuns empty array', function() {
+      beforeEach(function() {
+        ctx.scope.target.target = 'test.count';
+        ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+        ctx.scope.init();
+        ctx.scope.getAltSegments(1);
+        ctx.scope.$digest();
+        ctx.scope.$parent = { get_data: sinon.spy() };
+      });
+
+      it('should have no segments', function() {
+        expect(ctx.scope.altSegments.length).to.be(0);
+      });
+
     });
 
     describe('targetChanged', function() {

@@ -19,14 +19,14 @@ function (angular, $, _) {
         var template = '<div class="panel-menu small">';
         template += '<div class="panel-menu-inner">';
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="icon-minus"></i></a>';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="icon-plus"></i></a>';
-        template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="icon-remove"></i></a>';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
+        template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="fa fa-remove"></i></a>';
         template += '<div class="clearfix"></div>';
         template += '</div>';
 
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="icon-th-list"></i></a>';
+        template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="fa fa-bars"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
           template += '<a class="panel-menu-link" ';

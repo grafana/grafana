@@ -58,10 +58,14 @@ function (angular, app, _, moment, kbn) {
 
     $scope.init = function() {
       var time = timeSrv.timeRange(true);
-      if(time) {
-        $scope.panel.now = timeSrv.timeRange(false).to === "now" ? true : false;
-        $scope.time = getScopeTimeObj(time.from,time.to);
+      $scope.panel.now = false;
+
+      var unparsed = timeSrv.timeRange(false);
+      if (_.isString(unparsed.to) && unparsed.to.indexOf('now') === 0) {
+        $scope.panel.now = true;
       }
+
+      $scope.time = getScopeTimeObj(time.from, time.to);
     };
 
     $scope.customTime = function() {
@@ -141,6 +145,10 @@ function (angular, app, _, moment, kbn) {
         from : "now-"+timespan,
         to: "now"
       };
+
+      if ($scope.panel.nowDelay) {
+        _filter.to = 'now-' + $scope.panel.nowDelay;
+      }
 
       timeSrv.setTime(_filter);
 

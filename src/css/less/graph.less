@@ -42,6 +42,12 @@
   }
 }
 
+.graph-legend-icon .fa {
+  font-size: 135%;
+  position: relative;
+  top: 1px;
+}
+
 .graph-legend-series {
   float: left;
   white-space: nowrap;
@@ -80,9 +86,8 @@
     width: 5px;
     padding: 0;
     top: 0;
-    .icon-minus {
-      position: relative;
-      top: 2px;
+    .fa {
+      top: 4px;
     }
   }
 
@@ -136,7 +141,7 @@
     vertical-align: top;
     position: relative;
     left: 4px;
-    top: -20px;
+    top: -25px;
   }
 
   .graph-legend {
@@ -223,3 +228,53 @@
     text-align: right;
   }
 }
+
+.left-yaxis-label {
+  top: 50%;
+  left: -5px;
+  transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
+  transform-origin: left top;
+  -o-transform-origin: left top;
+  -ms-transform-origin: left top;
+  -moz-transform-origin: left top;
+  -webkit-transform-origin: left top;
+}
+
+.right-yaxis-label {
+  top: 50%;
+  right: -5px;
+
+  -webkit-transform: rotate(90deg);
+  -webkit-transform-origin: right top;
+  -moz-transform: rotate(90deg);
+  -moz-transform-origin: right top;
+  -ms-transform: rotate(90deg);
+  -ms-transform-origin: right top;
+  -o-transform: rotate(90deg);
+  -o-transform-origin: right top;
+  transform: rotate(90deg);
+  transform-origin: right top;
+}
+
+.axisLabel {
+  color: @textColor;
+  font-size: @fontSizeSmall;
+  position: absolute;
+  text-align: center;
+  font-size: 12px;
+}
+
+.graph-time-info {
+  font-weight: bold;
+  float: right;
+  margin-right: 15px;
+  color: @blue;
+  font-size: 85%;
+  position: relative;
+  top: -20px;
+}
+

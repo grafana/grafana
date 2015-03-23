@@ -1,6 +1,6 @@
 <div ng-controller="TemplateEditorCtrl" ng-init="init()"> <div class="dashboard-editor-header">
 		<div class="dashboard-editor-title">
-			<i class="icon icon-code"></i>
+			<i class="fa fa-code"></i>
 			Templating
 		</div>
 
@@ -31,16 +31,16 @@
 								{{variable.query}}
 							</td>
 							<td style="width: 1%">
-								<a ng-click="edit(variable)" class="btn btn-success btn-mini">
-									<i class="icon-edit"></i>
+								<a ng-click="edit(variable)" class="btn btn-success btn-small">
+									<i class="fa fa-edit"></i>
 									Edit
 								</a>
 							</td>
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 							<td style="width: 1%">
-								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
-									<i class="icon-remove"></i>
+								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-small">
+									<i class="fa fa-remove"></i>
 								</a>
 							</td>
 						</tr>
@@ -101,7 +101,7 @@
 							<div class="editor-option form-inline">
 								<label class="small">Variable values query</label>
 								<input type="text" class="input-xxlarge" ng-model='current.query' placeholder="apps.servers.*"></input>
-								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="icon-play"></i></button>
+								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'Execute query'" data-placement="right"><i class="fa fa-play"></i></button>
 							</div>
 						</div>
 
@@ -109,7 +109,7 @@
 							<div class="editor-option form-inline">
 								<label class="small">regex (optional, if you want to extract part of a series name or metric node segment)</label>
 								<input type="text" class="input-xxlarge" ng-model='current.regex' placeholder="/.*-(.*)-.*/"></input>
-								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'execute query'" data-placement="right"><i class="icon-play"></i></button>
+								<button class="btn btn-small btn-success" ng-click="runQuery()" bs-tooltip="'execute query'" data-placement="right"><i class="fa fa-play"></i></button>
 							</div>
 						</div>
 
@@ -151,13 +151,3 @@
 	</div>
 </div>
 
-<!-- <div class="span4"> -->
-	<!-- 	<tip class="info&#45;box"> -->
-	<!-- 	<i class="icon&#45;question&#45;sign"></i> -->
-	<!-- 	The templating feature in Grafana lets easily create and manage templated queries. Templated queries use [[replacement]] syntax -->
-	<!-- 	to replace a part of your metric key or query. By using this feature you can make your dashboards more generic. You can for example create -->
-	<!-- 	a query replacement for your cluster name or server name. Then use that replacement in your metric queries and change -->
-	<!-- 	it globably for all graphs on the dashboard. -->
-	<!-- 	<br/><br/> -->
-	<!-- 	</tip> -->
-	<!-- </div> -->

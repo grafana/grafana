@@ -1,6 +1,6 @@
 <div class="dashboard-editor-header">
 	<div class="dashboard-editor-title">
-		<i class="icon icon-cogs"></i>
+		<i class="fa fa-cogs"></i>
 		Dashboard settings
 	</div>
 
@@ -51,11 +51,11 @@
 							<td style="width: 97%">
 								{{row.title}}
 							</td>
-							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 							<td>
-								<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-mini">
-									<i class="icon-remove"></i>
+								<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-small">
+									<i class="fa fa-remove"></i>
 								</a>
 							</td>
 						</tr>

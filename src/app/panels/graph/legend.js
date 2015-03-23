@@ -78,7 +78,7 @@ function (angular, app, _, kbn, $) {
           var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
 
           if (panel.legend.sort === statName) {
-            var cssClass = panel.legend.sortDesc ? 'icon-caret-down' : 'icon-caret-up' ;
+            var cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa-caret-up' ;
             html += ' <span class="' + cssClass + '"></span>';
           }
 
@@ -125,12 +125,18 @@ function (angular, app, _, kbn, $) {
 
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
+
+            // ignore empty series
+            if (panel.legend.hideEmpty && series.allIsNull) {
+              continue;
+            }
+
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }
             if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
-            html += '<i class="icon-minus pointer" style="color:' + series.color + '"></i>';
+            html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
             html += '<div class="graph-legend-alias">';

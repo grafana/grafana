@@ -4,6 +4,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'jshint:source',
     'jshint:tests',
+    'karma:test',
     'clean:on_start',
     'less:src',
     'concat:cssDark',
@@ -13,7 +14,7 @@ module.exports = function(grunt) {
     'ngtemplates',
     'cssmin:build',
     'build:grafanaVersion',
-    'ngmin:build',
+    'ngAnnotate:build',
     'requirejs:build',
     'concat:js',
     'filerev',

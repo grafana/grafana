@@ -19,6 +19,9 @@ function (angular, _, config, $) {
       $scope.db = datasourceSrv.getGrafanaDB();
       $scope.currentSearchId = 0;
 
+      // events
+      $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
+
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
         $scope.query.query = 'title:';
@@ -123,6 +126,10 @@ function (angular, _, config, $) {
     $scope.deleteDashboard = function(dash, evt) {
       evt.stopPropagation();
       $scope.appEvent('delete-dashboard', { id: dash.id, title: dash.title });
+    };
+
+    $scope.dashboardDeleted = function(evt, id) {
+      var dash = _.findWhere($scope.results.dashboards, {id: id});
       $scope.results.dashboards = _.without($scope.results.dashboards, dash);
     };
 

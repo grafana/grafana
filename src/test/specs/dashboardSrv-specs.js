@@ -1,5 +1,5 @@
 define([
-  'services/dashboard/dashboardSrv'
+  'features/dashboard/dashboardSrv'
 ], function() {
   'use strict';
 
@@ -70,16 +70,6 @@ define([
       expect(dashboard.rows[0].panels[1].id).to.be(11);
     });
 
-    it('duplicate should add row if there is no space left', function() {
-      var panel = { span: 12, attr: '123' };
-      dashboard.rows = [{ panels: [panel] }];
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
-
-      expect(dashboard.rows[0].panels[0].span).to.be(12);
-      expect(dashboard.rows[0].panels.length).to.be(1);
-      expect(dashboard.rows[1].panels[0].attr).to.be('123');
-    });
-
   });
 
   describe('when creating dashboard with editable false', function() {
@@ -105,7 +95,7 @@ define([
     beforeEach(module('grafana.services'));
     beforeEach(inject(function(dashboardSrv) {
       model = dashboardSrv.create({
-        services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [1] }},
+        services: { filter: { time: { from: 'now-1d', to: 'now'}, list: [{}] }},
         pulldowns: [
           {
             type: 'filtering',
@@ -145,7 +135,7 @@ define([
 
     it('should move time and filtering list', function() {
       expect(model.time.from).to.be('now-1d');
-      expect(model.templating.list[0]).to.be(1);
+      expect(model.templating.list[0].allFormat).to.be('glob');
     });
 
     it('graphite panel should change name too graph', function() {

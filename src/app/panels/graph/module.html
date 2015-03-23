@@ -3,6 +3,10 @@
 	<div class="graph-wrapper" ng-class="{'graph-legend-rightside': panel.legend.rightSide}">
 		<div class="graph-canvas-wrapper">
 
+			<span class="graph-time-info" ng-if="panelMeta.timeInfo">
+				<i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}
+		  </span>
+
 			<div ng-if="datapointsWarning" class="datapoints-warning">
 				<span class="small" ng-show="!datapointsCount">
 					No datapoints <tip>No datapoints returned from metric query</tip>
@@ -23,7 +27,7 @@
 	<div style="margin-top: 30px" ng-if="editMode">
 		<div class="dashboard-editor-header">
 			<div class="dashboard-editor-title">
-				<i class="icon icon-bar-chart"></i>
+				<i class="fa fa-bar-chart"></i>
 				Graph
 			</div>
 

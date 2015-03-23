@@ -1,6 +1,6 @@
 <div class="dashboard-editor-header">
 	<div class="dashboard-editor-title">
-		<i class="icon icon-th-list"></i>
+		<i class="fa fa-th-list"></i>
 		Row settings
 	</div>
 
@@ -38,11 +38,11 @@
           <td style="width: 95%">{{panel.title}}</td>
           <td>{{panel.type}}</td>
           <td><select ng-hide="panel.sizeable == false" class="input-mini" style="margin-bottom: 0;" ng-model="panel.span" ng-options="size for size in [1,2,3,4,5,6,7,8,9,10,11,12]"></select></td>
-					<td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer icon-arrow-up"></i></td>
-					<td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer icon-arrow-down"></i></td>
+					<td><i ng-click="_.move(row.panels,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td><i ng-click="_.move(row.panels,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 					<td>
-						<a ng-click="row.panels = _.without(row.panels,panel)" class="btn btn-danger btn-mini">
-							<i class="icon-remove"></i>
+						<a ng-click="row.panels = _.without(row.panels,panel)" class="btn btn-danger btn-small">
+							<i class="fa fa-remove"></i>
 						</a>
 					</td>
 				</tr>
