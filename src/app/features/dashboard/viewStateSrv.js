@@ -137,6 +137,8 @@ function (angular, _, $) {
 
       panelScope.fullscreen = true;
 
+      panelScope.get_data();
+
       $timeout(function() {
         panelScope.$emit('render');
       });
