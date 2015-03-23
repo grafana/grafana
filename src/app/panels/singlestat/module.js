@@ -87,6 +87,11 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
         });
     };
 
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.dataHandler(snapshotData);
+    };
+
     $scope.dataHandler = function(results) {
       $scope.series = _.map(results.data, $scope.seriesHandler);
       $scope.render();

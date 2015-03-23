@@ -93,6 +93,13 @@ function (angular, _, config) {
       $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
+        if ($scope.panel.snapshotData) {
+          if ($scope.loadSnapshot) {
+            $scope.loadSnapshot($scope.panel.snapshotData);
+          }
+          return;
+        }
+
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
 

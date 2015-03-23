@@ -130,12 +130,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
-      if ($scope.panel.snapshotData) {
-        $scope.annotationsPromise = $q.when([]);
-        $scope.dataHandler($scope.panel.snapshotData);
-        return;
-      }
-
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
       return panelHelper.issueMetricQuery($scope, datasource)
@@ -146,10 +140,13 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         });
     };
 
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.annotationsPromise = $q.when([]);
+      $scope.dataHandler(snapshotData);
+    };
+
     $scope.dataHandler = function(results) {
-      if ($scope.dashboard.snapshot) {
-        $scope.panel.snapshotData = results;
-      }
       // png renderer returns just a url
       if (_.isString(results)) {
         $scope.render(results);
