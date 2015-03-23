@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
@@ -87,6 +88,10 @@ func runWeb(c *cli.Context) {
 	var err error
 	m := newMacaron()
 	api.Register(m)
+
+	if setting.ReportingEnabled {
+		go metrics.StartUsageReportLoop()
+	}
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
