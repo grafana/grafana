@@ -81,13 +81,13 @@ function (angular, app, _, config) {
       $scope.$broadcast('render');
     };
 
-    $scope.remove_panel_from_row = function(row, panel) {
+    $scope.removePanel = function(panel) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to remove this panel?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          row.panels = _.without(row.panels, panel);
+          $scope.row.panels = _.without($scope.row.panels, panel);
         }
       });
     };
