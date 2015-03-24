@@ -68,7 +68,8 @@ function (angular, _, kbn, $) {
         targets: scope.panel.targets,
         format: scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: scope.resolution,
-        cacheTimeout: scope.panel.cacheTimeout
+        cacheTimeout: scope.panel.cacheTimeout,
+        isTableView: scope.isTableView
       };
 
       return datasource.query(metricsQuery).then(function(results) {
