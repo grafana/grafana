@@ -168,4 +168,12 @@ function (angular, app, _, config) {
     };
   });
 
+  module.directive('panelGhostPanel', function() {
+    return function(scope, element) {
+      var dropZoneSpan = 12 - scope.dashboard.rowSpan(scope.row);
+      element.find('.panel-container').css('height', scope.row.height);
+      element[0].style.width = ((dropZoneSpan / 1.2) * 10) + '%';
+    };
+  });
+
 });

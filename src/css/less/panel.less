@@ -169,6 +169,18 @@
   }
 }
 
+.ghost-panel {
+  &:hover {
+    .panel-container {
+      visibility: visible;
+    }
+  }
+  .panel-container {
+    visibility: hidden;
+    border: 1px solid @grayDark;
+  }
+}
+
 .panel-time-info {
   font-weight: bold;
   float: right;
