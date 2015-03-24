@@ -35,6 +35,6 @@ func GetDashboardSnapshot(c *middleware.Context) {
 		Meta:  dtos.DashboardMeta{IsSnapshot: true},
 	}
 
-	c.Resp.Header().Set("Cache-Control", "public max-age: 31536000")
+	c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
 	c.JSON(200, dto)
 }
