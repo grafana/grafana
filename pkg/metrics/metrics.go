@@ -21,5 +21,8 @@ var (
 	M_Api_Login_OAuth       = NewComboCounterRef("api.login.oauth")
 	M_Api_Org_Create        = NewComboCounterRef("api.org.create")
 
+	M_Api_Dashboard_Snapshot_Create = NewComboCounterRef("api.dashboard_snapshot.create")
+	M_Api_Dashboard_Snapshot_Get    = NewComboCounterRef("api.dashboard_snapshot.get")
+
 	M_Models_Dashboard_Insert = NewComboCounterRef("models.dashboard.insert")
 )
