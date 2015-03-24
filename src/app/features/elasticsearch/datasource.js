@@ -293,7 +293,8 @@ function (angular, _, config, kbn, moment) {
 
           displayHits.tagsOnly = tagsOnly;
           return displayHits;
-        });
+        },
+        function(reason) {return {dashboards: [], tags: []}});
     };
 
     return ElasticDatasource;

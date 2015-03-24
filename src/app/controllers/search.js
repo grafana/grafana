@@ -83,7 +83,7 @@ function (angular, _, config, $) {
       // bookeeping for determining stale search requests
       var searchId = $scope.currentSearchId + 1;
       $scope.currentSearchId = searchId > $scope.currentSearchId ? searchId : $scope.currentSearchId;
-
+      $scope.searchLoading=true;
       return $scope.db.searchDashboards(queryString)
         .then(function(results) {
           // since searches are async, it's possible that these results are not for the latest search. throw
@@ -91,6 +91,7 @@ function (angular, _, config, $) {
           if (searchId < $scope.currentSearchId) {
             return;
           }
+          $scope.searchLoading=false;
 
           $scope.tagsOnly = results.tagsOnly;
           $scope.results.dashboards = results.dashboards;
