@@ -4,6 +4,7 @@ define([
   'lodash',
   'require',
   'components/panelmeta',
+  './table'
 ],
 function (angular, app, _, require, PanelMeta) {
   'use strict';
@@ -16,7 +17,7 @@ function (angular, app, _, require, PanelMeta) {
   module.directive('grafanaPanelTable', function() {
     return {
       controller: 'TablePanelCtrl',
-      templateUrl: 'app/panels/text/module.html',
+      templateUrl: 'app/panels/table/module.html'
     };
   });
 
@@ -62,24 +63,19 @@ function (angular, app, _, require, PanelMeta) {
       return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler, function(err) {
           $scope.seriesList = [];
-          $scope.render([]);
+          $scope.render(null);
           throw err;
         });
     };
 
-
-    $scope.render = function() {
-      $scope.renderText($scope.panel.content);
+    $scope.dataHandler = function(results) {
+      console.log(results);
+      $scope.tableData = results.data[0]; // we are only allowing one query on the tableview series
+      $scope.render();
     };
 
-    $scope.renderText = function(content) {
-      content = content
-        .replace(/&/g, '&amp;')
-        .replace(/>/g, '&gt;')
-        .replace(/</g, '&lt;')
-        .replace(/\n/g, '<br/>');
-
-      $scope.updateContent(content);
+    $scope.render = function() {
+      $scope.$broadcast('renderTable', $scope.tableData);
     };
 
 
