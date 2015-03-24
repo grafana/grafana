@@ -50,36 +50,33 @@
 		<h4 class="share-snapshot-header">
 			<i ng-if="!loading" class="fa fa-camera"></i>
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
-			Create dashboard with embedded data and share with anyone
+			Snapshot dashboard & visible data and share with anyone
 		</h4>
 
 		<div class="editor-row" style="margin: 11px 20px 33px 20px">
-			<div class="section">
-
-				<div ng-if="!snapshotUrl">
-					<div class="tight-form last">
-						<ul class="tight-form-list">
-							<li class="tight-form-item">
-								<strong>Snapshot name</strong>
-							</li>
-							<li>
-								<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+			<div class="section"ng-if="!snapshotUrl">
+				<div class="tight-form last">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							<strong>Snapshot name</strong>
+						</li>
+						<li>
+							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
 				</div>
+			</div>
 
-				<div class="gf-form" ng-if="snapshotUrl">
-					<div class="gf-form-row">
-						<a href="{{snapshotUrl}}" class="large" target="_blank">
-							<i class="fa fa-external-link-square"></i>
-							{{snapshotUrl}}
-						</a>
-						<br>
-						<br>
-						<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
-					</div>
+			<div class="gf-form" ng-if="snapshotUrl">
+				<div class="gf-form-row">
+					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
+						<i class="fa fa-external-link-square"></i>
+						{{snapshotUrl}}
+					</a>
+					<br>
+					<br>
+					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
 				</div>
 			</div>
 		</div>

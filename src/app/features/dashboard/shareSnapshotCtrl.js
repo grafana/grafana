@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareSnapshotCtrl', function($scope, $rootScope, $location, backendSrv, $timeout) {
+  module.controller('ShareSnapshotCtrl', function($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
 
     $scope.snapshot = {
       name: $scope.dashboard.title
@@ -24,8 +24,11 @@ function (angular) {
 
     $scope.saveSnapshot = function(makePublic) {
       var dash = angular.copy($scope.dashboard);
+      // change title
       dash.title = $scope.snapshot.name;
-
+      // make relative times absolute
+      dash.time = timeSrv.timeRange();
+      // remove panel queries & links
       dash.forEachPanel(function(panel) {
         panel.targets = [];
         panel.links = [];

@@ -9,7 +9,7 @@ import (
 )
 
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
-	cmd.Key = util.GetRandomString(20)
+	cmd.Key = util.GetRandomString(32)
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create snaphost", err)

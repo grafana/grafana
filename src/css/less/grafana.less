@@ -294,3 +294,30 @@
     }
   }
 }
+
+.share-snapshot {
+  text-align: center;
+
+  .share-snapshot-header {
+    .fa {
+      position: absolute;
+      font-size: 600%;
+      left: 42%;
+      color: @grafanaTargetFuncBackground;
+      z-index: -1;
+    }
+
+    position: relative;
+    z-index: 1000;
+    line-height: 106px;
+    margin: 45px 0 22px 0;
+  }
+
+  .share-snapshot-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+  }
+}
