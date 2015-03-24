@@ -169,15 +169,23 @@
   }
 }
 
-.ghost-panel {
-  &:hover {
-    .panel-container {
-      visibility: visible;
-    }
-  }
+.panel-ghost{
+  width: 100%;
   .panel-container {
-    visibility: hidden;
-    border: 1px solid @grayDark;
+    border: none;
+    background: transparent;
+  }
+  .panel-ghost-list {
+    margin: 10px 0 10px 20px;
+  }
+
+  button {
+    text-align: left;
+    min-width: 135px;
+    .fa {
+      position: relative;
+      left: -5px;
+    }
   }
 }
 

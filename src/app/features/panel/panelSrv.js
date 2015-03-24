@@ -40,8 +40,7 @@ function (angular, _, config) {
       };
 
       $scope.updateColumnSpan = function(span) {
-        $scope.panel.span = Math.min(Math.max($scope.panel.span + span, 1), 12);
-        $scope.row.updatePanelSpan()
+        $scope.updatePanelSpan($scope.panel, span);
 
         $timeout(function() {
           $scope.$broadcast('render');

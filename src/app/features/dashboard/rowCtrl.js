@@ -38,11 +38,6 @@ function (angular, app, _, config) {
       }
     };
 
-    // This can be overridden by individual panels
-    $scope.close_edit = function() {
-      $scope.$broadcast('render');
-    };
-
     $scope.add_panel = function(panel) {
       $scope.dashboard.add_panel(panel, $scope.row);
     };
@@ -90,6 +85,10 @@ function (angular, app, _, config) {
           $scope.row.panels = _.without($scope.row.panels, panel);
         }
       });
+    };
+
+    $scope.updatePanelSpan = function(panel, span) {
+      panel.span = Math.min(Math.max(panel.span + span, 1), 12);
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {
@@ -144,9 +143,11 @@ function (angular, app, _, config) {
 
   module.directive('panelWidth', function() {
     return function(scope, element) {
-      scope.$watch('panel.span', function() {
+      function updateWidth() {
         element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
-      });
+      }
+
+      scope.$watch('panel.span', updateWidth);
     };
   });
 
@@ -168,11 +169,21 @@ function (angular, app, _, config) {
     };
   });
 
-  module.directive('panelGhostPanel', function() {
+  module.directive('panelGhost', function() {
     return function(scope, element) {
-      var dropZoneSpan = 12 - scope.dashboard.rowSpan(scope.row);
-      element.find('.panel-container').css('height', scope.row.height);
-      element[0].style.width = ((dropZoneSpan / 1.2) * 10) + '%';
+      function updateWidth() {
+        var spanLeft = 12 - scope.dashboard.rowSpan(scope.row);
+        if (spanLeft > 1) {
+          element.show();
+          element.find('.panel-container').css('height', scope.row.height);
+          element[0].style.width = ((spanLeft / 1.2) * 10) + '%';
+        } else {
+          element.hide();
+        }
+      }
+
+      updateWidth();
+      scope.$on('dashboard-panel-span-updated', updateWidth);
     };
   });
 

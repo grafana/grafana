@@ -20,8 +20,8 @@ function (angular, $, _) {
         var template = '<div class="panel-menu small">';
         template += '<div class="panel-menu-inner">';
         template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(panel,-1)"><i class="fa fa-minus"></i></a>';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(panel,1)"><i class="fa fa-plus"></i></a>';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
+        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
         template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
         template += '<div class="clearfix"></div>';
         template += '</div>';
