@@ -29,6 +29,22 @@ define([
       });
     });
 
+    describe('replace can pass scoped vars', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+      });
+
+      it('should replace $test with scoped value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.mupp.filters');
+      });
+
+      it('should replace $test with scoped text', function() {
+        var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.asd.filters');
+      });
+    });
+
     describe('can check if variable exists', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
