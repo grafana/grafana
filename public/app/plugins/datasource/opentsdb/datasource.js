@@ -187,6 +187,7 @@ function (angular, _, dateMath) {
       });
     };
 
+<<<<<<< 0b1d467284f6956db8cbdcad1164a64603efee74
     var aggregatorsPromise = null;
     OpenTSDBDatasource.prototype.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
@@ -202,6 +203,24 @@ function (angular, _, dateMath) {
 
     function transformMetricData(md, groupByTags, target, options) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
+=======
+    OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/aggregators'
+      };
+      return $http(options).then(function(result) {
+        if (result.data instanceof Array) {
+          return result.data.sort();
+        } else {
+          return result.data;
+        }
+      });
+    };
+
+    function transformMetricData(md, groupByTags, options) {
+      var metricLabel = createMetricLabel(md, options, groupByTags);
+>>>>>>> Instead of hard-coding the OpenTsdb aggregators list, pull the supported
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
