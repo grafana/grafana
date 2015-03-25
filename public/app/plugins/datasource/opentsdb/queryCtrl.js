@@ -14,6 +14,12 @@ function (angular, _, kbn) {
       $scope.target.errors = validateTarget($scope.target);
       $scope.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
 
+      $scope.datasource.performAggregatorsQuery().then(function(result) {
+        if (result) {
+          $scope.aggregators = result;
+        }
+      });
+
       if (!$scope.target.aggregator) {
         $scope.target.aggregator = 'sum';
       }
