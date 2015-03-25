@@ -298,19 +298,36 @@
 .share-snapshot {
   text-align: center;
 
-  .share-snapshot-header {
+  .share-snapshot-info-text {
+    margin: 10px 143px;
+  }
+  .share-snapshot-warning {
+    background-color: @grafanaTargetFuncBackground;
+    padding: 5px;
     .fa {
+      color: @orange;
+    }
+  }
+
+  .share-snapshot-header {
+    .fa-spinner {
       position: absolute;
       font-size: 600%;
-      left: 42%;
+      left: 44%;
       color: @grafanaTargetFuncBackground;
       z-index: -1;
     }
 
     position: relative;
     z-index: 1000;
-    line-height: 106px;
-    margin: 45px 0 22px 0;
+    margin: 20px 0 22px 0;
+  }
+
+  .tight-form {
+    text-align: left;
+    label {
+      display: inline;
+    }
   }
 
   .share-snapshot-link {

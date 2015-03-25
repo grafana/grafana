@@ -47,17 +47,20 @@
 
 	<div class="gf-box-body share-snapshot ng-cloak" ng-cloak ng-if="editor.index === 1" ng-controller="ShareSnapshotCtrl">
 
-		<h4 class="share-snapshot-header">
-			<i ng-if="!loading" class="fa fa-camera"></i>
+		<div class="share-snapshot-header" ng-if="step === 1">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
-			Snapshot dashboard & visible data and share with anyone
-		</h4>
+			<p class="share-snapshot-info-text">
+				A snapshot is an instant way to <strong>share</strong> a dashboard publicly. The visible data and series names
+				are embedded into the dashboard while metric queries and panel links are stripped. The snapshot can be viewed by
+				<strong>anyone</strong> that have the link and can reach the URL. <a href="http://docs.grafana.org/reference/snapshot" target="_blank">Read more</a>.
+			</p>
+		</div>
 
 		<div class="editor-row" style="margin: 11px 20px 33px 20px">
-			<div class="section"ng-if="!snapshotUrl">
-				<div class="tight-form last">
+			<div class="section" ng-if="step === 1">
+				<div class="tight-form">
 					<ul class="tight-form-list">
-						<li class="tight-form-item">
+						<li class="tight-form-item" style="width: 110px;">
 							<strong>Snapshot name</strong>
 						</li>
 						<li>
@@ -66,42 +69,43 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 110px">
+							<strong>Expire</strong>
+						</li>
+						<li>
+							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expire" ng-options="f.value as f.text for f in expireOptions"></select>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
 			</div>
 
-			<div class="gf-form" ng-if="snapshotUrl">
+			<div class="gf-form" ng-if="step === 2" style="margin-top: 55px">
 				<div class="gf-form-row">
 					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
 						<i class="fa fa-external-link-square"></i>
 						{{snapshotUrl}}
 					</a>
 					<br>
-					<br>
 					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
 				</div>
 			</div>
 		</div>
 
-		<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-if="!snapshotUrl" ng-disabled="loading">
-			<i class="fa fa-save"></i>
-			Local Snapshot
-		</button>
+		<div ng-if="step === 1">
+			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
+				<i class="fa fa-save"></i>
+				Local Snapshot
+			</button>
 
-		<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-if="!snapshotUrl" ng-disabled="loading">
-			<i class="fa fa-cloud-upload"></i>
-			Publish Snapshot <i class="fa fa-long-arrow-right"></i> snapshots.raintank.io
-		</button>
-
-		<p style="margin: 50px 30px">
-			<em class="large">
-				<i class="fa fa-info-circle"></i>
-				This will create a snapshot of the dashboard and the data currently visible. It will be saved and you will
-				get a link, anyone with this link will be able view view the dashboard and the data currently visible.
-
-				Panel metric queries and panel drilldown links are removed.
-			</em>
-		</p>
+			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
+				<i class="fa fa-cloud-upload"></i>
+				Publish to snapshot.raintank.io
+			</button>
+		</div>
 
 	</div>
-
 </div>
 
