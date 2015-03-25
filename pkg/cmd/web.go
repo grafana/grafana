@@ -66,12 +66,12 @@ func newMacaron() *macaron.Macaron {
 
 func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
-		c.Resp.Header().Set("Cache-Control", "public, max-age: 3600")
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if setting.Env == setting.DEV {
 		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age: 0, must-revalidate")
+			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}
 	}
 
