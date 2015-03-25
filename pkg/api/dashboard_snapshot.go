@@ -19,6 +19,7 @@ import (
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	if cmd.External {
 		createExternalSnapshot(c, cmd)
+		return
 	}
 
 	cmd.Key = util.GetRandomString(32)
@@ -35,6 +36,7 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 func createExternalSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
 
+	cmd.External = false
 	json, _ := json.Marshal(cmd)
 	jsonData := bytes.NewBuffer(json)
 
