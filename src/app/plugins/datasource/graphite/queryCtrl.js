@@ -113,7 +113,7 @@ function (angular, _, config, gfunc, Parser) {
 
     function checkOtherSegments(fromIndex) {
       if (fromIndex === 0) {
-        $scope.segments.push(new MetricSegment('select metric'));
+        $scope.segments.push(MetricSegment.newSelectMetric());
         return;
       }
 
@@ -123,13 +123,13 @@ function (angular, _, config, gfunc, Parser) {
           if (segments.length === 0) {
             if (path !== '') {
               $scope.segments = $scope.segments.splice(0, fromIndex);
-              $scope.segments.push(new MetricSegment('select metric'));
+              $scope.segments.push(MetricSegment.newSelectMetric());
             }
             return;
           }
           if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
-              $scope.segments.push(new MetricSegment('select metric'));
+              $scope.segments.push(MetricSegment.newSelectMetric());
             }
             else {
               return checkOtherSegments(fromIndex + 1);
@@ -238,7 +238,7 @@ function (angular, _, config, gfunc, Parser) {
       $scope.moveAliasFuncLast();
       $scope.smartlyHandleNewAliasByNode(newFunc);
 
-      if ($scope.segments.length === 1 && $scope.segments[0].value === 'select metric') {
+      if ($scope.segments.length === 1 && $scope.segments[0].fake) {
         $scope.segments = [];
       }
 
@@ -298,17 +298,16 @@ function (angular, _, config, gfunc, Parser) {
         return;
       }
 
-      if (_.isString(options)) {
-        this.value = options;
-        this.html = $sce.trustAsHtml(this.value);
-        return;
-      }
-
+      this.fake = options.fake;
       this.value = options.value;
       this.type = options.type;
       this.expandable = options.expandable;
       this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
     }
+
+    MetricSegment.newSelectMetric = function() {
+      return new MetricSegment({value: 'select metric', fake: true});
+    };
 
   });
 
