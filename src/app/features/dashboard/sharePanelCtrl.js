@@ -71,12 +71,16 @@ function (angular, _, require, config) {
         }
       });
 
-      $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
+      var queryParams = "?" + paramsArray.join('&');
+      $scope.shareUrl = baseUrl + queryParams;
 
-      $scope.soloUrl = $scope.shareUrl.replace('/dashboard/db/', '/dashboard/solo/');
-      $scope.iframeHtml = '<iframe src="' + $scope.soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+      var soloUrl = $scope.shareUrl;
+      soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
+      soloUrl = soloUrl.replace('/dashboard/snapshot/', '/dashboard/solo/snapshot/');
 
-      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
+      $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+
+      $scope.imageUrl = soloUrl.replace('/dashboard/', '/render/dashboard/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

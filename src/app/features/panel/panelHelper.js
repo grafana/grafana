@@ -8,6 +8,7 @@ function (angular, _, kbn, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
   module.service('panelHelper', function(timeSrv) {
 
     this.updateTimeRange = function(scope) {

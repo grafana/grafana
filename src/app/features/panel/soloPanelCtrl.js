@@ -26,12 +26,19 @@ function (angular, $) {
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
-      backendSrv.getDashboard($routeParams.slug)
-        .then(function(dashboard) {
-          $scope.initPanelScope(dashboard);
-        }).then(null, function(err) {
-          $scope.appEvent('alert-error', ['Load panel error', err.message]);
-        });
+      var request;
+
+      if ($routeParams.slug) {
+        request = backendSrv.getDashboard($routeParams.slug);
+      } else {
+        request = backendSrv.get('/api/snapshots/' + $routeParams.key);
+      }
+
+      request.then(function(dashboard) {
+        $scope.initPanelScope(dashboard);
+      }).then(null, function(err) {
+        $scope.appEvent('alert-error', ['Load panel error', err.message]);
+      });
     };
 
     $scope.initPanelScope = function(dashboard) {

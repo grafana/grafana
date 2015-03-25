@@ -17,6 +17,7 @@ function (angular, $, config) {
       templateValuesSrv,
       dashboardSrv,
       dashboardViewStateSrv,
+      contextSrv,
       $timeout) {
 
     $scope.editor = { index: 0 };
@@ -46,7 +47,7 @@ function (angular, $, config) {
       templateValuesSrv.init(dashboard).then(function() {
         $scope.dashboard = dashboard;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-        $scope.dashboardMeta = data.meta;
+        $scope.initDashboardMeta(data.meta, $scope.dashboard);
 
         dashboardKeybindings.shortcuts($scope);
 
@@ -55,6 +56,32 @@ function (angular, $, config) {
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       });
+    };
+
+    $scope.initDashboardMeta = function(meta, dashboard) {
+      meta.canShare = true;
+      meta.canSave = true;
+      meta.canEdit = true;
+      meta.canStar = true;
+
+      if (contextSrv.hasRole('Viewer')) {
+        meta.canSave = false;
+      }
+
+      if (meta.isHome) {
+        meta.canShare = false;
+        meta.canStar = false;
+        meta.canSave = false;
+        meta.canEdit = false;
+      }
+
+      if (dashboard.snapshot) {
+        meta.canEdit = false;
+        meta.canSave = false;
+        meta.canStar = false;
+      }
+
+      $scope.dashboardMeta = meta;
     };
 
     $scope.updateSubmenuVisibility = function() {
@@ -132,4 +159,5 @@ function (angular, $, config) {
     };
 
   });
+
 });

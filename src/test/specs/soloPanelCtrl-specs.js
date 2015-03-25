@@ -46,7 +46,7 @@ define([
           }
         };
 
-        routeParams.id = 1;
+        routeParams.slug = "my dash";
         search.panelId = 23;
         backendSrv.getDashboard = sinon.stub().returns(ctx.$q.when(dashboard));
 

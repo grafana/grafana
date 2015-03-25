@@ -12,14 +12,17 @@ function (angular) {
       name: $scope.dashboard.title
     };
 
-    $scope.createSnapshot = function(makePublic) {
-      $scope.dashboard.snapshot = true;
+    $scope.createSnapshot = function(external) {
+      $scope.dashboard.snapshot = {
+        timestamp: new Date()
+      };
+
       $scope.loading = true;
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        $scope.saveSnapshot(makePublic);
-      }, 2000);
+        $scope.saveSnapshot(external);
+      }, 3000);
     };
 
     $scope.saveSnapshot = function(external) {
@@ -35,7 +38,7 @@ function (angular) {
       });
 
       // cleanup snapshotData
-      $scope.dashboard.snapshot = false;
+      delete $scope.dashboard.snapshot;
       $scope.dashboard.forEachPanel(function(panel) {
         delete panel.snapshotData;
       });
@@ -47,7 +50,7 @@ function (angular) {
           $scope.snapshotUrl = results.url;
         } else {
           var baseUrl = $location.absUrl().replace($location.url(), "");
-          $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
+          $scope.snapshotUrl = baseUrl + '/dashboard/snapshot/' + results.key;
         }
       }, function() {
         $scope.loading = false;

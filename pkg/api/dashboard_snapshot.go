@@ -29,7 +29,7 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 
 	metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
 
-	c.JSON(200, util.DynMap{"key": cmd.Key, "url": setting.ToAbsUrl("/dashboard/snapshots")})
+	c.JSON(200, util.DynMap{"key": cmd.Key, "url": setting.ToAbsUrl("/dashboard/snapshot")})
 }
 
 func createExternalSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {

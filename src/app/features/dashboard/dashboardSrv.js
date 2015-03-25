@@ -37,6 +37,7 @@ function (angular, $, kbn, _, moment) {
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
+      this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
 
