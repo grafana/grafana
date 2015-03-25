@@ -1,8 +1,8 @@
 [Grafana](http://grafana.org) [![Build Status](https://api.travis-ci.org/grafana/grafana.svg)](https://travis-ci.org/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png)](https://coveralls.io/r/grafana/grafana) [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/grafana/grafana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ================
 [Website](http://grafana.org) |
-[Twitter](http://twitter.com/grafana) |
-[IRC](http://webchat.freenode.net/?channels=grafana) |
+[Twitter](https://twitter.com/grafana) |
+[IRC](https://webchat.freenode.net/?channels=grafana) |
 [Email](mailto:contact@grafana.org)
 
 Grafana is An open source, feature rich metrics dashboard and graph editor for
