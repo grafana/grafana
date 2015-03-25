@@ -4,7 +4,8 @@ define([
   'lodash',
   'require',
   'components/panelmeta',
-  './table'
+  './table',
+  './pagingControl'
 ],
 function (angular, app, _, require, PanelMeta) {
   'use strict';

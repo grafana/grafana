@@ -138,10 +138,18 @@ function (_) {
 
   p.getTableTimeSeries = function() {
     var series = this.seriesList[0]; // tables only have one series
-    var seriesName = series.name || this.alias;
-    var seriesColumns = series.columns;
 
-    return { target: seriesName, datapoints: series.points, selectedColumns: seriesColumns };
+    var datapoints = [];
+    var seriesColumns = [];
+    var seriesName = null;
+
+    if (series) {
+      seriesName = series.name || this.alias;
+      seriesColumns = series.columns;
+      datapoints = series.points;
+    }
+
+    return { target: seriesName, datapoints: datapoints, selectedColumns: seriesColumns };
   };
 
   return InfluxSeries;
