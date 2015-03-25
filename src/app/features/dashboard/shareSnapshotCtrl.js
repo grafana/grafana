@@ -22,7 +22,7 @@ function (angular) {
       }, 2000);
     };
 
-    $scope.saveSnapshot = function(makePublic) {
+    $scope.saveSnapshot = function(external) {
       var dash = angular.copy($scope.dashboard);
       // change title
       dash.title = $scope.snapshot.name;
@@ -40,22 +40,15 @@ function (angular) {
         delete panel.snapshotData;
       });
 
-      var apiUrl = '/api/snapshots';
-
-      if (makePublic) {
-        apiUrl = 'http://snapshots.raintank.io/api/snapshots';
-      }
-
-      backendSrv.post(apiUrl, {dashboard: dash}).then(function(results) {
+      backendSrv.post('/api/snapshots', {dashboard: dash, external: external}).then(function(results) {
         $scope.loading = false;
 
-        var baseUrl = $location.absUrl().replace($location.url(), "");
-        if (makePublic) {
-          baseUrl = 'http://snapshots.raintank.io';
+        if (external) {
+          $scope.snapshotUrl = results.url;
+        } else {
+          var baseUrl = $location.absUrl().replace($location.url(), "");
+          $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
         }
-
-        $scope.snapshotUrl = baseUrl + '/dashboard/snapshots/' + results.key;
-
       }, function() {
         $scope.loading = false;
       });

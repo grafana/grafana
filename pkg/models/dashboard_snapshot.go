@@ -20,6 +20,7 @@ type DashboardSnapshot struct {
 
 type CreateDashboardSnapshotCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
+	External  bool
 
 	Key string `json:"-"`
 
