@@ -5,7 +5,7 @@
 [IRC](https://webchat.freenode.net/?channels=grafana) |
 [Email](mailto:contact@grafana.org)
 
-Grafana is An open source, feature rich metrics dashboard and graph editor for
+Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, InfluxDB & OpenTSDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
@@ -25,13 +25,13 @@ The code is available in the [develop](https://github.com/grafana/grafana/tree/d
 - [See it in action](http://grafana.org/docs/features/graphite)
 
 ### Graphing
-- Fast rendering, even over large timespans.
-- Click and drag to zoom.
-- Multiple Y-axis.
-- Bars, Lines, Points.
+- Fast rendering, even over large timespans
+- Click and drag to zoom
+- Multiple Y-axis
+- Bars, Lines, Points
 - Smart Y-axis formating
 - Series toggles & color selector
-- Legend values, and formating options
+- Legend values, and formatting options
 - Grid thresholds, axis labels
 - [Annotations](http://grafana.org/docs/features/annotations)
 
@@ -48,7 +48,7 @@ The code is available in the [develop](https://github.com/grafana/grafana/tree/d
 - [Time range controls](http://grafana.org/docs/features/time_range)
 
 ### InfluxDB
-- Use InfluxDB as a metric data source, annotation source and for dashboard storage
+- Use InfluxDB as a metric data source, annotation source, and for dashboard storage
 - Query editor with series and column typeahead, easy group by and function selection
 
 ### OpenTSDB
@@ -62,7 +62,7 @@ There are no dependencies, Grafana is a client side application that runs in you
 Head to [grafana.org](http://grafana.org) and [download](http://grafana.org/download/)
 the latest release.
 
-Then follow the quick [setup & config guide](http://grafana.org/docs/). If you have any problems please
+Then follow the [quick setup & config guide](http://grafana.org/docs/). If you have any problems please
 read the [troubleshooting guide](http://grafana.org/docs/troubleshooting).
 
 ## Documentation & Support
@@ -70,12 +70,12 @@ Be sure to read the [getting started guide](http://grafana.org/docs/features/int
 feature guides.
 
 ## Run from master
-Grafana uses nodejs and grunt for asset management (css & javascript), unit test runner and javascript syntax verification.
+Grafana uses Node.js and Grunt for asset management (css & javascript), unit test runner and javascript syntax verification.
 - clone repository
 - install nodejs
 - npm install (in project root)
 - npm install -g grunt-cli
-- grunt   (runt default task that will generate css files)
+- grunt   (grunt default task that will generate css files)
 - grunt build (creates optimized & minified release)
 - grunt release (same as grunt build but will also create tar & zip package)
 - grunt test (executes jshint and unit tests)
