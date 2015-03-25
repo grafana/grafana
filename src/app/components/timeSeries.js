@@ -76,6 +76,9 @@ function (_, kbn) {
     var currentValue;
 
     for (var i = 0; i < this.datapoints.length; i++) {
+      if (this.datapoints[i] === undefined) {
+        continue;
+      }
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
 
@@ -102,8 +105,14 @@ function (_, kbn) {
       result.push([currentTime, currentValue]);
     }
 
-    if (this.datapoints.length >= 2) {
-      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
+    if (this.datapoints.length >= 3) {
+      var first = 0
+      var second =1
+      if (this.datapoints[0] === undefined) {
+         first = 1
+         second = 2
+      }
+      this.stats.timeStep = this.datapoints[second][1] - this.datapoints[first][1];
     }
 
     if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
