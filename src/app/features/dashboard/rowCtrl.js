@@ -169,22 +169,4 @@ function (angular, app, _, config) {
     };
   });
 
-  module.directive('panelGhost', function() {
-    return function(scope, element) {
-      function updateWidth() {
-        var spanLeft = 12 - scope.dashboard.rowSpan(scope.row);
-        if (spanLeft > 1) {
-          element.show();
-          element.find('.panel-container').css('height', scope.row.height);
-          element[0].style.width = ((spanLeft / 1.2) * 10) + '%';
-        } else {
-          element.hide();
-        }
-      }
-
-      updateWidth();
-      scope.$on('dashboard-panel-span-updated', updateWidth);
-    };
-  });
-
 });
