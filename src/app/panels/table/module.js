@@ -59,7 +59,6 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
-
       return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler, function(err) {
           $scope.seriesList = [];
@@ -74,21 +73,7 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.render = function() {
-      $scope.$broadcast('renderTable', $scope.tableData);
-    };
-
-
-    $scope.updateContent = function(html) {
-      try {
-        $scope.content = $sce.trustAsHtml(templateSrv.replace(html));
-      } catch(e) {
-        console.log('Text panel error: ', e);
-        $scope.content = $sce.trustAsHtml(html);
-      }
-
-      if(!$scope.$$phase) {
-        $scope.$digest();
-      }
+      $scope.$broadcast('render', $scope.tableData);
     };
 
 
