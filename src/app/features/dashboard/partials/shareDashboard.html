@@ -50,9 +50,13 @@
 		<div class="share-snapshot-header" ng-if="step === 1">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
 			<p class="share-snapshot-info-text">
-				A snapshot is an instant way to <strong>share</strong> a dashboard publicly. The visible data and series names
-				are embedded into the dashboard while metric queries and panel links are stripped. The snapshot can be viewed by
-				<strong>anyone</strong> that have the link and can reach the URL. <a href="http://docs.grafana.org/reference/snapshot" target="_blank">Read more</a>.
+				A snapshot is an instant way to share an interactive dashboard publicly.
+				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
+				leaving only the visible metric data and series names embedded into your dashboard.
+			</p>
+			<p class="share-snapshot-info-text">
+				Keep in mind, your <strong>snapshot can be viewed any anyone</strong> that has the link and can reach the URL.
+				Share wisely.
 			</p>
 		</div>
 
@@ -61,7 +65,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 110px;">
-							<strong>Snapshot name</strong>
+							Snapshot name
 						</li>
 						<li>
 							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
@@ -72,7 +76,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 110px">
-							<strong>Expire</strong>
+							Expire
 						</li>
 						<li>
 							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expire" ng-options="f.value as f.text for f in expireOptions"></select>
