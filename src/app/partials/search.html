@@ -2,7 +2,10 @@
 
 	<div class="dashboard-editor-header">
 		<div class="dashboard-editor-title" style="border: 0; line-height: 41px;">
-			<i class="fa fa-search"></i>
+			<span class="fa">
+				<i class="fa fa-spinner fa-spin" ng-show="searchLoading == true"></i>
+				<i class="fa fa-search" ng-show="searchLoading == false"></i>
+			</span>
 			Search
 		</div>
 

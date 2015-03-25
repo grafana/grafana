@@ -294,7 +294,8 @@ function (angular, _, config, kbn, moment) {
 
           displayHits.tagsOnly = tagsOnly;
           return displayHits;
-        });
+        },
+        function() {return {dashboards: [], tags: []};});
     };
 
     return ElasticDatasource;
