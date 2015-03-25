@@ -1,0 +1,24 @@
+.table-visualization {
+  position: relative;
+
+  .table-vis-overflow-container {
+    overflow: auto;
+  }
+
+  table {
+    margin: 0 auto;
+
+    td, th {
+      border: 1px solid @grafanaTargetSegmentBorder;
+      color: @textColor;
+      padding: 8px 6px;
+    }
+
+    tr:nth-child(even) {
+      background-color: @grafanaTargetFuncBackground;
+    }
+
+    th {
+    }
+  }
+}
