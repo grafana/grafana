@@ -7,16 +7,15 @@ function (angular, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('SoloPanelCtrl',
-    function(
-      $scope,
-      backendSrv,
-      $routeParams,
-      dashboardSrv,
-      timeSrv,
-      $location,
-      templateValuesSrv,
-      contextSrv) {
+  module.controller('SoloPanelCtrl', function(
+    $scope,
+    backendSrv,
+    $routeParams,
+    dashboardSrv,
+    timeSrv,
+    $location,
+    templateValuesSrv,
+    contextSrv) {
 
     var panelId;
 
