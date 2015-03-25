@@ -104,6 +104,20 @@ define([
       });
     });
 
+    describeUpdateVariable('update custom variable with brackets', function(scenario) {
+        scenario.setup(function(){
+            scenario.variable = { type: 'custom', query: '{a,b},c', queryLabel: 'login', name: 'test'};    
+        });
+
+        it('should update options array', function() {
+            expect(scenario.variable.options.length).to.be(2);
+            expect(scenario.variable.options[0].value).to.be('{a,b}');
+            expect(scenario.variable.options[0].text).to.be('login');
+            expect(scenario.variable.options[1].value).to.be('c');
+            expect(scenario.variable.options[1].text).to.be('c');
+        });
+    });
+
     describeUpdateVariable('basic query variable', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
