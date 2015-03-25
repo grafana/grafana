@@ -22,10 +22,7 @@ function (angular, _, kbn) {
       var vars = query.split("&");
       for (var i=0;i<vars.length;i++) {
         var pair = vars[i].split("=");
-        if (pair[0] === "token") {
-          this.access_token = pair[1];
-        }
-        else if (pair[0] === "api") {
+        if (pair[0] === "api") {
           this.api = decodeURIComponent(pair[1]);
         }
       }
@@ -164,7 +161,6 @@ function (angular, _, kbn) {
         var currentUrl = _this.api;
 
         var headers = {
-          'X-Auth-Token': _this.access_token,
           'Content-Type': 'application/json'
         };
 
@@ -206,7 +202,6 @@ function (angular, _, kbn) {
         var currentUrl = _this.api;
 
         var headers = {
-          'X-Auth-Token': _this.access_token,
           'Content-Type': 'application/json'
         };
 
