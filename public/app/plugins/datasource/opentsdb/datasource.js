@@ -218,6 +218,20 @@ function (angular, _, dateMath) {
       });
     };
 
+    OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/aggregators'
+      };
+      return $http(options).then(function(result) {
+        if (result.data instanceof Array) {
+          return result.data.sort();
+        } else {
+          return result.data;
+        }
+      });
+    };
+
     function transformMetricData(md, groupByTags, options) {
       var metricLabel = createMetricLabel(md, options, groupByTags);
 >>>>>>> Instead of hard-coding the OpenTsdb aggregators list, pull the supported
