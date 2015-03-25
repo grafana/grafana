@@ -69,7 +69,6 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      console.log(results);
       $scope.tableData = results.data[0]; // we are only allowing one query on the tableview series
       $scope.render();
     };

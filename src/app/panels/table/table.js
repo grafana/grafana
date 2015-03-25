@@ -11,6 +11,7 @@ define([
     var module = angular.module('grafana.directives');
     var data;
     var tableHeight;
+    var headerHeight = 25;
 
     module.directive('grafanaTable', function($rootScope, timeSrv, $compile) {
       return {
@@ -37,6 +38,7 @@ define([
               return '<th>' + columnName +  '</th>';
             }).join('');
 
+            headers = '<tr>' + headers + '</tr>';
 
             var tableData = _.reduce(data.datapoints, function(prev, cur) {
               var row = _.map(cur, function(seriesValue) {
@@ -51,15 +53,39 @@ define([
 
 
             var html =
-              '<table>' +
-                '<tr>' + headers + '</tr>' +
-                tableData +
-              '</table>';
+              '<div style="position: relative; margin-top:' + headerHeight +'px;">' +
+                '<div style="height: ' + (tableHeight) + 'px; overflow: auto;">' +
+                  '<table>' +
+
+                    '<thead>' +
+                      headers +
+                    '</thead>' +
+
+                    '<tbody>' +
+                      tableData +
+                    '</tbody>' +
+
+                  '</table>' +
+                '</div>' +
+              '</div>';
 
 
 
             elem.html(html);
             $compile(elem.contents())(scope);
+
+            // we need to hardcode header widths so they do not get lost when the headers become fixed
+            var ths = elem.find('thead th');
+            for (var i = 0; i < ths.length; ++i) {
+              var el = ths.eq(i);
+              var width = el.width();
+              el.css('width', width);
+            }
+
+
+            elem.find('thead')
+              .css('position', 'absolute')
+              .css('top', -headerHeight + 'px'); // create distance from headers and body
           }
 
 
@@ -75,7 +101,7 @@ define([
             if (!setElementHeight()) { return true; }
 
             if (elem.width() === 0) {
-              return;
+              return false;
             }
           }
 
@@ -89,6 +115,7 @@ define([
 
               tableHeight -= 5; // padding
               tableHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
+              tableHeight -= headerHeight;
 
 
               elem.css('height', tableHeight + 'px');
