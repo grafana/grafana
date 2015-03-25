@@ -205,7 +205,7 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Tags:      make([]string, 0),
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
-			public:    l.public,
+			Public:    l.Public,
 		}
 		return nil
 	})
