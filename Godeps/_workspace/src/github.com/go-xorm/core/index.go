@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 )
 
 const (
@@ -11,9 +13,21 @@ const (
 
 // database index
 type Index struct {
-	Name string
-	Type int
-	Cols []string
+	IsRegular bool
+	Name      string
+	Type      int
+	Cols      []string
+}
+
+func (index *Index) XName(tableName string) string {
+	if !strings.HasPrefix(index.Name, "UQE_") &&
+		!strings.HasPrefix(index.Name, "IDX_") {
+		if index.Type == UniqueType {
+			return fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+		}
+		return fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+	}
+	return index.Name
 }
 
 // add columns which will be composite index
@@ -24,6 +38,9 @@ func (index *Index) AddColumn(cols ...string) {
 }
 
 func (index *Index) Equal(dst *Index) bool {
+	if index.Type != dst.Type {
+		return false
+	}
 	if len(index.Cols) != len(dst.Cols) {
 		return false
 	}
@@ -40,5 +57,5 @@ func (index *Index) Equal(dst *Index) bool {
 
 // new an index
 func NewIndex(name string, indexType int) *Index {
-	return &Index{name, indexType, make([]string, 0)}
+	return &Index{true, name, indexType, make([]string, 0)}
 }

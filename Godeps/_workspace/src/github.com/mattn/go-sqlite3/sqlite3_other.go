@@ -9,6 +9,6 @@ package sqlite3
 /*
 #cgo CFLAGS: -I.
 #cgo linux LDFLAGS: -ldl
-#cgo CFLAGS: -DSQLITE_ENABLE_RTREE -DSQLITE_THREADSAFE
+#cgo LDFLAGS: -lpthread
 */
 import "C"

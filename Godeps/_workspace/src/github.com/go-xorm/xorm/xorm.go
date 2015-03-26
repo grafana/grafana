@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	Version string = "0.4.1"
+	Version string = "0.4.2.0225"
 )
 
 func regDrvsNDialects() bool {
@@ -84,17 +84,16 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		TZLocation:    time.Local,
 	}
 
+	engine.dialect.SetLogger(engine.Logger)
+
 	engine.SetMapper(core.NewCacheMapper(new(core.SnakeMapper)))
 
-	//engine.Filters = dialect.Filters()
-	//engine.Cacher = NewLRUCacher()
-	//err = engine.SetPool(NewSysConnectPool())
-
 	runtime.SetFinalizer(engine, close)
-	return engine, err
+
+	return engine, nil
 }
 
 // clone an engine
 func (engine *Engine) Clone() (*Engine, error) {
-	return NewEngine(engine.dialect.DriverName(), engine.dialect.DataSourceName())
+	return NewEngine(engine.DriverName(), engine.DataSourceName())
 }

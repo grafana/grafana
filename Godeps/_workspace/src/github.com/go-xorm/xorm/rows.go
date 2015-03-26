@@ -25,11 +25,6 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	rows.session = session
 	rows.beanType = reflect.Indirect(reflect.ValueOf(bean)).Type()
 
-	err := rows.session.newDb()
-	if err != nil {
-		return nil, err
-	}
-
 	defer rows.session.Statement.Init()
 
 	var sqlStr string
@@ -47,8 +42,8 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	}
 
 	rows.session.Engine.logSQL(sqlStr, args)
-
-	rows.stmt, err = rows.session.Db.Prepare(sqlStr)
+	var err error
+	rows.stmt, err = rows.session.DB().Prepare(sqlStr)
 	if err != nil {
 		rows.lastError = err
 		defer rows.Close()
