@@ -1,7 +1,6 @@
 package api
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -15,12 +14,15 @@ import (
 
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	cmd.Key = util.GetRandomString(32)
+	cmd.DeleteKey = util.GetRandomString(32)
 
 	if cmd.External {
 		cmd.OrgId = -1
+		cmd.UserId = -1
 		metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
 	} else {
 		cmd.OrgId = c.OrgId
+		cmd.UserId = c.UserId
 		metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
 	}
 
@@ -29,7 +31,12 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 		return
 	}
 
-	c.JSON(200, util.DynMap{"key": cmd.Key, "url": setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)})
+	c.JSON(200, util.DynMap{
+		"key":       cmd.Key,
+		"deleteKey": cmd.DeleteKey,
+		"url":       setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key),
+		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
+	})
 }
 
 func GetDashboardSnapshot(c *middleware.Context) {
@@ -58,9 +65,18 @@ func GetDashboardSnapshot(c *middleware.Context) {
 
 	metrics.M_Api_Dashboard_Snapshot_Get.Inc(1)
 
-	maxAge := int64(snapshot.Expires.Sub(time.Now()).Seconds())
-
-	c.Resp.Header().Set("Cache-Control", "public, max-age="+strconv.FormatInt(maxAge, 10))
-
+	c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	c.JSON(200, dto)
+}
+
+func DeleteDashboardSnapshot(c *middleware.Context) {
+	key := c.Params(":key")
+	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: key}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		c.JsonApiErr(500, "Failed to delete dashboard snapshot", err)
+		return
+	}
+
+	c.JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it is cleared from a CDN cache."})
 }

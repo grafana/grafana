@@ -11,6 +11,7 @@ import (
 func init() {
 	bus.AddHandler("sql", CreateDashboardSnapshot)
 	bus.AddHandler("sql", GetDashboardSnapshot)
+	bus.AddHandler("sql", DeleteDashboardSnapshot)
 }
 
 func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
@@ -23,17 +24,29 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 		}
 
 		snapshot := &m.DashboardSnapshot{
-			Key:       cmd.Key,
-			OrgId:     cmd.OrgId,
-			Dashboard: cmd.Dashboard,
-			Expires:   expires,
-			Created:   time.Now(),
-			Updated:   time.Now(),
+			Key:         cmd.Key,
+			DeleteKey:   cmd.DeleteKey,
+			OrgId:       cmd.OrgId,
+			UserId:      cmd.UserId,
+			External:    cmd.External,
+			ExternalUrl: cmd.ExternalUrl,
+			Dashboard:   cmd.Dashboard,
+			Expires:     expires,
+			Created:     time.Now(),
+			Updated:     time.Now(),
 		}
 
 		_, err := sess.Insert(snapshot)
 		cmd.Result = snapshot
 
+		return err
+	})
+}
+
+func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
+		_, err := sess.Exec(rawSql, cmd.DeleteKey)
 		return err
 	})
 }
