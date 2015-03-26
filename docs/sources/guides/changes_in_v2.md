@@ -32,6 +32,19 @@ This is a guide that descriptes some of changes and new features that can be fou
 > longer create a new dashboard. It will just change the name for the current dashboard.
 > To change name and create a new dashboard use the `Save As...` menu option
 
+## Dashboard Snapshot sharing
+A dashboard snapshot is an instant way to share an interactive dashboard publicly. When created, we <strong>strip sensitive data</strong> like queries
+(metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
+snapshots can be accessed by anyone who has the link and can reach the URL.
+
+![](/img/v2/dashboard_snapshot_dialog.png)
+
+### Publish snapshots
+You can publish snapshots to you local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The later is a free service
+that is provided by [Raintank](http://raintank.io) that allows you to publish dashboard snapshots to an external grafana instance.
+The same rules still apply, anyone with the link can view it. You can set an expiration time if you want the snapshot to be removed
+after a certain time period.
+
 ## Panel time overrides & timeshift
 
 In Grafana v2.x you can now override the relative time range for individual panels. You can also add a
@@ -58,6 +71,14 @@ upper right of a panel when overriden time range options.
 
 The dashboard search view has received a big UI update and polish. You can now see and filter by which dashboard
 you have personally starred.
+
+## Logarithmic scale
+
+The Graph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. Logarithmic y-axis
+scales are very useful when rendering many series of different order of magnitude on the same scale. For example
+latency, network traffic or storage.
+
+![](/img/v2/graph_logbase10_ms.png)
 
 ## Dashlist panel
 
@@ -118,3 +139,10 @@ Organizations via a role. That role can be:
 > per series permissions in Graphite, InfluxDB or OpenTSDB.
 
 There are currently no permissions on individual dashboards.
+
+## Panel IFrame embedding
+
+You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
+with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](snapshot.raintank.io).
+
+<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
