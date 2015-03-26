@@ -13,12 +13,11 @@ This is a guide that descriptes some of changes and new features that can be fou
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 
 1. Side menu toggle
-2. Dashboard search (also includes access to New dashboard, Import & Playlist)
-3. Dashboard title
-4. Star/unstar current dashboard
-5. Share current dashboard (Make sure the dashboard is saved before)
-6. Save current dashboard
-7. Settings dropdown (dashboard settings, annotations, templating, etc)
+2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
+3. Star/unstar current dashboard
+4. Share current dashboard (Make sure the dashboard is saved before)
+5. Save current dashboard
+6. Settings dropdown (dashboard settings, annotations, templating, etc)
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.
