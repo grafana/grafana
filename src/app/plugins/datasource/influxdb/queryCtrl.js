@@ -93,6 +93,15 @@ function (angular, _) {
         return;
       }
 
+      $scope.target.measurement = '';
+      $scope.target.tags = {};
+      $scope.target.measurement = $scope.segments[0].value;
+
+      for (var i = 1; i+1 < $scope.segments.length; i += 2) {
+        var key = $scope.segments[i].value;
+        $scope.target.tags[key] = $scope.segments[i+1].value;
+      }
+
       $scope.$parent.get_data();
     };
 

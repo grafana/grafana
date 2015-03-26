@@ -36,13 +36,14 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var timeFilter = getTimeFilter(options);
 
       var promises = _.map(options.targets, function(target) {
-        if (target.hide || !target.query) {
+        if (target.hide) {
           return [];
         }
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
+        console.log('query builder result:' + query);
 
         // replace grafana variables
         query = query.replace('$timeFilter', timeFilter);
