@@ -7,17 +7,22 @@ define([
     'use strict';
 
     var module = angular.module('grafana.directives');
-    var data;
-    var tableHeight;
 
     module.directive('grafanaTable', function($rootScope, timeSrv, $compile) {
+      var data;
+      var tableHeight;
+
+      // paging variables
+      var dataToSkip;
+      var pagedData;
+      var numPages = 1;
+
       return {
         restrict: 'A',
         link: function(scope, elem) {
-
           scope.height = 280; // set default height for edit mode (prob should be done elsewhere)
           scope.tablePageSize = 20;
-          scope.curPage = 1;
+          scope.curTablePage = 1;
 
           scope.$on('render',function(event, renderData) {
             data = renderData || data;
@@ -26,7 +31,28 @@ define([
               return;
             }
 
-            scope.curPage = 1; // set to first page, since new data has come in
+            numPages = Math.floor(data.datapoints.length / scope.tablePageSize);
+            scope.curTablePage = 1; // set to first page, since new data has come in
+            render_panel();
+          });
+
+
+          scope.$watch('curTablePage', function() {
+            scope.curTablePage = parseInt(scope.curTablePage) || 1; // ensure page is numeric
+
+            if (scope.curTablePage < 1) {
+              scope.curTablePage = 1;
+            }
+
+            if (scope.curTablePage > numPages) {
+              scope.curTablePage = numPages;
+            }
+
+
+            if (!data) {
+              return;
+            }
+
             render_panel();
           });
 
@@ -41,15 +67,17 @@ define([
               return;
             }
 
+            // handle paging
+            dataToSkip = scope.tablePageSize * (scope.curTablePage - 1);
+            pagedData = data.datapoints.slice(dataToSkip, scope.tablePageSize + dataToSkip);
+
+
+            // construct table
             var headers = _.map(data.selectedColumns, function(columnName) {
               return '<th>' + columnName +  '</th>';
             }).join('');
 
             headers = '<tr>' + headers + '</tr>';
-
-
-            var dataToSkip = scope.tablePageSize * (scope.curPage - 1);
-            var pagedData = data.datapoints.slice(dataToSkip, scope.tablePageSize);
 
             var tableData = _.reduce(pagedData, function(prev, cur) {
               var row = _.map(cur, function(seriesValue) {
