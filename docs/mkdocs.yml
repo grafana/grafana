@@ -34,7 +34,7 @@ pages:
 - ['installation/migrating_to2.md', 'Installation', 'Migrating from v1.x to v2.x']
 
 - ['guides/gettingstarted.md', 'User Guides', 'Getting started']
-- ['guides/changes_in_v2.md', 'User Guides', 'Changes and New Features in v2.0']
+- ['guides/whats-new-in-v2.md', 'User Guides', "What's New in Grafana v2.0"]
 - ['guides/screencasts.md', 'User Guides', 'Screencasts']
 
 - ['reference/graph.md', 'Reference', 'Graph Panel']

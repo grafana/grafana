@@ -1,13 +1,12 @@
 ---
-page_title: Changes and new features in Grafana v2.0
+page_title: Whats New in Grafana v2.0
 page_description: Changes and new features in Grafana v2.0
 page_keywords: grafana, changes, features, documentation
 ---
 
-# Changes and new features in v2.0
+# What's New in Grafana v2.0
 
 This is a guide that descriptes some of changes and new features that can be found in Grafana v2.0.
-
 
 ## New dashboard top header
 
@@ -19,14 +18,7 @@ This is a guide that descriptes some of changes and new features that can be fou
 4. Star/unstar current dashboard
 5. Share current dashboard (Make sure the dashboard is saved before)
 6. Save current dashboard
-7. Settings dropdown
-    - Dashboard settings
-    - Annotations
-    - Templating
-    - Export (exports current dashboard to json file)
-    - View JSON (view current dashboard json model)
-    - Save As... (Copy & Save current dashboard under a new name)
-    - Delete dashboard
+7. Settings dropdown (dashboard settings, annotations, templating, etc)
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.
