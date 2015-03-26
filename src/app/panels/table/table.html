@@ -1,0 +1,12 @@
+<div class="table-visualization"> 
+    <div class="table-vis-overflow-container">
+        <table>
+            <thead>
+                <tr>
+                    <th ng-repeat="column in columnNames">{{column}}</th>
+                </tr>
+            </thead>
+            <tbody ng-bind-html="tableData"></tbody>
+        </table>
+    </div>
+</div>
