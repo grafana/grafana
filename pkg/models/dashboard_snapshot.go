@@ -24,15 +24,16 @@ type DashboardSnapshot struct {
 // COMMANDS
 
 type CreateDashboardSnapshotCommand struct {
-	Dashboard   map[string]interface{} `json:"dashboard" binding:"Required"`
-	External    bool                   `json:"external"`
-	ExternalUrl string                 `json:"externalUrl"`
-	Expires     int64                  `json:"expires"`
+	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
+	Expires   int64                  `json:"expires"`
 
-	OrgId     int64  `json:"-"`
-	UserId    int64  `json:"-"`
-	Key       string `json:"-"`
-	DeleteKey string `json:"-"`
+	// these are passed when storing an external snapshot ref
+	External  bool   `json:"external"`
+	Key       string `json:"key"`
+	DeleteKey string `json:"deleteKey"`
+
+	OrgId  int64 `json:"-"`
+	UserId int64 `json:"-"`
 
 	Result *DashboardSnapshot
 }

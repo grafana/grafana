@@ -29,6 +29,9 @@ function (angular, _) {
       {text: 'Public on the web', value: 3},
     ];
 
+    $scope.externalUrl = 'http://snapshots-origin.raintank.io';
+    $scope.apiUrl = '/api/snapshots';
+
     $scope.createSnapshot = function(external) {
       $scope.dashboard.snapshot = {
         timestamp: new Date()
@@ -71,21 +74,18 @@ function (angular, _) {
 
       var cmdData = {
         dashboard: dash,
-        external: external === true,
         expires: $scope.snapshot.expires,
       };
 
-      var apiUrl = '/api/snapshots/';
-      if (external) {
-        apiUrl = "http://snapshots-origin.raintank.io/api/snapshots";
-      }
+      var postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
 
-      backendSrv.post(apiUrl, cmdData).then(function(results) {
+      backendSrv.post(postUrl, cmdData).then(function(results) {
         $scope.loading = false;
 
         if (external) {
           $scope.deleteUrl = results.deleteUrl;
           $scope.snapshotUrl = results.url;
+          $scope.saveExternalSnapshotRef(cmdData, results);
         } else {
           var baseUrl = $location.absUrl().replace($location.url(), "");
           $scope.snapshotUrl = baseUrl + '/dashboard/snapshot/' + results.key;
@@ -96,6 +96,14 @@ function (angular, _) {
       }, function() {
         $scope.loading = false;
       });
+    };
+
+    $scope.saveExternalSnapshotRef = function(cmdData, results) {
+      // save external in local instance as well
+      cmdData.external = true;
+      cmdData.key = results.key;
+      cmdData.delete_key = results.delete_key;
+      backendSrv.post('/api/snapshots/', cmdData);
     };
 
   });

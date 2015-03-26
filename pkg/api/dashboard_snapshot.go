@@ -13,14 +13,19 @@ import (
 )
 
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
-	cmd.Key = util.GetRandomString(32)
-	cmd.DeleteKey = util.GetRandomString(32)
-
 	if cmd.External {
+		// external snapshot ref requires key and delete key
+		if cmd.Key != "" && cmd.DeleteKey != "" {
+			c.JsonApiErr(400, "Missing key and delete key for external snapshot", nil)
+			return
+		}
+
 		cmd.OrgId = -1
 		cmd.UserId = -1
 		metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
 	} else {
+		cmd.Key = util.GetRandomString(32)
+		cmd.DeleteKey = util.GetRandomString(32)
 		cmd.OrgId = c.OrgId
 		cmd.UserId = c.UserId
 		metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
@@ -78,5 +83,5 @@ func DeleteDashboardSnapshot(c *middleware.Context) {
 		return
 	}
 
-	c.JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it is cleared from a CDN cache."})
+	c.JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
 }
