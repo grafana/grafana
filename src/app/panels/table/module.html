@@ -1,4 +1,8 @@
 <grafana-panel>
     <div grafana-table></div>
-    <div grafana-table-pager></div>
+    <div ng-show="!dashboard.refresh">
+        <!-- if dashboard is constantly refreshing, viewing a specific page on a table has no meaning,
+            since it is constantly updating -->
+        <div grafana-table-pager></div>
+    </div>
 </grafana-panel>
