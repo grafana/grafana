@@ -3,7 +3,10 @@
         <table>
             <thead>
                 <tr>
-                    <th ng-repeat="column in columnNames">{{column}}</th>
+                    <!-- Because html has no concept of a fixed table header, we create a shadow fixed header
+                        that will then be stickied directly over the initial position of the real header -->
+                    <th class="real-table-header" ng-repeat="column in columnNames">{{column}}</th>
+                    <th class="fixed-table-header" style="display: none;" ng-repeat="column in columnNames">{{column}}</th>
                 </tr>
             </thead>
             <tbody ng-bind-html="tableData"></tbody>

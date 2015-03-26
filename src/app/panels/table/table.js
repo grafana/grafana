@@ -94,42 +94,33 @@ define([
               return prev += row;
             }, '');
 
+            elem.find('.table-vis-overflow-container').height(tableHeight);
+            elem.height(tableHeight); // set physical height of directive
 
             $timeout(function() { // after angular is processing, do jquery stuff
-              var thead$el = elem.find('thead');
-
-              // we need to hardcode header widths so they do not get lost when the headers become fixed
-              // we base them off the below tds
-              var ths = thead$el.find('th');
-              var tds = elem.find('tbody tr:first-child td');
-
-              if (tds.length > 0) {
-                for (var i = 0; i < ths.length; ++i) {
-                  var th = ths.eq(i);
-                  var td = tds.eq(i);
-                  var width = td.width();
-                  var borderWidth = parseFloat(td.css('border-width')) || 0;
-                  th.css('width', width + borderWidth);
-                }
-              }
-
-
-              headerHeight = headerHeight || parseFloat(thead$el.css('height')) || 0;
-
-              thead$el
-                .css('position', 'absolute') // fix table head in position
-                .css('top', -headerHeight + 'px'); // create distance from headers and body
-
-
-              // margin needed to push the headers above the table body. this has the effect of
-              // essentially increasing the directive's height by the header height amount
-              elem.find('.table-visualization').css('margin-top', headerHeight + 'px');
-
-              var heightRemainingFromTotal = tableHeight - headerHeight;
-              elem.find('.table-vis-overflow-container').css('height', heightRemainingFromTotal + 'px');
-              elem.css('height', heightRemainingFromTotal + 'px'); // set physical height of directive
+              performHeaderPositioning();
             }, 0);
+          }
 
+          // on resize, the absolutely positioned headers will be shifted, during shift we should hide them
+          $(window).resize(function() {
+            performHeaderPositioning();
+          });
+
+
+          function performHeaderPositioning() {
+            var realHeaders = elem.find('.real-table-header');
+            var fixedHeaders = elem.find('.fixed-table-header');
+            var container = elem.find('.table-vis-overflow-container');
+
+            for (var i = 0; i < realHeaders.length; ++i) {
+              var realEl = realHeaders.eq(i);
+              var fixedEl = fixedHeaders.eq(i);
+              fixedEl.width(realEl.width());
+              fixedEl.css({ left: realEl.position().left, top: container.position().top });
+            }
+
+            fixedHeaders.show();
           }
 
 
