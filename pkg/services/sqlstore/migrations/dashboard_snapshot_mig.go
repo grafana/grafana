@@ -21,9 +21,6 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 
 	// add v4
 	mg.AddMigration("create dashboard_snapshot table v4", NewAddTableMigration(snapshotV4))
-
-	// drop v4
-	addDropAllIndicesMigrations(mg, "v4", snapshotV4)
 	mg.AddMigration("drop table dashboard_snapshot_v4 #1", NewDropTableMigration("dashboard_snapshot"))
 
 	snapshotV5 := Table{
