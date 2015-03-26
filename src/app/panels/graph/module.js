@@ -162,17 +162,15 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
       return $scope.datasource.query(metricsQuery)
-        .then($scope.dataHandler)
-        .then(null, function(err) {
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
-          $scope.seriesList = [];
-          $scope.render([]);
-        });
+        .then($scope.dataHandler);
     };
 
     $scope.dataHandler = function(results) {
+      if (results.data.length === 0 && results.errors.length !== 0) {
+        $scope.dataHandlerTotalFailure(results.errors);
+        return;
+      }
+
       // png renderer returns just a url
       if (_.isString(results)) {
         $scope.panelMeta.loading = false;
@@ -197,6 +195,28 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
           $scope.panelMeta.loading = false;
           $scope.render($scope.seriesList);
         });
+
+      // check for partial failures
+      if (results.errors.length !== 0) {
+        $scope.dataHandlerPartialFailure(results.errors);
+      }
+    };
+
+    $scope.dataHandlerTotalFailure = function(errors) {
+      $scope.dataHandlerPartialFailure(errors);
+
+      $scope.seriesList = [];
+      $scope.render([]);
+    };
+
+    $scope.dataHandlerPartialFailure = function(errors) {
+      var combinedErrorMessage = _.reduce(errors, function(prev, curr) {
+        return prev + curr.message;
+      }, '');
+
+      $scope.panelMeta.loading = false;
+      $scope.panelMeta.error = combinedErrorMessage || "Timeseries data request error";
+      $scope.inspector.errors = errors;
     };
 
     $scope.seriesHandler = function(seriesData, index) {

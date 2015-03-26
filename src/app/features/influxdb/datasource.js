@@ -35,32 +35,30 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
 
-      var promises = _.map(options.targets, function(target) {
-        if (target.hide || !((target.series && target.column) || target.query)) {
-          return [];
-        }
+      var promises = _.chain(options.targets)
+        .filter(function(target) { return !(target.hide || !((target.series && target.column) || target.query)); })
+        .map(function(target) {
 
-        // build query
-        var queryBuilder = new InfluxQueryBuilder(target);
-        var query = queryBuilder.build();
+          // build query
+          var queryBuilder = new InfluxQueryBuilder(target);
+          var query = queryBuilder.build();
 
-        // replace grafana variables
-        query = query.replace('$timeFilter', timeFilter);
-        query = query.replace(/\$interval/g, (target.interval || options.interval));
+          // replace grafana variables
+          query = query.replace('$timeFilter', timeFilter);
+          query = query.replace(/\$interval/g, (target.interval || options.interval));
 
-        // replace templated variables
-        query = templateSrv.replace(query);
+          // replace templated variables
+          query = templateSrv.replace(query);
 
-        var alias = target.alias ? templateSrv.replace(target.alias) : '';
+          var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
-        return this._seriesQuery(query).then(handleResponse);
+          var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
+          return this._seriesQuery(query).then(handleResponse);
 
-      }, this);
+        }, this)
+        .value();
 
-      return $q.all(promises).then(function(results) {
-        return { data: _.flatten(results) };
-      });
+      return queryPromiseCombiner(promises);
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
@@ -390,6 +388,44 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function to_utc_epoch_seconds(date) {
       return (date.getTime() / 1000).toFixed(0) + 's';
+    }
+
+    function queryPromiseCombiner(promises) {
+      var stackTrace = null;
+
+      // classify promises as either successes or failures
+      var classifiedPromises =
+        _.map(promises, function(promise) {
+          return promise
+            .then(
+              function(value) {
+                return { isSuccessful: true, value: value };
+              },
+              function(error) {
+                if (stackTrace === null) {
+                  // creating self contained error in order to establish stack trace
+                  try { throw new Error('Promise failed'); } catch(e) { stackTrace = e.stack;  }
+                }
+
+                error.stack = stackTrace;
+                return { isSuccessful: false, error: error };
+              }
+            );
+        });
+
+      // when all promises classified
+      return $q.all(classifiedPromises).then(function(results) {
+        var promiseDict = _.groupBy(results, 'isSuccessful');
+        var successes = _.pluck(promiseDict[true], 'value') || [];
+        successes = _.flatten(successes);
+
+        var errors = _.pluck(promiseDict[false], 'error') || [];
+
+        return {
+          data: successes,
+          errors: errors
+        };
+      });
     }
 
     return InfluxDatasource;

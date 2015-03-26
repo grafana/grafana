@@ -10,47 +10,44 @@ function (angular, _) {
   module.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
 
-    function getParametersFromQueryString(queryString) {
-      var result = [];
-      var parameters = queryString.split("&");
-      for (var i = 0; i < parameters.length; i++) {
-        var keyValue = parameters[i].split("=");
-        if (keyValue[1].length > 0) {
-          result.push({ key: keyValue[0], value: window.unescape(keyValue[1]) });
-        }
-      }
-      return result;
-    }
-
     $scope.init = function () {
       $scope.editor = { index: 0 };
 
-      if (!model.error)  {
+      if (!model.errors || model.errors.length === 0)  {
         return;
       }
 
-      if (_.isString(model.error.data)) {
-        $scope.response = model.error.data;
-      }
+      $scope.responses = [];
+      _.each(model.errors, function(error) {
+        if (_.isString(error.data)) {
+          // add response data
+          $scope.responses.push(error.data);
+        }
 
-      if (model.error.config && model.error.config.params) {
-        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
-          return { key: key, value: value};
-        });
-      }
+        if (error.config && error.config.params) {
+          var requestParameters = _.map(error.config.params, function(value, key) {
+            return {key: key, value: value};
+          });
 
-      if (model.error.stack) {
+          error.requestParameters = requestParameters;
+        }
+      });
+
+      // all errors will share same stack, as they all come from same query call
+      var firstError = model.errors[0];
+      var stackTrace = firstError.stack;
+      if (stackTrace) {
         $scope.editor.index = 2;
-        $scope.stack_trace = model.error.stack;
-        $scope.message = model.error.message;
+        $scope.stack_trace = stackTrace;
       }
-      else if (model.error.config && model.error.config.data) {
+
+      // in order to avoid opening multiple iframes which can hurt performance, we will only
+      // display from first error in list
+      else if (firstError.config && firstError.config.data) {
         $scope.editor.index = 1;
 
-        $scope.request_parameters = getParametersFromQueryString(model.error.config.data);
-
-        if (model.error.data.indexOf('DOCTYPE') !== -1) {
-          $scope.response_html = model.error.data;
+        if (firstError.data.indexOf('DOCTYPE') !== -1) {
+          $scope.response_html = firstError.data;
         }
       }
     };
