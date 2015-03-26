@@ -265,7 +265,8 @@ function (angular, _, config, kbn, moment) {
         query: { query_string: { query: queryString } },
         facets: { tags: { terms: { field: "tags", order: "term", size: 50 } } },
         size: this.searchMaxResults,
-        sort: ["_uid"]
+        sort: ["_uid"],
+        fields: ["title", "tags"]
       };
 
       return this._post('/dashboard/_search', query)
@@ -281,8 +282,8 @@ function (angular, _, config, kbn, moment) {
             var hit = resultsHits[i];
             displayHits.dashboards.push({
               id: hit._id,
-              title: hit._source.title,
-              tags: hit._source.tags
+              title: hit.fields.title,
+              tags: hit.fields.tags
             });
           }
 
