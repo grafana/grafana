@@ -11,8 +11,7 @@ function (angular, _) {
 
     $scope.snapshot = {
       name: $scope.dashboard.title,
-      expire: 0,
-      external: false,
+      expires: 0,
     };
 
     $scope.step = 1;
@@ -22,6 +21,12 @@ function (angular, _) {
       {text: '1 Day',  value: 60*60*24},
       {text: '7 Days', value: 60*60*7},
       {text: 'Never',  value: 0},
+    ];
+
+    $scope.accessOptions = [
+      {text: 'Anyone with the link', value: 1},
+      {text: 'Organization users',  value: 2},
+      {text: 'Public on the web', value: 3},
     ];
 
     $scope.createSnapshot = function(external) {
@@ -35,11 +40,11 @@ function (angular, _) {
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        $scope.saveSnapshot();
+        $scope.saveSnapshot(external);
       }, 3000);
     };
 
-    $scope.saveSnapshot = function() {
+    $scope.saveSnapshot = function(external) {
       var dash = angular.copy($scope.dashboard);
       // change title
       dash.title = $scope.snapshot.name;
@@ -66,14 +71,19 @@ function (angular, _) {
 
       var cmdData = {
         dashboard: dash,
-        external: $scope.snapshot.external,
+        external: external === true,
         expires: $scope.snapshot.expires,
       };
 
-      backendSrv.post('/api/snapshots', cmdData).then(function(results) {
+      var apiUrl = '/api/snapshots/';
+      if (external) {
+        apiUrl = "http://snapshots-origin.raintank.io/api/snapshots";
+      }
+
+      backendSrv.post(apiUrl, cmdData).then(function(results) {
         $scope.loading = false;
 
-        if ($scope.snapshot.external) {
+        if (external) {
           $scope.snapshotUrl = results.url;
         } else {
           var baseUrl = $location.absUrl().replace($location.url(), "");

@@ -1,10 +1,7 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -17,44 +14,22 @@ import (
 )
 
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
+	cmd.Key = util.GetRandomString(32)
+
 	if cmd.External {
-		createExternalSnapshot(c, cmd)
-		return
+		cmd.OrgId = -1
+		metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
+	} else {
+		cmd.OrgId = c.OrgId
+		metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
 	}
 
-	cmd.Key = util.GetRandomString(32)
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create snaphost", err)
 		return
 	}
 
-	metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
-
 	c.JSON(200, util.DynMap{"key": cmd.Key, "url": setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)})
-}
-
-func createExternalSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
-	metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
-
-	cmd.External = false
-	json, _ := json.Marshal(cmd)
-	jsonData := bytes.NewBuffer(json)
-
-	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-	resp, err := client.Post("http://snapshots-origin.raintank.io/api/snapshots", "application/json", jsonData)
-
-	if err != nil {
-		c.JsonApiErr(500, "Failed to publish external snapshot", err)
-		return
-	}
-
-	c.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
-	c.WriteHeader(resp.StatusCode)
-
-	if resp.ContentLength > 0 {
-		bytes, _ := ioutil.ReadAll(resp.Body)
-		c.Write(bytes)
-	}
 }
 
 func GetDashboardSnapshot(c *middleware.Context) {
@@ -68,14 +43,24 @@ func GetDashboardSnapshot(c *middleware.Context) {
 		return
 	}
 
+	snapshot := query.Result
+
+	// expired snapshots should also be removed from db
+	if snapshot.Expires.Before(time.Now()) {
+		c.JsonApiErr(404, "Snapshot not found", err)
+		return
+	}
+
 	dto := dtos.Dashboard{
-		Model: query.Result.Dashboard,
+		Model: snapshot.Dashboard,
 		Meta:  dtos.DashboardMeta{IsSnapshot: true},
 	}
 
 	metrics.M_Api_Dashboard_Snapshot_Get.Inc(1)
 
-	c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
+	maxAge := int64(snapshot.Expires.Sub(time.Now()).Seconds())
+
+	c.Resp.Header().Set("Cache-Control", "public, max-age="+strconv.FormatInt(maxAge, 10))
 
 	c.JSON(200, dto)
 }

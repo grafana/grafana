@@ -79,6 +79,7 @@ function (angular, $, config) {
         meta.canEdit = false;
         meta.canSave = false;
         meta.canStar = false;
+        meta.canShare = false;
       }
 
       $scope.dashboardMeta = meta;

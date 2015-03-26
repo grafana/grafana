@@ -55,7 +55,7 @@
 				leaving only the visible metric data and series names embedded into your dashboard.
 			</p>
 			<p class="share-snapshot-info-text">
-				Keep in mind, your <strong>snapshot can be viewed any anyone</strong> that has the link and can reach the URL.
+				Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
 				Share wisely.
 			</p>
 		</div>
@@ -79,11 +79,22 @@
 							Expire
 						</li>
 						<li>
-							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expire" ng-options="f.value as f.text for f in expireOptions"></select>
+							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
 						</li>
 					</ul>
 					<div class="clearfix"></div>
 				</div>
+				<!-- <div class="tight&#45;form"> -->
+				<!-- 	<ul class="tight&#45;form&#45;list"> -->
+				<!-- 		<li class="tight&#45;form&#45;item" style="width: 110px"> -->
+				<!-- 			Access -->
+				<!-- 		</li> -->
+				<!-- 		<li> -->
+				<!-- 			<select class="input&#45;small tight&#45;form&#45;input last" style="width: 211px" ng&#45;model="snapshot.access" ng&#45;options="f.value as f.text for f in accessOptions"></select> -->
+				<!-- 		</li> -->
+				<!-- 	</ul> -->
+				<!-- 	<div class="clearfix"></div> -->
+				<!-- </div> -->
 			</div>
 
 			<div class="gf-form" ng-if="step === 2" style="margin-top: 55px">

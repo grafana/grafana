@@ -4,9 +4,10 @@ import "time"
 
 // DashboardSnapshot model
 type DashboardSnapshot struct {
-	Id   int64
-	Name string
-	Key  string
+	Id    int64
+	Name  string
+	Key   string
+	OrgId int64
 
 	Expires time.Time
 	Created time.Time
@@ -20,9 +21,11 @@ type DashboardSnapshot struct {
 
 type CreateDashboardSnapshotCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
-	External  bool
+	External  bool                   `json:"external"`
+	Expires   int64                  `json:"expires"`
 
-	Key string `json:"-"`
+	OrgId int64  `json:"-"`
+	Key   string `json:"-"`
 
 	Result *DashboardSnapshot
 }

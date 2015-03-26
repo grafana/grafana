@@ -16,10 +16,17 @@ func init() {
 func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 
+		// never
+		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
+		if cmd.Expires > 0 {
+			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
+		}
+
 		snapshot := &m.DashboardSnapshot{
 			Key:       cmd.Key,
+			OrgId:     cmd.OrgId,
 			Dashboard: cmd.Dashboard,
-			Expires:   time.Unix(0, 0),
+			Expires:   expires,
 			Created:   time.Now(),
 			Updated:   time.Now(),
 		}
@@ -32,8 +39,8 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 }
 
 func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
-	var snapshot m.DashboardSnapshot
-	has, err := x.Where("key=?", query.Key).Get(&snapshot)
+	snapshot := m.DashboardSnapshot{Key: query.Key}
+	has, err := x.Get(&snapshot)
 
 	if err != nil {
 		return err
