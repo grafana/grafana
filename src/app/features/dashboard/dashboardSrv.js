@@ -27,6 +27,7 @@ function (angular, $, kbn, _, moment) {
       this.editable = data.editable === false ? false : true;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
+      this.disableLoadingIcon = data.disableLoadingIcon || false;
       this.rows = data.rows || [];
       this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };

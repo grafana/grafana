@@ -99,7 +99,9 @@ function (angular, _) {
           if ($scope.otherPanelInFullscreenMode()) { return; }
 
           delete $scope.panelMeta.error;
-          $scope.panelMeta.loading = true;
+          if (!$scope.dashboard.disableLoadingIcon) {
+            $scope.panelMeta.loading = true;
+          }
 
           panel_get_data();
         };
