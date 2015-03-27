@@ -1,0 +1,17 @@
+{
+  "pluginType": "datasource",
+  "name": "KairosDB",
+
+  "type": "kairosdb",
+  "serviceName": "KairosDBDatasource",
+
+  "module": "plugins/datasource/kairosdb/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/kairosdb/partials/config.html",
+    "query": "app/plugins/datasource/kairosdb/partials/query.editor.html"
+  },
+
+  "metrics": true,
+  "annotations": false
+}

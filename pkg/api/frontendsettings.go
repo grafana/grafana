@@ -1,11 +1,10 @@
 package api
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -45,7 +44,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 		meta, exists := plugins.DataSources[ds.Type]
 		if !exists {
-			return nil, errors.New(fmt.Sprintf("Could not find plugin definition for data source: %v", ds.Type))
+			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
+			continue
 		}
 
 		dsMap["meta"] = meta
