@@ -72,7 +72,13 @@ function (angular, _, kbn, $) {
         cacheTimeout: scope.panel.cacheTimeout
       };
 
-      return datasource.query(metricsQuery);
+      return datasource.query(metricsQuery).then(function(results) {
+        if (scope.dashboard.snapshot) {
+          scope.panel.snapshotData = results;
+        }
+
+        return results;
+      });
     };
 
   });

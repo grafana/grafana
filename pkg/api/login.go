@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -75,7 +76,6 @@ func LoginView(c *middleware.Context) {
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
-
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.User}
 	err := bus.Dispatch(&userQuery)
 
@@ -111,6 +111,8 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 		result["redirectUrl"] = redirectTo
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
+
+	metrics.M_Api_Login_Post.Inc(1)
 
 	c.JSON(200, result)
 }

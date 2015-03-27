@@ -1,36 +1,40 @@
 ---
-page_title: Changes and new features in Grafana v2.0
-page_description: Changes and new features in Grafana v2.0
-page_keywords: grafana, changes, features, documentation
+page_title: What's New in Grafana v2.0
+page_description: What's new in Grafana v2.0
+page_keywords: grafana, new, changes, features, documentation
 ---
 
-# Changes and new features in v2.0
+# What's New in Grafana v2.0
 
-This is a guide that descriptes some of changes and new features that can be found in Grafana v2.0.
-
+This is a guide that describes some of changes and new features that can be found in Grafana v2.0.
 
 ## New dashboard top header
 
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 
 1. Side menu toggle
-2. Dashboard search (also includes access to New dashboard, Import & Playlist)
-3. Dashboard title
-4. Star/unstar current dashboard
-5. Share current dashboard (Make sure the dashboard is saved before)
-6. Save current dashboard
-7. Settings dropdown
-    - Dashboard settings
-    - Annotations
-    - Templating
-    - Export (exports current dashboard to json file)
-    - View JSON (view current dashboard json model)
-    - Save As... (Copy & Save current dashboard under a new name)
-    - Delete dashboard
+2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
+3. Star/unstar current dashboard
+4. Share current dashboard (Make sure the dashboard is saved before)
+5. Save current dashboard
+6. Settings dropdown (dashboard settings, annotations, templating, etc)
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.
 > To change name and create a new dashboard use the `Save As...` menu option
+
+## Dashboard Snapshot sharing
+A dashboard snapshot is an instant way to share an interactive dashboard publicly. When created, we <strong>strip sensitive data</strong> like queries
+(metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
+snapshots can be accessed by anyone who has the link and can reach the URL.
+
+![](/img/v2/dashboard_snapshot_dialog.png)
+
+### Publish snapshots
+You can publish snapshots to you local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The later is a free service
+that is provided by [Raintank](http://raintank.io) that allows you to publish dashboard snapshots to an external grafana instance.
+The same rules still apply, anyone with the link can view it. You can set an expiration time if you want the snapshot to be removed
+after a certain time period.
 
 ## Panel time overrides & timeshift
 
@@ -58,6 +62,14 @@ upper right of a panel when overriden time range options.
 
 The dashboard search view has received a big UI update and polish. You can now see and filter by which dashboard
 you have personally starred.
+
+## Logarithmic scale
+
+The Graph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. Logarithmic y-axis
+scales are very useful when rendering many series of different order of magnitude on the same scale. For example
+latency, network traffic or storage.
+
+![](/img/v2/graph_logbase10_ms.png)
 
 ## Dashlist panel
 
@@ -118,3 +130,10 @@ Organizations via a role. That role can be:
 > per series permissions in Graphite, InfluxDB or OpenTSDB.
 
 There are currently no permissions on individual dashboards.
+
+## Panel IFrame embedding
+
+You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
+with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](snapshot.raintank.io).
+
+<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>

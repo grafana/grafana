@@ -37,6 +37,7 @@ function (angular, $, kbn, _, moment) {
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
+      this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
 
@@ -65,6 +66,16 @@ function (angular, $, kbn, _, moment) {
         }
       }
       return max + 1;
+    };
+
+    p.forEachPanel = function(callback) {
+      var i, j, row;
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          callback(row.panels[j], row);
+        }
+      }
     };
 
     p.rowSpan = function(row) {

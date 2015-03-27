@@ -11,7 +11,7 @@ function (angular, _, moment) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, timeSrv) {
+  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, timeSrv, $timeout) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
@@ -155,6 +155,18 @@ function (angular, _, moment) {
         from: moment.utc(from).toDate(),
         to: moment.utc(to).toDate(),
       });
+    };
+
+    $scope.snapshot = function() {
+      $scope.dashboard.snapshot = true;
+      $rootScope.$broadcast('refresh');
+
+      $timeout(function() {
+        $scope.exportDashboard();
+        $scope.dashboard.snapshot = false;
+        $scope.appEvent('dashboard-snapshot-cleanup');
+      }, 1000);
+
     };
 
     $scope.editJson = function() {

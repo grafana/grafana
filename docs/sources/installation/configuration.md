@@ -184,7 +184,7 @@ Valid values are "memory", "file", "mysql", 'postgres'. Default is "memory".
 This option should be configured differently depending on what type of session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `root:password@/session_table`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
 
 if you use mysql or postgres as session store you need to create the session table manually.
 Mysql Example:

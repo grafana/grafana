@@ -103,11 +103,12 @@ function (angular, _) {
         }
 
         for (i = 0; i < copy.panels.length; i++) {
-          panel = row.panels[i];
+          panel = copy.panels[i];
           panel.scopedVars = panel.scopedVars || {};
           panel.scopedVars[variable.name] = option;
         }
       });
+
     };
 
     this.repeatPanel = function(panel, row, dashboard) {

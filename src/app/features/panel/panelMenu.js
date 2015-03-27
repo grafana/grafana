@@ -22,7 +22,7 @@ function (angular, $, _) {
         template += '<div class="panel-menu-row">';
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
         template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
-        template += '<a class="panel-menu-icon pull-right" ng-click="remove_panel_from_row(row, panel)"><i class="fa fa-remove"></i></a>';
+        template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
         template += '<div class="clearfix"></div>';
         template += '</div>';
 

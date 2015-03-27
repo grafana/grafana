@@ -25,12 +25,12 @@
 		},
 		{
 			"ImportPath": "github.com/go-xorm/core",
-			"Rev": "a949e067ced1cb6e6ef5c38b6f28b074fa718f1e"
+			"Rev": "be6e7ac47dc57bd0ada25322fa526944f66ccaa6"
 		},
 		{
 			"ImportPath": "github.com/go-xorm/xorm",
-			"Comment": "v0.4.1-19-g5c23849",
-			"Rev": "5c23849a66f4593e68909bb6c1fa30651b5b0541"
+			"Comment": "v0.4.2-58-ge2889e5",
+			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",
@@ -51,7 +51,7 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
-			"Rev": "d10e2c8f62100097910367dee90a9bd89d426a44"
+			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",

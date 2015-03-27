@@ -95,5 +95,5 @@ func addDataSourceMigration(mg *Migrator) {
 		"updated":             "updated",
 	}))
 
-	mg.AddMigration("Drop old table data_source_v1", NewDropTableMigration("data_source_old"))
+	mg.AddMigration("Drop old table data_source_v1 #2", NewDropTableMigration("data_source_v1"))
 }

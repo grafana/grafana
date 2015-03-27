@@ -73,7 +73,6 @@ define([
 
     });
 
->>>>>>> template_var_multi_select
     describe('can check if variable exists', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);

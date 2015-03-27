@@ -65,11 +65,16 @@ func (table *Table) GetColumnIdx(name string, idx int) *Column {
 
 // if has primary key, return column
 func (table *Table) PKColumns() []*Column {
-	columns := make([]*Column, 0)
-	for _, name := range table.PrimaryKeys {
-		columns = append(columns, table.GetColumn(name))
+	columns := make([]*Column, len(table.PrimaryKeys))
+	for i, name := range table.PrimaryKeys {
+		columns[i] = table.GetColumn(name)
 	}
 	return columns
+}
+
+func (table *Table) ColumnType(name string) reflect.Type {
+	t, _ := table.Type.FieldByName(name)
+	return t.Type
 }
 
 func (table *Table) AutoIncrColumn() *Column {

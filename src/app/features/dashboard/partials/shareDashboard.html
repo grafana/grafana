@@ -1,12 +1,12 @@
 <div class="modal-body gf-box gf-box-no-margin" ng-controller="SharePanelCtrl">
 	<div class="gf-box-header">
 		<div class="gf-box-title">
-			<i class="fa fa-share"></i>
-			Share
+			<i class="fa fa-share-square-o"></i>
+			Share Dashboard
 		</div>
 
 		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Link']" data-title="{{tab}}">
+			<div ng-repeat="tab in ['Link', 'Snapshot sharing']" data-title="{{tab}}">
 			</div>
 		</div>
 
@@ -45,4 +45,74 @@
 		</div>
 	</div>
 
+	<div class="gf-box-body share-snapshot ng-cloak" ng-cloak ng-if="editor.index === 1" ng-controller="ShareSnapshotCtrl">
+
+		<div class="share-snapshot-header" ng-if="step === 1">
+			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+			<p class="share-snapshot-info-text">
+				A snapshot is an instant way to share an interactive dashboard publicly.
+				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
+				leaving only the visible metric data and series names embedded into your dashboard.
+			</p>
+			<p class="share-snapshot-info-text">
+				Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
+				Share wisely.
+			</p>
+		</div>
+
+		<div class="editor-row" style="margin: 11px 20px 33px 20px">
+			<div class="section" ng-if="step === 1">
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 110px;">
+							Snapshot name
+						</li>
+						<li>
+							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 110px">
+							Expire
+						</li>
+						<li>
+							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+
+			<div class="gf-form" ng-if="step === 2" style="margin-top: 55px">
+				<div class="gf-form-row">
+					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
+						<i class="fa fa-external-link-square"></i>
+						{{snapshotUrl}}
+					</a>
+					<br>
+					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
+				</div>
+			</div>
+		</div>
+
+		<div ng-if="step === 1">
+			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
+				<i class="fa fa-save"></i>
+				Local Snapshot
+			</button>
+
+			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
+				<i class="fa fa-cloud-upload"></i>
+				Publish to snapshot.raintank.io
+			</button>
+		</div>
+
+		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
+			Did you make a mistake? <a href="{{deleteUrl}}" target="_blank">delete snapshot.</a>
+		</div>
+	</div>
 </div>
+

@@ -21,8 +21,8 @@ func TestApiKeyDataAccess(t *testing.T) {
 			Convey("Should be able to get key by name", func() {
 				query := m.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
 				err = GetApiKeyByName(&query)
-				So(err, ShouldBeNil)
 
+				So(err, ShouldBeNil)
 				So(query.Result, ShouldNotBeNil)
 			})
 

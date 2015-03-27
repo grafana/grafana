@@ -85,7 +85,8 @@
 
   &.template-param-name {
     border-right: none;
-    padding-right: 3px;
+    padding-right: 0;
+    padding-left: 18px;
   }
   &.annotation-segment {
     padding: 8px 10px;
@@ -197,4 +198,11 @@ select.tight-form-input {
   }
 }
 
-
+.tight-form-radio {
+  input[type=radio] {
+    margin: 0;
+  }
+  label {
+    display: inline;
+  }
+}

@@ -96,6 +96,8 @@ var (
 	PhantomDir string
 
 	configFiles []string
+
+	ReportingEnabled bool
 )
 
 func init() {
@@ -232,6 +234,8 @@ func NewConfigContext(config string) {
 	// PhantomJS rendering
 	ImagesDir = "data/png"
 	PhantomDir = "vendor/phantomjs"
+
+	ReportingEnabled = Cfg.Section("").Key("reporting-enabled").MustBool(true)
 
 	readSessionConfig()
 }

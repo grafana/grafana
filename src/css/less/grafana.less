@@ -55,7 +55,7 @@
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  top: 30%;
+  top: 20%;
 }
 
 .dashboard-fullscreen {
@@ -292,5 +292,43 @@
     button {
       margin-right: 5px
     }
+  }
+}
+
+.share-snapshot {
+  text-align: center;
+
+  .share-snapshot-info-text {
+    margin: 10px 105px;
+    strong {
+      color: @headingsColor;
+      font-weight: bold;
+    }
+  }
+
+  .share-snapshot-header {
+    .fa-spinner {
+      position: absolute;
+      font-size: 600%;
+      left: 44%;
+      color: @grafanaTargetFuncBackground;
+      z-index: -1;
+    }
+
+    position: relative;
+    z-index: 1000;
+    margin: 20px 0 22px 0;
+  }
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-snapshot-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
   }
 }

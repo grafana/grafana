@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -116,7 +116,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
-    $scope.logScales = {'linear': 1, 'log (base 16)': 16, 'log (base 10)': 10, 'log (base 1024)': 1024};
+    $scope.logScales = {'linear': 1, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
@@ -138,6 +138,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
           $scope.render([]);
           throw err;
         });
+    };
+
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.annotationsPromise = $q.when([]);
+      $scope.dataHandler(snapshotData);
     };
 
     $scope.dataHandler = function(results) {
@@ -285,6 +291,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     panelSrv.init($scope);
+
   });
 
 });

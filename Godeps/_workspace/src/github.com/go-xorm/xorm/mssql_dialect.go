@@ -270,7 +270,7 @@ func (db *mssql) IsReserved(name string) bool {
 }
 
 func (db *mssql) Quote(name string) string {
-	return "[" + name + "]"
+	return "\"" + name + "\""
 }
 
 func (db *mssql) QuoteStr() string {
