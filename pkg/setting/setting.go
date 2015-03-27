@@ -97,7 +97,8 @@ var (
 
 	configFiles []string
 
-	ReportingEnabled bool
+	ReportingEnabled  bool
+	GoogleAnalyticsId string
 )
 
 func init() {
@@ -235,7 +236,9 @@ func NewConfigContext(config string) {
 	ImagesDir = "data/png"
 	PhantomDir = "vendor/phantomjs"
 
-	ReportingEnabled = Cfg.Section("").Key("reporting-enabled").MustBool(true)
+	analytics := Cfg.Section("analytics")
+	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 
 	readSessionConfig()
 }

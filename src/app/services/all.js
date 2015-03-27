@@ -5,6 +5,7 @@ define([
   './contextSrv',
   './timer',
   './keyboardManager',
+  './analytics',
   './popoverSrv',
   './backendSrv',
 ],

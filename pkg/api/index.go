@@ -33,6 +33,10 @@ func setIndexViewData(c *middleware.Context) error {
 	c.Data["AppUrl"] = setting.AppUrl
 	c.Data["AppSubUrl"] = setting.AppSubUrl
 
+	if setting.GoogleAnalyticsId != "" {
+		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId
+	}
+
 	return nil
 }
 
