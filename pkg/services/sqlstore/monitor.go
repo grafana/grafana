@@ -3,10 +3,10 @@ package sqlstore
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -611,7 +611,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				})
 			}
 		}
-		
+
 		if cmd.Namespace == "" {
 			label := strings.ToLower(currentEndpoint.Name)
 			re := regexp.MustCompile("[^\\w-]+")
