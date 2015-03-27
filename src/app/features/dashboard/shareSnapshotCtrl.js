@@ -102,7 +102,7 @@ function (angular, _) {
       // save external in local instance as well
       cmdData.external = true;
       cmdData.key = results.key;
-      cmdData.delete_key = results.delete_key;
+      cmdData.deleteKey = results.deleteKey;
       backendSrv.post('/api/snapshots/', cmdData);
     };
 

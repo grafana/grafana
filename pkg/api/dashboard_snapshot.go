@@ -15,7 +15,7 @@ import (
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	if cmd.External {
 		// external snapshot ref requires key and delete key
-		if cmd.Key != "" && cmd.DeleteKey != "" {
+		if cmd.Key == "" || cmd.DeleteKey == "" {
 			c.JsonApiErr(400, "Missing key and delete key for external snapshot", nil)
 			return
 		}
