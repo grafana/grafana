@@ -32,7 +32,6 @@ define([
         link: function(scope, elem) {
           scope.height = 280; // set default height for edit mode (prob should be done elsewhere)
           scope.tablePageSize = 20;
-          scope.curTablePage = 1;
 
           scope.$on('render',function(event, renderData) {
             data = renderData || data;
@@ -44,7 +43,7 @@ define([
             numPages = Math.ceil(data.datapoints.length / scope.tablePageSize);
             minPage = numPages > 0 ? 1 : 0;
 
-            scope.curTablePage = 1; // set to first page, since new data has come in
+            scope.curTablePage = minPage; // set to first page, since new data has come in
             render_panel();
           });
 
@@ -116,7 +115,10 @@ define([
             for (var i = 0; i < realHeaders.length; ++i) {
               var realEl = realHeaders.eq(i);
               var fixedEl = fixedHeaders.eq(i);
-              fixedEl.width(realEl.width());
+
+              var borderWidth = parseFloat(realEl.css('borderWidth')) || 0;
+
+              fixedEl.width(realEl.width() + borderWidth);
               fixedEl.css({ left: realEl.position().left, top: container.position().top });
             }
 
