@@ -10,8 +10,7 @@ define([
 
     module.directive('grafanaTable', function($rootScope, $timeout) {
       var data;
-      var tableHeight;
-      var sortedData;
+      var sortedData; // will shadow the data
 
       // paging variables
       var dataToSkip;
@@ -19,6 +18,7 @@ define([
       var numPages = 1;
       var minPage = 1;
 
+      var tableHeight;
 
       var SortType = {
         none: 0,
@@ -36,6 +36,7 @@ define([
 
           // refers to the order in which the columns were requested to be sorted
           // for example, we might want to first sort by second column, then by third, then by first, etc.
+          // this does not necessarily refer to the physical order of the columns
           scope.columnSortOrder = [];
 
           scope.$on('render',function(event, renderData) {
@@ -45,14 +46,13 @@ define([
               return;
             }
 
-            numPages = Math.ceil(data.datapoints.length / scope.tablePageSize);
-            minPage = numPages > 0 ? 1 : 0;
-
-            scope.curTablePage = minPage; // set to first page, since new data has come in
+            sortedData = [].concat(data.datapoints); // on initial render, original data is the desired sort
+            setupInitialPaging();
             render_panel();
           });
 
 
+          // if user changes page
           scope.$watch('curTablePage', function() {
             scope.curTablePage = parseInt(scope.curTablePage) || 1; // ensure page is numeric
 
@@ -72,8 +72,10 @@ define([
             render_panel();
           });
 
+          // if user tries to sort
           scope.headerClicked = function(header) {
             changeSortType(header);
+            handleSorting();
             render_panel();
           };
 
@@ -85,7 +87,6 @@ define([
             }
 
             setHeaders();
-            handleSorting();
             handlePaging();
             setTableData();
 
@@ -103,9 +104,8 @@ define([
           });
 
 
+          // only set headers if there has been a change, since we do not want to lose pre existing sorting options
           function setHeaders() {
-            // only set headers if there has been a change, since we do not want to lose sorting options
-
             var curHeaders = scope.headers;
 
             var newHeaders = _.map(data.selectedColumns, function(columnName) {
@@ -167,6 +167,13 @@ define([
             fixedHeaders.show();
           }
 
+          function setupInitialPaging() {
+            numPages = Math.ceil(data.datapoints.length / scope.tablePageSize);
+            minPage = numPages > 0 ? 1 : 0;
+
+            scope.curTablePage = minPage; // set to first page, since new data has come in
+          }
+
           function handlePaging() {
             dataToSkip = scope.tablePageSize * (scope.curTablePage - 1);
             pagedData = sortedData.slice(dataToSkip, scope.tablePageSize + dataToSkip);
@@ -174,33 +181,36 @@ define([
 
           function handleSorting() {
             sortedData = [].concat(data.datapoints);
-            sortedData = sortedData.slice(0, 5);
+            if (scope.columnSortOrder.length === 0) {
+              return;
+            }
 
-            var columnToSort = 0;
-            var ascSort = true; // if true, will sort on asc, if not, by desc
+            sortedData.sort(sortFunction);
 
-            for (var i = 0; i < scope.columnSortOrder.length; ++i) {
-              var header = scope.columnSortOrder[i];
-              columnToSort = _.findIndex(scope.headers, header);
-              if (columnToSort === -1) continue;
+            // multi column sorting
+            function sortFunction(a, b){
+              for (var i = 0; i < scope.columnSortOrder.length; ++i) {
+                var columnToSort = scope.columnSortOrder[i]; // take from list of column sort priority
+                var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
 
-              if (header.sortType === SortType.asc) {
-                ascSort = true;
+                var ascSort = columnToSort.sortType === SortType.asc;
+                var temp = compareItems(a[columnIndex], b[columnIndex], ascSort);
+
+                if (temp !== 0) {
+                  break;
+                }
               }
-              else if (header.sortType === SortType.desc) {
-                ascSort = false;
-              }
 
-              sortedData.sort(sortFunction);
+              return temp;
             }
 
 
-            function sortFunction(a, b) {
-              if (a[columnToSort] === b[columnToSort]) {
+            function compareItems(itm1, itm2, ascSort) {
+              if (itm1 === itm2) {
                 return 0;
               }
               else {
-                var isConditionMet = ascSort ? a[columnToSort] < b[columnToSort] : a[columnToSort] > b[columnToSort];
+                var isConditionMet = ascSort ? itm1 < itm2 : itm1 > itm2;
                 return isConditionMet ? -1 : 1;
               }
             }
