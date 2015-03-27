@@ -11,13 +11,18 @@
 }
 
 .panel-container {
-  background: @grafanaPanelBackground;
+  background-color: @grafanaPanelBackground;
   position: relative;
   border: @grafanaPanelBorder;
   &:hover {
     .panel-actions {
       display: block;
     }
+  }
+
+  &.panel-transparent {
+    background-color: transparent;
+    border: none;
   }
 }
 

@@ -1,4 +1,4 @@
-<div class="panel-container">
+<div class="panel-container" ng-class="{'panel-transparent': panel.transparent}">
 	<div class="panel-header">
 		<span class="alert-error panel-error small pointer" config-modal="app/partials/inspector.html" ng-if="panelMeta.error">
 			<span data-placement="top" bs-tooltip="panelMeta.error">
