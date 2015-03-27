@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -413,7 +414,11 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 		}
 
 		if cmd.Namespace == "" {
-			cmd.Namespace = fmt.Sprintf("network.%s", endpointQuery.Result.Name)
+			label := strings.ToLower(endpointQuery.Result.Name)
+			re := regexp.MustCompile("[^\\w-]+")
+			re2 := regexp.MustCompile("\\s")
+			slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
+			cmd.Namespace = slug
 		}
 
 		mon := &m.Monitor{
@@ -606,9 +611,13 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				})
 			}
 		}
-
+		
 		if cmd.Namespace == "" {
-			cmd.Namespace = fmt.Sprintf("network.%s", currentEndpoint.Name)
+			label := strings.ToLower(currentEndpoint.Name)
+			re := regexp.MustCompile("[^\\w-]+")
+			re2 := regexp.MustCompile("\\s")
+			slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
+			cmd.Namespace = slug
 		}
 
 		mon := &m.Monitor{
