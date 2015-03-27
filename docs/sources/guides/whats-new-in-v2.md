@@ -1,12 +1,12 @@
 ---
-page_title: Whats New in Grafana v2.0
-page_description: Changes and new features in Grafana v2.0
-page_keywords: grafana, changes, features, documentation
+page_title: What's New in Grafana v2.0
+page_description: What's new in Grafana v2.0
+page_keywords: grafana, new, changes, features, documentation
 ---
 
 # What's New in Grafana v2.0
 
-This is a guide that descriptes some of changes and new features that can be found in Grafana v2.0.
+This is a guide that describes some of changes and new features that can be found in Grafana v2.0.
 
 ## New dashboard top header
 
