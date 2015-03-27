@@ -20,7 +20,7 @@ define([
       var minPage = 1;
 
 
-      var sortingType = {
+      var SortType = {
         none: 0,
         asc: 1,
         desc: 2
@@ -32,6 +32,7 @@ define([
         link: function(scope, elem) {
           scope.height = 280; // set default height for edit mode (prob should be done elsewhere)
           scope.tablePageSize = 20;
+          scope.sortType = SortType;
 
           scope.$on('render',function(event, renderData) {
             data = renderData || data;
@@ -67,6 +68,33 @@ define([
             render_panel();
           });
 
+          scope.headerClicked = function(header) {
+            changeSortType(header);
+            // sort
+          };
+
+
+
+          function changeSortType(header) {
+            var newType = null;
+
+            switch (header.sortType) {
+              case SortType.none:
+                newType = SortType.asc;
+                break;
+
+              case SortType.asc:
+                newType = SortType.desc;
+                break;
+
+              case SortType.desc:
+                newType = SortType.none;
+                break;
+            }
+
+            header.sortType = newType;
+          }
+
 
           function render_panel() {
             var isHeightSet = setTableHeightVariable();
@@ -79,7 +107,9 @@ define([
             pagedData = data.datapoints.slice(dataToSkip, scope.tablePageSize + dataToSkip);
 
 
-            scope.columnNames = data.selectedColumns;
+            scope.headers = _.map(data.selectedColumns, function(columnName) {
+              return { columnName: columnName, sortType: SortType.none };
+            });
 
             // avoid using angular bindings for table data in order to avoid performance penalty
             // in case user wants to view a large number of cells simultaneously

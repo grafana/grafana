@@ -6,8 +6,15 @@
                 <tr>
                     <!-- Because html has no concept of a fixed table header, we create a shadow fixed header
                         that will then be stickied directly over the initial position of the real header -->
-                    <th class="real-table-header" ng-repeat="column in columnNames">{{column}}</th>
-                    <th class="fixed-table-header" style="display: none;" ng-repeat="column in columnNames">{{column}}</th>
+                    <th class="real-table-header" ng-repeat="header in headers">{{header.columnName}}</th>
+                    <th class="fixed-table-header"
+                        ng-click="headerClicked(header)"
+                        style="display: none;"
+                        ng-repeat="header in headers">
+                        {{header.columnName}}
+                        <i ng-if="header.sortType === sortType.asc" class="fa fa-caret-up"></i>
+                        <i ng-if="header.sortType === sortType.desc" class="fa fa-caret-down"></i>
+                    </th>
                 </tr>
             </thead>
             <tbody ng-bind-html="tableData"></tbody>
