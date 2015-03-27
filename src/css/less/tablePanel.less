@@ -20,6 +20,14 @@
 
     th {
       background-color: @grayDark;
+      .no-select();
+
+      .fa-caret-up,.fa-caret-down {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+      }
+
     }
 
     .fixed-table-header {
@@ -42,11 +50,16 @@
     font-size: 150%;
     padding: 0 4px 0 4px;
 
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -o-user-select: none;
+    .no-select();
    }
+}
+
+
+.no-select() {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
 }
 
