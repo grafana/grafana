@@ -1,6 +1,7 @@
 define([
   './dashboardCtrl',
   './dashboardNavCtrl',
+  './snapshotTopNavCtrl',
   './saveDashboardAsCtrl',
   './playlistCtrl',
   './rowCtrl',

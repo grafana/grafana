@@ -1,14 +1,14 @@
 <div body-class class="dashboard" ng-class="{'dashboard-fullscreen': dashboardViewState.fullscreen}">
 
-	<div ng-include="'app/partials/dashboard_topnav.html'">
+	<div ng-include src="topNavPartial">
 	</div>
-
 
 	<div dash-editor-view></div>
 	<div dash-search-view></div>
 
 	<div ng-if="submenuEnabled" ng-include="'app/partials/submenu.html'">
   </div>
+
 	<div class="clearfix"></div>
 
 	<div class="main-view-container">

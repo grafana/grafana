@@ -47,8 +47,12 @@
 
 	<div class="gf-box-body share-snapshot ng-cloak" ng-cloak ng-if="editor.index === 1" ng-controller="ShareSnapshotCtrl">
 
-		<div class="share-snapshot-header" ng-if="step === 1">
+		<div style="margin: 10px 0">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+			<i ng-if="!loading" class="gf-icon gf-icon-snapshot"></i>
+		</div>
+
+		<div class="share-snapshot-header" ng-if="step === 1">
 			<p class="share-snapshot-info-text">
 				A snapshot is an instant way to share an interactive dashboard publicly.
 				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
@@ -86,7 +90,7 @@
 				</div>
 			</div>
 
-			<div class="gf-form" ng-if="step === 2" style="margin-top: 55px">
+			<div class="gf-form" ng-if="step === 2" style="margin-top: 40px">
 				<div class="gf-form-row">
 					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
 						<i class="fa fa-external-link-square"></i>

@@ -21,6 +21,7 @@ function (angular, $, config) {
       $timeout) {
 
     $scope.editor = { index: 0 };
+    $scope.topNavPartial = 'app/features/dashboard/partials/dashboardTopNav.html';
     $scope.panels = config.panels;
 
     var resizeEventTimeout;
@@ -76,10 +77,7 @@ function (angular, $, config) {
       }
 
       if (dashboard.snapshot) {
-        meta.canEdit = false;
-        meta.canSave = false;
-        meta.canStar = false;
-        meta.canShare = false;
+        $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
       }
 
       $scope.dashboardMeta = meta;

@@ -14,6 +14,7 @@
 @import "dashlist.less";
 @import "admin.less";
 @import "validation.less";
+@import "fonts.less";
 
 .row-control-inner {
   padding:0px;
@@ -298,6 +299,14 @@
 .share-snapshot {
   text-align: center;
 
+  .gf-icon-snapshot {
+    font-size: 70px;
+  }
+
+  .fa-spinner {
+    font-size: 70px;
+  }
+
   .share-snapshot-info-text {
     margin: 10px 105px;
     strong {
@@ -307,16 +316,6 @@
   }
 
   .share-snapshot-header {
-    .fa-spinner {
-      position: absolute;
-      font-size: 600%;
-      left: 44%;
-      color: @grafanaTargetFuncBackground;
-      z-index: -1;
-    }
-
-    position: relative;
-    z-index: 1000;
     margin: 20px 0 22px 0;
   }
 

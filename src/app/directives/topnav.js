@@ -25,7 +25,7 @@ function (angular) {
               '<i class="fa fa-bars"></i>' +
             '</a>' +
 
-            '<span class="icon-circle top-nav-icon"">' +
+            '<span class="icon-circle top-nav-icon">' +
               '<i ng-class="icon"></i>' +
             '</span>' +
 
