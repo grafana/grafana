@@ -59,7 +59,7 @@ function (angular, $, config) {
       });
     };
 
-    $scope.initDashboardMeta = function(meta, dashboard) {
+    $scope.initDashboardMeta = function(meta) {
       meta.canShare = true;
       meta.canSave = true;
       meta.canEdit = true;
@@ -76,7 +76,7 @@ function (angular, $, config) {
         meta.canEdit = false;
       }
 
-      if (dashboard.snapshot) {
+      if (meta.isSnapshot) {
         $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
       }
 

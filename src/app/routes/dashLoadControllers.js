@@ -37,8 +37,7 @@ function (angular, _, kbn, moment, $) {
     backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
       $scope.initDashboard(result, $scope);
     },function() {
-      $scope.initDashboard({}, $scope);
-      $scope.appEvent('alert-error', ['Dashboard Snapshot', '']);
+      $scope.initDashboard({meta: {isSnapshot: true}, model: {title: 'Snapshot not found'}}, $scope);
     });
   });
 
