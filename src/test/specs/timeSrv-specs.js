@@ -92,6 +92,36 @@ define([
       });
     });
 
+    describe('zoom', function() {
+      it('should zoom from center of time range', function() {
+        var nowTimestamp = 1410337665699;
+        ctx.service.setTime({
+          from: new Date(nowTimestamp - 1000),
+          to: new Date(nowTimestamp)
+        });
+
+        ctx.service.zoom(2);
+        var time = ctx.service.timeRange(true);
+        expect(time.from.getTime()).to.equal(nowTimestamp - 1500);
+        expect(time.to.getTime()).to.equal(nowTimestamp + 500);
+      });
+
+      it('should snap to current time', function() {
+        var nowTimestamp = 1410337665699;
+        var nowDate = new Date(nowTimestamp);
+        Date.now = sinon.stub().returns(nowDate);
+        ctx.service.setTime({
+          from: new Date(nowTimestamp - 1000),
+          to: nowDate
+        });
+
+        ctx.service.zoom(2);
+        var time = ctx.service.timeRange(true);
+        expect(time.from.getTime()).to.equal(nowTimestamp - 2000);
+        expect(time.to.getTime()).to.equal(nowTimestamp);
+      });
+    });
+
   });
 
 });

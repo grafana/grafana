@@ -115,6 +115,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.render();
     };
 
+    $scope.zoom = timeSrv.zoom;
+
     $scope.updateTimeRange = function () {
       $scope.range = timeSrv.timeRange();
       $scope.rangeUnparsed = timeSrv.timeRange(false);

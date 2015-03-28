@@ -137,6 +137,27 @@ define([
       }
     };
 
+    this.zoom = function(factor) {
+      var range = self.timeRange();
+
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
+
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if(to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
+      }
+
+      self.setTime({
+        from: moment.utc(from).toDate(),
+        to: moment.utc(to).toDate(),
+      });
+    };
+
   });
 
 });
