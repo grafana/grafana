@@ -158,11 +158,6 @@ function($, _, moment) {
     return info.sec * info.count;
   };
 
-  // This should go away, moment.js can do this
-  kbn.time_ago = function(string) {
-    return new Date(new Date().getTime() - (kbn.interval_to_ms(string)));
-  };
-
   /* This is a simplified version of elasticsearch's date parser */
   kbn.parseDate = function(text) {
     if(_.isDate(text)) {
