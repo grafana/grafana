@@ -20,7 +20,7 @@ From here, you can add any Graphite, InfluxDB, elasticsearch, and OpenTSDB datas
 
 ## Importing your existing dashboards
 
-Grafana 2.0 now has integrated dashboard storage engine that can be configured to use an internal sqllite database, MySQL, or Postgres. This eliminates the need to use Elasticsearch for dashboard storage for Graphite users. Grafana 2.0 does not support storing dashboards in InfluxDB. 
+Grafana 2.0 now has integrated dashboard storage engine that can be configured to use an internal sqlite database, MySQL, or Postgres. This eliminates the need to use Elasticsearch for dashboard storage for Graphite users. Grafana 2.0 does not support storing dashboards in InfluxDB. 
 
 You can seamlessly import your existing dashboards.
 
