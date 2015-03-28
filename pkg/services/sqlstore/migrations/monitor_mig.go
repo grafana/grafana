@@ -83,9 +83,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	mg.AddMigration("drop table monitor_v1", NewDropTableMigration("monitor_v1"))
 
-	mg.AddMigration("reset monitor.namespace to namespace.slug", new(RawSqlMigration).
-		Sqlite("UPDATE monitor set namespace=namespace || '.'' || slug").
-		Mysql("UPDATE monitor set namespace=CONCAT(namespace, '.', slug)"))
 
 	// ---------------------
 	// site -> endpoint changes
