@@ -26,7 +26,8 @@ The above will give an error saying there is no go code. That is because the new
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-git checkout -t origin/develop
+git remote add raintank https://github.com/raintank/grafana
+git checkout -t raintank/master
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
 go build .
