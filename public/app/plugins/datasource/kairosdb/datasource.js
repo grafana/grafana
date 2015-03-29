@@ -217,7 +217,7 @@ function (angular, _, kbn) {
           if(chosenAggregator.sampling_rate) {
             returnedAggregator.sampling = KairosDBDatasource.prototype.convertToKairosInterval(chosenAggregator.sampling_rate);
             returnedAggregator.align_sampling = true;
-            returnedAggregator.align_start_time=true;
+            returnedAggregator.align_start_time =true;
           }
           if(chosenAggregator.unit) {
             returnedAggregator.unit = chosenAggregator.unit+'s';

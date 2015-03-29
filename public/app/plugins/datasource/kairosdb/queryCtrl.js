@@ -53,30 +53,26 @@ function (angular, _) {
       _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
-    //////////////////////////////
-    // SUGGESTION QUERIES
-    //////////////////////////////
-
+    // Fetch metric list
     $scope.updateMetricList = function() {
       $scope.metricListLoading = true;
       metricList = [];
       $scope.datasource.performMetricSuggestQuery().then(function(series) {
         metricList = series;
         $scope.metric.list = series;
-        if ($scope.target.metric)
+        if ($scope.target.metric) {
           $scope.metric.value = $scope.target.metric;
-        else
+        }
+        else {
           $scope.metric.value = "";
+        }
         $scope.metricListLoading = false;
         return metricList;
       });
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.updateTimeRange();
-      callback($scope.datasource
-        .performTagSuggestQuery($scope.target.metric,$scope.rangeUnparsed, 'key',''));
-
+      callback($scope.datasource.performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'key',''));
     };
 
     $scope.suggestTagValues = function(query, callback) {
@@ -84,10 +80,7 @@ function (angular, _) {
         .performTagSuggestQuery($scope.target.metric,$scope.rangeUnparsed, 'value',$scope.target.currentTagKey));
     };
 
-    //////////////////////////////
-    // FILTER by TAG
-    //////////////////////////////
-
+    // Filter metric by tag
     $scope.addFilterTag = function() {
       if (!$scope.addFilterTagMode) {
         $scope.addFilterTagMode = true;
@@ -333,10 +326,7 @@ function (angular, _) {
       alert(message);
     };
 
-    //////////////////////////////
-    // VALIDATION
-    //////////////////////////////
-
+    // Validation
     function MetricListToObject(MetricList) {
       var result = {};
       var Metric;
