@@ -49,7 +49,7 @@ function (angular, $) {
 
       $scope.test = "Hej";
       $scope.$index = 0;
-      $scope.panel = $scope.getPanelById(panelId);
+      $scope.panel = $scope.dashboard.getPanelById(panelId);
 
       if (!$scope.panel) {
         $scope.appEvent('alert-error', ['Panel not found', '']);
@@ -61,20 +61,6 @@ function (angular, $) {
 
       timeSrv.init($scope.dashboard);
       templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
-    };
-
-    $scope.getPanelById = function(id) {
-      var rows = $scope.dashboard.rows;
-      for (var i = 0; i < rows.length; i++) {
-        var row = rows[i];
-        for (var j = 0; j < row.panels.length; j++) {
-          var panel = row.panels[j];
-          if (panel.id === id) {
-            return panel;
-          }
-        }
-      }
-      return null;
     };
 
     if (!$scope.skipAutoInit) {

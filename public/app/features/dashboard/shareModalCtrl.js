@@ -9,15 +9,25 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
-      $scope.options = {
-        forCurrent: true,
-        toPanel: $scope.panel ? true : false,
-        includeTemplateVars: true
-      };
+      $scope.options = { forCurrent: true, includeTemplateVars: true };
+      $scope.modeSharePanel = $scope.panel ? true : false;
+
+      $scope.tabs = [{title: 'Link', src: 'shareLink.html'}];
+
+      if ($scope.modeSharePanel) {
+        $scope.modalTitle = 'Share Panel';
+        $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
+      } else {
+        $scope.modalTitle = 'Share Dashboard';
+      }
+
+      if (!$scope.dashboardMeta.isSnapshot) {
+        $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
+      }
 
       $scope.buildUrl();
     };
@@ -52,7 +62,7 @@ function (angular, _, require, config) {
         delete params.to;
       }
 
-      if ($scope.options.toPanel) {
+      if ($scope.modeSharePanel) {
         params.panelId = $scope.panel.id;
         params.fullscreen = true;
       } else {
@@ -84,8 +94,6 @@ function (angular, _, require, config) {
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };
-
-    $scope.init();
 
   });
 

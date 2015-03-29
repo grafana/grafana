@@ -37,7 +37,7 @@ function (angular, _) {
 
     $scope.shareDashboard = function() {
       $scope.appEvent('show-modal', {
-        src: './app/features/dashboard/partials/shareDashboard.html',
+        src: './app/features/dashboard/partials/shareModal.html',
         scope: $scope.$new(),
       });
     };

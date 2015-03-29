@@ -1,10 +1,10 @@
 define([
   'helpers',
-  'features/dashboard/sharePanelCtrl'
+  'features/dashboard/shareModalCtrl'
 ], function(helpers) {
   'use strict';
 
-  describe('SharePanelCtrl', function() {
+  describe('ShareModalCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
 
     function setTime(range) {
@@ -16,7 +16,7 @@ define([
     beforeEach(module('grafana.controllers'));
 
     beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('SharePanelCtrl'));
+    beforeEach(ctx.createControllerPhase('ShareModalCtrl'));
 
     describe('shareUrl with current time range and panel', function() {
 
@@ -26,7 +26,7 @@ define([
 
         setTime({ from: 'now-1h', to: 'now' });
 
-        ctx.scope.buildUrl();
+        ctx.scope.init();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now&panelId=22&fullscreen');
       });
 
@@ -35,24 +35,23 @@ define([
         ctx.scope.panel = { id: 22 };
         setTime({ from: 1362178800000, to: 1396648800000 });
 
-        ctx.scope.buildUrl();
+        ctx.scope.init();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1362178800000&to=1396648800000&panelId=22&fullscreen');
       });
 
-      it('should remove panel id when toPanel is false', function() {
+      it('should remove panel id when no panel in scope', function() {
         ctx.$location.path('/test');
-        ctx.scope.panel = { id: 22 };
-        ctx.scope.options = { toPanel: false, forCurrent: true };
+        ctx.scope.options = { forCurrent: true };
+        ctx.scope.panel = null;
         setTime({ from: 'now-1h', to: 'now' });
 
-        ctx.scope.buildUrl();
+        ctx.scope.init();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now');
       });
 
       it('should include template variables in url', function() {
         ctx.$location.path('/test');
-        ctx.scope.panel = { id: 22 };
-        ctx.scope.options = { includeTemplateVars: true, toPanel: false, forCurrent: true };
+        ctx.scope.options = { includeTemplateVars: true, forCurrent: true };
 
         ctx.templateSrv.variables = [{ name: 'app', current: {text: 'mupp' }}, {name: 'server', current: {text: 'srv-01'}}];
         setTime({ from: 'now-1h', to: 'now' });

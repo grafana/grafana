@@ -78,6 +78,19 @@ function (angular, $, kbn, _, moment) {
       }
     };
 
+    p.getPanelById = function(id) {
+      for (var i = 0; i < this.rows.length; i++) {
+        var row = this.rows[i];
+        for (var j = 0; j < row.panels.length; j++) {
+          var panel = row.panels[j];
+          if (panel.id === id) {
+            return panel;
+          }
+        }
+      }
+      return null;
+    };
+
     p.rowSpan = function(row) {
       return _.reduce(row.panels, function(p,v) {
         return p + v.span;
