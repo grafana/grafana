@@ -8,11 +8,11 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'src/test/test-main.js',
-      {pattern: 'src/app/**/*.js', included: false},
-      {pattern: 'src/vendor/**/*.js', included: false},
-      {pattern: 'src/test/**/*.js', included: false},
-      {pattern: 'src/**/*.js', included: false}
+      'public/test/test-main.js',
+      {pattern: 'public/app/**/*.js', included: false},
+      {pattern: 'public/vendor/**/*.js', included: false},
+      {pattern: 'public/test/**/*.js', included: false},
+      {pattern: 'public/**/*.js', included: false}
     ],
 
     // list of files to exclude

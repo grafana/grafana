@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: 'http://localhost:9876/base/src/app',
+  baseUrl: 'http://localhost:9876/base/public/app',
 
   paths: {
     specs:                 '../test/specs',
