@@ -134,6 +134,6 @@ There are currently no permissions on individual dashboards.
 ## Panel IFrame embedding
 
 You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
-with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](snapshot.raintank.io).
+with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
 
 <iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
