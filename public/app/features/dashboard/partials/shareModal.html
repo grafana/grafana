@@ -1,4 +1,4 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl">
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl" ng-init="init()">
 	<div class="gf-box-header">
 		<div class="gf-box-title">
 			<i class="fa fa-share"></i>
@@ -59,7 +59,7 @@
 				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
 			</span>
 		</div>
-		<div class="editor-row" style="margin-top: 5px;" ng-show="options.toPanel">
+		<div class="editor-row" style="margin-top: 5px;" ng-show="modeSharePanel">
 			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
 		</div>
 	</div>

@@ -44,6 +44,7 @@ define([
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.dashboard = {};
+        self.scope.dashboardMeta = {};
         self.scope.dashboardViewState = new DashboardViewStateStub();
         self.scope.appEvent = sinon.spy();
         self.scope.onAppEvent = sinon.spy();

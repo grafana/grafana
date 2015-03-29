@@ -44,34 +44,12 @@ function (angular, _) {
 
       $timeout(function() {
         $scope.saveSnapshot(external);
-      }, 3000);
+      }, 4000);
     };
 
     $scope.saveSnapshot = function(external) {
       var dash = angular.copy($scope.dashboard);
-      // change title
-      dash.title = $scope.snapshot.name;
-      // make relative times absolute
-      dash.time = timeSrv.timeRange();
-      // remove panel queries & links
-      dash.forEachPanel(function(panel) {
-        panel.targets = [];
-        panel.links = [];
-      });
-      // remove annotations
-      dash.annotations.list = [];
-      // remove template queries
-      _.each(dash.templating.list, function(variable) {
-        variable.query = "";
-        variable.options = [];
-        variable.refresh = false;
-      });
-
-      // cleanup snapshotData
-      delete $scope.dashboard.snapshot;
-      $scope.dashboard.forEachPanel(function(panel) {
-        delete panel.snapshotData;
-      });
+      $scope.scrubDashboard(dash);
 
       var cmdData = {
         dashboard: dash,
@@ -96,6 +74,38 @@ function (angular, _) {
         $scope.step = 2;
       }, function() {
         $scope.loading = false;
+      });
+    };
+
+    $scope.scrubDashboard = function(dash) {
+      // change title
+      dash.title = $scope.snapshot.name;
+      // make relative times absolute
+      dash.time = timeSrv.timeRange();
+      // remove panel queries & links
+      dash.forEachPanel(function(panel) {
+        panel.targets = [];
+        panel.links = [];
+      });
+      // remove annotations
+      dash.annotations.list = [];
+      // remove template queries
+      _.each(dash.templating.list, function(variable) {
+        variable.query = "";
+        variable.options = [];
+        variable.refresh = false;
+      });
+
+      // snapshot single panel
+      if ($scope.modeSharePanel) {
+        var singlePanel = dash.getPanelById($scope.panel.id);
+        dash.rows = [{ height: '500px', span: 12, panels: [singlePanel] }];
+      }
+
+      // cleanup snapshotData
+      delete $scope.dashboard.snapshot;
+      $scope.dashboard.forEachPanel(function(panel) {
+        delete panel.snapshotData;
       });
     };
 
