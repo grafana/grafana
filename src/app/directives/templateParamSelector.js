@@ -14,7 +14,7 @@ function (angular, app, _, $) {
                             ' class="tight-form-clear-input input-medium"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="tight-form-item tabindex="1">{{variable.current.text}}</a>';
+      var buttonTemplate = '<a  class="tight-form-item tabindex="1">{{variable.current.text}} <i class="fa fa-caret-down"></i></a>';
 
       return {
         link: function($scope, elem) {

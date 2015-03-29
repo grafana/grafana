@@ -1,12 +1,10 @@
-/**
- * Bootstrap require with the needed config, then load the app.js module.
- */
+
 require.config({
-  baseUrl: 'app',
   urlArgs: 'bust=' + (new Date().getTime()),
+  baseUrl: 'public/app',
 
   paths: {
-    config:                   ['../config', '../config.sample'],
+    config:                   'components/config',
     settings:                 'components/settings',
     kbn:                      'components/kbn',
     store:                    'components/store',
@@ -15,6 +13,7 @@ require.config({
     text:                     '../vendor/require/text',
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
+    ZeroClipboard:            '../vendor/ZeroClipboard',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular/angular-route',
     'angular-sanitize':       '../vendor/angular/angular-sanitize',
@@ -47,7 +46,6 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
-
   },
   shim: {
 
@@ -57,6 +55,10 @@ require.config({
 
     crypto: {
       exports: 'Crypto'
+    },
+
+    ZeroClipboard: {
+      exports: 'ZeroClipboard'
     },
 
     angular: {

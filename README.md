@@ -10,10 +10,69 @@ Graphite, InfluxDB & OpenTSDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
 
-## Grafana 2.0 News
-Grafana 2.0 with its new awesome backend written in Go is approaching beta.
-The code is available in the [develop](https://github.com/grafana/grafana/tree/develop) branch.
-[This blog post](http://grafana.org/blog/2015/02/10/Grafana-2-Alpha-and-preview.html) contains some news about it as well.
+# Grafana 2.0 Alpha branch [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana)
+
+Grafana 2.0 comes with a backend written in Go. It is not ready for production use yet as there is still a lot of small
+issues to fix and polish missing. But feedback on what is done and bug reports would be greatly appreciated.
+
+## Try it out with docker
+```
+docker run -i -p 3000:3000 grafana/grafana:develop
+```
+The default admin user is admin/admin.
+
+## building and running
+
+```
+go get github.com/grafana/grafana
+```
+The above will give an error saying there is no go code. That is because the new backend parts are in the develop branch.
+
+Building
+```
+cd $GOPATH/src/github.com/grafana/grafana
+git checkout -t origin/develop
+go run build.go setup            (only needed once to install godep)
+godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+go build .
+```
+
+To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+npm (v2.5.0) and grunt (v0.4.5). Run the following:
+
+```
+npm install
+npm install -g grunt-cli
+grunt
+```
+
+To rebuild on source change (requires that you executed godep restore)
+```
+go get github.com/Unknwon/bra
+bra run
+```
+
+Running
+```
+./bin/grafana web
+```
+Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+
+### Config
+Create a grafana.custom.ini in the conf directory to override default configuration options.
+You only need to add the options you want to override. Config files are applied in the order of:
+
+1. grafana.ini
+2. grafana.dev.ini (if found)
+3. grafana.custom.ini
+
+### Docs
+There is no docs for the configuration and new UI views, or the account / user model yet. But a quick note
+is that Grafana 2.0 has a multi tenant account & user model where Dashboards, data sources, api keys, etc are
+tied to an account and not to a specific user. Users are coupled to accounts via an account user role (Admin, Editor, Viewer).
+The default configuration is set to a single account mode to make this user & account model easier to handle in a single account setup.
+User sign ups are automatically added to a main account with the Editor role (this can be overriden in the config file). The default
+grafana admin user that is created on first startup also creates the main account.
 
 
 ## Features
@@ -89,4 +148,7 @@ Before creating a pull request be sure that "grunt test" runs without any style 
 please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
 
 ## License
+
 Grafana is distributed under Apache 2.0 License.
+Work in progress Grafana 2.0 (with included Grafana backend)
+

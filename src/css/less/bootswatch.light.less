@@ -70,6 +70,7 @@ a.text-success:hover { color: darken(@green, 10%); }
 	.nav > .active > a:hover,
 	.nav > .active > a:focus {
 		.box-shadow(none);
+    border-bottom: 1px solid @blue;
 		background-color: @navbarLinkBackgroundHover;
 	}
 
@@ -309,7 +310,7 @@ div.subnav {
 	background-image: none;
 	.box-shadow(none);
 	border: none;
-	.border-radius(0);
+	.border-radius(3px);
 	text-shadow: none;
 
 	&.disabled {
@@ -317,8 +318,11 @@ div.subnav {
 	}
 }
 
+.btn-inverse {
+}
+
 .btn-large {
-	padding: 22px 30px;
+  padding: 14px 23px;
 }
 
 .btn-small {

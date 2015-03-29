@@ -1,19 +1,23 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  'require',
+  'config',
 ],
-function (angular, _) {
+function (angular, _, require, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('SharePanelCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
-      $scope.forCurrent = true;
-      $scope.toPanel = true;
-      $scope.includeTemplateVars = true;
+      $scope.options = {
+        forCurrent: true,
+        toPanel: $scope.panel ? true : false,
+        includeTemplateVars: true
+      };
 
       $scope.buildUrl();
     };
@@ -26,14 +30,13 @@ function (angular, _) {
         baseUrl = baseUrl.substring(0, queryStart);
       }
 
-      var panelId = $scope.panel.id;
       var params = angular.copy($location.search());
 
       var range = timeSrv.timeRangeForUrl();
       params.from = range.from;
       params.to = range.to;
 
-      if ($scope.includeTemplateVars) {
+      if ($scope.options.includeTemplateVars) {
         _.each(templateSrv.variables, function(variable) {
           params['var-' + variable.name] = variable.current.text;
         });
@@ -44,13 +47,13 @@ function (angular, _) {
         });
       }
 
-      if (!$scope.forCurrent) {
+      if (!$scope.options.forCurrent) {
         delete params.from;
         delete params.to;
       }
 
-      if ($scope.toPanel) {
-        params.panelId = panelId;
+      if ($scope.options.toPanel) {
+        params.panelId = $scope.panel.id;
         params.fullscreen = true;
       } else {
         delete params.panelId;
@@ -68,18 +71,33 @@ function (angular, _) {
         }
       });
 
-      $scope.shareUrl = baseUrl + "?" + paramsArray.join('&') ;
+      var queryParams = "?" + paramsArray.join('&');
+      $scope.shareUrl = baseUrl + queryParams;
 
-      $timeout(function() {
-        var input = $element.find('[data-share-panel-url]');
-        input.focus();
-        input.select();
-      }, 10);
+      var soloUrl = $scope.shareUrl;
+      soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
+      soloUrl = soloUrl.replace('/dashboard/snapshot/', '/dashboard/solo/snapshot/');
 
+      $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+
+      $scope.imageUrl = soloUrl.replace('/dashboard/', '/render/dashboard/');
+      $scope.imageUrl += '&width=1000';
+      $scope.imageUrl += '&height=500';
     };
 
     $scope.init();
 
+  });
+
+  module.directive('clipboardButton',function() {
+    return function(scope, elem) {
+      require(['ZeroClipboard'], function(ZeroClipboard) {
+        ZeroClipboard.config({
+          swfPath: config.appSubUrl + '/public/vendor/ZeroClipboard.swf'
+        });
+        new ZeroClipboard(elem[0]);
+      });
+    };
   });
 
 });

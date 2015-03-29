@@ -1,6 +1,6 @@
+@import "login.less";
 @import "submenu.less";
 @import "graph.less";
-@import "console.less";
 @import "bootstrap-tagsinput.less";
 @import "tables_lists.less";
 @import "search.less";
@@ -8,6 +8,13 @@
 @import "forms.less";
 @import "singlestat.less";
 @import "tightform.less";
+@import "sidemenu.less";
+@import "navbar.less";
+@import "gfbox.less";
+@import "dashlist.less";
+@import "admin.less";
+@import "validation.less";
+@import "fonts.less";
 
 .row-control-inner {
   padding:0px;
@@ -20,9 +27,6 @@
   .row-tab {
     display: none;
   }
-  .submenu-controls {
-    display: none;
-  }
   .add-row-panel-hint {
     display: none;
   }
@@ -30,31 +34,16 @@
 
 .playlist-active {
   .grafana-menu-zoom-out,
-  .grafana-menu-save,
-  .grafana-menu-load,
   .add-row-panel-hint,
-  .grafana-menu-home,
   .grafana-menu-refresh,
-  .grafana-menu-edit {
-    display: none;
+  .top-nav-dashboards-btn,
+  .top-nav-dash-actions {
+    display:none;
   }
 
   .grafana-menu-stop-playlist {
     display: list-item;
   }
-}
-
-.logo-icon {
-  width: 24px;
-  padding: 13px 11px 0 0;
-  display: block;
-  float: left;
-}
-
-.page-title {
- padding: 15px 0;
- display: block;
- float: left;
 }
 
 .row-button {
@@ -67,31 +56,14 @@
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  top: 30%;
-}
-
-.grafana-search-metric-actions {
-  visibility: hidden;
-  padding-left: 20px;
-}
-
-.grafana-search-metric-name {
-  white-space: nowrap;
-}
-
-.grafana-search-metric-result:hover {
-  .grafana-search-metric-actions {
-    visibility: visible;
-  }
-  .grafana-search-metric-name {
-    color: @blue;
-  }
+  top: 20%;
 }
 
 .dashboard-fullscreen {
   .main-view-container {
     overflow: hidden;
     height: 0;
+    padding: 0;
     .row-control-inner {
       display: none;
     }
@@ -243,46 +215,6 @@
   max-width: 400px;
 }
 
-.dashboard-edit-view {
-  padding: 20px;
-  background-color: @grafanaPanelBackground;
-  position: relative;
-}
-
-.dashboard-editor-body {
-  padding: 20px 10px;
-  min-height: 100px;
-}
-
-.dashboard-editor-footer {
-  overflow: hidden;
-}
-
-.dashboard-editor-header {
-  overflow: hidden;
-  .tabs {
-    float: left;
-  }
-  .nav {
-    margin: 0;
-  }
-}
-
-.dashboard-editor-title {
-  border-bottom: 1px solid @fullEditBorder;
-  padding-right: 20px;
-  float: left;
-  color: @linkColor;
-  font-size: 20px;
-  font-weight: normal;
-  line-height: 38px;
-  margin: 0;
-  .fa {
-    padding: 0 8px 0 5px;
-    color: @textColor;
-  }
-}
-
 .grafana-version-info {
   position: absolute;
   bottom: 2px;
@@ -327,5 +259,75 @@
 }
 
 .confirm-modal {
+  border: 1px solid @grafanaTargetFuncBackground;
   max-width: 500px;
+  background-color: @grafanaPanelBackground;
+  text-align: center;
+
+  .modal-close {
+    float: right;
+    font-size: 140%;
+    padding: 10px;
+  }
+
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: @green;
+    padding-bottom: 20px;
+  }
+
+  .confirm-modal-title {
+    font-size: 18px;
+    color: @linkColor;
+    margin-bottom: 15px;
+  }
+
+  .confirm-modal-text {
+    font-size: 16px;
+  }
+
+  .confirm-modal-buttons {
+    margin-top: 35px;
+    margin-bottom: 35px;
+    button {
+      margin-right: 5px
+    }
+  }
+}
+
+.share-snapshot {
+  text-align: center;
+
+  .gf-icon-snap-multi {
+    font-size: 70px;
+  }
+
+  .fa-spinner {
+    font-size: 70px;
+  }
+
+  .share-snapshot-info-text {
+    margin: 10px 105px;
+    strong {
+      color: @headingsColor;
+      font-weight: bold;
+    }
+  }
+
+  .share-snapshot-header {
+    margin: 20px 0 22px 0;
+  }
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-snapshot-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+  }
 }

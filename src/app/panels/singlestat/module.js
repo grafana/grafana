@@ -13,10 +13,18 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
   var module = angular.module('grafana.panels.singlestat');
   app.useModule(module);
 
-  module.controller('SingleStatCtrl', function($scope, panelSrv, timeSrv) {
+  module.directive('grafanaPanelSinglestat', function() {
+    return {
+      controller: 'SingleStatCtrl',
+      templateUrl: 'app/panels/singlestat/module.html',
+    };
+  });
+
+  module.controller('SingleStatCtrl', function($scope, panelSrv, panelHelper) {
 
     $scope.panelMeta = new PanelMeta({
-      description: 'Singlestat panel',
+      panelName: 'Singlestat',
+      editIcon:  "fa fa-dashboard",
       fullscreen: true,
       metricsEditor: true
     });
@@ -24,6 +32,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
     $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     // Set and populate defaults
     var _d = {
@@ -66,40 +75,25 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
-      $scope.$on('refresh', $scope.get_data);
     };
 
-    $scope.updateTimeRange = function () {
-      $scope.range = timeSrv.timeRange();
-      $scope.rangeUnparsed = timeSrv.timeRange(false);
-      $scope.resolution = $scope.panel.maxDataPoints;
-      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
-    };
+    $scope.refreshData = function(datasource) {
+      panelHelper.updateTimeRange($scope);
 
-    $scope.get_data = function() {
-      $scope.updateTimeRange();
-
-      var metricsQuery = {
-        range: $scope.rangeUnparsed,
-        interval: $scope.interval,
-        targets: $scope.panel.targets,
-        maxDataPoints: $scope.resolution,
-        cacheTimeout: $scope.panel.cacheTimeout
-      };
-
-      return $scope.datasource.query(metricsQuery)
-        .then($scope.dataHandler)
-        .then(null, function(err) {
-          console.log("err");
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+      return panelHelper.issueMetricQuery($scope, datasource)
+        .then($scope.dataHandler, function(err) {
+          $scope.series = [];
           $scope.render();
+          throw err;
         });
     };
 
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.dataHandler(snapshotData);
+    };
+
     $scope.dataHandler = function(results) {
-      $scope.panelMeta.loading = false;
       $scope.series = _.map(results.data, $scope.seriesHandler);
       $scope.render();
     };
@@ -135,6 +129,9 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     };
 
     $scope.getDecimalsForValue = function(value) {
+      if ($scope.panel.decimals) {
+        return { decimals: $scope.panel.decimals, scaledDecimals: null };
+      }
 
       var delta = value / 2;
       var dec = -Math.floor(Math.log(delta) / Math.LN10);
@@ -192,7 +189,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       data.colorMap = $scope.panel.colors;
 
       $scope.data = data;
-      $scope.$emit('render');
+      $scope.$broadcast('render');
     };
 
     $scope.getFormatedValue = function(mainValue) {

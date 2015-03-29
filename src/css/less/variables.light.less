@@ -20,7 +20,8 @@
 
 // Accent colors
 // -------------------------
-@blue:                  #007FFF;
+@blueOrig:              #007FFF;
+@blue:             	   	#2AB2E4;
 @blueDark:              #75CAEB;
 @green:                 #28B62C;
 @red:                   #FF4136;
@@ -28,11 +29,13 @@
 @orange:                #FF7518;
 @pink:                  #E671B8;
 @purple:                #9954BB;
-@variable:              #32D1DF;
+@variable:              #2AB2E4;
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: @white;
+@grafanaPanelBackground: 	@white;
+@grafanaPanelBorder: 		  solid 1px #ddd;
+@grafanaTriggerBorder:		solid 1px @grayLighter;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -42,26 +45,28 @@
 @fullEditBorder:          @grayLighter;
 
 // Graphite Target Editor
-@grafanaTargetBorder:         @submenuBackground;
-@grafanaTargetBackground:     @white;
+@grafanaTargetBorder:         #ddd;
+@grafanaTargetBackground:     #efefef;
 @grafanaTargetColor:          @textColor;
 @grafanaTargetColorHide:      lighten(@textColor, 25%);
-@grafanaTargetSegmentBorder:  @submenuBackground;
+@grafanaTargetSegmentBorder:  #ddd;
 
 @grafanaTargetFuncBackground: darken(@grafanaTargetBackground, 5%);
 @grafanaTargetFuncHightlight: darken(@grafanaTargetBackground, 10%);
 
+@modalBackground: @bodyBackground;
+
 // Scaffolding
 // -------------------------
 @bodyBackground:        #EAEAEA;
-@textColor:             #666;
+@textColor:             @gray;
 
 
 // Links
 // -------------------------
-@linkColor:             darken(@textColor, 20%);
+@linkColor:             @gray;
 @linkColorDisabled:     lighten(@linkColor,30%);
-@linkColorHover:        @blue;
+@linkColorHover:        @grayDarker;
 
 
 // Typography
@@ -71,6 +76,7 @@
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
@@ -97,13 +103,13 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  transparent;
-@grafanaListAccent:         @grayLighter;
-@grafanaListBorderTop:      #eee;
-@grafanaListBorderBottom:   #efefef;
-@grafanaListHighlight:      @blue;
+@grafanaListBackground:  	     darken(@grayLighter,5%);
+@grafanaListAccent:            darken(@grayLighter,8%);
+@grafanaListBorderTop:         #eee;
+@grafanaListBorderBottom:      #eee;
+@grafanaListHighlight:         darken(@grayLighter,10%);
 @grafanaListHighlightContrast: #ddd;
-@grafanaListMainLinkColor: @textColor;
+@grafanaListMainLinkColor:     @textColor;
 
 
 // Tables
@@ -139,8 +145,13 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              lighten(@black, 5%);
-@btnInverseBackgroundHighlight:     darken(@black, 5%);
+@btnInverseBackground:              @gray;
+@btnInverseBackgroundHighlight:     darken(@gray, 10%);
+
+@iconContainerBackground:			      @white;
+@iconContainerBackgroundHighlight:	lighten(@white, 5%);
+@iconContainerBorder:				        1px solid rgba(0,0,0, 0.05);
+@iconContainerShadow:				        0 0 14px 2px rgba(0,0,0, 0.05);
 
 
 // Forms
@@ -216,14 +227,14 @@
 @navbarCollapseWidth:             979px;
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
-@navbarHeight:                    50px;
+@navbarHeight:                    52px;
 @navbarBackgroundHighlight:       #f8f8f8;
 @navbarBackground:                #f8f8f8;
-@navbarBorder:                    darken(@navbarBackground, 6.5%);
+@navbarBorder:                    none;
 
 @navbarText:                      #666;
 @navbarLinkColor:                 #666;
-@navbarLinkColorHover:            @blue;
+@navbarLinkColorHover:            #333;
 @navbarLinkColorActive:           #555;
 @navbarLinkBackgroundHover:       transparent;
 @navbarLinkBackgroundActive:      darken(@navbarBackground, 6.5%);
@@ -286,7 +297,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       #000;
+@tooltipBackground:       #333;
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        darken(@white,11%);

@@ -8,15 +8,24 @@ define([
 function (angular, app, _, require, PanelMeta) {
   'use strict';
 
+  var converter;
+
   var module = angular.module('grafana.panels.text', []);
   app.useModule(module);
 
-  var converter;
+  module.directive('grafanaPanelText', function() {
+    return {
+      controller: 'TextPanelCtrl',
+      templateUrl: 'app/panels/text/module.html',
+    };
+  });
 
-  module.controller('text', function($scope, templateSrv, $sce, panelSrv) {
+  module.controller('TextPanelCtrl', function($scope, templateSrv, $sce, panelSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      description : "A static text panel that can use plain text, markdown, or (sanitized) HTML"
+      panelName: 'Text',
+      editIcon:  "fa fa-text-width",
+      fullscreen: true,
     });
 
     $scope.panelMeta.addEditorTab('Edit text', 'app/panels/text/editor.html');
@@ -34,7 +43,11 @@ function (angular, app, _, require, PanelMeta) {
     $scope.init = function() {
       panelSrv.init($scope);
       $scope.ready = false;
-      $scope.$on('refresh', $scope.render);
+      $scope.render();
+    };
+
+    $scope.refreshData = function() {
+      $scope.panelMeta.loading = false;
       $scope.render();
     };
 

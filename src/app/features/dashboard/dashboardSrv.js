@@ -10,12 +10,16 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function($rootScope)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data) {
 
       if (!data) {
         data = {};
+      }
+
+      if (!data.id && data.version) {
+        data.schemaVersion = data.version;
       }
 
       this.id = data.id || null;
@@ -33,8 +37,9 @@ function (angular, $, kbn, _, moment) {
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
+      this.snapshot = data.snapshot;
+      this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
-      this.hideAllLegends = data.hideAllLegends || false;
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -63,6 +68,16 @@ function (angular, $, kbn, _, moment) {
       return max + 1;
     };
 
+    p.forEachPanel = function(callback) {
+      var i, j, row;
+      for (i = 0; i < this.rows.length; i++) {
+        row = this.rows[i];
+        for (j = 0; j < row.panels.length; j++) {
+          callback(row.panels[j], row);
+        }
+      }
+    };
+
     p.rowSpan = function(row) {
       return _.reduce(row.panels, function(p,v) {
         return p + v.span;
@@ -89,6 +104,10 @@ function (angular, $, kbn, _, moment) {
       }
 
       row.panels.push(panel);
+    };
+
+    p.hasTemplateVarsOrAnnotations = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
@@ -128,15 +147,11 @@ function (angular, $, kbn, _, moment) {
               moment.utc(date).format(format);
     };
 
-    p.emit_refresh = function() {
-      $rootScope.$broadcast('refresh');
-    };
-
     p._updateSchema = function(old) {
       var i, j, k;
-      var oldVersion = this.version;
+      var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.version = 6;
+      this.schemaVersion = 6;
 
       if (oldVersion === 6) {
         return;
@@ -215,15 +230,11 @@ function (angular, $, kbn, _, moment) {
 
       if (oldVersion < 6) {
         // move pulldowns to new schema
-        var filtering = _.findWhere(old.pulldowns, { type: 'filtering' });
         var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
-        if (filtering) {
-          this.templating.enable = filtering.enable;
-        }
+
         if (annotations) {
           this.annotations = {
-            list: annotations.annotations,
-            enable: annotations.enable
+            list: annotations.annotations || [],
           };
         }
 

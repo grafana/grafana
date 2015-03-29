@@ -157,13 +157,11 @@ define([
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.templating.enable).to.be(true);
-      expect(model.annotations.enable).to.be(true);
       expect(model.annotations.list[0].name).to.be('old');
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.version).to.be(6);
+      expect(model.schemaVersion).to.be(6);
     });
 
   });

@@ -8,8 +8,10 @@ module.exports = function (grunt) {
     srcDir: 'src',
     destDir: 'dist',
     tempDir: 'tmp',
-    docsDir: 'docs/'
+    arch: grunt.option('arch') || 'x86_64',
   };
+
+  config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
   // load plugins
   require('load-grunt-tasks')(grunt);
@@ -34,5 +36,4 @@ module.exports = function (grunt) {
 
   // pass the config to grunt
   grunt.initConfig(config);
-
 };

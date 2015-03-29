@@ -1,0 +1,4 @@
+graphite:
+  build: blocks/graphite
+  ports:
+    - "8776:80"

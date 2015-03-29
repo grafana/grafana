@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $routeParams, templateSrv, timeSrv) {
+  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
 
     $rootScope.onAppEvent('time-range-changed', function()  {
@@ -18,27 +18,34 @@ function (angular, _, kbn) {
       }
     });
 
-    this.init = function(dashboard, viewstate) {
+    this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
-      this.viewstate = viewstate;
       templateSrv.init(this.variables);
+
+      var queryParams = $location.search();
+      var promises = [];
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
-        var urlValue = viewstate.state['var-' + variable.name];
+        var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
           var option = _.findWhere(variable.options, { text: urlValue });
           option = option || { text: urlValue, value: urlValue };
-          this.setVariableValue(variable, option, true);
+
+          var promise = this.setVariableValue(variable, option, true);
           this.updateAutoInterval(variable);
+
+          promises.push(promise);
         }
         else if (variable.refresh) {
-          this.updateOptions(variable);
+          promises.push(this.updateOptions(variable));
         }
         else if (variable.type === 'interval') {
           this.updateAutoInterval(variable);
         }
       }
+
+      return $q.all(promises);
     };
 
     this.updateAutoInterval = function(variable) {
@@ -97,9 +104,8 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      var datasource = datasourceSrv.get(variable.datasource);
-      return datasource.metricFindQuery(variable.query)
-        .then(function (results) {
+      return datasourceSrv.get(variable.datasource).then(function(datasource) {
+        return datasource.metricFindQuery(variable.query).then(function (results) {
           variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
@@ -117,6 +123,7 @@ function (angular, _, kbn) {
 
           return self.setVariableValue(variable, variable.options[0], true);
         });
+      });
     };
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
@@ -149,19 +156,19 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-      case 'wildcard':
-        allValue = '*';
-        break;
-      case 'regex wildcard':
-        allValue = '.*';
-        break;
-      case 'regex values':
-        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
-        break;
-      default:
-        allValue = '{';
-        allValue += _.pluck(variable.options, 'text').join(',');
-        allValue += '}';
+        case 'wildcard':
+          allValue = '*';
+          break;
+        case 'regex wildcard':
+          allValue = '.*';
+          break;
+        case 'regex values':
+          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+          break;
+        default:
+          allValue = '{';
+          allValue += _.pluck(variable.options, 'text').join(',');
+          allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});

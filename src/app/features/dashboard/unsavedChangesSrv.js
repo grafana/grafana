@@ -60,6 +60,7 @@ function(angular, _, config) {
     this.open_modal = function() {
       var confirmModal = $modal({
         template: './app/partials/unsaved-changes.html',
+        modalClass: 'confirm-modal',
         persist: true,
         show: false,
         scope: modalScope,
@@ -82,13 +83,18 @@ function(angular, _, config) {
       // ignore timespan changes
       current.time = original.time = {};
       current.refresh = original.refresh;
+      // ignore version
+      current.version = original.version;
 
       // ignore template variable values
       _.each(current.templating.list, function(value, index) {
         value.current = null;
         value.options = null;
-        original.templating.list[index].current = null;
-        original.templating.list[index].options = null;
+
+        if (original.templating.list.length > index) {
+          original.templating.list[index].current = null;
+          original.templating.list[index].options = null;
+        }
       });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });

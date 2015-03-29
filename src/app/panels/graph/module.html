@@ -1,11 +1,11 @@
-<div ng-controller='GraphCtrl'>
+<grafana-panel>
 
 	<div class="graph-wrapper" ng-class="{'graph-legend-rightside': panel.legend.rightSide}">
 		<div class="graph-canvas-wrapper">
 
-			<span class="graph-time-info" ng-if="panelMeta.timeInfo">
-				<i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}
-		  </span>
+			<!-- <span class="graph&#45;time&#45;info" ng&#45;if="panelMeta.timeInfo"> -->
+			<!-- 	<i class="fa fa&#45;clock&#45;o"></i> {{panelMeta.timeInfo}} -->
+		  <!-- </span> -->
 
 			<div ng-if="datapointsWarning" class="datapoints-warning">
 				<span class="small" ng-show="!datapointsCount">
@@ -24,23 +24,6 @@
 
 	<div class="clearfix"></div>
 
-	<div style="margin-top: 30px" ng-if="editMode">
-		<div class="dashboard-editor-header">
-			<div class="dashboard-editor-title">
-				<i class="fa fa-bar-chart"></i>
-				Graph
-			</div>
+</grafana-panel>
 
-			<div ng-model="editor.index" bs-tabs>
-				<div ng-repeat="tab in panelMeta.editorTabs" data-title="{{tab.title}}">
-				</div>
-			</div>
-		</div>
 
-		<div class="dashboard-editor-body">
-			<div ng-repeat="tab in panelMeta.editorTabs" ng-if="editor.index === $index">
-				<div ng-include src="tab.src"></div>
-			</div>
-		</div>
-	</div>
-</div>

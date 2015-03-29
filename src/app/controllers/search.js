@@ -2,29 +2,24 @@ define([
   'angular',
   'lodash',
   'config',
-  'jquery'
 ],
-function (angular, _, config, $) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $rootScope, $element, $location, datasourceSrv, $timeout) {
+  module.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = {dashboards: [], tags: [], metrics: []};
-      $scope.query = { query: 'title:' };
-      $scope.db = datasourceSrv.getGrafanaDB();
+      $scope.query = { query: '', tag: '', starred: false };
       $scope.currentSearchId = 0;
-
-      // events
-      $scope.onAppEvent('dashboard-deleted', $scope.dashboardDeleted);
 
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-        $scope.query.query = 'title:';
+        $scope.query.query = '';
         $scope.search();
       }, 100);
 
@@ -32,7 +27,7 @@ function (angular, _, config, $) {
 
     $scope.keyDown = function (evt) {
       if (evt.keyCode === 27) {
-        $scope.appEvent('hide-dash-editor');
+        $scope.dismiss();
       }
       if (evt.keyCode === 40) {
         $scope.moveSelection(1);
@@ -41,7 +36,7 @@ function (angular, _, config, $) {
         $scope.moveSelection(-1);
       }
       if (evt.keyCode === 13) {
-        if ($scope.tagsOnly) {
+        if ($scope.query.tagcloud) {
           var tag = $scope.results.tags[$scope.selectedIndex];
           if (tag) {
             $scope.filterByTag(tag.term);
@@ -52,10 +47,7 @@ function (angular, _, config, $) {
         var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
         if (selectedDash) {
           $location.search({});
-          $location.path("/dashboard/db/" + selectedDash.id);
-          setTimeout(function() {
-            $('body').click(); // hack to force dropdown to close;
-          });
+          $location.path(selectedDash.url);
         }
       }
     };
@@ -64,43 +56,34 @@ function (angular, _, config, $) {
       $scope.selectedIndex = Math.max(Math.min($scope.selectedIndex + direction, $scope.resultCount - 1), 0);
     };
 
-    $scope.goToDashboard = function(id) {
-      $location.search({});
-      $location.path("/dashboard/db/" + id);
-    };
+    $scope.searchDashboards = function() {
+      $scope.currentSearchId = $scope.currentSearchId + 1;
+      var localSearchId = $scope.currentSearchId;
 
-    $scope.shareDashboard = function(title, id, $event) {
-      $event.stopPropagation();
-      var baseUrl = window.location.href.replace(window.location.hash,'');
+      return backendSrv.search($scope.query).then(function(results) {
+        if (localSearchId < $scope.currentSearchId) { return; }
 
-      $scope.share = {
-        title: title,
-        url: baseUrl + '#dashboard/db/' + encodeURIComponent(id)
-      };
-    };
-
-    $scope.searchDashboards = function(queryString) {
-      // bookeeping for determining stale search requests
-      var searchId = $scope.currentSearchId + 1;
-      $scope.currentSearchId = searchId > $scope.currentSearchId ? searchId : $scope.currentSearchId;
-
-      return $scope.db.searchDashboards(queryString)
-        .then(function(results) {
-          // since searches are async, it's possible that these results are not for the latest search. throw
-          // them away if so
-          if (searchId < $scope.currentSearchId) {
-            return;
-          }
-
-          $scope.tagsOnly = results.tagsOnly;
-          $scope.results.dashboards = results.dashboards;
-          $scope.results.tags = results.tags;
-          $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+        $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
+        $scope.results.tags = results.tags;
+        $scope.results.dashboards = _.map(results.dashboards, function(dash) {
+          dash.url = 'dashboard/db/' + dash.slug;
+          return dash;
         });
+
+        if ($scope.queryHasNoFilters()) {
+          $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+        }
+      });
+    };
+
+    $scope.queryHasNoFilters = function() {
+      var query = $scope.query;
+      return query.query === '' && query.starred === false && query.tag === '';
     };
 
     $scope.filterByTag = function(tag, evt) {
-      $scope.query.query = "tags:" + tag + " AND title:";
+      $scope.query.tag = tag;
+      $scope.query.tagcloud = false;
       $scope.search();
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       if (evt) {
@@ -110,27 +93,21 @@ function (angular, _, config, $) {
     };
 
     $scope.showTags = function() {
-      $scope.tagsOnly = !$scope.tagsOnly;
-      $scope.query.query = $scope.tagsOnly ? "tags!:" : "";
+      $scope.query.tagcloud = !$scope.query.tagcloud;
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.selectedIndex = -1;
+      $scope.search();
+    };
+
+    $scope.showStarred = function() {
+      $scope.query.starred = !$scope.query.starred;
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       $scope.search();
     };
 
     $scope.search = function() {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
-      $scope.searchDashboards($scope.query.query);
-    };
-
-    $scope.deleteDashboard = function(dash, evt) {
-      evt.stopPropagation();
-      $scope.appEvent('delete-dashboard', { id: dash.id, title: dash.title });
-    };
-
-    $scope.dashboardDeleted = function(evt, id) {
-      var dash = _.findWhere($scope.results.dashboards, {id: id});
-      $scope.results.dashboards = _.without($scope.results.dashboards, dash);
+      $scope.searchDashboards();
     };
 
     $scope.addMetricToCurrentDashboard = function (metricId) {
@@ -139,13 +116,13 @@ function (angular, _, config, $) {
         height: '250px',
         editable: true,
         panels: [
-          {
-            type: 'graphite',
-            title: 'test',
-            span: 12,
-            targets: [{ target: metricId }]
-          }
-        ]
+      {
+        type: 'graphite',
+        title: 'test',
+        span: 12,
+        targets: [{ target: metricId }]
+      }
+      ]
       });
     };
 
@@ -154,7 +131,7 @@ function (angular, _, config, $) {
     };
 
     $scope.newDashboard = function() {
-      $location.url('/dashboard/file/empty.json');
+      $location.url('dashboard/new');
     };
 
   });
@@ -188,21 +165,22 @@ function (angular, _, config, $) {
       return hash;
     }
 
-    return function (scope, element) {
-      var name = _.isString(scope.tag) ? scope.tag : scope.tag.term;
-      var hash = djb2(name.toLowerCase());
-      var colors = [
-        "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
-        "#508642","#447EBC","#C15C17","#890F02","#757575",
-        "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
-        "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
-        "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
-        "#58140C","#052B51","#511749","#3F2B5B",
-      ];
-      var color = colors[Math.abs(hash % colors.length)];
-      element.css("background-color", color);
+    return {
+      scope: { tag: "=" },
+      link: function (scope, element) {
+        var name = scope.tag;
+        var hash = djb2(name.toLowerCase());
+        var colors = [
+          "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
+          "#508642","#447EBC","#C15C17","#890F02","#757575",
+          "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
+          "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
+          "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
+          "#58140C","#052B51","#511749","#3F2B5B",
+        ];
+        var color = colors[Math.abs(hash % colors.length)];
+        element.css("background-color", color);
+      }
     };
-
   });
-
 });

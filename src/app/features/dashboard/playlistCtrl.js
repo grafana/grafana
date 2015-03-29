@@ -8,29 +8,46 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PlaylistCtrl', function($scope, playlistSrv) {
+  module.controller('PlaylistCtrl', function($scope, playlistSrv, backendSrv) {
 
     $scope.init = function() {
+      $scope.playlist = [];
       $scope.timespan = config.playlist_timespan;
-      $scope.loadFavorites();
+      $scope.search();
     };
 
-    $scope.loadFavorites = function() {
-      $scope.favDashboards = playlistSrv.getFavorites().dashboards;
+    $scope.search = function() {
+      var query = {starred: true, limit: 10};
 
-      _.each($scope.favDashboards, function(dashboard) {
-        dashboard.include = true;
+      if ($scope.searchQuery) {
+        query.query = $scope.searchQuery;
+        query.starred = false;
+      }
+
+      backendSrv.search(query).then(function(results) {
+        $scope.searchHits = results.dashboards;
+        $scope.filterHits();
       });
     };
 
-    $scope.removeAsFavorite = function(dashboard) {
-      playlistSrv.removeAsFavorite(dashboard);
-      $scope.loadFavorites();
+    $scope.filterHits = function() {
+      $scope.filteredHits = _.reject($scope.searchHits, function(dash) {
+        return _.findWhere($scope.playlist, {slug: dash.slug});
+      });
+    };
+
+    $scope.addDashboard = function(dashboard) {
+      $scope.playlist.push(dashboard);
+      $scope.filterHits();
+    };
+
+    $scope.removeDashboard = function(dashboard) {
+      $scope.playlist = _.without($scope.playlist, dashboard);
+      $scope.filterHits();
     };
 
     $scope.start = function() {
-      var included = _.where($scope.favDashboards, { include: true });
-      playlistSrv.start(included, $scope.timespan);
+      playlistSrv.start($scope.playlist, $scope.timespan);
     };
 
   });

@@ -21,7 +21,7 @@ function (angular, kbn) {
         else {
           info.title = templateSrv.replace(link.title || '');
           var slug = kbn.slugifyForUrl(link.dashboard || '');
-          info.href = '#dashboard/db/' + slug + '?';
+          info.href = 'dashboard/db/' + slug + '?';
         }
 
         var range = timeSrv.timeRangeForUrl();

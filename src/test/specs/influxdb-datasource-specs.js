@@ -1,6 +1,6 @@
 define([
   'helpers',
-  'features/influxdb/datasource'
+  'plugins/datasource/influxdb_08/datasource'
 ], function(helpers) {
   'use strict';
 
@@ -9,9 +9,9 @@ define([
 
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase(['templateSrv']));
-    beforeEach(ctx.createService('InfluxDatasource'));
+    beforeEach(ctx.createService('InfluxDatasource_08'));
     beforeEach(function() {
-      ctx.ds = new ctx.service({ urls: [''], user: 'test', password: 'mupp' });
+      ctx.ds = new ctx.service({ url: '', user: 'test', password: 'mupp' });
     });
 
     describe('When querying influxdb with one target using query editor target spec', function() {

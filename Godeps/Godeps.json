@@ -1,0 +1,79 @@
+{
+	"ImportPath": "github.com/torkelo/grafana-pro",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./pkg/..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/Unknwon/com",
+			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
+		},
+		{
+			"ImportPath": "github.com/Unknwon/macaron",
+			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-38-g9908e96",
+			"Rev": "9908e96513e5a94de37004098a3974a567f18111"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-26-g9543750",
+			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
+		},
+		{
+			"ImportPath": "github.com/go-xorm/core",
+			"Rev": "be6e7ac47dc57bd0ada25322fa526944f66ccaa6"
+		},
+		{
+			"ImportPath": "github.com/go-xorm/xorm",
+			"Comment": "v0.4.2-58-ge2889e5",
+			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
+		},
+		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-13-g19eeca3",
+			"Rev": "19eeca3e30d2577b1761db471ec130810e67f532"
+		},
+		{
+			"ImportPath": "github.com/macaron-contrib/binding",
+			"Rev": "0fbe4b9707e6eb556ef843e5471592f55ce0a5e7"
+		},
+		{
+			"ImportPath": "github.com/macaron-contrib/session",
+			"Rev": "65b8817c40cb5bdce08673a15fd2a648c2ba0e16"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-356-gfbc0a1c",
+			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
+		},
+		{
+			"ImportPath": "github.com/streadway/amqp",
+			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "972f0c5fbe4ae29e666c3f78c3ed42ae7a448b0a"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
+		},
+		{
+			"ImportPath": "gopkg.in/ini.v1",
+			"Comment": "v0-16-g1772191",
+			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		}
+	]
+}

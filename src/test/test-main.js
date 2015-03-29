@@ -5,7 +5,7 @@ require.config({
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
     helpers:               '../test/specs/helpers',
-    config:                ['../config', '../config.sample'],
+    config:                'components/config',
     kbn:                   'components/kbn',
     store:                 'components/store',
 
@@ -109,10 +109,12 @@ require([
     }
   }
 
+
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
   angular.module('grafana.panels', []);
   angular.module('grafana.filters', []);
+  angular.module('grafana.routes', ['ngRoute']);
 
   var specs = [
     'specs/lexer-specs',
@@ -124,6 +126,7 @@ require([
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
     'specs/influxQueryBuilder-specs',
+    'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
@@ -135,7 +138,8 @@ require([
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
-    'specs/dashboardViewStateSrv-specs'
+    'specs/dashboardViewStateSrv-specs',
+    'specs/soloPanelCtrl-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

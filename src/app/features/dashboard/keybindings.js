@@ -34,13 +34,13 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+f', function() {
-        scope.appEvent('show-dash-editor', { src: 'app/partials/search.html' });
+        scope.appEvent('show-dash-search');
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+o', function() {
         var current = scope.dashboard.sharedCrosshair;
         scope.dashboard.sharedCrosshair = !current;
-        scope.dashboard.emit_refresh('refresh');
+        scope.broadcastRefresh();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+l', function() {
@@ -57,7 +57,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+r', function() {
-        scope.dashboard.emit_refresh();
+        scope.broadcastRefresh();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+z', function(evt) {

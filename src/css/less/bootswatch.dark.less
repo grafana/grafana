@@ -26,11 +26,11 @@ blockquote {
 // -----------------------------------------------------
 
 html {
-	min-height: 100%;
+	height: 100%;
 }
 
 body {
-	min-height: 100%;
+	height: 100%;
 	//#gradient > .vertical (@bodyBackground, #252A30);
 	//background: @bodyBackground;
 	background: @bodyBackground;
@@ -212,7 +212,7 @@ div.subnav {
 
 .nav-tabs {
 
-	border-bottom: 1px solid @fullEditBorder;
+	border-bottom: none;
 
 	& > li > a {
 		.border-radius(0);
@@ -361,9 +361,9 @@ div.subnav {
 .btn {
 	padding: 5px 12px;
 	background-image: none;
-	.box-shadow(none);
+	.box-shadow(0px 0px 8px @bodyBackground);
 	border: none;
-	.border-radius(2px);
+	.border-radius(3px);
 	text-shadow: none;
 
 	&.disabled {
@@ -371,8 +371,12 @@ div.subnav {
 	}
 }
 
+.btn-inverse {
+  border: 1px solid #444;
+}
+
 .btn-large {
-	padding: 22px 30px;
+  padding: 14px 23px;
 }
 
 .btn-small {
@@ -480,13 +484,13 @@ legend, label {
 .alert-error .alert-heading,
 .alert-info,
 .alert-info .alert-heading {
-  color: @grayLighter;
+  color: @white;
   text-shadow: none;
   border: none;
 }
 
 .label {
-	color: @grayLighter;
+	color: @white;
 }
 
 .badge {

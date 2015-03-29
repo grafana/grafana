@@ -9,7 +9,9 @@ RUN git reset --hard
 # Then copy the desired docs into the /docs/sources/ dir
 COPY ./sources/ /docs/sources
 
-COPY ./VERSION VERSION
+COPY ./VERSION /docs/VERSION
+
+COPY ./changed-files /docs/changed-files
 
 # adding the image spec will require Docker 1.5 and `docker build -f docs/Dockerfile .`
 #COPY ./image/spec/v1.md /docs/sources/reference/image-spec-v1.md

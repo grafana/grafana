@@ -1,9 +1,10 @@
 define([
   'angular',
   'app',
-  'lodash'
+  'lodash',
+  'config'
 ],
-function (angular, app, _) {
+function (angular, app, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -37,19 +38,15 @@ function (angular, app, _) {
       }
     };
 
-    // This can be overridden by individual panels
-    $scope.close_edit = function() {
-      $scope.$broadcast('render');
-    };
-
     $scope.add_panel = function(panel) {
       $scope.dashboard.add_panel(panel, $scope.row);
     };
 
     $scope.delete_row = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Delete row',
-        text: 'Are you sure you want to delete this row?',
+        title: 'Are you sure you want to delete this row?',
+        icon: 'fa-trash',
+        yesText: 'delete',
         onConfirm: function() {
           $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
         }
@@ -79,14 +76,19 @@ function (angular, app, _) {
       $scope.$broadcast('render');
     };
 
-    $scope.remove_panel_from_row = function(row, panel) {
+    $scope.removePanel = function(panel) {
       $scope.appEvent('confirm-modal', {
-        title: 'Remove panel',
-        text: 'Are you sure you want to remove this panel?',
+        title: 'Are you sure you want to remove this panel?',
+        icon: 'fa-trash',
+        yesText: 'Delete',
         onConfirm: function() {
-          row.panels = _.without(row.panels, panel);
+          $scope.row.panels = _.without($scope.row.panels, panel);
         }
       });
+    };
+
+    $scope.updatePanelSpan = function(panel, span) {
+      panel.span = Math.min(Math.max(panel.span + span, 1), 12);
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {
@@ -107,11 +109,11 @@ function (angular, app, _) {
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
 
       $scope.panel = {
-        title: 'no title (click here)',
-        error   : false,
-        span    : _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+        title: config.new_panel_title,
+        error: false,
+        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: true,
-        type    : type
+        type: type
       };
 
       function fixRowHeight(height) {
@@ -141,9 +143,11 @@ function (angular, app, _) {
 
   module.directive('panelWidth', function() {
     return function(scope, element) {
-      scope.$watch('panel.span', function() {
+      function updateWidth() {
         element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
-      });
+      }
+
+      scope.$watch('panel.span', updateWidth);
     };
   });
 

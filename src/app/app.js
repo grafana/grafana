@@ -15,7 +15,7 @@ define([
   'extend-jquery',
   'bindonce',
 ],
-function (angular, $, _, appLevelRequire, config) {
+function (angular, $, _, appLevelRequire) {
 
   "use strict";
 
@@ -49,8 +49,7 @@ function (angular, $, _, appLevelRequire, config) {
     return module;
   };
 
-  app.config(function ($routeProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
-    $routeProvider.otherwise({ redirectTo: config.default_route });
+  app.config(function($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
     // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
@@ -85,12 +84,8 @@ function (angular, $, _, appLevelRequire, config) {
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/standalone/default',
+    'routes/all',
   ];
-
-  _.each(config.plugins.dependencies, function(dep) {
-    preBootRequires.push('../plugins/' + dep);
-  });
 
   app.boot = function() {
     require(preBootRequires, function () {

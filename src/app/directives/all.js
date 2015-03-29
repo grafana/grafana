@@ -1,7 +1,6 @@
 define([
   './arrayJoin',
   './dashUpload',
-  './grafanaPanel',
   './grafanaSimplePanel',
   './ngBlur',
   './dashEditLink',
@@ -16,4 +15,5 @@ define([
   './graphiteSegment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
+  './topnav',
 ], function () {});

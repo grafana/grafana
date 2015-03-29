@@ -8,89 +8,75 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, $http, $injector) {
-    var datasources = {};
-    var metricSources = [];
-    var annotationSources = [];
-    var grafanaDB = {};
+  module.service('datasourceSrv', function($q, $injector, $rootScope) {
+    var self = this;
 
-    this.init = function() {
+    this.init = function(dsSettingList) {
+      config.datasources = dsSettingList;
+
+      this.datasources = {};
+      this.metricSources = [];
+      this.annotationSources = [];
+
       _.each(config.datasources, function(value, key) {
-        var ds = this.datasourceFactory(value);
-        if (value.default) {
-          this.default = ds;
-          ds.default = true;
-        }
-        datasources[key] = ds;
-      }, this);
-
-      if (!this.default) {
-        this.default = datasources[_.keys(datasources)[0]];
-        this.default.default = true;
-      }
-
-      // create list of different source types
-      _.each(datasources, function(value, key) {
-        if (value.supportMetrics) {
-          metricSources.push({
-            name: value.name,
-            value: value.default ? null : key,
-            default: value.default,
+        if (value.meta && value.meta.metrics) {
+          self.metricSources.push({
+            value: key === config.defaultDatasource ? null : key,
+            name: key
           });
         }
-        if (value.supportAnnotations) {
-          annotationSources.push({
-            name: key,
-            editorSrc: value.annotationEditorSrc,
-          });
-        }
-        if (value.grafanaDB) {
-          grafanaDB = value;
+        if (value.meta && value.meta.annotations) {
+          self.annotationSources.push(value);
         }
       });
-
-    };
-
-    this.datasourceFactory = function(ds) {
-      var Datasource = null;
-      switch(ds.type) {
-      case 'graphite':
-        Datasource = $injector.get('GraphiteDatasource');
-        break;
-      case 'influxdb':
-        Datasource = $injector.get('InfluxDatasource');
-        break;
-      case 'opentsdb':
-        Datasource = $injector.get('OpenTSDBDatasource');
-        break;
-      case 'elasticsearch':
-        Datasource = $injector.get('ElasticDatasource');
-        break;
-      default:
-        Datasource = $injector.get(ds.type);
-      }
-      return new Datasource(ds);
     };
 
     this.get = function(name) {
-      if (!name) { return this.default; }
-      if (datasources[name]) { return datasources[name]; }
+      if (!name) {
+        return this.get(config.defaultDatasource);
+      }
 
-      return this.default;
+      if (this.datasources[name]) {
+        return $q.when(this.datasources[name]);
+      }
+
+      return this.loadDatasource(name);
+    };
+
+    this.loadDatasource = function(name) {
+      var dsConfig = config.datasources[name];
+      if (!dsConfig) {
+        return $q.reject({message: "Datasource named " + name + " was not found"});
+      }
+
+      var deferred = $q.defer();
+
+      var pluginDef = dsConfig.meta;
+
+      $rootScope.require([pluginDef.module], function() {
+        var AngularService = $injector.get(pluginDef.serviceName);
+        var instance = new AngularService(dsConfig, pluginDef);
+        instance.meta = pluginDef;
+        instance.name = name;
+        self.datasources[name] = instance;
+        deferred.resolve(instance);
+      });
+
+      return deferred.promise;
+    };
+
+    this.getAll = function() {
+      return config.datasources;
     };
 
     this.getAnnotationSources = function() {
-      return annotationSources;
+      return this.annotationSources;
     };
 
     this.getMetricSources = function() {
-      return metricSources;
+      return this.metricSources;
     };
 
-    this.getGrafanaDB = function() {
-      return grafanaDB;
-    };
-
-    this.init();
+    this.init(config.datasources);
   });
 });

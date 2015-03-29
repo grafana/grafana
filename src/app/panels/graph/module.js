@@ -16,17 +16,25 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
   var module = angular.module('grafana.panels.graph');
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, timeSrv) {
+  module.directive('grafanaPanelGraph', function() {
+    return {
+      controller: 'GraphCtrl',
+      templateUrl: 'app/panels/graph/module.html',
+    };
+  });
+
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
 
     $scope.panelMeta = new PanelMeta({
-      description: 'Graph panel',
+      panelName: 'Graph',
+      editIcon:  "fa fa-bar-chart",
       fullscreen: true,
       metricsEditor: true
     });
 
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
-    $scope.panelMeta.addEditorTab('Time range', 'app/features/dashboard/partials/panelTime.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
     $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
@@ -45,10 +53,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       y_formats    : ['short', 'short'],
       // grid options
       grid          : {
+        leftLogBase: 1,
         leftMax: null,
         rightMax: null,
         leftMin: null,
         rightMin: null,
+        rightLogBase: 1,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -87,7 +97,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // tooltip options
       tooltip       : {
         value_type: 'cumulative',
-        shared: false,
+        shared: true,
       },
       // time overrides
       timeFrom: null,
@@ -106,6 +116,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
+    $scope.logScales = {'linear': 1, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
+
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
     $scope.unitFormats = kbn.getUnitFormats();
@@ -115,67 +127,28 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       $scope.render();
     };
 
-    $scope.updateTimeRange = function () {
-      $scope.range = timeSrv.timeRange();
-      $scope.rangeUnparsed = timeSrv.timeRange(false);
-
-      $scope.panelMeta.timeInfo = "";
-
-      // check panel time overrrides
-      if ($scope.panel.timeFrom) {
-        if (_.isString($scope.rangeUnparsed.from)) {
-          $scope.panelMeta.timeInfo = "last " + $scope.panel.timeFrom;
-          $scope.rangeUnparsed.from = 'now-' + $scope.panel.timeFrom;
-          $scope.range.from = kbn.parseDate($scope.rangeUnparsed.from);
-        }
-      }
-
-      if ($scope.panel.timeShift) {
-        var timeShift = '-' + $scope.panel.timeShift;
-        $scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
-        $scope.range.from = kbn.parseDateMath(timeShift, $scope.range.from);
-        $scope.range.to = kbn.parseDateMath(timeShift, $scope.range.to);
-        $scope.rangeUnparsed = $scope.range;
-      }
-
-      if ($scope.panel.maxDataPoints) {
-        $scope.resolution = $scope.panel.maxDataPoints;
-      }
-      else {
-        $scope.resolution = Math.ceil($(window).width() * ($scope.panel.span / 12));
-      }
-      $scope.interval = kbn.calculateInterval($scope.range, $scope.resolution, $scope.panel.interval);
-    };
-
-    $scope.get_data = function() {
-      $scope.updateTimeRange();
-
-      var metricsQuery = {
-        range: $scope.rangeUnparsed,
-        interval: $scope.interval,
-        targets: $scope.panel.targets,
-        format: $scope.panel.renderer === 'png' ? 'png' : 'json',
-        maxDataPoints: $scope.resolution,
-        cacheTimeout: $scope.panel.cacheTimeout
-      };
+    $scope.refreshData = function(datasource) {
+      panelHelper.updateTimeRange($scope);
 
       $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
 
-      return $scope.datasource.query(metricsQuery)
-        .then($scope.dataHandler)
-        .then(null, function(err) {
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+      return panelHelper.issueMetricQuery($scope, datasource)
+        .then($scope.dataHandler, function(err) {
           $scope.seriesList = [];
           $scope.render([]);
+          throw err;
         });
+    };
+
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.annotationsPromise = $q.when([]);
+      $scope.dataHandler(snapshotData);
     };
 
     $scope.dataHandler = function(results) {
       // png renderer returns just a url
       if (_.isString(results)) {
-        $scope.panelMeta.loading = false;
         $scope.render(results);
         return;
       }
@@ -206,8 +179,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-        alias: alias,
-        color: color,
+          alias: alias,
+          color: color,
       });
 
       if (datapoints && datapoints.length > 0) {
@@ -318,6 +291,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     panelSrv.init($scope);
+
   });
 
 });

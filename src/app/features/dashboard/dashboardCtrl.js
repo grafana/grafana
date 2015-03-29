@@ -4,7 +4,7 @@ define([
   'config',
   'lodash',
 ],
-function (angular, $, config, _) {
+function (angular, $, config) {
   "use strict";
 
   var module = angular.module('grafana.controllers');
@@ -17,51 +17,82 @@ function (angular, $, config, _) {
       templateValuesSrv,
       dashboardSrv,
       dashboardViewStateSrv,
+      contextSrv,
       $timeout) {
 
     $scope.editor = { index: 0 };
-    $scope.panelNames = _.map(config.panels, function(value, key) { return key; });
+    $scope.topNavPartial = 'app/features/dashboard/partials/dashboardTopNav.html';
+    $scope.panels = config.panels;
+
     var resizeEventTimeout;
 
-    this.init = function(dashboardData) {
-      $scope.availablePanels = config.panels;
+    this.init = function(dashboard) {
       $scope.reset_row();
       $scope.registerWindowResizeEvent();
       $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
-      $scope.setupDashboard(dashboardData);
+      $scope.setupDashboard(dashboard);
     };
 
-    $scope.setupDashboard = function(dashboardData) {
+    $scope.setupDashboard = function(data) {
       $rootScope.performance.dashboardLoadStart = new Date().getTime();
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      $scope.dashboard = dashboardSrv.create(dashboardData);
-      $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+      var dashboard = dashboardSrv.create(data.model);
 
       // init services
-      timeSrv.init($scope.dashboard);
-      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
+      timeSrv.init(dashboard);
 
-      $scope.checkFeatureToggles();
-      dashboardKeybindings.shortcuts($scope);
+      // template values service needs to initialize completely before
+      // the rest of the dashboard can load
+      templateValuesSrv.init(dashboard).then(function() {
+        $scope.dashboard = dashboard;
+        $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+        $scope.initDashboardMeta(data.meta, $scope.dashboard);
 
-      $scope.setWindowTitleAndTheme();
+        dashboardKeybindings.shortcuts($scope);
 
-      $scope.appEvent("dashboard-loaded", $scope.dashboard);
+        $scope.updateSubmenuVisibility();
+        $scope.setWindowTitleAndTheme();
+
+        $scope.appEvent("dashboard-loaded", $scope.dashboard);
+      });
+    };
+
+    $scope.initDashboardMeta = function(meta) {
+      meta.canShare = true;
+      meta.canSave = true;
+      meta.canEdit = true;
+      meta.canStar = true;
+
+      if (contextSrv.hasRole('Viewer')) {
+        meta.canSave = false;
+      }
+
+      if (meta.isHome) {
+        meta.canShare = false;
+        meta.canStar = false;
+        meta.canSave = false;
+        meta.canEdit = false;
+      }
+
+      if (meta.isSnapshot) {
+        $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
+      }
+
+      $scope.dashboardMeta = meta;
+    };
+
+    $scope.updateSubmenuVisibility = function() {
+      $scope.submenuEnabled = $scope.dashboard.hasTemplateVarsOrAnnotations();
     };
 
     $scope.setWindowTitleAndTheme = function() {
       window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      $scope.grafana.style = $scope.dashboard.style;
     };
 
-    $scope.isPanel = function(obj) {
-      if(!_.isNull(obj) && !_.isUndefined(obj) && !_.isUndefined(obj.type)) {
-        return true;
-      } else {
-        return false;
-      }
+    $scope.broadcastRefresh = function() {
+      $rootScope.$broadcast('refresh');
     };
 
     $scope.add_row = function(dash, row) {
@@ -97,10 +128,6 @@ function (angular, $, config, _) {
       $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
     };
 
-    $scope.checkFeatureToggles = function() {
-      $scope.submenuEnabled = $scope.dashboard.templating.enable || $scope.dashboard.annotations.enable || false;
-    };
-
     $scope.onDrop = function(panelId, row, dropTarget) {
       var info = $scope.dashboard.getPanelInfoById(panelId);
       if (dropTarget) {
@@ -131,4 +158,5 @@ function (angular, $, config, _) {
     };
 
   });
+
 });

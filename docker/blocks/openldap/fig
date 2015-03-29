@@ -1,0 +1,9 @@
+openldap:
+  image: cnry/openldap
+  environment:
+    SLAPD_PASSWORD: grafana
+    SLAPD_DOMAIN: grafana.org
+  ports:
+    - "389:389"
+
+

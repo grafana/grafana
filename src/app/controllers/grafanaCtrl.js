@@ -10,26 +10,23 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, grafanaVersion, $rootScope, $controller) {
-
-    $scope.grafanaVersion = grafanaVersion[0] === '@' ? 'master' : grafanaVersion;
-    $scope._ = _;
-    $rootScope.profilingEnabled = store.getBool('profilingEnabled');
-    $rootScope.performance = { loadStart: new Date().getTime() };
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
 
     $scope.init = function() {
+      $scope.contextSrv = contextSrv;
+
+      $scope._ = _;
+
+      $rootScope.profilingEnabled = store.getBool('profilingEnabled');
+      $rootScope.performance = { loadStart: new Date().getTime() };
+      $rootScope.appSubUrl = config.appSubUrl;
+
       if ($rootScope.profilingEnabled) { $scope.initProfiling(); }
 
       alertSrv.init();
       utilSrv.init();
 
       $scope.dashAlerts = alertSrv;
-      $scope.grafana = { style: 'dark' };
-    };
-
-    $scope.toggleConsole = function() {
-      $scope.consoleEnabled = !$scope.consoleEnabled;
-      store.set('grafanaConsole', $scope.consoleEnabled);
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
@@ -81,7 +78,11 @@ function (angular, config, _, $, store) {
     $scope.initProfiling = function() {
       var count = 0;
 
-      $scope.$watch(function digestCounter() { count++; }, function() { });
+      $scope.$watch(function digestCounter() {
+        count++;
+      }, function() {
+      });
+
       $scope.onAppEvent('dashboard-loaded', function() {
         count = 0;
 

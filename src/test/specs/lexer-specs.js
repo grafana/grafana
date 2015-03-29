@@ -1,5 +1,5 @@
 define([
-  'features/graphite/lexer'
+  'plugins/datasource/graphite/lexer'
 ], function(Lexer) {
   'use strict';
 

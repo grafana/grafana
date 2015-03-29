@@ -66,6 +66,10 @@ function (angular, app, _, moment, kbn) {
       }
 
       $scope.time = getScopeTimeObj(time.from, time.to);
+
+      $scope.onAppEvent('zoom-out', function() {
+        $scope.zoom(2);
+      });
     };
 
     $scope.customTime = function() {
@@ -211,6 +215,27 @@ function (angular, app, _, moment, kbn) {
     var datepickerToLocal = function(date) {
       date = moment(date).clone().toDate();
       return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).toDate();
+    };
+
+    $scope.zoom = function(factor) {
+      var range = timeSrv.timeRange();
+
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
+
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if(to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
+      }
+
+      timeSrv.setTime({
+        from: moment.utc(from).toDate(),
+        to: moment.utc(to).toDate(),
+      });
     };
 
   });

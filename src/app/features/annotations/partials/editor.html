@@ -1,7 +1,7 @@
 <div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
 
-	<div class="dashboard-editor-header">
-		<div class="dashboard-editor-title">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
 			<i class="fa fa-bolt"></i>
 			Annotations
 		</div>
@@ -11,9 +11,12 @@
 			</div>
 		</div>
 
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
 	</div>
 
-	<div class="dashboard-editor-body">
+	<div class="gf-box-body">
 		<div class="editor-row row" ng-if="editor.index == 0">
 			<div class="span6">
 				<div ng-if="annotations.length === 0">
@@ -25,16 +28,17 @@
 							<i class="fa fa-bolt"></i> &nbsp;
 							{{annotation.name}}
 						</td>
-						<td style="width: 1%">
-							<a ng-click="edit(annotation)" class="btn btn-success btn-small">
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+
+						<td style="width: 1%" class="nobg">
+							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
 								<i class="fa fa-edit"></i>
 								Edit
 							</a>
 						</td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-						<td style="width: 1%">
-							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-small">
+						<td style="width: 1%" class="nobg">
+							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
 								<i class="fa fa-remove"></i>
 							</a>
 						</td>
@@ -68,15 +72,15 @@
 				</div>
 			</div>
 
-			<div ng-include src="currentDatasource.editorSrc">
+			<div ng-include src="currentDatasource.meta.partials.annotations">
 			</div>
 
-		</div>
-	</div>
+			<br>
+			<button ng-show="editor.index === 1" type="button" class="btn btn-success" ng-click="add()">Add</button>
+			<button ng-show="editor.index === 2" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
+			<br>
+			<br>
 
-	<div class="dashboard-editor-footer">
-		<button ng-show="editor.index === 1" type="button" class="btn btn-success" ng-click="add()">Add</button>
-		<button ng-show="editor.index === 2" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
-		<button type="button" class="btn btn-success pull-right" ng-click="close_edit();dismiss();dashboard.refresh();">Close</button>
+		</div>
 	</div>
 </div>

@@ -14,7 +14,13 @@ define([
     this.templateSrv = new TemplateSrvStub();
     this.datasourceSrv = {
       getMetricSources: function() {},
-      get: function() { return self.datasource; }
+      get: function() {
+        return {
+          then: function(callback) {
+            callback(self.datasource);
+          }
+        };
+      }
     };
 
     this.providePhase = function(mocks) {
@@ -34,7 +40,7 @@ define([
       return inject(function($controller, $rootScope, $q, $location) {
         self.scope = $rootScope.$new();
         self.$location = $location;
-        self.scope.grafana = {};
+        self.scope.contextSrv = {};
         self.scope.panel = {};
         self.scope.row = { panels:[] };
         self.scope.dashboard = {};

@@ -1,9 +1,11 @@
 module.exports = function(grunt) {
+  "use strict";
 
   // Concat and Minify the src directory into dist
   grunt.registerTask('build', [
     'jshint:source',
     'jshint:tests',
+    'jscs',
     'karma:test',
     'clean:on_start',
     'less:src',
@@ -13,27 +15,61 @@ module.exports = function(grunt) {
     'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
-    'build:grafanaVersion',
     'ngAnnotate:build',
     'requirejs:build',
     'concat:js',
     'filerev',
+    'remapFilerev',
     'usemin',
     'clean:temp',
     'uglify:dest'
   ]);
 
 
-  grunt.registerTask('build:grafanaVersion', function() {
-    grunt.config('string-replace.config', {
-      files: {
-        '<%= tempDir %>/app/app.js': '<%= tempDir %>/app/app.js'
-      },
-      options: {
-        replacements: [{ pattern: /@grafanaVersion@/g,  replacement: '<%= pkg.version %>' }]
+  // task to add [[.AppSubUrl]] to reved path
+  grunt.registerTask('remapFilerev', function(){
+    var root = grunt.config().destDir;
+    var summary = grunt.filerev.summary;
+    var fixed = {};
+
+    for(var key in summary){
+      if(summary.hasOwnProperty(key)){
+
+        var orig = key.replace(root, root+'/[[.AppSubUrl]]');
+        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]');
+        fixed[orig] = revved;
       }
+    }
+
+    grunt.filerev.summary = fixed;
+  });
+
+  grunt.registerTask('build-post-process', function() {
+    grunt.config('copy.dist_to_tmp', {
+      expand: true,
+      cwd: '<%= destDir %>',
+      src: '**/*',
+      dest: '<%= tempDir %>/public/',
     });
-    grunt.task.run('string-replace:config');
+    grunt.config('clean.dest_dir', ['<%= destDir %>']);
+    grunt.config('copy.backend_bin', {
+      cwd: 'bin',
+      expand: true,
+      src: ['grafana'],
+      options: { mode: true},
+      dest: '<%= tempDir %>'
+    });
+    grunt.config('copy.backend_files', {
+      expand: true,
+      src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/**/*', 'scripts/*'],
+      options: { mode: true},
+      dest: '<%= tempDir %>'
+    });
+
+    grunt.task.run('copy:dist_to_tmp');
+    grunt.task.run('clean:dest_dir');
+    grunt.task.run('copy:backend_bin');
+    grunt.task.run('copy:backend_files');
   });
 
 };

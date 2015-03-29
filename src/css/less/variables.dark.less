@@ -13,11 +13,10 @@
 @grayLighter:           #BBBFC2;
 @white:                 #fff;
 
-
 // Accent colors
 // -------------------------
 @blue:                  #33B5E5;
-@blueDark:              #0099CC;
+@blueDark:              #005f81;
 @green:                 #669900;
 @red:                   #CC3900;
 @yellow:                #ECBB13;
@@ -28,10 +27,9 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: @grayDarker;
-
-// Tabs
-@fullEditBorder:          #555;
+@grafanaPanelBackground: 	@grayDarker;
+@grafanaPanelBorder: 		  solid 1px @grayDark;
+@grafanaTriggerBorder:		solid 1px #555;
 
 // Graphite Target Editor
 @grafanaTargetBorder:         @black;
@@ -42,6 +40,8 @@
 
 @grafanaTargetFuncBackground: #333;
 @grafanaTargetFuncHightlight: #444;
+
+@modalBackground: @black;
 
 // Scaffolding
 // -------------------------
@@ -63,6 +63,7 @@
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
@@ -71,6 +72,7 @@
 @headingsFontWeight:    bold;    // instead of browser default, bold
 @headingsColor:         @white; // empty to use BS default, @textColor
 @inputText:             @black;
+
 
 // Component sizing
 // -------------------------
@@ -89,13 +91,12 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  transparent;
+@grafanaListBackground:  #262626;
 @grafanaListAccent:      lighten(@grayDarker, 2%);
 @grafanaListBorderTop:      @grayDark;
 @grafanaListBorderBottom:   @black;
-@grafanaListHighlight:      @blue;
-@grafanaListHighlightContrast: #4F4F4F;
-@grafanaListMainLinkColor: @linkColor;
+@grafanaListHighlight:      #333;
+@grafanaListMainLinkColor: @textColor;
 
 // Scrollbars
 @scrollbarBackground: #3a3a3a;
@@ -111,12 +112,12 @@
 
 // Buttons
 // -------------------------
-@btnBackground:                     @grayLight;
+@btnBackground:                     @grayDark;
 @btnBackgroundHighlight:            darken(@grayLight, 15%);
 @btnBorder:                         #bbb;
 
-@btnPrimaryBackground:              lighten(@blue, 5%);
-@btnPrimaryBackgroundHighlight:     darken(@blue, 5%);
+@btnPrimaryBackground:              @blueDark;
+@btnPrimaryBackgroundHighlight:     lighten(@blueDark, 10%);
 
 @btnInfoBackground:                 lighten(@purple, 5%);
 @btnInfoBackgroundHighlight:        darken(@purple, 5%);
@@ -130,8 +131,13 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              lighten(@black, 5%);
-@btnInverseBackgroundHighlight:     darken(@black, 5%);
+@btnInverseBackground:              @grayDark;
+@btnInverseBackgroundHighlight:     lighten(@grayDark, 5%);
+
+@iconContainerBackground:			      @black;
+@iconContainerBackgroundHighlight:	lighten(@black, 5%);
+@iconContainerBorder:				        1px solid transparent;
+@iconContainerShadow:				        0 0 14px 2px rgba(255,255,255, 0.05);
 
 
 // Forms
@@ -149,14 +155,14 @@
 @dropdownBackground:            @heroUnitBackground;
 @dropdownBorder:                rgba(0,0,0,.2);
 @dropdownDividerTop:            transparent;
-@dropdownDividerBottom:         #222;
+@dropdownDividerBottom:         #444;
 
 @dropdownLinkColor:             @textColor;
 @dropdownLinkColorHover:        @white;
 @dropdownLinkColorActive:       @white;
 
-@dropdownLinkBackgroundActive:  @blue;
-@dropdownLinkBackgroundHover:   @blue;
+@dropdownLinkBackgroundActive:  @blueDark;
+@dropdownLinkBackgroundHover:   @blueDark;
 
 
 
@@ -174,7 +180,6 @@
 @zindexFixedNavbar:       1030;
 @zindexModalBackdrop:     1040;
 @zindexModal:             1050;
-
 
 // Sprite icons path
 // -------------------------
@@ -207,10 +212,10 @@
 @navbarCollapseWidth:             979px;
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
-@navbarHeight:                    50px;
+@navbarHeight:                    52px;
 @navbarBackgroundHighlight:       @grayDarker;
 @navbarBackground:                @grayDarker;
-@navbarBorder:                    darken(@navbarBackground, 20%);
+@navbarBorder:                    none;
 
 @navbarText:                      @grayLight;
 @navbarLinkColor:                 @grayLight;
