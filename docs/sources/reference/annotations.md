@@ -10,38 +10,31 @@ page_keywords: grafana, annotations, guide, documentation
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get title, tags, and text information for the event.
 
-To enable annotations open dashboard settings and the controls tab.
-Under feature toggles you will find the checkbox for annotations.
+To add an annotation query click dashboard settings icon in top menu and select `Annotations` from the
+dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add a new annotation query.
 
-When enabled they will appear in the sub menu controls area.
-![](/img/v1/annotations_submenu1.png)
+### Graphite annotations
 
-Click the cog wheel to open the dialog where you can add & edit annotations.
-![](/img/v1/annotations_dialog1.png)
+Graphite supports two ways to query annotations.
 
-## Datasources
-Grafana supports many data sources for annotation.
+- A regular metric query, use the `Graphite target expression` text input for this
+- Graphite events query, use the `Graphite event tags` text input, especify an tag or wildcard (leave empty should also work)
 
-- Graphite metrics
-- Graphite events
-- InfluxDB query
-- Elasticsearch query
+## Elasticsearch annoations
+![](/img/v2/annotations_es.png)
+
+Grafana can query any Elasticsearch index for annotation events. The index name can be the name of an alias or an index wildcard pattern.
+You can leave the search query blank or specify a lucene query.
+
+If your elasticsearch document has a timestamp field other than `@timestamp` you will need to specify that. As well
+as the name for the fields that should be used for the annotation title, tags and text. Tags and text are optional.
+
+> **Note** The annotation timestamp field in elasticsearch need to be in UTC format.
 
 ## InfluxDB Annotations
-![](/img/influxdb/influxdb_annotation.png)
+![](/img/v2/annotations_influxdb.png)
 
 For InfluxDB you need to enter a query like in the above screenshot. You need to have the ```where $timeFilter``` part.
 If you only select one column you will not need to enter anything in the column mapping fields.
 If you have multiple columns you need to specify which column should be treated as title, tags and text column.
 
-## Elasticsearch Annotations
-![](/img/v1/elasticsearch_annotations_edit.png)
-
-You can use the same data source as you specified in config.js for storing grafana dashboards or you can specify another one.
-The annotation definition contains an index name that will override the index name specified in config.js. The index name can
-be the name of an alias or an index wildcard pattern. You can leave the search query blank or specify a lucene query.
-
-If your elasticsearch document has a timestamp field other than ```@timestamp``` you will need to specify that. As well
-as the name for the fields that should be used for the annotation title, tags and text. Tags and text are optional.
-
-**The annotation timestamp field in elasticsearch need to be in UTC format**
