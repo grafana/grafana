@@ -6,7 +6,7 @@ init_cmds = [
 watch_all = true
 watch_dirs = [
 	"$WORKDIR/pkg",
-	"$WORKDIR/src/views",
+	"$WORKDIR/public/views",
 	"$WORKDIR/conf",
 ]
 watch_exts = [".go", ".ini"]
