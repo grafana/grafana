@@ -63,6 +63,7 @@ function (angular, _) {
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";
+        variable.options = [];
         variable.refresh = false;
       });
 

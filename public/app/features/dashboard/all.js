@@ -5,7 +5,7 @@ define([
   './saveDashboardAsCtrl',
   './playlistCtrl',
   './rowCtrl',
-  './sharePanelCtrl',
+  './shareModalCtrl',
   './shareSnapshotCtrl',
   './submenuCtrl',
   './dashboardSrv',

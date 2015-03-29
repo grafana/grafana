@@ -9,7 +9,7 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
@@ -18,6 +18,18 @@ function (angular, _, require, config) {
         toPanel: $scope.panel ? true : false,
         includeTemplateVars: true
       };
+
+      $scope.tabs = [{title: 'Link', src: 'shareLink.html'}];
+
+      if ($scope.options.toPanel) {
+        $scope.modalTitle = 'Share Panel';
+        $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
+      } else {
+        $scope.modalTitle = 'Share Dashboard';
+        if (!$scope.dashboardMeta.isSnapshot) {
+          $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
+        }
+      }
 
       $scope.buildUrl();
     };

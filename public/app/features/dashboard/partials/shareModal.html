@@ -1,12 +1,12 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="SharePanelCtrl">
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl">
 	<div class="gf-box-header">
 		<div class="gf-box-title">
-			<i class="fa fa-share-square-o"></i>
-			Share Dashboard
+			<i class="fa fa-share"></i>
+			{{modalTitle}}
 		</div>
 
-		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Link', 'Snapshot sharing']" data-title="{{tab}}">
+		<div ng-model="editor.index" bs-tabs>
+			<div ng-repeat="tab in tabs" data-title="{{tab.title}}">
 			</div>
 		</div>
 
@@ -15,38 +15,58 @@
 		</button>
 	</div>
 
-	<div class="gf-box-body" ng-if="editor.index === 0">
-		<br>
-		<div class="gf-form">
-			<div class="gf-form-row">
-				<editor-checkbox text="Current time range" model="options.forCurrent" change="buildUrl()"></editor-checkbox>
-			</div>
-		</div>
-		<div class="gf-form">
-			<div class="gf-form-row">
-				<editor-checkbox text="Include template variables" model="options.includeTemplateVars" change="buildUrl()"></editor-checkbox>
-			</div>
-		</div>
-
-		<br>
-		<div class="gf-form">
-			<div class="gf-form-row">
-				<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
-				<span class="gf-fluid-input">
-					<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
-				</span>
-			</div>
-			<div>
-
-				<div class="editor-row" style="margin-top: 5px;" ng-if="options.toPanel">
-					<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
-				</div>
-			</div>
-		</div>
+	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">
+		<ng-include src="tab.src"></ng-include>
 	</div>
 
-	<div class="gf-box-body share-snapshot ng-cloak" ng-cloak ng-if="editor.index === 1" ng-controller="ShareSnapshotCtrl">
+</div>
 
+<script type="text/ng-template" id="shareEmbed.html">
+	<h5>IFrame embedding</h5>
+	<p>
+		<em>
+			The html code below can be pasted and included in another web page. Unless anonymous access
+			is enabled the user viewing that page need to be signed into grafana for the graph to load.
+		</em>
+	</p>
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<span class="gf-fluid-input">
+				<textarea rows="5" data-share-panel-url class="input" ng-model='iframeHtml'></textarea>
+			</span>
+		</div>
+		<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+	</div>
+</script>
+
+<script type="text/ng-template" id="shareLink.html">
+	<h5>Link options</h5>
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<editor-checkbox text="Current time range" model="options.forCurrent" change="buildUrl()"></editor-checkbox>
+		</div>
+	</div>
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<editor-checkbox text="Include template variables" model="options.includeTemplateVars" change="buildUrl()"></editor-checkbox>
+		</div>
+	</div>
+	<br>
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+			<span class="gf-fluid-input">
+				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
+			</span>
+		</div>
+		<div class="editor-row" style="margin-top: 5px;" ng-show="options.toPanel">
+			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
+		</div>
+	</div>
+</script>
+
+<script type="text/ng-template" id="shareSnapshot.html">
+	<div class="share-snapshot ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl">
 		<div style="margin: 10px 0">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
 			<i ng-if="!loading" class="gf-icon gf-icon-snap-multi"></i>
@@ -118,5 +138,4 @@
 			Did you make a mistake? <a href="{{deleteUrl}}" target="_blank">delete snapshot.</a>
 		</div>
 	</div>
-</div>
-
+</script>

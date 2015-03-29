@@ -1,6 +1,6 @@
 define([
   'helpers',
-  'features/dashboard/sharePanelCtrl'
+  'features/dashboard/shareModalCtrl'
 ], function(helpers) {
   'use strict';
 
@@ -16,7 +16,7 @@ define([
     beforeEach(module('grafana.controllers'));
 
     beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('SharePanelCtrl'));
+    beforeEach(ctx.createControllerPhase('ShareModalCtrl'));
 
     describe('shareUrl with current time range and panel', function() {
 

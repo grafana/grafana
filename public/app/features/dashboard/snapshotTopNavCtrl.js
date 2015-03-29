@@ -17,6 +17,13 @@ function (angular, moment) {
       }
     };
 
+    $scope.shareDashboard = function() {
+      $scope.appEvent('show-modal', {
+        src: './app/features/dashboard/partials/shareModal.html',
+        scope: $scope.$new(),
+      });
+    };
+
   });
 
 });

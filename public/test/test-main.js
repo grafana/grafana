@@ -132,7 +132,7 @@ require([
     'specs/graph-specs',
     'specs/graph-tooltip-specs',
     'specs/seriesOverridesCtrl-specs',
-    'specs/sharePanelCtrl-specs',
+    'specs/shareModalCtrl-specs',
     'specs/timeSrv-specs',
     'specs/templateSrv-specs',
     'specs/templateValuesSrv-specs',
