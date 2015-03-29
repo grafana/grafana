@@ -8,14 +8,14 @@
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, InfluxDB & OpenTSDB.
 
+![](http://grafana.org/assets/img/start_page_bg.png)
+
 ## Grafana 2.0
 The develop branch has now been merged with master. For 1.9 users this is a big change as Grafana is no longer
 a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - [Install instructions](http://docs.grafana.org/v2.0/installation/)
 - [Migrating from 1.x to 2.x](http://docs.grafana.org/v2.0/installation/migrating_to2/)
 - [What's New in Grafana 2.0](http://docs.grafana.org/v2.0/guides/whats-new-in-v2/)
-
-![](http://grafana.org/assets/img/start_page_bg.png)
 
 ## Features
 ### Graphite Target Editor
@@ -28,7 +28,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 ### Graphing
 - Fast rendering, even over large timespans
 - Click and drag to zoom
-- Multiple Y-axis
+- Multiple Y-axis, logarithmic scales
 - Bars, Lines, Points
 - Smart Y-axis formating
 - Series toggles & color selector
@@ -45,6 +45,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - [Scripted dashboards](http://docs.grafana.org/reference/scripting/)
 - [Dashboard playlists](http://docs.grafana.org/reference/playlist/)
 - [Time range controls](http://docs.grafana.org/reference/timerange/)
+- [Share snapshots publicly](http://docs.grafana.org/v2.0/reference/sharing/)
 
 ### InfluxDB
 - Use InfluxDB as a metric data source, annotation source
@@ -55,7 +56,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - Query editor with metric name typeahead and tag filtering
 
 ## Requirements
-There are no dependencies except an external time series data store. For dashboard and user accounts Grafana can use an embedded
+There are no dependencies except an external time series data store. For dashboards and user accounts Grafana can use an embedded
 database (sqlite3) or you can use an external SQL data base like MySQL or Postgres.
 
 ## Installation
