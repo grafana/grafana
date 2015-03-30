@@ -21,6 +21,10 @@ that is provided by [Raintank](http://raintank.io) that allows you to publish da
 The same rules still apply, anyone with the link can view it. You can set an expiration time if you want the snapshot to be removed
 after a certain time period.
 
+Dashboard snapshots are really useful when you want to share a whole dashboard or just a panel with an external client who do not
+have access to your Grafana instance. Instead of taking a picture you can snapshot the current visible data
+and share an interactive dashboard. It can also be used in combination with panel iframe embedding (mentioned below).
+
 ## Panel time overrides & timeshift
 
 In Grafana v2.x you can now override the relative time range for individual panels. You can also add a
@@ -44,7 +48,8 @@ upper right of a panel when overriden time range options.
 ## Panel IFrame embedding
 
 You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
-with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
+with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io). Try
+hovering or zooming on the panel below!
 
 <iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/IQ7iZF00sHalq0Ffjv6OyclJSA1YHYV1?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
 
