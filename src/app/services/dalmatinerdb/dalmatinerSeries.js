@@ -16,7 +16,7 @@ define([
     _.each(self.seriesList, function(series) {
       var seriesName = series.n;
       var seriesData = series.v;
-      var seriesResolution = series.r;
+      var seriesResolution = series.r / 1000;
       var t = (new Date().getTime()/1000) - (seriesData.length * seriesResolution);
       seriesData = seriesData.map(function(e, i) {
         return [e, t+(i*seriesResolution)];

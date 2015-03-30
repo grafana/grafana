@@ -41,7 +41,7 @@ define([
 
         query = query + src;
         if (target.alias) {
-          query = query + " AS " + target.alias;
+          query = query + " AS '" + target.alias + "'";
         }
         if (query !== "SELECT ") {
           query = query + timeFilter;
