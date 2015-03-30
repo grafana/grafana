@@ -10,13 +10,13 @@ This is a guide that describes some of changes and new features that can be foun
 
 ## New backend
 
-Grafana now ships with its own backend server. Dashboards are still 100% client-side rendered, but the integrated server allows for much of the new functionality that 2.0 brings. The backend server is written in Go, has a full API, and is also completely open source. 
+Grafana now ships with its own backend server. Dashboards are still 100% client-side rendered, but the integrated server allows for much of the new functionality that 2.0 brings. The backend server is written in Go, has a full API, and is also completely open source. We also provide a CLI tool for accessing API functionality.
 
 In addition to new features, the backend server makes it much easier to set up and enjoy Grafana. 2.0 ships as a single binary with no dependencies, and we hope to extend support to more platforms. Authentication is built in, and Grafana is now capable of proxying connections to Data Sources. There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds. Elasticsearch is no longer required just to store dashboards.
 
 ## Overhauled User Interface
 
-Grafana has gotten some good UI/UX attention in the last few months. You can read about some of our journeys in this area. 
+Grafana has undergone some serious interface changes over the last few months. We have introduced a collapsable side menubar and streamlined the Dashboard top header.
 
 ### New dashboard top header
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
@@ -41,8 +41,6 @@ When you create a Snapshot, we strip sensitive data (like the names of your quer
 Sharing a Snapshot is similar to sharing a link to a screenshot of your dashboard, only way better. Better because they're more like a Dashboard (they'll look great at any screen resolution, you can hover over series, even zoom in). Similar because they're just static files, and aren't actually connected to any live Data Sources in any way.
 
 They allow you to share a specific view of a particular Dashboard, without providing access to the rest of your Grafana instance, simply by sharing the Snapshot URL. They're a great way to communicate about a particular incident with specific people, or over the Internet. You can also use them to show off your dashboards. 
-
-You can take a Dashboard Snapshot on any Dashboard by clicking the Share icon on the new Dashboard top header and selecting Snapshot. You can publish your Snapshot to your own Grafana server, or to the Internet through snapshots.raintank.io (free Snapshot hosting from raintank, the company behind Grafana).
 
 ![](/img/v2/dashboard_snapshot_dialog.png)
 
@@ -70,14 +68,13 @@ upper right of a panel when overriden time range options.
 
 ![](/img/v2/dashboard_search.jpg)
 
-The dashboard search view has received a big UI update and polish. You can now see and filter by which dashboard
-you have personally starred.
+The dashboard search view has received a big update, and received a lot of polish. You can now see and filter Dashboards by name, tag, or by ones your User has starred. The speed of the Dashboard search has also been dramatically improved.
 
-## Logarithmic scale
+## graph Panel: Logarithmic scale
 
-The Graph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. 
+The hraph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. 
 
-Logarithmic y-axis scales are very useful when rendering many series of different order of magnitude on the same scale. Types of data include latency, network traffic, and storage.
+Logarithmic y-axis scales are useful when rendering many series of different order of magnitudes on the same Panel. Types of data that can be appropriate for a Logarithmic scale include latency, network traffic, and storage.
 
 ![](/img/v2/graph_logbase10_ms.png)
 
@@ -85,7 +82,9 @@ Logarithmic y-axis scales are very useful when rendering many series of differen
 
 ![](/img/v2/dashlist_starred.png)
 
-There is one new Panel in Grafana v2.0: dashlist. It allows you to show your personally starred Dashboards, as well as search Dashboards based on strings or tags to create a list of Dashboards.
+The dashlist is the only new panel in Grafana 2.0. It allows you to show your personally starred Dashboards, as well as search Dashboards based on strings or tags to create a list of Dashboards.
+
+We plan on creating several new panel types over the coming months.
 
 ## Data Source proxy & admin views
 
@@ -131,18 +130,22 @@ Data Source is accessible from your Grafana instance.
 
 ## User & Organization permissions
 
-All dashboards and data sources are linked to an organization (not to a user). Users are linked to
-Organizations via a role. That role can be:
+Grafana V2.0 introduces its own user management and authentication capabilities, as well as the concept of Organizations.
 
-- `Viewer`: Can only view dashboards, not save / create them.
-- `Editor`: Can view, update and create dashboards.
-- `Admin`: Everything an Editor can plus edit and add data sources and organization users.
+Users can have the following roles:
+
+- `Viewer`: Can view Dashboards only
+- `Editor`: Can view, update and create Dashboards.
+- `Admin`: Everything an Editor can plus manage Data Sources and Users in their Organization
+- `Grafana Admin`: Can manage Users and Admins across any Organization.
+
+Currently, all Dashboards and Data Sources are assigned to an Organization, not a User. Users can belong to one or more Organizations. Many Grafana installations will have no need for multiple Organizations. Organizations are designed to support multi-tenant installations of Grafana.
 
 > **Note** A `Viewer` can still view all metrics exposed through a data source, not only
 > the metrics used in already existing dashboards. That is because there are not
-> per series permissions in Graphite, InfluxDB or OpenTSDB.
+> per series permissions in Graphite, InfluxDB or OpenTSDB. 
 
-There are currently no permissions on individual dashboards.
+> **Note** currently there are no permissions on individual Dashboards. 
 
 ## Panel IFrame embedding
 
