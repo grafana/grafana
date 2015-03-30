@@ -6,24 +6,41 @@ page_keywords: grafana, new, changes, features, documentation
 
 # What's New in Grafana v2.0
 
-This is a guide that describes some of changes and new features that can be found in Grafana v2.0.
+Grafana 2.0 represents months of work by the Grafana team and the community. We are pleased to be able to
+release the Grafana 2.0 beta. This is a guide that describes some of changes and new features that can
+be found in Grafana V2.0.
+
+If you are interested in how to migrate from Grafana V1.x to V2.0, please read our [Migration Guide](../installation/migrating_to2.md)
+
+## New backend
+
+Grafana now ships with its own backend server. Graphs are still 100% client-side rendered, but the integrated server allows for much of
+the new functionality that 2.0 brings. The backend server is written in Go, has a full HTTP API, and is also completely open source.
+
+In addition to new features, the backend server makes it much easier to set up and enjoy Grafana.
+Grafana 2.0 ships as a single binary with no dependencies, and we hope to extend support to more platforms.
+Authentication is built in, and Grafana is now capable of proxying connections to Data Sources.
+There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds.
+Elasticsearch is no longer required just to store dashboards.
 
 ## Dashboard Snapshot sharing
-A dashboard snapshot is an instant way to share an interactive dashboard publicly. When created, we <strong>strip sensitive data</strong> like queries
-(metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
-snapshots can be accessed by anyone who has the link and can reach the URL.
+A Dashboard Snapshot is an easy way to create and share a URL for a stripped down, point-in-time version of any Dashboard.
+You can give this URL to anyone or everyone, and they can view the Snapshot even if they're not a User of your Grafana instance.
+You can set an expiration time for any Snapshots you create. When you create a Snapshot, we strip some data, like
+panel metric queries, annotation and template queries and panel links. The data points displayed on
+screen for that specific time period in your Dashboard is saved in the JSON of the Snapshot itself.
+
+Sharing a Snapshot is similar to sharing a link to a screenshot of your dashboard, only way better (they'll look great at any screen resolution, you can hover over series,
+even zoom in). Also they are fast to load as they aren't actually connected to any live Data Sources in any way.
+
+They're a great way to communicate about a particular incident with specific people, or over the Internet. You can also use them to show off your dashboards.
 
 ![](/img/v2/dashboard_snapshot_dialog.png)
 
 ### Publish snapshots
 You can publish snapshots to you local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The later is a free service
 that is provided by [Raintank](http://raintank.io) that allows you to publish dashboard snapshots to an external grafana instance.
-The same rules still apply, anyone with the link can view it. You can set an expiration time if you want the snapshot to be removed
-after a certain time period.
-
-Dashboard snapshots are really useful when you want to share a whole dashboard or just a panel with an external client who do not
-have access to your Grafana instance. Instead of taking a picture you can snapshot the current visible data
-and share an interactive dashboard. It can also be used in combination with panel iframe embedding (mentioned below).
+The same rules still apply, anyone with the link can view it.
 
 ## Panel time overrides & timeshift
 
@@ -57,16 +74,21 @@ hovering or zooming on the panel below!
 
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 
-1. Side menu toggle
-2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
-3. Star/unstar current dashboard
-4. Share current dashboard (Make sure the dashboard is saved before)
-5. Save current dashboard
-6. Settings dropdown (dashboard settings, annotations, templating, etc)
+1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
+2. `Dashboard dropdown` This main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage Dashboard playlists.
+3. `Star Dashboard`: Star (or unstar) the current Dashboar. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+4. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+5. `Save dashboard`: Save the current Dashboard.
+6. `Settings`: Manage Dashboard settings and features such as Templating and Annotations.
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.
 > To change name and create a new dashboard use the `Save As...` menu option
+
+### New Side menubar
+
+The side menubar provides access to features such as User Preferences, Organizations, and Data Sources.
+If you have multiple Organizations, you can easily switch between them.
 
 ## New search view & starring dashboards
 
@@ -100,18 +122,16 @@ Graphite or OpenTSDB without having to spend time with nginx CORS (Cross origin 
 > hide database user & password details from the frontend / browser.
 
 ## Relative time now delay
+A commonly reported problem has been graphs dipping to zero at the the end, because metric data for
+the last interval has yet to be written to the Data Source. These graphs then "self correct" once the data comes in, but can look deceiving or alarming at times.
 
-A problem that has plagued many is the fact that graphs tend to dip to zero by the end because metrics for
-the last interval has yet to be received by the time series database. You can now work around this by adding
-a now delay in `Dashboard Settings` > `Time Picker` tab.
-
+You can avoid this problem by adding a `now delay` in `Dashboard Settings` > `Time Picker` tab. This will effectively cause Grafana to ignore the most recent data up to the set delay. The necessary delay will depend on how much latency you have in your collection pipeline.
 ![](/img/v2/timepicker_now_delay.jpg)
 
 ## Overwrite protection
 
-Grafana v2.0 will protect you and your other Grafana users from accidentally overwriting each others changes
-to the same dashboard. The same protection also applies if you try to create a new dashboard with a
-name that already exists.
+Grafana v2.0 will protect Users from accidentally overwriting another Users changes. Similar protections are in place if you try to create a new Dashboard with the same name as an existing one.
+These protections are only the first step; we will be building out additional capabilities around dashboard versioning and management in future versions of Grafana.
 
 ![](/img/v2/overwrite_protection.jpg)
 
@@ -121,10 +141,9 @@ If you open side menu (by clicking on the Grafana icon in the top header) you ca
 Here you can update your user details, UI Theme and change password.
 
 ## PNG rendering
+Grafana now supports server-side PNG rendering. From the Panel share dialog you now have access to a link that will render the Panel to a PNG image.
 
-In the panel share dialog you now have access to a link that will render the panel to a PNG image.
-The panel is rendered on the backend via phantomjs (headless browser). This requires that your metric
-data source is accessible from your Grafana server host machine.
+> **Note** This requires that your Data Source is accessible from your Grafana instance.
 
 ![](/img/v2/share_dialog_image_highlight.jpg)
 
