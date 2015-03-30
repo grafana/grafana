@@ -48,7 +48,7 @@ pages:
 - ['reference/scripting.md', 'Reference', 'Scripted dashboards']
 - ['reference/playlist.md', 'Reference', 'Playlist']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
-- ['reference/admin.md', 'Reference', 'Grafana Admin']
+- ['reference/admin.md', 'Reference', 'Administration']
 - ['reference/http_api.md', 'Reference', 'HTTP API']
 
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
