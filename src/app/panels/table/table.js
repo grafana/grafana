@@ -30,7 +30,6 @@ define([
         restrict: 'A',
         templateUrl: 'app/panels/table/table.html',
         link: function(scope, elem) {
-          scope.height = 280; // set default height for edit mode (prob should be done elsewhere)
           scope.panel.pageLimit = scope.panel.pageLimit || 20;
           scope.sortType = SortType;
 
@@ -286,6 +285,21 @@ define([
 
 
           function setTableHeightVariable() {
+            var docHeight = $(window).height();
+            var editscreenHeight = Math.floor(docHeight * 0.6);
+            var fullscreenHeight = Math.floor(docHeight * 0.7);
+
+            // editing takes up a lot of space, so it should be set accordingly
+            if (scope.editMode) {
+              scope.height = editscreenHeight;
+            }
+            else if (scope.fullscreen) {
+              scope.height = fullscreenHeight;
+            }
+            else {
+              scope.height = null; // if in normal dashboard mode
+            }
+
             try {
               tableHeight = scope.height || scope.panel.height || scope.row.height;
               if (_.isString(tableHeight)) {
@@ -294,6 +308,7 @@ define([
 
               tableHeight -= 5; // padding
               tableHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
+              tableHeight -= scope.shouldHidePaginationControl() ? 0 : 57; // subtract paginator height/margin if applicable
 
               return true;
             } catch(e) { // IE throws errors sometimes
