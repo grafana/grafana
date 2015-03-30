@@ -2,10 +2,10 @@
     <div class="section">
         <h5>Styling Options</h5>
         <div class="editor-option">
-            <label class="small">Column Width</label>
-            <select class="input-small" ng-model="panel.columnWidth" ng-change="panel.columnWidthChanged()">
-                <option value="auto">Auto</option>
-                <option ng-repeat="width in permittedColumnWidthRange" value="{{width}}">{{width}}</option>
+            <label class="small">Max Column Width</label>
+            <select class="input-small" ng-model="panel.columnWidth" ng-change="panel.adjustColumnWidth()">
+                <option ng-selected="panel.columnWidth == 'auto'" value="auto">Auto</option>
+                <option ng-selected="panel.columnWidth == {{width}}" ng-repeat="width in permittedColumnWidthRange" value="{{width}}">{{width}}</option>
             </select>
         </div>
     </div>
