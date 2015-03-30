@@ -34,6 +34,7 @@ function (angular, app, _, require, PanelMeta) {
     $scope.multipleQueriesNotSupported = true; // we can only do one query at a time, although it can be for multiple columns
     $scope.isTableView = true;
 
+    $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/table/styleEditor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
 
@@ -45,9 +46,14 @@ function (angular, app, _, require, PanelMeta) {
       style: {},
       timeFrom: null,
       timeShift: null,
-      targets: [{ rawQuery: true }] // should only allow one query, set to raw query mode on page load
+      targets: [{ rawQuery: true }], // should only allow one query, set to raw query mode on page load
+      columnWidth: 'auto',
+      allowPaging: true,
+      pageLimit: 20,
+      allowSorting: true
     };
 
+    $scope.permittedColumnWidthRange = _.range(20, 200);
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {

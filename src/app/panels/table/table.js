@@ -31,13 +31,13 @@ define([
         templateUrl: 'app/panels/table/table.html',
         link: function(scope, elem) {
           scope.height = 280; // set default height for edit mode (prob should be done elsewhere)
-          scope.tablePageSize = 20;
+          scope.panel.pageLimit = scope.panel.pageLimit || 20;
           scope.sortType = SortType;
 
           // refers to the order in which the columns were requested to be sorted
           // for example, we might want to first sort by second column, then by third, then by first, etc.
           // this does not necessarily refer to the physical order of the columns
-          scope.columnSortOrder = [];
+          scope.panel.columnSortOrder = [];
 
           scope.$on('render',function(event, renderData) {
             data = renderData || data;
@@ -48,20 +48,20 @@ define([
 
             sortedData = [].concat(data.datapoints); // on initial render, original data is the desired sort
             setupInitialPaging();
-            render_panel();
+            renderTable();
           });
 
 
           // if user changes page
-          scope.$watch('curTablePage', function() {
-            scope.curTablePage = parseInt(scope.curTablePage) || 1; // ensure page is numeric
+          scope.$watch('panel.curTablePage', function() {
+            scope.panel.curTablePage = parseInt(scope.panel.curTablePage) || 1; // ensure page is numeric
 
-            if (scope.curTablePage < minPage) {
-              scope.curTablePage = minPage;
+            if (scope.panel.curTablePage < minPage) {
+              scope.panel.curTablePage = minPage;
             }
 
-            if (scope.curTablePage > numPages) {
-              scope.curTablePage = numPages;
+            if (scope.panel.curTablePage > numPages) {
+              scope.panel.curTablePage = numPages;
             }
 
 
@@ -69,18 +69,38 @@ define([
               return;
             }
 
-            render_panel();
+            renderTable();
           });
 
           // if user tries to sort
           scope.headerClicked = function(header) {
+            if (!scope.panel.allowSorting) {
+              return;
+            }
+
             changeSortType(header);
             handleSorting();
-            render_panel();
+            renderTable();
+          };
+
+          scope.panel.clearSortOrder = function() {
+            _.each(scope.headers, function(column) {
+              column.sortType = SortType.none;
+            });
+
+            scope.panel.columnSortOrder = [];
+            sortedData = [].concat(data.datapoints); // set sorted data to initial data state
+            renderTable();
+          };
+
+          scope.panel.columnWidthChanged = function() {
+            // NOT IMPLEMENTED CORRECTLY
+            elem.find('th').width(scope.panel.columnWidth);
+            performHeaderPositioning();
           };
 
 
-          function render_panel() {
+          function renderTable() {
             var isHeightSet = setTableHeightVariable();
             if (shouldAbortRender(isHeightSet)) {
               return;
@@ -114,7 +134,7 @@ define([
 
             if (!curHeaders) {
               scope.headers = newHeaders;
-              scope.columnSortOrder = [];
+              scope.panel.columnSortOrder = [];
               return;
             }
 
@@ -131,7 +151,7 @@ define([
             if (headersChanged)
             {
               scope.headers = newHeaders;
-              scope.columnSortOrder = [];
+              scope.panel.columnSortOrder = [];
             }
           }
 
@@ -168,20 +188,20 @@ define([
           }
 
           function setupInitialPaging() {
-            numPages = Math.ceil(data.datapoints.length / scope.tablePageSize);
+            numPages = Math.ceil(data.datapoints.length / scope.panel.pageLimit);
             minPage = numPages > 0 ? 1 : 0;
 
-            scope.curTablePage = minPage; // set to first page, since new data has come in
+            scope.panel.curTablePage = minPage; // set to first page, since new data has come in
           }
 
           function handlePaging() {
-            dataToSkip = scope.tablePageSize * (scope.curTablePage - 1);
-            pagedData = sortedData.slice(dataToSkip, scope.tablePageSize + dataToSkip);
+            dataToSkip = scope.panel.pageLimit * (scope.panel.curTablePage - 1);
+            pagedData = sortedData.slice(dataToSkip, scope.panel.pageLimit + dataToSkip);
           }
 
           function handleSorting() {
             sortedData = [].concat(data.datapoints);
-            if (scope.columnSortOrder.length === 0) {
+            if (scope.panel.columnSortOrder.length === 0) {
               return;
             }
 
@@ -189,8 +209,8 @@ define([
 
             // multi column sorting
             function sortFunction(a, b){
-              for (var i = 0; i < scope.columnSortOrder.length; ++i) {
-                var columnToSort = scope.columnSortOrder[i]; // take from list of column sort priority
+              for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
+                var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
                 var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
 
                 var ascSort = columnToSort.sortType === SortType.asc;
@@ -222,7 +242,7 @@ define([
             switch (header.sortType) {
               case SortType.none:
                 newType = SortType.asc;
-                scope.columnSortOrder.push(header); // we are beginning to sort by header column, so add to array
+                scope.panel.columnSortOrder.push(header); // we are beginning to sort by header column, so add to array
                 break;
 
               case SortType.asc:
@@ -232,7 +252,7 @@ define([
               case SortType.desc:
                 newType = SortType.none;
                 // since we are no longer sorting, remove from sort order array
-                scope.columnSortOrder = _.filter(scope.columnSortOrder, function(sortedHeader) { return header !== sortedHeader;  } );
+                scope.panel.columnSortOrder = _.filter(scope.panel.columnSortOrder, function(sortedHeader) { return header !== sortedHeader;  } );
                 break;
             }
 

@@ -14,8 +14,8 @@ define([
         link: function(scope, elem) {
           scope.arrowChange = function(change) {
             // older browsers may not support number input type, so make sure we parse input as text
-            var numericPage = parseInt(scope.curTablePage) || 1;
-            scope.curTablePage = numericPage + change;
+            var numericPage = parseInt(scope.panel.curTablePage) || 1;
+            scope.panel.curTablePage = numericPage + change;
           };
         }
       }
