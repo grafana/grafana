@@ -83,6 +83,10 @@ function (angular, app, _, require, PanelMeta) {
       $scope.$broadcast('render', $scope.tableData);
     };
 
+    $scope.shouldHidePaginationControl = function() {
+      return $scope.dashboard.refresh || !$scope.panel.allowPaging;
+    };
+
 
     $scope.init();
   });
