@@ -6,7 +6,11 @@ page_keywords: grafana, new, changes, features, documentation
 
 # What's New in Grafana v2.0
 
-This is a guide that describes some of changes and new features that can be found in Grafana v2.0.
+Grafana 2.0 represents months of work by the Grafana team and the community. We are pleased to be able to release the Grafana 2.0 beta.
+
+This is a guide that describes some of changes and new features that can be found in Grafana V2.0
+
+If you are interested in how to migrate from Grafana V1.x to V2.0, please read our Migration Guide.
 
 ## New backend
 
@@ -21,16 +25,22 @@ Grafana has undergone some serious interface changes over the last few months. W
 ### New dashboard top header
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 
-1. Side menu toggle
-2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
-3. Star/unstar current dashboard
-4. Share current dashboard (Make sure the dashboard is saved before)
-5. Save current dashboard
-6. Settings dropdown (dashboard settings, annotations, templating, etc)
+Every Dashboard-related feature can be accessed from the main Dashboard header.
+
+1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
+2. `Dashboard dropdown` This main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage Dashboard playlists. 
+3. `Star Dashboard`: Star (or unstar) the current Dashboar. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+4. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+5. `Save dashboard`: Save the current Dashboard. 
+6. `Settings`: Manage Dashboard settings and features such as Templating and Annotations. 
 
 > **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
 > longer create a new dashboard. It will just change the name for the current dashboard.
 > To change name and create a new dashboard use the `Save As...` menu option
+
+### New Side menubar
+
+The side menubar provides access to features such as User Preferences, Organizations, and Data Sources. If you have multiple Organizations, you can easily switch between them.
 
 ## Dashboard Snapshot sharing
 
@@ -72,7 +82,7 @@ The dashboard search view has received a big update, and received a lot of polis
 
 ## graph Panel: Logarithmic scale
 
-The hraph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. 
+The graph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. 
 
 Logarithmic y-axis scales are useful when rendering many series of different order of magnitudes on the same Panel. Types of data that can be appropriate for a Logarithmic scale include latency, network traffic, and storage.
 
@@ -82,7 +92,7 @@ Logarithmic y-axis scales are useful when rendering many series of different ord
 
 ![](/img/v2/dashlist_starred.png)
 
-The dashlist is the only new panel in Grafana 2.0. It allows you to show your personally starred Dashboards, as well as search Dashboards based on strings or tags to create a list of Dashboards.
+The dashlist is s new panel in Grafana 2.0. It showd your personally starred Dashboards, and provides a Dashboard list based a customizable search of strings and tags.
 
 We plan on creating several new panel types over the coming months.
 
@@ -115,41 +125,23 @@ These protections are only the first step; we will be building out additional ca
 
 ![](/img/v2/overwrite_protection.jpg)
 
-## User preferences
 
-If you open side menu (by clicking on the Grafana icon in the top header) you can access your profile page.
-Here you can update your user details, UI Theme and change your password.
+## Server-side panel images and iframe embedding
 
-## PNG rendering
+Grafana now supports server-side PNG rendering. From the Panel share dialog you now have access to a link that will render the Panel to a PNG image.
 
-In the Panel share dialog you now have access to a link that will render the Panel to a PNG image.
-The Panel is rendered on the backend via phantomjs (headless browser). This requires that your metric
-Data Source is accessible from your Grafana instance.
+Below you should see an example server-side png rendered panel:
+
+[link]
+
+> **Note** This requires that your Data Source is accessible from your Grafana instance.
 
 ![](/img/v2/share_dialog_image_highlight.jpg)
 
-## User & Organization permissions
+## Server-side Panel IFrame embedding
 
-Grafana V2.0 introduces its own user management and authentication capabilities, as well as the concept of Organizations.
+You can now embed a single Panel on another web page using the Panel share dialog. 
 
-Users can have the following roles:
-
-- `Viewer`: Can view Dashboards only
-- `Editor`: Can view, update and create Dashboards.
-- `Admin`: Everything an Editor can plus manage Data Sources and Users in their Organization
-- `Grafana Admin`: Can manage Users and Admins across any Organization.
-
-Currently, all Dashboards and Data Sources are assigned to an Organization, not a User. Users can belong to one or more Organizations. Many Grafana installations will have no need for multiple Organizations. Organizations are designed to support multi-tenant installations of Grafana.
-
-> **Note** A `Viewer` can still view all metrics exposed through a data source, not only
-> the metrics used in already existing dashboards. That is because there are not
-> per series permissions in Graphite, InfluxDB or OpenTSDB. 
-
-> **Note** currently there are no permissions on individual Dashboards. 
-
-## Panel IFrame embedding
-
-You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
-with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
+Below you should see an example IFrame with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
 
 <iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
