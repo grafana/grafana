@@ -10,8 +10,6 @@ define([
 function (angular, app, _, require, PanelMeta) {
   'use strict';
 
-  var converter;
-
   var module = angular.module('grafana.panels.table', []);
   app.useModule(module);
 
@@ -62,8 +60,6 @@ function (angular, app, _, require, PanelMeta) {
       $scope.render();
     };
 
-
-
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
       return panelHelper.issueMetricQuery($scope, datasource)
@@ -86,7 +82,6 @@ function (angular, app, _, require, PanelMeta) {
     $scope.shouldHidePaginationControl = function() {
       return $scope.dashboard.refresh || !$scope.panel.allowPaging;
     };
-
 
     $scope.init();
   });

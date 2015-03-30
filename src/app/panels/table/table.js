@@ -50,7 +50,6 @@ define([
             renderTable();
           });
 
-
           // if user changes page
           scope.$watch('panel.curTablePage', function() {
             scope.panel.curTablePage = parseInt(scope.panel.curTablePage) || 1; // ensure page is numeric
@@ -62,7 +61,6 @@ define([
             if (scope.panel.curTablePage > numPages) {
               scope.panel.curTablePage = numPages;
             }
-
 
             if (!data) {
               return;
@@ -96,7 +94,6 @@ define([
             performHeaderPositioning();
           };
 
-
           function renderTable() {
             var isHeightSet = setTableHeightVariable();
             if (shouldAbortRender(isHeightSet)) {
@@ -120,7 +117,6 @@ define([
             performHeaderPositioning();
           });
 
-
           // only set headers if there has been a change, since we do not want to lose pre existing sorting options
           function setHeaders() {
             var curHeaders = scope.headers;
@@ -135,7 +131,6 @@ define([
               return;
             }
 
-
             var headersChanged = curHeaders.length !== newHeaders.length;
             if (!headersChanged) { // check further to see if they did change
               var curNames = _.pluck(curHeaders, 'columnName');
@@ -143,7 +138,6 @@ define([
 
               headersChanged = _.difference(curNames, newNames).length > 0;
             }
-
 
             if (headersChanged)
             {
@@ -179,7 +173,6 @@ define([
               realHeaders.width(scope.panel.columnWidth);
             }
 
-
             for (var i = 0; i < realHeaders.length; ++i) {
               var realEl = realHeaders.eq(i);
               var fixedEl = fixedHeaders.eq(i);
@@ -206,21 +199,16 @@ define([
           }
 
           function handleSorting() {
-            sortedData = [].concat(data.datapoints);
-            if (scope.panel.columnSortOrder.length === 0) {
-              return;
-            }
-
-            sortedData.sort(sortFunction);
-
             // multi column sorting
             function sortFunction(a, b){
+              var temp = 0;
+
               for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
                 var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
                 var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
 
                 var ascSort = columnToSort.sortType === SortType.asc;
-                var temp = compareItems(a[columnIndex], b[columnIndex], ascSort);
+                temp = compareItems(a[columnIndex], b[columnIndex], ascSort);
 
                 if (temp !== 0) {
                   break;
@@ -229,7 +217,6 @@ define([
 
               return temp;
             }
-
 
             function compareItems(itm1, itm2, ascSort) {
               if (itm1 === itm2) {
@@ -240,6 +227,13 @@ define([
                 return isConditionMet ? -1 : 1;
               }
             }
+
+            sortedData = [].concat(data.datapoints);
+            if (scope.panel.columnSortOrder.length === 0) {
+              return;
+            }
+
+            sortedData.sort(sortFunction);
           }
 
           function changeSortType(header) {
@@ -258,14 +252,14 @@ define([
               case SortType.desc:
                 newType = SortType.none;
                 // since we are no longer sorting, remove from sort order array
-                scope.panel.columnSortOrder = _.filter(scope.panel.columnSortOrder, function(sortedHeader) { return header !== sortedHeader;  } );
+                scope.panel.columnSortOrder = _.filter(scope.panel.columnSortOrder, function(sortedHeader) {
+                  return header !== sortedHeader;
+                });
                 break;
             }
 
             header.sortType = newType;
           }
-
-
 
           function shouldAbortRender(isHeightSet) {
             if (!data) {
@@ -282,7 +276,6 @@ define([
               return false;
             }
           }
-
 
           function setTableHeightVariable() {
             var docHeight = $(window).height();
@@ -319,8 +312,4 @@ define([
         }
       };
     });
-
-
-
-
   });

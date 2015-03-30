@@ -22,7 +22,7 @@ function (_) {
     else {
       return this.getNormalTimeSeries();
     }
-  }
+  };
 
   p.getNormalTimeSeries = function() {
     var output = [];
