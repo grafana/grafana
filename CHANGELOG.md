@@ -1,4 +1,4 @@
-# 2.0.0 (unreleased)
+# 2.0.0-Beta1 (2015-03-30)
 
 **New features**
 - [Issue #1623](https://github.com/grafana/grafana/issues/1623). Share Dashboard: Dashboard snapshot sharing (dash and data snapshot), save to local or save to public snapshot dashboard snapshots.raintank.io site

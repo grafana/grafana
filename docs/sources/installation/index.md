@@ -10,14 +10,14 @@ a tar that contains all required files and binaries. If you can't find a package
 to build one your self, read [build from source](../project/building_from_source) instructions for more information.
 
 ## Ubuntu & Debian
-Start by [downloading](http://grafana.org/download/builds) the latest `.deb` package.
+Start by [downloading](http://grafana.org/download) the latest `.deb` package.
 
 To install the package:
 
     $ sudo dpkg -i grafana_latest_amd64.deb
 
 ## Redhat & Centos
-Start by [downloading](http://grafana.org/download/builds) the latest `.rpm` package.
+Start by [downloading](http://grafana.org/download) the latest `.rpm` package.
 
     $ sudo rpm -Uvh grafana-latest-1.x86_64.rpm
 
