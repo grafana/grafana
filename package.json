@@ -62,7 +62,7 @@
   },
   "license": "Apache License",
   "dependencies": {
-    "grunt-jscs": "^0.8.1",
+    "grunt-jscs": "~1.5.x",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
     "sinon": "^1.10.3"

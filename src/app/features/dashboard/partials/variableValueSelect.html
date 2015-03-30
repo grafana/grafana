@@ -1,0 +1,24 @@
+<a ng-click="show()" class="variable-value-link">
+	{{linkText}}
+	<i class="fa fa-caret-down"></i>
+</a>
+
+<div ng-if="selectorOpen" class="variable-value-dropdown">
+	<div class="search-field-wrapper">
+		<span style="position: relative;">
+			<input  type="text" placeholder="Search variable values" give-focus="giveFocus" tabindex="1"
+			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+		</span>
+	</div>
+
+	<div class="variable-options-container" ng-if="!query.tagcloud">
+		<a class="variable-option pointer" bindonce ng-repeat="option in options"
+				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
+				<i class="fa fa-fw fa-square-o"></i>
+				<i class="fa fa-fw fa-check-square-o"></i>
+				<span >{{option.text}}</label>
+			</div>
+		</a>
+	</div>
+</div>
+

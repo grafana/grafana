@@ -509,7 +509,7 @@ func (db *oracle) SqlType(c *core.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {
 	case core.Bit, core.TinyInt, core.SmallInt, core.MediumInt, core.Int, core.Integer, core.BigInt, core.Bool, core.Serial, core.BigSerial:
-		return "NUMBER"
+		res = "NUMBER"
 	case core.Binary, core.VarBinary, core.Blob, core.TinyBlob, core.MediumBlob, core.LongBlob, core.Bytea:
 		return core.Blob
 	case core.Time, core.DateTime, core.TimeStamp:
@@ -521,7 +521,7 @@ func (db *oracle) SqlType(c *core.Column) string {
 	case core.Text, core.MediumText, core.LongText:
 		res = "CLOB"
 	case core.Char, core.Varchar, core.TinyText:
-		return "VARCHAR2"
+		res = "VARCHAR2"
 	default:
 		res = t
 	}
@@ -534,6 +534,10 @@ func (db *oracle) SqlType(c *core.Column) string {
 		res += "(" + strconv.Itoa(c.Length) + ")"
 	}
 	return res
+}
+
+func (db *oracle) AutoIncrStr() string {
+	return "AUTO_INCREMENT"
 }
 
 func (db *oracle) SupportInsertMany() bool {
@@ -553,10 +557,6 @@ func (db *oracle) QuoteStr() string {
 	return "\""
 }
 
-func (db *oracle) AutoIncrStr() string {
-	return ""
-}
-
 func (db *oracle) SupportEngine() bool {
 	return false
 }
@@ -565,19 +565,94 @@ func (db *oracle) SupportCharset() bool {
 	return false
 }
 
+func (db *oracle) SupportDropIfExists() bool {
+	return false
+}
+
 func (db *oracle) IndexOnTable() bool {
 	return false
 }
 
+func (db *oracle) DropTableSql(tableName string) string {
+	return fmt.Sprintf("DROP TABLE `%s`", tableName)
+}
+
+func (b *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
+	var sql string
+	sql = "CREATE TABLE "
+	if tableName == "" {
+		tableName = table.Name
+	}
+
+	sql += b.Quote(tableName) + " ("
+
+	pkList := table.PrimaryKeys
+
+	for _, colName := range table.ColumnsSeq() {
+		col := table.GetColumn(colName)
+		/*if col.IsPrimaryKey && len(pkList) == 1 {
+			sql += col.String(b.dialect)
+		} else {*/
+		sql += col.StringNoPk(b)
+		//}
+		sql = strings.TrimSpace(sql)
+		sql += ", "
+	}
+
+	if len(pkList) > 0 {
+		sql += "PRIMARY KEY ( "
+		sql += b.Quote(strings.Join(pkList, b.Quote(",")))
+		sql += " ), "
+	}
+
+	sql = sql[:len(sql)-2] + ")"
+	if b.SupportEngine() && storeEngine != "" {
+		sql += " ENGINE=" + storeEngine
+	}
+	if b.SupportCharset() {
+		if len(charset) == 0 {
+			charset = b.URI().Charset
+		}
+		if len(charset) > 0 {
+			sql += " DEFAULT CHARSET " + charset
+		}
+	}
+	return sql
+}
+
 func (db *oracle) IndexCheckSql(tableName, idxName string) (string, []interface{}) {
-	args := []interface{}{strings.ToUpper(tableName), strings.ToUpper(idxName)}
+	args := []interface{}{tableName, idxName}
 	return `SELECT INDEX_NAME FROM USER_INDEXES ` +
-		`WHERE TABLE_NAME = ? AND INDEX_NAME = ?`, args
+		`WHERE TABLE_NAME = :1 AND INDEX_NAME = :2`, args
 }
 
 func (db *oracle) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{strings.ToUpper(tableName)}
-	return `SELECT table_name FROM user_tables WHERE table_name = ?`, args
+	args := []interface{}{tableName}
+	return `SELECT table_name FROM user_tables WHERE table_name = :1`, args
+}
+
+func (db *oracle) MustDropTable(tableName string) error {
+	sql, args := db.TableCheckSql(tableName)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql, args)
+	}
+
+	rows, err := db.DB().Query(sql, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil
+	}
+
+	sql = "Drop Table \"" + tableName + "\""
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql)
+	}
+	_, err = db.DB().Exec(sql)
+	return err
 }
 
 /*func (db *oracle) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
@@ -587,9 +662,9 @@ func (db *oracle) TableCheckSql(tableName string) (string, []interface{}) {
 }*/
 
 func (db *oracle) IsColumnExist(tableName string, col *core.Column) (bool, error) {
-	args := []interface{}{strings.ToUpper(tableName), strings.ToUpper(col.Name)}
-	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = ?" +
-		" AND column_name = ?"
+	args := []interface{}{tableName, col.Name}
+	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = :1" +
+		" AND column_name = :2"
 	rows, err := db.DB().Query(query, args...)
 	if db.Logger != nil {
 		db.Logger.Info("[sql]", query, args)
@@ -606,7 +681,7 @@ func (db *oracle) IsColumnExist(tableName string, col *core.Column) (bool, error
 }
 
 func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
-	args := []interface{}{strings.ToUpper(tableName)}
+	args := []interface{}{tableName}
 	s := "SELECT column_name,data_default,data_type,data_length,data_precision,data_scale," +
 		"nullable FROM USER_TAB_COLUMNS WHERE table_name = :1"
 
@@ -625,7 +700,7 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 		col := new(core.Column)
 		col.Indexes = make(map[string]bool)
 
-		var colName, colDefault, nullable, dataType, dataPrecision, dataScale string
+		var colName, colDefault, nullable, dataType, dataPrecision, dataScale *string
 		var dataLen int
 
 		err = rows.Scan(&colName, &colDefault, &dataType, &dataLen, &dataPrecision,
@@ -634,36 +709,66 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 			return nil, nil, err
 		}
 
-		col.Name = strings.Trim(colName, `" `)
-		col.Default = colDefault
+		col.Name = strings.Trim(*colName, `" `)
+		if colDefault != nil {
+			col.Default = *colDefault
+			col.DefaultIsEmpty = false
+		}
 
-		if nullable == "Y" {
+		if *nullable == "Y" {
 			col.Nullable = true
 		} else {
 			col.Nullable = false
 		}
 
-		switch dataType {
+		var ignore bool
+
+		var dt string
+		var len1, len2 int
+		dts := strings.Split(*dataType, "(")
+		dt = dts[0]
+		if len(dts) > 1 {
+			lens := strings.Split(dts[1][:len(dts[1])-1], ",")
+			if len(lens) > 1 {
+				len1, _ = strconv.Atoi(lens[0])
+				len2, _ = strconv.Atoi(lens[1])
+			} else {
+				len1, _ = strconv.Atoi(lens[0])
+			}
+		}
+
+		switch dt {
 		case "VARCHAR2":
-			col.SQLType = core.SQLType{core.Varchar, 0, 0}
+			col.SQLType = core.SQLType{core.Varchar, len1, len2}
 		case "TIMESTAMP WITH TIME ZONE":
 			col.SQLType = core.SQLType{core.TimeStampz, 0, 0}
+		case "NUMBER":
+			col.SQLType = core.SQLType{core.Double, len1, len2}
+		case "LONG", "LONG RAW":
+			col.SQLType = core.SQLType{core.Text, 0, 0}
+		case "RAW":
+			col.SQLType = core.SQLType{core.Binary, 0, 0}
+		case "ROWID":
+			col.SQLType = core.SQLType{core.Varchar, 18, 0}
+		case "AQ$_SUBSCRIBERS":
+			ignore = true
 		default:
-			col.SQLType = core.SQLType{strings.ToUpper(dataType), 0, 0}
+			col.SQLType = core.SQLType{strings.ToUpper(dt), len1, len2}
 		}
+
+		if ignore {
+			continue
+		}
+
 		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
-			return nil, nil, errors.New(fmt.Sprintf("unkonw colType %v", dataType))
+			return nil, nil, errors.New(fmt.Sprintf("unkonw colType %v %v", *dataType, col.SQLType))
 		}
 
 		col.Length = dataLen
 
 		if col.SQLType.IsText() || col.SQLType.IsTime() {
-			if col.Default != "" {
+			if !col.DefaultIsEmpty {
 				col.Default = "'" + col.Default + "'"
-			} else {
-				if col.DefaultIsEmpty {
-					col.Default = "''"
-				}
 			}
 		}
 		cols[col.Name] = col

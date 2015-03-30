@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,4 +27,6 @@ func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
 	loginUserWithUser(&user, c)
 
 	c.JsonOK("User created and logged in")
+
+	metrics.M_Api_User_SignUp.Inc(1)
 }

@@ -344,7 +344,7 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 				if col := table.GetColumn(name); col != nil {
 					col.Indexes[index.Name] = true
 				} else {
-					return nil, fmt.Errorf("Unknown col "+name+" in indexes %v", index)
+					return nil, fmt.Errorf("Unknown col "+name+" in indexes %v of table", index, table.ColumnsSeq())
 				}
 			}
 		}
@@ -352,6 +352,9 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 	return tables, nil
 }
 
+/*
+dump database all table structs and data to a file
+*/
 func (engine *Engine) DumpAllToFile(fp string) error {
 	f, err := os.Create(fp)
 	if err != nil {
@@ -361,6 +364,9 @@ func (engine *Engine) DumpAllToFile(fp string) error {
 	return engine.DumpAll(f)
 }
 
+/*
+dump database all table structs and data to w
+*/
 func (engine *Engine) DumpAll(w io.Writer) error {
 	tables, err := engine.DBMetas()
 	if err != nil {
@@ -556,6 +562,13 @@ func (engine *Engine) Decr(column string, arg ...interface{}) *Session {
 	session := engine.NewSession()
 	session.IsAutoClose = true
 	return session.Decr(column, arg...)
+}
+
+// Method SetExpr provides a update string like "column = {expression}"
+func (engine *Engine) SetExpr(column string, expression string) *Session {
+	session := engine.NewSession()
+	session.IsAutoClose = true
+	return session.SetExpr(column, expression)
 }
 
 // Temporarily change the Get, Find, Update's table
@@ -766,7 +779,12 @@ func (engine *Engine) mapType(v reflect.Value) *core.Table {
 						col.IsPrimaryKey = true
 						col.Nullable = false
 					case k == "NULL":
-						col.Nullable = (strings.ToUpper(tags[j-1]) != "NOT")
+						if j == 0 {
+							col.Nullable = true
+						} else {
+							col.Nullable = (strings.ToUpper(tags[j-1]) != "NOT")
+						}
+					// TODO: for postgres how add autoincr?
 					/*case strings.HasPrefix(k, "AUTOINCR(") && strings.HasSuffix(k, ")"):
 					col.IsAutoIncrement = true
 
@@ -915,7 +933,7 @@ func (engine *Engine) mapType(v reflect.Value) *core.Table {
 
 		table.AddColumn(col)
 
-		if fieldType.Kind() == reflect.Int64 && (col.FieldName == "Id" || strings.HasSuffix(col.FieldName, ".Id")) {
+		if fieldType.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
 			idFieldColName = col.Name
 		}
 	} // end for
@@ -959,40 +977,25 @@ func (engine *Engine) mapping(beans ...interface{}) (e error) {
 
 // If a table has any reocrd
 func (engine *Engine) IsTableEmpty(bean interface{}) (bool, error) {
-	v := rValue(bean)
-	t := v.Type()
-	if t.Kind() != reflect.Struct {
-		return false, errors.New("bean should be a struct or struct's point")
-	}
-	engine.autoMapType(v)
 	session := engine.NewSession()
 	defer session.Close()
-	rows, err := session.Count(bean)
-	return rows == 0, err
+	return session.IsTableEmpty(bean)
 }
 
 // If a table is exist
-func (engine *Engine) IsTableExist(bean interface{}) (bool, error) {
-	v := rValue(bean)
-	var tableName string
-	if v.Type().Kind() == reflect.String {
-		tableName = bean.(string)
-	} else if v.Type().Kind() == reflect.Struct {
-		table := engine.autoMapType(v)
-		tableName = table.Name
-	} else {
-		return false, errors.New("bean should be a struct or struct's point")
-	}
-
+func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 	session := engine.NewSession()
 	defer session.Close()
-	has, err := session.isTableExist(tableName)
-	return has, err
+	return session.IsTableExist(beanOrTableName)
 }
 
 func (engine *Engine) IdOf(bean interface{}) core.PK {
-	table := engine.TableInfo(bean)
-	v := reflect.Indirect(reflect.ValueOf(bean))
+	return engine.IdOfV(reflect.ValueOf(bean))
+}
+
+func (engine *Engine) IdOfV(rv reflect.Value) core.PK {
+	v := reflect.Indirect(rv)
+	table := engine.autoMapType(v)
 	pk := make([]interface{}, len(table.PrimaryKeys))
 	for i, col := range table.PKColumns() {
 		pkField := v.FieldByName(col.FieldName)
@@ -1109,7 +1112,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 				session := engine.NewSession()
 				session.Statement.RefTable = table
 				defer session.Close()
-				isExist, err := session.isColumnExist(table.Name, col)
+				isExist, err := session.Engine.dialect.IsColumnExist(table.Name, col)
 				if err != nil {
 					return err
 				}
@@ -1222,8 +1225,9 @@ func (engine *Engine) CreateTables(beans ...interface{}) error {
 
 func (engine *Engine) DropTables(beans ...interface{}) error {
 	session := engine.NewSession()
-	err := session.Begin()
 	defer session.Close()
+
+	err := session.Begin()
 	if err != nil {
 		return err
 	}
@@ -1256,13 +1260,6 @@ func (engine *Engine) Query(sql string, paramStr ...interface{}) (resultsSlice [
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Query(sql, paramStr...)
-}
-
-// Exec a raw sql and return records as []map[string]string
-func (engine *Engine) Q(sql string, paramStr ...interface{}) (resultsSlice []map[string]string, err error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Q(sql, paramStr...)
 }
 
 // Insert one or more records
@@ -1371,18 +1368,11 @@ func (engine *Engine) Import(r io.Reader) ([]sql.Result, error) {
 
 	scanner.Split(semiColSpliter)
 
-	session := engine.NewSession()
-	defer session.Close()
-	err := session.newDb()
-	if err != nil {
-		return results, err
-	}
-
 	for scanner.Scan() {
 		query := scanner.Text()
 		query = strings.Trim(query, " \t")
 		if len(query) > 0 {
-			result, err := session.Db.Exec(query)
+			result, err := engine.DB().Exec(query)
 			results = append(results, result)
 			if err != nil {
 				lastError = err
@@ -1409,7 +1399,15 @@ func (engine *Engine) NowTime(sqlTypeName string) interface{} {
 	return engine.FormatTime(sqlTypeName, t)
 }
 
+func (engine *Engine) NowTime2(sqlTypeName string) (interface{}, time.Time) {
+	t := time.Now()
+	return engine.FormatTime(sqlTypeName, t), t
+}
+
 func (engine *Engine) FormatTime(sqlTypeName string, t time.Time) (v interface{}) {
+	if engine.dialect.DBType() == core.ORACLE {
+		return t
+	}
 	switch sqlTypeName {
 	case core.Time:
 		s := engine.TZTime(t).Format("2006-01-02 15:04:05") //time.RFC3339
@@ -1419,6 +1417,8 @@ func (engine *Engine) FormatTime(sqlTypeName string, t time.Time) (v interface{}
 	case core.DateTime, core.TimeStamp:
 		if engine.dialect.DBType() == "ql" {
 			v = engine.TZTime(t)
+		} else if engine.dialect.DBType() == "sqlite3" {
+			v = engine.TZTime(t).UTC().Format("2006-01-02 15:04:05")
 		} else {
 			v = engine.TZTime(t).Format("2006-01-02 15:04:05")
 		}
@@ -1430,6 +1430,8 @@ func (engine *Engine) FormatTime(sqlTypeName string, t time.Time) (v interface{}
 		} else {
 			v = engine.TZTime(t).Format(time.RFC3339Nano)
 		}
+	case core.BigInt, core.Int:
+		v = engine.TZTime(t).Unix()
 	default:
 		v = engine.TZTime(t)
 	}

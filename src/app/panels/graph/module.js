@@ -23,7 +23,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -53,10 +53,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       y_formats    : ['short', 'short'],
       // grid options
       grid          : {
+        leftLogBase: 1,
         leftMax: null,
         rightMax: null,
         leftMin: null,
         rightMin: null,
+        rightLogBase: 1,
         threshold1: null,
         threshold2: null,
         threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -95,7 +97,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // tooltip options
       tooltip       : {
         value_type: 'cumulative',
-        shared: false,
+        shared: true,
       },
       // time overrides
       timeFrom: null,
@@ -113,6 +115,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.annotate, _d.annotate);
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
+
+    $scope.logScales = {'linear': 1, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
@@ -134,6 +138,12 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
           $scope.render([]);
           throw err;
         });
+    };
+
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.annotationsPromise = $q.when([]);
+      $scope.dataHandler(snapshotData);
     };
 
     $scope.dataHandler = function(results) {
@@ -281,6 +291,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     panelSrv.init($scope);
+
   });
 
 });

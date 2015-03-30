@@ -22,7 +22,6 @@ import (
 var (
 	x       *xorm.Engine
 	dialect migrator.Dialect
-	tables  []interface{}
 
 	HasEngine bool
 
@@ -80,10 +79,6 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
 	}
 
-	if err := x.Sync2(tables...); err != nil {
-		return fmt.Errorf("sync database struct error: %v\n", err)
-	}
-
 	if enableLog {
 		logPath := path.Join(setting.LogRootPath, "xorm.log")
 		os.MkdirAll(path.Dir(logPath), os.ModePerm)
@@ -94,11 +89,13 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 		}
 		x.Logger = xorm.NewSimpleLogger(f)
 
-		x.ShowSQL = true
-		x.ShowInfo = true
-		x.ShowDebug = true
-		x.ShowErr = true
-		x.ShowWarn = true
+		if setting.Env == setting.DEV {
+			x.ShowSQL = false
+			x.ShowInfo = false
+			x.ShowDebug = false
+			x.ShowErr = true
+			x.ShowWarn = true
+		}
 	}
 
 	return nil
@@ -125,7 +122,7 @@ func getEngine() (*xorm.Engine, error) {
 			DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode)
 	case "sqlite3":
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
+		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc&_loc=Local"
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}

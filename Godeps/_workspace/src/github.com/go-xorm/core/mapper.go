@@ -9,7 +9,6 @@ import (
 type IMapper interface {
 	Obj2Table(string) string
 	Table2Obj(string) string
-	TableName(string) string
 }
 
 type CacheMapper struct {
@@ -56,10 +55,6 @@ func (m *CacheMapper) Table2Obj(t string) string {
 	return o
 }
 
-func (m *CacheMapper) TableName(t string) string {
-	return t
-}
-
 // SameMapper implements IMapper and provides same name between struct and
 // database table
 type SameMapper struct {
@@ -70,10 +65,6 @@ func (m SameMapper) Obj2Table(o string) string {
 }
 
 func (m SameMapper) Table2Obj(t string) string {
-	return t
-}
-
-func (m SameMapper) TableName(t string) string {
 	return t
 }
 
@@ -96,25 +87,6 @@ func snakeCasedName(name string) string {
 
 	return string(newstr)
 }
-
-/*func pascal2Sql(s string) (d string) {
-    d = ""
-    lastIdx := 0
-    for i := 0; i < len(s); i++ {
-        if s[i] >= 'A' && s[i] <= 'Z' {
-            if lastIdx < i {
-                d += s[lastIdx+1 : i]
-            }
-            if i != 0 {
-                d += "_"
-            }
-            d += string(s[i] + 32)
-            lastIdx = i
-        }
-    }
-    d += s[lastIdx+1:]
-    return
-}*/
 
 func (mapper SnakeMapper) Obj2Table(name string) string {
 	return snakeCasedName(name)
@@ -148,9 +120,103 @@ func (mapper SnakeMapper) Table2Obj(name string) string {
 	return titleCasedName(name)
 }
 
-func (mapper SnakeMapper) TableName(t string) string {
-	return t
+// GonicMapper implements IMapper. It will consider initialisms when mapping names.
+// E.g. id -> ID, user -> User and to table names: UserID -> user_id, MyUID -> my_uid
+type GonicMapper map[string]bool
+
+func isASCIIUpper(r rune) bool {
+	return 'A' <= r && r <= 'Z'
 }
+
+func toASCIIUpper(r rune) rune {
+	if 'a' <= r && r <= 'z' {
+		r -= ('a' - 'A')
+	}
+	return r
+}
+
+func gonicCasedName(name string) string {
+	newstr := make([]rune, 0, len(name)+3)
+	for idx, chr := range name {
+		if isASCIIUpper(chr) && idx > 0 {
+			if !isASCIIUpper(newstr[len(newstr)-1]) {
+				newstr = append(newstr, '_')
+			}
+		}
+
+		if !isASCIIUpper(chr) && idx > 1 {
+			l := len(newstr)
+			if isASCIIUpper(newstr[l-1]) && isASCIIUpper(newstr[l-2]) {
+				newstr = append(newstr, newstr[l-1])
+				newstr[l-1] = '_'
+			}
+		}
+
+		newstr = append(newstr, chr)
+	}
+	return strings.ToLower(string(newstr))
+}
+
+func (mapper GonicMapper) Obj2Table(name string) string {
+	return gonicCasedName(name)
+}
+
+func (mapper GonicMapper) Table2Obj(name string) string {
+	newstr := make([]rune, 0)
+
+	name = strings.ToLower(name)
+	parts := strings.Split(name, "_")
+
+	for _, p := range parts {
+		_, isInitialism := mapper[strings.ToUpper(p)]
+		for i, r := range p {
+			if i == 0 || isInitialism {
+				r = toASCIIUpper(r)
+			}
+			newstr = append(newstr, r)
+		}
+	}
+
+	return string(newstr)
+}
+
+// A GonicMapper that contains a list of common initialisms taken from golang/lint
+var LintGonicMapper = GonicMapper{
+	"API":   true,
+	"ASCII": true,
+	"CPU":   true,
+	"CSS":   true,
+	"DNS":   true,
+	"EOF":   true,
+	"GUID":  true,
+	"HTML":  true,
+	"HTTP":  true,
+	"HTTPS": true,
+	"ID":    true,
+	"IP":    true,
+	"JSON":  true,
+	"LHS":   true,
+	"QPS":   true,
+	"RAM":   true,
+	"RHS":   true,
+	"RPC":   true,
+	"SLA":   true,
+	"SMTP":  true,
+	"SSH":   true,
+	"TLS":   true,
+	"TTL":   true,
+	"UI":    true,
+	"UID":   true,
+	"UUID":  true,
+	"URI":   true,
+	"URL":   true,
+	"UTF8":  true,
+	"VM":    true,
+	"XML":   true,
+	"XSRF":  true,
+	"XSS":   true,
+}
+
 // provide prefix table name support
 type PrefixMapper struct {
 	Mapper IMapper
@@ -163,10 +229,6 @@ func (mapper PrefixMapper) Obj2Table(name string) string {
 
 func (mapper PrefixMapper) Table2Obj(name string) string {
 	return mapper.Mapper.Table2Obj(name[len(mapper.Prefix):])
-}
-
-func (mapper PrefixMapper) TableName(name string) string {
-	return mapper.Prefix + name
 }
 
 func NewPrefixMapper(mapper IMapper, prefix string) PrefixMapper {
@@ -185,10 +247,6 @@ func (mapper SuffixMapper) Obj2Table(name string) string {
 
 func (mapper SuffixMapper) Table2Obj(name string) string {
 	return mapper.Mapper.Table2Obj(name[:len(name)-len(mapper.Suffix)])
-}
-
-func (mapper SuffixMapper) TableName(name string) string {
-	return name + mapper.Suffix
 }
 
 func NewSuffixMapper(mapper IMapper, suffix string) SuffixMapper {

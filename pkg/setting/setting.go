@@ -98,6 +98,8 @@ var (
 	//Raintank Graphite Backend
 	GraphiteUrl string
 	configFiles []string
+
+	ReportingEnabled bool
 )
 
 func init() {
@@ -244,6 +246,8 @@ func NewConfigContext(config string) {
 	if err != nil {
 		log.Fatal(4, "Invalid graphite_url(%s): %s", GraphiteUrl, err)
 	}
+
+	ReportingEnabled = Cfg.Section("").Key("reporting-enabled").MustBool(true)
 
 	readSessionConfig()
 }

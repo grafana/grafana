@@ -8,6 +8,7 @@ function (angular, _, kbn, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
   module.service('panelHelper', function(timeSrv) {
 
     this.updateTimeRange = function(scope) {
@@ -67,10 +68,17 @@ function (angular, _, kbn, $) {
         targets: scope.panel.targets,
         format: scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: scope.resolution,
+        scopedVars: scope.panel.scopedVars,
         cacheTimeout: scope.panel.cacheTimeout
       };
 
-      return datasource.query(metricsQuery);
+      return datasource.query(metricsQuery).then(function(results) {
+        if (scope.dashboard.snapshot) {
+          scope.panel.snapshotData = results;
+        }
+
+        return results;
+      });
     };
 
   });

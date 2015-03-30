@@ -38,11 +38,6 @@ function (angular, app, _, config) {
       }
     };
 
-    // This can be overridden by individual panels
-    $scope.close_edit = function() {
-      $scope.$broadcast('render');
-    };
-
     $scope.add_panel = function(panel) {
       $scope.dashboard.add_panel(panel, $scope.row);
     };
@@ -81,15 +76,19 @@ function (angular, app, _, config) {
       $scope.$broadcast('render');
     };
 
-    $scope.remove_panel_from_row = function(row, panel) {
+    $scope.removePanel = function(panel) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to remove this panel?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          row.panels = _.without(row.panels, panel);
+          $scope.row.panels = _.without($scope.row.panels, panel);
         }
       });
+    };
+
+    $scope.updatePanelSpan = function(panel, span) {
+      panel.span = Math.min(Math.max(panel.span + span, 1), 12);
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {
@@ -144,9 +143,11 @@ function (angular, app, _, config) {
 
   module.directive('panelWidth', function() {
     return function(scope, element) {
-      scope.$watch('panel.span', function() {
+      function updateWidth() {
         element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
-      });
+      }
+
+      scope.$watch('panel.span', updateWidth);
     };
   });
 

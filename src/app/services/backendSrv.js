@@ -54,11 +54,15 @@ function (angular, _, config) {
 
     this.request = function(options) {
       var httpOptions = {
-        url: config.appSubUrl + options.url,
+        url: options.url,
         method: options.method,
         data: options.data,
         params: options.params,
       };
+
+      if (httpOptions.url.indexOf('/') === 0) {
+        httpOptions.url = config.appSubUrl + httpOptions.url;
+      }
 
       return $http(httpOptions).then(function(results) {
         if (options.method !== 'GET') {

@@ -1,6 +1,7 @@
 package xorm
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -152,7 +153,7 @@ func (db *sqlite3) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName st
 func (db *sqlite3) SqlType(c *core.Column) string {
 	switch t := c.SQLType.Name; t {
 	case core.Date, core.DateTime, core.TimeStamp, core.Time:
-		return core.Numeric
+		return core.DateTime
 	case core.TimeStampz:
 		return core.Text
 	case core.Char, core.Varchar, core.NVarchar, core.TinyText, core.Text, core.MediumText, core.LongText:
@@ -297,6 +298,7 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 		col := new(core.Column)
 		col.Indexes = make(map[string]bool)
 		col.Nullable = true
+		col.DefaultIsEmpty = true
 		for idx, field := range fields {
 			if idx == 0 {
 				col.Name = strings.Trim(field, "`[] ")
@@ -315,7 +317,13 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 				} else {
 					col.Nullable = true
 				}
+			case "DEFAULT":
+				col.Default = fields[idx+1]
+				col.DefaultIsEmpty = false
 			}
+		}
+		if !col.SQLType.IsNumeric() && !col.DefaultIsEmpty {
+			col.Default = "'" + col.Default + "'"
 		}
 		cols[col.Name] = col
 		colSeq = append(colSeq, col.Name)
@@ -366,15 +374,16 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 
 	indexes := make(map[string]*core.Index, 0)
 	for rows.Next() {
-		var sql string
-		err = rows.Scan(&sql)
+		var tmpSql sql.NullString
+		err = rows.Scan(&tmpSql)
 		if err != nil {
 			return nil, err
 		}
 
-		if sql == "" {
+		if !tmpSql.Valid {
 			continue
 		}
+		sql := tmpSql.String
 
 		index := new(core.Index)
 		nNStart := strings.Index(sql, "INDEX")
@@ -384,7 +393,6 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 		}
 
 		indexName := strings.Trim(sql[nNStart+6:nNEnd], "` []")
-		//fmt.Println(indexName)
 		if strings.HasPrefix(indexName, "IDX_"+tableName) || strings.HasPrefix(indexName, "UQE_"+tableName) {
 			index.Name = indexName[5+len(tableName) : len(indexName)]
 		} else {

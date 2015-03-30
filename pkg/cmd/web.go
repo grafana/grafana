@@ -19,7 +19,9 @@ import (
 	_ "github.com/macaron-contrib/session/postgres"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
@@ -65,11 +67,22 @@ func newMacaron() *macaron.Macaron {
 }
 
 func mapStatic(m *macaron.Macaron, dir string, prefix string) {
-	m.Use(macaron.Static(
+	headers := func(c *macaron.Context) {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if setting.Env == setting.DEV {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	m.Use(httpstatic.Static(
 		path.Join(setting.StaticRootPath, dir),
-		macaron.StaticOptions{
+		httpstatic.StaticOptions{
 			SkipLogging: true,
 			Prefix:      prefix,
+			AddHeaders:  headers,
 		},
 	))
 }
@@ -86,6 +99,10 @@ func runWeb(c *cli.Context) {
 	var err error
 	m := newMacaron()
 	api.Register(m)
+
+	if setting.ReportingEnabled {
+		go metrics.StartUsageReportLoop()
+	}
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)

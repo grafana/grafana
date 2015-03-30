@@ -32,6 +32,12 @@ A **Data Source** is either raw data in type `[]byte` or a file name with type `
 cfg, err := ini.Load([]byte("raw data"), "filename")
 ```
 
+Or start with an empty object:
+
+```go
+cfg := ini.Empty()
+```
+
 When you cannot decide how many data sources to load at the beginning, you still able to **Append()** them later.
 
 ```go
@@ -58,7 +64,7 @@ When you're pretty sure the section exists, following code could make your life 
 section := cfg.Section("")
 ```
 
-What happens when the section somehow does not exists? Won't panic, it returns an empty section object.
+What happens when the section somehow does not exist? Don't panic, it automatically creates and returns a new section to you.
 
 To create a new section:
 
@@ -117,6 +123,9 @@ val := cfg.Section("").Key("key name").String()
 To get value with types:
 
 ```go
+// For boolean values:
+// true when value is: 1, t, T, TRUE, true, True, YES, yes, Yes, ON, on, On
+// false when value is: 0, f, F, FALSE, false, False, NO, no, No, OFF, off, Off
 v, err = cfg.Section("").Key("BOOL").Bool()
 v, err = cfg.Section("").Key("FLOAT64").Float64()
 v, err = cfg.Section("").Key("INT").Int()
@@ -176,10 +185,21 @@ v = cfg.Section("").Key("STRING").In("default", []string{"str", "arr", "types"})
 v = cfg.Section("").Key("FLOAT64").InFloat64(1.1, []float64{1.25, 2.5, 3.75})
 v = cfg.Section("").Key("INT").InInt(5, []int{10, 20, 30})
 v = cfg.Section("").Key("INT64").InInt64(10, []int64{10, 20, 30})
-v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3})
+v = cfg.Section("").Key("TIME").InTimeFormat(time.RFC3339, time.Now(), []time.Time{time1, time2, time3})
+v = cfg.Section("").Key("TIME").InTime(time.Now(), []time.Time{time1, time2, time3}) // RFC3339
 ```
 
 Default value will be presented if value of key is not in candidates you given, and default value does not need be one of candidates.
+
+To validate value in a given range:
+
+```go
+vals = cfg.Section("").Key("FLOAT64").RangeFloat64(0.0, 1.1, 2.2)
+vals = cfg.Section("").Key("INT").RangeInt(0, 10, 20)
+vals = cfg.Section("").Key("INT64").RangeInt64(0, 10, 20)
+vals = cfg.Section("").Key("TIME").RangeTimeFormat(time.RFC3339, time.Now(), minTime, maxTime)
+vals = cfg.Section("").Key("TIME").RangeTime(time.Now(), minTime, maxTime) // RFC3339
+```
 
 To auto-split value into slice:
 
@@ -293,6 +313,18 @@ func main() {
 	err = cfg.Section("Note").MapTo(n)
 	// ...
 }
+```
+
+Can I have default value for field? Absolutely.
+
+Assign it before you map to struct. It will keep the value as it is if the key is not presented or got wrong type.
+
+```go
+// ...
+p := &Person{
+	Name: "Joe",
+}
+// ...
 ```
 
 #### Name Mapper

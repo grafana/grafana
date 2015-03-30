@@ -47,7 +47,7 @@ func Index(c *middleware.Context) {
 
 func NotFound(c *middleware.Context) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(200, "Not found", nil)
+		c.JsonApiErr(404, "Not found", nil)
 		return
 	}
 

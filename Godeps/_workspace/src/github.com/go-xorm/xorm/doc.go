@@ -63,21 +63,22 @@ There are 7 major ORM methods and many helpful methods to use to operate databas
     // SELECT * FROM user
 
 4. Query multiple records and record by record handle, there two methods, one is Iterate,
-another is Raws
+another is Rows
 
     err := engine.Iterate(...)
     // SELECT * FROM user
 
-    raws, err := engine.Raws(...)
+    rows, err := engine.Rows(...)
     // SELECT * FROM user
+    defer rows.Close()
     bean := new(Struct)
-    for raws.Next() {
-        err = raws.Scan(bean)
+    for rows.Next() {
+        err = rows.Scan(bean)
     }
 
 5. Update one or more records
 
-    affected, err := engine.Update(&user)
+    affected, err := engine.Id(...).Update(&user)
     // UPDATE user SET ...
 
 6. Delete one or more records, Delete MUST has conditon
@@ -150,6 +151,6 @@ Attention: the above 7 methods should be the last chainable method.
     engine.Join("LEFT", "userdetail", "user.id=userdetail.id").Find()
     //SELECT * FROM user LEFT JOIN userdetail ON user.id=userdetail.id
 
-More usage, please visit https://github.com/go-xorm/xorm/blob/master/docs/QuickStartEn.md
+More usage, please visit http://xorm.io/docs
 */
 package xorm

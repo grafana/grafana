@@ -37,12 +37,14 @@ function (angular, app, _, $) {
               if (selected) {
                 segment.value = selected.value;
                 segment.html = selected.html;
+                segment.fake = false;
                 segment.expandable = selected.expandable;
               }
               else {
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
+                segment.fake = false;
               }
               $scope.segmentValueChanged(segment, $scope.$index);
             });
@@ -71,7 +73,7 @@ function (angular, app, _, $) {
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
-                if (segment.value !== 'select metric' &&  _.indexOf(options, segment.value) === -1) {
+                if (!segment.fake && _.indexOf(options, segment.value) === -1) {
                   options.unshift(segment.value);
                 }
 

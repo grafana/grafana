@@ -33,6 +33,15 @@ function (angular, _, kbn, moment, $) {
     });
   });
 
+  module.controller('DashFromSnapshotCtrl', function($scope, $routeParams, backendSrv) {
+    backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
+      $scope.initDashboard(result, $scope);
+    },function() {
+      $scope.initDashboard({}, $scope);
+      $scope.appEvent('alert-error', ['Dashboard Snapshot', '']);
+    });
+  });
+
   module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
     if (!window.grafanaImportDashboard) {
       alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
@@ -47,7 +56,7 @@ function (angular, _, kbn, moment, $) {
       meta: {},
       model: {
         title: "New dashboard",
-        rows: [{ height: '250px', panels:[] }]
+      rows: [{ height: '250px', panels:[] }]
       },
     }, $scope);
   });
@@ -57,10 +66,10 @@ function (angular, _, kbn, moment, $) {
     var file_load = function(file) {
       return $http({
         url: "public/dashboards/"+file.replace(/\.(?!json)/,"/")+'?' + new Date().getTime(),
-        method: "GET",
-        transformResponse: function(response) {
-          return angular.fromJson(response);
-        }
+             method: "GET",
+             transformResponse: function(response) {
+               return angular.fromJson(response);
+             }
       }).then(function(result) {
         if(!result) {
           return false;
@@ -83,8 +92,8 @@ function (angular, _, kbn, moment, $) {
     var execute_script = function(result) {
       var services = {
         dashboardSrv: dashboardSrv,
-        datasourceSrv: datasourceSrv,
-        $q: $q,
+    datasourceSrv: datasourceSrv,
+    $q: $q,
       };
 
       /*jshint -W054 */

@@ -61,6 +61,7 @@ module.exports = function(config,grunt) {
           'controllers/all',
           'routes/all',
           'components/partials',
+          'plugins/datasource/grafana/datasource',
         ]
       }
     ];

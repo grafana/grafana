@@ -81,10 +81,16 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       panelHelper.updateTimeRange($scope);
 
       return panelHelper.issueMetricQuery($scope, datasource)
-        .then($scope.dataHandler)
-        .then(null, function() {
+        .then($scope.dataHandler, function(err) {
+          $scope.series = [];
           $scope.render();
+          throw err;
         });
+    };
+
+    $scope.loadSnapshot = function(snapshotData) {
+      panelHelper.updateTimeRange($scope);
+      $scope.dataHandler(snapshotData);
     };
 
     $scope.dataHandler = function(results) {

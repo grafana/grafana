@@ -28,7 +28,7 @@ define([
             scope.height = '200px';
             scope.panel = {
               legend: {},
-              grid: {},
+              grid: { },
               y_formats: [],
               seriesOverrides: [],
               tooltip: {
@@ -137,6 +137,25 @@ define([
       it('should add grid markings', function() {
         var markings = ctx.plotOptions.grid.markings;
         expect(markings[0].yaxis.from).to.be(0);
+      });
+    });
+
+    graphScenario('when logBase is log 10', function(ctx) {
+      ctx.setup(function(scope) {
+        scope.panel.grid = {
+          leftMax: null,
+          rightMax: null,
+          leftMin: null,
+          rightMin: null,
+          leftLogBase: 10,
+        };
+      });
+
+      it('should apply axis transform and ticks', function() {
+        var axis = ctx.plotOptions.yaxes[0];
+        expect(axis.transform(100)).to.be(Math.log(100+0.1));
+        expect(axis.ticks[0]).to.be(0);
+        expect(axis.ticks[1]).to.be(1);
       });
     });
 

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -99,6 +100,15 @@ func (ctx *Context) Handle(status int, title string, err error) {
 		}
 	}
 
+	switch status {
+	case 200:
+		metrics.M_Page_Status_200.Inc(1)
+	case 404:
+		metrics.M_Page_Status_404.Inc(1)
+	case 500:
+		metrics.M_Page_Status_500.Inc(1)
+	}
+
 	ctx.Data["Title"] = title
 	ctx.HTML(status, strconv.Itoa(status))
 }
@@ -128,7 +138,9 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	switch status {
 	case 404:
 		resp["message"] = "Not Found"
+		metrics.M_Api_Status_500.Inc(1)
 	case 500:
+		metrics.M_Api_Status_404.Inc(1)
 		resp["message"] = "Internal Server Error"
 	}
 

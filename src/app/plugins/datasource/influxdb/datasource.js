@@ -36,13 +36,14 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var timeFilter = getTimeFilter(options);
 
       var promises = _.map(options.targets, function(target) {
-        if (target.hide || !((target.series && target.column) || target.query)) {
+        if (target.hide) {
           return [];
         }
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
+        console.log('query builder result:' + query);
 
         // replace grafana variables
         query = query.replace('$timeFilter', timeFilter);
@@ -73,40 +74,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.listColumns = function(seriesName) {
-      seriesName = templateSrv.replace(seriesName);
-
-      if(!seriesName.match('^/.*/') && !seriesName.match(/^merge\(.*\)/)) {
-        seriesName = '"' + seriesName+ '"';
-      }
-
-      return this._seriesQuery('select * from ' + seriesName + ' limit 1').then(function(data) {
-        if (!data) {
-          return [];
-        }
-        return data[0].columns.map(function(item) {
-          return /^\w+$/.test(item) ? item : ('"' + item + '"');
-        });
-      });
-    };
-
-    InfluxDatasource.prototype.listSeries = function(query) {
-      // wrap in regex
-      if (query && query.length > 0 && query[0] !== '/')  {
-        query = '/' + query + '/';
-      }
-
-      return this._seriesQuery('SHOW MEASUREMENTS').then(function(data) {
-        if (!data || data.length === 0) {
-          return [];
-        }
-        return _.map(data[0].points, function(point) {
-          return point[1];
-        });
-      });
-    };
-
-    InfluxDatasource.prototype.metricFindQuery = function (query) {
+    InfluxDatasource.prototype.metricFindQuery = function (query, queryType) {
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -115,17 +83,30 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         return $q.reject(err);
       }
 
-      return this._seriesQuery(interpolated)
-        .then(function (results) {
-          if (!results || results.length === 0) { return []; }
+      console.log('metricFindQuery called with: ' + [query, queryType].join(', '));
 
-          return _.map(results[0].points, function (metric) {
-            return {
-              text: metric[1],
-              expandable: false
-            };
-          });
-        });
+      return this._seriesQuery(interpolated, queryType).then(function (results) {
+        if (!results || results.results.length === 0) { return []; }
+
+        var influxResults = results.results[0];
+        if (!influxResults.series) {
+          return [];
+        }
+
+        console.log('metric find query response', results);
+        var series = influxResults.series[0];
+
+        switch (queryType) {
+        case 'MEASUREMENTS':
+          return _.map(series.values, function(value) { return { text: value[0], expandable: true }; });
+        case 'TAG_KEYS':
+          var tagKeys = _.flatten(series.values);
+          return _.map(tagKeys, function(tagKey) { return { text: tagKey, expandable: true }; });
+        case 'TAG_VALUES':
+          var tagValues = _.flatten(series.values);
+          return _.map(tagValues, function(tagValue) { return { text: tagValue, expandable: true }; });
+        }
+      });
     };
 
     function retry(deferred, callback, delay) {
@@ -143,9 +124,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     InfluxDatasource.prototype._seriesQuery = function(query) {
-      return this._influxRequest('GET', '/query', {
-        q: query,
-      });
+      return this._influxRequest('GET', '/query', {q: query});
     };
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
