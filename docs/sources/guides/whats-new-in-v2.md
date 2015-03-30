@@ -8,21 +8,6 @@ page_keywords: grafana, new, changes, features, documentation
 
 This is a guide that describes some of changes and new features that can be found in Grafana v2.0.
 
-## New dashboard top header
-
-<img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
-
-1. Side menu toggle
-2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
-3. Star/unstar current dashboard
-4. Share current dashboard (Make sure the dashboard is saved before)
-5. Save current dashboard
-6. Settings dropdown (dashboard settings, annotations, templating, etc)
-
-> **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
-> longer create a new dashboard. It will just change the name for the current dashboard.
-> To change name and create a new dashboard use the `Save As...` menu option
-
 ## Dashboard Snapshot sharing
 A dashboard snapshot is an instant way to share an interactive dashboard publicly. When created, we <strong>strip sensitive data</strong> like queries
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
@@ -55,6 +40,28 @@ however is always active, even when the dashboard time is absolute.
 
 The `Hide time override info` option allows you to hide the the override info text that is by default shown in the
 upper right of a panel when overriden time range options.
+
+## Panel IFrame embedding
+
+You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
+with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
+
+<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/IQ7iZF00sHalq0Ffjv6OyclJSA1YHYV1?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
+
+## New dashboard top header
+
+<img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
+
+1. Side menu toggle
+2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
+3. Star/unstar current dashboard
+4. Share current dashboard (Make sure the dashboard is saved before)
+5. Save current dashboard
+6. Settings dropdown (dashboard settings, annotations, templating, etc)
+
+> **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
+> longer create a new dashboard. It will just change the name for the current dashboard.
+> To change name and create a new dashboard use the `Save As...` menu option
 
 ## New search view & starring dashboards
 
@@ -131,9 +138,3 @@ Organizations via a role. That role can be:
 
 There are currently no permissions on individual dashboards.
 
-## Panel IFrame embedding
-
-You can embed a single panel on another web page using the panel share dialog. Below you should see an iframe
-with a graph panel (taken from dashoard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
-
-<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>

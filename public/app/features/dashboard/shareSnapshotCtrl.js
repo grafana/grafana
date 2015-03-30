@@ -99,6 +99,7 @@ function (angular, _) {
       // snapshot single panel
       if ($scope.modeSharePanel) {
         var singlePanel = dash.getPanelById($scope.panel.id);
+        singlePanel.span = 12;
         dash.rows = [{ height: '500px', span: 12, panels: [singlePanel] }];
       }
 

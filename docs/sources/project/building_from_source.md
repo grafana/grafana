@@ -53,6 +53,11 @@ bra run
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
 
+## Creating optimized release packages
+```
+go run build.go build package
+```
+
 ## Dev config
 
 Create a custom.ini in the conf directory to override default configuration options.
