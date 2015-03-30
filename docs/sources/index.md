@@ -6,11 +6,11 @@ page_keywords: grafana, introduction, documentation, about
 
 Grafana is a general purpose dashboard and graph composer. It's focused on providing
 rich ways to visualize time series metrics, mainly though graphs but supports other ways to visualize data through
-a pluggable panel architecture. It currently has rich support for for [Graphite](http://graphite.readthedocs.org/en/latest/),
+a pluggable panel architecture. It currently has rich support for [Graphite](http://graphite.readthedocs.org/en/latest/),
 [InfluxDB](http://influxdb.org) and [OpenTSDB](http://opentsdb.net). But supports other data sources via plugins.
 
 It is most commonly used for infrastructure monitoring, application monitoring and metric analytics. But Grafana
-has an open architecture and design that enabled is to be used in other domains as well, like home automation,
+has an open architecture and design that enables it to be used in other domains as well, like home automation,
 weather and industrial sensors analytics.
 
 ## Support
@@ -20,7 +20,7 @@ correctly there are a number of sources where you can get help.
 
 - [Troubleshooting guide](../troubleshooting)
 - \#grafana IRC channel on freenode
-- Search closed and open [issues on github](https://github.com/grafana/grafana/issues).
+- Search closed and open [issues on github](https://github.com/grafana/grafana/issues)
 - [Mailing list](https://groups.io/org/groupsio/grafana)
 
 Do not hesitate to open a new issue with a question, bug report or an idea for improvement.
