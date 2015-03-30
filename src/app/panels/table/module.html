@@ -1,6 +1,6 @@
 <grafana-panel>
     <div grafana-table></div>
-    <div ng-show="!dashboard.refresh && curTablePage !== 0">
+    <div ng-show="!dashboard.refresh && curTablePage !== 0 && panel.allowPaging">
         <!-- if dashboard is constantly refreshing, viewing a specific page on a table has no meaning,
             since it is constantly updating -->
         <div grafana-table-pager></div>

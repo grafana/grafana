@@ -8,6 +8,7 @@
                         that will then be stickied directly over the initial position of the real header -->
                     <th class="real-table-header" ng-repeat="header in headers">{{header.columnName}}</th>
                     <th class="fixed-table-header"
+                        ng-disabled="!panel.allowSorting"
                         ng-click="headerClicked(header)"
                         style="display: none;"
                         ng-repeat="header in headers">

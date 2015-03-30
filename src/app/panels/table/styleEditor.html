@@ -1,0 +1,29 @@
+<div class="editor-row">
+    <div class="section">
+        <h5>Styling Options</h5>
+        <div class="editor-option">
+            <label class="small">Column Width</label>
+            <select class="input-small" ng-model="panel.columnWidth" ng-change="panel.columnWidthChanged()">
+                <option value="auto">Auto</option>
+                <option ng-repeat="width in permittedColumnWidthRange" value="{{width}}">{{width}}</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Sorting</h5>
+        <editor-opt-bool text="Allow Sorting" model="panel.allowSorting" change="panel.clearSortOrder()" tip="Click on column headers to sort"></editor-opt-bool>
+    </div>
+
+    <div class="section">
+        <h5>Paging</h5>
+        <div class="editor-option">
+            <label class="small">Results per Page</label>
+            <input type="number" class="input-small" ng-model="panel.pageLimit" min="5" max="500" ng-change="curTablePage = 1; render()" />
+        </div>
+
+        <editor-opt-bool text="Allow Paging" model="panel.allowPaging" change="render()"
+             tip="When graph is not in auto refresh mode, allow paging of current data selection">
+         </editor-opt-bool>
+    </div>
+</div>
