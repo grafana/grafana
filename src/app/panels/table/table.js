@@ -93,9 +93,7 @@ define([
             renderTable();
           };
 
-          scope.panel.columnWidthChanged = function() {
-            // NOT IMPLEMENTED CORRECTLY
-            elem.find('th').width(scope.panel.columnWidth);
+          scope.panel.adjustColumnWidth = function() {
             performHeaderPositioning();
           };
 
@@ -173,6 +171,15 @@ define([
             var realHeaders = elem.find('.real-table-header');
             var fixedHeaders = elem.find('.fixed-table-header');
             var container = elem.find('.table-vis-overflow-container');
+
+            // set width according to option specification
+            if (scope.panel.columnWidth === 'auto') {
+              realHeaders.width('auto');
+            }
+            else {
+              realHeaders.width(scope.panel.columnWidth);
+            }
+
 
             for (var i = 0; i < realHeaders.length; ++i) {
               var realEl = realHeaders.eq(i);
