@@ -60,6 +60,8 @@ The path to the directory where the frontend files (html & js & css). Default to
 why the Grafana binary needs to be executed with working directory set to the installation path.
 
 <hr>
+
+<hr>
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other things). By default it is configured to
@@ -204,5 +206,17 @@ Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 
 ### session_life_time
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+
+## [analytics]
+
+### reporting-enabled
+When enabled Grafana will send anonymous usage statistics to stats.grafana.org.
+No ip addresses are being tracked, only simple counters to track running instances,
+versions, dashboard & error counts. It is very helpful to us, please leave this
+enabled. Counters are sent every 24 hours.
+
+### google_analytics_ua_id
+If you want to track Grafana usage via Google analytics specify *your* Univeral Analytics ID
+here. By defualt this feature is disabled.
 
 
