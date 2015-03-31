@@ -12,12 +12,15 @@ function (angular, _, kbn, moment, $) {
 
   module.controller('DashFromDBCtrl', function($scope, $routeParams, backendSrv) {
 
+    function dashboardLoadFailed(title) {
+      $scope.initDashboard({meta: {}, model: {title: title}}, $scope);
+    }
+
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
         $scope.initDashboard(result, $scope);
       },function() {
-        $scope.initDashboard({}, $scope);
-        $scope.appEvent('alert-error', ['Load dashboard failed', '']);
+        dashboardLoadFailed('Not found');
       });
 
       return;
@@ -26,17 +29,15 @@ function (angular, _, kbn, moment, $) {
     return backendSrv.getDashboard($routeParams.slug).then(function(result) {
       $scope.initDashboard(result, $scope);
     }, function() {
-      $scope.initDashboard({
-        meta: {},
-        model: { title: 'Not found' }
-      }, $scope);
+      dashboardLoadFailed('Not found');
     });
+
   });
 
   module.controller('DashFromSnapshotCtrl', function($scope, $routeParams, backendSrv) {
     backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
       $scope.initDashboard(result, $scope);
-    },function() {
+    }, function() {
       $scope.initDashboard({meta: {isSnapshot: true}, model: {title: 'Snapshot not found'}}, $scope);
     });
   });
