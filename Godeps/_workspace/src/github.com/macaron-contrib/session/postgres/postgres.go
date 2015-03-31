@@ -22,22 +22,22 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 
 	"github.com/macaron-contrib/session"
 )
 
-// MysqlStore represents a mysql session store implementation.
-type MysqlStore struct {
+// PostgresStore represents a postgres session store implementation.
+type PostgresStore struct {
 	c    *sql.DB
 	sid  string
 	lock sync.RWMutex
 	data map[interface{}]interface{}
 }
 
-// NewMysqlStore creates and returns a mysql session store.
-func NewMysqlStore(c *sql.DB, sid string, kv map[interface{}]interface{}) *MysqlStore {
-	return &MysqlStore{
+// NewPostgresStore creates and returns a postgres session store.
+func NewPostgresStore(c *sql.DB, sid string, kv map[interface{}]interface{}) *PostgresStore {
+	return &PostgresStore{
 		c:    c,
 		sid:  sid,
 		data: kv,
@@ -45,16 +45,16 @@ func NewMysqlStore(c *sql.DB, sid string, kv map[interface{}]interface{}) *Mysql
 }
 
 // Set sets value to given key in session.
-func (s *MysqlStore) Set(key, val interface{}) error {
+func (s *PostgresStore) Set(key, value interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	s.data[key] = val
+	s.data[key] = value
 	return nil
 }
 
 // Get gets value by given key in session.
-func (s *MysqlStore) Get(key interface{}) interface{} {
+func (s *PostgresStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -62,7 +62,7 @@ func (s *MysqlStore) Get(key interface{}) interface{} {
 }
 
 // Delete delete a key from session.
-func (s *MysqlStore) Delete(key interface{}) error {
+func (s *PostgresStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -71,24 +71,25 @@ func (s *MysqlStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *MysqlStore) ID() string {
+func (s *PostgresStore) ID() string {
 	return s.sid
 }
 
-// Release releases resource and save data to provider.
-func (s *MysqlStore) Release() error {
+// save postgres session values to database.
+// must call this method to save values to database.
+func (s *PostgresStore) Release() error {
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.c.Exec("UPDATE session SET data=?, expiry=? WHERE `key`=?",
+	_, err = s.c.Exec("UPDATE session SET data=$1, expiry=$2 WHERE key=$3",
 		data, time.Now().Unix(), s.sid)
 	return err
 }
 
 // Flush deletes all session data.
-func (s *MysqlStore) Flush() error {
+func (s *PostgresStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -96,18 +97,18 @@ func (s *MysqlStore) Flush() error {
 	return nil
 }
 
-// MysqlProvider represents a mysql session provider implementation.
-type MysqlProvider struct {
-	c      *sql.DB
-	expire int64
+// PostgresProvider represents a postgres session provider implementation.
+type PostgresProvider struct {
+	c           *sql.DB
+	maxlifetime int64
 }
 
-// Init initializes mysql session provider.
-// connStr: username:password@protocol(address)/dbname?param=value
-func (p *MysqlProvider) Init(expire int64, connStr string) (err error) {
-	p.expire = expire
+// Init initializes postgres session provider.
+// connStr: user=a password=b host=localhost port=5432 dbname=c sslmode=disable
+func (p *PostgresProvider) Init(maxlifetime int64, connStr string) (err error) {
+	p.maxlifetime = maxlifetime
 
-	p.c, err = sql.Open("mysql", connStr)
+	p.c, err = sql.Open("postgres", connStr)
 	if err != nil {
 		return err
 	}
@@ -115,11 +116,11 @@ func (p *MysqlProvider) Init(expire int64, connStr string) (err error) {
 }
 
 // Read returns raw session store by session ID.
-func (p *MysqlProvider) Read(sid string) (session.RawStore, error) {
+func (p *PostgresProvider) Read(sid string) (session.RawStore, error) {
 	var data []byte
-	err := p.c.QueryRow("SELECT data FROM session WHERE `key`=?", sid).Scan(&data)
+	err := p.c.QueryRow("SELECT data FROM session WHERE key=$1", sid).Scan(&data)
 	if err == sql.ErrNoRows {
-		_, err = p.c.Exec("INSERT INTO session(`key`,data,expiry) VALUES(?,?,?)",
+		_, err = p.c.Exec("INSERT INTO session(key,data,expiry) VALUES($1,$2,$3)",
 			sid, "", time.Now().Unix())
 	}
 	if err != nil {
@@ -136,39 +137,39 @@ func (p *MysqlProvider) Read(sid string) (session.RawStore, error) {
 		}
 	}
 
-	return NewMysqlStore(p.c, sid, kv), nil
+	return NewPostgresStore(p.c, sid, kv), nil
 }
 
 // Exist returns true if session with given ID exists.
-func (p *MysqlProvider) Exist(sid string) bool {
+func (p *PostgresProvider) Exist(sid string) bool {
 	var data []byte
-	err := p.c.QueryRow("SELECT data FROM session WHERE `key`=?", sid).Scan(&data)
+	err := p.c.QueryRow("SELECT data FROM session WHERE key=$1", sid).Scan(&data)
 	if err != nil && err != sql.ErrNoRows {
-		panic("session/mysql: error checking existence: " + err.Error())
+		panic("session/postgres: error checking existence: " + err.Error())
 	}
 	return err != sql.ErrNoRows
 }
 
 // Destory deletes a session by session ID.
-func (p *MysqlProvider) Destory(sid string) error {
-	_, err := p.c.Exec("DELETE FROM session WHERE `key`=?", sid)
+func (p *PostgresProvider) Destory(sid string) error {
+	_, err := p.c.Exec("DELETE FROM session WHERE key=$1", sid)
 	return err
 }
 
 // Regenerate regenerates a session store from old session ID to new one.
-func (p *MysqlProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err error) {
+func (p *PostgresProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err error) {
 	if p.Exist(sid) {
 		return nil, fmt.Errorf("new sid '%s' already exists", sid)
 	}
 
 	if !p.Exist(oldsid) {
-		if _, err = p.c.Exec("INSERT INTO session(`key`,data,expiry) VALUES(?,?,?)",
+		if _, err = p.c.Exec("INSERT INTO session(key,data,expiry) VALUES($1,$2,$3)",
 			oldsid, "", time.Now().Unix()); err != nil {
 			return nil, err
 		}
 	}
 
-	if _, err = p.c.Exec("UPDATE session SET `key`=? WHERE `key`=?", sid, oldsid); err != nil {
+	if _, err = p.c.Exec("UPDATE session SET key=$1 WHERE key=$2", sid, oldsid); err != nil {
 		return nil, err
 	}
 
@@ -176,20 +177,20 @@ func (p *MysqlProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err 
 }
 
 // Count counts and returns number of sessions.
-func (p *MysqlProvider) Count() (total int) {
+func (p *PostgresProvider) Count() (total int) {
 	if err := p.c.QueryRow("SELECT COUNT(*) AS NUM FROM session").Scan(&total); err != nil {
-		panic("session/mysql: error counting records: " + err.Error())
+		panic("session/postgres: error counting records: " + err.Error())
 	}
 	return total
 }
 
 // GC calls GC to clean expired sessions.
-func (p *MysqlProvider) GC() {
-	if _, err := p.c.Exec("DELETE FROM session WHERE UNIX_TIMESTAMP(NOW()) - expiry > ?", p.expire); err != nil {
-		log.Printf("session/mysql: error garbage collecting: %v", err)
+func (p *PostgresProvider) GC() {
+	if _, err := p.c.Exec("DELETE FROM session WHERE EXTRACT(EPOCH FROM NOW()) - expiry > $1", p.maxlifetime); err != nil {
+		log.Printf("session/postgres: error garbage collecting: %v", err)
 	}
 }
 
 func init() {
-	session.Register("mysql", &MysqlProvider{})
+	session.Register("postgres", &PostgresProvider{})
 }

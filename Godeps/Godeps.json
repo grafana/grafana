@@ -47,7 +47,7 @@
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/session",
-			"Rev": "65b8817c40cb5bdce08673a15fd2a648c2ba0e16"
+			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
