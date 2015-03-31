@@ -86,6 +86,7 @@ function (angular, _) {
       dash.forEachPanel(function(panel) {
         panel.targets = [];
         panel.links = [];
+        panel.datasource = null;
       });
       // remove annotations
       dash.annotations.list = [];
