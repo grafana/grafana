@@ -2,7 +2,6 @@
 
 - [Issue #1671](https://github.com/grafana/grafana/issues/1671). Data sources: Fixed issue with changing default data source (should not require full page load to take effect, now fixed)
 
-
 # 2.0.0-Beta1 (2015-03-30)
 
 **New features**
