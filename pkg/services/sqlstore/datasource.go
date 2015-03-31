@@ -89,8 +89,8 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *m.DataSource, sess *xorm.Session) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default = 0 WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, ds.OrgId, ds.Id); err != nil {
+		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSql, False, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}
