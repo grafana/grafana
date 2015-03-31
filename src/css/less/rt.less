@@ -1,0 +1,119 @@
+
+
+// raintank override styles from gfbox.less
+
+.rt-list {
+  margin: 1px;
+  background-color: @grafanaPanelBackground;
+  position: relative;
+  border: none;
+  line-height: normal;
+}
+
+.rt-list-item-title {
+    font-size: 15px;
+    a:link {
+      color: @rt-light-gray;
+    }  
+    a:hover {
+     color: @white;
+    }    
+  margin: 10px;
+}
+
+.rt-list-header {
+  overflow: visible;
+  padding: 10px 5px;
+  background-color: @raintankTargetBackground;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-list-collector-status {
+  color: @rt-green;
+  font-weight: 700;
+  font-size: .85em;
+}
+
+.rt-list-collector-since {
+  color: @rt-light-gray;
+  font-weight: 400;
+  font-size: .85em;
+
+}
+
+// raintank from overrides.less
+// Labels & Badges
+.rt-label-tag {
+  background-color: @purple;
+  color: @white;
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 10px;
+  font-weight: 600px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: lighten(@purple, 10%);
+  line-height: 12px;
+
+  a {
+     color: @white;
+    }    
+
+  a:hover {
+     color: @white;
+    }    
+
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.rt-label-tag:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: darken(@purple, 5%);
+}
+
+.rt-h1 {
+  font-size: 2em;
+  font-weight: 400;
+  display: inline;
+  -webkit-font-smoothing:antialiased;
+}
+
+.rt-page-header-area {
+  display: block;
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+// Buttons
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  -webkit-font-smoothing:antialiased;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+
+  &:hover, &:focus {
+    background: darken(@rt-blue, 10%);
+  }
+ 
+ &:active {
+    background: lighten(@rt-blue, 5%);
+  }
+}
