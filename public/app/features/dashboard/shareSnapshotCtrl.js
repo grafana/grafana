@@ -66,9 +66,15 @@ function (angular, _) {
           $scope.snapshotUrl = results.url;
           $scope.saveExternalSnapshotRef(cmdData, results);
         } else {
-          var baseUrl = $location.absUrl().replace($location.url(), "");
-          $scope.snapshotUrl = baseUrl + '/dashboard/snapshot/' + results.key;
-          $scope.deleteUrl = baseUrl + '/api/snapshots-delete/' + results.deleteKey;
+          var url = $location.url();
+          var baseUrl = $location.absUrl();
+
+          if (url !== '/') {
+            baseUrl = baseUrl.replace(url, '') + '/';
+          }
+
+          $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.key;
+          $scope.deleteUrl = baseUrl + 'api/snapshots-delete/' + results.deleteKey;
         }
 
         $scope.step = 2;
