@@ -14,6 +14,9 @@ import (
 
 	"github.com/Unknwon/com"
 	"github.com/macaron-contrib/session"
+	_ "github.com/macaron-contrib/session/mysql"
+	_ "github.com/macaron-contrib/session/postgres"
+	_ "github.com/macaron-contrib/session/redis"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -246,7 +249,7 @@ func NewConfigContext(config string) {
 func readSessionConfig() {
 	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
-	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql"})
+	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres"})
 	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
