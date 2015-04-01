@@ -33,24 +33,29 @@ var (
 )
 
 func EnsureAdminUser() {
-	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
+	statsQuery := m.GetSystemStatsQuery{}
 
-	if err := bus.Dispatch(&adminQuery); err == m.ErrUserNotFound {
-		cmd := m.CreateUserCommand{}
-		cmd.Login = setting.AdminUser
-		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Password = setting.AdminPassword
-		cmd.IsAdmin = true
-
-		if err = bus.Dispatch(&cmd); err != nil {
-			log.Error(3, "Failed to create default admin user", err)
-			return
-		}
-
-		log.Info("Created default admin user: %v", setting.AdminUser)
-	} else if err != nil {
-		log.Error(3, "Could not determine if admin user exists: %v", err)
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		log.Fatal(3, "Could not determine if admin user exists: %v", err)
+		return
 	}
+
+	if statsQuery.Result.UserCount > 0 {
+		return
+	}
+
+	cmd := m.CreateUserCommand{}
+	cmd.Login = setting.AdminUser
+	cmd.Email = setting.AdminUser + "@localhost"
+	cmd.Password = setting.AdminPassword
+	cmd.IsAdmin = true
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.Error(3, "Failed to create default admin user", err)
+		return
+	}
+
+	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
 func NewEngine() {
