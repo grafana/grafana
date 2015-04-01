@@ -84,6 +84,13 @@
 			</p>
 		</div>
 
+		<div class="share-snapshot-header" ng-if="step === 3">
+			<p class="share-snapshot-info-text">
+				The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before it is removed from
+				browser caches or CDN caches.
+			</p>
+		</div>
+
 		<div class="editor-row" style="margin: 11px 20px 33px 20px">
 			<div class="section" ng-if="step === 1">
 				<div class="tight-form">
@@ -135,7 +142,8 @@
 		</div>
 
 		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
-			Did you make a mistake? <a href="{{deleteUrl}}" target="_blank">delete snapshot.</a>
+			Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
 		</div>
+
 	</div>
 </script>

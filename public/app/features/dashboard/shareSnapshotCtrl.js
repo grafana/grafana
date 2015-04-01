@@ -117,6 +117,12 @@ function (angular, _) {
       });
     };
 
+    $scope.deleteSnapshot = function() {
+      backendSrv.get($scope.deleteUrl).then(function() {
+        $scope.step = 3;
+      });
+    };
+
     $scope.saveExternalSnapshotRef = function(cmdData, results) {
       // save external in local instance as well
       cmdData.external = true;
