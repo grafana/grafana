@@ -28,7 +28,7 @@ func getRequestUserId(c *Context) int64 {
 func getApiKey(c *Context) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
-	if len(parts) == 2 || parts[0] == "Bearer" {
+	if len(parts) == 2 && parts[0] == "Bearer" {
 		key := parts[1]
 		return key
 	}
