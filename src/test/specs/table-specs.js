@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'text!panels/table/table.html',
   'panels/table/table'
-], function(angular, _) {
+], function(angular, _, templateHtml) {
   'use strict';
 
   // Column names are sequential strings
@@ -41,7 +42,7 @@ define([
     beforeEach(module('grafana.directives'));
 
     beforeEach(inject(function($rootScope, $compile, $templateCache) {
-      $templateCache.put('app/panels/table/table.html','<div class="table-visualization"> <div class="table-vis-overflow-container"> <p ng-if="data.datapoints.length === 0">No data available</p> <table> <thead> <tr> <!-- Because html has no concept of a fixed table header, we create a shadow fixed header that will then be stickied directly over the initial position of the real header --> <th class="real-table-header" ng-repeat="header in headers">{{header.columnName}}</th> <th class="fixed-table-header" ng-disabled="!panel.allowSorting" ng-click="headerClicked(header)" style="display: none;" ng-repeat="header in headers"> {{header.columnName}} <i ng-if="header.sortType === sortType.asc" class="fa fa-caret-up"></i> <i ng-if="header.sortType === sortType.desc" class="fa fa-caret-down"></i> </th> </tr> </thead> <tbody ng-bind-html="tableData"></tbody> </table> </div> </div>');
+      $templateCache.put('app/panels/table/table.html',templateHtml);
 
       scope = $rootScope.$new();
       var html = angular.element("<div grafana-table><div>");
