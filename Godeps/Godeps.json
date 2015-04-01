@@ -1,6 +1,6 @@
 {
-	"ImportPath": "github.com/torkelo/grafana-pro",
-	"GoVersion": "go1.3",
+	"ImportPath": "github.com/grafana/grafana",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -71,9 +71,19 @@
 			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
 		},
 		{
+			"ImportPath": "gopkg.in/bufio.v1",
+			"Comment": "v1",
+			"Rev": "567b2bfa514e796916c4747494d6ff5132a1dfce"
+		},
+		{
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v0-16-g1772191",
 			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v2",
+			"Comment": "v2.3.2",
+			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
 		}
 	]
 }
