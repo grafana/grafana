@@ -8,23 +8,17 @@ define([
 
     var module = angular.module('grafana.directives');
 
-    module.directive('grafanaTable', function($rootScope, $timeout) {
+    module.directive('grafanaTable', function($rootScope, $timeout, $sce, utilSrv) {
       var data;
       var sortedData; // will shadow the data
 
       // paging variables
       var dataToSkip;
       var pagedData;
-      var numPages = 1;
-      var minPage = 1;
+      var minPage;
 
       var tableHeight;
-
-      var SortType = {
-        none: 0,
-        asc: 1,
-        desc: 2
-      };
+      var SortType = utilSrv.sortType;
 
       return {
         restrict: 'A',
@@ -58,8 +52,8 @@ define([
               scope.panel.curTablePage = minPage;
             }
 
-            if (scope.panel.curTablePage > numPages) {
-              scope.panel.curTablePage = numPages;
+            if (scope.panel.curTablePage > scope.panel.numPages) {
+              scope.panel.curTablePage = scope.panel.numPages;
             }
 
             if (!data) {
@@ -149,7 +143,7 @@ define([
           function setTableData() {
             // avoid using angular bindings for table data in order to avoid performance penalty
             // in case user wants to view a large number of cells simultaneously
-            scope.tableData = _.reduce(pagedData, function(prev, cur) {
+            var tableData = _.reduce(pagedData, function(prev, cur) {
               var row = _.map(cur, function(seriesValue) {
                 return '<td>' + seriesValue  + '</td>';
               }).join('');
@@ -158,6 +152,8 @@ define([
 
               return prev += row;
             }, '');
+
+            scope.tableData = $sce.trustAsHtml(tableData);
           }
 
           function performHeaderPositioning() {
@@ -187,8 +183,8 @@ define([
           }
 
           function setupInitialPaging() {
-            numPages = Math.ceil(data.datapoints.length / scope.panel.pageLimit);
-            minPage = numPages > 0 ? 1 : 0;
+            scope.panel.numPages = Math.ceil(data.datapoints.length / scope.panel.pageLimit);
+            minPage = scope.panel.numPages > 0 ? 1 : 0;
 
             scope.panel.curTablePage = minPage; // set to first page, since new data has come in
           }
@@ -199,41 +195,18 @@ define([
           }
 
           function handleSorting() {
-            // multi column sorting
-            function sortFunction(a, b){
-              var temp = 0;
+            var indexesToSort = [];
+            var sortTypes = [];
 
-              for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
-                var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
-                var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
-
-                var ascSort = columnToSort.sortType === SortType.asc;
-                temp = compareItems(a[columnIndex], b[columnIndex], ascSort);
-
-                if (temp !== 0) {
-                  break;
-                }
-              }
-
-              return temp;
-            }
-
-            function compareItems(itm1, itm2, ascSort) {
-              if (itm1 === itm2) {
-                return 0;
-              }
-              else {
-                var isConditionMet = ascSort ? itm1 < itm2 : itm1 > itm2;
-                return isConditionMet ? -1 : 1;
-              }
+            for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
+              var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
+              var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
+              indexesToSort.push(columnIndex);
+              sortTypes.push(columnToSort.sortType);
             }
 
             sortedData = [].concat(data.datapoints);
-            if (scope.panel.columnSortOrder.length === 0) {
-              return;
-            }
-
-            sortedData.sort(sortFunction);
+            utilSrv.multiColumnSort(sortedData, indexesToSort, sortTypes);
           }
 
           function changeSortType(header) {

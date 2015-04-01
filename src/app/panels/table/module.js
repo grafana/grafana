@@ -51,7 +51,7 @@ function (angular, app, _, require, PanelMeta) {
       allowSorting: true
     };
 
-    $scope.permittedColumnWidthRange = _.range(20, 200);
+    $scope.permittedColumnWidthRange = _.range(40, 201);
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {
