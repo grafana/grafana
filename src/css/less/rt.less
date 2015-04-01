@@ -47,35 +47,47 @@
   font-size: 15px;
   color: @rt-dark-gray;
   text-transform: uppercase;
+  text-decoration: none;
 }
 
 .rt-list-status-up {
-  .rt-list-status;  
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-green;
-
+  &:link, &:visited {
+    .rt-list-status;  
+    font-size: 19px;
+    font-weight: 600;
+    color: @rt-green;
+  }
+  &:hover {color: lighten(@rt-green, 10%);} 
 }
 
 .rt-list-status-warning {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-yellow;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 19px;
+    font-weight: 600;
+    color: @rt-yellow;
+  }
+  &:hover {color: lighten(@rt-yellow, 10%);} 
 }
 
 .rt-list-status-down {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-red;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 19px;
+    font-weight: 600;
+    color: @rt-red;
+  }
+  &:hover {color: lighten(@rt-red, 10%);} 
 }
 
 .rt-list-status-disabled {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @grayLighter;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 19px;
+    font-weight: 600;
+    color: @grayLighter;
+  }
+  &:hover {color: lighten(@grayLighter, 10%);} 
 }
 
 
@@ -135,10 +147,13 @@
   text-shadow: none;
   font-size: 10px;
   font-weight: 600px;
+  margin-left: 6px;
+  vertical-align: 1px;
   padding: 2px 6px;
   border-width: 1px;
   border-style: solid;
-  border-color: lighten(@purple, 10%);
+  border-color: lighten(@purple, 15%);
+  box-shadow: 0 0 1px fade(@purple, 90%);
   line-height: 12px;
   -webkit-font-smoothing:antialiased;
 
@@ -162,6 +177,64 @@
   // Hover will trigger the tool tip eventually. This is temporary/ 
   background-color: darken(@purple, 5%);
 }
+
+.rt-list-tag-menu {
+    // Different positioning for bottom up menu
+    .dropdown-menu {
+      top: auto;
+      bottom: 100%;
+      margin-bottom: 5px;
+    }
+  }
+
+.dropdown-menu {
+  >li >a {padding: 0 8px;}
+
+  >li >a:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: transparent;
+  background-image: none;
+  opacity: 0.8;
+  }
+}
+
+.rt-tag-dropup {
+  background-color: @grayDark;
+  min-width: 90px;
+  border: 1px solid @rt-dark-gray;
+  box-shadow: 0 0 1px fade(@rt-dark-gray, 90%);
+  border-radius: 2px;
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+
+  // Links within the dropdown menu
+  li, a {
+    display: inline-block;
+  }
+}
+
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+// ------------------------------------------------------
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    border-top: 0;
+    border-bottom: 4px solid @black;
+    content: "";
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 1px;
+  }
+}
+
+
 
 .rt-h1 {
   font-size: 2em;
@@ -192,10 +265,10 @@
   transition: all 0.1s ease 0s;
 
   &:hover, &:focus {
-    background: darken(@rt-blue, 10%);
+    background: lighten(@rt-blue, 10%);
   }
  
  &:active {
-    background: lighten(@rt-blue, 5%);
+    background: darken(@rt-blue, 5%);
   }
 }

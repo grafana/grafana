@@ -16,7 +16,7 @@
 		</div>
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<span class="rt-list-status-up">3 Up</span> | 
+					<a href="#" class="rt-list-status-up">3 Up</a> | 
 					<span>0 Warning</span> | <!-- class="rt-list-status-warning" -->
 					<span>0 Down</span> | <!-- class="rt-list-status-down" -->
 					<span>0 Disabled</span> <!-- class="rt-list-status-disabled" -->
@@ -36,16 +36,24 @@
 	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
-			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in endpoint.tags"><a ng-click="setEndpointFilter(tag)">{{tag}}</a></span>
 
-			<div style="float: right; display: inline;">
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags">
+						<a data-toggle="dropdown">{{tag}} <img class="dashboard-icon"src="img/rt-endpoint.svg" style="padding-left: 2px; vertical-align: -2px;"width="12px" height="12px"> </a>
+						<ul class="dropdown-menu rt-tag-dropup">
+                        	<li><a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
+                        	<li><a ng-click="setCollectorFilter(tag)"><img class="dashboard-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+                   		</ul>
+                </span>
+
+
+ 				<div style="float: right; display: inline;">
 				<div style="display: inline;">
 					<span class="rt-event-success">11</span>
 					<span class="rt-event-warning">348</span>
 					<span class="rt-event-error">12k</span>
 				</div>
 				<div style="display: inline;">
-					<a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px"></a>
+					<a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></a>
 				</div>
 				<div class="dropdown" style="float: right;">
 					<a data-toggle="dropdown">
