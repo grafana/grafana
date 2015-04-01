@@ -1,0 +1,534 @@
+html {-webkit-font-smoothing:antialiased;} // make type beautiful
+/***********************************
+responsive GRID
+***********************************/
+.grid {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  max-width:1300px;
+  min-width: 400px;
+  margin:10px;
+}
+
+.grid-cell {
+  border: 1px solid #333;
+  background-color: @black;
+  margin: 10px 0;
+  flex: 0 0 48.8%;
+  display: inline-block;
+  position:relative;
+  border:none;
+  border-radius:2px;
+}
+
+@media screen and (max-width: 780px) {
+  .grid-cell  { 
+    flex: 0 0 100%; 
+  }
+}
+
+
+
+/***********************************
+  MASONRY RESPONSIVE GRID
+***********************************/
+
+  .scaffolding{
+    max-width:1300px;
+  }
+
+  .scaffolding .item {
+    width:  49%;    // width:  49%;
+    height: 50px;
+    padding:20px;
+    margin-bottom:10px;
+    background-color: @black;
+    border-radius: 4px;
+    text-align:center;
+  }
+
+@media screen and (max-width: 780px) {
+  .scaffolding .item {
+    width:  100%;
+  }
+}
+
+/***********************************
+raintank BOX
+***********************************/
+.rt-box {
+  background-color: @black;
+}
+.rt-box-no-margin {
+  margin: 0;
+}
+
+.rt-box-header-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  font-size: 120%;
+  color: @textColor;
+  &:hover {
+    color: @white;
+  }
+}
+
+.rt-box-body {
+  padding: 20px;
+  min-height: 150px;
+}
+
+.rt-box-footer {
+  overflow: hidden;
+}
+
+.rt-box-header {
+  padding: 10px;
+  font-size:16px;
+  border-bottom: 1px solid #262626;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-box-title {
+  padding-right: 20px;
+  padding-left: 10px;
+  float: left;
+  color: @linkColor;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 38px;
+  margin: 0;
+  .fa {
+    padding: 0 8px 0 5px;
+    color: @textColor;
+  }
+}
+
+
+.collectorStatus {
+margin-bottom: 50px;
+}
+
+.currentStatus {
+display:block;
+margin-bottom: 25px;
+}
+/***********************************
+raintank TYPE
+***********************************/
+.status {
+
+}
+
+.online {
+  color: @online;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.warn {
+  color: @warn;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.disabled {
+  color: @disabled;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.critical {
+  color: @critical;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+
+
+/***********************************
+raintank POSITIONING
+***********************************/
+
+.msg {display:inline;}
+
+
+/***********************************
+raintank BUTTONS
+***********************************/
+.superCTA { 
+    display: inline-block;
+    width:100%;
+    margin-bottom: 10px;
+    padding: 0.6em 2.0em;
+    color:#fff;
+    background-color: #13b2d4;
+    border: 1px solid #13b2d4;
+    border-radius: 2px;
+    text-align:center;
+    font-weight: 400;
+    font-size: 16px;
+    transition: 0.15s;
+  }
+
+  .superCTA:hover{
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #fff;
+    color: #262626;
+}
+.primaryCTA {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.2em 1.4em;
+    color:#fff;
+    background-color: #13b2d4;
+    border: 1px solid #13b2d4;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+}
+.primaryCTA:hover{
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #fff;
+    color: #262626;
+}
+.secondaryCTA {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.2em 1.4em;
+    border: 1px solid #13b2d4;
+    color: #13b2d4;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+}
+.secondaryCTA:hover{
+    cursor: pointer;
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+.tertiaryCTA {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.2em 1.4em;
+    border: 1px solid #999;
+    color: #999;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+}
+.tertiaryCTA:hover{
+    cursor: pointer;
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+
+/**************************************
+MATT STYLES
+**************************************/
+
+.rt-event {
+  border-radius: 10px;
+  text-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin: 0 3px;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 12px;  
+}
+
+.statusDetail {
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 40px;
+  font-weight: 500;
+
+}
+
+.statusDetail .statusDesc {font-size:18px;}
+
+.rt-event-success {
+  .rt-event;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .rt-event;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+
+.rt-event-error {
+  .rt-event;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+
+
+.rt-event-success {
+  .statusDetail;
+  display:inline-block;
+  padding: 20px 15px;
+  border-width: 1px;
+  border-style: solid;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .statusDetail;
+  display:inline-block;
+  padding: 20px 15px;
+  border-width: 1px;
+  border-style: solid;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+
+.rt-event-error {
+  .statusDetail;
+  display:inline-block;
+  padding: 20px 15px;
+  border-width: 1px;
+  border-style: solid;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+
+
+
+
+.dashboard-icon {
+  transition: all 0.1s ease 0s;
+}
+
+.dashboard-icon:hover {
+  opacity: 0.8;
+}
+
+
+// list status headers
+
+.rt-list-status {
+  font-size: 15px;
+  color: @rt-dark-gray;
+  text-transform: uppercase;
+}
+
+.rt-list-status-up {
+  .rt-list-status;  
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-green;
+
+}
+
+.rt-list-status-warning {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-yellow;
+}
+
+.rt-list-status-down {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-red;
+}
+
+.rt-list-status-disabled {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @grayLighter;
+}
+
+
+// raintank override styles from gfbox.less
+
+.rt-list {
+  margin: 1px;
+  background-color: @raintankTargetBackground;
+  position: relative;
+  border: none;
+  line-height: normal;
+  padding: 3px 0;
+}
+
+.rt-list-item-title {
+    font-size: 15px;
+    a:link {
+      color: @rt-light-gray;
+    }  
+    a:hover {
+     color: @white;
+    }    
+  margin: 10px;
+}
+
+.rt-list-header {
+  overflow: visible;
+  padding: 10px 5px;
+  background-color: @raintankTargetBackground;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-list-collector-status {
+  color: @rt-green;
+  font-weight: 700;
+  font-size: .85em;
+}
+
+.rt-list-collector-since {
+  color: @rt-light-gray;
+  font-weight: 400;
+  font-size: .85em;
+
+}
+
+// raintank from overrides.less
+// Labels & Badges
+.rt-label-tag {
+  background-color: @purple;
+  color: @white;
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 10px;
+  font-weight: 600px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 1px rgba(255,255,255,0.9);
+  line-height: 12px;
+
+  a {
+     color: @white;
+    }    
+
+  a:hover {
+     color: @white;
+    }    
+
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.rt-label-tag:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: darken(@purple, 5%);
+}
+
+.tag-tip {
+
+}
+
+.collector_icon {
+  vertical-align: 2px;
+  padding-left:3px;
+}
+
+.collectorMap {
+  background-color:@gray; 
+  background-image: ur(../img/ams_map.png);
+  background-position: top left;
+  background-repeat: repeat;
+  background-size: cover;
+  width:100%; 
+  height:450px;
+  text-align: center;
+
+  .locationDetail {
+    background-color: rgba(255,255,255,.8);
+    color: @black;
+    width:100%;
+    position: absolute;
+    bottom:0;
+    right: 0px;
+    text-align: right;
+
+    h3 {color:#000; margin:20px;}
+    p {margin:20px;}
+  }
+}
+
+
+
+.rt-h1 {
+  font-size: 2em;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-page-header-area {
+  display: block;
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+
+
+// Buttons
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+
+  &:hover, &:focus {
+    background: darken(@rt-blue, 10%);
+  }
+ 
+ &:active {
+    background: lighten(@rt-blue, 5%);
+  }
+}
+
