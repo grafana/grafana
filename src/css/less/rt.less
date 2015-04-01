@@ -1,13 +1,93 @@
+.rt-event {
+  border-radius: 10px;
+  text-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin: 0 3px;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 12px;  
+}
+
+.rt-event-success {
+  .rt-event;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .rt-event;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+
+.rt-event-error {
+  .rt-event;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+
+.dashboard-icon {
+  transition: all 0.1s ease 0s;
+}
+
+.dashboard-icon:hover {
+  opacity: 0.8;
+}
+
+
+// list status headers
+
+.rt-list-status {
+  font-size: 15px;
+  color: @rt-dark-gray;
+  text-transform: uppercase;
+}
+
+.rt-list-status-up {
+  .rt-list-status;  
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-green;
+
+}
+
+.rt-list-status-warning {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-yellow;
+}
+
+.rt-list-status-down {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @rt-red;
+}
+
+.rt-list-status-disabled {
+  .rt-list-status;
+  font-size: 19px;
+  font-weight: 600;
+  color: @grayLighter;
+}
 
 
 // raintank override styles from gfbox.less
 
 .rt-list {
   margin: 1px;
-  background-color: @grafanaPanelBackground;
+  background-color: @raintankTargetBackground;
   position: relative;
   border: none;
   line-height: normal;
+  padding: 3px 0;
 }
 
 .rt-list-item-title {
@@ -60,6 +140,8 @@
   border-style: solid;
   border-color: lighten(@purple, 10%);
   line-height: 12px;
+  -webkit-font-smoothing:antialiased;
+
 
   a {
      color: @white;

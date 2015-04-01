@@ -31,15 +31,6 @@
 @purple:                #9954BB;
 @variable:              #2AB2E4;
 
-// raintank Accent colors
-// -------------------------
-@rt-green:             	 rgb(0,166,81);
-@rt-yellow:              rgb(247,148,29);
-@rt-red:             	 rgb(237,28,36);
-@rt-light-gray:			 rgb(153,153,153);
-@rt-blue:				 rgb(19,178,212);
-
-
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: 	@white;
@@ -64,27 +55,6 @@
 @grafanaTargetFuncHightlight: darken(@grafanaTargetBackground, 10%);
 
 @modalBackground: @bodyBackground;
-
-
-// raintank Variables
-// -------------------------
-@raintankPanelBackground: 	@grayDarker;
-@raintankPanelBorder: 		solid 1px @grayDark;
-@raintankTriggerBorder:		solid 1px #555;
-
-// Graphite Target Editor
-@raintankTargetBorder:         @white;
-@raintankTargetBackground:     @white;
-@raintankTargetColor:          #c8c8c8;
-@raintankTargetColorHide:      darken(#c8c8c8, 25%);
-@raintankTargetSegmentBorder:  #050505;
-
-@raintankTargetFuncBackground: #333;
-@raintankTargetFuncHightlight: #444;
-
-@rt-navbarBackground:          @white;
-
-
 
 // Scaffolding
 // -------------------------
@@ -377,3 +347,56 @@
 // 768px-979px
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
+
+
+
+
+// -------------------------
+// RAINTANK VARIABLES
+// -------------------------
+
+
+// raintank Accent colors
+// -------------------------
+@rt-green:             	 rgb(0,166,81);
+@rt-yellow:              rgb(247,148,29);
+@rt-red:             	 rgb(237,28,36);
+@rt-dark-gray:			 rgb(102,102,102);
+@rt-light-gray:			 rgb(153,153,153);
+@rt-blue:				 rgb(19,178,212);
+
+
+
+// raintank Variables
+// -------------------------
+@raintankPanelBackground: 	@grayDarker;
+@raintankPanelBorder: 		solid 1px @grayDark;
+@raintankTriggerBorder:		solid 1px #555;
+
+// Graphite Target Editor
+@raintankTargetBorder:         @white;
+@raintankTargetBackground:     @white;
+@raintankTargetColor:          #c8c8c8;
+@raintankTargetColorHide:      darken(#c8c8c8, 25%);
+@raintankTargetSegmentBorder:  #050505;
+
+@raintankTargetFuncBackground: #333;
+@raintankTargetFuncHightlight: #444;
+
+@rt-navbarBackground:          @white;
+
+
+// raintank Forms
+// -------------------------
+@inputBackground:               lighten(@grayDark,5%);
+@inputBorder:                   lighten(@grayDark,5%);
+@inputBorderRadius:             @baseBorderRadius;
+@inputDisabledBackground:       #555;
+@formActionsBackground:         transparent;
+@inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
+
+
+// -------------------------
+// End RAINTANK VARIABLES
+// -------------------------
+

@@ -25,15 +25,6 @@
 @purple:                #9933CC;
 @variable:              #32D1DF;
 
-// raintank Accent colors
-// -------------------------
-@rt-green:             	 rgb(0,166,81);
-@rt-yellow:              rgb(247,148,29);
-@rt-red:             	 rgb(237,28,36);
-@rt-light-gray:			 rgb(153,153,153);
-@rt-blue:				 rgb(19,178,212);
-
-
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: 	@grayDarker;
@@ -51,26 +42,6 @@
 @grafanaTargetFuncHightlight: #444;
 
 @modalBackground: 				@black;
-
-// raintank Variables
-// -------------------------
-@raintankPanelBackground: 	@grayDarker;
-@raintankPanelBorder: 		solid 1px @grayDark;
-@raintankTriggerBorder:		solid 1px #555;
-
-// Graphite Target Editor
-@raintankTargetBorder:         @black;
-@raintankTargetBackground:     @black;
-@raintankTargetColor:          #c8c8c8;
-@raintankTargetColorHide:      darken(#c8c8c8, 25%);
-@raintankTargetSegmentBorder:  #050505;
-
-@raintankTargetFuncBackground: #333;
-@raintankTargetFuncHightlight: #444;
-
-@rt-navbarBackground:          @black;
-
-
 
 // Scaffolding
 // -------------------------
@@ -180,16 +151,6 @@
 @inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
 
 
-// raintank Forms
-// -------------------------
-@inputBackground:               lighten(@grayDark,5%);
-@inputBorder:                   lighten(@grayDark,5%);
-@inputBorderRadius:             @baseBorderRadius;
-@inputDisabledBackground:       #555;
-@formActionsBackground:         transparent;
-@inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-
-
 // Dropdowns
 // -------------------------
 @dropdownBackground:            @heroUnitBackground;
@@ -253,8 +214,8 @@
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
 @navbarHeight:                    52px;
-@navbarBackgroundHighlight:       @grayDarker;
-@navbarBackground:                @grayDarker;
+@navbarBackgroundHighlight:       @black;
+@navbarBackground:                @black;
 @navbarBorder:                    none;
 
 @navbarText:                      @grayLight;
@@ -373,3 +334,52 @@
 // 768px-979px
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
+
+
+
+// -------------------------
+// RAINTANK VARIABLES
+// -------------------------
+
+
+// raintank Accent colors
+// -------------------------
+@rt-green:             	 rgb(0,166,81);
+@rt-yellow:              rgb(247,148,29);
+@rt-red:             	 rgb(237,28,36);
+@rt-dark-gray:			 rgb(102,102,102);
+@rt-light-gray:			 rgb(153,153,153);
+@rt-blue:				 rgb(19,178,212);
+
+
+// raintank Variables
+// -------------------------
+@raintankPanelBackground: 	@grayDarker;
+@raintankPanelBorder: 		solid 1px @grayDark;
+@raintankTriggerBorder:		solid 1px #555;
+
+// Graphite Target Editor
+@raintankTargetBorder:         @black;
+@raintankTargetBackground:     @black;
+@raintankTargetColor:          #c8c8c8;
+@raintankTargetColorHide:      darken(#c8c8c8, 25%);
+@raintankTargetSegmentBorder:  #050505;
+
+@raintankTargetFuncBackground: #333;
+@raintankTargetFuncHightlight: #444;
+
+@rt-navbarBackground:          @black;
+
+
+// raintank Forms
+// -------------------------
+@inputBackground:               lighten(@grayDark,5%);
+@inputBorder:                   lighten(@grayDark,5%);
+@inputBorderRadius:             @baseBorderRadius;
+@inputDisabledBackground:       #555;
+@formActionsBackground:         transparent;
+@inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
+
+// -------------------------
+// End RAINTANK VARIABLES
+// -------------------------
