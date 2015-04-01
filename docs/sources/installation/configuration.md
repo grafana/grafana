@@ -42,7 +42,16 @@ Then you can override that using:
 The ip address to bind to, if empty will bind to all interfaces
 
 ### http_port
-The port to bind to, defaults to `3000`
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the grafana binary permission for example:
+
+```
+$ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+```
+
+Or redirect port 80 to the grafana port using:
+```
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+```
 
 ### domain
 This setting is only used in as a part of the root_url setting (see below). Important if you
