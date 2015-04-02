@@ -36,9 +36,6 @@ function(angular, _, config) {
       self.originalPath = $location.path();
     });
 
-    this.ignoreChangeCheck = function() {
-   };
-
     window.onbeforeunload = function() {
       if (contextSrv.hasRole('Viewer')) { return true; }
       if (self.has_unsaved_changes()) {
