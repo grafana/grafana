@@ -34,22 +34,22 @@ responsive GRID
   MASONRY RESPONSIVE GRID
 ***********************************/
 
-  .scaffolding{
+  .masonry {
     max-width:1300px;
   }
 
-  .scaffolding .item {
-    width:  49%;    // width:  49%;
-    height: 50px;
-    padding:20px;
-    margin-bottom:10px;
-    background-color: @black;
-    border-radius: 4px;
-    text-align:center;
+  .mybrick {
+   //  width:  200px;    width:  49%;
+  height: 50px;
+  padding: 20px;
+  margin-bottom: 10px;
+  background-color: #000;
+  border-radius: 4px;
+  text-align: center;
   }
 
 @media screen and (max-width: 780px) {
-  .scaffolding .item {
+ .mybrick{
     width:  100%;
   }
 }
@@ -116,7 +116,8 @@ raintank BOX
 }
 
 
-.collectorStatus {
+.collectorStatus,
+.endpointStatus  {
 margin-bottom: 50px;
 }
 
@@ -128,30 +129,29 @@ margin-bottom: 25px;
 raintank TYPE
 ***********************************/
 .status {
-
 }
 
 .online {
   color: @online;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .warn {
   color: @warn;
-  font-weight: bold;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .disabled {
   color: @disabled;
-  font-weight: bold;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .critical {
   color: @critical;
-  font-weight: bold;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -244,6 +244,41 @@ raintank BUTTONS
 }
 
 
+
+.collector_icon {
+  vertical-align: 2px;
+  padding-left:3px;
+}
+
+.collectorMap {
+  background-color:@gray; 
+  background-image: url(../img/ams_map.png);
+  background-position: top left;
+  background-repeat: repeat;
+  background-size: cover;
+  width:100%; 
+  height:450px;
+  text-align: center;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+
+  .locationDetail {
+    background-color: rgba(255,255,255,.8);
+    color: @black;
+    width:100%;
+    position: absolute;
+    bottom:0;
+    right: 0px;
+    text-align: right;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+
+    h3 {color:#000; margin:20px 20px 0; font-weight:600;}
+    dl {margin:0 20px 20px;}
+    dt {font-weight: normal;}
+  }
+}
+
 /**************************************
 MATT STYLES
 **************************************/
@@ -260,15 +295,20 @@ MATT STYLES
   line-height: 12px;  
 }
 
-.statusDetail {
+.statusDetail .rt-event-success, 
+.statusDetail .rt-event-warning, 
+.statusDetail .rt-event-error{  
+  display:inline-block;
+  padding: 15px 10px;
   border-radius: 50px;
   text-shadow: none;
-  font-size: 40px;
-  font-weight: 500;
-
+  font-size: 36px;
+  font-weight: 600;
 }
 
-.statusDetail .statusDesc {font-size:18px;}
+.statusDetail .statusDesc {font-size:18px; font-weight:600;}
+
+
 
 .rt-event-success {
   .rt-event;
@@ -291,89 +331,74 @@ MATT STYLES
   background-color: fade(@rt-red, 30%);
   border-color: fade(@rt-red, 50%);
   box-shadow: 0 0 1px fade(@rt-red, 90%);}
-
-
-.rt-event-success {
-  .statusDetail;
-  display:inline-block;
-  padding: 20px 15px;
-  border-width: 1px;
-  border-style: solid;
-  color: @rt-green;
-  background-color: fade(@rt-green, 30%);
-  border-color: fade(@rt-green, 50%);
-  box-shadow: 0 0 1px fade(@rt-green, 90%);
-}
-
-.rt-event-warning {
-  .statusDetail;
-  display:inline-block;
-  padding: 20px 15px;
-  border-width: 1px;
-  border-style: solid;
-  color: @rt-yellow;
-  background-color: fade(@rt-yellow, 30%);
-  border-color: fade(@rt-yellow, 50%);
-  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
-
-.rt-event-error {
-  .statusDetail;
-  display:inline-block;
-  padding: 20px 15px;
-  border-width: 1px;
-  border-style: solid;
-  color: @rt-red;
-  background-color: fade(@rt-red, 30%);
-  border-color: fade(@rt-red, 50%);
-  box-shadow: 0 0 1px fade(@rt-red, 90%);}
-
-
 
 
 .dashboard-icon {
   transition: all 0.1s ease 0s;
+  vertical-align: top;
 }
 
 .dashboard-icon:hover {
-  opacity: 0.8;
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
+.filter-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
 }
 
 
 // list status headers
 
 .rt-list-status {
-  font-size: 15px;
+  font-size: 16px;
   color: @rt-dark-gray;
   text-transform: uppercase;
+  text-decoration: none;
 }
 
 .rt-list-status-up {
-  .rt-list-status;  
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-green;
-
+  &:link, &:visited {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
+  }
+  &:hover {color: lighten(@rt-green, 10%);} 
 }
 
 .rt-list-status-warning {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-yellow;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
+  }
+  &:hover {color: lighten(@rt-yellow, 10%);} 
 }
 
 .rt-list-status-down {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @rt-red;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
+  }
+  &:hover {color: lighten(@rt-red, 10%);} 
 }
 
 .rt-list-status-disabled {
-  .rt-list-status;
-  font-size: 19px;
-  font-weight: 600;
-  color: @grayLighter;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @grayLighter;
+  }
+  &:hover {color: lighten(@grayLighter, 10%);} 
 }
 
 
@@ -411,6 +436,32 @@ MATT STYLES
   }
 }
 
+.rt-tabs { 
+  border-bottom:1px solid #fff;
+  font-size: 16px; 
+  padding:10px 20px;
+  background:@raintankPanelBackground;
+ 
+  a:link {
+    color:@gray;
+    margin:0 5px;
+  }
+  .active a:link {
+    color:@white;
+    background:@raintankPanelBackground;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid #fff; 
+    border-right:1px solid #fff; 
+    border-left:1px solid #fff;
+    margin:0 5px;
+    padding:5px 15px 10px 15px;
+  }
+
+  a:hover,
+  .active a:hover {color:@white; text-decoration: none;}
+}
+
 .rt-list-collector-status {
   color: @rt-green;
   font-weight: 700;
@@ -433,11 +484,13 @@ MATT STYLES
   text-shadow: none;
   font-size: 10px;
   font-weight: 600px;
+  margin-left: 6px;
+  vertical-align: 1px;
   padding: 2px 6px;
   border-width: 1px;
   border-style: solid;
-  border-color: rgba(255,255,255,0.2);
-  box-shadow: 0 0 1px rgba(255,255,255,0.9);
+  border-color: lighten(@purple, 15%);
+  box-shadow: 0 0 1px fade(@purple, 90%);
   line-height: 12px;
 
   a {
@@ -460,36 +513,59 @@ MATT STYLES
   background-color: darken(@purple, 5%);
 }
 
-.tag-tip {
+.rt-list-tag-menu {
+    // Different positioning for bottom up menu
+    .dropdown-menu {
+      top: auto;
+      bottom: 100%;
+      margin-bottom: 5px;
+    }
+  }
 
+.dropdown-menu {
+  >li >a {padding: 0 8px;}
+
+  >li >a:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: transparent;
+  background-image: none;
+  opacity: 0.8;
+  }
 }
 
-.collector_icon {
-  vertical-align: 2px;
-  padding-left:3px;
+.rt-tag-dropup {
+  background-color: @grayDark;
+  min-width: 90px;
+  border: 1px solid @rt-dark-gray;
+  box-shadow: 0 0 1px fade(@rt-dark-gray, 90%);
+  border-radius: 2px;
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+
+  // Links within the dropdown menu
+  li, a {
+    display: inline-block;
+  }
 }
 
-.collectorMap {
-  background-color:@gray; 
-  background-image: ur(../img/ams_map.png);
-  background-position: top left;
-  background-repeat: repeat;
-  background-size: cover;
-  width:100%; 
-  height:450px;
-  text-align: center;
-
-  .locationDetail {
-    background-color: rgba(255,255,255,.8);
-    color: @black;
-    width:100%;
-    position: absolute;
-    bottom:0;
-    right: 0px;
-    text-align: right;
-
-    h3 {color:#000; margin:20px;}
-    p {margin:20px;}
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+// ------------------------------------------------------
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    border-top: 0;
+    border-bottom: 4px solid @black;
+    content: "";
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 1px;
   }
 }
 

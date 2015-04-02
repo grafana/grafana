@@ -61,7 +61,7 @@
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "Open Sans", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
@@ -337,10 +337,20 @@
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
 
+
+
 // -------------------------
 // RAINTANK VARIABLES
 // -------------------------
 
+// raintank Font Sizes
+// -------------------------
+@rt-fontSizeJumbo: 28px;
+@rt-fontSizeLarge: 20px;
+@rt-fontSizeMed-1: 16px;
+@rt-fontSizeMed-2: 14px; // Base font. 
+@rt-fontSizeSmall: 0.85em; //About 12px
+@rt-fontSizeMini-2: 10px;
 
 // raintank Accent colors
 // -------------------------
@@ -351,16 +361,15 @@
 @rt-light-gray:			 rgb(153,153,153);
 @rt-blue:				 rgb(19,178,212);
 
-@primaryLink: 			#13b2d4;
+@online:             	 rgb(0,166,81);
+@warn:              	 rgb(247,148,29);
+@critical:             	 rgb(237,28,36);
+@disabled:             	 rgb(255,255,255);
 
-@online: 				rgba(0,166,81,1);
-@warn: 					rgba(247,148,29,1);
-@critical:				rgba(237,28,36,1);
-@disabled: 				rgba(255,255,255,1);
 
 // raintank Variables
 // -------------------------
-@raintankPanelBackground: 	@grayDarker;
+@raintankPanelBackground: 	@grayDark;
 @raintankPanelBorder: 		solid 1px @grayDark;
 @raintankTriggerBorder:		solid 1px #555;
 
@@ -385,7 +394,6 @@
 @inputDisabledBackground:       #555;
 @formActionsBackground:         transparent;
 @inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-
 
 
 // -------------------------

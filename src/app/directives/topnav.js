@@ -21,7 +21,7 @@ function (angular) {
           '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
           '<div class="top-nav">' +
             '<a class="top-nav-menu-btn pointer" ng-if="!contextSrv.sidemenu" ng-click="toggle()">' +
-              '<img class="logo-icon" src="img/fav32.png"></img> ' +
+              '<img class="logo-icon" src="img/raintank_icn_blk.svg"></img> ' +
               '<i class="fa fa-bars"></i>' +
             '</a>' +
 
@@ -33,10 +33,10 @@ function (angular) {
               '<span class="top-nav-title">{{section}}</span>' +
               '<i class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
             '</span>' +
-
-            '<a ng-click="titleAction()" class="top-nav-title">' +
-              '{{title}}' +
-            '</a>' +
+            
+            //'<a ng-click="titleAction()" class="top-nav-title">' +
+              //'{{title}}' +
+            //'</a>' +
             '<i ng-show="subnav" class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
           '</div><div ng-transclude></div></div></div></div>',
         link: function(scope, elem, attrs) {

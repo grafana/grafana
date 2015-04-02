@@ -19,10 +19,10 @@
 		</div>
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<span class="rt-list-status-up">13 Up</span> | 
-					<span class="rt-list-status-warning">1 Warning</span> | 
-					<span class="rt-list-status-down">2 Down</span> |
-					<span class="rt-list-status-disabled">1 Disabled</span> 
+					<a href="#" class="rt-list-status-up">23 Up</a> | 
+					<a href="#" class="rt-list-status-warning">2 Warning</a> | 
+					<a href="#" class="rt-list-status-down">1 Down</a> |
+					<a href="#" class="rt-list-status-disabled">2 Disabled</a> 
 			</div>
 			<div class="editor-option" style="float: right;">
 				<span class="small">Sort By:</span>
@@ -39,9 +39,18 @@
 	<div class="rt-list" ng-repeat="collector in collectors | filterByTag:collector_filter | orderBy:sort_field">
 		<div class="rt-list-header">
 			<span class="rt-list-item-title"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
-			<span><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1"></img></span>
-			<span><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0"></img></span>
-			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in collector.tags" tag-color-from-name><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
+			<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raitank Public Collector'"></img></span>
+			<span style="vertical-align: 2px;"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" style="margin-right: 5px;" bs-tooltip="'Private Collector'"></img></span>
+<!-- 			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in collector.tags" tag-color-from-name><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
+ -->
+
+ 					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name>
+						<a data-toggle="dropdown">{{tag}}<svg height="12" width="12"><i ng-class="icon" class="fa fa-globe" style="font-size: 14px; margin-left: -5px;"></i></svg></a>
+                    	<ul class="dropdown-menu rt-tag-dropup">
+                        	<li><a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
+                        	<li><a ng-click="setCollectorFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+                   		</ul>
+                </span>
 
 			<div style="float: right; display: inline;">
 				<div style="display: inline;">
@@ -50,7 +59,7 @@
 					<span class="rt-event-error">12k</span>
 				</div>
 				<div style="display: inline;">
-					<a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px"></a>
+					<a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{collector.name}} dashboard'"></a>
 				</div>
 				<div class="dropdown" style="display: inline;">
 					<a data-toggle="dropdown">

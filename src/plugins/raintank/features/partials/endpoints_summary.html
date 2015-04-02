@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+<!-- <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li>
 			<div style="margin-top:10px;">
@@ -10,7 +10,8 @@
 		<li class="active"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></li>
 		<li ><a href="endpoints/edit/{{endpoint.id}}">Edit</a></li>
 	</ul>
-</topnav>
+</topnav> 
+
 
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<form name="endpointForm">
@@ -45,4 +46,154 @@
 			</div>
 		</div>
 	</form>
-</div>
+</div> -->
+
+<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li class="top-nav-title ng-binding">
+			<div>
+				<form style="margin-bottom:0px;">
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="endpoint in endpoints">
+								<a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
+							</li>
+						</ul>
+					</li>
+				</form>
+			</div>
+		</li>
+	</ul>
+</topnav>
+
+<div style="margin: 15px; position: relative; display: block; max-width: 1300px; min-width:400px;">
+	
+	<!-- page title -->
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">{{endpoint.name}}</h1>
+		<span style="float: right;"><a class="rt-btn" href="#">Go to {{endpoint.name}} Dashboard</a></span>
+	</div>
+
+	<!-- tabs -->
+	<div class="rt-tabs">
+		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="nonactive" ng-hide="!contextSrv.isGrafanaAdmin"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+	</div>
+</div>	
+<form name="endpointForm">
+	<div class="grid">
+		<div class="grid-cell rt-box">
+			<div class="rt-box-header">
+				<div style="padding:10px;">Status Since Last Check</div>
+				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+					<a data-toggle="dropdown">
+						<i class="fa fa-fw fa-ellipsis-v"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="endpoints/summary/{{endpoint.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="endpoint.public && !contextSrv.isGrafanaAdmin"h>
+							<a href="endpoints/edit/{{endpoint.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="endpoint.public && !contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(endpoint)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="rt-box-body" style="min-height: 50px">
+				<div class="currentStatus">
+					<span class="online jumbo">online</span> <span class="statusDesc">for 12 days</span>
+				</div>
+
+				<div class="statusDetail" >
+					<div style="display:block; margin-bottom:20px">
+						<span class="rt-event-warning">4</span> <span class="statusDesc">Warnings</span>
+						<div class="pull-right tertiaryCTA">View</div>
+					</div>
+					<div style="display:block; margin-bottom:40px">
+						<span class="rt-event-error">12k</span> <span class="statusDesc">Errors</span>
+						 <div class="pull-right tertiaryCTA">View</div>
+					</div>
+				</div>
+				<div class="secondaryCTA">View All Errors</div>
+			</div>
+		</div>
+
+		<div class="grid-cell rt-box">
+			<div class="rt-box-header">
+				<div style="padding:10px;">Tags</div>
+				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+					<a data-toggle="dropdown">
+						<i class="fa fa-fw fa-ellipsis-v"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="endpoints/summary/{{endpoint.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="!contextSrv.isGrafanaAdmin"h>
+							<a href="endpoints/edit/{{endpoint.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="!contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(endpoint)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="rt-box-body" style="min-height: 50px">
+				<div class="editor-row">
+					<div class="editor-option">
+						<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
+						<tip>You can also press enter to a add tag</tip>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="grid-cell rt-box">
+			<div class="rt-box-header">
+				<div style="padding:10px;">Recent Events</div>
+				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+					<a data-toggle="dropdown">
+						<i class="fa fa-fw fa-ellipsis-v"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="endpoints/summary/{{endpoint.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="!contextSrv.isGrafanaAdmin"h>
+							<a href="endpoints/edit/{{endpoint.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="!contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(endpoint)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="rt-box-body" style="min-height: 50px">
+				TODO: add recent events
+			</div>
+		</div>
+</form>

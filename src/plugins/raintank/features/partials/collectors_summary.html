@@ -1,14 +1,24 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
-		<li>
-			<div style="margin-top:10px;">
+		<li class="top-nav-title ng-binding"> <!-- <span class="top-nav-title ng-binding" style="margin-left:-20px; margin-right:20px;">{{collector.name}}</span> -->
+			<div>
 				<form style="margin-bottom:0px;">
-					<select ng-model="collector" ng-options="c as c.name for c in collectors" ng-change="setLocation(collector.id)"></select>
+					<!-- <select ng-model="collector" ng-options="c as c.name for c in collectors" ng-change="setLocation(collector.id)"></select> -->
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+							<span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="collector in collectors">
+								<a class="small" href="collectors/summary/{{collector.id}}">{{collector.name}}</a>
+							</li>
+						</ul>
+					</li>
 				</form>
 			</div>
 		</li>
-		<li class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
-		<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Edit</a></li>
+		<!-- <li class="active" style="margin-left:200px;"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
+		<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Edit</a></li> -->
 	</ul>
 </topnav>
 
@@ -16,17 +26,16 @@
 	
 	<!-- page title -->
 	<div class="rt-page-header-area">
-		<h1 class="rt-h1">New York</h1>
+		<h1 class="rt-h1">{{collector.name}}</h1>
 		<span class="collector_icon"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></img>
 		<span class="collector_icon"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></img>
 		</span>
-
-		<span style="float: right;"><a class="rt-btn" href="#">New Collector</a></span>
+		<span style="float: right;"><a class="rt-btn" href="#">Go to {{collector.name}} Dashboard</a></span>
 	</div>
 
 	<!-- tabs -->
-	<div class="tabs">
-		<span class="active"><a href="#">Summary</a></span>  <span class=""><a href="#">Configuration</a></span>
+	<div class="rt-tabs">
+		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
 </div>	
 <form name="collectorForm">
@@ -72,12 +81,12 @@
 						<span class="rt-event-warning">4</span> <span class="statusDesc">Warnings</span>
 						<div class="pull-right tertiaryCTA">View</div>
 					</div>
-					<div style="display:block; margin-bottom:20px">
+					<div style="display:block; margin-bottom:40px">
 						<span class="rt-event-error">12k</span> <span class="statusDesc">Errors</span>
 						 <div class="pull-right tertiaryCTA">View</div>
 					</div>
 				</div>
-
+				<div class="secondaryCTA">View All Errors</div>
 			</div>
 		</div>
 
@@ -144,10 +153,13 @@
 			</div>
 			<div class="rt-box-body" style="min-height: 50px; margin:-20px;">
 				<div class="collectorMap no-margin" style="">
-					<span class="">collector location map</span>
 					<div class="locationDetail">
-						<h3>Location Detail</h3>
-						<p>other info about location</p>
+						<h3>New York</h3>
+						<dl>
+							<dt>Science Park</dt> 
+							<dt>610 NL-1098 XH AMSTERDAM</dt> 
+							<dt>The Netherlands</dt>
+						</dl>
 					</div>
 				</div>
 			</div>
@@ -215,3 +227,12 @@
 		</div>
 	</div>
 </form>
+
+<masonry column-width="200" item-selector=".mybrick" gutter="10">
+	<div class="masonry">
+	    <div class="mybrick" >This will be 200px wide max - for masonry.</div>
+	    <div class="mybrick" >This will be 200px wide max - for masonry.</div>
+		<div class="mybrick" >This will be 200px wide max - for masonry.</div>
+		<div class="mybrick" >This will be 200px wide max - for masonry.</div>
+	</div>
+</masonry>
