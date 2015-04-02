@@ -12,7 +12,7 @@ function(angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout, contextSrv) {
 
     var self = this;
     var modalScope = $rootScope.$new();
@@ -36,7 +36,11 @@ function(angular, _, config) {
       self.originalPath = $location.path();
     });
 
+    this.ignoreChangeCheck = function() {
+   };
+
     window.onbeforeunload = function() {
+      if (contextSrv.hasRole('Viewer')) { return true; }
       if (self.has_unsaved_changes()) {
         return "There are unsaved changes to this dashboard";
       }
@@ -44,9 +48,9 @@ function(angular, _, config) {
 
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
-        if (self.originalPath === $location.path()) {
-          return;
-        }
+        // check if we should look for changes
+        if (self.originalPath === $location.path()) { return true; }
+        if (contextSrv.hasRole('Viewer')) { return true; }
 
         if (self.has_unsaved_changes()) {
           event.preventDefault();
