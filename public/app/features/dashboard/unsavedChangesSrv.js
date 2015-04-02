@@ -101,6 +101,25 @@ function(angular, _, config) {
         }
       });
 
+      // ignore some panel and row stuff
+      current.forEachPanel(function(panel, panelIndex, row, rowIndex) {
+        var originalRow = original.rows[rowIndex];
+        var originalPanel = original.getPanelById(panel.id);
+        // ignore row collapse state
+        if (originalRow) {
+          row.collapse = originalRow.collapse;
+        }
+        if (originalPanel) {
+          // ignore graph legend sort
+          if (originalPanel.legend && panel.legend)  {
+            delete originalPanel.legend.sortDesc;
+            delete originalPanel.legend.sort;
+            delete panel.legend.sort;
+            delete panel.legend.sortDesc;
+          }
+        }
+      });
+
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
 

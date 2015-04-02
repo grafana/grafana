@@ -73,7 +73,7 @@ function (angular, $, kbn, _, moment) {
       for (i = 0; i < this.rows.length; i++) {
         row = this.rows[i];
         for (j = 0; j < row.panels.length; j++) {
-          callback(row.panels[j], row);
+          callback(row.panels[j], j, row, i);
         }
       }
     };
