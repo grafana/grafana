@@ -21,6 +21,7 @@ function (angular, app, _, config) {
     _.defaults($scope.row,_d);
 
     $scope.init = function() {
+      $scope.editor = {index: 0};
       $scope.reset_panel();
     };
 
