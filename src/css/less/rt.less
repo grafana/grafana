@@ -1,7 +1,7 @@
 .rt-event {
   border-radius: 10px;
   text-shadow: none;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   padding: 0 6px;
   margin: 0 3px;
@@ -34,17 +34,28 @@
 
 .dashboard-icon {
   transition: all 0.1s ease 0s;
+  vertical-align: top;
 }
 
 .dashboard-icon:hover {
-  opacity: 0.8;
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
 }
+
+.filter-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
 
 
 // list status headers
 
 .rt-list-status {
-  font-size: 15px;
+  font-size: 16px;
   color: @rt-dark-gray;
   text-transform: uppercase;
   text-decoration: none;
@@ -53,7 +64,7 @@
 .rt-list-status-up {
   &:link, &:visited {
     .rt-list-status;  
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
     color: @rt-green;
   }
@@ -63,7 +74,7 @@
 .rt-list-status-warning {
   &:link, &:visited {
     .rt-list-status;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
     color: @rt-yellow;
   }
@@ -73,7 +84,7 @@
 .rt-list-status-down {
   &:link, &:visited {
     .rt-list-status;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
     color: @rt-red;
   }
@@ -83,7 +94,7 @@
 .rt-list-status-disabled {
   &:link, &:visited {
     .rt-list-status;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
     color: @grayLighter;
   }
@@ -103,7 +114,7 @@
 }
 
 .rt-list-item-title {
-    font-size: 15px;
+    font-size: 16px;
     a:link {
       color: @rt-light-gray;
     }  
@@ -237,7 +248,7 @@
 
 
 .rt-h1 {
-  font-size: 2em;
+  font-size: 28px;
   font-weight: 400;
   display: inline;
   -webkit-font-smoothing:antialiased;
