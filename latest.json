@@ -1,4 +1,3 @@
 {
-	"version": "1.9.1",
-	"url": "https://grafanarel.s3.amazonaws.com/grafana-1.9.1.tar.gz"
+	"version": "2.0.0-beta1",
 }

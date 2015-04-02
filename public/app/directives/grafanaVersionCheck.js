@@ -6,11 +6,11 @@ function (angular) {
 
   angular
     .module('grafana.directives')
-    .directive('grafanaVersionCheck', function($http, grafanaVersion) {
+    .directive('grafanaVersionCheck', function($http, contextSrv) {
       return {
         restrict: 'A',
         link: function(scope, elem) {
-          if (grafanaVersion[0] === '@') {
+          if (contextSrv.version === 'master') {
             return;
           }
 
@@ -20,7 +20,7 @@ function (angular) {
                 return;
               }
 
-              if (grafanaVersion !== response.data.version) {
+              if (contextSrv.version !== response.data.version) {
                 elem.append('<i class="icon-info-sign"></i> ' +
                             '<a href="http://grafana.org/download" target="_blank"> ' +
                                 'New version available: ' + response.data.version +
