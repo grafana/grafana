@@ -15,7 +15,7 @@
 		<div style="position:absolute; top: 45px; left:15px;" ng-hide="query.text">
 			<a ng-click="selectAll()">all</a>
 		</div>
-		<div style="display:inline-block">
+		<div style="display:inline-block; vertical-align:top;">
 			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
 				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
 				<i class="fa fa-fw fa-square-o"></i>
@@ -23,7 +23,7 @@
 				<span >{{option.text}}</span>
 			</a>
 		</div>
-		<div style="display:inline-block">
+		<div style="display:inline-block; vertical-align:top;">
 			<a class="variable-option pointer" bindonce ng-repeat="option in tags|filter:query"
 					ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
 				<i class="fa fa-fw fa-square-o"></i>
