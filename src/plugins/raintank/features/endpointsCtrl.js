@@ -1,6 +1,5 @@
 define([
   'angular',
-  'wu.masonry'
 ],
 function (angular) {
   'use strict';
