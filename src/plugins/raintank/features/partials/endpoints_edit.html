@@ -58,8 +58,7 @@
 					</div>
 					<div class="editor-row">
 						<div class="editor-option">
-							<label class="small">Collectors</label>
-							<select class="input-medium" ng-model="monitor.collectorGroup" ng-options="c for c in collectorGroups"></select>
+							<endpoint-collector-select model="monitor.collector_ids" collectors="collectors"></endpoint-collector-select>
 						</div>
 						<div class="editor-option">
 							<label class="small">Frequency</label>

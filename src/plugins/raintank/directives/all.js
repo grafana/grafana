@@ -59,4 +59,83 @@ define([
       });
     };
   });
+
+  module.directive('endpointCollectorSelect', function($compile, $window, $timeout) {
+    return {
+      scope: {
+        collectors: "=",
+        model: "=",
+      },
+      templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
+      link: function(scope, elem) {
+        var bodyEl = angular.element($window.document.body);
+        var collectors = scope.collectors;
+
+        scope.show = function() {
+          scope.selectorOpen = true;
+          scope.giveFocus = 1;;
+          var currentValues = scope.model;
+          _.forEach(collectors, function(c) {
+            console.log("collector: "+c.name);
+          });
+          scope.options = _.map(collectors, function(c) {
+            var option = {id: c.id, selected: false, name: c.name};
+            if (_.indexOf(currentValues, c.id) >= 0) {
+              option.selected = true;
+            }
+            return option;
+          });
+
+          $timeout(function() {
+            bodyEl.on('click', scope.bodyOnClick);
+          }, 0, false);
+        };
+
+        scope.optionSelected = function(option) {
+          option.selected = !option.selected;
+
+          if (option.name === 'All') {
+            _.each(scope.options, function(other) {
+              if (option !== other) {
+                other.selected = false;
+              }
+            });
+          }
+
+          var selected = _.filter(scope.options, {selected: true});
+
+          // enfore the first selected if no option is selected
+          if (selected.length === 0) {
+            scope.options[0].selected = true;
+            selected = [scope.options[0]];
+          }
+
+          if (selected.length > 1) {
+            if (selected[0].name === 'All') {
+              selected[0].selected = false;
+              selected = selected.slice(1, selected.length);
+            }
+          }
+          scope.model = [];
+          _.forEach(selected, function(c) {
+            scope.model.push(c.id);
+          })
+        };
+
+        scope.hide = function() {
+          scope.selectorOpen = false;
+          bodyEl.off('click', scope.bodyOnClick);
+        };
+
+        scope.bodyOnClick = function(e) {
+          var dropdown = elem.find('.variable-value-dropdown');
+          if (dropdown.has(e.target).length === 0) {
+            scope.$apply(scope.hide);
+          }
+        };
+
+      },
+    };
+  });
+
 });
