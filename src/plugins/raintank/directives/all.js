@@ -69,21 +69,33 @@ define([
       templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
       link: function(scope, elem) {
         var bodyEl = angular.element($window.document.body);
-        var collectors = scope.collectors;
-
+        var tags 
         scope.show = function() {
           scope.selectorOpen = true;
-          scope.giveFocus = 1;;
-          var currentValues = scope.model;
-          _.forEach(collectors, function(c) {
-            console.log("collector: "+c.name);
-          });
-          scope.options = _.map(collectors, function(c) {
-            var option = {id: c.id, selected: false, name: c.name};
-            if (_.indexOf(currentValues, c.id) >= 0) {
+          scope.giveFocus = 1;
+
+          var currentIds = scope.model.collector_ids;
+          var currentTags = scope.model.collector_tags;
+
+          var seenTags = {};
+          scope.options = [];
+          scope.tags = [];
+          _.forEach(scope.collectors, function(c) {
+            var option = {id: c.id, selected: false, text: c.name};
+            if (_.indexOf(currentIds, c.id) >= 0) {
               option.selected = true;
             }
-            return option;
+            _.forEach(c.tags, function(t) {
+              if (!(t in seenTags)) {
+                seenTags[t] = true;
+                var o = {selected: false, text: t};
+                if (_.indexOf(currentTags, t) >= 0 ) {
+                  o.selected = true;
+                }
+                scope.tags.push(o);
+              }
+            });
+            scope.options.push(option);
           });
 
           $timeout(function() {
@@ -94,32 +106,59 @@ define([
         scope.optionSelected = function(option) {
           option.selected = !option.selected;
 
-          if (option.name === 'All') {
-            _.each(scope.options, function(other) {
-              if (option !== other) {
-                other.selected = false;
-              }
-            });
-          }
-
-          var selected = _.filter(scope.options, {selected: true});
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
 
           // enfore the first selected if no option is selected
-          if (selected.length === 0) {
+          if (selectedIds.length === 0 && selectedTags.length === 0) {
             scope.options[0].selected = true;
-            selected = [scope.options[0]];
+            selectedIds = [scope.options[0]];
           }
 
-          if (selected.length > 1) {
-            if (selected[0].name === 'All') {
-              selected[0].selected = false;
-              selected = selected.slice(1, selected.length);
-            }
+          scope.model.collector_ids = [];
+          _.forEach(selectedIds, function(c) {
+            scope.model.collector_ids.push(c.id);
+          });
+        };
+        scope.selectAll = function() {
+          var select = true;
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+          if (selectedIds.length == scope.options.length) {
+            select = false;
           }
-          scope.model = [];
-          _.forEach(selected, function(c) {
-            scope.model.push(c.id);
-          })
+          _.forEach(scope.options, function(option) {
+            option.selected = select;
+          });
+
+          // enfore the first selected if no option is selected
+          if (!select && selectedTags.length === 0) {
+            scope.options[0].selected = true;
+            selectedIds = [scope.options[0]];
+          }
+
+          scope.model.collector_ids = [];
+          _.forEach(selectedIds, function(c) {
+            scope.model.collector_ids.push(c.id);
+          });
+        }
+
+        scope.tagSelected = function(option) {
+          option.selected = !option.selected;
+
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+
+          // enfore the first selected if no option is selected
+          if (selectedIds.length === 0 && selectedTags.length === 0) {
+            scope.options[0].selected = true;
+            scope.model.collector_ids = [scope.options[0].id];
+          }
+
+          scope.model.collector_tags = [];
+          _.forEach(selectedTags, function(t) {
+            scope.model.collector_tags.push(t.text);
+          });
         };
 
         scope.hide = function() {

@@ -7,18 +7,30 @@
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
 			<input  type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
-			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+			ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 		</span>
 	</div>
 
-	<div class="variable-options-container" ng-if="!query.tagcloud">
-		<a class="variable-option pointer" bindonce ng-repeat="option in options"
+	<div class="variable-options-container">
+		<div style="position:absolute; top: 45px; left:15px;" ng-hide="query.text">
+			<a ng-click="selectAll()">all</a>
+		</div>
+		<div style="display:inline-block">
+			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
 				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
 				<i class="fa fa-fw fa-square-o"></i>
 				<i class="fa fa-fw fa-check-square-o"></i>
-				<span >{{option.name}}</label>
-			</div>
-		</a>
+				<span >{{option.text}}</span>
+			</a>
+		</div>
+		<div style="display:inline-block">
+			<a class="variable-option pointer" bindonce ng-repeat="option in tags|filter:query"
+					ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
+				<i class="fa fa-fw fa-square-o"></i>
+				<i class="fa fa-fw fa-check-square-o"></i>
+				<span >{{option.text}}</span>
+			</a>
+		</div>
 	</div>
 </div>
 
