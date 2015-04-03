@@ -1,14 +1,21 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
-		<li>
-			<div style="margin-top:10px;">
+		<li class="top-nav-title ng-binding">
+			<div>
 				<form style="margin-bottom:0px;">
-					<select ng-model="endpoint" ng-options="e as e.name for e in endpoints" ng-change="setEndpoint(endpoint.id)"></select>
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="endpoint in endpoints">
+								<a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
+							</li>
+						</ul>
+					</li>
 				</form>
 			</div>
 		</li>
-		<li ><a href="endpoints/summary/{{endpoint.id}}">Summary</a></li>
-		<li class="active"><a href="endpoints/edit/{{endpoint.id}}">Edit</a></li>
 	</ul>
 </topnav>
 

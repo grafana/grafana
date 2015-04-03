@@ -118,18 +118,28 @@ raintank BOX
 
 .collectorStatus,
 .endpointStatus  {
-margin-bottom: 50px;
+  margin-bottom: 50px;
 }
 
 .currentStatus {
-display:block;
-margin-bottom: 25px;
+  display:block;
+  margin-bottom: 25px;
 }
+
+.checkType {width:70px; display:inline-block;}
+
+.status {margin-left:10px}
+
 /***********************************
 raintank TYPE
 ***********************************/
-.status {
+
+.currentStatus .status, .checkType {
+  font-size:18px;
+  font-weight:600;
 }
+
+.statusMsg {padding-left:5px;}
 
 .online {
   color: @online;
@@ -155,6 +165,11 @@ raintank TYPE
   text-transform: uppercase;
 }
 
+.nodata {
+  color: @nodata;
+  font-weight: 600;
+  text-transform: uppercase;
+}
 
 
 /***********************************
@@ -305,10 +320,6 @@ MATT STYLES
   font-size: 36px;
   font-weight: 600;
 }
-
-.statusDetail .statusDesc {font-size:18px; font-weight:600;}
-
-
 
 .rt-event-success {
   .rt-event;
