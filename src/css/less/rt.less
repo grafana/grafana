@@ -3,8 +3,16 @@ html {-webkit-font-smoothing:antialiased;} // make type beautiful
 responsive GRID
 ***********************************/
 .grid {
-  display: flex;
+  display: -webkit-box;  /* OLD - iOS 6-, Safari 3.1-6, BB7 */
+  display: -ms-flexbox;  /* TWEENER - IE 10 */
+  display: -webkit-flex; /* NEW - Safari 6.1+. iOS 7.1+, BB10 */
+  display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */
+  -webkit-flex-flow: row wrap;    
   flex-flow: row wrap;
+  -webkit-box-pack: justify;
+  -moz-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-justify-content: space-between;
   justify-content: space-between;
   max-width:1300px;
   min-width: 400px;
@@ -15,6 +23,11 @@ responsive GRID
   border: 1px solid #333;
   background-color: @black;
   margin: 10px 0;
+  -webkit-box-flex: 0 0 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex:0 0 1;         /* OLD - Firefox 19- */
+  width:48.8%;                  /* For old syntax, otherwise collapses. */
+  -webkit-flex: 0 0 1;         /* Chrome */
+  -ms-flex: 0 0 1;              /* IE 10 */
   flex: 0 0 48.8%;
   display: inline-block;
   position:relative;
@@ -35,7 +48,12 @@ responsive GRID
 
 @media screen and (max-width: 780px) {
   .grid-cell  { 
-    flex: 0 0 100%; 
+  -webkit-box-flex: 0 0 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex:0 0 1;         /* OLD - Firefox 19- */
+  width:100%;                  /* For old syntax, otherwise collapses. */
+  -webkit-flex: 0 0 1;         /* Chrome */
+  -ms-flex: 0 0 1;              /* IE 10 */
+  flex: 0 0 100%; 
   }
 }
 
