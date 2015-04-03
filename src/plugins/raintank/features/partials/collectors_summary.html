@@ -5,7 +5,7 @@
 				<form style="margin-bottom:0px;">
 					<!-- <select ng-model="collector" ng-options="c as c.name for c in collectors" ng-change="setLocation(collector.id)"></select> -->
 					<li class="dropdown">
-						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+						<a class="pointer" data-toggle="dropdown" ng-click="openSearch()">
 							<span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
 				   		</a>
 						<ul class="dropdown-menu" role="menu" style="left: 65px">
@@ -78,11 +78,11 @@
 
 				<div class="statusDetail" >
 					<div style="display:block; margin-bottom:20px">
-						<span class="rt-event-warning">4</span> <span class="statusMsg">Warnings</span>
+						<span class="rt-event-warning">4</span> <span class="status">Warnings</span>
 						<div class="pull-right tertiaryCTA">View</div>
 					</div>
 					<div style="display:block; margin-bottom:40px">
-						<span class="rt-event-error">12k</span> <span class="statusMsg">Errors</span>
+						<span class="rt-event-error">12k</span> <span class="status">Errors</span>
 						 <div class="pull-right tertiaryCTA">View</div>
 					</div>
 				</div>

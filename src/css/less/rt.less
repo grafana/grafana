@@ -22,6 +22,17 @@ responsive GRID
   border-radius:2px;
 }
 
+.grid-full {
+  border: 1px solid #333;
+  background-color: @black;
+  margin: 10px 0;
+  flex: 0 0 100%;
+  display: inline-block;
+  position:relative;
+  border:none;
+  border-radius:2px;
+}
+
 @media screen and (max-width: 780px) {
   .grid-cell  { 
     flex: 0 0 100%; 
@@ -129,17 +140,16 @@ raintank BOX
 .checkType {width:70px; display:inline-block;}
 
 .status {margin-left:10px}
+.statusMsg {padding-left:5px;}
 
 /***********************************
 raintank TYPE
 ***********************************/
 
-.currentStatus .status, .checkType {
+.status, .checkType {
   font-size:18px;
   font-weight:600;
 }
-
-.statusMsg {padding-left:5px;}
 
 .online {
   color: @online;
@@ -453,11 +463,13 @@ MATT STYLES
   padding:10px 20px;
   background:@raintankPanelBackground;
  
-  a:link {
+  .nonactive a:link, 
+  .nonactive a:visited {
     color:@gray;
     margin:0 5px;
   }
-  .active a:link {
+  .active a:link,
+  .active a:visited  {
     color:@white;
     background:@raintankPanelBackground;
     border-top-left-radius:4px;
@@ -470,7 +482,8 @@ MATT STYLES
   }
 
   a:hover,
-  .active a:hover {color:@white; text-decoration: none;}
+  .active a:hover,
+  .nonactive a:hover {color:@white; text-decoration: none;}
 }
 
 .rt-list-collector-status {
