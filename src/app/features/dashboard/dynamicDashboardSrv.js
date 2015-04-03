@@ -143,5 +143,3 @@ function (angular, _) {
   });
 
 });
-
-

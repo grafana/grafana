@@ -32,7 +32,6 @@ function (angular) {
       return promise;
     };
 
-    
     $scope.reset = function() {
       $scope.collector = angular.copy(defaults);
     };
