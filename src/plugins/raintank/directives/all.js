@@ -69,7 +69,6 @@ define([
       templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
       link: function(scope, elem) {
         var bodyEl = angular.element($window.document.body);
-        var tags 
         scope.show = function() {
           scope.selectorOpen = true;
           scope.giveFocus = 1;
@@ -89,7 +88,7 @@ define([
               if (!(t in seenTags)) {
                 seenTags[t] = true;
                 var o = {selected: false, text: t};
-                if (_.indexOf(currentTags, t) >= 0 ) {
+                if (_.indexOf(currentTags, t) >= 0) {
                   o.selected = true;
                 }
                 scope.tags.push(o);
