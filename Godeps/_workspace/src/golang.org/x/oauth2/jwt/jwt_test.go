@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package oauth2
+package jwt
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"golang.org/x/oauth2"
 )
 
 var dummyPrivateKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
@@ -50,17 +52,17 @@ func TestJWTFetch_JSONResponse(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	conf := &JWTConfig{
+	conf := &Config{
 		Email:      "aaa@xxx.com",
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(NoContext, nil).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if tok.Expired() {
-		t.Errorf("Token shouldn't be expired")
+	if !tok.Valid() {
+		t.Errorf("Token invalid")
 	}
 	if tok.AccessToken != "90d64460d14870c08c81352a05dedd3465940a7c" {
 		t.Errorf("Unexpected access token, %#v", tok.AccessToken)
@@ -84,24 +86,30 @@ func TestJWTFetch_BadResponse(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	conf := &JWTConfig{
+	conf := &Config{
 		Email:      "aaa@xxx.com",
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(NoContext, nil).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if tok.AccessToken != "" {
-		t.Errorf("Unexpected access token, %#v.", tok.AccessToken)
+	if tok == nil {
+		t.Fatalf("token is nil")
 	}
-	if tok.TokenType != "bearer" {
-		t.Errorf("Unexpected token type, %#v.", tok.TokenType)
+	if tok.Valid() {
+		t.Errorf("token is valid. want invalid.")
+	}
+	if tok.AccessToken != "" {
+		t.Errorf("Unexpected non-empty access token %q.", tok.AccessToken)
+	}
+	if want := "bearer"; tok.TokenType != want {
+		t.Errorf("TokenType = %q; want %q", tok.TokenType, want)
 	}
 	scope := tok.Extra("scope")
-	if scope != "user" {
-		t.Errorf("Unexpected value for scope: %v", scope)
+	if want := "user"; scope != want {
+		t.Errorf("token scope = %q; want %q", scope, want)
 	}
 }
 
@@ -111,12 +119,12 @@ func TestJWTFetch_BadResponseType(t *testing.T) {
 		w.Write([]byte(`{"access_token":123, "scope": "user", "token_type": "bearer"}`))
 	}))
 	defer ts.Close()
-	conf := &JWTConfig{
+	conf := &Config{
 		Email:      "aaa@xxx.com",
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(NoContext, nil).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err == nil {
 		t.Error("got a token; expected error")
 		if tok.AccessToken != "" {

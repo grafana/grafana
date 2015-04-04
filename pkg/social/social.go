@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/net/context"
 
 	"golang.org/x/oauth2"
 )
@@ -24,7 +25,7 @@ type SocialConnector interface {
 	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	Exchange(ctx oauth2.Context, code string) (*oauth2.Token, error)
+	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 }
 
 var (

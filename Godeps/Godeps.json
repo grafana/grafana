@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.3",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -68,7 +68,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
+			"Rev": "c58fcf0ffc1c772aa2e1ee4894bc19f2649263b2"
 		},
 		{
 			"ImportPath": "gopkg.in/bufio.v1",
