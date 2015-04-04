@@ -36,7 +36,14 @@
 		<br>
 
 		<table class="grafana-options-table">
+			<tr>
+				<th>Login</th>
+				<th>Email</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
 			<tr ng-repeat="user in users">
+				<td>{{user.login}}</td>
 				<td>{{user.email}}</td>
 				<td>
 					{{user.role}}
