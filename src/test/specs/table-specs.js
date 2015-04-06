@@ -10,28 +10,26 @@ define([
   // If the user requests 1 column, the returned column name will "1"
   // if the user requests 2 columns, the returned column names will be "1", "2"
   function getRandomData(numColumns, numRows) {
-    var title = 'randomTitle';
     var data = [];
     var selectedColumns = [];
-    var i;
+    var i, j;
 
     for (i = 0; i < numColumns; ++i) {
-      selectedColumns.push(String(numColumns + 1));
+      selectedColumns.push(String(i));
     }
 
     for (i = 0; i < numRows; ++i) {
-      var row = [];
+      var row = { Timestamp: i + 10000 };
 
-      for (var j = 0; j < numColumns; ++j) {
+      for (j = 0; j < numColumns; ++j) {
+        var columnName = selectedColumns[j];
         var value = Math.random();
-        row.push(value);
+        row[columnName] = value;
       }
-
       data.push(row);
     }
 
-
-    return {target: title, datapoints: data, selectedColumns: selectedColumns};
+    return {columnOrder: selectedColumns, values: data};
   }
 
   describe('grafanaTable', function() {
@@ -156,7 +154,10 @@ define([
           for (var columnIndex = 0; columnIndex < rowData.length; ++columnIndex) {
             var cell = rowData.eq(columnIndex);
             var cellData = cell.text();
-            var objectData = data.datapoints[rowIndex][columnIndex].toString();
+
+            var columnName = scope.columnOrder[columnIndex];
+
+            var objectData = data.values[rowIndex][columnName].toString();
 
             expect(cellData).to.equal(objectData);
 

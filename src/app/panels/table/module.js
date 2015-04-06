@@ -14,7 +14,6 @@ function (angular, app, _, require, PanelMeta) {
   app.useModule(module);
   var timestampColumnName = 'Timestamp';
 
-
   module.directive('grafanaPanelTable', function() {
     return {
       controller: 'TablePanelCtrl',
@@ -43,7 +42,7 @@ function (angular, app, _, require, PanelMeta) {
       style: {},
       timeFrom: null,
       timeShift: null,
-      targets: [{ rawQuery: true }], // should only allow one query, set to raw query mode on page load
+      targets: [{ rawQuery: false }],
       columnWidth: 'auto',
       allowPaging: true,
       pageLimit: 20,
@@ -71,7 +70,10 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.dataHandler = function(results) {
       var columnOrder = _.pluck(results.data, 'target');
-      columnOrder.unshift(timestampColumnName);
+
+      if (columnOrder.length > 0) { // if data was returned, add timestamp column
+        columnOrder.unshift(timestampColumnName);
+      }
 
       var data = dataTransform(results.data);
 

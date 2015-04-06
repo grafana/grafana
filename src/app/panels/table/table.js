@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.directives');
 
-    module.directive('grafanaTable', function($rootScope, $timeout, $sce) {
+    module.directive('grafanaTable', function($rootScope, $timeout, $sce, $filter) {
       var data;
       var sortedData; // will shadow the data
 
@@ -213,20 +213,26 @@ define([
 
           function handleSorting() {
             var columnNamesToSort = [];
-            var sortOrders = [];
 
-            for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
-              var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
+            // below ideal solution not supported in current older version of lodash
+            // sortedData = _.sortByOrder(sortedData, columnNamesToSort, sortOrders);
+
+            // therefore we will use anguar's built in method
+
+            _.each(scope.panel.columnSortOrder, function(columnToSort) {
               var sortType = columnToSort.sortType;
 
               if (sortType !== SortType.none) {
-                columnNamesToSort.push(columnToSort.columnName);
-                sortOrders.push(columnToSort.sortType === SortType.asc ? true : false);
+                if (sortType === SortType.desc) {
+                  columnNamesToSort.push("-" + columnToSort.columnName); // angular uses - to indicate desc
+                }
+                else {
+                  columnNamesToSort.push(columnToSort.columnName);
+                }
               }
-            }
+            });
 
-            sortedData = [].concat(data.values);
-            sortedData = _.sortByOrder(sortedData, columnNamesToSort, sortOrders);
+            sortedData = $filter('orderBy')(data.values, columnNamesToSort);
           }
 
           function changeSortType(header) {
