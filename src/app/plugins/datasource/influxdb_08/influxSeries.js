@@ -9,22 +9,11 @@ function (_) {
     this.alias = options.alias;
     this.groupByField = options.groupByField;
     this.annotation = options.annotation;
-    this.isTableView = options.isTableView;
   }
 
   var p = InfluxSeries.prototype;
 
   p.getTimeSeries = function() {
-    if (this.isTableView) {
-      // normal time series only supports one value per query, but tables need multiple columns
-      return this.getTableTimeSeries();
-    }
-    else {
-      return this.getNormalTimeSeries();
-    }
-  };
-
-  p.getNormalTimeSeries = function() {
     var output = [];
     var self = this;
     var i;
@@ -134,22 +123,6 @@ function (_) {
       return match;
     });
 
-  };
-
-  p.getTableTimeSeries = function() {
-    var series = this.seriesList[0]; // tables only have one series
-
-    var datapoints = [];
-    var seriesColumns = [];
-    var seriesName = null;
-
-    if (series) {
-      seriesName = series.name || this.alias;
-      seriesColumns = series.columns;
-      datapoints = series.points;
-    }
-
-    return { target: seriesName, datapoints: datapoints, selectedColumns: seriesColumns };
   };
 
   return InfluxSeries;

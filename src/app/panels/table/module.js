@@ -29,9 +29,6 @@ function (angular, app, _, require, PanelMeta) {
       metricsEditor: true
     });
 
-    $scope.multipleQueriesNotSupported = true; // we can only do one query at a time, although it can be for multiple columns
-    $scope.isTableView = true;
-
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/table/styleEditor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');

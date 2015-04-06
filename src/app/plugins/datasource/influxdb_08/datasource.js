@@ -46,7 +46,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         var alias = target.alias ? templateSrv.replace(target.alias) : '';
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField, options.isTableView);
+        var handleResponse = _.partial(handleInfluxQueryResponse, alias, queryBuilder.groupByField);
         return this._seriesQuery(query).then(handleResponse);
 
       }, this);
@@ -351,12 +351,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    function handleInfluxQueryResponse(alias, groupByField, isTableView, seriesList) {
+    function handleInfluxQueryResponse(alias, groupByField, seriesList) {
       var influxSeries = new InfluxSeries({
         seriesList: seriesList,
         alias: alias,
-        groupByField: groupByField,
-        isTableView: isTableView
+        groupByField: groupByField
       });
 
       return influxSeries.getTimeSeries();
