@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.directives');
 
-    module.directive('grafanaTable', function($rootScope, $timeout, $sce, utilSrv) {
+    module.directive('grafanaTable', function($rootScope, $timeout, $sce) {
       var data;
       var sortedData; // will shadow the data
 
@@ -18,14 +18,20 @@ define([
       var minPage;
 
       var tableHeight;
-      var SortType = utilSrv.sortType;
+      var SortType = {
+        none: 0,
+        asc: 1,
+        desc: 2
+      };
 
       return {
         restrict: 'A',
         templateUrl: 'app/panels/table/table.html',
         link: function(scope, elem) {
-          scope.panel.pageLimit = scope.panel.pageLimit || 20;
           scope.sortType = SortType;
+
+          // refers to the actual physical column order of the table
+          scope.columnOrder = [];
 
           // refers to the order in which the columns were requested to be sorted
           // for example, we might want to first sort by second column, then by third, then by first, etc.
@@ -39,7 +45,8 @@ define([
               return;
             }
 
-            sortedData = [].concat(data.datapoints); // on initial render, original data is the desired sort
+            scope.columnOrder = data.columnOrder;
+            sortedData = [].concat(data.values); // on initial render, original data is the desired sort
             setupInitialPaging();
             renderTable();
           });
@@ -115,7 +122,7 @@ define([
           function setHeaders() {
             var curHeaders = scope.headers;
 
-            var newHeaders = _.map(data.selectedColumns, function(columnName) {
+            var newHeaders = _.map(data.columnOrder, function(columnName) {
               return { columnName: columnName, sortType: SortType.none };
             });
 
@@ -138,19 +145,29 @@ define([
               scope.headers = newHeaders;
               scope.panel.columnSortOrder = [];
             }
+            else { // if headers haven't changed, we should still ensure that the column aliases are up to date
+              for (var i = 0; i < scope.headers.length; ++i) {
+                scope.headers[i].columnName = newHeaders[i].columnName;
+              }
+            }
           }
 
           function setTableData() {
             // avoid using angular bindings for table data in order to avoid performance penalty
             // in case user wants to view a large number of cells simultaneously
-            var tableData = _.reduce(pagedData, function(prev, cur) {
-              var row = _.map(cur, function(seriesValue) {
+            var tableData = _.reduce(pagedData, function(prevColumn, curColumn) {
+
+              var rowData = _.map(scope.columnOrder, function(columnName) {
+                return curColumn[columnName];
+              });
+
+              var row = _.map(rowData, function(seriesValue) {
                 return '<td>' + seriesValue  + '</td>';
               }).join('');
 
               row = '<tr>' + row + '</tr>';
 
-              return prev += row;
+              return prevColumn += row;
             }, '');
 
             scope.tableData = $sce.trustAsHtml(tableData);
@@ -183,7 +200,7 @@ define([
           }
 
           function setupInitialPaging() {
-            scope.panel.numPages = Math.ceil(data.datapoints.length / scope.panel.pageLimit);
+            scope.panel.numPages = Math.ceil(data.values.length / scope.panel.pageLimit);
             minPage = scope.panel.numPages > 0 ? 1 : 0;
 
             scope.panel.curTablePage = minPage; // set to first page, since new data has come in
@@ -195,18 +212,21 @@ define([
           }
 
           function handleSorting() {
-            var indexesToSort = [];
-            var sortTypes = [];
+            var columnNamesToSort = [];
+            var sortOrders = [];
 
             for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
               var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
-              var columnIndex = _.findIndex(scope.headers, columnToSort); // actual index of column header
-              indexesToSort.push(columnIndex);
-              sortTypes.push(columnToSort.sortType);
+              var sortType = columnToSort.sortType;
+
+              if (sortType !== SortType.none) {
+                columnNamesToSort.push(columnToSort.columnName);
+                sortOrders.push(columnToSort.sortType === SortType.asc ? true : false);
+              }
             }
 
-            sortedData = [].concat(data.datapoints);
-            utilSrv.multiColumnSort(sortedData, indexesToSort, sortTypes);
+            sortedData = [].concat(data.values);
+            sortedData = _.sortByOrder(sortedData, columnNamesToSort, sortOrders);
           }
 
           function changeSortType(header) {

@@ -12,6 +12,8 @@ function (angular, app, _, require, PanelMeta) {
 
   var module = angular.module('grafana.panels.table', []);
   app.useModule(module);
+  var timestampColumnName = 'Timestamp';
+
 
   module.directive('grafanaPanelTable', function() {
     return {
@@ -68,7 +70,16 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      $scope.tableData = results.data[0]; // we are only allowing one query on the tableview series
+      var columnOrder = _.pluck(results.data, 'target');
+      columnOrder.unshift(timestampColumnName);
+
+      var data = dataTransform(results.data);
+
+      $scope.tableData = {
+        values: data,
+        columnOrder: columnOrder
+      };
+
       $scope.render();
     };
 
@@ -82,4 +93,49 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.init();
   });
+
+  /**
+   * Transforms the raw datasource query return into an array of objects initially sorted by timestamp
+   * @param results
+   * @returns {Array}
+   */
+  function dataTransform(results) {
+    // because we are performing multiple queries that may not have overlapping timestamps,
+    // we must make sure we accumulate the total intersection first
+    var timeStampColumnDict = {};
+    var dataIndex = 0;
+    var timestampIndex = 1;
+
+    var columnNames = _.pluck(results, 'target');
+
+    _.each(results, function(queryResult) {
+      var curColumnName = queryResult.target;
+
+      _.each(queryResult.datapoints, function(dataPoint) {
+        var timestamp = dataPoint[timestampIndex];
+        var value =  dataPoint[dataIndex];
+
+        if (!timeStampColumnDict[timestamp]) {
+          timeStampColumnDict[timestamp] = _.zipObject(columnNames);
+          timeStampColumnDict[timestamp][timestampColumnName] = timestamp; // assign the timestamp value as well
+        }
+
+        timeStampColumnDict[timestamp][curColumnName] = value;
+      });
+    });
+
+    // when accumulation is finished, we transform into an array
+    var sortedTimestamps = _.
+      chain(timeStampColumnDict)
+      .keys()
+      .sortBy()
+      .value();
+
+    var transformedResult = [];
+    _.each(sortedTimestamps, function(sortedTimestamp) {
+      transformedResult.push(timeStampColumnDict[sortedTimestamp]);
+    });
+
+    return transformedResult;
+  }
 });
