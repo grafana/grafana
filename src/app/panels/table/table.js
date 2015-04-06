@@ -87,7 +87,7 @@ define([
             });
 
             scope.panel.columnSortOrder = [];
-            sortedData = [].concat(data.datapoints); // set sorted data to initial data state
+            sortedData = [].concat(data.values); // set sorted data to initial data state
             renderTable();
           };
 
@@ -219,6 +219,12 @@ define([
 
             // therefore we will use anguar's built in method
 
+            sortedData = [].concat(data.values);
+
+            if (scope.panel.columnSortOrder.length === 0) {
+              return;
+            }
+
             _.each(scope.panel.columnSortOrder, function(columnToSort) {
               var sortType = columnToSort.sortType;
 
@@ -232,7 +238,7 @@ define([
               }
             });
 
-            sortedData = $filter('orderBy')(data.values, columnNamesToSort);
+            sortedData = $filter('orderBy')(sortedData, columnNamesToSort);
           }
 
           function changeSortType(header) {
