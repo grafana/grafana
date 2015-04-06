@@ -48,7 +48,7 @@ function (angular, _, kbn, moment, $) {
       $location.path('');
       return;
     }
-    $scope.initDashboard({ meta: {}, model: window.grafanaImportDashboard }, $scope);
+    $scope.initDashboard({meta: {}, model: window.grafanaImportDashboard }, $scope);
   });
 
   module.controller('NewDashboardCtrl', function($scope) {
@@ -82,7 +82,7 @@ function (angular, _, kbn, moment, $) {
     };
 
     file_load($routeParams.jsonFile).then(function(result) {
-      $scope.initDashboard({meta: {}, model: result}, $scope);
+      $scope.initDashboard({meta: {fromFile: true}, model: result}, $scope);
     });
 
   });
@@ -127,7 +127,7 @@ function (angular, _, kbn, moment, $) {
     };
 
     script_load($routeParams.jsFile).then(function(result) {
-      $scope.initDashboard({meta: {}, model: result.data}, $scope);
+      $scope.initDashboard({meta: {fromScript: true}, model: result.data}, $scope);
     });
 
   });

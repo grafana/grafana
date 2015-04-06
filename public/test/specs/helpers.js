@@ -115,6 +115,12 @@ define([
     };
   }
 
+  function ContextSrvStub() {
+    this.hasRole = function() {
+      return true;
+    };
+  }
+
   function TemplateSrvStub() {
     this.variables = [];
     this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
@@ -134,6 +140,7 @@ define([
   return {
     ControllerTestContext: ControllerTestContext,
     TimeSrvStub: TimeSrvStub,
+    ContextSrvStub: ContextSrvStub,
     ServiceTestContext: ServiceTestContext
   };
 

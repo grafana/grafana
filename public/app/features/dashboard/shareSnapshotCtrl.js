@@ -48,7 +48,7 @@ function (angular, _) {
     };
 
     $scope.saveSnapshot = function(external) {
-      var dash = angular.copy($scope.dashboard);
+      var dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
       var cmdData = {

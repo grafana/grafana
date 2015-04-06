@@ -10,10 +10,9 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function()  {
+  module.factory('dashboardSrv', function(contextSrv)  {
 
-    function DashboardModel (data) {
-
+    function DashboardModel (data, meta) {
       if (!data) {
         data = {};
       }
@@ -46,9 +45,42 @@ function (angular, $, kbn, _, moment) {
       }
 
       this._updateSchema(data);
+      this._initMeta(meta);
     }
 
     var p = DashboardModel.prototype;
+
+    p._initMeta = function(meta) {
+      meta = meta || {};
+      meta.canShare = true;
+      meta.canSave = true;
+      meta.canEdit = true;
+      meta.canStar = true;
+
+      if (contextSrv.hasRole('Viewer')) {
+        meta.canSave = false;
+      }
+
+      if (meta.isSnapshot) {
+        meta.canSave = false;
+      }
+
+      if (meta.isHome) {
+        meta.canShare = false;
+        meta.canStar = false;
+        meta.canSave = false;
+        meta.canEdit = false;
+      }
+
+      this.meta = meta;
+    };
+
+    // cleans meta data and other non peristent state
+    p.getSaveModelClone = function() {
+      var copy = angular.copy(this);
+      delete copy.meta;
+      return copy;
+    };
 
     p._ensureListExist = function (data) {
       if (!data) { data = {}; }
@@ -276,8 +308,8 @@ function (angular, $, kbn, _, moment) {
     };
 
     return {
-      create: function(dashboard) {
-        return new DashboardModel(dashboard);
+      create: function(dashboard, meta) {
+        return new DashboardModel(dashboard, meta);
       }
     };
 
