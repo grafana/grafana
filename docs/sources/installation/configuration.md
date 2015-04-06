@@ -181,9 +181,10 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
+    allowed_domains = mycompany.com
 
 Restart the grafana backend. You should now see a google login button on the login page. You can
-now login or signup with your google accounts.
+now login or signup with your google accounts. `allowed_domains` option is optional.
 
 <hr>
 ## [session]
