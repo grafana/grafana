@@ -179,6 +179,7 @@ func NewConfigContext(config string) {
 	for i, file := range configFiles {
 		if i == 0 {
 			Cfg, err = ini.Load(configFiles[i])
+			Cfg.BlockMode = false
 		} else {
 			err = Cfg.Append(configFiles[i])
 		}
