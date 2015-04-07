@@ -2,6 +2,7 @@ require.config({
   baseUrl: 'http://localhost:9876/base/src/app',
 
   paths: {
+    text:                  '../vendor/require/text',
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
     helpers:               '../test/specs/helpers',
@@ -140,6 +141,8 @@ require([
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
     'specs/soloPanelCtrl-specs',
+    'specs/table-specs',
+    'specs/table-ctrl-specs'
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

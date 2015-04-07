@@ -50,6 +50,7 @@
     "load-grunt-tasks": "~0.2.0",
     "mocha": "~1.16.1",
     "requirejs": "~2.1.14",
+    "requirejs-text": "~2.0.12",
     "rjs-build-analysis": "0.0.3"
   },
   "engines": {

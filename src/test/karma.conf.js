@@ -12,7 +12,8 @@ module.exports = function(config) {
       {pattern: 'src/app/**/*.js', included: false},
       {pattern: 'src/vendor/**/*.js', included: false},
       {pattern: 'src/test/**/*.js', included: false},
-      {pattern: 'src/**/*.js', included: false}
+      {pattern: 'src/**/*.js', included: false},
+      {pattern: 'src/app/panels/table/table.html', included: false} // allow require text! import
     ],
 
     // list of files to exclude

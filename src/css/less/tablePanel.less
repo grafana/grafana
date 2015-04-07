@@ -1,0 +1,65 @@
+.table-visualization {
+  position: relative;
+
+  .table-vis-overflow-container {
+    overflow: auto;
+  }
+
+  table {
+    margin: 0 auto;
+
+    td, th {
+      border: 1px solid @grafanaTargetSegmentBorder;
+      color: @textColor;
+      padding: 8px 6px;
+    }
+
+    tr:nth-child(even) {
+      background-color: @grafanaTargetFuncBackground;
+    }
+
+    th {
+      background-color: @grayDark;
+      .no-select();
+
+      .fa-caret-up,.fa-caret-down {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+      }
+
+    }
+
+    .fixed-table-header {
+      position: absolute;
+    }
+  }
+}
+
+
+.table-paging-control {
+  width: 200px;
+  margin: 17px auto 0 auto;
+
+  input {
+    text-align: center;
+    width: 120px;
+  }
+
+  i {
+    font-size: 150%;
+    padding: 0 4px 0 4px;
+
+    .no-select();
+   }
+}
+
+
+.no-select() {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+}
+
