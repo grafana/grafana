@@ -254,6 +254,7 @@ func readSessionConfig() {
 	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
 	SessionOptions.Gclifetime = Cfg.Section("session").Key("gc_interval_time").MustInt64(86400)
 	SessionOptions.Maxlifetime = Cfg.Section("session").Key("session_life_time").MustInt64(86400)
+	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)

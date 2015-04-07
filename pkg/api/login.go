@@ -139,6 +139,6 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 func Logout(c *middleware.Context) {
 	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
 	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
-	c.Session.Destory(c.Context)
+	c.Session.Destory(c)
 	c.Redirect(setting.AppSubUrl + "/login")
 }

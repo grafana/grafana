@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/session"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -19,75 +18,108 @@ type Context struct {
 	*macaron.Context
 	*m.SignedInUser
 
-	Session session.Store
+	Session SessionStore
 
 	IsSignedIn     bool
 	AllowAnonymous bool
 }
 
 func GetContextHandler() macaron.Handler {
-	return func(c *macaron.Context, sess session.Store) {
+	return func(c *macaron.Context) {
 		ctx := &Context{
 			Context:        c,
-			Session:        sess,
 			SignedInUser:   &m.SignedInUser{},
+			Session:        GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 		}
 
-		// try get account id from request
-		if userId := getRequestUserId(ctx); userId != 0 {
-			query := m.GetSignedInUserQuery{UserId: userId}
-			if err := bus.Dispatch(&query); err != nil {
-				log.Error(3, "Failed to get user by id, %v, %v", userId, err)
-			} else {
-				ctx.SignedInUser = query.Result
-				ctx.IsSignedIn = true
-			}
-		} else if keyString := getApiKey(ctx); keyString != "" {
-			// base64 decode key
-			decoded, err := apikeygen.Decode(keyString)
-			if err != nil {
-				ctx.JsonApiErr(401, "Invalid API key", err)
-				return
-			}
-			// fetch key
-			keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-			if err := bus.Dispatch(&keyQuery); err != nil {
-				ctx.JsonApiErr(401, "Invalid API key", err)
-				return
-			} else {
-				apikey := keyQuery.Result
-
-				// validate api key
-				if !apikeygen.IsValid(decoded, apikey.Key) {
-					ctx.JsonApiErr(401, "Invalid API key", err)
-					return
-				}
-
-				ctx.IsSignedIn = true
-				ctx.SignedInUser = &m.SignedInUser{}
-
-				// TODO: fix this
-				ctx.OrgRole = apikey.Role
-				ctx.ApiKeyId = apikey.Id
-				ctx.OrgId = apikey.OrgId
-			}
-		} else if setting.AnonymousEnabled {
-			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
-			if err := bus.Dispatch(&orgQuery); err != nil {
-				log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
-			} else {
-				ctx.IsSignedIn = false
-				ctx.AllowAnonymous = true
-				ctx.SignedInUser = &m.SignedInUser{}
-				ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
-				ctx.OrgId = orgQuery.Result.Id
-				ctx.OrgName = orgQuery.Result.Name
-			}
+		if initContextWithApiKey(ctx) ||
+			initContextWithUserSessionCookie(ctx) ||
+			initContextWithAnonymousUser(ctx) {
 		}
 
 		c.Map(ctx)
+	}
+}
+
+func initContextWithAnonymousUser(ctx *Context) bool {
+	if !setting.AnonymousEnabled {
+		return false
+	}
+
+	orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+	if err := bus.Dispatch(&orgQuery); err != nil {
+		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
+		return false
+	} else {
+		ctx.IsSignedIn = false
+		ctx.AllowAnonymous = true
+		ctx.SignedInUser = &m.SignedInUser{}
+		ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+		ctx.OrgId = orgQuery.Result.Id
+		ctx.OrgName = orgQuery.Result.Name
+		return true
+	}
+}
+
+func initContextWithUserSessionCookie(ctx *Context) bool {
+	// initialize session
+	if err := ctx.Session.Start(ctx); err != nil {
+		log.Error(3, "Failed to start session", err)
+		return false
+	}
+
+	var userId int64
+	if userId = getRequestUserId(ctx); userId == 0 {
+		return false
+	}
+
+	query := m.GetSignedInUserQuery{UserId: userId}
+	if err := bus.Dispatch(&query); err != nil {
+		log.Error(3, "Failed to get user by id, %v, %v", userId, err)
+		return false
+	} else {
+		ctx.SignedInUser = query.Result
+		ctx.IsSignedIn = true
+		return true
+	}
+}
+
+func initContextWithApiKey(ctx *Context) bool {
+	var keyString string
+	if keyString = getApiKey(ctx); keyString == "" {
+		return false
+	}
+
+	// base64 decode key
+	decoded, err := apikeygen.Decode(keyString)
+	if err != nil {
+		ctx.JsonApiErr(401, "Invalid API key", err)
+		return true
+	}
+	// fetch key
+	keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	if err := bus.Dispatch(&keyQuery); err != nil {
+		ctx.JsonApiErr(401, "Invalid API key", err)
+		return true
+	} else {
+		apikey := keyQuery.Result
+
+		// validate api key
+		if !apikeygen.IsValid(decoded, apikey.Key) {
+			ctx.JsonApiErr(401, "Invalid API key", err)
+			return true
+		}
+
+		ctx.IsSignedIn = true
+		ctx.SignedInUser = &m.SignedInUser{}
+
+		// TODO: fix this
+		ctx.OrgRole = apikey.Role
+		ctx.ApiKeyId = apikey.Id
+		ctx.OrgId = apikey.OrgId
+		return true
 	}
 }
 

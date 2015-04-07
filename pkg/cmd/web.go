@@ -14,10 +14,6 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/codegangsta/cli"
-	"github.com/macaron-contrib/session"
-	_ "github.com/macaron-contrib/session/mysql"
-	_ "github.com/macaron-contrib/session/postgres"
-	_ "github.com/macaron-contrib/session/redis"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/static"
@@ -54,8 +50,6 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "img", "img")
 	mapStatic(m, "fonts", "fonts")
 
-	m.Use(session.Sessioner(setting.SessionOptions))
-
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
@@ -63,6 +57,8 @@ func newMacaron() *macaron.Macaron {
 	}))
 
 	m.Use(middleware.GetContextHandler())
+	m.Use(middleware.Sessioner(setting.SessionOptions))
+
 	return m
 }
 
