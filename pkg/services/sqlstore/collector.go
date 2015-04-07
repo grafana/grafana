@@ -196,13 +196,27 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
+		collectorTags := make([]m.CollectorTag, 0, len(cmd.Tags))
+		for _, tag := range cmd.Tags {
+			collectorTags = append(collectorTags, m.CollectorTag{
+				OrgId:       cmd.OrgId,
+				CollectorId: l.Id,
+				Tag:         tag,
+			})
+		}
+		if len(collectorTags) > 0 {
+			sess.Table("collector_tag")
+			if _, err := sess.Insert(&collectorTags); err != nil {
+				return err
+			}
+		}
 
 		cmd.Result = &m.CollectorDTO{
 			Id:        l.Id,
 			OrgId:     l.OrgId,
 			Name:      l.Name,
 			Slug:      l.Slug,
-			Tags:      make([]string, 0),
+			Tags:      cmd.Tags,
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
 			Public:    l.Public,
@@ -255,14 +269,15 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 		//the collector can only be edited by those who own it.
 		if collectorQuery.Result.OrgId == cmd.OrgId {
 			l := &m.Collector{
-				Id:        cmd.Id,
 				OrgId:     cmd.OrgId,
 				Latitude:  cmd.Latitude,
 				Longitude: cmd.Longitude,
 				Public:    cmd.Public,
 				Updated:   time.Now(),
 			}
-			_, err := sess.Where("id=? and org_id=?", l.Id, l.OrgId).Update(l)
+
+			sess.UseBool("public")
+			_, err := sess.Id(cmd.Id).Update(l)
 			if err != nil {
 				return err
 			}

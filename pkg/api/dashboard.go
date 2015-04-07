@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,6 +28,8 @@ func isDasboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) 
 }
 
 func GetDashboard(c *middleware.Context) {
+	metrics.M_Api_Dashboard_Get.Inc(1)
+
 	slug := c.Params(":slug")
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
@@ -87,6 +90,8 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
+
+	metrics.M_Api_Dashboard_Post.Inc(1)
 
 	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
 }

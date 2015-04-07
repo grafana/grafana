@@ -11,6 +11,7 @@ function (angular, _, config) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
 
     this.init = function($scope) {
+
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
       $scope.inspector = {};
@@ -26,7 +27,7 @@ function (angular, _, config) {
 
       $scope.sharePanel = function() {
         $scope.appEvent('show-modal', {
-          src: './app/features/dashboard/partials/shareModal.html',
+          src: './app/features/dashboard/partials/sharePanel.html',
           scope: $scope.$new()
         });
       };
@@ -40,7 +41,7 @@ function (angular, _, config) {
       };
 
       $scope.updateColumnSpan = function(span) {
-        $scope.panel.span = Math.min(Math.max($scope.panel.span + span, 1), 12);
+        $scope.updatePanelSpan($scope.panel, span);
 
         $timeout(function() {
           $scope.$broadcast('render');
@@ -92,6 +93,13 @@ function (angular, _, config) {
 
       $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
+
+        if ($scope.panel.snapshotData) {
+          if ($scope.loadSnapshot) {
+            $scope.loadSnapshot($scope.panel.snapshotData);
+          }
+          return;
+        }
 
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;

@@ -44,16 +44,10 @@ xorm是一个简单而强大的Go语言ORM库. 通过它可以使数据库操作
 
 ## 更新日志
 
-* **v0.4.0 RC1** 
-	新特性:
-	* 移动xorm cmd [github.com/go-xorm/cmd](github.com/go-xorm/cmd)
-	* 在重构一般DB操作核心库 [github.com/go-xorm/core](https://github.com/go-xorm/core)
-	* 移动测试github.com/复XORM/测试 [github.com/go-xorm/tests](github.com/go-xorm/tests)
-
-	改进：
-	* Prepared statement 缓存
-	* 添加 Incr API
-	* 指定时区位置
+* **v0.4.2**
+	新特性：
+	* deleted标记
+	* bug fixed
 
 [更多更新日志...](https://github.com/go-xorm/manual-zh-CN/tree/master/chapter-16)
 
@@ -77,6 +71,8 @@ xorm是一个简单而强大的Go语言ORM库. 通过它可以使数据库操作
 
 
 ## 案例
+
+* [Wego](http://github.com/go-tango/wego)
 
 * [Docker.cn](https://docker.cn/)
 

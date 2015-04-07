@@ -10,11 +10,13 @@ define([
     var backendSrv = {};
     var routeParams = {};
     var search = {};
+    var contextSrv = {};
 
     beforeEach(module('grafana.routes'));
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase({
       $routeParams: routeParams,
+      contextSrv: contextSrv,
       $location: {
         search: function() {
           return search;
@@ -44,7 +46,7 @@ define([
           }
         };
 
-        routeParams.id = 1;
+        routeParams.slug = "my dash";
         search.panelId = 23;
         backendSrv.getDashboard = sinon.stub().returns(ctx.$q.when(dashboard));
 
@@ -55,6 +57,10 @@ define([
       it('should load dashboard and extract panel and setup panel scope', function() {
         expect(ctx.scope.panel.id).to.be(23);
         expect(ctx.scope.panel.some).to.be('prop');
+      });
+
+      it('should hide sidemenu', function() {
+        expect(contextSrv.sidemenu).to.be(false);
       });
 
     });

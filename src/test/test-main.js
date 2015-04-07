@@ -126,6 +126,7 @@ require([
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
     'specs/influxQueryBuilder-specs',
+    'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',

@@ -40,13 +40,13 @@ IMPORT_PATH = gopkg.in/%(NAME)s.%(VERSION)s
 # Information about package author
 # Bio can be written in multiple lines.
 [author]
-NAME = Unknwon
+NAME = Unknwon  # Succeeding comment
 E-MAIL = fake@localhost
 GITHUB = https://github.com/%(NAME)s
 BIO = """Gopher.
 Coding addict.
 Good man.
-"""
+"""  # Succeeding comment
 
 [package]
 CLONE_URL = https://%(IMPORT_PATH)s
@@ -62,6 +62,7 @@ UNUSED_KEY = should be deleted
 [types]
 STRING = str
 BOOL = true
+BOOL_FALSE = false
 FLOAT64 = 1.25
 INT = 10
 TIME = 2015-01-01T20:17:05Z
@@ -88,9 +89,7 @@ func Test_Load(t *testing.T) {
 	Convey("Load from data sources", t, func() {
 
 		Convey("Load with empty data", func() {
-			cfg, err := Load([]byte(""))
-			So(err, ShouldBeNil)
-			So(cfg, ShouldNotBeNil)
+			So(Empty(), ShouldNotBeNil)
 		})
 
 		Convey("Load with multiple data sources", func() {
@@ -203,6 +202,10 @@ func Test_Values(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(v1, ShouldBeTrue)
 
+			v1, err = sec.Key("BOOL_FALSE").Bool()
+			So(err, ShouldBeNil)
+			So(v1, ShouldBeFalse)
+
 			v2, err := sec.Key("FLOAT64").Float64()
 			So(err, ShouldBeNil)
 			So(v2, ShouldEqual, 1.25)
@@ -265,6 +268,30 @@ func Test_Values(t *testing.T) {
 			})
 		})
 
+		Convey("Get values in range", func() {
+			sec := cfg.Section("types")
+			So(sec.Key("FLOAT64").RangeFloat64(0, 1, 2), ShouldEqual, 1.25)
+			So(sec.Key("INT").RangeInt(0, 10, 20), ShouldEqual, 10)
+			So(sec.Key("INT").RangeInt64(0, 10, 20), ShouldEqual, 10)
+
+			minT, err := time.Parse(time.RFC3339, "0001-01-01T01:00:00Z")
+			So(err, ShouldBeNil)
+			midT, err := time.Parse(time.RFC3339, "2013-01-01T01:00:00Z")
+			So(err, ShouldBeNil)
+			maxT, err := time.Parse(time.RFC3339, "9999-01-01T01:00:00Z")
+			So(err, ShouldBeNil)
+			t, err := time.Parse(time.RFC3339, "2015-01-01T20:17:05Z")
+			So(err, ShouldBeNil)
+			So(sec.Key("TIME").RangeTime(t, minT, maxT).String(), ShouldEqual, t.String())
+
+			Convey("Get value in range with default value", func() {
+				So(sec.Key("FLOAT64").RangeFloat64(5, 0, 1), ShouldEqual, 5)
+				So(sec.Key("INT").RangeInt(7, 0, 5), ShouldEqual, 7)
+				So(sec.Key("INT").RangeInt64(7, 0, 5), ShouldEqual, 7)
+				So(sec.Key("TIME").RangeTime(t, minT, midT).String(), ShouldEqual, t.String())
+			})
+		})
+
 		Convey("Get values into slice", func() {
 			sec := cfg.Section("array")
 			So(strings.Join(sec.Key("STRINGS").Strings(","), ","), ShouldEqual, "en,zh,de")
@@ -304,7 +331,7 @@ func Test_Values(t *testing.T) {
 		})
 
 		Convey("Get key strings", func() {
-			So(strings.Join(cfg.Section("types").KeyStrings(), ","), ShouldEqual, "STRING,BOOL,FLOAT64,INT,TIME")
+			So(strings.Join(cfg.Section("types").KeyStrings(), ","), ShouldEqual, "STRING,BOOL,BOOL_FALSE,FLOAT64,INT,TIME")
 		})
 
 		Convey("Delete a key", func() {
@@ -320,6 +347,14 @@ func Test_Values(t *testing.T) {
 		Convey("Delete a section", func() {
 			cfg.DeleteSection("")
 			So(cfg.SectionStrings()[0], ShouldNotEqual, DEFAULT_SECTION)
+		})
+
+		Convey("Create new sections", func() {
+			cfg.NewSections("test", "test2")
+			_, err := cfg.GetSection("test")
+			So(err, ShouldBeNil)
+			_, err = cfg.GetSection("test2")
+			So(err, ShouldBeNil)
 		})
 	})
 
@@ -338,6 +373,10 @@ func Test_Values(t *testing.T) {
 			s, err := cfg.NewSection("")
 			So(err, ShouldNotBeNil)
 			So(s, ShouldBeNil)
+		})
+
+		Convey("Create new sections with empty name", func() {
+			So(cfg.NewSections(""), ShouldNotBeNil)
 		})
 
 		Convey("Get section that not exists", func() {

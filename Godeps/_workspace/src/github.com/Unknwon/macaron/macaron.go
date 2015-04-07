@@ -29,7 +29,7 @@ import (
 	"github.com/Unknwon/macaron/inject"
 )
 
-const _VERSION = "0.5.0.0116"
+const _VERSION = "0.5.4.0318"
 
 func Version() string {
 	return _VERSION
@@ -267,7 +267,7 @@ func SetConfig(source interface{}, others ...interface{}) (_ *ini.File, err erro
 // It returns an empty object if there is no one available.
 func Config() *ini.File {
 	if cfg == nil {
-		return &ini.File{}
+		return ini.Empty()
 	}
 	return cfg
 }

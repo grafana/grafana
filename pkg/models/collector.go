@@ -49,11 +49,12 @@ type CollectorDTO struct {
 // COMMANDS
 
 type AddCollectorCommand struct {
-	OrgId     int64   `json:"-"`
-	Name      string  `json:"name"`
-	Public    bool    `json:"public"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	OrgId     int64    `json:"-"`
+	Name      string   `json:"name"`
+	Tags      []string `json:"tags"`
+	Public    bool     `json:"public"`
+	Latitude  float64  `json:"latitude"`
+	Longitude float64  `json:"longitude"`
 	Result    *CollectorDTO
 }
 

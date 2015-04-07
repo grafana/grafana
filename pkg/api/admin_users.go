@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -63,6 +64,8 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 		c.JsonApiErr(500, "failed to create user", err)
 		return
 	}
+
+	metrics.M_Api_Admin_User_Create.Inc(1)
 
 	c.JsonOK("User created")
 }

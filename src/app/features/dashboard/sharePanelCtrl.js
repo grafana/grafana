@@ -9,19 +9,17 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SharePanelCtrl', function($scope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('SharePanelCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
-      $scope.forCurrent = true;
+      $scope.options = {
+        forCurrent: true,
+        toPanel: $scope.panel ? true : false,
+        includeTemplateVars: true
+      };
 
-      if ($scope.panel) {
-        $scope.toPanel = true;
-      }
-
-      $scope.includeTemplateVars = true;
       $scope.buildUrl();
-
     };
 
     $scope.buildUrl = function() {
@@ -38,7 +36,7 @@ function (angular, _, require, config) {
       params.from = range.from;
       params.to = range.to;
 
-      if ($scope.includeTemplateVars) {
+      if ($scope.options.includeTemplateVars) {
         _.each(templateSrv.variables, function(variable) {
           params['var-' + variable.name] = variable.current.text;
         });
@@ -49,12 +47,12 @@ function (angular, _, require, config) {
         });
       }
 
-      if (!$scope.forCurrent) {
+      if (!$scope.options.forCurrent) {
         delete params.from;
         delete params.to;
       }
 
-      if ($scope.toPanel) {
+      if ($scope.options.toPanel) {
         params.panelId = $scope.panel.id;
         params.fullscreen = true;
       } else {
@@ -73,9 +71,16 @@ function (angular, _, require, config) {
         }
       });
 
-      $scope.shareUrl = baseUrl + "?" + paramsArray.join('&');
-      $scope.imageUrl = $scope.shareUrl.replace('/dashboard/db/', '/render/dashboard/solo/');
+      var queryParams = "?" + paramsArray.join('&');
+      $scope.shareUrl = baseUrl + queryParams;
 
+      var soloUrl = $scope.shareUrl;
+      soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
+      soloUrl = soloUrl.replace('/dashboard/snapshot/', '/dashboard/solo/snapshot/');
+
+      $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+
+      $scope.imageUrl = soloUrl.replace('/dashboard/', '/render/dashboard/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

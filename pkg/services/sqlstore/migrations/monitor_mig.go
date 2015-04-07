@@ -83,7 +83,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	mg.AddMigration("drop table monitor_v1", NewDropTableMigration("monitor_v1"))
 
-
 	// ---------------------
 	// site -> endpoint changes
 	//-------  drop dashboard indexes ------------------

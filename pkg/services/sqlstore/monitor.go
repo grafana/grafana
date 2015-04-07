@@ -76,6 +76,9 @@ WHERE monitor.id=?
 	if err != nil {
 		return err
 	}
+	if len(results) < 1 {
+		return m.ErrMonitorNotFound
+	}
 	result := results[0]
 
 	monitorCollectorIds := make([]int64, 0)

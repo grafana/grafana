@@ -19,6 +19,14 @@ function (angular, jquery, _, config) {
         templateUrl: 'plugins/raintank/features/partials/collectors_summary.html',
         controller : 'CollectorSummaryCtrl',
       })
+      .when('/collectors/edit/:id', {
+        templateUrl: 'plugins/raintank/features/partials/collectors_edit.html',
+        controller : 'CollectorConfCtrl',
+      })
+      .when('/collectors/new', {
+        templateUrl: 'plugins/raintank/features/partials/collectors_edit.html',
+        controller : 'CollectorConfCtrl',
+      })
       .when('/endpoints', {
         templateUrl: 'plugins/raintank/features/partials/endpoints.html',
         controller : 'EndpointsCtrl',

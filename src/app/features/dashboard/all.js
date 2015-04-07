@@ -5,6 +5,7 @@ define([
   './playlistCtrl',
   './rowCtrl',
   './sharePanelCtrl',
+  './shareSnapshotCtrl',
   './submenuCtrl',
   './dashboardSrv',
   './keybindings',
@@ -14,5 +15,6 @@ define([
   './unsavedChangesSrv',
   './directives/dashSearchView',
   './graphiteImportCtrl',
+  './dynamicDashboardSrv',
   './importCtrl',
 ], function () {});
