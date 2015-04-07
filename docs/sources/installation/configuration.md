@@ -53,6 +53,11 @@ Or redirect port 80 to the grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
+Another way is put nginx or apache infront of Grafana and have them proxy requests to Grafana.
+
+### protocol
+`http` or `https`
+
 ### domain
 This setting is only used in as a part of the root_url setting (see below). Important if you
 use github or google oauth.
@@ -67,6 +72,12 @@ google or github oauth authentication (for the callback url to be correct).
 ### static_root_path
 The path to the directory where the frontend files (html & js & css). Default to `public` which is
 why the Grafana binary needs to be executed with working directory set to the installation path.
+
+### cert_file
+Path to cert file (if protocol is https)
+
+### cert_key
+Path to cert key file (if protocol is https)
 
 <hr>
 
