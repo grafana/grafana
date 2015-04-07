@@ -28,11 +28,25 @@ func LoginView(c *middleware.Context) {
 	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
 	settings["disableUserSignUp"] = !setting.AllowUserSignUp
 
+	if !tryLoginUsingRememberCookie(c) {
+		c.HTML(200, VIEW_INDEX)
+		return
+	}
+
+	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		c.Redirect(redirectTo)
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/")
+}
+
+func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
 	if len(uname) == 0 {
-		c.HTML(200, VIEW_INDEX)
-		return
+		return false
 	}
 
 	isSucceed := false
@@ -47,32 +61,29 @@ func LoginView(c *middleware.Context) {
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err != m.ErrUserNotFound {
-			c.Handle(500, "GetUserByLoginQuery", err)
-		} else {
-			c.HTML(200, VIEW_INDEX)
-		}
-		return
+		return false
 	}
 
 	user := userQuery.Result
 
+	// validate remember me cookie
 	if val, _ := c.GetSuperSecureCookie(
 		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
-		c.HTML(200, VIEW_INDEX)
-		return
+		return false
 	}
 
 	isSucceed = true
 	loginUserWithUser(user, c)
+	return true
+}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
+func LoginApiPing(c *middleware.Context) {
+	if !tryLoginUsingRememberCookie(c) {
+		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/")
+	c.JsonOK("Logged in")
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {

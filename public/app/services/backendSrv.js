@@ -28,43 +28,46 @@ function (angular, _, config) {
     };
 
     this._handleError = function(err) {
-      if (err.status === 422) {
-        alertSrv.set("Validation failed", "", "warning", 4000);
-        throw err.data;
-      }
+      return function() {
+        if (err.isHandled) {
+          return;
+        }
 
-      var data = err.data || { message: 'Unexpected error' };
+        if (err.status === 422) {
+          alertSrv.set("Validation failed", "", "warning", 4000);
+          throw err.data;
+        }
 
-      if (_.isString(data)) {
-        data = { message: data };
-      }
+        var data = err.data || { message: 'Unexpected error' };
 
-      data.severity = 'error';
+        if (_.isString(data)) {
+          data = { message: data };
+        }
 
-      if (err.status < 500) {
-        data.severity = "warning";
-      }
+        data.severity = 'error';
 
-      if (data.message) {
-        alertSrv.set("Problem!", data.message, data.severity, 10000);
-      }
+        if (err.status < 500) {
+          data.severity = "warning";
+        }
 
-      throw data;
+        if (data.message) {
+          alertSrv.set("Problem!", data.message, data.severity, 10000);
+        }
+
+        throw data;
+      };
     };
 
     this.request = function(options) {
-      var httpOptions = {
-        url: options.url,
-        method: options.method,
-        data: options.data,
-        params: options.params,
-      };
+      options.retry = options.retry || 0;
+      var requestIsLocal = options.url.indexOf('/') === 0;
+      var firstAttempt = options.retry === 0;
 
-      if (httpOptions.url.indexOf('/') === 0) {
-        httpOptions.url = config.appSubUrl + httpOptions.url;
+      if (requestIsLocal && firstAttempt) {
+        options.url = config.appSubUrl + options.url;
       }
 
-      return $http(httpOptions).then(function(results) {
+      return $http(options).then(function(results) {
         if (options.method !== 'GET') {
           if (results && results.data.message) {
             alertSrv.set(results.data.message, '', 'success', 3000);
@@ -72,13 +75,43 @@ function (angular, _, config) {
         }
         return results.data;
       }, function(err) {
-        $timeout(function() {
-          if (err.isHandled) { return; }
-          self._handleError(err);
-        }, 50);
+        // handle unauthorized
+        if (err.status === 401 && firstAttempt) {
+          return self.loginPing().then(function() {
+            options.retry = 1;
+            return self.request(options);
+          });
+        }
+
+        $timeout(self._handleError(err), 50);
+        throw err;
+      });
+    };
+
+    this.datasourceRequest = function(options) {
+      options.retry = options.retry || 0;
+      var requestIsLocal = options.url.indexOf('/') === 0;
+      var firstAttempt = options.retry === 0;
+
+      if (requestIsLocal && firstAttempt) {
+        options.url = config.appSubUrl + options.url;
+      }
+
+      return $http(options).then(null, function(err) {
+        // handle unauthorized for backend requests
+        if (requestIsLocal && firstAttempt  && err.status === 401) {
+          return self.loginPing().then(function() {
+            options.retry = 1;
+            return self.datasourceRequest(options);
+          });
+        }
 
         throw err;
       });
+    };
+
+    this.loginPing = function() {
+      return this.request({url: '/api/login/ping', method: 'GET', retry: 1 });
     };
 
     this.search = function(query) {

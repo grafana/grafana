@@ -68,6 +68,7 @@ define([
     self.templateSrv = new TemplateSrvStub();
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
+    self.backendSrv = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {

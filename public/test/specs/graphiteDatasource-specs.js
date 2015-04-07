@@ -8,7 +8,8 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase());
+    beforeEach(ctx.providePhase(['backendSrv']));
+
     beforeEach(ctx.createService('GraphiteDatasource'));
     beforeEach(function() {
       ctx.ds = new ctx.service({ url: [''] });
@@ -21,25 +22,25 @@ define([
         maxDataPoints: 500,
       };
 
-      var response = [{ target: 'prod1.count', datapoints: [[10, 1], [12,1]], }];
       var results;
-      var request;
+      var requestOptions;
 
       beforeEach(function() {
-
-        ctx.$httpBackend.expectPOST('/render', function(body) { request = body; return true; })
-          .respond(response);
+        ctx.backendSrv.datasourceRequest = function(options) {
+          requestOptions = options;
+          return ctx.$q.when({data: [{ target: 'prod1.count', datapoints: [[10, 1], [12,1]] }]});
+        };
 
         ctx.ds.query(query).then(function(data) { results = data; });
-        ctx.$httpBackend.flush();
+        ctx.$rootScope.$apply();
       });
 
       it('should generate the correct query', function() {
-        ctx.$httpBackend.verifyNoOutstandingExpectation();
+        expect(requestOptions.url).to.be('/render');
       });
 
       it('should query correctly', function() {
-        var params = request.split('&');
+        var params = requestOptions.data.split('&');
         expect(params).to.contain('target=prod1.count');
         expect(params).to.contain('target=prod2.count');
         expect(params).to.contain('from=-1h');
@@ -47,13 +48,17 @@ define([
       });
 
       it('should exclude undefined params', function() {
-        var params = request.split('&');
+        var params = requestOptions.data.split('&');
         expect(params).to.not.contain('cacheTimeout=undefined');
       });
 
       it('should return series list', function() {
         expect(results.data.length).to.be(1);
         expect(results.data[0].target).to.be('prod1.count');
+      });
+
+      it('should convert to millisecond resolution', function() {
+        expect(results.data[0].datapoints[0][0]).to.be(10);
       });
 
     });
