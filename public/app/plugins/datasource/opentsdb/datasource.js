@@ -183,7 +183,9 @@ function (angular, _, kbn) {
       return _.map(metrics, function(metricData) {
         return _.findIndex(targets, function(target) {
           return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) { return metricData.tags[tagK] !== void 0; });
+            _.all(target.tags, function(tagV, tagK) {
+            return metricData.tags[tagK] === tagV || tagV === "*";
+          });
         });
       });
     }
