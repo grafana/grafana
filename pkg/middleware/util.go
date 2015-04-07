@@ -11,6 +11,7 @@ func Gziper() macaron.Handler {
 
 	return func(ctx *macaron.Context) {
 		requestPath := ctx.Req.URL.RequestURI()
+		// ignore datasource proxy requests
 		if strings.HasPrefix(requestPath, "/api/datasources/proxy") {
 			return
 		}

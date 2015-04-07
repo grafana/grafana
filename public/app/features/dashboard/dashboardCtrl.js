@@ -45,7 +45,7 @@ function (angular, $, config) {
 
       // template values service needs to initialize completely before
       // the rest of the dashboard can load
-      templateValuesSrv.init(dashboard).then(function() {
+      templateValuesSrv.init(dashboard).finally(function() {
         $scope.dashboard = dashboard;
         $scope.dashboardMeta = dashboard.meta;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
@@ -57,6 +57,9 @@ function (angular, $, config) {
         $scope.setWindowTitleAndTheme();
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
+      }).catch(function(err) {
+        console.log('Failed to initialize dashboard template variables, error: ', err);
+        $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
     };
 
