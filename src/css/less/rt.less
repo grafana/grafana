@@ -32,11 +32,22 @@ raintank BOX
   background-color: @black;
   margin: 0px 10px 20px 10px;
   position: relative;
-}
-.rt-box-no-margin {
-  margin: 0;
+  .rt-box-no-margin {
+    margin: 0;
+  }
 }
 
+  .oneCol {display:none;}
+  .twoCol {display:none;}
+
+@media screen and (max-width: 780px) {
+  .oneCol {display:block;}
+}
+@media screen and (min-width: 781px) {
+  .twoCol {display:block;}
+}
+
+.clearBack {background-color:transparent;}
 .rt-box-header-close-btn {
   float: right;
   padding: 0;
@@ -164,10 +175,8 @@ raintank BUTTONS
 ***********************************/
 
 .superCTA { 
-    display: inline-block;
-    width:100%;
-    margin-bottom: 10px;
-    padding: 0.6em 2.0em;
+    display: block;
+    padding: 0.6em 0;
     color:#fff;
     background-color: #13b2d4;
     border: 1px solid #13b2d4;

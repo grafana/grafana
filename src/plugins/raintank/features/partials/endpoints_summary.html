@@ -24,7 +24,6 @@
 	<!-- page title -->
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{endpoint.name}}</h1>
-		<span style="float: right;"><a class="rt-btn" href="#">Go to {{endpoint.name}} Dashboard</a></span>
 	</div>
 
 	<!-- tabs -->
@@ -36,6 +35,9 @@
 <form name="endpointForm">
 	<div class="detailContainer">
 		<div class="detailColumn detailLeft">
+			<div class="rt-box clearBack oneCol">
+				<span><a class="superCTA" href="#">Go to {{endpoint.name}} Dashboard</a></span>
+			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status Since Last Check</div>
@@ -122,6 +124,9 @@
 		</div>
 
 		<div class="detailColumn detailRight">
+			<div class="rt-box clearBack twoCol">
+				<span><a class="superCTA" href="#">Go to {{endpoint.name}} Dashboard</a></span>
+			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Tags</div>

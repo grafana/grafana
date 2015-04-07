@@ -30,7 +30,6 @@
 		<span class="collector_icon"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></img>
 		<span class="collector_icon"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></img>
 		</span>
-		<span style="float: right;"><a class="rt-btn" href="#">Go to {{collector.name}} Dashboard</a></span>
 	</div>
 
 	<!-- tabs -->
@@ -42,6 +41,9 @@
 <form name="collectorForm">
 	<div class="detailContainer">
 		<div class="detailColumn detailLeft">
+		<div class="rt-box clearBack oneCol">
+				<span><a class="superCTA" href="#">Go to {{collector.name}} Dashboard</a></span>
+			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status Since Last Check</div>
@@ -165,6 +167,9 @@
 			</div>
 		</div>
 		<div class="detailColumn detailRight">
+			<div class="rt-box clearBack twoCol">
+				<span><a class="superCTA" href="#">Go to {{collector.name}} Dashboard</a></span>
+			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Tags</div>
