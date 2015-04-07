@@ -10,7 +10,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, $http, templateSrv) {
+  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
@@ -73,7 +73,7 @@ function (angular, _, kbn) {
         data: reqBody
       };
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     OpenTSDBDatasource.prototype.performSuggestQuery = function(query, type) {
@@ -85,7 +85,7 @@ function (angular, _, kbn) {
           q: query
         }
       };
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       });
     };
