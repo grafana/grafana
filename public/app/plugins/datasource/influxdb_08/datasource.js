@@ -12,7 +12,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource_08', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource_08', function($q, backendSrv, templateSrv) {
 
     function InfluxDatasource(datasource) {
       this.urls = _.map(datasource.url.split(','), function(url) {
@@ -172,84 +172,12 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           options.headers.Authorization = 'Basic ' + _this.basicAuth;
         }
 
-        return $http(options).success(function (data) {
-          deferred.resolve(data);
+        return backendSrv.datasourceRequest(options).then(function(response) {
+          deferred.resolve(response.data);
         });
       }, 10);
 
       return deferred.promise;
-    };
-
-    InfluxDatasource.prototype.saveDashboard = function(dashboard) {
-      var tags = dashboard.tags.join(',');
-      var title = dashboard.title;
-      var temp = dashboard.temp;
-      var id = kbn.slugifyForUrl(title);
-      if (temp) { delete dashboard.temp; }
-
-      var data = [{
-        name: 'grafana.dashboard_' + btoa(id),
-        columns: ['time', 'sequence_number', 'title', 'tags', 'dashboard', 'id'],
-        points: [[1000000000000, 1, title, tags, angular.toJson(dashboard), id]]
-      }];
-
-      if (temp) {
-        return this._saveDashboardTemp(data, title, id);
-      }
-      else {
-        var self = this;
-        return this._influxRequest('POST', '/series', data).then(function() {
-          self._removeUnslugifiedDashboard(id, title, false);
-          return { title: title, url: '/dashboard/db/' + id };
-        }, function(err) {
-          throw 'Failed to save dashboard to InfluxDB: ' + err.data;
-        });
-      }
-    };
-
-    InfluxDatasource.prototype._removeUnslugifiedDashboard = function(id, title, isTemp) {
-      if (id === title) { return; }
-
-      var self = this;
-      self._getDashboardInternal(title, isTemp).then(function(dashboard) {
-        if (dashboard !== null) {
-          self.deleteDashboard(title);
-        }
-      });
-    };
-
-    InfluxDatasource.prototype._saveDashboardTemp = function(data, title, id) {
-      data[0].name = 'grafana.temp_dashboard_' + btoa(id);
-      data[0].columns.push('expires');
-      data[0].points[0].push(this._getTempDashboardExpiresDate());
-
-      return this._influxRequest('POST', '/series', data).then(function() {
-        var baseUrl = window.location.href.replace(window.location.hash,'');
-        var url = baseUrl + "#dashboard/temp/" + id;
-        return { title: title, url: url };
-      }, function(err) {
-        throw 'Failed to save shared dashboard to InfluxDB: ' + err.data;
-      });
-    };
-
-    InfluxDatasource.prototype._getTempDashboardExpiresDate = function() {
-      var ttlLength = this.saveTempTTL.substring(0, this.saveTempTTL.length - 1);
-      var ttlTerm = this.saveTempTTL.substring(this.saveTempTTL.length - 1, this.saveTempTTL.length).toLowerCase();
-      var expires = Date.now();
-      switch(ttlTerm) {
-        case "m":
-          expires += ttlLength * 60000;
-          break;
-        case "d":
-          expires += ttlLength * 86400000;
-          break;
-        case "w":
-          expires += ttlLength * 604800000;
-          break;
-        default:
-          throw "Unknown ttl duration format";
-      }
-      return expires;
     };
 
     InfluxDatasource.prototype._getDashboardInternal = function(id, isTemp) {

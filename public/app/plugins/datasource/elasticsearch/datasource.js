@@ -10,7 +10,7 @@ function (angular, _, config, kbn, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, $http, templateSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -38,7 +38,7 @@ function (angular, _, config, kbn, moment) {
         };
       }
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     ElasticDatasource.prototype._get = function(url) {
