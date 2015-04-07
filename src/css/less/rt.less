@@ -178,8 +178,8 @@ raintank BUTTONS
     display: block;
     padding: 0.6em 0;
     color:#fff;
-    background-color: #13b2d4;
-    border: 1px solid #13b2d4;
+    background-color: @rt-blue;
+    border: 1px solid @rt-blue;
     border-radius: 2px;
     text-align:center;
     font-weight: 400;
@@ -187,36 +187,37 @@ raintank BUTTONS
     transition: 0.15s;
   }
 
-.superCTA:hover{
+.superCTA:hover,
+.superCTA:active{
     cursor: pointer;
-    background-color: #fff;
-    border: 1px solid #fff;
-    color: #262626;
+    background: darken(@rt-blue, 10%);
+    border: 1px solid darken(@rt-blue, 10%);
 }
 .primaryCTA {
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.2em 1.4em;
     color:#fff;
-    background-color: #13b2d4;
-    border: 1px solid #13b2d4;
+    background-color: @rt-blue;
+    border: 1px solid @rt-blue;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
     font-size: 12px;
     transition: 0.15s;
 }
-.primaryCTA:hover{
+.primaryCTA:hover, 
+.primaryCTA:active{
     cursor: pointer;
-    background-color: #fff;
-    border: 1px solid #fff;
-    color: #262626;
+    background: darken(@rt-blue, 10%);
+    border: 1px solid darken(@rt-blue, 10%);
+}
 }
 .secondaryCTA {
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.2em 1.4em;
-    border: 1px solid #13b2d4;
+    border: 1px solid @rt-blue;
     color: #13b2d4;
     border-radius: 2px;
     font-style: italic;
