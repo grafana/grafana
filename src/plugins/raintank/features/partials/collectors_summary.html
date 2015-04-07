@@ -22,7 +22,7 @@
 	</ul>
 </topnav>
 
-<div style="margin: 15px; position: relative; display: block; max-width: 1300px; min-width:400px;">
+<div style="margin: 10px; position: relative; display: block; max-width: 1300px; min-width:400px;">
 	
 	<!-- page title -->
 	<div class="rt-page-header-area">
@@ -38,9 +38,81 @@
 		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
 </div>	
+
 <form name="collectorForm">
-	<div class="grid">
-		<div class="grid-cell rt-box">
+<div class="detailContainer">
+	<div class="detailColumn detailRight">
+		<div class="rt-box">
+			<div class="rt-box-header">
+				<div style="padding:10px;">Tags</div>
+				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+					<a data-toggle="dropdown">
+						<img src="img/bulk_action.svg" width="5px" height="16px">
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="collectors/summary/{{collector.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+							<a href="collectors/edit/{{collector.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(collector)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="rt-box-body" style="min-height: 50px">
+				<div class="editor-row">
+					<div class="editor-option">
+						<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
+						<tip>You can also press enter to a add tag</tip>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="rt-box">
+			<div class="rt-box-header">
+				<div style="padding:10px;">Recent Events</div>
+				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+					<a data-toggle="dropdown">
+						<img src="img/bulk_action.svg" width="5px" height="16px">
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="collectors/summary/{{collector.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+							<a href="collectors/edit/{{collector.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(collector)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="rt-box-body" style="min-height: 50px">
+				TODO: add recent events
+			</div>
+		</div>
+	</div>
+
+
+	<div class="detailColumn detailLeft">
+		<div class="rt-box">
 			<div class="rt-box-header">
 				<div style="padding:10px;">Status Since Last Check</div>
 				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
@@ -90,42 +162,7 @@
 			</div>
 		</div>
 
-		<div class="grid-cell rt-box">
-			<div class="rt-box-header">
-				<div style="padding:10px;">Tags</div>
-				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-					<a data-toggle="dropdown">
-						<img src="img/bulk_action.svg" width="5px" height="16px">
-					</a>
-					<ul class="dropdown-menu" role="menu">
-						<li>
-							<a href="collectors/summary/{{collector.id}}">
-								View
-							</a>
-						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
-							<a href="collectors/edit/{{collector.id}}">
-								Edit
-							</a>
-						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
-							<a ng-click="remove(collector)">
-								Delete
-							</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="rt-box-body" style="min-height: 50px">
-				<div class="editor-row">
-					<div class="editor-option">
-						<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
-						<tip>You can also press enter to a add tag</tip>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="grid-cell rt-box">
+		<div class="rt-box">
 			<div class="rt-box-header">
 				<div style="padding:10px;">Collector Location</div>
 				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
@@ -151,10 +188,10 @@
 					</ul>
 				</div>
 			</div>
-			<div class="rt-box-body" style="min-height: 50px; margin:-20px;">
-				<div class="collectorMap no-margin" style="">
+			<div class="rt-box-body" style="min-height: 50px;">
+				<div class="collectorMap no-margin">
 					<div class="locationDetail">
-						<h3>New York</h3>
+						<h3>{{collector.name}}</h3>
 						<dl>
 							<dt>Science Park</dt> 
 							<dt>610 NL-1098 XH AMSTERDAM</dt> 
@@ -164,37 +201,8 @@
 				</div>
 			</div>
 		</div>
-		<div class="grid-cell rt-box">
-			<div class="rt-box-header">
-				<div style="padding:10px;">Recent Events</div>
-				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-					<a data-toggle="dropdown">
-						<img src="img/bulk_action.svg" width="5px" height="16px">
-					</a>
-					<ul class="dropdown-menu" role="menu">
-						<li>
-							<a href="collectors/summary/{{collector.id}}">
-								View
-							</a>
-						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
-							<a href="collectors/edit/{{collector.id}}">
-								Edit
-							</a>
-						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
-							<a ng-click="remove(collector)">
-								Delete
-							</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="rt-box-body" style="min-height: 50px">
-				TODO: add recent events
-			</div>
-		</div>
-		<div class="grid-cell rt-box">
+
+		<div class="rt-box">
 			<div class="rt-box-header">
 				<div style="padding:10px;">Exposure</div>
 				<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
@@ -226,4 +234,5 @@
 			</div>
 		</div>
 	</div>
+</div>	
 </form>

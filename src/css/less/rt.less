@@ -60,34 +60,34 @@ responsive GRID
 
 
 /***********************************
-  MASONRY RESPONSIVE GRID
+COLUMNS
 ***********************************/
+  .detailContainer {min-width:400px; max-width:1320px; margin: 20px 0;}
 
-  .masonry {
-    max-width:1301px;
-  }
+    .detailColumn {
+          width:  50%;
+          float:right;
+          position: relative;
+        }
 
-  .mybrick {
-   //  width:  200px;    width:  49%;
-  height: 50px;
-  padding: 20px;
-  margin-bottom: 10px;
-  background-color: #000;
-  border-radius: 4px;
-  text-align: center;
-  }
+    .detailLeft {}
+    .detailRight {}
 
-@media screen and (max-width: 780px) {
- .mybrick{
-    width:  100%;
-  }
-}
+     @media screen and (max-width: 780px) {
+        .detailColumn {
+          width:  100%;
+          float:none;
+        }
+      .detailLeft {padding-right:0px; margin-left:0px;}
+      .detailRight {padding-left:0px;}
+      }
 
 /***********************************
 raintank BOX
 ***********************************/
 .rt-box {
   background-color: @black;
+  margin: 0px 10px 20px 10px;
 }
 .rt-box-no-margin {
   margin: 0;
@@ -294,13 +294,14 @@ raintank BUTTONS
 }
 
 .collectorMap {
+  position:relative;
   background-color:@gray; 
   background-image: url(../img/ams_map.png);
   background-position: top left;
   background-repeat: repeat;
   background-size: cover;
-  width:100%; 
   height:450px;
+  margin:-20px;
   text-align: center;
   border-bottom-left-radius: 2px;
   border-bottom-right-radius: 2px;
@@ -308,11 +309,12 @@ raintank BUTTONS
   .locationDetail {
     background-color: rgba(255,255,255,.8);
     color: @black;
-    width:100%;
     position: absolute;
-    bottom:0;
+    bottom:0px;
     right: 0px;
+    width:100%;
     text-align: right;
+    padding: 5px 0;
     border-bottom-left-radius: 2px;
     border-bottom-right-radius: 2px;
 
