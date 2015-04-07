@@ -180,11 +180,13 @@ function (angular, _, kbn) {
     }
 
     function mapMetricsToTargets(metrics, targets) {
+      var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(targets, function(target) {
           return target.metric === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
-            return metricData.tags[tagK] === tagV || tagV === "*";
+            interpolatedTagValue = templateSrv.replace(tagV);
+            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
           });
         });
       });
