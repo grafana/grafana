@@ -83,7 +83,6 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.init();
 
-
     /**
      * Transforms the raw datasource query into an array of objects initially sorted by timestamp
      * The column order is retained since JS Dictionaries are unordered
@@ -126,7 +125,6 @@ function (angular, app, _, require, PanelMeta) {
       _.each(sortedTimestamps, function(sortedTimestamp) {
         transformedResult.push(timeStampColumnDict[sortedTimestamp]);
       });
-
 
       // the initial order of the columns is represented by the ordering of the column names
       var columnOrder = [];

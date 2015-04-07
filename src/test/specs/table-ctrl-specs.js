@@ -55,9 +55,7 @@ define([
         ]
       };
 
-
       expect(ctx.scope.tableData.columnOrder).to.eql(expectedResult.columnOrder);
-
 
       // deep comaprison of array of objects
       expect(ctx.scope.tableData.values.length).to.eql(expectedResult.values.length);
