@@ -12,7 +12,6 @@ function (angular, app, _, require, PanelMeta) {
 
   var module = angular.module('grafana.panels.table', []);
   app.useModule(module);
-  var timestampColumnName = 'Timestamp';
 
   module.directive('grafanaPanelTable', function() {
     return {
@@ -22,6 +21,7 @@ function (angular, app, _, require, PanelMeta) {
   });
 
   module.controller('TablePanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
+    $scope.timestampColumnName = 'Timestamp';
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
@@ -69,19 +69,7 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      var columnOrder = _.pluck(results.data, 'target');
-
-      if (columnOrder.length > 0) { // if data was returned, add timestamp column
-        columnOrder.unshift(timestampColumnName);
-      }
-
-      var data = dataTransform(results.data);
-
-      $scope.tableData = {
-        values: data,
-        columnOrder: columnOrder
-      };
-
+      $scope.tableData = dataTransform(results.data);
       $scope.render();
     };
 
@@ -94,50 +82,63 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.init();
-  });
 
-  /**
-   * Transforms the raw datasource query return into an array of objects initially sorted by timestamp
-   * @param results
-   * @returns {Array}
-   */
-  function dataTransform(results) {
-    // because we are performing multiple queries that may not have overlapping timestamps,
-    // we must make sure we accumulate the total intersection first
-    var timeStampColumnDict = {};
-    var dataIndex = 0;
-    var timestampIndex = 1;
 
-    var columnNames = _.pluck(results, 'target');
+    /**
+     * Transforms the raw datasource query into an array of objects initially sorted by timestamp
+     * The column order is retained since JS Dictionaries are unordered
+     * @param results
+     * @returns {{values: Array, columnOrder: Array}}
+     */
+    function dataTransform(results) {
+      // because we are performing multiple queries that may not have overlapping timestamps,
+      // we must make sure we accumulate the total intersection first
+      var timeStampColumnDict = {};
+      var dataIndex = 0;
+      var timestampIndex = 1;
 
-    _.each(results, function(queryResult) {
-      var curColumnName = queryResult.target;
+      var columnNames = _.pluck(results, 'target');
 
-      _.each(queryResult.datapoints, function(dataPoint) {
-        var timestamp = dataPoint[timestampIndex];
-        var value =  dataPoint[dataIndex];
+      _.each(results, function(queryResult) {
+        var curColumnName = queryResult.target;
 
-        if (!timeStampColumnDict[timestamp]) {
-          timeStampColumnDict[timestamp] = _.zipObject(columnNames);
-          timeStampColumnDict[timestamp][timestampColumnName] = timestamp; // assign the timestamp value as well
-        }
+        _.each(queryResult.datapoints, function(dataPoint) {
+          var timestamp = dataPoint[timestampIndex];
+          var value =  dataPoint[dataIndex];
 
-        timeStampColumnDict[timestamp][curColumnName] = value;
+          if (!timeStampColumnDict[timestamp]) {
+            timeStampColumnDict[timestamp] = _.zipObject(columnNames);
+            timeStampColumnDict[timestamp][$scope.timestampColumnName] = timestamp; // assign the timestamp value as well
+          }
+
+          timeStampColumnDict[timestamp][curColumnName] = value;
+        });
       });
-    });
 
-    // when accumulation is finished, we transform into an array
-    var sortedTimestamps = _.
-      chain(timeStampColumnDict)
-      .keys()
-      .sortBy()
-      .value();
+      // when accumulation is finished, we transform into an array
+      var sortedTimestamps = _.
+        chain(timeStampColumnDict)
+        .keys()
+        .sortBy()
+        .value();
 
-    var transformedResult = [];
-    _.each(sortedTimestamps, function(sortedTimestamp) {
-      transformedResult.push(timeStampColumnDict[sortedTimestamp]);
-    });
+      var transformedResult = [];
+      _.each(sortedTimestamps, function(sortedTimestamp) {
+        transformedResult.push(timeStampColumnDict[sortedTimestamp]);
+      });
 
-    return transformedResult;
-  }
+
+      // the initial order of the columns is represented by the ordering of the column names
+      var columnOrder = [];
+      if (columnNames.length > 0) { // if data was returned, add timestamp column
+        columnOrder = [$scope.timestampColumnName].concat(columnNames);
+      }
+
+      return  {
+        values: transformedResult,
+        columnOrder: columnOrder
+      };
+    }
+
+  });
 });
