@@ -83,57 +83,8 @@
 	</div>
 </div>	
 
-
-
-
-
-
-
-
-
-
 <form name="endpointForm">
 	<div class="detailContainer">
-		<div class="detailColumn detailRight">
-
-			<div class="rt-box">
-				<div class="rt-box-header">
-					<div style="padding:10px;">Tags</div>
-					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
-						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a href="endpoints/summary/{{endpoint.id}}">
-									View
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin"h>
-								<a href="endpoints/edit/{{endpoint.id}}">
-									Edit
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin">
-								<a ng-click="remove(endpoint)">
-									Delete
-								</a>
-							</li>
-						</ul>
-					</div>
-				</div>
-				<div class="rt-box-body" style="min-height: 50px">
-					<div class="editor-row">
-						<div class="editor-option">
-							<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
-							<tip>You can also press enter to a add tag</tip>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-
 		<div class="detailColumn detailLeft">
 			<div class="rt-box">
 				<div class="rt-box-header">
@@ -178,7 +129,6 @@
 					</div>
 				</div>
 			</div>
-			
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Events</div>
@@ -217,6 +167,44 @@
 						</div>
 					</div>
 					<div class="secondaryCTA">View All Errors</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="detailColumn detailRight">
+			<div class="rt-box">
+				<div class="rt-box-header">
+					<div style="padding:10px;">Tags</div>
+					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+						<a data-toggle="dropdown">
+							<img src="img/bulk_action.svg" width="5px" height="16px">
+						</a>
+						<ul class="dropdown-menu" role="menu">
+							<li>
+								<a href="endpoints/summary/{{endpoint.id}}">
+									View
+								</a>
+							</li>
+							<li ng-hide="!contextSrv.isGrafanaAdmin"h>
+								<a href="endpoints/edit/{{endpoint.id}}">
+									Edit
+								</a>
+							</li>
+							<li ng-hide="!contextSrv.isGrafanaAdmin">
+								<a ng-click="remove(endpoint)">
+									Delete
+								</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="rt-box-body" style="min-height: 50px">
+					<div class="editor-row">
+						<div class="editor-option">
+							<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
+							<tip>You can also press enter to a add tag</tip>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
