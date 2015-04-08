@@ -14,11 +14,6 @@
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-38-g9908e96",
-			"Rev": "9908e96513e5a94de37004098a3974a567f18111"
-		},
-		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
 			"Comment": "v1.2-26-g9543750",
 			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"

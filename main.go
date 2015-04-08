@@ -1,21 +1,31 @@
 package main
 
 import (
+	"flag"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/codegangsta/cli"
+	"github.com/grafana/grafana/pkg/social"
 )
 
 var version = "master"
 var commit = "NA"
 var buildstamp string
+
+var configFile = flag.String("config", "", "path to config file")
+var pidFile = flag.String("pidfile", "", "path to pid file")
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -35,31 +45,53 @@ func main() {
 		os.Exit(0)
 	}()
 
-	app := cli.NewApp()
-	app.Name = "Grafana Backend"
-	app.Usage = "grafana web"
-	app.Version = version
-	app.Commands = []cli.Command{cmd.ImportDashboard, cmd.Web}
-	app.Flags = append(app.Flags, []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Usage: "path to grafana.ini config file",
-		},
-		cli.StringFlag{
-			Name:  "default-data-path",
-			Usage: "change default path to where grafana can store data",
-		},
-		cli.StringFlag{
-			Name:  "default-log-path",
-			Usage: "change default path to where grafana can log files",
-		},
-		cli.StringFlag{
-			Name:  "pidfile",
-			Usage: "path to pidfile",
-		},
-	}...)
+	flag.Parse()
 
-	app.Run(os.Args)
+	initRuntime()
+	writePIDFile()
+
+	social.NewOAuthService()
+	eventpublisher.Init()
+	plugins.Init()
+
+	if setting.ReportingEnabled {
+		go metrics.StartUsageReportLoop()
+	}
+
+	cmd.StartServer()
 
 	log.Close()
+}
+
+func initRuntime() {
+	setting.NewConfigContext(&setting.CommandLineArgs{})
+
+	log.Info("Starting Grafana")
+	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+	setting.LogLoadedConfigFiles()
+
+	log.Info("Working Path: %s", setting.WorkPath)
+	log.Info("Data Path: %s", setting.DataPath)
+	log.Info("Log Path: %s", setting.LogRootPath)
+
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
+}
+
+func writePIDFile() {
+	if *pidFile == "" {
+		return
+	}
+
+	// Ensure the required directory structure exists.
+	err := os.MkdirAll(filepath.Dir(*pidFile), 0700)
+	if err != nil {
+		log.Fatal(3, "Failed to verify pid directory", err)
+	}
+
+	// Retrieve the PID and write it.
+	pid := strconv.Itoa(os.Getpid())
+	if err := ioutil.WriteFile(*pidFile, []byte(pid), 0644); err != nil {
+		log.Fatal(3, "Failed to write pidfile", err)
+	}
 }

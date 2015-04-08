@@ -43,7 +43,7 @@ WORK_DIR=$GRAFANA_HOME
 DATA_DIR=$GRAFANA_HOME/data
 LOG_DIR=/var/log/$NAME
 CONF_FILE=$CONF_DIR/grafana.ini
-MAX_OPEN_FILES=65535
+MAX_OPEN_FILES=10000
 
 # overwrite settings from default file
 if [ -f "$DEFAULT" ]; then

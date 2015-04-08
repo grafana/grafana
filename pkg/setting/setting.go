@@ -175,6 +175,17 @@ func loadEnvVariableOverrides() {
 	}
 }
 
+func evalutePathConfig(value, commandLineVal, def string) string {
+	if value == "" {
+		if commandLineVal != "" {
+			return commandLineVal
+		} else {
+			return def
+		}
+	}
+	return value
+}
+
 func NewConfigContext(args *CommandLineArgs) {
 	findConfigFiles(args.Config)
 
@@ -196,15 +207,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	loadEnvVariableOverrides()
 
 	DataPath = Cfg.Section("").Key("data_path").String()
-	// if no data path in config, use command line, otherwise default to
-	// data folder relative to working dir
-	if DataPath == "" {
-		if args.DefaultDataPath != "" {
-			DataPath = args.DefaultDataPath
-		} else {
-			DataPath = filepath.Join(WorkPath, "data")
-		}
-	}
+	DataPath = evalutePathConfig(DataPath, args.DefaultDataPath, filepath.Join(WorkPath, "data"))
 
 	initLogging(args)
 

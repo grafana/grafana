@@ -13,7 +13,6 @@ ExecStart=/opt/grafana/bin/grafana            \
                             --config=$CONF_FILE      \
                             --default-log-path=$LOG_DIR     \
                             --default-path-data=$DATA_DIR    \
-
 LimitNOFILE=10000
 TimeoutStopSec=20
 
