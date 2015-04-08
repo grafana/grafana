@@ -259,6 +259,10 @@ func readSessionConfig() {
 	if SessionOptions.Provider == "file" {
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
+
+	if SessionOptions.CookiePath == "" {
+		SessionOptions.CookiePath = "/"
+	}
 }
 
 var logLevels = map[string]string{

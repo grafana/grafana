@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	SESS_KEY_USERID    = "uid"
-	SESS_KEY_FAVORITES = "favorites"
+	SESS_KEY_USERID = "uid"
+	SESS_KEY_APIKEY = "apikey_id" // used fror render requests with api keys
 )
 
 var sessionManager *session.Manager
@@ -102,7 +102,10 @@ func (s *SessionWrapper) Release() error {
 
 func (s *SessionWrapper) Destory(c *Context) error {
 	if s.session != nil {
-		return s.manager.Destory(c.Context)
+		if err := s.manager.Destory(c.Context); err != nil {
+			return err
+		}
+		s.session = nil
 	}
 	return nil
 }

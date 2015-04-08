@@ -55,6 +55,11 @@ type GetApiKeyByNameQuery struct {
 	Result  *ApiKey
 }
 
+type GetApiKeyByIdQuery struct {
+	ApiKeyId int64
+	Result   *ApiKey
+}
+
 // ------------------------
 // DTO & Projections
 
