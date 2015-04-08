@@ -1,25 +1,45 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
-		<li>
-			<div style="margin-top:10px;">
+		<li class="top-nav-title ng-binding">
+			<div>
 				<form style="margin-bottom:0px;">
-					<select ng-model="endpoint" ng-options="e as e.name for e in endpoints" ng-change="setEndpoint(endpoint.id)"></select>
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="endpoint in endpoints">
+								<a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
+							</li>
+						</ul>
+					</li>
 				</form>
 			</div>
 		</li>
-		<li ><a href="endpoints/summary/{{endpoint.id}}">Summary</a></li>
-		<li class="active"><a href="endpoints/edit/{{endpoint.id}}">Edit</a></li>
 	</ul>
 </topnav>
 
 
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<div style="margin: 15px; position: relative; display: block; min-width:400px; max-width: 1300px;">
+		<!-- page title -->
+		<div class="rt-page-header-area">
+			<h1 class="rt-h1">{{endpoint.name}}</h1>
+			<span style="float: right;"><a class="rt-btn" href="#">Go to {{endpoint.name}} Dashboard</a></span>
+		</div>
+
+		<!-- tabs -->
+		<div class="rt-tabs">
+			<span class="nonactive"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="active" ng-hide="!contextSrv.isGrafanaAdmin"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+		</div>
+	</div>
 	<form name="endpointForm">
-		<div class="gf-box">
-			<div class="gf-box-header">
+
+	<div class="grid">
+		<div class="grid-full rt-box">
+			<div class="rt-box-header">
 				<div style="padding:10px;">General Settings</div>
 			</div>
-			<div class="gf-box-body" style="min-height: 50px">
+			<div class="rt-box-body" style="min-height: 50px">
 				<div class="editor-row">
 					<div class="editor-option">
 						<label class="small">Site Name</label>
@@ -39,9 +59,11 @@
 				</div>
 			</div>
 		</div>
-		<div ng-if="endpoint.id">
-			<div class="gf-box" ng-repeat="(monitor_type, monitor) in monitors">
-				<div class="gf-box-header">
+	</div>
+	<div ng-if="endpoint.id">
+		<div class="grid">
+			<div class="grid-full rt-box" ng-repeat="(monitor_type, monitor) in monitors">
+				<div class="rt-box-header">
 					<div style="padding:10px;">
 						<span>{{monitor_types[monitor_type].name}}</span>
 						<a ng-click="removeMonitor(monitor)" style="float: right"  class="btn btn-danger btn-mini" ng-show="monitor.id">
@@ -49,7 +71,7 @@
 						</a>
 					</div>
 				</div>
-				<div class="gf-box-body">
+				<div class="rt-box-body">
 					<div class="editor-row">
 						<div class="editor-option">
 							<label class="small">Enabled</label>
@@ -82,6 +104,7 @@
 				</div>
 			</div>
 		</div>
+	</div>	
 		<div class="dashboard-editor-footer" style="margin-top: 20px">
 			<button type="submit" class="btn btn-info" ng-hide="endpoint.id" ng-click="cancel()">Cancel</button>
 			<button type="submit" class="btn btn-success" ng-hide="endpoint.id" ng-click="add()">Add</button>

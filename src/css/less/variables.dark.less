@@ -41,11 +41,13 @@
 @grafanaTargetFuncBackground: #333;
 @grafanaTargetFuncHightlight: #444;
 
-@modalBackground: 				@black;
+
+@modalBackground: 			@black;
 
 // Scaffolding
 // -------------------------
-// 
+
+// @bodyBackground:        rgb(22,22,22);
 @bodyBackground:        rgb(38,38,38);
 @textColor:             @grayLighter;
 
@@ -283,7 +285,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       rgb(58, 57, 57);
+@tooltipBackground:       #202020;
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        @linkColor;
@@ -341,7 +343,6 @@
 // RAINTANK VARIABLES
 // -------------------------
 
-
 // raintank Font Sizes
 // -------------------------
 @rt-fontSizeJumbo: 28px;
@@ -350,7 +351,6 @@
 @rt-fontSizeMed-2: 14px; // Base font. 
 @rt-fontSizeSmall: 0.85em; //About 12px
 @rt-fontSizeMini-2: 10px;
-
 
 // raintank Accent colors
 // -------------------------
@@ -361,10 +361,17 @@
 @rt-light-gray:			 rgb(153,153,153);
 @rt-blue:				 rgb(19,178,212);
 
+@online:             	 rgb(0,166,81);
+@warn:              	 rgb(247,148,29);
+@critical:             	 rgb(237,28,36);
+@disabled:             	 rgb(255,255,255);
+@nodata:             	 rgb(103,103,103);
+
 
 // raintank Variables
 // -------------------------
-@raintankPanelBackground: 	@grayDarker;
+@raintankPanelBackground: 	@grayDark;
+
 @raintankPanelBorder: 		solid 1px @grayDark;
 @raintankTriggerBorder:		solid 1px #555;
 
@@ -390,6 +397,8 @@
 @formActionsBackground:         transparent;
 @inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
 
+
 // -------------------------
 // End RAINTANK VARIABLES
 // -------------------------
+
