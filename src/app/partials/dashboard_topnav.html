@@ -18,19 +18,19 @@
 
 			</div>
 
-			<ul class="nav pull-left top-nav-dash-actions" ng-if="!dashboardMeta.isHome">
-				<li>
+			<ul class="nav pull-left top-nav-dash-actions">
+				<li ng-show="dashboardMeta.canStar">
 					<a class="pointer" ng-click="starDashboard()">
-						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred,}" style="color: orange;"></i>
+						<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred}" style="color: orange;"></i>
 					</a>
 				</li>
-				<li>
+				<li ng-show="dashboardMeta.canShare">
 					<a class="pointer" ng-click="shareDashboard()" bs-tooltip="'Share dashboard'" data-placement="bottom"><i class="fa fa-share-square-o"></i></a>
 				</li>
-				<li>
+				<li ng-show="dashboardMeta.canSave">
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
-				<li class="dropdown">
+				<li class="dropdown" ng-if="dashboardMeta.canEdit">
 					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 					<ul class="dropdown-menu">
 						<li><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
@@ -38,8 +38,8 @@
 						<li><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
-						<li><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
-						<li><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
+						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
+						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
 			</ul>

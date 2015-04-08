@@ -78,27 +78,17 @@ type unsupport4 struct {
 	*unsupport3 `ini:"Others"`
 }
 
-type invalidInt struct {
-	Age int
-}
-
-type invalidBool struct {
-	Male bool
-}
-
-type invalidFloat struct {
-	Money float64
-}
-
-type invalidTime struct {
-	Born time.Time
-}
-
-type emptySlice struct {
+type defaultValue struct {
+	Name   string
+	Age    int
+	Male   bool
+	Money  float64
+	Born   time.Time
 	Cities []string
 }
 
 const _INVALID_DATA_CONF_STRUCT = `
+Name = 
 Age = age
 Male = 123
 Money = money
@@ -154,12 +144,20 @@ func Test_Struct(t *testing.T) {
 		So(MapTo(&testStruct{}, "hi"), ShouldNotBeNil)
 	})
 
-	Convey("Map to wrong types", t, func() {
-		So(MapTo(&invalidInt{}, []byte(_INVALID_DATA_CONF_STRUCT)), ShouldNotBeNil)
-		So(MapTo(&invalidBool{}, []byte(_INVALID_DATA_CONF_STRUCT)), ShouldNotBeNil)
-		So(MapTo(&invalidFloat{}, []byte(_INVALID_DATA_CONF_STRUCT)), ShouldNotBeNil)
-		So(MapTo(&invalidTime{}, []byte(_INVALID_DATA_CONF_STRUCT)), ShouldNotBeNil)
-		So(MapTo(&emptySlice{}, []byte(_INVALID_DATA_CONF_STRUCT)), ShouldBeNil)
+	Convey("Map to wrong types and gain default values", t, func() {
+		cfg, err := Load([]byte(_INVALID_DATA_CONF_STRUCT))
+		So(err, ShouldBeNil)
+
+		t, err := time.Parse(time.RFC3339, "1993-10-07T20:17:05Z")
+		So(err, ShouldBeNil)
+		dv := &defaultValue{"Joe", 10, true, 1.25, t, []string{"HangZhou", "Boston"}}
+		So(cfg.MapTo(dv), ShouldBeNil)
+		So(dv.Name, ShouldEqual, "Joe")
+		So(dv.Age, ShouldEqual, 10)
+		So(dv.Male, ShouldBeTrue)
+		So(dv.Money, ShouldEqual, 1.25)
+		So(dv.Born.String(), ShouldEqual, t.String())
+		So(strings.Join(dv.Cities, ","), ShouldEqual, "HangZhou,Boston")
 	})
 }
 

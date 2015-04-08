@@ -77,15 +77,13 @@
 							<label class="small">Enabled</label>
 							<input type="checkbox" class="input-xxlarge" ng-model="monitor.enabled" ng-true-value="true" ng-false-value="false"></input>
 						</div>
-					</div>
-					<div class="editor-row">
-						<div class="editor-option">
-							<label class="small">Collectors</label>
-							<select class="input-medium" ng-model="monitor.collectorGroup" ng-options="c for c in collectorGroups"></select>
-						</div>
 						<div class="editor-option">
 							<label class="small">Frequency</label>
 							Every <select class="input-small" ng-model="monitor.frequency" ng-options="f for f in [10, 30, 60, 120]"></select> seconds
+						</div>
+						<div class="editor-option">
+							<label class="small">&nbsp;</label>
+							<endpoint-collector-select model="monitor" collectors="collectors"></endpoint-collector-select>
 						</div>
 					</div>
 					<div class="editor-row">

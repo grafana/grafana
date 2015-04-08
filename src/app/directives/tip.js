@@ -57,14 +57,15 @@ function (angular, kbn) {
 
   angular
     .module('grafana.directives')
-    .directive('editorCheckbox', function($compile) {
+    .directive('editorCheckbox', function($compile, $interpolate) {
       return {
         restrict: 'E',
         link: function(scope, elem, attrs) {
+          var text = $interpolate(attrs.text)(scope);
           var ngchange = attrs.change ? (' ng-change="' + attrs.change + '"') : '';
           var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
           var label = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
-                           attrs.text + tip + '</label>';
+                           text + tip + '</label>';
 
           var template = '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
                           '       ng-model="' + attrs.model + '"' + ngchange +

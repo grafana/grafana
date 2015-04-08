@@ -1,6 +1,7 @@
 define([
+    'lodash'
 ],
-function () {
+function (_) {
   'use strict';
 
   function InfluxQueryBuilder(target) {
@@ -15,36 +16,36 @@ function () {
 
   p._buildQuery = function() {
     var target = this.target;
-    var query = 'select ';
-    var seriesName = target.series;
 
-    if(!seriesName.match('^/.*/') && !seriesName.match(/^merge\(.*\)/)) {
-      seriesName = '"' + seriesName+ '"';
+    console.log('Build Query: target = ', target);
+
+    if (!target.measurement) {
+      throw "Metric measurement is missing";
     }
 
-    if (target.groupby_field) {
-      query += target.groupby_field + ', ';
+    var query = 'SELECT ';
+    var measurement = target.measurement;
+    var aggregationFunc = target.function || 'mean';
+
+    if(!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+      measurement = '"' + measurement+ '"';
     }
 
-    query +=  target.function + '(' + target.column + ')';
-    query += ' from ' + seriesName + ' where $timeFilter';
+    query +=  aggregationFunc + '(value)';
+    query += ' FROM ' + measurement + ' WHERE ';
+    query += _.map(target.tags, function(value, key) {
+      return key + ' = ' + "'" + value + "' AND ";
+    });
 
-    if (target.condition) {
-      query += ' and ' + target.condition;
-    }
+    query += '$timeFilter';
 
-    query += ' group by time($interval)';
-
-    if (target.groupby_field) {
-      query += ', ' + target.groupby_field;
-      this.groupByField = target.groupby_field;
-    }
+    query += ' GROUP BY time($interval)';
 
     if (target.fill) {
       query += ' fill(' + target.fill + ')';
     }
 
-    query += " order asc";
+    query += " ORDER BY asc";
     target.query = query;
 
     return query;

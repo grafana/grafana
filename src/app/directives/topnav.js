@@ -33,7 +33,7 @@ function (angular) {
               '<span class="top-nav-title">{{section}}</span>' +
               '<i class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
             '</span>' +
-            
+
             //'<a ng-click="titleAction()" class="top-nav-title">' +
               //'{{title}}' +
             //'</a>' +

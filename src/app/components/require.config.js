@@ -101,7 +101,6 @@ require.config({
     'bindonce':             ['angular'],
     'wu.masonry':           ['jquery', 'angular', 'masonry', 'imagesloaded'],
 
-
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
 

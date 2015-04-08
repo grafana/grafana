@@ -1,0 +1,54 @@
+<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li>
+			<div style="margin-top:10px;">
+				<form style="margin-bottom:0px;">
+					<select ng-model="collector" ng-options="c as c.name for c in editableCollectors()" ng-change="setCollector(collector.id)"></select>
+				</form>
+			</div>
+		</li>
+		<li ><a href="collectors/summary/{{collector.id}}">Summary</a></li>
+		<li class="active"><a href="collectors/edit/{{collector.id}}">Edit</a></li>
+	</ul>
+</topnav>
+
+
+<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<form name="collectorForm">
+		<div class="gf-box">
+			<div class="gf-box-header">
+				<div style="padding:10px;">General Settings</div>
+			</div>
+			<div class="gf-box-body" style="min-height: 50px">
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Collector Name</label>
+						<input type="text" class="input-medium" ng-model="collector.name" required></input>
+					</div>
+					<div class="editor-option" ng-if="contextSrv.isGrafanaAdmin">
+						<label class="small">Public</label>
+						<input type="checkbox" class="input-medium" ng-model="collector.public"></input>
+					</div>
+				</div>
+				<div class="editor-row">
+					<div class="editor-option">
+						<label class="small">Tags</label>
+						<bootstrap-tagsinput ng-model="collector.tags" tagclass="label label-tag" placeholder="add tags">
+						</bootstrap-tagsinput>
+						<tip>Press enter to a add tag</tip>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div ng-if="collector.id">
+			
+		</div>
+		<div class="dashboard-editor-footer" style="margin-top: 20px">
+			<button type="submit" class="btn btn-info" ng-hide="collector.id" ng-click="cancel()">Cancel</button>
+			<button type="submit" class="btn btn-success" ng-hide="collector.id" ng-click="add()">Add</button>
+			<button type="submit" class="btn btn-success" ng-show="collector.id" ng-click="save()">Save</button>
+		</div>
+	</form>
+</div>
+
+			

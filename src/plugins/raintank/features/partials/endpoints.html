@@ -8,10 +8,12 @@
 	<div class="editor-row">
 		<div class="editor-option">
 			<span class="small">Filter by Endpoint Tag:</span>
-			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="endpoint_filter" ng-options="tag for tag in endpointTags()">
-				<option value="" label="All Tags">All Endpoints</option>
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="endpoint_filter">
+				<option value="" label="All Tags" style="color:black">All Endpoints</option>
+				<option ng-repeat="t in endpointTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
 			</select>
-			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="status_filter">
+				<option ng-repeat="s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']" value="{{s}}" label="{{s}}" style="color:black">{{s}}</option>
 			</select>
 		</div>
 		<div style="display: block; padding: 45px 0 0 0;">
@@ -41,7 +43,7 @@
 						<a data-toggle="dropdown">{{tag}} <img class="dashboard-icon"src="img/tiny-rt-endpoint.svg" style="padding-left: 2px; vertical-align: -2px;"width="12px" height="12px"> </a>
 						<ul class="dropdown-menu rt-tag-dropup">
                         	<li><a href="#"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
-                        	<li><a ng-click="setCollectorFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+                        	<li><a ng-click="setEndpointFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
                    		</ul>
                 </span>
 
@@ -53,7 +55,7 @@
 					<span class="rt-event-error">12k</span>
 				</div>
 				<div style="display: inline;">
-					<a href="#"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></a>
+					<a ng-click="gotoDashboard(endpoint)"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></a>
 				</div>
 				<div class="dropdown" style="float: right;">
 					<a data-toggle="dropdown">

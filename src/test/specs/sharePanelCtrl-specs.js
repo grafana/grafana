@@ -42,7 +42,7 @@ define([
       it('should remove panel id when toPanel is false', function() {
         ctx.$location.path('/test');
         ctx.scope.panel = { id: 22 };
-        ctx.scope.toPanel = false;
+        ctx.scope.options = { toPanel: false, forCurrent: true };
         setTime({ from: 'now-1h', to: 'now' });
 
         ctx.scope.buildUrl();
@@ -52,8 +52,8 @@ define([
       it('should include template variables in url', function() {
         ctx.$location.path('/test');
         ctx.scope.panel = { id: 22 };
-        ctx.scope.includeTemplateVars = true;
-        ctx.scope.toPanel = false;
+        ctx.scope.options = { includeTemplateVars: true, toPanel: false, forCurrent: true };
+
         ctx.templateSrv.variables = [{ name: 'app', current: {text: 'mupp' }}, {name: 'server', current: {text: 'srv-01'}}];
         setTime({ from: 'now-1h', to: 'now' });
 

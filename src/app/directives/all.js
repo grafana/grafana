@@ -16,4 +16,5 @@ define([
   './grafanaVersionCheck',
   './dropdown.typeahead',
   './topnav',
+  './giveFocus',
 ], function () {});

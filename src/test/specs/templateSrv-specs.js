@@ -29,6 +29,50 @@ define([
       });
     });
 
+    describe('replace can pass scoped vars', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+      });
+
+      it('should replace $test with scoped value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.mupp.filters');
+      });
+
+      it('should replace $test with scoped text', function() {
+        var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.asd.filters');
+      });
+    });
+
+    describe('render variable to string values', function() {
+      it('single value should return value', function() {
+        var result = _templateSrv.renderVariableValue({current: {value: 'test'}});
+        expect(result).to.be('test');
+      });
+
+      it('multi value and glob format should render glob string', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'glob',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('{test,test2}');
+      });
+
+      it('multi value and regex format should render regex string', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'regex values',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('(test|test2)');
+      });
+
+    });
+
     describe('can check if variable exists', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);

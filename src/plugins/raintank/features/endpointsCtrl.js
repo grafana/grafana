@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointsCtrl', function($scope, $http, backendSrv) {
+  module.controller('EndpointsCtrl', function($scope, $http, $location, backendSrv) {
 
     var defaults = {
       name: '',
@@ -66,6 +66,18 @@ function (angular) {
         $scope.getEndpoints();
       });
     };
+
+    $scope.slug = function(name) {
+      var label = name.toLowerCase();
+      var re = new RegExp("[^\\w-]+");
+      var re2 = new RegExp("\\s");
+      var slug = label.replace(re, "_").replace(re2, "-");
+      return slug;
+    }
+
+    $scope.gotoDashboard = function(endpoint) {
+      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug(endpoint.name)});
+    }
 
     $scope.init();
 

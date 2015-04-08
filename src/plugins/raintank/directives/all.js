@@ -59,4 +59,121 @@ define([
       });
     };
   });
+
+  module.directive('endpointCollectorSelect', function($compile, $window, $timeout) {
+    return {
+      scope: {
+        collectors: "=",
+        model: "=",
+      },
+      templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
+      link: function(scope, elem) {
+        var bodyEl = angular.element($window.document.body);
+        scope.show = function() {
+          scope.selectorOpen = true;
+          scope.giveFocus = 1;
+
+          var currentIds = scope.model.collector_ids;
+          var currentTags = scope.model.collector_tags;
+
+          var seenTags = {};
+          scope.options = [];
+          scope.tags = [];
+          _.forEach(scope.collectors, function(c) {
+            var option = {id: c.id, selected: false, text: c.name};
+            if (_.indexOf(currentIds, c.id) >= 0) {
+              option.selected = true;
+            }
+            _.forEach(c.tags, function(t) {
+              if (!(t in seenTags)) {
+                seenTags[t] = true;
+                var o = {selected: false, text: t};
+                if (_.indexOf(currentTags, t) >= 0) {
+                  o.selected = true;
+                }
+                scope.tags.push(o);
+              }
+            });
+            scope.options.push(option);
+          });
+
+          $timeout(function() {
+            bodyEl.on('click', scope.bodyOnClick);
+          }, 0, false);
+        };
+
+        scope.optionSelected = function(option) {
+          option.selected = !option.selected;
+
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+
+          // enfore the first selected if no option is selected
+          if (selectedIds.length === 0 && selectedTags.length === 0) {
+            scope.options[0].selected = true;
+            selectedIds = [scope.options[0]];
+          }
+
+          scope.model.collector_ids = [];
+          _.forEach(selectedIds, function(c) {
+            scope.model.collector_ids.push(c.id);
+          });
+        };
+        scope.selectAll = function() {
+          var select = true;
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+          if (selectedIds.length == scope.options.length) {
+            select = false;
+          }
+          _.forEach(scope.options, function(option) {
+            option.selected = select;
+          });
+
+          // enfore the first selected if no option is selected
+          if (!select && selectedTags.length === 0) {
+            scope.options[0].selected = true;
+            selectedIds = [scope.options[0]];
+          }
+
+          scope.model.collector_ids = [];
+          _.forEach(selectedIds, function(c) {
+            scope.model.collector_ids.push(c.id);
+          });
+        }
+
+        scope.tagSelected = function(option) {
+          option.selected = !option.selected;
+
+          var selectedIds = _.filter(scope.options, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+
+          // enfore the first selected if no option is selected
+          if (selectedIds.length === 0 && selectedTags.length === 0) {
+            scope.options[0].selected = true;
+            scope.model.collector_ids = [scope.options[0].id];
+          }
+
+          scope.model.collector_tags = [];
+          _.forEach(selectedTags, function(t) {
+            scope.model.collector_tags.push(t.text);
+          });
+        };
+
+        scope.hide = function() {
+          scope.selectorOpen = false;
+          bodyEl.off('click', scope.bodyOnClick);
+        };
+
+        scope.bodyOnClick = function(e) {
+          var dropdown = elem.find('.variable-value-dropdown');
+          if (dropdown.has(e.target).length === 0) {
+            scope.$apply(scope.hide);
+          }
+        };
+
+      },
+    };
+  });
+
 });

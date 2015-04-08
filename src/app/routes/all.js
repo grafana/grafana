@@ -35,6 +35,18 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
+      .when('/dashboard/snapshot/:key', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromSnapshotCtrl',
+      })
+      .when('/dashboard/solo/db/:slug', {
+        templateUrl: 'app/features/panel/partials/soloPanel.html',
+        controller : 'SoloPanelCtrl',
+      })
+      .when('/dashboard/solo/snapshot/:key', {
+        templateUrl: 'app/features/panel/partials/soloPanel.html',
+        controller : 'SoloPanelCtrl',
+      })
       .when('/dashboard/new', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'NewDashboardCtrl',
@@ -102,10 +114,6 @@ define([
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
-      })
-      .when('/dashboard/solo/:slug/', {
-        templateUrl: 'app/features/panel/partials/soloPanel.html',
-        controller : 'SoloPanelCtrl',
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',

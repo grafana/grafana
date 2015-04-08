@@ -11,6 +11,11 @@ input[type="checkbox"].cr1 {
   display: none;
 }
 
+.editor-option label.cr1 {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
 label.cr1 {
   display: inline-block;
   height: 19px;
@@ -41,6 +46,12 @@ input[type="checkbox"]:checked+label {
   overflow: hidden;
   padding-right: 10px;
   input[type=text] {
+    width: 100%;
+    padding: 5px 6px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  textarea {
     width: 100%;
     padding: 5px 6px;
     height: 100%;

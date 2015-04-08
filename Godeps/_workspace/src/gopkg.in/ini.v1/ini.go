@@ -35,7 +35,7 @@ const (
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
 
-	_VERSION = "1.0.1"
+	_VERSION = "1.2.6"
 )
 
 func Version() string {
@@ -144,9 +144,24 @@ func (k *Key) String() string {
 	return val
 }
 
+// parseBool returns the boolean value represented by the string.
+//
+// It accepts 1, t, T, TRUE, true, True, YES, yes, Yes, ON, on, On,
+// 0, f, F, FALSE, false, False, NO, no, No, OFF, off, Off.
+// Any other value returns an error.
+func parseBool(str string) (value bool, err error) {
+	switch str {
+	case "1", "t", "T", "true", "TRUE", "True", "YES", "yes", "Yes", "ON", "on", "On":
+		return true, nil
+	case "0", "f", "F", "false", "FALSE", "False", "NO", "no", "No", "OFF", "off", "Off":
+		return false, nil
+	}
+	return false, fmt.Errorf("parsing \"%s\": invalid syntax", str)
+}
+
 // Bool returns bool type value.
 func (k *Key) Bool() (bool, error) {
-	return strconv.ParseBool(k.String())
+	return parseBool(k.String())
 }
 
 // Float64 returns float64 type value.
@@ -305,6 +320,52 @@ func (k *Key) InTime(defaultVal time.Time, candidates []time.Time) time.Time {
 	return k.InTimeFormat(time.RFC3339, defaultVal, candidates)
 }
 
+// RangeFloat64 checks if value is in given range inclusively,
+// and returns default value if it's not.
+func (k *Key) RangeFloat64(defaultVal, min, max float64) float64 {
+	val := k.MustFloat64()
+	if val < min || val > max {
+		return defaultVal
+	}
+	return val
+}
+
+// RangeInt checks if value is in given range inclusively,
+// and returns default value if it's not.
+func (k *Key) RangeInt(defaultVal, min, max int) int {
+	val := k.MustInt()
+	if val < min || val > max {
+		return defaultVal
+	}
+	return val
+}
+
+// RangeInt64 checks if value is in given range inclusively,
+// and returns default value if it's not.
+func (k *Key) RangeInt64(defaultVal, min, max int64) int64 {
+	val := k.MustInt64()
+	if val < min || val > max {
+		return defaultVal
+	}
+	return val
+}
+
+// RangeTimeFormat checks if value with given format is in given range inclusively,
+// and returns default value if it's not.
+func (k *Key) RangeTimeFormat(format string, defaultVal, min, max time.Time) time.Time {
+	val := k.MustTimeFormat(format)
+	if val.Unix() < min.Unix() || val.Unix() > max.Unix() {
+		return defaultVal
+	}
+	return val
+}
+
+// RangeTime checks if value with RFC3339 format is in given range inclusively,
+// and returns default value if it's not.
+func (k *Key) RangeTime(defaultVal, min, max time.Time) time.Time {
+	return k.RangeTimeFormat(time.RFC3339, defaultVal, min, max)
+}
+
 // Strings returns list of string devide by given delimiter.
 func (k *Key) Strings(delim string) []string {
 	str := k.String()
@@ -440,7 +501,10 @@ func (s *Section) GetKey(name string) (*Key, error) {
 func (s *Section) Key(name string) *Key {
 	key, err := s.GetKey(name)
 	if err != nil {
-		return &Key{}
+		// It's OK here because the only possible error is empty key name,
+		// but if it's empty, this piece of code won't be executed.
+		key, _ = s.NewKey(name, "")
+		return key
 	}
 	return key
 }
@@ -555,6 +619,13 @@ func Load(source interface{}, others ...interface{}) (_ *File, err error) {
 	return f, f.Reload()
 }
 
+// Empty returns an empty file object.
+func Empty() *File {
+	// Ignore error here, we sure our data is good.
+	f, _ := Load([]byte(""))
+	return f
+}
+
 // NewSection creates a new section.
 func (f *File) NewSection(name string) (*Section, error) {
 	if len(name) == 0 {
@@ -573,6 +644,16 @@ func (f *File) NewSection(name string) (*Section, error) {
 	f.sectionList = append(f.sectionList, name)
 	f.sections[name] = newSection(f, name)
 	return f.sections[name], nil
+}
+
+// NewSections creates a list of sections.
+func (f *File) NewSections(names ...string) (err error) {
+	for _, name := range names {
+		if _, err = f.NewSection(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetSection returns section by given name.
@@ -597,7 +678,10 @@ func (f *File) GetSection(name string) (*Section, error) {
 func (f *File) Section(name string) *Section {
 	sec, err := f.GetSection(name)
 	if err != nil {
-		return newSection(f, name)
+		// It's OK here because the only possible error is empty section name,
+		// but if it's empty, this piece of code won't be executed.
+		sec, _ = f.NewSection(name)
+		return sec
 	}
 	return sec
 }
@@ -636,6 +720,14 @@ func (f *File) DeleteSection(name string) {
 			return
 		}
 	}
+}
+
+func cutComment(str string) string {
+	i := strings.Index(str, "#")
+	if i == -1 {
+		return str
+	}
+	return str[:i]
 }
 
 // parse parses data through an io.Reader.
@@ -776,7 +868,6 @@ func (f *File) parse(reader io.Reader) error {
 				val = lineRight[qLen:] + "\n"
 				for {
 					next, err := buf.ReadString('\n')
-					val += next
 					if err != nil {
 						if err != io.EOF {
 							return err
@@ -785,9 +876,10 @@ func (f *File) parse(reader io.Reader) error {
 					}
 					pos = strings.LastIndex(next, valQuote)
 					if pos > -1 {
-						val = val[:len(val)-len(valQuote)-1]
+						val += next[:pos]
 						break
 					}
+					val += next
 					if isEnd {
 						return fmt.Errorf("error parsing line: missing closing key quote from '%s' to '%s'", line, next)
 					}
@@ -796,7 +888,7 @@ func (f *File) parse(reader io.Reader) error {
 				val = lineRight[qLen : pos+qLen]
 			}
 		} else {
-			val = strings.TrimSpace(lineRight[0:])
+			val = strings.TrimSpace(cutComment(lineRight[0:]))
 		}
 
 		k, err := section.NewKey(kname, val)

@@ -8,7 +8,18 @@ page_keywords: grafana, guide, documentation
 This guide will help you get started and acquainted with the Grafana user interface.
 
 ## Interface overview
-<img src="/img/v1/interface_guide1.png" class="no-shadow">
+
+### Dashboard header
+<img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
+
+1. Side menu toggle
+2. Dashboard title & Search dropdown (also includes access to New dashboard, Import & Playlist)
+3. Star/unstar current dashboard
+4. Share current dashboard (Make sure the dashboard is saved before)
+5. Save current dashboard
+6. Settings dropdown (dashboard settings, annotations, templating, etc)
+
+<img src="/img/v1/interface_guide1.png" class="no-sthadow">
 
 ## New dashboard
 ![](/img/animated_gifs/new_dashboard.gif)
