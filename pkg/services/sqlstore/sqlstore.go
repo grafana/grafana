@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -126,6 +127,9 @@ func getEngine() (*xorm.Engine, error) {
 		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s",
 			DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode)
 	case "sqlite3":
+		if !filepath.IsAbs(DbCfg.Path) {
+			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
+		}
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc&_loc=Local"
 	default:

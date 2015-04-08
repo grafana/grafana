@@ -83,12 +83,10 @@ var (
 	SessionOptions session.Options
 
 	// Global setting objects.
-	WorkDir      string
+	DataPath     string
+	WorkPath     string
 	Cfg          *ini.File
 	ConfRootPath string
-	CustomPath   string // Custom directory path.
-	ProdMode     bool
-	RunUser      string
 	IsWindows    bool
 
 	// PhantomJs Rendering
@@ -101,14 +99,20 @@ var (
 	GoogleAnalyticsId string
 )
 
+type CommandLineArgs struct {
+	DefaultDataPath string
+	DefaultLogPath  string
+	Config          string
+}
+
 func init() {
 	IsWindows = runtime.GOOS == "windows"
 	log.NewLogger(0, "console", `{"level": 0}`)
-	WorkDir, _ = filepath.Abs(".")
+	WorkPath, _ = filepath.Abs(".")
 }
 
 func findConfigFiles(customConfigFile string) {
-	ConfRootPath = path.Join(WorkDir, "conf")
+	ConfRootPath = path.Join(WorkPath, "conf")
 	configFiles = make([]string, 0)
 
 	configFile := path.Join(ConfRootPath, "defaults.ini")
@@ -171,8 +175,8 @@ func loadEnvVariableOverrides() {
 	}
 }
 
-func NewConfigContext(config string) {
-	findConfigFiles(config)
+func NewConfigContext(args *CommandLineArgs) {
+	findConfigFiles(args.Config)
 
 	var err error
 
@@ -190,7 +194,19 @@ func NewConfigContext(config string) {
 	}
 
 	loadEnvVariableOverrides()
-	initLogging()
+
+	DataPath = Cfg.Section("").Key("data_path").String()
+	// if no data path in config, use command line, otherwise default to
+	// data folder relative to working dir
+	if DataPath == "" {
+		if args.DefaultDataPath != "" {
+			DataPath = args.DefaultDataPath
+		} else {
+			DataPath = filepath.Join(WorkPath, "data")
+		}
+	}
+
+	initLogging(args)
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
@@ -209,7 +225,7 @@ func NewConfigContext(config string) {
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
 
-	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkDir, "webapp"))
+	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkPath, "public"))
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 
@@ -234,8 +250,8 @@ func NewConfigContext(config string) {
 	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
 
 	// PhantomJS rendering
-	ImagesDir = "data/png"
-	PhantomDir = "vendor/phantomjs"
+	ImagesDir = filepath.Join(DataPath, "png")
+	PhantomDir = filepath.Join(WorkPath, "vendor/phantomjs")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -257,6 +273,9 @@ func readSessionConfig() {
 	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
+		if !filepath.IsAbs(SessionOptions.ProviderConfig) {
+			SessionOptions.ProviderConfig = filepath.Join(DataPath, SessionOptions.ProviderConfig)
+		}
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
 	}
 
@@ -274,10 +293,18 @@ var logLevels = map[string]string{
 	"Critical": "5",
 }
 
-func initLogging() {
+func initLogging(args *CommandLineArgs) {
 	// Get and check log mode.
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
-	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
+	LogRootPath = Cfg.Section("log").Key("root_path").String()
+	if LogRootPath == "" {
+		if args.DefaultLogPath != "" {
+			LogRootPath = args.DefaultLogPath
+		} else {
+			LogRootPath = filepath.Join(DataPath, "log")
+		}
+	}
+
 	LogConfigs = make([]string, len(LogModes))
 	for i, mode := range LogModes {
 		mode = strings.TrimSpace(mode)

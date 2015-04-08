@@ -46,6 +46,14 @@ func main() {
 			Usage: "path to grafana.ini config file",
 		},
 		cli.StringFlag{
+			Name:  "default-data-path",
+			Usage: "change default path to where grafana can store data",
+		},
+		cli.StringFlag{
+			Name:  "default-log-path",
+			Usage: "change default path to where grafana can log files",
+		},
+		cli.StringFlag{
 			Name:  "pidfile",
 			Usage: "path to pidfile",
 		},

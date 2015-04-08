@@ -73,7 +73,7 @@ func main() {
 
 		case "package":
 			//verifyGitRepoIsClean()
-			grunt("release", "--pkgVer="+version)
+			//grunt("release", "--pkgVer="+version)
 			createRpmAndDeb()
 
 		case "latest":
@@ -114,32 +114,39 @@ func readVersionFromPackageJson() {
 
 func createRpmAndDeb() {
 	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
-	postInstallScriptPath, _ := ioutil.TempFile("", "postinstall")
+	afterInstallScript, _ := filepath.Abs("./packaging/deb/control/postinst")
+	initdscript, _ := filepath.Abs("./packaging/deb/init.d/grafana")
+	defaultScript, _ := filepath.Abs("./packaging/deb/default/grafana")
 
-	versionFolder := filepath.Join(packageRoot, installRoot, "versions", version)
+	packageInstallRoot := filepath.Join(packageRoot, installRoot)
 	configDir := filepath.Join(packageRoot, configRoot)
 
-	runError("mkdir", "-p", versionFolder)
+	runError("mkdir", "-p", packageInstallRoot)
 	runError("mkdir", "-p", configDir)
+	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/default"))
 
 	// copy sample ini file to /etc/opt/grafana
 	configFile := filepath.Join(configDir, "grafana.ini")
 	runError("cp", "conf/sample.ini", configFile)
-	// copy release files
-	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
 
-	GeneratePostInstallScript(postInstallScriptPath.Name())
+	// copy init.d script
+	runError("cp", "-p", initdscript, filepath.Join(packageRoot, "/etc/init.d/grafana"))
+	runError("cp", "-p", defaultScript, filepath.Join(packageRoot, "/etc/default/grafana"))
+	// copy release files
+	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", packageInstallRoot)
 
 	args := []string{
 		"-s", "dir",
 		"--description", "Grafana",
 		"-C", packageRoot,
 		"--vendor", "Grafana",
+		"--depends", "adduser",
 		"--url", "http://grafana.org",
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", filepath.Join(configRoot, "grafana.ini"),
-		"--after-install", postInstallScriptPath.Name(),
+		"--after-install", afterInstallScript,
 		"--name", "grafana",
 		"--version", version,
 		"-p", "./dist",
@@ -151,37 +158,6 @@ func createRpmAndDeb() {
 
 	fmt.Println("Creating redhat/centos package")
 	runPrint("fpm", append([]string{"-t", "rpm"}, args...)...)
-}
-
-func GeneratePostInstallScript(path string) {
-	content := `
-rm -f $INSTALL_ROOT_DIR/current
-ln -s $INSTALL_ROOT_DIR/versions/$VERSION/ $INSTALL_ROOT_DIR/current
-
-if [ ! -L /etc/init.d/grafana ]; then
-    ln -sfn $INSTALL_ROOT_DIR/current/scripts/init.sh /etc/init.d/grafana
-fi
-
-chmod +x /etc/init.d/grafana
-if which update-rc.d > /dev/null 2>&1 ; then
-   update-rc.d -f grafana remove
-   update-rc.d grafana defaults
-else
-   chkconfig --add grafana
-fi
-
-if ! id grafana >/dev/null 2>&1; then
-   useradd --system -U -M grafana
-fi
-chown -R -L grafana:grafana $INSTALL_ROOT_DIR
-chmod -R a+rX $INSTALL_ROOT_DIR
-mkdir -p $GRAFANA_LOG_DIR
-chown -R -L grafana:grafana $GRAFANA_LOG_DIR
-`
-	content = strings.Replace(content, "$INSTALL_ROOT_DIR", installRoot, -1)
-	content = strings.Replace(content, "$VERSION", version, -1)
-	content = strings.Replace(content, "$GRAFANA_LOG_DIR", grafanaLogDir, -1)
-	ioutil.WriteFile(path, []byte(content), 0644)
 }
 
 func verifyGitRepoIsClean() {

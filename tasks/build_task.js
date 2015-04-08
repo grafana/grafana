@@ -57,7 +57,7 @@ module.exports = function(grunt) {
       expand: true,
       src: ['grafana'],
       options: { mode: true},
-      dest: '<%= tempDir %>'
+      dest: '<%= tempDir %>/bin/'
     });
     grunt.config('copy.backend_files', {
       expand: true,
