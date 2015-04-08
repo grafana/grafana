@@ -1,25 +1,36 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
 </topnav>
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
-	<div style="float: right;">
-		<a class="btn btn-success" href="collectors/new">New Collector</a>
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">Collectors</h1>
+		<span style="float: right;"><a class="rt-btn" href="#">New Collector</a></span>
 	</div>
-	<div class="clearfix"></div>
-</div>
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<div class="editor-row">
 		<div class="editor-option">
-			<label class="small">Filter by Collector Tag:</label>
-			<select class="input-medium" ng-model="collector_filter" ng-options="loc for loc in collectorTags()">
-				<option value="" label="All Tags">All Collectors</option>
+			<span class="small">Filter by:</span>
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="collector_filter">
+				<option value="" label="All Tags" style="color:black">All Collectors</option>
+				<option ng-repeat="t in collectorTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
 			</select>
-			<select class="input-medium" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="status_filter">
+				<option ng-repeat="s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']" value="{{s}}" label="{{s}}" style="color:black">{{s}}</option>
 			</select>
 		</div>
-		<div class="editor-option" style="float: right;">
-			<label class="small">Sort By:</label>
-			<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['Collector']">
-			</select>
+		<div style="display: flex; align-items: center; justify-content: center;">
+			<img src="img/collector-map.png">
+		</div>
+		<div style="display: block; padding: 45px 0 0 0;">
+			<div style="display: inline-block" class="rt-list-status">
+					<a href="#" class="rt-list-status-up">23 Up</a> | 
+					<a href="#" class="rt-list-status-warning">2 Warning</a> | 
+					<a href="#" class="rt-list-status-down">1 Down</a> |
+					<a href="#" class="rt-list-status-disabled">2 Disabled</a> 
+			</div>
+			<div class="editor-option" style="float: right;">
+				<span class="small">Sort By:</span>
+				<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['Collector']" style="font-size: 14px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;">
+				</select>
+			</div>
 		</div>
 	</div>
 </div>
@@ -27,35 +38,62 @@
 	<div ng-if="collectors.length === 0">
 		<em>No collectors defined</em>
 	</div>
-	<div class="gf-box" ng-repeat="collector in collectors | filterByTag:collector_filter | orderBy:sort_field">
-		<div class="gf-box-header" style="overflow: visible; padding:5px;">
-			<span style="margin: 10px;"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
-			<img src="img/raintank_small.png" width="20px" height="20px" ng-if="collector.public"></img>
-			<div class="dropdown" style="float: right;">
-				<a data-toggle="dropdown">
-					<i class="fa fa-fw fa-ellipsis-v"></i>
-				</a>
-				<ul class="dropdown-menu" role="menu">
-					<li>
-						<a href="collectors/summary/{{collector.id}}">
-							View
-						</a>
-					</li>
-					<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
-						<a href="collectors/edit/{{collector.id}}">
-							Edit
-						</a>
-					</li>
-					<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
-						<a ng-click="remove(collector)">
-							Delete
-						</a>
-					</li>
-				</ul>
+	<div class="rt-list" ng-repeat="collector in collectors | filterByTag:collector_filter | orderBy:sort_field">
+		<div class="rt-list-header">
+			<span class="rt-list-item-title"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
+			<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raitank Public Collector'"></img></span>
+			<span style="vertical-align: 2px;"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" style="margin-right: 5px;" bs-tooltip="'Private Collector'"></img></span>
+<!-- 			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in collector.tags" tag-color-from-name><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
+ -->
+
+					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name>
+						<a data-toggle="dropdown">{{tag}}<svg height="12" width="12"><i ng-class="icon" class="fa fa-globe" style="font-size: 14px; margin-left: -5px;"></i></svg></a>
+						<ul class="dropdown-menu rt-tag-dropup">
+							<li><a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
+							<li><a ng-click="setCollectorFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+						</ul>
+				</span>
+
+			<div style="float: right; display: inline;">
+				<div style="display: inline;">
+					<span class="rt-event-success">0</span>
+					<span class="rt-event-warning">348</span>
+					<span class="rt-event-error">12k</span>
+				</div>
+				<div style="display: inline;">
+					<a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{collector.name}} dashboard'"></a>
+				</div>
+				<div class="dropdown" style="display: inline;">
+					<a data-toggle="dropdown">
+						<i class="fa fa-fw fa-ellipsis-v"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="collectors/summary/{{collector.id}}">
+								View
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+							<a href="collectors/edit/{{collector.id}}">
+								Edit
+							</a>
+						</li>
+						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+							<a ng-click="remove(collector)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
 			</div>
 			<span style="float: right;">
-				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in collector.tags"><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
 			</span>
+		<div style="margin-left: 10px;">
+			<p style="margin:2px 0 0 0;">
+			<span class="rt-list-collector-status">ONLINE</span>
+			<span class="rt-list-collector-since">for 12 days</span>
+			</p>
+		</div>
 		</div>
 	</div>
 </div>

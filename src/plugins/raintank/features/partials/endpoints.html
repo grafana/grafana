@@ -1,26 +1,33 @@
 <topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
-
 </topnav>
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
-	<div style="float: right;">
-		<a class="btn btn-success" href="endpoints/new">New Endpoint</a>
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">Endpoints</h1>
+		<span style="float: right;"><a class="rt-btn" href="#">New Endpoints</a></span>
 	</div>
-	<div class="clearfix"></div>
-</div>
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<div class="editor-row">
 		<div class="editor-option">
-			<label class="small">Filter by Endpoint Tag:</label>
-			<select class="input-medium" ng-model="endpoint_filter" ng-options="tag for tag in endpointTags()">
-				<option value="" label="All Tags">All Endpoints</option>
+			<span class="small">Filter by Endpoint Tag:</span>
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="endpoint_filter">
+				<option value="" label="All Tags" style="color:black">All Endpoints</option>
+				<option ng-repeat="t in endpointTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
 			</select>
-			<select class="input-medium" ng-model="status_filter" ng-options="s for s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']">
+			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="status_filter">
+				<option ng-repeat="s in ['All Statuses', 'OK', 'WARNING', 'CRITICAL']" value="{{s}}" label="{{s}}" style="color:black">{{s}}</option>
 			</select>
 		</div>
-		<div class="editor-option" style="float: right;">
-			<label class="small">Sort By:</label>
-			<select class="input-medium" ng-model="sort_field" ng-options="field for field in ['name']">
-			</select>
+		<div style="display: block; padding: 45px 0 0 0;">
+			<div style="display: inline-block" class="rt-list-status">
+					<a href="#" class="rt-list-status-up">3 Up</a> | 
+					<span>0 Warning</span> | <!-- class="rt-list-status-warning" -->
+					<span>0 Down</span> | <!-- class="rt-list-status-down" -->
+					<span>0 Disabled</span> <!-- class="rt-list-status-disabled" -->
+			</div>
+			<div class="editor-option" style="float: right;">
+				<span class="small">Sort By:</span>
+				<select class="input-medium" style="font-size: 14px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="sort_field" ng-options="field for field in ['name']">
+				</select>
+			</div>
 		</div>
 	</div>
 </div>
@@ -28,33 +35,52 @@
 	<div ng-if="endpoints.length === 0">
 		<em>No endpoints defined</em>
 	</div>
-	<div class="gf-box" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | orderBy:sort_field">
-		<div class="gf-box-header" style="overflow: visible; padding:5px;">
-			<span style="margin: 10px;"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
-			<div class="dropdown" style="float: right;">
-				<a data-toggle="dropdown">
-					<i class="fa fa-fw fa-ellipsis-v"></i>
-				</a>
-				<ul class="dropdown-menu" role="menu">
-					<li>
-						<a href="endpoints/summary/{{endpoint.id}}">
-							View
-						</a>
-					</li>
-					<li>
-						<a href="endpoints/edit/{{endpoint.id}}">
-							Edit
-						</a>
-					</li>
-					<li>
-						<a ng-click="remove(endpoint)">
-							Delete
-						</a>
-					</li>
-				</ul>
-			</div>
+	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | orderBy:sort_field">
+		<div class="rt-list-header" style="overflow: visible; padding:5px;">
+			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
+
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags">
+						<a data-toggle="dropdown">{{tag}} <img class="dashboard-icon"src="img/rt-endpoint.svg" style="padding-left: 2px; vertical-align: -2px;"width="12px" height="12px"> </a>
+						<ul class="dropdown-menu rt-tag-dropup">
+							<li><a href="#"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
+							<li><a ng-click="setEndpointFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+						</ul>
+				</span>
+
+
+				<div style="float: right; display: inline;">
+				<div style="display: inline;">
+					<span class="rt-event-success">11</span>
+					<span class="rt-event-warning">348</span>
+					<span class="rt-event-error">12k</span>
+				</div>
+				<div style="display: inline;">
+					<a ng-click="gotoDashboard(endpoint)"><img class="dashboard-icon"src="img/rt-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></a>
+				</div>
+				<div class="dropdown" style="float: right;">
+					<a data-toggle="dropdown">
+						<i class="fa fa-fw fa-ellipsis-v"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="endpoints/summary/{{endpoint.id}}">
+								View
+							</a>
+						</li>
+						<li>
+							<a href="endpoints/edit/{{endpoint.id}}">
+								Edit
+							</a>
+						</li>
+						<li>
+							<a ng-click="remove(endpoint)">
+								Delete
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>	
 			<span style="float: right;">
-				<span class="label label-tag" style="margin-left: 6px; font-size: 11px; padding: 2px  6px;" ng-repeat="tag in endpoint.tags"><a ng-click="setEndpointFilter(tag)">{{tag}}</a></span>
 			</span>
 		</div>
 	</div>

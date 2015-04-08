@@ -1,0 +1,285 @@
+.rt-event {
+  border-radius: 10px;
+  text-shadow: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin: 0 3px;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 12px;  
+}
+
+.rt-event-success {
+  .rt-event;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .rt-event;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+
+.rt-event-error {
+  .rt-event;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+
+.dashboard-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: top;
+}
+
+.dashboard-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
+.filter-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
+
+
+// list status headers
+
+.rt-list-status {
+  font-size: 16px;
+  color: @rt-dark-gray;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.rt-list-status-up {
+  &:link, &:visited {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
+  }
+  &:hover {color: lighten(@rt-green, 10%);} 
+}
+
+.rt-list-status-warning {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
+  }
+  &:hover {color: lighten(@rt-yellow, 10%);} 
+}
+
+.rt-list-status-down {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
+  }
+  &:hover {color: lighten(@rt-red, 10%);} 
+}
+
+.rt-list-status-disabled {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @grayLighter;
+  }
+  &:hover {color: lighten(@grayLighter, 10%);} 
+}
+
+
+// raintank override styles from gfbox.less
+
+.rt-list {
+  margin: 1px;
+  background-color: @raintankTargetBackground;
+  position: relative;
+  border: none;
+  line-height: normal;
+  padding: 3px 0;
+}
+
+.rt-list-item-title {
+    font-size: 16px;
+    a:link {
+      color: @rt-light-gray;
+    }  
+    a:hover {
+     color: @white;
+    }    
+  margin: 10px;
+}
+
+.rt-list-header {
+  overflow: visible;
+  padding: 10px 5px;
+  background-color: @raintankTargetBackground;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-list-collector-status {
+  color: @rt-green;
+  font-weight: 700;
+  font-size: .85em;
+}
+
+.rt-list-collector-since {
+  color: @rt-light-gray;
+  font-weight: 400;
+  font-size: .85em;
+
+}
+
+// raintank from overrides.less
+// Labels & Badges
+.rt-label-tag {
+  background-color: @purple;
+  color: @white;
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 10px;
+  font-weight: 600px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: lighten(@purple, 15%);
+  box-shadow: 0 0 1px fade(@purple, 90%);
+  line-height: 12px;
+  -webkit-font-smoothing:antialiased;
+
+
+  a {
+     color: @white;
+    }    
+
+  a:hover {
+     color: @white;
+    }    
+
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.rt-label-tag:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: darken(@purple, 5%);
+}
+
+.rt-list-tag-menu {
+    // Different positioning for bottom up menu
+    .dropdown-menu {
+      top: auto;
+      bottom: 100%;
+      margin-bottom: 5px;
+    }
+  }
+
+.dropdown-menu {
+  >li >a {padding: 0 8px;}
+
+  >li >a:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: transparent;
+  background-image: none;
+  opacity: 0.8;
+  }
+}
+
+.rt-tag-dropup {
+  background-color: @grayDark;
+  min-width: 90px;
+  border: 1px solid @rt-dark-gray;
+  box-shadow: 0 0 1px fade(@rt-dark-gray, 90%);
+  border-radius: 2px;
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+
+  // Links within the dropdown menu
+  li, a {
+    display: inline-block;
+  }
+}
+
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+// ------------------------------------------------------
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    border-top: 0;
+    border-bottom: 4px solid @black;
+    content: "";
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 1px;
+  }
+}
+
+
+
+.rt-h1 {
+  font-size: 28px;
+  font-weight: 400;
+  display: inline;
+  -webkit-font-smoothing:antialiased;
+}
+
+.rt-page-header-area {
+  display: block;
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+// Buttons
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  -webkit-font-smoothing:antialiased;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+
+  &:hover, &:focus {
+    background: lighten(@rt-blue, 10%);
+  }
+ 
+ &:active {
+    background: darken(@rt-blue, 5%);
+  }
+}
