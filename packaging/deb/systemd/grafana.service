@@ -5,21 +5,16 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=/etc/default/elasticsearch
-User=elasticsearch
-Group=elasticsearch
-ExecStart=/usr/share/elasticsearch/bin/elasticsearch            \
-                            -Des.default.config=$CONF_FILE      \
-                            -Des.default.path.home=$ES_HOME     \
-                            -Des.default.path.logs=$LOG_DIR     \
-                            -Des.default.path.data=$DATA_DIR    \
-                            -Des.default.path.work=$WORK_DIR    \
-                            -Des.default.path.conf=$CONF_DIR
-# See MAX_OPEN_FILES in sysconfig
-LimitNOFILE=65535
-# See MAX_LOCKED_MEMORY in sysconfig, use "infinity" when MAX_LOCKED_MEMORY=unlimited and using bootstrap.mlockall: true
-#LimitMEMLOCK=infinity
-# Shutdown delay in seconds, before process is tried to be killed with KILL (if configured)
+EnvironmentFile=/etc/default/grafana
+User=grafana
+Group=grafana
+Type=simple
+ExecStart=/opt/grafana/bin/grafana            \
+                            --config=$CONF_FILE      \
+                            --default-log-path=$LOG_DIR     \
+                            --default-path-data=$DATA_DIR    \
+
+LimitNOFILE=10000
 TimeoutStopSec=20
 
 [Install]

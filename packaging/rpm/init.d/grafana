@@ -1,0 +1,158 @@
+#! /usr/bin/env bash
+
+# chkconfig: 2345 80 05
+# description: Grafana web server & backend
+# processname: grafana
+# config: /etc/grafana/grafana.ini
+# pidfile: /var/run/grafana.pid
+
+### BEGIN INIT INFO
+# Provides:          grafana
+# Required-Start:    $all
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start grafana at boot time
+### END INIT INFO
+
+#  tested on
+#  1. New lsb that define start-stop-daemon
+#  3. Centos with initscripts package installed
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+NAME=grafana
+DESC="Grafana Server"
+
+#
+# init.d / servicectl compatibility (openSUSE)
+#
+if [ -f /etc/rc.status ]; then
+    . /etc/rc.status
+    rc_reset
+fi
+
+#
+# Source function library.
+#
+if [ -f /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions
+fi
+
+GRAFANA_USER=grafana
+GRAFANA_GROUP=grafana
+GRAFANA_HOME=/opt/$NAME
+CONF_DIR=/etc/$NAME
+WORK_DIR=$GRAFANA_HOME
+DATA_DIR=$GRAFANA_HOME/data
+LOG_DIR=/var/log/$NAME
+CONF_FILE=$CONF_DIR/grafana.ini
+MAX_OPEN_FILES=65535
+
+# overwrite settings from default file
+[ -e /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
+
+PID_FILE=/var/run/$NAME.pid
+DAEMON=$GRAFANA_HOME/bin/grafana
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --default-data-path=${DATA_DIR} --default-log-path=${LOG_DIR} web"
+
+# Check DAEMON exists
+test -x $DAEMON || exit 0
+
+function pidofproc() {
+    if [ $# -ne 3 ]; then
+        echo "Expected three arguments, e.g. $0 -p pidfile daemon-name"
+    fi
+
+    pid=`pgrep -f $3`
+    local pidfile=`cat $2`
+
+    if [ "x$pidfile" == "x" ]; then
+        return 1
+    fi
+
+    if [ "x$pid" != "x" -a "$pidfile" == "$pid" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
+case "$1" in
+  start)
+    echo -n $"Starting $DESC: .... "
+
+    pid=`pidofproc -p $PID_FILE grafana`
+    if [ -n "$pid" ] ; then
+      echo "Already running."
+      exit 2
+    fi
+
+    # Prepare environment
+    mkdir -p "$LOG_DIR" "$DATA_DIR" "$WORK_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR" "$WORK_DIR"
+    touch "$PID_FILE" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$PID_FILE"
+
+    if [ -n "$MAX_OPEN_FILES" ]; then
+      ulimit -n $MAX_OPEN_FILES
+    fi
+
+    # Start Daemon
+    su -s /bin/sh -c "nohup ${DAEMON_PATH} --pidfile=${DAEMON_PID} ${DAEMON_OPTS} >> $STDOUT 3>&1 &" $DAEMON_USER
+    return=$?
+    if [ $return -eq 0 ]
+    then
+      sleep 1
+      # check if pid file has been written two
+      if ! [[ -s $PID_FILE ]]; then
+        exit 3
+      fi
+      i=0
+      timeout=10
+      # Wait for the process to be properly started before exiting
+      until { cat "$PID_FILE" | xargs kill -0; } >/dev/null 2>&1
+      do
+        sleep 1
+        i=$(($i + 1))
+        [ $i -gt $timeout ] && exit 4
+      done
+    fi
+
+    echo "OK"
+    exit $return
+    ;;
+  stop)
+    echo -n "Stopping $DESC ..."
+
+    if [ -f "$PID_FILE" ]; then
+      killproc -p $PID_FILE -d 20 $NAME
+      if [ $? -eq 1 ]; then
+        echo -n "$DESC is not running but pid file exists, cleaning up"
+      elif [ $? -eq 3 ]; then
+        PID="`cat $PID_FILE`"
+        echo -n "Failed to stop $DESC (pid $PID)"
+        exit 1
+      fi
+      rm -f "$PID_FILE"
+      echo "OK"
+      exit 0
+    else
+      echo -n "(not running)"
+    fi
+    exit 0
+    ;;
+  status)
+    status -p $PID_FILE $NAME
+    ;;
+  restart|force-reload)
+    if [ -f "$PID_FILE" ]; then
+      $0 stop
+      sleep 1
+    fi
+    $0 start
+    ;;
+  *)
+    echo -n "Usage: $0 {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
