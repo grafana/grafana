@@ -209,7 +209,7 @@ func test(pkg string) {
 }
 
 func build(pkg string, tags []string) {
-	binary := "./bin/grafana"
+	binary := "./bin/grafana-server"
 	if goos == "windows" {
 		binary += ".exe"
 	}

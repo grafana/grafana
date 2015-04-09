@@ -10,12 +10,12 @@ import (
 
 func TestLoadingSettings(t *testing.T) {
 
-	WorkDir, _ = filepath.Abs("../../")
+	HomePath, _ = filepath.Abs("../../")
 
 	Convey("Testing loading settings from ini file", t, func() {
 
 		Convey("Given the default ini files", func() {
-			NewConfigContext("")
+			NewConfigContext(&CommandLineArgs{})
 
 			So(AppName, ShouldEqual, "Grafana")
 			So(AdminUser, ShouldEqual, "admin")
@@ -23,9 +23,63 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override via environment variables", func() {
 			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-			NewConfigContext("")
+			NewConfigContext(&CommandLineArgs{})
 
 			So(AdminUser, ShouldEqual, "superduper")
+			So(DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
+			So(LogsPath, ShouldEqual, filepath.Join(DataPath, "log"))
+		})
+
+		Convey("Should get property map from command line args array", func() {
+			props := getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
+
+			So(len(props), ShouldEqual, 2)
+			So(props["test"], ShouldEqual, "value")
+			So(props["map.test"], ShouldEqual, "1")
+		})
+
+		Convey("Should be able to override via command line", func() {
+			NewConfigContext(&CommandLineArgs{
+				Args: []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
+			})
+
+			So(DataPath, ShouldEqual, "/tmp/data")
+			So(LogsPath, ShouldEqual, "/tmp/logs")
+		})
+
+		Convey("Should be able to override defaults via command line", func() {
+			NewConfigContext(&CommandLineArgs{
+				Args: []string{"cfg:default.paths.data=/tmp/data"},
+			})
+
+			So(DataPath, ShouldEqual, "/tmp/data")
+		})
+
+		Convey("Defaults can be overriden in specified config file", func() {
+			NewConfigContext(&CommandLineArgs{
+				Args:   []string{"cfg:default.paths.data=/tmp/data"},
+				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+			})
+
+			So(DataPath, ShouldEqual, "/tmp/override")
+		})
+
+		Convey("Command line overrides specified config file", func() {
+			NewConfigContext(&CommandLineArgs{
+				Args:   []string{"cfg:paths.data=/tmp/data"},
+				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+			})
+
+			So(DataPath, ShouldEqual, "/tmp/data")
+		})
+
+		Convey("Can use environment variables in config values", func() {
+			os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+			NewConfigContext(&CommandLineArgs{
+				Args: []string{"cfg:paths.data=${GF_DATA_PATH}"},
+			})
+
+			So(DataPath, ShouldEqual, "/tmp/env_override")
 		})
 
 	})

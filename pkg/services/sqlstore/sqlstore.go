@@ -86,7 +86,7 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	}
 
 	if enableLog {
-		logPath := path.Join(setting.LogRootPath, "xorm.log")
+		logPath := path.Join(setting.LogsPath, "xorm.log")
 		os.MkdirAll(path.Dir(logPath), os.ModePerm)
 
 		f, err := os.Create(logPath)

@@ -64,15 +64,14 @@ func main() {
 }
 
 func initRuntime() {
-	setting.NewConfigContext(&setting.CommandLineArgs{})
+	setting.NewConfigContext(&setting.CommandLineArgs{
+		Config: *configFile,
+		Args:   flag.Args(),
+	})
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
-	setting.LogLoadedConfigFiles()
-
-	log.Info("Working Path: %s", setting.WorkPath)
-	log.Info("Data Path: %s", setting.DataPath)
-	log.Info("Log Path: %s", setting.LogRootPath)
+	setting.LogConfigurationInfo()
 
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
