@@ -32,10 +32,15 @@ raintank BOX
   background-color: @black;
   margin: 0px 10px 20px 10px;
   position: relative;
-  .rt-box-no-margin {
-    margin: 0;
-  }
+  border-radius: 2px;
 }
+
+ .rt-box-no-margin {
+    margin: 0;
+    background-color: @black;
+    position: relative;
+    border-radius: 2px;
+  }
 
   .oneCol {display:none;}
   .twoCol {display:none;}
@@ -43,6 +48,7 @@ raintank BOX
 @media screen and (max-width: 780px) {
   .oneCol {display:block;}
 }
+
 @media screen and (min-width: 781px) {
   .twoCol {display:block;}
 }
@@ -67,6 +73,10 @@ raintank BOX
   min-height: 150px;
 }
 
+.no-padding {
+    padding: 0;
+  }
+
 .rt-box-footer {
   overflow: hidden;
 }
@@ -74,7 +84,7 @@ raintank BOX
 .rt-box-header {
   padding: 10px;
   font-size:16px;
-  border-bottom: 1px solid #262626;
+  border-bottom: 1px solid @bodyBackground;
   overflow: hidden;
   .tabs {
     float: left;
@@ -107,55 +117,110 @@ raintank BOX
 
 .currentStatus {
   display:block;
-  margin-bottom: 25px;
+  padding: 20px;
+  border-bottom: 1px solid @bodyBackground;
 }
 
-.checkType {width:70px; display:inline-block;}
+.currentStatus:last-child { 
+  padding-bottom: 30px;
+  border-bottom: none;
+  border-bottom-left-radius: 2px; 
+  border-bottom-right-radius: 2px;
+}
 
-.status {margin-left:10px; 
-  vertical-align:bottom;
+.currentStatus .rt-event-success, 
+.currentStatus .rt-event-warning, 
+.currentStatus .rt-event-error{  
+  display:inline-block;
+  padding: 10px;
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.statusEvents {
+  display:block; 
+  margin-left:70px; 
+}
+
+.event {
+  display:inline-block;
+  margin-bottom:10px;
+  margin-right:20px
+  }
+
+.event:last-child {margin-right:0;}
+
+.event .rt-event-success, 
+.event .rt-event-warning, 
+.event .rt-event-error {
+  margin:0;
+}
+
+ .health {
+  margin-bottom:10px;
+ } 
+
+ .health img {  
+  margin-right:5px; 
   position: relative;
-  bottom: 10px !important;
+  top:-5px;
 }
 
-.statusMsg {padding-left:5px;}
+.checkType {
+  width:70px; 
+  display:inline-block;
+  float:left;
+}
+
+.status {
+  display: inline-block;
+  // vertical-align:bottom;
+  // position: relative;
+  // bottom: 10px !important;
+}
+
+.eventType {margin-left:5px;}
 
 /***********************************
 raintank TYPE
 ***********************************/
 
-.status, .checkType {
-  font-size:18px;
+.checkType, .eventType {
+  font-size:16px;
   font-weight:600;
 }
 
+.status {
+font-size:20px;
+font-weight:600;
+}
+
+.statusMsg {font-size:12px; font-weight:300;}
+
 .online {
   color: @online;
-  font-weight: 600;
   text-transform: uppercase;
 }
 
 .warn {
   color: @warn;
-  font-weight: 600;
   text-transform: uppercase;
 }
 
 .disabled {
   color: @disabled;
-  font-weight: 600;
   text-transform: uppercase;
 }
 
 .critical {
   color: @critical;
-  font-weight: 600;
   text-transform: uppercase;
 }
 
 .nodata {
   color: @nodata;
-  font-weight: 600;
   text-transform: uppercase;
 }
 
