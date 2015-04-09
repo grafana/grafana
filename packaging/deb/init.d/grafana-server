@@ -20,9 +20,9 @@
 #  3. Centos with initscripts package installed
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-NAME=grafana
+NAME=grafana-server
 DESC="Grafana Server"
-DEFAULT=/etc/default/$NAME
+DEFAULT=/etc/default/grafana-server
 
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
@@ -37,11 +37,11 @@ fi
 
 GRAFANA_USER=grafana
 GRAFANA_GROUP=grafana
-GRAFANA_HOME=/opt/$NAME
-CONF_DIR=/etc/$NAME
+GRAFANA_HOME=/usr/share/grafana
+CONF_DIR=/etc/grafana
 WORK_DIR=$GRAFANA_HOME
-DATA_DIR=$GRAFANA_HOME/data
-LOG_DIR=/var/log/$NAME
+DATA_DIR=/var/lib/grafana
+LOG_DIR=/var/log/grafana
 CONF_FILE=$CONF_DIR/grafana.ini
 MAX_OPEN_FILES=10000
 
@@ -51,8 +51,8 @@ if [ -f "$DEFAULT" ]; then
 fi
 
 PID_FILE=/var/run/$NAME.pid
-DAEMON=$GRAFANA_HOME/bin/grafana
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --default-data-path=${DATA_DIR} --default-log-path=${LOG_DIR} web"
+DAEMON=/usr/bin/grafana-server
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR}"
 
 # Check DAEMON exists
 test -x $DAEMON || exit 0

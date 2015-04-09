@@ -22,12 +22,13 @@ import (
 )
 
 var (
-	versionRe  = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch     string
-	goos       string
-	version    string = "v1"
-	race       bool
-	workingDir string
+	versionRe        = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch           string
+	goos             string
+	version          string = "v1"
+	race             bool
+	workingDir       string
+	serverBinaryName string = "grafana-server"
 )
 
 const minGoVersion = 1.3
@@ -71,7 +72,7 @@ func main() {
 			//verifyGitRepoIsClean()
 			//grunt("release", "--pkgVer="+version)
 			createPackage("deb", "default")
-			createPackage("rpm", "sysconfig")
+			//createPackage("rpm", "sysconfig")
 
 		case "latest":
 			makeLatestDistCopies()
@@ -110,37 +111,42 @@ func readVersionFromPackageJson() {
 }
 
 func createPackage(packageType string, defaultPath string) {
-	installRoot := "/opt/grafana"
-	configRoot := "/etc/grafana"
+	homeDir := "/usr/share/grafana"
+	configDir := "/etc/grafana"
+	configFilePath := "/etc/grafana/grafana.ini"
+	defaultFilePath := filepath.Join("/etc/", defaultPath, "grafana-server")
+	grafanaServerBinPath := "/usr/bin/" + serverBinaryName
+	initdScriptPath := "/etc/init.d/grafana-server"
+	systemdServiceFilePath := "/usr/lib/systemd/system/grafana-server.service"
 
 	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
 	packageConfDir := filepath.Join("packaging", packageType)
 
-	afterInstallScript := filepath.Join(packageConfDir, "control/postinst")
-	initdscript := filepath.Join(packageConfDir, "init.d/grafana")
-	defaultScript := filepath.Join(packageConfDir, defaultPath, "grafana")
-	systemdServiceFile := filepath.Join(packageConfDir, "systemd/grafana.service")
+	postintSrc := filepath.Join(packageConfDir, "control/postinst")
+	initdScriptSrc := filepath.Join(packageConfDir, "init.d/grafana-server")
+	defaultFileSrc := filepath.Join(packageConfDir, defaultPath, "grafana-server")
+	systemdFileSrc := filepath.Join(packageConfDir, "systemd/grafana-server.service")
 
-	packageInstallRoot := filepath.Join(packageRoot, installRoot)
-	configDir := filepath.Join(packageRoot, configRoot)
-
-	runError("mkdir", "-p", packageInstallRoot)
-	runError("mkdir", "-p", configDir)
+	// create directories
+	runError("mkdir", "-p", filepath.Join(packageRoot, homeDir))
+	runError("mkdir", "-p", filepath.Join(packageRoot, configDir))
 	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
 	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/", defaultPath))
 	runError("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
+	runError("mkdir", "-p", filepath.Join(packageRoot, "/usr/bin"))
 
+	// copy binary
+	runError("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), grafanaServerBinPath)
 	// copy init.d script
-	runError("cp", "-p", initdscript, filepath.Join(packageRoot, "/etc/init.d/grafana"))
-	// copy environment file
-	runError("cp", "-p", defaultScript, filepath.Join(packageRoot, "etc", defaultPath, "grafana"))
+	runError("cp", "-p", initdScriptSrc, filepath.Join(packageRoot, initdScriptPath))
+	// copy environment var file
+	runError("cp", "-p", defaultFileSrc, filepath.Join(packageRoot, defaultFilePath))
 	// copy systemd file
-	runError("cp", "-p", systemdServiceFile, filepath.Join(packageRoot, "/usr/lib/systemd/system/grafana.service"))
+	runPrint("cp", "-p", systemdFileSrc, filepath.Join(packageRoot, systemdServiceFilePath))
 	// copy release files
-	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", packageInstallRoot)
+	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, homeDir))
 	// copy sample ini file to /etc/opt/grafana
-	configFile := filepath.Join(configDir, "grafana.ini")
-	runError("cp", "conf/sample.ini", configFile)
+	runError("cp", "conf/sample.ini", filepath.Join(packageRoot, configFilePath))
 
 	args := []string{
 		"-s", "dir",
@@ -151,8 +157,11 @@ func createPackage(packageType string, defaultPath string) {
 		"--url", "http://grafana.org",
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
-		"--config-files", filepath.Join(configRoot, "grafana.ini"),
-		"--after-install", afterInstallScript,
+		"--config-files", configFilePath,
+		"--config-files", initdScriptPath,
+		"--config-files", defaultFilePath,
+		"--config-files", systemdServiceFilePath,
+		"--after-install", postintSrc,
 		"--name", "grafana",
 		"--version", version,
 		"-p", "./dist",
@@ -209,7 +218,7 @@ func test(pkg string) {
 }
 
 func build(pkg string, tags []string) {
-	binary := "./bin/grafana-server"
+	binary := "./bin/" + serverBinaryName
 	if goos == "windows" {
 		binary += ".exe"
 	}
