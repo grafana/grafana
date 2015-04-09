@@ -25,6 +25,7 @@ COLUMNS
       .detailRight {padding-left:0px;}
       }
 
+
 /***********************************
 raintank BOX
 ***********************************/
@@ -32,9 +33,16 @@ raintank BOX
   background-color: @black;
   margin: 0px 10px 20px 10px;
   position: relative;
+
   .rt-box-no-margin {
     margin: 0;
   }
+}
+
+.rt-box-no-margin {
+  margin: 0;
+  background-color: @white;
+  padding: 0px 30px;
 }
 
   .oneCol {display:none;}
@@ -67,6 +75,11 @@ raintank BOX
   min-height: 150px;
 }
 
+.rt-modal-box-body {
+  padding: 20px 0;
+  min-height: 150px;
+}
+
 .rt-box-footer {
   overflow: hidden;
 }
@@ -81,6 +94,35 @@ raintank BOX
   }
   .nav {
     margin: 0;
+  }
+}
+
+
+.rt-modal-header {
+  padding: 30px 0px;
+  font-size:16px;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-box-header-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  margin-top: -15px;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  font-size: 150%;
+  font-weight: 100;
+  color: @textColor;
+  &:hover {
+    color: @black;
   }
 }
 
@@ -470,6 +512,80 @@ MATT STYLES
   .nonactive a:hover {color:@white; text-decoration: none;}
 }
 
+.rt-modal-tabs { 
+  border-bottom:1px solid @raintankPanelBackground;
+  font-size: @rt-fontSizeMed-1; 
+  padding:10px 10px;
+
+ 
+  .nonactive a:link, 
+  .nonactive a:visited {
+    color:@grayDark;
+    margin:0 25px;
+  }
+  .active a:link,
+  .active a:visited  {
+    color:@black;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid @raintankPanelBackground; 
+    border-right:1px solid @raintankPanelBackground; 
+    border-left:1px solid @raintankPanelBackground;
+    background-color: @white;
+    margin:0 5px;
+    padding:5px 15px 10px 15px;
+  }
+
+  a:hover,
+  .active a:hover,
+  .nonactive a:hover {color:@raintankPanelBackground; text-decoration: none;}
+}
+
+
+// Form Additions
+
+.rt-form-label-medium {
+  color: @grayDark;
+  font-size: @rt-fontSizeMed-2;
+  // font-weight: 600;
+}
+
+
+// Shared size and type resets
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"] {
+  &.rt-form-input {
+  display: inline-block;
+  height: 20px;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 2;
+  font-size: @rt-fontSizeLarge;
+  line-height: @baseLineHeight;
+  color: @white;
+  border: solid 1px @grayDark;
+  .border-radius(2px);
+  vertical-align: middle;
+}
+}
+
+
+
+// Collector List Status
+
 .rt-list-collector-status {
   color: @rt-green;
   font-weight: 700;
@@ -580,7 +696,13 @@ MATT STYLES
 
 
 .rt-h1 {
-  font-size: 2em;
+  font-size: @rt-fontSizeJumbo;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-h2 {
+  font-size: @rt-fontSizeLarger;
   font-weight: 400;
   display: inline;
 }
@@ -594,6 +716,7 @@ MATT STYLES
 
 
 // Buttons
+// Needs to be consolidated. 
 .rt-btn {
   background: @rt-blue;
   color: @white;

@@ -21,7 +21,7 @@ function(angular, $) {
 
         helpModalScope = $rootScope.$new();
         var helpModal = $modal({
-          template: './app/partials/help_modal.html',
+          template: './plugins/raintank/features/partials/endpoint_modal_new.html',
           persist: false,
           show: false,
           scope: helpModalScope,

@@ -1,0 +1,29 @@
+<div class="modal-body rt-box-no-margin">
+	<div class="rt-modal-header">
+		<div class="rt-h1" style="color: #262626;">
+			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25px" height="25px">
+			<span>New Endpoint</span>
+		</div>
+
+		<button class="rt-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="rt-modal-tabs">
+		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
+		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Ping</a></span>
+		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">DNS</a></span>
+		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Web</a></span>
+	</div>
+
+	<div class="rt-modal-box-body">
+		<div class="editor-option" style="display: block; padding-top: 15px; padding-bottom: 5px;">
+			<label class="rt-form-label-medium">Endpoint Name</label>
+			<input type="text" class="rt-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="collector.name"required="">
+		</div>
+		<div class="secondaryCTA">Auto Discover</div>
+	</div>
+
+</div>
+
