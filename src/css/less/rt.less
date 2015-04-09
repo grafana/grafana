@@ -115,13 +115,19 @@ raintank BOX
   margin-bottom: 50px;
 }
 
+.collectorCurrentStatus {
+  display:block;
+  padding: 20px;
+}
+
 .currentStatus {
   display:block;
   padding: 20px;
   border-bottom: 1px solid @bodyBackground;
 }
 
-.currentStatus:last-child { 
+.currentStatus:last-child,
+.collectorCurrentStatus:last-child { 
   padding-bottom: 30px;
   border-bottom: none;
   border-bottom-left-radius: 2px; 
@@ -130,7 +136,10 @@ raintank BOX
 
 .currentStatus .rt-event-success, 
 .currentStatus .rt-event-warning, 
-.currentStatus .rt-event-error{  
+.currentStatus .rt-event-error,
+.collectorCurrentStatus .rt-event-success, 
+.collectorCurrentStatus .rt-event-warning, 
+.collectorCurrentStatus .rt-event-error {  
   display:inline-block;
   padding: 10px;
   border-radius: 50px;
@@ -142,6 +151,12 @@ raintank BOX
 .statusEvents {
   display:block; 
   margin-left:70px; 
+}
+
+.collectorCurrentStatus .statusEvents {
+  display:block;
+  margin-left:0;
+  margin-top:20px;
 }
 
 .event {
@@ -192,6 +207,8 @@ raintank TYPE
   font-weight:600;
 }
 
+.jumbo {font-weight:600;}
+
 .status {
 font-size:20px;
 font-weight:600;
@@ -230,6 +247,7 @@ raintank POSITIONING
 ***********************************/
 
 .msg {display:inline;}
+.msg span {font-weight:600;}
 
 .nudgeDown {
   position: relative;
