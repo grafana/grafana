@@ -901,7 +901,7 @@ func updateCollectorState(mon *m.Monitor, collectorList []int64, sess *session) 
 			state = -1
 		}
 	} else {
-		state = 1
+		state = 0
 	}
 	stateChange := false
 	if mon.State != state {
@@ -942,7 +942,7 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 			state := results[0]
 			state.State = cmd.State
 			state.Updated = cmd.Updated
-			sess.UseBool("state")
+			sess.UseBool()
 			if _, err := sess.Id(state.Id).Update(state); err != nil {
 				return err
 			}
