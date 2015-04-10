@@ -5,13 +5,14 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=/etc/default/grafana
+EnvironmentFile=/etc/default/grafana-server
 User=grafana
 Group=grafana
 Type=simple
+WorkingDirectory=/usr/share/grafana
 ExecStart=/usr/sbin/grafana-server                                \
                             --config=${CONF_FILE}                 \
-                            cfg:default.paths.data=${LOG_DIR}     \
+                            cfg:default.paths.logs=${LOG_DIR}     \
                             cfg:default.paths.data=${DATA_DIR}    \
 LimitNOFILE=10000
 TimeoutStopSec=20
