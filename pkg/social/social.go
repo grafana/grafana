@@ -25,6 +25,7 @@ type SocialConnector interface {
 	Type() int
 	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
+	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
@@ -52,6 +53,7 @@ func NewOAuthService() {
 			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
+			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 		}
 
 		if !info.Enabled {
@@ -73,13 +75,13 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
+			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
+			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
 		}
 	}
 }
@@ -102,6 +104,7 @@ type SocialGithub struct {
 	*oauth2.Config
 	allowedDomains []string
 	ApiUrl         string
+	allowSignup    bool
 }
 
 func (s *SocialGithub) Type() int {
@@ -110,6 +113,10 @@ func (s *SocialGithub) Type() int {
 
 func (s *SocialGithub) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialGithub) IsSignupAllowed() bool {
+	return s.allowSignup
 }
 
 func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
@@ -150,6 +157,7 @@ type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
 	ApiUrl         string
+	allowSignup    bool
 }
 
 func (s *SocialGoogle) Type() int {
@@ -158,6 +166,10 @@ func (s *SocialGoogle) Type() int {
 
 func (s *SocialGoogle) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialGoogle) IsSignupAllowed() bool {
+	return s.allowSignup
 }
 
 func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {

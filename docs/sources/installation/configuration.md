@@ -181,9 +181,13 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
 
 Restart the grafana backend. You should now see a github login button on the login page. You can
 now login or signup with your github accounts.
+
+You may allow users to sign-up via github auth by setting allow_sign_up to true. When this option is
+set to true, any user successfully authenticating via github auth will be automatically signed up.
 
 ## [auth.google]
 You need to create a google project. You can do this in the [Google Developer Console](https://console.developers.google.com/project).
@@ -203,9 +207,13 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
     allowed_domains = mycompany.com
+    allow_sign_up = false
 
 Restart the grafana backend. You should now see a google login button on the login page. You can
 now login or signup with your google accounts. `allowed_domains` option is optional.
+
+You may allow users to sign-up via google auth by setting allow_sign_up to true. When this option is
+set to true, any user successfully authenticating via google auth will be automatically signed up.
 
 <hr>
 ## [session]
