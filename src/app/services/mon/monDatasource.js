@@ -30,46 +30,53 @@ function (angular, _, kbn) {
 
     MonDatasource.prototype.query = function (options) {
 
-      var promises = _.map(options.targets, function (target) {
+      var _this = this;
+      return $q.all(this.getTargets(options.targets)).then(function (args) {
+        var newTargets = _.flatten(args);
+        var promises = _.map(newTargets, function (target) {
 
-        if (target.hide || !((target.series && target.column) || target.query)) {
+          if (target.hide || !((target.series && target.column) || target.query)) {
+            return [];
+          }
+
+          var startTime = getMonTime(options.range.from);
+          //var endTime = getMonTime(options.range.to);
+
+          if (target.rawQuery) {
+            alert("Raw queries not supported");
+            return [];
+          }
+          else {
+            var params = {
+              start_time: startTime
+              //end_time: endTime
+            };
+            if (target.function !== 'none') {
+              params.statistics = target.function;
+            }
+            if (target.series !== '') {
+              params.name = target.series;
+            }
+            if (target.period !== '') {
+              params.period = target.period;
+            }
+            if (target.condition_key && target.condition_value) {
+              var key = target.condition_key;
+              var value = target.condition_value;
+              params.dimensions = key + ':' + value;
+            }
+            if (target.dimensions !== ''){
+              params.dimensions = target.dimensions;
+            }
+            params.merge_metrics = target.merge;
+            return _this.doGetStatisticsRequest(params, target.alias, target.label, startTime).then(handleGetStatisticsResponse);
+          }
           return [];
-        }
+        }, this);
 
-        var startTime = getMonTime(options.range.from);
-        //var endTime = getMonTime(options.range.to);
-
-        if (target.rawQuery) {
-          alert("Raw queries not supported");
-          return [];
-        }
-        else {
-          var params = {
-            start_time: startTime
-            //end_time: endTime
-          };
-          if (target.function !== 'none') {
-            params.statistics = target.function;
-          }
-          if (target.series !== '') {
-            params.name = target.series;
-          }
-          if (target.period !== '') {
-            params.period = target.period;
-          }
-          if (target.condition_key && target.condition_value) {
-            var key = target.condition_key;
-            var value = target.condition_value;
-            params.dimensions = key + ':' + value;
-          }
-          params.merge_metrics = 'true';
-          return this.doGetStatisticsRequest(params, target.alias, target.label, startTime).then(handleGetStatisticsResponse);
-        }
-        return [];
-      }, this);
-
-      return $q.all(promises).then(function (results) {
-        return { data: _.flatten(results) };
+        return $q.all(promises).then(function (results) {
+          return {data: _.flatten(results)};
+        });
       });
     };
 
@@ -136,6 +143,62 @@ function (angular, _, kbn) {
       });
     };
 
+    MonDatasource.prototype.getMetricDimensions = function (seriesName, seriesDimensions) {
+      return this.doGetMetricsRequest(seriesName, seriesDimensions).then(function (data) {
+        if (!data) {
+          return [];
+        }
+        if (!(data instanceof Array)) {
+          data = data['elements']
+        }
+
+        var results = [];
+        for (var i = 0; i < data.length; i++) {
+          var dimensions = data[i].dimensions;
+          var tmp = "";
+          for (var dimension in dimensions) {
+            if (tmp != "") {
+              tmp += ",";
+            }
+            tmp += (dimension + ":" + encodeURIComponent(dimensions[dimension]));
+          }
+          results.push(tmp);
+        }
+        return results;
+      });
+    };
+
+
+    MonDatasource.prototype.getTargets = function (originalTargets) {
+      var targets = [];
+      var returnTargets = originalTargets;
+      for (var i = 0; i < returnTargets.length; i++) {
+        var target = returnTargets[i];
+        if (!target.merge) {
+          var metricDimensions = "";
+          if (target.condition_key && target.condition_value) {
+            var key = target.condition_key;
+            var value = target.condition_value;
+            metricDimensions = key + ':' + value;
+          }
+          targets.push(this.getMetricDimensions(target.series, metricDimensions).then(function (dimensions) {
+            var target_list = [];
+            for (var i = 0; i < dimensions.length; i++) {
+              var temp = jQuery.extend({}, target);
+              temp.dimensions = dimensions[i];
+              target_list.push(temp);
+            }
+            return target_list;
+          }));
+        }
+        else {
+          target.dimensions = "";
+          targets.push(target);
+        }
+      }
+      return targets;
+    };
+
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function (reason) {
         if (reason.status !== 0) {
@@ -166,7 +229,7 @@ function (angular, _, kbn) {
 
         var options = {
           method: 'GET',
-          url: currentUrl + '/metrics/measurements',
+          url: currentUrl + '/metrics/measurements/',
           params: params,
           withCredentials: true,
           headers: headers
@@ -193,7 +256,7 @@ function (angular, _, kbn) {
      * @param alias
      * @returns {promise}
      */
-    MonDatasource.prototype.doGetMetricsRequest = function (metricName, alias) {
+    MonDatasource.prototype.doGetMetricsRequest = function (metricName, metricDimensions, alias) {
       var _this = this;
       var deferred = $q.defer();
       var seriesName = metricName;
@@ -208,6 +271,10 @@ function (angular, _, kbn) {
         var params = {
           name: seriesName
         };
+
+        if (metricDimensions !== ''){
+          params.dimensions = metricDimensions;
+        }
 
         var options = {
           method: 'GET',
@@ -238,7 +305,7 @@ function (angular, _, kbn) {
         var timeCol = series.columns.indexOf('timestamp');
 
         _.each(series.columns, function (column, index) {
-          if (column === "timestamp" || column === "id") {
+          if (column === "timestamp" || column === "id" || column == "value_meta") {
             return;
           }
 
