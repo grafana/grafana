@@ -53,37 +53,21 @@ fi
 # overwrite settings from default file
 [ -e /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
 
-PID_FILE=/var/run/$NAME.pid
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --default-data-path=${DATA_DIR} --default-log-path=${LOG_DIR} web"
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR}"
 
 # Check DAEMON exists
 test -x $DAEMON || exit 0
 
-function pidofproc() {
-    if [ $# -ne 3 ]; then
-        echo "Expected three arguments, e.g. $0 -p pidfile daemon-name"
-    fi
-
-    pid=`pgrep -f $3`
-    local pidfile=`cat $2`
-
-    if [ "x$pidfile" == "x" ]; then
-        return 1
-    fi
-
-    if [ "x$pid" != "x" -a "$pidfile" == "$pid" ]; then
-        return 0
-    fi
-
-    return 1
+function isRunning() {
+  status -p $PID_FILE $NAME > /dev/null 2>&1
 }
 
 case "$1" in
   start)
     echo -n $"Starting $DESC: .... "
 
-    pid=`pidofproc -p $PID_FILE grafana`
-    if [ -n "$pid" ] ; then
+    isRunning
+    if [ $? -eq 0 ]; then
       echo "Already running."
       exit 2
     fi
@@ -97,7 +81,8 @@ case "$1" in
     fi
 
     # Start Daemon
-    su -s /bin/sh -c "nohup ${DAEMON_PATH} --pidfile=${DAEMON_PID} ${DAEMON_OPTS} >> $STDOUT 3>&1 &" $DAEMON_USER
+    cd $GRAFANA_HOME
+    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $DAEMON_USER
     return=$?
     if [ $return -eq 0 ]
     then

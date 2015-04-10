@@ -1,6 +1,6 @@
-FROM centos:7.0
+FROM centos:latest
 
 RUN yum install -y initscripts
 
-ADD * /tmp/
+ADD *.rpm /tmp/
 
