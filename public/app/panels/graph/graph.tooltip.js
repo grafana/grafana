@@ -82,13 +82,16 @@ function ($) {
     };
 
     elem.mouseleave(function () {
-      if (scope.panel.tooltip.shared || dashboard.sharedCrosshair) {
+      if (scope.panel.tooltip.shared) {
         var plot = elem.data().plot;
         if (plot) {
           $tooltip.detach();
           plot.unhighlight();
-          scope.appEvent('clearCrosshair');
         }
+      }
+
+      if (dashboard.sharedCrosshair) {
+        scope.appEvent('clearCrosshair');
       }
     });
 
