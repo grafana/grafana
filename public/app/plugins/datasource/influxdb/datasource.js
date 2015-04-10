@@ -105,6 +105,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         case 'TAG_VALUES':
           var tagValues = _.flatten(series.values);
           return _.map(tagValues, function(tagValue) { return { text: tagValue, expandable: true }; });
+        default: // template values service does not pass in a a query type
+          var flattenedValues = _.flatten(series.values);
+          return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
         }
       });
     };
