@@ -21,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", AddMonitor)
 	bus.AddHandler("sql", UpdateMonitor)
 	bus.AddHandler("sql", DeleteMonitor)
+	bus.AddHandler("sql", UpdateMonitorCollectorState)
 }
 
 type MonitorWithCollectorDTO struct {
@@ -32,6 +33,8 @@ type MonitorWithCollectorDTO struct {
 	CollectorIds  string
 	CollectorTags string
 	TagCollectors string
+	State         int64
+	StateChange   time.Time
 	Settings      []*m.MonitorSettingDTO
 	Frequency     int64
 	Enabled       bool
@@ -122,6 +125,8 @@ WHERE monitor.id=?
 		CollectorIds:  monitorCollectorIds,
 		CollectorTags: monitorCollectorTags,
 		Collectors:    mergedCollectors,
+		State:         result.State,
+		StateChange:   result.StateChange,
 		Settings:      result.Settings,
 		Frequency:     result.Frequency,
 		Enabled:       result.Enabled,
@@ -229,6 +234,8 @@ FROM monitor
 			CollectorIds:  monitorCollectorIds,
 			CollectorTags: monitorCollectorTags,
 			Collectors:    mergedCollectors,
+			State:         row.State,
+			StateChange:   row.StateChange,
 			Settings:      row.Settings,
 			Frequency:     row.Frequency,
 			Enabled:       row.Enabled,
@@ -321,6 +328,11 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 			return err
 		}
 		rawSql = "DELETE FROM monitor_collector_tag WHERE monitor_id=?"
+		_, err = sess.Exec(rawSql, cmd.Id)
+		if err != nil {
+			return err
+		}
+		rawSql = "DELETE FROM monitor_collector_state WHERE monitor_id=?"
 		_, err = sess.Exec(rawSql, cmd.Id)
 		if err != nil {
 			return err
@@ -435,6 +447,8 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Updated:       time.Now(),
 			Frequency:     cmd.Frequency,
 			Enabled:       cmd.Enabled,
+			State:         -1,
+			StateChange:   time.Now(),
 		}
 
 		if _, err := sess.Insert(mon); err != nil {
@@ -487,6 +501,24 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 				collectorList = append(collectorList, id)
 			}
 		}
+
+		if len(collectorList) > 0 {
+			monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
+			for i, c := range collectorList {
+				monitor_collector_states[i] = &m.MonitorCollectorState{
+					EndpointId: mon.EndpointId,
+					MonitorId: mon.Id,
+					CollectorId: c,
+					State: -1,
+					Updated: time.Now(),
+				}
+			}
+			sess.Table("monitor_collector_state")
+			if _, err := sess.Insert(&monitor_collector_states); err != nil {
+				return err
+			}
+		}
+
 		cmd.Result = &m.MonitorDTO{
 			Id:            mon.Id,
 			EndpointId:    mon.EndpointId,
@@ -499,6 +531,8 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
+			State:         mon.State,
+			StateChange:   mon.StateChange,
 			Offset:        mon.Offset,
 			Updated:       mon.Updated,
 		}
@@ -632,17 +666,14 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Settings:      cmd.Settings,
 			Updated:       time.Now(),
 			Enabled:       cmd.Enabled,
+			State:         lastState.State,
+			StateChange:   lastState.StateChange,
 			Frequency:     cmd.Frequency,
 		}
 
 		//check if we need to update the time offset for when the monitor should run.
 		if mon.Offset >= mon.Frequency {
 			mon.Offset = rand.Int63n(mon.Frequency - 1)
-		}
-
-		sess.UseBool("enabled")
-		if _, err = sess.Where("id=? and org_id=?", mon.Id, mon.OrgId).Update(mon); err != nil {
-			return err
 		}
 
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
@@ -690,6 +721,11 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 
 		collectorIdMap := make(map[int64]bool)
 		collectorList := make([]int64, 0)
+		lastCollectors := make(map[int64]bool)
+		for _, id := range lastState.Collectors {
+			lastCollectors[id] = false
+		}
+		
 		for _, id := range cmd.CollectorIds {
 			collectorIdMap[id] = true
 			collectorList = append(collectorList, id)
@@ -700,6 +736,21 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				collectorList = append(collectorList, id)
 			}
 		}
+
+		stateChange, err := updateCollectorState(mon, collectorList, sess)
+		if err != nil {
+			return err
+		}
+		if stateChange {
+			fmt.Println("TODO: propagate stateChange to endpoint.")
+		}
+
+		sess.Table("monitor")
+		sess.UseBool("enabled")
+		if _, err = sess.Where("id=? and org_id=?", mon.Id, mon.OrgId).Update(mon); err != nil {
+			return err
+		}
+
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
@@ -777,4 +828,165 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 	}
 
 	return result, nil
+}
+
+func updateCollectorState(mon *m.Monitor, collectorList []int64, sess *session) (bool, error) {
+	states := make([]*m.MonitorCollectorState, 0)
+	sess.Table("monitor_collector_state")
+	err := sess.Where("monitor_id=?", mon.Id).Find(&states)
+	if err != nil {
+		return false, err
+	}
+
+	collectorMap := make(map[int64]bool)
+	for _, id := range collectorList {
+		collectorMap[id] = false
+	}
+
+	collectorsToDel := make([]int64, 0)
+
+	state := int64(-1)
+	okCount, unknownCount, warnCount, errorCount := 0, 0, 0, 0
+	totalCount := len(collectorList)
+
+	if len(states) > 0 {
+		for _, row := range states {
+			if _, ok := collectorMap[row.CollectorId]; !ok {
+				collectorsToDel = append(collectorsToDel, row.CollectorId)
+				continue
+			}
+			collectorMap[row.CollectorId] = true
+
+			switch row.State {
+			case 0:
+				okCount++
+			case 1:
+				warnCount++
+			case 2:
+				errorCount++
+			default:
+				unknownCount++
+			}
+		}
+	}
+
+	for _, seen := range collectorMap {
+		if !seen {
+			unknownCount++
+		}
+	}
+
+	if len(collectorsToDel) > 0 {
+		params := make([]interface{}, len(collectorsToDel) + 1)
+		params[0] = mon.Id
+		p := make([]string, len(collectorsToDel))
+		for i, c := range collectorsToDel {
+			p[i] = "?"
+			params[i+1] = c
+		}
+		rawSql := fmt.Sprintf("DELETE FROM monitor_collector_state WHERE monitor_id=? and collector_id IN (%s)", strings.Join(p, ","))
+		if _, err := sess.Exec(rawSql, params...); err != nil {
+			return false, err
+		}
+	}
+
+	// determine our state
+	if okCount < totalCount/2 || (totalCount - okCount) >= 3 {
+		//state is not OK.
+		if errorCount > 0 {
+			state = 2
+		} else if warnCount > 0 {
+			state = 1
+		} else {
+			state = -1
+		}
+	} else {
+		state = 1
+	}
+	stateChange := false
+	if mon.State != state {
+		mon.State = state
+		mon.StateChange = time.Now()
+		mon.Updated = time.Now()
+		stateChange = true
+	}
+	return stateChange, nil
+}
+
+func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) error {
+	return inTransaction2(func(sess *session) error {
+		sess.Table("monitor_collector_state")
+		results := make([]*m.MonitorCollectorState, 0)
+		sess.Where("monitor_id=?", cmd.MonitorId).And("endpoint_id=?", cmd.EndpointId).And("collector_id=?", cmd.CollectorId)
+		if err := sess.Find(&results); err != nil {
+			return err
+		}
+		stateChange := false
+		if (len(results) < 1) {
+			//need to insert
+			state := &m.MonitorCollectorState{
+				MonitorId: cmd.MonitorId,
+				EndpointId: cmd.EndpointId,
+				CollectorId: cmd.CollectorId,
+				State: cmd.State,
+				Updated: cmd.Updated,
+			}
+			sess.UseBool()
+			if _, err := sess.Insert(state); err != nil {
+				fmt.Printf("failed to insert into monitor_collector_state")
+				return err
+			}
+			stateChange = true
+		} else if (results[0].State != cmd.State) {
+			//need to update
+			state := results[0]
+			state.State = cmd.State
+			state.Updated = cmd.Updated
+			sess.UseBool("state")
+			if _, err := sess.Id(state.Id).Update(state); err != nil {
+				return err
+			}
+			stateChange = true
+		}
+
+		if stateChange {
+		 	//update state of monitor.
+			q := m.GetMonitorByIdQuery{
+				Id:    cmd.MonitorId,
+				OrgId: cmd.OrgId,
+			}
+			err := GetMonitorById(&q)
+			if err != nil {
+				return err
+			}
+			monView := q.Result
+			mon := &m.Monitor{
+				Id:            monView.Id,
+				EndpointId:    monView.EndpointId,
+				OrgId:         monView.OrgId,
+				Namespace:     monView.Namespace,
+				MonitorTypeId: monView.MonitorTypeId,
+				Offset:        monView.Offset,
+				Settings:      monView.Settings,
+				Updated:       monView.StateChange,
+				Frequency:     monView.Frequency,
+				Enabled:       monView.Enabled,
+				State:         monView.State,
+				StateChange:   monView.StateChange,
+			}
+			monStateChange, err := updateCollectorState(mon, monView.Collectors, sess)
+			if err != nil {
+				return err
+			}
+			if monStateChange {
+				sess.Table("monitor")
+				sess.UseBool("state")
+				if _, err := sess.Id(mon.Id).Update(mon); err != nil {
+					return err
+				}
+				fmt.Println("TODO: propagate stateChange to endpoint.")
+			}
+		}
+		return nil
+	})
 }

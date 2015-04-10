@@ -103,7 +103,9 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
 			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "state_change", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		}, Indices: []*Index{
 			&Index{Cols: []string{"monitor_type_id"}},
@@ -326,4 +328,24 @@ func addMonitorMigration(mg *Migrator) {
 
 	mg.AddMigration("drop table monitor_location_tag v1", NewDropTableMigration("monitor_location_tag"))
 
+
+	//monitorCollector
+	var monitorCollectorStateV1 = Table{
+		Name: "monitor_collector_state",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+
+		},
+		Indices: []*Index{
+			&Index{Cols: []string{"monitor_id", "endpoint_id", "collector_id"}},
+		},
+	}
+	mg.AddMigration("create monitor_collector_state table", NewAddTableMigration(monitorCollectorStateV1))
+	//-------  indexes ------------------
+	addTableIndicesMigrations(mg, "v1", monitorCollectorStateV1)
 }

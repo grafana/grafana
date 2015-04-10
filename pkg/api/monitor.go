@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"strings"
 )
 
 func GetMonitorById(c *middleware.Context) {
@@ -61,11 +60,6 @@ func DeleteMonitor(c *middleware.Context) {
 func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
 	cmd.OrgId = c.OrgId
 
-	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
-		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
-		return
-	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add monitor", err)
 		return
@@ -77,11 +71,6 @@ func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
 func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 	cmd.OrgId = c.OrgId
 
-	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
-		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
-		return
-	}
-
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to update monitor", err)
@@ -89,4 +78,31 @@ func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 	}
 
 	c.JsonOK("Monitor updated")
+}
+
+func UpdateMonitorCollectorState(c *middleware.Context, cmd m.UpdateMonitorCollectorStateCommand) {
+	if cmd.EndpointId == 0 {
+		c.JsonApiErr(400, "EndpointId not set.", nil)
+		return
+	}
+	if cmd.MonitorId == 0 {
+		c.JsonApiErr(400, "MonitorId not set.", nil)
+		return
+	}
+	if cmd.CollectorId == 0 {
+		c.JsonApiErr(400, "CollectorId not set.", nil)
+		return
+	}
+	if cmd.OrgId == 0 {
+		c.JsonApiErr(400, "OrgId not set.", nil)
+		return
+	}
+
+	err := bus.Dispatch(&cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to update monitor collector state", err)
+		return
+	}
+
+	c.JsonOK("Monitor Collector State updated")
 }

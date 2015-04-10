@@ -124,6 +124,7 @@ func Register(r *macaron.Macaron) {
 				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), UpdateMonitor)
 			r.Get("/:id", GetMonitorById)
 			r.Delete("/:id", reqEditorRole, DeleteMonitor)
+			r.Post("/state",reqGrafanaAdmin, bind(m.UpdateMonitorCollectorStateCommand{}), UpdateMonitorCollectorState )
 		})
 		// endpoints
 		r.Group("/endpoints", func() {
