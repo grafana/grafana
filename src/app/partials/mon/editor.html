@@ -54,6 +54,14 @@
 
                 <ul class="grafana-segment-list" role="menu" ng-hide="target.rawQuery">
                     <li class="grafana-target-segment">
+                        Merge
+                        <input type="checkbox"
+                               class="grafana-target-option-checkbox"
+                               ng-model="target.merge"
+                               ng-change="get_data()"
+                                >
+                    </li>
+                    <li class="grafana-target-segment">
                         function
                     </li>
                     <li>
@@ -62,7 +70,6 @@
                                 ng-model="target.function"
                                 ng-options="f for f in functions" ></select>
                     </li>
-
                     <li class="grafana-target-segment">
                         metric name
                     </li>
