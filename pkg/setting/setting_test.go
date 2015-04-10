@@ -49,10 +49,13 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override defaults via command line", func() {
 			NewConfigContext(&CommandLineArgs{
-				Args: []string{"cfg:default.paths.data=/tmp/data"},
+				Args: []string{
+					"cfg:default.server.domain=test2",
+				},
+				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
 			})
 
-			So(DataPath, ShouldEqual, "/tmp/data")
+			So(Domain, ShouldEqual, "test2")
 		})
 
 		Convey("Defaults can be overriden in specified config file", func() {

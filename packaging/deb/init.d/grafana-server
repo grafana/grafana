@@ -22,7 +22,19 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 NAME=grafana-server
 DESC="Grafana Server"
-DEFAULT=/etc/default/grafana-server
+DEFAULT=/etc/default/$NAME
+
+GRAFANA_USER=grafana
+GRAFANA_GROUP=grafana
+GRAFANA_HOME=/usr/share/grafana
+CONF_DIR=/etc/grafana
+WORK_DIR=$GRAFANA_HOME
+DATA_DIR=/var/lib/grafana
+LOG_DIR=/var/log/grafana
+CONF_FILE=$CONF_DIR/grafana.ini
+MAX_OPEN_FILES=10000
+PID_FILE=/var/run/$NAME.pid
+DAEMON=/usr/sbin/$NAME
 
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
@@ -35,23 +47,11 @@ if [ -r /etc/default/rcS ]; then
 	. /etc/default/rcS
 fi
 
-GRAFANA_USER=grafana
-GRAFANA_GROUP=grafana
-GRAFANA_HOME=/usr/share/grafana
-CONF_DIR=/etc/grafana
-WORK_DIR=$GRAFANA_HOME
-DATA_DIR=/var/lib/grafana
-LOG_DIR=/var/log/grafana
-CONF_FILE=$CONF_DIR/grafana.ini
-MAX_OPEN_FILES=10000
-
 # overwrite settings from default file
 if [ -f "$DEFAULT" ]; then
 	. "$DEFAULT"
 fi
 
-PID_FILE=/var/run/$NAME.pid
-DAEMON=/usr/bin/grafana-server
 DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR}"
 
 # Check DAEMON exists

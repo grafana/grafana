@@ -49,15 +49,15 @@ case "$1" in
         if [ -x /bin/systemctl ] ; then
             echo "### NOT starting on installation, please execute the following statements to configure elasticsearch to start automatically using systemd"
             echo " sudo /bin/systemctl daemon-reload"
-            echo " sudo /bin/systemctl enable grafana.service"
-            echo "### You can start grafana by executing"
-            echo " sudo /bin/systemctl start grafana.service"
+            echo " sudo /bin/systemctl enable grafana-server.service"
+            echo "### You can start grafana-server by executing"
+            echo " sudo /bin/systemctl start grafana-server.service"
 
         elif [ -x /usr/sbin/update-rc.d ] ; then
-            echo "### NOT starting grafana by default on bootup, please execute"
-            echo " sudo update-rc.d grafana defaults 95 10"
-            echo "### In order to start grafana, execute"
-            echo " sudo /etc/init.d/grafana start"
+            echo "### NOT starting grafana-server by default on bootup, please execute"
+            echo " sudo update-rc.d grafana-server defaults 95 10"
+            echo "### In order to start grafana-server, execute"
+            echo " sudo service grafana-server start"
         fi
 	fi
 	;;

@@ -225,6 +225,33 @@ func evalConfigValues() {
 	}
 }
 
+func loadSpecifedConfigFile(configFile string) {
+	userConfig, err := ini.Load(configFile)
+	if err != nil {
+		log.Fatal(3, "Failed to parse %v, %v", configFile, err)
+	}
+
+	for _, section := range userConfig.Sections() {
+		for _, key := range section.Keys() {
+			if key.Value() == "" {
+				continue
+			}
+
+			defaultSec, err := Cfg.GetSection(section.Name())
+			if err != nil {
+				log.Fatal(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+			}
+			defaultKey, err := defaultSec.GetKey(key.Name())
+			if err != nil {
+				log.Fatal(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+			}
+			defaultKey.SetValue(key.Value())
+		}
+	}
+
+	configFiles = append(configFiles, configFile)
+}
+
 func loadConfiguration(args *CommandLineArgs) {
 	var err error
 
@@ -249,12 +276,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// load specified config file
 	if args.Config != "" {
-		err = Cfg.Append(args.Config)
-		if err != nil {
-			log.Fatal(3, "Failed to parse %v, %v", args.Config, err)
-		}
-		configFiles = append(configFiles, args.Config)
-		appliedCommandLineProperties = append(appliedCommandLineProperties, "config="+args.Config)
+		loadSpecifedConfigFile(args.Config)
 	}
 
 	// apply environment overrides

@@ -115,7 +115,7 @@ func createPackage(packageType string, defaultPath string) {
 	configDir := "/etc/grafana"
 	configFilePath := "/etc/grafana/grafana.ini"
 	defaultFilePath := filepath.Join("/etc/", defaultPath, "grafana-server")
-	grafanaServerBinPath := "/usr/bin/" + serverBinaryName
+	grafanaServerBinPath := "/usr/sbin/" + serverBinaryName
 	initdScriptPath := "/etc/init.d/grafana-server"
 	systemdServiceFilePath := "/usr/lib/systemd/system/grafana-server.service"
 
@@ -128,25 +128,25 @@ func createPackage(packageType string, defaultPath string) {
 	systemdFileSrc := filepath.Join(packageConfDir, "systemd/grafana-server.service")
 
 	// create directories
-	runError("mkdir", "-p", filepath.Join(packageRoot, homeDir))
-	runError("mkdir", "-p", filepath.Join(packageRoot, configDir))
-	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
-	runError("mkdir", "-p", filepath.Join(packageRoot, "/etc/", defaultPath))
-	runError("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
-	runError("mkdir", "-p", filepath.Join(packageRoot, "/usr/bin"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, homeDir))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, configDir))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/", defaultPath))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
 	// copy binary
-	runError("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), grafanaServerBinPath)
+	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, grafanaServerBinPath))
 	// copy init.d script
-	runError("cp", "-p", initdScriptSrc, filepath.Join(packageRoot, initdScriptPath))
+	runPrint("cp", "-p", initdScriptSrc, filepath.Join(packageRoot, initdScriptPath))
 	// copy environment var file
-	runError("cp", "-p", defaultFileSrc, filepath.Join(packageRoot, defaultFilePath))
+	runPrint("cp", "-p", defaultFileSrc, filepath.Join(packageRoot, defaultFilePath))
 	// copy systemd file
 	runPrint("cp", "-p", systemdFileSrc, filepath.Join(packageRoot, systemdServiceFilePath))
 	// copy release files
-	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, homeDir))
+	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, homeDir))
 	// copy sample ini file to /etc/opt/grafana
-	runError("cp", "conf/sample.ini", filepath.Join(packageRoot, configFilePath))
+	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, configFilePath))
 
 	args := []string{
 		"-s", "dir",
