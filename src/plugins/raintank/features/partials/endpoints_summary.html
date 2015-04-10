@@ -64,61 +64,86 @@
 						</ul>
 					</div>
 				</div>
-				<div class="rt-box-body" style="min-height: 50px">
+
+				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
-						<div style="display:block; margin-bottom:20px">
-							<span class="checkType">Ping</span> <img src="img/online.svg" width="35px" height="35px"> <span class="status online">UP</span> <span class="statusMsg">for 12 days</span>
+						<div class="pull-right tertiaryCTA">View</div>
+
+						<div class="checkType">Ping</div> 
+
+						<div class="statusEvents">
+							<div class="health">
+								<img src="img/online.svg" width="35px" height="35px">
+								<div class="status">
+									<span class="online">Up</span> <span class="statusMsg">a few seconds ago</span>
+								</div>
+							</div>
+							<div class="event">
+								<span class="rt-event-warning">3</span> <span class="eventType">Warnings</span>
+							</div>					
 						</div>
-						<div style="display:block; margin-bottom:20px">
-							<span class="checkType">DNS</span> <img src="img/critical.svg" width="35px" height="35px" class="ng-scope"> <span class="status  critical">DOWN</span> <span class="statusMsg">for 10 months</span>
-						</div>
-						<div style="display:block; margin-bottom:20px">
-							<span class="checkType">HTTP</span> <img src="img/warn.svg" width="35px" height="35px" class="ng-scope"> <span class="status warn">WARNING</span> <span class="statusMsg">for 1 day</span>
-						</div>
-						<div style="display:block; margin-bottom:20px">
-							<span class="checkType">HTTPS</span> <img src="img/nodata.svg" width="35px" height="35px" class="ng-scope"> <span class="status nodata">NO DATA</span> <span class="statusMsg"></span>
-						</div>
+						<div class="clearfix"></div>
 					</div>
-				</div>
-			</div>
-			<div class="rt-box">
-				<div class="rt-box-header">
-					<div style="padding:10px;">Events</div>
-					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
-						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a href="endpoints/summary/{{endpoint.id}}">
-									View
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin"h>
-								<a href="endpoints/edit/{{endpoint.id}}">
-									Edit
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin">
-								<a ng-click="remove(endpoint)">
-									Delete
-								</a>
-							</li>
-						</ul>
-					</div>
-				</div>
-				<div class="rt-box-body" style="min-height: 50px">
-					<div class="statusDetail" >
-						<div style="display:block; margin-bottom:20px">
-							<span class="rt-event-warning">14</span> <span class="status">Warnings</span>
-							<div class="pull-right nudgeDown tertiaryCTA">View</div>
+
+					<div class="currentStatus">
+						<div class="pull-right tertiaryCTA">View</div>
+
+						<div class="checkType">DNS</div> 
+
+						<div class="statusEvents">
+							<div class="health">
+								<img src="img/critical.svg" width="35px" height="35px">
+								<div class="status">
+									<span class="critical">Down</span> <span class="statusMsg">a month ago</span>
+								</div>
+							</div>	
+							<div class="event">
+								<span class="rt-event-error">72</span> <span class="eventType">Errors</span> 
+							</div>
+							<div class="event">
+								<span class="rt-event-warning">136</span> <span class="eventType">Warnings</span>
+							</div>
 						</div>
-						<div style="display:block; margin-bottom:40px">
-							<span class="rt-event-error">33</span> <span class="status">Errors</span>
-							 <div class="pull-right nudgeDown tertiaryCTA">View</div>
-						</div>
+						<div class="clearfix"></div>
 					</div>
-					<div class="secondaryCTA">View All Errors</div>
+
+					<div class="currentStatus">
+						<div class="pull-right tertiaryCTA">View</div>
+
+						<div class="checkType">HTTP</div> 
+
+						<div class="statusEvents">
+							<div class="health">
+								<img src="img/warn.svg" width="35px" height="35px">
+								<div class="status">
+									<span class="warn">Warning</span> <span class="statusMsg">132 days ago</span>
+								</div>
+							</div>			
+							<div class="event">
+								<span class="rt-event-error">4</span> <span class="eventType">Errors</span> 
+							</div>
+							<div class="event">
+								<span class="rt-event-warning">62</span> <span class="eventType">Warnings</span>
+							</div>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+
+					<div class="currentStatus">
+						<div class="pull-right tertiaryCTA">View</div>
+
+						<div class="checkType">HTTPS</div> 
+
+						<div class="statusEvents">
+							<div class="health">
+								<img src="img/nodata.svg" width="35px" height="35px">
+								<div class="status">
+									<span class="nodata">No Data</span> <span class="statusMsg"></span>
+								</div>
+							</div>		
+						</div>
+						<div class="clearfix"></div>
+					</div>
 				</div>
 			</div>
 		</div>
