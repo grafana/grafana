@@ -2,7 +2,7 @@
 
 set -e
 
-[ -f /etc/default/grafana ] && . /etc/default/grafana
+[ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
 
 startGrafana() {
     if [ -x /bin/systemctl ] ; then
