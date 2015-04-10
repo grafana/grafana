@@ -24,17 +24,17 @@ stopGrafana() {
 	fi
 }
 
-case "$1" in
-	configure)
+# Initial installation: $1 == 1
+# Upgrade: $1 == 2, and configured to restart on upgrade
+if [ $1 -eq 1 ] ; then
 	[ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
 	[ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
 	if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
-	    addgroup --system "$GRAFANA_GROUP" --quiet
+    groupadd -r "$GRAFANA_GROUP"
 	fi
-	if ! id $GRAFANA_USER > /dev/null 2>&1 ; then
-	    adduser --system --home /usr/share/grafana --no-create-home \
-		--ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
-		"$GRAFANA_USER"
+	if ! getent passwd "$GRAFANA_USER" > /dev/null 2>&1 ; then
+    useradd -r -g grafana -d /usr/share/grafana -s /sbin/nologin \
+    -c "grafana user" grafana
 	fi
 
 	# Set user permissions on /var/log/grafana, /var/lib/grafana
@@ -48,24 +48,20 @@ case "$1" in
 	find /etc/grafana -type f -exec chmod 644 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
-	# if $2 is set, this is an upgrade
-	if ( [ -n $2 ] && [ "$RESTART_ON_UPGRADE" = "true" ] ) ; then
-		startGrafana
-	# this is a fresh installation
-	elif [ -z $2 ] ; then
-        if [ -x /bin/systemctl ] ; then
-            echo "### NOT starting on installation, please execute the following statements to configure elasticsearch to start automatically using systemd"
-            echo " sudo /bin/systemctl daemon-reload"
-            echo " sudo /bin/systemctl enable grafana-server.service"
-            echo "### You can start grafana-server by executing"
-            echo " sudo /bin/systemctl start grafana-server.service"
+  if [ -x /bin/systemctl ] ; then
+    echo "### NOT starting on installation, please execute the following statements to configure elasticsearch to start automatically using systemd"
+    echo " sudo /bin/systemctl daemon-reload"
+    echo " sudo /bin/systemctl enable grafana-server.service"
+    echo "### You can start grafana-server by executing"
+    echo " sudo /bin/systemctl start grafana-server.service"
 
-        elif [ -x /usr/sbin/update-rc.d ] ; then
-            echo "### NOT starting grafana-server by default on bootup, please execute"
-            echo " sudo update-rc.d grafana-server defaults 95 10"
-            echo "### In order to start grafana-server, execute"
-            echo " sudo service grafana-server start"
-        fi
-	fi
-	;;
-esac
+  elif [ -x /usr/sbin/update-rc.d ] ; then
+    echo "### NOT starting grafana-server by default on bootup, please execute"
+    echo " sudo update-rc.d grafana-server defaults 95 10"
+    echo "### In order to start grafana-server, execute"
+    echo " sudo service grafana-server start"
+  fi
+elif [ $1 -ge 2 -a "$RESTART_ON_UPGRADE" == "true" ] ; then
+  stopGrafana
+  startGrafana
+fi

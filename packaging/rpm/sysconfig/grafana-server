@@ -1,15 +1,17 @@
+GRAFANA_USER=grafana
 
-#GRAFANA_USER=grafana
+GRAFANA_GROUP=grafana
 
-#GRAFANA_GROUP=grafana
+GRAFANA_HOME=/usr/share/grafana
 
-#LOG_DIR=/var/log/grafana
+LOG_DIR=/var/log/grafana
 
-#GRAFANA_HOME=/opt/grafana
-#DATA_DIR=/opt/data/grafana
-#WORK_DIR=/opt/grafana
+DATA_DIR=/var/lib/grafana
 
-#CONF_DIR=/etc/grafana
-#CONF_FILE=/etc/grafana/grafana.ini
+MAX_OPEN_FILES=10000
 
-#RESTART_ON_UPGRADE=true
+CONF_DIR=/etc/grafana
+
+CONF_FILE=/etc/grafana/grafana.ini
+
+RESTART_ON_UPGRADE=true

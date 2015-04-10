@@ -227,6 +227,7 @@ func evalConfigValues() {
 
 func loadSpecifedConfigFile(configFile string) {
 	userConfig, err := ini.Load(configFile)
+	userConfig.BlockMode = false
 	if err != nil {
 		log.Fatal(3, "Failed to parse %v, %v", configFile, err)
 	}
@@ -262,7 +263,7 @@ func loadConfiguration(args *CommandLineArgs) {
 	configFiles = append(configFiles, defaultConfigFile)
 
 	Cfg, err = ini.Load(defaultConfigFile)
-	Cfg.BlockMode = true
+	Cfg.BlockMode = false
 
 	if err != nil {
 		log.Fatal(3, "Failed to parse defaults.ini, %v", err)

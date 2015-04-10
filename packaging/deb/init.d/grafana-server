@@ -70,7 +70,7 @@ case "$1" in
 	fi
 
 	# Prepare environment
-	mkdir -p "$LOG_DIR" "$DATA_DIR" "$WORK_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR" "$WORK_DIR"
+	mkdir -p "$LOG_DIR" "$DATA_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR"
 	touch "$PID_FILE" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$PID_FILE"
 
   if [ -n "$MAX_OPEN_FILES" ]; then
