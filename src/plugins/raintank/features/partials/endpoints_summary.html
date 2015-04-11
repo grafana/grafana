@@ -47,18 +47,13 @@
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
-								<a href="endpoints/summary/{{endpoint.id}}">
-									View
+								<a ng-click="disableAll()">
+									Disable All
 								</a>
 							</li>
-							<li ng-hide="endpoint.public && !contextSrv.isGrafanaAdmin"h>
-								<a href="endpoints/edit/{{endpoint.id}}">
-									Edit
-								</a>
-							</li>
-							<li ng-hide="endpoint.public && !contextSrv.isGrafanaAdmin">
-								<a ng-click="remove(endpoint)">
-									Delete
+							<li>
+								<a ng-click="enableAll()">
+									Enable All
 								</a>
 							</li>
 						</ul>
@@ -73,9 +68,9 @@
 
 						<div class="statusEvents">
 							<div class="health">
-								<img src="img/online.svg" width="35px" height="35px">
+								<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="35px" height="35px">
 								<div class="status">
-									<span class="online">Up</span> <span class="statusMsg">a few seconds ago</span>
+									<span class="{{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
 								</div>
 							</div>
 							<div class="event">
@@ -92,9 +87,9 @@
 
 						<div class="statusEvents">
 							<div class="health">
-								<img src="img/critical.svg" width="35px" height="35px">
+								<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="35px" height="35px">
 								<div class="status">
-									<span class="critical">Down</span> <span class="statusMsg">a month ago</span>
+									<span class="{{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
 								</div>
 							</div>	
 							<div class="event">
@@ -114,9 +109,9 @@
 
 						<div class="statusEvents">
 							<div class="health">
-								<img src="img/warn.svg" width="35px" height="35px">
+								<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="35px" height="35px">
 								<div class="status">
-									<span class="warn">Warning</span> <span class="statusMsg">132 days ago</span>
+									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
 								</div>
 							</div>			
 							<div class="event">
@@ -136,9 +131,9 @@
 
 						<div class="statusEvents">
 							<div class="health">
-								<img src="img/nodata.svg" width="35px" height="35px">
+								<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="35px" height="35px">
 								<div class="status">
-									<span class="nodata">No Data</span> <span class="statusMsg"></span>
+									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
 								</div>
 							</div>		
 						</div>
