@@ -1,4 +1,4 @@
-# 2.0.0-Beta3 (unreleased)
+# 2.0.0-Beta3 (2015-04-12)
 
 **RPM / DEB Package changes (to follow HFS)**
 - binary name changed to grafana-server
@@ -18,7 +18,7 @@
 **Config breaking change (setting rename)**
 - `[log] root_path` has changed to `[paths] logs`
 
-# 2.0.0-Beta2  (unreleased)
+# 2.0.0-Beta2  (...)
 
 **Enhancements**
 - [Issue #1701](https://github.com/grafana/grafana/issues/1701). Share modal: Override UI theme via URL param for Share link, rendered panel, or embedded panel
