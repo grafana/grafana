@@ -70,7 +70,7 @@ func main() {
 
 		case "package":
 			//verifyGitRepoIsClean()
-			//grunt("release", "--pkgVer="+version)
+			grunt("release", "--pkgVer="+version)
 			createLinuxPackages()
 
 		case "latest":
