@@ -1,4 +1,24 @@
-# 2.0.0-RC1  (unreleased)
+# 2.0.0-Beta3 (unreleased)
+
+**RPM / DEB Package changes (to follow HFS)**
+- binary name changed to grafana-server
+- does not install to `/opt/grafana` any more, installs to `/usr/share/grafana`
+- binary to `/usr/sbin/grafana-server`
+- init.d script improvements, renamed to `/etc/init.d/grafana-server`
+- added default file with environment variables,
+  - `/etc/default/grafana-server` (deb/ubuntu)
+  - `/etc/sysconfig/grafana-server` (centos/redhat)
+
+- added systemd service file, tested on debian jessie and centos7
+- config file in same location `/etc/grafana/grafana.ini` (now complete config file but with every setting commented out)
+- data directory (where sqlite3) file is stored is now by default `/var/lib/grafana`
+- no symlinking current to versions anymore
+- For more info see [Issue #1758](https://github.com/grafana/grafana/issues/1758).
+
+**Config breaking change (setting rename)**
+- `[log] root_path` has changed to `[paths] logs`
+
+# 2.0.0-Beta2  (unreleased)
 
 **Enhancements**
 - [Issue #1701](https://github.com/grafana/grafana/issues/1701). Share modal: Override UI theme via URL param for Share link, rendered panel, or embedded panel
