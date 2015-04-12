@@ -55,9 +55,9 @@ if [ $1 -eq 1 ] ; then
     echo "### You can start grafana-server by executing"
     echo " sudo /bin/systemctl start grafana-server.service"
 
-  elif [ -x /usr/sbin/update-rc.d ] ; then
+  elif [ -x /sbin/chkconfig ] ; then
     echo "### NOT starting grafana-server by default on bootup, please execute"
-    echo " sudo update-rc.d grafana-server defaults 95 10"
+    echo " sudo /sbin/chkconfig --add grafana-server"
     echo "### In order to start grafana-server, execute"
     echo " sudo service grafana-server start"
   fi
