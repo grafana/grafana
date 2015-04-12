@@ -327,25 +327,6 @@ function (angular, _) {
     };
 
     // Validation
-    function MetricListToObject(MetricList) {
-      var result = {};
-      var Metric;
-      var MetricArray = [];
-      var MetricCnt = 0;
-      for (var i =0;i < MetricList.length; i++) {
-        Metric = MetricList[i];
-        MetricArray = Metric.split('.');
-        if (!result.hasOwnProperty(MetricArray[0])) {
-          result[MetricArray[0]] = {};
-        }
-        if (!result[MetricArray[0]].hasOwnProperty(MetricArray[1])) {
-          result[MetricArray[0]][MetricArray[1]] = [];
-        }
-        result[MetricArray[0]][MetricArray[1]].push(MetricArray[2]);
-      }
-      return result;
-    }
-
     function validateTarget(target) {
       var errs = {};
 
