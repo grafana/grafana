@@ -29,8 +29,9 @@ function (angular, _, kbn) {
       var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
       var plotParams = _.compact(_.map(options.targets, function(target) {
         var alias = target.alias;
-        if (typeof target.alias == 'undefined' || target.alias == "")
+        if (typeof target.alias === 'undefined' || target.alias === "") {
           alias = target.metric;
+        }
         return !target.hide
             ?  {alias: alias,
                 exouter: target.exOuter}
@@ -171,8 +172,9 @@ function (angular, _, kbn) {
             }
           });
           details+= ") ";
-          if (details != " ( ) ")
+          if (details !== " ( ) ") {
             target += details;
+          }
           var datapoints = [];
 
           for (var i = 0; i < result.values.length; i++) {
@@ -180,8 +182,9 @@ function (angular, _, kbn) {
             var v = result.values[i][1];
             datapoints[i] = [v, t];
           }
-          if (plotParams[index].exouter)
-            datapoints = PeakFilter(datapoints, 10);
+          if (plotParams[index].exouter) {
+            datapoints = new PeakFilter(datapoints, 10);
+          }
           output.push({ target: target, datapoints: datapoints });
         });
         index ++;
@@ -387,27 +390,31 @@ function (angular, _, kbn) {
     function PeakFilter(dataIn, limit) {
       var datapoints = dataIn;
       var arrLength = datapoints.length;
-      if (arrLength <= 3)
+      if (arrLength <= 3) {
         return datapoints;
+      }
       var LastIndx = arrLength - 1;
 
       // Check first point
       var prvDelta = Math.abs((datapoints[1][0] - datapoints[0][0]) / datapoints[0][0]);
       var nxtDelta = Math.abs((datapoints[1][0] - datapoints[2][0]) / datapoints[2][0]);
-      if (prvDelta >= limit && nxtDelta < limit)
+      if (prvDelta >= limit && nxtDelta < limit) {
         datapoints[0][0] = datapoints[1][0];
+      }
 
       // Check last point
       prvDelta = Math.abs((datapoints[LastIndx - 1][0] - datapoints[LastIndx - 2][0]) / datapoints[LastIndx - 2][0]);
       nxtDelta = Math.abs((datapoints[LastIndx - 1][0] - datapoints[LastIndx][0]) / datapoints[LastIndx][0]);
-      if (prvDelta >= limit && nxtDelta < limit)
+      if (prvDelta >= limit && nxtDelta < limit) {
         datapoints[LastIndx][0] = datapoints[LastIndx - 1][0];
+      }
 
       for (var i = 1; i < arrLength - 1; i++) {
         prvDelta = Math.abs((datapoints[i][0] - datapoints[i - 1][0]) / datapoints[i - 1][0]);
         nxtDelta = Math.abs((datapoints[i][0] - datapoints[i + 1][0]) / datapoints[i + 1][0]);
-        if (prvDelta >= limit && nxtDelta >= limit)
+        if (prvDelta >= limit && nxtDelta >= limit) {
           datapoints[i][0] = (datapoints[i-1][0] + datapoints[i+1][0]) / 2;
+        }
       }
 
       return datapoints;
