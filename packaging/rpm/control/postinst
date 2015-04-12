@@ -37,14 +37,7 @@ if [ $1 -eq 1 ] ; then
     -c "grafana user" grafana
 	fi
 
-  if [ -x /opt/grafana/data/grafana.db ]; then
-    echo "### Upgrading Notice ### "
-    echo "-- New grafana install home is /usr/share/grafana"
-    echo "-- Moving sqlite3 database to /var/lib/grafana/"
-    echo "-- Notice: service name && binary changed to grafana-server"
-  fi
-
-	# Set user permissions on /var/log/grafana, /var/lib/grafana
+ 	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
 	chmod 755 /var/log/grafana /var/lib/grafana
@@ -61,14 +54,23 @@ if [ $1 -eq 1 ] ; then
     echo " sudo /bin/systemctl enable grafana-server.service"
     echo "### You can start grafana-server by executing"
     echo " sudo /bin/systemctl start grafana-server.service"
-
   elif [ -x /sbin/chkconfig ] ; then
     echo "### NOT starting grafana-server by default on bootup, please execute"
     echo " sudo /sbin/chkconfig --add grafana-server"
     echo "### In order to start grafana-server, execute"
     echo " sudo service grafana-server start"
   fi
-elif [ $1 -ge 2 -a "$RESTART_ON_UPGRADE" == "true" ] ; then
-  stopGrafana
-  startGrafana
+
+elif [ $1 -ge 2 ] ; then
+  if [ -x /opt/grafana/ ]; then
+    echo "### Upgrading Notice ### "
+    echo "-- New grafana install home is /usr/share/grafana"
+    echo "-- Please move sqlite3 database to /var/lib/grafana/"
+    echo "-- Notice: service name && binary changed to grafana-server"
+  fi
+
+  if [ "$RESTART_ON_UPGRADE" == "true" ]; then
+    stopGrafana
+    startGrafana
+  fi
 fi
