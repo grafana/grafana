@@ -10,7 +10,7 @@
 				<li>
 					<a bs-tooltip="'Group by\'s are always executed before aggregations!'"
 						ng-click="alert('Group by\'s are always executed before aggregations!')">
-						<i class="icon-info"></i>
+						<i class="fa fa-info-circle"></i>
 					</a>
 				</li>
 				<li class="dropdown">
@@ -72,7 +72,7 @@
 					<a bs-tooltip="target.errors.metric"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.metric">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 
@@ -98,13 +98,13 @@
 				<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
 					{{key}}&nbsp;=&nbsp;{{value}}
 					<a ng-click="removeFilterTag(key)">
-						<i class="icon-remove"></i>
+						<i class="fa fa-remove"></i>
 					</a>
 				</li>
 
 				<li class="tight-form-item" ng-hide="addFilterTagMode">
 					<a ng-click="addFilterTag()">
-						<i class="icon-plus-sign"></i>
+						<i class="fa fa-plus"></i>
 					</a>
 				</li>
 
@@ -130,12 +130,12 @@
 					<a bs-tooltip="target.errors.tags"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.tags">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 					<li class="tight-form-item" ng-show="addFilterTagMode">
 						<a ng-click="addFilterTag()">
-							<i ng-show="target.errors.tags" class="icon-remove"></i>
-							<i ng-hide="target.errors.tags" class="icon-plus-sign"></i>
+							<i ng-show="target.errors.tags" class="fa fa-remove"></i>
+							<i ng-hide="target.errors.tags" class="fa fa-plus"></i>
 						</a>
 					</li>
 				</li>
@@ -152,7 +152,7 @@
 				<li ng-repeat="key in target.groupByTags track by $index" class="tight-form-item">
 					{{key}}
 					<a ng-click="removeGroupByTag($index)">
-						<i class="icon-remove"></i>
+						<i class="fa fa-remove"></i>
 					</a>
 				</li>
 
@@ -163,13 +163,13 @@
 				<li ng-repeat="groupByObject in target.nonTagGroupBys track by $index" class="tight-form-item">
 					{{_.values(groupByObject)}}
 					<a ng-click="removeNonTagGroupBy($index)">
-						<i class="icon-remove"></i>
+						<i class="fa fa-remove"></i>
 					</a>
 				</li>
 
 				<li class="tight-form-item" ng-hide="addGroupByMode">
 					<a ng-click="addGroupBy()">
-						<i class="fa fa-fw fa-plus"></i>
+						<i class="fa fa-plus"></i>
 					</a>
 				</li>
 				<li ng-show="addGroupByMode">
@@ -190,7 +190,7 @@
 					<a bs-tooltip="target.errors.groupBy.tagKey"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.groupBy.tagKey">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 				<li ng-show="isValueGroupBy">
@@ -204,7 +204,7 @@
 					<a bs-tooltip="target.errors.groupBy.valueRange"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.groupBy.valueRange">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 				<li ng-show="isTimeGroupBy">
@@ -219,7 +219,7 @@
 					<a bs-tooltip="target.errors.groupBy.timeInterval"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.groupBy.timeInterval">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 				<li ng-show="isTimeGroupBy">
@@ -233,13 +233,13 @@
 					<a bs-tooltip="target.errors.groupBy.groupCount"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.groupBy.groupCount">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 				<li class="tight-form-item" ng-show="addGroupByMode">
 					<a ng-click="addGroupBy()">
-						<i ng-hide="isGroupByValid" class="icon-remove"></i>
-						<i ng-show="isGroupByValid" class="icon-plus-sign"></i>
+						<i ng-hide="isGroupByValid" class="fa fa-remove"></i>
+						<i ng-show="isGroupByValid" class="fa fa-plus"></i>
 					</a>
 				</li>
 
@@ -285,7 +285,7 @@
 					<a bs-tooltip="target.errors.horAggregator.samplingRate"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.horAggregator.samplingRate">
-						<i class="icon-warning-sign"></i>
+						<i class="fa fa-warning"></i>
 					</a>
 				</li>
 
@@ -375,7 +375,7 @@
 				<a bs-tooltip="target.errors.sampling"
 					style="color: rgb(229, 189, 28)"
 					ng-show="target.errors.sampling">
-					<i class="icon-warning-sign"></i>
+					<i class="fa fa-warning"></i>
 				</a>
 			</li>
 		</ul>
