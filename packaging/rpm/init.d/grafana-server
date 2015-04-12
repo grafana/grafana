@@ -82,13 +82,14 @@ case "$1" in
 
     # Start Daemon
     cd $GRAFANA_HOME
-    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $DAEMON_USER
+    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER
     return=$?
     if [ $return -eq 0 ]
     then
       sleep 1
       # check if pid file has been written two
       if ! [[ -s $PID_FILE ]]; then
+        echo "FAILED"
         exit 3
       fi
       i=0
@@ -98,7 +99,10 @@ case "$1" in
       do
         sleep 1
         i=$(($i + 1))
-        [ $i -gt $timeout ] && exit 4
+        if [ $i -gt $timeout ]; then
+          echo "FAILED"
+          exit 4
+        fi
       done
     fi
 
