@@ -27,10 +27,11 @@ function (angular, _, kbn) {
       var end = options.range.to;
 
       var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
-      var plotParams = _.compact(_.map(options.targets, function(target){
+      var plotParams = _.compact(_.map(options.targets, function(target) {
         var alias = target.alias;
-        if (typeof target.alias == 'undefined' || target.alias == "")
+        if (typeof target.alias === 'undefined' || target.alias === "") {
           alias = target.metric;
+        }
         return !target.hide
             ?  {alias: alias,
                 exouter: target.exOuter}
@@ -54,7 +55,7 @@ function (angular, _, kbn) {
       var reqBody = {
         metrics: queries
       };
-      reqBody.cache_time=0;
+      reqBody.cache_time = 0;
       convertToKairosTime(start,reqBody,'start');
       convertToKairosTime(end,reqBody,'end');
       var options = {
@@ -86,7 +87,7 @@ function (angular, _, kbn) {
     };
 
     KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname,range,type,keyValue) {
-      if(tagList && (metricname === tagList.metricName) && (range.from === tagList.range.from) &&
+      if (tagList && (metricname === tagList.metricName) && (range.from === tagList.range.from) &&
         (range.to === tagList.range.to)) {
         return getTagListFromResponse(tagList.results,type,keyValue);
       }
@@ -119,10 +120,10 @@ function (angular, _, kbn) {
       if (!results.data) {
         return [];
       }
-      if(type==="key") {
+      if (type === "key") {
         return _.keys(results.data.queries[0].results[0].tags);
       }
-      else if(type==="value" && _.has(results.data.queries[0].results[0].tags,keyValue)) {
+      else if (type === "value" && _.has(results.data.queries[0].results[0].tags,keyValue)) {
         return results.data.queries[0].results[0].tags[keyValue];
       }
       return [];
@@ -134,13 +135,13 @@ function (angular, _, kbn) {
      * @returns {*}
      */
     function handleQueryError(results) {
-      if(results.data.errors && !_.isEmpty(results.data.errors)) {
+      if (results.data.errors && !_.isEmpty(results.data.errors)) {
         var errors = {
           message: results.data.errors[0]
         };
         return $q.reject(errors);
       }
-      else{
+      else {
         return $q.reject(results);
       }
     }
@@ -148,31 +149,32 @@ function (angular, _, kbn) {
     function handleKairosDBQueryResponse(plotParams, results) {
       var output = [];
       var index = 0;
-      _.each(results.data.queries, function (series) {
+      _.each(results.data.queries, function(series) {
         var sample_size = series.sample_size;
         console.log("sample_size:" + sample_size + " samples");
 
-        _.each(series.results, function (result) {
+        _.each(series.results, function(result) {
 
           //var target = result.name;
           var target = plotParams[index].alias;
           var details = " ( ";
-          _.each(result.group_by,function(element) {
-            if(element.name==="tag") {
-              _.each(element.group,function(value, key) {
-                details+= key+"="+value+" ";
+          _.each(result.group_by, function(element) {
+            if (element.name === "tag") {
+              _.each(element.group, function(value, key) {
+                details += key + "=" + value + " ";
               });
             }
-            else if(element.name==="value") {
-              details+= 'value_group='+element.group.group_number+" ";
+            else if (element.name === "value") {
+              details += 'value_group=' + element.group.group_number + " ";
             }
-            else if(element.name==="time") {
-              details+= 'time_group='+element.group.group_number+" ";
+            else if (element.name === "time") {
+              details += 'time_group=' + element.group.group_number + " ";
             }
           });
-          details+= ") ";
-          if (details != " ( ) ")
+          details += ") ";
+          if (details !== " ( ) ") {
             target += details;
+          }
           var datapoints = [];
 
           for (var i = 0; i < result.values.length; i++) {
@@ -180,8 +182,9 @@ function (angular, _, kbn) {
             var v = result.values[i][1];
             datapoints[i] = [v, t];
           }
-          if (plotParams[index].exouter)
-            datapoints = PeakFilter(datapoints, 10);
+          if (plotParams[index].exouter) {
+            datapoints = new PeakFilter(datapoints, 10);
+          }
           output.push({ target: target, datapoints: datapoints });
         });
         index ++;
@@ -201,7 +204,7 @@ function (angular, _, kbn) {
       };
 
       query.aggregators = [];
-      if(target.downsampling!=='(NONE)') {
+      if (target.downsampling !== '(NONE)') {
         query.aggregators.push({
           name: target.downsampling,
           align_sampling: true,
@@ -209,47 +212,47 @@ function (angular, _, kbn) {
           sampling: KairosDBDatasource.prototype.convertToKairosInterval(target.sampling || options.interval)
         });
       }
-      if(target.horizontalAggregators) {
-        _.each(target.horizontalAggregators,function(chosenAggregator) {
+      if (target.horizontalAggregators) {
+        _.each(target.horizontalAggregators, function(chosenAggregator) {
           var returnedAggregator = {
             name:chosenAggregator.name
           };
-          if(chosenAggregator.sampling_rate) {
+          if (chosenAggregator.sampling_rate) {
             returnedAggregator.sampling = KairosDBDatasource.prototype.convertToKairosInterval(chosenAggregator.sampling_rate);
             returnedAggregator.align_sampling = true;
             returnedAggregator.align_start_time =true;
           }
-          if(chosenAggregator.unit) {
-            returnedAggregator.unit = chosenAggregator.unit+'s';
+          if (chosenAggregator.unit) {
+            returnedAggregator.unit = chosenAggregator.unit + 's';
           }
-          if(chosenAggregator.factor && chosenAggregator.name==='div') {
+          if (chosenAggregator.factor && chosenAggregator.name === 'div') {
             returnedAggregator.divisor = chosenAggregator.factor;
           }
-          else if(chosenAggregator.factor && chosenAggregator.name==='scale') {
-            returnedAggregator.factor  = chosenAggregator.factor;
+          else if (chosenAggregator.factor && chosenAggregator.name === 'scale') {
+            returnedAggregator.factor = chosenAggregator.factor;
           }
-          if(chosenAggregator.percentile) {
+          if (chosenAggregator.percentile) {
             returnedAggregator.percentile = chosenAggregator.percentile;
           }
           query.aggregators.push(returnedAggregator);
         });
       }
-      if(_.isEmpty(query.aggregators)) {
+      if (_.isEmpty(query.aggregators)) {
         delete query.aggregators;
       }
 
-      if(target.tags) {
+      if (target.tags) {
         query.tags = angular.copy(target.tags);
       }
 
-      if(target.groupByTags || target.nonTagGroupBys) {
+      if (target.groupByTags || target.nonTagGroupBys) {
         query.group_by = [];
-        if(target.groupByTags) {query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});}
-        if(target.nonTagGroupBys) {
-          _.each(target.nonTagGroupBys,function(rawGroupBy) {
+        if (target.groupByTags) {query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});}
+        if (target.nonTagGroupBys) {
+          _.each(target.nonTagGroupBys, function(rawGroupBy) {
             var formattedGroupBy = angular.copy(rawGroupBy);
-            if(formattedGroupBy.name==='time') {
-              formattedGroupBy.range_size=KairosDBDatasource.prototype.convertToKairosInterval(formattedGroupBy.range_size);
+            if (formattedGroupBy.name === 'time') {
+              formattedGroupBy.range_size = KairosDBDatasource.prototype.convertToKairosInterval(formattedGroupBy.range_size);
             }
             query.group_by.push(formattedGroupBy);
           });
@@ -266,7 +269,7 @@ function (angular, _, kbn) {
       var interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
       var interval_regex_ms = /(\d+(?:\.\d+)?)(ms)/;
       var matches = intervalString.match(interval_regex_ms);
-      if(!matches) {
+      if (!matches) {
         matches = intervalString.match(interval_regex);
       }
       if (!matches) {
@@ -275,13 +278,13 @@ function (angular, _, kbn) {
 
       var value = matches[1];
       var unit = matches[2];
-      if (value%1!==0) {
-        if(unit==='ms') {throw new Error('Invalid interval value, cannot be smaller than the millisecond');}
-        value = Math.round(kbn.intervals_in_seconds[unit]*value*1000);
+      if (value%1 !== 0) {
+        if (unit === 'ms') {throw new Error('Invalid interval value, cannot be smaller than the millisecond');}
+        value = Math.round(kbn.intervals_in_seconds[unit] * value * 1000);
         unit = 'ms';
 
       }
-      switch(unit) {
+      switch (unit) {
         case 'ms':
           unit = 'milliseconds';
           break;
@@ -334,7 +337,7 @@ function (angular, _, kbn) {
           if (result) {
             var value = result[1];
             var unit = result[2];
-            switch(unit) {
+            switch (unit) {
               case 'ms':
                 unit = 'milliseconds';
                 break;
@@ -375,7 +378,7 @@ function (angular, _, kbn) {
         date = kbn.parseDate(date);
       }
 
-      if(_.isDate(date)) {
+      if (_.isDate(date)) {
         name = start_stop_name + "_absolute";
         response_obj[name] = date.getTime();
         return;
@@ -387,27 +390,31 @@ function (angular, _, kbn) {
     function PeakFilter(dataIn, limit) {
       var datapoints = dataIn;
       var arrLength = datapoints.length;
-      if (arrLength <= 3)
+      if (arrLength <= 3) {
         return datapoints;
+      }
       var LastIndx = arrLength - 1;
 
       // Check first point
       var prvDelta = Math.abs((datapoints[1][0] - datapoints[0][0]) / datapoints[0][0]);
       var nxtDelta = Math.abs((datapoints[1][0] - datapoints[2][0]) / datapoints[2][0]);
-      if (prvDelta >= limit && nxtDelta < limit)
+      if (prvDelta >= limit && nxtDelta < limit) {
         datapoints[0][0] = datapoints[1][0];
+      }
 
       // Check last point
       prvDelta = Math.abs((datapoints[LastIndx - 1][0] - datapoints[LastIndx - 2][0]) / datapoints[LastIndx - 2][0]);
       nxtDelta = Math.abs((datapoints[LastIndx - 1][0] - datapoints[LastIndx][0]) / datapoints[LastIndx][0]);
-      if (prvDelta >= limit && nxtDelta < limit)
+      if (prvDelta >= limit && nxtDelta < limit) {
         datapoints[LastIndx][0] = datapoints[LastIndx - 1][0];
+      }
 
-      for (var i = 1; i < arrLength - 1; i++){
+      for (var i = 1; i < arrLength - 1; i++) {
         prvDelta = Math.abs((datapoints[i][0] - datapoints[i - 1][0]) / datapoints[i - 1][0]);
         nxtDelta = Math.abs((datapoints[i][0] - datapoints[i + 1][0]) / datapoints[i + 1][0]);
-        if (prvDelta >= limit && nxtDelta >= limit)
-          datapoints[i][0] = (datapoints[i-1][0] + datapoints[i+1][0]) / 2;
+        if (prvDelta >= limit && nxtDelta >= limit) {
+          datapoints[i][0] = (datapoints[i - 1][0] + datapoints[i + 1][0]) / 2;
+        }
       }
 
       return datapoints;

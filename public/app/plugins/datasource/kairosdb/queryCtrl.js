@@ -94,7 +94,7 @@ function (angular, _) {
 
       $scope.validateFilterTag();
       if (!$scope.target.errors.tags) {
-        if(!_.has($scope.target.tags,$scope.target.currentTagKey)) {
+        if (!_.has($scope.target.tags,$scope.target.currentTagKey)) {
           $scope.target.tags[$scope.target.currentTagKey] = [];
         }
         $scope.target.tags[$scope.target.currentTagKey].push($scope.target.currentTagValue);
@@ -108,7 +108,7 @@ function (angular, _) {
 
     $scope.removeFilterTag = function(key) {
       delete $scope.target.tags[key];
-      if(_.size($scope.target.tags)===0) {
+      if (_.size($scope.target.tags) === 0) {
         $scope.target.tags = null;
       }
       $scope.targetBlur();
@@ -116,7 +116,7 @@ function (angular, _) {
 
     $scope.validateFilterTag = function() {
       $scope.target.errors.tags = null;
-      if(!$scope.target.currentTagKey || !$scope.target.currentTagValue) {
+      if (!$scope.target.currentTagKey || !$scope.target.currentTagValue) {
         $scope.target.errors.tags = "You must specify a tag name and value.";
       }
     };
@@ -136,7 +136,7 @@ function (angular, _) {
       $scope.validateGroupBy();
       // nb: if error is found, means that user clicked on cross : cancels input
       if (_.isEmpty($scope.target.errors.groupBy)) {
-        if($scope.isTagGroupBy) {
+        if ($scope.isTagGroupBy) {
           if (!$scope.target.groupByTags) {
             $scope.target.groupByTags = [];
           }
@@ -147,15 +147,15 @@ function (angular, _) {
           }
           $scope.target.groupBy.tagKey = '';
         }
-        else  {
+        else {
           if (!$scope.target.nonTagGroupBys) {
             $scope.target.nonTagGroupBys = [];
           }
           var groupBy = {
             name: $scope.target.currentGroupByType
           };
-          if($scope.isValueGroupBy) {groupBy.range_size = $scope.target.groupBy.valueRange;}
-          else if($scope.isTimeGroupBy) {
+          if ($scope.isValueGroupBy) {groupBy.range_size = $scope.target.groupBy.valueRange;}
+          else if ($scope.isTimeGroupBy) {
             groupBy.range_size = $scope.target.groupBy.timeInterval;
             groupBy.group_count = $scope.target.groupBy.groupCount;
           }
@@ -171,7 +171,7 @@ function (angular, _) {
 
     $scope.removeGroupByTag = function(index) {
       $scope.target.groupByTags.splice(index, 1);
-      if(_.size($scope.target.groupByTags)===0) {
+      if (_.size($scope.target.groupByTags) === 0) {
         $scope.target.groupByTags = null;
       }
       $scope.targetBlur();
@@ -179,16 +179,16 @@ function (angular, _) {
 
     $scope.removeNonTagGroupBy = function(index) {
       $scope.target.nonTagGroupBys.splice(index, 1);
-      if(_.size($scope.target.nonTagGroupBys)===0) {
+      if (_.size($scope.target.nonTagGroupBys) === 0) {
         $scope.target.nonTagGroupBys = null;
       }
       $scope.targetBlur();
     };
 
     $scope.changeGroupByInput = function() {
-      $scope.isTagGroupBy = $scope.target.currentGroupByType==='tag';
-      $scope.isValueGroupBy = $scope.target.currentGroupByType==='value';
-      $scope.isTimeGroupBy = $scope.target.currentGroupByType==='time';
+      $scope.isTagGroupBy = $scope.target.currentGroupByType === 'tag';
+      $scope.isValueGroupBy = $scope.target.currentGroupByType === 'value';
+      $scope.isTimeGroupBy = $scope.target.currentGroupByType === 'time';
       $scope.validateGroupBy();
     };
 
@@ -196,32 +196,32 @@ function (angular, _) {
       delete $scope.target.errors.groupBy;
       var errors = {};
       $scope.isGroupByValid = true;
-      if($scope.isTagGroupBy) {
-        if(!$scope.target.groupBy.tagKey) {
+      if ($scope.isTagGroupBy) {
+        if (!$scope.target.groupBy.tagKey) {
           $scope.isGroupByValid = false;
           errors.tagKey = 'You must supply a tag name';
         }
       }
-      if($scope.isValueGroupBy) {
-        if(!$scope.target.groupBy.valueRange || !isInt($scope.target.groupBy.valueRange)) {
+      if ($scope.isValueGroupBy) {
+        if (!$scope.target.groupBy.valueRange || !isInt($scope.target.groupBy.valueRange)) {
           errors.valueRange = "Range must be an integer";
           $scope.isGroupByValid = false;
         }
       }
-      if($scope.isTimeGroupBy) {
+      if ($scope.isTimeGroupBy) {
         try {
           $scope.datasource.convertToKairosInterval($scope.target.groupBy.timeInterval);
-        } catch(err) {
+        } catch (err) {
           errors.timeInterval = err.message;
           $scope.isGroupByValid = false;
         }
-        if(!$scope.target.groupBy.groupCount || !isInt($scope.target.groupBy.groupCount)) {
+        if (!$scope.target.groupBy.groupCount || !isInt($scope.target.groupBy.groupCount)) {
           errors.groupCount = "Group count must be an integer";
           $scope.isGroupByValid = false;
         }
       }
 
-      if(!_.isEmpty(errors)) {
+      if (!_.isEmpty(errors)) {
         $scope.target.errors.groupBy = errors;
       }
     };
@@ -245,17 +245,17 @@ function (angular, _) {
 
       $scope.validateHorizontalAggregator();
       // nb: if error is found, means that user clicked on cross : cancels input
-      if(_.isEmpty($scope.target.errors.horAggregator)) {
+      if (_.isEmpty($scope.target.errors.horAggregator)) {
         if (!$scope.target.horizontalAggregators) {
           $scope.target.horizontalAggregators = [];
         }
         var aggregator = {
           name:$scope.target.currentHorizontalAggregatorName
         };
-        if($scope.hasSamplingRate) {aggregator.sampling_rate = $scope.target.horAggregator.samplingRate;}
-        if($scope.hasUnit) {aggregator.unit = $scope.target.horAggregator.unit;}
-        if($scope.hasFactor) {aggregator.factor = $scope.target.horAggregator.factor;}
-        if($scope.hasPercentile) {aggregator.percentile = $scope.target.horAggregator.percentile;}
+        if ($scope.hasSamplingRate) {aggregator.sampling_rate = $scope.target.horAggregator.samplingRate;}
+        if ($scope.hasUnit) {aggregator.unit = $scope.target.horAggregator.unit;}
+        if ($scope.hasFactor) {aggregator.factor = $scope.target.horAggregator.factor;}
+        if ($scope.hasPercentile) {aggregator.percentile = $scope.target.horAggregator.percentile;}
         $scope.target.horizontalAggregators.push(aggregator);
         $scope.targetBlur();
       }
@@ -270,7 +270,7 @@ function (angular, _) {
 
     $scope.removeHorizontalAggregator = function(index) {
       $scope.target.horizontalAggregators.splice(index, 1);
-      if(_.size($scope.target.horizontalAggregators)===0) {
+      if (_.size($scope.target.horizontalAggregators) === 0) {
         $scope.target.horizontalAggregators = null;
       }
 
@@ -282,7 +282,7 @@ function (angular, _) {
         $scope.target.currentHorizontalAggregatorName);
       $scope.hasUnit = _.contains(['sampler','rate'], $scope.target.currentHorizontalAggregatorName);
       $scope.hasFactor = _.contains(['div','scale'], $scope.target.currentHorizontalAggregatorName);
-      $scope.hasPercentile = 'percentile'===$scope.target.currentHorizontalAggregatorName;
+      $scope.hasPercentile = 'percentile' === $scope.target.currentHorizontalAggregatorName;
       $scope.validateHorizontalAggregator();
     };
 
@@ -290,26 +290,26 @@ function (angular, _) {
       delete $scope.target.errors.horAggregator;
       var errors = {};
       $scope.isAggregatorValid = true;
-      if($scope.hasSamplingRate) {
+      if ($scope.hasSamplingRate) {
         try {
           $scope.datasource.convertToKairosInterval($scope.target.horAggregator.samplingRate);
-        } catch(err) {
+        } catch (err) {
           errors.samplingRate = err.message;
           $scope.isAggregatorValid = false;
         }
       }
-      if($scope.hasFactor) {
-        if(!$scope.target.horAggregator.factor) {
+      if ($scope.hasFactor) {
+        if (!$scope.target.horAggregator.factor) {
           errors.factor = 'You must supply a numeric value for this aggregator';
           $scope.isAggregatorValid = false;
         }
-        else if(parseInt($scope.target.horAggregator.factor)===0 && $scope.target.currentHorizontalAggregatorName==='div') {
+        else if (parseInt($scope.target.horAggregator.factor) === 0 && $scope.target.currentHorizontalAggregatorName === 'div') {
           errors.factor = 'Cannot divide by 0';
           $scope.isAggregatorValid = false;
         }
       }
-      if($scope.hasPercentile) {
-        if(!$scope.target.horAggregator.percentile ||
+      if ($scope.hasPercentile) {
+        if (!$scope.target.horAggregator.percentile ||
           $scope.target.horAggregator.percentile<=0 ||
           $scope.target.horAggregator.percentile>1) {
           errors.percentile = 'Percentile must be between 0 and 1';
@@ -317,7 +317,7 @@ function (angular, _) {
         }
       }
 
-      if(!_.isEmpty(errors)) {
+      if (!_.isEmpty(errors)) {
         $scope.target.errors.horAggregator = errors;
       }
     };
@@ -327,25 +327,6 @@ function (angular, _) {
     };
 
     // Validation
-    function MetricListToObject(MetricList) {
-      var result = {};
-      var Metric;
-      var MetricArray = [];
-      var MetricCnt = 0;
-      for (var i =0;i < MetricList.length; i++) {
-        Metric = MetricList[i];
-        MetricArray = Metric.split('.');
-        if(!result.hasOwnProperty(MetricArray[0])) {
-          result[MetricArray[0]] = {};
-        }
-        if(!result[MetricArray[0]].hasOwnProperty(MetricArray[1])) {
-          result[MetricArray[0]][MetricArray[1]] = [];
-        }
-        result[MetricArray[0]][MetricArray[1]].push(MetricArray[2]);
-      }
-      return result;
-    }
-
     function validateTarget(target) {
       var errs = {};
 
@@ -357,7 +338,7 @@ function (angular, _) {
         if (target.sampling) {
           $scope.datasource.convertToKairosInterval(target.sampling);
         }
-      } catch(err) {
+      } catch (err) {
         errs.sampling = err.message;
       }
 
