@@ -37,6 +37,13 @@ if [ $1 -eq 1 ] ; then
     -c "grafana user" grafana
 	fi
 
+  if [ -x /opt/grafana/data/grafana.db ]; then
+    echo "### Upgrading Notice ### "
+    echo "-- New grafana install home is /usr/share/grafana"
+    echo "-- Moving sqlite3 database to /var/lib/grafana/"
+    echo "-- Notice: service name && binary changed to grafana-server"
+  fi
+
 	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
