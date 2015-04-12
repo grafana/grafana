@@ -59,12 +59,12 @@ type MonitorCollectorTag struct {
 }
 
 type MonitorCollectorState struct {
-	Id   int64
-	MonitorId int64
-	EndpointId int64
-	CollectorId int64
-	State       int64
-	Updated       time.Time
+	Id   int64 `json:"-"`
+	MonitorId int64 `json:"monitor_id"`
+	EndpointId int64 `json:"endpoint_id"`
+	CollectorId int64 `json:"collector_id"`
+	State       int64 `json:"state"`
+	Updated       time.Time `json:"updated"`
 }
 
 // ---------------
@@ -185,4 +185,10 @@ type GetMonitorTypesQuery struct {
 type GetMonitorTypeByIdQuery struct {
 	Id     int64
 	Result *MonitorTypeDTO
+}
+
+type GetMonitorHealthByIdQuery struct {
+	Id  int64
+	OrgId int64
+	Result []*MonitorCollectorState
 }

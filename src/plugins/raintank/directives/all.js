@@ -1,7 +1,8 @@
 define([
   'angular',
-  'lodash'
-], function (angular, _) {
+  'lodash',
+  'jquery'
+], function (angular, _, $) {
   var module = angular.module('grafana.directives');
 
   module.directive('raintankSetting', function ($compile) {
@@ -41,6 +42,58 @@ define([
         }
         element.html(tmpl);
         $compile(element.contents())(scope);
+      }
+    };
+  });
+
+  module.directive("rtCheckHealth", function($compile, backendSrv) {
+    return {
+      templateUrl: 'plugins/raintank/directives/partials/checkHealth.html',
+      scope: {
+        model: "=",
+      },
+      link: function(scope, element) {
+        scope.$watch("model", function(check) {
+          if (typeof(check) == "object") {
+            showHealth(check);
+          }
+        });
+
+        function showHealth(check) {
+          monitor_id = check.id;
+          if (!check.enabled) {
+            return;
+          }
+          backendSrv.get('/api/monitors/'+monitor_id+'/health').then(function(health) {
+            var tmpl = '';
+            var okCount = 0;
+            var warnCount = 0;
+            var errorCount = 0;
+            var unknownCount = 0;
+            _.forEach(health, function(checkState) {
+              if (checkState.state == -1) {
+                unknownCount++;
+                return
+              }
+              if (checkState.state == 0) {
+                okCount++;
+                return
+              }
+              if (checkState.state == 1) {
+                warnCount++;
+                return
+              }
+              if (checkState.state == 2) {
+                errorCount++;
+                return
+              }
+            });
+            scope.okCount = okCount;
+            scope.warnCount = warnCount;
+            scope.errorCount = errorCount;
+            scope.unknownCount = unknownCount;
+          });
+        }
       }
     };
   });

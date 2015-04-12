@@ -104,6 +104,18 @@ function (angular, _) {
       $location.path('/endpoints/summary/'+id);
     }
 
+    $scope.slug = function(name) {
+      var label = name.toLowerCase();
+      var re = new RegExp("[^\\w-]+");
+      var re2 = new RegExp("\\s");
+      var slug = label.replace(re, "_").replace(re2, "-");
+      return slug;
+    }
+
+    $scope.gotoDashboard = function(endpoint) {
+      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
+    }
+
     $scope.init();
   });
 });

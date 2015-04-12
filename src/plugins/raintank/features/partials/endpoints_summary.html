@@ -36,7 +36,7 @@
 	<div class="detailContainer">
 		<div class="detailColumn detailLeft">
 			<div class="rt-box clearBack oneCol">
-				<span><a class="superCTA" href="#">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
@@ -73,9 +73,7 @@
 									<span class="{{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
 								</div>
 							</div>
-							<div class="event">
-								<span class="rt-event-warning">3</span> <span class="eventType">Warnings</span>
-							</div>					
+							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
 						</div>
 						<div class="clearfix"></div>
 					</div>
@@ -92,12 +90,7 @@
 									<span class="{{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
 								</div>
 							</div>	
-							<div class="event">
-								<span class="rt-event-error">72</span> <span class="eventType">Errors</span> 
-							</div>
-							<div class="event">
-								<span class="rt-event-warning">136</span> <span class="eventType">Warnings</span>
-							</div>
+							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 						</div>
 						<div class="clearfix"></div>
 					</div>
@@ -114,12 +107,7 @@
 									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
 								</div>
 							</div>			
-							<div class="event">
-								<span class="rt-event-error">4</span> <span class="eventType">Errors</span> 
-							</div>
-							<div class="event">
-								<span class="rt-event-warning">62</span> <span class="eventType">Warnings</span>
-							</div>
+							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 						</div>
 						<div class="clearfix"></div>
 					</div>
@@ -135,7 +123,8 @@
 								<div class="status">
 									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
 								</div>
-							</div>		
+							</div>
+							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 						</div>
 						<div class="clearfix"></div>
 					</div>
@@ -145,7 +134,7 @@
 
 		<div class="detailColumn detailRight">
 			<div class="rt-box clearBack twoCol">
-				<span><a class="superCTA" href="#">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
