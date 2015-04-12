@@ -507,11 +507,11 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
 			for i, c := range collectorList {
 				monitor_collector_states[i] = &m.MonitorCollectorState{
-					EndpointId: mon.EndpointId,
-					MonitorId: mon.Id,
+					EndpointId:  mon.EndpointId,
+					MonitorId:   mon.Id,
 					CollectorId: c,
-					State: -1,
-					Updated: time.Now(),
+					State:       -1,
+					Updated:     time.Now(),
 				}
 			}
 			sess.Table("monitor_collector_state")
@@ -726,7 +726,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		for _, id := range lastState.Collectors {
 			lastCollectors[id] = false
 		}
-		
+
 		for _, id := range cmd.CollectorIds {
 			collectorIdMap[id] = true
 			collectorList = append(collectorList, id)
@@ -751,7 +751,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		if _, err = sess.Where("id=? and org_id=?", mon.Id, mon.OrgId).Update(mon); err != nil {
 			return err
 		}
-
 
 		sess.publishAfterCommit(&events.MonitorUpdated{
 			MonitorPayload: events.MonitorPayload{
@@ -878,7 +877,7 @@ func updateCollectorState(mon *m.Monitor, collectorList []int64, sess *session) 
 	}
 
 	if len(collectorsToDel) > 0 {
-		params := make([]interface{}, len(collectorsToDel) + 1)
+		params := make([]interface{}, len(collectorsToDel)+1)
 		params[0] = mon.Id
 		p := make([]string, len(collectorsToDel))
 		for i, c := range collectorsToDel {
@@ -892,7 +891,7 @@ func updateCollectorState(mon *m.Monitor, collectorList []int64, sess *session) 
 	}
 
 	// determine our state
-	if okCount < totalCount/2 || (totalCount - okCount) >= 3 {
+	if okCount < totalCount/2 || (totalCount-okCount) >= 3 {
 		//state is not OK.
 		if errorCount > 0 {
 			state = 2
@@ -923,14 +922,14 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 			return err
 		}
 		stateChange := false
-		if (len(results) < 1) {
+		if len(results) < 1 {
 			//need to insert
 			state := &m.MonitorCollectorState{
-				MonitorId: cmd.MonitorId,
-				EndpointId: cmd.EndpointId,
+				MonitorId:   cmd.MonitorId,
+				EndpointId:  cmd.EndpointId,
 				CollectorId: cmd.CollectorId,
-				State: cmd.State,
-				Updated: cmd.Updated,
+				State:       cmd.State,
+				Updated:     cmd.Updated,
 			}
 			sess.UseBool()
 			if _, err := sess.Insert(state); err != nil {
@@ -938,7 +937,7 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 				return err
 			}
 			stateChange = true
-		} else if (results[0].State != cmd.State) {
+		} else if results[0].State != cmd.State {
 			//need to update
 			state := results[0]
 			state.State = cmd.State
@@ -951,7 +950,7 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 		}
 
 		if stateChange {
-		 	//update state of monitor.
+			//update state of monitor.
 			q := m.GetMonitorByIdQuery{
 				Id:    cmd.MonitorId,
 				OrgId: cmd.OrgId,

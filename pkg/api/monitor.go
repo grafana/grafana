@@ -24,7 +24,7 @@ func GetMonitorById(c *middleware.Context) {
 func getMonitorHealthById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 	query := m.GetMonitorHealthByIdQuery{
-		Id: id,
+		Id:    id,
 		OrgId: c.OrgId,
 	}
 	err := bus.Dispatch(&query)

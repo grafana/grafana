@@ -59,12 +59,12 @@ type MonitorCollectorTag struct {
 }
 
 type MonitorCollectorState struct {
-	Id   int64 `json:"-"`
-	MonitorId int64 `json:"monitor_id"`
-	EndpointId int64 `json:"endpoint_id"`
-	CollectorId int64 `json:"collector_id"`
-	State       int64 `json:"state"`
-	Updated       time.Time `json:"updated"`
+	Id          int64     `json:"-"`
+	MonitorId   int64     `json:"monitor_id"`
+	EndpointId  int64     `json:"endpoint_id"`
+	CollectorId int64     `json:"collector_id"`
+	State       int64     `json:"state"`
+	Updated     time.Time `json:"updated"`
 }
 
 // ---------------
@@ -145,12 +145,12 @@ type DeleteMonitorCommand struct {
 }
 
 type UpdateMonitorCollectorStateCommand struct {
-	MonitorId int64 `json:"monitor_id"`
-	OrgId      int64 `json:"org_id"`
-	CollectorId int64 `json:"collector_id"`
-	EndpointId  int64  `json:"endpoint_id"`
-	State       int64  `json:"state"`
-	Updated    time.Time `json:"updated"`
+	MonitorId   int64     `json:"monitor_id"`
+	OrgId       int64     `json:"org_id"`
+	CollectorId int64     `json:"collector_id"`
+	EndpointId  int64     `json:"endpoint_id"`
+	State       int64     `json:"state"`
+	Updated     time.Time `json:"updated"`
 }
 
 // ---------------------
@@ -188,7 +188,7 @@ type GetMonitorTypeByIdQuery struct {
 }
 
 type GetMonitorHealthByIdQuery struct {
-	Id  int64
-	OrgId int64
+	Id     int64
+	OrgId  int64
 	Result []*MonitorCollectorState
 }

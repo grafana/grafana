@@ -328,7 +328,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	mg.AddMigration("drop table monitor_location_tag v1", NewDropTableMigration("monitor_location_tag"))
 
-
 	//monitorCollector
 	var monitorCollectorStateV1 = Table{
 		Name: "monitor_collector_state",
@@ -339,7 +338,6 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-
 		},
 		Indices: []*Index{
 			&Index{Cols: []string{"monitor_id", "endpoint_id", "collector_id"}},
