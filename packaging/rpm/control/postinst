@@ -49,7 +49,7 @@ if [ $1 -eq 1 ] ; then
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
   if [ -x /bin/systemctl ] ; then
-    echo "### NOT starting on installation, please execute the following statements to configure elasticsearch to start automatically using systemd"
+    echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
     echo " sudo /bin/systemctl daemon-reload"
     echo " sudo /bin/systemctl enable grafana-server.service"
     echo "### You can start grafana-server by executing"
@@ -60,7 +60,6 @@ if [ $1 -eq 1 ] ; then
     echo "### In order to start grafana-server, execute"
     echo " sudo service grafana-server start"
   fi
-
 elif [ $1 -ge 2 ] ; then
   if [ -x /opt/grafana/ ]; then
     echo "### Upgrading Notice ### "
