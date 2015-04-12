@@ -25,6 +25,7 @@ var commit = "NA"
 var buildstamp string
 
 var configFile = flag.String("config", "", "path to config file")
+var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
 
 func init() {
@@ -65,8 +66,9 @@ func main() {
 
 func initRuntime() {
 	setting.NewConfigContext(&setting.CommandLineArgs{
-		Config: *configFile,
-		Args:   flag.Args(),
+		Config:   *configFile,
+		HomePath: *homePath,
+		Args:     flag.Args(),
 	})
 
 	log.Info("Starting Grafana")

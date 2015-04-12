@@ -106,14 +106,14 @@ var (
 )
 
 type CommandLineArgs struct {
-	Config string
-	Args   []string
+	Config   string
+	HomePath string
+	Args     []string
 }
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
 	log.NewLogger(0, "console", `{"level": 0}`)
-	HomePath, _ = filepath.Abs(".")
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -226,6 +226,14 @@ func evalConfigValues() {
 }
 
 func loadSpecifedConfigFile(configFile string) {
+	if configFile == "" {
+		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		// return without error if custom file does not exist
+		if !pathExists(configFile) {
+			return
+		}
+	}
+
 	userConfig, err := ini.Load(configFile)
 	userConfig.BlockMode = false
 	if err != nil {
@@ -256,8 +264,6 @@ func loadSpecifedConfigFile(configFile string) {
 func loadConfiguration(args *CommandLineArgs) {
 	var err error
 
-	args.Config = evalEnvVarExpression(args.Config)
-
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -276,9 +282,7 @@ func loadConfiguration(args *CommandLineArgs) {
 	applyCommandLineDefaultProperties(commandLineProps)
 
 	// load specified config file
-	if args.Config != "" {
-		loadSpecifedConfigFile(args.Config)
-	}
+	loadSpecifedConfigFile(args.Config)
 
 	// apply environment overrides
 	applyEnvVariableOverrides()
@@ -290,11 +294,40 @@ func loadConfiguration(args *CommandLineArgs) {
 	evalConfigValues()
 }
 
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}
+
+func setHomePath(args *CommandLineArgs) {
+	if args.HomePath != "" {
+		HomePath = args.HomePath
+		return
+	}
+
+	HomePath, _ = filepath.Abs(".")
+	// check if homepath is correct
+	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
+		return
+	}
+
+	// try down one path
+	if pathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
+		HomePath = filepath.Join(HomePath, "../")
+	}
+}
+
 func NewConfigContext(args *CommandLineArgs) {
+	setHomePath(args)
 	loadConfiguration(args)
 
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-
 	initLogging(args)
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
@@ -314,7 +347,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
 
-	StaticRootPath = server.Key("static_root_path").MustString(path.Join(HomePath, "public"))
+	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 

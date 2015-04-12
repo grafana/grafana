@@ -10,12 +10,10 @@ import (
 
 func TestLoadingSettings(t *testing.T) {
 
-	HomePath, _ = filepath.Abs("../../")
-
 	Convey("Testing loading settings from ini file", t, func() {
 
 		Convey("Given the default ini files", func() {
-			NewConfigContext(&CommandLineArgs{})
+			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
 
 			So(AppName, ShouldEqual, "Grafana")
 			So(AdminUser, ShouldEqual, "admin")
@@ -23,7 +21,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override via environment variables", func() {
 			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-			NewConfigContext(&CommandLineArgs{})
+			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
 
 			So(AdminUser, ShouldEqual, "superduper")
 			So(DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
@@ -40,7 +38,8 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override via command line", func() {
 			NewConfigContext(&CommandLineArgs{
-				Args: []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
+				HomePath: "../../",
+				Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
 			})
 
 			So(DataPath, ShouldEqual, "/tmp/data")
@@ -49,6 +48,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override defaults via command line", func() {
 			NewConfigContext(&CommandLineArgs{
+				HomePath: "../../",
 				Args: []string{
 					"cfg:default.server.domain=test2",
 				},
@@ -60,8 +60,9 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Defaults can be overriden in specified config file", func() {
 			NewConfigContext(&CommandLineArgs{
-				Args:   []string{"cfg:default.paths.data=/tmp/data"},
-				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+				Args:     []string{"cfg:default.paths.data=/tmp/data"},
 			})
 
 			So(DataPath, ShouldEqual, "/tmp/override")
@@ -69,8 +70,9 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Command line overrides specified config file", func() {
 			NewConfigContext(&CommandLineArgs{
-				Args:   []string{"cfg:paths.data=/tmp/data"},
-				Config: filepath.Join(HomePath, "tests/config-files/override.ini"),
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
+				Args:     []string{"cfg:paths.data=/tmp/data"},
 			})
 
 			So(DataPath, ShouldEqual, "/tmp/data")
@@ -79,7 +81,8 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("Can use environment variables in config values", func() {
 			os.Setenv("GF_DATA_PATH", "/tmp/env_override")
 			NewConfigContext(&CommandLineArgs{
-				Args: []string{"cfg:paths.data=${GF_DATA_PATH}"},
+				HomePath: "../../",
+				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
 
 			So(DataPath, ShouldEqual, "/tmp/env_override")
