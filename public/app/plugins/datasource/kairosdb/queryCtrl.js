@@ -108,7 +108,7 @@ function (angular, _) {
 
     $scope.removeFilterTag = function(key) {
       delete $scope.target.tags[key];
-      if (_.size($scope.target.tags)===0) {
+      if (_.size($scope.target.tags) === 0) {
         $scope.target.tags = null;
       }
       $scope.targetBlur();
@@ -171,7 +171,7 @@ function (angular, _) {
 
     $scope.removeGroupByTag = function(index) {
       $scope.target.groupByTags.splice(index, 1);
-      if (_.size($scope.target.groupByTags)===0) {
+      if (_.size($scope.target.groupByTags) === 0) {
         $scope.target.groupByTags = null;
       }
       $scope.targetBlur();
@@ -179,16 +179,16 @@ function (angular, _) {
 
     $scope.removeNonTagGroupBy = function(index) {
       $scope.target.nonTagGroupBys.splice(index, 1);
-      if (_.size($scope.target.nonTagGroupBys)===0) {
+      if (_.size($scope.target.nonTagGroupBys) === 0) {
         $scope.target.nonTagGroupBys = null;
       }
       $scope.targetBlur();
     };
 
     $scope.changeGroupByInput = function() {
-      $scope.isTagGroupBy = $scope.target.currentGroupByType==='tag';
-      $scope.isValueGroupBy = $scope.target.currentGroupByType==='value';
-      $scope.isTimeGroupBy = $scope.target.currentGroupByType==='time';
+      $scope.isTagGroupBy = $scope.target.currentGroupByType === 'tag';
+      $scope.isValueGroupBy = $scope.target.currentGroupByType === 'value';
+      $scope.isTimeGroupBy = $scope.target.currentGroupByType === 'time';
       $scope.validateGroupBy();
     };
 
@@ -270,7 +270,7 @@ function (angular, _) {
 
     $scope.removeHorizontalAggregator = function(index) {
       $scope.target.horizontalAggregators.splice(index, 1);
-      if (_.size($scope.target.horizontalAggregators)===0) {
+      if (_.size($scope.target.horizontalAggregators) === 0) {
         $scope.target.horizontalAggregators = null;
       }
 
@@ -282,7 +282,7 @@ function (angular, _) {
         $scope.target.currentHorizontalAggregatorName);
       $scope.hasUnit = _.contains(['sampler','rate'], $scope.target.currentHorizontalAggregatorName);
       $scope.hasFactor = _.contains(['div','scale'], $scope.target.currentHorizontalAggregatorName);
-      $scope.hasPercentile = 'percentile'===$scope.target.currentHorizontalAggregatorName;
+      $scope.hasPercentile = 'percentile' === $scope.target.currentHorizontalAggregatorName;
       $scope.validateHorizontalAggregator();
     };
 
@@ -303,7 +303,7 @@ function (angular, _) {
           errors.factor = 'You must supply a numeric value for this aggregator';
           $scope.isAggregatorValid = false;
         }
-        else if (parseInt($scope.target.horAggregator.factor)===0 && $scope.target.currentHorizontalAggregatorName==='div') {
+        else if (parseInt($scope.target.horAggregator.factor) === 0 && $scope.target.currentHorizontalAggregatorName === 'div') {
           errors.factor = 'Cannot divide by 0';
           $scope.isAggregatorValid = false;
         }

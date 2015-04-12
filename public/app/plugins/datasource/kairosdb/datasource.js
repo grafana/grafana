@@ -55,7 +55,7 @@ function (angular, _, kbn) {
       var reqBody = {
         metrics: queries
       };
-      reqBody.cache_time=0;
+      reqBody.cache_time = 0;
       convertToKairosTime(start,reqBody,'start');
       convertToKairosTime(end,reqBody,'end');
       var options = {
@@ -120,10 +120,10 @@ function (angular, _, kbn) {
       if (!results.data) {
         return [];
       }
-      if (type==="key") {
+      if (type === "key") {
         return _.keys(results.data.queries[0].results[0].tags);
       }
-      else if (type==="value" && _.has(results.data.queries[0].results[0].tags,keyValue)) {
+      else if (type === "value" && _.has(results.data.queries[0].results[0].tags,keyValue)) {
         return results.data.queries[0].results[0].tags[keyValue];
       }
       return [];
@@ -159,19 +159,19 @@ function (angular, _, kbn) {
           var target = plotParams[index].alias;
           var details = " ( ";
           _.each(result.group_by,function(element) {
-            if (element.name==="tag") {
+            if (element.name === "tag") {
               _.each(element.group,function(value, key) {
-                details+= key+"="+value+" ";
+                details += key + "=" + value + " ";
               });
             }
-            else if (element.name==="value") {
-              details+= 'value_group='+element.group.group_number+" ";
+            else if (element.name === "value") {
+              details += 'value_group=' + element.group.group_number + " ";
             }
-            else if (element.name==="time") {
-              details+= 'time_group='+element.group.group_number+" ";
+            else if (element.name === "time") {
+              details += 'time_group=' + element.group.group_number + " ";
             }
           });
-          details+= ") ";
+          details += ") ";
           if (details !== " ( ) ") {
             target += details;
           }
@@ -204,7 +204,7 @@ function (angular, _, kbn) {
       };
 
       query.aggregators = [];
-      if (target.downsampling!=='(NONE)') {
+      if (target.downsampling !== '(NONE)') {
         query.aggregators.push({
           name: target.downsampling,
           align_sampling: true,
@@ -223,13 +223,13 @@ function (angular, _, kbn) {
             returnedAggregator.align_start_time =true;
           }
           if (chosenAggregator.unit) {
-            returnedAggregator.unit = chosenAggregator.unit+'s';
+            returnedAggregator.unit = chosenAggregator.unit + 's';
           }
-          if (chosenAggregator.factor && chosenAggregator.name==='div') {
+          if (chosenAggregator.factor && chosenAggregator.name === 'div') {
             returnedAggregator.divisor = chosenAggregator.factor;
           }
-          else if (chosenAggregator.factor && chosenAggregator.name==='scale') {
-            returnedAggregator.factor  = chosenAggregator.factor;
+          else if (chosenAggregator.factor && chosenAggregator.name === 'scale') {
+            returnedAggregator.factor = chosenAggregator.factor;
           }
           if (chosenAggregator.percentile) {
             returnedAggregator.percentile = chosenAggregator.percentile;
@@ -249,10 +249,10 @@ function (angular, _, kbn) {
         query.group_by = [];
         if (target.groupByTags) {query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});}
         if (target.nonTagGroupBys) {
-          _.each(target.nonTagGroupBys,function(rawGroupBy) {
+          _.each(target.nonTagGroupBys, function(rawGroupBy) {
             var formattedGroupBy = angular.copy(rawGroupBy);
-            if (formattedGroupBy.name==='time') {
-              formattedGroupBy.range_size=KairosDBDatasource.prototype.convertToKairosInterval(formattedGroupBy.range_size);
+            if (formattedGroupBy.name === 'time') {
+              formattedGroupBy.range_size = KairosDBDatasource.prototype.convertToKairosInterval(formattedGroupBy.range_size);
             }
             query.group_by.push(formattedGroupBy);
           });
@@ -278,9 +278,9 @@ function (angular, _, kbn) {
 
       var value = matches[1];
       var unit = matches[2];
-      if (value%1!==0) {
-        if (unit==='ms') {throw new Error('Invalid interval value, cannot be smaller than the millisecond');}
-        value = Math.round(kbn.intervals_in_seconds[unit]*value*1000);
+      if (value%1 !== 0) {
+        if (unit === 'ms') {throw new Error('Invalid interval value, cannot be smaller than the millisecond');}
+        value = Math.round(kbn.intervals_in_seconds[unit] * value * 1000);
         unit = 'ms';
 
       }
@@ -413,7 +413,7 @@ function (angular, _, kbn) {
         prvDelta = Math.abs((datapoints[i][0] - datapoints[i - 1][0]) / datapoints[i - 1][0]);
         nxtDelta = Math.abs((datapoints[i][0] - datapoints[i + 1][0]) / datapoints[i + 1][0]);
         if (prvDelta >= limit && nxtDelta >= limit) {
-          datapoints[i][0] = (datapoints[i-1][0] + datapoints[i+1][0]) / 2;
+          datapoints[i][0] = (datapoints[i - 1][0] + datapoints[i + 1][0]) / 2;
         }
       }
 
