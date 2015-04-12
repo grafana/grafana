@@ -27,7 +27,7 @@ function (angular, _, kbn) {
       var end = options.range.to;
 
       var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
-      var plotParams = _.compact(_.map(options.targets, function(target){
+      var plotParams = _.compact(_.map(options.targets, function(target) {
         var alias = target.alias;
         if (typeof target.alias == 'undefined' || target.alias == "")
           alias = target.metric;
