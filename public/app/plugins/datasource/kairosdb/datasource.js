@@ -149,18 +149,18 @@ function (angular, _, kbn) {
     function handleKairosDBQueryResponse(plotParams, results) {
       var output = [];
       var index = 0;
-      _.each(results.data.queries, function (series) {
+      _.each(results.data.queries, function(series) {
         var sample_size = series.sample_size;
         console.log("sample_size:" + sample_size + " samples");
 
-        _.each(series.results, function (result) {
+        _.each(series.results, function(result) {
 
           //var target = result.name;
           var target = plotParams[index].alias;
           var details = " ( ";
-          _.each(result.group_by,function(element) {
+          _.each(result.group_by, function(element) {
             if (element.name === "tag") {
-              _.each(element.group,function(value, key) {
+              _.each(element.group, function(value, key) {
                 details += key + "=" + value + " ";
               });
             }
@@ -213,7 +213,7 @@ function (angular, _, kbn) {
         });
       }
       if (target.horizontalAggregators) {
-        _.each(target.horizontalAggregators,function(chosenAggregator) {
+        _.each(target.horizontalAggregators, function(chosenAggregator) {
           var returnedAggregator = {
             name:chosenAggregator.name
           };
