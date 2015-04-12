@@ -36,6 +36,16 @@ Then you can override that using:
     export GF_SECURITY_ADMIN_USER=true
 
 <hr>
+## [paths]
+
+### data
+Path to where grafana can store the sqlite3 database (if used), file based sessions (if used), and other data.
+This path is usually specified via command line in the init.d script or the systemd service file.
+
+### logs
+Path to where grafana can store logs. This path is usually specified via command line in the init.d script or the systemd service file.
+It can be overriden in the config file or in the default environment variable file.
+
 ## [server]
 
 ### http_addr
