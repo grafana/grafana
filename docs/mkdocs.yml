@@ -29,8 +29,8 @@ pages:
 - ['installation/index.md', 'Installation', 'Installation']
 - ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
 - ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']
-- ['installation/windows.md', 'Installation', 'Installing on Windows']
 - ['installation/mac.md', 'Installation', 'Installing on Mac OS X']
+- ['installation/windows.md', 'Installation', 'Installing on Windows']
 - ['installation/docker.md', 'Installation', 'Installing on Docker']
 
 - ['installation/configuration.md', 'Installation', 'Configuration']

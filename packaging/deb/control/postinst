@@ -54,7 +54,7 @@ case "$1" in
 	# this is a fresh installation
 	elif [ -z $2 ] ; then
         if [ -x /bin/systemctl ] ; then
-            echo "### NOT starting on installation, please execute the following statements to configure elasticsearch to start automatically using systemd"
+            echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
             echo " sudo /bin/systemctl daemon-reload"
             echo " sudo /bin/systemctl enable grafana-server.service"
             echo "### You can start grafana-server by executing"

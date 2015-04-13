@@ -49,7 +49,7 @@ variables.
 
 ### Logging
 
-By default grafana will log to /var/log/grafana
+By default grafana will log to ``/var/log/grafana`
 
 ## Configuration
 
@@ -61,4 +61,15 @@ on all those options.
 - [Graphite](../datasources/graphite.md)
 - [InfluxDB](../datasources/influxdb.md)
 - [OpenTSDB](../datasources/opentsdb.md)
+
+## Installing from binary tar file
+
+Start by [downloading](http://grafana.org/download/builds) the latest `.tar.gz` file and extract it.
+This will extract into a folder named after the version you downloaded. This folder contains all files required to run grafana.
+There are no init scripts or install scripts in this package.
+
+To configure grafana add a config file named `custom.ini` to the `conf` folder and override any of the settings defined in
+`conf/defaults.ini`. Start grafana by excecuting `./grafana web`. The grafana binary needs the working directory
+to be the root install dir (where the binary is and the public folder is located).
+
 
