@@ -32,6 +32,7 @@ type CollectorWithTag struct {
 	Created   time.Time
 	Updated   time.Time
 	Online    bool
+	Enabled   bool
 }
 
 func GetCollectorById(query *m.GetCollectorByIdQuery) error {
@@ -75,6 +76,7 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 		Longitude: result.Longitude,
 		Public:    result.Public,
 		Online:    result.Online,
+		Enabled:   result.Enabled,
 	}
 
 	return err
@@ -150,6 +152,7 @@ func GetCollectors(query *m.GetCollectorsQuery) error {
 			Tags:      tags,
 			Public:    row.Public,
 			Online:    row.Online,
+			Enabled:   row.Enabled,
 		}
 	}
 
@@ -196,10 +199,12 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Created:   time.Now(),
 			Updated:   time.Now(),
 			Online:    cmd.Online,
+			Enabled:   cmd.Enabled,
 		}
 		l.UpdateCollectorSlug()
 		sess.UseBool("public")
 		sess.UseBool("online")
+		sess.UseBool("enabled")
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
@@ -228,6 +233,7 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Longitude: l.Longitude,
 			Public:    l.Public,
 			Online:    l.Online,
+			Enabled:   l.Enabled,
 		}
 		return nil
 	})
@@ -282,6 +288,7 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				Longitude: cmd.Longitude,
 				Public:    cmd.Public,
 				Updated:   time.Now(),
+				Enabled:   cmd.Enabled,
 			}
 
 			sess.UseBool("public")

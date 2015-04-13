@@ -43,6 +43,11 @@ function (angular, _) {
       });
     };
 
+    $scope.setEnabled = function(newState) {
+      $scope.collector.enabled = newState;
+      backendSrv.post('/api/collectors', $scope.collector);
+    };
+
     $scope.setCollector = function(id) {
       $location.path('/collectors/summary/'+id);
     }

@@ -75,8 +75,9 @@
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="collectorCurrentStatus">
 						<div class="collectorStatus">
-							<div class="pull-left msg">This collector is <span class="disabled">disabled</span>.</div>
-							<div class="pull-right tertiaryCTA">Enable</div>
+							<div class="pull-left msg">This collector is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
+							<a class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
+							<a class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
 						</div>
 
 						<span class="online jumbo">online</span> <span class="statusMsg">for 12 days</span>

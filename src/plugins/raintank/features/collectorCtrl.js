@@ -47,12 +47,6 @@ function (angular) {
       return equal;
     }
 
-    $scope.edit = function(loc) {
-      $scope.current = loc;
-      $scope.currentIsNew = false;
-      $scope.editor.index = 2;
-    };
-
     $scope.getCollectors = function() {
       backendSrv.get('/api/collectors').then(function(collectors) {
         $scope.collectors = collectors;

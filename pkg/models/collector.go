@@ -24,6 +24,7 @@ type Collector struct {
 	Created   time.Time
 	Updated   time.Time
 	Online    bool
+	Enabled   bool
 }
 
 type CollectorTag struct {
@@ -45,6 +46,7 @@ type CollectorDTO struct {
 	Latitude  float64  `json:"latitude"`
 	Longitude float64  `json:"longitude"`
 	Online    bool     `json:"online"`
+	Enabled   bool     `json:"enabled"`
 }
 
 // ----------------------
@@ -56,6 +58,7 @@ type AddCollectorCommand struct {
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
 	Online    bool     `json:"online"`
+	Enabled   bool     `json:"enabled"`
 	Latitude  float64  `json:"latitude"`
 	Longitude float64  `json:"longitude"`
 	Result    *CollectorDTO
@@ -66,6 +69,7 @@ type UpdateCollectorCommand struct {
 	OrgId     int64    `json:"-"`
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
+	Enabled   bool     `json:"enabled"`
 	Latitude  float64  `json:"latitude"`
 	Longitude float64  `json:"longitude"`
 }
