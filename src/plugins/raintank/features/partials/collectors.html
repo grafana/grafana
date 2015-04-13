@@ -57,7 +57,7 @@
 					<rt-collector-health model="collector"></rt-collector-health>
 				</div>
 				<div style="display: inline;">
-					<a href="#"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{collector.name}} dashboard'"></a>
+					<a ng-click="gotoDashboard(collector)"><img class="dashboard-icon" src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{collector.name}} dashboard'"></a>
 				</div>
 				<div class="dropdown" style="display: inline;">
 					<a data-toggle="dropdown">

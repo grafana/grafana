@@ -52,6 +52,10 @@ function (angular, _) {
       $location.path('/collectors/summary/'+id);
     }
 
+    $scope.gotoDashboard = function(collector) {
+      $location.path("/dashboard/db/statusboard").search({"var-collector": collector.slug, "var-endpoint": "All"});
+    }
+    
     $scope.init();
   });
 });

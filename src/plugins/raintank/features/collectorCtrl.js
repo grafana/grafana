@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CollectorCtrl', function($scope, $http, backendSrv, contextSrv) {
+  module.controller('CollectorCtrl', function($scope, $http, $location, backendSrv, contextSrv) {
     $scope.statuses = [
       {label: "Up", value: "up"},
       {label: "Down", value: "down"},
@@ -58,6 +58,10 @@ function (angular) {
         $scope.getCollectors();
       });
     };
+
+    $scope.gotoDashboard = function(collector) {
+      $location.path("/dashboard/db/statusboard").search({"var-collector": collector.slug, "var-endpoint": "All"});
+    }
 
     $scope.init();
   });
