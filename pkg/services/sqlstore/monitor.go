@@ -925,6 +925,7 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 		if len(results) < 1 {
 			//need to insert
 			state := &m.MonitorCollectorState{
+				OrgId:       cmd.OrgId,
 				MonitorId:   cmd.MonitorId,
 				EndpointId:  cmd.EndpointId,
 				CollectorId: cmd.CollectorId,
