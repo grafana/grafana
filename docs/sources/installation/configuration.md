@@ -36,13 +36,37 @@ Then you can override that using:
     export GF_SECURITY_ADMIN_USER=true
 
 <hr>
+## [paths]
+
+### data
+Path to where grafana can store the sqlite3 database (if used), file based sessions (if used), and other data.
+This path is usually specified via command line in the init.d script or the systemd service file.
+
+### logs
+Path to where grafana can store logs. This path is usually specified via command line in the init.d script or the systemd service file.
+It can be overriden in the config file or in the default environment variable file.
+
 ## [server]
 
 ### http_addr
 The ip address to bind to, if empty will bind to all interfaces
 
 ### http_port
-The port to bind to, defaults to `3000`
+The port to bind to, defaults to `3000`. To use port 80 you need to either give the grafana binary permission for example:
+
+```
+$ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+```
+
+Or redirect port 80 to the grafana port using:
+```
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+```
+
+Another way is put nginx or apache infront of Grafana and have them proxy requests to Grafana.
+
+### protocol
+`http` or `https`
 
 ### domain
 This setting is only used in as a part of the root_url setting (see below). Important if you
@@ -58,6 +82,14 @@ google or github oauth authentication (for the callback url to be correct).
 ### static_root_path
 The path to the directory where the frontend files (html & js & css). Default to `public` which is
 why the Grafana binary needs to be executed with working directory set to the installation path.
+
+### cert_file
+Path to cert file (if protocol is https)
+
+### cert_key
+Path to cert key file (if protocol is https)
+
+<hr>
 
 <hr>
 ## [database]
@@ -170,9 +202,10 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
+    allowed_domains = mycompany.com
 
 Restart the grafana backend. You should now see a google login button on the login page. You can
-now login or signup with your google accounts.
+now login or signup with your google accounts. `allowed_domains` option is optional.
 
 <hr>
 ## [session]
@@ -204,5 +237,17 @@ Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 
 ### session_life_time
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+
+## [analytics]
+
+### reporting_enabled
+When enabled Grafana will send anonymous usage statistics to stats.grafana.org.
+No ip addresses are being tracked, only simple counters to track running instances,
+versions, dashboard & error counts. It is very helpful to us, please leave this
+enabled. Counters are sent every 24 hours.
+
+### google_analytics_ua_id
+If you want to track Grafana usage via Google analytics specify *your* Univeral Analytics ID
+here. By defualt this feature is disabled.
 
 

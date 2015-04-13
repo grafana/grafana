@@ -10,13 +10,18 @@ import (
 	"time"
 )
 
+// expiryDelta determines how earlier a token should be considered
+// expired than its actual expiration time. It is used to avoid late
+// expirations due to client-server time mismatches.
+const expiryDelta = 10 * time.Second
+
 // Token represents the crendentials used to authorize
 // the requests to access protected resources on the OAuth 2.0
 // provider's backend.
 //
 // Most users of this package should not access fields of Token
 // directly. They're exported mostly for use by related packages
-// implementing derivate OAuth2 flows.
+// implementing derivative OAuth2 flows.
 type Token struct {
 	// AccessToken is the token that authorizes and authenticates
 	// the requests.
@@ -60,28 +65,40 @@ func (t *Token) SetAuthHeader(r *http.Request) {
 	r.Header.Set("Authorization", t.Type()+" "+t.AccessToken)
 }
 
-// Extra returns an extra field returned from the server during token
-// retrieval.
-func (t *Token) Extra(key string) string {
+// WithExtra returns a new Token that's a clone of t, but using the
+// provided raw extra map. This is only intended for use by packages
+// implementing derivative OAuth2 flows.
+func (t *Token) WithExtra(extra interface{}) *Token {
+	t2 := new(Token)
+	*t2 = *t
+	t2.raw = extra
+	return t2
+}
+
+// Extra returns an extra field.
+// Extra fields are key-value pairs returned by the server as a
+// part of the token retrieval response.
+func (t *Token) Extra(key string) interface{} {
 	if vals, ok := t.raw.(url.Values); ok {
+		// TODO(jbd): Cast numeric values to int64 or float64.
 		return vals.Get(key)
 	}
 	if raw, ok := t.raw.(map[string]interface{}); ok {
-		if val, ok := raw[key].(string); ok {
-			return val
-		}
+		return raw[key]
 	}
-	return ""
+	return nil
 }
 
-// Expired returns true if there is no access token or the
-// access token is expired.
-func (t *Token) Expired() bool {
-	if t.AccessToken == "" {
-		return true
-	}
+// expired reports whether the token is expired.
+// t must be non-nil.
+func (t *Token) expired() bool {
 	if t.Expiry.IsZero() {
 		return false
 	}
-	return t.Expiry.Before(time.Now())
+	return t.Expiry.Add(-expiryDelta).Before(time.Now())
+}
+
+// Valid reports whether t is non-nil, has an AccessToken, and is not expired.
+func (t *Token) Valid() bool {
+	return t != nil && t.AccessToken != "" && !t.expired()
 }

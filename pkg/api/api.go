@@ -48,6 +48,9 @@ func Register(r *macaron.Macaron) {
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
 
+	// api renew session based on remember cookie
+	r.Get("/api/login/ping", LoginApiPing)
+
 	// authed api
 	r.Group("/api", func() {
 		// user

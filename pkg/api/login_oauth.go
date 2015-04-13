@@ -33,7 +33,6 @@ func OAuthLogin(ctx *middleware.Context) {
 		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
 		return
 	}
-	log.Info("code: %v", code)
 
 	// handle call back
 	token, err := connect.Exchange(oauth2.NoContext, code)
@@ -50,7 +49,14 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	log.Info("login.OAuthLogin(social login): %s", userInfo)
+	log.Trace("login.OAuthLogin(social login): %s", userInfo)
+
+	// validate that the email is allowed to login to grafana
+	if !connect.IsEmailAllowed(userInfo.Email) {
+		log.Info("OAuth login attempt with unallowed email, %s", userInfo.Email)
+		ctx.Redirect(setting.AppSubUrl + "/login?email_not_allowed=1")
+		return
+	}
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Email}
 	err = bus.Dispatch(&userQuery)

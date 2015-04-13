@@ -1,4 +1,41 @@
-# 2.0.0 (unreleased)
+# 2.0.0-Beta3 (2015-04-12)
+
+**RPM / DEB Package changes (to follow HFS)**
+- binary name changed to grafana-server
+- does not install to `/opt/grafana` any more, installs to `/usr/share/grafana`
+- binary to `/usr/sbin/grafana-server`
+- init.d script improvements, renamed to `/etc/init.d/grafana-server`
+- added default file with environment variables,
+  - `/etc/default/grafana-server` (deb/ubuntu)
+  - `/etc/sysconfig/grafana-server` (centos/redhat)
+
+- added systemd service file, tested on debian jessie and centos7
+- config file in same location `/etc/grafana/grafana.ini` (now complete config file but with every setting commented out)
+- data directory (where sqlite3) file is stored is now by default `/var/lib/grafana`
+- no symlinking current to versions anymore
+- For more info see [Issue #1758](https://github.com/grafana/grafana/issues/1758).
+
+**Config breaking change (setting rename)**
+- `[log] root_path` has changed to `[paths] logs`
+
+# 2.0.0-Beta2  (...)
+
+**Enhancements**
+- [Issue #1701](https://github.com/grafana/grafana/issues/1701). Share modal: Override UI theme via URL param for Share link, rendered panel, or embedded panel
+- [Issue #1660](https://github.com/grafana/grafana/issues/1660). OAuth: Specify allowed email address domains for google or and github oauth logins
+
+**Fixes**
+- [Issue #1649](https://github.com/grafana/grafana/issues/1649). HTTP API: grafana /render calls nows with api keys
+- [Issue #1667](https://github.com/grafana/grafana/issues/1667). Datasource proxy & session timeout fix (casued 401 Unauthorized error after a while)
+- [Issue #1707](https://github.com/grafana/grafana/issues/1707). Unsaved changes: Do not show for snapshots, scripted and file based dashboards
+- [Issue #1703](https://github.com/grafana/grafana/issues/1703). Unsaved changes: Do not show for users with role `Viewer`
+- [Issue #1675](https://github.com/grafana/grafana/issues/1675). Data source proxy: Fixed issue with Gzip enabled and data source proxy
+- [Issue #1681](https://github.com/grafana/grafana/issues/1681). MySQL session: fixed problem using mysql as session store
+- [Issue #1671](https://github.com/grafana/grafana/issues/1671). Data sources: Fixed issue with changing default data source (should not require full page load to take effect, now fixed)
+- [Issue #1685](https://github.com/grafana/grafana/issues/1685). Search: Dashboard results should be sorted alphabetically
+- [Issue #1673](https://github.com/grafana/grafana/issues/1673). Basic auth: Fixed issue when using basic auth proxy infront of Grafana
+
+# 2.0.0-Beta1 (2015-03-30)
 
 **New features**
 - [Issue #1623](https://github.com/grafana/grafana/issues/1623). Share Dashboard: Dashboard snapshot sharing (dash and data snapshot), save to local or save to public snapshot dashboard snapshots.raintank.io site

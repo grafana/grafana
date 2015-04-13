@@ -42,7 +42,7 @@ func Test_Sessioner(t *testing.T) {
 		m.ServeHTTP(resp, req)
 	})
 
-	Convey("Register invalid provider that", t, func() {
+	Convey("Register invalid provider", t, func() {
 		Convey("Provider not exists", func() {
 			defer func() {
 				So(recover(), ShouldNotBeNil)

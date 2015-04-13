@@ -14,19 +14,15 @@ dev environment.
 - Go 1.4
 - NodeJS
 
-
 ## Get Code
 
 ```
 go get github.com/grafana/grafana
 ```
 
-The above will give an error saying there is no go code. That is because the new backend parts are in the develop branch.
-
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-git checkout -t origin/develop
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
 go build .
@@ -52,10 +48,15 @@ bra run
 
 ## Running
 ```
-./bin/grafana web
+./grafana-server
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+
+## Creating optimized release packages
+```
+go run build.go build package
+```
 
 ## Dev config
 
@@ -63,8 +64,7 @@ Create a custom.ini in the conf directory to override default configuration opti
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
-2. dev.ini (if found)
-3. custom.ini
+2. custom.ini
 
 ## Create a pull requests
 

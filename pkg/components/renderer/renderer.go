@@ -1,8 +1,6 @@
 package renderer
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"io"
 	"os"
 	"os/exec"
@@ -11,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type RenderOpts struct {
@@ -24,10 +23,10 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	log.Info("PhantomRenderer::renderToPng url %v", params.Url)
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "phantomjs"))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
-	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, getHash(params.Url)))
+	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	cmd := exec.Command(binPath, scriptPath, "url="+params.Url, "width="+params.Width,
+	cmd := exec.Command(binPath, "--ignore-ssl-errors=true", scriptPath, "url="+params.Url, "width="+params.Width,
 		"height="+params.Height, "png="+pngPath, "cookiename="+setting.SessionOptions.CookieName,
 		"domain="+setting.Domain, "sessionid="+params.SessionId)
 	stdout, err := cmd.StdoutPipe()
@@ -63,10 +62,4 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	}
 
 	return pngPath, nil
-}
-
-func getHash(text string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(text))
-	return hex.EncodeToString(hasher.Sum(nil))
 }
