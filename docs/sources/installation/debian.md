@@ -13,11 +13,10 @@ Description | Download
 .deb for Debian-based Linux | [grafana_2.0.0-beta3_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.0-beta3_amd64.deb)
 
 ## Install
-To install the package
 
     $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.0-beta3_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_latest_amd64.deb
+    $ sudo dpkg -i grafana_2.0.0-beta3_amd64.deb
 
 ## Package details
 
@@ -35,11 +34,18 @@ To install the package
 - This will start the grafana-server process as the `grafana` user (created during package install)
 - Default http port is `3000`, and default user is admin/admin
 
-## Start the server (via systemd)
+To configure Grafana server to start at boot time:
 
+    $ sudo update-rc.d grafana-server defaults 95 10
+
+## Start the server (via systemd)
     $ systemctl daemon-reload
     $ systemctl start grafana-server
     $ systemctl status grafana-server
+
+Enable the systemd service (so grafana starts at boot)
+
+    sudo systemctl enable grafana-server.service
 
 ## Environment file
 
@@ -49,7 +55,12 @@ variables.
 
 ### Logging
 
-By default grafana will log to ``/var/log/grafana`
+By default grafana will log to `/var/log/grafana`
+
+### Database
+
+The default configuration specifies a sqlite3 database located at `/var/lib/grafana/grafana.db`. Please backup
+this database before upgrades. You can also use mysql or postgres as the Grafana database.
 
 ## Configuration
 

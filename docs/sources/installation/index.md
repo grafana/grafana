@@ -15,20 +15,17 @@ to build one your self, read [build from source](../project/building_from_source
 - [Installing on Mac OS X](mac.md)
 - [Installing on Windows](windows.md)
 - [Installing on Docker](docker.md)
-
-
-# Dependencies
-There are no dependencies with the default configuration. You can switch from a sqlite3 database to mysql or postgres but
-that is optional. For small to medium setups sqlite3 should suffice.
-
-## Install using provisioning
-If you prefer to install grafana via Puppet, Ansible, Docker or Chef. [This page](provisioning) has compiled a
-list of repositories for different provisioning systems
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning.md)
 
 ## Configuration
 
 The backend web server has a number of configuration options. Go the [Configuration](configuration) page for details
 on all those options.
 
+## Adding data sources
+
+- [Graphite](../datasources/graphite.md)
+- [InfluxDB](../datasources/influxdb.md)
+- [OpenTSDB](../datasources/opentsdb.md)
 
 

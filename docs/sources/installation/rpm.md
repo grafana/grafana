@@ -17,7 +17,7 @@ To install the package
 
     $ wget https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.0_beta3-1.x86_64.rpm
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-latest-1.x86_64.rpm
+    $ sudo rpm -Uvh grafana-2.0.0_beta3-1.x86_64.rpm
 
 ## Package details
 
@@ -34,13 +34,17 @@ To install the package
 - Start grafana by `sudo service grafana-server start`
 - This will start the grafana-server process as the `grafana` user (created during package install)
 - Default http port is `3000`, and default user is admin/admin
-- To configure grafana server to start at boot time: `sudo `
+- To configure grafana server to start at boot time: `sudo /sbin/chkconfig --add grafana-server`
 
 ## Start the server (via systemd)
 
     $ systemctl daemon-reload
     $ systemctl start grafana-server
     $ systemctl status grafana-server
+
+### Enable the systemd service (so grafana starts at boot)
+
+    sudo systemctl enable grafana-server.service
 
 ## Environment file
 
@@ -50,7 +54,12 @@ variables.
 
 ### Logging
 
-By default grafana will log to /var/log/grafana
+By default grafana will log to `/var/log/grafana`
+
+### Database
+
+The default configuration specifies a sqlite3 database located at `/var/lib/grafana/grafana.db`. Please backup
+this database before upgrades. You can also use mysql or postgres as the Grafana database.
 
 ## Configuration
 
