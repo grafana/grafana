@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.directives');
 
-    module.directive('grafanaTable', function($rootScope, $timeout, $sce, $filter) {
+    module.directive('grafanaTable', function($rootScope, $timeout, $sce) {
       var data;
       var sortedData; // will shadow the data
 
