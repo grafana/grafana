@@ -17,6 +17,21 @@ func GetCollectors(c *middleware.Context, query m.GetCollectorsQuery) {
 	c.JSON(200, query.Result)
 }
 
+func getCollectorHealthById(c *middleware.Context) {
+	id := c.ParamsInt64(":id")
+	query := m.GetCollectorHealthByIdQuery{
+		Id:    id,
+		OrgId: c.OrgId,
+	}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to query collector health", err)
+		return
+	}
+
+	c.JSON(200, query.Result)
+}
+
 func GetCollectorById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 

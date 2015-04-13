@@ -144,6 +144,7 @@ func addCollectorMigration(mg *Migrator) {
 			&Column{Name: "latitude", Type: DB_Float, Nullable: true},
 			&Column{Name: "longitude", Type: DB_Float, Nullable: true},
 			&Column{Name: "public", Type: DB_Bool, Nullable: false},
+			&Column{Name: "online", Type: DB_Bool, Nullable: false},
 			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},

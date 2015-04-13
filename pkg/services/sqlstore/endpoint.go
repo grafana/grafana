@@ -276,19 +276,8 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 }
 
 func GetEndpointHealthById(query *m.GetEndpointHealthByIdQuery) error {
-	//check that the monitor exists.
-	sess := x.Table("endpoint")
-	sess.Where("id=?", query.Id).And("org_id=?", query.OrgId)
-	result := make([]*m.Endpoint, 0)
-	if err := sess.Find(&result); err != nil {
-		return err
-	}
-	if len(result) < 1 {
-		return m.ErrEndpointNotFound
-	}
-	sess.Table("monitor_collector_state")
-	sess.Where("endpoint_id=?", query.Id)
-	//query.result = make([]*m.MonitorCollectorState, 0)
+	sess := x.Table("monitor_collector_state")
+	sess.Where("endpoint_id=?", query.Id).And("org_id=?", query.OrgId)
 	err := sess.Find(&query.Result)
 	if err != nil {
 		return err

@@ -12,14 +12,27 @@ function (angular) {
       name: '',
     };
 
+    $scope.statuses = [
+      {label: "Ok", value: 0},
+      {label: "Warning", value: 1},
+      {label: "Error", value: 2},
+      {label: "Unknown", value: -1},
+    ];
+
     $scope.init = function() {
       $scope.endpoint_filter = '';
-      $scope.status_filter = "All Statuses";
+      $scope.status_filter = '';
       $scope.sort_field = 'name';
       $scope.endpoints = [];
       $scope.getEndpoints();
       $scope.getCollectors();
       $scope.getMonitorTypes();
+      $scope.endpointState = {
+        "ok": 0,
+        "warn": 0,
+        "error": 0,
+        "unknown": 0,
+      };
     };
 
     $scope.endpointTags = function() {
@@ -35,7 +48,20 @@ function (angular) {
     $scope.setEndpointFilter = function(tag) {
       $scope.endpoint_filter = tag;
     };
+    $scope.setStatusFilter = function(status) {
+      if (status === $scope.status_filter) {
+        status = "";
+      }
+      $scope.status_filter = status;
+    };
 
+    $scope.statusFilter = function(actual, expected) {
+      if (expected === "") {
+        return true;
+      }
+      var equal = (actual === expected);
+      return equal;
+    }
     $scope.getCollectors = function() {
       var collectorMap = {};
       backendSrv.get('/api/collectors').then(function(collectors) {
@@ -59,6 +85,75 @@ function (angular) {
     $scope.getEndpoints = function() {
       backendSrv.get('/api/endpoints').then(function(endpoints) {
         $scope.endpoints = endpoints;
+        _.forEach($scope.endpoints, function(endpoint) {
+          backendSrv.get('/api/endpoints/'+endpoint.id+'/health').then(function(health) {
+            endpoint.health = health;
+            var okCount = 0;
+            var warnCount = 0;
+            var errorCount = 0;
+            var unknownCount = 0;
+            var monitors = {};
+            _.forEach(health, function(checkState) {
+              if (!(checkState.monitor_id in monitors)) {
+                monitors[checkState.monitor_id] = {
+                  okCount: 0,
+                  warnCount: 0,
+                  errorCount: 0,
+                  unknownCount: 0,
+                  totalCount: 0
+                }
+              }
+              monitors[checkState.monitor_id].totalCount++;
+
+              if (checkState.state == -1) {
+                monitors[checkState.monitor_id].unknownCount++;
+                return
+              }
+              if (checkState.state == 0) {
+                monitors[checkState.monitor_id].okCount++;
+                return
+              }
+              if (checkState.state == 1) {
+                monitors[checkState.monitor_id].warnCount++;
+                return
+              }
+              if (checkState.state == 2) {
+                monitors[checkState.monitor_id].errorCount++;
+                return
+              }
+            });
+            var max = 0;
+            for (var monId in monitors) {
+              var mon = monitors[monId];
+              if ((mon.okCount < mon.totalCount/2) || ((mon.totalCount - mon.okCount) >= 3)) {
+                if (mon.errorCount > 0) {
+                  mon.state = 2;
+                  max = 2;
+                } else if (mon.warnCount > 0) {
+                  mon.state = 1;
+                  if (max < 1) {
+                    max = 1;
+                  }
+                } else {
+                  mon.state = -1;
+                  if (max < 1) {
+                    max = -1;
+                  }
+                }
+              }
+            }
+            endpoint.state = max;
+            if (max == -1) {
+              $scope.endpointState["unknown"]++;
+            } else if (max == 0) {
+              $scope.endpointState["ok"]++;
+            } else if (max == 1) {
+              $scope.endpointState["warn"]++;
+            } else if (max == 2) {
+              $scope.endpointState["error"]++;
+            }
+          });
+        });
       });
     };
     $scope.remove = function(endpoint) {

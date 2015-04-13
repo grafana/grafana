@@ -17,6 +17,7 @@ func init() {
 	bus.AddHandler("sql", AddCollector)
 	bus.AddHandler("sql", UpdateCollector)
 	bus.AddHandler("sql", DeleteCollector)
+	bus.AddHandler("sql", GetCollectorHealthById)
 }
 
 type CollectorWithTag struct {
@@ -30,6 +31,7 @@ type CollectorWithTag struct {
 	Public    bool
 	Created   time.Time
 	Updated   time.Time
+	Online    bool
 }
 
 func GetCollectorById(query *m.GetCollectorByIdQuery) error {
@@ -72,6 +74,7 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 		Latitude:  result.Latitude,
 		Longitude: result.Longitude,
 		Public:    result.Public,
+		Online:    result.Online,
 	}
 
 	return err
@@ -146,6 +149,7 @@ func GetCollectors(query *m.GetCollectorsQuery) error {
 			Longitude: row.Longitude,
 			Tags:      tags,
 			Public:    row.Public,
+			Online:    row.Online,
 		}
 	}
 
@@ -191,8 +195,11 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Longitude: cmd.Longitude,
 			Created:   time.Now(),
 			Updated:   time.Now(),
+			Online:    cmd.Online,
 		}
 		l.UpdateCollectorSlug()
+		sess.UseBool("public")
+		sess.UseBool("online")
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
@@ -220,6 +227,7 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
 			Public:    l.Public,
+			Online:    l.Online,
 		}
 		return nil
 	})
@@ -305,4 +313,14 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 
 		return nil
 	})
+}
+
+func GetCollectorHealthById(query *m.GetCollectorHealthByIdQuery) error {
+	sess := x.Table("monitor_collector_state")
+	sess.Where("collector_id=?", query.Id).And("org_id=?", query.OrgId)
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+	return nil
 }

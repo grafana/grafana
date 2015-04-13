@@ -60,6 +60,7 @@ type MonitorCollectorTag struct {
 
 type MonitorCollectorState struct {
 	Id          int64     `json:"-"`
+	OrgId       int64     `json:"-"`
 	MonitorId   int64     `json:"monitor_id"`
 	EndpointId  int64     `json:"endpoint_id"`
 	CollectorId int64     `json:"collector_id"`

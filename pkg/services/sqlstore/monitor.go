@@ -991,18 +991,8 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 }
 
 func GetMonitorHealthById(query *m.GetMonitorHealthByIdQuery) error {
-	//check that the monitor exists.
-	sess := x.Table("monitor")
-	sess.Where("id=?", query.Id).And("org_id=?", query.OrgId)
-	result := make([]*m.Monitor, 0)
-	if err := sess.Find(&result); err != nil {
-		return err
-	}
-	if len(result) < 1 {
-		return m.ErrMonitorNotFound
-	}
-	sess.Table("monitor_collector_state")
-	sess.Where("monitor_id=?", query.Id)
+	sess := x.Table("monitor_collector_state")
+	sess.Where("monitor_id=?", query.Id).And("org_id=?", query.OrgId)
 	//query.result = make([]*m.MonitorCollectorState, 0)
 	err := sess.Find(&query.Result)
 	if err != nil {

@@ -7,10 +7,14 @@ function (angular) {
   var module = angular.module('grafana.controllers');
 
   module.controller('CollectorCtrl', function($scope, $http, backendSrv, contextSrv) {
+    $scope.statuses = [
+      {label: "Up", value: "up"},
+      {label: "Down", value: "down"},
+    ];
     $scope.init = function() {
       $scope.collector_filter = "";
-      $scope.status_filter = "All Statuses";
-      $scope.sort_field = "Collector";
+      $scope.status_filter = "";
+      $scope.sort_field = "name";
       $scope.collectors = [];
       $scope.getCollectors();
     };
@@ -26,6 +30,22 @@ function (angular) {
     $scope.setCollectorFilter = function(tag) {
       $scope.collector_filter = tag;
     };
+
+    $scope.setStatusFilter = function(status) {
+      var newStatus = status ? "up":"down";
+      if (newStatus == $scope.status_filter) {
+        newStatus = "";
+      }
+      $scope.status_filter = newStatus;
+    };
+
+    $scope.statusFilter = function(actual, expected) {
+      if (expected === "") {
+        return true;
+      }
+      var equal = ((actual ? "up" :"down") === expected);
+      return equal;
+    }
 
     $scope.edit = function(loc) {
       $scope.current = loc;

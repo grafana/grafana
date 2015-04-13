@@ -23,6 +23,7 @@ type Collector struct {
 	Longitude float64
 	Created   time.Time
 	Updated   time.Time
+	Online    bool
 }
 
 type CollectorTag struct {
@@ -43,6 +44,7 @@ type CollectorDTO struct {
 	Public    bool     `json:"public"`
 	Latitude  float64  `json:"latitude"`
 	Longitude float64  `json:"longitude"`
+	Online    bool     `json:"online"`
 }
 
 // ----------------------
@@ -53,6 +55,7 @@ type AddCollectorCommand struct {
 	Name      string   `json:"name"`
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
+	Online    bool     `json:"online"`
 	Latitude  float64  `json:"latitude"`
 	Longitude float64  `json:"longitude"`
 	Result    *CollectorDTO
@@ -95,4 +98,10 @@ func (collector *Collector) UpdateCollectorSlug() {
 	re := regexp.MustCompile("[^\\w ]+")
 	re2 := regexp.MustCompile("\\s")
 	collector.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
+}
+
+type GetCollectorHealthByIdQuery struct {
+	Id     int64
+	OrgId  int64
+	Result []*MonitorCollectorState
 }
