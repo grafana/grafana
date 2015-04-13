@@ -115,7 +115,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
 
             // decimal override
-            if (scope.panel.decimals) {
+            if (_.isNumber(scope.panel.decimals)) {
               series.updateLegendValues(formater, scope.panel.decimals, null);
             } else {
               // auto decimals
