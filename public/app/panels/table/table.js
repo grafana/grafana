@@ -213,32 +213,19 @@ define([
 
           function handleSorting() {
             var columnNamesToSort = [];
+            var sortOrders = [];
 
-            // below ideal solution not supported in current older version of lodash
-            // sortedData = _.sortByOrder(sortedData, columnNamesToSort, sortOrders);
-
-            // therefore we will use anguar's built in method
-
-            sortedData = [].concat(data.values);
-
-            if (scope.panel.columnSortOrder.length === 0) {
-              return;
-            }
-
-            _.each(scope.panel.columnSortOrder, function(columnToSort) {
+            for (var i = 0; i < scope.panel.columnSortOrder.length; ++i) {
+              var columnToSort = scope.panel.columnSortOrder[i]; // take from list of column sort priority
               var sortType = columnToSort.sortType;
 
               if (sortType !== SortType.none) {
-                if (sortType === SortType.desc) {
-                  columnNamesToSort.push("-" + columnToSort.columnName); // angular uses - to indicate desc
-                }
-                else {
-                  columnNamesToSort.push(columnToSort.columnName);
-                }
+                columnNamesToSort.push(columnToSort.columnName);
+                sortOrders.push(columnToSort.sortType === SortType.asc ? true : false);
               }
-            });
+            }
 
-            sortedData = $filter('orderBy')(sortedData, columnNamesToSort);
+            sortedData = _.sortByOrder(data.values, columnNamesToSort, sortOrders);
           }
 
           function changeSortType(header) {
