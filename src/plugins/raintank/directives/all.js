@@ -97,6 +97,53 @@ define([
       }
     };
   });
+  module.directive("rtEndpointHealth", function($compile, backendSrv) {
+    return {
+      templateUrl: 'plugins/raintank/directives/partials/endpointHealth.html',
+      scope: {
+        model: "=",
+      },
+      link: function(scope, element) {
+        scope.$watch("model", function(endpoint) {
+          if (typeof(endpoint) == "object") {
+            showHealth(endpoint);
+          }
+        });
+
+        function showHealth(endpoint) {
+          backendSrv.get('/api/endpoints/'+endpoint.id+'/health').then(function(health) {
+            var tmpl = '';
+            var okCount = 0;
+            var warnCount = 0;
+            var errorCount = 0;
+            var unknownCount = 0;
+            _.forEach(health, function(checkState) {
+              if (checkState.state == -1) {
+                unknownCount++;
+                return
+              }
+              if (checkState.state == 0) {
+                okCount++;
+                return
+              }
+              if (checkState.state == 1) {
+                warnCount++;
+                return
+              }
+              if (checkState.state == 2) {
+                errorCount++;
+                return
+              }
+            });
+            scope.okCount = okCount;
+            scope.warnCount = warnCount;
+            scope.errorCount = errorCount;
+            scope.unknownCount = unknownCount;
+          });
+        }
+      }
+    };
+  });
 
   module.directive('panelScroll', function() {
     return function(scope, element) {

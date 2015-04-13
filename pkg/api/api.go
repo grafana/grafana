@@ -132,6 +132,7 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).
 				Put(reqEditorRole, bind(m.AddEndpointCommand{}), AddEndpoint).
 				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), UpdateEndpoint)
+			r.Get("/:id/health", getEndpointHealthById)
 			r.Get("/:id", GetEndpointById)
 			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
 		})

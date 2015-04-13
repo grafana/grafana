@@ -931,9 +931,8 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 				State:       cmd.State,
 				Updated:     cmd.Updated,
 			}
-			sess.UseBool()
+			sess.UseBool("state")
 			if _, err := sess.Insert(state); err != nil {
-				fmt.Printf("failed to insert into monitor_collector_state")
 				return err
 			}
 			stateChange = true
@@ -942,7 +941,7 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 			state := results[0]
 			state.State = cmd.State
 			state.Updated = cmd.Updated
-			sess.UseBool()
+			sess.UseBool("state")
 			if _, err := sess.Id(state.Id).Update(state); err != nil {
 				return err
 			}

@@ -86,3 +86,9 @@ type GetEndpointByIdQuery struct {
 	OrgId  int64
 	Result *EndpointDTO
 }
+
+type GetEndpointHealthByIdQuery struct {
+	Id     int64
+	OrgId  int64
+	Result []*MonitorCollectorState
+}
