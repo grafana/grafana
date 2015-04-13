@@ -48,7 +48,7 @@ bra run
 
 ## Running
 ```
-./grafana web
+./grafana-server
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
@@ -64,8 +64,7 @@ Create a custom.ini in the conf directory to override default configuration opti
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
-2. dev.ini (if found)
-3. custom.ini
+2. custom.ini
 
 ## Create a pull requests
 
