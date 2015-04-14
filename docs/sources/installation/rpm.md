@@ -13,11 +13,32 @@ Description | Download
 .RPM for Fedora / RHEL / CentOS Linux | [grafana-2.0.0_beta3-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.0_beta3-1.x86_64.rpm)
 
 ## Install
-To install the package
+You can install using yum
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.0_beta3-1.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.0_beta3-1.x86_64.rpm
+
+Or manually using `rpm`
+
     $ sudo yum install initscripts fontconfig
     $ sudo rpm -Uvh grafana-2.0.0_beta3-1.x86_64.rpm
+
+## YUM Repository
+
+Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
+
+    [grafana]
+    name=grafana
+    baseurl=https://packagecloud.io/grafana/testing/el/6/$basearch
+    repo_gpgcheck=1
+    gpgcheck=0
+    enabled=1
+    gpgkey=https://packagecloud.io/gpg.key
+    sslverify=1
+    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+Update apt and install Grafana
+
+    $ sudo yum install grafana
 
 ## Package details
 
