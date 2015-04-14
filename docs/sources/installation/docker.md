@@ -17,11 +17,11 @@ above container.
 
 ## Docker volumes & ENV config
 
-The docker container exposes two volumes, the sqlite3 database in the folder `/opt/grafana/data` and
-configuration files in the `/opt/grafana/conf` folder. You can map these volumes to host folders when you start the container:
+The docker container exposes two volumes, the sqlite3 database in the folder `/var/lib/grafana` and
+configuration files is in `/etc/grafana/` folder. You can map these volumes to host folders when you start the container:
 
     $ docker run -d -p 3000:3000 \
-        -v /var/grafana/data:/opt/grafana/data \
+        -v /var/lib/grafana:/var/lib/grafana \
         -e "GF_SECURITY_ADMIN_PASSWORD=secret  \
         grafana/grafana:develop
 
