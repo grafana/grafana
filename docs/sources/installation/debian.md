@@ -18,6 +18,27 @@ Description | Download
     $ sudo apt-get install -y adduser libfontconfig
     $ sudo dpkg -i grafana_2.0.0-beta3_amd64.deb
 
+## APT Repository
+Add the following line to your `/etc/apt/sources.list`
+
+    deb https://packagecloud.io/grafana/testing/debian/ wheezy main
+
+Use the above line even if you are on Ubuntu or another debian version.
+
+Then add the [Package Cloud](https://packagecloud.io/grafana) key used to sign packages.
+
+    $ curl https://packagecloud.io/gpg.key | sudo apt-key add -
+
+Update apt and install Grafana
+
+    $ sudo apt-get update
+    $ sudo apt-get install grafana
+
+On some older versions of Ubuntu and Debian you may need to install `apt-transport-https`,
+needed to fetch packages over HTTPS.
+
+    $ sudo apt-get install -y apt-transport-https
+
 ## Package details
 
 - Installs binary to `/usr/sbin/grafana-server`
