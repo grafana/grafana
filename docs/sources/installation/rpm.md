@@ -36,7 +36,7 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
     sslverify=1
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 
-Update apt and install Grafana
+Install Grafana
 
     $ sudo yum install grafana
 
