@@ -1,3 +1,8 @@
+# 2.0.0 (unreleased)
+
+**Fixes**
+- [Issue #1782](https://github.com/grafana/grafana/issues/1782). Github OAuth: Now works with Github for Enterprise, thanks @williamjoy
+
 # 2.0.0-Beta3 (2015-04-12)
 
 **RPM / DEB Package changes (to follow HFS)**
