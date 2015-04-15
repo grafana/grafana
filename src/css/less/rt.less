@@ -55,6 +55,7 @@ raintank BOX
 }
 
 .clearBack {background-color:transparent;}
+
 .rt-box-header-close-btn {
   float: right;
   padding: 0;
@@ -208,8 +209,14 @@ raintank BOX
 
 .mainLink i:hover, .mainLink i:active{
   color: @white;  
+  text-decoration:none;
 }
 
+.tag-icon {  
+  font-size: 14px;
+  vertical-align: text-bottom;
+  margin-left:5px;
+}
 
 /******************************************
 FONTS
@@ -418,6 +425,7 @@ raintank BUTTONS
     cursor: pointer;
     background: darken(@rt-blue, 10%);
     border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
 }
 .primaryCTA ,
 .primaryCTA:visited{
@@ -438,6 +446,7 @@ raintank BUTTONS
     cursor: pointer;
     background: darken(@rt-blue, 10%);
     border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
 }
 .secondaryCTA,
 .secondaryCTA:visited {
@@ -457,6 +466,7 @@ raintank BUTTONS
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+    text-decoration:none;
 }
 
 .tertiaryCTA,
@@ -477,13 +487,14 @@ raintank BUTTONS
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+    text-decoration:none;
 }
 
 .miniCTA, 
 .miniCTA:visited {color:@gray;}
 
 .miniCTA:hover,
-.miniCTA:active {color:@white;}
+.miniCTA:active {color:@white; text-decoration:none;}
 
 
 .collector_icon {
@@ -574,11 +585,13 @@ MATT STYLES
 
 .dashboard-icon {
   transition: all 0.1s ease 0s;
-  vertical-align: top;
+  vertical-align: text-top;
+  font-size:20px;
+  color:@gray;
 }
 
 .dashboard-icon:hover {
-  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+    color: darken(@gray, 10%); // This is a hack. I want to control the svg color on hover eventually. (MST) DONE (TRW)
 }
 
 .filter-icon {
@@ -587,7 +600,7 @@ MATT STYLES
 }
 
 .filter-icon:hover {
-  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+  color:@purple; // This is a hack. I want to control the svg color on hover eventually. (MST)
 }
 
 
@@ -648,6 +661,7 @@ MATT STYLES
   background-color: @raintankTargetBackground;
   position: relative;
   border: none;
+  border-radius: 2px;
   line-height: normal;
   padding: 3px 0;
 }
@@ -731,9 +745,9 @@ MATT STYLES
   padding: 2px 6px;
   border-width: 1px;
   border-style: solid;
-  border-color: lighten(@purple, 15%);
-  box-shadow: 0 0 1px fade(@purple, 90%);
-  line-height: 12px;
+  border-color:  rgba(255,255,255,.2);
+  box-shadow: 0 0 1px rgba(255,255,255,.2);
+  line-height: 14px;
 
   a {
      color: @white;
@@ -752,7 +766,7 @@ MATT STYLES
 
 .rt-label-tag:hover {
   // Hover will trigger the tool tip eventually. This is temporary/ 
-  background-color: darken(@purple, 5%);
+  background-color: rgba(255,255,255,.4);
 }
 
 .rt-list-tag-menu {
@@ -765,7 +779,7 @@ MATT STYLES
   }
 
 .dropdown-menu {
-  >li >a {padding: 0 8px;}
+  >li >a {padding: 0 8px; font-size: 14px;}
 
   >li >a:hover {
   // Hover will trigger the tool tip eventually. This is temporary/ 
@@ -840,12 +854,15 @@ MATT STYLES
   border: none;
   font-size: 16px;
   transition: all 0.1s ease 0s;
+  text-decoration:none;
 
   &:hover, &:focus {
     background: darken(@rt-blue, 10%);
+    text-decoration:none;
   }
  
   &:active {
     background: lighten(@rt-blue, 5%);
+    text-decoration:none;
   }
 }
