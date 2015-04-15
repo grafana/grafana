@@ -34,7 +34,7 @@ function (angular, _, $, config) {
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({
           text: "Data Sources",
-          icon: "fa fa-fw fa-database",
+          icon: "fa-fw icon-rt-datasources",
           href: $scope.getUrl("/datasources"),
         });
       }
