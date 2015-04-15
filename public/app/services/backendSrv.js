@@ -93,10 +93,6 @@ function (angular, _, config) {
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
-      if (requestIsLocal && firstAttempt) {
-        options.url = config.appSubUrl + options.url;
-      }
-
       return $http(options).then(null, function(err) {
         // handle unauthorized for backend requests
         if (requestIsLocal && firstAttempt  && err.status === 401) {
