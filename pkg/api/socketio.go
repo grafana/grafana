@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"reflect"
 	"runtime"
+	"time"
 )
 
 var server *socketio.Server
@@ -174,6 +175,9 @@ func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 	// send to RabbitMQ
 	routingKey := fmt.Sprintf("EVENT.%s.%s", msg.Severity, msg.EventType)
 	go eventpublisher.Publish(routingKey, msgString)
+	if msg.EventType == "monitor_state" {
+		updateState(msg)
+	}
 }
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
@@ -287,4 +291,46 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 		socket.Emit(eventName, event)
 	}
 	return nil
+}
+
+
+func updateState(event *m.EventDefinition) {
+	collector, ok := event.Extra["collector_id"]
+	if !ok {
+		log.Error(0, "event does not have collector_id set.", nil)
+		return
+	}
+	endpoint, ok := event.Extra["endpoint_id"]
+	if !ok {
+		log.Error(0, "event does not have endpoint_id set.", nil)
+		return
+	}
+	monitor, ok := event.Extra["monitor_id"]
+	if !ok {
+		log.Error(0, "event does not have monitor_id set.", nil)
+		return
+	}
+	log.Debug(fmt.Sprintf("updating state of monitor: %v from %v", monitor, event.Extra["collector"]))
+	cmd := m.UpdateMonitorCollectorStateCommand{
+		OrgId: event.OrgId,
+		EndpointId: int64(endpoint.(float64)),
+		MonitorId: int64(monitor.(float64)),
+		CollectorId: int64(collector.(float64)),
+		Updated: time.Unix(0, event.Timestamp*int64(time.Millisecond)),
+	}
+	// update the check state
+	switch event.Severity {
+	case "OK":
+		cmd.State = 0
+	case "WARN":
+		cmd.State = 1
+	case "ERROR":
+		cmd.State = 2
+	default:
+		cmd.State = -1
+	}
+	
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.Error(0, "faile to update MonitorcollectorState", err)
+	}
 }

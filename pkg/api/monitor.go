@@ -95,29 +95,3 @@ func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 	c.JsonOK("Monitor updated")
 }
 
-func UpdateMonitorCollectorState(c *middleware.Context, cmd m.UpdateMonitorCollectorStateCommand) {
-	if cmd.EndpointId == 0 {
-		c.JsonApiErr(400, "EndpointId not set.", nil)
-		return
-	}
-	if cmd.MonitorId == 0 {
-		c.JsonApiErr(400, "MonitorId not set.", nil)
-		return
-	}
-	if cmd.CollectorId == 0 {
-		c.JsonApiErr(400, "CollectorId not set.", nil)
-		return
-	}
-	if cmd.OrgId == 0 {
-		c.JsonApiErr(400, "OrgId not set.", nil)
-		return
-	}
-
-	err := bus.Dispatch(&cmd)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to update monitor collector state", err)
-		return
-	}
-
-	c.JsonOK("Monitor Collector State updated")
-}
