@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
@@ -93,9 +94,10 @@ func runWeb(c *cli.Context) {
 
 	social.NewOAuthService()
 	eventpublisher.Init()
+	metricpublisher.Init()
 	elasticstore.Init()
 	plugins.Init()
-
+	api.InitCollectorController()
 	var err error
 	m := newMacaron()
 	api.Register(m)

@@ -42,6 +42,7 @@ type MonitorRemoved struct {
 	OrgId         int64     `json:"org_id"`
 	CollectorIds  []int64   `json:"collectors_ids"`
 	CollectorTags []string  `json:"collectors_tags"`
+	Collectors    []int64   `json:"collectors"`
 }
 
 type EndpointPayload struct {

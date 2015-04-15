@@ -346,6 +346,7 @@ func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 			OrgId:         q.Result.OrgId,
 			CollectorIds:  q.Result.CollectorIds,
 			CollectorTags: q.Result.CollectorTags,
+			Collectors:    q.Result.Collectors,
 		})
 		return nil
 	})
@@ -507,6 +508,7 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
 			for i, c := range collectorList {
 				monitor_collector_states[i] = &m.MonitorCollectorState{
+					OrgId:       mon.OrgId,
 					EndpointId:  mon.EndpointId,
 					MonitorId:   mon.Id,
 					CollectorId: c,
@@ -917,7 +919,8 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 	return inTransaction2(func(sess *session) error {
 		sess.Table("monitor_collector_state")
 		results := make([]*m.MonitorCollectorState, 0)
-		sess.Where("monitor_id=?", cmd.MonitorId).And("endpoint_id=?", cmd.EndpointId).And("collector_id=?", cmd.CollectorId)
+		sess.Where("monitor_id=?", cmd.MonitorId)
+		sess.And("org_id=?", cmd.OrgId).And("endpoint_id=?", cmd.EndpointId).And("collector_id=?", cmd.CollectorId)
 		if err := sess.Find(&results); err != nil {
 			return err
 		}

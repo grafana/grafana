@@ -34,6 +34,14 @@ type CollectorTag struct {
 	Tag         string
 }
 
+type CollectorSession struct {
+	Id          int64
+	OrgId       int64
+	CollectorId int64
+	SocketId    string
+	Updated     time.Time
+}
+
 // ----------------------
 // DTO
 type CollectorDTO struct {
@@ -79,6 +87,22 @@ type DeleteCollectorCommand struct {
 	OrgId int64 `json:"-"`
 }
 
+type AddCollectorSessionCommand struct {
+	CollectorId int64
+	SocketId    string
+	OrgId       int64
+}
+
+type DeleteCollectorSessionCommand struct {
+	OrgId       int64
+	SocketId    string
+	CollectorId int64
+}
+
+type ClearCollectorSessionCommand struct {
+	ProcessId int64
+}
+
 // ---------------------
 // QUERIES
 
@@ -97,6 +121,12 @@ type GetCollectorByIdQuery struct {
 	Result *CollectorDTO
 }
 
+type GetCollectorByNameQuery struct {
+	Name   string
+	OrgId  int64
+	Result *CollectorDTO
+}
+
 func (collector *Collector) UpdateCollectorSlug() {
 	name := strings.ToLower(collector.Name)
 	re := regexp.MustCompile("[^\\w ]+")
@@ -108,4 +138,9 @@ type GetCollectorHealthByIdQuery struct {
 	Id     int64
 	OrgId  int64
 	Result []*MonitorCollectorState
+}
+
+type GetCollectorSessionsQuery struct {
+	CollectorId int64
+	Result      []*CollectorSession
 }
