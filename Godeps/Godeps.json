@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.4",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -41,8 +38,17 @@
 			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
 		},
 		{
-			"ImportPath": "github.com/jtolds/gls",
-			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
+			"ImportPath": "github.com/googollee/go-engine.io",
+			"Rev": "597faf3df88a01780a5881fafbcbccd9d5c3fab0"
+		},
+		{
+			"ImportPath": "github.com/googollee/go-socket.io",
+			"Comment": "0.9.x-24-g2a8532d",
+			"Rev": "2a8532d68ee77d0cce9dcfaf9ec8fb6eb9a7c62e"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -65,11 +71,6 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-376-g507d829",
-			"Rev": "507d82961b11be9fc3c07aeb0fc338be0b757775"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",
