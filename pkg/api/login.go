@@ -103,15 +103,6 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 		return
 	}
 
-	// default to true here for now
-	cmd.Remember = true
-
-	if cmd.Remember {
-		days := 86400 * setting.LogInRememberDays
-		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
-	}
-
 	loginUserWithUser(user, c)
 
 	result := map[string]interface{}{
@@ -132,6 +123,10 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	if user == nil {
 		log.Error(3, "User login with nil user")
 	}
+
+	days := 86400 * setting.LogInRememberDays
+	c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
+	c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
 
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
