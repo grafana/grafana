@@ -34,3 +34,24 @@
     padding: 0;
   }
 }
+
+.back-to-dashboard-link  {
+  display: none;
+}
+
+@media (min-width: 990px) {
+  .back-to-dashboard-link  {
+    display: block;
+  }
+  .sidemenu-open {
+    .back-to-dashboard-link  {
+      display: none;
+    }
+  }
+}
+
+@media (min-width: 1210px) {
+  .back-to-dashboard-link  {
+    display: block;
+  }
+}
