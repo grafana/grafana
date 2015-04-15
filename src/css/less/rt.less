@@ -25,6 +25,27 @@ COLUMNS
       .detailRight {padding-left:0px;}
       }
 
+  .modalContainer {min-width:200px; max-width:1320px;}
+
+    .modalColumn {
+          width:  50%;
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
+
+    .modalLeft {}
+    .modalRight {}
+
+     @media screen and (max-width: 780px) {
+        .detailColumn {
+          width:  100%;
+          float:none;
+          transition: 0.15s;
+        }
+      .modalLeft {padding-right:0px; margin-left:0px;}
+      .modalRight {padding-left:0px;}
+      }
 
 /***********************************
 raintank BOX
@@ -268,10 +289,19 @@ raintank BUTTONS
     font-size: 12px;
     transition: 0.15s;
 }
+
+// For dark backgrounds. 
 .secondaryCTA:hover{
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+}
+
+// For light backgrounds. 
+.modal-body .secondaryCTA:hover{
+    cursor: pointer;
+    border: 1px solid #161616;
+    color: #161616;
 }
 
 .tertiaryCTA {
@@ -329,6 +359,54 @@ raintank BUTTONS
     dt {font-weight: normal;}
   }
 }
+
+/************************************** 
+Crazy Helper Box
+**************************************/
+
+.helperBoxContent{ /* adds some padding to keep the box organized */
+    padding:10px 25px 25px 25px;
+    margin:15px 20px 6px 8px;
+    border-radius: 2px;
+}
+
+.helperBorder1 {
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    padding:0em;
+    width:100%;
+    display: block;
+}
+.helperBorder2 {
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+.helperBorder3{
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+
+
 
 /**************************************
 MATT STYLES
@@ -705,6 +783,16 @@ input[type="color"] {
   font-size: @rt-fontSizeLarger;
   font-weight: 400;
   display: inline;
+}
+
+.rt-h3 {
+  font-size: @rt-fontSizeLarge;
+  font-weight: 600;
+  display: inline;
+}
+
+.modal-body .rt-h3 {
+  color: @rt-primary;
 }
 
 .rt-page-header-area {

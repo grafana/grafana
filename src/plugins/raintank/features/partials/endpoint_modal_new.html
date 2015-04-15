@@ -18,11 +18,43 @@
 	</div>
 
 	<div class="rt-modal-box-body">
-		<div class="editor-option" style="display: block; padding-top: 15px; padding-bottom: 5px;">
-			<label class="rt-form-label-medium">Endpoint Name</label>
-			<input type="text" class="rt-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="collector.name"required="">
+		<div class="modalContainer">
+			<div class="modalColumn modalLeft">
+				<div class="editor-option" style="display: block; padding-top: 15px; padding-bottom: 5px;">
+					<label class="rt-form-label-medium">Endpoint Name</label>
+					<input type="text" class="rt-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="collector.name"required="">
+				</div>
+				<!-- <div class="secondaryCTA">Auto Discover</div> -->
+				<div style="display: block; padding-left: 25px">
+					<span class="rt-h3">Great Success!</span>
+					<p>We've suggested some default checks below based on what we were able to detect. <a href="#">Check again</a></p>
+				</div>
+				<div id="helperBox" style="padding: 20px 0px;">
+	                <div class="helperBorder1">
+	                    <div class="helperBorder2">
+	                         <div class="helperBorder3">
+	                            <div class="helperBoxContent">
+	           						<span class="rt-h2" style="color: #161616">Check Summary</span>
+	        						<ul style="list-style: none;">
+	        							<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Ping</span></a></li>
+										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >DNS</span></a></li>
+										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTP)</span></a></li>
+										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTPS)</span></a></li>										
+									</ul>
+	        							
+	           					</div>
+	       					</div>
+	   					</div>
+					</div>
+				</div>
+			</div>
+			<div class="modalColumn modalRight">
+				<div class="editor-option">
+						<label class="small">&nbsp;</label>
+						<endpoint-collector-select model="monitor" collectors="collectors"></endpoint-collector-select>
+				</div>
+			</div>
 		</div>
-		<div class="secondaryCTA">Auto Discover</div>
 	</div>
 
 </div>
