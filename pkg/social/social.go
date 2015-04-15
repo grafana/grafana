@@ -49,6 +49,7 @@ func NewOAuthService() {
 			Scopes:         sec.Key("scopes").Strings(" "),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
+			APIUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 		}
