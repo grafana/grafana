@@ -163,5 +163,7 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
+	r.Any("/socket.io/", SocketIO)
+
 	r.NotFound(NotFound)
 }

@@ -1,17 +1,13 @@
-package eventpublisher
+package metricpublisher
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"strings"
-	"time"
-	"unicode"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/streadway/amqp"
+	"time"
 )
 
 var (
@@ -36,13 +32,13 @@ func getChannel() (*amqp.Channel, error) {
 	}
 
 	err = ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		exchange,            // name
+		"x-consistent-hash", // type
+		true,                // durable
+		false,               // auto-deleted
+		false,               // internal
+		false,               // no-wait
+		nil,                 // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -58,11 +54,10 @@ func Init() {
 	}
 
 	url = sec.Key("rabbitmq_url").String()
-	exchange = sec.Key("exchange").String()
-	bus.AddWildcardListener(eventListener)
+	exchange = "metricResults"
 
 	if err := Setup(); err != nil {
-		log.Fatal(4, "Failed to connect to notification queue: %v", err)
+		log.Fatal(4, "Failed to connect to metricResults exchange: %v", err)
 		return
 	}
 }
@@ -132,50 +127,36 @@ func Publish(routingKey string, msgString []byte) {
 	return
 }
 
-func eventListener(event interface{}) error {
-	wireEvent, err := events.ToOnWriteEvent(event)
-	if err != nil {
-		return err
-	}
+func ProcessBuffer(c <-chan m.MetricDefinition) {
+	buf := make(map[uint32][]m.MetricDefinition)
 
-	msgString, err := json.Marshal(wireEvent)
-	if err != nil {
-		return err
-	}
-
-	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, CamelToDotted(wireEvent.EventType))
-	// this is run in a greenthread and we expect that publish will keep
-	// retrying until the message gets sent.
-	go Publish(routingKey, msgString)
-	return nil
-}
-
-// CamelToDotted
-func CamelToDotted(s string) string {
-	var result string
-	var words []string
-	var lastPos int
-	rs := []rune(s)
-
-	for i := 0; i < len(rs); i++ {
-		if i > 0 && unicode.IsUpper(rs[i]) {
-			words = append(words, s[lastPos:i])
-			lastPos = i
+	// flush buffer 10 times every second
+	t := time.NewTicker(time.Millisecond * 100)
+	for {
+		select {
+		case b := <-c:
+			if b.OrgId != 0 {
+				//get hash.
+				hash := uint32(1)
+				if _, ok := buf[hash]; !ok {
+					buf[hash] = make([]m.MetricDefinition, 0)
+				}
+				buf[hash] = append(buf[hash], b)
+			}
+		case <-t.C:
+			//copy contents of buffer
+			for hash, metrics := range buf {
+				currentBuf := make([]m.MetricDefinition, len(metrics))
+				copy(currentBuf, metrics)
+				delete(buf, hash)
+				log.Info(fmt.Sprintf("flushing %d items in buffer now", len(currentBuf)))
+				msgString, err := json.Marshal(currentBuf)
+				if err != nil {
+					log.Error(0, "Failed to marshal metrics payload.", err)
+				} else {
+					go Publish(fmt.Sprintf("%d", hash), msgString)
+				}
+			}
 		}
 	}
-
-	// append the last word
-	if s[lastPos:] != "" {
-		words = append(words, s[lastPos:])
-	}
-
-	for k, word := range words {
-		if k > 0 {
-			result += "."
-		}
-
-		result += strings.ToLower(word)
-	}
-
-	return result
 }
