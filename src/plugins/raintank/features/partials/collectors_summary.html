@@ -76,11 +76,11 @@
 					<div class="collectorCurrentStatus">
 						<div class="collectorStatus">
 							<div class="pull-left msg">This collector is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
-							<a class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
-							<a class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
+							<a ng-if="!(collector.public && !contextSrv.isGrafanaAdmin)" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
+							<a ng-if="!(collector.public && !contextSrv.isGrafanaAdmin)" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
 						</div>
 
-						<span class="online jumbo">online</span> <span class="statusMsg">for 12 days</span>
+						<span class="{{collector.online?'online':'offline'}} jumbo">{{collector.online?'online':'offline'}}</span> <!--<span class="statusMsg">for 12 days</span>-->
 
 						<div class="statusEvents" >
 							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
@@ -105,7 +105,7 @@
 									View
 								</a>
 							</li>
-							<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+							<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
 								<a href="collectors/edit/{{collector.id}}">
 									Edit
 								</a>
