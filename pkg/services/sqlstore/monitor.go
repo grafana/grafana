@@ -175,6 +175,33 @@ FROM monitor
 		whereSql = append(whereSql, fmt.Sprintf("monitor.endpoint_id IN (%s)", strings.Join(p, ",")))
 	}
 
+	if len(query.CollectorId) > 0 {
+		rawSql += "LEFT JOIN monitor_collector AS mc ON mc.monitor_id = monitor.id\n"
+		rawSql += `LEFT JOIN 
+        (SELECT
+            collector.id AS collector_id,
+            collector_tag.tag as tag
+        FROM collector
+        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
+        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id=? OR collector_tag.id is NULL)) as ct
+		ON ct.tag = monitor_collector_tag.tag
+		`
+		rawParams = append(rawParams, query.OrgId, query.OrgId)
+
+		p := make([]string, len(query.CollectorId))
+		for i, c := range query.CollectorId {
+			p[i] = "?"
+			rawParams = append(rawParams, c)
+		}
+		
+		p2 := make([]string, len(query.CollectorId))
+		for i, e := range query.CollectorId {
+			p2[i] = "?"
+			rawParams = append(rawParams, e)
+		}
+		whereSql = append(whereSql, fmt.Sprintf("(mc.collector_id IN (%s) OR ct.collector_id IN (%s))", strings.Join(p, ","), strings.Join(p2, ",")))
+	}
+
 	if query.Modulo > 0 {
 		whereSql = append(whereSql, "(monitor.id % ?) = ?")
 		rawParams = append(rawParams, query.Modulo, query.ModuloOffset)
