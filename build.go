@@ -188,6 +188,7 @@ func createPackage(options linuxPackageOptions) {
 	// copy systemd file
 	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
 	// copy release files
+	runPrint("rm", "-rf", filepath.Join(workingDir, "tmp/bin"))
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// copy sample ini file to /etc/opt/grafana
 	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
