@@ -49,7 +49,7 @@ func NewOAuthService() {
 			Scopes:         sec.Key("scopes").Strings(" "),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
-			APIUrl:         sec.Key("api_url").String(),
+			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 		}
@@ -73,7 +73,7 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, APIUrl: info.APIUrl}
+			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
 		}
 
 		// Google.
@@ -101,7 +101,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 type SocialGithub struct {
 	*oauth2.Config
 	allowedDomains []string
-	APIUrl []string
+	ApiUrl         string
 }
 
 func (s *SocialGithub) Type() int {
@@ -121,7 +121,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var err error
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.APIUrl)
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}
