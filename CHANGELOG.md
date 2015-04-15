@@ -2,6 +2,7 @@
 
 **Fixes**
 - [Issue #1782](https://github.com/grafana/grafana/issues/1782). Github OAuth: Now works with Github for Enterprise, thanks @williamjoy
+- [Issue #1780](https://github.com/grafana/grafana/issues/1780). Dashboard snapshot: Should not require login to view snapshot, Fixes #1780
 
 # 2.0.0-Beta3 (2015-04-12)
 
