@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointsCtrl', function($scope, $http, $location, backendSrv) {
+  module.controller('EndpointsCtrl', function($scope, $http, $location, $rootScope, $modal, $q, backendSrv) {
 
     var defaults = {
       name: '',
@@ -77,6 +77,24 @@ function (angular) {
 
     $scope.gotoDashboard = function(endpoint) {
       $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug(endpoint.name)});
+    }
+
+    var newEndpointModalScope = null;
+    $scope.openNewEndPointModal = function() {
+        if (newEndpointModalScope) { return; }
+
+        newEndpointModalScope = $rootScope.$new();
+        var newEndpointModal = $modal({
+          template: './plugins/raintank/features/partials/endpoint_modal_new.html',
+          persist: false,
+          show: false,
+          scope: newEndpointModalScope,
+          keyboard: false
+        });
+
+        newEndpointModalScope.$on('$destroy', function() { newEndpointModalScope = null; });
+        $q.when(newEndpointModal).then(function(modalEl) { modalEl.modal('show'); });
+
     }
 
     $scope.init();
