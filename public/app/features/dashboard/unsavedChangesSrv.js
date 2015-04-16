@@ -20,13 +20,13 @@ function(angular, _, config) {
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
       // wait for different services to patch the dashboard (missing properties)
       $timeout(function() {
-        self.original = angular.copy(newDashboard);
+        self.original = newDashboard.getSaveModelClone();
         self.current = newDashboard;
       }, 1200);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
-      self.original = angular.copy(savedDashboard);
+      self.original = savedDashboard.getSaveModelClone();
       self.current = savedDashboard;
       self.orignalPath = $location.path();
     });
@@ -85,7 +85,7 @@ function(angular, _, config) {
         return false;
       }
 
-      var current = angular.copy(self.current);
+      var current = self.current.getSaveModelClone();
       var original = self.original;
 
       // ignore timespan changes
