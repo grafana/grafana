@@ -8,8 +8,9 @@ page_keywords: grafana, scripted, guide, documentation
 
 If you have lots of metric names that change (new servers etc) in a defined pattern it is irritating to constantly have to create new dashboards.
 
-With scripted dashboards you can dynamically create your dashboards using javascript. In the folder grafana install folder _app/dashboards/_ there is a file named _scripted.js_. This file contains an example of a scripted dashboard. You can access it by using the url:
-> http://grafana_url/#/dashboard/script/scripted.js?rows=3&name=myName
+With scripted dashboards you can dynamically create your dashboards using javascript. In the folder grafana install folder
+under `public/dashboards/` there is a file named `scripted.js`. This file contains an example of a scripted dashboard. You can access it by using the url:
+`http://grafana_url/dashboard/script/scripted.js?rows=3&name=myName`
 
 If you open scripted.js you can see how it reads url paramters from ARGS variable and then adds rows and panels.
 
@@ -58,4 +59,4 @@ return dashboard;
 
 ## More examples
 
-You can find more examples in `app/dashboards/` directory of your grafana installation.
+You can find more examples in `public/dashboards/` directory of your grafana installation.

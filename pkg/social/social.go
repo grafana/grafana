@@ -49,6 +49,7 @@ func NewOAuthService() {
 			Scopes:         sec.Key("scopes").Strings(" "),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
+			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 		}
@@ -72,13 +73,13 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains}
+			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains}
+			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
 		}
 	}
 }
@@ -100,6 +101,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 type SocialGithub struct {
 	*oauth2.Config
 	allowedDomains []string
+	ApiUrl         string
 }
 
 func (s *SocialGithub) Type() int {
@@ -119,7 +121,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var err error
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get("https://api.github.com/user")
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +149,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
+	ApiUrl         string
 }
 
 func (s *SocialGoogle) Type() int {
@@ -165,9 +168,8 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 	var err error
 
-	reqUrl := "https://www.googleapis.com/oauth2/v1/userinfo"
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(reqUrl)
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}

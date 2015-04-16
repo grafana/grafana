@@ -16,6 +16,7 @@ to build one your self, read [build from source](../project/building_from_source
 - [Installing on Windows](windows.md)
 - [Installing on Docker](docker.md)
 - [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning.md)
+- [Nightly Builds](http://grafana.org/download/builds.html)
 
 ## Configuration
 
