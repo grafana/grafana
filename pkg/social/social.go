@@ -79,7 +79,7 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains}
+			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl}
 		}
 	}
 }
@@ -149,6 +149,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
+	ApiUrl         string
 }
 
 func (s *SocialGoogle) Type() int {
@@ -167,9 +168,8 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 	var err error
 
-	reqUrl := "https://www.googleapis.com/oauth2/v1/userinfo"
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(reqUrl)
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}
