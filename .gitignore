@@ -2,8 +2,11 @@ node_modules
 coverage/
 .aws-config.json
 awsconfig
+/grafana
+/main
 /dist
 /tmp
+/bindata
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH

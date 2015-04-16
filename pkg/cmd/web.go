@@ -7,11 +7,17 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/Unknwon/macaron"
+	"github.com/macaron-contrib/bindata"
 
+	"github.com/grafana/grafana/bindata/app"
+	"github.com/grafana/grafana/bindata/css"
+	"github.com/grafana/grafana/bindata/fonts"
+	"github.com/grafana/grafana/bindata/img"
+	"github.com/grafana/grafana/bindata/public"
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,11 +34,40 @@ func newMacaron() *macaron.Macaron {
 		m.Use(middleware.Gziper())
 	}
 
-	mapStatic(m, "", "public")
-	mapStatic(m, "app", "app")
-	mapStatic(m, "css", "css")
-	mapStatic(m, "img", "img")
-	mapStatic(m, "fonts", "fonts")
+	//go:generate go-bindata -o bindata/public/main.go -pkg=public public/...
+	mapStatic(m, "public", bindata.Options{
+		Asset:      public.Asset,
+		AssetDir:   public.AssetDir,
+		AssetNames: public.AssetNames,
+	})
+
+	//go:generate go-bindata -o bindata/app/main.go -pkg=app -prefix=public public/app/...
+	mapStatic(m, "app", bindata.Options{
+		Asset:      app.Asset,
+		AssetDir:   app.AssetDir,
+		AssetNames: app.AssetNames,
+	})
+
+	//go:generate go-bindata -o bindata/css/main.go -pkg=css -prefix=public public/css/...
+	mapStatic(m, "css", bindata.Options{
+		Asset:      css.Asset,
+		AssetDir:   css.AssetDir,
+		AssetNames: css.AssetNames,
+	})
+
+	//go:generate go-bindata -o bindata/img/main.go -pkg=img -prefix=public public/img/...
+	mapStatic(m, "img", bindata.Options{
+		Asset:      img.Asset,
+		AssetDir:   img.AssetDir,
+		AssetNames: img.AssetNames,
+	})
+
+	//go:generate go-bindata -o bindata/fonts/main.go -pkg=fonts -prefix=public public/fonts/...
+	mapStatic(m, "fonts", bindata.Options{
+		Asset:      fonts.Asset,
+		AssetDir:   fonts.AssetDir,
+		AssetNames: fonts.AssetNames,
+	})
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -46,23 +81,20 @@ func newMacaron() *macaron.Macaron {
 	return m
 }
 
-func mapStatic(m *macaron.Macaron, dir string, prefix string) {
-	headers := func(c *macaron.Context) {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
-	}
-
-	if setting.Env == setting.DEV {
-		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+func mapStatic(m *macaron.Macaron, prefix string, options bindata.Options) {
+	headers := func() string {
+		now := time.Now()
+		if setting.Env != setting.DEV {
+			now.Add(time.Duration(3600))
 		}
+		return now.Format(time.RFC1123)
 	}
 
-	m.Use(httpstatic.Static(
-		path.Join(setting.StaticRootPath, dir),
-		httpstatic.StaticOptions{
+	m.Use(macaron.Static(prefix,
+		macaron.StaticOptions{
 			SkipLogging: true,
-			Prefix:      prefix,
-			AddHeaders:  headers,
+			Expires:     headers,
+			FileSystem:  bindata.Static(options),
 		},
 	))
 }
