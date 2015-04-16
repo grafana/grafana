@@ -1,4 +1,4 @@
-<div class="modal-body rt-box-no-margin" ng-controller="EndpointConfCtrl">
+<div class="modal-body rt-box-no-margin" ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
 	<div class="rt-modal-header">
 		<div class="rt-h1" style="color: #262626;">
 			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25px" height="25px">
@@ -39,7 +39,9 @@
 	        							<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Ping</span></a></li>
 										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >DNS</span></a></li>
 										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTP)</span></a></li>
-										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTPS)</span></a></li>										
+										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTPS)</span></a></li>
+																	<label class="small">Enabled</label>
+							<input type="checkbox" class="input-xxlarge"></input>										
 									</ul>
 	        							
 	           					</div>
@@ -49,7 +51,7 @@
 				</div>
 			</div>
 			<div class="modalColumn modalRight">
-				<div class="editor-option">
+				<div class="editor-option" ng-init="monitor={collector_ids:[], collector_tags: []}">
 						<label class="small">&nbsp;</label>
 						<endpoint-collector-select model="monitor" collectors="collectors"></endpoint-collector-select>
 				</div>
