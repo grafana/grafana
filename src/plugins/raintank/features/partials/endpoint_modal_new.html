@@ -1,7 +1,7 @@
 <div class="modal-body rt-box-no-margin" ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
 	<div class="rt-modal-header">
 		<div class="rt-h1" style="color: #262626;">
-			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25px" height="25px">
+			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25" height="25">
 			<span>New Endpoint</span>
 		</div>
 
@@ -27,7 +27,8 @@
 				<!-- <div class="secondaryCTA">Auto Discover</div> -->
 				<div style="display: block; padding-left: 25px">
 					<span class="rt-h3">Great Success!</span>
-					<p>We've suggested some default checks below based on what we were able to detect. <a href="#">Check again</a></p>
+					<p class="rt-modal-body-copy">We've suggested some default checks below based on what we were able to detect.</br>
+					<a class="rt-modal-body-link" href="#">Check again</a></p>
 				</div>
 				<div id="helperBox" style="padding: 20px 0px;">
 	                <div class="helperBorder1">
@@ -40,10 +41,8 @@
 										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >DNS</span></a></li>
 										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTP)</span></a></li>
 										<li><a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span >Web (HTTPS)</span></a></li>
-																	<label class="small">Enabled</label>
-							<input type="checkbox" class="input-xxlarge"></input>										
+										<li><label class="small">Enabled</label><input type="checkbox" class="input-xxlarge"></li>
 									</ul>
-	        							
 	           					</div>
 	       					</div>
 	   					</div>
@@ -59,5 +58,45 @@
 		</div>
 	</div>
 
-</div>
+	<!-- In lieau of getting tabs correct, here is a very long modal.  -->
 
+
+	<br><br><br>
+	<div class="rt-modal-box-body" style="display: inline-block;">
+		<div class="modalContainer">
+			<div class="modalColumn modalLeft" style="width: 80%">
+				<p class="rt-modal-body-copy">Ping is the lowerst level of monitoring, and also the least intrusive. It doesn’t hit your webserver at the heart, where it’s most-likely to feel pain. Unless it’s a cutter, in which case it needs pain to feel alive.</br>
+				<div>
+					<a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span class="rt-modal-body-copy" style="font-weight: 600; font-style: normal;">Enabled</span></a>
+				</div>
+				<div class="rt-h2">Ping my endpoint every:</div>
+
+				<div>
+				    <div class="editor-option">
+				      <label class="small">10 seconds</label>
+				      <input type="radio" class="input-small" ng-model="" value="10">
+				    </div>
+				    <div class="editor-option">
+				      <label class="small">30 seconds</label>
+				      <input type="radio" class="input-small" ng-model="" value="30">
+				    </div>
+				    <div class="editor-option">
+				      <label class="small">60 seconds</label>
+				      <input type="radio" class="input-small" ng-model="" value="60">
+				    </div>
+				    <div class="editor-option">
+				      <label class="small">120 seconds</label>
+				      <input type="radio" class="input-small" ng-model="" value="120">
+				    </div>
+				</div>
+
+			</div>
+			<div class="modalColumn modalRight">
+			<img src="img/rt-GlobeAnimation.png">
+			</div>
+		</div>
+	</div>
+
+
+
+</div>

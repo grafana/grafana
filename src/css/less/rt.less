@@ -795,6 +795,21 @@ input[type="color"] {
   color: @rt-primary;
 }
 
+.rt-modal-body-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-style: italic;
+}
+
+.rt-modal-body-link {
+  &:link, &:visited {
+    color: @rt-primary;   
+    font-size: @rt-fontSizeMed-2;
+    color: @rt-primary;
+  }
+  &:hover {color: lighten(@rt-primary, 10%);}
+  } 
+
 .rt-page-header-area {
   display: block;
   padding-top: 40px;

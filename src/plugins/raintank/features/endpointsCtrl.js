@@ -81,19 +81,17 @@ function (angular) {
 
     var newEndpointModalScope = null;
     $scope.openNewEndPointModal = function() {
-        if (newEndpointModalScope) { return; }
-
-        newEndpointModalScope = $rootScope.$new();
-        var newEndpointModal = $modal({
-          template: './plugins/raintank/features/partials/endpoint_modal_new.html',
-          persist: false,
-          show: false,
-          scope: newEndpointModalScope,
-          keyboard: false
-        });
-
-        newEndpointModalScope.$on('$destroy', function() { newEndpointModalScope = null; });
-        $q.when(newEndpointModal).then(function(modalEl) { modalEl.modal('show'); });
+      if (newEndpointModalScope) { return; }
+      newEndpointModalScope = $rootScope.$new();
+      var newEndpointModal = $modal({
+        template: './plugins/raintank/features/partials/endpoint_modal_new.html',
+        persist: false,
+        show: false,
+        scope: newEndpointModalScope,
+        keyboard: false
+      });
+      newEndpointModalScope.$on('$destroy', function() { newEndpointModalScope = null; });
+      $q.when(newEndpointModal).then(function(modalEl) { modalEl.modal('show'); });
 
     }
 
