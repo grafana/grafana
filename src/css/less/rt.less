@@ -25,6 +25,10 @@ COLUMNS
       .detailRight {padding-left:0px;}
       }
 
+.modal-body {
+  overflow-y: auto;
+}
+
   .modalContainer {min-width:200px; max-width:1320px;}
 
     .modalColumn {
@@ -791,6 +795,14 @@ input[type="color"] {
   display: inline;
 }
 
+.modal-body .rt-h1{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+}
+
+.modal-body .rt-h2{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+}
+
 .modal-body .rt-h3 {
   color: @rt-primary;
 }
@@ -816,6 +828,142 @@ input[type="color"] {
   padding-bottom: 20px;
 }
 
+.rt-collapse{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
+}
+.rt-collapse:hover {
+ color: @rt-light-gray;
+}    
+
+.rt-collapse + input{
+  display:none;
+}
+.rt-collapse + input + *{
+  display:none;
+}
+.rt-collapse+ input:checked + *{
+  display:block;
+}
+
+
+.rt-world-spin {
+    background-image: url(http://i.imgur.com/LJtXuFd.png);
+    opacity: 1;
+    width: 373px;
+    height: 373px;
+    margin: 0 auto;
+    position: relative;
+    -moz-animation: spinPulse 1s infinite ease-in-out;
+    -webkit-animation: spinPulse 1s infinite linear;
+}
+
+.rt-world {
+    background-image: url(http://i.imgur.com/f3xavFU.png);
+    background-position: 50%;
+    background-repeat: no-repeat;
+    opacity: 1;
+    width: 373px;
+    height: 373px;
+    margin: 0 auto;
+    padding: 50px;
+    position: relative;
+    top: -50px;
+}
+
+@-moz-keyframes spinPulse {
+    0% {
+        -moz-transform: rotate(-10deg);
+        opacity: 0.5;
+    }
+
+    50% {
+        -moz-transform: rotate(50deg);
+        opacity: 1;
+    }
+
+    100% {
+        -moz-transform: rotate(350deg);
+        opacity: 0.5;
+    };
+}
+
+
+@-webkit-keyframes spinPulse {
+    0% {
+        -webkit-transform: rotate(-10deg);
+        opacity: .5;
+    }
+
+    50% {
+        -webkit-transform: rotate(50deg);
+        opacity: 1;
+    }
+
+    100% {
+        -webkit-transform: rotate(350deg);
+        opacity: .5;
+    };
+}
+
+
+// raintank form elements
+
+.rt-radio-custom {
+    opacity: 0;
+    position: absolute;   
+}
+
+.rt-radio-layout {
+  margin-right: 10px;
+}
+
+.rt-radio-custom, .rt-radio-custom-label {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.rt-radio-custom-label {
+    position: relative;
+    color: @rt-dark-gray;
+    font-size: 60px;
+    font-weight: 600;
+}
+
+.rt-radio-custom-sub-label {
+  font-size: @rt-fontSizeMed-1;
+  color: @rt-light-gray;
+  font-weight: 400;
+  display: block;
+}
+
+.rt-radio-custom + .rt-radio-custom-label:before {
+    content: '';
+    background: #fff;
+    border: 2px solid @rt-dark-gray;
+    display: inline-block;
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+    padding: 2px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+
+.rt-radio-custom + .rt-radio-custom-label:before {
+    border-radius: 50%;
+}
+
+.rt-radio-custom:checked + .rt-radio-custom-label:before {
+    background: @rt-primary;
+    box-shadow: inset 0px 0px 0px 4px #fff;
+}
 
 
 // Buttons

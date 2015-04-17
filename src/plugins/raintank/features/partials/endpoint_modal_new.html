@@ -1,6 +1,6 @@
 <div class="modal-body rt-box-no-margin" ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
 	<div class="rt-modal-header">
-		<div class="rt-h1" style="color: #262626;">
+		<div class="rt-h1">
 			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25" height="25">
 			<span>New Endpoint</span>
 		</div>
@@ -17,14 +17,16 @@
 		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Web</a></span>
 	</div>
 
-	<div class="rt-modal-box-body">
+	<!-- Summary Tab.  -->
+
+<!-- 	<div class="rt-modal-box-body">
 		<div class="modalContainer">
 			<div class="modalColumn modalLeft">
 				<div class="editor-option" style="display: block; padding-top: 15px; padding-bottom: 5px;">
 					<label class="rt-form-label-medium">Endpoint Name</label>
 					<input type="text" class="rt-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="endpoint.name"required="">
 				</div>
-				<!-- <div class="secondaryCTA">Auto Discover</div> -->
+				<div class="secondaryCTA">Auto Discover</div>
 				<div style="display: block; padding-left: 25px">
 					<span class="rt-h3">Great Success!</span>
 					<p class="rt-modal-body-copy">We've suggested some default checks below based on what we were able to detect.</br>
@@ -56,47 +58,65 @@
 				</div>
 			</div>
 		</div>
-	</div>
-
-	<!-- In lieau of getting tabs correct, here is a very long modal.  -->
+	</div> -->
 
 
-	<br><br><br>
+	<!-- Ping Tab.  -->
+
 	<div class="rt-modal-box-body" style="display: inline-block;">
 		<div class="modalContainer">
 			<div class="modalColumn modalLeft" style="width: 80%">
 				<p class="rt-modal-body-copy">Ping is the lowerst level of monitoring, and also the least intrusive. It doesn’t hit your webserver at the heart, where it’s most-likely to feel pain. Unless it’s a cutter, in which case it needs pain to feel alive.</br>
-				<div>
+				<div style="margin: 20px 0;">
 					<a href="#"><i class="fa fa-fw fa-check-square-o"></i> <span class="rt-modal-body-copy" style="font-weight: 600; font-style: normal;">Enabled</span></a>
 				</div>
-				<div class="rt-h2">Ping my endpoint every:</div>
+				<form>
+					<div class="rt-h2" style="margin: 20px 0; display: inline-block;">Ping my endpoint every:</div>
+					<div style="display: inline-block; margin-top: 20px;">
+						<div style="display: flex;">
+					        <div class="rt-radio-layout">
+				            	<input id="rt-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" checked>
+				            	<div style="text-align: center;">
+					            	<label for="rt-radio-1" class="rt-radio-custom-label">10</label>
+				            		<span class="rt-radio-custom-sub-label">Seconds</span>
+			            		</div>
+					        </div>
+					        <div class="rt-radio-layout">
+					            <input id="rt-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio">
+					            <label for="rt-radio-2" class="rt-radio-custom-label">30</label>
+								<span class="rt-radio-custom-sub-label">Seconds</span>
+					        </div>
+					        <div class="rt-radio-layout">
+					            <input id="rt-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio">
+					            <label for="rt-radio-3" class="rt-radio-custom-label">60</label>
+   					            <span class="rt-radio-custom-sub-label">Seconds</span>
+					        </div>
+					       	<div class="rt-radio-layout">
+					            <input id="rt-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio">
+					            <label for="rt-radio-4" class="rt-radio-custom-label">120</label>
+					            <span class="rt-radio-custom-sub-label">Seconds</span>
+					        </div> 
+						</div>
+					</div>
+					<div style="margin-top: 30px;">
+						<label class="rt-collapse" for="_1">advanced options <i class="fa fa-caret-down"></i></label>
+						<input id="_1" type="checkbox">
+						<div>
+							Hellllo.
+						</div>
+					</div>
 
-				<div>
-				    <div class="editor-option">
-				      <label class="small">10 seconds</label>
-				      <input type="radio" class="input-small" ng-model="" value="10">
-				    </div>
-				    <div class="editor-option">
-				      <label class="small">30 seconds</label>
-				      <input type="radio" class="input-small" ng-model="" value="30">
-				    </div>
-				    <div class="editor-option">
-				      <label class="small">60 seconds</label>
-				      <input type="radio" class="input-small" ng-model="" value="60">
-				    </div>
-				    <div class="editor-option">
-				      <label class="small">120 seconds</label>
-				      <input type="radio" class="input-small" ng-model="" value="120">
-				    </div>
-				</div>
-
+				</form>
 			</div>
+
 			<div class="modalColumn modalRight">
-			<img src="img/rt-GlobeAnimation.png">
+ 				<!-- <div class="rt-world">
+  					<div class="rt-world-spin"></div>
+				</div> -->
 			</div>
 		</div>
 	</div>
 
-
+<span style="padding-bottom: 100px"></span>
 
 </div>
