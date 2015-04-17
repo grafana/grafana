@@ -59,6 +59,7 @@ function (angular, $, kbn, _, moment) {
 
       if (contextSrv.hasRole('Viewer')) {
         meta.canSave = false;
+        meta.canEdit = false;
       }
 
       if (meta.isSnapshot) {
