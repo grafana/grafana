@@ -38,8 +38,12 @@ COLUMNS
           transition: 0.15s;
         }
 
-    .modalLeft {}
-    .modalRight {}
+    .modalLeft {
+      width: 80%;
+    }
+    .modalRight {
+      width: 20%;
+    }
 
      @media screen and (max-width: 780px) {
         .detailColumn {
@@ -850,28 +854,30 @@ input[type="color"] {
 }
 
 
-.rt-world-spin {
-    background-image: url(http://i.imgur.com/LJtXuFd.png);
-    opacity: 1;
-    width: 373px;
-    height: 373px;
-    margin: 0 auto;
-    position: relative;
-    -moz-animation: spinPulse 1s infinite ease-in-out;
-    -webkit-animation: spinPulse 1s infinite linear;
+.rt-globe-check-speed {
+  background-image: url(/img/rt-globe-check-speed.svg);
+  opacity: 1;
+  width: 177px;
+  height: 177px;
+  margin: 0 auto;
+  position: absolute;
+
+  -moz-animation: spinPulse 1500ms infinite ease-in-out;
+  -webkit-animation: spinPulse 1500ms infinite linear;
 }
 
-.rt-world {
-    background-image: url(http://i.imgur.com/f3xavFU.png);
-    background-position: 50%;
-    background-repeat: no-repeat;
-    opacity: 1;
-    width: 373px;
-    height: 373px;
-    margin: 0 auto;
-    padding: 50px;
-    position: relative;
-    top: -50px;
+.rt-globe {
+  background-image: url(/img/rt-globe.svg);  
+  background-position: 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 1;
+  width: 177px;
+  height: 177px;
+  margin: 0 auto;
+  padding: 0px;
+  position: relative;
+
 }
 
 @-moz-keyframes spinPulse {
@@ -880,10 +886,11 @@ input[type="color"] {
         opacity: 0.5;
     }
 
-    50% {
-        -moz-transform: rotate(50deg);
+    25% {
+        -moz-transform: rotate(125deg);
         opacity: 1;
     }
+  
 
     100% {
         -moz-transform: rotate(350deg);
@@ -898,8 +905,8 @@ input[type="color"] {
         opacity: .5;
     }
 
-    50% {
-        -webkit-transform: rotate(50deg);
+    25% {
+        -webkit-transform: rotate(125deg);
         opacity: 1;
     }
 
@@ -910,6 +917,7 @@ input[type="color"] {
 }
 
 
+
 // raintank form elements
 
 .rt-radio-custom {
@@ -918,7 +926,7 @@ input[type="color"] {
 }
 
 .rt-radio-layout {
-  margin-right: 10px;
+  margin-right: 20px;
 }
 
 .rt-radio-custom, .rt-radio-custom-label {
@@ -940,6 +948,7 @@ input[type="color"] {
   color: @rt-light-gray;
   font-weight: 400;
   display: block;
+  margin-top: 5px;
 }
 
 .rt-radio-custom + .rt-radio-custom-label:before {
