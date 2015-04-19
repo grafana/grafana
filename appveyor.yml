@@ -12,7 +12,7 @@ install:
   - echo %GOPATH%
   - go version
   - go env
-  - go get -v -t ./...
+  - go run build.go setup
 
 build_script:
-  - go test -v ./pkg/...
+  - go run build.go build
