@@ -5,11 +5,11 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
 	"path"
-	"encoding/json"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -54,7 +54,7 @@ var (
 
 	// Log settings.
 	LogModes   []string
-	LogConfigs []string
+	LogConfigs []util.DynMap
 
 	// Http server options
 	Protocol           Scheme
@@ -420,7 +420,7 @@ func initLogging(args *CommandLineArgs) {
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
 
-	LogConfigs = make([]string, len(LogModes))
+	LogConfigs = make([]util.DynMap, len(LogModes))
 	for i, mode := range LogModes {
 		mode = strings.TrimSpace(mode)
 		sec, err := Cfg.GetSection("log." + mode)
@@ -436,53 +436,49 @@ func initLogging(args *CommandLineArgs) {
 			log.Fatal(4, "Unknown log level: %s", levelName)
 		}
 
-		var logCfg util.DynMap
-
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			logCfg = util.DynMap{"level": level}
+			LogConfigs[i] = util.DynMap{"level": level}
 		case "file":
 			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
-			logCfg = util.DynMap{
-				"level": level,
+			LogConfigs[i] = util.DynMap{
+				"level":    level,
 				"filename": logPath,
-				"rotate": sec.Key("log_rotate").MustBool(true),
+				"rotate":   sec.Key("log_rotate").MustBool(true),
 				"maxlines": sec.Key("max_lines").MustInt(1000000),
-				"maxsize": 1<<uint(sec.Key("max_size_shift").MustInt(28)),
-				"daily": sec.Key("daily_rotate").MustBool(true),
-				"maxdays": sec.Key("max_days").MustInt(7),
+				"maxsize":  1 << uint(sec.Key("max_size_shift").MustInt(28)),
+				"daily":    sec.Key("daily_rotate").MustBool(true),
+				"maxdays":  sec.Key("max_days").MustInt(7),
 			}
 		case "conn":
-			logCfg = util.DynMap{
-				"level": level,
+			LogConfigs[i] = util.DynMap{
+				"level":          level,
 				"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
-				"reconnect": sec.Key("reconnect").MustBool(),
-				"net": sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-				"addr": sec.Key("addr").MustString(":7020"),
+				"reconnect":      sec.Key("reconnect").MustBool(),
+				"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
+				"addr":           sec.Key("addr").MustString(":7020"),
 			}
 		case "smtp":
-			logCfg = util.DynMap{
-				"level": level,
-				"user": sec.Key("user").MustString("example@example.com"),
-				"passwd": sec.Key("passwd").MustString("******"),
-				"host": sec.Key("host").MustString("127.0.0.1:25"),
+			LogConfigs[i] = util.DynMap{
+				"level":     level,
+				"user":      sec.Key("user").MustString("example@example.com"),
+				"passwd":    sec.Key("passwd").MustString("******"),
+				"host":      sec.Key("host").MustString("127.0.0.1:25"),
 				"receivers": sec.Key("receivers").MustString("[]"),
-				"subject": sec.Key("subject").MustString("Diagnostic message from serve"),
+				"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
 			}
 		case "database":
-			logCfg = util.DynMap{
-				"level": level,
+			LogConfigs[i] = util.DynMap{
+				"level":  level,
 				"driver": sec.Key("driver").String(),
-				"conn": sec.Key("conn").String(),
+				"conn":   sec.Key("conn").String(),
 			}
 		}
 
-		cfgJsonBytes, _ := json.Marshal(logCfg)
-		LogConfigs[i] = string(cfgJsonBytes)
-		fmt.Printf("Config: %s\n", LogConfigs[i])
-		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, LogConfigs[i])
+		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
+		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, string(cfgJsonBytes))
 	}
 }
 
