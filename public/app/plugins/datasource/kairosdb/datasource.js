@@ -44,7 +44,7 @@ function (angular, _, kbn) {
         d.resolve({ data: [] });
         return d.promise;
       }
-      return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias,handleQueryError);
+      return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
     };
 
     ///////////////////////////////////////////////////////////////////////
@@ -56,8 +56,8 @@ function (angular, _, kbn) {
         metrics: queries
       };
       reqBody.cache_time = 0;
-      convertToKairosTime(start,reqBody,'start');
-      convertToKairosTime(end,reqBody,'end');
+      convertToKairosTime(start, reqBody, 'start');
+      convertToKairosTime(end, reqBody, 'end');
       var options = {
         method: 'POST',
         url: '/api/v1/datapoints/query',
@@ -86,10 +86,10 @@ function (angular, _, kbn) {
 
     };
 
-    KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname,range,type,keyValue) {
+    KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname, range, type, keyValue) {
       if (tagList && (metricname === tagList.metricName) && (range.from === tagList.range.from) &&
         (range.to === tagList.range.to)) {
-        return getTagListFromResponse(tagList.results,type,keyValue);
+        return getTagListFromResponse(tagList.results, type, keyValue);
       }
       tagList = {
         metricName:metricname,
@@ -98,8 +98,8 @@ function (angular, _, kbn) {
       var body = {
         metrics : [{name : metricname}]
       };
-      convertToKairosTime(range.from,body,'start');
-      convertToKairosTime(range.to,body,'end');
+      convertToKairosTime(range.from, body, 'start');
+      convertToKairosTime(range.to, body, 'end');
       var options = {
         url : this.url + '/api/v1/datapoints/query/tags',
         method : 'POST',
@@ -107,7 +107,7 @@ function (angular, _, kbn) {
       };
       return $http(options).then(function(results) {
         tagList.results = results;
-        return getTagListFromResponse(results,type,keyValue);
+        return getTagListFromResponse(results, type, keyValue);
       });
 
     };
@@ -116,14 +116,14 @@ function (angular, _, kbn) {
     /// Formatting methods
     ////////////////////////////////////////////////////////////////////////
 
-    function getTagListFromResponse(results,type,keyValue) {
+    function getTagListFromResponse(results, type, keyValue) {
       if (!results.data) {
         return [];
       }
       if (type === "key") {
         return _.keys(results.data.queries[0].results[0].tags);
       }
-      else if (type === "value" && _.has(results.data.queries[0].results[0].tags,keyValue)) {
+      else if (type === "value" && _.has(results.data.queries[0].results[0].tags, keyValue)) {
         return results.data.queries[0].results[0].tags[keyValue];
       }
       return [];
@@ -150,9 +150,6 @@ function (angular, _, kbn) {
       var output = [];
       var index = 0;
       _.each(results.data.queries, function(series) {
-        var sample_size = series.sample_size;
-        console.log("sample_size:" + sample_size + " samples");
-
         _.each(series.results, function(result) {
 
           //var target = result.name;
@@ -194,7 +191,7 @@ function (angular, _, kbn) {
       return output2;
     }
 
-    function convertTargetToQuery(options,target) {
+    function convertTargetToQuery(options, target) {
       if (!target.metric || target.hide) {
         return null;
       }

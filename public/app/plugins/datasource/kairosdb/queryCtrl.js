@@ -9,7 +9,7 @@ function (angular, _) {
   var metricList = null;
   var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
-  module.controller('KairosDBTargetCtrl', function($scope) {
+  module.controller('KairosDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.metric = {
@@ -72,12 +72,12 @@ function (angular, _) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      callback($scope.datasource.performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'key',''));
+      callback($scope.datasource.performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'key', ''));
     };
 
     $scope.suggestTagValues = function(query, callback) {
       callback($scope.datasource
-        .performTagSuggestQuery($scope.target.metric,$scope.rangeUnparsed, 'value',$scope.target.currentTagKey));
+        .performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'value', $scope.target.currentTagKey));
     };
 
     // Filter metric by tag
@@ -94,7 +94,7 @@ function (angular, _) {
 
       $scope.validateFilterTag();
       if (!$scope.target.errors.tags) {
-        if (!_.has($scope.target.tags,$scope.target.currentTagKey)) {
+        if (!_.has($scope.target.tags, $scope.target.currentTagKey)) {
           $scope.target.tags[$scope.target.currentTagKey] = [];
         }
         $scope.target.tags[$scope.target.currentTagKey].push($scope.target.currentTagValue);
