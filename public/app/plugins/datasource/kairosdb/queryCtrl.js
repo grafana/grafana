@@ -9,7 +9,7 @@ function (angular, _) {
   var metricList = null;
   var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
-  module.controller('KairosDBTargetCtrl', function($scope) {
+  module.controller('KairosDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.metric = {
