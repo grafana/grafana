@@ -150,9 +150,6 @@ function (angular, _, kbn) {
       var output = [];
       var index = 0;
       _.each(results.data.queries, function(series) {
-        var sample_size = series.sample_size;
-        console.log("sample_size:" + sample_size + " samples");
-
         _.each(series.results, function(result) {
 
           //var target = result.name;
