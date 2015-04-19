@@ -8,6 +8,7 @@ environment:
   GOPATH: c:\gopath
 
 install:
+  - choco install mingw
   - echo %PATH%
   - echo %GOPATH%
   - go version
