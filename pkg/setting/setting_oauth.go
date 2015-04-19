@@ -7,6 +7,7 @@ type OAuthInfo struct {
 	Enabled                bool
 	AllowedDomains         []string
 	ApiUrl                 string
+	AllowSignup            bool
 }
 
 type OAuther struct {
