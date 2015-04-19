@@ -28,6 +28,10 @@ godep restore                    (will pull down all golang lib dependecies in y
 go build .
 ```
 
+# Building on Windows
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
+to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
 ## Building frontend assets
 
 To build less to css for the frontend you will need a recent version of of node (v0.12.0),
