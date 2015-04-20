@@ -28,7 +28,7 @@ repository if you want beta or release candidates.
 
     deb https://packagecloud.io/grafana/testing/debian/ wheezy main
 
-Then add the [Package Cloud](https://packagecloud.io/grafana) key used to sign packages.
+Then add the [Package Cloud](https://packagecloud.io/grafana) key (signs repo metadata).
 
     $ curl https://packagecloud.io/gpg.key | sudo apt-key add -
 
