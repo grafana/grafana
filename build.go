@@ -88,7 +88,7 @@ func main() {
 func makeLatestDistCopies() {
 	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
 	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
-	runError("cp", "dist/grafana-"+version+".x86_64.tar.gz", "dist/grafana-latest.x86_64.tar.gz")
+	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
 }
 
 func readVersionFromPackageJson() {
