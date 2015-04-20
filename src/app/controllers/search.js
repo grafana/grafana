@@ -159,8 +159,19 @@ function (angular, _, config) {
           "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
           "#58140C","#052B51","#511749","#3F2B5B",
         ];
+        var borderColors = [
+          "#FF7368","#459EE7","#E069CF","#9683C6","#6C8E29",
+          "#76AC68","#6AA4E2","#E7823D","#AF3528","#9B9B9B",
+          "#3069A2","#934588","#7E6A9D","#88C477","#557575",
+          "#E54126","#A694DD","#B054DE", "#8FC426","#262626",
+          "#658E59","#557D84","#BF6A30","#FF9B53","#3470DA",
+          "#7E3A32","#2B5177","#773D6F","#655181",
+        ];
         var color = colors[Math.abs(hash % colors.length)];
+        var borderColor = borderColors[Math.abs(hash % borderColors.length)];
+
         element.css("background-color", color);
+        element.css("border-color", borderColor);
       }
     };
   });

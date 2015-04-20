@@ -126,7 +126,6 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id/health", getMonitorHealthById)
 			r.Get("/:id", GetMonitorById)
 			r.Delete("/:id", reqEditorRole, DeleteMonitor)
-			r.Post("/state", reqGrafanaAdmin, bind(m.UpdateMonitorCollectorStateCommand{}), UpdateMonitorCollectorState)
 		})
 		// endpoints
 		r.Group("/endpoints", func() {
@@ -162,6 +161,8 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.Any("/socket.io/", SocketIO)
 
 	r.NotFound(NotFound)
 }

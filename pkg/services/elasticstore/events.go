@@ -11,7 +11,7 @@ func init() {
 }
 
 func GetEventsQuery(query *m.GetEventsQuery) error {
-	query.Result = make([]map[string]interface{}, 0)
+	query.Result = make([]*m.EventDefinition, 0)
 	esQuery := map[string]interface{}{
 		"query": map[string]interface{}{
 			"filtered": map[string]interface{}{
@@ -45,12 +45,12 @@ func GetEventsQuery(query *m.GetEventsQuery) error {
 		return err
 	}
 	for _, hit := range out.Hits.Hits {
-		var source map[string]interface{}
+		var source m.EventDefinition
 		err = json.Unmarshal(*hit.Source, &source)
 		if err != nil {
 			return err
 		}
-		query.Result = append(query.Result, source)
+		query.Result = append(query.Result, &source)
 	}
 
 	return nil

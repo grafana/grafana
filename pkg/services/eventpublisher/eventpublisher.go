@@ -110,7 +110,7 @@ func Setup() error {
 	return nil
 }
 
-func publish(routingKey string, msgString []byte) {
+func Publish(routingKey string, msgString []byte) {
 	err := channel.Publish(
 		exchange,   //exchange
 		routingKey, // routing key
@@ -127,7 +127,7 @@ func publish(routingKey string, msgString []byte) {
 		// retrying every 2seconds until we successfully publish.
 		time.Sleep(2 * time.Second)
 		fmt.Println("publish failed, retrying.")
-		publish(routingKey, msgString)
+		Publish(routingKey, msgString)
 	}
 	return
 }
@@ -146,7 +146,7 @@ func eventListener(event interface{}) error {
 	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, CamelToDotted(wireEvent.EventType))
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
-	go publish(routingKey, msgString)
+	go Publish(routingKey, msgString)
 	return nil
 }
 
