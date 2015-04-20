@@ -4,9 +4,9 @@ page_keywords: grafana, introduction, documentation, about
 
 # About Grafana
 
-Grafana is a leading open source application for visualizing your large scale time series measurement data. 
+Grafana is a leading open source applications for visualizing large-scale measurement data. 
 
-It provides a powerful and elegant way to create and share dashboards and data from your metrics, either with your team or with the world. 
+It provides a powerful and elegant way to create, share, and explore data and dashboards from your metrics in different databases, either with your team or with the world. 
 
 Grafana is most commonly used for Internet infrastructure and application monitoring and analytics, but many use it in other domains including industrial sensors, home automation, weather, and process control.
 
