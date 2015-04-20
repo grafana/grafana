@@ -1,25 +1,47 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
-		<li>
-			<div style="margin-top:10px;">
+		<li class="top-nav-title ng-binding">
+			<div>
 				<form style="margin-bottom:0px;">
-					<select ng-model="collector" ng-options="c as c.name for c in editableCollectors()" ng-change="setCollector(collector.id)"></select>
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+							<span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="collector in collectors">
+								<a class="small" href="collectors/summary/{{collector.id}}">{{collector.name}}</a>
+							</li>
+						</ul>
+					</li>
 				</form>
 			</div>
 		</li>
-		<li ><a href="collectors/summary/{{collector.id}}">Summary</a></li>
-		<li class="active"><a href="collectors/edit/{{collector.id}}">Edit</a></li>
 	</ul>
 </topnav>
 
+<div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1300px;">
+			<!-- page title -->
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">{{collector.name}}</h1>
+		
+		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
+		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
+	</div>
 
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+	<!-- tabs -->
+	<div class="rt-tabs">
+		<span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="active" ng-hide="!contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
+	</div>
+</div>
+
+
 	<form name="collectorForm">
-		<div class="gf-box">
-			<div class="gf-box-header">
+		<div class="grid">
+		<div class="grid-full rt-box">
+			<div class="rt-box-header">
 				<div style="padding:10px;">General Settings</div>
 			</div>
-			<div class="gf-box-body" style="min-height: 50px">
+			<div class="rt-box-body" style="min-height: 50px">
 				<div class="editor-row">
 					<div class="editor-option">
 						<label class="small">Collector Name</label>
@@ -49,6 +71,6 @@
 			<button type="submit" class="btn btn-success" ng-show="collector.id" ng-click="save()">Save</button>
 		</div>
 	</form>
-</div>
+
 
 			

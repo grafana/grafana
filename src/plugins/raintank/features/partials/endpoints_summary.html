@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li class="top-nav-title ng-binding">
 			<div>
@@ -36,14 +36,14 @@
 	<div class="detailContainer">
 		<div class="detailColumn detailLeft">
 			<div class="rt-box clearBack oneCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status Since Last Check</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
@@ -134,14 +134,14 @@
 
 		<div class="detailColumn detailRight">
 			<div class="rt-box clearBack twoCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Tags</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>

@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 </topnav>
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<div class="rt-page-header-area">
@@ -41,10 +41,10 @@
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
 
 				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag="tag" tag-color-from-name>
-						<a data-toggle="dropdown">{{tag}} <img class="dashboard-icon"src="img/tiny-rt-endpoint.svg" style="padding-left: 2px; vertical-align: -2px;"width="12px" height="12px"> </a>
+						<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
 						<ul class="dropdown-menu rt-tag-dropup">
-                        	<li><a href="#"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{tag}} dashboard'"></a></li>
-                        	<li><a ng-click="setEndpointFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
+                        	<li><a href="#"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{tag}} dashboard'"></i></a></li>
+                        	<li><a ng-click="setEndpointFilter(tag)"><i ng-class="icon" class="dashboard-icon icon-rt-filter" bs-tooltip="'Filter by {{tag}}'"></i></a></li>
                    		</ul>
                 </span>
 
@@ -54,11 +54,11 @@
 					<rt-endpoint-health model="endpoint.health"></rt-endpoint-health>
 				</div>
 				<div style="display: inline;">
-					<a ng-click="gotoDashboard(endpoint)"><img class="dashboard-icon"src="img/jump-to-dashboard.svg" width="28px" height="28px" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></a>
+					<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 				</div>
 				<div class="dropdown" style="float: right;">
 					<a data-toggle="dropdown">
-						<i class="fa fa-fw fa-ellipsis-v"></i>
+						<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 					</a>
 					<ul class="dropdown-menu" role="menu">
 						<li>

@@ -1,4 +1,5 @@
-html {-webkit-font-smoothing:antialiased;} // make type beautiful
+html {-webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing: grayscale;} /* make type beautiful*/
 
 /***********************************
 COLUMNS
@@ -54,6 +55,7 @@ raintank BOX
 }
 
 .clearBack {background-color:transparent;}
+
 .rt-box-header-close-btn {
   float: right;
   padding: 0;
@@ -109,6 +111,8 @@ raintank BOX
   }
 }
 
+.public {color:@rt-blue;}
+.private {color:@gray;}
 
 .collectorStatus,
 .endpointStatus  {
@@ -122,7 +126,7 @@ raintank BOX
 
 .currentStatus {
   display:block;
-  padding: 20px;
+  padding: 10px 20px;
   border-bottom: 1px solid @bodyBackground;
 }
 
@@ -161,7 +165,7 @@ raintank BOX
 
 .event {
   display:inline-block;
-  margin-bottom:10px;
+  margin-bottom:0px;
   margin-right:20px
   }
 
@@ -191,12 +195,155 @@ raintank BOX
 
 .status {
   display: inline-block;
-  // vertical-align:bottom;
-  // position: relative;
-  // bottom: 10px !important;
 }
 
 .eventType {margin-left:5px;}
+
+
+.mainLink i, .mainLink i:visited{
+  -moz-color: -moz-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
+  -webkit-color: -webkit-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
+  color: linear-gradient(to bottom right, #fff 0%, #13b2d4 100%); 
+  transition: 0.15s; 
+}
+
+.mainLink i:hover, .mainLink i:active{
+  color: @white;  
+  text-decoration:none;
+}
+
+.tag-icon {  
+  font-size: 14px;
+  vertical-align: text-bottom;
+  margin-left:5px;
+}
+
+/******************************************
+FONTS
+******************************************/
+@font-face {
+  font-family: 'raintank-icons';
+  src:url('../fonts/raintank-icons.eot?-1mxvgn');
+  src:url('../fonts/raintank-icons.eot?#iefix-1mxvgn') format('embedded-opentype'),
+    url('../fonts/raintank-icons.woff?-1mxvgn') format('woff'),
+    url('../fonts/raintank-icons.ttf?-1mxvgn') format('truetype'),
+    url('../fonts/raintank-icons.svg?-1mxvgn#raintank-icons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+i {
+  font-family: 'raintank-icons';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-rt-datasources:before {
+  content: "\e618";
+}
+
+.icon-rt-globe:before {
+  content: "\e600";
+}
+
+.icon-rt-refresh:before {
+  content: "\e601";
+}
+
+.icon-rt-save:before {
+  content: "\e602";
+}
+
+.icon-rt-search:before {
+  content: "\e603";
+}
+
+.icon-rt-settings:before {
+  content: "\e604";
+}
+
+.icon-rt-share:before {
+  content: "\e605";
+}
+
+.icon-rt-snapshot:before {
+  content: "\e606";
+}
+
+.icon-rt-star:before {
+  content: "\e607";
+}
+
+.icon-rt-status:before {
+  content: "\e608";
+}
+
+.icon-rt-video:before {
+  content: "\e609";
+}
+
+.icon-rt-bulk_action:before {
+  content: "\e60a";
+}
+
+.icon-rt-dashboard:before {
+  content: "\e60b";
+}
+
+.icon-rt-collector:before {
+  content: "\e60c";
+}
+
+.icon-rt-endpoint:before {
+  content: "\e60d";
+}
+
+.icon-rt-endpoint-tiny:before {
+  content: "\e60e";
+}
+
+.icon-rt-jump-to-dashboard:before {
+  content: "\e60f";
+}
+
+.icon-rt-filter:before {
+  content: "\e610";
+}
+
+.icon-rt-online:before {
+  content: "\e611";
+}
+
+.icon-rt-critical:before {
+  content: "\e612";
+}
+
+.icon-rt-nodata:before {
+  content: "\e613";
+}
+
+.icon-rt-warn:before {
+  content: "\e614";
+}
+
+.icon-rt-private-collector:before {
+  content: "\e615";
+}
+
+.icon-rt-raintank_icn:before {
+  content: "\e616";
+}
+
+.icon-rt-raintank_wordmark:before {
+  content: "\e617";
+}
 
 /***********************************
 raintank TYPE
@@ -257,7 +404,8 @@ raintank POSITIONING
 raintank BUTTONS
 ***********************************/
 
-.superCTA { 
+.superCTA,
+.superCTA:visited { 
     display: block;
     padding: 1.0em 0;
     color:#fff;
@@ -277,8 +425,10 @@ raintank BUTTONS
     cursor: pointer;
     background: darken(@rt-blue, 10%);
     border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
 }
-.primaryCTA {
+.primaryCTA ,
+.primaryCTA:visited{
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.2em 1.4em;
@@ -296,8 +446,10 @@ raintank BUTTONS
     cursor: pointer;
     background: darken(@rt-blue, 10%);
     border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
 }
-.secondaryCTA {
+.secondaryCTA,
+.secondaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.2em 1.4em;
@@ -309,13 +461,16 @@ raintank BUTTONS
     font-size: 12px;
     transition: 0.15s;
 }
-.secondaryCTA:hover{
+.secondaryCTA:hover, 
+.secondaryCTA:active{
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+    text-decoration:none;
 }
 
-.tertiaryCTA {
+.tertiaryCTA,
+.tertiaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.2em 1.4em;
@@ -327,16 +482,23 @@ raintank BUTTONS
     font-size: 12px;
     transition: 0.15s;
 }
-.tertiaryCTA:hover{
+.tertiaryCTA:hover,
+.tertiaryCTA:active{
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+    text-decoration:none;
 }
 
+.miniCTA, 
+.miniCTA:visited {color:@gray;}
+
+.miniCTA:hover,
+.miniCTA:active {color:@white; text-decoration:none;}
 
 
 .collector_icon {
-  vertical-align: 2px;
+  vertical-align: 0;
   padding-left:3px;
 }
 
@@ -423,11 +585,13 @@ MATT STYLES
 
 .dashboard-icon {
   transition: all 0.1s ease 0s;
-  vertical-align: top;
+  vertical-align: text-top;
+  font-size:20px;
+  color:@gray;
 }
 
 .dashboard-icon:hover {
-  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+    color: darken(@gray, 10%); // This is a hack. I want to control the svg color on hover eventually. (MST) DONE (TRW)
 }
 
 .filter-icon {
@@ -436,7 +600,7 @@ MATT STYLES
 }
 
 .filter-icon:hover {
-  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+  color:@purple; // This is a hack. I want to control the svg color on hover eventually. (MST)
 }
 
 
@@ -497,6 +661,7 @@ MATT STYLES
   background-color: @raintankTargetBackground;
   position: relative;
   border: none;
+  border-radius: 2px;
   line-height: normal;
   padding: 3px 0;
 }
@@ -585,9 +750,9 @@ MATT STYLES
   padding: 2px 6px;
   border-width: 1px;
   border-style: solid;
-  border-color: lighten(@purple, 15%);
-  box-shadow: 0 0 1px fade(@gray, 90%);
-  line-height: 12px;
+  border-color:  rgba(255,255,255,.2);
+  box-shadow: 0 0 1px rgba(255,255,255,.2);
+  line-height: 14px;
 
   a {
      color: @white;
@@ -606,7 +771,7 @@ MATT STYLES
 
 .rt-label-tag:hover {
   // Hover will trigger the tool tip eventually. This is temporary/ 
-  background-color: darken(@purple, 5%);
+  background-color: rgba(255,255,255,.4);
 }
 
 .rt-list-tag-menu {
@@ -619,7 +784,7 @@ MATT STYLES
   }
 
 .dropdown-menu {
-  >li >a {padding: 0 8px;}
+  >li >a {padding: 0 8px; font-size: 14px;}
 
   >li >a:hover {
   // Hover will trigger the tool tip eventually. This is temporary/ 
@@ -694,12 +859,15 @@ MATT STYLES
   border: none;
   font-size: 16px;
   transition: all 0.1s ease 0s;
+  text-decoration:none;
 
   &:hover, &:focus {
     background: darken(@rt-blue, 10%);
+    text-decoration:none;
   }
  
   &:active {
     background: lighten(@rt-blue, 5%);
+    text-decoration:none;
   }
 }

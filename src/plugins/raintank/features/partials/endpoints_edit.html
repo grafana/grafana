@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-cloud" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li class="top-nav-title ng-binding">
 			<div>
@@ -19,19 +19,19 @@
 	</ul>
 </topnav>
 
-
-	<div style="margin: 15px; position: relative; display: block; min-width:400px; max-width: 1300px;">
-		<!-- page title -->
-		<div class="rt-page-header-area">
-			<h1 class="rt-h1">{{endpoint.name}}</h1>
-			<span style="float: right;"><a class="rt-btn" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard</a></span>
-		</div>
-
-		<!-- tabs -->
-		<div class="rt-tabs">
-			<span class="nonactive"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="active" ng-hide="!contextSrv.isGrafanaAdmin"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
-		</div>
+<div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1300px;">
+	<!-- page title -->
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">{{endpoint.name}}</h1>
 	</div>
+
+	<!-- tabs -->
+	<div class="rt-tabs">
+		<span class="nonactive"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="active" ng-hide="!contextSrv.isGrafanaAdmin"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+	</div>
+</div>
+
+
 	<form name="endpointForm">
 
 	<div class="grid">

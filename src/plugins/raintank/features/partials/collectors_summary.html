@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="fa fa-globe" section="Collectors" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li class="top-nav-title ng-binding"> <!-- <span class="top-nav-title ng-binding" style="margin-left:-20px; margin-right:20px;">{{collector.name}}</span> -->
 			<div>
@@ -17,7 +17,7 @@
 				</form>
 			</div>
 		</li>
-		<!-- <li class="active" style="margin-left:200px;"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
+		<!--  <li class="active" style="margin-left:200px;"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
 		<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Edit</a></li> -->
 	</ul>
 </topnav>
@@ -27,9 +27,9 @@
 	<!-- page title -->
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{collector.name}}</h1>
-		<span class="collector_icon"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></img>
-		<span class="collector_icon"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></img>
-		</span>
+		
+		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
+		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
 
 	<!-- tabs -->
@@ -42,14 +42,14 @@
 	<div class="detailContainer">
 		<div class="detailColumn detailLeft">
 		<div class="rt-box clearBack oneCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status Since Last Check</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
@@ -97,7 +97,7 @@
 					<div style="padding:10px;">Collector Location</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
@@ -137,7 +137,7 @@
 					<div style="padding:10px;">Exposure</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
@@ -166,14 +166,14 @@
 		</div>
 		<div class="detailColumn detailRight">
 			<div class="rt-box clearBack twoCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <img class="dashboard-icon"src="img/rt-dashboard.svg" width="20px" height="20px"></a></span>
+				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Tags</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
@@ -209,7 +209,7 @@
 					<div style="padding:10px;">Recent Events</div>
 					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a data-toggle="dropdown">
-							<img src="img/bulk_action.svg" width="5px" height="16px">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 						</a>
 						<ul class="dropdown-menu" role="menu">
 							<li>
