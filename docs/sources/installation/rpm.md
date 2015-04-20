@@ -44,6 +44,9 @@ Install Grafana
 
     $ sudo yum install grafana
 
+### RPM GPG Key
+The rpms are signed, you can verify the signature with this [public GPG key](https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana).
+
 ## Package details
 
 - Installs binary to `/usr/sbin/grafana-server`
