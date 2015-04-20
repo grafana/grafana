@@ -28,11 +28,6 @@ From Dashboard setttings, click the Timepicker tab. From here you can specify th
 
 ![](/img/v1/timepicker_editor.png)
 
-## Override 
-
-In dashboard settings, `Time Picker` tab you can add or remove the relative time intervals and refresh intervals
-that should be available in the time picker dropdown.
-
 ## Panel time override 
 
 In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../guides/whats-new-in-v2/) for further information
