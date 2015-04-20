@@ -12,6 +12,7 @@ install:
   # install nodejs and npm
   - ps: Install-Product node $env:nodejs_version
   - npm install
+  - npm install -g grunt-cli
   # install gcc (needed for sqlite3)
   - choco install -y mingw
   - set PATH=C:\tools\mingw64\bin;%PATH%
@@ -23,4 +24,8 @@ install:
 
 build_script:
   - go run build.go build
-  - grunt release
+  - node grunt release
+
+artifacts:
+  - path: dist/*
+    name: binzip
