@@ -2,13 +2,15 @@
 'use strict';
 module.exports = function (grunt) {
 
+  var os = require('os');
   var config = {
     pkg: grunt.file.readJSON('package.json'),
     baseDir: '.',
     srcDir: 'public',
     destDir: 'dist',
     tempDir: 'tmp',
-    arch: grunt.option('arch') || 'x86_64',
+    arch: os.arch(),
+    platform: process.platform.replace('win32', 'windows'),
   };
 
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
