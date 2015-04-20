@@ -1,4 +1,4 @@
-# 2.0.0 (unreleased)
+# 2.0.0 (2015-04-20)
 
 **Fixes**
 - [Issue #1784](https://github.com/grafana/grafana/issues/1784). Data source proxy: Fixed issue with using data source proxy when grafana is behind nginx suburl
