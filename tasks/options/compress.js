@@ -1,4 +1,5 @@
 module.exports = function(config) {
+  'use strict';
 
   var task = {
     release: {
@@ -10,7 +11,7 @@ module.exports = function(config) {
           expand: true,
           cwd: '<%= tempDir %>',
           src: ['**/*'],
-          dest: '<%= pkg.name %>/',
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },
         {
           expand: true,
