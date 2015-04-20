@@ -24,7 +24,7 @@ install:
 
 build_script:
   - go run build.go build
-  - node grunt release
+  - grunt release
 
 artifacts:
   - path: dist/*
