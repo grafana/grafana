@@ -32,7 +32,7 @@ If you wish to get paid support please [contact us](mailto:contact@grafana.org).
 
 ## License
 
-Grafana is licensed under Apache 2.0. See [LICENSE](https://github.com/grafana/grafana/blob/master/LICENSE.mdhttps://github.com/grafana/grafana/blob/master/LICENSE.md)
+Grafana is licensed under Apache 2.0. See [LICENSE](https://github.com/grafana/grafana/blob/master/LICENSE.md)
 for full license text.
 
 
