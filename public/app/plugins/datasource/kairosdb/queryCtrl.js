@@ -37,6 +37,7 @@ function (angular, _) {
         $scope.get_data();
       }
     };
+
     $scope.panelBlur = function() {
       _.each($scope.panel.targets, function(target) {
         target.downsampling = $scope.panel.downsampling;
@@ -49,6 +50,7 @@ function (angular, _) {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);
     };
+
     $scope.moveMetricQuery = function(fromIndex, toIndex) {
       _.move($scope.panel.targets, fromIndex, toIndex);
     };
@@ -140,7 +142,6 @@ function (angular, _) {
           if (!$scope.target.groupByTags) {
             $scope.target.groupByTags = [];
           }
-          console.log($scope.target.groupBy.tagKey);
           if (!_.contains($scope.target.groupByTags, $scope.target.groupBy.tagKey)) {
             $scope.target.groupByTags.push($scope.target.groupBy.tagKey);
             $scope.targetBlur();
@@ -202,12 +203,14 @@ function (angular, _) {
           errors.tagKey = 'You must supply a tag name';
         }
       }
+
       if ($scope.isValueGroupBy) {
         if (!$scope.target.groupBy.valueRange || !isInt($scope.target.groupBy.valueRange)) {
           errors.valueRange = "Range must be an integer";
           $scope.isGroupByValid = false;
         }
       }
+
       if ($scope.isTimeGroupBy) {
         try {
           $scope.datasource.convertToKairosInterval($scope.target.groupBy.timeInterval);
@@ -265,7 +268,6 @@ function (angular, _) {
       $scope.hasUnit = false;
       $scope.hasFactor = false;
       $scope.hasPercentile = false;
-
     };
 
     $scope.removeHorizontalAggregator = function(index) {
@@ -279,7 +281,7 @@ function (angular, _) {
 
     $scope.changeHorAggregationInput = function() {
       $scope.hasSamplingRate = _.contains(['avg','dev','max','min','sum','least_squares','count','percentile'],
-        $scope.target.currentHorizontalAggregatorName);
+                                          $scope.target.currentHorizontalAggregatorName);
       $scope.hasUnit = _.contains(['sampler','rate'], $scope.target.currentHorizontalAggregatorName);
       $scope.hasFactor = _.contains(['div','scale'], $scope.target.currentHorizontalAggregatorName);
       $scope.hasPercentile = 'percentile' === $scope.target.currentHorizontalAggregatorName;
@@ -290,6 +292,7 @@ function (angular, _) {
       delete $scope.target.errors.horAggregator;
       var errors = {};
       $scope.isAggregatorValid = true;
+
       if ($scope.hasSamplingRate) {
         try {
           $scope.datasource.convertToKairosInterval($scope.target.horAggregator.samplingRate);
@@ -298,6 +301,7 @@ function (angular, _) {
           $scope.isAggregatorValid = false;
         }
       }
+
       if ($scope.hasFactor) {
         if (!$scope.target.horAggregator.factor) {
           errors.factor = 'You must supply a numeric value for this aggregator';
@@ -308,6 +312,7 @@ function (angular, _) {
           $scope.isAggregatorValid = false;
         }
       }
+
       if ($scope.hasPercentile) {
         if (!$scope.target.horAggregator.percentile ||
           $scope.target.horAggregator.percentile<=0 ||

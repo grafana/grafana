@@ -32,18 +32,24 @@ function (angular, _, kbn) {
         if (typeof target.alias === 'undefined' || target.alias === "") {
           alias = target.metric;
         }
-        return !target.hide
-            ?  {alias: alias,
-                exouter: target.exOuter}
-            : null;
+
+        if (!target.hide) {
+          return { alias: alias, exouter: target.exOuter };
+        }
+        else {
+          return null;
+        }
       }));
+
       var handleKairosDBQueryResponseAlias = _.partial(handleKairosDBQueryResponse, plotParams);
+
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
         var d = $q.defer();
         d.resolve({ data: [] });
         return d.promise;
       }
+
       return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
     };
 
@@ -53,18 +59,19 @@ function (angular, _, kbn) {
 
     KairosDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
-        metrics: queries
+        metrics: queries,
+        cache_time: 0
       };
-      reqBody.cache_time = 0;
+
       convertToKairosTime(start, reqBody, 'start');
       convertToKairosTime(end, reqBody, 'end');
+
       var options = {
         method: 'POST',
-        url: '/api/v1/datapoints/query',
+        url: this.url + '/api/v1/datapoints/query',
         data: reqBody
       };
 
-      options.url = this.url + options.url;
       return $http(options);
     };
 
@@ -77,39 +84,41 @@ function (angular, _, kbn) {
         url : this.url + '/api/v1/metricnames',
         method : 'GET'
       };
+
       return $http(options).then(function(results) {
         if (!results.data) {
           return [];
         }
         return results.data.results;
       });
-
     };
 
     KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname, range, type, keyValue) {
       if (tagList && (metricname === tagList.metricName) && (range.from === tagList.range.from) &&
-        (range.to === tagList.range.to)) {
+          (range.to === tagList.range.to)) {
         return getTagListFromResponse(tagList.results, type, keyValue);
       }
       tagList = {
-        metricName:metricname,
-        range:range
+        metricName: metricname,
+        range: range
       };
       var body = {
         metrics : [{name : metricname}]
       };
+
       convertToKairosTime(range.from, body, 'start');
       convertToKairosTime(range.to, body, 'end');
+
       var options = {
         url : this.url + '/api/v1/datapoints/query/tags',
         method : 'POST',
         data : body
       };
+
       return $http(options).then(function(results) {
         tagList.results = results;
         return getTagListFromResponse(results, type, keyValue);
       });
-
     };
 
     /////////////////////////////////////////////////////////////////////////
@@ -120,13 +129,15 @@ function (angular, _, kbn) {
       if (!results.data) {
         return [];
       }
-      if (type === "key") {
+      else if (type === "key") {
         return _.keys(results.data.queries[0].results[0].tags);
       }
       else if (type === "value" && _.has(results.data.queries[0].results[0].tags, keyValue)) {
         return results.data.queries[0].results[0].tags[keyValue];
       }
-      return [];
+      else {
+        return [];
+      }
     }
 
     /**
@@ -151,10 +162,9 @@ function (angular, _, kbn) {
       var index = 0;
       _.each(results.data.queries, function(series) {
         _.each(series.results, function(result) {
-
-          //var target = result.name;
           var target = plotParams[index].alias;
           var details = " ( ";
+
           _.each(result.group_by, function(element) {
             if (element.name === "tag") {
               _.each(element.group, function(value, key) {
@@ -168,10 +178,13 @@ function (angular, _, kbn) {
               details += 'time_group=' + element.group.group_number + " ";
             }
           });
+
           details += ") ";
+
           if (details !== " ( ) ") {
             target += details;
           }
+
           var datapoints = [];
 
           for (var i = 0; i < result.values.length; i++) {
@@ -184,11 +197,11 @@ function (angular, _, kbn) {
           }
           output.push({ target: target, datapoints: datapoints });
         });
-        index ++;
-      });
-      var output2 = { data: _.flatten(output) };
 
-      return output2;
+        index++;
+      });
+
+      return { data: _.flatten(output) };
     }
 
     function convertTargetToQuery(options, target) {
@@ -201,6 +214,7 @@ function (angular, _, kbn) {
       };
 
       query.aggregators = [];
+
       if (target.downsampling !== '(NONE)') {
         query.aggregators.push({
           name: target.downsampling,
@@ -209,31 +223,37 @@ function (angular, _, kbn) {
           sampling: KairosDBDatasource.prototype.convertToKairosInterval(target.sampling || options.interval)
         });
       }
+
       if (target.horizontalAggregators) {
         _.each(target.horizontalAggregators, function(chosenAggregator) {
           var returnedAggregator = {
             name:chosenAggregator.name
           };
+
           if (chosenAggregator.sampling_rate) {
             returnedAggregator.sampling = KairosDBDatasource.prototype.convertToKairosInterval(chosenAggregator.sampling_rate);
             returnedAggregator.align_sampling = true;
             returnedAggregator.align_start_time =true;
           }
+
           if (chosenAggregator.unit) {
             returnedAggregator.unit = chosenAggregator.unit + 's';
           }
+
           if (chosenAggregator.factor && chosenAggregator.name === 'div') {
             returnedAggregator.divisor = chosenAggregator.factor;
           }
           else if (chosenAggregator.factor && chosenAggregator.name === 'scale') {
             returnedAggregator.factor = chosenAggregator.factor;
           }
+
           if (chosenAggregator.percentile) {
             returnedAggregator.percentile = chosenAggregator.percentile;
           }
           query.aggregators.push(returnedAggregator);
         });
       }
+
       if (_.isEmpty(query.aggregators)) {
         delete query.aggregators;
       }
@@ -244,7 +264,9 @@ function (angular, _, kbn) {
 
       if (target.groupByTags || target.nonTagGroupBys) {
         query.group_by = [];
-        if (target.groupByTags) {query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});}
+        if (target.groupByTags) {
+          query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});
+        }
         if (target.nonTagGroupBys) {
           _.each(target.nonTagGroupBys, function(rawGroupBy) {
             var formattedGroupBy = angular.copy(rawGroupBy);
@@ -276,102 +298,46 @@ function (angular, _, kbn) {
       var value = matches[1];
       var unit = matches[2];
       if (value%1 !== 0) {
-        if (unit === 'ms') {throw new Error('Invalid interval value, cannot be smaller than the millisecond');}
+        if (unit === 'ms') {
+          throw new Error('Invalid interval value, cannot be smaller than the millisecond');
+        }
         value = Math.round(kbn.intervals_in_seconds[unit] * value * 1000);
         unit = 'ms';
-
-      }
-      switch (unit) {
-        case 'ms':
-          unit = 'milliseconds';
-          break;
-        case 's':
-          unit = 'seconds';
-          break;
-        case 'm':
-          unit = 'minutes';
-          break;
-        case 'h':
-          unit = 'hours';
-          break;
-        case 'd':
-          unit = 'days';
-          break;
-        case 'w':
-          unit = 'weeks';
-          break;
-        case 'M':
-          unit = 'months';
-          break;
-        case 'y':
-          unit = 'years';
-          break;
-        default:
-          console.log("Unknown interval ", intervalString);
-          break;
       }
 
       return {
-        "value": value,
-        "unit": unit
+        value: value,
+        unit: convertToKairosDBTimeUnit(unit)
       };
-
     };
 
     function convertToKairosTime(date, response_obj, start_stop_name) {
       var name;
+
       if (_.isString(date)) {
         if (date === 'now') {
           return;
         }
         else if (date.indexOf('now-') >= 0) {
-
-          name = start_stop_name + "_relative";
-
           date = date.substring(4);
+          name = start_stop_name + "_relative";
           var re_date = /(\d+)\s*(\D+)/;
           var result = re_date.exec(date);
+
           if (result) {
             var value = result[1];
             var unit = result[2];
-            switch (unit) {
-              case 'ms':
-                unit = 'milliseconds';
-                break;
-              case 's':
-                unit = 'seconds';
-                break;
-              case 'm':
-                unit = 'minutes';
-                break;
-              case 'h':
-                unit = 'hours';
-                break;
-              case 'd':
-                unit = 'days';
-                break;
-              case 'w':
-                unit = 'weeks';
-                break;
-              case 'M':
-                unit = 'months';
-                break;
-              case 'y':
-                unit = 'years';
-                break;
-              default:
-                console.log("Unknown date ", date);
-                break;
-            }
+
             response_obj[name] = {
-              "value": value,
-              "unit": unit
+              value: value,
+              unit: convertToKairosDBTimeUnit(unit)
             };
             return;
           }
           console.log("Unparseable date", date);
           return;
         }
+
         date = kbn.parseDate(date);
       }
 
@@ -382,6 +348,30 @@ function (angular, _, kbn) {
       }
 
       console.log("Date is neither string nor date");
+    }
+
+    function convertToKairosDBTimeUnit(unit) {
+      switch (unit) {
+      case 'ms':
+        return 'milliseconds';
+      case 's':
+        return 'seconds';
+      case 'm':
+        return 'minutes';
+      case 'h':
+        return 'hours';
+      case 'd':
+        return 'days';
+      case 'w':
+        return 'weeks';
+      case 'M':
+        return 'months';
+      case 'y':
+        return 'years';
+      default:
+        console.log("Unknown unit ", unit);
+        return '';
+      }
     }
 
     function PeakFilter(dataIn, limit) {
@@ -417,7 +407,6 @@ function (angular, _, kbn) {
       return datapoints;
     }
 
-    ////////////////////////////////////////////////////////////////////////
     return KairosDBDatasource;
   });
 
