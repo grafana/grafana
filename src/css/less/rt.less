@@ -32,6 +32,10 @@ COLUMNS
 
   .modalContainer {min-width:200px; max-width:1320px;}
 
+  .summary-tab {
+    padding-top: 25px;
+  }
+
     .modalColumn {
           width:  50%;
           float:left;
@@ -39,11 +43,18 @@ COLUMNS
           transition: 0.15s;
         }
 
-    .modalLeft {
+    .modal-left-80-20 {
       width: 80%;
     }
-    .modalRight {
+    .modal-right-80-20 {
       width: 20%;
+    }
+
+    .modal-left-equal {
+      width: 50%;
+    }
+    .modal-right-equal {
+      width: 50%;
     }
 
      @media screen and (max-width: 780px) {
@@ -105,7 +116,7 @@ raintank BOX
 }
 
 .rt-modal-box-body {
-  padding: 20px 0;
+  padding: 20px 0 20px 0;
   min-height: 150px;
 }
 
@@ -532,6 +543,7 @@ raintank BUTTONS
     font-weight: 400;
     font-size: 12px;
     transition: 0.15s;
+    background-color: transparent;
 }
 
 // For dark backgrounds. 
@@ -568,6 +580,23 @@ raintank BUTTONS
     cursor: pointer;
     border: 1px solid #fff;
     color: #fff;
+    text-decoration:none;
+}
+
+.cancel-primary,
+.cancel-primary:visited {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.2em 1.4em;
+    color: @rt-dark-gray;
+    font-size: @rt-fontSizeMed-1;
+    transition: 0.15s;
+}
+
+.cancel-primary:hover,
+.cancel-primary:active{
+    cursor: pointer;
+    color: @rt-light-gray;
     text-decoration:none;
 }
 
@@ -882,7 +911,6 @@ MATT STYLES
 .rt-form-label-medium {
   color: @grayDark;
   font-size: @rt-fontSizeMed-2;
-  // font-weight: 600;
 }
 
 
@@ -917,6 +945,30 @@ input[type="color"] {
 }
 }
 
+input[type="checkbox"].rt-modal {
+  display: none;
+}
+
+.editor-option label.rt-modal {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.rt-modal {
+  display: inline-block;
+  height: 17px;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 1px 0;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background: url(@rt-checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+input[type="checkbox"]:checked+label {
+  background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
+}
 
 
 // Collector List Status
@@ -1059,10 +1111,22 @@ input[type="color"] {
 
 .modal-body .rt-h2{
   color: #262626; // Needs to be consolidated into one of gray variables. 
+  margin: 40px 0 10px 0;
+  display: inline-block;
 }
 
 .modal-body .rt-h3 {
   color: @rt-primary;
+}
+
+.modal-collector-select {
+  color: @rt-dark-gray;
+}
+
+.rt-modal-label-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
 }
 
 .rt-modal-body-copy {
@@ -1101,6 +1165,12 @@ input[type="color"] {
   cursor: pointer;
   color: @rt-primary;
 }
+
+.rt-collapse-secondary{
+  color: @grayLight;
+  font-style: italic;
+}
+
 .rt-collapse:hover {
  color: @rt-light-gray;
 }    
@@ -1122,10 +1192,29 @@ input[type="color"] {
   opacity: 1;
 }
 
-.rt-collapse-secondary{
-  color: @grayLight;
-  font-style: italic;
+.rt-advanced-options{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0 40px 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
 }
+.rt-advanced-options:hover{
+ color: @rt-light-gray;
+}    
+
+.rt-advanced-options + input{
+  display:none;
+  
+}
+.rt-advanced-options + input + *{
+  display:none;
+}
+
+.rt-advanced-options+ input:checked + *{
+  display:block;
+}
+
 
 .rt-globe-check-speed {
   background-image: url(/img/rt-globe-check-speed.svg);
@@ -1202,21 +1291,26 @@ input[type="color"] {
   margin-right: 20px;
 }
 
-.rt-radio-custom, .rt-radio-custom-label {
+.rt-radio-custom, .rt-radio-jumbo-label, .rt-radio-body-label {
     display: inline-block;
     vertical-align: middle;
     margin: 5px;
     cursor: pointer;
 }
 
-.rt-radio-custom-label {
+.rt-radio-body-label {
+  .rt-modal-body-copy;
+  font-style: normal;
+}
+
+.rt-radio-jumbo-label {
     position: relative;
     color: @rt-dark-gray;
     font-size: 60px;
     font-weight: 600;
 }
 
-.rt-radio-custom-sub-label {
+.rt-radio-jumbo-sub-label {
   font-size: @rt-fontSizeMed-1;
   color: @rt-light-gray;
   font-weight: 400;
@@ -1224,7 +1318,7 @@ input[type="color"] {
   margin-top: 5px;
 }
 
-.rt-radio-custom + .rt-radio-custom-label:before {
+.rt-radio-custom + *:before {
     content: '';
     background: #fff;
     border: 2px solid @rt-dark-gray;
@@ -1238,15 +1332,22 @@ input[type="color"] {
 }
 
 
-.rt-radio-custom + .rt-radio-custom-label:before {
+.rt-radio-custom + *:before {
     border-radius: 50%;
 }
 
-.rt-radio-custom:checked + .rt-radio-custom-label:before {
+.rt-radio-custom:checked + *:before {
     background: @rt-primary;
     box-shadow: inset 0px 0px 0px 4px #fff;
 }
 
+// Hiding class for screen readers
+
+.rt-hide {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+}
 
 // Buttons
 // Needs to be consolidated. 
@@ -1273,4 +1374,8 @@ input[type="color"] {
     background: lighten(@rt-blue, 5%);
     text-decoration:none;
   }
+}
+
+.modal-body .rt-btn{
+  margin: 30px 0 40px 0;
 }
