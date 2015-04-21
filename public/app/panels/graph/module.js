@@ -67,9 +67,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // show/hide lines
       lines         : true,
       // fill factor
-      fill          : 0,
+      fill          : 1,
       // line width in pixels
-      linewidth     : 1,
+      linewidth     : 2,
       // show hide points
       points        : false,
       // point radius in pixels
