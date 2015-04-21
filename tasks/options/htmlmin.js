@@ -10,7 +10,8 @@ module.exports = function(config) {
       src: [
         //'index.html',
         'app/panels/**/*.html',
-        'app/partials/**/*.html'
+        'app/partials/**/*.html',
+        'plugins/**/*.html'
       ],
       dest: '<%= tempDir %>'
     }

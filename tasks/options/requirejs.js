@@ -62,6 +62,7 @@ module.exports = function(config,grunt) {
           'routes/all',
           'components/partials',
           'plugins/datasource/grafana/datasource',
+          '../plugins/raintank/all'
         ]
       }
     ];
