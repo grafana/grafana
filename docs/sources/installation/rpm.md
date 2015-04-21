@@ -30,9 +30,9 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
     name=grafana
     baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
     repo_gpgcheck=1
-    gpgcheck=0
     enabled=1
-    gpgkey=https://packagecloud.io/gpg.key
+    gpgcheck=1
+    gpgkey=https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
     sslverify=1
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 
