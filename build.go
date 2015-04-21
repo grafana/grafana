@@ -19,16 +19,21 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/blang/semver"
 )
 
 var (
-	versionRe        = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch           string
-	goos             string
-	version          string = "v1"
-	race             bool
-	workingDir       string
-	serverBinaryName string = "grafana-server"
+	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch    string
+	goos      string
+	version   string = "v1"
+	// deb & rpm does not support semver so have to handle their version a little differently
+	linuxPackageVersion   string = "v1"
+	linuxPackageIteration string = ""
+	race                  bool
+	workingDir            string
+	serverBinaryName      string = "grafana-server"
 )
 
 const minGoVersion = 1.3
@@ -40,7 +45,7 @@ func main() {
 	ensureGoPath()
 	readVersionFromPackageJson()
 
-	log.Printf("Version: %s\n", version)
+	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
@@ -70,7 +75,7 @@ func main() {
 
 		case "package":
 			//verifyGitRepoIsClean()
-			grunt("release", "--pkgVer="+version)
+			grunt("release")
 			createLinuxPackages()
 
 		case "latest":
@@ -107,6 +112,17 @@ func readVersionFromPackageJson() {
 	}
 
 	version = jsonObj["version"].(string)
+	linuxPackageVersion = version
+	linuxPackageIteration = ""
+
+	// handle pre version stuff (deb / rpm does not support semver)
+	versionInfo, _ := semver.Make(version)
+
+	if len(versionInfo.Pre) > 0 {
+		linuxPackageIteration = versionInfo.Pre[0].VersionStr
+		versionInfo.Pre = make([]semver.PRVersion, 0)
+		linuxPackageVersion = versionInfo.String()
+	}
 }
 
 type linuxPackageOptions struct {
@@ -208,8 +224,12 @@ func createPackage(options linuxPackageOptions) {
 		"--config-files", options.systemdServiceFilePath,
 		"--after-install", options.postinstSrc,
 		"--name", "grafana",
-		"--version", version,
+		"--version", linuxPackageVersion,
 		"-p", "./dist",
+	}
+
+	if linuxPackageIteration != "" {
+		args = append(args, "--iteration", linuxPackageIteration)
 	}
 
 	// add dependenciesj
