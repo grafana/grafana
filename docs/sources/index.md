@@ -4,9 +4,9 @@ page_keywords: grafana, introduction, documentation, about
 
 # About Grafana
 
-Grafana is a leading open source applications for visualizing large-scale measurement data. 
+Grafana is a leading open source applications for visualizing large-scale measurement data.
 
-It provides a powerful and elegant way to create, share, and explore data and dashboards from your disparate metric databases, either with your team or the world. 
+It provides a powerful and elegant way to create, share, and explore data and dashboards from your disparate metric databases, either with your team or the world.
 
 Grafana is most commonly used for Internet infrastructure and application analytics, but many use it in other domains including industrial sensors, home automation, weather, and process control.
 
@@ -16,7 +16,7 @@ Version 2.0 was released in April 2015: Grafana now ships with its own backend s
 
 ## Community Resources, Feedback, and Support
 
-Thousands of organizations large and small rely on Grafana, and we have a vibrant and active community that constantly inspires us. 
+Thousands of organizations large and small rely on Grafana, and we have a vibrant and active community that constantly inspires us.
 
 Please don't hesitate to [open a new issue on Github](https://github.com/grafana/grafana/issues) with your suggestions, ideas, and bug reports.
 
@@ -35,4 +35,4 @@ If you have any trouble with Grafana, whether you can't get it set up or you jus
 
 ## License
 
-By utilizing this software, you agree to the terms of the included license. Grafana is licensed under the Apache 2.0 agreement. See [LICENSE](https://github.com/grafana/grafana/blob/master/LICENSE.mdhttps://github.com/grafana/grafana/blob/master/LICENSE.md) for the full license terms. 
+By utilizing this software, you agree to the terms of the included license. Grafana is licensed under the Apache 2.0 agreement. See [LICENSE](https://github.com/grafana/grafana/blob/master/LICENSE.md) for the full license terms.
