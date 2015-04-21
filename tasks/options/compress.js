@@ -16,7 +16,7 @@ module.exports = function(config) {
         {
           expand: true,
           src: ['LICENSE.md', 'README.md', 'NOTICE.md'],
-          dest: '<%= pkg.name %>/',
+          dest: '<%= pkg.name %>-<%= pkg.version %>/',
         }
       ]
     }
