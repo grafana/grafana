@@ -8,6 +8,10 @@ page_keywords: grafana, guide, documentation
 This guide will help you get started and acquainted with the Grafana user interface. It assumes you have a working
 Grafana 2.0 instance, and have added at least one Grafana data source.
 
+## Beginner guides
+Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2)
+to get a quick intro to the dashboard & panel editing UI.
+
 ## Top header
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 

@@ -55,7 +55,7 @@ module.exports = function(grunt) {
     grunt.config('copy.backend_bin', {
       cwd: 'bin',
       expand: true,
-      src: ['grafana-server'],
+      src: ['*'],
       options: { mode: true},
       dest: '<%= tempDir %>/bin/'
     });

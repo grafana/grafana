@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Scheme string
@@ -52,7 +54,7 @@ var (
 
 	// Log settings.
 	LogModes   []string
-	LogConfigs []string
+	LogConfigs []util.DynMap
 
 	// Http server options
 	Protocol           Scheme
@@ -404,13 +406,13 @@ func readSessionConfig() {
 	}
 }
 
-var logLevels = map[string]string{
-	"Trace":    "0",
-	"Debug":    "1",
-	"Info":     "2",
-	"Warn":     "3",
-	"Error":    "4",
-	"Critical": "5",
+var logLevels = map[string]int{
+	"Trace":    0,
+	"Debug":    1,
+	"Info":     2,
+	"Warn":     3,
+	"Error":    4,
+	"Critical": 5,
 }
 
 func initLogging(args *CommandLineArgs) {
@@ -418,7 +420,7 @@ func initLogging(args *CommandLineArgs) {
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
 
-	LogConfigs = make([]string, len(LogModes))
+	LogConfigs = make([]util.DynMap, len(LogModes))
 	for i, mode := range LogModes {
 		mode = strings.TrimSpace(mode)
 		sec, err := Cfg.GetSection("log." + mode)
@@ -437,38 +439,46 @@ func initLogging(args *CommandLineArgs) {
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s}`, level)
+			LogConfigs[i] = util.DynMap{"level": level}
 		case "file":
-			logPath := sec.Key("file_name").MustString(path.Join(LogsPath, "grafana.log"))
-			os.MkdirAll(path.Dir(logPath), os.ModePerm)
-			LogConfigs[i] = fmt.Sprintf(
-				`{"level":%s,"filename":"%s","rotate":%v,"maxlines":%d,"maxsize":%d,"daily":%v,"maxdays":%d}`, level,
-				logPath,
-				sec.Key("log_rotate").MustBool(true),
-				sec.Key("max_lines").MustInt(1000000),
-				1<<uint(sec.Key("max_size_shift").MustInt(28)),
-				sec.Key("daily_rotate").MustBool(true),
-				sec.Key("max_days").MustInt(7))
+			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
+			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
+			LogConfigs[i] = util.DynMap{
+				"level":    level,
+				"filename": logPath,
+				"rotate":   sec.Key("log_rotate").MustBool(true),
+				"maxlines": sec.Key("max_lines").MustInt(1000000),
+				"maxsize":  1 << uint(sec.Key("max_size_shift").MustInt(28)),
+				"daily":    sec.Key("daily_rotate").MustBool(true),
+				"maxdays":  sec.Key("max_days").MustInt(7),
+			}
 		case "conn":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"reconnectOnMsg":%v,"reconnect":%v,"net":"%s","addr":"%s"}`, level,
-				sec.Key("reconnect_on_msg").MustBool(),
-				sec.Key("reconnect").MustBool(),
-				sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-				sec.Key("addr").MustString(":7020"))
+			LogConfigs[i] = util.DynMap{
+				"level":          level,
+				"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
+				"reconnect":      sec.Key("reconnect").MustBool(),
+				"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
+				"addr":           sec.Key("addr").MustString(":7020"),
+			}
 		case "smtp":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"username":"%s","password":"%s","host":"%s","sendTos":"%s","subject":"%s"}`, level,
-				sec.Key("user").MustString("example@example.com"),
-				sec.Key("passwd").MustString("******"),
-				sec.Key("host").MustString("127.0.0.1:25"),
-				sec.Key("receivers").MustString("[]"),
-				sec.Key("subject").MustString("Diagnostic message from serve"))
+			LogConfigs[i] = util.DynMap{
+				"level":     level,
+				"user":      sec.Key("user").MustString("example@example.com"),
+				"passwd":    sec.Key("passwd").MustString("******"),
+				"host":      sec.Key("host").MustString("127.0.0.1:25"),
+				"receivers": sec.Key("receivers").MustString("[]"),
+				"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
+			}
 		case "database":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"driver":"%s","conn":"%s"}`, level,
-				sec.Key("driver").String(),
-				sec.Key("conn").String())
+			LogConfigs[i] = util.DynMap{
+				"level":  level,
+				"driver": sec.Key("driver").String(),
+				"conn":   sec.Key("conn").String(),
+			}
 		}
 
-		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, LogConfigs[i])
+		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
+		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, string(cfgJsonBytes))
 	}
 }
 
