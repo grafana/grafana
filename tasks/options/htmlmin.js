@@ -3,7 +3,8 @@ module.exports = function(config) {
     build: {
       options:{
         removeComments: true,
-        collapseWhitespace: true
+        collapseWhitespace: true,
+        keepClosingSlash: true
       },
       expand: true,
       cwd: '<%= tempDir %>',
