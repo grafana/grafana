@@ -1,4 +1,4 @@
-# 2.0.2 (unreleased)
+# 2.0.2 (2015-04-22)
 
 **Fixes**
 - [Issue #1832](https://github.com/grafana/grafana/issues/1832). Graph Panel + Legend Table mode: Many series casued zero height graph, now legend will never reduce the height of the graph below 50% of row height.
