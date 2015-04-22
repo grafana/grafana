@@ -31,7 +31,7 @@ The `Authorization` header value should be `Bearer <your api key>`.
 
 ## Dashboards
 
-### Create or Update dashboard
+### Create / Update dashboard
 
 `POST /api/dashboards/db`
 
@@ -63,13 +63,12 @@ Creates a new dashboard or updates an existing dashboard.
 JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard
-- **overwrite** – Set to true if you want to overwrite existing dashboard with new version or with same dashboard title.
+- **overwrite** – Set to true if you want to overwrite existing dashboard with newer version or with same dashboard title.
 
 **Example Response**:
 
     HTTP/1.1 200 OK
     Content-Type: application/json; charset=UTF-8
-    Date: Wed, 22 Apr 2015 11:12:06 GMT
     Content-Length: 78
 
     {
@@ -111,6 +110,11 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
         Accept: application/json
         Content-Type: application/json
         Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
 
         {
           "meta": {
