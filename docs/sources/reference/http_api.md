@@ -135,7 +135,15 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
           },
         }
 
+### Delete dashboard
+
+`DELETE /api/dashboards/db/:slug`
+
+The above will delete the dashboard with the specified slug. The slug is the url friendly (unique) version of the dashboard title.
+
 ## Data sources
+
+### Create data source
 
 ## Organizations
 
