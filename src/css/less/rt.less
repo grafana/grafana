@@ -30,6 +30,11 @@ COLUMNS
   overflow-y: auto;
 }
 
+div.rt-modal-override {
+  top: 10%;
+  position: absolute;
+}
+
   .modalContainer {min-width:200px; max-width:1320px;}
 
   .summary-tab {
@@ -876,19 +881,24 @@ MATT STYLES
   .nonactive a:hover {color:@white; text-decoration: none;}
 }
 
-.rt-modal-tabs { 
+.rt-modal-tabs .nav-tabs { 
   border-bottom:1px solid @raintankPanelBackground;
   font-size: @rt-fontSizeMed-1; 
   padding:10px 10px;
 
  
-  .nonactive a:link, 
-  .nonactive a:visited {
+  li>a {
     color:@grayDark;
     margin:0 25px;
+
+    &:hover{
+    color:@raintankPanelBackground;
+    text-decoration: none;
+    border-bottom: none;
+    }
   }
-  .active a:link,
-  .active a:visited  {
+
+  li.active>a {
     color:@black;
     border-top-left-radius:4px;
     border-top-right-radius: 4px;
@@ -898,6 +908,7 @@ MATT STYLES
     background-color: @white;
     margin:0 5px;
     padding:5px 15px 10px 15px;
+    border-bottom: none;
   }
 
   a:hover,

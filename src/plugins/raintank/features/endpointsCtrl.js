@@ -85,6 +85,7 @@ function (angular) {
       newEndpointModalScope = $rootScope.$new();
       var newEndpointModal = $modal({
         template: './plugins/raintank/features/partials/endpoint_modal_new.html',
+        modalClass: 'rt-modal-override',
         persist: false,
         show: false,
         scope: newEndpointModalScope,

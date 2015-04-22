@@ -10,11 +10,8 @@
 		</button>
 	</div>
 
-	<div class="rt-modal-tabs">
-		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
-		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Ping</a></span>
-		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">DNS</a></span>
-		<span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Web</a></span>
+	<div class="rt-modal-tabs" ng-model="editor.index" bs-tabs>
+		 <div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}"></div>
 	</div>
 
 	<form name="endpointForm">
@@ -22,7 +19,7 @@
 
 	<!-- Summary Tab.  -->
 
- 	<div class="rt-modal-box-body">
+ 	<div class="rt-modal-box-body" ng-if="editor.index == 0">
 		<div class="modalContainer summary-tab">
 			<div class="modalColumn modal-left-equal">
 				<div class="editor-option" style="display: block; padding-bottom: 5px;">
@@ -93,7 +90,7 @@
 
 	<!-- Ping Tab.  -->
 
-<!--  	<div class="rt-modal-box-body">
+  	<div class="rt-modal-box-body" ng-if="editor.index == 1">
 		<div class="modalContainer">
 			<div class="modalColumn modal-left-80-20">
 				<p class="rt-modal-body-copy">Ping is the lowerst level of monitoring, and also the least intrusive. We suggest the default 10 seconds for all endpoints, but you reduce frequency as desired.</p></br>
@@ -143,7 +140,7 @@
 			</div>
 			<div class="modalColumn modal-right-80-20"></div>
 		</div>
-	</div> -->
+	</div>
 
 	<!-- End Ping Tab -->
 
