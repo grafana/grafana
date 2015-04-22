@@ -11,13 +11,12 @@
 	</div>
 
 	<div class="rt-modal-tabs" ng-model="editor.index" bs-tabs>
-		 <div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}"></div>
+		 <div ng-repeat="tab in ['Summary', 'Ping', 'DNS', 'Web']" data-title="{{tab}}"></div>
 	</div>
 
 	<form name="endpointForm">
 
-
-	<!-- Summary Tab.  -->
+	<!-- Summary Tab  -->
 
  	<div class="rt-modal-box-body" ng-if="editor.index == 0">
 		<div class="modalContainer summary-tab">
@@ -88,13 +87,13 @@
 
  	<!-- End Summary Tab -->
 
-	<!-- Ping Tab.  -->
+	<!-- Ping Tab  -->
 
   	<div class="rt-modal-box-body" ng-if="editor.index == 1">
 		<div class="modalContainer">
 			<div class="modalColumn modal-left-80-20">
 				<p class="rt-modal-body-copy">Ping is the lowerst level of monitoring, and also the least intrusive. We suggest the default 10 seconds for all endpoints, but you reduce frequency as desired.</p></br>
-				<div>
+				<div class="checkbox-check-enabled">
 					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitor.enabled" ng-true-value="true" ng-false-value="false" checked>
 					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
 				</div>
@@ -144,13 +143,13 @@
 
 	<!-- End Ping Tab -->
 
-	<!-- DNS Tab.  -->
+	<!-- DNS Tab  -->
 
-<!-- 	<div class="rt-modal-box-body">
+	<div class="rt-modal-box-body" ng-if="editor.index == 2">
 		<div class="modalContainer">
 			<div class="modalColumn modal-left-80-20">
 				<p class="rt-modal-body-copy">DNS is awesome. Ferrealz.</p></br>
-				<div>
+				<div class="checkbox-check-enabled">
 					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitor.enabled" ng-true-value="true" ng-false-value="false" checked>
 					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
 				</div>
@@ -195,19 +194,18 @@
 				</div>
 			</div>
 			<div class="modalColumn modal-right-80-20"></div>
-			</div>
 		</div>
-	</div> -->
+	</div>
 
 	<!-- End DNS Tab -->
 
-	<!-- Web Tab.  -->
+	<!-- Web Tab  -->
 
-<!-- 	<div class="rt-modal-box-body">
+	<div class="rt-modal-box-body" ng-if="editor.index == 3">
 		<div class="modalContainer">
 			<div class="modalColumn modal-left-80-20">
 				<p class="rt-modal-body-copy">Web web web web web. A manifesto.</p></br>
-				<div>
+				<div class="checkbox-check-enabled">
 					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitor.enabled" ng-true-value="true" ng-false-value="false" checked>
 					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
 				</div>
@@ -257,10 +255,10 @@
 				</div>
 			</div>
 			<div class="modalColumn modal-right-80-20"></div>
-			</div>
 		</div>
-	</div> -->
+	</div>
+
 
 	<!-- End Web Tab -->
-
+</form>
 </div>

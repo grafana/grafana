@@ -38,7 +38,7 @@ div.rt-modal-override {
   .modalContainer {min-width:200px; max-width:1320px;}
 
   .summary-tab {
-    padding-top: 25px;
+    padding-top: 10px;
   }
 
     .modalColumn {
@@ -881,10 +881,15 @@ MATT STYLES
   .nonactive a:hover {color:@white; text-decoration: none;}
 }
 
+
+.rt-modal-tabs .nav {
+  margin-bottom: 0px;
+}
+
 .rt-modal-tabs .nav-tabs { 
   border-bottom:1px solid @raintankPanelBackground;
   font-size: @rt-fontSizeMed-1; 
-  padding:10px 10px;
+  padding:10px 10px 0 10px;
 
  
   li>a {
@@ -907,7 +912,7 @@ MATT STYLES
     border-left:1px solid @raintankPanelBackground;
     background-color: @white;
     margin:0 5px;
-    padding:5px 15px 10px 15px;
+    padding:5px 15px 12px 15px;
     border-bottom: none;
   }
 
@@ -981,6 +986,9 @@ input[type="checkbox"]:checked+label {
   background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
 }
 
+.checkbox-check-enabled {
+  margin-bottom: 10px;
+}
 
 // Collector List Status
 
