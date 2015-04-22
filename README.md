@@ -111,7 +111,7 @@ bra run
 
 ### Running
 ```
-./grafana web
+./grafana
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
