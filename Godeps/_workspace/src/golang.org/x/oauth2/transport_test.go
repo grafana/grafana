@@ -32,10 +32,10 @@ func TestTransportTokenSource(t *testing.T) {
 	client.Get(server.URL)
 }
 
-func TestExpiredWithNoAccessToken(t *testing.T) {
+func TestTokenValidNoAccessToken(t *testing.T) {
 	token := &Token{}
-	if !token.Expired() {
-		t.Errorf("Token should be expired if no access token is provided")
+	if token.Valid() {
+		t.Errorf("Token should not be valid with no access token")
 	}
 }
 
@@ -43,8 +43,8 @@ func TestExpiredWithExpiry(t *testing.T) {
 	token := &Token{
 		Expiry: time.Now().Add(-5 * time.Hour),
 	}
-	if !token.Expired() {
-		t.Errorf("Token should be expired if no access token is provided")
+	if token.Valid() {
+		t.Errorf("Token should not be valid if it expired in the past")
 	}
 }
 

@@ -22,16 +22,16 @@ import (
 )
 
 var (
-	versionRe  = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch     string
-	goos       string
-	version    string = "v1"
-	race       bool
-	workingDir string
-
-	installRoot   = "/opt/grafana"
-	configRoot    = "/etc/grafana"
-	grafanaLogDir = "/var/log/grafana"
+	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch    string
+	goos      string
+	version   string = "v1"
+	// deb & rpm does not support semver so have to handle their version a little differently
+	linuxPackageVersion   string = "v1"
+	linuxPackageIteration string = ""
+	race                  bool
+	workingDir            string
+	serverBinaryName      string = "grafana-server"
 )
 
 const minGoVersion = 1.3
@@ -43,7 +43,7 @@ func main() {
 	ensureGoPath()
 	readVersionFromPackageJson()
 
-	log.Printf("Version: %s\n", version)
+	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
@@ -73,8 +73,8 @@ func main() {
 
 		case "package":
 			//verifyGitRepoIsClean()
-			grunt("release", "--pkgVer="+version)
-			createRpmAndDeb()
+			grunt("release")
+			createLinuxPackages()
 
 		case "latest":
 			makeLatestDistCopies()
@@ -91,7 +91,7 @@ func main() {
 func makeLatestDistCopies() {
 	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
 	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
-	runError("cp", "dist/grafana-"+version+".x86_64.tar.gz", "dist/grafana-latest.x86_64.tar.gz")
+	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
 }
 
 func readVersionFromPackageJson() {
@@ -110,25 +110,102 @@ func readVersionFromPackageJson() {
 	}
 
 	version = jsonObj["version"].(string)
+	linuxPackageVersion = version
+	linuxPackageIteration = ""
+
+	// handle pre version stuff (deb / rpm does not support semver)
+	parts := strings.Split(version, "-")
+
+	if len(parts) > 1 {
+		linuxPackageVersion = parts[0]
+		linuxPackageIteration = parts[1]
+	}
 }
 
-func createRpmAndDeb() {
+type linuxPackageOptions struct {
+	packageType            string
+	homeDir                string
+	binPath                string
+	configDir              string
+	configFilePath         string
+	etcDefaultPath         string
+	etcDefaultFilePath     string
+	initdScriptFilePath    string
+	systemdServiceFilePath string
+
+	postinstSrc    string
+	initdScriptSrc string
+	defaultFileSrc string
+	systemdFileSrc string
+
+	depends []string
+}
+
+func createLinuxPackages() {
+	createPackage(linuxPackageOptions{
+		packageType:            "deb",
+		homeDir:                "/usr/share/grafana",
+		binPath:                "/usr/sbin/grafana-server",
+		configDir:              "/etc/grafana",
+		configFilePath:         "/etc/grafana/grafana.ini",
+		etcDefaultPath:         "/etc/default",
+		etcDefaultFilePath:     "/etc/default/grafana-server",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+
+		postinstSrc:    "packaging/deb/control/postinst",
+		initdScriptSrc: "packaging/deb/init.d/grafana-server",
+		defaultFileSrc: "packaging/deb/default/grafana-server",
+		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
+
+		depends: []string{"adduser", "libfontconfig"},
+	})
+
+	createPackage(linuxPackageOptions{
+		packageType:            "rpm",
+		homeDir:                "/usr/share/grafana",
+		binPath:                "/usr/sbin/grafana-server",
+		configDir:              "/etc/grafana",
+		configFilePath:         "/etc/grafana/grafana.ini",
+		etcDefaultPath:         "/etc/sysconfig",
+		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+
+		postinstSrc:    "packaging/rpm/control/postinst",
+		initdScriptSrc: "packaging/rpm/init.d/grafana-server",
+		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
+		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
+
+		depends: []string{"initscripts", "fontconfig"},
+	})
+}
+
+func createPackage(options linuxPackageOptions) {
 	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
-	postInstallScriptPath, _ := ioutil.TempFile("", "postinstall")
 
-	versionFolder := filepath.Join(packageRoot, installRoot, "versions", version)
-	configDir := filepath.Join(packageRoot, configRoot)
+	// create directories
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeDir))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.configDir))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
-	runError("mkdir", "-p", versionFolder)
-	runError("mkdir", "-p", configDir)
-
-	// copy sample ini file to /etc/opt/grafana
-	configFile := filepath.Join(configDir, "grafana.ini")
-	runError("cp", "conf/sample.ini", configFile)
+	// copy binary
+	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
+	// copy init.d script
+	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
+	// copy environment var file
+	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
+	// copy systemd file
+	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
 	// copy release files
-	runError("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", versionFolder)
-
-	GeneratePostInstallScript(postInstallScriptPath.Name())
+	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
+	// remove bin path
+	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
+	// copy sample ini file to /etc/opt/grafana
+	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
 
 	args := []string{
 		"-s", "dir",
@@ -138,50 +215,29 @@ func createRpmAndDeb() {
 		"--url", "http://grafana.org",
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
-		"--config-files", filepath.Join(configRoot, "grafana.ini"),
-		"--after-install", postInstallScriptPath.Name(),
+		"--config-files", options.configFilePath,
+		"--config-files", options.initdScriptFilePath,
+		"--config-files", options.etcDefaultFilePath,
+		"--config-files", options.systemdServiceFilePath,
+		"--after-install", options.postinstSrc,
 		"--name", "grafana",
-		"--version", version,
+		"--version", linuxPackageVersion,
 		"-p", "./dist",
-		".",
 	}
 
-	fmt.Println("Creating debian package")
-	runPrint("fpm", append([]string{"-t", "deb"}, args...)...)
+	if linuxPackageIteration != "" {
+		args = append(args, "--iteration", linuxPackageIteration)
+	}
 
-	fmt.Println("Creating redhat/centos package")
-	runPrint("fpm", append([]string{"-t", "rpm"}, args...)...)
-}
+	// add dependenciesj
+	for _, dep := range options.depends {
+		args = append(args, "--depends", dep)
+	}
 
-func GeneratePostInstallScript(path string) {
-	content := `
-rm -f $INSTALL_ROOT_DIR/current
-ln -s $INSTALL_ROOT_DIR/versions/$VERSION/ $INSTALL_ROOT_DIR/current
+	args = append(args, ".")
 
-if [ ! -L /etc/init.d/grafana ]; then
-    ln -sfn $INSTALL_ROOT_DIR/current/scripts/init.sh /etc/init.d/grafana
-fi
-
-chmod +x /etc/init.d/grafana
-if which update-rc.d > /dev/null 2>&1 ; then
-   update-rc.d -f grafana remove
-   update-rc.d grafana defaults
-else
-   chkconfig --add grafana
-fi
-
-if ! id grafana >/dev/null 2>&1; then
-   useradd --system -U -M grafana
-fi
-chown -R -L grafana:grafana $INSTALL_ROOT_DIR
-chmod -R a+rX $INSTALL_ROOT_DIR
-mkdir -p $GRAFANA_LOG_DIR
-chown -R -L grafana:grafana $GRAFANA_LOG_DIR
-`
-	content = strings.Replace(content, "$INSTALL_ROOT_DIR", installRoot, -1)
-	content = strings.Replace(content, "$VERSION", version, -1)
-	content = strings.Replace(content, "$GRAFANA_LOG_DIR", grafanaLogDir, -1)
-	ioutil.WriteFile(path, []byte(content), 0644)
+	fmt.Println("Creating package: ", options.packageType)
+	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
 }
 
 func verifyGitRepoIsClean() {
@@ -220,6 +276,7 @@ func grunt(params ...string) {
 
 func setup() {
 	runPrint("go", "get", "-v", "github.com/tools/godep")
+	runPrint("go", "get", "-v", "github.com/blang/semver")
 	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
@@ -230,7 +287,7 @@ func test(pkg string) {
 }
 
 func build(pkg string, tags []string) {
-	binary := "./bin/grafana"
+	binary := "./bin/" + serverBinaryName
 	if goos == "windows" {
 		binary += ".exe"
 	}

@@ -1,15 +1,20 @@
 /* jshint node:true */
 'use strict';
 module.exports = function (grunt) {
-
+  var os = require('os');
   var config = {
     pkg: grunt.file.readJSON('package.json'),
     baseDir: '.',
-    srcDir: 'src',
+    srcDir: 'public',
     destDir: 'dist',
     tempDir: 'tmp',
-    arch: grunt.option('arch') || 'x86_64',
+    arch: os.arch(),
+    platform: process.platform.replace('win32', 'windows'),
   };
+
+  if (process.platform.match(/^win/)) {
+    config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
+  }
 
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
@@ -33,7 +38,6 @@ module.exports = function (grunt) {
 
   // Merge that object with what with whatever we have here
   loadConfig(config,'./tasks/options/');
-
   // pass the config to grunt
   grunt.initConfig(config);
 };

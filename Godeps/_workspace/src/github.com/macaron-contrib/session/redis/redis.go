@@ -16,31 +16,39 @@
 package session
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/beego/redigo/redis"
+	"github.com/Unknwon/com"
+	"gopkg.in/ini.v1"
+	"gopkg.in/redis.v2"
 
 	"github.com/macaron-contrib/session"
 )
 
-// redis max pool size
-var MAX_POOL_SIZE = 100
+// RedisStore represents a redis session store implementation.
+type RedisStore struct {
+	c        *redis.Client
+	sid      string
+	duration time.Duration
+	lock     sync.RWMutex
+	data     map[interface{}]interface{}
+}
 
-var redisPool chan redis.Conn
-
-// RedisSessionStore represents a redis session store implementation.
-type RedisSessionStore struct {
-	p           *redis.Pool
-	sid         string
-	lock        sync.RWMutex
-	data        map[interface{}]interface{}
-	maxlifetime int64
+// NewRedisStore creates and returns a redis session store.
+func NewRedisStore(c *redis.Client, sid string, dur time.Duration, kv map[interface{}]interface{}) *RedisStore {
+	return &RedisStore{
+		c:        c,
+		sid:      sid,
+		duration: dur,
+		data:     kv,
+	}
 }
 
 // Set sets value to given key in session.
-func (s *RedisSessionStore) Set(key, val interface{}) error {
+func (s *RedisStore) Set(key, val interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -49,7 +57,7 @@ func (s *RedisSessionStore) Set(key, val interface{}) error {
 }
 
 // Get gets value by given key in session.
-func (s *RedisSessionStore) Get(key interface{}) interface{} {
+func (s *RedisStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -57,7 +65,7 @@ func (s *RedisSessionStore) Get(key interface{}) interface{} {
 }
 
 // Delete delete a key from session.
-func (s *RedisSessionStore) Delete(key interface{}) error {
+func (s *RedisStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -66,26 +74,22 @@ func (s *RedisSessionStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *RedisSessionStore) ID() string {
+func (s *RedisStore) ID() string {
 	return s.sid
 }
 
 // Release releases resource and save data to provider.
-func (s *RedisSessionStore) Release() error {
-	c := s.p.Get()
-	defer c.Close()
-
+func (s *RedisStore) Release() error {
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.Do("SETEX", s.sid, s.maxlifetime, string(data))
-	return err
+	return s.c.SetEx(s.sid, s.duration, string(data)).Err()
 }
 
 // Flush deletes all session data.
-func (s *RedisSessionStore) Flush() error {
+func (s *RedisStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -95,59 +99,65 @@ func (s *RedisSessionStore) Flush() error {
 
 // RedisProvider represents a redis session provider implementation.
 type RedisProvider struct {
-	maxlifetime int64
-	connAddr    string
-	poolsize    int
-	password    string
-	poollist    *redis.Pool
+	c        *redis.Client
+	duration time.Duration
 }
 
-// Init initializes memory session provider.
-// connStr: <redis server addr>,<pool size>,<password>
-// e.g. 127.0.0.1:6379,100,macaron
-func (p *RedisProvider) Init(maxlifetime int64, connStr string) error {
-	p.maxlifetime = maxlifetime
-	configs := strings.Split(connStr, ",")
-	if len(configs) > 0 {
-		p.connAddr = configs[0]
+// Init initializes redis session provider.
+// configs: network=tcp,addr=:6379,password=macaron,db=0,pool_size=100,idle_timeout=180
+func (p *RedisProvider) Init(maxlifetime int64, configs string) (err error) {
+	p.duration, err = time.ParseDuration(fmt.Sprintf("%ds", maxlifetime))
+	if err != nil {
+		return err
 	}
-	if len(configs) > 1 {
-		poolsize, err := strconv.Atoi(configs[1])
-		if err != nil || poolsize <= 0 {
-			p.poolsize = MAX_POOL_SIZE
-		} else {
-			p.poolsize = poolsize
-		}
-	} else {
-		p.poolsize = MAX_POOL_SIZE
-	}
-	if len(configs) > 2 {
-		p.password = configs[2]
-	}
-	p.poollist = redis.NewPool(func() (redis.Conn, error) {
-		c, err := redis.Dial("tcp", p.connAddr)
-		if err != nil {
-			return nil, err
-		}
-		if p.password != "" {
-			if _, err := c.Do("AUTH", p.password); err != nil {
-				c.Close()
-				return nil, err
-			}
-		}
-		return c, err
-	}, p.poolsize)
 
-	return p.poollist.Get().Err()
+	cfg, err := ini.Load([]byte(strings.Replace(configs, ",", "\n", -1)))
+	if err != nil {
+		return err
+	}
+
+	opt := &redis.Options{
+		Network: "tcp",
+	}
+	for k, v := range cfg.Section("").KeysHash() {
+		switch k {
+		case "network":
+			opt.Network = v
+		case "addr":
+			opt.Addr = v
+		case "password":
+			opt.Password = v
+		case "db":
+			opt.DB = com.StrTo(v).MustInt64()
+		case "pool_size":
+			opt.PoolSize = com.StrTo(v).MustInt()
+		case "idle_timeout":
+			opt.IdleTimeout, err = time.ParseDuration(v + "s")
+			if err != nil {
+				return fmt.Errorf("error parsing idle timeout: %v", err)
+			}
+		default:
+			return fmt.Errorf("session/redis: unsupported option '%s'", k)
+		}
+	}
+
+	p.c = redis.NewClient(opt)
+	return p.c.Ping().Err()
 }
 
 // Read returns raw session store by session ID.
 func (p *RedisProvider) Read(sid string) (session.RawStore, error) {
-	c := p.poollist.Get()
-	defer c.Close()
+	if !p.Exist(sid) {
+		if err := p.c.Set(sid, "").Err(); err != nil {
+			return nil, err
+		}
+	}
 
-	kvs, err := redis.String(c.Do("GET", sid))
 	var kv map[interface{}]interface{}
+	kvs, err := p.c.Get(sid).Result()
+	if err != nil {
+		return nil, err
+	}
 	if len(kvs) == 0 {
 		kv = make(map[interface{}]interface{})
 	} else {
@@ -157,48 +167,41 @@ func (p *RedisProvider) Read(sid string) (session.RawStore, error) {
 		}
 	}
 
-	rs := &RedisSessionStore{p: p.poollist, sid: sid, data: kv, maxlifetime: p.maxlifetime}
-	return rs, nil
+	return NewRedisStore(p.c, sid, p.duration, kv), nil
 }
 
 // Exist returns true if session with given ID exists.
 func (p *RedisProvider) Exist(sid string) bool {
-	c := p.poollist.Get()
-	defer c.Close()
-
-	if existed, err := redis.Int(c.Do("EXISTS", sid)); err != nil || existed == 0 {
-		return false
-	} else {
-		return true
-	}
+	has, err := p.c.Exists(sid).Result()
+	return err == nil && has
 }
 
 // Destory deletes a session by session ID.
 func (p *RedisProvider) Destory(sid string) error {
-	c := p.poollist.Get()
-	defer c.Close()
-
-	_, err := c.Do("DEL", sid)
-	return err
+	return p.c.Del(sid).Err()
 }
 
 // Regenerate regenerates a session store from old session ID to new one.
-func (p *RedisProvider) Regenerate(oldsid, sid string) (session.RawStore, error) {
-	c := p.poollist.Get()
-	defer c.Close()
-
-	if existed, _ := redis.Int(c.Do("EXISTS", oldsid)); existed == 0 {
-		// oldsid doesn't exists, set the new sid directly
-		// ignore error here, since if it return error
-		// the existed value will be 0
-		c.Do("SET", sid, "", "EX", p.maxlifetime)
-	} else {
-		c.Do("RENAME", oldsid, sid)
-		c.Do("EXPIRE", sid, p.maxlifetime)
+func (p *RedisProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err error) {
+	if p.Exist(sid) {
+		return nil, fmt.Errorf("new sid '%s' already exists", sid)
+	} else if !p.Exist(oldsid) {
+		// Make a fake old session.
+		if err = p.c.SetEx(oldsid, p.duration, "").Err(); err != nil {
+			return nil, err
+		}
 	}
 
-	kvs, err := redis.String(c.Do("GET", sid))
+	if err = p.c.Rename(oldsid, sid).Err(); err != nil {
+		return nil, err
+	}
+
 	var kv map[interface{}]interface{}
+	kvs, err := p.c.Get(sid).Result()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(kvs) == 0 {
 		kv = make(map[interface{}]interface{})
 	} else {
@@ -208,14 +211,12 @@ func (p *RedisProvider) Regenerate(oldsid, sid string) (session.RawStore, error)
 		}
 	}
 
-	rs := &RedisSessionStore{p: p.poollist, sid: sid, data: kv, maxlifetime: p.maxlifetime}
-	return rs, nil
+	return NewRedisStore(p.c, sid, p.duration, kv), nil
 }
 
 // Count counts and returns number of sessions.
 func (p *RedisProvider) Count() int {
-	// FIXME
-	return 0
+	return int(p.c.DbSize().Val())
 }
 
 // GC calls GC to clean expired sessions.
