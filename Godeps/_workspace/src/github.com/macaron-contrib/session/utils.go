@@ -24,39 +24,19 @@ import (
 	"github.com/Unknwon/com"
 )
 
-func init() {
-	gob.Register([]interface{}{})
-	gob.Register(map[int]interface{}{})
-	gob.Register(map[string]interface{}{})
-	gob.Register(map[interface{}]interface{}{})
-	gob.Register(map[string]string{})
-	gob.Register(map[int]string{})
-	gob.Register(map[int]int{})
-	gob.Register(map[int]int64{})
-}
-
 func EncodeGob(obj map[interface{}]interface{}) ([]byte, error) {
 	for _, v := range obj {
 		gob.Register(v)
 	}
 	buf := bytes.NewBuffer(nil)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(obj)
-	if err != nil {
-		return []byte(""), err
-	}
-	return buf.Bytes(), nil
+	err := gob.NewEncoder(buf).Encode(obj)
+	return buf.Bytes(), err
 }
 
-func DecodeGob(encoded []byte) (map[interface{}]interface{}, error) {
+func DecodeGob(encoded []byte) (out map[interface{}]interface{}, err error) {
 	buf := bytes.NewBuffer(encoded)
-	dec := gob.NewDecoder(buf)
-	var out map[interface{}]interface{}
-	err := dec.Decode(&out)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+	err = gob.NewDecoder(buf).Decode(&out)
+	return out, err
 }
 
 // generateRandomKey creates a random key with the given strength.

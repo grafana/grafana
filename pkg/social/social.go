@@ -2,11 +2,13 @@ package social
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/net/context"
 
 	"golang.org/x/oauth2"
 )
@@ -22,9 +24,11 @@ type BasicUserInfo struct {
 type SocialConnector interface {
 	Type() int
 	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
+	IsEmailAllowed(email string) bool
+	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	Exchange(ctx oauth2.Context, code string) (*oauth2.Token, error)
+	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 }
 
 var (
@@ -41,12 +45,15 @@ func NewOAuthService() {
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
 		info := &setting.OAuthInfo{
-			ClientId:     sec.Key("client_id").String(),
-			ClientSecret: sec.Key("client_secret").String(),
-			Scopes:       sec.Key("scopes").Strings(" "),
-			AuthUrl:      sec.Key("auth_url").String(),
-			TokenUrl:     sec.Key("token_url").String(),
-			Enabled:      sec.Key("enabled").MustBool(),
+			ClientId:       sec.Key("client_id").String(),
+			ClientSecret:   sec.Key("client_secret").String(),
+			Scopes:         sec.Key("scopes").Strings(" "),
+			AuthUrl:        sec.Key("auth_url").String(),
+			TokenUrl:       sec.Key("token_url").String(),
+			ApiUrl:         sec.Key("api_url").String(),
+			Enabled:        sec.Key("enabled").MustBool(),
+			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
+			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 		}
 
 		if !info.Enabled {
@@ -68,23 +75,48 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config}
+			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config}
+			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
 		}
 	}
 }
 
+func isEmailAllowed(email string, allowedDomains []string) bool {
+	if len(allowedDomains) == 0 {
+		return true
+	}
+
+	valid := false
+	for _, domain := range allowedDomains {
+		emailSuffix := fmt.Sprintf("@%s", domain)
+		valid = valid || strings.HasSuffix(email, emailSuffix)
+	}
+
+	return valid
+}
+
 type SocialGithub struct {
 	*oauth2.Config
+	allowedDomains []string
+	ApiUrl         string
+	allowSignup    bool
 }
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
+}
+
+func (s *SocialGithub) IsEmailAllowed(email string) bool {
+	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialGithub) IsSignupAllowed() bool {
+	return s.allowSignup
 }
 
 func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
@@ -96,7 +128,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var err error
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get("https://api.github.com/user")
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +155,21 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 type SocialGoogle struct {
 	*oauth2.Config
+	allowedDomains []string
+	ApiUrl         string
+	allowSignup    bool
 }
 
 func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
+}
+
+func (s *SocialGoogle) IsEmailAllowed(email string) bool {
+	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialGoogle) IsSignupAllowed() bool {
+	return s.allowSignup
 }
 
 func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
@@ -137,9 +180,8 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 	var err error
 
-	reqUrl := "https://www.googleapis.com/oauth2/v1/userinfo"
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(reqUrl)
+	r, err := client.Get(s.ApiUrl)
 	if err != nil {
 		return nil, err
 	}

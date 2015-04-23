@@ -4,30 +4,31 @@ page_description: Playlist guide for Grafana
 page_keywords: grafana, playlist, documentation
 ---
 
-# Playlist Guide
+## About the Playlist
 
-In Grafana v1.5 a playlist feature was added. You can use this feature by first marking a couple
- of dashboards as favorites. This is accomplished in the Save menu. Click on the save icon and then _Mark As Favorite_.
+The Playlist is a special type of Dashboard that rotates through a particular list of two or more Dashboards. They can be a great way to build situational awareness or just show off your metrics to your team or visitors. Since Dashboards in Grafana automatically scale to any resolution they're perfect for big screens!
 
+## Configuring the Playlist
 
-## Step 1 - Mark as favorire
-![](/img/v1/mark_as_favorite.png)
+The Playlist can be accessed from the main Dashboard picker. Click the 'Playlist' button at the bottom of the picker to access the Playlist functionality.
 
-Then open the playlist modal. You will find this button in the open dashboard / search popup (CTRL+F).
+![](/img/v2/dashboard_search.jpg)
 
-## Step 2 - Open playlist view
-![](/img/v1/playlist_button.png)
+Since the Playlist is basically a list of Dashboards, ensure that all the Dashboards you want to appear in your Playlist are added here. You can search Dashboards by name (or use a regular expression).
 
-This opens the playlist view.
+You can search Dashboards by name (or use a regular expression), and add them to your Playlist. By default, your starred dashboards will appear as candidates for the Playlist.
 
-## Step 3 - Select dashbords and interval
+Be sure to click the right arrow appearing next to the Dashboard name to add it to the Playlist.
 
-![](/img/v1/playlist_modal.png)
+You can configure a time interval for Grafana to wait on a particular Dashboard before advancing to the next one on the Playlist.
 
-In this view you can select the dashboards you want to include in the playlist, and even remove dashboards from you favorites list. Set the time span between dashboard change, for example 1m, 10m, 1h for 1 minute, 10 minute or 1 hour interval.
+## Starting and controlling the Playlist
 
-To start the dashboard click the Start button.
+To start the Playlist, click the green "Start" button 
 
-When a dashboard playlist is running, most menu buttons and dashboard controls are hidden. This is in order to present as clear a view of the dashboard as possible for big tv displays. Click the stop playlist link in the top menu to the right to stop the playlist.
+Playlists can also be manually controlled utilizing the Playlist controls at the top of screen when in Playlist mode. 
 
-![](playlist_playing_hiden_menu.png)
+Click the stop button to stop the Playlist, and exit to the current Dashboard.
+Click the next button to advance to the next Dashboard in the Playlist.
+Click the back button to rewind to the previous Dashboard in the Playlist.
+

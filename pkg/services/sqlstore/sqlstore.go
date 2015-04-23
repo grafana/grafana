@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,24 +34,29 @@ var (
 )
 
 func EnsureAdminUser() {
-	adminQuery := m.GetUserByLoginQuery{LoginOrEmail: setting.AdminUser}
+	statsQuery := m.GetSystemStatsQuery{}
 
-	if err := bus.Dispatch(&adminQuery); err == m.ErrUserNotFound {
-		cmd := m.CreateUserCommand{}
-		cmd.Login = setting.AdminUser
-		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Password = setting.AdminPassword
-		cmd.IsAdmin = true
-
-		if err = bus.Dispatch(&cmd); err != nil {
-			log.Error(3, "Failed to create default admin user", err)
-			return
-		}
-
-		log.Info("Created default admin user: %v", setting.AdminUser)
-	} else if err != nil {
-		log.Error(3, "Could not determine if admin user exists: %v", err)
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		log.Fatal(3, "Could not determine if admin user exists: %v", err)
+		return
 	}
+
+	if statsQuery.Result.UserCount > 0 {
+		return
+	}
+
+	cmd := m.CreateUserCommand{}
+	cmd.Login = setting.AdminUser
+	cmd.Email = setting.AdminUser + "@localhost"
+	cmd.Password = setting.AdminPassword
+	cmd.IsAdmin = true
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		log.Error(3, "Failed to create default admin user", err)
+		return
+	}
+
+	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
 func NewEngine() {
@@ -80,7 +86,7 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	}
 
 	if enableLog {
-		logPath := path.Join(setting.LogRootPath, "xorm.log")
+		logPath := path.Join(setting.LogsPath, "xorm.log")
 		os.MkdirAll(path.Dir(logPath), os.ModePerm)
 
 		f, err := os.Create(logPath)
@@ -121,6 +127,9 @@ func getEngine() (*xorm.Engine, error) {
 		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s",
 			DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode)
 	case "sqlite3":
+		if !filepath.IsAbs(DbCfg.Path) {
+			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
+		}
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc&_loc=Local"
 	default:
