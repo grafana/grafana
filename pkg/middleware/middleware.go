@@ -40,7 +40,7 @@ func GetContextHandler() macaron.Handler {
 		}
 
 		if !strings.EqualFold(h, setting.Domain) {
-			ctx.Redirect(strings.TrimSuffix(setting.AppUrl, "/") + ctx.Req.RequestURI, 301)
+			ctx.Redirect(strings.TrimSuffix(setting.AppUrl, "/")+ctx.Req.RequestURI, 301)
 			return
 		}
 
