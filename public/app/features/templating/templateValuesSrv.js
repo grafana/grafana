@@ -28,6 +28,9 @@ function (angular, _, kbn) {
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
         var urlValue = queryParams['var-' + variable.name];
+        if (variable.refresh) {
+          promises.push(this.updateOptions(variable));
+        }
         if (urlValue !== void 0) {
           var option = _.findWhere(variable.options, { text: urlValue });
           option = option || { text: urlValue, value: urlValue };
@@ -36,9 +39,6 @@ function (angular, _, kbn) {
           this.updateAutoInterval(variable);
 
           promises.push(promise);
-        }
-        else if (variable.refresh) {
-          promises.push(this.updateOptions(variable));
         }
         else if (variable.type === 'interval') {
           this.updateAutoInterval(variable);
