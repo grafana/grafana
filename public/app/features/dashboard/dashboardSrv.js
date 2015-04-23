@@ -52,10 +52,7 @@ function (angular, $, kbn, _, moment) {
 
     p._initMeta = function(meta) {
       meta = meta || {};
-      meta.canShare = true;
-      meta.canSave = true;
-      meta.canEdit = true;
-      meta.canStar = true;
+      _.defaults(meta, {canShare: true, canSave: true, canEdit: true, canStar: true});
 
       if (contextSrv.hasRole('Viewer')) {
         meta.canSave = false;
