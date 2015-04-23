@@ -60,7 +60,7 @@ function (angular) {
     };
 
     $scope.gotoDashboard = function(collector) {
-      $location.path("/dashboard/db/statusboard").search({"var-collector": collector.slug, "var-endpoint": "All"});
+      $location.path("/dashboard/raintank/statusboard").search({"var-collector": collector.slug, "var-endpoint": "All"});
     }
 
     $scope.init();

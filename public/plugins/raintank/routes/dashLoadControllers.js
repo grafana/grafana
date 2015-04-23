@@ -27,7 +27,7 @@ function (angular) {
     };
 
     file_load($routeParams.slug).then(function(result) {
-      $scope.initDashboard({meta: {isRaintank: true, canSave: false}, model: result}, $scope);
+      $scope.initDashboard({meta: {isRaintank: true, canSave: true, canStar: false, canEdit: true}, model: result}, $scope);
     });
 
   });

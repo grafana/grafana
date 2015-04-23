@@ -113,7 +113,7 @@ function (angular, _) {
     }
 
     $scope.gotoDashboard = function(endpoint) {
-      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
+      $location.path("/dashboard/raintank/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
     }
 
     $scope.init();
