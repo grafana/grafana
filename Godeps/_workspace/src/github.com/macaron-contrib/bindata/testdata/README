@@ -1,0 +1,3 @@
+Use following command under this directory to regenerate testdata.
+
+$ go-bindata -pkg testdata static templates

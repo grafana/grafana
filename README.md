@@ -83,14 +83,6 @@ the latest master builds [here](http://grafana.org/download/builds)
 go get github.com/grafana/grafana
 ```
 
-### Building the backend
-```
-cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
-go build .
-```
-
 ### Building frontend assets
 
 To build less to css for the frontend you will need a recent version of of node (v0.12.0),
@@ -100,6 +92,39 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 npm install
 npm install -g grunt-cli
 grunt
+```
+
+### Building the backend
+```
+cd $GOPATH/src/github.com/grafana/grafana
+go run build.go setup            (only needed once to install godep)
+godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+```
+
+If you are considering to embed static assets to easly deploy the application run:
+
+```
+go-bindata -o bindata/public/main.go -pkg=public public/...
+go-bindata -o bindata/app/main.go -pkg=app -prefix=public public/app/...
+go-bindata -o bindata/css/main.go -pkg=css -prefix=public public/css/...
+go-bindata -o bindata/img/main.go -pkg=img -prefix=public public/img/...
+go-bindata -o bindata/fonts/main.go -pkg=fonts -prefix=public public/fonts/...
+```
+
+If you don't like to embed the assets in bin or you are a graphana developer and prefer to do not embed assets but only stream it from filesystem in order to don't need recompiling during development, run:
+
+```
+go-bindata -debug -o bindata/public/main.go -pkg=public public/...
+go-bindata -debug -o bindata/app/main.go -pkg=app -prefix=public public/app/...
+go-bindata -debug -o bindata/css/main.go -pkg=css -prefix=public public/css/...
+go-bindata -debug -o bindata/img/main.go -pkg=img -prefix=public public/img/...
+go-bindata -debug -o bindata/fonts/main.go -pkg=fonts -prefix=public public/fonts/...
+```
+
+At the end you need to compile the application
+
+```
+go build .
 ```
 
 ### Recompile backend on source change
