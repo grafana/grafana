@@ -12,6 +12,12 @@ COLUMNS
           position: relative;
           transition: 0.15s;
         }
+        .detailFull {
+          width:  100%; // was 50% for 2 columns, changed to 1 col for now: TRW
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
 
     .detailLeft {}
     .detailRight {}
@@ -191,6 +197,13 @@ raintank BOX
   display:block;
   padding: 10px 20px;
   border-bottom: 1px solid @bodyBackground;
+
+  .dashboard-icon {
+  font-size:@rt-fontSizeLarger;
+  color:@rt-light-gray;
+  margin-left:20px;
+  }
+
 }
 
 .currentStatus:last-child,
@@ -240,27 +253,40 @@ raintank BOX
   margin:0;
 }
 
- .health {
-  margin-bottom:10px;
- } 
+.eventType {margin-left:5px;}
 
- .health img {  
-  margin-right:5px; 
-  position: relative;
-  top:-5px;
+.check {
+  margin-right: 30px;
+  margin-bottom:8px;
+  float: left;
 }
 
-.checkType {
-  width:70px; 
-  display:inline-block;
+.monitorState {
+  float:left;
+}
+.status {
   float:left;
 }
 
-.status {
-  display: inline-block;
+.statusType {
+  float:left;
+  margin-right: 15px;
+  margin-bottom:8px;
 }
 
-.eventType {margin-left:5px;}
+.health {
+  width:70px; 
+  display:inline-block;
+  float:left;
+  margin-bottom:10px;
+}
+
+.frequency {
+  margin-bottom: 10px;
+  display:block;
+  clear: both;
+
+}
 
 
 .mainLink i, .mainLink i:visited{
@@ -270,7 +296,7 @@ raintank BOX
   transition: 0.15s; 
 }
 
-.mainLink i:hover, .mainLink i:active{
+.mainLink i:hover, .mainLink i:active {
   color: @white;  
   text-decoration:none;
 }
@@ -281,8 +307,58 @@ raintank BOX
   margin-left:5px;
 }
 
+/***********************************
+raintank TYPE
+***********************************/
+
+.checkType, .eventType {
+  font-size:16px;
+  font-weight:600;
+  color:@rt-light-gray;
+}
+
+.status {
+  font-size:14px;
+  font-weight:600;
+}
+
+.jumbo {font-weight:600;}
+
+.statusMsg, .freqMsg {font-size:14px; font-weight:300; color:@grayLight;}
+
+.online {
+  color: @online;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.warn {
+  color: @warn;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.disabled, .none {
+  color: @disabled;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.critical {
+  color: @critical;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nodata {
+  color: @nodata;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
 /******************************************
-FONTS
+RAINTANK ICON FONTS
 ******************************************/
 @font-face {
   font-family: 'raintank-icons';
@@ -414,55 +490,6 @@ i {
 }
 
 /***********************************
-raintank TYPE
-***********************************/
-
-.checkType, .eventType {
-  font-size:16px;
-  font-weight:600;
-}
-
-.jumbo {font-weight:600;}
-
-.status {
-font-size:20px;
-font-weight:600;
-}
-
-.statusMsg {font-size:12px; font-weight:300;}
-
-.online {
-  color: @online;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.warn {
-  color: @warn;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.disabled {
-  color: @disabled;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.critical {
-  color: @critical;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.nodata {
-  color: @nodata;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-
-/***********************************
 raintank POSITIONING
 ***********************************/
 
@@ -506,7 +533,7 @@ raintank BUTTONS
 .primaryCTA:visited{
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     color:#fff;
     background-color: @rt-blue;
     border: 1px solid @rt-blue;
@@ -529,7 +556,7 @@ raintank BUTTONS
 .secondaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     border: 1px solid @rt-blue;
     color: #13b2d4;
     border-radius: 2px;
@@ -559,7 +586,7 @@ raintank BUTTONS
 .tertiaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     border: 1px solid #999;
     color: #999;
     border-radius: 2px;

@@ -34,140 +34,155 @@
 
 <form name="endpointForm">
 	<div class="detailContainer">
-		<div class="detailColumn detailLeft">
-			<div class="rt-box clearBack oneCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
-			</div>
+		<div class="detailFull detailLeft">
 			<div class="rt-box">
 				<div class="rt-box-header">
-					<div style="padding:10px;">Status Since Last Check</div>
-					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a data-toggle="dropdown">
-							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
+					<div style="padding:10px;">Status</div>
+					<div class="" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+						<a href="" ng-click="">
+							<span class="small">As of 4:04pm</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
 						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a ng-click="disableAll()">
-									Disable All
-								</a>
-							</li>
-							<li>
-								<a ng-click="enableAll()">
-									Enable All
-								</a>
-							</li>
-						</ul>
 					</div>
 				</div>
+
 
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
-						<div class="pull-right tertiaryCTA">View</div>
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
 
-						<div class="checkType">Ping</div> 
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
+						</div> 
 
-						<div class="statusEvents">
-							<div class="health">
-								<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="35px" height="35px">
-								<div class="status">
-									<span class="{{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
-								</div>
+						<div class="monitorState">
+
+							<div class="check">
+								<span class="checkType">Ping:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
 							</div>
+							
+							<div class="status">
+								<div class="statusType">OK: <a href=""><span class="online">20</span></a></div> 
+								<div class="statusType">Warn: <a href=""><span class="warn">4</span></a></div>
+								<div class="statusType">Error: <a href=""><span class="critical">3</span></a></div>
+								<div class="statusType">Unknown: <a href=""><span class="none">--</span></a></div>
+							</div>
+
+							<div class="frequency">
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> from 4 collectors
+							</div>
+							
 							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
+
 						</div>
 						<div class="clearfix"></div>
 					</div>
 
+
+
 					<div class="currentStatus">
-						<div class="pull-right tertiaryCTA">View</div>
-
-						<div class="checkType">DNS</div> 
-
-						<div class="statusEvents">
-							<div class="health">
-								<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="35px" height="35px">
-								<div class="status">
-									<span class="{{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
-								</div>
-							</div>	
-							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<div class="clearfix"></div>
-					</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
 
-					<div class="currentStatus">
-						<div class="pull-right tertiaryCTA">View</div>
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
+						</div> 
 
-						<div class="checkType">HTTP</div> 
+						<div class="monitorState">
 
-						<div class="statusEvents">
-							<div class="health">
-								<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="35px" height="35px">
-								<div class="status">
-									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
-								</div>
-							</div>			
-							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
-						</div>
-						<div class="clearfix"></div>
-					</div>
-
-					<div class="currentStatus">
-						<div class="pull-right tertiaryCTA">View</div>
-
-						<div class="checkType">HTTPS</div> 
-
-						<div class="statusEvents">
-							<div class="health">
-								<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="35px" height="35px">
-								<div class="status">
-									<span class="{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span> <span class="statusMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
-								</div>
+							<div class="check">
+								<span class="checkType">DNS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
 							</div>
-							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
+							
+							<div class="status">
+								<div class="statusType">OK: <a href=""><span class="online">4</span></a></div> 
+								<div class="statusType">Warn: <a href=""><span class="warn">17</span></a></div>
+								<div class="statusType">Error: <a href=""><span class="critical">5</span></a></div>
+								<div class="statusType">Unknown: <a href=""><span class="nodata">2</span></a></div>
+							</div>
+
+							<div class="frequency">
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span> from 21 collectors
+							</div>
+							
+							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
+
 						</div>
 						<div class="clearfix"></div>
 					</div>
-				</div>
-			</div>
-		</div>
 
-		<div class="detailColumn detailRight">
-			<div class="rt-box clearBack twoCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(endpoint)">Go to {{endpoint.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
-			</div>
-			<div class="rt-box">
-				<div class="rt-box-header">
-					<div style="padding:10px;">Tags</div>
-					<div class="dropdown" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a data-toggle="dropdown">
-							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
-						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a href="endpoints/summary/{{endpoint.id}}">
-									View
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin"h>
-								<a href="endpoints/edit/{{endpoint.id}}">
-									Edit
-								</a>
-							</li>
-							<li ng-hide="!contextSrv.isGrafanaAdmin">
-								<a ng-click="remove(endpoint)">
-									Delete
-								</a>
-							</li>
-						</ul>
-					</div>
-				</div>
-				<div class="rt-box-body" style="min-height: 50px">
-					<div class="editor-row">
-						<div class="editor-option">
-							<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="Add New Tag" on-update="tagsUpdated"></bootstrap-tagsinput>
-							<tip>You can also press enter to a add tag</tip>
+
+
+
+
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="40px" height="40px">
+						</div> 
+
+						<div class="monitorState">
+
+							<div class="check">
+								<span class="checkType">HTTP:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
+							</div>
+							
+							<div class="status">
+								<div class="statusType">OK: <a href=""><span class="online">12</span></a></div> 
+								<div class="statusType">Warn: <a href=""><span class="none">--</span></a></div>
+								<div class="statusType">Error: <a href=""><span class="critical">1</span></a></div>
+								<div class="statusType">Unknown: <a href=""><span class="nodata">10</span></a></div>
+							</div>
+
+							<div class="frequency">
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span> from 40 collectors
+							</div>
+							
+							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
+
+						</div>
+						<div class="clearfix"></div>
+					</div>
+
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="40px" height="40px">
+						</div> 
+
+						<div class="monitorState">
+
+							<div class="check">
+								<span class="checkType">HTTPS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
+							</div>
+							
+							<div class="status">
+								<div class="statusType">OK: <a href=""><span class="online">2</span></a></div> 
+								<div class="statusType">Warn: <a href=""><span class="warn">3</span></a></div>
+								<div class="statusType">Error: <a href=""><span class="critical">10</span></a></div>
+								<div class="statusType">Unknown: <a href=""><span class="nodata">1</span></a></div>
+							</div>
+
+							<div class="frequency">
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span> from 2 collectors
+							</div>
+							
+							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
+
+						</div>
+						<div class="clearfix"></div>
 					</div>
 				</div>
 			</div>
