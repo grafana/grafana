@@ -1,10 +1,8 @@
 define([
   'angular',
-  'jquery',
-  'lodash',
-  'config',
+  './dashLoadControllers',
 ],
-function (angular, jquery, _, config) {
+function (angular) {
   "use strict";
 
   var module = angular.module('grafana.routes');
@@ -42,6 +40,11 @@ function (angular, jquery, _, config) {
       .when('/endpoints/edit/:id', {
         templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',
         controller : 'EndpointConfCtrl',
+      })
+      .when('/dashboard/raintank/:slug', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromRaintankCtrl',
+        reloadOnSearch: false,
       })
   });
 });
