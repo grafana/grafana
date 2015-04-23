@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"strings"
 )
 
 func GetMonitorById(c *middleware.Context) {
@@ -16,6 +15,21 @@ func GetMonitorById(c *middleware.Context) {
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Monitor not found", nil)
+		return
+	}
+
+	c.JSON(200, query.Result)
+}
+
+func getMonitorHealthById(c *middleware.Context) {
+	id := c.ParamsInt64(":id")
+	query := m.GetMonitorHealthByIdQuery{
+		Id:    id,
+		OrgId: c.OrgId,
+	}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to query monitor health", err)
 		return
 	}
 
@@ -61,11 +75,6 @@ func DeleteMonitor(c *middleware.Context) {
 func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
 	cmd.OrgId = c.OrgId
 
-	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
-		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
-		return
-	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add monitor", err)
 		return
@@ -76,11 +85,6 @@ func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
 
 func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 	cmd.OrgId = c.OrgId
-
-	if !c.IsGrafanaAdmin && strings.HasPrefix(strings.ToLower(cmd.Namespace), "public") {
-		c.JsonApiErr(400, "Validation failed. namespace public is reserved.", nil)
-		return
-	}
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

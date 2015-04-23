@@ -4,23 +4,30 @@ page_description: Time range user guide
 page_keywords: grafana, time range, guide, documentation
 ---
 
-# Time range controls
+Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
+
+# Dashboard time picker
 
 ![](/img/v1/time_range_controls.png)
 
-In the menu you have the time range dropdown (between to Zoom out and refresh links).
-In this dropdown you have relative time options, auto refresh options and custom time options.
+In the top right, you have the master Dashboard time picker (it's inbetween the 'Zoom out' and the 'Refresh' links).
 
+From this dropdown you can:
 
-## Custom time
+1. Specify an exact time range (eg. "October 13 12:01 to October 14 12:05)
+2. Choose a relative time (eg. "Last 15 minutes","Last 1 week")
+3. Configure auto-refresh options
 
-To customize the relative and auto refresh options open the dashboard settings and click the Timepicker tab.
-In this tab you can specify the relative and auto refresh intervals. The Timepicker tab settings are saved
-on per dashboard basis.
+All of this applies to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
+
+## Customize relative time and auto auto-refresh options
+
+It's possible to customize the options displayed for relative time and the auto-refresh options. 
+
+From Dashboard setttings, click the Timepicker tab. From here you can specify the relative and auto refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.
 
 ![](/img/v1/timepicker_editor.png)
 
-## Time picker options
+## Panel time override 
 
-In dashboard settings, `Time Picker` tab you can add or remove the relative time intervals and refresh intervals
-that should be available in the time picker dropdown.
+In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../guides/whats-new-in-v2/) for further information

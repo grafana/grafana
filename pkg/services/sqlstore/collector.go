@@ -14,9 +14,15 @@ import (
 func init() {
 	bus.AddHandler("sql", GetCollectors)
 	bus.AddHandler("sql", GetCollectorById)
+	bus.AddHandler("sql", GetCollectorByName)
 	bus.AddHandler("sql", AddCollector)
 	bus.AddHandler("sql", UpdateCollector)
 	bus.AddHandler("sql", DeleteCollector)
+	bus.AddHandler("sql", GetCollectorHealthById)
+	bus.AddHandler("sql", AddCollectorSession)
+	bus.AddHandler("sql", DeleteCollectorSession)
+	bus.AddHandler("sql", ClearCollectorSession)
+	bus.AddHandler("sql", GetCollectorSessions)
 }
 
 type CollectorWithTag struct {
@@ -30,6 +36,8 @@ type CollectorWithTag struct {
 	Public    bool
 	Created   time.Time
 	Updated   time.Time
+	Online    bool
+	Enabled   bool
 }
 
 func GetCollectorById(query *m.GetCollectorByIdQuery) error {
@@ -72,6 +80,55 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 		Latitude:  result.Latitude,
 		Longitude: result.Longitude,
 		Public:    result.Public,
+		Online:    result.Online,
+		Enabled:   result.Enabled,
+	}
+
+	return err
+}
+
+func GetCollectorByName(query *m.GetCollectorByNameQuery) error {
+	sess := x.Table("collector")
+	rawParams := make([]interface{}, 0)
+	rawSql := `SELECT
+		GROUP_CONCAT(DISTINCT(collector_tag.tag)) as tags,
+		collector.*
+	FROM collector
+	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
+	WHERE 
+		(collector.public=1 OR collector.org_id=?)
+	AND
+		collector.name=?
+	GROUP BY collector.id
+	`
+	rawParams = append(rawParams, query.OrgId, query.OrgId, query.Name)
+	results := make([]CollectorWithTag, 0)
+	err := sess.Sql(rawSql, rawParams...).Find(&results)
+	if err != nil {
+		return err
+	}
+	if len(results) < 1 {
+		return m.ErrCollectorNotFound
+	}
+
+	result := results[0]
+
+	tags := make([]string, 0)
+	if result.Tags != "" {
+		tags = strings.Split(result.Tags, ",")
+	}
+
+	query.Result = &m.CollectorDTO{
+		Id:        result.Id,
+		OrgId:     result.OrgId,
+		Name:      result.Name,
+		Slug:      result.Slug,
+		Tags:      tags,
+		Latitude:  result.Latitude,
+		Longitude: result.Longitude,
+		Public:    result.Public,
+		Online:    result.Online,
+		Enabled:   result.Enabled,
 	}
 
 	return err
@@ -146,6 +203,8 @@ func GetCollectors(query *m.GetCollectorsQuery) error {
 			Longitude: row.Longitude,
 			Tags:      tags,
 			Public:    row.Public,
+			Online:    row.Online,
+			Enabled:   row.Enabled,
 		}
 	}
 
@@ -191,8 +250,13 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Longitude: cmd.Longitude,
 			Created:   time.Now(),
 			Updated:   time.Now(),
+			Online:    cmd.Online,
+			Enabled:   cmd.Enabled,
 		}
 		l.UpdateCollectorSlug()
+		sess.UseBool("public")
+		sess.UseBool("online")
+		sess.UseBool("enabled")
 		if _, err := sess.Insert(l); err != nil {
 			return err
 		}
@@ -220,6 +284,8 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 			Latitude:  l.Latitude,
 			Longitude: l.Longitude,
 			Public:    l.Public,
+			Online:    l.Online,
+			Enabled:   l.Enabled,
 		}
 		return nil
 	})
@@ -274,6 +340,7 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				Longitude: cmd.Longitude,
 				Public:    cmd.Public,
 				Updated:   time.Now(),
+				Enabled:   cmd.Enabled,
 			}
 
 			sess.UseBool("public")
@@ -303,6 +370,76 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 			}
 		}
 
+		return nil
+	})
+}
+
+func GetCollectorHealthById(query *m.GetCollectorHealthByIdQuery) error {
+	sess := x.Table("monitor_collector_state")
+	sess.Where("collector_id=?", query.Id).And("org_id=?", query.OrgId)
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		collectorSess := m.CollectorSession{
+			OrgId:       cmd.OrgId,
+			CollectorId: cmd.CollectorId,
+			SocketId:    cmd.SocketId,
+			Updated:     time.Now(),
+		}
+		if _, err := sess.Insert(&collectorSess); err != nil {
+			return err
+		}
+		rawSql := "UPDATE collector set online=1 where id=?"
+		if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func GetCollectorSessions(query *m.GetCollectorSessionsQuery) error {
+	sess := x.Table("collector_session")
+	fmt.Printf("searching for sessions for collector %d\n", query.CollectorId)
+	err := sess.Where("collector_id=?", query.CollectorId).OrderBy("updated").Find(&query.Result)
+	return err
+}
+
+func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM collector_session WHERE org_id=? AND socket_id=?"
+		if _, err := sess.Exec(rawSql, cmd.OrgId, cmd.SocketId); err != nil {
+			return err
+		}
+		q := m.GetCollectorSessionsQuery{CollectorId: cmd.CollectorId}
+		if err := GetCollectorSessions(&q); err != nil {
+			return err
+		}
+		if len(q.Result) < 1 {
+			rawSql := "UPDATE collector set online=0 where id=?"
+			if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM collector_session"
+		if _, err := sess.Exec(rawSql); err != nil {
+			return err
+		}
+		rawSql = "UPDATE collector set online=0"
+		if _, err := sess.Exec(rawSql); err != nil {
+			return err
+		}
 		return nil
 	})
 }

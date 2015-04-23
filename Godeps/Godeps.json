@@ -1,8 +1,8 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.4",
+	"GoVersion": "go1.4.2",
 	"Packages": [
-		"./..."
+		"./pkg/..."
 	],
 	"Deps": [
 		{
@@ -22,11 +22,6 @@
 			"Rev": "e83c9e8d24926d4897baaaac1c9428e07bacb377"
 		},
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-38-g9908e96",
-			"Rev": "9908e96513e5a94de37004098a3974a567f18111"
-		},
-		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
 			"Comment": "v1.2-26-g9543750",
 			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
@@ -39,6 +34,23 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.2-58-ge2889e5",
 			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
+		},
+		{
+			"ImportPath": "github.com/googollee/go-engine.io",
+			"Rev": "597faf3df88a01780a5881fafbcbccd9d5c3fab0"
+		},
+		{
+			"ImportPath": "github.com/googollee/go-socket.io",
+			"Comment": "0.9.x-24-g2a8532d",
+			"Rev": "2a8532d68ee77d0cce9dcfaf9ec8fb6eb9a7c62e"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
+		},
+		{
+			"ImportPath": "github.com/gosimple/slug",
+			"Rev": "a2392a4a87fa0366cbff131d3fd421f83f52492f"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",
@@ -55,7 +67,7 @@
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/session",
-			"Rev": "65b8817c40cb5bdce08673a15fd2a648c2ba0e16"
+			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
 		},
 		{
 			"ImportPath": "github.com/mattbaird/elastigo/lib",
@@ -67,11 +79,6 @@
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
 		},
 		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-376-g507d829",
-			"Rev": "507d82961b11be9fc3c07aeb0fc338be0b757775"
-		},
-		{
 			"ImportPath": "github.com/streadway/amqp",
 			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
 		},
@@ -81,12 +88,30 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
+			"Rev": "c58fcf0ffc1c772aa2e1ee4894bc19f2649263b2"
+		},
+		{
+			"ImportPath": "gopkg.in/bufio.v1",
+			"Comment": "v1",
+			"Rev": "567b2bfa514e796916c4747494d6ff5132a1dfce"
 		},
 		{
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v0-16-g1772191",
 			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v2",
+			"Comment": "v2.3.2",
+			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
+		},
+		{
+			"ImportPath": "gopkgs.com/pool.v1",
+			"Rev": "c850f092aad1780cbffff25f471c5cc32097932a"
+		},
+		{
+			"ImportPath": "gopkgs.com/unidecode.v1",
+			"Rev": "4deae2c05236b41cc39f8144ac87a837ba974d40"
 		}
 	]
 }

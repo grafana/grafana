@@ -16,6 +16,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -24,20 +25,35 @@ import (
 	"github.com/macaron-contrib/session"
 )
 
-var (
-	client *memcache.Client
-)
+// MemcacheStore represents a memcache session store implementation.
+type MemcacheStore struct {
+	c      *memcache.Client
+	sid    string
+	expire int32
+	lock   sync.RWMutex
+	data   map[interface{}]interface{}
+}
 
-// MemcacheSessionStore represents a memcache session store implementation.
-type MemcacheSessionStore struct {
-	sid         string
-	lock        sync.RWMutex
-	data        map[interface{}]interface{}
-	maxlifetime int64
+// NewMemcacheStore creates and returns a memcache session store.
+func NewMemcacheStore(c *memcache.Client, sid string, expire int32, kv map[interface{}]interface{}) *MemcacheStore {
+	return &MemcacheStore{
+		c:      c,
+		sid:    sid,
+		expire: expire,
+		data:   kv,
+	}
+}
+
+func NewItem(sid string, data []byte, expire int32) *memcache.Item {
+	return &memcache.Item{
+		Key:        sid,
+		Value:      data,
+		Expiration: expire,
+	}
 }
 
 // Set sets value to given key in session.
-func (s *MemcacheSessionStore) Set(key, val interface{}) error {
+func (s *MemcacheStore) Set(key, val interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -46,7 +62,7 @@ func (s *MemcacheSessionStore) Set(key, val interface{}) error {
 }
 
 // Get gets value by given key in session.
-func (s *MemcacheSessionStore) Get(key interface{}) interface{} {
+func (s *MemcacheStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -54,7 +70,7 @@ func (s *MemcacheSessionStore) Get(key interface{}) interface{} {
 }
 
 // Delete delete a key from session.
-func (s *MemcacheSessionStore) Delete(key interface{}) error {
+func (s *MemcacheStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -63,26 +79,22 @@ func (s *MemcacheSessionStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *MemcacheSessionStore) ID() string {
+func (s *MemcacheStore) ID() string {
 	return s.sid
 }
 
 // Release releases resource and save data to provider.
-func (s *MemcacheSessionStore) Release() error {
+func (s *MemcacheStore) Release() error {
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err
 	}
 
-	return client.Set(&memcache.Item{
-		Key:        s.sid,
-		Value:      data,
-		Expiration: int32(s.maxlifetime),
-	})
+	return s.c.Set(NewItem(s.sid, data, s.expire))
 }
 
 // Flush deletes all session data.
-func (s *MemcacheSessionStore) Flush() error {
+func (s *MemcacheStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -90,39 +102,73 @@ func (s *MemcacheSessionStore) Flush() error {
 	return nil
 }
 
-// MemProvider represents a memcache session provider implementation.
-type MemProvider struct {
-	maxlifetime int64
-	conninfo    []string
-	poolsize    int
-	password    string
+// MemcacheProvider represents a memcache session provider implementation.
+type MemcacheProvider struct {
+	c      *memcache.Client
+	expire int32
 }
 
-// Init initializes memory session provider.
-// connStrs can be multiple connection strings separate by ;
-// e.g. 127.0.0.1:9090
-func (p *MemProvider) Init(maxlifetime int64, connStrs string) error {
-	p.maxlifetime = maxlifetime
-	p.conninfo = strings.Split(connStrs, ";")
-	client = memcache.New(p.conninfo...)
-	return nil
-}
-
-func (p *MemProvider) connectInit() error {
-	client = memcache.New(p.conninfo...)
+// Init initializes memcache session provider.
+// connStrs: 127.0.0.1:9090;127.0.0.1:9091
+func (p *MemcacheProvider) Init(expire int64, connStrs string) error {
+	p.expire = int32(expire)
+	p.c = memcache.New(strings.Split(connStrs, ";")...)
 	return nil
 }
 
 // Read returns raw session store by session ID.
-func (p *MemProvider) Read(sid string) (session.RawStore, error) {
-	if client == nil {
-		if err := p.connectInit(); err != nil {
+func (p *MemcacheProvider) Read(sid string) (session.RawStore, error) {
+	if !p.Exist(sid) {
+		if err := p.c.Set(NewItem(sid, []byte(""), p.expire)); err != nil {
 			return nil, err
 		}
 	}
 
-	item, err := client.Get(sid)
+	var kv map[interface{}]interface{}
+	item, err := p.c.Get(sid)
 	if err != nil {
+		return nil, err
+	}
+	if len(item.Value) == 0 {
+		kv = make(map[interface{}]interface{})
+	} else {
+		kv, err = session.DecodeGob(item.Value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewMemcacheStore(p.c, sid, p.expire, kv), nil
+}
+
+// Exist returns true if session with given ID exists.
+func (p *MemcacheProvider) Exist(sid string) bool {
+	_, err := p.c.Get(sid)
+	return err == nil
+}
+
+// Destory deletes a session by session ID.
+func (p *MemcacheProvider) Destory(sid string) error {
+	return p.c.Delete(sid)
+}
+
+// Regenerate regenerates a session store from old session ID to new one.
+func (p *MemcacheProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err error) {
+	if p.Exist(sid) {
+		return nil, fmt.Errorf("new sid '%s' already exists", sid)
+	}
+
+	item := NewItem(sid, []byte(""), p.expire)
+	if p.Exist(oldsid) {
+		item, err = p.c.Get(oldsid)
+		if err != nil {
+			return nil, err
+		} else if err = p.c.Delete(oldsid); err != nil {
+			return nil, err
+		}
+		item.Key = sid
+	}
+	if err = p.c.Set(item); err != nil {
 		return nil, err
 	}
 
@@ -136,86 +182,18 @@ func (p *MemProvider) Read(sid string) (session.RawStore, error) {
 		}
 	}
 
-	rs := &MemcacheSessionStore{sid: sid, data: kv, maxlifetime: p.maxlifetime}
-	return rs, nil
-}
-
-// Exist returns true if session with given ID exists.
-func (p *MemProvider) Exist(sid string) bool {
-	if client == nil {
-		if err := p.connectInit(); err != nil {
-			return false
-		}
-	}
-
-	if item, err := client.Get(sid); err != nil || len(item.Value) == 0 {
-		return false
-	} else {
-		return true
-	}
-}
-
-// Destory deletes a session by session ID.
-func (p *MemProvider) Destory(sid string) error {
-	if client == nil {
-		if err := p.connectInit(); err != nil {
-			return err
-		}
-	}
-
-	return client.Delete(sid)
-}
-
-// Regenerate regenerates a session store from old session ID to new one.
-func (p *MemProvider) Regenerate(oldsid, sid string) (session.RawStore, error) {
-	if client == nil {
-		if err := p.connectInit(); err != nil {
-			return nil, err
-		}
-	}
-
-	var contain []byte
-	if item, err := client.Get(sid); err != nil || len(item.Value) == 0 {
-		// oldsid doesn't exists, set the new sid directly
-		// ignore error here, since if it return error
-		// the existed value will be 0
-		item.Key = sid
-		item.Value = []byte("")
-		item.Expiration = int32(p.maxlifetime)
-		client.Set(item)
-	} else {
-		client.Delete(oldsid)
-		item.Key = sid
-		item.Value = item.Value
-		item.Expiration = int32(p.maxlifetime)
-		client.Set(item)
-		contain = item.Value
-	}
-
-	var kv map[interface{}]interface{}
-	if len(contain) == 0 {
-		kv = make(map[interface{}]interface{})
-	} else {
-		var err error
-		kv, err = session.DecodeGob(contain)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	rs := &MemcacheSessionStore{sid: sid, data: kv, maxlifetime: p.maxlifetime}
-	return rs, nil
+	return NewMemcacheStore(p.c, sid, p.expire, kv), nil
 }
 
 // Count counts and returns number of sessions.
-func (p *MemProvider) Count() int {
-	// FIXME
-	return 0
+func (p *MemcacheProvider) Count() int {
+	// FIXME: how come this library does not have Stats method?
+	return -1
 }
 
 // GC calls GC to clean expired sessions.
-func (p *MemProvider) GC() {}
+func (p *MemcacheProvider) GC() {}
 
 func init() {
-	session.Register("memcache", &MemProvider{})
+	session.Register("memcache", &MemcacheProvider{})
 }

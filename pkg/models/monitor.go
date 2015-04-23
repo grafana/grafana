@@ -40,6 +40,8 @@ type Monitor struct {
 	Offset        int64
 	Frequency     int64
 	Enabled       bool
+	State         int64
+	StateChange   time.Time
 	Settings      []*MonitorSettingDTO
 	Created       time.Time
 	Updated       time.Time
@@ -54,6 +56,16 @@ type MonitorCollectorTag struct {
 	Id        int64
 	MonitorId int64
 	Tag       string
+}
+
+type MonitorCollectorState struct {
+	Id          int64     `json:"-"`
+	OrgId       int64     `json:"-"`
+	MonitorId   int64     `json:"monitor_id"`
+	EndpointId  int64     `json:"endpoint_id"`
+	CollectorId int64     `json:"collector_id"`
+	State       int64     `json:"state"`
+	Updated     time.Time `json:"updated"`
 }
 
 // ---------------
@@ -73,6 +85,8 @@ type MonitorDTO struct {
 	CollectorIds  []int64              `json:"collector_ids"`
 	CollectorTags []string             `json:"collector_tags"`
 	Collectors    []int64              `json:"collectors"`
+	State         int64                `json:"state"`
+	StateChange   time.Time            `json:"state_change"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
 	Frequency     int64                `json:"frequency"`
 	Enabled       bool                 `json:"enabled"`
@@ -131,6 +145,15 @@ type DeleteMonitorCommand struct {
 	OrgId int64 `json:"-"`
 }
 
+type UpdateMonitorCollectorStateCommand struct {
+	MonitorId   int64     `json:"monitor_id"`
+	OrgId       int64     `json:"org_id"`
+	CollectorId int64     `json:"collector_id"`
+	EndpointId  int64     `json:"endpoint_id"`
+	State       int64     `json:"state"`
+	Updated     time.Time `json:"updated"`
+}
+
 // ---------------------
 // QUERIES
 
@@ -143,6 +166,7 @@ type GetMonitorsQuery struct {
 	Enabled        string  `form:"enabled"`
 	Modulo         int64   `form:"modulo"`
 	ModuloOffset   int64   `form:"modulo_offset"`
+	State          int64   `form:"state"`
 	OrgId          int64
 	IsGrafanaAdmin bool
 	Result         []*MonitorDTO
@@ -162,4 +186,10 @@ type GetMonitorTypesQuery struct {
 type GetMonitorTypeByIdQuery struct {
 	Id     int64
 	Result *MonitorTypeDTO
+}
+
+type GetMonitorHealthByIdQuery struct {
+	Id     int64
+	OrgId  int64
+	Result []*MonitorCollectorState
 }

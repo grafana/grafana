@@ -44,10 +44,13 @@ func Register(r *macaron.Macaron) {
 
 	// dashboard snapshots
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
-	r.Get("/dashboard/snapshots/*", Index)
+	r.Get("/dashboard/snapshot/*", Index)
 
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
+
+	// api renew session based on remember cookie
+	r.Get("/api/login/ping", LoginApiPing)
 
 	// authed api
 	r.Group("/api", func() {
@@ -112,6 +115,7 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetCollectorsQuery{}), GetCollectors).
 				Put(reqEditorRole, bind(m.AddCollectorCommand{}), AddCollector).
 				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), UpdateCollector)
+			r.Get("/:id/health", getCollectorHealthById)
 			r.Get("/:id", GetCollectorById)
 			r.Delete("/:id", reqEditorRole, DeleteCollector)
 		})
@@ -122,6 +126,7 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
 				Put(reqEditorRole, bind(m.AddMonitorCommand{}), AddMonitor).
 				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), UpdateMonitor)
+			r.Get("/:id/health", getMonitorHealthById)
 			r.Get("/:id", GetMonitorById)
 			r.Delete("/:id", reqEditorRole, DeleteMonitor)
 		})
@@ -130,6 +135,7 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).
 				Put(reqEditorRole, bind(m.AddEndpointCommand{}), AddEndpoint).
 				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), UpdateEndpoint)
+			r.Get("/:id/health", getEndpointHealthById)
 			r.Get("/:id", GetEndpointById)
 			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
 		})
@@ -158,6 +164,8 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.Any("/socket.io/", SocketIO)
 
 	r.NotFound(NotFound)
 }

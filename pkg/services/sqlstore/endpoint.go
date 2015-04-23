@@ -15,6 +15,7 @@ func init() {
 	bus.AddHandler("sql", AddEndpoint)
 	bus.AddHandler("sql", UpdateEndpoint)
 	bus.AddHandler("sql", DeleteEndpoint)
+	bus.AddHandler("sql", GetEndpointHealthById)
 }
 
 type EndpointWithTag struct {
@@ -272,4 +273,14 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 		})
 		return err
 	})
+}
+
+func GetEndpointHealthById(query *m.GetEndpointHealthByIdQuery) error {
+	sess := x.Table("monitor_collector_state")
+	sess.Where("endpoint_id=?", query.Id).And("org_id=?", query.OrgId)
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+	return nil
 }

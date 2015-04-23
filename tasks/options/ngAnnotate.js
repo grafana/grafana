@@ -14,6 +14,7 @@ module.exports = function(config) {
         'app/routes/**/*.js',
         'app/app.js',
         'vendor/angular/**/*.js',
+        'plugins/**/*.js'
       ],
       dest: '<%= tempDir %>'
     }

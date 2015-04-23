@@ -140,7 +140,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		query.Limit = 300
 	}
 
-	sql.WriteString(fmt.Sprintf(" LIMIT %d", query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT %d", query.Limit))
 
 	var res []DashboardSearchProjection
 	err := x.Sql(sql.String(), params...).Find(&res)
