@@ -385,7 +385,7 @@ func NewConfigContext(args *CommandLineArgs) {
 		GraphiteUrl += "/"
 	}
 	// Check if has app suburl.
-	_, err = url.Parse(GraphiteUrl)
+	_, err := url.Parse(GraphiteUrl)
 	if err != nil {
 		log.Fatal(4, "Invalid graphite_url(%s): %s", GraphiteUrl, err)
 	}
