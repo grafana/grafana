@@ -194,8 +194,9 @@ raintank BOX
 }
 
 .currentStatus {
+  position:relative;
   display:block;
-  padding: 10px 20px;
+  padding: 10px 15px;
   border-bottom: 1px solid @bodyBackground;
 
   .dashboard-icon {
@@ -255,17 +256,23 @@ raintank BOX
 
 .eventType {margin-left:5px;}
 
-.check {
-  margin-right: 30px;
-  margin-bottom:8px;
-  float: left;
+.monitorState {}
+
+.status, .check, .frequency {
+  float:left;
+  margin-left:55px;
 }
 
-.monitorState {
-  float:left;
+.check {
+  width:28%;
+  min-width:130px;
+  margin-bottom:13px;
 }
-.status {
-  float:left;
+
+
+.frequency {
+  margin-bottom: 10px;
+  clear: both;
 }
 
 .statusType {
@@ -274,18 +281,12 @@ raintank BOX
   margin-bottom:8px;
 }
 
+
 .health {
-  width:70px; 
-  display:inline-block;
-  float:left;
-  margin-bottom:10px;
-}
-
-.frequency {
-  margin-bottom: 10px;
-  display:block;
-  clear: both;
-
+  width:40px; 
+  position: absolute;
+  top:12px;
+  left:15px;
 }
 
 
@@ -310,6 +311,7 @@ raintank BOX
 /***********************************
 raintank TYPE
 ***********************************/
+.refresh a:link, .refresh a:visited, .refresh a:hover, .refresh a:active { text-decoration:none;} // was underlineing on click.
 
 .checkType, .eventType {
   font-size:16px;
@@ -317,9 +319,11 @@ raintank TYPE
   color:@rt-light-gray;
 }
 
+
 .status {
   font-size:14px;
   font-weight:600;
+  .online, .warn, .critical, .nodata, .none {font-weight:900;}
 }
 
 .jumbo {font-weight:600;}

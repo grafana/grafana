@@ -38,9 +38,9 @@
 			<div class="rt-box">
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status</div>
-					<div class="" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a href="" ng-click="">
-							<span class="small">As of 4:04pm</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
+					<div class="refresh" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+						<a href="" ng-click="z">
+							<span class="small">As of 4:17pm </span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
 						</a>
 					</div>
 				</div>
@@ -57,26 +57,20 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
 						</div> 
 
-						<div class="monitorState">
-
+						<div style="width:100%;">
 							<div class="check">
 								<span class="checkType">Ping:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
 							</div>
-							
+
 							<div class="status">
-								<div class="statusType">OK: <a href=""><span class="online">20</span></a></div> 
-								<div class="statusType">Warn: <a href=""><span class="warn">4</span></a></div>
-								<div class="statusType">Error: <a href=""><span class="critical">3</span></a></div>
-								<div class="statusType">Unknown: <a href=""><span class="none">--</span></a></div>
+								<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
 							</div>
-
-							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> from 4 collectors
-							</div>
-							
-							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
-
 						</div>
+							<div class="frequency">
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> from 27 collectors
+							</div>
+			
+
 						<div class="clearfix"></div>
 					</div>
 
@@ -92,26 +86,20 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
 						</div> 
 
-						<div class="monitorState">
 
 							<div class="check">
 								<span class="checkType">DNS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
 							</div>
 							
 							<div class="status">
-								<div class="statusType">OK: <a href=""><span class="online">4</span></a></div> 
-								<div class="statusType">Warn: <a href=""><span class="warn">17</span></a></div>
-								<div class="statusType">Error: <a href=""><span class="critical">5</span></a></div>
-								<div class="statusType">Unknown: <a href=""><span class="nodata">2</span></a></div>
+								<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 							</div>
 
 							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span> from 21 collectors
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span> from 28 collectors
 							</div>
-							
-							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 
-						</div>
+
 						<div class="clearfix"></div>
 					</div>
 
@@ -129,26 +117,20 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="40px" height="40px">
 						</div> 
 
-						<div class="monitorState">
 
 							<div class="check">
 								<span class="checkType">HTTP:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
 							</div>
 							
 							<div class="status">
-								<div class="statusType">OK: <a href=""><span class="online">12</span></a></div> 
-								<div class="statusType">Warn: <a href=""><span class="none">--</span></a></div>
-								<div class="statusType">Error: <a href=""><span class="critical">1</span></a></div>
-								<div class="statusType">Unknown: <a href=""><span class="nodata">10</span></a></div>
+								<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 							</div>
 
 							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span> from 40 collectors
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span> from 23 collectors
 							</div>
-							
-							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 
-						</div>
+
 						<div class="clearfix"></div>
 					</div>
 
@@ -162,28 +144,23 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="40px" height="40px">
 						</div> 
 
-						<div class="monitorState">
 
 							<div class="check">
 								<span class="checkType">HTTPS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
 							</div>
 							
 							<div class="status">
-								<div class="statusType">OK: <a href=""><span class="online">2</span></a></div> 
-								<div class="statusType">Warn: <a href=""><span class="warn">3</span></a></div>
-								<div class="statusType">Error: <a href=""><span class="critical">10</span></a></div>
-								<div class="statusType">Unknown: <a href=""><span class="nodata">1</span></a></div>
+								<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 							</div>
 
 							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span> from 2 collectors
+								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span> from 16 collectors
 							</div>
-							
-							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 
-						</div>
+
 						<div class="clearfix"></div>
 					</div>
+
 				</div>
 			</div>
 		</div>
