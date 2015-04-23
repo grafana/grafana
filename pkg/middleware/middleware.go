@@ -34,6 +34,16 @@ func GetContextHandler() macaron.Handler {
 			AllowAnonymous: false,
 		}
 
+		h := ctx.Req.Host
+		if i := strings.Index(h, ":"); i >= 0 {
+			h = h[:i]
+		}
+
+		if !strings.EqualFold(h, setting.Domain) {
+			ctx.Redirect(strings.TrimSuffix(setting.AppUrl, "/") + ctx.Req.RequestURI, 301)
+			return
+		}
+
 		// the order in which these are tested are important
 		// look for api key in Authorization header first
 		// then init session and look for userId in session
