@@ -63,8 +63,9 @@ function (angular, _, config) {
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
-      if (requestIsLocal && firstAttempt) {
+      if (requestIsLocal && !options.hasSubUrl) {
         options.url = config.appSubUrl + options.url;
+        options.hasSubUrl = true;
       }
 
       return $http(options).then(function(results) {

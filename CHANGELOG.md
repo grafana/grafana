@@ -1,3 +1,8 @@
+# 2.0.3 (unreleased)
+
+**Fixes**
+- [Issue #1857](https://github.com/grafana/grafana/issues/1857). /api/login/ping Fix for issue when behind reverse proxy and subpath
+
 # 2.0.2 (2015-04-22)
 
 **Fixes**
