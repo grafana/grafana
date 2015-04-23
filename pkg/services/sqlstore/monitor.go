@@ -193,7 +193,7 @@ FROM monitor
 			p[i] = "?"
 			rawParams = append(rawParams, c)
 		}
-		
+
 		p2 := make([]string, len(query.CollectorId))
 		for i, e := range query.CollectorId {
 			p2[i] = "?"

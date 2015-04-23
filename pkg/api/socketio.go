@@ -293,7 +293,6 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	return nil
 }
 
-
 func updateState(event *m.EventDefinition) {
 	collector, ok := event.Extra["collector_id"]
 	if !ok {
@@ -312,11 +311,11 @@ func updateState(event *m.EventDefinition) {
 	}
 	log.Debug(fmt.Sprintf("updating state of monitor: %v from %v", monitor, event.Extra["collector"]))
 	cmd := m.UpdateMonitorCollectorStateCommand{
-		OrgId: event.OrgId,
-		EndpointId: int64(endpoint.(float64)),
-		MonitorId: int64(monitor.(float64)),
+		OrgId:       event.OrgId,
+		EndpointId:  int64(endpoint.(float64)),
+		MonitorId:   int64(monitor.(float64)),
 		CollectorId: int64(collector.(float64)),
-		Updated: time.Unix(0, event.Timestamp*int64(time.Millisecond)),
+		Updated:     time.Unix(0, event.Timestamp*int64(time.Millisecond)),
 	}
 	// update the check state
 	switch event.Severity {
@@ -329,7 +328,7 @@ func updateState(event *m.EventDefinition) {
 	default:
 		cmd.State = -1
 	}
-	
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		log.Error(0, "faile to update MonitorcollectorState", err)
 	}

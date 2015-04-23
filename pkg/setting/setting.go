@@ -394,7 +394,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 
-
 	readSessionConfig()
 }
 
