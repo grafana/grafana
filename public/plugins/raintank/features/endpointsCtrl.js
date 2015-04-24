@@ -186,7 +186,7 @@ function (angular) {
         scope: newEndpointModalScope,
         keyboard: false
       });
-      newEndpointModalScope.$on('$destroy', function() { newEndpointModalScope = null; });
+      newEndpointModalScope.$on('$destroy', function() { newEndpointModalScope = null; $scope.getEndpoints();});
       $q.when(newEndpointModal).then(function(modalEl) { modalEl.modal('show'); });
     }
 
