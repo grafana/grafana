@@ -15,6 +15,7 @@ function (angular, _) {
       $scope.monitor_types = {};
       $scope.monitor_types_by_name = {};
       $scope.endpoint = null;
+      $scope.refreshTime = new Date();
       $scope.getMonitorTypes();
       var promise = $scope.getEndpoints();
       promise.then(function() {
@@ -128,6 +129,7 @@ function (angular, _) {
     }
     $scope.refresh = function() {
       $scope.getEndpoint($scope.endpoint.id);
+      $scope.refreshTime = new Date();
     }
     $scope.init();
   });

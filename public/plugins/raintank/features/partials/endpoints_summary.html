@@ -45,7 +45,7 @@
 					<div style="padding:10px;">Status</div>
 					<div class="refresh" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
 						<a ng-click="refresh()">
-							<span class="small">As of 4:17pm </span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
+							<span class="small">As of {{refreshTime | date:'shortTime'}}</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
 						</a>
 					</div>
 				</div>
