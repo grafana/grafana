@@ -138,6 +138,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id/health", getEndpointHealthById)
 			r.Get("/:id", GetEndpointById)
 			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
+			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), DiscoverEndpoint)
 		})
 
 		r.Get("/monitor_types", GetMonitorTypes)

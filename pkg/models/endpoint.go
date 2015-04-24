@@ -35,11 +35,6 @@ type EndpointDTO struct {
 	Tags  []string `json:"tags"`
 }
 
-type NewEndpointDTO struct {
-	Endpoint          *EndpointDTO        `json:"endpoint"`
-	SuggestedMonitors []*SuggestedMonitor `json:"suggested_monitors"`
-}
-
 type SuggestedMonitor struct {
 	MonitorTypeId int64               `json:"monitor_type_id"`
 	Settings      []MonitorSettingDTO `json:"settings"`
@@ -48,14 +43,15 @@ type SuggestedMonitor struct {
 // ----------------------
 // COMMANDS
 type EndpointDiscoveryCommand struct {
-	Endpoint *EndpointDTO
-	Result   *NewEndpointDTO
+	Name string `form:"name"`
+	Result   []*SuggestedMonitor
 }
 
 type AddEndpointCommand struct {
 	OrgId  int64    `json:"-"`
 	Name   string   `json:"name"`
 	Tags   []string `json:"tags"`
+	Monitors []*AddMonitorCommand `json:"monitors"`
 	Result *EndpointDTO
 }
 

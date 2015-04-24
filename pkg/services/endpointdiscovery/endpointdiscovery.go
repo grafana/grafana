@@ -15,10 +15,9 @@ func init() {
 }
 
 func DiscoverEndpoint(cmd *m.EndpointDiscoveryCommand) error {
-	cmd.Result = &m.NewEndpointDTO{Endpoint: cmd.Endpoint}
 	monitors := make([]*m.SuggestedMonitor, 0)
 
-	domain, err := getHostName(cmd.Endpoint.Name)
+	domain, err := getHostName(cmd.Name)
 	if err != nil {
 		return err
 	}
@@ -50,7 +49,7 @@ func DiscoverEndpoint(cmd *m.EndpointDiscoveryCommand) error {
 	} else {
 		monitors = append(monitors, dnsMonitor)
 	}
-	cmd.Result.SuggestedMonitors = monitors
+	cmd.Result = monitors
 	return nil
 
 }
