@@ -33,7 +33,7 @@
 
 	<!-- tabs -->
 	<div class="rt-tabs">
-		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="nonactive" ng-hide="!contextSrv.isGrafanaAdmin"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Summary</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
 	</div>
 </div>	
 
@@ -44,7 +44,7 @@
 				<div class="rt-box-header">
 					<div style="padding:10px;">Status</div>
 					<div class="refresh" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a href="" ng-click="z">
+						<a ng-click="refresh()">
 							<span class="small">As of 4:17pm </span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
 						</a>
 					</div>
@@ -62,23 +62,18 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
 						</div> 
 
-						<div style="width:100%;">
-							<div class="check">
-								<span class="checkType">Ping:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
-							</div>
-
-							<div class="status">
-								<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
-							</div>
+						<div class="check">
+							<span class="checkType">Ping:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
 						</div>
-							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> from 27 collectors
-							</div>
-			
 
+						<div class="status">
+							<rt-check-health model="monitor_health[getMonitorByTypeName('Ping').id]"></rt-check-health>
+						</div>
+						<div class="frequency">
+							<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> from {{monitor_health[getMonitorByTypeName('Ping').id].length}} collectors
+						</div>
 						<div class="clearfix"></div>
 					</div>
-
 
 
 					<div class="currentStatus">
@@ -91,25 +86,19 @@
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
 						</div> 
 
-
-							<div class="check">
-								<span class="checkType">DNS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
-							</div>
-							
-							<div class="status">
-								<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
-							</div>
-
-							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span> from 28 collectors
-							</div>
-
+						<div class="check">
+							<span class="checkType">DNS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
+						</div>
+						
+						<div class="status">
+							<rt-check-health model="monitor_health[getMonitorByTypeName('DNS').id]"></rt-check-health>
+						</div>
+						<div class="frequency">
+							<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span> from {{monitor_health[getMonitorByTypeName('DNS').id].length}} collectors
+						</div>
 
 						<div class="clearfix"></div>
 					</div>
-
-
-
 
 
 					<div class="currentStatus">
@@ -123,21 +112,21 @@
 						</div> 
 
 
-							<div class="check">
-								<span class="checkType">HTTP:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
-							</div>
-							
-							<div class="status">
-								<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
-							</div>
-
-							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span> from 23 collectors
-							</div>
+						<div class="check">
+							<span class="checkType">HTTP:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
+						</div>
+						
+						<div class="status">
+							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTP').id]"></rt-check-health>
+						</div>
+						<div class="frequency">
+							<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span> from {{monitor_health[getMonitorByTypeName('HTTP').id].length}} collectors
+						</div>
 
 
 						<div class="clearfix"></div>
 					</div>
+
 
 					<div class="currentStatus">
 						<div class="pull-right">
@@ -150,18 +139,16 @@
 						</div> 
 
 
-							<div class="check">
-								<span class="checkType">HTTPS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
-							</div>
-							
-							<div class="status">
-								<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
-							</div>
-
-							<div class="frequency">
-								<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span> from 16 collectors
-							</div>
-
+						<div class="check">
+							<span class="checkType">HTTPS:</span> <span class="checkType {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
+						</div>
+						
+						<div class="status">
+							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
+						</div>
+						<div class="frequency">
+							<span class="freqMsg">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span> from {{monitor_health[getMonitorByTypeName('HTTPS').id].length}} collectors
+						</div>
 
 						<div class="clearfix"></div>
 					</div>
