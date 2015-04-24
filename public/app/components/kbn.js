@@ -380,6 +380,9 @@ function($, _, moment) {
   kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
+  kbn.valueFormats.amp = kbn.formatFuncCreator(1000, [' A', ' kA', ' MA', ' GA', ' TA', ' PA', ' EA', ' ZA', ' YA']);
+  kbn.valueFormats.volt = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
+  kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
   kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
   kbn.valueFormats.kwatt = kbn.formatFuncCreator(1000, [' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
   kbn.valueFormats.watth = kbn.formatFuncCreator(1000, [' Wh', ' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
@@ -534,6 +537,7 @@ function($, _, moment) {
           {text: 'microseconds (µs)', value: 'µs'},
           {text: 'milliseconds (ms)', value: 'ms'},
           {text: 'seconds (s)', value: 's'},
+          {text: 'Hertz (1/s)', value: 'hertz'},
         ]
       },
       {
@@ -561,6 +565,8 @@ function($, _, moment) {
           {text: 'kilowatt-hour (kWh)',   value: 'kwatth'},
           {text: 'joule (J)',             value: 'joule'},
           {text: 'electron volt (eV)',    value: 'ev'},
+          {text: 'Ampere (A)',            value: 'amp'},
+          {text: 'Volt (V)',              value: 'volt'},
         ]
       },
       {

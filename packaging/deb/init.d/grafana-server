@@ -87,6 +87,7 @@ case "$1" in
     # check if pid file has been written two
 	  if ! [[ -s $PID_FILE ]]; then
 	    log_end_msg 1
+	    exit 1
 	  fi
 
 		i=0
@@ -96,7 +97,10 @@ case "$1" in
 		do
 			sleep 1
 			i=$(($i + 1))
-			[ $i -gt $timeout ] && log_end_msg 1
+      if [ $i -gt $timeout ]; then
+			  log_end_msg 1
+			  exit 1
+			fi
 		done
   fi
   log_end_msg $return

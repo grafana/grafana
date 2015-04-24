@@ -219,7 +219,7 @@ set to true, any user successfully authenticating via google auth will be automa
 ## [session]
 
 ### provider
-Valid values are "memory", "file", "mysql", 'postgres'. Default is "memory".
+Valid values are "memory", "file", "mysql", 'postgres'. Default is "file".
 
 ### provider_config
 This option should be configured differently depending on what type of session provider you have configured.
@@ -252,7 +252,7 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 When enabled Grafana will send anonymous usage statistics to stats.grafana.org.
 No ip addresses are being tracked, only simple counters to track running instances,
 versions, dashboard & error counts. It is very helpful to us, please leave this
-enabled. Counters are sent every 24 hours.
+enabled. Counters are sent every 24 hours. Default value is `true`.
 
 ### google_analytics_ua_id
 If you want to track Grafana usage via Google analytics specify *your* Univeral Analytics ID

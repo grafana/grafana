@@ -43,7 +43,7 @@ function (angular, _, kbn, $) {
       }
 
       if (scope.panel.timeShift) {
-        if (!kbn.isValidTimeSpan(scope.panel.timeFrom)) {
+        if (!kbn.isValidTimeSpan(scope.panel.timeShift)) {
           scope.panelMeta.timeInfo = 'invalid timeshift';
           return;
         }

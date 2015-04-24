@@ -19,8 +19,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/blang/semver"
 )
 
 var (
@@ -116,12 +114,11 @@ func readVersionFromPackageJson() {
 	linuxPackageIteration = ""
 
 	// handle pre version stuff (deb / rpm does not support semver)
-	versionInfo, _ := semver.Make(version)
+	parts := strings.Split(version, "-")
 
-	if len(versionInfo.Pre) > 0 {
-		linuxPackageIteration = versionInfo.Pre[0].VersionStr
-		versionInfo.Pre = make([]semver.PRVersion, 0)
-		linuxPackageVersion = versionInfo.String()
+	if len(parts) > 1 {
+		linuxPackageVersion = parts[0]
+		linuxPackageIteration = parts[1]
 	}
 }
 
@@ -279,6 +276,7 @@ func grunt(params ...string) {
 
 func setup() {
 	runPrint("go", "get", "-v", "github.com/tools/godep")
+	runPrint("go", "get", "-v", "github.com/blang/semver")
 	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
