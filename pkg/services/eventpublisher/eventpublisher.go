@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -108,7 +110,7 @@ func Setup() error {
 	return nil
 }
 
-func publish(routingKey string, msgString []byte) {
+func Publish(routingKey string, msgString []byte) {
 	err := channel.Publish(
 		exchange,   //exchange
 		routingKey, // routing key
@@ -125,7 +127,7 @@ func publish(routingKey string, msgString []byte) {
 		// retrying every 2seconds until we successfully publish.
 		time.Sleep(2 * time.Second)
 		fmt.Println("publish failed, retrying.")
-		publish(routingKey, msgString)
+		Publish(routingKey, msgString)
 	}
 	return
 }
@@ -141,9 +143,39 @@ func eventListener(event interface{}) error {
 		return err
 	}
 
-	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, wireEvent.EventType)
+	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, CamelToDotted(wireEvent.EventType))
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
-	go publish(routingKey, msgString)
+	go Publish(routingKey, msgString)
 	return nil
+}
+
+// CamelToDotted
+func CamelToDotted(s string) string {
+	var result string
+	var words []string
+	var lastPos int
+	rs := []rune(s)
+
+	for i := 0; i < len(rs); i++ {
+		if i > 0 && unicode.IsUpper(rs[i]) {
+			words = append(words, s[lastPos:i])
+			lastPos = i
+		}
+	}
+
+	// append the last word
+	if s[lastPos:] != "" {
+		words = append(words, s[lastPos:])
+	}
+
+	for k, word := range words {
+		if k > 0 {
+			result += "."
+		}
+
+		result += strings.ToLower(word)
+	}
+
+	return result
 }

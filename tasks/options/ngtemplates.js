@@ -2,7 +2,7 @@ module.exports = function(config) {
   return {
     grafana: {
       cwd:  '<%= tempDir %>',
-      src:  ['app/**/*.html'],
+      src:  ['app/**/*.html', 'plugins/**/*.html'],
       dest: '<%= tempDir %>/app/components/partials.js',
       options: {
         bootstrap: function(module, script) {

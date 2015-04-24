@@ -53,13 +53,13 @@
 			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
 		},
 		{
-			"ImportPath": "github.com/mattn/go-sqlite3",
-			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+			"ImportPath": "github.com/mattbaird/elastigo/lib",
+			"Comment": "v1.0-139-gba038c1",
+			"Rev": "ba038c10f634af5e7f3bd27b81bd8c37af844edf"
 		},
 		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-356-gfbc0a1c",
-			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",

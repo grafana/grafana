@@ -1,0 +1,173 @@
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li class="top-nav-title ng-binding">
+			<div>
+				<form style="margin-bottom:0px;">
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="openSearch()">
+							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="endpoint in endpoints">
+								<a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
+							</li>
+						</ul>
+					</li>
+				</form>
+			</div>
+		</li>
+	</ul>
+	<div class="pull-right refresh">
+		<a ng-click="refresh()">
+			<span class="small">As of {{refreshTime | date:'shortTime'}}</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
+		</a>
+	</div>		
+</topnav>
+
+<div style="margin: 10px; position: relative; display: block; max-width: 1000px; min-width:400px;">
+	
+	<!-- page title -->
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">{{endpoint.name}}</h1>
+	</div>
+	<div class="editor-row rt-detail-pages">
+		<div class="editor-option">
+			<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-update="tagsUpdated" ></bootstrap-tagsinput>
+		</div>
+	</div>
+
+	<!-- tabs -->
+	<div class="rt-tabs">
+		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+	</div>
+</div>	
+
+<form name="endpointForm">
+	<div class="detailContainer">
+		<div class="detailFull detailLeft">
+			<div class="rt-box">
+				<!-- <div class="rt-box-header">
+					<div style="padding:10px;">Status</div>
+					<div class="refresh" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
+						<a ng-click="refresh()">
+							<span class="small">As of {{refreshTime | date:'shortTime'}}</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
+						</a>
+					</div>
+				</div> -->
+
+
+				<div class="rt-box-body no-padding" style="min-height: 50px">
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
+						</div> 
+
+						<div class="check">
+							<span class="checkType">Ping:</span> 
+							<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> 
+							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
+						</div>
+
+						<div class="status">
+							<div class="frequency">
+								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('Ping').id].length}} collectors:
+							</div>
+							<rt-check-health model="monitor_health[getMonitorByTypeName('Ping').id]"></rt-check-health>
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+
+
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
+						</div> 
+
+						<div class="check">
+							<span class="checkType">DNS:</span> 
+							<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
+							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
+						</div>
+						
+						<div class="status">
+							<div class="frequency">
+								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('DNS').id].length}} collectors:
+							</div>
+							<rt-check-health model="monitor_health[getMonitorByTypeName('DNS').id]"></rt-check-health>
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+
+
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="40px" height="40px">
+						</div> 
+
+
+						<div class="check">
+							<span class="checkType">HTTP:</span> 
+							<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
+							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
+						</div>
+						
+						<div class="status">
+							<div class="frequency">
+								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTP').id].length}} collectors:
+							</div>
+							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTP').id]"></rt-check-health>
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+
+
+					<div class="currentStatus">
+						<div class="pull-right">
+							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+						</div>
+						<div class="pull-right tertiaryCTA">All Events</div>
+
+						<div class="health">
+							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="40px" height="40px">
+						</div> 
+
+
+						<div class="check">
+							<span class="checkType">HTTPS:</span> 
+							<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
+							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
+						</div>
+						
+						<div class="status">
+							<div class="frequency">
+								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTPS').id].length}} collectors:
+							</div>
+							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>	
+</form>

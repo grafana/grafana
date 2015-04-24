@@ -61,18 +61,18 @@
       background: @iconContainerBackground;
       box-shadow: @iconContainerShadow;
       border: @iconContainerBorder;
-      width: 28px;
-      height: 28px;
+      width: 20px;
+      height: 20px;
       i {
         top: 1px;
-        left: 4px;
+        left: 1px;
         font-size: 110%;
       }
     }
 
     .sidemenu-item {
       // color: @textColor;
-      line-height: 28px;
+      line-height: 20px;
       padding-left: 25px;
     }
   }
@@ -90,7 +90,7 @@
 .sidemenu-top-btn {
   display: block;
   padding: 8px 0 4px 22px;
-  background-color: @navbarBackground;
+  background-color: @rt-navbarBackground;
   border-right: 3px solid @bodyBackground;
   img {
     border-radius: 50%;
@@ -99,6 +99,13 @@
     width: 30px;
     padding: 4px;
   }
+  img.expanded {
+   border-radius: 0;
+   border:none;
+   background: @iconContainerBackground;
+   width: 112px;
+   padding: 6px 15px 10px 15px;
+  }
   i {
     padding-right: 5px;
     padding-top: 5px;
@@ -106,6 +113,9 @@
     color: @linkColor;
   }
 }
+
+
+
 
 .icon-circle {
   width: 40px;
@@ -138,8 +148,8 @@
   }
   img {
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
     box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
 }

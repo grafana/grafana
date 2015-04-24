@@ -1,0 +1,1498 @@
+html {-webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing: grayscale;} /* make type beautiful */
+
+/***********************************
+COLUMNS
+***********************************/
+  .detailContainer {min-width:400px; max-width:1020px; margin: 20px 0;}
+
+    .detailColumn {
+          width:  50%;
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
+        .detailFull {
+          width:  100%; // was 50% for 2 columns, changed to 1 col for now: TRW
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
+
+    .detailLeft {}
+    .detailRight {}
+
+     @media screen and (max-width: 780px) {
+        .detailColumn {
+          width:  100%;
+          float:none;
+          transition: 0.15s;
+        }
+      .detailLeft {padding-right:0px; margin-left:0px;}
+      .detailRight {padding-left:0px;}
+      }
+
+.modal-body {
+  overflow-y: auto;
+}
+
+div.rt-modal-override {
+  top: 10%;
+  position: absolute;
+}
+
+  .modalContainer {min-width:200px; max-width:1020px;}
+
+  .summary-tab {
+    padding-top: 10px;
+  }
+
+    .modalColumn {
+          width:  50%;
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
+
+    .modal-left-80-20 {
+      width: 80%;
+    }
+    .modal-right-80-20 {
+      width: 20%;
+    }
+
+    .modal-left-equal {
+      width: 50%;
+    }
+    .modal-right-equal {
+      width: 50%;
+    }
+
+     @media screen and (max-width: 780px) {
+        .detailColumn {
+          width:  100%;
+          float:none;
+          transition: 0.15s;
+        }
+      .modalLeft {padding-right:0px; margin-left:0px;}
+      .modalRight {padding-left:0px;}
+      }
+
+/***********************************
+raintank BOX
+***********************************/
+.rt-box {
+  background-color: @black;
+  margin: 0px 10px 20px 10px;
+  position: relative;
+  border-radius: 2px;
+}
+
+.rt-box-no-margin {
+  margin: 0;
+  background-color: @white;
+  padding: 0px 30px;
+}
+
+  .oneCol {display:none;}
+  .twoCol {display:none;}
+
+@media screen and (max-width: 780px) {
+  .oneCol {display:block;}
+}
+
+@media screen and (min-width: 781px) {
+  .twoCol {display:block;}
+}
+
+.clearBack {background-color:transparent;}
+
+.rt-box-header-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  font-size: 120%;
+  color: @textColor;
+  &:hover {
+    color: @white;
+  }
+}
+
+.rt-box-body {
+  padding: 20px;
+  min-height: 150px;
+}
+
+.rt-modal-box-body {
+  padding: 20px 0 20px 0;
+  min-height: 150px;
+}
+
+.no-padding {
+    padding: 0;
+  }
+
+.rt-box-footer {
+  overflow: hidden;
+}
+
+.rt-box-header {
+  padding: 10px;
+  font-size:16px;
+  border-bottom: 1px solid #262626;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+
+.rt-modal-header {
+  padding: 30px 0px;
+  font-size:16px;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-box-header-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  margin-top: -15px;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  font-size: 150%;
+  font-weight: 100;
+  color: @textColor;
+  &:hover {
+    color: @black;
+  }
+}
+
+.rt-box-title {
+  padding-right: 20px;
+  padding-left: 10px;
+  float: left;
+  color: @linkColor;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 38px;
+  margin: 0;
+  .fa {
+    padding: 0 8px 0 5px;
+    color: @textColor;
+  }
+}
+
+.public {color:@rt-blue;}
+.private {color:@gray;}
+
+.collectorStatus,
+.endpointStatus  {
+  margin-bottom: 50px;
+}
+
+.collectorCurrentStatus {
+  display:block;
+  padding: 20px;
+}
+
+.currentStatus {
+  position:relative;
+  display:block;
+  padding: 10px 15px;
+  border-bottom: 1px solid @bodyBackground;
+
+  .dashboard-icon {
+  font-size:@rt-fontSizeLarger;
+  color:@rt-light-gray;
+  margin-left:20px;
+  }
+
+}
+
+.currentStatus:last-child,
+.collectorCurrentStatus:last-child { 
+  padding-bottom: 30px;
+  border-bottom: none;
+  border-bottom-left-radius: 2px; 
+  border-bottom-right-radius: 2px;
+}
+
+.currentStatus .rt-event-success, 
+.currentStatus .rt-event-warning, 
+.currentStatus .rt-event-error,
+.collectorCurrentStatus .rt-event-success, 
+.collectorCurrentStatus .rt-event-warning, 
+.collectorCurrentStatus .rt-event-error {  
+  display:inline-block;
+  padding: 10px;
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.statusEvents {
+  display:block; 
+  margin-left:70px; 
+}
+
+.collectorCurrentStatus .statusEvents {
+  display:block;
+  margin-left:0;
+  margin-top:20px;
+}
+
+.event {
+  display:inline-block;
+  margin-bottom:0px;
+  margin-right:20px
+  }
+
+.event:last-child {margin-right:0;}
+
+.event .rt-event-success, 
+.event .rt-event-warning, 
+.event .rt-event-error {
+  margin:0;
+}
+
+.eventType {margin-left:5px;}
+
+.monitorState {}
+
+.status, .check {
+  float:left;
+  margin-left:55px;
+}
+
+.check {
+  width:25%;
+  min-width:130px;
+  margin-bottom:13px;
+}
+
+.frequency {
+  clear: both;
+}
+
+.statusType {
+  float:left;
+  margin-right: 15px;
+  margin-bottom:8px;
+}
+
+.checkType {display:block;}
+
+
+.health {
+  width:40px; 
+  position: absolute;
+  top:12px;
+  left:15px;
+}
+
+.refresh {padding-top:15px;}
+
+.mainLink i, .mainLink i:visited{
+  -moz-color: -moz-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
+  -webkit-color: -webkit-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
+  color: linear-gradient(to bottom right, #fff 0%, #13b2d4 100%); 
+  transition: 0.15s; 
+}
+
+.mainLink i:hover, .mainLink i:active {
+  color: @white;  
+  text-decoration:none;
+}
+
+.tag-icon {  
+  font-size: 14px;
+  vertical-align: text-bottom;
+  margin-left:5px;
+}
+
+/***********************************
+raintank TYPE
+***********************************/
+.refresh a:link, .refresh a:visited, .refresh a:hover, .refresh a:active { text-decoration:none;} // was underlineing on click.
+
+.checkType, .eventType {
+  font-size:16px;
+  font-weight:600;
+  color:@rt-light-gray;
+}
+
+.status {
+  font-size:14px;
+  font-weight:600;
+  .online, .warn, .critical, .nodata, .none {font-weight:900;}
+}
+
+.checkTime {color:@rt-med-gray}
+
+.jumbo {font-weight:600;}
+
+.frequency {color:@rt-med-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:300;}
+
+.online {
+  color: @online;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.warn {
+  color: @warn;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.disabled, .none {
+  color: @disabled;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.critical {
+  color: @critical;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nodata {
+  color: @nodata;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
+/******************************************
+RAINTANK ICON FONTS
+******************************************/
+@font-face {
+  font-family: 'raintank-icons';
+  src:url('../fonts/raintank-icons.eot?-1mxvgn');
+  src:url('../fonts/raintank-icons.eot?#iefix-1mxvgn') format('embedded-opentype'),
+    url('../fonts/raintank-icons.woff?-1mxvgn') format('woff'),
+    url('../fonts/raintank-icons.ttf?-1mxvgn') format('truetype'),
+    url('../fonts/raintank-icons.svg?-1mxvgn#raintank-icons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+i {
+  font-family: 'raintank-icons';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-rt-datasources:before {
+  content: "\e618";
+}
+
+.icon-rt-globe:before {
+  content: "\e600";
+}
+
+.icon-rt-refresh:before {
+  content: "\e601";
+}
+
+.icon-rt-save:before {
+  content: "\e602";
+}
+
+.icon-rt-search:before {
+  content: "\e603";
+}
+
+.icon-rt-settings:before {
+  content: "\e604";
+}
+
+.icon-rt-share:before {
+  content: "\e605";
+}
+
+.icon-rt-snapshot:before {
+  content: "\e606";
+}
+
+.icon-rt-star:before {
+  content: "\e607";
+}
+
+.icon-rt-status:before {
+  content: "\e608";
+}
+
+.icon-rt-video:before {
+  content: "\e609";
+}
+
+.icon-rt-bulk_action:before {
+  content: "\e60a";
+}
+
+.icon-rt-dashboard:before {
+  content: "\e60b";
+}
+
+.icon-rt-collector:before {
+  content: "\e60c";
+}
+
+.icon-rt-endpoint:before {
+  content: "\e60d";
+}
+
+.icon-rt-endpoint-tiny:before {
+  content: "\e60e";
+}
+
+.icon-rt-jump-to-dashboard:before {
+  content: "\e60f";
+}
+
+.icon-rt-filter:before {
+  content: "\e610";
+}
+
+.icon-rt-online:before {
+  content: "\e611";
+}
+
+.icon-rt-critical:before {
+  content: "\e612";
+}
+
+.icon-rt-nodata:before {
+  content: "\e613";
+}
+
+.icon-rt-warn:before {
+  content: "\e614";
+}
+
+.icon-rt-private-collector:before {
+  content: "\e615";
+}
+
+.icon-rt-raintank_icn:before {
+  content: "\e616";
+}
+
+.icon-rt-raintank_wordmark:before {
+  content: "\e617";
+}
+
+/***********************************
+raintank POSITIONING
+***********************************/
+
+.msg {display:inline;}
+.msg span {font-weight:600;}
+
+.nudgeDown {
+  position: relative;
+  top: 15px;
+}
+
+/***********************************
+raintank BUTTONS
+***********************************/
+
+.superCTA,
+.superCTA:visited { 
+    display: block;
+    padding: 1.0em 0;
+    color:#fff;
+    background-color: @rt-blue;
+    border: 1px solid @rt-blue;
+    border-radius: 2px;
+    text-align:center;
+    font-weight: 400;
+    font-size: 16px;
+    transition: 0.15s;
+
+    img {padding-left: 2px;}
+  }
+
+.superCTA:hover,
+.superCTA:active{
+    cursor: pointer;
+    background: darken(@rt-blue, 10%);
+    border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
+}
+
+.primaryCTA ,
+.primaryCTA:visited{
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.1em 1.2em;
+    color:#fff;
+    background-color: @rt-blue;
+    border: 1px solid @rt-blue;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+}
+
+.primaryCTA:hover, 
+.primaryCTA:active{
+    cursor: pointer;
+    background: darken(@rt-blue, 10%);
+    border: 1px solid darken(@rt-blue, 10%);
+    text-decoration:none;
+}
+
+.secondaryCTA,
+.secondaryCTA:visited {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.1em 1.2em;
+    border: 1px solid @rt-blue;
+    color: #13b2d4;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+    background-color: transparent;
+}
+
+// For dark backgrounds. 
+.secondaryCTA:hover, 
+.secondaryCTA:active{
+    cursor: pointer;
+    border: 1px solid #fff;
+    color: #fff;
+    text-decoration:none;
+}
+
+// For light backgrounds. 
+.modal-body .secondaryCTA:hover{
+    cursor: pointer;
+    border: 1px solid #161616;
+    color: #161616;
+}
+
+.tertiaryCTA,
+.tertiaryCTA:visited {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.1em 1.2em;
+    border: 1px solid #999;
+    color: #999;
+    border-radius: 2px;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    transition: 0.15s;
+}
+.tertiaryCTA:hover,
+.tertiaryCTA:active{
+    cursor: pointer;
+    border: 1px solid #fff;
+    color: #fff;
+    text-decoration:none;
+}
+
+.cancel-primary,
+.cancel-primary:visited {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 0.2em 1.4em;
+    color: @rt-dark-gray;
+    font-size: @rt-fontSizeMed-1;
+    transition: 0.15s;
+}
+
+.cancel-primary:hover,
+.cancel-primary:active{
+    cursor: pointer;
+    color: @rt-light-gray;
+    text-decoration:none;
+}
+
+.miniCTA, 
+.miniCTA:visited {color:@gray;}
+
+.miniCTA:hover,
+.miniCTA:active {color:@white; text-decoration:none;}
+
+
+.collector_icon {
+  vertical-align: 0;
+  padding-left:3px;
+}
+
+.collectorMap {
+  position:relative;
+  background-color:@gray; 
+  background-image: url(../img/ams_map.png);
+  background-position: top left;
+  background-repeat: repeat;
+  background-size: cover;
+  height:450px;
+  margin:-20px;
+  text-align: center;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+
+  .locationDetail {
+    background-color: rgba(255,255,255,.8);
+    color: @black;
+    position: absolute;
+    bottom:0px;
+    right: 0px;
+    width:100%;
+    text-align: right;
+    padding: 5px 0;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+
+    h3 {color:#000; margin:20px 20px 0; font-weight:600;}
+    dl {margin:0 20px 20px;}
+    dt {font-weight: normal;}
+  }
+}
+
+/************************************** 
+Crazy Helper Box
+**************************************/
+
+.helperBoxContent{ /* adds some padding to keep the box organized */
+    padding:10px 25px 25px 25px;
+    margin:15px 20px 6px 8px;
+    border-radius: 2px;
+}
+
+.helperBorder1 {
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    padding:0em;
+    width:100%;
+    display: block;
+}
+.helperBorder2 {
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+.helperBorder3{
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+
+
+
+/**************************************
+MATT STYLES
+**************************************/
+
+.rt-event {
+  border-radius: 10px;
+  text-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin: 0 3px;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 12px;  
+}
+
+.statusDetail .rt-event-success, 
+.statusDetail .rt-event-warning, 
+.statusDetail .rt-event-error{  
+  display:inline-block;
+  padding: 15px 10px;
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.rt-event-success {
+  .rt-event;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .rt-event;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+
+.rt-event-error {
+  .rt-event;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+
+
+.dashboard-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: text-top;
+  font-size:20px;
+  color:@gray;
+}
+
+.dashboard-icon:hover {
+    color: darken(@gray, 10%); // This is a hack. I want to control the svg color on hover eventually. (MST) DONE (TRW)
+}
+
+.filter-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
+
+// list status headers
+
+.rt-list-status {
+  font-size: 16px;
+  color: @rt-dark-gray;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.rt-list-status-up {
+  &:link, &:visited {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
+  }
+  &:hover {color: lighten(@rt-green, 10%);} 
+}
+
+.rt-list-status-warning {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
+  }
+  &:hover {color: lighten(@rt-yellow, 10%);} 
+}
+
+.rt-list-status-down {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
+  }
+  &:hover {color: lighten(@rt-red, 10%);} 
+}
+
+.rt-list-status-disabled {
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @grayLighter;
+  }
+  &:hover {color: lighten(@grayLighter, 10%);} 
+}
+
+
+// raintank override styles from gfbox.less
+
+.rt-list {
+  margin: 1px;
+  background-color: @raintankTargetBackground;
+  position: relative;
+  border: none;
+  border-radius: 2px;
+  line-height: normal;
+  padding: 3px 0;
+}
+
+.rt-list-item-title {
+    font-size: 15px;
+    a:link {
+      color: @rt-light-gray;
+    }  
+    a:hover {
+     color: @white;
+    }    
+  margin: 10px;
+}
+
+.rt-list-header {
+  overflow: visible;
+  padding: 10px 5px;
+  background-color: @raintankTargetBackground;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-tabs { 
+  border-bottom:1px solid #fff;
+  font-size: 16px; 
+  padding:10px 20px;
+  background:@raintankPanelBackground;
+ 
+  .nonactive a:link, 
+  .nonactive a:visited {
+    color:@gray;
+    margin:0 5px;
+  }
+  .active a:link,
+  .active a:visited  {
+    color:@white;
+    background:@raintankPanelBackground;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid #fff; 
+    border-right:1px solid #fff; 
+    border-left:1px solid #fff;
+    margin:0 5px;
+    padding:5px 15px 10px 15px;
+  }
+
+  a:hover,
+  .active a:hover,
+  .nonactive a:hover {color:@white; text-decoration: none;}
+}
+
+
+.rt-modal-tabs .nav {
+  margin-bottom: 0px;
+}
+
+.rt-modal-tabs .nav-tabs { 
+  border-bottom:1px solid @raintankPanelBackground;
+  font-size: @rt-fontSizeMed-1; 
+  padding:10px 10px 0 10px;
+
+ 
+  li>a {
+    color:@grayDark;
+    margin:0 25px;
+
+    &:hover{
+    color:@raintankPanelBackground;
+    text-decoration: none;
+    border-bottom: none;
+    }
+  }
+
+  li.active>a {
+    color:@black;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid @raintankPanelBackground; 
+    border-right:1px solid @raintankPanelBackground; 
+    border-left:1px solid @raintankPanelBackground;
+    background-color: @white;
+    margin:0 5px;
+    padding:5px 15px 12px 15px;
+    border-bottom: none;
+  }
+
+  a:hover,
+  .active a:hover,
+  .nonactive a:hover {color:@raintankPanelBackground; text-decoration: none;}
+}
+
+
+// Form Additions
+
+.rt-form-label-medium {
+  color: @grayDark;
+  font-size: @rt-fontSizeMed-2;
+}
+
+
+// Shared size and type resets
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"] {
+  &.rt-form-input {
+  display: inline-block;
+  height: 20px;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 2;
+  font-size: @rt-fontSizeLarge;
+  line-height: @baseLineHeight;
+  color: @white;
+  border: solid 1px @grayDark;
+  .border-radius(2px);
+  vertical-align: middle;
+}
+}
+
+input[type="checkbox"].rt-modal {
+  display: none;
+}
+
+.editor-option label.rt-modal {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.rt-modal {
+  display: inline-block;
+  height: 17px;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 1px 0;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background: url(@rt-checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+input[type="checkbox"]:checked+label {
+  background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
+}
+
+.checkbox-check-enabled {
+  margin-bottom: 10px;
+}
+
+// Collector List Status
+
+.rt-list-collector-status-online {
+  color: @rt-green;
+  font-weight: 700;
+  font-size: .85em;
+}
+.rt-list-collector-status-offline {
+  color: @grayLighter;
+  font-weight: 700;
+  font-size: .85em;
+}
+
+.rt-list-collector-since {
+  color: @rt-light-gray;
+  font-weight: 400;
+  font-size: .85em;
+
+}
+
+// raintank from overrides.less
+// Labels & Badges
+.rt-label-tag {
+  background-color: @purple;
+  color: @white;
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 10px;
+  font-weight: 600px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color:  rgba(255,255,255,.2);
+  box-shadow: 0 0 1px rgba(255,255,255,.2);
+  line-height: 14px;
+
+  a {
+     color: @white;
+    }    
+
+  a:hover {
+     color: @white;
+    }    
+
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.rt-label-tag:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: rgba(255,255,255,.4);
+}
+
+.rt-list-tag-menu {
+    // Different positioning for bottom up menu
+    .dropdown-menu {
+      top: auto;
+      bottom: 100%;
+      margin-bottom: 5px;
+    }
+  }
+
+.dropdown-menu {
+  >li >a {padding: 0 8px; font-size: 14px;}
+
+  >li >a:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: transparent;
+  background-image: none;
+  opacity: 0.8;
+  }
+}
+
+.rt-tag-dropup {
+  background-color: @grayDark;
+  min-width: 90px;
+  border: 1px solid @rt-dark-gray;
+  box-shadow: 0 0 1px fade(@rt-dark-gray, 90%);
+  border-radius: 2px;
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+
+  // Links within the dropdown menu
+  li, a {
+    display: inline-block;
+  }
+}
+
+.rt-detail-pages {
+  padding-bottom: 30px;
+
+.bootstrap-tagsinput {
+  padding: 4px 0;
+}
+
+.tag-add-icon {
+  margin-left: 5px;
+}
+
+.bootstrap-tagsinput input {
+  display: inline;
+  margin-top: -2px;
+  width: auto;
+  }
+
+  .bootstrap-tagsinput .tag {
+  margin-right: 5px;
+  margin-bottom: 10px;
+  }
+}
+
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+// ------------------------------------------------------
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    border-top: 0;
+    border-bottom: 4px solid @black;
+    content: "";
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 1px;
+  }
+}
+
+
+
+.rt-h1 {
+  font-size: @rt-fontSizeJumbo;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-h2 {
+  font-size: @rt-fontSizeLarger;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-h3 {
+  font-size: @rt-fontSizeLarge;
+  font-weight: 600;
+  display: inline;
+}
+
+.modal-body .rt-h1{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+}
+
+.modal-body .rt-h2{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+  margin: 40px 0 10px 0;
+  display: inline-block;
+}
+
+.modal-body .rt-h3 {
+  color: @rt-primary;
+}
+
+.modal-collector-select {
+  color: @rt-dark-gray;
+}
+
+.rt-modal-label-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
+}
+
+.rt-modal-body-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-style: italic;
+}
+
+.rt-modal-body-link {
+  &:link, &:visited {
+    color: @rt-primary;   
+    font-size: @rt-fontSizeMed-2;
+    color: @rt-primary;
+  }
+  &:hover {color: lighten(@rt-primary, 10%);}
+  } 
+
+.rt-body-link {
+  &:link, &:visited {
+    color: @rt-primary;   
+    font-size: @rt-fontSizeMed-2;
+  }
+  &:hover {color: lighten(@rt-primary, 10%);}
+  } 
+
+.rt-page-header-area {
+  display: block;
+  padding-top: 20px;
+}
+
+.rt-collapse{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
+}
+
+.rt-collapse-secondary{
+  color: @grayLight;
+  font-style: italic;
+}
+
+.rt-collapse:hover {
+ color: @rt-light-gray;
+}    
+
+.rt-collapse + input{
+  // display:none;
+  opacity: 0;
+}
+.rt-collapse + input + *{
+  // display:none;
+  opacity: 0;
+
+  transition: opacity 100ms ease-in-out;
+  -moz-transition: opacity 100ms ease-in-out;
+  -webkit-transition: opacity 100ms ease-in-out;
+}
+.rt-collapse+ input:checked + *{
+  // display:block;
+  opacity: 1;
+}
+
+.rt-advanced-options{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0 40px 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
+}
+.rt-advanced-options:hover{
+ color: @rt-light-gray;
+}    
+
+.rt-advanced-options + input{
+  display:none;
+  
+}
+.rt-advanced-options + input + *{
+  display:none;
+}
+
+.rt-advanced-options+ input:checked + *{
+  display:block;
+}
+
+
+.rt-globe-check-speed {
+  background-image: url(/img/rt-globe-check-speed.svg);
+  opacity: 1;
+  width: 177px;
+  height: 177px;
+  margin: 0 auto;
+  position: absolute;
+
+  -moz-animation: spinPulse 1500ms infinite ease-in-out;
+  -webkit-animation: spinPulse 1500ms infinite linear;
+}
+
+.rt-globe {
+  background-image: url(/img/rt-globe.svg);  
+  background-position: 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 1;
+  width: 177px;
+  height: 177px;
+  margin: 0 auto;
+  padding: 0px;
+  position: relative;
+
+}
+
+@-moz-keyframes spinPulse {
+    0% {
+        -moz-transform: rotate(-10deg);
+        opacity: 0.5;
+    }
+
+    25% {
+        -moz-transform: rotate(125deg);
+        opacity: 1;
+    }
+  
+
+    100% {
+        -moz-transform: rotate(350deg);
+        opacity: 0.5;
+    };
+}
+
+
+@-webkit-keyframes spinPulse {
+    0% {
+        -webkit-transform: rotate(-10deg);
+        opacity: .5;
+    }
+
+    25% {
+        -webkit-transform: rotate(125deg);
+        opacity: 1;
+    }
+
+    100% {
+        -webkit-transform: rotate(350deg);
+        opacity: .5;
+    };
+}
+
+
+
+// raintank form elements
+
+.rt-radio-custom {
+    opacity: 0;
+    position: absolute;   
+}
+
+.rt-radio-layout {
+  margin-right: 20px;
+}
+
+.rt-radio-custom, .rt-radio-jumbo-label, .rt-radio-body-label {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.rt-radio-body-label {
+  .rt-modal-body-copy;
+  font-style: normal;
+}
+
+.rt-radio-jumbo-label {
+    position: relative;
+    color: @rt-dark-gray;
+    font-size: 60px;
+    font-weight: 600;
+}
+
+.rt-radio-jumbo-sub-label {
+  font-size: @rt-fontSizeMed-1;
+  color: @rt-light-gray;
+  font-weight: 400;
+  display: block;
+  margin-top: 5px;
+}
+
+.rt-radio-custom + *:before {
+    content: '';
+    background: #fff;
+    border: 2px solid @rt-dark-gray;
+    display: inline-block;
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+    padding: 2px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+
+.rt-radio-custom + *:before {
+    border-radius: 50%;
+}
+
+.rt-radio-custom:checked + *:before {
+    background: @rt-primary;
+    box-shadow: inset 0px 0px 0px 4px #fff;
+}
+
+// Hiding class for screen readers
+
+.rt-hide {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+}
+
+// Buttons
+// Needs to be consolidated. 
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+  text-decoration:none;
+
+  &:hover, &:focus {
+    background: darken(@rt-blue, 10%);
+    text-decoration:none;
+  }
+ 
+  &:active {
+    background: lighten(@rt-blue, 5%);
+    text-decoration:none;
+  }
+}
+
+.modal-body .rt-btn{
+  margin: 30px 0 40px 0;
+}
+
+
+/******************************************
+RAINTANK DASHBOARD STYLES
+******************************************/
+
+.rt-dashboard-h1 {
+    font-size: 60px;
+    font-weight:900;
+    letter-spacing: -1px;
+    color: #EEE;
+    display: inline;
+    padding-top: 20px;
+}
+
+p.rt-dashboard-copy {
+    font-size:14px;
+    color: #EEE;
+}
+
+.rt-dash-flex-container {
+     display: flex;
+     justify-content: space-around;
+     flex-direction: row;
+     margin-top: 50px;
+}
+
+.rt-dash-flex-item {
+     width: 200px;
+     mid-width: 200px;
+     text-align: center;
+}
+
+p.rt-dashboard-blurb{
+     font-size:14px;
+     color: #EEE;
+     min-height: 85px;
+}
+.rt-dashboard-icons {
+  color: @rt-primary;
+  font-size: 85px;
+}

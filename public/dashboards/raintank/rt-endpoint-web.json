@@ -1,0 +1,467 @@
+{
+  "title": "rt-endpoint-web",
+  "originalTitle": "rt-endpoint-web",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "connect": "#508642",
+            "dns": "#0A50A1",
+            "recv": "#BA43A9",
+            "send": "#1F78C1",
+            "wait": "#EA6460"
+          },
+          "bars": true,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 2,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "280",
+          "id": 579,
+          "leftYAxisLabel": "latency",
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "scopedVars": {},
+          "seriesOverrides": [
+            {
+              "alias": "throughput",
+              "bars": false,
+              "fill": 0,
+              "lines": true,
+              "yaxis": 2
+            }
+          ],
+          "span": 5,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dns), 'dns')"
+            },
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dns), 'connect')"
+            },
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.send), 'send')"
+            },
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.wait), 'wait')"
+            },
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.recv), 'recv')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Detailed $protocol response for $endpoint (averaged across all selected Collectors)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "ms",
+            "Bps"
+          ]
+        },
+        {
+          "aliasColors": {
+            "connect": "#508642",
+            "dns": "#0A50A1",
+            "recv": "#BA43A9",
+            "send": "#1F78C1",
+            "wait": "#EA6460"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": 0,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "280",
+          "id": 584,
+          "leftYAxisLabel": "latency",
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "150",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "scopedVars": {},
+          "seriesOverrides": [
+            {
+              "alias": "download speed",
+              "bars": false,
+              "fill": 0,
+              "lines": true,
+              "points": false,
+              "yaxis": 2
+            }
+          ],
+          "span": 5,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dataLength), 'content size')"
+            },
+            {
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.throughput), 'download speed')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Performance $protocol response for $endpoint (averaged across all selected Collectors)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "bytes",
+            "Bps"
+          ]
+        },
+        {
+          "content": "<HTML><BODY>\n\n<TABLE ALIGN=CENTER CELLPADDING=10 BORDER=5 width=\"100%\">\n<TR>\n<TD ALIGN=TOP>\n<CENTER><small><a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint&var-collector=$collector\">SUMMARY</a> | <a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint&var-collector=$collector\">DNS</a> | <a href=\"/dashboard/raintank/rt-endpoint-icmp?var-endpoint=$endpoint&var-collector=$collector\">ICMP</a> | <a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector\">WEB</a></small></CENTER>\n</TD>\n</TR>\n</BODY></HTML>",
+          "editable": true,
+          "error": false,
+          "height": "100",
+          "id": 585,
+          "links": [],
+          "mode": "html",
+          "scopedVars": {},
+          "span": 2,
+          "style": {},
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        },
+        {
+          "aliasColors": {
+            "error": "#BF1B00"
+          },
+          "bars": true,
+          "datasource": null,
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "100",
+          "id": 583,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "connected",
+          "percentage": true,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "scopedVars": {},
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.ok_state), 'ok')"
+            },
+            {
+              "hide": false,
+              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.warn_state), 'warn')"
+            },
+            {
+              "hide": false,
+              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.error_state), 'error')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Errors for $endpoint on $protocol (across all selected Collectors)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": false,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {
+            "connect": "#0A50A1",
+            "dns": "#890F02",
+            "recv": "#6ED0E0",
+            "send": "#508642",
+            "wait": "#EAB839"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0.5,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "400",
+          "id": 581,
+          "leftYAxisLabel": "latency",
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "rightSide": false,
+            "show": true,
+            "sort": "current",
+            "sortDesc": true,
+            "total": true,
+            "values": true
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "350",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 2,
+          "points": true,
+          "renderer": "flot",
+          "scopedVars": {},
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode($endpoint.$collector.network.$protocol.total, 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "total $protocol response team (for each selected Collector)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "ms",
+            "short"
+          ]
+        }
+      ],
+      "repeat": "$endpoint",
+      "title": "Row"
+    }
+  ],
+  "nav": [
+    {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": false,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "datasource": null,
+        "includeAll": false,
+        "label": "Endpoint(s)",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "endpoint",
+        "options": [],
+        "query": "*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "datasource": null,
+        "includeAll": true,
+        "label": "Collector(s)",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "collector",
+        "options": [],
+        "query": "*.*",
+        "refresh": true,
+        "refresh_on_load": true,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "http",
+          "value": "http"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "protocol",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "protocol",
+        "options": [
+          {
+            "selected": true,
+            "text": "http",
+            "value": "http"
+          },
+          {
+            "selected": false,
+            "text": "https",
+            "value": "https"
+          }
+        ],
+        "query": "http,https",
+        "refresh_on_load": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 6,
+  "version": 21
+}

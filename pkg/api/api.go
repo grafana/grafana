@@ -36,7 +36,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-
+	r.Get("/collectors", reqSignedIn, Index)
+	r.Get("/endpoints", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
@@ -64,9 +65,9 @@ func Register(r *macaron.Macaron) {
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
 		})
 
-		// account
+		// Org
+		r.Get("/org", GetOrg)
 		r.Group("/org", func() {
-			r.Get("/", GetOrg)
 			r.Post("/", bind(m.CreateOrgCommand{}), CreateOrg)
 			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
 			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
@@ -107,6 +108,47 @@ func Register(r *macaron.Macaron) {
 
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
+
+		// collectors
+		r.Group("/collectors", func() {
+			r.Combo("/").
+				Get(bind(m.GetCollectorsQuery{}), GetCollectors).
+				Put(reqEditorRole, bind(m.AddCollectorCommand{}), AddCollector).
+				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), UpdateCollector)
+			r.Get("/:id/health", getCollectorHealthById)
+			r.Get("/:id", GetCollectorById)
+			r.Delete("/:id", reqEditorRole, DeleteCollector)
+		})
+
+		// Monitors
+		r.Group("/monitors", func() {
+			r.Combo("/").
+				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
+				Put(reqEditorRole, bind(m.AddMonitorCommand{}), AddMonitor).
+				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), UpdateMonitor)
+			r.Get("/:id/health", getMonitorHealthById)
+			r.Get("/:id", GetMonitorById)
+			r.Delete("/:id", reqEditorRole, DeleteMonitor)
+		})
+		// endpoints
+		r.Group("/endpoints", func() {
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).
+				Put(reqEditorRole, bind(m.AddEndpointCommand{}), AddEndpoint).
+				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), UpdateEndpoint)
+			r.Get("/:id/health", getEndpointHealthById)
+			r.Get("/:id", GetEndpointById)
+			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
+			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), DiscoverEndpoint)
+		})
+
+		r.Get("/monitor_types", GetMonitorTypes)
+
+		//Events
+		r.Get("/events", bind(m.GetEventsQuery{}), GetEvents)
+
+		//Get Graph data from Graphite.
+		r.Any("/graphite/*", GraphiteProxy)
+
 	}, reqSignedIn)
 
 	// admin api
@@ -123,6 +165,8 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.Any("/socket.io/", SocketIO)
 
 	r.NotFound(NotFound)
 }

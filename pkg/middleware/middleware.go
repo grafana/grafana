@@ -33,7 +33,6 @@ func GetContextHandler() macaron.Handler {
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 		}
-
 		// the order in which these are tested are important
 		// look for api key in Authorization header first
 		// then init session and look for userId in session
@@ -118,7 +117,7 @@ func initContextWithApiKey(ctx *Context) bool {
 		}
 
 		ctx.IsSignedIn = true
-		ctx.SignedInUser = &m.SignedInUser{}
+		ctx.SignedInUser = &m.SignedInUser{IsGrafanaAdmin: apikey.IsAdmin}
 		ctx.OrgRole = apikey.Role
 		ctx.ApiKeyId = apikey.Id
 		ctx.OrgId = apikey.OrgId

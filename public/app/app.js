@@ -85,6 +85,7 @@ function (angular, $, _, appLevelRequire) {
     'filters/all',
     'components/partials',
     'routes/all',
+    '../plugins/raintank/all'
   ];
 
   app.boot = function() {

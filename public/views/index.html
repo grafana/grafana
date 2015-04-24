@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width">
 
-    <title>Grafana</title>
+    <title>raintank</title>
 
 		[[if .User.LightTheme]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
@@ -13,13 +13,14 @@
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
 		[[end]]
 
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
+    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/raintank_favicon32.png">
 		<base href="[[.AppSubUrl]]/" />
 
 		<!-- build:js [[.AppSubUrl]]/app/app.js -->
     <script src="[[.AppSubUrl]]/public/vendor/require/require.js"></script>
     <script src="[[.AppSubUrl]]/public/app/components/require.config.js"></script>
     <!-- endbuild -->
+
   </head>
 
 	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
@@ -56,6 +57,15 @@
 	    app.boot();
     })
 
+	</script>
+
+	<script type="text/javascript">
+	    window.doorbellOptions = {
+	        appKey: 'KLHrULFyMa2663yJvigxkcQsRGJB7ki71cbNTQDVq5V3Mqmwv8XwL5TFObjaZHl5'
+	    };
+	    (function(d, t) {
+	        var g = d.createElement(t);g.id = 'doorbellScript';g.type = 'text/javascript';g.async = true;g.src = 'https://doorbell.io/button/925?t='+(new Date().getTime());(d.getElementsByTagName('head')[0]||d.getElementsByTagName('body')[0]).appendChild(g);
+	    }(document, 'script'));
 	</script>
 
 	[[if .GoogleAnalyticsId]]

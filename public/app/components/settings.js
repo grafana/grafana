@@ -30,7 +30,9 @@ function (_) {
     };
 
     var settings = _.extend({}, defaults, options);
-
+    if (settings.plugins.panels) {
+      _.extend(settings.panels, settings.plugins.panels);
+    }
     // var parseBasicAuth = function(datasource) {
     //   var passwordEnd = datasource.url.indexOf('@');
     //   if (passwordEnd > 0) {
