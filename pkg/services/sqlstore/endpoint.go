@@ -173,7 +173,7 @@ func AddEndpoint(cmd *m.AddEndpointCommand) error {
 				monitorCmd.OrgId = cmd.OrgId
 				monitorCmd.EndpointId = endpoint.Id
 				if err := addMonitorTransaction(monitorCmd, sess); err != nil {
-					fmt.Println(err);
+					fmt.Println(err)
 					return err
 				}
 			}

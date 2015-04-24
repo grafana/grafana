@@ -43,16 +43,16 @@ type SuggestedMonitor struct {
 // ----------------------
 // COMMANDS
 type EndpointDiscoveryCommand struct {
-	Name string `form:"name"`
-	Result   []*SuggestedMonitor
+	Name   string `form:"name"`
+	Result []*SuggestedMonitor
 }
 
 type AddEndpointCommand struct {
-	OrgId  int64    `json:"-"`
-	Name   string   `json:"name"`
-	Tags   []string `json:"tags"`
+	OrgId    int64                `json:"-"`
+	Name     string               `json:"name"`
+	Tags     []string             `json:"tags"`
 	Monitors []*AddMonitorCommand `json:"monitors"`
-	Result *EndpointDTO
+	Result   *EndpointDTO
 }
 
 type UpdateEndpointCommand struct {
