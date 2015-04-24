@@ -1,16 +1,17 @@
 define([
   'helpers',
-  'panels/table/module'
+  'panels/table/timeseries/module',
+  'panels/table/RAG/module'
 ], function(helpers) {
   'use strict';
 
-  describe('TablePanelCtrl', function() {
+  describe('TableTimePanelCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.services'));
     beforeEach(module('grafana.panels.table'));
     beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('TablePanelCtrl'));
+    beforeEach(ctx.createControllerPhase('TableTimePanelCtrl'));
 
 
     it('should transform the data returned by the datasource correctly', function() {
@@ -67,5 +68,48 @@ define([
     });
 
   });
+
+  describe('TableRagPanelCtrl', function() {
+    var ctx = new helpers.ControllerTestContext();
+
+    beforeEach(module('grafana.services'));
+    beforeEach(module('grafana.panels.table'));
+    beforeEach(ctx.providePhase());
+    beforeEach(ctx.createControllerPhase('TableRagPanelCtrl'));
+
+    if('should transform the data returned by the datasource correctly' ,function() {
+
+      // target name is composed of the series name and the object version of the grouped by tag
+      var datasourceInput = {
+        data: [
+          {
+            target: 'randomThing.lists.maxFunCount {name: tag1}',
+            datapoints: [ [ 200, 1429885220822 ] ]
+          },
+          {
+            target: 'randomThing.lists.maxFunCount {name: tag2}',
+            datapoints: [ [ 234, 1429885228707 ] ]
+          }
+        ]
+      };
+
+      ctx.scope.dataHandler(datasourceInput);
+      ctx.scope.$digest();
+
+      var expectedResult = {
+        columnOrder: [ 'tagName', 'value' ],
+        values: [
+          { tagName: 'tag1', value: 200 },
+          { tagName: 'tag2', value: 234 }
+        ]
+      };
+
+      expect(ctx.scope.tableData.columnOrder).to.eql(expectedResult.columnOrder);
+      expect(ctx.scope.tableData.values[0]).to.eql(200);
+      expect(ctx.scope.tableData.values[1]).to.eql(234);
+    });
+  });
+
+
 });
 

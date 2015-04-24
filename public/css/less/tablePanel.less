@@ -1,6 +1,4 @@
 .table-visualization {
-  position: relative;
-
   .table-vis-overflow-container {
     overflow: auto;
   }
@@ -21,17 +19,13 @@
     th {
       background-color: @grayDark;
       .no-select();
+      position: relative;
 
       .fa-caret-up,.fa-caret-down {
         position: absolute;
-        right: 10px;
+        right: 6px;
         top: 10px;
       }
-
-    }
-
-    .fixed-table-header {
-      position: absolute;
     }
   }
 }

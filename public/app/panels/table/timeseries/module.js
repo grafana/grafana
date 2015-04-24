@@ -5,7 +5,8 @@ define([
   'require',
   'components/panelmeta',
   './table',
-  './pagingControl'
+  './pagingControl',
+  '../../../directives/coloring'
 ],
 function (angular, app, _, require, PanelMeta) {
   'use strict';
@@ -13,15 +14,15 @@ function (angular, app, _, require, PanelMeta) {
   var module = angular.module('grafana.panels.table', []);
   app.useModule(module);
 
-  module.directive('grafanaPanelTable', function() {
+  module.directive('grafanaPanelTableTime', function() {
     return {
-      controller: 'TablePanelCtrl',
+      controller: 'TableTimePanelCtrl',
       templateUrl: 'app/panels/table/module.html'
     };
   });
 
-  module.controller('TablePanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
-    $scope.timestampColumnName = 'Timestamp';
+  module.controller('TableTimePanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
+    $scope.timestampColumnName = 'Time';
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
@@ -40,8 +41,6 @@ function (angular, app, _, require, PanelMeta) {
       datasource: null,
       content : "",
       style: {},
-      timeFrom: null,
-      timeShift: null,
       targets: [{ rawQuery: false }],
       columnWidth: 'auto',
       allowPaging: true,
@@ -84,7 +83,7 @@ function (angular, app, _, require, PanelMeta) {
     $scope.init();
 
     /**
-     * Transforms the raw datasource query into an array of objects initially sorted by timestamp
+     * Transforms the raw datasource query into an array of objects
      * The column order is retained since JS Dictionaries are unordered
      * @param results
      * @returns {{values: Array, columnOrder: Array}}

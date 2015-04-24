@@ -1,23 +1,15 @@
 define([
   'angular',
   'jquery',
-  'lodash'
+  'lodash',
+  'moment'
 ],
-  function (angular, $, _) {
+  function (angular, $, _, moment) {
     'use strict';
 
     var module = angular.module('grafana.directives');
 
     module.directive('grafanaTable', function($rootScope, $timeout, $sce) {
-      var data;
-      var sortedData; // will shadow the data
-
-      // paging variables
-      var dataToSkip;
-      var pagedData;
-      var minPage;
-
-      var tableHeight;
       var SortType = {
         none: 0,
         asc: 1,
@@ -28,6 +20,16 @@ define([
         restrict: 'A',
         templateUrl: 'app/panels/table/table.html',
         link: function(scope, elem) {
+          var data;
+          var sortedData; // will shadow the data
+
+          // paging variables
+          var dataToSkip;
+          var pagedData;
+          var minPage;
+
+          var tableHeight;
+
           scope.sortType = SortType;
 
           // refers to the actual physical column order of the table
@@ -102,6 +104,7 @@ define([
             }
 
             setHeaders();
+            handleSorting();
             handlePaging();
             setTableData();
 
@@ -113,8 +116,12 @@ define([
             }, 0);
           }
 
-          // on resize, the absolutely positioned headers will be shifted, during shift we reposition them
+          // on resize or scroll, the absolutely positioned headers will be shifted, during shift we reposition them
           $(window).resize(function() {
+            performHeaderPositioning();
+          });
+
+          elem.find('.table-vis-overflow-container').scroll(function() {
             performHeaderPositioning();
           });
 
@@ -161,8 +168,13 @@ define([
                 return curColumn[columnName];
               });
 
+              var columnIndex = 0;
               var row = _.map(rowData, function(seriesValue) {
-                return '<td>' + seriesValue  + '</td>';
+                var styleHtml = getCellColorStyle(seriesValue, columnIndex);
+                var formattedValue = getFormattedValue(seriesValue, columnIndex);
+                columnIndex++;
+
+                return '<td ' + styleHtml + '>' + formattedValue + '</td>';
               }).join('');
 
               row = '<tr>' + row + '</tr>';
@@ -174,26 +186,23 @@ define([
           }
 
           function performHeaderPositioning() {
-            var realHeaders = elem.find('.real-table-header');
-            var fixedHeaders = elem.find('.fixed-table-header');
             var container = elem.find('.table-vis-overflow-container');
+            var yOffset = container.scrollTop();
+            var fixedHeaders = elem.find('.fixed-table-header');
 
             // set width according to option specification
             if (scope.panel.columnWidth === 'auto') {
-              realHeaders.width('auto');
+              fixedHeaders.width('auto');
             }
             else {
-              realHeaders.width(scope.panel.columnWidth);
+              fixedHeaders.width(scope.panel.columnWidth);
             }
 
-            for (var i = 0; i < realHeaders.length; ++i) {
-              var realEl = realHeaders.eq(i);
+            for (var i = 0; i < fixedHeaders.length; ++i) {
               var fixedEl = fixedHeaders.eq(i);
 
-              var borderWidth = parseFloat(realEl.css('borderWidth')) || 0;
-
-              fixedEl.width(realEl.width() + borderWidth);
-              fixedEl.css({ left: realEl.position().left, top: container.position().top });
+              var borderOffset = - parseFloat(fixedEl.css('borderWidth')) || 0;
+              fixedEl.css({ top: yOffset + borderOffset });
             }
 
             fixedHeaders.show();
@@ -252,6 +261,61 @@ define([
 
             header.sortType = newType;
           }
+
+          function getCellColorStyle(value, columnIndex) {
+            var styleHtml = '';
+            var targetIndex = columnIndex - 1; // first column is reference column (timeseries or aggregate)
+            // and should not be highlighted with colors
+
+            if (scope.panel.targets.length === 0 || targetIndex < 0 || !scope.panel.targets[targetIndex] || value === null) {
+              return styleHtml;
+            }
+
+            var coloring = scope.panel.targets[targetIndex].coloring;
+
+            if (coloring && (coloring.colorBackground || coloring.colorValue) && !isNaN(value)) {
+              var color = getColorForValue(value);
+              if (color) {
+                styleHtml = 'style="';
+                if (coloring.colorBackground) {
+                  styleHtml += 'background-color:' + color + ';';
+                }
+                if (coloring.colorValue) {
+                  styleHtml += 'color:' + color + ';';
+                }
+                styleHtml += ';"';
+              }
+            }
+            return styleHtml;
+
+            function getColorForValue(value) {
+              for (var i = coloring.thresholdValues.length - 1; i >= 0; i--) {
+                if (value >= coloring.thresholdValues[i]) {
+                  return coloring.colors[i];
+                }
+              }
+
+              return null;
+            }
+          }
+
+          function getFormattedValue(value, columnIndex) {
+            if (columnIndex === 0) { // reference column
+              if (scope.timestampColumnName && scope.panel.showTimeAsDate) { // if timeseries table and checkbox selected
+                return moment(value).format('L HH:mm:ss');
+              }
+
+              return value;
+            }
+
+            var decimalLimit = scope.panel.decimalLimit;
+            if (value !== null && !isNaN(value) && decimalLimit !== null && !isNaN(decimalLimit)) {
+              return value.toFixed(decimalLimit);
+            }
+
+            return value;
+          }
+
 
           function shouldAbortRender(isHeightSet) {
             if (!data) {

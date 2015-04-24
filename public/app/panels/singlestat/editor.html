@@ -77,47 +77,7 @@
 	</div>
 </div>
 
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Coloring</strong>
-				</li>
-				<li class="tight-form-item">
-					Background&nbsp;
-					<input class="cr1" id="panel.colorBackground" type="checkbox"
-					ng-model="panel.colorBackground" ng-checked="panel.colorBackground" ng-change="render()">
-					<label for="panel.colorBackground" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Value&nbsp;
-					<input class="cr1" id="panel.colorValue" type="checkbox"
-					ng-model="panel.colorValue" ng-checked="panel.colorValue" ng-change="render()">
-					<label for="panel.colorValue" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Thresholds<tip>Comma seperated values</tip>
-				</li>
-				<li>
-					<input type="text" class="input-large tight-form-input" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
-				</li>
-				<li class="tight-form-item">
-					Colors
-				</li>
-				<li class="tight-form-item">
-					<spectrum-picker ng-model="panel.colors[0]" ng-change="render()" ></spectrum-picker>
-					<spectrum-picker ng-model="panel.colors[1]" ng-change="render()" ></spectrum-picker>
-					<spectrum-picker ng-model="panel.colors[2]" ng-change="render()" ></spectrum-picker>
-				</li>
-				<li class="tight-form-item last">
-					<a class="pointer" ng-click="invertColorOrder()">invert order</a>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-</div>
+<div coloring render="render()" target="panel.targets[0]"></div>
 
 <div class="editor-row">
 	<div class="section" style="margin-bottom: 20px">

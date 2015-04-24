@@ -26,4 +26,28 @@
              tip="When graph is not in auto refresh mode, allow paging of current data selection">
          </editor-opt-bool>
     </div>
+
+    <div class="section">
+        <h5>Formatting</h5>
+
+        <div class="editor-option">
+            <label class="small">Decimal Places</label>
+            <select class="input-small" ng-model="panel.decimalLimit" ng-change="render()">
+                <option ng-selected="panel.decimalLimit == 'none'" value="auto">None</option>
+                <option ng-selected="panel.decimalLimit == {{n}}" ng-repeat="n in [1,2,3,4,5,6,7,8]" value="{{n}}">{{n}}</option>
+            </select>
+        </div>
+
+        <div class="editor-option" ng-if="timestampColumnName"> <!-- Only show for time series table -->
+            <editor-opt-bool text="Time as Date" model="panel.showTimeAsDate" change="render()"
+                tip="If selected, the UNIX timestamp will be displayed in a regular date format"></editor-opt-bool>
+        </div>
+    </div>
+</div>
+
+<div class="editor-row">
+    <h5>Column Coloring</h5>
+    <div ng-repeat="target in panel.targets">
+        <div coloring target="target" render="render()"></div>
+    </div>
 </div>
