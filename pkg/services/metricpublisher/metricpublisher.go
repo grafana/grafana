@@ -149,7 +149,7 @@ func ProcessBuffer(c <-chan m.MetricDefinition) {
 				currentBuf := make([]m.MetricDefinition, len(metrics))
 				copy(currentBuf, metrics)
 				delete(buf, hash)
-				log.Info(fmt.Sprintf("flushing %d items in buffer now", len(currentBuf)))
+				//log.Info(fmt.Sprintf("flushing %d items in buffer now", len(currentBuf)))
 				msgString, err := json.Marshal(currentBuf)
 				if err != nil {
 					log.Error(0, "Failed to marshal metrics payload.", err)

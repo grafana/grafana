@@ -54,7 +54,7 @@
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
 						</div>
 						<div class="pull-right tertiaryCTA">All Events</div>
 
@@ -78,7 +78,7 @@
 
 					<div class="currentStatus">
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
 						<div class="pull-right tertiaryCTA">All Events</div>
 
@@ -103,7 +103,7 @@
 
 					<div class="currentStatus">
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
 						<div class="pull-right tertiaryCTA">All Events</div>
 
@@ -130,7 +130,7 @@
 
 					<div class="currentStatus">
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
 						<div class="pull-right tertiaryCTA">All Events</div>
 

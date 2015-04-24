@@ -124,9 +124,38 @@ function (angular, _) {
       return slug;
     }
 
-    $scope.gotoDashboard = function(endpoint) {
-      $location.path("/dashboard/raintank/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
-    }
+    $scope.gotoDashboard = function(endpoint, type) {
+      if (!type) {
+        type = 'summary';
+      }
+      var search = {
+        "var-collector": "All",
+        "var-endpoint": $scope.slug($scope.endpoint.name)
+      };
+      switch(type) {
+        case "summary":
+          $location.path("/dashboard/raintank/statusboard").search(search);
+          break;
+        case "ping":
+          $location.path("/dashboard/raintank/rt-endpoint-icmp").search(search);
+          break;
+        case "dns":
+          $location.path("/dashboard/raintank/rt-endpoint-dns").search(search);
+          break;
+        case "http":
+          search['var-protocol'] = "http";
+          $location.path("/dashboard/raintank/rt-endpoint-web").search(search);
+          break;
+        case "https":
+          search['var-protocol'] = "https";
+          $location.path("/dashboard/raintank/rt-endpoint-web").search(search);
+          break;
+        default:
+          $location.path("/dashboard/raintank/statusboard").search(search);
+          break;
+      }
+    };
+
     $scope.refresh = function() {
       $scope.getEndpoint($scope.endpoint.id);
       $scope.refreshTime = new Date();
