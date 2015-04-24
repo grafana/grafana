@@ -25,6 +25,11 @@
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{endpoint.name}}</h1>
 	</div>
+	<div class="editor-row rt-detail-pages">
+		<div class="editor-option">
+			<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-update="tagsUpdated" ></bootstrap-tagsinput>
+		</div>
+	</div>
 
 	<!-- tabs -->
 	<div class="rt-tabs">
