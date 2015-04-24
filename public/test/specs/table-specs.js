@@ -19,7 +19,7 @@ define([
     }
 
     for (i = 0; i < numRows; ++i) {
-      var row = { Timestamp: i + 10000 };
+      var row = { Time: i + 10000 };
 
       for (j = 0; j < numColumns; ++j) {
         var columnName = selectedColumns[j];
@@ -52,7 +52,18 @@ define([
         style: {},
         timeFrom: null,
         timeShift: null,
-        targets: [{ rawQuery: true }], // should only allow one query, set to raw query mode on page load
+        targets: [ // only used for coloring
+          { measurement: 'stuff', query: 'to be or not to be', $$hashKey: 1, coloring: {} },
+          { measurement: 'more stuff', query: 'two bee or not too bie', $$hashKey: 2,
+            coloring: {
+              thresholdCommaString: '20, 60, 90',
+              thresholdValues: [20, 60, 90],
+              colors: ["rgb(245, 54, 54)", "rgb(237, 129, 40)", "rgb(50, 172, 45)"],
+              colorBackground: true,
+              colorValue: true
+            }
+          }
+        ],
         columnWidth: 'auto',
         allowPaging: true,
         pageLimit: 20,
@@ -107,18 +118,25 @@ define([
     });
 
     describe('rendered tables', function() {
+      var jqLiteTable;
+      var tbody;
+
+      function renderAndSetElementVars(data) {
+        scope.$emit('render', data);
+        scope.$digest();
+
+        jqLiteTable = angular.element(elem);
+        tbody = jqLiteTable.find('tbody tr');
+      }
+
       // the rendered table body does not use angular bindings, (it uses manual string building) so we should test it
       it ('should have correct number of rows', function() {
         var dataRows = 3;
         scope.panel.pageLimit = 5;
 
         var data = getRandomData(1, dataRows);
+        renderAndSetElementVars(data);
 
-        scope.$emit('render', data);
-        scope.$digest();
-
-        var jqLiteTable = angular.element(elem);
-        var tbody = jqLiteTable.find('tbody tr');
         expect(tbody.length).to.equal(dataRows);
       });
 
@@ -127,12 +145,8 @@ define([
         scope.panel.pageLimit = 5;
 
         var data = getRandomData(1, dataRows);
+        renderAndSetElementVars(data);
 
-        scope.$emit('render', data);
-        scope.$digest();
-
-        var jqLiteTable = angular.element(elem);
-        var tbody = jqLiteTable.find('tbody tr');
         expect(tbody.length).to.equal(scope.panel.pageLimit);
       });
 
@@ -140,12 +154,8 @@ define([
         scope.panel.pageLimit = 5;
 
         var data = getRandomData(2, 5);
+        renderAndSetElementVars(data);
 
-        scope.$emit('render', data);
-        scope.$digest();
-
-        var jqLiteTable = angular.element(elem);
-        var tbody = jqLiteTable.find('tbody tr');
 
         for (var rowIndex = 0; rowIndex < tbody.length; ++rowIndex) {
           var row = tbody.eq(rowIndex);
@@ -163,6 +173,115 @@ define([
 
           }
         }
+      });
+
+      describe('decimal formatting', function() {
+        it('should not do anything if not turned on', function() {
+          var data = getRandomData(2, 2);
+          renderAndSetElementVars(data);
+
+          scope.panel.decimalLimit = 'auto';
+
+          for (var rowIndex = 0; rowIndex < tbody.length; ++rowIndex) {
+            var row = tbody.eq(rowIndex);
+            var rowData = row.find('td');
+
+            // start at 1 since first column is reference column
+            for (var columnIndex = 1; columnIndex < rowData.length; ++columnIndex) {
+              var cell = rowData.eq(columnIndex);
+              var cellData = cell.text();
+
+              var columnName = scope.columnOrder[columnIndex];
+
+              var objectData = data.values[rowIndex][columnName].toString();
+
+              expect(cellData).to.equal(objectData);
+            }
+          }
+        });
+
+        it('should render correctly if turned on', function() {
+          var data = getRandomData(2, 2);
+
+          scope.panel.decimalLimit = 2;
+          renderAndSetElementVars(data);
+
+          for (var rowIndex = 0; rowIndex < tbody.length; ++rowIndex) {
+            var row = tbody.eq(rowIndex);
+            var rowData = row.find('td');
+
+            // start at 1 since first column is reference column
+            for (var columnIndex = 1; columnIndex < rowData.length; ++columnIndex) {
+              var cell = rowData.eq(columnIndex);
+              var cellData = cell.text();
+
+              var columnName = scope.columnOrder[columnIndex];
+
+              var objectData = data.values[rowIndex][columnName].toFixed(scope.panel.decimalLimit);
+
+              expect(cellData).to.equal(objectData);
+              var decimalLength = objectData.split('.')[1].length;
+              expect(decimalLength).to.equal(scope.panel.decimalLimit);
+            }
+          }
+        });
+      });
+
+      describe('color formatting', function() {
+        function getCellColors(rowIndex, colIndex) {
+          var row = tbody.eq(rowIndex);
+          var rowData = row.find('td');
+          var cell = rowData.eq(colIndex);
+
+          var cellTextColor = cell.css('color');
+          var cellBgColor = cell.css('backgroundColor');
+
+          return { fontC: cellTextColor, bgC: cellBgColor };
+        }
+
+        beforeEach(function() {
+          var columnOrder = ['Time','Column1','Column2'];
+          var values = [
+            {Time: 1429899796009, Column1: 30, Column2: 100},
+            {Time: 1429899796019, Column1: 13, Column2: 50},
+            {Time: 1429899796029, Column1: 5, Column2: null},
+            {Time: 1429899796029, Column1: null, Column2: 10}
+          ];
+
+          var bigData = {columnOrder: columnOrder, values: values};
+
+          scope.panel.pageLimit = 5;
+
+
+          renderAndSetElementVars(bigData);
+        });
+
+
+        it('should meet thresholds correctly on the correct targets', function() {
+          // first column should be not contain colors since it (targets[0]) does not have a defined color scheme
+          for (var i = 0; i < 4; i++) {
+            var cellColors = getCellColors(i, 1);
+            expect(cellColors.fontC).to.equal('');
+            expect(cellColors.bgC).to.equal('');
+          }
+
+
+          var c02 = getCellColors(0, 2);
+          expect(c02.fontC).to.equal('rgb(50, 172, 45)');
+          expect(c02.bgC).to.equal('rgb(50, 172, 45)');
+
+          var c12 = getCellColors(1, 2);
+          expect(c12.fontC).to.equal('rgb(245, 54, 54)');
+          expect(c12.bgC).to.equal('rgb(245, 54, 54)');
+
+          var c22 = getCellColors(2, 2);
+          expect(c22.fontC).to.equal('');
+          expect(c22.bgC).to.equal('');
+
+          var c23 = getCellColors(3, 2);
+          expect(c23.fontC).to.equal('');
+          expect(c23.bgC).to.equal('');
+        });
       });
     });
 

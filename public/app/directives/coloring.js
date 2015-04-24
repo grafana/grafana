@@ -36,6 +36,7 @@ define([
 
             scope.$watch('target.coloring.thresholdCommaString', function() {
               if (!coloring.thresholdCommaString) {
+                coloring.thresholdValues = [];
                 return;
               }
 

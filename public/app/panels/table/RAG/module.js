@@ -41,6 +41,8 @@ define([
         style: {},
         targets: [{ rawQuery: true }],
         columnWidth: 'auto',
+        decimalLimit: 'auto',
+        showTimeAsDate: false,
         allowPaging: true,
         pageLimit: 20,
         allowSorting: true
