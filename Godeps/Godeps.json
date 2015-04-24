@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.3",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -14,12 +14,12 @@
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
-			"ImportPath": "github.com/araddon/gou",
-			"Rev": "83835b52401515352c9234fecfa61e55aaab793b"
+			"ImportPath": "github.com/dalu/slug",
+			"Rev": "6dbd13912e9be466e2c1de349a2c7d1466c97e07"
 		},
 		{
-			"ImportPath": "github.com/bitly/go-hostpool",
-			"Rev": "e83c9e8d24926d4897baaaac1c9428e07bacb377"
+			"ImportPath": "github.com/dalu/unidecode",
+			"Rev": "339814d47f3e32a6f7036a0a4c56ed9b373dd755"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -34,23 +34,6 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.2-58-ge2889e5",
 			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
-		},
-		{
-			"ImportPath": "github.com/googollee/go-engine.io",
-			"Rev": "597faf3df88a01780a5881fafbcbccd9d5c3fab0"
-		},
-		{
-			"ImportPath": "github.com/googollee/go-socket.io",
-			"Comment": "0.9.x-24-g2a8532d",
-			"Rev": "2a8532d68ee77d0cce9dcfaf9ec8fb6eb9a7c62e"
-		},
-		{
-			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
-		},
-		{
-			"ImportPath": "github.com/gosimple/slug",
-			"Rev": "a2392a4a87fa0366cbff131d3fd421f83f52492f"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",
@@ -108,10 +91,6 @@
 		{
 			"ImportPath": "gopkgs.com/pool.v1",
 			"Rev": "c850f092aad1780cbffff25f471c5cc32097932a"
-		},
-		{
-			"ImportPath": "gopkgs.com/unidecode.v1",
-			"Rev": "4deae2c05236b41cc39f8144ac87a837ba974d40"
 		}
 	]
 }
