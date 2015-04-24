@@ -13,11 +13,31 @@ function (angular) {
     };
 
     $scope.init = function() {
+      $scope.discovered = false;
       $scope.endpoints = [];
+      $scope.monitors = {};
+      $scope.monitor_types_by_name = {};
+      $scope.allCollectors = [];
+      $scope.collectorsOption = {selection: "all"};
+      $scope.$watch("collectorsOption.selection", function(newVal) {
+        if (newVal === "all") {
+          $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
+        }
+      });
+      $scope.global_collectors = {collector_ids: [], collector_tags: []};
+      $scope.$watch("global_collectors.collector_ids", function(newVal) {
+        _.forEach($scope.monitors, function(monitor) {
+          monitor.collector_ids = newVal;
+        });
+      });
+      $scope.$watch("global_collectors.collector_tags", function(newVal) {
+        _.forEach($scope.monitors, function(monitor) {
+          monitor.collector_tags = newVal;
+        });
+      });
       if ("id" in $routeParams) {
         $scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);
-          $scope.monitors = {};
         });
       } else {
         $scope.reset();
@@ -26,8 +46,9 @@ function (angular) {
       $scope.getCollectors();
       $scope.getMonitorTypes();
       $scope.$watch('endpoint.name', function(newVal, oldVal) {
-        for (var id in $scope.monitors) {
-          var monitor = $scope.monitors[id];
+        $scope.discovered = false;
+        for (var type in $scope.monitors) {
+          var monitor = $scope.monitors[type];
           _.forEach(monitor.settings, function(setting) {
             if ((setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") && ((setting.value == "") || (setting.value == oldVal))) {
               setting.value = newVal;
@@ -40,6 +61,10 @@ function (angular) {
     $scope.getCollectors = function() {
       backendSrv.get('/api/collectors').then(function(collectors) {
         $scope.collectors = collectors;
+        _.forEach(collectors, function(c) {
+          $scope.allCollectors.push(c.id);
+        });
+        $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
       });
     };
 
@@ -56,11 +81,13 @@ function (angular) {
             }
             settings.push({variable: setting.variable, value: val});
           });
-          if (!(type.id in $scope.monitors)) {
-            $scope.monitors[type.id] = {
+          $scope.monitor_types_by_name[type.name.toLowerCase()] = type;
+          if (!(type.name.toLowerCase() in $scope.monitors)) {
+            $scope.monitors[type.name.toLowerCase()] = {
               endpoint_id: null,
               monitor_type_id: type.id,
-              collectorGroup: 'all',
+              collector_ids: $scope.global_collectors.collector_ids,
+              collector_tags: $scope.global_collectors.collector_tags,
               settings: settings,
               enabled: false,
               frequency: 10,
@@ -93,7 +120,6 @@ function (angular) {
     }
     $scope.reset = function() {
       $scope.endpoint = angular.copy(defaults);
-      $scope.monitors = {};
     };
 
     $scope.cancel = function() {
@@ -114,7 +140,8 @@ function (angular) {
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
-              $scope.monitors[monitor.monitor_type_id] = monitor;
+              var type = $scope.monitor_types[monitor.monitor_type_id];
+              $scope.monitors[type.name.toLowerCase()] = monitor;
             });
           });
         }
@@ -132,10 +159,10 @@ function (angular) {
     };
 
     $scope.removeMonitor = function(mon) {
-      var type_id = mon.monitor_type_id;
+      var type = $scope.monitor_types[mon.monitor_type_id];
       backendSrv.delete('/api/monitors/' + mon.id).then(function() {
         var settings = [];
-        _.forEach($scope.monitor_types[type_id].settings, function(setting) {
+        _.forEach($scope.monitor_types[type.id].settings, function(setting) {
           var val = setting.default_value;
           if (setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") {
             val = $scope.endpoint.name;
@@ -143,13 +170,14 @@ function (angular) {
           settings.push({variable: setting.variable, value: val});
         });
         var frequency = 10;
-        if ($scope.monitor_types[type_id].name.indexOf("HTTP") == 0) {
+        if ($scope.monitor_types[type.id].name.indexOf("HTTP") == 0) {
           frequency = 60;
         }
-        $scope.monitors[type_id] = {
+        $scope.monitors[type.name.toLowerCase()] = {
           endpoint_id: null,
-          monitor_type_id: type_id,
-          collectorGroup: 'all',
+          monitor_type_id: type.id,
+          collector_ids: $scope.global_collectors.collector_ids,
+          collector_tags: $scope.global_collectors.collector_tags,
           settings: settings,
           enabled: false,
           frequency: frequency,
@@ -171,7 +199,7 @@ function (angular) {
           promises.push(backendSrv.put('/api/monitors', monitor));
         }
       });
-
+      promises.push(backendSrv.post('/api/endpoints', $scope.endpoint));
       $q.all(promises).then(function() {
         $location.path("/endpoints");
       });
@@ -182,36 +210,50 @@ function (angular) {
     }
 
     $scope.parseSuggestions = function(payload) {
-      var collectors = [];
-      _.forEach($scope.collectors, function(loc) {
-        collectors.push(loc.id);
-      });
       var defaults = {
-        endpoint_id: payload.endpoint.id,
+        endpoint_id: 0,
         monitor_type_id: 1,
-        collector_ids: collectors,
+        collector_ids: $scope.global_collectors.collector_ids,
+        collector_tags: $scope.global_collectors.collector_tags,
         settings: [],
         enabled: true,
         frequency: 10,
       };
-      _.forEach(payload.suggested_monitors, function(suggestion) {
+      _.forEach(payload, function(suggestion) {
         _.defaults(suggestion, defaults);
-        $scope.monitors[suggestion.monitor_type_id] = suggestion;
+        var type = $scope.monitor_types[suggestion.monitor_type_id];
+        if (type.name.indexOf("HTTP") == 0) {
+          suggestion.frequency = 60;
+        }
+        $scope.monitors[type.name.toLowerCase()] = suggestion;
       });
-      $scope.endpoint.id = payload.endpoint.id;
+      console.log($scope.monitors);
     }
 
-    $scope.add = function() {
-      if (!$scope.endpointForm.$valid) {
-        console.log("form invalid");
-        return;
+    $scope.discover = function(endpoint) {
+      backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
+        $scope.discovered = true;
+        $scope.parseSuggestions(resp);
+      });
+    }
+
+    $scope.addEndpoint = function() {
+      if ($scope.endpoint.id) {
+        return updateEndpoint();
       }
 
-      backendSrv.put('/api/endpoints', $scope.endpoint)
-        .then(function(resp) {
-          $scope.parseSuggestions(resp);
-        });
-    };
+      var payload = $scope.endpoint;
+      payload.monitors = [];
+      _.forEach($scope.monitors, function(monitor) {
+        if (monitor.enabled) {
+          payload.monitors.push(monitor);
+        }
+      });
+      backendSrv.put('/api/endpoints', payload).then(function(resp) {
+        $scope.endpoint = resp;
+        $scope.dismiss();
+      });
+    }
 
     $scope.slug = function(name) {
       var label = name.toLowerCase();

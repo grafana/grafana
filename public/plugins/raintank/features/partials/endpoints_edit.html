@@ -70,7 +70,7 @@
 			<div class="grid-full rt-box" ng-repeat="(monitor_type, monitor) in monitors">
 				<div class="rt-box-header">
 					<div style="padding:10px;">
-						<span>{{monitor_types[monitor_type].name}}</span>
+						<span>{{monitor_types_by_name[monitor_type].name}}</span>
 						<a ng-click="removeMonitor(monitor)" style="float: right"  class="btn btn-danger btn-mini" ng-show="monitor.id">
 							<i class="fa fa-remove"></i>
 						</a>
@@ -92,19 +92,17 @@
 						</div>
 					</div>
 					<div class="editor-row">
-						<div class="editor-option" ng-repeat="setting in monitor_types[monitor_type].settings | filter:{required: 'true'}">
-							<label class="small">{{setting.description}}</label>
+						<div class="editor-option" ng-repeat="setting in monitor_types_by_name[monitor_type].settings | filter:{required: 'true'}">
 							<raintank-setting definition="setting" target="currentSettingByVariable(monitor, setting.variable)">
 						</div>
 					</div>
 					<div class="editor-row">
-						<div class="editor-option" ng-repeat="setting in monitor_types[monitor_type].settings | filter:{required: 'false'}">
-							<label class="small">{{setting.description}}</label>
+						<div class="editor-option" ng-repeat="setting in monitor_types_by_name[monitor_type].settings | filter:{required: 'false'}">
 							<raintank-setting definition="setting" target="currentSettingByVariable(monitor, setting.variable)">
 						</div>
 					</div>
 					<div class="editor-row" ng-show="monitor.id">
-						<button type="submit" class="btn btn-success" ng-click="updateMonitor(monitor)">Update {{monitor_types[monitor_type].name}} Check</button>
+						<button type="submit" class="btn btn-success" ng-click="updateMonitor(monitor)">Update {{monitor_type}} Check</button>
 					</div>
 				</div>
 			</div>

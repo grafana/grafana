@@ -3,7 +3,7 @@
 	<i class="fa fa-caret-down"></i>
 </a>
 
-<div ng-if="selectorOpen" class="variable-value-dropdown">
+<div ng-if="selectorOpen" class="variable-value-dropdown" style="overflow: scroll">
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
 			<input  type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
@@ -15,7 +15,7 @@
 		<div style="position:absolute; top: 45px; left:15px;" ng-hide="query.text">
 			<a ng-click="selectAll()">all</a>
 		</div>
-		<div style="display:inline-block; vertical-align:top;">
+		<div style="display:inline-block; vertical-align:top; width: 50%">
 			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
 				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
 				<i class="fa fa-fw fa-square-o"></i>
@@ -28,7 +28,10 @@
 					ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
 				<i class="fa fa-fw fa-square-o"></i>
 				<i class="fa fa-fw fa-check-square-o"></i>
-				<span >{{option.text}}</span>
+					<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
+						{{option.text}}
+						<img class="dashboard-icon"src="img/tiny-rt-endpoint.svg" style="padding-left: 2px; vertical-align: -2px;"width="12px" height="12px"> </a>
+					</span>
 			</a>
 		</div>
 	</div>

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -63,24 +62,15 @@ func DeleteEndpoint(c *middleware.Context) {
 
 func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) {
 	cmd.OrgId = c.OrgId
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to add endpoint", err)
 		return
 	}
-	endpoint := cmd.Result
-	discoverCmd := m.EndpointDiscoveryCommand{Endpoint: endpoint}
-	if err := bus.Dispatch(&discoverCmd); err != nil {
-		fmt.Println("Failed to discover endpoint.", err)
-		//Nothing more to do, the endpoint was created so
-		// we still need to return a 200 response.
-	}
 
-	c.JSON(200, discoverCmd.Result)
+	c.JSON(200, cmd.Result)
 }
 
 func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) {
-
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
@@ -90,4 +80,12 @@ func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) {
 	}
 
 	c.JsonOK("Endpoint updated")
+}
+
+func DiscoverEndpoint(c *middleware.Context, cmd m.EndpointDiscoveryCommand) {
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed to discover endpoint", err)
+		return
+	}
+	c.JSON(200, cmd.Result)
 }

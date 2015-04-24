@@ -28,7 +28,11 @@ type EndpointWithTag struct {
 }
 
 func GetEndpointById(query *m.GetEndpointByIdQuery) error {
-	sess := x.Table("endpoint")
+	sess := session{Session: x.Table("endpoint")}
+	return GetEndpointByIdTransaction(query, &sess)
+}
+
+func GetEndpointByIdTransaction(query *m.GetEndpointByIdQuery, sess *session) error {
 	rawParams := make([]interface{}, 0)
 	rawSql := `SELECT
 		GROUP_CONCAT(DISTINCT(endpoint_tag.tag)) as tags,
@@ -162,6 +166,19 @@ func AddEndpoint(cmd *m.AddEndpointCommand) error {
 			},
 			Timestamp: endpoint.Updated,
 		})
+
+		// add any included momitors.
+		if len(cmd.Monitors) > 0 {
+			for _, monitorCmd := range cmd.Monitors {
+				monitorCmd.OrgId = cmd.OrgId
+				monitorCmd.EndpointId = endpoint.Id
+				if err := addMonitorTransaction(monitorCmd, sess); err != nil {
+					fmt.Println(err)
+					return err
+				}
+			}
+		}
+
 		return nil
 	})
 }

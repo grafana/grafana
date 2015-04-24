@@ -3,7 +3,7 @@
 <div style="margin: 15px; position: relative; display: block; max-width: 900px;">
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">Endpoints</h1>
-		<span style="float: right;"><a class="rt-btn" href="/endpoints/new">New Endpoint</a></span>
+		<span style="float: right; margin-top: 10px;"><a class="rt-btn" ng-click="openNewEndPointModal()">New Endpoint</a></span>
 	</div>
 
 	<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
@@ -22,7 +22,7 @@
 					h38.6v23.6C40.3,37.7,37.7,40.3,34.4,40.3z"/>
 			</g>
 			</svg>
-			<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="/endpoints/new">Add an endpoint now.</a></p>
+			<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="#" ng-click="openNewEndPointModal()">Add an endpoint now.</a></p>
 		</div>
 		<div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
 			<label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>

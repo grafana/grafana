@@ -17,29 +17,42 @@ define([
       replace: true,
       link: function(scope,element, attrs) {
         var tmpl;
+
         if (scope.target.value == null) {
           scope.target.value = scope.definition.default_value;
         }
+
         switch (scope.definition.data_type) {
           case 'String':
-            tmpl = '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="form-control">';
+            tmpl = '<label class="small">{{definition.description}}</label>';
+            tmpl += '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
             break;
           case 'Text':
-            tmpl = '<textarea placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="form-control">';
+            tmpl = '<label class="small">{{definition.description}}</label>';
+            tmpl += '<textarea placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
             break;
           case 'Number':
+            tmpl = '<label class="small">{{definition.description}}</label>';
             scope.target.value = parseFloat(scope.target.value).toString();
-            tmpl = '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="form-control">';
+            tmpl += '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
             break;
           case 'Boolean':
-            tmpl = '<input type="checkbox" ng-true-value="\'true\'" ng-false-value="\'false\'" ng-model="target.value" class="form-control">';
+            scope.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+              return v.toString(16);
+            });
+            tmpl = '<input type="checkbox" ng-true-value="\'true\'" id={{id}} ng-false-value="\'false\'" ng-model="target.value" class="rt-modal">';
+            tmpl += '<label class="rt-modal rt-modal-label-copy" for="{{id}}">{{definition.description}}</label>';
             break;
           case 'Enum':
-            tmpl = '<select ng-model="target.value" class="form-control" ng-options="e for e in definition.conditions.values" ng-required="definition.required">';
+            tmpl = '<label class="small">{{definition.description}}</label>';
+            tmpl += '<select ng-model="target.value" class="rt-form-input form-control" ng-options="e for e in definition.conditions.values" ng-required="definition.required" style="height: 34px;">';
             break;
           default:
-            tmpl = '<input type="text" placeholder="{{definition.description}} : {{definition.data_type}}" ng-required="definition.required" ng-model="target.value" class="form-control">';
+            tmpl = '<label class="small">{{definition.description}}</label>';
+            tmpl += '<input type="text" placeholder="{{definition.description}} : {{definition.data_type}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
         }
+
         element.html(tmpl);
         $compile(element.contents())(scope);
       }

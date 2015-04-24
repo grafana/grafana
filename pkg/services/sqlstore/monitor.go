@@ -385,171 +385,194 @@ type collectorList struct {
 }
 
 func AddMonitor(cmd *m.AddMonitorCommand) error {
-
 	return inTransaction2(func(sess *session) error {
-		//validate Endpoint.
-		endpointQuery := m.GetEndpointByIdQuery{
-			Id:    cmd.EndpointId,
-			OrgId: cmd.OrgId,
-		}
-		err := GetEndpointById(&endpointQuery)
+		return addMonitorTransaction(cmd, sess)
+	})
+}
+
+func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
+	//validate Endpoint.
+	endpointQuery := m.GetEndpointByIdQuery{
+		Id:    cmd.EndpointId,
+		OrgId: cmd.OrgId,
+	}
+	err := GetEndpointByIdTransaction(&endpointQuery, sess)
+	if err != nil {
+		return err
+	}
+
+	filtered_collectors := make([]*collectorList, 0, len(cmd.CollectorIds))
+	if len(cmd.CollectorIds) > 0 {
+		sess.Table("collector")
+		sess.In("id", cmd.CollectorIds).Where("org_id=? or public=1", cmd.OrgId)
+		sess.Cols("id")
+		err = sess.Find(&filtered_collectors)
+
 		if err != nil {
 			return err
 		}
+	}
 
-		filtered_collectors := make([]*collectorList, 0, len(cmd.CollectorIds))
-		if len(cmd.CollectorIds) > 0 {
-			sess.Table("collector")
-			sess.In("id", cmd.CollectorIds).Where("org_id=? or public=1", cmd.OrgId)
-			sess.Cols("id")
-			err = sess.Find(&filtered_collectors)
+	if len(filtered_collectors) < len(cmd.CollectorIds) {
+		return m.ErrMonitorCollectorsInvalid
+	}
 
-			if err != nil {
-				return err
-			}
+	//get settings definition for thie monitorType.
+	var typeSettings []*m.MonitorTypeSetting
+	sess.Table("monitor_type_setting")
+	sess.Where("monitor_type_id=?", cmd.MonitorTypeId)
+	err = sess.Find(&typeSettings)
+	if err != nil {
+		return nil
+	}
+
+	// push the typeSettings into a Map with the variable name as key
+	settingMap := make(map[string]*m.MonitorTypeSetting)
+	for _, s := range typeSettings {
+		settingMap[s.Variable] = s
+	}
+
+	//validate the settings.
+	seenMetrics := make(map[string]bool)
+	for _, v := range cmd.Settings {
+		def, ok := settingMap[v.Variable]
+		if ok != true {
+			log.Info("Unkown variable %s passed.", v.Variable)
+			return m.ErrMonitorSettingsInvalid
 		}
+		//TODO:(awoods) make sure the value meets the definition.
+		seenMetrics[def.Variable] = true
+		log.Info("%s present in settings", def.Variable)
+	}
 
-		if len(filtered_collectors) < len(cmd.CollectorIds) {
-			return m.ErrMonitorCollectorsInvalid
-		}
-
-		//get settings definition for thie monitorType.
-		var typeSettings []*m.MonitorTypeSetting
-		sess.Table("monitor_type_setting")
-		sess.Where("monitor_type_id=?", cmd.MonitorTypeId)
-		err = sess.Find(&typeSettings)
-		if err != nil {
-			return nil
-		}
-
-		// push the typeSettings into a Map with the variable name as key
-		settingMap := make(map[string]*m.MonitorTypeSetting)
-		for _, s := range typeSettings {
-			settingMap[s.Variable] = s
-		}
-
-		//validate the settings.
-		seenMetrics := make(map[string]bool)
-		for _, v := range cmd.Settings {
-			def, ok := settingMap[v.Variable]
-			if ok != true {
-				log.Info("Unkown variable %s passed.", v.Variable)
+	//make sure all required variables were provided.
+	//add defaults for missing optional variables.
+	for k, s := range settingMap {
+		if _, ok := seenMetrics[k]; ok != true {
+			log.Info("%s not in settings", k)
+			if s.Required {
+				// required setting variable missing.
 				return m.ErrMonitorSettingsInvalid
 			}
-			//TODO:(awoods) make sure the value meets the definition.
-			seenMetrics[def.Variable] = true
-			log.Info("%s present in settings", def.Variable)
+			cmd.Settings = append(cmd.Settings, &m.MonitorSettingDTO{
+				Variable: k,
+				Value:    s.DefaultValue,
+			})
 		}
+	}
 
-		//make sure all required variables were provided.
-		//add defaults for missing optional variables.
-		for k, s := range settingMap {
-			if _, ok := seenMetrics[k]; ok != true {
-				log.Info("%s not in settings", k)
-				if s.Required {
-					// required setting variable missing.
-					return m.ErrMonitorSettingsInvalid
-				}
-				cmd.Settings = append(cmd.Settings, &m.MonitorSettingDTO{
-					Variable: k,
-					Value:    s.DefaultValue,
-				})
+	if cmd.Namespace == "" {
+		label := strings.ToLower(endpointQuery.Result.Name)
+		re := regexp.MustCompile("[^\\w-]+")
+		re2 := regexp.MustCompile("\\s")
+		slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
+		cmd.Namespace = slug
+	}
+
+	mon := &m.Monitor{
+		EndpointId:    cmd.EndpointId,
+		OrgId:         cmd.OrgId,
+		Namespace:     cmd.Namespace,
+		MonitorTypeId: cmd.MonitorTypeId,
+		Offset:        rand.Int63n(cmd.Frequency - 1),
+		Settings:      cmd.Settings,
+		Created:       time.Now(),
+		Updated:       time.Now(),
+		Frequency:     cmd.Frequency,
+		Enabled:       cmd.Enabled,
+		State:         -1,
+		StateChange:   time.Now(),
+	}
+
+	if _, err := sess.Insert(mon); err != nil {
+		return err
+	}
+
+	if len(cmd.CollectorIds) > 0 {
+		monitor_collectors := make([]*m.MonitorCollector, len(cmd.CollectorIds))
+		for i, l := range cmd.CollectorIds {
+			monitor_collectors[i] = &m.MonitorCollector{
+				MonitorId:   mon.Id,
+				CollectorId: l,
 			}
 		}
-
-		if cmd.Namespace == "" {
-			label := strings.ToLower(endpointQuery.Result.Name)
-			re := regexp.MustCompile("[^\\w-]+")
-			re2 := regexp.MustCompile("\\s")
-			slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
-			cmd.Namespace = slug
-		}
-
-		mon := &m.Monitor{
-			EndpointId:    cmd.EndpointId,
-			OrgId:         cmd.OrgId,
-			Namespace:     cmd.Namespace,
-			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        rand.Int63n(cmd.Frequency - 1),
-			Settings:      cmd.Settings,
-			Created:       time.Now(),
-			Updated:       time.Now(),
-			Frequency:     cmd.Frequency,
-			Enabled:       cmd.Enabled,
-			State:         -1,
-			StateChange:   time.Now(),
-		}
-
-		if _, err := sess.Insert(mon); err != nil {
+		sess.Table("monitor_collector")
+		if _, err := sess.Insert(&monitor_collectors); err != nil {
 			return err
 		}
+	}
 
-		if len(cmd.CollectorIds) > 0 {
-			monitor_collectors := make([]*m.MonitorCollector, len(cmd.CollectorIds))
-			for i, l := range cmd.CollectorIds {
-				monitor_collectors[i] = &m.MonitorCollector{
-					MonitorId:   mon.Id,
-					CollectorId: l,
-				}
-			}
-			sess.Table("monitor_collector")
-			if _, err := sess.Insert(&monitor_collectors); err != nil {
-				return err
+	if len(cmd.CollectorTags) > 0 {
+		monitor_collector_tags := make([]*m.MonitorCollectorTag, len(cmd.CollectorTags))
+		for i, t := range cmd.CollectorTags {
+			monitor_collector_tags[i] = &m.MonitorCollectorTag{
+				MonitorId: mon.Id,
+				Tag:       t,
 			}
 		}
 
-		if len(cmd.CollectorTags) > 0 {
-			monitor_collector_tags := make([]*m.MonitorCollectorTag, len(cmd.CollectorTags))
-			for i, t := range cmd.CollectorTags {
-				monitor_collector_tags[i] = &m.MonitorCollectorTag{
-					MonitorId: mon.Id,
-					Tag:       t,
-				}
-			}
-
-			sess.Table("monitor_collector_tag")
-			if _, err := sess.Insert(&monitor_collector_tags); err != nil {
-				return err
-			}
-		}
-		// get collectorIds from tags
-		tagCollectors, err := getCollectorIdsFromTags(cmd.OrgId, cmd.CollectorTags, sess)
-		if err != nil {
+		sess.Table("monitor_collector_tag")
+		if _, err := sess.Insert(&monitor_collector_tags); err != nil {
 			return err
 		}
+	}
+	// get collectorIds from tags
+	tagCollectors, err := getCollectorIdsFromTags(cmd.OrgId, cmd.CollectorTags, sess)
+	if err != nil {
+		return err
+	}
 
-		collectorIdMap := make(map[int64]bool)
-		collectorList := make([]int64, 0)
-		for _, id := range cmd.CollectorIds {
-			collectorIdMap[id] = true
+	collectorIdMap := make(map[int64]bool)
+	collectorList := make([]int64, 0)
+	for _, id := range cmd.CollectorIds {
+		collectorIdMap[id] = true
+		collectorList = append(collectorList, id)
+	}
+
+	for _, id := range tagCollectors {
+		if _, ok := collectorIdMap[id]; !ok {
 			collectorList = append(collectorList, id)
 		}
+	}
 
-		for _, id := range tagCollectors {
-			if _, ok := collectorIdMap[id]; !ok {
-				collectorList = append(collectorList, id)
+	if len(collectorList) > 0 {
+		monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
+		for i, c := range collectorList {
+			monitor_collector_states[i] = &m.MonitorCollectorState{
+				OrgId:       mon.OrgId,
+				EndpointId:  mon.EndpointId,
+				MonitorId:   mon.Id,
+				CollectorId: c,
+				State:       -1,
+				Updated:     time.Now(),
 			}
 		}
-
-		if len(collectorList) > 0 {
-			monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
-			for i, c := range collectorList {
-				monitor_collector_states[i] = &m.MonitorCollectorState{
-					OrgId:       mon.OrgId,
-					EndpointId:  mon.EndpointId,
-					MonitorId:   mon.Id,
-					CollectorId: c,
-					State:       -1,
-					Updated:     time.Now(),
-				}
-			}
-			sess.Table("monitor_collector_state")
-			if _, err := sess.Insert(&monitor_collector_states); err != nil {
-				return err
-			}
+		sess.Table("monitor_collector_state")
+		if _, err := sess.Insert(&monitor_collector_states); err != nil {
+			return err
 		}
+	}
 
-		cmd.Result = &m.MonitorDTO{
+	cmd.Result = &m.MonitorDTO{
+		Id:            mon.Id,
+		EndpointId:    mon.EndpointId,
+		OrgId:         mon.OrgId,
+		Namespace:     mon.Namespace,
+		MonitorTypeId: mon.MonitorTypeId,
+		CollectorIds:  cmd.CollectorIds,
+		CollectorTags: cmd.CollectorTags,
+		Collectors:    collectorList,
+		Settings:      mon.Settings,
+		Frequency:     mon.Frequency,
+		Enabled:       mon.Enabled,
+		State:         mon.State,
+		StateChange:   mon.StateChange,
+		Offset:        mon.Offset,
+		Updated:       mon.Updated,
+	}
+	sess.publishAfterCommit(&events.MonitorCreated{
+		Timestamp: mon.Updated,
+		MonitorPayload: events.MonitorPayload{
 			Id:            mon.Id,
 			EndpointId:    mon.EndpointId,
 			OrgId:         mon.OrgId,
@@ -561,31 +584,11 @@ func AddMonitor(cmd *m.AddMonitorCommand) error {
 			Settings:      mon.Settings,
 			Frequency:     mon.Frequency,
 			Enabled:       mon.Enabled,
-			State:         mon.State,
-			StateChange:   mon.StateChange,
 			Offset:        mon.Offset,
 			Updated:       mon.Updated,
-		}
-		sess.publishAfterCommit(&events.MonitorCreated{
-			Timestamp: mon.Updated,
-			MonitorPayload: events.MonitorPayload{
-				Id:            mon.Id,
-				EndpointId:    mon.EndpointId,
-				OrgId:         mon.OrgId,
-				Namespace:     mon.Namespace,
-				MonitorTypeId: mon.MonitorTypeId,
-				CollectorIds:  cmd.CollectorIds,
-				CollectorTags: cmd.CollectorTags,
-				Collectors:    collectorList,
-				Settings:      mon.Settings,
-				Frequency:     mon.Frequency,
-				Enabled:       mon.Enabled,
-				Offset:        mon.Offset,
-				Updated:       mon.Updated,
-			},
-		})
-		return nil
+		},
 	})
+	return nil
 }
 
 func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
