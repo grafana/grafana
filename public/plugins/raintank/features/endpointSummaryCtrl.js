@@ -11,9 +11,11 @@ function (angular, _) {
     $scope.init = function() {
       $scope.endpoints = [];
       $scope.monitors = {};
+      $scope.monitor_health = {};
       $scope.monitor_types = {};
       $scope.monitor_types_by_name = {};
       $scope.endpoint = null;
+      $scope.refreshTime = new Date();
       $scope.getMonitorTypes();
       var promise = $scope.getEndpoints();
       promise.then(function() {
@@ -52,6 +54,16 @@ function (angular, _) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
             });
+          });
+          backendSrv.get('/api/endpoints/'+id+'/health').then(function(health) {
+            var healthByCheck = {};
+            _.forEach(health, function(checkState) {
+              if (!(checkState.monitor_id in healthByCheck)) {
+                healthByCheck[checkState.monitor_id] = [];
+              }
+              healthByCheck[checkState.monitor_id].push(checkState);
+            });
+            $scope.monitor_health = healthByCheck;
           });
         }
       });
@@ -115,7 +127,10 @@ function (angular, _) {
     $scope.gotoDashboard = function(endpoint) {
       $location.path("/dashboard/raintank/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
     }
-
+    $scope.refresh = function() {
+      $scope.getEndpoint($scope.endpoint.id);
+      $scope.refreshTime = new Date();
+    }
     $scope.init();
   });
 });

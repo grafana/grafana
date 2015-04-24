@@ -12,6 +12,12 @@ COLUMNS
           position: relative;
           transition: 0.15s;
         }
+        .detailFull {
+          width:  100%; // was 50% for 2 columns, changed to 1 col for now: TRW
+          float:left;
+          position: relative;
+          transition: 0.15s;
+        }
 
     .detailLeft {}
     .detailRight {}
@@ -204,9 +210,17 @@ raintank BOX
 }
 
 .currentStatus {
+  position:relative;
   display:block;
-  padding: 10px 20px;
+  padding: 10px 15px;
   border-bottom: 1px solid @bodyBackground;
+
+  .dashboard-icon {
+  font-size:@rt-fontSizeLarger;
+  color:@rt-light-gray;
+  margin-left:20px;
+  }
+
 }
 
 .currentStatus:last-child,
@@ -256,27 +270,40 @@ raintank BOX
   margin:0;
 }
 
- .health {
-  margin-bottom:10px;
- } 
-
- .health img {  
-  margin-right:5px; 
-  position: relative;
-  top:-5px;
-}
-
-.checkType {
-  width:70px; 
-  display:inline-block;
-  float:left;
-}
-
-.status {
-  display: inline-block;
-}
-
 .eventType {margin-left:5px;}
+
+.monitorState {}
+
+.status, .check, .frequency {
+  float:left;
+  margin-left:55px;
+}
+
+.check {
+  width:28%;
+  min-width:130px;
+  margin-bottom:13px;
+}
+
+
+.frequency {
+  margin-bottom: 10px;
+  clear: both;
+}
+
+.statusType {
+  float:left;
+  margin-right: 15px;
+  margin-bottom:8px;
+}
+
+
+.health {
+  width:40px; 
+  position: absolute;
+  top:12px;
+  left:15px;
+}
 
 
 .mainLink i, .mainLink i:visited{
@@ -286,7 +313,7 @@ raintank BOX
   transition: 0.15s; 
 }
 
-.mainLink i:hover, .mainLink i:active{
+.mainLink i:hover, .mainLink i:active {
   color: @white;  
   text-decoration:none;
 }
@@ -297,8 +324,61 @@ raintank BOX
   margin-left:5px;
 }
 
+/***********************************
+raintank TYPE
+***********************************/
+.refresh a:link, .refresh a:visited, .refresh a:hover, .refresh a:active { text-decoration:none;} // was underlineing on click.
+
+.checkType, .eventType {
+  font-size:16px;
+  font-weight:600;
+  color:@rt-light-gray;
+}
+
+
+.status {
+  font-size:14px;
+  font-weight:600;
+  .online, .warn, .critical, .nodata, .none {font-weight:900;}
+}
+
+.jumbo {font-weight:600;}
+
+.statusMsg, .freqMsg {font-size:14px; font-weight:300; color:@grayLight;}
+
+.online {
+  color: @online;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.warn {
+  color: @warn;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.disabled, .none {
+  color: @disabled;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.critical {
+  color: @critical;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nodata {
+  color: @nodata;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
 /******************************************
-FONTS
+RAINTANK ICON FONTS
 ******************************************/
 @font-face {
   font-family: 'raintank-icons';
@@ -425,55 +505,6 @@ i {
 }
 
 /***********************************
-raintank TYPE
-***********************************/
-
-.checkType, .eventType {
-  font-size:16px;
-  font-weight:600;
-}
-
-.jumbo {font-weight:600;}
-
-.status {
-font-size:20px;
-font-weight:600;
-}
-
-.statusMsg {font-size:12px; font-weight:300;}
-
-.online {
-  color: @online;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.warn {
-  color: @warn;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.disabled {
-  color: @disabled;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.critical {
-  color: @critical;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.nodata {
-  color: @nodata;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-
-/***********************************
 raintank POSITIONING
 ***********************************/
 
@@ -517,7 +548,7 @@ raintank BUTTONS
 .primaryCTA:visited{
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     color:#fff;
     background-color: @rt-blue;
     border: 1px solid @rt-blue;
@@ -540,7 +571,7 @@ raintank BUTTONS
 .secondaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     border: 1px solid @rt-blue;
     color: #13b2d4;
     border-radius: 2px;
@@ -571,7 +602,7 @@ raintank BUTTONS
 .tertiaryCTA:visited {
     display: inline-block;
     margin-bottom: 10px;
-    padding: 0.2em 1.4em;
+    padding: 0.1em 1.2em;
     border: 1px solid #999;
     color: #999;
     border-radius: 2px;
@@ -1084,6 +1115,29 @@ input[type="checkbox"]:checked+label {
   }
 }
 
+.rt-detail-pages {
+  padding-bottom: 30px;
+
+.bootstrap-tagsinput {
+  padding: 4px 0;
+}
+
+.tag-add-icon {
+  margin-left: 5px;
+}
+
+.bootstrap-tagsinput input {
+  display: inline;
+  margin-top: -2px;
+  width: auto;
+  }
+
+  .bootstrap-tagsinput .tag {
+  margin-right: 5px;
+  margin-bottom: 10px;
+  }
+}
+
 // Allow for dropdowns to go bottom up (aka, dropup-menu)
 // ------------------------------------------------------
 // Just add .dropup after the standard .dropdown class and you're set, bro.
@@ -1173,8 +1227,7 @@ input[type="checkbox"]:checked+label {
 
 .rt-page-header-area {
   display: block;
-  padding-top: 40px;
-  padding-bottom: 20px;
+  padding-top: 20px;
 }
 
 .rt-collapse{

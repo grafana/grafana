@@ -46,57 +46,52 @@ define([
     };
   });
 
-  module.directive("rtCheckHealth", function($compile, backendSrv) {
+  module.directive("rtCheckHealth", function($compile) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/checkHealth.html',
       scope: {
         model: "=",
       },
       link: function(scope, element) {
-        scope.$watch("model", function(check) {
-          if (typeof(check) == "object") {
-            showHealth(check);
+        scope.$watch("model", function(health) {
+          if (typeof(health) == "object") {
+            showHealth(health);
           }
         });
 
-        function showHealth(check) {
-          monitor_id = check.id;
-          if (!check.enabled) {
-            return;
-          }
-          backendSrv.get('/api/monitors/'+monitor_id+'/health').then(function(health) {
-            var tmpl = '';
-            var okCount = 0;
-            var warnCount = 0;
-            var errorCount = 0;
-            var unknownCount = 0;
-            _.forEach(health, function(checkState) {
-              if (checkState.state == -1) {
-                unknownCount++;
-                return
-              }
-              if (checkState.state == 0) {
-                okCount++;
-                return
-              }
-              if (checkState.state == 1) {
-                warnCount++;
-                return
-              }
-              if (checkState.state == 2) {
-                errorCount++;
-                return
-              }
-            });
-            scope.okCount = okCount;
-            scope.warnCount = warnCount;
-            scope.errorCount = errorCount;
-            scope.unknownCount = unknownCount;
+        function showHealth(health) {
+          var tmpl = '';
+          var okCount = 0;
+          var warnCount = 0;
+          var errorCount = 0;
+          var unknownCount = 0;
+          _.forEach(health, function(checkState) {
+            if (checkState.state == -1) {
+              unknownCount++;
+              return
+            }
+            if (checkState.state == 0) {
+              okCount++;
+              return
+            }
+            if (checkState.state == 1) {
+              warnCount++;
+              return
+            }
+            if (checkState.state == 2) {
+              errorCount++;
+              return
+            }
           });
+          scope.okCount = okCount;
+          scope.warnCount = warnCount;
+          scope.errorCount = errorCount;
+          scope.unknownCount = unknownCount;
         }
       }
     };
   });
+
   module.directive("rtEndpointHealth", function() {
     return {
       templateUrl: 'plugins/raintank/directives/partials/endpointHealth.html',

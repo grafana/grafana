@@ -1,12 +1,4 @@
-<div class="event" ng-show="okCount > 0">
-	<span class="rt-event-success">{{okCount}}</span> <span class="eventType">Ok</span>
-</div>
-<div class="event" ng-show="warnCount > 0">
-	<span class="rt-event-warning">{{warnCount}}</span> <span class="eventType">Warnings</span>
-</div>
-<div class="event" ng-show="errorCount > 0">
-	<span class="rt-event-error">{{errorCount}}</span> <span class="eventType">Errors</span> 
-</div>
-<div class="event" ng-show="unknownCount > 0">
-	<span class="rt-event-warning">{{unknownCount}}</span> <span class="eventType">Unknown</span>
-</div>
+<div class="statusType" ng-show="okCount >= 0">OK: <span class="online">{{okCount}}</span></div> 
+<div class="statusType" ng-show="warnCount >= 0">Warn: <span class="warn">{{warnCount}}</span></div>
+<div class="statusType" ng-show="errorCount >= 0">Error: <span class="critical">{{errorCount}}</span></div>
+<div class="statusType" ng-show="unknownCount >= 0">Unknown: <span class="none">{{unknownCount}}</span></div>
