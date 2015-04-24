@@ -13,7 +13,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-// Package session a middleware that provides the session manager of Macaron.
+// Package session a middleware that provides the session management of Macaron.
 package session
 
 // NOTE: last sync 000033e on Nov 4, 2014.
@@ -28,7 +28,7 @@ import (
 	"github.com/Unknwon/macaron"
 )
 
-const _VERSION = "0.1.1"
+const _VERSION = "0.1.6"
 
 func Version() string {
 	return _VERSION
@@ -37,11 +37,11 @@ func Version() string {
 // RawStore is the interface that operates the session data.
 type RawStore interface {
 	// Set sets value to given key in session.
-	Set(key, value interface{}) error
+	Set(interface{}, interface{}) error
 	// Get gets value by given key in session.
-	Get(key interface{}) interface{}
-	// Delete delete a key from session.
-	Delete(key interface{}) error
+	Get(interface{}) interface{}
+	// Delete deletes a key from session.
+	Delete(interface{}) error
 	// ID returns current session ID.
 	ID() string
 	// Release releases session resource and save data to provider.
@@ -54,7 +54,7 @@ type RawStore interface {
 type Store interface {
 	RawStore
 	// Read returns raw session store by session ID.
-	Read(sid string) (RawStore, error)
+	Read(string) (RawStore, error)
 	// Destory deletes a session.
 	Destory(*macaron.Context) error
 	// RegenerateId regenerates a session store from old session ID to new one.
@@ -111,7 +111,7 @@ func prepareOptions(options []Options) Options {
 	if len(opt.Provider) == 0 {
 		opt.Provider = sec.Key("PROVIDER").MustString("memory")
 	}
-	if len(opt.ProviderConfig) == 0 && opt.Provider == "file" {
+	if len(opt.ProviderConfig) == 0 {
 		opt.ProviderConfig = sec.Key("PROVIDER_CONFIG").MustString("data/sessions")
 	}
 	if len(opt.CookieName) == 0 {
@@ -155,7 +155,7 @@ func Sessioner(options ...Options) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		sess, err := manager.Start(ctx)
 		if err != nil {
-			panic("session: " + err.Error())
+			panic("session(start): " + err.Error())
 		}
 
 		// Get flash.
@@ -187,8 +187,8 @@ func Sessioner(options ...Options) macaron.Handler {
 
 		ctx.Next()
 
-		if sess.Release() != nil {
-			panic("session: " + err.Error())
+		if err = sess.Release(); err != nil {
+			panic("session(release): " + err.Error())
 		}
 	}
 }
@@ -242,17 +242,14 @@ type Manager struct {
 func NewManager(name string, opt Options) (*Manager, error) {
 	p, ok := providers[name]
 	if !ok {
-		return nil, fmt.Errorf("session: unknown provider ‘%q’(forgotten import?)", name)
+		return nil, fmt.Errorf("session: unknown provider '%s'(forgotten import?)", name)
 	}
-	if err := p.Init(opt.Maxlifetime, opt.ProviderConfig); err != nil {
-		return nil, err
-	}
-	return &Manager{p, opt}, nil
+	return &Manager{p, opt}, p.Init(opt.Maxlifetime, opt.ProviderConfig)
 }
 
 // sessionId generates a new session ID with rand string, unix nano time, remote addr by hash function.
 func (m *Manager) sessionId() string {
-	return hex.EncodeToString(generateRandomKey(m.opt.IDLength))
+	return hex.EncodeToString(generateRandomKey(m.opt.IDLength / 2))
 }
 
 // Start starts a session by generating new one
@@ -315,16 +312,9 @@ func (m *Manager) Destory(ctx *macaron.Context) error {
 func (m *Manager) RegenerateId(ctx *macaron.Context) (sess RawStore, err error) {
 	sid := m.sessionId()
 	oldsid := ctx.GetCookie(m.opt.CookieName)
-	if len(oldsid) == 0 {
-		sess, err = m.provider.Read(oldsid)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		sess, err = m.provider.Regenerate(oldsid, sid)
-		if err != nil {
-			return nil, err
-		}
+	sess, err = m.provider.Regenerate(oldsid, sid)
+	if err != nil {
+		return nil, err
 	}
 	ck := &http.Cookie{
 		Name:     m.opt.CookieName,

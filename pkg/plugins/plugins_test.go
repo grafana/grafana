@@ -10,7 +10,7 @@ import (
 func TestPluginScans(t *testing.T) {
 
 	Convey("When scaning for plugins", t, func() {
-		path, _ := filepath.Abs("../../src/app/plugins")
+		path, _ := filepath.Abs("../../public/app/plugins")
 		err := scan(path)
 
 		So(err, ShouldBeNil)

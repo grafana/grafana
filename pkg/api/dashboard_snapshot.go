@@ -65,7 +65,11 @@ func GetDashboardSnapshot(c *middleware.Context) {
 
 	dto := dtos.Dashboard{
 		Model: snapshot.Dashboard,
-		Meta:  dtos.DashboardMeta{IsSnapshot: true},
+		Meta: dtos.DashboardMeta{
+			IsSnapshot: true,
+			Created:    snapshot.Created,
+			Expires:    snapshot.Expires,
+		},
 	}
 
 	metrics.M_Api_Dashboard_Snapshot_Get.Inc(1)

@@ -94,4 +94,3 @@ func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
 
 	c.JsonOK("Monitor updated")
 }
-

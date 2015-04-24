@@ -17,6 +17,8 @@ package session
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -25,16 +27,25 @@ import (
 	"github.com/macaron-contrib/session"
 )
 
-// MysqlSessionStore represents a mysql session store implementation.
-type MysqlSessionStore struct {
+// MysqlStore represents a mysql session store implementation.
+type MysqlStore struct {
 	c    *sql.DB
 	sid  string
 	lock sync.RWMutex
 	data map[interface{}]interface{}
 }
 
+// NewMysqlStore creates and returns a mysql session store.
+func NewMysqlStore(c *sql.DB, sid string, kv map[interface{}]interface{}) *MysqlStore {
+	return &MysqlStore{
+		c:    c,
+		sid:  sid,
+		data: kv,
+	}
+}
+
 // Set sets value to given key in session.
-func (s *MysqlSessionStore) Set(key, val interface{}) error {
+func (s *MysqlStore) Set(key, val interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -43,7 +54,7 @@ func (s *MysqlSessionStore) Set(key, val interface{}) error {
 }
 
 // Get gets value by given key in session.
-func (s *MysqlSessionStore) Get(key interface{}) interface{} {
+func (s *MysqlStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -51,7 +62,7 @@ func (s *MysqlSessionStore) Get(key interface{}) interface{} {
 }
 
 // Delete delete a key from session.
-func (s *MysqlSessionStore) Delete(key interface{}) error {
+func (s *MysqlStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -60,24 +71,24 @@ func (s *MysqlSessionStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *MysqlSessionStore) ID() string {
+func (s *MysqlStore) ID() string {
 	return s.sid
 }
 
 // Release releases resource and save data to provider.
-func (s *MysqlSessionStore) Release() error {
-	defer s.c.Close()
+func (s *MysqlStore) Release() error {
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err
 	}
-	_, err = s.c.Exec("UPDATE session set `session_data`=?, `session_expiry`=? where session_key=?",
+
+	_, err = s.c.Exec("UPDATE session SET data=?, expiry=? WHERE `key`=?",
 		data, time.Now().Unix(), s.sid)
 	return err
 }
 
 // Flush deletes all session data.
-func (s *MysqlSessionStore) Flush() error {
+func (s *MysqlStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -87,113 +98,96 @@ func (s *MysqlSessionStore) Flush() error {
 
 // MysqlProvider represents a mysql session provider implementation.
 type MysqlProvider struct {
-	maxlifetime int64
-	connStr     string
+	c      *sql.DB
+	expire int64
 }
 
-func (p *MysqlProvider) connectInit() *sql.DB {
-	db, e := sql.Open("mysql", p.connStr)
-	if e != nil {
-		return nil
+// Init initializes mysql session provider.
+// connStr: username:password@protocol(address)/dbname?param=value
+func (p *MysqlProvider) Init(expire int64, connStr string) (err error) {
+	p.expire = expire
+
+	p.c, err = sql.Open("mysql", connStr)
+	if err != nil {
+		return err
 	}
-	return db
-}
-
-// Init initializes memory session provider.
-func (p *MysqlProvider) Init(maxlifetime int64, connStr string) error {
-	p.maxlifetime = maxlifetime
-	p.connStr = connStr
-	return nil
+	return p.c.Ping()
 }
 
 // Read returns raw session store by session ID.
 func (p *MysqlProvider) Read(sid string) (session.RawStore, error) {
-	c := p.connectInit()
-	row := c.QueryRow("select session_data from session where session_key=?", sid)
-	var sessiondata []byte
-	err := row.Scan(&sessiondata)
+	var data []byte
+	err := p.c.QueryRow("SELECT data FROM session WHERE `key`=?", sid).Scan(&data)
 	if err == sql.ErrNoRows {
-		c.Exec("insert into session(`session_key`,`session_data`,`session_expiry`) values(?,?,?)",
+		_, err = p.c.Exec("INSERT INTO session(`key`,data,expiry) VALUES(?,?,?)",
 			sid, "", time.Now().Unix())
 	}
+	if err != nil {
+		return nil, err
+	}
+
 	var kv map[interface{}]interface{}
-	if len(sessiondata) == 0 {
+	if len(data) == 0 {
 		kv = make(map[interface{}]interface{})
 	} else {
-		kv, err = session.DecodeGob(sessiondata)
+		kv, err = session.DecodeGob(data)
 		if err != nil {
 			return nil, err
 		}
 	}
-	rs := &MysqlSessionStore{c: c, sid: sid, data: kv}
-	return rs, nil
+
+	return NewMysqlStore(p.c, sid, kv), nil
 }
 
 // Exist returns true if session with given ID exists.
 func (p *MysqlProvider) Exist(sid string) bool {
-	c := p.connectInit()
-	defer c.Close()
-
-	row := c.QueryRow("select session_data from session where session_key=?", sid)
-	var sessiondata []byte
-	err := row.Scan(&sessiondata)
-	if err == sql.ErrNoRows {
-		return false
-	} else {
-		return true
+	var data []byte
+	err := p.c.QueryRow("SELECT data FROM session WHERE `key`=?", sid).Scan(&data)
+	if err != nil && err != sql.ErrNoRows {
+		panic("session/mysql: error checking existence: " + err.Error())
 	}
+	return err != sql.ErrNoRows
 }
 
 // Destory deletes a session by session ID.
-func (p *MysqlProvider) Destory(sid string) (err error) {
-	c := p.connectInit()
-	if _, err = c.Exec("DELETE FROM session where session_key=?", sid); err != nil {
-		return err
-	}
-	return c.Close()
+func (p *MysqlProvider) Destory(sid string) error {
+	_, err := p.c.Exec("DELETE FROM session WHERE `key`=?", sid)
+	return err
 }
 
 // Regenerate regenerates a session store from old session ID to new one.
-func (p *MysqlProvider) Regenerate(oldsid, sid string) (session.RawStore, error) {
-	c := p.connectInit()
-	row := c.QueryRow("select session_data from session where session_key=?", oldsid)
-	var sessiondata []byte
-	err := row.Scan(&sessiondata)
-	if err == sql.ErrNoRows {
-		c.Exec("insert into session(`session_key`,`session_data`,`session_expiry`) values(?,?,?)", oldsid, "", time.Now().Unix())
+func (p *MysqlProvider) Regenerate(oldsid, sid string) (_ session.RawStore, err error) {
+	if p.Exist(sid) {
+		return nil, fmt.Errorf("new sid '%s' already exists", sid)
 	}
-	c.Exec("update session set `session_key`=? where session_key=?", sid, oldsid)
-	var kv map[interface{}]interface{}
-	if len(sessiondata) == 0 {
-		kv = make(map[interface{}]interface{})
-	} else {
-		kv, err = session.DecodeGob(sessiondata)
-		if err != nil {
+
+	if !p.Exist(oldsid) {
+		if _, err = p.c.Exec("INSERT INTO session(`key`,data,expiry) VALUES(?,?,?)",
+			oldsid, "", time.Now().Unix()); err != nil {
 			return nil, err
 		}
 	}
-	rs := &MysqlSessionStore{c: c, sid: sid, data: kv}
-	return rs, nil
+
+	if _, err = p.c.Exec("UPDATE session SET `key`=? WHERE `key`=?", sid, oldsid); err != nil {
+		return nil, err
+	}
+
+	return p.Read(sid)
 }
 
 // Count counts and returns number of sessions.
-func (p *MysqlProvider) Count() int {
-	c := p.connectInit()
-	defer c.Close()
-
-	var total int
-	err := c.QueryRow("SELECT count(*) as num from session").Scan(&total)
-	if err != nil {
-		return 0
+func (p *MysqlProvider) Count() (total int) {
+	if err := p.c.QueryRow("SELECT COUNT(*) AS NUM FROM session").Scan(&total); err != nil {
+		panic("session/mysql: error counting records: " + err.Error())
 	}
 	return total
 }
 
 // GC calls GC to clean expired sessions.
-func (mp *MysqlProvider) GC() {
-	c := mp.connectInit()
-	c.Exec("DELETE from session where session_expiry < ?", time.Now().Unix()-mp.maxlifetime)
-	c.Close()
+func (p *MysqlProvider) GC() {
+	if _, err := p.c.Exec("DELETE FROM session WHERE UNIX_TIMESTAMP(NOW()) - expiry > ?", p.expire); err != nil {
+		log.Printf("session/mysql: error garbage collecting: %v", err)
+	}
 }
 
 func init() {
