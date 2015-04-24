@@ -4,14 +4,14 @@ define([
   'lodash',
   'require',
   'components/panelmeta',
-  './table',
-  './pagingControl',
+  'panels/table/table',
+  'panels/table/pagingControl',
   '../../../directives/coloring'
 ],
 function (angular, app, _, require, PanelMeta) {
   'use strict';
 
-  var module = angular.module('grafana.panels.table', []);
+  var module = angular.module('grafana.panels.table.timeseries', []);
   app.useModule(module);
 
   module.directive('grafanaPanelTableTime', function() {

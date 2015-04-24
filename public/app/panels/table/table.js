@@ -263,6 +263,16 @@ define([
           }
 
           function getCellColorStyle(value, columnIndex) {
+            function getColorForValue(value) {
+              for (var i = coloring.thresholdValues.length - 1; i >= 0; i--) {
+                if (value >= coloring.thresholdValues[i]) {
+                  return coloring.colors[i];
+                }
+              }
+
+              return null;
+            }
+
             var styleHtml = '';
             var targetIndex = columnIndex - 1; // first column is reference column (timeseries or aggregate)
             // and should not be highlighted with colors
@@ -287,16 +297,6 @@ define([
               }
             }
             return styleHtml;
-
-            function getColorForValue(value) {
-              for (var i = coloring.thresholdValues.length - 1; i >= 0; i--) {
-                if (value >= coloring.thresholdValues[i]) {
-                  return coloring.colors[i];
-                }
-              }
-
-              return null;
-            }
           }
 
           function getFormattedValue(value, columnIndex) {
@@ -315,7 +315,6 @@ define([
 
             return value;
           }
-
 
           function shouldAbortRender(isHeightSet) {
             if (!data) {

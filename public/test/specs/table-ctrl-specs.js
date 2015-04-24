@@ -9,7 +9,7 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(module('grafana.panels.table'));
+    beforeEach(module('grafana.panels.table.timeseries'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('TableTimePanelCtrl'));
 
@@ -28,7 +28,6 @@ define([
               [500, 1428422180400]
             ]
           },
-
           {
             target: 'Col2',
             datapoints: [
@@ -73,11 +72,11 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(module('grafana.panels.table'));
+    beforeEach(module('grafana.panels.table.rag'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('TableRagPanelCtrl'));
 
-    if('should transform the data returned by the datasource correctly' ,function() {
+    it('should transform the data returned by the datasource correctly', function() {
 
       // target name is composed of the series name and the object version of the grouped by tag
       var datasourceInput = {
@@ -105,11 +104,10 @@ define([
       };
 
       expect(ctx.scope.tableData.columnOrder).to.eql(expectedResult.columnOrder);
-      expect(ctx.scope.tableData.values[0]).to.eql(200);
-      expect(ctx.scope.tableData.values[1]).to.eql(234);
+      expect(ctx.scope.tableData.values[0].value).to.eql(200);
+      expect(ctx.scope.tableData.values[1].value).to.eql(234);
     });
   });
-
 
 });
 

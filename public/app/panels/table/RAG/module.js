@@ -4,14 +4,14 @@ define([
   'lodash',
   'require',
   'components/panelmeta',
-  './table',
-  './pagingControl',
+  'panels/table/table',
+  'panels/table/pagingControl',
   '../../../directives/coloring'
 ],
   function (angular, app, _, require, PanelMeta) {
     'use strict';
 
-    var module = angular.module('grafana.panels.table', []);
+    var module = angular.module('grafana.panels.table.rag', []);
     app.useModule(module);
 
     module.directive('grafanaPanelTableRag', function() {
@@ -87,7 +87,12 @@ define([
        * @returns {{values: Array, columnOrder: Array}}
        */
       function dataTransform(results) {
-        var rowNames = _.map(results, function(queryResult) { return getTagName(queryResult.target); });
+        function getTagName(rawName) {
+          var tagRegex = /\{.*?: ?(.*?)\}/g;
+          var match = tagRegex.exec(rawName);
+          return match !== null ? match[1] : rawName;
+        }
+
         var rowValues = _.map(results, function(queryResult) {
           var curRowName = getTagName(queryResult.target);
           var rowData = queryResult.datapoints[0]; // each grouped row will only have one array of datapoints (for now)
@@ -97,14 +102,8 @@ define([
 
         return {
           values: rowValues,
-          columnOrder: [ 'tagName', 'value' ]
+          columnOrder: ['tagName', 'value']
         };
-
-        function getTagName(rawName) {
-          var tagRegex = /\{.*?: ?(.*?)\}/g
-          var match = tagRegex.exec(rawName);
-          return match !== null ? match[1] : rawName;
-        }
       }
     });
   });
