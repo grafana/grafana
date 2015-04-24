@@ -22,8 +22,8 @@
 		</div>
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}} Up</a> | 
-					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}} Down</a> 
+					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}} ONLINE</a> | 
+					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}} OFFLINE</a> 
 			</div>
 			<div class="editor-option" style="float: right;">
 				<span class="small">Sort By:</span>
@@ -33,7 +33,7 @@
 		</div>
 	</div>
 </div>
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 	<div ng-if="collectors.length === 0">
 		<em>No collectors defined</em>
 	</div>
@@ -86,7 +86,7 @@
 			</span>
 		<div style="margin-left: 10px;">
 			<p style="margin:2px 0 0 0;">
-			<span class="rt-list-collector-status-{{collector.online?'online':'offline'}}">{{collector.online?"Online":"Offline"}}</span>
+			<span class="rt-list-collector-status-{{collector.online?'online':'offline'}}">{{collector.online?"ONLINE":"OFFLINE"}}</span>
 			<!--<span class="rt-list-collector-since">for 12 days</span>-->
 			</p>
 		</div>
