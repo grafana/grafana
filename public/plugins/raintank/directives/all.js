@@ -17,11 +17,11 @@ define([
       replace: true,
       link: function(scope,element, attrs) {
         var tmpl;
-        
+
         if (scope.target.value == null) {
           scope.target.value = scope.definition.default_value;
         }
-        
+
         switch (scope.definition.data_type) {
           case 'String':
             tmpl = '<label class="small">{{definition.description}}</label>';
@@ -52,7 +52,7 @@ define([
             tmpl = '<label class="small">{{definition.description}}</label>';
             tmpl += '<input type="text" placeholder="{{definition.description}} : {{definition.data_type}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
         }
-        
+
         element.html(tmpl);
         $compile(element.contents())(scope);
       }
