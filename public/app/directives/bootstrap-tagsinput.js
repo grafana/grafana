@@ -23,7 +23,7 @@ function (angular, $) {
           return item[property];
         };
       }
-      
+
       function djb2(str) {
         var hash = 5381;
         for (var i = 0; i < str.length; i++) {
@@ -90,7 +90,9 @@ function (angular, $) {
           select.on('itemAdded', function(event) {
             if (scope.model.indexOf(event.item) === -1) {
               scope.model.push(event.item);
-              var tagElement = select.next().children("span").filter(function(){ return $(this).text() === event.item;});
+              var tagElement = select.next().children("span").filter(function() {
+                return $(this).text() === event.item;
+              });
               setColor(event.item, tagElement);
               if (angular.isFunction(scope.onUpdate)) {
                 scope.onUpdate(scope.model);
