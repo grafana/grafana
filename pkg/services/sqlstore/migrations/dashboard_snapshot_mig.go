@@ -49,9 +49,4 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	mg.AddMigration("create dashboard_snapshot table v5 #2", NewAddTableMigration(snapshotV5))
 	addTableIndicesMigrations(mg, "v5", snapshotV5)
 
-	// ncrease data type
-	mg.AddMigration("alter dashboard_snapshot.data to mediumtext v1", new(RawSqlMigration).
-		Sqlite("SELECT 0 WHERE 0;").
-		Postgres("SELECT 0;").
-		Mysql("ALTER TABLE dashboard_snapshot MODIFY data MEDIUMTEXT;"))
 }
