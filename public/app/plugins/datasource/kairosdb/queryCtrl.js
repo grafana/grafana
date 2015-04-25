@@ -7,7 +7,6 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
   var metricList = null;
-  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
   module.controller('KairosDBQueryCtrl', function($scope) {
 
@@ -24,7 +23,6 @@ function (angular, _) {
         $scope.target.downsampling = $scope.panel.downsampling;
         $scope.target.sampling = $scope.panel.sampling;
       }
-      $scope.targetLetters = targetLetters;
       $scope.updateMetricList();
       $scope.target.errors = validateTarget($scope.target);
     };
