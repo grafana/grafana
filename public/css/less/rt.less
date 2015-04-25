@@ -1,10 +1,10 @@
 html {-webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing: grayscale;} /* make type beautiful*/
+      -moz-osx-font-smoothing: grayscale;} /* make type beautiful */
 
 /***********************************
 COLUMNS
 ***********************************/
-  .detailContainer {min-width:400px; max-width:1320px; margin: 20px 0;}
+  .detailContainer {min-width:400px; max-width:1020px; margin: 20px 0;}
 
     .detailColumn {
           width:  50%;
@@ -41,7 +41,7 @@ div.rt-modal-override {
   position: absolute;
 }
 
-  .modalContainer {min-width:200px; max-width:1320px;}
+  .modalContainer {min-width:200px; max-width:1020px;}
 
   .summary-tab {
     padding-top: 10px;
@@ -287,20 +287,18 @@ ul.rt-modal-ul {
 
 .monitorState {}
 
-.status, .check, .frequency {
+.status, .check {
   float:left;
   margin-left:55px;
 }
 
 .check {
-  width:28%;
+  width:25%;
   min-width:130px;
   margin-bottom:13px;
 }
 
-
 .frequency {
-  margin-bottom: 10px;
   clear: both;
 }
 
@@ -310,6 +308,8 @@ ul.rt-modal-ul {
   margin-bottom:8px;
 }
 
+.checkType {display:block;}
+
 
 .health {
   width:40px; 
@@ -318,6 +318,7 @@ ul.rt-modal-ul {
   left:15px;
 }
 
+.refresh {padding-top:15px;}
 
 .mainLink i, .mainLink i:visited{
   -moz-color: -moz-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
@@ -348,16 +349,18 @@ raintank TYPE
   color:@rt-light-gray;
 }
 
-
 .status {
   font-size:14px;
   font-weight:600;
   .online, .warn, .critical, .nodata, .none {font-weight:900;}
 }
 
+.checkTime {color:@rt-med-gray}
+
 .jumbo {font-weight:600;}
 
-.statusMsg, .freqMsg {font-size:14px; font-weight:300; color:@grayLight;}
+.frequency {color:@rt-med-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:300;}
 
 .online {
   color: @online;

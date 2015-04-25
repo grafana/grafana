@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gosimple/slug"
+	"github.com/dalu/slug"
 )
 
 // Typed errors

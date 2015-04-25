@@ -219,7 +219,7 @@ set to true, any user successfully authenticating via google auth will be automa
 ## [session]
 
 ### provider
-Valid values are "memory", "file", "mysql", 'postgres'. Default is "memory".
+Valid values are "memory", "file", "mysql", 'postgres'. Default is "file".
 
 ### provider_config
 This option should be configured differently depending on what type of session provider you have configured.
