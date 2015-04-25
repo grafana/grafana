@@ -1,0 +1,146 @@
+{
+  "id": 2,
+  "title": "Litmus Home",
+  "originalTitle": "Litmus Home",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "100px",
+      "panels": [
+        {
+          "content": "</br>\n<div class=\"rt-dashboard-h1\">LITMUS</div>\n<span style=\"display: inline; margin-left: 20px;\">by <img src=\"img/raintank_wordmark_white.svg\" width=\"100\" style=\"opacity: 0.85; vertical-align: sub;\"></span>",
+          "editable": true,
+          "error": false,
+          "id": 1,
+          "links": [],
+          "mode": "html",
+          "span": 12,
+          "style": {},
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        }
+      ],
+      "title": "Header Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "200px",
+      "panels": [
+        {
+          "content": "<h4>What is Litmus?</h4>\n<div style=\"width: 85%\">\n<p class=\"rt-dashboard-copy\"> Litmus allows you to monitor the network quality of anything from anywhere.</p>\n\n<p class=\"rt-dashboard-copy\"> Whether you have a simple blog or a globally distributed application, Litmus can help you analyze its performance and availability from around the world. </p>\n\n<p class=\"rt-dashboard-copy\"> Litmus is currently in restricted alpha. Your feedback is much appreciated and helps make it better. </p>\n",
+          "editable": true,
+          "error": false,
+          "id": 2,
+          "links": [],
+          "mode": "html",
+          "span": 6,
+          "style": {},
+          "title": "",
+          "type": "text"
+        },
+        {
+          "editable": true,
+          "error": false,
+          "id": 5,
+          "limit": 5,
+          "links": [],
+          "mode": "search",
+          "query": "litmus",
+          "span": 3,
+          "tag": "",
+          "title": "Endpoint Dashboards",
+          "type": "dashlist"
+        },
+        {
+          "editable": true,
+          "error": false,
+          "id": 6,
+          "limit": 5,
+          "links": [],
+          "mode": "search",
+          "query": "collector",
+          "span": 3,
+          "tag": "",
+          "title": "Collector Dashboards",
+          "type": "dashlist"
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "<h4>Getting the most out of Litmus</h4>\n<div class=\"rt-dash-flex-container\">\n<div class=\"rt-dash-flex-item\">\n     <div style=\"height:100px\">\n     <i class=\"fa-fw icon-rt-endpoint rt-dashboard-icons\"></i>\n     </div>\n     <h4>Add an endpoint</h4>\n     <p class=\"rt-dashboard-blurb\">An endpoint is anything you want to monitor - just need a fully qualified domain name.</p>\n     <button class=\"secondaryCTA\">New Endpoint</button>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\">\n<i class=\"fa fa-fw fa-users rt-dashboard-icons\" style=\"font-size: 85px;\"></i>\n</div>\n<h4>Invite your team</h4>\n<p class=\"rt-dashboard-blurb\">Litmus is more fun with others.  Invite team members, or share an invite to the beta.</p>\n<button class=\"secondaryCTA\">Add Users</button>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\">\n<i class=\"fa-fw icon-rt-datasources rt-dashboard-icons\"></i></div>\n<h4>Connect data sources</h4>\n<p class=\"rt-dashboard-blurb\">Our data is great. Your data is great. They should be together?</p>\n<button class=\"secondaryCTA\">Add Data Source</button>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\"><i class=\"fa-fw icon-rt-collector rt-dashboard-icons\"></i></div>\n<h4>Deploy collectors</h4>\n<p class=\"rt-dashboard-blurb\">Deploy private collectors worldwide.</p>\n<button class=\"secondaryCTA\">New Collector</button>\n</div>",
+          "editable": true,
+          "error": false,
+          "id": 4,
+          "links": [],
+          "mode": "html",
+          "span": 12,
+          "style": {},
+          "title": "",
+          "transparent": false,
+          "type": "text"
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "nav": [
+    {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "schemaVersion": 6,
+  "version": 50
+}
