@@ -53,5 +53,5 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	mg.AddMigration("alter dashboard_snapshot.data to mediumtext v1", new(RawSqlMigration).
 		Sqlite("SELECT 0 WHERE 0;").
 		Postgres("SELECT 0;").
-		Mysql("ALTER TABLE dashboard_snapshot.data MODIFY data MEDIUMTEXT;"))
+		Mysql("ALTER TABLE dashboard_snapshot MODIFY data MEDIUMTEXT;"))
 }
