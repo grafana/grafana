@@ -29,11 +29,24 @@ function (angular, _, kbn) {
         var variable = this.variables[i];
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
+          var promise;
+          if (variable.refresh) {
+            var self = this;
+            //refresh the list of options before setting the value
+            promise = this.updateOptions(variable).then(function() {
+              var option = _.findWhere(variable.options, { text: urlValue });
+              option = option || { text: urlValue, value: urlValue };
 
-          var promise = this.setVariableValue(variable, option);
-          this.updateAutoInterval(variable);
+              self.updateAutoInterval(variable);
+              return self.setVariableValue(variable, option);
+            });
+          } else {
+            var option = _.findWhere(variable.options, { text: urlValue });
+            option = option || { text: urlValue, value: urlValue };
+
+            var promise = this.setVariableValue(variable, option);
+            this.updateAutoInterval(variable);
+          }
 
           promises.push(promise);
         }
