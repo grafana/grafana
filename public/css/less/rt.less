@@ -1,10 +1,10 @@
 html {-webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing: grayscale;} /* make type beautiful*/
+      -moz-osx-font-smoothing: grayscale;} /* make type beautiful */
 
 /***********************************
 COLUMNS
 ***********************************/
-  .detailContainer {min-width:400px; max-width:1320px; margin: 20px 0;}
+  .detailContainer {min-width:400px; max-width:1020px; margin: 20px 0;}
 
     .detailColumn {
           width:  50%;
@@ -41,7 +41,7 @@ div.rt-modal-override {
   position: absolute;
 }
 
-  .modalContainer {min-width:200px; max-width:1320px;}
+  .modalContainer {min-width:200px; max-width:1020px;}
 
   .summary-tab {
     padding-top: 10px;
@@ -274,20 +274,18 @@ raintank BOX
 
 .monitorState {}
 
-.status, .check, .frequency {
+.status, .check {
   float:left;
   margin-left:55px;
 }
 
 .check {
-  width:28%;
+  width:25%;
   min-width:130px;
   margin-bottom:13px;
 }
 
-
 .frequency {
-  margin-bottom: 10px;
   clear: both;
 }
 
@@ -297,6 +295,8 @@ raintank BOX
   margin-bottom:8px;
 }
 
+.checkType {display:block;}
+
 
 .health {
   width:40px; 
@@ -305,6 +305,7 @@ raintank BOX
   left:15px;
 }
 
+.refresh {padding-top:15px;}
 
 .mainLink i, .mainLink i:visited{
   -moz-color: -moz-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
@@ -335,16 +336,18 @@ raintank TYPE
   color:@rt-light-gray;
 }
 
-
 .status {
   font-size:14px;
   font-weight:600;
   .online, .warn, .critical, .nodata, .none {font-weight:900;}
 }
 
+.checkTime {color:@rt-med-gray}
+
 .jumbo {font-weight:600;}
 
-.statusMsg, .freqMsg {font-size:14px; font-weight:300; color:@grayLight;}
+.frequency {color:@rt-med-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:300;}
 
 .online {
   color: @online;
@@ -1450,4 +1453,46 @@ input[type="checkbox"]:checked+label {
 
 .modal-body .rt-btn{
   margin: 30px 0 40px 0;
+}
+
+
+/******************************************
+RAINTANK DASHBOARD STYLES
+******************************************/
+
+.rt-dashboard-h1 {
+    font-size: 60px;
+    font-weight:900;
+    letter-spacing: -1px;
+    color: #EEE;
+    display: inline;
+    padding-top: 20px;
+}
+
+p.rt-dashboard-copy {
+    font-size:14px;
+    color: #EEE;
+}
+
+.rt-dash-flex-container {
+     display: flex;
+     justify-content: space-around;
+     flex-direction: row;
+     margin-top: 50px;
+}
+
+.rt-dash-flex-item {
+     width: 200px;
+     mid-width: 200px;
+     text-align: center;
+}
+
+p.rt-dashboard-blurb{
+     font-size:14px;
+     color: #EEE;
+     min-height: 85px;
+}
+.rt-dashboard-icons {
+  color: @rt-primary;
+  font-size: 85px;
 }
