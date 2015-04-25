@@ -56,13 +56,21 @@ div.rt-modal-override {
 
     .modal-left-80-20 {
       width: 80%;
+      padding-bottom: 75px;
+
     }
     .modal-right-80-20 {
       width: 20%;
     }
 
+    .modal-left-100 {
+      width: 100%;
+      padding-bottom: 75px;
+    }
+
     .modal-left-equal {
       width: 50%;
+      padding-bottom: 10px;
     }
     .modal-right-equal {
       width: 50%;
@@ -129,6 +137,11 @@ raintank BOX
 .rt-modal-box-body {
   padding: 20px 0 20px 0;
   min-height: 150px;
+}
+
+ul.rt-modal-ul {
+  margin: 0 0 10px 0;
+  list-style: none;  
 }
 
 .no-padding {
@@ -375,7 +388,6 @@ raintank TYPE
   font-weight: 600;
   text-transform: uppercase;
 }
-
 
 /******************************************
 RAINTANK ICON FONTS
@@ -996,6 +1008,26 @@ input[type="checkbox"].rt-modal {
   display: none;
 }
 
+.rt-modal-input-styles{
+  label {
+  color: @grayDark;
+  }
+  select, 
+  textarea, 
+  input[type="text"] {
+  display: inline-block;
+  height: 20px;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 4;
+  font-size: @rt-fontSizeMed-1;
+  line-height: @baseLineHeight;
+  color: @white;
+  border: solid 1px @grayDark;
+  .border-radius(2px);
+  vertical-align: middle;
+  }
+}
+
 .editor-option label.rt-modal {
   display: inline-block;
   margin: 5px 0 1px 0;
@@ -1192,6 +1224,11 @@ input[type="checkbox"]:checked+label {
   color: @rt-primary;
 }
 
+.modal-body .variable-value-link {
+  color: @rt-primary;
+  font-size: @rt-fontSizeMed-2;
+}
+
 .modal-collector-select {
   color: @rt-dark-gray;
 }
@@ -1208,12 +1245,19 @@ input[type="checkbox"]:checked+label {
   font-style: italic;
 }
 
-.rt-modal-body-link {
-  &:link, &:visited {
+.rt-modal-tiny-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-2;
+  font-weight: 400;
+  float: right;
+  margin-right: 60px;
+  vertical-align: sub;
+}
+
+
+a.rt-modal-body-link {
     color: @rt-primary;   
     font-size: @rt-fontSizeMed-2;
-    color: @rt-primary;
-  }
   &:hover {color: lighten(@rt-primary, 10%);}
   } 
 
@@ -1451,3 +1495,47 @@ input[type="checkbox"]:checked+label {
 .modal-body .rt-btn{
   margin: 30px 0 40px 0;
 }
+
+
+/******************************************
+RAINTANK DASHBOARD STYLES
+******************************************/
+
+.rt-dashboard-h1 {
+    font-size: 60px;
+    font-weight:900;
+    letter-spacing: -1px;
+    color: #EEE;
+    display: inline;
+    padding-top: 20px;
+}
+
+p.rt-dashboard-copy {
+    font-size:14px;
+    color: #EEE;
+}
+
+.rt-dash-flex-container {
+     display: flex;
+     justify-content: space-around;
+     flex-direction: row;
+     margin-top: 50px;
+}
+
+.rt-dash-flex-item {
+     width: 200px;
+     mid-width: 200px;
+     text-align: center;
+}
+
+p.rt-dashboard-blurb{
+     font-size:14px;
+     color: #EEE;
+     min-height: 85px;
+}
+
+.rt-dashboard-icons {
+  color: @rt-primary;
+  font-size: 85px;
+}
+
