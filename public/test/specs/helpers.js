@@ -68,6 +68,7 @@ define([
     self.templateSrv = new TemplateSrvStub();
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
+    self.backendSrv = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
@@ -115,6 +116,12 @@ define([
     };
   }
 
+  function ContextSrvStub() {
+    this.hasRole = function() {
+      return true;
+    };
+  }
+
   function TemplateSrvStub() {
     this.variables = [];
     this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
@@ -134,6 +141,7 @@ define([
   return {
     ControllerTestContext: ControllerTestContext,
     TimeSrvStub: TimeSrvStub,
+    ContextSrvStub: ContextSrvStub,
     ServiceTestContext: ServiceTestContext
   };
 

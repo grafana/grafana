@@ -11,9 +11,7 @@ function (angular, _, config) {
   module.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
-    this.init = function(dsSettingList) {
-      config.datasources = dsSettingList;
-
+    this.init = function() {
       this.datasources = {};
       this.metricSources = [];
       this.annotationSources = [];
@@ -77,6 +75,6 @@ function (angular, _, config) {
       return this.metricSources;
     };
 
-    this.init(config.datasources);
+    this.init();
   });
 });

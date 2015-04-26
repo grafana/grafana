@@ -52,7 +52,7 @@ function (angular, _, kbn) {
       if (!variable.auto) { return; }
 
       // add auto option if missing
-      if (variable.options[0].text !== 'auto') {
+      if (variable.options.length && variable.options[0].text !== 'auto') {
         variable.options.unshift({ text: 'auto', value: '$__auto_interval' });
       }
 

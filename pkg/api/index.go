@@ -28,6 +28,11 @@ func setIndexViewData(c *middleware.Context) error {
 		currentUser.Name = currentUser.Login
 	}
 
+	themeUrlParam := c.Query("theme")
+	if themeUrlParam == "light" {
+		currentUser.LightTheme = true
+	}
+
 	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl

@@ -8,9 +8,9 @@ page_keywords: grafana, installation, migration, documentation
 
 Grafana 2.0 represents a major update to Grafana. It brings new capabilities, many of which are enabled by its new backend server and integrated database.
 
-The new backend lays a solid foundation that we hope to build on over the coming months. For the 2.0 release, it enables authentication as well as server-side sharing and rendering. 
+The new backend lays a solid foundation that we hope to build on over the coming months. For the 2.0 release, it enables authentication as well as server-side sharing and rendering.
 
-We've attempted to provide a smooth migration path for V1.9 users to migrate to Grafana 2.0. 
+We've attempted to provide a smooth migration path for V1.9 users to migrate to Grafana 2.0.
 
 ## Adding Data sources
 
@@ -18,9 +18,12 @@ The config.js file has been deprecated. Data sources are now managed via the UI 
 
 From here, you can add any Graphite, InfluxDB, elasticsearch, and OpenTSDB datasources that you were using with Grafana 1.x. Grafana 2.0 can be configured to communicate with your datasource using a backend mode which can eliminate many CORS-related issues, as well as provide more secure authentication to your datasources.
 
+> *Note* When you add your data sources please name them exacly as you named them in config.js in Grafana 1.x. That name is referenced by panels
+> , annotation and template queries. That way when you import your old dashboard they will work without any changes.
+
 ## Importing your existing dashboards
 
-Grafana 2.0 now has integrated dashboard storage engine that can be configured to use an internal sqlite database, MySQL, or Postgres. This eliminates the need to use Elasticsearch for dashboard storage for Graphite users. Grafana 2.0 does not support storing dashboards in InfluxDB. 
+Grafana 2.0 now has integrated dashboard storage engine that can be configured to use an internal sqlite database, MySQL, or Postgres. This eliminates the need to use Elasticsearch for dashboard storage for Graphite users. Grafana 2.0 does not support storing dashboards in InfluxDB.
 
 You can seamlessly import your existing dashboards.
 
@@ -47,7 +50,7 @@ and click the `Import` button.
 
 ![](/img/v2/migrate_dashboards.jpg)
 
-Your dashboards should be automatically imported into the Grafana 2.0 backend. 
+Your dashboards should be automatically imported into the Grafana 2.0 backend.
 
 Dashboards will no longer be stored in your previous elasticsearch or InfluxDB databases.
 

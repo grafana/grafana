@@ -16,12 +16,7 @@ function (angular, _, config) {
       $scope.inspector = {};
 
       $scope.editPanel = function() {
-        if ($scope.panelMeta.fullscreen) {
-          $scope.toggleFullscreen(true);
-        }
-        else {
-          $scope.appEvent('show-dash-editor', { src: 'app/partials/paneleditor.html', scope: $scope });
-        }
+        $scope.toggleFullscreen(true);
       };
 
       $scope.sharePanel = function() {

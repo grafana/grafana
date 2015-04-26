@@ -42,12 +42,13 @@
 						</td>
 						<td style="text-align: center">
 							<button class="btn btn-inverse btn-mini pull-right" ng-click="addDashboard(dashboard)">
-								<i class="fa fa-arrow-right"></i>
+								<i class="fa fa-plus"></i>
+								Add to playlist
 							</button>
 						</td>
 					</tr>
 					<tr ng-hide="searchHits.length">
-						<td colspan="3">
+						<td colspan="2">
 							<i class="fa fa-warning"></i> No dashboards found
 						</td>
 					</tr>
@@ -63,6 +64,11 @@
 							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
 								<i class="fa fa-remove"></i>
 							</button>
+						</td>
+					</tr>
+					<tr ng-hide="playlist.length">
+						<td colspan="2">
+							Playlist empty
 						</td>
 					</tr>
 				</table>

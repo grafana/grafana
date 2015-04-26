@@ -28,17 +28,17 @@ import (
 	"github.com/Unknwon/com"
 )
 
-// FileSessionStore represents a file session store implementation.
-type FileSessionStore struct {
+// FileStore represents a file session store implementation.
+type FileStore struct {
 	p    *FileProvider
 	sid  string
 	lock sync.RWMutex
 	data map[interface{}]interface{}
 }
 
-// NewFileSessionStore creates and returns a file session store.
-func NewFileSessionStore(p *FileProvider, sid string, kv map[interface{}]interface{}) *FileSessionStore {
-	return &FileSessionStore{
+// NewFileStore creates and returns a file session store.
+func NewFileStore(p *FileProvider, sid string, kv map[interface{}]interface{}) *FileStore {
+	return &FileStore{
 		p:    p,
 		sid:  sid,
 		data: kv,
@@ -46,7 +46,7 @@ func NewFileSessionStore(p *FileProvider, sid string, kv map[interface{}]interfa
 }
 
 // Set sets value to given key in session.
-func (s *FileSessionStore) Set(key, val interface{}) error {
+func (s *FileStore) Set(key, val interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -55,7 +55,7 @@ func (s *FileSessionStore) Set(key, val interface{}) error {
 }
 
 // Get gets value by given key in session.
-func (s *FileSessionStore) Get(key interface{}) interface{} {
+func (s *FileStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -63,7 +63,7 @@ func (s *FileSessionStore) Get(key interface{}) interface{} {
 }
 
 // Delete delete a key from session.
-func (s *FileSessionStore) Delete(key interface{}) error {
+func (s *FileStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -72,12 +72,12 @@ func (s *FileSessionStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *FileSessionStore) ID() string {
+func (s *FileStore) ID() string {
 	return s.sid
 }
 
 // Release releases resource and save data to provider.
-func (s *FileSessionStore) Release() error {
+func (s *FileStore) Release() error {
 	data, err := EncodeGob(s.data)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (s *FileSessionStore) Release() error {
 }
 
 // Flush deletes all session data.
-func (s *FileSessionStore) Flush() error {
+func (s *FileStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -97,7 +97,6 @@ func (s *FileSessionStore) Flush() error {
 
 // FileProvider represents a file session provider implementation.
 type FileProvider struct {
-	lock        sync.RWMutex
 	maxlifetime int64
 	rootPath    string
 }
@@ -115,9 +114,6 @@ func (p *FileProvider) filepath(sid string) string {
 
 // Read returns raw session store by session ID.
 func (p *FileProvider) Read(sid string) (_ RawStore, err error) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
 	filename := p.filepath(sid)
 	if err = os.MkdirAll(path.Dir(filename), os.ModePerm); err != nil {
 		return nil, err
@@ -151,22 +147,16 @@ func (p *FileProvider) Read(sid string) (_ RawStore, err error) {
 			return nil, err
 		}
 	}
-	return NewFileSessionStore(p, sid, kv), nil
+	return NewFileStore(p, sid, kv), nil
 }
 
 // Exist returns true if session with given ID exists.
 func (p *FileProvider) Exist(sid string) bool {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
 	return com.IsFile(p.filepath(sid))
 }
 
 // Destory deletes a session by session ID.
 func (p *FileProvider) Destory(sid string) error {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
 	return os.Remove(p.filepath(sid))
 }
 
@@ -201,12 +191,9 @@ func (p *FileProvider) regenerate(oldsid, sid string) (err error) {
 
 // Regenerate regenerates a session store from old session ID to new one.
 func (p *FileProvider) Regenerate(oldsid, sid string) (_ RawStore, err error) {
-	p.lock.Lock()
 	if err := p.regenerate(oldsid, sid); err != nil {
-		p.lock.Unlock()
 		return nil, err
 	}
-	p.lock.Unlock()
 
 	return p.Read(sid)
 }
@@ -235,9 +222,6 @@ func (p *FileProvider) GC() {
 	if !com.IsExist(p.rootPath) {
 		return
 	}
-
-	p.lock.Lock()
-	defer p.lock.Unlock()
 
 	if err := filepath.Walk(p.rootPath, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {

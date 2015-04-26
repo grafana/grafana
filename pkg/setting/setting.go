@@ -4,19 +4,22 @@
 package setting
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
-	"github.com/Unknwon/com"
 	"github.com/macaron-contrib/session"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Scheme string
@@ -44,10 +47,14 @@ var (
 	BuildCommit  string
 	BuildStamp   int64
 
+	// Paths
+	LogsPath string
+	HomePath string
+	DataPath string
+
 	// Log settings.
-	LogRootPath string
-	LogModes    []string
-	LogConfigs  []string
+	LogModes   []string
+	LogConfigs []util.DynMap
 
 	// Http server options
 	Protocol           Scheme
@@ -83,56 +90,32 @@ var (
 	SessionOptions session.Options
 
 	// Global setting objects.
-	WorkDir      string
 	Cfg          *ini.File
 	ConfRootPath string
-	CustomPath   string // Custom directory path.
-	ProdMode     bool
-	RunUser      string
 	IsWindows    bool
 
 	// PhantomJs Rendering
 	ImagesDir  string
 	PhantomDir string
 
-	configFiles []string
+	// for logging purposes
+	configFiles                  []string
+	appliedCommandLineProperties []string
+	appliedEnvOverrides          []string
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
 )
 
+type CommandLineArgs struct {
+	Config   string
+	HomePath string
+	Args     []string
+}
+
 func init() {
 	IsWindows = runtime.GOOS == "windows"
 	log.NewLogger(0, "console", `{"level": 0}`)
-	WorkDir, _ = filepath.Abs(".")
-}
-
-func findConfigFiles(customConfigFile string) {
-	ConfRootPath = path.Join(WorkDir, "conf")
-	configFiles = make([]string, 0)
-
-	configFile := path.Join(ConfRootPath, "defaults.ini")
-	if com.IsFile(configFile) {
-		configFiles = append(configFiles, configFile)
-	}
-
-	configFile = path.Join(ConfRootPath, "dev.ini")
-	if com.IsFile(configFile) {
-		configFiles = append(configFiles, configFile)
-	}
-
-	configFile = path.Join(ConfRootPath, "custom.ini")
-	if com.IsFile(configFile) {
-		configFiles = append(configFiles, configFile)
-	}
-
-	if customConfigFile != "" {
-		configFiles = append(configFiles, customConfigFile)
-	}
-
-	if len(configFiles) == 0 {
-		log.Fatal(3, "Could not find any config file")
-	}
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -155,7 +138,8 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func loadEnvVariableOverrides() {
+func applyEnvVariableOverrides() {
+	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
 		for _, key := range section.Keys() {
 			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
@@ -164,32 +148,189 @@ func loadEnvVariableOverrides() {
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
-				log.Info("Setting: ENV override found: %s", envKey)
 				key.SetValue(envValue)
+				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
 		}
 	}
 }
 
-func NewConfigContext(config string) {
-	findConfigFiles(config)
+func applyCommandLineDefaultProperties(props map[string]string) {
+	appliedCommandLineProperties = make([]string, 0)
+	for _, section := range Cfg.Sections() {
+		for _, key := range section.Keys() {
+			keyString := fmt.Sprintf("default.%s.%s", section.Name(), key.Name())
+			value, exists := props[keyString]
+			if exists {
+				key.SetValue(value)
+				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+			}
+		}
+	}
+}
 
-	var err error
+func applyCommandLineProperties(props map[string]string) {
+	for _, section := range Cfg.Sections() {
+		for _, key := range section.Keys() {
+			keyString := fmt.Sprintf("%s.%s", section.Name(), key.Name())
+			value, exists := props[keyString]
+			if exists {
+				key.SetValue(value)
+				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+			}
+		}
+	}
+}
 
-	for i, file := range configFiles {
-		if i == 0 {
-			Cfg, err = ini.Load(configFiles[i])
-		} else {
-			err = Cfg.Append(configFiles[i])
+func getCommandLineProperties(args []string) map[string]string {
+	props := make(map[string]string)
+
+	for _, arg := range args {
+		if !strings.HasPrefix(arg, "cfg:") {
+			continue
 		}
 
-		if err != nil {
-			log.Fatal(4, "Fail to parse config file: %v, error: %v", file, err)
+		trimmed := strings.TrimPrefix(arg, "cfg:")
+		parts := strings.Split(trimmed, "=")
+		if len(parts) != 2 {
+			log.Fatal(3, "Invalid command line argument", arg)
+			return nil
+		}
+
+		props[parts[0]] = parts[1]
+	}
+	return props
+}
+
+func makeAbsolute(path string, root string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(root, path)
+}
+
+func evalEnvVarExpression(value string) string {
+	regex := regexp.MustCompile(`\${(\w+)}`)
+	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
+		envVar = strings.TrimPrefix(envVar, "${")
+		envVar = strings.TrimSuffix(envVar, "}")
+		envValue := os.Getenv(envVar)
+		return envValue
+	})
+}
+
+func evalConfigValues() {
+	for _, section := range Cfg.Sections() {
+		for _, key := range section.Keys() {
+			key.SetValue(evalEnvVarExpression(key.Value()))
+		}
+	}
+}
+
+func loadSpecifedConfigFile(configFile string) {
+	if configFile == "" {
+		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		// return without error if custom file does not exist
+		if !pathExists(configFile) {
+			return
 		}
 	}
 
-	loadEnvVariableOverrides()
-	initLogging()
+	userConfig, err := ini.Load(configFile)
+	userConfig.BlockMode = false
+	if err != nil {
+		log.Fatal(3, "Failed to parse %v, %v", configFile, err)
+	}
+
+	for _, section := range userConfig.Sections() {
+		for _, key := range section.Keys() {
+			if key.Value() == "" {
+				continue
+			}
+
+			defaultSec, err := Cfg.GetSection(section.Name())
+			if err != nil {
+				log.Fatal(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+			}
+			defaultKey, err := defaultSec.GetKey(key.Name())
+			if err != nil {
+				log.Fatal(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+			}
+			defaultKey.SetValue(key.Value())
+		}
+	}
+
+	configFiles = append(configFiles, configFile)
+}
+
+func loadConfiguration(args *CommandLineArgs) {
+	var err error
+
+	// load config defaults
+	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
+	configFiles = append(configFiles, defaultConfigFile)
+
+	Cfg, err = ini.Load(defaultConfigFile)
+	Cfg.BlockMode = false
+
+	if err != nil {
+		log.Fatal(3, "Failed to parse defaults.ini, %v", err)
+	}
+
+	// command line props
+	commandLineProps := getCommandLineProperties(args.Args)
+
+	// load default overrides
+	applyCommandLineDefaultProperties(commandLineProps)
+
+	// load specified config file
+	loadSpecifedConfigFile(args.Config)
+
+	// apply environment overrides
+	applyEnvVariableOverrides()
+
+	// apply command line overrides
+	applyCommandLineProperties(commandLineProps)
+
+	// evaluate config values containing environment variables
+	evalConfigValues()
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}
+
+func setHomePath(args *CommandLineArgs) {
+	if args.HomePath != "" {
+		HomePath = args.HomePath
+		return
+	}
+
+	HomePath, _ = filepath.Abs(".")
+	// check if homepath is correct
+	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
+		return
+	}
+
+	// try down one path
+	if pathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
+		HomePath = filepath.Join(HomePath, "../")
+	}
+}
+
+func NewConfigContext(args *CommandLineArgs) {
+	setHomePath(args)
+	loadConfiguration(args)
+
+	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
+	initLogging(args)
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
@@ -208,7 +349,7 @@ func NewConfigContext(config string) {
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
 
-	StaticRootPath = server.Key("static_root_path").MustString(path.Join(WorkDir, "webapp"))
+	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 
@@ -233,8 +374,8 @@ func NewConfigContext(config string) {
 	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
 
 	// PhantomJS rendering
-	ImagesDir = "data/png"
-	PhantomDir = "vendor/phantomjs"
+	ImagesDir = filepath.Join(DataPath, "png")
+	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -246,33 +387,40 @@ func NewConfigContext(config string) {
 func readSessionConfig() {
 	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
-	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql"})
+	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres"})
 	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
 	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
 	SessionOptions.Gclifetime = Cfg.Section("session").Key("gc_interval_time").MustInt64(86400)
 	SessionOptions.Maxlifetime = Cfg.Section("session").Key("session_life_time").MustInt64(86400)
+	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
+		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, DataPath)
 		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
+	}
+
+	if SessionOptions.CookiePath == "" {
+		SessionOptions.CookiePath = "/"
 	}
 }
 
-var logLevels = map[string]string{
-	"Trace":    "0",
-	"Debug":    "1",
-	"Info":     "2",
-	"Warn":     "3",
-	"Error":    "4",
-	"Critical": "5",
+var logLevels = map[string]int{
+	"Trace":    0,
+	"Debug":    1,
+	"Info":     2,
+	"Warn":     3,
+	"Error":    4,
+	"Critical": 5,
 }
 
-func initLogging() {
+func initLogging(args *CommandLineArgs) {
 	// Get and check log mode.
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
-	LogRootPath = Cfg.Section("log").Key("root_path").MustString(path.Join(WorkDir, "/data/log"))
-	LogConfigs = make([]string, len(LogModes))
+	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
+
+	LogConfigs = make([]util.DynMap, len(LogModes))
 	for i, mode := range LogModes {
 		mode = strings.TrimSpace(mode)
 		sec, err := Cfg.GetSection("log." + mode)
@@ -291,43 +439,76 @@ func initLogging() {
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s}`, level)
+			LogConfigs[i] = util.DynMap{"level": level}
 		case "file":
-			logPath := sec.Key("file_name").MustString(path.Join(LogRootPath, "grafana.log"))
-			os.MkdirAll(path.Dir(logPath), os.ModePerm)
-			LogConfigs[i] = fmt.Sprintf(
-				`{"level":%s,"filename":"%s","rotate":%v,"maxlines":%d,"maxsize":%d,"daily":%v,"maxdays":%d}`, level,
-				logPath,
-				sec.Key("log_rotate").MustBool(true),
-				sec.Key("max_lines").MustInt(1000000),
-				1<<uint(sec.Key("max_size_shift").MustInt(28)),
-				sec.Key("daily_rotate").MustBool(true),
-				sec.Key("max_days").MustInt(7))
+			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
+			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
+			LogConfigs[i] = util.DynMap{
+				"level":    level,
+				"filename": logPath,
+				"rotate":   sec.Key("log_rotate").MustBool(true),
+				"maxlines": sec.Key("max_lines").MustInt(1000000),
+				"maxsize":  1 << uint(sec.Key("max_size_shift").MustInt(28)),
+				"daily":    sec.Key("daily_rotate").MustBool(true),
+				"maxdays":  sec.Key("max_days").MustInt(7),
+			}
 		case "conn":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"reconnectOnMsg":%v,"reconnect":%v,"net":"%s","addr":"%s"}`, level,
-				sec.Key("reconnect_on_msg").MustBool(),
-				sec.Key("reconnect").MustBool(),
-				sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-				sec.Key("addr").MustString(":7020"))
+			LogConfigs[i] = util.DynMap{
+				"level":          level,
+				"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
+				"reconnect":      sec.Key("reconnect").MustBool(),
+				"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
+				"addr":           sec.Key("addr").MustString(":7020"),
+			}
 		case "smtp":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"username":"%s","password":"%s","host":"%s","sendTos":"%s","subject":"%s"}`, level,
-				sec.Key("user").MustString("example@example.com"),
-				sec.Key("passwd").MustString("******"),
-				sec.Key("host").MustString("127.0.0.1:25"),
-				sec.Key("receivers").MustString("[]"),
-				sec.Key("subject").MustString("Diagnostic message from serve"))
+			LogConfigs[i] = util.DynMap{
+				"level":     level,
+				"user":      sec.Key("user").MustString("example@example.com"),
+				"passwd":    sec.Key("passwd").MustString("******"),
+				"host":      sec.Key("host").MustString("127.0.0.1:25"),
+				"receivers": sec.Key("receivers").MustString("[]"),
+				"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
+			}
 		case "database":
-			LogConfigs[i] = fmt.Sprintf(`{"level":%s,"driver":"%s","conn":"%s"}`, level,
-				sec.Key("driver").String(),
-				sec.Key("conn").String())
+			LogConfigs[i] = util.DynMap{
+				"level":  level,
+				"driver": sec.Key("driver").String(),
+				"conn":   sec.Key("conn").String(),
+			}
 		}
 
-		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, LogConfigs[i])
+		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
+		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, string(cfgJsonBytes))
 	}
 }
 
-func LogLoadedConfigFiles() {
-	for _, file := range configFiles {
-		log.Info("Config: Loaded from %s", file)
+func LogConfigurationInfo() {
+	var text bytes.Buffer
+	text.WriteString("Configuration Info\n")
+
+	text.WriteString("Config files:\n")
+	for i, file := range configFiles {
+		text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, file))
 	}
+
+	if len(appliedCommandLineProperties) > 0 {
+		text.WriteString("Command lines overrides:\n")
+		for i, prop := range appliedCommandLineProperties {
+			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		}
+	}
+
+	if len(appliedEnvOverrides) > 0 {
+		text.WriteString("\tEnvironment variables used:\n")
+		for i, prop := range appliedCommandLineProperties {
+			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		}
+	}
+
+	text.WriteString("Paths:\n")
+	text.WriteString(fmt.Sprintf("  home: %s\n", HomePath))
+	text.WriteString(fmt.Sprintf("  data: %s\n", DataPath))
+	text.WriteString(fmt.Sprintf("  logs: %s\n", LogsPath))
+
+	log.Info(text.String())
 }

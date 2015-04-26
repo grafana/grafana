@@ -41,7 +41,7 @@ define([
 
       it('should remove panel id when no panel in scope', function() {
         ctx.$location.path('/test');
-        ctx.scope.options = { forCurrent: true };
+        ctx.scope.options.forCurrent = true;
         ctx.scope.panel = null;
         setTime({ from: 'now-1h', to: 'now' });
 
@@ -49,9 +49,19 @@ define([
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now');
       });
 
+      it('should add theme when specified', function() {
+        ctx.$location.path('/test');
+        ctx.scope.options.theme = 'light';
+        ctx.scope.panel = null;
+        setTime({ from: 'now-1h', to: 'now' });
+
+        ctx.scope.init();
+        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now&theme=light');
+      });
+
       it('should include template variables in url', function() {
         ctx.$location.path('/test');
-        ctx.scope.options = { includeTemplateVars: true, forCurrent: true };
+        ctx.scope.options.includeTemplateVars = true;
 
         ctx.templateSrv.variables = [{ name: 'app', current: {text: 'mupp' }}, {name: 'server', current: {text: 'srv-01'}}];
         setTime({ from: 'now-1h', to: 'now' });

@@ -32,12 +32,10 @@ function (_) {
     }
 
     query +=  aggregationFunc + '(value)';
-    query += ' FROM ' + measurement + ' WHERE ';
+    query += ' FROM ' + measurement + ' WHERE $timeFilter';
     query += _.map(target.tags, function(value, key) {
-      return key + ' = ' + "'" + value + "' AND ";
-    });
-
-    query += '$timeFilter';
+      return ' AND ' + key + '=' + "'" + value + "'";
+    }).join('');
 
     query += ' GROUP BY time($interval)';
 

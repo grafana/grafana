@@ -38,49 +38,35 @@ function (angular, $, config) {
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      var dashboard = dashboardSrv.create(data.model);
+      var dashboard = dashboardSrv.create(data.model, data.meta);
 
       // init services
       timeSrv.init(dashboard);
 
       // template values service needs to initialize completely before
       // the rest of the dashboard can load
-      templateValuesSrv.init(dashboard).then(function() {
+      templateValuesSrv.init(dashboard).finally(function() {
         $scope.dashboard = dashboard;
+        $scope.dashboardMeta = dashboard.meta;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-        $scope.initDashboardMeta(data.meta, $scope.dashboard);
 
         dashboardKeybindings.shortcuts($scope);
 
+        $scope.updateTopNavPartial();
         $scope.updateSubmenuVisibility();
         $scope.setWindowTitleAndTheme();
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
+      }).catch(function(err) {
+        console.log('Failed to initialize dashboard template variables, error: ', err);
+        $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
     };
 
-    $scope.initDashboardMeta = function(meta) {
-      meta.canShare = true;
-      meta.canSave = true;
-      meta.canEdit = true;
-      meta.canStar = true;
-
-      if (contextSrv.hasRole('Viewer')) {
-        meta.canSave = false;
-      }
-
-      if (meta.isHome) {
-        meta.canShare = false;
-        meta.canStar = false;
-        meta.canSave = false;
-        meta.canEdit = false;
-      }
-
-      if (meta.isSnapshot) {
+    $scope.updateTopNavPartial = function() {
+      if ($scope.dashboard.meta.isSnapshot) {
         $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
       }
-
-      $scope.dashboardMeta = meta;
     };
 
     $scope.updateSubmenuVisibility = function() {

@@ -10,25 +10,27 @@ function (angular, app, _, kbn) {
   var module = angular.module('grafana.controllers');
 
   module.controller('GraphiteImportCtrl', function($scope, datasourceSrv, dashboardSrv, $location) {
+    $scope.options = {};
 
     $scope.init = function() {
       $scope.datasources = [];
       _.each(datasourceSrv.getAll(), function(ds) {
         if (ds.type === 'graphite') {
-          $scope.sourceName = ds.name;
+          $scope.options.sourceName = ds.name;
           $scope.datasources.push(ds.name);
         }
       });
     };
 
     $scope.listAll = function() {
-      $scope.datasource = datasourceSrv.get($scope.sourceName);
-
-      $scope.datasource.listDashboards('').then(function(results) {
-        $scope.dashboards = results;
-      }, function(err) {
-        var message = err.message || err.statusText || 'Error';
-        $scope.appEvent('alert-error', ['Failed to load dashboard list from graphite', message]);
+      datasourceSrv.get($scope.options.sourceName).then(function(datasource) {
+        $scope.datasource = datasource;
+        $scope.datasource.listDashboards('').then(function(results) {
+          $scope.dashboards = results;
+        }, function(err) {
+          var message = err.message || err.statusText || 'Error';
+          $scope.appEvent('alert-error', ['Failed to load dashboard list from graphite', message]);
+        });
       });
     };
 
