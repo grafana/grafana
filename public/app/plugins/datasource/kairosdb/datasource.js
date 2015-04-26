@@ -18,7 +18,6 @@ function (angular, _, kbn) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
-      this.grafanaDB = datasource.grafanaDB;
     }
 
     // Called once per panel (graph)
@@ -85,11 +84,11 @@ function (angular, _, kbn) {
         method : 'GET'
       };
 
-      return $http(options).then(function(results) {
-        if (!results.data) {
+      return $http(options).then(function(response) {
+        if (!response.data) {
           return [];
         }
-        return results.data.results;
+        return response.data.results;
       });
     };
 
