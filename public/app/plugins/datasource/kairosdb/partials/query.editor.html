@@ -38,14 +38,15 @@
 					Metric
 				</li>
 				<li>
-					<select style="width: 20em"
-						class="input-medium tight-form-input"
-						ng-change="targetBlur()"
-						ng-model="metric.value"
-						bs-tooltip="metricValue.length > 40 ? metricValue : ''"
-						ng-options="f for f in metric.list" >
-						<option value="">--select metric--</option>
-					</select>
+					<input type="text"
+						   class="input-large tight-form-input"
+						   ng-model="target.metric"
+						   spellcheck="false"
+						   bs-typeahead="suggestMetrics"
+						   placeholder="metric name"
+						   data-min-length=0 data-items=100
+						   ng-blur="targetBlur()"
+						   >
 					<a bs-tooltip="target.errors.metric"
 						style="color: rgb(229, 189, 28)"
 						ng-show="target.errors.metric">

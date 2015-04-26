@@ -6,15 +6,12 @@ function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var metricList = null;
+  var metricList = [];
+  var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
   module.controller('KairosDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
-      $scope.metric = {
-        list: ["Loading..."],
-        value: "Loading..."
-      };
       $scope.panel.stack = false;
       if (!$scope.panel.downsampling) {
         $scope.panel.downsampling = 'avg';
@@ -23,12 +20,12 @@ function (angular, _) {
         $scope.target.downsampling = $scope.panel.downsampling;
         $scope.target.sampling = $scope.panel.sampling;
       }
+      $scope.targetLetters = targetLetters;
       $scope.updateMetricList();
       $scope.target.errors = validateTarget($scope.target);
     };
 
     $scope.targetBlur = function() {
-      $scope.target.metric = $scope.metric.value;
       $scope.target.errors = validateTarget($scope.target);
       if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
         $scope.oldTarget = angular.copy($scope.target);
@@ -53,22 +50,16 @@ function (angular, _) {
       _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
-    // Fetch metric list
-    $scope.updateMetricList = function() {
-      $scope.metricListLoading = true;
-      metricList = [];
-      $scope.datasource.performMetricSuggestQuery().then(function(series) {
-        metricList = series;
-        $scope.metric.list = series;
-        if ($scope.target.metric) {
-          $scope.metric.value = $scope.target.metric;
-        }
-        else {
-          $scope.metric.value = "";
-        }
-        $scope.metricListLoading = false;
+    $scope.suggestMetrics = function(query, callback) {
+      if (!_.isEmpty(metricList)) {
         return metricList;
-      });
+      }
+      else {
+        $scope.datasource.performMetricSuggestQuery().then(function(result) {
+          metricList = result;
+          callback(metricList);
+        });
+      }
     };
 
     $scope.suggestTagKeys = function(query, callback) {
