@@ -7,40 +7,21 @@
 
 		<div class="tight-form">
 			<ul class="tight-form-list pull-right">
-				<li>
-					<a bs-tooltip="'Group by\'s are always executed before aggregations!'"
-						ng-click="alert('Group by\'s are always executed before aggregations!')">
-						<i class="fa fa-info-circle"></i>
-					</a>
+				<li class="tight-form-item">
+					<div class="dropdown">
+						<a  class="pointer dropdown-toggle"
+							data-toggle="dropdown"
+							tabindex="1">
+							<i class="fa fa-bars"></i>
+						</a>
+						<ul class="dropdown-menu pull-right" role="menu">
+							<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up</a></li>
+							<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
+						</ul>
+					</div>
 				</li>
-				<li class="dropdown">
-					<a  class="pointer dropdown-toggle"
-						data-toggle="dropdown"
-						tabindex="1">
-						<i class="fa fa-cog"></i>
-					</a>
-					<ul class="dropdown-menu pull-right" role="menu">
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="duplicate()">
-								Duplicate
-							</a>
-						</li>
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index-1)">
-								Move up
-							</a>
-						</li>
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index+1)">
-								Move down
-							</a>
-						</li>
-					</ul>
-				</li>
-				<li>
+				<li class="tight-form-item last">
 					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
 						<i class="fa fa-remove"></i>
 					</a>
@@ -48,17 +29,13 @@
 			</ul>
 
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="min-width: 15px; text-align: center">
-					{{targetLetters[$index]}}
-				</li>
 				<li>
 					<a  class="tight-form-item" ng-click="target.hide = !target.hide; targetBlur();" role="menuitem">
-						<i class="fa fa-fw fa-eye"></i>
+						<i class="fa fa-eye"></i>
 					</a>
 				</li>
-				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias"
-					spellcheck='false' placeholder="alias" ng-blur="targetBlur()">
+				<li class="tight-form-item">
+					Metric
 				</li>
 				<li>
 					<select style="width: 20em"
@@ -75,7 +52,13 @@
 						<i class="fa fa-warning"></i>
 					</a>
 				</li>
-
+				<li class="tight-form-item">
+					Alias
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input" ng-model="target.alias"
+						   spellcheck='false' placeholder="alias" ng-blur="targetBlur()">
+				</li>
 				<li  class="tight-form-item">
 					&nbsp;Peak filter
 					<input class="input-medium" type="checkbox" ng-model="target.exOuter" ng-change="targetBlur()">
@@ -85,15 +68,14 @@
 			<div class="clearfix"></div>
 		</div>
 
+		<!-- TAGS -->
 		<div class="tight-form">
 			<ul class="tight-form-list" role="menu">
-				<li class="tight-form-item" style="min-width: 15px; text-align: center">
-				</li>
-				<li>
-					<i class="fa fa-fw fa-eye invisible"></i>
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
 				</li>
 				<li class="tight-form-item">
-					Filter by Tag:
+					Tags
 				</li>
 				<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
 					{{key}}&nbsp;=&nbsp;{{value}}
@@ -135,14 +117,23 @@
 					<li class="tight-form-item" ng-show="addFilterTagMode">
 						<a ng-click="addFilterTag()">
 							<i ng-show="target.errors.tags" class="fa fa-remove"></i>
-							<i ng-hide="target.errors.tags" class="fa fa-plus"></i>
+							<i ng-hide="target.errors.tags" class="fa fa-plus-circle"></i>
 						</a>
 					</li>
 				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
 
-				<!-- TAGS  GROUP BYS -->
+		<!-- GROUP BY -->
+		<div class="tight-form">
+			<ul class="tight-form-list" role="menu">
 				<li class="tight-form-item">
-					Group by
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item">
+					Group By
 				</li>
 
 				<li class="tight-form-item" ng-show="target.groupByTags">
@@ -239,13 +230,21 @@
 				<li class="tight-form-item" ng-show="addGroupByMode">
 					<a ng-click="addGroupBy()">
 						<i ng-hide="isGroupByValid" class="fa fa-remove"></i>
-						<i ng-show="isGroupByValid" class="fa fa-plus"></i>
+						<i ng-show="isGroupByValid" class="fa fa-plus-circle"></i>
 					</a>
 				</li>
+			<div class="clearfix"></div>
+		</div>
 
-				<!-- HORIZONTAL AGGREGATION -->
+		<!-- HORIZONTAL AGGREGATION -->
+		<div class="tight-form">
+			<ul class="tight-form-list" role="menu">
 				<li class="tight-form-item">
-					Aggregation:
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item">
+					Aggregators
 				</li>
 				<li ng-repeat="aggregatorObject in target.horizontalAggregators track by $index" class="tight-form-item">
 					{{aggregatorObject.name}}&#40;
@@ -336,7 +335,7 @@
 				<li class="tight-form-item" ng-show="addHorizontalAggregatorMode">
 					<a ng-click="addHorizontalAggregator()">
 						<i ng-hide="isAggregatorValid" class="fa fa-remove"></i>
-						<i ng-show="isAggregatorValid" class="fa fa-plus"></i>
+						<i ng-show="isAggregatorValid" class="fa fa-plus-circle"></i>
 					</a>
 				</li>
 			</ul>
