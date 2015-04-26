@@ -10,7 +10,7 @@ function (angular) {
     console.log("DashFromRaintankCtrl");
     var file_load = function(file) {
       return $http({
-        url: "public/vendor/raintank/dashboards/"+file+'.json?' + new Date().getTime(),
+        url: "plugins/raintank/dashboards/"+file+'.json?' + new Date().getTime(),
              method: "GET",
              transformResponse: function(response) {
                return angular.fromJson(response);
