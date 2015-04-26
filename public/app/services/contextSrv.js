@@ -2,13 +2,14 @@ define([
   'angular',
   'lodash',
   'store',
+  'config',
 ],
-function (angular, _, store) {
+function (angular, _, store, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('contextSrv', function(grafanaVersion, $rootScope, $timeout) {
+  module.service('contextSrv', function($rootScope, $timeout) {
     var self = this;
 
     function User() {
@@ -17,7 +18,7 @@ function (angular, _, store) {
       }
     }
 
-    this.version = grafanaVersion;
+    this.version = config.buildInfo.version;
     this.lightTheme = false;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;

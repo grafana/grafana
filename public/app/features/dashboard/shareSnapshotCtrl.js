@@ -48,7 +48,7 @@ function (angular, _) {
     };
 
     $scope.saveSnapshot = function(external) {
-      var dash = angular.copy($scope.dashboard);
+      var dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
       var cmdData = {
@@ -66,9 +66,15 @@ function (angular, _) {
           $scope.snapshotUrl = results.url;
           $scope.saveExternalSnapshotRef(cmdData, results);
         } else {
-          var baseUrl = $location.absUrl().replace($location.url(), "");
-          $scope.snapshotUrl = baseUrl + '/dashboard/snapshot/' + results.key;
-          $scope.deleteUrl = baseUrl + '/api/snapshots-delete/' + results.deleteKey;
+          var url = $location.url();
+          var baseUrl = $location.absUrl();
+
+          if (url !== '/') {
+            baseUrl = baseUrl.replace(url, '') + '/';
+          }
+
+          $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.key;
+          $scope.deleteUrl = baseUrl + 'api/snapshots-delete/' + results.deleteKey;
         }
 
         $scope.step = 2;
@@ -86,6 +92,7 @@ function (angular, _) {
       dash.forEachPanel(function(panel) {
         panel.targets = [];
         panel.links = [];
+        panel.datasource = null;
       });
       // remove annotations
       dash.annotations.list = [];
@@ -99,6 +106,7 @@ function (angular, _) {
       // snapshot single panel
       if ($scope.modeSharePanel) {
         var singlePanel = dash.getPanelById($scope.panel.id);
+        singlePanel.span = 12;
         dash.rows = [{ height: '500px', span: 12, panels: [singlePanel] }];
       }
 
@@ -106,6 +114,12 @@ function (angular, _) {
       delete $scope.dashboard.snapshot;
       $scope.dashboard.forEachPanel(function(panel) {
         delete panel.snapshotData;
+      });
+    };
+
+    $scope.deleteSnapshot = function() {
+      backendSrv.get($scope.deleteUrl).then(function() {
+        $scope.step = 3;
       });
     };
 

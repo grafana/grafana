@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/torkelo/grafana-pro",
+	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.3",
 	"Packages": [
 		"./pkg/..."
@@ -14,9 +14,12 @@
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-38-g9908e96",
-			"Rev": "9908e96513e5a94de37004098a3974a567f18111"
+			"ImportPath": "github.com/dalu/slug",
+			"Rev": "6dbd13912e9be466e2c1de349a2c7d1466c97e07"
+		},
+		{
+			"ImportPath": "github.com/dalu/unidecode",
+			"Rev": "339814d47f3e32a6f7036a0a4c56ed9b373dd755"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -47,7 +50,7 @@
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/session",
-			"Rev": "65b8817c40cb5bdce08673a15fd2a648c2ba0e16"
+			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
@@ -68,12 +71,26 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "e5909d4679a1926c774c712b343f10b8298687a3"
+			"Rev": "c58fcf0ffc1c772aa2e1ee4894bc19f2649263b2"
+		},
+		{
+			"ImportPath": "gopkg.in/bufio.v1",
+			"Comment": "v1",
+			"Rev": "567b2bfa514e796916c4747494d6ff5132a1dfce"
 		},
 		{
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v0-16-g1772191",
 			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v2",
+			"Comment": "v2.3.2",
+			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
+		},
+		{
+			"ImportPath": "gopkgs.com/pool.v1",
+			"Rev": "c850f092aad1780cbffff25f471c5cc32097932a"
 		}
 	]
 }

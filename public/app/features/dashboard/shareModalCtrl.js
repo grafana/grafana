@@ -10,10 +10,10 @@ function (angular, _, require, config) {
   var module = angular.module('grafana.controllers');
 
   module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
+    $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
+    $scope.editor = { index: 0 };
 
     $scope.init = function() {
-      $scope.editor = { index: 0 };
-      $scope.options = { forCurrent: true, includeTemplateVars: true };
       $scope.modeSharePanel = $scope.panel ? true : false;
 
       $scope.tabs = [{title: 'Link', src: 'shareLink.html'}];
@@ -60,6 +60,10 @@ function (angular, _, require, config) {
       if (!$scope.options.forCurrent) {
         delete params.from;
         delete params.to;
+      }
+
+      if ($scope.options.theme !== 'current') {
+        params.theme = $scope.options.theme;
       }
 
       if ($scope.modeSharePanel) {

@@ -27,8 +27,8 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE hostname = \'server1\'' +
-          ' AND $timeFilter GROUP BY time($interval) ORDER BY asc');
+        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter ' +
+          'AND hostname=\'server1\' GROUP BY time($interval) ORDER BY asc');
       });
 
     });

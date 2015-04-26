@@ -20,13 +20,13 @@ function(angular, _, config) {
     $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
       // wait for different services to patch the dashboard (missing properties)
       $timeout(function() {
-        self.original = angular.copy(newDashboard);
+        self.original = newDashboard.getSaveModelClone();
         self.current = newDashboard;
       }, 1200);
     });
 
     $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
-      self.original = angular.copy(savedDashboard);
+      self.original = savedDashboard.getSaveModelClone();
       self.current = savedDashboard;
       self.orignalPath = $location.path();
     });
@@ -36,7 +36,15 @@ function(angular, _, config) {
       self.originalPath = $location.path();
     });
 
+    this.ignoreChanges = function() {
+      if (!self.current) { return true; }
+
+      var meta = self.current.meta;
+      return !meta.canSave || meta.fromScript || meta.fromFile;
+    };
+
     window.onbeforeunload = function() {
+      if (self.ignoreChanges()) { return; }
       if (self.has_unsaved_changes()) {
         return "There are unsaved changes to this dashboard";
       }
@@ -44,9 +52,9 @@ function(angular, _, config) {
 
     this.init = function() {
       $rootScope.$on("$locationChangeStart", function(event, next) {
-        if (self.originalPath === $location.path()) {
-          return;
-        }
+        // check if we should look for changes
+        if (self.originalPath === $location.path()) { return true; }
+        if (self.ignoreChanges()) { return true; }
 
         if (self.has_unsaved_changes()) {
           event.preventDefault();
@@ -77,7 +85,7 @@ function(angular, _, config) {
         return false;
       }
 
-      var current = angular.copy(self.current);
+      var current = self.current.getSaveModelClone();
       var original = self.original;
 
       // ignore timespan changes
@@ -94,6 +102,25 @@ function(angular, _, config) {
         if (original.templating.list.length > index) {
           original.templating.list[index].current = null;
           original.templating.list[index].options = null;
+        }
+      });
+
+      // ignore some panel and row stuff
+      current.forEachPanel(function(panel, panelIndex, row, rowIndex) {
+        var originalRow = original.rows[rowIndex];
+        var originalPanel = original.getPanelById(panel.id);
+        // ignore row collapse state
+        if (originalRow) {
+          row.collapse = originalRow.collapse;
+        }
+        if (originalPanel) {
+          // ignore graph legend sort
+          if (originalPanel.legend && panel.legend)  {
+            delete originalPanel.legend.sortDesc;
+            delete originalPanel.legend.sort;
+            delete panel.legend.sort;
+            delete panel.legend.sortDesc;
+          }
         }
       });
 

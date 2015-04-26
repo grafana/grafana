@@ -10,6 +10,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetApiKeys)
+	bus.AddHandler("sql", GetApiKeyById)
 	bus.AddHandler("sql", GetApiKeyByName)
 	bus.AddHandler("sql", DeleteApiKey)
 	bus.AddHandler("sql", AddApiKey)
@@ -47,6 +48,20 @@ func AddApiKey(cmd *m.AddApiKeyCommand) error {
 		cmd.Result = &t
 		return nil
 	})
+}
+
+func GetApiKeyById(query *m.GetApiKeyByIdQuery) error {
+	var apikey m.ApiKey
+	has, err := x.Id(query.ApiKeyId).Get(&apikey)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrInvalidApiKey
+	}
+
+	query.Result = &apikey
+	return nil
 }
 
 func GetApiKeyByName(query *m.GetApiKeyByNameQuery) error {

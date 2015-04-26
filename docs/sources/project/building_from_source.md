@@ -28,6 +28,10 @@ godep restore                    (will pull down all golang lib dependecies in y
 go build .
 ```
 
+# Building on Windows
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
+to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
 ## Building frontend assets
 
 To build less to css for the frontend you will need a recent version of of node (v0.12.0),
@@ -48,10 +52,15 @@ bra run
 
 ## Running
 ```
-./grafana web
+./grafana-server
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+
+## Creating optimized release packages
+```
+go run build.go build package
+```
 
 ## Dev config
 
@@ -59,8 +68,7 @@ Create a custom.ini in the conf directory to override default configuration opti
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
-2. dev.ini (if found)
-3. custom.ini
+2. custom.ini
 
 ## Create a pull requests
 

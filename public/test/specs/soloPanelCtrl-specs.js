@@ -10,7 +10,9 @@ define([
     var backendSrv = {};
     var routeParams = {};
     var search = {};
-    var contextSrv = {};
+    var contextSrv = {
+      hasRole: sinon.stub().returns(true)
+    };
 
     beforeEach(module('grafana.routes'));
     beforeEach(module('grafana.services'));
@@ -43,7 +45,8 @@ define([
                 ]
               }
             ]
-          }
+          },
+          meta: {}
         };
 
         routeParams.slug = "my dash";

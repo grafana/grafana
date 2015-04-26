@@ -1,8 +1,9 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  'jquery'
 ],
-function (angular, _) {
+function (angular, _, $) {
   'use strict';
 
   angular
@@ -12,6 +13,11 @@ function (angular, _) {
         link: function($scope, elem) {
 
           var lastHideControlsVal;
+
+          // tooltip removal fix
+          $scope.$on("$routeChangeSuccess", function() {
+            $("#tooltip").remove();
+          });
 
           $scope.$watch('submenuEnabled', function() {
             if (!$scope.dashboard) {

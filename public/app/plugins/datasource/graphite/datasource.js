@@ -14,7 +14,7 @@ function (angular, _, $, config, kbn, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('GraphiteDatasource', function($q, $http, templateSrv) {
+  module.factory('GraphiteDatasource', function($q, backendSrv, templateSrv) {
 
     function GraphiteDatasource(datasource) {
       this.basicAuth = datasource.basicAuth;
@@ -218,7 +218,7 @@ function (angular, _, $, config, kbn, moment) {
       options.url = this.url + options.url;
       options.inspect = { type: 'graphite' };
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     GraphiteDatasource.prototype._seriesRefLetters = [

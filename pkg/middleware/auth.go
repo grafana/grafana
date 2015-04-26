@@ -28,7 +28,7 @@ func getRequestUserId(c *Context) int64 {
 func getApiKey(c *Context) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
-	if len(parts) == 2 || parts[0] == "Bearer" {
+	if len(parts) == 2 && parts[0] == "Bearer" {
 		key := parts[1]
 		return key
 	}
@@ -42,6 +42,7 @@ func authDenied(c *Context) {
 		return
 	}
 
+	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -63,13 +64,11 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
-			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}
 
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
-			c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
 			authDenied(c)
 			return
 		}

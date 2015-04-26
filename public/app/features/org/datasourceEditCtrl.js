@@ -1,8 +1,8 @@
 define([
   'angular',
-  'lodash',
+  'config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -59,7 +59,9 @@ function (angular) {
 
     $scope.updateFrontendSettings = function() {
       backendSrv.get('/api/frontend/settings').then(function(settings) {
-        datasourceSrv.init(settings.datasources);
+        config.datasources = settings.datasources;
+        config.defaultDatasource = settings.defaultDatasource;
+        datasourceSrv.init();
       });
     };
 

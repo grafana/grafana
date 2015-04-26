@@ -11,17 +11,22 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"testing"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/urlfetch"
 )
 
-// Remove after Go 1.4.
-// Related to https://codereview.appspot.com/107320046
-func TestA(t *testing.T) {}
+func ExampleDefaultClient() {
+	client, err := google.DefaultClient(oauth2.NoContext,
+		"https://www.googleapis.com/auth/devstorage.full_control")
+	if err != nil {
+		log.Fatal(err)
+	}
+	client.Get("...")
+}
 
 func Example_webServer() {
 	// Your credentials should be obtained from the Google
@@ -62,21 +67,34 @@ func ExampleJWTConfigFromJSON() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	conf, err := google.JWTConfigFromJSON(oauth2.NoContext, data, "https://www.googleapis.com/auth/bigquery")
+	conf, err := google.JWTConfigFromJSON(data, "https://www.googleapis.com/auth/bigquery")
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Initiate an http.Client. The following GET request will be
 	// authorized and authenticated on the behalf of
 	// your service account.
-	client := conf.Client(oauth2.NoContext, nil)
+	client := conf.Client(oauth2.NoContext)
+	client.Get("...")
+}
+
+func ExampleSDKConfig() {
+	// The credentials will be obtained from the first account that
+	// has been authorized with `gcloud auth login`.
+	conf, err := google.NewSDKConfig("")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Initiate an http.Client. The following GET request will be
+	// authorized and authenticated on the behalf of the SDK user.
+	client := conf.Client(oauth2.NoContext)
 	client.Get("...")
 }
 
 func Example_serviceAccount() {
 	// Your credentials should be obtained from the Google
 	// Developer Console (https://console.developers.google.com).
-	conf := &oauth2.JWTConfig{
+	conf := &jwt.Config{
 		Email: "xxx@developer.gserviceaccount.com",
 		// The contents of your RSA private key or your PEM file
 		// that contains a private key.
@@ -101,7 +119,7 @@ func Example_serviceAccount() {
 	}
 	// Initiate an http.Client, the following GET request will be
 	// authorized and authenticated on the behalf of user@example.com.
-	client := conf.Client(oauth2.NoContext, nil)
+	client := conf.Client(oauth2.NoContext)
 	client.Get("...")
 }
 

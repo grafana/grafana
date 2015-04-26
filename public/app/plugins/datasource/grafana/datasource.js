@@ -31,6 +31,10 @@ function (angular, _, kbn) {
       return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
     };
 
+    GrafanaDatasource.prototype.metricFindQuery = function() {
+      return $q.when([]);
+    };
+
     GrafanaDatasource.prototype.starDashboard = function(dashId) {
       return backendSrv.post('/api/user/stars/dashboard/' + dashId);
     };

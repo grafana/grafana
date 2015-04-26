@@ -22,17 +22,17 @@ import (
 	"time"
 )
 
-// MemSessionStore represents a in-memory session store implementation.
-type MemSessionStore struct {
+// MemStore represents a in-memory session store implementation.
+type MemStore struct {
 	sid        string
 	lock       sync.RWMutex
 	data       map[interface{}]interface{}
 	lastAccess time.Time
 }
 
-// NewMemSessionStore creates and returns a memory session store.
-func NewMemSessionStore(sid string) *MemSessionStore {
-	return &MemSessionStore{
+// NewMemStore creates and returns a memory session store.
+func NewMemStore(sid string) *MemStore {
+	return &MemStore{
 		sid:        sid,
 		data:       make(map[interface{}]interface{}),
 		lastAccess: time.Now(),
@@ -40,7 +40,7 @@ func NewMemSessionStore(sid string) *MemSessionStore {
 }
 
 // Set sets value to given key in session.
-func (s *MemSessionStore) Set(key, val interface{}) error {
+func (s *MemStore) Set(key, val interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -49,15 +49,15 @@ func (s *MemSessionStore) Set(key, val interface{}) error {
 }
 
 // Get gets value by given key in session.
-func (s *MemSessionStore) Get(key interface{}) interface{} {
+func (s *MemStore) Get(key interface{}) interface{} {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
 	return s.data[key]
 }
 
-// Delete delete a key from session.
-func (s *MemSessionStore) Delete(key interface{}) error {
+// Delete deletes a key from session.
+func (s *MemStore) Delete(key interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -66,17 +66,17 @@ func (s *MemSessionStore) Delete(key interface{}) error {
 }
 
 // ID returns current session ID.
-func (s *MemSessionStore) ID() string {
+func (s *MemStore) ID() string {
 	return s.sid
 }
 
 // Release releases resource and save data to provider.
-func (_ *MemSessionStore) Release() error {
+func (_ *MemStore) Release() error {
 	return nil
 }
 
 // Flush deletes all session data.
-func (s *MemSessionStore) Flush() error {
+func (s *MemStore) Flush() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -105,7 +105,7 @@ func (p *MemProvider) update(sid string) error {
 	defer p.lock.Unlock()
 
 	if e, ok := p.data[sid]; ok {
-		e.Value.(*MemSessionStore).lastAccess = time.Now()
+		e.Value.(*MemStore).lastAccess = time.Now()
 		p.list.MoveToFront(e)
 		return nil
 	}
@@ -122,14 +122,14 @@ func (p *MemProvider) Read(sid string) (_ RawStore, err error) {
 		if err = p.update(sid); err != nil {
 			return nil, err
 		}
-		return e.Value.(*MemSessionStore), nil
+		return e.Value.(*MemStore), nil
 	}
 
 	// Create a new session.
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	s := NewMemSessionStore(sid)
+	s := NewMemStore(sid)
 	p.data[sid] = p.list.PushBack(s)
 	return s, nil
 }
@@ -173,7 +173,7 @@ func (p *MemProvider) Regenerate(oldsid, sid string) (RawStore, error) {
 		return nil, err
 	}
 
-	s.(*MemSessionStore).sid = sid
+	s.(*MemStore).sid = sid
 	p.data[sid] = p.list.PushBack(s)
 	return s, nil
 }
@@ -193,11 +193,11 @@ func (p *MemProvider) GC() {
 			break
 		}
 
-		if (e.Value.(*MemSessionStore).lastAccess.Unix() + p.maxLifetime) < time.Now().Unix() {
+		if (e.Value.(*MemStore).lastAccess.Unix() + p.maxLifetime) < time.Now().Unix() {
 			p.lock.RUnlock()
 			p.lock.Lock()
 			p.list.Remove(e)
-			delete(p.data, e.Value.(*MemSessionStore).sid)
+			delete(p.data, e.Value.(*MemStore).sid)
 			p.lock.Unlock()
 			p.lock.RLock()
 		} else {

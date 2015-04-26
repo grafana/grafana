@@ -1,0 +1,31 @@
+version: "{build}"
+
+os: Windows Server 2012 R2
+
+clone_folder: c:\gopath\src\github.com\grafana\grafana
+
+environment:
+  nodejs_version: "0.12.2"
+  GOPATH: c:\gopath
+
+install:
+  # install nodejs and npm
+  - ps: Install-Product node $env:nodejs_version
+  - npm install
+  - npm install -g grunt-cli
+  # install gcc (needed for sqlite3)
+  - choco install -y mingw
+  - set PATH=C:\tools\mingw64\bin;%PATH%
+  - echo %PATH%
+  - echo %GOPATH%
+  - go version
+  - go env
+  - go run build.go setup
+
+build_script:
+  - go run build.go build
+  - grunt release
+
+artifacts:
+  - path: dist/*
+    name: binzip

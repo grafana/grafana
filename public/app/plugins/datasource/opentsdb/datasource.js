@@ -10,7 +10,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, $http, templateSrv) {
+  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
@@ -73,7 +73,7 @@ function (angular, _, kbn) {
         data: reqBody
       };
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     OpenTSDBDatasource.prototype.performSuggestQuery = function(query, type) {
@@ -85,7 +85,7 @@ function (angular, _, kbn) {
           q: query
         }
       };
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       });
     };
@@ -180,10 +180,14 @@ function (angular, _, kbn) {
     }
 
     function mapMetricsToTargets(metrics, targets) {
+      var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(targets, function(target) {
           return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) { return metricData.tags[tagK] !== void 0; });
+            _.all(target.tags, function(tagV, tagK) {
+            interpolatedTagValue = templateSrv.replace(tagV);
+            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+          });
         });
       });
     }

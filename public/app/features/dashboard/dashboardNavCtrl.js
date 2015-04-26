@@ -52,7 +52,7 @@ function (angular, _) {
     };
 
     $scope.saveDashboard = function(options) {
-      var clone = angular.copy($scope.dashboard);
+      var clone = $scope.dashboard.getSaveModelClone();
 
       backendSrv.saveDashboard(clone, options).then(function(data) {
         $scope.dashboard.version = data.version;
@@ -118,7 +118,7 @@ function (angular, _) {
 
     $scope.saveDashboardAs = function() {
       var newScope = $rootScope.$new();
-      newScope.clone = angular.copy($scope.dashboard);
+      newScope.clone = $scope.dashboard.getSaveModelClone();
 
       $scope.appEvent('show-modal', {
         src: './app/features/dashboard/partials/saveDashboardAs.html',
@@ -127,7 +127,8 @@ function (angular, _) {
     };
 
     $scope.exportDashboard = function() {
-      var blob = new Blob([angular.toJson($scope.dashboard, true)], { type: "application/json;charset=utf-8" });
+      var clone = $scope.dashboard.getSaveModelClone();
+      var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
@@ -144,7 +145,8 @@ function (angular, _) {
     };
 
     $scope.editJson = function() {
-      $scope.appEvent('show-json-editor', { object: $scope.dashboard });
+      var clone = $scope.dashboard.getSaveModelClone();
+      $scope.appEvent('show-json-editor', { object: clone });
     };
 
     $scope.stopPlaylist = function() {

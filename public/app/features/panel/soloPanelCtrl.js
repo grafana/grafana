@@ -40,8 +40,8 @@ function (angular, $) {
       });
     };
 
-    $scope.initPanelScope = function(dashboard) {
-      $scope.dashboard = dashboardSrv.create(dashboard.model);
+    $scope.initPanelScope = function(dashData) {
+      $scope.dashboard = dashboardSrv.create(dashData.model, dashData.meta);
 
       $scope.row = {
         height: ($(window).height() - 10) + 'px',
