@@ -8,7 +8,6 @@ function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
-  var tagList = null;
 
   module.factory('KairosDBDatasource', function($q, $http) {
 
@@ -92,52 +91,30 @@ function (angular, _, kbn) {
       });
     };
 
-    KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname, range, type, keyValue) {
-      if (tagList && (metricname === tagList.metricName) && (range.from === tagList.range.from) &&
-          (range.to === tagList.range.to)) {
-        return getTagListFromResponse(tagList.results, type, keyValue);
-      }
-      tagList = {
-        metricName: metricname,
-        range: range
-      };
-      var body = {
-        metrics : [{name : metricname}]
-      };
-
-      convertToKairosTime(range.from, body, 'start');
-      convertToKairosTime(range.to, body, 'end');
-
+    KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname) {
       var options = {
         url : this.url + '/api/v1/datapoints/query/tags',
         method : 'POST',
-        data : body
+        data : {
+          metrics : [{ name : metricname }],
+          cache_time : 0,
+          start_absolute: 0
+        }
       };
 
-      return $http(options).then(function(results) {
-        tagList.results = results;
-        return getTagListFromResponse(results, type, keyValue);
+      return $http(options).then(function(response) {
+        if (!response.data) {
+          return [];
+        }
+        else {
+          return response.data.queries[0].results[0];
+        }
       });
     };
 
     /////////////////////////////////////////////////////////////////////////
     /// Formatting methods
     ////////////////////////////////////////////////////////////////////////
-
-    function getTagListFromResponse(results, type, keyValue) {
-      if (!results.data) {
-        return [];
-      }
-      else if (type === "key") {
-        return _.keys(results.data.queries[0].results[0].tags);
-      }
-      else if (type === "value" && _.has(results.data.queries[0].results[0].tags, keyValue)) {
-        return results.data.queries[0].results[0].tags[keyValue];
-      }
-      else {
-        return [];
-      }
-    }
 
     /**
      * Requires a verion of KairosDB with every CORS defects fixed

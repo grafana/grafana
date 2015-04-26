@@ -7,6 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
   var metricList = [];
+  var tagList = [];
   var targetLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
 
   module.controller('KairosDBQueryCtrl', function($scope) {
@@ -63,12 +64,37 @@ function (angular, _) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      callback($scope.datasource.performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'key', ''));
+      if (!_.isEmpty(tagList)) {
+        var result = _.find(tagList, { name : $scope.target.metric });
+
+        if (!_.isEmpty(result)) {
+          return _.keys(result.tags);
+        }
+      }
+
+      $scope.datasource.performTagSuggestQuery($scope.target.metric).then(function(result) {
+        if (!_.isEmpty(result)) {
+          tagList.push(result);
+          callback(_.keys(result.tags));
+        }
+      });
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      callback($scope.datasource
-        .performTagSuggestQuery($scope.target.metric, $scope.rangeUnparsed, 'value', $scope.target.currentTagKey));
+      if (!_.isEmpty(tagList)) {
+        var result = _.find(tagList, { name : $scope.target.metric });
+
+        if (!_.isEmpty(result)) {
+          return result.tags[$scope.target.currentTagKey];
+        }
+      }
+
+      $scope.datasource.performTagSuggestQuery($scope.target.metric).then(function(result) {
+        if (!_.isEmpty(result)) {
+          tagList.push(result);
+          callback(result.tags[$scope.target.currentTagKey]);
+        }
+      });
     };
 
     // Filter metric by tag
