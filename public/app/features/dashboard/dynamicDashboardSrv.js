@@ -8,8 +8,6 @@ function (angular, _) {
   var module = angular.module('grafana.services');
 
   module.service('dynamicDashboardSrv', function()  {
-    var self = this;
-
     this.init = function(dashboard) {
       this.iteration = 0;
 
@@ -57,7 +55,7 @@ function (angular, _) {
       for (i = 0; i < dashboard.rows.length; i++) {
         row = dashboard.rows[i];
         if (row.linked) {
-          dashboard.rows = _.without(dashboard.rows, row);
+          dashboard.rows.splice(i, 1);
           i = i - 1;
         }
       }
@@ -75,7 +73,6 @@ function (angular, _) {
     };
 
     this.repeatRow = function(row, dashboard) {
-      console.log('repeat row');
       var variables = dashboard.templating.list;
       var variable = _.findWhere(variables, {name: row.repeat.replace('$', '')});
       if (!variable) {
@@ -95,13 +92,13 @@ function (angular, _) {
           copy.repeat = null;
           copy.linked = true;
 
+          dashboard.rows.push(copy);
+
           // set new panel ids
           for (i = 0; i < copy.panels.length; i++) {
-            panel = row.panels[i];
+            panel = copy.panels[i];
             panel.id = dashboard.getNextPanelId();
           }
-
-          dashboard.rows.push(copy);
         } else {
           copy = row;
         }
@@ -112,7 +109,6 @@ function (angular, _) {
           panel.scopedVars[variable.name] = option;
         }
       });
-
     };
 
     this.getRepeatPanel = function(sourcePanel, row) {
@@ -155,4 +151,3 @@ function (angular, _) {
   });
 
 });
-
