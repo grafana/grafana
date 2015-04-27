@@ -1,7 +1,8 @@
 package core
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 )
 
 type PK []interface{}
@@ -12,14 +13,14 @@ func NewPK(pks ...interface{}) *PK {
 }
 
 func (p *PK) ToString() (string, error) {
-	bs, err := json.Marshal(*p)
-	if err != nil {
-		return "", nil
-	}
-
-	return string(bs), nil
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(*p)
+	return buf.String(), err
 }
 
 func (p *PK) FromString(content string) error {
-	return json.Unmarshal([]byte(content), p)
+	dec := gob.NewDecoder(bytes.NewBufferString(content))
+	err := dec.Decode(p)
+	return err
 }

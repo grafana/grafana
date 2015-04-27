@@ -11,6 +11,43 @@ import (
 	"github.com/go-xorm/core"
 )
 
+func isZero(k interface{}) bool {
+	switch k.(type) {
+	case int:
+		return k.(int) == 0
+	case int8:
+		return k.(int8) == 0
+	case int16:
+		return k.(int16) == 0
+	case int32:
+		return k.(int32) == 0
+	case int64:
+		return k.(int64) == 0
+	case uint:
+		return k.(uint) == 0
+	case uint8:
+		return k.(uint8) == 0
+	case uint16:
+		return k.(uint16) == 0
+	case uint32:
+		return k.(uint32) == 0
+	case uint64:
+		return k.(uint64) == 0
+	case string:
+		return k.(string) == ""
+	}
+	return false
+}
+
+func isPKZero(pk core.PK) bool {
+	for _, k := range pk {
+		if isZero(k) {
+			return true
+		}
+	}
+	return false
+}
+
 func indexNoCase(s, sep string) int {
 	return strings.Index(strings.ToLower(s), strings.ToLower(sep))
 }
@@ -162,4 +199,183 @@ func rows2maps(rows *core.Rows) (resultsSlice []map[string][]byte, err error) {
 	}
 
 	return resultsSlice, nil
+}
+
+func row2map(rows *core.Rows, fields []string) (resultsMap map[string][]byte, err error) {
+	result := make(map[string][]byte)
+	scanResultContainers := make([]interface{}, len(fields))
+	for i := 0; i < len(fields); i++ {
+		var scanResultContainer interface{}
+		scanResultContainers[i] = &scanResultContainer
+	}
+	if err := rows.Scan(scanResultContainers...); err != nil {
+		return nil, err
+	}
+
+	for ii, key := range fields {
+		rawValue := reflect.Indirect(reflect.ValueOf(scanResultContainers[ii]))
+		//if row is null then ignore
+		if rawValue.Interface() == nil {
+			//fmt.Println("ignore ...", key, rawValue)
+			continue
+		}
+
+		if data, err := value2Bytes(&rawValue); err == nil {
+			result[key] = data
+		} else {
+			return nil, err // !nashtsai! REVIEW, should return err or just error log?
+		}
+	}
+	return result, nil
+}
+
+func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string, err error) {
+	result := make(map[string]string)
+	scanResultContainers := make([]interface{}, len(fields))
+	for i := 0; i < len(fields); i++ {
+		var scanResultContainer interface{}
+		scanResultContainers[i] = &scanResultContainer
+	}
+	if err := rows.Scan(scanResultContainers...); err != nil {
+		return nil, err
+	}
+
+	for ii, key := range fields {
+		rawValue := reflect.Indirect(reflect.ValueOf(scanResultContainers[ii]))
+		//if row is null then ignore
+		if rawValue.Interface() == nil {
+			//fmt.Println("ignore ...", key, rawValue)
+			continue
+		}
+
+		if data, err := value2String(&rawValue); err == nil {
+			result[key] = data
+		} else {
+			return nil, err // !nashtsai! REVIEW, should return err or just error log?
+		}
+	}
+	return result, nil
+}
+
+func txQuery2(tx *core.Tx, sqlStr string, params ...interface{}) (resultsSlice []map[string]string, err error) {
+	rows, err := tx.Query(sqlStr, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return rows2Strings(rows)
+}
+
+func query2(db *core.DB, sqlStr string, params ...interface{}) (resultsSlice []map[string]string, err error) {
+	s, err := db.Prepare(sqlStr)
+	if err != nil {
+		return nil, err
+	}
+	defer s.Close()
+	rows, err := s.Query(params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return rows2Strings(rows)
+}
+
+func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
+	v, err := col.ValueOf(bean)
+	if err != nil {
+		return
+	}
+	if v.CanSet() {
+		switch v.Type().Kind() {
+		case reflect.Struct:
+			v.Set(reflect.ValueOf(t).Convert(v.Type()))
+		case reflect.Int, reflect.Int64, reflect.Int32:
+			v.SetInt(t.Unix())
+		case reflect.Uint, reflect.Uint64, reflect.Uint32:
+			v.SetUint(uint64(t.Unix()))
+		}
+	}
+}
+
+func genCols(table *core.Table, session *Session, bean interface{}, useCol bool, includeQuote bool) ([]string, []interface{}, error) {
+	colNames := make([]string, 0)
+	args := make([]interface{}, 0)
+
+	for _, col := range table.Columns() {
+		lColName := strings.ToLower(col.Name)
+		if useCol && !col.IsVersion && !col.IsCreated && !col.IsUpdated {
+			if _, ok := session.Statement.columnMap[lColName]; !ok {
+				continue
+			}
+		}
+		if col.MapType == core.ONLYFROMDB {
+			continue
+		}
+
+		fieldValuePtr, err := col.ValueOf(bean)
+		if err != nil {
+			session.Engine.LogError(err)
+			continue
+		}
+		fieldValue := *fieldValuePtr
+
+		if col.IsAutoIncrement {
+			switch fieldValue.Type().Kind() {
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
+				if fieldValue.Int() == 0 {
+					continue
+				}
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint, reflect.Uint64:
+				if fieldValue.Uint() == 0 {
+					continue
+				}
+			case reflect.String:
+				if len(fieldValue.String()) == 0 {
+					continue
+				}
+			}
+		}
+
+		if col.IsDeleted {
+			continue
+		}
+
+		if session.Statement.ColumnStr != "" {
+			if _, ok := session.Statement.columnMap[lColName]; !ok {
+				continue
+			}
+		}
+		if session.Statement.OmitStr != "" {
+			if _, ok := session.Statement.columnMap[lColName]; ok {
+				continue
+			}
+		}
+
+		if (col.IsCreated || col.IsUpdated) && session.Statement.UseAutoTime {
+			val, t := session.Engine.NowTime2(col.SQLType.Name)
+			args = append(args, val)
+
+			var colName = col.Name
+			session.afterClosures = append(session.afterClosures, func(bean interface{}) {
+				col := table.GetColumn(colName)
+				setColumnTime(bean, col, t)
+			})
+		} else if col.IsVersion && session.Statement.checkVersion {
+			args = append(args, 1)
+		} else {
+			arg, err := session.value2Interface(col, fieldValue)
+			if err != nil {
+				return colNames, args, err
+			}
+			args = append(args, arg)
+		}
+
+		if includeQuote {
+			colNames = append(colNames, session.Engine.Quote(col.Name)+" = ?")
+		} else {
+			colNames = append(colNames, col.Name)
+		}
+	}
+	return colNames, args, nil
 }

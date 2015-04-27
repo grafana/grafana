@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -48,6 +49,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		}
 
 		if dash.Id == 0 {
+			metrics.M_Models_Dashboard_Insert.Inc(1)
 			_, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
@@ -138,7 +140,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		query.Limit = 300
 	}
 
-	sql.WriteString(fmt.Sprintf(" LIMIT %d", query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT %d", query.Limit))
 
 	var res []DashboardSearchProjection
 	err := x.Sql(sql.String(), params...).Find(&res)

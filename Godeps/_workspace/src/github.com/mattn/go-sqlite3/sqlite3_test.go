@@ -9,8 +9,10 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -309,6 +311,7 @@ func TestTimestamp(t *testing.T) {
 		{"0000-00-00 00:00:00", time.Time{}},
 		{timestamp1, timestamp1},
 		{timestamp1.Unix(), timestamp1},
+		{timestamp1.UnixNano() / int64(time.Millisecond), timestamp1},
 		{timestamp1.In(time.FixedZone("TEST", -7*3600)), timestamp1},
 		{timestamp1.Format("2006-01-02 15:04:05.000"), timestamp1},
 		{timestamp1.Format("2006-01-02T15:04:05.000"), timestamp1},
@@ -633,6 +636,102 @@ func TestWAL(t *testing.T) {
 	}
 }
 
+func TestTimezoneConversion(t *testing.T) {
+	zones := []string{"UTC", "US/Central", "US/Pacific", "Local"}
+	for _, tz := range zones {
+		tempFilename := TempFilename()
+		db, err := sql.Open("sqlite3", tempFilename+"?_loc="+url.QueryEscape(tz))
+		if err != nil {
+			t.Fatal("Failed to open database:", err)
+		}
+		defer os.Remove(tempFilename)
+		defer db.Close()
+
+		_, err = db.Exec("DROP TABLE foo")
+		_, err = db.Exec("CREATE TABLE foo(id INTEGER, ts TIMESTAMP, dt DATETIME)")
+		if err != nil {
+			t.Fatal("Failed to create table:", err)
+		}
+
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			t.Fatal("Failed to load location:", err)
+		}
+
+		timestamp1 := time.Date(2012, time.April, 6, 22, 50, 0, 0, time.UTC)
+		timestamp2 := time.Date(2006, time.January, 2, 15, 4, 5, 123456789, time.UTC)
+		timestamp3 := time.Date(2012, time.November, 4, 0, 0, 0, 0, time.UTC)
+		tests := []struct {
+			value    interface{}
+			expected time.Time
+		}{
+			{"nonsense", time.Time{}.In(loc)},
+			{"0000-00-00 00:00:00", time.Time{}.In(loc)},
+			{timestamp1, timestamp1.In(loc)},
+			{timestamp1.Unix(), timestamp1.In(loc)},
+			{timestamp1.In(time.FixedZone("TEST", -7*3600)), timestamp1.In(loc)},
+			{timestamp1.Format("2006-01-02 15:04:05.000"), timestamp1.In(loc)},
+			{timestamp1.Format("2006-01-02T15:04:05.000"), timestamp1.In(loc)},
+			{timestamp1.Format("2006-01-02 15:04:05"), timestamp1.In(loc)},
+			{timestamp1.Format("2006-01-02T15:04:05"), timestamp1.In(loc)},
+			{timestamp2, timestamp2.In(loc)},
+			{"2006-01-02 15:04:05.123456789", timestamp2.In(loc)},
+			{"2006-01-02T15:04:05.123456789", timestamp2.In(loc)},
+			{"2012-11-04", timestamp3.In(loc)},
+			{"2012-11-04 00:00", timestamp3.In(loc)},
+			{"2012-11-04 00:00:00", timestamp3.In(loc)},
+			{"2012-11-04 00:00:00.000", timestamp3.In(loc)},
+			{"2012-11-04T00:00", timestamp3.In(loc)},
+			{"2012-11-04T00:00:00", timestamp3.In(loc)},
+			{"2012-11-04T00:00:00.000", timestamp3.In(loc)},
+		}
+		for i := range tests {
+			_, err = db.Exec("INSERT INTO foo(id, ts, dt) VALUES(?, ?, ?)", i, tests[i].value, tests[i].value)
+			if err != nil {
+				t.Fatal("Failed to insert timestamp:", err)
+			}
+		}
+
+		rows, err := db.Query("SELECT id, ts, dt FROM foo ORDER BY id ASC")
+		if err != nil {
+			t.Fatal("Unable to query foo table:", err)
+		}
+		defer rows.Close()
+
+		seen := 0
+		for rows.Next() {
+			var id int
+			var ts, dt time.Time
+
+			if err := rows.Scan(&id, &ts, &dt); err != nil {
+				t.Error("Unable to scan results:", err)
+				continue
+			}
+			if id < 0 || id >= len(tests) {
+				t.Error("Bad row id: ", id)
+				continue
+			}
+			seen++
+			if !tests[id].expected.Equal(ts) {
+				t.Errorf("Timestamp value for id %v (%v) should be %v, not %v", id, tests[id].value, tests[id].expected, ts)
+			}
+			if !tests[id].expected.Equal(dt) {
+				t.Errorf("Datetime value for id %v (%v) should be %v, not %v", id, tests[id].value, tests[id].expected, dt)
+			}
+			if tests[id].expected.Location().String() != ts.Location().String() {
+				t.Errorf("Location for id %v (%v) should be %v, not %v", id, tests[id].value, tests[id].expected.Location().String(), ts.Location().String())
+			}
+			if tests[id].expected.Location().String() != dt.Location().String() {
+				t.Errorf("Location for id %v (%v) should be %v, not %v", id, tests[id].value, tests[id].expected.Location().String(), dt.Location().String())
+			}
+		}
+
+		if seen != len(tests) {
+			t.Errorf("Expected to see %d rows", len(tests))
+		}
+	}
+}
+
 func TestSuite(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
@@ -740,5 +839,109 @@ func TestStress(t *testing.T) {
 			rows.Close()
 		}
 		db.Close()
+	}
+}
+
+func TestDateTimeLocal(t *testing.T) {
+	zone := "Asia/Tokyo"
+	tempFilename := TempFilename()
+	db, err := sql.Open("sqlite3", tempFilename+"?_loc="+zone)
+	if err != nil {
+		t.Fatal("Failed to open database:", err)
+	}
+	db.Exec("CREATE TABLE foo (dt datetime);")
+	db.Exec("INSERT INTO foo VALUES('2015-03-05 15:16:17');")
+
+	row := db.QueryRow("select * from foo")
+	var d time.Time
+	err = row.Scan(&d)
+	if err != nil {
+		t.Fatal("Failed to scan datetime:", err)
+	}
+	if d.Hour() == 15 || !strings.Contains(d.String(), "JST") {
+		t.Fatal("Result should have timezone", d)
+	}
+	db.Close()
+
+	db, err = sql.Open("sqlite3", tempFilename)
+	if err != nil {
+		t.Fatal("Failed to open database:", err)
+	}
+
+	row = db.QueryRow("select * from foo")
+	err = row.Scan(&d)
+	if err != nil {
+		t.Fatal("Failed to scan datetime:", err)
+	}
+	if d.UTC().Hour() != 15 || !strings.Contains(d.String(), "UTC") {
+		t.Fatalf("Result should not have timezone %v %v", zone, d.String())
+	}
+
+	_, err = db.Exec("DELETE FROM foo")
+	if err != nil {
+		t.Fatal("Failed to delete table:", err)
+	}
+	dt, err := time.Parse("2006/1/2 15/4/5 -0700 MST", "2015/3/5 15/16/17 +0900 JST")
+	if err != nil {
+		t.Fatal("Failed to parse datetime:", err)
+	}
+	db.Exec("INSERT INTO foo VALUES(?);", dt)
+
+	db.Close()
+	db, err = sql.Open("sqlite3", tempFilename+"?_loc="+zone)
+	if err != nil {
+		t.Fatal("Failed to open database:", err)
+	}
+
+	row = db.QueryRow("select * from foo")
+	err = row.Scan(&d)
+	if err != nil {
+		t.Fatal("Failed to scan datetime:", err)
+	}
+	if d.Hour() != 15 || !strings.Contains(d.String(), "JST") {
+		t.Fatalf("Result should have timezone %v %v", zone, d.String())
+	}
+}
+
+func TestVersion(t *testing.T) {
+	s, n, id := Version()
+	if s == "" || n == 0 || id == "" {
+		t.Errorf("Version failed %q, %d, %q\n", s, n, id)
+	}
+}
+
+func TestNumberNamedParams(t *testing.T) {
+	tempFilename := TempFilename()
+	db, err := sql.Open("sqlite3", tempFilename)
+	if err != nil {
+		t.Fatal("Failed to open database:", err)
+	}
+	defer os.Remove(tempFilename)
+	defer db.Close()
+
+	_, err = db.Exec(`
+	create table foo (id integer, name text, extra text);
+	`)
+	if err != nil {
+		t.Error("Failed to call db.Query:", err)
+	}
+
+	_, err = db.Exec(`insert into foo(id, name, extra) values($1, $2, $2)`, 1, "foo")
+	if err != nil {
+		t.Error("Failed to call db.Exec:", err)
+	}
+
+	row := db.QueryRow(`select id, extra from foo where id = $1 and extra = $2`, 1, "foo")
+	if row == nil {
+		t.Error("Failed to call db.QueryRow")
+	}
+	var id int
+	var extra string
+	err = row.Scan(&id, &extra)
+	if err != nil {
+		t.Error("Failed to db.Scan:", err)
+	}
+	if id != 1 || extra != "foo" {
+		t.Error("Failed to db.QueryRow: not matched results")
 	}
 }

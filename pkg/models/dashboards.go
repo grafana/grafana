@@ -2,9 +2,10 @@ package models
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 	"time"
+
+	"github.com/dalu/slug"
 )
 
 // Typed errors
@@ -82,9 +83,7 @@ func (dash *Dashboard) GetString(prop string) string {
 // UpdateSlug updates the slug
 func (dash *Dashboard) UpdateSlug() {
 	title := strings.ToLower(dash.Data["title"].(string))
-	re := regexp.MustCompile("[^\\w ]+")
-	re2 := regexp.MustCompile("\\s")
-	dash.Slug = re2.ReplaceAllString(re.ReplaceAllString(title, ""), "-")
+	dash.Slug = slug.Make(title)
 }
 
 //

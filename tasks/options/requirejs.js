@@ -61,6 +61,10 @@ module.exports = function(config,grunt) {
           'controllers/all',
           'routes/all',
           'components/partials',
+          // bundle the datasources
+          'plugins/datasource/grafana/datasource',
+          'plugins/datasource/graphite/datasource',
+          'plugins/datasource/influxdb_08/datasource',
         ]
       }
     ];
@@ -68,7 +72,7 @@ module.exports = function(config,grunt) {
     var fs = require('fs');
     var panelPath = config.srcDir+'/app/panels';
 
-    // create a module for each directory in src/app/panels/
+    // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {
       requireModules[0].include.push('panels/'+panelName+'/module');
       requireModules[0].include.push('text!panels/'+panelName+'/module.html');

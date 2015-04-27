@@ -47,15 +47,13 @@ type Dialect interface {
 	SupportInsertMany() bool
 	SupportEngine() bool
 	SupportCharset() bool
+	SupportDropIfExists() bool
 	IndexOnTable() bool
 	ShowCreateNull() bool
 
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
-	//ColumnCheckSql(tableName, colName string) (string, []interface{})
 
-	//IsTableExist(tableName string) (bool, error)
-	//IsIndexExist(tableName string, idx *Index) (bool, error)
 	IsColumnExist(tableName string, col *Column) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
@@ -65,14 +63,12 @@ type Dialect interface {
 
 	ModifyColumnSql(tableName string, col *Column) string
 
+	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
+	//MustDropTable(tableName string) error
+
 	GetColumns(tableName string) ([]string, map[string]*Column, error)
 	GetTables() ([]*Table, error)
 	GetIndexes(tableName string) (map[string]*Index, error)
-
-	// Get data from db cell to a struct's field
-	//GetData(col *Column, fieldValue *reflect.Value, cellData interface{}) error
-	// Set field data to db
-	//SetData(col *Column, fieldValue *refelct.Value) (interface{}, error)
 
 	Filters() []Filter
 }
@@ -144,6 +140,10 @@ func (db *Base) RollBackStr() string {
 	return "ROLL BACK"
 }
 
+func (db *Base) SupportDropIfExists() bool {
+	return true
+}
+
 func (db *Base) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
 }
@@ -170,35 +170,52 @@ func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
 	return db.HasRecords(query, db.DbName, tableName, col.Name)
 }
 
+/*
+func (db *Base) CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error {
+	sql, args := db.dialect.TableCheckSql(tableName)
+	rows, err := db.DB().Query(sql, args...)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql, args)
+	}
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return nil
+	}
+
+	sql = db.dialect.CreateTableSql(table, tableName, storeEngine, charset)
+	_, err = db.DB().Exec(sql)
+	if db.Logger != nil {
+		db.Logger.Info("[sql]", sql)
+	}
+	return err
+}*/
+
 func (db *Base) CreateIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
 	var unique string
 	var idxName string
 	if index.Type == UniqueType {
 		unique = " UNIQUE"
-		idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
-	} else {
-		idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 	}
-	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique,
+	idxName = index.XName(tableName)
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
 		quote(idxName), quote(tableName),
 		quote(strings.Join(index.Cols, quote(","))))
 }
 
 func (db *Base) DropIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
-	//var unique string
-	var idxName string = index.Name
-	if !strings.HasPrefix(idxName, "UQE_") &&
-		!strings.HasPrefix(idxName, "IDX_") {
-		if index.Type == UniqueType {
-			idxName = fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
-		} else {
-			idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
-		}
+	var name string
+	if index.IsRegular {
+		name = index.XName(tableName)
+	} else {
+		name = index.Name
 	}
-	return fmt.Sprintf("DROP INDEX %v ON %s",
-		quote(idxName), quote(tableName))
+	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 
 func (db *Base) ModifyColumnSql(tableName string, col *Column) string {

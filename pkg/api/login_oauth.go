@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,7 +33,6 @@ func OAuthLogin(ctx *middleware.Context) {
 		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
 		return
 	}
-	log.Info("code: %v", code)
 
 	// handle call back
 	token, err := connect.Exchange(oauth2.NoContext, code)
@@ -49,14 +49,21 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	log.Info("login.OAuthLogin(social login): %s", userInfo)
+	log.Trace("login.OAuthLogin(social login): %s", userInfo)
+
+	// validate that the email is allowed to login to grafana
+	if !connect.IsEmailAllowed(userInfo.Email) {
+		log.Info("OAuth login attempt with unallowed email, %s", userInfo.Email)
+		ctx.Redirect(setting.AppSubUrl + "/login?email_not_allowed=1")
+		return
+	}
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Email}
 	err = bus.Dispatch(&userQuery)
 
 	// create account if missing
 	if err == m.ErrUserNotFound {
-		if !setting.AllowUserSignUp {
+		if !connect.IsSignupAllowed() {
 			ctx.Redirect(setting.AppSubUrl + "/login")
 			return
 		}
@@ -80,6 +87,8 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
+
+	metrics.M_Api_Login_OAuth.Inc(1)
 
 	ctx.Redirect(setting.AppSubUrl + "/")
 }

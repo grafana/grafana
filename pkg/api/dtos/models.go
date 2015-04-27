@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strings"
+	"time"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -27,9 +28,12 @@ type CurrentUser struct {
 }
 
 type DashboardMeta struct {
-	IsStarred bool   `json:"isStarred"`
-	IsHome    bool   `json:"isHome"`
-	Slug      string `json:"slug"`
+	IsStarred  bool      `json:"isStarred,omitempty"`
+	IsHome     bool      `json:"isHome,omitempty"`
+	IsSnapshot bool      `json:"isSnapshot,omitempty"`
+	Slug       string    `json:"slug"`
+	Expires    time.Time `json:"expires"`
+	Created    time.Time `json:"created"`
 }
 
 type Dashboard struct {

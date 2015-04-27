@@ -121,6 +121,21 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 		col.fieldPath = strings.Split(col.FieldName, ".")
 	}
 
+	if dataStruct.Type().Kind() == reflect.Map {
+		var keyValue reflect.Value
+
+		if len(col.fieldPath) == 1 {
+			keyValue = reflect.ValueOf(col.FieldName)
+		} else if len(col.fieldPath) == 2 {
+			keyValue = reflect.ValueOf(col.fieldPath[1])
+		} else {
+			return nil, fmt.Errorf("Unsupported mutliderive %v", col.FieldName)
+		}
+
+		fieldValue = dataStruct.MapIndex(keyValue)
+		return &fieldValue, nil
+	}
+
 	if len(col.fieldPath) == 1 {
 		fieldValue = dataStruct.FieldByName(col.FieldName)
 	} else if len(col.fieldPath) == 2 {

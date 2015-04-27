@@ -2,8 +2,10 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func GetOrg(c *middleware.Context) {
@@ -28,12 +30,18 @@ func GetOrg(c *middleware.Context) {
 }
 
 func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) {
-	cmd.UserId = c.UserId
+	if !setting.AllowUserOrgCreate && !c.IsGrafanaAdmin {
+		c.JsonApiErr(401, "Access denied", nil)
+		return
+	}
 
+	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create organization", err)
 		return
 	}
+
+	metrics.M_Api_Org_Create.Inc(1)
 
 	c.JsonOK("Organization created")
 }

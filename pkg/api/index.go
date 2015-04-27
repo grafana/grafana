@@ -28,10 +28,19 @@ func setIndexViewData(c *middleware.Context) error {
 		currentUser.Name = currentUser.Login
 	}
 
+	themeUrlParam := c.Query("theme")
+	if themeUrlParam == "light" {
+		currentUser.LightTheme = true
+	}
+
 	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl
 	c.Data["AppSubUrl"] = setting.AppSubUrl
+
+	if setting.GoogleAnalyticsId != "" {
+		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId
+	}
 
 	return nil
 }
@@ -47,7 +56,7 @@ func Index(c *middleware.Context) {
 
 func NotFound(c *middleware.Context) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(200, "Not found", nil)
+		c.JsonApiErr(404, "Not found", nil)
 		return
 	}
 
