@@ -17,14 +17,25 @@
 <div class="gf-box-body">
 
 	<div class="editor-row" ng-if="editor.index == 0">
-		<div class="editor-option">
-			<label class="small">Title</label><input type="text" class="input-xlarge" ng-model='row.title'></input>
+		<div class="section">
+			<h5>Row details</h5>
+			<div class="editor-option">
+				<label class="small">Title</label><input type="text" class="input-medium" ng-model='row.title'></input>
+			</div>
+			<div class="editor-option">
+				<label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
+			</div>
+			<editor-opt-bool text="Editable" model="row.editable"></editor-opt-bool>
+			<editor-opt-bool text="Show title" model="row.showTitle"></editor-opt-bool>
 		</div>
-		<div class="editor-option">
-			<label class="small">Height</label><input type="text" class="input-mini" ng-model='row.height'></input>
+
+		<div class="section">
+			<h5>Templating options</h5>
+			<div class="editor-option">
+				<label class="small">Repeat row</label>
+				<input type="text" class="input-medium" ng-model='row.repeat'></input>
+			</div>
 		</div>
-		<editor-opt-bool text="Editable" model="row.editable"></editor-opt-bool>
-		<editor-opt-bool text="Show title" model="row.showTitle"></editor-opt-bool>
 	</div>
 
 </div>

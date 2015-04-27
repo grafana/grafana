@@ -29,6 +29,7 @@ function (angular, _) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
           }
+          delete panel.scopedVars;
         }
       }
     };
