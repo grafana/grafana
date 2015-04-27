@@ -66,6 +66,8 @@ function (angular, $, kbn, _, moment) {
       if (!this.editable) {
         meta.canEdit = false;
         meta.canDelete = false;
+        meta.canSave = false;
+        this.hideControls = true;
       }
 
       this.meta = meta;

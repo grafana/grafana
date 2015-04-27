@@ -119,6 +119,8 @@ function (angular, _) {
     $scope.saveDashboardAs = function() {
       var newScope = $rootScope.$new();
       newScope.clone = $scope.dashboard.getSaveModelClone();
+      newScope.clone.editable = true;
+      newScope.clone.hideControls = false;
 
       $scope.appEvent('show-modal', {
         src: './app/features/dashboard/partials/saveDashboardAs.html',

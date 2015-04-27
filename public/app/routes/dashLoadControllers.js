@@ -59,12 +59,15 @@ function (angular, _, kbn, moment, $) {
       $location.path('');
       return;
     }
-    $scope.initDashboard({meta: {}, model: window.grafanaImportDashboard }, $scope);
+    $scope.initDashboard({
+      meta: { canShare: false, canStar: false },
+      model: window.grafanaImportDashboard
+    }, $scope);
   });
 
   module.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
-      meta: {},
+      meta: { canStar: false, canShare: false },
       model: {
         title: "New dashboard",
         rows: [{ height: '250px', panels:[] }]
@@ -93,7 +96,10 @@ function (angular, _, kbn, moment, $) {
     };
 
     file_load($routeParams.jsonFile).then(function(result) {
-      $scope.initDashboard({meta: {fromFile: true}, model: result}, $scope);
+      $scope.initDashboard({
+        meta: { canSave: false, canDelete: false },
+        model: result
+      }, $scope);
     });
 
   });
@@ -138,7 +144,10 @@ function (angular, _, kbn, moment, $) {
     };
 
     script_load($routeParams.jsFile).then(function(result) {
-      $scope.initDashboard({meta: {fromScript: true, canDelete: false}, model: result.data}, $scope);
+      $scope.initDashboard({
+        meta: {fromScript: true, canDelete: false, canSave: false},
+        model: result.data
+      }, $scope);
     });
 
   });
