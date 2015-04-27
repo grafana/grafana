@@ -52,6 +52,10 @@ function (angular, _) {
     };
 
     $scope.saveDashboard = function(options) {
+      if ($scope.dashboardMeta.canSave === false) {
+        return;
+      }
+
       var clone = $scope.dashboard.getSaveModelClone();
 
       backendSrv.saveDashboard(clone, options).then(function(data) {
