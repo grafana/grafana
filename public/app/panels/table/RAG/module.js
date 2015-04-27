@@ -61,7 +61,7 @@ define([
         panelHelper.updateTimeRange($scope);
         return panelHelper.issueMetricQuery($scope, datasource)
           .then($scope.dataHandler, function(err) {
-            $scope.seriesList = [];
+            $scope.tableData = null;
             $scope.render(null);
             throw err;
           });
@@ -77,7 +77,7 @@ define([
       };
 
       $scope.shouldHidePaginationControl = function() {
-        return $scope.dashboard.refresh || !$scope.panel.allowPaging;
+        return $scope.dashboard.refresh || !$scope.panel.allowPaging || !$scope.tableData;
       };
 
       $scope.init();
