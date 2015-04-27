@@ -8,8 +8,11 @@ function (angular, _) {
   var module = angular.module('grafana.services');
 
   module.service('dynamicDashboardSrv', function()  {
+    var self = this;
 
     this.init = function(dashboard) {
+      this.iteration = 0;
+
       this.handlePanelRepeats(dashboard);
       this.handleRowRepeats(dashboard);
     };
@@ -112,6 +115,15 @@ function (angular, _) {
 
     };
 
+    this.getRepeatPanel = function(sourcePanel, row) {
+      for (var i = 0; i < row.panels.length; i++) {
+        var panel = row.panels[i];
+        if (panel.sourcePanel === sourcePanel) {
+          return panel;
+        }
+      }
+    };
+
     this.repeatPanel = function(panel, row, dashboard) {
       var variables = dashboard.templating.list;
       var variable = _.findWhere(variables, {name: panel.repeat.replace('$', '')});
@@ -137,7 +149,6 @@ function (angular, _) {
           panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
         }
-        console.log('duplicatePanel');
       });
     };
 

@@ -48,6 +48,7 @@ function (angular, $, config) {
       // the rest of the dashboard can load
       templateValuesSrv.init(dashboard).finally(function() {
         dynamicDashboardSrv.init(dashboard);
+
         $scope.dashboard = dashboard;
         $scope.dashboardMeta = dashboard.meta;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);

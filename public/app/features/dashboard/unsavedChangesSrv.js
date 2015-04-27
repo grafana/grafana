@@ -12,7 +12,7 @@ function(angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout, contextSrv) {
 
     var self = this;
     var modalScope = $rootScope.$new();
@@ -37,6 +37,7 @@ function(angular, _, config) {
     });
 
     this.ignoreChanges = function() {
+      if (!contextSrv.isEditor) { return true; }
       if (!self.current || !self.current.meta) { return true; }
 
       var meta = self.current.meta;
