@@ -29,7 +29,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       panelName: 'Graph',
       editIcon:  "fa fa-bar-chart",
       fullscreen: true,
-      metricsEditor: true
+      metricsEditor: true,
     });
 
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
