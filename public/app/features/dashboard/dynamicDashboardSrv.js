@@ -64,30 +64,35 @@ function (angular, _) {
         return sourceRow;
       }
 
-      var i, panel, row;
+      var i, panel, row, copy;
       var sourceRowId = _.indexOf(this.dashboard.rows, sourceRow) + 1;
 
       // look for row to reuse
       for (i = 0; i < this.dashboard.rows.length; i++) {
         row = this.dashboard.rows[i];
         if (row.repeatRowId === sourceRowId && row.repeatIteration !== this.iteration) {
-          row.repeatIteration = this.iteration;
-          return row;
+          copy = row;
+          break;
         }
       }
 
-      var copy = angular.copy(sourceRow);
+      if (!copy) {
+        copy = angular.copy(sourceRow);
+        this.dashboard.rows.push(copy);
+
+        // set new panel ids
+        for (i = 0; i < copy.panels.length; i++) {
+          panel = copy.panels[i];
+          panel.id = this.dashboard.getNextPanelId();
+        }
+
+      } else {
+        // update reused instance
+      }
+
       copy.repeat = null;
       copy.repeatRowId = sourceRowId;
       copy.repeatIteration = this.iteration;
-      this.dashboard.rows.push(copy);
-
-      // set new panel ids
-      for (i = 0; i < copy.panels.length; i++) {
-        panel = copy.panels[i];
-        panel.id = this.dashboard.getNextPanelId();
-      }
-
       return copy;
     };
 
@@ -122,16 +127,28 @@ function (angular, _) {
         return sourcePanel;
       }
 
+      var i, tmpId, panel, clone;
+
       // first try finding an existing clone to use
-      for (var i = 0; i < row.panels.length; i++) {
-        var panel = row.panels[i];
+      for (i = 0; i < row.panels.length; i++) {
+        panel = row.panels[i];
         if (panel.repeatIteration !== this.iteration && panel.repeatPanelId === sourcePanel.id) {
-          panel.repeatIteration = this.iteration;
-          return panel;
+          clone = panel;
+          break;
         }
       }
 
-      var clone = this.dashboard.duplicatePanel(sourcePanel, row);
+      if (!clone) {
+        clone = { id: this.dashboard.getNextPanelId() };
+        row.panels.push(clone);
+      }
+
+      // save id
+      tmpId = clone.id;
+      // copy properties from source
+      angular.extend(clone, sourcePanel);
+      // restore id
+      clone.id = tmpId;
       clone.repeatIteration = this.iteration;
       clone.repeatPanelId = sourcePanel.id;
       clone.repeat = null;

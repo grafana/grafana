@@ -70,11 +70,16 @@ define([
 
       beforeEach(function() {
         repeatedPanelAfterIteration1 = ctx.rows[0].panels[1];
+        ctx.rows[0].panels[0].fill = 10;
         ctx.dynamicDashboardSrv.update(ctx.dash);
       });
 
       it('should have reused same panel instances', function() {
         expect(ctx.rows[0].panels[1]).to.be(repeatedPanelAfterIteration1);
+      });
+
+      it('reused panel should copy properties from source', function() {
+        expect(ctx.rows[0].panels[1].fill).to.be(10);
       });
 
       it('should have same panel count', function() {
@@ -144,11 +149,16 @@ define([
 
       beforeEach(function() {
         repeatedRowAfterFirstIteration = ctx.rows[1];
+        ctx.rows[0].height = 500;
         ctx.dynamicDashboardSrv.update(ctx.dash);
       });
 
       it('should still only have 2 rows', function() {
         expect(ctx.rows.length).to.be(2);
+      });
+
+      it.skip('should have updated props from source', function() {
+        expect(ctx.rows[1].height).to.be(500);
       });
 
       it('should reuse row instance', function() {
