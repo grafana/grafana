@@ -99,12 +99,8 @@ function (angular, app, _) {
           };
 
           scope.updateLinkText = function() {
-            scope.linkText = "";
-            if (!variable.hideLabel) {
-              scope.linkText = (variable.label || variable.name) + ': ';
-            }
-
-            scope.linkText += variable.current.text;
+            scope.labelText = variable.label || '$' + variable.name;
+            scope.linkText = variable.current.text;
           };
 
           scope.$watchGroup(['variable.hideLabel', 'variable.name', 'variable.label', 'variable.current.text'], function() {
