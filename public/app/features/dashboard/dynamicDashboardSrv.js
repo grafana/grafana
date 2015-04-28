@@ -8,14 +8,20 @@ function (angular, _) {
   var module = angular.module('grafana.services');
 
   module.service('dynamicDashboardSrv', function()  {
+    var self = this;
+
     this.init = function(dashboard) {
-      this.iteration = 0;
+      this.dashboard = dashboard;
+      this.iteration = new Date().getTime();
 
       this.handlePanelRepeats(dashboard);
       this.handleRowRepeats(dashboard);
     };
 
     this.update = function(dashboard) {
+      this.dashboard = dashboard;
+      this.iteration = this.iteration + 1;
+
       this.handlePanelRepeats(dashboard);
       this.handleRowRepeats(dashboard);
     };
@@ -36,8 +42,6 @@ function (angular, _) {
     };
 
     this.handlePanelRepeats = function(dashboard) {
-      this.removeLinkedPanels(dashboard);
-
       var i, j, row, panel;
       for (i = 0; i < dashboard.rows.length; i++) {
         row = dashboard.rows[i];
@@ -45,6 +49,11 @@ function (angular, _) {
           panel = row.panels[j];
           if (panel.repeat) {
             this.repeatPanel(panel, row, dashboard);
+          }
+          // clean up old left overs
+          else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
+            row.panels = _.without(row.panels, panel);
+            j = j - 1;
           }
         }
       }
@@ -111,13 +120,27 @@ function (angular, _) {
       });
     };
 
-    this.getRepeatPanel = function(sourcePanel, row) {
+    this.getPanelClone = function(sourcePanel, row, index) {
+      // if first clone return source
+      if (index === 0) {
+        return sourcePanel;
+      }
+
+      // first try finding an existing clone to use
       for (var i = 0; i < row.panels.length; i++) {
         var panel = row.panels[i];
-        if (panel.sourcePanel === sourcePanel) {
+        if (panel.repeatIteration !== this.iteration &&
+            panel.repeatPanelId === sourcePanel.id) {
+          panel.repeatIteration = this.iteration;
           return panel;
         }
       }
+
+      var clone = this.dashboard.duplicatePanel(sourcePanel, row);
+      clone.repeatIteration = this.iteration;
+      clone.repeatPanelId = sourcePanel.id;
+      clone.repeat = null;
+      return clone;
     };
 
     this.repeatPanel = function(panel, row, dashboard) {
@@ -135,16 +158,9 @@ function (angular, _) {
       }
 
       _.each(selected, function(option, index) {
-        if (index > 0) {
-          var copy = dashboard.duplicatePanel(panel, row);
-          copy.repeat = null;
-          copy.linked = true;
-          copy.scopedVars = {};
-          copy.scopedVars[variable.name] = option;
-        } else {
-          panel.scopedVars = {};
-          panel.scopedVars[variable.name] = option;
-        }
+        var copy = self.getPanelClone(panel, row, index);
+        copy.scopedVars = {};
+        copy.scopedVars[variable.name] = option;
       });
     };
 

@@ -26,13 +26,10 @@ define([
           ctx.dash = ctx.dashboardSrv.create(model);
           ctx.dynamicDashboardSrv.init(ctx.dash);
           ctx.rows = ctx.dash.rows;
-
         }));
-
       };
 
       func(ctx);
-
     });
   }
 
@@ -59,15 +56,41 @@ define([
     });
 
     it('should mark panel repeated', function() {
-      expect(ctx.rows[0].panels[0].linked).to.be(undefined);
       expect(ctx.rows[0].panels[0].repeat).to.be('$apps');
-      expect(ctx.rows[0].panels[1].linked).to.be(true);
-      expect(ctx.rows[0].panels[1].repeat).to.be(null);
+      expect(ctx.rows[0].panels[1].repeatPanelId).to.be(2);
     });
 
     it('should set scopedVars on panels', function() {
       expect(ctx.rows[0].panels[0].scopedVars.apps.value).to.be('se1');
       expect(ctx.rows[0].panels[1].scopedVars.apps.value).to.be('se2');
+    });
+
+    describe('After a second iteration', function() {
+      var repeatedPanelAfterIteration1;
+
+      beforeEach(function() {
+        repeatedPanelAfterIteration1 = ctx.rows[0].panels[1];
+        ctx.dynamicDashboardSrv.update(ctx.dash);
+      });
+
+      it('should have reused same panel instances', function() {
+        expect(ctx.rows[0].panels[1]).to.be(repeatedPanelAfterIteration1);
+      });
+
+      it('should have same panel count', function() {
+        expect(ctx.rows[0].panels.length).to.be(2);
+      });
+    });
+
+    describe('After a second iteration and selected values reduced', function() {
+      beforeEach(function() {
+        ctx.dash.templating.list[0].options[1].selected = false;
+        ctx.dynamicDashboardSrv.update(ctx.dash);
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(ctx.rows[0].panels.length).to.be(1);
+      });
     });
 
   });
@@ -110,8 +133,6 @@ define([
       expect(ctx.rows[0].panels[0].scopedVars.servers.value).to.be('se1');
       expect(ctx.rows[1].panels[0].scopedVars.servers.value).to.be('se2');
     });
-
   });
-
 
 });
