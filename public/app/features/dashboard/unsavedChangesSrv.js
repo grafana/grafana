@@ -64,7 +64,7 @@ function(angular, _) {
       // ignore time and refresh
       dash.time = 0;
       dash.refresh = 0;
-      dash.version = 0;
+      dash.schemaVersion = 0;
 
       // filter row and panels properties that should be ignored
       dash.rows = _.filter(dash.rows, function(row) {

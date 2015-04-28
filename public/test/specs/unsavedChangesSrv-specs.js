@@ -54,8 +54,7 @@ define([
     it('Should ignore a lot of changes', function() {
       dash.time = {from: '1h'};
       dash.refresh = true;
-      dash.version = 10;
-      dash.rows[0].collapse = true;
+      dash.schemaVersion = 10;
       expect(tracker.hasChanges()).to.be(false);
     });
 
