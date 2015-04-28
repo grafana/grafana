@@ -26,21 +26,6 @@ function (angular, _) {
       this.handleRowRepeats(dashboard);
     };
 
-    this.removeLinkedPanels = function(dashboard) {
-      var i, j, row, panel;
-      for (i = 0; i < dashboard.rows.length; i++) {
-        row = dashboard.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          panel = row.panels[j];
-          if (panel.linked) {
-            row.panels = _.without(row.panels, panel);
-            j = j - 1;
-          }
-          delete panel.scopedVars;
-        }
-      }
-    };
-
     this.handlePanelRepeats = function(dashboard) {
       var i, j, row, panel;
       for (i = 0; i < dashboard.rows.length; i++) {
@@ -59,26 +44,51 @@ function (angular, _) {
       }
     };
 
-    this.removeLinkedRows = function(dashboard) {
-      var i, row;
-      for (i = 0; i < dashboard.rows.length; i++) {
-        row = dashboard.rows[i];
-        if (row.linked) {
-          dashboard.rows.splice(i, 1);
-          i = i - 1;
-        }
-      }
-    };
-
     this.handleRowRepeats = function(dashboard) {
-      this.removeLinkedRows(dashboard);
       var i, row;
       for (i = 0; i < dashboard.rows.length; i++) {
         row = dashboard.rows[i];
         if (row.repeat) {
           this.repeatRow(row, dashboard);
         }
+        // clean up old left overs
+        else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
+          dashboard.rows.splice(i, 1);
+          i = i - 1;
+        }
       }
+    };
+
+    this.getRowClone = function(sourceRow, index) {
+      if (index === 0) {
+        return sourceRow;
+      }
+
+      var i, panel, row;
+      var sourceRowId = _.indexOf(this.dashboard.rows, sourceRow) + 1;
+
+      // look for row to reuse
+      for (i = 0; i < this.dashboard.rows.length; i++) {
+        row = this.dashboard.rows[i];
+        if (row.repeatRowId === sourceRowId && row.repeatIteration !== this.iteration) {
+          row.repeatIteration = this.iteration;
+          return row;
+        }
+      }
+
+      var copy = angular.copy(sourceRow);
+      copy.repeat = null;
+      copy.repeatRowId = sourceRowId;
+      copy.repeatIteration = this.iteration;
+      this.dashboard.rows.push(copy);
+
+      // set new panel ids
+      for (i = 0; i < copy.panels.length; i++) {
+        panel = copy.panels[i];
+        panel.id = this.dashboard.getNextPanelId();
+      }
+
+      return copy;
     };
 
     this.repeatRow = function(row, dashboard) {
@@ -96,21 +106,7 @@ function (angular, _) {
       }
 
       _.each(selected, function(option, index) {
-        if (index > 0) {
-          copy = angular.copy(row);
-          copy.repeat = null;
-          copy.linked = true;
-
-          dashboard.rows.push(copy);
-
-          // set new panel ids
-          for (i = 0; i < copy.panels.length; i++) {
-            panel = copy.panels[i];
-            panel.id = dashboard.getNextPanelId();
-          }
-        } else {
-          copy = row;
-        }
+        copy = self.getRowClone(row, index);
 
         for (i = 0; i < copy.panels.length; i++) {
           panel = copy.panels[i];
@@ -129,8 +125,7 @@ function (angular, _) {
       // first try finding an existing clone to use
       for (var i = 0; i < row.panels.length; i++) {
         var panel = row.panels[i];
-        if (panel.repeatIteration !== this.iteration &&
-            panel.repeatPanelId === sourcePanel.id) {
+        if (panel.repeatIteration !== this.iteration && panel.repeatPanelId === sourcePanel.id) {
           panel.repeatIteration = this.iteration;
           return panel;
         }

@@ -133,6 +133,33 @@ define([
       expect(ctx.rows[0].panels[0].scopedVars.servers.value).to.be('se1');
       expect(ctx.rows[1].panels[0].scopedVars.servers.value).to.be('se2');
     });
-  });
 
+    describe('After a second iteration', function() {
+      var repeatedRowAfterFirstIteration;
+
+      beforeEach(function() {
+        repeatedRowAfterFirstIteration = ctx.rows[1];
+        ctx.dynamicDashboardSrv.update(ctx.dash);
+      });
+
+      it('should still only have 2 rows', function() {
+        expect(ctx.rows.length).to.be(2);
+      });
+
+      it('should reuse row instance', function() {
+        expect(ctx.rows[1]).to.be(repeatedRowAfterFirstIteration);
+      });
+    });
+
+    describe('After a second iteration and selected values reduced', function() {
+      beforeEach(function() {
+        ctx.dash.templating.list[0].options[1].selected = false;
+        ctx.dynamicDashboardSrv.update(ctx.dash);
+      });
+
+      it('should remove repeated second row', function() {
+        expect(ctx.rows.length).to.be(1);
+      });
+    });
+  });
 });
