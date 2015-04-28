@@ -24,7 +24,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
   });
 
   module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
-    console.log('Graph: init: ' + $scope.panel.id);
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',

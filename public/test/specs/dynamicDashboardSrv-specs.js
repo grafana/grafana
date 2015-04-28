@@ -123,10 +123,15 @@ define([
     });
 
     it('should mark second row as repeated', function() {
-      expect(ctx.rows[0].linked).to.be(undefined);
       expect(ctx.rows[0].repeat).to.be('$servers');
-      expect(ctx.rows[1].linked).to.be(true);
+    });
+
+    it('should clear repeat field on repeated row', function() {
       expect(ctx.rows[1].repeat).to.be(null);
+    });
+
+    it('should generate a repeartRowId based on repeat row index', function() {
+      expect(ctx.rows[1].repeatRowId).to.be(1);
     });
 
     it('should set scopedVars on row panels', function() {
