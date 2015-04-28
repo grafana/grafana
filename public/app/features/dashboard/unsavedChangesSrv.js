@@ -61,6 +61,12 @@ function(angular, _) {
 
     // remove stuff that should not count in diff
     p.cleanDashboardFromIgnoredChanges = function(dash) {
+      // ignore time and refresh
+      dash.time = 0;
+      dash.refresh = 0;
+      dash.version = 0;
+
+      // filter row and panels properties that should be ignored
       dash.rows = _.filter(dash.rows, function(row) {
         if (row.repeatRowId) {
           return false;
@@ -70,57 +76,38 @@ function(angular, _) {
           if (panel.repeatPanelId) {
             return false;
           }
+
           // remove scopedVars
           panel.scopedVars = null;
+
+          // ignore panel legend sort
+          if (panel.legend)  {
+            delete panel.legend.sort;
+            delete panel.legend.sortDesc;
+          }
+
           return true;
         });
 
+        // ignore collapse state
+        row.collapse = false;
         return true;
       });
+
+      // ignore template variable values
+      _.each(dash.templating.list, function(value) {
+        value.current = null;
+        value.options = null;
+      });
+
     };
 
     p.hasChanges = function() {
       var current = this.current.getSaveModelClone();
       var original = this.original;
 
-      // ignore timespan changes
-      current.time = original.time = {};
-      current.refresh = original.refresh;
-      // ignore version
-      current.version = original.version;
-
-      // ignore template variable values
-      _.each(current.templating.list, function(value, index) {
-        value.current = null;
-        value.options = null;
-
-        if (original.templating.list.length > index) {
-          original.templating.list[index].current = null;
-          original.templating.list[index].options = null;
-        }
-      });
-
       this.cleanDashboardFromIgnoredChanges(current);
       this.cleanDashboardFromIgnoredChanges(original);
-
-      // ignore some panel and row stuff
-      current.forEachPanel(function(panel, panelIndex, row, rowIndex) {
-        var originalRow = original.rows[rowIndex];
-        var originalPanel = original.getPanelById(panel.id);
-        // ignore row collapse state
-        if (originalRow) {
-          row.collapse = originalRow.collapse;
-        }
-        if (originalPanel) {
-          // ignore graph legend sort
-          if (originalPanel.legend && panel.legend)  {
-            delete originalPanel.legend.sortDesc;
-            delete originalPanel.legend.sort;
-            delete panel.legend.sort;
-            delete panel.legend.sortDesc;
-          }
-        }
-      });
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
