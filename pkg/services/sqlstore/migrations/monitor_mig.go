@@ -3,94 +3,8 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addMonitorMigration(mg *Migrator) {
-	var monitorV1 = Table{
-		Name: "monitor",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "site_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "account_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
-			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-		}, Indices: []*Index{
-			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"account_id", "slug"}, Type: UniqueIndex},
-		},
-	}
-	mg.AddMigration("create monitor table", NewAddTableMigration(monitorV1))
 
-	//-------  indexes ------------------
-	mg.AddMigration("add index monitor.monitor_type_id", NewAddIndexMigration(monitorV1, monitorV1.Indices[0]))
-	mg.AddMigration("add unique index monitor.account_id_slug", NewAddIndexMigration(monitorV1, monitorV1.Indices[1]))
-
-	// ---------------------
-	// account -> org changes
-	//-------  drop dashboard indexes ------------------
-	addDropAllIndicesMigrations(mg, "v1", monitorV1)
-	//------- rename table ------------------
-	addTableRenameMigration(mg, "monitor", "monitor_v1", "v1")
-
-	// monitor v2
-	var monitorV2 = Table{
-		Name: "monitor",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "site_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
-			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-		}, Indices: []*Index{
-			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"org_id", "slug", "monitor_type_id"}, Type: UniqueIndex},
-		},
-	}
-
-	// recreate table
-	mg.AddMigration("create monitor v2", NewAddTableMigration(monitorV2))
-	// recreate indices
-	addTableIndicesMigrations(mg, "v2", monitorV2)
-	// copy data
-	mg.AddMigration("copy monitor v1 to v2", NewCopyTableDataMigration("monitor", "monitor_v1", map[string]string{
-		"id":              "id",
-		"site_id":         "site_id",
-		"org_id":          "account_id",
-		"slug":            "slug",
-		"name":            "name",
-		"namespace":       "namespace",
-		"monitor_type_id": "monitor_type_id",
-		"offset":          "offset",
-		"frequency":       "frequency",
-		"enabled":         "enabled",
-		"settings":        "settings",
-		"created":         "created",
-		"updated":         "updated",
-	}))
-
-	mg.AddMigration("drop table monitor_v1", NewDropTableMigration("monitor_v1"))
-
-	// ---------------------
-	// site -> endpoint changes
-	//-------  drop dashboard indexes ------------------
-	addDropAllIndicesMigrations(mg, "v2", monitorV2)
-	//------- rename table ------------------
-	addTableRenameMigration(mg, "monitor", "monitor_v2", "v2")
-
-	// monitor v2
+	// monitor v3
 	var monitorV3 = Table{
 		Name: "monitor",
 		Columns: []*Column{
@@ -117,39 +31,6 @@ func addMonitorMigration(mg *Migrator) {
 	mg.AddMigration("create monitor v3", NewAddTableMigration(monitorV3))
 	// recreate indices
 	addTableIndicesMigrations(mg, "v3", monitorV3)
-	// copy data
-	mg.AddMigration("copy monitor v2 to v3", NewCopyTableDataMigration("monitor", "monitor_v2", map[string]string{
-		"id":              "id",
-		"endpoint_id":     "site_id",
-		"org_id":          "org_id",
-		"namespace":       "namespace",
-		"monitor_type_id": "monitor_type_id",
-		"offset":          "offset",
-		"frequency":       "frequency",
-		"enabled":         "enabled",
-		"settings":        "settings",
-		"created":         "created",
-		"updated":         "updated",
-	}))
-
-	mg.AddMigration("drop table monitor_v2", NewDropTableMigration("monitor_v2"))
-
-	//monitorLocation
-	var monitorLocationV1 = Table{
-		Name: "monitor_location",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "location_id", Type: DB_BigInt, Nullable: false},
-		},
-		Indices: []*Index{
-			&Index{Cols: []string{"monitor_id", "location_id"}},
-		},
-	}
-	mg.AddMigration("create monitor_location table", NewAddTableMigration(monitorLocationV1))
-
-	//-------  indexes ------------------
-	mg.AddMigration("add index monitor_location.monitor_id_location_id", NewAddIndexMigration(monitorLocationV1, monitorLocationV1.Indices[0]))
 
 	//monitorTypes
 	var monitorTypeV1 = Table{
@@ -261,23 +142,6 @@ func addMonitorMigration(mg *Migrator) {
 		Sqlite("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 
-	// add endpoint_tags
-	var monitorLocationTagV1 = Table{
-		Name: "monitor_location_tag",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
-		},
-		Indices: []*Index{
-			&Index{Cols: []string{"monitor_id"}},
-			&Index{Cols: []string{"monitor_id", "tag"}, Type: UniqueIndex},
-		},
-	}
-	mg.AddMigration("create monitor_location_tag table v1", NewAddTableMigration(monitorLocationTagV1))
-
-	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", monitorLocationTagV1)
 
 	//monitorCollector
 	var monitorCollectorV1 = Table{
@@ -295,13 +159,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorV1)
-	mg.AddMigration("copy monitor_location v1 to monitor_collector v1", NewCopyTableDataMigration("monitor_collector", "monitor_location", map[string]string{
-		"id":           "id",
-		"monitor_id":   "monitor_id",
-		"collector_id": "location_id",
-	}))
-
-	mg.AddMigration("drop table monitor_location v1", NewDropTableMigration("monitor_location"))
 
 	// add monitor_collector_tags
 	var monitorCollectorTagV1 = Table{
@@ -320,13 +177,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorTagV1)
-	mg.AddMigration("copy monitor_location_tag v1 to monitor_collector_tag v1", NewCopyTableDataMigration("monitor_collector_tag", "monitor_location_tag", map[string]string{
-		"id":         "id",
-		"monitor_id": "monitor_id",
-		"tag":        "tag",
-	}))
-
-	mg.AddMigration("drop table monitor_location_tag v1", NewDropTableMigration("monitor_location_tag"))
 
 	//monitorCollector
 	var monitorCollectorStateV1 = Table{
