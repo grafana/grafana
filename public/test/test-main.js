@@ -141,6 +141,7 @@ require([
     'specs/dashboardViewStateSrv-specs',
     'specs/soloPanelCtrl-specs',
     'specs/dynamicDashboardSrv-specs',
+    'specs/unsavedChangesSrv-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
