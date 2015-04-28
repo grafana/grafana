@@ -18,7 +18,7 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
 			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
 			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "state_change", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "state_change", Type: DB_DateTime, Nullable: false},
 			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		}, Indices: []*Index{
