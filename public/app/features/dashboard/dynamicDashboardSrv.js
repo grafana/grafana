@@ -85,9 +85,6 @@ function (angular, _) {
           panel = copy.panels[i];
           panel.id = this.dashboard.getNextPanelId();
         }
-
-      } else {
-        // update reused instance
       }
 
       copy.repeat = null;

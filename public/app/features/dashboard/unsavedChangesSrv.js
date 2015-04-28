@@ -81,6 +81,26 @@ function(angular, _, config) {
       });
     };
 
+    this.cleanDashboardFromRepeatedPanelsAndRows = function(dash) {
+      dash.rows = _.filter(dash.rows, function(row) {
+        if (row.repeatRowId) {
+          console.log('filtering out row');
+          return false;
+        }
+
+        row.panels = _.filter(row.panels, function(panel) {
+          if (panel.repeatPanelId) {
+            return false;
+          }
+          // remove scopedVars
+          panel.scopedVars = null;
+          return true;
+        });
+
+        return true;
+      });
+    };
+
     this.has_unsaved_changes = function() {
       if (!self.original) {
         return false;
@@ -105,6 +125,9 @@ function(angular, _, config) {
           original.templating.list[index].options = null;
         }
       });
+
+      this.cleanDashboardFromRepeatedPanelsAndRows(current);
+      this.cleanDashboardFromRepeatedPanelsAndRows(original);
 
       // ignore some panel and row stuff
       current.forEachPanel(function(panel, panelIndex, row, rowIndex) {
