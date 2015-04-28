@@ -165,7 +165,7 @@ func (c *CollectorContext) OnDisconnection() {
 
 func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 	log.Info(fmt.Sprintf("recieved event from %s", c.Collector.Name))
-	if !c.IsGrafanaAdmin {
+	if !c.Collector.Public {
 		msg.OrgId = c.OrgId
 	}
 	msgString, err := json.Marshal(msg)
@@ -182,7 +182,7 @@ func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 	for _, r := range results {
-		if !c.IsGrafanaAdmin {
+		if !c.Collector.Public {
 			r.OrgId = c.OrgId
 		}
 		bufCh <- *r
