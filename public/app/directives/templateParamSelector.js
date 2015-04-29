@@ -42,26 +42,38 @@ function (angular, app, _) {
             }, 0, false);
           };
 
-          scope.optionSelected = function(option) {
+          scope.optionSelected = function(option, event) {
             option.selected = !option.selected;
 
-            if (!variable.multi || option.text === 'All') {
+            var hideAfter = true;
+            var setAllExceptCurrentTo = function(newValue) {
               _.each(scope.options, function(other) {
-                if (option !== other) {
-                  other.selected = false;
-                }
+                if (option !== other) { other.selected = newValue; }
               });
+            };
+
+            if (option.text === 'All') {
+              setAllExceptCurrentTo(false);
+            }
+            else if (!variable.multi) {
+              setAllExceptCurrentTo(false);
+            } else {
+              if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                hideAfter = false;
+              }
+              else {
+                setAllExceptCurrentTo(false);
+              }
             }
 
             var selected = _.filter(scope.options, {selected: true});
 
-            // enfore the first selected if no option is selected
             if (selected.length === 0) {
-              scope.options[0].selected = true;
-              selected = [scope.options[0]];
+              option.selected = true;
+              selected = [option];
             }
 
-            if (selected.length > 1) {
+            if (selected.length > 1 && selected.length !== scope.options.length) {
               if (selected[0].text === 'All') {
                 selected[0].selected = false;
                 selected = selected.slice(1, selected.length);
@@ -80,6 +92,10 @@ function (angular, app, _) {
 
             scope.updateLinkText();
             scope.onUpdated();
+
+            if (hideAfter) {
+              scope.hide();
+            }
           };
 
           scope.hide = function() {

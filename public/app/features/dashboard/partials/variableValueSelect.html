@@ -14,11 +14,9 @@
 	</div>
 
 	<div class="variable-options-container" ng-if="!query.tagcloud">
-		<a class="variable-option pointer" bindonce ng-repeat="option in options"
-				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
-				<i class="fa fa-fw fa-square-o"></i>
-				<i class="fa fa-fw fa-check-square-o"></i>
+		<a class="variable-option pointer" bindonce ng-repeat="option in options" ng-class="{'selected': option.selected}" ng-click="optionSelected(option, $event)">
 				<span >{{option.text}}</label>
+				<span class="fa fa-fw variable-option-icon"></span>
 			</div>
 		</a>
 	</div>

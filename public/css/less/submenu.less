@@ -26,40 +26,42 @@
 
 .variable-value-dropdown {
   position: absolute;
-  top: 43px;
-  min-width: 200px;
+  top: 35px;
+  min-width: 150px;
   max-height: 400px;
   background: @grafanaPanelBackground;
   box-shadow: 0px 0px 55px 0px black;
   border: 1px solid @grafanaTargetFuncBackground;
   z-index: 1000;
   font-size: @baseFontSize;
-  padding: 4px 4px 8px 4px;
+  padding: 0;
+  border-radius: 3px 3px 0 0;
 }
 
 .variable-options-container {
   max-height: 350px;
   overflow: auto;
   display: block;
-  line-height: 28px;
+  line-height: 26px;
 }
 
 .variable-option {
   display: block;
-  .fa {
-    font-size: 130%;
-    position: relative;
-    top: 2px;
-    padding-right: 4px;
+  padding: 0 8px;
+
+  &:hover {
+    background-color: @blueDark;
   }
-  .fa-check-square-o { display: none; }
+
+  .fa {
+    line-height: 26px;
+    float: right;
+    padding-left: 4px;
+  }
 
   &.selected {
-    .fa-square-o {
-      display: none;
-    }
-    .fa-check-square-o {
-      display: inline-block;
+    .variable-option-icon:before {
+      content: "\f00c";
     }
   }
 }
