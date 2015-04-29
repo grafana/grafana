@@ -137,7 +137,7 @@ function (angular, _) {
           $location.path("/dashboard/raintank/statusboard").search(search);
           break;
         case "ping":
-          $location.path("/dashboard/raintank/rt-endpoint-icmp").search(search);
+          $location.path("/dashboard/raintank/rt-endpoint-ping").search(search);
           break;
         case "dns":
           $location.path("/dashboard/raintank/rt-endpoint-dns").search(search);
