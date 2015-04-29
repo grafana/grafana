@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -108,6 +109,10 @@ type SocialGithub struct {
 	allowSignup    bool
 	teamIds        []int
 }
+
+var (
+	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
+)
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
