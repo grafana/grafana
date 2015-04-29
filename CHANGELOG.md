@@ -1,4 +1,10 @@
-# 2.0.3 (unreleased)
+# 2.1.0 (unreleased - master branch)
+
+**Backend**
+- [Issue #1905](https://github.com/grafana/grafana/issues/1905). Github OAuth: You can now configure a Github team membership requirement, thx @dewski
+
+
+# 2.0.3 (unreleased - 2.0.x branch)
 
 **Fixes**
 - [Issue #1872](https://github.com/grafana/grafana/issues/1872). Firefox/IE issue, invisible text in dashboard search fixed

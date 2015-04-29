@@ -376,6 +376,7 @@ function($, _, moment) {
   kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.gbytes = kbn.formatFuncCreator(1024, [' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
   kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
   kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
@@ -547,6 +548,7 @@ function($, _, moment) {
           {text: 'bytes', value: 'bytes'},
           {text: 'kilobytes', value: 'kbytes'},
           {text: 'megabytes', value: 'mbytes'},
+          {text: 'gigabytes', value: 'gbytes'},
         ]
       },
       {
