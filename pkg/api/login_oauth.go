@@ -45,7 +45,11 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	userInfo, err := connect.UserInfo(token)
 	if err != nil {
-		ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
+		if err == social.ErrMissingTeamMembership {
+			ctx.Redirect(setting.AppSubUrl + "/login?missing_team_membership=1")
+		} else {
+			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
+		}
 		return
 	}
 
