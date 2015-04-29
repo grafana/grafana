@@ -2,11 +2,11 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
-	"errors"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -78,13 +78,23 @@ func NewOAuthService() {
 		if name == "github" {
 			setting.OAuthService.GitHub = true
 			teamIds := sec.Key("team_ids").Ints(",")
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup, teamIds: teamIds}
+			SocialMap["github"] = &SocialGithub{
+				Config:         &config,
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				teamIds:        teamIds,
+			}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
+			SocialMap["google"] = &SocialGoogle{
+				Config: &config, allowedDomains: info.AllowedDomains,
+				apiUrl:      info.ApiUrl,
+				allowSignup: info.AllowSignup,
+			}
 		}
 	}
 }
@@ -106,7 +116,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 type SocialGithub struct {
 	*oauth2.Config
 	allowedDomains []string
-	ApiUrl         string
+	apiUrl         string
 	allowSignup    bool
 	teamIds        []int
 }
@@ -129,8 +139,8 @@ func (s *SocialGithub) IsSignupAllowed() bool {
 
 func (s *SocialGithub) IsTeamMember(client *http.Client, username string, teamId int) bool {
 	var data struct {
-		Url    string `json:"url"`
-		State  string `json:"state"`
+		Url   string `json:"url"`
+		State string `json:"state"`
 	}
 
 	membershipUrl := fmt.Sprintf("https://api.github.com/teams/%d/memberships/%s", teamId, username)
@@ -158,7 +168,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var err error
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.ApiUrl)
+	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +208,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
-	ApiUrl         string
+	apiUrl         string
 	allowSignup    bool
 }
 
@@ -223,7 +233,7 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var err error
 
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.ApiUrl)
+	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
 	}
