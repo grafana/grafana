@@ -16,7 +16,7 @@ Description | Download
 
     $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.1_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_2.0.1_amd64.deb
+    $ sudo dpkg -i grafana_2.0.2_amd64.deb
 
 ## APT Repository
 Add the following line to your `/etc/apt/sources.list`
