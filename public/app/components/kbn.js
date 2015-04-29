@@ -390,6 +390,8 @@ function($, _, moment) {
   kbn.valueFormats.kwatth = kbn.formatFuncCreator(1000, [' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
   kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
   kbn.valueFormats.none = kbn.toFixed;
+  kbn.valueFormats.dollars = function(value, decimals) { return kbn.toCurrency(value, decimals, "$"); };
+  kbn.valueFormats.pounds = function(value, decimals) { return kbn.toCurrency(value, decimals, "£"); };
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
@@ -404,6 +406,23 @@ function($, _, moment) {
       return kbn.toFixed(value, decimals) + ext;
     } else {
       return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
+    }
+  };
+
+  kbn.toCurrency = function(size, decimals, currency) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < Math.pow(10, 6)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size, decimals));
+    }
+    else if (Math.abs(size) < Math.pow(10, 9)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 6), decimals)) + "M";
+    }
+    else if (Math.abs(size) < Math.pow(10, 12)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), decimals)) + "B";
+    }
+    else if (Math.abs(size) < Math.pow(10, 15)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), decimals)) + "T";
     }
   };
 
@@ -529,6 +548,13 @@ function($, _, moment) {
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
+        ]
+      },
+      {
+        text: 'currency',
+        submenu: [
+          {text: 'Dollars ($)',          value: 'dollars' },
+          {text: 'Pounds (£)',           value: 'pounds'  }
         ]
       },
       {
