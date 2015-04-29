@@ -182,12 +182,28 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
+    team_ids =
 
 Restart the grafana backend. You should now see a github login button on the login page. You can
 now login or signup with your github accounts.
 
 You may allow users to sign-up via github auth by setting allow_sign_up to true. When this option is
 set to true, any user successfully authenticating via github auth will be automatically signed up.
+
+### team_ids
+Require an active team membership for at least one of the given teams on GitHub.
+If the authenticated user isn't a member of at least one the teams they will not
+be able to register or authenticate with your Grafana instance. Example:
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email
+    team_ids = 150,300
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
 
 ## [auth.google]
 You need to create a google project. You can do this in the [Google Developer Console](https://console.developers.google.com/project).
