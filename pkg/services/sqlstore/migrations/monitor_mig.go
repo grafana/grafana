@@ -142,7 +142,6 @@ func addMonitorMigration(mg *Migrator) {
 		Sqlite("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
 		Mysql("INSERT INTO monitor_type_setting values(null,4,'protocol','Protocol','Enum','{\"values\": [\"tcp\",\"udp\"]}','udp',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 
-
 	//monitorCollector
 	var monitorCollectorV1 = Table{
 		Name: "monitor_collector",
