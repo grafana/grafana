@@ -18,6 +18,7 @@ func setIndexViewData(c *middleware.Context) error {
 		Email:          c.Email,
 		Name:           c.Name,
 		LightTheme:     c.Theme == "light",
+		OrgId:          c.OrgId,
 		OrgName:        c.OrgName,
 		OrgRole:        c.OrgRole,
 		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
