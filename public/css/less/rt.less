@@ -374,7 +374,7 @@ raintank TYPE
   text-transform: uppercase;
 }
 
-.disabled, .none {
+.disabled, .offline, .none {
   color: @disabled;
   font-weight: 600;
   text-transform: uppercase;
@@ -1519,16 +1519,37 @@ p.rt-dashboard-copy {
 }
 
 .rt-dash-flex-container {
-     display: flex;
-     justify-content: space-around;
-     flex-direction: row;
      margin-top: 50px;
+     display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+     display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+     display: -ms-flexbox;      /* TWEENER - IE 10 */
+     display: -webkit-flex;     /* NEW - Chrome */
+     display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
+     justify-content: space-around;
+
+     @media screen and (max-width: 780px) {
+       -webkit-flex-direction: column;
+       flex-direction: column;
+        -webkit-align-items: center;
+   align-items: center;
+   -webkit-justify-content: center;
 }
+     }
+
 
 .rt-dash-flex-item {
-     width: 200px;
-     mid-width: 200px;
      text-align: center;
+    -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-flex: 1;         /* OLD - Firefox 19- */
+    width: 25%;             /* For old syntax, otherwise collapses. */
+    -webkit-flex: 1;          /* Chrome */
+    -ms-flex: 1;              /* IE 10 */
+    flex: 1;                  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+    
+    @media screen and (max-width: 780px) {
+      width:200px;
+      margin-bottom:20px;
+}
 }
 
 p.rt-dashboard-blurb{

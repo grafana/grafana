@@ -1,6 +1,6 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
 </topnav>
-<div style="margin: 15px; position: relative; display: block; max-width: 900px;">
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">Collectors</h1>
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="/collectors/new">New Collector</a></span>
@@ -18,7 +18,7 @@
 			</select>
 		</div>
 		<div style="display: flex; align-items: center; justify-content: center;">
-			<img src="img/collector-map.png">
+			<img src="img/collector-map-alpha1.png">
 		</div>
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
@@ -40,7 +40,7 @@
 	<div class="rt-list" ng-repeat="collector in collectors | filterByTag:collector_filter | filter:{online:status_filter}:statusFilter | orderBy:sort_field">
 		<div class="rt-list-header">
 			<span class="rt-list-item-title"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
-			<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raitank Public Collector'"></img></span>
+			<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raintank Public Collector'"></img></span>
 			<span style="vertical-align: 2px;"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" style="margin-right: 5px;" bs-tooltip="'Private Collector'"></img></span>
 <!-- 			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in collector.tags" tag-color-from-name><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
  -->
