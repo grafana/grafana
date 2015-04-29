@@ -28,37 +28,49 @@
   position: absolute;
   top: 43px;
   min-width: 200px;
-  height: 400px;
+  max-height: 400px;
   background: @grafanaPanelBackground;
   box-shadow: 0px 0px 55px 0px black;
   border: 1px solid @grafanaTargetFuncBackground;
   z-index: 1000;
-  padding: 10px;
+  font-size: @baseFontSize;
+  padding: 4px 4px 8px 4px;
+}
 
-  .variable-options-container {
-    height: 350px;
-    overflow: auto;
-    display: block;
-    line-height: 28px;
+.variable-options-container {
+  max-height: 350px;
+  overflow: auto;
+  display: block;
+  line-height: 28px;
+}
+
+.variable-option {
+  display: block;
+  .fa {
+    font-size: 130%;
+    position: relative;
+    top: 2px;
+    padding-right: 4px;
   }
+  .fa-check-square-o { display: none; }
 
-  .variable-option {
-    display: block;
-    .fa {
-      font-size: 130%;
-      position: relative;
-      top: 2px;
-      padding-right: 6px;
+  &.selected {
+    .fa-square-o {
+      display: none;
     }
-    .fa-check-square-o { display: none; }
-
-    &.selected {
-      .fa-square-o {
-        display: none;
-      }
-      .fa-check-square-o {
-        display: inline-block;
-      }
+    .fa-check-square-o {
+      display: inline-block;
     }
   }
 }
+
+.variable-search-wrapper {
+  input {
+    width: 100%;
+    padding: 7px 8px;
+    height: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+  }
+}
+

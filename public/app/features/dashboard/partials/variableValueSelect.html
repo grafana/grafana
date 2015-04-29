@@ -7,10 +7,9 @@
 </a>
 
 <div ng-if="selectorOpen" class="variable-value-dropdown">
-	<div class="search-field-wrapper">
+	<div class="variable-search-wrapper">
 		<span style="position: relative;">
-			<input  type="text" placeholder="Search variable values" give-focus="giveFocus" tabindex="1"
-			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+			<input type="text" placeholder="Search values..." give-focus="giveFocus" tabindex="1" ng-model="query.query" spellcheck='false' ng-change="search()" />
 		</span>
 	</div>
 
