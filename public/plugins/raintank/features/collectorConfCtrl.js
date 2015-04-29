@@ -44,7 +44,7 @@ function (angular) {
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
         if (collector.id == id) {
-          if (collector.public && !contextSrv.isGrafanaAdmin) {
+          if (collector.org_id != contextSrv.user.orgId) {
             $location.path('/collectors');
           } else {
             $scope.collector = collector;
@@ -56,7 +56,7 @@ function (angular) {
     $scope.editableCollectors = function() {
       var list = [];
       _.forEach($scope.collectors, function(collector) {
-        if (collector.public && !contextSrv.isGrafanaAdmin) {
+        if (collector.org_id != contextSrv.user.orgId) {
           return;
         }
         list.push(collector);

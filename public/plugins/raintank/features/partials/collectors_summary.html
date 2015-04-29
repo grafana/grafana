@@ -18,7 +18,7 @@
 			</div>
 		</li>
 		<!--  <li class="active" style="margin-left:200px;"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
-		<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Edit</a></li> -->
+		<li ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Edit</a></li> -->
 	</ul>
 </topnav>
 
@@ -28,8 +28,8 @@
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{collector.name}}</h1>
 		
-		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
-		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
+		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public" bs-tooltip="'This is a public collector'"></i></span>
+		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="!collector.public" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
 	<div class="editor-row rt-detail-pages">
 		<div class="editor-option">
@@ -39,7 +39,7 @@
 
 	<!-- tabs -->
 	<div class="rt-tabs">
-		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-hide="collector.public && !contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
+		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
 </div>	
 
@@ -62,12 +62,12 @@
 									View
 								</a>
 							</li>
-							<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+							<li ng-show="collector.org_id == contextSrv.user.orgId">
 								<a href="collectors/edit/{{collector.id}}">
 									Edit
 								</a>
 							</li>
-							<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+							<li ng-show="collector.org_id == contextSrv.user.orgId">
 								<a ng-click="remove(collector)">
 									Delete
 								</a>
@@ -81,8 +81,8 @@
 					<div class="collectorCurrentStatus">
 						<div class="collectorStatus">
 							<div class="pull-left msg">This collector is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
-							<a ng-if="!(collector.public && !contextSrv.isGrafanaAdmin)" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
-							<a ng-if="!(collector.public && !contextSrv.isGrafanaAdmin)" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
+							<a ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
+							<a ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
 						</div>
 
 						<span class="{{collector.online?'online':'offline'}} jumbo">{{collector.online?'online':'offline'}}</span> <!--<span class="statusMsg">for 12 days</span>-->
