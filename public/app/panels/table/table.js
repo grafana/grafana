@@ -170,15 +170,14 @@ define([
 
               var columnIndex = 0;
               var row = _.map(rowData, function(seriesValue) {
-                var styleHtml = getCellColorStyle(seriesValue, columnIndex);
+                var colorStyle = getCellColorStyle(seriesValue, columnIndex);
                 var formattedValue = getFormattedValue(seriesValue, columnIndex);
 
-                var styleWithoutBackground = getCellColorStyle(seriesValue, columnIndex, true);
                 // base row hyperlink on leftmost column if applicable, hence the rowData[0]
-                var hyperlinkedTd = getHyperlinkedTd(formattedValue, styleWithoutBackground, rowData[0]);
+                var hyperlinkedTd = getHyperlinkedTd(formattedValue, colorStyle, rowData[0]);
                 columnIndex++;
 
-                return '<td ' + styleHtml + '>' + hyperlinkedTd + '</td>';
+                return '<td ' + colorStyle.textAndBackground + '>' + hyperlinkedTd + '</td>';
               }).join('');
 
               row = '<tr>' + row + '</tr>';
@@ -266,7 +265,7 @@ define([
             header.sortType = newType;
           }
 
-          function getCellColorStyle(value, columnIndex, ignoreColorBackground) {
+          function getCellColorStyle(value, columnIndex) {
             function getColorForValue(value) {
               for (var i = coloring.thresholdValues.length - 1; i >= 0; i--) {
                 if (value >= coloring.thresholdValues[i]) {
@@ -277,12 +276,15 @@ define([
               return null;
             }
 
-            var styleHtml = '';
+            var colorHtml = { textAndBackground: '', textOnly: '' };
+            var backgroundHtml = '';
+            var textHtml = '';
+
             var targetIndex = columnIndex - 1; // first column is reference column (timeseries or aggregate)
             // and should not be highlighted with colors
 
             if (scope.panel.targets.length === 0 || targetIndex < 0 || !scope.panel.targets[targetIndex] || value === null) {
-              return styleHtml;
+              return colorHtml;
             }
 
             var coloring = scope.panel.targets[targetIndex].coloring;
@@ -290,17 +292,18 @@ define([
             if (coloring && (coloring.colorBackground || coloring.colorValue) && !isNaN(value)) {
               var color = getColorForValue(value);
               if (color) {
-                styleHtml = 'style="';
-                if (coloring.colorBackground && !ignoreColorBackground) {
-                  styleHtml += 'background-color:' + color + ';';
-                }
                 if (coloring.colorValue) {
-                  styleHtml += 'color:' + color + ';';
+                  textHtml = 'color:' + color + ';';
                 }
-                styleHtml += ';"';
+                if (coloring.colorBackground) {
+                  backgroundHtml = 'background-color:' + color + ';';
+                }
               }
             }
-            return styleHtml;
+
+            colorHtml.textAndBackground = backgroundHtml || textHtml ? 'style="' + backgroundHtml + textHtml + ';"' : '';
+            colorHtml.textOnly = textHtml ? 'style="' + textHtml + ';"' : '';
+            return colorHtml;
           }
 
           function getFormattedValue(value, columnIndex) {
@@ -320,12 +323,12 @@ define([
             return value;
           }
 
-          function getHyperlinkedTd(formattedValue, styleHtml, referenceTag) {
+          function getHyperlinkedTd(formattedValue, colorStyle, referenceTag) {
             if (!scope.panel.allowScriptedRagLink || !scope.panel.scriptedRagLink) {
               return formattedValue;
             }
 
-            return '<a target="_new"' + styleHtml + ' href="' +
+            return '<a target="_new"' + colorStyle.textOnly + ' href="' +
               scope.panel.scriptedRagLink.replace('$tagName', referenceTag) + '">' + formattedValue +
             '</a>';
 

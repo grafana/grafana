@@ -95,17 +95,22 @@ define([
       ctx.scope.dataHandler(datasourceInput);
       ctx.scope.$digest();
 
+      var columnOrder = [ctx.scope.tagColumnName, ctx.scope.tagValueColumnName];
+      var row1 = {};
+      row1[ctx.scope.tagColumnName] = 'tag1';
+      row1[ctx.scope.tagValueColumnName] = 200;
+      var row2 = {};
+      row2[ctx.scope.tagColumnName] = 'tag2';
+      row2[ctx.scope.tagValueColumnName] = 234;
+
       var expectedResult = {
-        columnOrder: [ 'tagName', 'value' ],
-        values: [
-          { tagName: 'tag1', value: 200 },
-          { tagName: 'tag2', value: 234 }
-        ]
+        columnOrder: columnOrder,
+        values: [row1, row2]
       };
 
       expect(ctx.scope.tableData.columnOrder).to.eql(expectedResult.columnOrder);
-      expect(ctx.scope.tableData.values[0].value).to.eql(200);
-      expect(ctx.scope.tableData.values[1].value).to.eql(234);
+      expect(ctx.scope.tableData.values[0][ctx.scope.tagValueColumnName]).to.eql(200);
+      expect(ctx.scope.tableData.values[1][ctx.scope.tagValueColumnName]).to.eql(234);
     });
   });
 
