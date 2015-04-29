@@ -75,7 +75,8 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
+			teamIds := sec.Key("team_ids").Ints(",")
+			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup, teamIds: teamIds}
 		}
 
 		// Google.
@@ -105,6 +106,7 @@ type SocialGithub struct {
 	allowedDomains []string
 	ApiUrl         string
 	allowSignup    bool
+	teamIds        []int
 }
 
 func (s *SocialGithub) Type() int {
