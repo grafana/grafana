@@ -70,6 +70,14 @@ function (angular, _, config) {
       };
 
       $scope.toggleFullscreen = function(edit) {
+        if (edit && $scope.dashboardMeta.canEdit === false) {
+          $scope.appEvent('alert-warning', [
+            'Dashboard not editable',
+            'Use Save As.. feature to create an editable copy of this dashboard.'
+          ]);
+          return;
+        }
+
         $scope.dashboardViewState.update({ fullscreen: true, edit: edit, panelId: $scope.panel.id });
       };
 

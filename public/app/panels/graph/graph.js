@@ -63,12 +63,13 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           render_panel();
         });
 
-        function getLegendHeight() {
+        function getLegendHeight(panelHeight) {
           if (!scope.panel.legend.show || scope.panel.legend.rightSide) {
             return 0;
           }
           if (scope.panel.legend.alignAsTable) {
-            return 30 + (25 * data.length);
+            var total = 30 + (25 * data.length);
+            return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;
           }
@@ -84,7 +85,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             graphHeight -= 5; // padding
             graphHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
 
-            graphHeight = graphHeight - getLegendHeight(); // subtract one line legend
+            graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
 
             elem.css('height', graphHeight + 'px');
 

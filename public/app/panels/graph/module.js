@@ -29,7 +29,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       panelName: 'Graph',
       editIcon:  "fa fa-bar-chart",
       fullscreen: true,
-      metricsEditor: true
+      metricsEditor: true,
     });
 
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
@@ -67,9 +67,9 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // show/hide lines
       lines         : true,
       // fill factor
-      fill          : 0,
+      fill          : 1,
       // line width in pixels
-      linewidth     : 1,
+      linewidth     : 2,
       // show hide points
       points        : false,
       // point radius in pixels

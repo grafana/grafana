@@ -6,8 +6,23 @@ page_keywords: grafana, installation, windows guide
 
 # Installing on Windows
 
-There are currently no binary build for Windows. But read the [build from source](../project/building_from_source)
-page for instructions on how to build it yourself.
+## Download
+
+Description | Download
+------------ | -------------
+Zip package for Windows | [grafana.2.0.2.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-2.0.2.windows-x64.zip)
+
+## Configure
+The zip file contains a folder with the current grafana version. Extract this folder to anywhere you want Grafana to run from.
+Go into the `conf` directory and copy `sample.ini` to `custom.ini`. You should edit `custom.ini`, never `defaults.ini`.
+
+The default grafana port is `3000`, this port requires extra permissions on windows. Edit `custom.ini` and uncomment the `http_port`
+config and change it to something like `8080` or similar. That port should not require extra windows privileges.
+
+Start grafana by executing `grafana-server.exe`, preferbly from the command line. If you want to run Grafana as
+windows service, download [NSSM](https://nssm.cc/). It is very easy add grafana as windows service using that tool.
+
+Read more about the [configuration options](configuration.md).
 
 ## Building on Windows
 

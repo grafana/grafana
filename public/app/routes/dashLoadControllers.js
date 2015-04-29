@@ -18,6 +18,8 @@ function (angular, _, kbn, moment, $) {
 
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
+        var meta = result.meta;
+        meta.canSave = meta.canShare = meta.canEdit = meta.canStar = false;
         $scope.initDashboard(result, $scope);
       },function() {
         dashboardLoadFailed('Not found');
@@ -38,7 +40,16 @@ function (angular, _, kbn, moment, $) {
     backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
       $scope.initDashboard(result, $scope);
     }, function() {
-      $scope.initDashboard({meta: {isSnapshot: true}, model: {title: 'Snapshot not found'}}, $scope);
+      $scope.initDashboard({
+        meta: {
+          isSnapshot: true,
+          canSave: false,
+          canEdit: false,
+        },
+        model: {
+          title: 'Snapshot not found'
+        }
+      }, $scope);
     });
   });
 
@@ -48,15 +59,18 @@ function (angular, _, kbn, moment, $) {
       $location.path('');
       return;
     }
-    $scope.initDashboard({meta: {}, model: window.grafanaImportDashboard }, $scope);
+    $scope.initDashboard({
+      meta: { canShare: false, canStar: false },
+      model: window.grafanaImportDashboard
+    }, $scope);
   });
 
   module.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
-      meta: {},
+      meta: { canStar: false, canShare: false },
       model: {
         title: "New dashboard",
-      rows: [{ height: '250px', panels:[] }]
+        rows: [{ height: '250px', panels:[] }]
       },
     }, $scope);
   });
@@ -66,10 +80,10 @@ function (angular, _, kbn, moment, $) {
     var file_load = function(file) {
       return $http({
         url: "public/dashboards/"+file.replace(/\.(?!json)/,"/")+'?' + new Date().getTime(),
-             method: "GET",
-             transformResponse: function(response) {
-               return angular.fromJson(response);
-             }
+        method: "GET",
+        transformResponse: function(response) {
+          return angular.fromJson(response);
+        }
       }).then(function(result) {
         if(!result) {
           return false;
@@ -82,7 +96,10 @@ function (angular, _, kbn, moment, $) {
     };
 
     file_load($routeParams.jsonFile).then(function(result) {
-      $scope.initDashboard({meta: {fromFile: true}, model: result}, $scope);
+      $scope.initDashboard({
+        meta: { canSave: false, canDelete: false },
+        model: result
+      }, $scope);
     });
 
   });
@@ -92,8 +109,8 @@ function (angular, _, kbn, moment, $) {
     var execute_script = function(result) {
       var services = {
         dashboardSrv: dashboardSrv,
-    datasourceSrv: datasourceSrv,
-    $q: $q,
+        datasourceSrv: datasourceSrv,
+        $q: $q,
       };
 
       /*jshint -W054 */
@@ -118,16 +135,19 @@ function (angular, _, kbn, moment, $) {
       var url = 'public/dashboards/'+file.replace(/\.(?!js)/,"/") + '?' + new Date().getTime();
 
       return $http({ url: url, method: "GET" })
-        .then(execute_script)
-        .then(null,function(err) {
-          console.log('Script dashboard error '+ err);
-          $scope.appEvent('alert-error', ["Script Error", "Please make sure it exists and returns a valid dashboard"]);
-          return false;
-        });
+      .then(execute_script)
+      .then(null,function(err) {
+        console.log('Script dashboard error '+ err);
+        $scope.appEvent('alert-error', ["Script Error", "Please make sure it exists and returns a valid dashboard"]);
+        return false;
+      });
     };
 
     script_load($routeParams.jsFile).then(function(result) {
-      $scope.initDashboard({meta: {fromScript: true}, model: result.data}, $scope);
+      $scope.initDashboard({
+        meta: {fromScript: true, canDelete: false, canSave: false},
+        model: result.data
+      }, $scope);
     });
 
   });

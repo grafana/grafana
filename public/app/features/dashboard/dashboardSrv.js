@@ -52,24 +52,22 @@ function (angular, $, kbn, _, moment) {
 
     p._initMeta = function(meta) {
       meta = meta || {};
-      meta.canShare = true;
-      meta.canSave = true;
-      meta.canEdit = true;
-      meta.canStar = true;
+
+      meta.canShare = meta.canShare === false ? false : true;
+      meta.canSave = meta.canSave === false ? false : true;
+      meta.canEdit = meta.canEdit === false ? false : true;
+      meta.canStar = meta.canStar === false ? false : true;
+      meta.canDelete = meta.canDelete === false ? false : true;
 
       if (contextSrv.hasRole('Viewer')) {
         meta.canSave = false;
       }
 
-      if (meta.isSnapshot) {
-        meta.canSave = false;
-      }
-
-      if (meta.isHome) {
-        meta.canShare = false;
-        meta.canStar = false;
-        meta.canSave = false;
+      if (!this.editable) {
         meta.canEdit = false;
+        meta.canDelete = false;
+        meta.canSave = false;
+        this.hideControls = true;
       }
 
       this.meta = meta;

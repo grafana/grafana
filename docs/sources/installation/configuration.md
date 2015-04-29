@@ -179,6 +179,7 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     client_id = YOUR_GITHUB_APP_CLIENT_ID
     client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
     scopes = user:email
+    team_ids =
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
@@ -188,6 +189,21 @@ now login or signup with your github accounts.
 
 You may allow users to sign-up via github auth by setting allow_sign_up to true. When this option is
 set to true, any user successfully authenticating via github auth will be automatically signed up.
+
+### team_ids
+Require an active team membership for at least one of the given teams on GitHub.
+If the authenticated user isn't a member of at least one the teams they will not
+be able to register or authenticate with your Grafana instance. Example:
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email
+    team_ids = 150,300
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
 
 ## [auth.google]
 You need to create a google project. You can do this in the [Google Developer Console](https://console.developers.google.com/project).
@@ -219,7 +235,7 @@ set to true, any user successfully authenticating via google auth will be automa
 ## [session]
 
 ### provider
-Valid values are "memory", "file", "mysql", 'postgres'. Default is "memory".
+Valid values are "memory", "file", "mysql", 'postgres'. Default is "file".
 
 ### provider_config
 This option should be configured differently depending on what type of session provider you have configured.
@@ -252,10 +268,8 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 When enabled Grafana will send anonymous usage statistics to stats.grafana.org.
 No ip addresses are being tracked, only simple counters to track running instances,
 versions, dashboard & error counts. It is very helpful to us, please leave this
-enabled. Counters are sent every 24 hours.
+enabled. Counters are sent every 24 hours. Default value is `true`.
 
 ### google_analytics_ua_id
 If you want to track Grafana usage via Google analytics specify *your* Univeral Analytics ID
 here. By defualt this feature is disabled.
-
-

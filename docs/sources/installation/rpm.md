@@ -10,12 +10,12 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 
 Description | Download
 ------------ | -------------
-.RPM for Fedora / RHEL / CentOS Linux | [grafana-2.0.1-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.1-1.x86_64.rpm)
+.RPM for Fedora / RHEL / CentOS Linux | [grafana-2.0.2-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.2-1.x86_64.rpm)
 
 ## Install
 You can install using yum
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.1-1.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.2-1.x86_64.rpm
 
 Or manually using `rpm`
 
@@ -30,9 +30,9 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
     name=grafana
     baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
     repo_gpgcheck=1
-    gpgcheck=0
     enabled=1
-    gpgkey=https://packagecloud.io/gpg.key
+    gpgcheck=1
+    gpgkey=https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
     sslverify=1
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 

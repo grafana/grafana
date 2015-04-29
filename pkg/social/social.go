@@ -2,7 +2,9 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -75,13 +77,24 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			setting.OAuthService.GitHub = true
-			SocialMap["github"] = &SocialGithub{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
+			teamIds := sec.Key("team_ids").Ints(",")
+			SocialMap["github"] = &SocialGithub{
+				Config:         &config,
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				teamIds:        teamIds,
+			}
 		}
 
 		// Google.
 		if name == "google" {
 			setting.OAuthService.Google = true
-			SocialMap["google"] = &SocialGoogle{Config: &config, allowedDomains: info.AllowedDomains, ApiUrl: info.ApiUrl, allowSignup: info.AllowSignup}
+			SocialMap["google"] = &SocialGoogle{
+				Config: &config, allowedDomains: info.AllowedDomains,
+				apiUrl:      info.ApiUrl,
+				allowSignup: info.AllowSignup,
+			}
 		}
 	}
 }
@@ -103,9 +116,14 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 type SocialGithub struct {
 	*oauth2.Config
 	allowedDomains []string
-	ApiUrl         string
+	apiUrl         string
 	allowSignup    bool
+	teamIds        []int
 }
+
+var (
+	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
+)
 
 func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
@@ -119,6 +137,28 @@ func (s *SocialGithub) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
+func (s *SocialGithub) IsTeamMember(client *http.Client, username string, teamId int) bool {
+	var data struct {
+		Url   string `json:"url"`
+		State string `json:"state"`
+	}
+
+	membershipUrl := fmt.Sprintf("https://api.github.com/teams/%d/memberships/%s", teamId, username)
+	r, err := client.Get(membershipUrl)
+	if err != nil {
+		return false
+	}
+
+	defer r.Body.Close()
+
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+		return false
+	}
+
+	active := data.State == "active"
+	return active
+}
+
 func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
@@ -128,7 +168,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var err error
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.ApiUrl)
+	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +179,23 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 		return nil, err
 	}
 
-	return &BasicUserInfo{
+	userInfo := &BasicUserInfo{
 		Identity: strconv.Itoa(data.Id),
 		Name:     data.Name,
 		Email:    data.Email,
-	}, nil
+	}
+
+	if len(s.teamIds) > 0 {
+		for _, teamId := range s.teamIds {
+			if s.IsTeamMember(client, data.Name, teamId) {
+				return userInfo, nil
+			}
+		}
+
+		return nil, ErrMissingTeamMembership
+	} else {
+		return userInfo, nil
+	}
 }
 
 //   ________                     .__
@@ -156,7 +208,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
-	ApiUrl         string
+	apiUrl         string
 	allowSignup    bool
 }
 
@@ -181,7 +233,7 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var err error
 
 	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.ApiUrl)
+	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
 	}
