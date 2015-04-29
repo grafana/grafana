@@ -3,7 +3,6 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addCollectorMigration(mg *Migrator) {
-	
 
 	var collectorV1 = Table{
 		Name: "collector",

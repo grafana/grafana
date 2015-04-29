@@ -353,23 +353,80 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 			}
 		}
 
-		rawSql := "DELETE FROM collector_tag WHERE collector_id=? and org_id=?"
-		if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
-			return err
+		tagMap := make(map[string]bool)
+		tagsToDelete := make([]string, 0)
+		tagsToAddMap := make(map[string]bool, 0)
+		// create map of current tags
+		for _, t := range collectorQuery.Result.Tags {
+			tagMap[t] = false
 		}
 
-		collectorTags := make([]m.CollectorTag, 0, len(cmd.Tags))
-		for _, tag := range cmd.Tags {
-			collectorTags = append(collectorTags, m.CollectorTag{
-				OrgId:       cmd.OrgId,
-				CollectorId: cmd.Id,
-				Tag:         tag,
-			})
+		// create map of tags to add. We use a map
+		// to ensure that we only add each tag once.
+		for _, t := range cmd.Tags {
+			if _, ok := tagMap[t]; !ok {
+				tagsToAddMap[t] = true
+			}
+			// mark that this tag has been seen.
+			tagMap[t] = true
 		}
-		if len(collectorTags) > 0 {
-			sess.Table("collector_tag")
-			if _, err := sess.Insert(&collectorTags); err != nil {
+
+		//create list of tags to delete
+		for t, seen := range tagMap {
+			if !seen {
+				tagsToDelete = append(tagsToDelete, t)
+			}
+		}
+
+		// create list of tags to add.
+		tagsToAdd := make([]string, len(tagsToAddMap))
+		i := 0
+		for t, _ := range tagsToAddMap {
+			tagsToAdd[i] = t
+			i += 1
+		}
+
+		if len(tagsToDelete) > 0 {
+			rawParams := make([]interface{}, 0)
+			rawParams = append(rawParams, cmd.Id, cmd.OrgId)
+			p := make([]string, len(tagsToDelete))
+			for i, t := range tagsToDelete {
+				p[i] = "?"
+				rawParams = append(rawParams, t)
+			}
+			rawSql := fmt.Sprintf("DELETE FROM collector_tag WHERE collector_id=? AND org_id=? AND tag IN (%s)", strings.Join(p, ","))
+			if _, err := sess.Exec(rawSql, rawParams...); err != nil {
 				return err
+			}
+		}
+
+		if len(tagsToAdd) > 0 {
+			newCollectorTags := make([]m.CollectorTag, len(tagsToAdd))
+			for i, tag := range tagsToAdd {
+				newCollectorTags[i] = m.CollectorTag{
+					OrgId:       cmd.OrgId,
+					CollectorId: cmd.Id,
+					Tag:         tag,
+				}
+			}
+			sess.Table("collector_tag")
+			if _, err := sess.Insert(&newCollectorTags); err != nil {
+				return err
+			}
+
+			if cmd.Public && collectorQuery.Result.OrgId == cmd.OrgId {
+				// if the tag was added by the owner of a public collector,
+				// then the tag should be copied to all organisations.
+				rawSql := `INSERT INTO collector_tag (org_id, collector_id, tag)
+							SELECT org.id as org_id, ? as collector_id, ? as tag
+							FROM org LEFT JOIN collector_tag
+							ON collector_tag.org_id = org.id AND collector_tag.tag = ? and collector_tag.collector_id=?
+							WHERE collector_tag.id IS NULL and org.id != ?`
+				for _, tag := range tagsToAdd {
+					if _, err := sess.Exec(rawSql, cmd.Id, tag, tag, cmd.Id, cmd.OrgId); err != nil {
+						return err
+					}
+				}
 			}
 		}
 
