@@ -22,6 +22,9 @@ define([
     });
 
     module.controller('TableRagPanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
+      $scope.tagColumnName = 'Name';
+      $scope.tagValueColumnName = 'Value';
+
       $scope.panelMeta = new PanelMeta({
         panelName: 'Table',
         editIcon:  "fa fa-table",
@@ -29,7 +32,7 @@ define([
         metricsEditor: true
       });
 
-      $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/table/styleEditor.html');
+      $scope.panelMeta.addEditorTab('Options', 'app/panels/table/styleEditor.html');
       $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
       $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
 
@@ -99,12 +102,15 @@ define([
           var curRowName = getTagName(queryResult.target);
           var rowData = queryResult.datapoints[0]; // each grouped row will only have one array of datapoints (for now)
           var value = rowData[0]; // index 0 is the value, index 1 is the timestamp which is not needed here
-          return { tagName: curRowName, value: value };
+          var result = {};
+          result[$scope.tagColumnName] = curRowName;
+          result[$scope.tagValueColumnName] = value;
+          return result;
         });
 
         return {
           values: rowValues,
-          columnOrder: ['tagName', 'value']
+          columnOrder: [$scope.tagColumnName, $scope.tagValueColumnName]
         };
       }
     });

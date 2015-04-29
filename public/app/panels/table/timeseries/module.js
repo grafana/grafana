@@ -31,7 +31,7 @@ function (angular, app, _, require, PanelMeta) {
       metricsEditor: true
     });
 
-    $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/table/styleEditor.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/panels/table/styleEditor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
 

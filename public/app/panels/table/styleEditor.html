@@ -45,6 +45,28 @@
     </div>
 </div>
 
+<div class="editor-row" ng-if="!timestampColumnName"> <!-- Only show for RAG series table -->
+    <div class="section">
+        <h5>Scripted Dashboard</h5>
+        <div class="editor-option">
+            <editor-opt-bool text="Enable" model="panel.allowScriptedRagLink" change="render()"
+                             tip="Clicking on a table row will navigate to the URL with the $tagName replaced"></editor-opt-bool>
+        </div>
+
+        <div class="editor-option">
+            <label class="small">URL String</label>
+            <input ng-disabled="!panel.allowScriptedRagLink"
+                   type="text"
+                   class="input-xxlarge"
+                   ng-model="panel.scriptedRagLink"
+                   ng-change="render()"
+                   placeholder="Example: dashboard/script/scripted.js?&name=$tagName" />
+
+        </div>
+    </div>
+</div>
+
+
 <div class="editor-row">
     <h5>Column Coloring</h5>
     <div ng-repeat="target in panel.targets">

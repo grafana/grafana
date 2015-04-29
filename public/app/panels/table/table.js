@@ -172,9 +172,13 @@ define([
               var row = _.map(rowData, function(seriesValue) {
                 var styleHtml = getCellColorStyle(seriesValue, columnIndex);
                 var formattedValue = getFormattedValue(seriesValue, columnIndex);
+
+                var styleWithoutBackground = getCellColorStyle(seriesValue, columnIndex, true);
+                // base row hyperlink on leftmost column if applicable, hence the rowData[0]
+                var hyperlinkedTd = getHyperlinkedTd(formattedValue, styleWithoutBackground, rowData[0]);
                 columnIndex++;
 
-                return '<td ' + styleHtml + '>' + formattedValue + '</td>';
+                return '<td ' + styleHtml + '>' + hyperlinkedTd + '</td>';
               }).join('');
 
               row = '<tr>' + row + '</tr>';
@@ -262,7 +266,7 @@ define([
             header.sortType = newType;
           }
 
-          function getCellColorStyle(value, columnIndex) {
+          function getCellColorStyle(value, columnIndex, ignoreColorBackground) {
             function getColorForValue(value) {
               for (var i = coloring.thresholdValues.length - 1; i >= 0; i--) {
                 if (value >= coloring.thresholdValues[i]) {
@@ -287,7 +291,7 @@ define([
               var color = getColorForValue(value);
               if (color) {
                 styleHtml = 'style="';
-                if (coloring.colorBackground) {
+                if (coloring.colorBackground && !ignoreColorBackground) {
                   styleHtml += 'background-color:' + color + ';';
                 }
                 if (coloring.colorValue) {
@@ -314,6 +318,17 @@ define([
             }
 
             return value;
+          }
+
+          function getHyperlinkedTd(formattedValue, styleHtml, referenceTag) {
+            if (!scope.panel.allowScriptedRagLink || !scope.panel.scriptedRagLink) {
+              return formattedValue;
+            }
+
+            return '<a target="_new"' + styleHtml + ' href="' +
+              scope.panel.scriptedRagLink.replace('$tagName', referenceTag) + '">' + formattedValue +
+            '</a>';
+
           }
 
           function shouldAbortRender(isHeightSet) {
