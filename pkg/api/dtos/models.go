@@ -23,6 +23,7 @@ type CurrentUser struct {
 	LightTheme     bool       `json:"lightTheme"`
 	OrgRole        m.RoleType `json:"orgRole"`
 	OrgName        string     `json:"orgName"`
+	OrgId          int64      `json:"orgId"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 }

@@ -20,6 +20,7 @@ func setIndexViewData(c *middleware.Context) error {
 		LightTheme:     c.Theme == "light",
 		OrgName:        c.OrgName,
 		OrgRole:        c.OrgRole,
+		OrgId:          c.OrgId,
 		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
 	}
