@@ -35,7 +35,7 @@
 
 	<!-- tabs -->
 	<div class="rt-tabs">
-		<span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="active" ng-hide="!contextSrv.isGrafanaAdmin"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
+		<span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="active" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
 </div>
 

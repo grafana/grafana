@@ -69,12 +69,12 @@
 								View
 							</a>
 						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin"h>
+						<li ng-show="collector.org_id == contextSrv.user.orgId">
 							<a href="collectors/edit/{{collector.id}}">
 								Configure
 							</a>
 						</li>
-						<li ng-hide="collector.public && !contextSrv.isGrafanaAdmin">
+						<li ng-show="collector.org_id == contextSrv.user.orgId">
 							<a ng-click="remove(collector)">
 								Delete
 							</a>
