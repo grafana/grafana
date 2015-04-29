@@ -118,8 +118,8 @@ function (angular, _) {
 
     $scope.slug = function(name) {
       var label = name.toLowerCase();
-      var re = new RegExp("[^\\w-]+");
-      var re2 = new RegExp("\\s");
+      var re = new RegExp("[^\\w-]+", "g");
+      var re2 = new RegExp("\\s", "g");
       var slug = label.replace(re, "_").replace(re2, "-");
       return slug;
     }
