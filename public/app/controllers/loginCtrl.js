@@ -7,7 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('LoginCtrl', function($scope, backendSrv, contextSrv) {
+  module.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -28,6 +28,13 @@ function (angular, config) {
     $scope.init = function() {
       $scope.$watch("loginMode", $scope.loginModeChanged);
       $scope.passwordChanged();
+
+      var params = $location.search();
+      if (params.failedMsg) {
+        $scope.appEvent('alert-warning', ['Login Failed', params.failedMsg]);
+        delete params.failedMsg;
+        $location.search(params);
+      }
     };
 
     // build info view model
