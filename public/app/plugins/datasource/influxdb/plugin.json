@@ -13,5 +13,6 @@
     "annotations": "app/plugins/datasource/influxdb/partials/annotations.editor.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "annotations": true
 }

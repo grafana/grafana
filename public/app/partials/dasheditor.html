@@ -17,63 +17,118 @@
 
 </div>
 
-<div class="gf-box-body">
-
-		<div ng-if="editor.index == 0">
-			<div class="editor-row">
-				<div class="section">
-					<div class="editor-option">
-						<label class="small">Title</label><input type="text" class="input-large" ng-model='dashboard.title'></input>
-					</div>
-					<div class="editor-option">
-						<label class="small">Time correction</label>
-						<select ng-model="dashboard.timezone" class='input-small' ng-options="f for f in ['browser','utc']"></select>
-					</div>
-					<editor-opt-bool text="Hide controls (CTRL+H)" model="dashboard.hideControls"></editor-opt-bool>
-          <editor-opt-bool text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-opt-bool>
+<div class="gf-box-body" style="padding-bottom: 50px;">
+	<div ng-if="editor.index == 0">
+		<div class="editor-row">
+			<div class="section">
+				<h5>Dashboard info</h5>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 90px">
+							Title
+						</li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input" ng-model='dashboard.title'></input>
+						</li>
+						<li class="tight-form-item">
+							Tags
+							<tip>Press enter to a add tag</tip>
+						</li>
+						<li>
+							<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+							</bootstrap-tagsinput>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
 				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 90px">
+							Timezone
+						</li>
+						<li>
+							<select ng-model="dashboard.timezone" class='input-small tight-form-input' ng-options="f for f in ['browser','utc']"></select>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
 			</div>
-			<div class="editor-row">
-				<div class="section">
-					<div class="editor-option">
-						<label class="small">Tags</label>
-						<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
-						</bootstrap-tagsinput>
-						<tip>Press enter to a add tag</tip>
-					</div>
+
+			<div class="section">
+				<h5>Toggles</h5>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 181px">
+							<label class="checkbox-label" for="dashboard.editable">Editable</label>
+						</li>
+						<li>
+							<li class="tight-form-item last">
+								<input class="cr1" id="dashboard.editable" type="checkbox" ng-model="dashboard.editable" ng-checked="dashboard.editable">
+								<label for="dashboard.editable" class="cr1"></label>
+							</li>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 181px">
+							<label class="checkbox-label" for="dashboard.hideControls">Hide Controls (CTRL+H)</label>
+						</li>
+						<li class="tight-form-item last">
+							<input class="cr1" id="dashboard.hideControls" type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
+							<label for="dashboard.hideControls" class="cr1"></label>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 181px">
+							<label class="checkbox-label" for="dashboard.sharedCrosshair">Shared Crosshair (CTRL+H)</label>
+						</li>
+						<li class="tight-form-item last">
+							<input class="cr1" id="dashboard.sharedCrosshair" type="checkbox" ng-model="dashboard.sharedCrosshair" ng-checked="dashboard.sharedCrosshair">
+							<label for="dashboard.sharedCrosshair" class="cr1"></label>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
 				</div>
 			</div>
 		</div>
-
-		<div ng-if="editor.index == 1">
-			<div class="editor-row">
-				<div class="span6">
-					<table class="grafana-options-table">
-						<tr ng-repeat="row in dashboard.rows">
-							<td style="width: 97%">
-								{{row.title}}
-							</td>
-							<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-							<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-							<td>
-								<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-small">
-									<i class="fa fa-remove"></i>
-								</a>
-							</td>
-						</tr>
-					</table>
-				</div>
-			</div>
-		</div>
-
-		<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 2+$index">
-			<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
-			<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
-		</div>
-
 	</div>
 
-	<div class="clearfix"></div>
+	<div ng-if="editor.index == 1">
+		<div class="editor-row">
+			<div class="span6">
+				<table class="grafana-options-table">
+					<tr ng-repeat="row in dashboard.rows">
+						<td style="width: 97%">
+							{{row.title}}
+						</td>
+						<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+						<td>
+							<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-small">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+
+	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 2+$index">
+		<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
+		<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
+	</div>
+
+</div>
+
+<div class="clearfix"></div>
 </div>
 
 <div class="gf-box-footer">
