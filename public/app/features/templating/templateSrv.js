@@ -28,7 +28,7 @@ function (angular, _) {
 
       _.each(this.variables, function(variable) {
         if (!variable.current || !variable.current.value) { return; }
-
+        console.log(variable);
         this._values[variable.name] = this.renderVariableValue(variable);
         this._texts[variable.name] = variable.current.text;
       }, this);

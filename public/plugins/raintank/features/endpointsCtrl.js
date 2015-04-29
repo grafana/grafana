@@ -171,7 +171,7 @@ function (angular) {
     }
 
     $scope.gotoDashboard = function(endpoint) {
-      $location.path("/dashboard/raintank/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug(endpoint.name)});
+      $location.path("/dashboard/raintank/rt-endpoint-summary").search({"var-collector": "All", "var-endpoint": $scope.slug(endpoint.name)});
     }
 
     var newEndpointModalScope = null;
