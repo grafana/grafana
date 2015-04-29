@@ -336,13 +336,16 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 		if collectorQuery.Result.OrgId == cmd.OrgId {
 			l := &m.Collector{
 				OrgId:     cmd.OrgId,
+				Name:      cmd.Name,
 				Latitude:  cmd.Latitude,
 				Longitude: cmd.Longitude,
 				Public:    cmd.Public,
-				Updated:   time.Now(),
 				Enabled:   cmd.Enabled,
+				Updated:   time.Now(),
 			}
-
+			l.UpdateCollectorSlug()
+			sess.UseBool("online")
+			sess.UseBool("enabled")
 			sess.UseBool("public")
 			_, err := sess.Id(cmd.Id).Update(l)
 			if err != nil {

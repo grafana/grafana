@@ -75,6 +75,7 @@ type AddCollectorCommand struct {
 type UpdateCollectorCommand struct {
 	Id        int64    `json:"id" binding:"required"`
 	OrgId     int64    `json:"-"`
+	Name      string   `json:"name"`
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
 	Enabled   bool     `json:"enabled"`
