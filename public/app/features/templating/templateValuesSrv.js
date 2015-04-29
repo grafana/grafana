@@ -29,13 +29,7 @@ function (angular, _, kbn) {
         var variable = this.variables[i];
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          var promise = this.setVariableValue(variable, option, true);
-          this.updateAutoInterval(variable);
-
-          promises.push(promise);
+          promises.push(this.setVariableFromUrl(variable, urlValue));
         }
         else if (variable.refresh) {
           promises.push(this.updateOptions(variable));
@@ -46,6 +40,25 @@ function (angular, _, kbn) {
       }
 
       return $q.all(promises);
+    };
+
+    this.setVariableFromUrl = function(variable, urlValue) {
+      if (variable.refresh) {
+        var self = this;
+        //refresh the list of options before setting the value
+        return this.updateOptions(variable).then(function() {
+          var option = _.findWhere(variable.options, { text: urlValue });
+          option = option || { text: urlValue, value: urlValue };
+
+          self.updateAutoInterval(variable);
+          return self.setVariableValue(variable, option);
+        });
+      }
+      var option = _.findWhere(variable.options, { text: urlValue });
+      option = option || { text: urlValue, value: urlValue };
+
+      this.updateAutoInterval(variable);
+      return this.setVariableValue(variable, option);
     };
 
     this.updateAutoInterval = function(variable) {
