@@ -80,7 +80,11 @@ define([
       };
 
       $scope.shouldHidePaginationControl = function() {
-        return $scope.dashboard.refresh || !$scope.panel.allowPaging || !$scope.tableData;
+        return $scope.dashboard.refresh || !$scope.panel.allowPaging;
+      };
+
+      $scope.shouldHideTable = function() {
+        return !$scope.tableData || !$scope.tableData.values.length;
       };
 
       $scope.init();
