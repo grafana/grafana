@@ -27,7 +27,7 @@
 				<li ng-show="dashboardMeta.canShare">
 					<a class="pointer" ng-click="shareDashboard()" bs-tooltip="'Share dashboard'" data-placement="bottom"><i class="fa fa-share-square-o"></i></a>
 				</li>
-				<li ng-show="dashboardMeta.canSave">
+				<li ng-show="dashboardMeta.canSave && contextSrv.isEditor">
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
 				<li class="dropdown">

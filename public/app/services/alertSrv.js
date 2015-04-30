@@ -29,7 +29,7 @@ function (angular, _) {
     this.set = function(title,text,severity,timeout) {
       var newAlert = {
         title: title || '',
-        text: $sce.trustAsHtml(text || ''),
+        text: text || '',
         severity: severity || 'info',
       };
 

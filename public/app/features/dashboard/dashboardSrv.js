@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(contextSrv)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -58,10 +58,6 @@ function (angular, $, kbn, _, moment) {
       meta.canEdit = meta.canEdit === false ? false : true;
       meta.canStar = meta.canStar === false ? false : true;
       meta.canDelete = meta.canDelete === false ? false : true;
-
-      if (contextSrv.hasRole('Viewer')) {
-        meta.canSave = false;
-      }
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -180,6 +176,7 @@ function (angular, $, kbn, _, moment) {
 
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
+      return newPanel;
     };
 
     p.formatDate = function(date, format) {

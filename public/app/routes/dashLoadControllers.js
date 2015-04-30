@@ -90,7 +90,7 @@ function (angular, _, kbn, moment, $) {
         }
         return result.data;
       },function() {
-        $scope.appEvent('alert-error', ["Dashboard load failed", "Could not load <i>dashboards/"+file+"</i>. Please make sure it exists"]);
+        $scope.appEvent('alert-error', ["Dashboard load failed", "Could not load "+file+". Please make sure it exists"]);
         return false;
       });
     };
