@@ -18,13 +18,6 @@ function (angular, _, store, config) {
       }
     }
 
-    this.version = config.buildInfo.version;
-    this.lightTheme = false;
-    this.user = new User();
-    this.isSignedIn = this.user.isSignedIn;
-    this.isGrafanaAdmin = this.user.isGrafanaAdmin;
-    this.sidemenu = store.getBool('grafana.sidemenu');
-
     // events
     $rootScope.$on('toggle-sidemenu', function() {
       self.toggleSideMenu();
@@ -47,6 +40,12 @@ function (angular, _, store, config) {
       }, 50);
     };
 
+    this.version = config.buildInfo.version;
+    this.lightTheme = false;
+    this.user = new User();
+    this.isSignedIn = this.user.isSignedIn;
+    this.isGrafanaAdmin = this.user.isGrafanaAdmin;
+    this.sidemenu = store.getBool('grafana.sidemenu');
+    this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
   });
-
 });

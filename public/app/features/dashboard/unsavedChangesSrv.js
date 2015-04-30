@@ -37,7 +37,7 @@ function(angular, _, config) {
     });
 
     this.ignoreChanges = function() {
-      if (!self.current) { return true; }
+      if (!self.current || !self.current.meta) { return true; }
 
       var meta = self.current.meta;
       return !meta.canSave || meta.fromScript || meta.fromFile;
