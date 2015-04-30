@@ -11,6 +11,7 @@ module.exports = function(grunt) {
     'less:src',
     'concat:cssDark',
     'concat:cssLight',
+    'css_selectors',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
     'ngtemplates',
@@ -55,7 +56,7 @@ module.exports = function(grunt) {
     grunt.config('copy.backend_bin', {
       cwd: 'bin',
       expand: true,
-      src: ['*'],
+      src: ['grafana-server'],
       options: { mode: true},
       dest: '<%= tempDir %>/bin/'
     });
