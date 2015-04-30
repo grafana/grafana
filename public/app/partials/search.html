@@ -2,7 +2,7 @@
 
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
-			<input  type="text" placeholder="Find dashboards by name" xng-focus="giveSearchFocus" tabindex="1"
+			<input  type="text" placeholder="Find dashboards by name" give-focus="giveSearchFocus" tabindex="1"
 			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 		</span>
 		<div class="search-switches">

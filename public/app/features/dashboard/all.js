@@ -16,5 +16,6 @@ define([
   './unsavedChangesSrv',
   './directives/dashSearchView',
   './graphiteImportCtrl',
+  './dynamicDashboardSrv',
   './importCtrl',
 ], function () {});

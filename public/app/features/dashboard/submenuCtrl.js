@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SubmenuCtrl', function($scope, $q, $rootScope, templateValuesSrv) {
+  module.controller('SubmenuCtrl', function($scope, $q, $rootScope, templateValuesSrv, dynamicDashboardSrv) {
     var _d = {
       enable: true
     };
@@ -26,8 +26,11 @@ function (angular, _) {
       $rootScope.$broadcast('refresh');
     };
 
-    $scope.setVariableValue = function(param, option) {
-      templateValuesSrv.setVariableValue(param, option);
+    $scope.variableUpdated = function(variable) {
+      templateValuesSrv.variableUpdated(variable).then(function() {
+        dynamicDashboardSrv.update($scope.dashboard);
+        $rootScope.$broadcast('refresh');
+      });
     };
 
     $scope.init();

@@ -68,6 +68,7 @@ function (angular, _, kbn, $) {
         targets: scope.panel.targets,
         format: scope.panel.renderer === 'png' ? 'png' : 'json',
         maxDataPoints: scope.resolution,
+        scopedVars: scope.panel.scopedVars,
         cacheTimeout: scope.panel.cacheTimeout
       };
 

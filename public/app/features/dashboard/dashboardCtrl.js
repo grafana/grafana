@@ -15,7 +15,9 @@ function (angular, $, config) {
       dashboardKeybindings,
       timeSrv,
       templateValuesSrv,
+      dynamicDashboardSrv,
       dashboardSrv,
+      unsavedChangesSrv,
       dashboardViewStateSrv,
       contextSrv,
       $timeout) {
@@ -46,6 +48,9 @@ function (angular, $, config) {
       // template values service needs to initialize completely before
       // the rest of the dashboard can load
       templateValuesSrv.init(dashboard).finally(function() {
+        dynamicDashboardSrv.init(dashboard);
+        unsavedChangesSrv.init(dashboard, $scope);
+
         $scope.dashboard = dashboard;
         $scope.dashboardMeta = dashboard.meta;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);

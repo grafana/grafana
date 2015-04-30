@@ -17,6 +17,8 @@ function (angular, _) {
       options: [],
       includeAll: false,
       allFormat: 'glob',
+      multi: false,
+      multiFormat: 'glob',
     };
 
     $scope.init = function() {
@@ -75,7 +77,7 @@ function (angular, _) {
       if ($scope.current.datasource === void 0) {
         $scope.current.datasource = null;
         $scope.current.type = 'query';
-        $scope.current.allFormat = 'Glob';
+        $scope.current.allFormat = 'glob';
       }
     };
 

@@ -19,3 +19,60 @@
   }
 }
 
+.variable-value-link {
+  font-size: 16px;
+  margin-right: 20px;
+}
+
+.variable-value-dropdown {
+  position: absolute;
+  top: 27px;
+  min-width: 150px;
+  max-height: 400px;
+  background: @grafanaPanelBackground;
+  box-shadow: 0px 0px 55px 0px black;
+  border: 1px solid @grafanaTargetFuncBackground;
+  z-index: 1000;
+  font-size: @baseFontSize;
+  padding: 0;
+  border-radius: 3px 3px 0 0;
+}
+
+.variable-options-container {
+  max-height: 350px;
+  overflow: auto;
+  display: block;
+  line-height: 26px;
+}
+
+.variable-option {
+  display: block;
+  padding: 0 8px;
+
+  &:hover, &.highlighted {
+    background-color: @blueDark;
+  }
+
+  .fa {
+    line-height: 26px;
+    float: right;
+    padding-left: 4px;
+  }
+
+  &.selected {
+    .variable-option-icon:before {
+      content: "\f00c";
+    }
+  }
+}
+
+.variable-search-wrapper {
+  input {
+    width: 100%;
+    padding: 7px 8px;
+    height: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+  }
+}
+

@@ -29,9 +29,21 @@ function (angular, _) {
       _.each(this.variables, function(variable) {
         if (!variable.current || !variable.current.value) { return; }
 
-        this._values[variable.name] = variable.current.value;
+        this._values[variable.name] = this.renderVariableValue(variable);
         this._texts[variable.name] = variable.current.text;
       }, this);
+    };
+
+    this.renderVariableValue = function(variable) {
+      var value = variable.current.value;
+      if (_.isString(value)) {
+        return value;
+      } else {
+        if (variable.multiFormat === 'regex values') {
+          return '(' + value.join('|') + ')';
+        }
+        return '{' + value.join(',') + '}';
+      }
     };
 
     this.setGrafanaVariable = function (name, value) {
