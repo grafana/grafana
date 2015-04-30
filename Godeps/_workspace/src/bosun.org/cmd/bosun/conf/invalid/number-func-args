@@ -1,0 +1,5 @@
+tsdbHost = test
+
+alert broken {
+	warn = q("avg:o", "") > 0
+}

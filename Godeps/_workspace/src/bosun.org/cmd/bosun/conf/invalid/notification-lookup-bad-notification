@@ -1,0 +1,9 @@
+lookup l {
+	entry a=* {
+		v = n
+	}
+}
+ 
+alert a {
+	critNotification = lookup("l", "v")
+}

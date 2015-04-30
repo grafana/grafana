@@ -1,0 +1,6 @@
+tsdbHost = test
+
+alert broken {
+	depends = avg(q("avg:o{x=b,y=d}", "", ""))
+	crit = avg(q("avg:o{a=b,c=d}", "", ""))
+}

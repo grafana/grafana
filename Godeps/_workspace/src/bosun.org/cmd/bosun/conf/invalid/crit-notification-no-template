@@ -1,0 +1,8 @@
+notification n {
+	print = true
+}
+
+alert a {
+	crit = 1
+	critNotification = n
+}
