@@ -412,17 +412,20 @@ function($, _, moment) {
   kbn.toCurrency = function(size, decimals, currency) {
     if (size === null) { return ""; }
 
+    if (Math.abs(size) < Math.pow(10, 3)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size, 2));
+    }
     if (Math.abs(size) < Math.pow(10, 6)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size, decimals));
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 3), 3)) + "K";
     }
     else if (Math.abs(size) < Math.pow(10, 9)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 6), decimals)) + "M";
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 6), 3)) + "MM";
     }
     else if (Math.abs(size) < Math.pow(10, 12)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), decimals)) + "B";
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), 3)) + "B";
     }
     else if (Math.abs(size) < Math.pow(10, 15)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), decimals)) + "T";
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), 3)) + "T";
     }
   };
 
