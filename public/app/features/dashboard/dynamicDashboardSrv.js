@@ -24,14 +24,11 @@ function (angular, _) {
       if (dashboard.templating.list.length === 0) { return; }
       this.dashboard = dashboard;
 
-      this.handlePanelRepeats();
-      this.handleRowRepeats();
-    };
-
-    this.handlePanelRepeats = function() {
       var i, j, row, panel;
       for (i = 0; i < this.dashboard.rows.length; i++) {
         row = this.dashboard.rows[i];
+
+        // repeat panels first
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
           if (panel.repeat) {
@@ -43,13 +40,8 @@ function (angular, _) {
             j = j - 1;
           }
         }
-      }
-    };
 
-    this.handleRowRepeats = function() {
-      var i, row;
-      for (i = 0; i < this.dashboard.rows.length; i++) {
-        row = this.dashboard.rows[i];
+        // handle row repeats
         if (row.repeat) {
           this.repeatRow(row);
         }
@@ -61,6 +53,7 @@ function (angular, _) {
       }
     };
 
+    // returns a new row clone or reuses a clone from previous iteration
     this.getRowClone = function(sourceRow, index) {
       if (index === 0) {
         return sourceRow;
@@ -95,6 +88,7 @@ function (angular, _) {
       return copy;
     };
 
+    // returns a new panel clone or reuses a clone from previous iteration
     this.repeatRow = function(row) {
       var variables = this.dashboard.templating.list;
       var variable = _.findWhere(variables, {name: row.repeat.replace('$', '')});
