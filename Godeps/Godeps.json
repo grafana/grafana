@@ -40,6 +40,11 @@
 			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
 		},
 		{
+			"ImportPath": "github.com/googollee/go-socket.io",
+			"Comment": "0.9.x-23-g31886c5",
+			"Rev": "31886c5636253259f3c028ee398e780d2b1d1696"
+		},
+		{
 			"ImportPath": "github.com/lib/pq",
 			"Comment": "go1.0-cutoff-13-g19eeca3",
 			"Rev": "19eeca3e30d2577b1761db471ec130810e67f532"
