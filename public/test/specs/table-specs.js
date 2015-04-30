@@ -283,6 +283,54 @@ define([
           expect(c23.bgC).to.equal('');
         });
       });
+
+      describe('ragHyperlinks', function() {
+        function render(allowLinks) {
+          scope.panel.allowScriptedRagLink = allowLinks;
+          scope.panel.scriptedRagLink = 'randomUrl$tagName';
+
+          var columnOrder = ['Name','Value'];
+          var values = [
+            {Name: 'fun1', Value: 100},
+            {Name: 'fun2', Value: 50}
+          ];
+
+          var bigData = {columnOrder: columnOrder, values: values};
+          scope.panel.pageLimit = 5;
+          renderAndSetElementVars(bigData);
+        }
+
+        it('should links properly when selected', function() {
+          render(true);
+
+          var row0 = tbody.eq(0);
+          var row0Links = row0.find('a');
+          expect(row0Links.length).to.equal(2); // one link for each cell
+          expect(row0Links.eq(0).attr('href')).to.equal('randomUrlfun1');
+          expect(row0Links.eq(1).attr('href')).to.equal('randomUrlfun1');
+
+          var row1 = tbody.eq(1);
+          var row1Links = row1.find('a');
+          expect(row1Links.length).to.equal(2); // one link for each cell
+          expect(row1Links.eq(0).attr('href')).to.equal('randomUrlfun2');
+          expect(row1Links.eq(1).attr('href')).to.equal('randomUrlfun2');
+        });
+
+        it('should not render links when not selected', function() {
+          render(false);
+
+          var row0 = tbody.eq(0);
+          var row0Links = row0.find('a');
+          expect(row0Links.length).to.equal(0); // there should be no hyperlinks
+
+          var row1 = tbody.eq(1);
+          var row1Links = row1.find('a');
+          expect(row1Links.length).to.equal(0);
+        });
+
+      });
+
+
     });
 
 
