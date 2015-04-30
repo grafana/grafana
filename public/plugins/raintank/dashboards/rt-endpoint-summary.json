@@ -14,7 +14,7 @@
       "height": "20px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint&var-collector=$collector\">SUMMARY</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint&var-collector=$collector\">DNS</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-ping?var-endpoint=$endpoint&var-collector=$collector\">Ping</a> |\n<a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector\">WEB</a></small>\n</div>\n<div style=\"float: right;\">\n<small>Summary Endpoint Dashboard | LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/db/rt-endpoint-summary?var-endpoint=$endpoint\"><big><u>SUMMARY</u></big></a> | \n<a href=\"/dashboard/db/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/db/rt-endpoint-ping?var-endpoint=$endpoint\">PING</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=All&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=All&var-protocol=https\">HTTPS</a></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "height": "20px",
@@ -48,7 +48,7 @@
           "editable": true,
           "error": false,
           "format": "percent",
-          "height": "30",
+          "height": "",
           "id": 11,
           "interval": null,
           "links": [],
@@ -98,7 +98,7 @@
           "editable": true,
           "error": false,
           "format": "percent",
-          "height": "30px",
+          "height": "",
           "id": 9,
           "interval": null,
           "links": [],
@@ -148,7 +148,7 @@
           "editable": true,
           "error": false,
           "format": "percent",
-          "height": "30",
+          "height": "",
           "id": 12,
           "interval": null,
           "links": [],
@@ -198,7 +198,7 @@
           "editable": true,
           "error": false,
           "format": "percent",
-          "height": "30",
+          "height": "",
           "id": 13,
           "interval": null,
           "links": [],
@@ -306,7 +306,7 @@
           "title": "DNS Errors",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -330,7 +330,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -379,7 +379,7 @@
           "title": "Ping Errors",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -403,7 +403,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -452,7 +452,7 @@
           "title": "HTTP Errors",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -476,7 +476,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -525,7 +525,7 @@
           "title": "HTTPS Errors",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -807,8 +807,6 @@
         }
       ],
       "title": "New row"
-    }
-  ],
   "nav": [
     {
       "collapse": false,

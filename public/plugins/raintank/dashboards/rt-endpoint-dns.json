@@ -14,7 +14,7 @@
       "height": "30px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint&var-collector=$collector\">SUMMARY</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint&var-collector=$collector\">DNS</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-ping?var-endpoint=$endpoint&var-collector=$collector\">Ping</a> |\n<a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector\">WEB</a></small>\n</div>\n<div style=\"float: right;\">\n<small>DNS Endpoint Dashboard | LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/db/rt-endpoint-summary?var-endpoint=$endpoint&var-collector=$collector\">SUMMARY</a> | \n<a href=\"/dashboard/db/rt-endpoint-dns?var-endpoint=$endpoint&var-collector=$collector\"><big><u>DNS</u></big></a> | \n<a href=\"/dashboard/db/rt-endpoint-ping?var-endpoint=$endpoint&var-collector=$collector\">PING</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> | \n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></small>\n</div>\n<div style=\"float: right;\">\n<small>DNS Endpoint Dashboard | LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "height": "100",
@@ -49,7 +49,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -96,10 +96,10 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "DNS errors for $endpoint (over all selected Collectors)",
+          "title": "DNS status for $endpoint (over all selected Collectors)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -150,13 +150,13 @@
             "alignAsTable": true,
             "avg": true,
             "current": true,
-            "max": true,
-            "min": true,
+            "max": false,
+            "min": false,
             "rightSide": false,
             "show": true,
             "sort": "current",
             "sortDesc": true,
-            "total": true,
+            "total": false,
             "values": true
           },
           "lines": false,

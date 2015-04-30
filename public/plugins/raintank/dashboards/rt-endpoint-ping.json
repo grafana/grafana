@@ -14,7 +14,7 @@
       "height": "10px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-ping?var-endpoint=$endpoint\">Ping</a> |\n<a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint\">WEB</a></small>\n</div>\n<div style=\"float: right;\">\n<small>Ping Endpoint Dashboard | LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/db/rt-endpoint-summary?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/db/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/db/rt-endpoint-ping?var-endpoint=$endpoint\"><big><u>PING</u></big></a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></small>\n</div>\n<div style=\"float: right;\">\n<small>Ping Endpoint Dashboard | LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "height": "20px",
@@ -49,7 +49,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -96,10 +96,10 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Ping errors for $endpoint (across all selected Collectors)",
+          "title": "Ping status for $endpoint (across all selected Collectors)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "individual"
           },
           "transparent": true,
           "type": "graph",
@@ -141,8 +141,8 @@
             "leftMax": null,
             "leftMin": null,
             "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
+            "rightMax": 100,
+            "rightMin": 0,
             "threshold1": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
             "threshold2": null,
@@ -207,7 +207,7 @@
             },
             {
               "hide": false,
-              "target": "alias(removeBelowValue(maxSeries($endpoint.$collector.network.ping.loss), 1), 'loss')"
+              "target": "alias(removeBelowValue(averageSeries($endpoint.$collector.network.ping.loss), 1), 'loss')"
             }
           ],
           "timeFrom": null,
