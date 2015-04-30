@@ -64,8 +64,8 @@ define([
         panelHelper.updateTimeRange($scope);
         return panelHelper.issueMetricQuery($scope, datasource)
           .then($scope.dataHandler, function(err) {
-            $scope.tableData = null;
-            $scope.render(null);
+            $scope.tableData = {values: [], columnOrder: []};
+            $scope.render($scope.tableData);
             throw err;
           });
       };
