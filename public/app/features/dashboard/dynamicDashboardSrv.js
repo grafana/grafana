@@ -11,29 +11,31 @@ function (angular, _) {
     var self = this;
 
     this.init = function(dashboard) {
-      this.dashboard = dashboard;
       this.iteration = new Date().getTime();
-
-      this.handlePanelRepeats(dashboard);
-      this.handleRowRepeats(dashboard);
+      this.process(dashboard);
     };
 
     this.update = function(dashboard) {
-      this.dashboard = dashboard;
       this.iteration = this.iteration + 1;
-
-      this.handlePanelRepeats(dashboard);
-      this.handleRowRepeats(dashboard);
+      this.process(dashboard);
     };
 
-    this.handlePanelRepeats = function(dashboard) {
+    this.process = function(dashboard) {
+      if (dashboard.templating.list.length === 0) { return; }
+      this.dashboard = dashboard;
+
+      this.handlePanelRepeats();
+      this.handleRowRepeats();
+    };
+
+    this.handlePanelRepeats = function() {
       var i, j, row, panel;
-      for (i = 0; i < dashboard.rows.length; i++) {
-        row = dashboard.rows[i];
+      for (i = 0; i < this.dashboard.rows.length; i++) {
+        row = this.dashboard.rows[i];
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
           if (panel.repeat) {
-            this.repeatPanel(panel, row, dashboard);
+            this.repeatPanel(panel, row);
           }
           // clean up old left overs
           else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
@@ -44,16 +46,16 @@ function (angular, _) {
       }
     };
 
-    this.handleRowRepeats = function(dashboard) {
+    this.handleRowRepeats = function() {
       var i, row;
-      for (i = 0; i < dashboard.rows.length; i++) {
-        row = dashboard.rows[i];
+      for (i = 0; i < this.dashboard.rows.length; i++) {
+        row = this.dashboard.rows[i];
         if (row.repeat) {
-          this.repeatRow(row, dashboard);
+          this.repeatRow(row);
         }
         // clean up old left overs
         else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
-          dashboard.rows.splice(i, 1);
+          this.dashboard.rows.splice(i, 1);
           i = i - 1;
         }
       }
@@ -93,8 +95,8 @@ function (angular, _) {
       return copy;
     };
 
-    this.repeatRow = function(row, dashboard) {
-      var variables = dashboard.templating.list;
+    this.repeatRow = function(row) {
+      var variables = this.dashboard.templating.list;
       var variable = _.findWhere(variables, {name: row.repeat.replace('$', '')});
       if (!variable) {
         return;
@@ -152,12 +154,10 @@ function (angular, _) {
       return clone;
     };
 
-    this.repeatPanel = function(panel, row, dashboard) {
-      var variables = dashboard.templating.list;
-      var variable = _.findWhere(variables, {name: panel.repeat.replace('$', '')});
-      if (!variable) {
-        return;
-      }
+    this.repeatPanel = function(panel, row) {
+      var variables = this.dashboard.templating.list;
+      var variable = _.findWhere(variables, {name: panel.repeat});
+      if (!variable) { return; }
 
       var selected;
       if (variable.current.text === 'All') {

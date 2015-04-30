@@ -36,7 +36,7 @@ define([
   dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
     ctx.setup(function(dash) {
       dash.rows.push({
-        panels: [{id: 2, repeat: '$apps'}]
+        panels: [{id: 2, repeat: 'apps'}]
       });
       dash.templating.list.push({
         name: 'apps',
@@ -56,7 +56,7 @@ define([
     });
 
     it('should mark panel repeated', function() {
-      expect(ctx.rows[0].panels[0].repeat).to.be('$apps');
+      expect(ctx.rows[0].panels[0].repeat).to.be('apps');
       expect(ctx.rows[0].panels[1].repeatPanelId).to.be(2);
     });
 
@@ -103,7 +103,7 @@ define([
   dynamicDashScenario('given dashboard with row repeat', function(ctx) {
     ctx.setup(function(dash) {
       dash.rows.push({
-        repeat: '$servers',
+        repeat: 'servers',
         panels: [{id: 2}]
       });
       dash.templating.list.push({
@@ -128,7 +128,7 @@ define([
     });
 
     it('should mark second row as repeated', function() {
-      expect(ctx.rows[0].repeat).to.be('$servers');
+      expect(ctx.rows[0].repeat).to.be('servers');
     });
 
     it('should clear repeat field on repeated row', function() {
