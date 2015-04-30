@@ -9,12 +9,13 @@
 <div ng-if="selectorOpen" class="variable-value-dropdown">
 	<div class="variable-search-wrapper">
 		<span style="position: relative;">
-			<input type="text" placeholder="Search values..." give-focus="giveFocus" tabindex="1" ng-model="query.query" spellcheck='false' ng-change="search()" />
+			<input type="text" placeholder="Search values..." ng-keydown="keyDown($event)" give-focus="giveFocus" tabindex="1" ng-model="search.query" spellcheck='false' ng-change="queryChanged()" />
 		</span>
 	</div>
 
 	<div class="variable-options-container" ng-if="!query.tagcloud">
-		<a class="variable-option pointer" bindonce ng-repeat="option in options" ng-class="{'selected': option.selected}" ng-click="optionSelected(option, $event)">
+		<a class="variable-option pointer" bindonce ng-repeat="option in search.options"
+				ng-class="{'selected': option.selected, 'highlighted': $index === highlightIndex}" ng-click="optionSelected(option, $event)">
 				<span >{{option.text}}</label>
 				<span class="fa fa-fw variable-option-icon"></span>
 			</div>
