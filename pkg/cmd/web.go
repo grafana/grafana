@@ -41,7 +41,7 @@ func newMacaron() *macaron.Macaron {
 	}))
 
 	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(setting.SessionOptions))
+	m.Use(middleware.Sessioner(&setting.SessionOptions))
 
 	return m
 }

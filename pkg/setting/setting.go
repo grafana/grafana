@@ -87,6 +87,12 @@ var (
 	AnonymousOrgName string
 	AnonymousOrgRole string
 
+	// Auth proxy settings
+	AuthProxyEnabled        bool
+	AuthProxyHeaderName     string
+	AuthProxyHeaderProperty string
+	AuthProxyAutoSignUp     bool
+
 	// Session settings.
 	SessionOptions session.Options
 
@@ -375,6 +381,13 @@ func NewConfigContext(args *CommandLineArgs) {
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
 	AnonymousOrgName = Cfg.Section("auth.anonymous").Key("org_name").String()
 	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
+
+	// auth proxy
+	authProxy := Cfg.Section("auth.proxy")
+	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+	AuthProxyHeaderName = authProxy.Key("header_name").String()
+	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
+	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
