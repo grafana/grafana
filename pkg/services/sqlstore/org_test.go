@@ -10,7 +10,6 @@ import (
 )
 
 func TestAccountDataAccess(t *testing.T) {
-
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 

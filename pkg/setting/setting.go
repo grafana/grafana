@@ -122,7 +122,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0}`)
+	//log.NewLogger(0, "console", `{"level": 0}`)
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {

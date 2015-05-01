@@ -17,10 +17,13 @@ const (
 
 var sessionManager *session.Manager
 var sessionOptions *session.Options
+var startSessionGC func()
 
-func startSessionGC() {
-	sessionManager.GC()
-	time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+func init() {
+	startSessionGC = func() {
+		sessionManager.GC()
+		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+	}
 }
 
 func prepareOptions(opt *session.Options) *session.Options {
