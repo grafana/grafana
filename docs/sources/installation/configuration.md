@@ -135,7 +135,7 @@ The number of days the keep me logged in / remember me cookie lasts.
 Used for signing keep me logged in / remember me cookies.
 
 <hr>
-## [user]
+## [users]
 
 ### allow_sign_up
 Set to `false` to prohibit users from being able to sign up / create user accounts. Defaults to `true`.
