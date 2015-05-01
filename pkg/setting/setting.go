@@ -71,6 +71,7 @@ var (
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
+	DisableGravatar    bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -358,6 +359,8 @@ func NewConfigContext(args *CommandLineArgs) {
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
+	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	// admin
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()

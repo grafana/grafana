@@ -134,6 +134,9 @@ The number of days the keep me logged in / remember me cookie lasts.
 ### secret_key
 Used for signing keep me logged in / remember me cookies.
 
+### disable_gravatar
+Set to true to disable the use of Gravatar for user profile images. Default is `false`.
+
 <hr>
 ## [user]
 

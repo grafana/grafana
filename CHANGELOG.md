@@ -6,6 +6,7 @@
 
 **Backend**
 - [Issue #1905](https://github.com/grafana/grafana/issues/1905). Github OAuth: You can now configure a Github team membership requirement, thx @dewski
+- [Issue #1891](https://github.com/grafana/grafana/issues/1891). Security: New config option to disable the use of gravatar for profile images
 
 
 # 2.0.3 (unreleased - 2.0.x branch)
