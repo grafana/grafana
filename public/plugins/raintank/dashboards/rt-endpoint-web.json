@@ -84,15 +84,15 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.https.ok_state), 'ok')"
+              "target": "alias(maxSeries($endpoint.$collector.network.$protocol.ok_state), 'ok')"
             },
             {
               "hide": false,
-              "target": "alias(maxSeries($endpoint.$collector.network.https.warn_state), 'warn')"
+              "target": "alias(maxSeries($endpoint.$collector.network.$protocol.warn_state), 'warn')"
             },
             {
               "hide": false,
-              "target": "alias(maxSeries($endpoint.$collector.network.https.error_state), 'error')"
+              "target": "alias(maxSeries($endpoint.$collector.network.$protocol.error_state), 'error')"
             }
           ],
           "timeFrom": null,
