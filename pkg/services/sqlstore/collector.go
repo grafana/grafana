@@ -344,7 +344,6 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				Updated:   time.Now(),
 			}
 			l.UpdateCollectorSlug()
-			sess.UseBool("online")
 			sess.UseBool("enabled")
 			sess.UseBool("public")
 			_, err := sess.Id(cmd.Id).Update(l)
