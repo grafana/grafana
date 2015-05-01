@@ -14,7 +14,7 @@
       "height": "20px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/db/rt-endpoint-summary?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/db/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/db/rt-endpoint-ping?var-endpoint=$endpoint\">PING</a> |\n<u><big><a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></big></u></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-ping?var-endpoint=$endpoint\">PING</a> |\n<u><big><a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></big></u></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "id": 585,
