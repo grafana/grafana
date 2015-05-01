@@ -11,7 +11,7 @@ define([
   './spectrumPicker',
   './bootstrap-tagsinput',
   './bodyClass',
-  './templateParamSelector',
+  './variableValueSelect',
   './graphiteSegment',
   './grafanaVersionCheck',
   './dropdown.typeahead',

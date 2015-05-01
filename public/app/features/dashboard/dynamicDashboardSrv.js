@@ -28,7 +28,17 @@ function (angular, _) {
       for (i = 0; i < this.dashboard.rows.length; i++) {
         row = this.dashboard.rows[i];
 
-        // repeat panels first
+        // handle row repeats
+        if (row.repeat) {
+          this.repeatRow(row);
+        }
+        // clean up old left overs
+        else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
+          this.dashboard.rows.splice(i, 1);
+          i = i - 1;
+        }
+
+        // repeat panels
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
           if (panel.repeat) {
@@ -39,16 +49,6 @@ function (angular, _) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
           }
-        }
-
-        // handle row repeats
-        if (row.repeat) {
-          this.repeatRow(row);
-        }
-        // clean up old left overs
-        else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
-          this.dashboard.rows.splice(i, 1);
-          i = i - 1;
         }
       }
     };
@@ -108,7 +108,7 @@ function (angular, _) {
 
         for (i = 0; i < copy.panels.length; i++) {
           panel = copy.panels[i];
-          panel.scopedVars = panel.scopedVars || {};
+          panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
         }
       });
@@ -139,7 +139,7 @@ function (angular, _) {
       // save id
       tmpId = clone.id;
       // copy properties from source
-      angular.extend(clone, sourcePanel);
+      angular.copy(sourcePanel, clone);
       // restore id
       clone.id = tmpId;
       clone.repeatIteration = this.iteration;
@@ -162,11 +162,10 @@ function (angular, _) {
 
       _.each(selected, function(option, index) {
         var copy = self.getPanelClone(panel, row, index);
-        copy.scopedVars = {};
+        copy.scopedVars = copy.scopedVars || {};
         copy.scopedVars[variable.name] = option;
       });
     };
 
   });
-
 });
