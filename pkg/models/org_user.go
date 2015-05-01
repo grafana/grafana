@@ -9,6 +9,7 @@ import (
 var (
 	ErrInvalidRoleType = errors.New("Invalid role type")
 	ErrLastOrgAdmin    = errors.New("Cannot remove last organization admin")
+	ErrOrgUserNotFound = errors.New("Cannot find the organization user")
 )
 
 type RoleType string
@@ -24,6 +25,7 @@ func (r RoleType) IsValid() bool {
 }
 
 type OrgUser struct {
+	Id      int64
 	OrgId   int64
 	UserId  int64
 	Role    RoleType
@@ -42,6 +44,13 @@ type RemoveOrgUserCommand struct {
 type AddOrgUserCommand struct {
 	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
 	Role         RoleType `json:"role" binding:"Required"`
+
+	OrgId  int64 `json:"-"`
+	UserId int64 `json:"-"`
+}
+
+type UpdateOrgUserCommand struct {
+	Role RoleType `json:"role" binding:"Required"`
 
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
