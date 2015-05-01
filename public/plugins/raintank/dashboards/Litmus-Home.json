@@ -36,7 +36,7 @@
       "height": "200px",
       "panels": [
         {
-          "content": "<h4>What is Litmus?</h4>\n<div style=\"width: 85%\">\n<p class=\"rt-dashboard-copy\"> Litmus allows you to monitor the network quality of anything from anywhere.</p>\n\n<p class=\"rt-dashboard-copy\"> Whether you have a simple blog or a globally distributed application, Litmus can help you analyze its performance and availability from around the world. </p>\n\n<p class=\"rt-dashboard-copy\"> Litmus is currently in restricted alpha. Your feedback is much appreciated and helps make it better. </p>\n",
+          "content": "<h4>What is Litmus?</h4>\n<div style=\"width: 85%\">\n<p class=\"rt-dashboard-copy\"> Litmus allows you to monitor the network quality of anything from anywhere.</p>\n\n<p class=\"rt-dashboard-copy\"> Whether you have a simple blog or a globally distributed application, Litmus can help you analyze its performance and availability from around the world. </p>\n\n<p class=\"rt-dashboard-copy\"> Litmus is currently in restricted alpha. Your feedback is much appreciated and helps make it better. </p><br/>\n",
           "editable": true,
           "error": false,
           "id": 2,
@@ -48,30 +48,16 @@
           "type": "text"
         },
         {
+          "content": "<h4>Dashboards</h4>\n<div class=\"\" style=\"text-align:center;\">\nThe following Dashboards are provided to help  you get started. Feel free to customize them with data of your own by Saving them as a personal Dashboard\n</div>\n\n<div class=\"rt-dash-flex-container\">\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/raintank/rt-endpoint-summary\"><div class=\"secondaryCTA\">Summary</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/raintank/rt-endpoint-ping\"><div class=\"secondaryCTA\">Ping</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n    <a href=\"dashboard/raintank/rt-endpoint-dns\"> <div class=\"secondaryCTA\">DNS</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/raintank/rt-endpoint-web?var-protocol=http\"><div class=\"secondaryCTA\">HTTP</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/raintank/rt-endpoint-web?var-protocol=https\"><div class=\"secondaryCTA\">HTTPS</div></a>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "id": 5,
-          "limit": 5,
           "links": [],
-          "mode": "search",
-          "query": "litmus",
-          "span": 3,
-          "tag": "",
-          "title": "Endpoint Dashboards",
-          "type": "dashlist"
-        },
-        {
-          "editable": true,
-          "error": false,
-          "id": 6,
-          "limit": 5,
-          "links": [],
-          "mode": "search",
-          "query": "collector",
-          "span": 3,
-          "tag": "",
-          "title": "Collector Dashboards",
-          "type": "dashlist"
+          "mode": "html",
+          "span": 6,
+          "style": {},
+          "title": "",
+          "type": "text"
         }
       ],
       "title": "New row"
