@@ -67,7 +67,7 @@ function (angular, config) {
         $scope.strengthClass = "password-strength-bad";
         return;
       }
-      if (newValue.length <= 6) {
+      if (newValue.length <= 8) {
         $scope.strengthText = "strength: you can do better.";
         $scope.strengthClass = "password-strength-ok";
         return;
