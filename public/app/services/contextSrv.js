@@ -45,7 +45,7 @@ function (angular, _, store, config) {
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
-    this.sidemenu = store.getBool('grafana.sidemenu');
+    this.sidemenu = store.getBool('grafana.sidemenu', true);
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
   });
 });
