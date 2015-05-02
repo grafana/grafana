@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -41,6 +40,7 @@ func GetContextHandler() macaron.Handler {
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		if initContextWithApiKey(ctx) ||
+			initContextWithAuthProxy(ctx) ||
 			initContextWithUserSessionCookie(ctx) ||
 			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
@@ -79,7 +79,6 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 	var userId int64
 	if userId = getRequestUserId(ctx); userId == 0 {
-		fmt.Printf("Not userId")
 		return false
 	}
 

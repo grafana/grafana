@@ -128,6 +128,62 @@ func TestMiddlewareContext(t *testing.T) {
 				So(sc.context.IsSignedIn, ShouldBeFalse)
 			})
 		})
+
+		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.exec()
+
+			Convey("should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 12)
+				So(sc.context.OrgId, ShouldEqual, 2)
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyAutoSignUp = true
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+					return nil
+				} else {
+					return m.ErrUserNotFound
+				}
+			})
+
+			var createUserCmd *m.CreateUserCommand
+			bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
+				createUserCmd = cmd
+				cmd.Result = m.User{Id: 33}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.exec()
+
+			Convey("Should create user if auto sign up is enabled", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 33)
+				So(sc.context.OrgId, ShouldEqual, 4)
+
+			})
+		})
+
 	})
 }
 
@@ -149,24 +205,27 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 		startSessionGC = func() {}
 		sc.m.Use(Sessioner(&session.Options{}))
 
-		sc.m.Get("/", func(c *Context) {
+		sc.defaultHandler = func(c *Context) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			}
-		})
+		}
+
+		sc.m.Get("/", sc.defaultHandler)
 
 		fn(sc)
 	})
 }
 
 type scenarioContext struct {
-	m           *macaron.Macaron
-	context     *Context
-	resp        *httptest.ResponseRecorder
-	apiKey      string
-	respJson    map[string]interface{}
-	handlerFunc handlerFunc
+	m              *macaron.Macaron
+	context        *Context
+	resp           *httptest.ResponseRecorder
+	apiKey         string
+	respJson       map[string]interface{}
+	handlerFunc    handlerFunc
+	defaultHandler macaron.Handler
 
 	req *http.Request
 }
