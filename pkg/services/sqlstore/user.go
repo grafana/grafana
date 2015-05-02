@@ -265,17 +265,17 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
 	                LEFT OUTER JOIN org on org.id = u.org_id `
 
+	sess := x.Table("user")
 	if query.UserId > 0 {
-		rawSql += "WHERE u.id=?"
+		sess.Sql(rawSql+"WHERE u.id=?", query.UserId)
 	} else if query.Login != "" {
-		rawSql += "WHERE u.login=?"
+		sess.Sql(rawSql+"WHERE u.login=?", query.Login)
 	} else if query.Email != "" {
-		rawSql += "WHERE u.email=?"
+		sess.Sql(rawSql+"WHERE u.email=?", query.Email)
 	}
 
 	var user m.SignedInUser
-	sess := x.Table("user")
-	has, err := sess.Sql(rawSql, query.UserId).Get(&user)
+	has, err := sess.Get(&user)
 	if err != nil {
 		return err
 	} else if !has {

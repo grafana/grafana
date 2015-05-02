@@ -12,7 +12,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	}
 
 	proxyHeaderValue := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
-	if len(proxyHeaderValue) <= 0 {
+	if len(proxyHeaderValue) == 0 {
 		return false
 	}
 
@@ -34,6 +34,8 @@ func initContextWithAuthProxy(ctx *Context) bool {
 				ctx.Handle(500, "Failed find user after creation", err)
 				return true
 			}
+		} else {
+			return false
 		}
 	}
 
