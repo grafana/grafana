@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -78,11 +79,13 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 	var userId int64
 	if userId = getRequestUserId(ctx); userId == 0 {
+		fmt.Printf("Not userId")
 		return false
 	}
 
 	query := m.GetSignedInUserQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
+		log.Error(3, "Failed to get user with id %v", userId)
 		return false
 	} else {
 		ctx.SignedInUser = query.Result
