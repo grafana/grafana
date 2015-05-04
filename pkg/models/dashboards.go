@@ -10,7 +10,7 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound           = errors.New("Account not found")
+	ErrDashboardNotFound           = errors.New("Dashboard not found")
 	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
 )

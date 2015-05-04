@@ -51,6 +51,21 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result.Slug, ShouldEqual, "test-dash-23")
 			})
 
+			Convey("Should return error if no dashboard is updated", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId:     1,
+					Overwrite: true,
+					Dashboard: map[string]interface{}{
+						"id":    float64(123412321),
+						"title": "Expect error",
+						"tags":  []interface{}{},
+					},
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldNotBeNil)
+			})
+
 			Convey("Should be able to search for dashboard", func() {
 				query := m.SearchDashboardsQuery{
 					Title: "test",

@@ -48,13 +48,19 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
+		affectedRows := int64(0)
+
 		if dash.Id == 0 {
 			metrics.M_Models_Dashboard_Insert.Inc(1)
-			_, err = sess.Insert(dash)
+			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
 			dash.Data["version"] = dash.Version
-			_, err = sess.Id(dash.Id).Update(dash)
+			affectedRows, err = sess.Id(dash.Id).Update(dash)
+		}
+
+		if affectedRows == 0 {
+			return m.ErrDashboardNotFound
 		}
 
 		// delete existing tabs
