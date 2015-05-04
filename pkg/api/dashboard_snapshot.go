@@ -45,8 +45,8 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 }
 
 func GetDashboardSnapshot(c *middleware.Context) {
-	key := c.Params(":key")
 
+	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
 	err := bus.Dispatch(query)
@@ -63,8 +63,8 @@ func GetDashboardSnapshot(c *middleware.Context) {
 		return
 	}
 
-	dto := dtos.Dashboard{
-		Model: snapshot.Dashboard,
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: snapshot.Dashboard,
 		Meta: dtos.DashboardMeta{
 			IsSnapshot: true,
 			Created:    snapshot.Created,

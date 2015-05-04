@@ -40,7 +40,7 @@ function (angular, $, config) {
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      var dashboard = dashboardSrv.create(data.model, data.meta);
+      var dashboard = dashboardSrv.create(data.dashboard, data.meta);
 
       // init services
       timeSrv.init(dashboard);

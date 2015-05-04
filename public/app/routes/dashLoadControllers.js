@@ -13,7 +13,7 @@ function (angular, _, kbn, moment, $) {
   module.controller('DashFromDBCtrl', function($scope, $routeParams, backendSrv) {
 
     function dashboardLoadFailed(title) {
-      $scope.initDashboard({meta: {}, model: {title: title}}, $scope);
+      $scope.initDashboard({meta: {}, dashboard: {title: title}}, $scope);
     }
 
     if (!$routeParams.slug) {
@@ -46,7 +46,7 @@ function (angular, _, kbn, moment, $) {
           canSave: false,
           canEdit: false,
         },
-        model: {
+        dashboard: {
           title: 'Snapshot not found'
         }
       }, $scope);
@@ -61,14 +61,14 @@ function (angular, _, kbn, moment, $) {
     }
     $scope.initDashboard({
       meta: { canShare: false, canStar: false },
-      model: window.grafanaImportDashboard
+      dashboard: window.grafanaImportDashboard
     }, $scope);
   });
 
   module.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false },
-      model: {
+      dashboard: {
         title: "New dashboard",
         rows: [{ height: '250px', panels:[] }]
       },
@@ -98,7 +98,7 @@ function (angular, _, kbn, moment, $) {
     file_load($routeParams.jsonFile).then(function(result) {
       $scope.initDashboard({
         meta: { canSave: false, canDelete: false },
-        model: result
+        dashboard: result
       }, $scope);
     });
 
@@ -146,7 +146,7 @@ function (angular, _, kbn, moment, $) {
     script_load($routeParams.jsFile).then(function(result) {
       $scope.initDashboard({
         meta: {fromScript: true, canDelete: false, canSave: false},
-        model: result.data
+        dashboard: result.data
       }, $scope);
     });
 
