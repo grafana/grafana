@@ -66,6 +66,24 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			Convey("Should not be able to overwrite dashboard in another org", func() {
+				query := m.GetDashboardQuery{Slug: "test-dash-23", OrgId: 1}
+				GetDashboard(&query)
+
+				cmd := m.SaveDashboardCommand{
+					OrgId:     2,
+					Overwrite: true,
+					Dashboard: map[string]interface{}{
+						"id":    float64(query.Result.Id),
+						"title": "Expect error",
+						"tags":  []interface{}{},
+					},
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldNotBeNil)
+			})
+
 			Convey("Should be able to search for dashboard", func() {
 				query := m.SearchDashboardsQuery{
 					Title: "test",
