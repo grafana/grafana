@@ -39,6 +39,7 @@ function (angular, $, kbn, _, moment) {
       this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
+      this.links = data.links || [];
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });

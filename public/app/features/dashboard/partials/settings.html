@@ -105,18 +105,7 @@
 	</div>
 
 	<div ng-if="editor.index == 2">
-		<div class="editor-row">
-			<div class="tight-form-section">
-				<h5>Links and Navigation Options<h5>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 90px">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
-		</div>
+		<dash-links-editor dashboard="dashboard"></dash-links-editor>
 	</div>
 
 	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 3+$index">

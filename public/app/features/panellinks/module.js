@@ -8,18 +8,18 @@ function (angular, _) {
 
   angular
     .module('grafana.directives')
-    .directive('panelLinkEditor', function() {
+    .directive('panelLinksEditor', function() {
       return {
         scope: {
           panel: "="
         },
         restrict: 'E',
-        controller: 'PanelLinkEditorCtrl',
+        controller: 'PanelLinksEditorCtrl',
         templateUrl: 'app/features/panellinkeditor/module.html',
         link: function() {
         }
       };
-    }).controller('PanelLinkEditorCtrl', function($scope, backendSrv) {
+    }).controller('PanelLinksEditorCtrl', function($scope, backendSrv) {
 
       $scope.panel.links = $scope.panel.links || [];
 
