@@ -14,7 +14,7 @@ function (angular, config) {
       password: '',
     };
 
-    contextSrv.setSideMenuState(false);
+    contextSrv.sidemenu = false;
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;

@@ -45,7 +45,19 @@ function (angular, _, store, config) {
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
-    this.sidemenu = store.getBool('grafana.sidemenu');
+    var sidemenuDefault = false;
+    if (this.hasRole('Admin')) {
+      sidemenuDefault = true;
+    }
+    this.sidemenu = store.getBool('grafana.sidemenu', sidemenuDefault);
+    if (this.isSignedIn && !store.exists('grafana.sidemenu')) {
+      // If the sidemnu has never been set before, set it to false.
+      // This will result in this.sidemenu and the localStorage grafana.sidemenu
+      // to be out of sync if the user has an admin role.  But this is
+      // intentional and results in the user seeing the sidemenu only on
+      // their first login.
+      store.set('grafana.sidemenu', false);
+    }
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
   });
 });
