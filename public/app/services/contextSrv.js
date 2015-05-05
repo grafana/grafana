@@ -53,7 +53,7 @@ function (angular, _, store, config) {
     if (this.isSignedIn && !store.exists('grafana.sidemenu')) {
       // If the sidemnu has never been set before, set it to false.
       // This will result in this.sidemenu and the localStorage grafana.sidemenu
-      // to be out of sync if the user has an admin role.  But this is 
+      // to be out of sync if the user has an admin role.  But this is
       // intentional and results in the user seeing the sidemenu only on
       // their first login.
       store.set('grafana.sidemenu', false);
