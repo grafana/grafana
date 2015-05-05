@@ -1,0 +1,48 @@
+// ==========================================================================
+// COLUMNS
+// ==========================================================================
+
+
+
+// Detail columns
+// ==========================================================================
+
+.detailContainer {
+  min-width: 400px; 
+  max-width: 1020px; 
+  margin: 20px 0;
+}
+
+.detailColumn {
+  width:  50%;
+  float:left;
+  position: relative;
+  transition: 0.15s;
+}
+
+.detailFull {
+  width: 100%; // was 50% for 2 columns, changed to 1 col for now: TRW
+  float: left;
+  position: relative;
+  transition: 0.15s;
+}
+
+.detailLeft {}
+.detailRight {}
+
+@media screen and (max-width: 780px) {
+  .detailColumn {
+    width:  100%;
+    float:none;
+    transition: 0.15s;
+  }
+
+  .detailLeft {
+    padding-right: 0px; 
+    margin-left: 0px;
+  }
+
+  .detailRight {
+    padding-left: 0px;
+  }
+}

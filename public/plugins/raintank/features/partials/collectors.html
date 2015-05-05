@@ -44,13 +44,32 @@
 			<span style="vertical-align: 2px;"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" style="margin-right: 5px;" bs-tooltip="'Private Collector'"></img></span>
 <!-- 			<span class="label rt-label-tag" style="margin-left: 6px;" ng-repeat="tag in collector.tags" tag-color-from-name><a ng-click="setCollectorFilter(tag)">{{tag}}</a></span>
  -->
-			<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag="tag" tag-color-from-name>
+<!-- 			<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag="tag" tag-color-from-name>
 				<a data-toggle="dropdown">{{tag}}<i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
 				<ul class="dropdown-menu rt-tag-dropup">
 					<li><a href="#"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{tag}} dashboard'"></i></a></li>
 					<li><a ng-click="setCollectorFilter(tag)"><img class="filter-icon"src="img/rt-filter.svg" width="28px" height="28px" bs-tooltip="'Filter by {{tag}}'"></a></li>
 				</ul>
+			</span> -->
+
+			<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag="tag" tag-color-from-name>
+				<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
+				<ul class="dropdown-menu rt-tag-dropup">
+					<li>
+						<a href="#">
+							<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
+							Dashboard
+						</a>
+					</li>
+					<li>
+						<a ng-click="setEndpointFilter(tag)">
+							<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
+							Filter
+						</a>
+					</li>
+				</ul>
 			</span>
+
 
 			<div style="float: right; display: inline;">
 				<div style="display: inline;">
