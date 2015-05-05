@@ -104,9 +104,7 @@
 						<div class="tight-form last">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 160px">
-									Include auto interval &nbsp;
-									<input class="cr1" id="current.auto" type="checkbox" ng-model="current.auto" ng-checked="current.auto" ng-change="runQuery()">
-									<label for="current.auto" class="cr1"></label>
+									<editor-checkbox text="Include auto interval" model="current.auto" change="runQuery()"></editor-checkbox>
 								</li>
 								<li class="tight-form-item" ng-show="current.auto">
 									Auto interval steps <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
@@ -162,9 +160,7 @@
 						<div class="tight-form">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 100px;">
-									All value &nbsp;
-									<input class="cr1" id="current.includeAll" type="checkbox" ng-model="current.includeAll" ng-checked="current.includeAll" ng-change="runQuery()">
-									<label for="current.includeAll" class="cr1"></label>
+									<editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
 								</li>
 								<li ng-show="current.includeAll">
 									<input type="text" class="input-xlarge tight-form-input" style="width:422px" ng-model='current.options[0].value'></input>
@@ -181,12 +177,8 @@
 
 						<div class="tight-form last">
 							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 100px;">
-									Refresh on load
-								</li>
-								<li class="tight-form-item">
-									<input class="cr1" id="current.refresh" type="checkbox" ng-model="current.refresh" ng-checked="current.refresh">
-									<label for="current.refresh" class="cr1"></label>
+								<li class="tight-form-item last">
+									<editor-checkbox text="Refresh on load" model="current.refresh"></editor-checkbox>
 									<tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time</tip>
 								</li>
 							</ul>
@@ -202,9 +194,7 @@
 					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item last" style="width: 100px;">
-								Enable &nbsp;
-								<input class="cr1" id="current.multi" type="checkbox" ng-model="current.multi" ng-checked="current.multi" ng-change="runQuery()">
-								<label for="current.multi" class="cr1"></label>
+								<editor-checkbox text="Enable" model="current.multi" change="runQuery()"></editor-checkbox>
 							</li>
 							<li class="tight-form-item" ng-show="current.multi">
 								Multi format
@@ -228,9 +218,7 @@
 								<input type="text" class="input-medium tight-form-input" ng-model='current.label' placeholder=""></input>
 							</li>
 							<li class="tight-form-item last">
-								Hide label &nbsp;
-								<input class="cr1" id="current.hideLabel" type="checkbox" ng-model="current.hideLabel" ng-checked="current.hideLabel" change="runQuery()">
-								<label for="current.hideLabel" class="cr1"></label>
+								<editor-checkbox text="Hide label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
