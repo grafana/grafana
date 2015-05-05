@@ -124,7 +124,7 @@ raintank BOX
 
 .rt-box-body {
   padding: 20px;
-  min-height: 150px;
+  min-height: 50px;
 }
 
 .rt-modal-box-body {
@@ -963,6 +963,17 @@ MATT STYLES
 
 // Form Additions
 
+.ng-hide-add         { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease; 
+}
+
+.ng-hide-remove      { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease;  
+}
+
+
 .rt-form-label-medium {
   // color: @grayDark;
   font-size: @rt-fontSizeMed-2;
@@ -1225,7 +1236,7 @@ input[type="checkbox"]:checked+label {
   font-style: italic;
 
   @media screen and (min-width: 950px) {
-  width: 660px;
+  max-width: 660px;
   }
 }
 
