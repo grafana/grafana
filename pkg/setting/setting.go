@@ -65,6 +65,7 @@ var (
 	RouterLogging      bool
 	StaticRootPath     string
 	EnableGzip         bool
+	EnforceDomain      bool
 
 	// Security settings.
 	SecretKey          string
@@ -355,10 +356,10 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
+	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()

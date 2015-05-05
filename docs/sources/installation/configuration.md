@@ -72,6 +72,9 @@ Another way is put nginx or apache infront of Grafana and have them proxy reques
 This setting is only used in as a part of the root_url setting (see below). Important if you
 use github or google oauth.
 
+### enforce_domain
+Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is false.
+
 ### root_url
 This is the full url used to access grafana from a web browser. This is important if you use
 google or github oauth authentication (for the callback url to be correct).
