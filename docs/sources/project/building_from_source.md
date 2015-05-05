@@ -17,14 +17,14 @@ dev environment.
 ## Get Code
 
 ```
-go get github.com/grafana/grafana
+mkdir $GOPATH/src/github.com/grafana
+ln -s $GOPATH/src/github.com/raintank/grafana $GOPATH/src/github.com/grafana/grafana
+go get github.com/raintank/grafana
 ```
 
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-git remote add raintank https://github.com/raintank/grafana
-git checkout -t raintank/master
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
 go build .
