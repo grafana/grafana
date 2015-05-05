@@ -36,7 +36,9 @@ function (angular, _, kbn, moment, $) {
 
   });
 
-  module.controller('DashFromSnapshotCtrl', function($scope, $routeParams, backendSrv) {
+  module.controller('DashFromSnapshotCtrl', function($scope, $routeParams, backendSrv, contextSrv) {
+    //don't show the sidemenu in snapshots.
+    contextSrv.sidemenu = false;
     backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
       $scope.initDashboard(result, $scope);
     }, function() {
