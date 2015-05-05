@@ -29,7 +29,7 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                   '../vendor/jquery/jquery-2.1.1.min',
+    jquery:                   '../vendor/jquery/jquery-2.1.3',
 
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
