@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows', 'Links']" data-title="{{tab}}">
 		</div>
 		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
 		</div>
@@ -14,13 +14,12 @@
 	<button class="gf-box-header-close-btn" ng-click="dismiss();">
 		<i class="fa fa-remove"></i>
 	</button>
-
 </div>
 
 <div class="gf-box-body" style="padding-bottom: 50px;">
 	<div ng-if="editor.index == 0">
 		<div class="editor-row">
-			<div class="section">
+			<div class="tight-form-section">
 				<h5>Dashboard info</h5>
 				<div class="tight-form">
 					<ul class="tight-form-list">
@@ -52,45 +51,22 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
-
 			</div>
+		</div>
 
-			<div class="section">
+		<div class="editor-row">
+			<div class="tight-form-section">
 				<h5>Toggles</h5>
 				<div class="tight-form">
 					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 181px">
-							<label class="checkbox-label" for="dashboard.editable">Editable</label>
+						<li class="tight-form-item">
+							<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
 						</li>
-						<li>
-							<li class="tight-form-item last">
-								<input class="cr1" id="dashboard.editable" type="checkbox" ng-model="dashboard.editable" ng-checked="dashboard.editable">
-								<label for="dashboard.editable" class="cr1"></label>
-							</li>
+						<li class="tight-form-item">
+							<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
 						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 181px">
-							<label class="checkbox-label" for="dashboard.hideControls">Hide Controls (CTRL+H)</label>
-						</li>
-						<li class="tight-form-item last">
-							<input class="cr1" id="dashboard.hideControls" type="checkbox" ng-model="dashboard.hideControls" ng-checked="dashboard.hideControls">
-							<label for="dashboard.hideControls" class="cr1"></label>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 181px">
-							<label class="checkbox-label" for="dashboard.sharedCrosshair">Shared Crosshair (CTRL+H)</label>
-						</li>
-						<li class="tight-form-item last">
-							<input class="cr1" id="dashboard.sharedCrosshair" type="checkbox" ng-model="dashboard.sharedCrosshair" ng-checked="dashboard.sharedCrosshair">
-							<label for="dashboard.sharedCrosshair" class="cr1"></label>
+						<li class="tight-form-item">
+							<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
 						</li>
 					</ul>
 					<div class="clearfix"></div>
@@ -101,27 +77,49 @@
 
 	<div ng-if="editor.index == 1">
 		<div class="editor-row">
-			<div class="span6">
-				<table class="grafana-options-table">
-					<tr ng-repeat="row in dashboard.rows">
-						<td style="width: 97%">
-							{{row.title}}
-						</td>
-						<td><i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-						<td><i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-						<td>
-							<a ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="btn btn-danger btn-small">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
+			<div class="tight-form-section">
+				<h5>Rows settings</h5>
+				<div class="tight-form" ng-repeat="row in dashboard.rows">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							Title
+						</li>
+						<li>
+							<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
+						</li>
+						<li class="tight-form-item">
+							<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
+						</li>
+						<li class="tight-form-item">
+							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
+							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
+						</li>
+						<li class="tight-form-item last">
+							<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
 			</div>
-			<div class="clearfix"></div>
 		</div>
 	</div>
 
-	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 2+$index">
+	<div ng-if="editor.index == 2">
+		<div class="editor-row">
+			<div class="tight-form-section">
+				<h5>Links and Navigation Options<h5>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 90px">
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 3+$index">
 		<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
 		<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
 	</div>
