@@ -13,23 +13,36 @@ function (angular, _) {
           dashboard: "="
         },
         restrict: 'E',
-        controller: 'DashLinkCtrl',
+        controller: 'DashLinkEditorCtrl',
         templateUrl: 'app/features/dashlinks/editor.html',
         link: function() {
         }
       };
-    }).directive('dashLinks', function() {
+    }).directive('dashLink', function(linkSrv) {
       return {
         scope: {
-          dashboard: "="
+          link: "="
         },
         restrict: 'E',
         controller: 'DashLinkCtrl',
         templateUrl: 'app/features/dashlinks/module.html',
-        link: function() {
+        link: function(scope, elem) {
+
+          function update() {
+            var linkInfo = linkSrv.getPanelLinkAnchorInfo(scope.link);
+            elem.find("span").text(linkInfo.title);
+            elem.find("a").attr("href", linkInfo.href);
+          }
+
+          update();
+          scope.$on('refresh', update);
         }
       };
-    }).controller('DashLinkCtrl', function($scope, backendSrv) {
+    })
+    .controller("DashLinkCtrl", function($scope) {
+
+    })
+    .controller('DashLinkEditorCtrl', function($scope, backendSrv) {
 
       $scope.dashboard.links = $scope.dashboard.links || [];
 

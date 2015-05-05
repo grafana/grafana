@@ -16,7 +16,6 @@ function (angular, kbn) {
           info.href = templateSrv.replace(link.url || '');
           info.title = templateSrv.replace(link.title || '');
           info.href += '?';
-
         }
         else {
           info.title = templateSrv.replace(link.title || '');

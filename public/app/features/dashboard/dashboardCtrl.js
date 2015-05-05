@@ -75,7 +75,7 @@ function (angular, $, config) {
     };
 
     $scope.updateSubmenuVisibility = function() {
-      $scope.submenuEnabled = $scope.dashboard.hasTemplateVarsOrAnnotations();
+      $scope.submenuEnabled = $scope.dashboard.isSubmenuFeaturesEnabled();
     };
 
     $scope.setWindowTitleAndTheme = function() {

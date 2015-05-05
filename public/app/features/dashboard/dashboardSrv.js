@@ -146,8 +146,8 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
-    p.hasTemplateVarsOrAnnotations = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0;
+    p.isSubmenuFeaturesEnabled = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
