@@ -75,7 +75,7 @@
 
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('Ping').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('Ping').id].length}}<span class="freqMsg"> collectors:</span>
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('Ping').id]"></rt-check-health>
 						</div>
@@ -102,7 +102,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('DNS').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('DNS').id].length}}<span class="freqMsg"> collectors:</span>
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('DNS').id]"></rt-check-health>
 						</div>
@@ -130,7 +130,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTP').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTP').id].length}}<span class="freqMsg"> collectors</span>:
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTP').id]"></rt-check-health>
 						</div>
@@ -158,7 +158,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTPS').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTPS').id].length}}<span class="freqMsg"> collectors:</span> 
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
 						</div>
