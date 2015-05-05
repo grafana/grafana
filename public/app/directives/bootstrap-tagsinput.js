@@ -52,7 +52,6 @@ function (angular, $) {
         ];
         var color = colors[Math.abs(hash % colors.length)];
         var borderColor = borderColors[Math.abs(hash % borderColors.length)];
-
         element.css("background-color", color);
         element.css("border-color", borderColor);
       }
@@ -90,14 +89,14 @@ function (angular, $) {
           select.on('itemAdded', function(event) {
             if (scope.model.indexOf(event.item) === -1) {
               scope.model.push(event.item);
-              var tagElement = select.next().children("span").filter(function() {
-                return $(this).text() === event.item;
-              });
-              setColor(event.item, tagElement);
               if (angular.isFunction(scope.onUpdate)) {
                 scope.onUpdate(scope.model);
               }
             }
+            var tagElement = select.next().children("span").filter(function() {
+              return $(this).text() === event.item;
+            });
+            setColor(event.item, tagElement);
           });
 
           select.on('itemRemoved', function(event) {
