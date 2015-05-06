@@ -64,16 +64,17 @@
   border-radius: 3px;
   font-size: 1.4em;
   color: #a2a2a2;
-  border: @grafanaTriggerBorder;
+  border: 1px solid @grafanaTargetFuncHightlight;
   a {
+    .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight);
     display: inline-block;
-    background: @grafanaTargetFuncBackground;
+    //background: @btnInverseBackground;
     padding: 5px 15px 5px 10px;
     border-radius: 3px;
     color: #a2a2a2;
 
     &:hover {
-      background: @grafanaTargetFuncHightlight;
+      background: @grafanaTargetFuncBackground;
       .fa {
         color: @linkColor;
       }

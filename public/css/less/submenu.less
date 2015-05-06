@@ -5,7 +5,7 @@
 }
 
 .submenu-controls {
-  margin: 10px 29px 1px 0px;
+  margin: 10px 10px 8px 14px;
   font-size: 16px;
 }
 
@@ -19,9 +19,26 @@
   }
 }
 
+.submenu-item {
+  padding: 8px 7px;
+  margin-right: 20px;
+  display: inline-block;
+  border-radius: 3px;
+  background-color: @grafanaPanelBackground;
+  border: @grafanaPanelBorder;
+  margin-right: 10px;
+  display: inline-block;
+
+  .fa-caret-down {
+    font-size: 75%;
+    position: relative;
+    top: 1px;
+  }
+}
+
 .variable-value-link {
   font-size: 16px;
-  margin-right: 20px;
+  padding-right: 10px;
 }
 
 .variable-value-dropdown {
@@ -76,3 +93,5 @@
   }
 }
 
+.dash-nav-link {
+}

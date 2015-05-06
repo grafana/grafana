@@ -32,6 +32,10 @@ function (angular, _) {
             var linkInfo = linkSrv.getPanelLinkAnchorInfo(scope.link);
             elem.find("span").text(linkInfo.title);
             elem.find("a").attr("href", linkInfo.href);
+
+            if (scope.link.type === 'dashboard') {
+              scope.tooltip = 'Go to dashboard';
+            }
           }
 
           update();
