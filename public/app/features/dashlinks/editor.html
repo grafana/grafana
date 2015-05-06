@@ -10,26 +10,31 @@
 
 					<li class="tight-form-item">Type</li>
 					<li>
-						<select class="input-medium tight-form-input" style="width: 101px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']" ng-change="updated()"></select>
+						<select class="input-medium tight-form-input" style="width: 101px;" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
 					</li>
 
-					<li class="tight-form-item" ng-show="link.type === 'dashboard'">Dashboard</li>
-					<li ng-show="link.type === 'dashboard'">
-						<input type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="input-xlarge tight-form-input" ng-model-onblur ng-change="updated()">
+					<li class="tight-form-item" ng-show="link.type === 'dashboards'">With tag</li>
+					<li ng-show="link.type === 'dashboards'">
+						<input type="text" ng-model="link.tag" class="input-small tight-form-input" ng-model-onblur ng-change="updated()">
 					</li>
 
-					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 69px">Url</li>
-					<li ng-show="link.type === 'absolute'">
+					<li class="tight-form-item" ng-show="link.type === 'link'" style="width: 69px">Url</li>
+					<li ng-show="link.type === 'link'">
 						<input type="text" ng-model="link.url" class="input-xlarge tight-form-input" ng-model-onblur ng-change="updated()">
 					</li>
 
-					<li class="tight-form-item">Title</li>
-					<li>
+					<li class="tight-form-item" ng-show="link.type === 'link'">Title</li>
+					<li ng-show="link.type === 'link'">
 						<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
 					</li>
-					<li class="tight-form-item">Tooltip</li>
-					<li>
+					<li class="tight-form-item" ng-show="link.type === 'link'">Tooltip</li>
+					<li ng-show="link.type === 'link'">
 						<input type="text" ng-model="link.tooltip" class="input-medium tight-form-input" placeholder="Open dashbord" ng-model-onblur ng-change="updated()">
+					</li>
+
+					<li class="tight-form-item" ng-show="link.type === 'link'">Icon</li>
+					<li ng-show="link.type === 'link'">
+						<select class="input-medium tight-form-input" style="width: 101px;" ng-model="link.icon" ng-options="f for f in ['dashboard','external','help']" ng-change="updated()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
