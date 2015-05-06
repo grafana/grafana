@@ -4,10 +4,11 @@
 
 // Grays
 // -------------------------
-@black:                 rgb(22,22,22);
+@black:                 #000;
 @gray:                  #bbb;
 @grayDark:              #262626;
 @grayDarker:            #1f1f1f;
+@grayDarkest:           #161616;
 
 @grayLight:             #ADAFAE;
 @grayLighter:           #BBBFC2;
@@ -27,8 +28,8 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: 	@black;
-@grafanaPanelBorder: 		  solid 1px @grayDark;
+@grafanaPanelBackground: 	@grayDarker;
+@grafanaPanelBorder: 		solid 1px @grayDark;
 @grafanaTriggerBorder:		solid 1px #555;
 
 // Graphite Target Editor
@@ -48,7 +49,7 @@
 // -------------------------
 
 // @bodyBackground:        rgb(22,22,22);
-@bodyBackground:        rgb(38,38,38);
+@bodyBackground:        @grayDarkest;
 @textColor:             @grayLighter;
 
 
@@ -360,28 +361,27 @@
 @rt-red:             	 rgb(237,28,36);
 @rt-dark-gray:			 rgb(102,102,102);
 @rt-light-gray:			 rgb(153,153,153);
-@rt-med-gray:             rgb(103,103,103);
 @rt-blue:				 rgb(19,178,212);
 
 @online:             	 rgb(0,166,81);
 @warn:              	 rgb(247,148,29);
 @critical:             	 rgb(237,28,36);
 @disabled:             	 rgb(255,255,255);
-@nodata:             	 rgb(103,103,103);
+@nodata:             	 rgb(102,102,102);
 
 
 // raintank Variables
 // -------------------------
 @raintankPanelBackground: 	@grayDark;
 
-@raintankPanelBorder: 		solid 1px @grayDark;
+@raintankPanelBorder: 		solid 1px @grayDarker;
 @raintankTriggerBorder:		solid 1px #555;
 
 @rt-primary:				@rt-blue;
 
 // Graphite Target Editor
-@raintankTargetBorder:         @black;
-@raintankTargetBackground:     @black;
+@raintankTargetBorder:         @grayDarkest;
+@raintankTargetBackground:     @grayDarker;
 @raintankTargetColor:          #c8c8c8;
 @raintankTargetColorHide:      darken(#c8c8c8, 25%);
 @raintankTargetSegmentBorder:  #050505;
@@ -389,8 +389,10 @@
 @raintankTargetFuncBackground: #333;
 @raintankTargetFuncHightlight: #444;
 
-@rt-navbarBackground:          @black;
+@rt-navbarBackground:          @grayDark;
 
+@navbarBackgroundHighlight:       @grayDark; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
+@navbarBackground:                @grayDark; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
 
 // raintank Forms
 // -------------------------

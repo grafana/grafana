@@ -82,7 +82,7 @@ div.rt-modal-override {
 raintank BOX
 ***********************************/
 .rt-box {
-  background-color: @black;
+  background-color: @grayDarker;
   margin: 0px 10px 20px 10px;
   position: relative;
   border-radius: 2px;
@@ -147,7 +147,7 @@ ul.rt-modal-ul {
 .rt-box-header {
   padding: 10px;
   font-size:16px;
-  border-bottom: 1px solid #262626;
+  border-bottom: 1px solid @grayDarkest;
   overflow: hidden;
   .tabs {
     float: left;
@@ -313,9 +313,9 @@ ul.rt-modal-ul {
 .refresh {padding-top:15px;}
 
 .mainLink i, .mainLink i:visited{
-  -moz-color: -moz-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
-  -webkit-color: -webkit-linear-gradient(top left, #fff 0%, #13b2d4 100%);  
-  color: linear-gradient(to bottom right, #fff 0%, #13b2d4 100%); 
+  -moz-color: -moz-linear-gradient(top left, @white 0%, @rt-blue 100%);  
+  -webkit-color: -webkit-linear-gradient(top left, @white 0%, @rt-blue 100%);  
+  color: linear-gradient(to bottom right, @white 0%, @rt-blue 100%); 
   transition: 0.15s; 
 }
 
@@ -347,11 +347,11 @@ raintank TYPE
   .online, .warn, .critical, .nodata, .none {font-weight:900;}
 }
 
-.checkTime {color:@rt-med-gray}
+.checkTime {color:@rt-dark-gray}
 
 .jumbo {font-weight:600;}
 
-.frequency {color:@rt-med-gray}
+.frequency {color:@rt-dark-gray}
 .statusMsg, .freqMsg {font-size:14px; font-weight:300;}
 
 .online {
@@ -531,7 +531,7 @@ raintank BUTTONS
 .superCTA:visited { 
     display: block;
     padding: 1.0em 0;
-    color:#fff;
+    color:@white;
     background-color: @rt-blue;
     border: 1px solid @rt-blue;
     border-radius: 2px;
@@ -556,7 +556,7 @@ raintank BUTTONS
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
-    color:#fff;
+    color:@white;
     background-color: @rt-blue;
     border: 1px solid @rt-blue;
     border-radius: 2px;
@@ -580,7 +580,7 @@ raintank BUTTONS
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
     border: 1px solid @rt-blue;
-    color: #13b2d4;
+    color: @rt-blue;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
@@ -593,16 +593,16 @@ raintank BUTTONS
 .secondaryCTA:hover, 
 .secondaryCTA:active{
     cursor: pointer;
-    border: 1px solid #fff;
-    color: #fff;
+    border: 1px solid @white;
+    color: @white;
     text-decoration:none;
 }
 
 // For light backgrounds. 
 .modal-body .secondaryCTA:hover{
     cursor: pointer;
-    border: 1px solid #161616;
-    color: #161616;
+    border: 1px solid @grayDarkest;
+    color: @grayDarkest;
 }
 
 .tertiaryCTA,
@@ -610,8 +610,8 @@ raintank BUTTONS
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
-    border: 1px solid #999;
-    color: #999;
+    border: 1px solid @rt-light-gray;
+    color: @rt-light-gray;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
@@ -621,8 +621,8 @@ raintank BUTTONS
 .tertiaryCTA:hover,
 .tertiaryCTA:active{
     cursor: pointer;
-    border: 1px solid #fff;
-    color: #fff;
+    border: 1px solid @white;
+    color: @white;
     text-decoration:none;
 }
 
@@ -680,7 +680,7 @@ raintank BUTTONS
     border-bottom-left-radius: 2px;
     border-bottom-right-radius: 2px;
 
-    h3 {color:#000; margin:20px 20px 0; font-weight:600;}
+    h3 {color:@black; margin:20px 20px 0; font-weight:600;}
     dl {margin:0 20px 20px;}
     dt {font-weight: normal;}
   }
@@ -698,9 +698,9 @@ Crazy Helper Box
 
 .helperBorder1 {
     border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     padding:0em;
@@ -711,10 +711,10 @@ Crazy Helper Box
     position: relative;
     top:-5px;
     right:-5px;
-    border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border: 1px solid @rt-blue;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -723,10 +723,10 @@ Crazy Helper Box
     position: relative;
     top:-5px;
     right:-5px;
-    border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, #13b2d4 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, #13b2d4 100%);  
+    border: 1px solid @rt-blue;
+    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -894,7 +894,6 @@ MATT STYLES
   border-bottom:1px solid #fff;
   font-size: 16px; 
   padding:10px 20px;
-  background:@raintankPanelBackground;
  
   .nonactive a:link, 
   .nonactive a:visited {
@@ -904,7 +903,7 @@ MATT STYLES
   .active a:link,
   .active a:visited  {
     color:@white;
-    background:@raintankPanelBackground;
+    background:@bodyBackground;
     border-top-left-radius:4px;
     border-top-right-radius: 4px;
     border-top:1px solid #fff; 
@@ -1413,7 +1412,7 @@ a.rt-modal-body-link {
 
 .rt-radio-custom:checked + *:before {
     background: @rt-primary;
-    box-shadow: inset 0px 0px 0px 4px #fff;
+    box-shadow: inset 0px 0px 0px 4px @white;
 }
 
 // Hiding class for screen readers
