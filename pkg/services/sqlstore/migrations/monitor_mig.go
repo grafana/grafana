@@ -11,6 +11,7 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: false},
 			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
 			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
@@ -22,7 +23,7 @@ func addMonitorMigration(mg *Migrator) {
 			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
 		}, Indices: []*Index{
 			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"org_id", "endpoint_id", "monitor_type_id"}, Type: UniqueIndex},
+			&Index{Cols: []string{"org_id", "namespace", "monitor_type_id"}, Type: UniqueIndex},
 		},
 	}
 
