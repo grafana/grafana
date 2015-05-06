@@ -19,7 +19,7 @@ html {
 }
 
 body {
-  font-size: 1rem;
+  font-size: 1em;
 }
 
 
@@ -82,7 +82,7 @@ div.rt-modal-override {
 raintank BOX
 ***********************************/
 .rt-box {
-  background-color: @grayDarker;
+  background-color: @raintankPanelBackground;
   margin: 0px 10px 20px 10px;
   position: relative;
   border-radius: 2px;
@@ -90,7 +90,7 @@ raintank BOX
 
 .rt-box-no-margin {
   margin: 0;
-  background-color: @white;
+  background-color: none;
   padding: 0px 30px;
 }
 
@@ -147,7 +147,7 @@ ul.rt-modal-ul {
 .rt-box-header {
   padding: 10px;
   font-size:16px;
-  border-bottom: 1px solid @grayDarkest;
+  border-bottom: 1px solid @bodyBackground;
   overflow: hidden;
   .tabs {
     float: left;
@@ -532,8 +532,8 @@ raintank BUTTONS
     display: block;
     padding: 1.0em 0;
     color:@white;
-    background-color: @rt-blue;
-    border: 1px solid @rt-blue;
+    background-color: @primaryCTA;
+    border: 1px solid @primaryCTA;
     border-radius: 2px;
     text-align:center;
     font-weight: 400;
@@ -546,8 +546,9 @@ raintank BUTTONS
 .superCTA:hover,
 .superCTA:active{
     cursor: pointer;
-    background: darken(@rt-blue, 10%);
-    border: 1px solid darken(@rt-blue, 10%);
+    color:@white;
+    background: darken(@primaryCTAHighlight, 10%);
+    border: 1px solid darken(@primaryCTAHighlight, 10%);
     text-decoration:none;
 }
 
@@ -557,8 +558,8 @@ raintank BUTTONS
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
     color:@white;
-    background-color: @rt-blue;
-    border: 1px solid @rt-blue;
+    background-color: @primaryCTA;
+    border: 1px solid @primaryCTA;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
@@ -569,8 +570,8 @@ raintank BUTTONS
 .primaryCTA:hover, 
 .primaryCTA:active{
     cursor: pointer;
-    background: darken(@rt-blue, 10%);
-    border: 1px solid darken(@rt-blue, 10%);
+    background: @primaryCTAHighlight;
+    border: 1px solid darken(@primaryCTAHighlight, 10%);
     text-decoration:none;
 }
 
@@ -579,8 +580,8 @@ raintank BUTTONS
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
-    border: 1px solid @rt-blue;
-    color: @rt-blue;
+    border: 1px solid @secondaryCTA;
+    color: @secondaryCTA;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
@@ -593,8 +594,8 @@ raintank BUTTONS
 .secondaryCTA:hover, 
 .secondaryCTA:active{
     cursor: pointer;
-    border: 1px solid @white;
-    color: @white;
+    border: 1px solid @secondaryCTAHighlight;
+    color: @secondaryCTAHighlight;
     text-decoration:none;
 }
 
@@ -610,8 +611,8 @@ raintank BUTTONS
     display: inline-block;
     margin-bottom: 10px;
     padding: 0.1em 1.2em;
-    border: 1px solid @rt-light-gray;
-    color: @rt-light-gray;
+    border: 1px solid @tertiaryCTA;
+    color: @tertiaryCTA;
     border-radius: 2px;
     font-style: italic;
     font-weight: 400;
@@ -621,8 +622,8 @@ raintank BUTTONS
 .tertiaryCTA:hover,
 .tertiaryCTA:active{
     cursor: pointer;
-    border: 1px solid @white;
-    color: @white;
+    border: 1px solid @tertiaryCTAHighlight;
+    color: @tertiaryCTAHighlight;
     text-decoration:none;
 }
 
@@ -647,7 +648,7 @@ raintank BUTTONS
 .miniCTA:visited {color:@gray;}
 
 .miniCTA:hover,
-.miniCTA:active {color:@white; text-decoration:none;}
+.miniCTA:active {color:lighten(@gray, 10%); text-decoration:none;}
 
 
 .collector_icon {
@@ -849,9 +850,9 @@ MATT STYLES
     .rt-list-status;
     font-size: 20px;
     font-weight: 600;
-    color: @grayLighter;
+    color: @rt-light-gray;
   }
-  &:hover {color: lighten(@grayLighter, 10%);} 
+  &:hover {color: lighten(@rt-light-gray, 10%);} 
 }
 
 
@@ -859,7 +860,7 @@ MATT STYLES
 
 .rt-list {
   margin: 1px;
-  background-color: @raintankTargetBackground;
+  background-color: @raintankPanelBackground;
   position: relative;
   border: none;
   border-radius: 2px;
@@ -870,10 +871,10 @@ MATT STYLES
 .rt-list-item-title {
     font-size: 15px;
     a:link {
-      color: @rt-light-gray;
+      color: @linkColor;
     }  
     a:hover {
-     color: @white;
+     color: @linkColorHover;
     }    
   margin: 10px;
 }
@@ -881,7 +882,7 @@ MATT STYLES
 .rt-list-header {
   overflow: visible;
   padding: 10px 5px;
-  background-color: @raintankTargetBackground;
+  background-color: @raintankPanelBackground;
   .tabs {
     float: left;
   }
@@ -891,31 +892,34 @@ MATT STYLES
 }
 
 .rt-tabs { 
-  border-bottom:1px solid #fff;
+  border-bottom:1px solid @tabBorder;
   font-size: 16px; 
   padding:10px 20px;
  
   .nonactive a:link, 
   .nonactive a:visited {
-    color:@gray;
+    color:@linkColor;
     margin:0 5px;
   }
   .active a:link,
   .active a:visited  {
-    color:@white;
+    color:@linkColorHover;
     background:@bodyBackground;
     border-top-left-radius:4px;
     border-top-right-radius: 4px;
-    border-top:1px solid #fff; 
-    border-right:1px solid #fff; 
-    border-left:1px solid #fff;
+    border-top:1px solid @tabBorder; 
+    border-right:1px solid @tabBorder;
+    border-left:1px solid @tabBorder;
     margin:0 5px;
     padding:5px 15px 10px 15px;
   }
 
   a:hover,
   .active a:hover,
-  .nonactive a:hover {color:@white; text-decoration: none;}
+  .nonactive a:hover {
+    color:@linkColorHover; 
+    text-decoration: none;
+  }
 }
 
 
@@ -1002,6 +1006,19 @@ input[type="checkbox"].rt-modal {
   display: none;
 }
 
+select.rt-select-dropdown {
+  color: @linkColor;
+  font-size: 16px;
+  vertical-align: baseline; 
+  margin: 0; 
+  background: none; 
+  border: none; 
+  width: auto;
+  &.small {
+    font-size: @baseFontSize;
+  }
+}
+
 .rt-modal-input-styles{
   label {
   color: @grayDark;
@@ -1055,7 +1072,7 @@ input[type="checkbox"]:checked+label {
   font-size: .85em;
 }
 .rt-list-collector-status-offline {
-  color: @grayLighter;
+  color: @rt-light-gray;
   font-weight: 700;
   font-size: .85em;
 }
@@ -1441,11 +1458,13 @@ a.rt-modal-body-link {
 
   &:hover, &:focus {
     background: darken(@rt-blue, 10%);
+    color: @white;
     text-decoration:none;
   }
  
   &:active {
     background: lighten(@rt-blue, 5%);
+    color: @white;
     text-decoration:none;
   }
 }

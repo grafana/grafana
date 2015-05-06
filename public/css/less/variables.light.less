@@ -35,7 +35,7 @@
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: 	@white;
-@grafanaPanelBorder: 		  solid 1px #ddd;
+@grafanaPanelBorder: 		 solid 1px #ddd;
 @grafanaTriggerBorder:		solid 1px @grayLighter;
 
 // Submenu
@@ -149,10 +149,10 @@
 @btnInverseBackground:              @gray;
 @btnInverseBackgroundHighlight:     darken(@gray, 10%);
 
-@iconContainerBackground:			      @white;
+@iconContainerBackground:			@white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);
-@iconContainerBorder:				        1px solid rgba(0,0,0, 0.05);
-@iconContainerShadow:				        0 0 14px 2px rgba(0,0,0, 0.05);
+@iconContainerBorder:				1px solid rgba(0,0,0, 0.05);
+@iconContainerShadow:				0 0 14px 2px rgba(0,0,0, 0.05);
 
 
 // Forms
@@ -376,8 +376,26 @@
 @online:             	 rgb(0,166,81);
 @warn:              	 rgb(247,148,29);
 @critical:             	 rgb(237,28,36);
-@disabled:             	 rgb(255,255,255);
-@nodata:             	 rgb(102,102,102);
+@disabled:             	 @grayLight;
+@nodata:             	 @grayLight;
+
+
+@tabBorder: 				@gray;
+
+// raintank buttons
+// -------------------------
+
+@primaryCTA: 			@rt-blue;
+@primaryCTAHighlight:   darken(@rt-blue, 10%);
+
+@secondaryCTA: 			@rt-blue;
+@secondaryCTAHighlight: @grayDark;
+
+@tertiaryCTA: 			@grayLight;
+@tertiaryCTAHighlight:  @gray;
+
+@miniCTA: 			@gray;
+@miniCTAHighlight:  darken(@grayDark, 10%);
 
 
 // raintank Variables
@@ -385,7 +403,7 @@
 
 @rt-primary:				@rt-blue;
 
-@raintankPanelBackground: 	@grayDarker;
+@raintankPanelBackground: 	@grayLighter;
 @raintankPanelBorder: 		solid 1px @grayDark;
 @raintankTriggerBorder:		solid 1px #555;
 
@@ -401,7 +419,10 @@
 @raintankTargetFuncBackground: #333;
 @raintankTargetFuncHightlight: #444;
 
-@rt-navbarBackground:          @white;
+@rt-navbarBackground:          @grayLighter;
+
+@navbarBackgroundHighlight:       @grayLighter; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
+@navbarBackground:                @grayLighter; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
 
 
 // raintank Forms
