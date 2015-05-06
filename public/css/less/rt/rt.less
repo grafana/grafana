@@ -3,9 +3,12 @@
 // ==========================================================================
 
 @import "layout/columns.less";
+@import "layout/page.less";
+
+@import "components/box.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
-
+@import "components/mini-form.less";
 
 
 
@@ -79,24 +82,9 @@ div.rt-modal-override {
       .modalRight {padding-left:0px;}
       }
 
-/***********************************
-raintank BOX
-***********************************/
-.rt-box {
-  background-color: @black;
-  margin: 0px 10px 20px 10px;
-  position: relative;
-  border-radius: 2px;
-}
 
-.rt-box-no-margin {
-  margin: 0;
-  background-color: @white;
-  padding: 0px 30px;
-}
-
-  .oneCol {display:none;}
-  .twoCol {display:none;}
+.oneCol {display:none;}
+.twoCol {display:none;}
 
 @media screen and (max-width: 780px) {
   .oneCol {display:block;}
@@ -107,25 +95,6 @@ raintank BOX
 }
 
 .clearBack {background-color:transparent;}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 120%;
-  color: @textColor;
-  &:hover {
-    color: @white;
-  }
-}
-
-.rt-box-body {
-  padding: 20px;
-  min-height: 50px;
-}
 
 .rt-modal-box-body {
   padding: 20px 0 20px 0;
@@ -141,24 +110,6 @@ ul.rt-modal-ul {
     padding: 0;
   }
 
-.rt-box-footer {
-  overflow: hidden;
-}
-
-.rt-box-header {
-  padding: 10px;
-  font-size:16px;
-  border-bottom: 1px solid #262626;
-  overflow: hidden;
-  .tabs {
-    float: left;
-  }
-  .nav {
-    margin: 0;
-  }
-}
-
-
 .rt-modal-header {
   padding: 30px 0px;
   font-size:16px;
@@ -168,37 +119,6 @@ ul.rt-modal-ul {
   }
   .nav {
     margin: 0;
-  }
-}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  margin-top: -15px;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 150%;
-  font-weight: 100;
-  color: @textColor;
-  &:hover {
-    color: @black;
-  }
-}
-
-.rt-box-title {
-  padding-right: 20px;
-  padding-left: 10px;
-  float: left;
-  color: @linkColor;
-  font-size: 18px;
-  font-weight: normal;
-  line-height: 38px;
-  margin: 0;
-  .fa {
-    padding: 0 8px 0 5px;
-    color: @textColor;
   }
 }
 

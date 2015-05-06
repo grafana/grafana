@@ -44,7 +44,7 @@ function (angular) {
       .when('/endpoints/new_endpoint', {
         templateUrl: 'plugins/raintank/features/partials/endpoint_new.html',
         controller : 'EndpointConfCtrl',
-      })      
+      })
       .when('/dashboard/raintank/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromRaintankCtrl',
