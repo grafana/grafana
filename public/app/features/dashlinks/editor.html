@@ -8,27 +8,28 @@
 						<i class="fa fa-remove pointer" ng-click="deleteLink(link)"></i>
 					</li>
 
-					<li class="tight-form-item" style="width: 80px;">Type</li>
+					<li class="tight-form-item">Type</li>
 					<li>
-						<select class="input-medium tight-form-input" style="width: 101px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
+						<select class="input-medium tight-form-input" style="width: 101px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']" ng-change="updated()"></select>
 					</li>
 
 					<li class="tight-form-item" ng-show="link.type === 'dashboard'">Dashboard</li>
 					<li ng-show="link.type === 'dashboard'">
-						<input type="text"
-						ng-model="link.dashboard"
-						bs-typeahead="searchDashboards"
-						class="input-large tight-form-input">
+						<input type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="input-xlarge tight-form-input" ng-model-onblur ng-change="updated()">
 					</li>
 
-					<li class="tight-form-item" ng-show="link.type === 'absolute'">Url</li>
+					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 69px">Url</li>
 					<li ng-show="link.type === 'absolute'">
-						<input type="text" ng-model="link.url" class="input-xlarge tight-form-input">
+						<input type="text" ng-model="link.url" class="input-xlarge tight-form-input" ng-model-onblur ng-change="updated()">
 					</li>
 
 					<li class="tight-form-item">Title</li>
 					<li>
-						<input type="text" ng-model="link.title" class="input-medium tight-form-input">
+						<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
+					</li>
+					<li class="tight-form-item">Tooltip</li>
+					<li>
+						<input type="text" ng-model="link.tooltip" class="input-medium tight-form-input" placeholder="Open dashbord" ng-model-onblur ng-change="updated()">
 					</li>
 				</ul>
 				<div class="clearfix"></div>
