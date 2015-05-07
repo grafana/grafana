@@ -62,6 +62,7 @@ function (angular, _) {
         // tooltip
         elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
         icon.attr('class', 'fa fa-fw ' + scope.link.icon);
+        anchor.attr('target', scope.link.target);
 
         update();
         scope.$on('refresh', update);
@@ -94,7 +95,9 @@ function (angular, _) {
         return $q.when([{
           url: linkDef.url,
           title: linkDef.title,
-          icon: iconMap[linkDef.icon]
+          icon: iconMap[linkDef.icon],
+          tooltip: linkDef.tooltip,
+          target: linkDef.targetBlank ? "_blank" : "",
         }]);
       }
 

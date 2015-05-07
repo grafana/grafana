@@ -90,9 +90,11 @@
 						<li class="tight-form-item">
 							<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
 						</li>
-						<li class="tight-form-item">
-							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
-							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
+						<li class="tight-form-item last">
+							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
+						</li>
+						<li class="tight-form-item last">
+							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
 						</li>
 						<li class="tight-form-item last">
 							<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
