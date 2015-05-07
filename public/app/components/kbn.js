@@ -81,11 +81,16 @@ function($, _, moment) {
     if(numminutes){
       return numminutes + 'm';
     }
-    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+    var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
     if(numseconds){
       return numseconds + 's';
     }
-    return 'less then a second'; //'just now' //or other string you like;
+    var nummilliseconds = Math.floor(seconds * 1000.0);
+    if(nummilliseconds){
+      return nummilliseconds + 'ms';
+    }
+
+    return 'less then a millisecond'; //'just now' //or other string you like;
   };
 
   kbn.to_percent = function(number,outof) {
