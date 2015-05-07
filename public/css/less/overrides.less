@@ -558,18 +558,6 @@ div.flot-text {
   background-color: darken(@purple, 10%);
 }
 
-// Top menu
-.save-dashboard-dropdown {
-  padding: 10px;
-  li>a {
-    padding-left: 5px;
-  }
-}
-
-.save-dashboard-dropdown-save-form {
-  margin-bottom: 5px;
-}
-
 
 // inspector
 .inspector-request-table {
@@ -592,4 +580,12 @@ code, pre {
   color: @textColor;
 }
 
-
+.dropdown-menu {
+  > li > a {
+    padding: 3px 10px;
+    i {
+      padding-right: 5px;
+      color: @linkColorDisabled;
+    }
+  }
+}

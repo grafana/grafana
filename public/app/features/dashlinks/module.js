@@ -42,21 +42,33 @@ function (angular, _) {
     };
   });
 
-  module.directive('dashLink', function(templateSrv) {
+  module.directive('dashLink', function($compile, linkSrv) {
     return {
-      scope: {
-        link: "="
-      },
       restrict: 'E',
-      templateUrl: 'app/features/dashlinks/module.html',
       link: function(scope, elem) {
+        var link = scope.link;
+        var template = '<div class="submenu-item dropdown">' +
+          '<a class="pointer dash-nav-link" data-placement="bottom"' +
+          (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"'  : "") + '>' +
+          '<i></i> <span></span></a>';
+
+        if (link.asDropdown) {
+          template += '<ul class="dropdown-menu" role="menu">' +
+            '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}"><i class="fa fa-th-large"></i> {{dash.title}}</a></li>' +
+            '</ul';
+        }
+
+        elem.html(template);
+        $compile(elem.contents())(scope);
+
         var anchor = elem.find('a');
         var icon = elem.find('i');
         var span = elem.find('span');
 
         function update() {
-          span.text(templateSrv.replace(scope.link.title));
-          anchor.attr("href", templateSrv.replace(scope.link.url));
+          var linkInfo = linkSrv.getAnchorInfo(link);
+          span.text(linkInfo.title);
+          anchor.attr("href", linkInfo.href);
         }
 
         // tooltip
@@ -70,7 +82,7 @@ function (angular, _) {
     };
   });
 
-  module.controller("DashLinksContainerCtrl", function($scope, $rootScope, $q, backendSrv, dashboardSrv) {
+  module.controller("DashLinksContainerCtrl", function($scope, $rootScope, $q, backendSrv, dashboardSrv, linkSrv) {
     var currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef) {
@@ -80,15 +92,16 @@ function (angular, _) {
           return $q.when([]);
         }
 
-        return backendSrv.search({tag: linkDef.tag}).then(function(results) {
-          return _.reduce(results.dashboards, function(memo, dash) {
-            // do not add current dashboard
-            if (dash.id !== currentDashId) {
-              memo.push({ title: dash.title, url: 'dashboard/db/'+ dash.slug, icon: 'fa fa-th-large' });
-            }
-            return memo;
-          }, []);
-        });
+        if (linkDef.asDropdown) {
+          return $q.when([{
+            title: linkDef.title,
+            tag: linkDef.tag,
+            icon: "fa fa-bars",
+            asDropdown: true
+          }]);
+        }
+
+        return $scope.searchDashboards(linkDef.tag);
       }
 
       if (linkDef.type === 'link') {
@@ -111,6 +124,27 @@ function (angular, _) {
         $scope.generatedLinks = _.flatten(results);
       });
     }
+
+    $scope.searchDashboards = function(tag) {
+      return backendSrv.search({tag: tag}).then(function(results) {
+        return _.reduce(results.dashboards, function(memo, dash) {
+          // do not add current dashboard
+          if (dash.id !== currentDashId) {
+            memo.push({ title: dash.title, url: 'dashboard/db/'+ dash.slug, icon: 'fa fa-th-large', addTime: true });
+          }
+          return memo;
+        }, []);
+      });
+    };
+
+    $scope.fillDropdown = function(link) {
+      $scope.searchDashboards(link.tag).then(function(results) {
+        _.each(results, function(hit) {
+          hit.url = linkSrv.getLinkUrl(hit);
+        });
+        link.searchHits = results;
+      });
+    };
 
     updateDashLinks();
     $rootScope.onAppEvent('dash-links-updated', updateDashLinks);

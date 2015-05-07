@@ -27,6 +27,16 @@
 				<li ng-show="link.type === 'dashboards'">
 					<input type="text" ng-model="link.tag" class="input-small tight-form-input" style="width: 151px" ng-model-onblur ng-change="updated()">
 				</li>
+				<li class="tight-form-item" ng-show="link.type === 'dashboards'">
+					<editor-checkbox text="As dropdown" model="link.asDropdown" change="updated()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item" ng-show="link.type === 'dashboards' && link.asDropdown">
+					Title
+				</li>
+				<li ng-show="link.type === 'dashboards' && link.asDropdown">
+					<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
+				</li>
+
 
 				<li class="tight-form-item" ng-show="link.type === 'link'" style="width: 51px">Url</li>
 				<li ng-show="link.type === 'link'">
