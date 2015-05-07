@@ -21,7 +21,7 @@ function (angular) {
           '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
           '<div class="top-nav">' +
             '<a class="top-nav-menu-btn pointer" ng-if="!contextSrv.sidemenu" ng-click="toggle()">' +
-              '<img class="logo-icon" src="img/raintank_icn_blk.svg"></img> ' +
+              '<i class="logo collapsed icon-rt-raintank_icn"></i> ' +
               '<i class="fa fa-bars"></i>' +
             '</a>' +
 

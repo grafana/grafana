@@ -34,9 +34,9 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: 	@white;
-@grafanaPanelBorder: 		 solid 1px #ddd;
-@grafanaTriggerBorder:		solid 1px @grayLighter;
+@grafanaPanelBackground: 	@grayLighter;
+@grafanaPanelBorder: 		solid 1px #ddd;
+@grafanaTriggerBorder:		solid 1px @grayLight;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -59,7 +59,7 @@
 
 // Scaffolding
 // -------------------------
-@bodyBackground:        #EAEAEA;
+@bodyBackground:        #EFEFEF;
 @textColor:             @gray;
 
 
@@ -104,7 +104,7 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  	     darken(@grayLighter,5%);
+@grafanaListBackground:  	   darken(@grayLighter,5%);
 @grafanaListAccent:            darken(@grayLighter,8%);
 @grafanaListBorderTop:         #eee;
 @grafanaListBorderBottom:      #eee;
@@ -379,8 +379,8 @@
 @disabled:             	 @grayLight;
 @nodata:             	 @grayLight;
 
-
-@tabBorder: 				@gray;
+@logo:					@gray;
+@tabBorder: 			@gray;
 
 // raintank buttons
 // -------------------------
@@ -405,7 +405,7 @@
 
 @raintankPanelBackground: 	@grayLighter;
 @raintankPanelBorder: 		solid 1px @grayLight;
-@raintankTriggerBorder:		solid 1px #555;
+@raintankTriggerBorder:		solid 1px @gray;
 
 @rt-primary:				@rt-blue;
 
