@@ -22,6 +22,7 @@ type EndpointWithTag struct {
 	Id      int64
 	OrgId   int64
 	Name    string
+	Slug    string
 	Tags    string
 	Created time.Time
 	Updated time.Time
@@ -62,6 +63,7 @@ func GetEndpointByIdTransaction(query *m.GetEndpointByIdQuery, sess *session) er
 		Id:    result.Id,
 		OrgId: result.OrgId,
 		Name:  result.Name,
+		Slug:  result.Slug,
 		Tags:  tags,
 	}
 	return nil
@@ -115,6 +117,7 @@ func GetEndpoints(query *m.GetEndpointsQuery) error {
 			Id:    row.Id,
 			OrgId: row.OrgId,
 			Name:  row.Name,
+			Slug:  row.Slug,
 			Tags:  tags,
 		})
 	}
