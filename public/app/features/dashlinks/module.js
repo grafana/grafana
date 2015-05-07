@@ -7,6 +7,16 @@ function (angular, _) {
 
   var module = angular.module('grafana.directives');
 
+  var iconMap = {
+    "external link": "fa-external-link",
+    "dashboard": "fa-th-large",
+    "question": "fa-question",
+    "info": "fa-info",
+    "bolt": "fa-bolt",
+    "doc": "fa-file-text-o",
+    "cloud": "fa-cloud",
+  };
+
   module.directive('dashLinksEditor', function() {
     return {
       scope: {
@@ -38,7 +48,6 @@ function (angular, _) {
         link: "="
       },
       restrict: 'E',
-      controller: 'DashLinkCtrl',
       templateUrl: 'app/features/dashlinks/module.html',
       link: function(scope, elem) {
         var anchor = elem.find('a');
@@ -52,7 +61,7 @@ function (angular, _) {
 
         // tooltip
         elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
-        icon.attr('class', scope.link.icon);
+        icon.attr('class', 'fa fa-fw ' + scope.link.icon);
 
         update();
         scope.$on('refresh', update);
@@ -60,23 +69,33 @@ function (angular, _) {
     };
   });
 
-  module.controller("DashLinksContainerCtrl", function($scope, $rootScope, $q, backendSrv) {
+  module.controller("DashLinksContainerCtrl", function($scope, $rootScope, $q, backendSrv, dashboardSrv) {
+    var currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef) {
       if (linkDef.type === 'dashboards') {
+        if (!linkDef.tag) {
+          console.log('Dashboard link missing tag');
+          return $q.when([]);
+        }
+
         return backendSrv.search({tag: linkDef.tag}).then(function(results) {
-          return _.map(results.dashboards, function(dash) {
-            return {
-              title: dash.title,
-              url: 'dashboard/db/'+ dash.slug,
-              icon: 'fa fa-th-large'
-            };
-          });
+          return _.reduce(results.dashboards, function(memo, dash) {
+            // do not add current dashboard
+            if (dash.id !== currentDashId) {
+              memo.push({ title: dash.title, url: 'dashboard/db/'+ dash.slug, icon: 'fa fa-th-large' });
+            }
+            return memo;
+          }, []);
         });
       }
 
       if (linkDef.type === 'link') {
-        return $q.when([{ url: linkDef.url, title: linkDef.title, icon: 'fa fa-external-link', }]);
+        return $q.when([{
+          url: linkDef.url,
+          title: linkDef.title,
+          icon: iconMap[linkDef.icon]
+        }]);
       }
 
       return $q.when([]);
@@ -94,38 +113,21 @@ function (angular, _) {
     $rootScope.onAppEvent('dash-links-updated', updateDashLinks);
   });
 
-  module.controller("DashLinkCtrl", function($scope) {
+  module.controller('DashLinkEditorCtrl', function($scope, $rootScope) {
 
-    if ($scope.link.type === 'dashboards') {
-      $scope.searchHits = [];
-    }
-
-  });
-
-  module.controller('DashLinkEditorCtrl', function($scope, backendSrv, $rootScope) {
-
+    $scope.iconMap = iconMap;
     $scope.dashboard.links = $scope.dashboard.links || [];
     $scope.addLink = function() {
-      $scope.dashboard.links.push({
-        type: 'dashboard',
-        name: 'Related dashboard'
-      });
+      $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
+    };
+
+    $scope.moveLink = function(index, dir) {
+      _.move($scope.dashboard.links, index, index+dir);
+      $scope.updated();
     };
 
     $scope.updated = function() {
       $rootScope.appEvent('dash-links-updated');
-    };
-
-    $scope.searchDashboards = function(queryStr, callback) {
-      var query = {query: queryStr};
-
-      backendSrv.search(query).then(function(result) {
-        var dashboards = _.map(result.dashboards, function(dash) {
-          return dash.title;
-        });
-
-        callback(dashboards);
-      });
     };
 
     $scope.deleteLink = function(link) {

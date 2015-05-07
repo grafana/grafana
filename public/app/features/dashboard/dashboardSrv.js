@@ -306,8 +306,13 @@ function (angular, $, kbn, _, moment) {
     return {
       create: function(dashboard, meta) {
         return new DashboardModel(dashboard, meta);
-      }
+      },
+      setCurrent: function(dashboard) {
+        this.currentDashboard = dashboard;
+      },
+      getCurrent: function() {
+        return this.currentDashboard;
+      },
     };
-
   });
 });
