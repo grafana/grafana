@@ -26,8 +26,6 @@
 		</div>
 		<div class="rt-page-body">
 			<form name="endpointForm">
-
-				<!-- Summary Tab  -->
 				<div class="rt-page-section">
 					<div class="rt-mini-form">
 						<div class="rt-mini-form-col">
@@ -48,253 +46,327 @@
 						</div>
 					</div>
 				</div>
-				<!-- End Summary Tab -->
 
-				<!-- Ping Tab  -->
-				<div class="rt-box rt-page-box">
-					<div class="rt-box-header rt-page-box-header">
-						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="ping-enabled" type="checkbox">
-							<label for="ping-enabled" class="rt-h2 rt-modal">Ping</label>
-						</div>
-						<div style="float: right; display: inline;">
-							<a href="#" ng-click="showPing = !showPing" ng-class="{ active: showping }">
-								<span class="freqMsg">Every {{monitors['ping'].frequency}}s from All Collectors.</span>
-								<span><i class="fa fa-caret-down"></i></span>
-							</a>
-						</div>
-					</div>
-					<div class="rt-box-body rt-page-box-body" ng-show="showPing">
-						<p class="rt-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p></br>
-						<div class="detailColumn detailFull">
-							<div class="rt-h4" style="margin: 20px 0; display: inline-block;">Check my endpoint every:</div>
-							<div style="display: block;">
-								<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: flex-start;">
-									<div class="rt-radio-layout">
-										<input id="rt-ping-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="10">
-										<label for="rt-ping-radio-1" class="rt-radio-jumbo-label">10</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-ping-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="30">
-										<label for="rt-ping-radio-2" class="rt-radio-jumbo-label">30</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-ping-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="60">
-										<label for="rt-ping-radio-3" class="rt-radio-jumbo-label">60</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-ping-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="120">
-										<label for="rt-ping-radio-4" class="rt-radio-jumbo-label">120</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-									</div> 
-								</div>
+					<!-- Ping Tab  -->
+					<div class="rt-box rt-page-box">
+						<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
+							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
+								<input class="rt-modal" id="ping-enabled" type="checkbox">
+								<label for="ping-enabled" class="rt-h2 rt-modal">Ping</label>
 							</div>
-							<div style="margin-top: 30px;">
-								<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
-									<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
-								</div>
-								<div class="editor-option" style="margin-top: 20px;">
-									<label class="small">&nbsp;</label>
-									<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-								</div>
+							<div style="float: right; display: inline;">
+								<a href="#">
+									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;"><span class="freqMsg"> Every {{monitors['ping'].frequency}}s from All Collectors | 
+									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
+									<span><i class="fa fa-caret-down"></i></span>
+								</a>
 							</div>
 						</div>
-						<div class="detailFull">
-							<div class="checkbox-check-enabled">
-								<input class="rt-modal" id="ping-alerting-enabled" type="checkbox">
-								<label for="ping-alerting-enabled" class="rt-modal rt-label-copy">Alerting</label>
+						<div class="rt-box-body rt-page-box-body" ng-show="showPing">
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+									</div>
+									<div class="rt-box-interior rt-box-interior-header">
+										<div class="rt-h3">Monitoring</div>
+										<p class="rt-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p>
+									</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<div class="checkbox-check-enabled">
+											<input class="rt-modal" id="ping-enabled" type="checkbox">
+											<label for="ping-enabled" class="rt-modal rt-body-copy"> Enabled</label>
+										</div>
+										<div class="editor-option rt-input-styles">
+											<label class="small">Frequency</label>
+											<select class="small" ng-model="monitors['ping'].frequency" ng-options="f for f in [10, 30, 60, 120]" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: auto;"></select> 
+										</div>
+										<div>
+											<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
+												<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
+											</div>
+											<div class="editor-option" style="margin-top: 20px;">
+												<label class="small">&nbsp;</label>
+												<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+									</div>
+									<div class="rt-box-interior rt-h3">Health</div>
+ 
+									<div class="rt-box-interior rt-box-interior-content">
+										<div style="margin-top: 20px; max-width: 660px;">
+											<span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="5"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">consecutive checks.</span>
+										</div>
+									</div>
+							</div>	
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+									</div>
+									<div class="rt-box-interior rt-h3">Alerting</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
+									</div>
 							</div>
-						</div>
-						<div class="clearfix"></div>
 					</div>
 				</div>
-				<!-- End Ping Tab -->
+					<!-- End Ping Tab -->
 
-				<!-- DNS Tab  -->
-				<div class="rt-box rt-page-box">
-					<div class="rt-box-header rt-page-box-header">
-						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="dns-enabled" type="checkbox">
-							<label for="dns-enabled" class="rt-h2 rt-modal">DNS</label>
-						</div>
-						<div style="float: right; display: inline;">
-							<a href="#" ng-click="showDns = !showDns" ng-class="{ active: showdns }">
-								<span class="freqMsg">Every {{monitors['dns'].frequency}}s from All Collectors.</span>
-								<span><i class="fa fa-caret-down"></i></span>
-							</a>
-						</div>
-					</div>
-					<div class="rt-box-body rt-page-box-body" ng-show="showDns">
-						<div class="detailColumn detailFull">
-							<p class="rt-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
-							<div class="rt-h2" style="margin: 20px 0; display: inline-block;">DNS check frequency:</div>
-							<div style="display: block; margin-top: 20px;">
-								<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: flex-start;">
-									<div class="rt-radio-layout">
-										<input id="rt-dns-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="10">
-										<label for="rt-dns-radio-1" class="rt-radio-jumbo-label">10</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-dns-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="30">
-										<label for="rt-dns-radio-2" class="rt-radio-jumbo-label">30</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-dns-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="60">
-										<label for="rt-dns-radio-3" class="rt-radio-jumbo-label">60</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 40px;">Seconds</span>
-									</div>
-									<div class="rt-radio-layout">
-										<input id="rt-dns-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="120">
-										<label for="rt-dns-radio-4" class="rt-radio-jumbo-label">120</label>
-										<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-									</div> 
-								</div>
-							</div>
-							<div style="margin-top: 30px;">
-								<label class="rt-advanced-options" for="_2">more options <i class="fa fa-caret-down"></i></label>
-								<input id="_2" type="checkbox">
-								<div>
-									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['dns'].settings">
-										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['dns'], setting.variable)">
-									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
-								</div>
-							</div>
-							<div class="checkbox-check-enabled">
-								<input class="rt-modal" id="dns-alerting-enabled" type="checkbox">
-								<label for="dns-alerting-enabled" class="rt-modal rt-label-copy">Alerting Enabled</label>
-							</div>
-						</div>
-					</div>
-					<div class="clearfix"></div>
-				</div>
-				<!-- End DNS Tab -->
 
-				<!-- Web Tab  -->
-				<div class="rt-box rt-page-box">
-					<div class="rt-box-header">
-						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="web-http-enabled" type="checkbox">
-							<label for="web-http-enabled" class="rt-h2 rt-modal">Web (HTTP)</label>
-						</div>
-						<div style="float: right; display: inline;">
-							<a href="#" ng-click="showHttp = !showHttp" ng-class="{ active: showHttp }">
-								<span class="freqMsg">Every {{monitors['http'].frequency}}s from All Collectors.</span>
-								<span><i class="fa fa-caret-down"></i></span>
-							</a>
-						</div>
-					</div>
-					<div class="rt-box-body rt-page-box-body" ng-show="showHttp">
-						<div class="modalContainer">
-							<div class="modalColumn modal-left-100">
-								<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p></br>
-								<div class="rt-h2" style="margin: 20px 0; display: inline-block;">HTTP check frequency:</div>
-								<div style="display: block; margin-top: 20px;">
-									<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
-										<div class="rt-radio-layout">
-											<input id="rt-dns-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="10">
-											<label for="rt-dns-radio-1" class="rt-radio-jumbo-label">10</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-dns-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="30">
-											<label for="rt-dns-radio-2" class="rt-radio-jumbo-label">30</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-dns-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="60">
-											<label for="rt-dns-radio-3" class="rt-radio-jumbo-label">60</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-dns-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="120">
-											<label for="rt-dns-radio-4" class="rt-radio-jumbo-label">120</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
-										</div> 
-									</div>
-								</div>
-								<div style="margin-top: 30px;">
-									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['http'].settings">
-										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['http'], setting.variable)">
-									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
-								</div>
+					<!-- DNS Tab  -->
+					<div class="rt-box rt-page-box">
+						<div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
+							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
+								<input class="rt-modal" id="dns-enabled" type="checkbox">
+								<label for="dns-enabled" class="rt-h2 rt-modal">DNS</label>
+							</div>
+							<div style="float: right; display: inline;">
+								<a href="#">
+									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;"><span class="freqMsg"> Every {{monitors['dns'].frequency}}s from All Collectors | 
+									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
+									<span><i class="fa fa-caret-down"></i></span>
+								</a>
 							</div>
 						</div>
-					</div>
-					<div class="clearfix"></div>
-				</div>
-				<!-- End Web Tab -->
+						<div class="rt-box-body rt-page-box-body" ng-show="showDNS">
 
-				<!-- Web HTTPS Tab  -->
-				<div class="rt-box rt-page-box">
-					<div class="rt-box-header">
-						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="web-https-enabled" type="checkbox">
-							<label for="web-https-enabled" class="rt-h2 rt-modal">Web (HTTPS)</label>
-						</div>
-						<div style="float: right; display: inline;">
-							<a href="#" ng-click="showHttps = !showHttps" ng-class="{ active: showHttps }">
-								<span class="freqMsg" style="opacity: 0.6;">HTTPS Not Auto-Detected</span>
-								<span><i class="fa fa-caret-down"></i></span>
-							</a>
-						</div>		
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+									</div>
+									<div class="rt-box-interior rt-box-interior-header">
+										<div class="rt-h3">Monitoring</div>
+										<p class="rt-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
+									</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<div class="checkbox-check-enabled">
+											<input class="rt-modal" id="dns-enabled" type="checkbox">
+											<label for="dns-enabled" class="rt-modal rt-body-copy"> Enabled</label>
+										</div>
+										<div class="editor-option rt-input-styles" style="display: inline-block;">
+											<label class="small">Frequency</label>
+											<select class="small" ng-model="monitors['dns'].frequency" ng-options="f for f in [10, 30, 60, 120]" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: auto;"></select> 
+										</div>
+										<div style="display: inline-block;">
+											<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['dns'].settings">
+												<raintank-setting definition="setting" target="currentSettingByVariable(monitors['dns'], setting.variable)">
+											</div>
+											<div class="editor-option" style="margin-top: 20px;">
+												<label class="small">&nbsp;</label>
+												<endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+									</div>
+									<div class="rt-box-interior rt-h3">Health</div>
+ 
+									<div class="rt-box-interior rt-box-interior-content">
+										<div style="margin-top: 20px; max-width: 660px;">
+											<span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="5"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">consecutive checks.</span>
+										</div>
+									</div>
+							</div>	
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+									</div>
+									<div class="rt-box-interior rt-h3">Alerting</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
+									</div>
+							</div>
 					</div>
-					<div class="rt-box-body rt-page-box-body" ng-show="showHttps">
-						<div class="modalContainer">
-							<div class="modalColumn modal-left-100">
-								<p class="rt-body-copy">We do an HTTPS request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p></br>
-								<div class="rt-h2" style="margin: 20px 0; display: inline-block;">HTTPS check frequency:</div>
-								<div style="display: block; margin-top: 20px;">
-									<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
-										<div class="rt-radio-layout">
-											<input id="rt-https-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="10">
-											<label for="rt-https-radio-1" class="rt-radio-jumbo-label">10</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-https-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="30">
-											<label for="rt-https-radio-2" class="rt-radio-jumbo-label">30</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-https-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="60">
-											<label for="rt-https-radio-3" class="rt-radio-jumbo-label">60</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
-										</div>
-										<div class="rt-radio-layout">
-											<input id="rt-https-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="120">
-											<label for="rt-https-radio-4" class="rt-radio-jumbo-label">120</label>
-											<span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
-										</div> 
-									</div>
-								</div>
-								<div style="margin-top: 30px;">
-									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['https'].settings">
-										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['https'], setting.variable)">
-									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['https']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
-								</div>
+				</div>
+					<!-- End DNS Tab -->
+
+					<!-- HTTP Tab  -->
+					<div class="rt-box rt-page-box">
+						<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
+							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
+								<input class="rt-modal" id="http-enabled" type="checkbox">
+								<label for="http-enabled" class="rt-h2 rt-modal">HTTP</label>
+							</div>
+							<div style="float: right; display: inline;">
+								<a href="#">
+									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;"><span class="freqMsg"> Every {{monitors['http'].frequency}}s from All Collectors | 
+									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
+									<span><i class="fa fa-caret-down"></i></span>
+								</a>
 							</div>
 						</div>
+						<div class="rt-box-body rt-page-box-body" ng-show="showHTTP">
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+									</div>
+									<div class="rt-box-interior rt-box-interior-header">
+										<div class="rt-h3">Monitoring</div>
+										<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
+									</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<div class="checkbox-check-enabled">
+											<input class="rt-modal" id="http-enabled" type="checkbox">
+											<label for="http-enabled" class="rt-modal rt-body-copy"> Enabled</label>
+										</div>
+										<div class="editor-option rt-input-styles" style="display: inline-block;">
+											<label class="small">Frequency</label>
+											<select class="small" ng-model="monitors['http'].frequency" ng-options="f for f in [10, 30, 60, 120]" ng-selected="{{monitors['http'].frequency}}" style="width: auto; height: auto;"></select> 
+										</div>
+										<div style="display: inline-block;">
+											<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['http'].settings">
+												<raintank-setting definition="setting" target="currentSettingByVariable(monitors['http'], setting.variable)">
+											</div>
+											<div class="editor-option" style="margin-top: 20px;">
+												<label class="small">&nbsp;</label>
+												<endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+									</div>
+									<div class="rt-box-interior rt-h3">Health</div>
+ 
+									<div class="rt-box-interior rt-box-interior-content">
+										<div style="margin-top: 20px; max-width: 660px;">
+											<span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="5"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">consecutive checks.</span>
+										</div>
+									</div>
+							</div>	
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+									</div>
+									<div class="rt-box-interior rt-h3">Alerting</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
+									</div>
+							</div>
 					</div>
-					<div class="clearfix"></div>
 				</div>
-				<!-- End Web HTTPS Tab -->
+					<!-- End HTTP Tab -->
+
+					<!-- HTTPS Tab  -->
+					<div class="rt-box rt-page-box">
+						<div class="rt-box-header rt-page-box-header" ng-click="showHTTPS = !showHTTPS">
+							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
+								<input class="rt-modal" id="https-enabled" type="checkbox">
+								<label for="https-enabled" class="rt-h2 rt-modal">HTTPS</label>
+							</div>
+							<div style="float: right; display: inline;">
+								<a href="#">
+									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;"><span class="freqMsg"> Every {{monitors['https'].frequency}}s from All Collectors | 
+									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
+									<span><i class="fa fa-caret-down"></i></span>
+								</a>
+							</div>
+						</div>
+						<div class="rt-box-body rt-page-box-body" ng-show="showHTTPS">
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+									</div>
+									<div class="rt-box-interior rt-box-interior-header">
+										<div class="rt-h3">Monitoring</div>
+										<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
+									</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<div class="checkbox-check-enabled">
+											<input class="rt-modal" id="https-enabled" type="checkbox">
+											<label for="https-enabled" class="rt-modal rt-body-copy"> Enabled</label>
+										</div>
+										<div class="editor-option rt-input-styles" style="display: inline-block;">
+											<label class="small">Frequency</label>
+											<select class="small" ng-model="monitors['https'].frequency" ng-options="f for f in [10, 30, 60, 120]" ng-selected="{{monitors['https'].frequency}}" style="width: auto; height: auto;"></select> 
+										</div>
+										<div style="display: inline-block;">
+											<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['https'].settings">
+												<raintank-setting definition="setting" target="currentSettingByVariable(monitors['https'], setting.variable)">
+											</div>
+											<div class="editor-option" style="margin-top: 20px;">
+												<label class="small">&nbsp;</label>
+												<endpoint-collector-select model="monitors['https']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+									</div>
+									<div class="rt-box-interior rt-h3">Health</div>
+ 
+									<div class="rt-box-interior rt-box-interior-content">
+										<div style="margin-top: 20px; max-width: 660px;">
+											<span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
+											<div class="editor-option rt-input-styles">
+												<label><input type="number" value="5"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+											</div>
+											<span class="rt-sentence-form-label">consecutive checks.</span>
+										</div>
+									</div>
+							</div>	
+
+							<div class="rt-box-interior-section">
+									<div class="rt-box-interior-header-icon">
+										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+									</div>
+									<div class="rt-box-interior rt-h3">Alerting</div>
+									<div class="rt-box-interior rt-box-interior-content">
+										<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
+									</div>
+							</div>
+					</div>
+				</div>
+					<!-- End Web Tab -->
 
 				<div class="editor-row">
 					<div style="display: block; margin-top: 5px;" class="editor-option">

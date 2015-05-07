@@ -25,7 +25,9 @@ body {
   font-size: 1rem;
 }
 
-
+a:focus {
+  text-decoration: none;
+}
 
 .modal-body {
   overflow-y: auto;
@@ -899,6 +901,13 @@ MATT STYLES
   font-size: @rt-fontSizeMed-2;
 }
 
+.rt-sentence-form-label {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  margin-left: -15px;
+}
+
+
 
 // Shared size and type resets
 select,
@@ -982,10 +991,10 @@ input[type="checkbox"].rt-modal {
 
 label.rt-modal {
   display: inline-block;
-  height: 17px;
+  height: 19px;
   clear: none;
   text-indent: 2px;
-  margin: 0 0 1px 0;
+  margin: 0 0 0 0;
   padding: 0 0 0 20px;
   vertical-align:middle;
   background: url(@rt-checkboxImageUrl) left top no-repeat;
@@ -993,7 +1002,7 @@ label.rt-modal {
 }
 
 input[type="checkbox"]:checked+label {
-  background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
 }
 
 .checkbox-check-enabled {
@@ -1153,7 +1162,6 @@ input[type="checkbox"]:checked+label {
 .rt-body-copy {
   color: @rt-light-gray;
   font-size: @rt-fontSizeMed-2;
-  font-style: italic;
 
   @media screen and (min-width: 950px) {
   max-width: 660px;
