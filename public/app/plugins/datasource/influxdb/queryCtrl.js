@@ -45,10 +45,10 @@ function (angular, _) {
         query = 'SHOW MEASUREMENTS';
       } else if (index % 2 === 1) {
         queryType = 'TAG_KEYS';
-        query = 'SHOW TAG KEYS FROM ' + measurement;
+        query = 'SHOW TAG KEYS FROM "' + measurement + '"';
       } else {
         queryType = 'TAG_VALUES';
-        query = "SHOW TAG VALUES FROM " + measurement + " WITH KEY = " + $scope.segments[$scope.segments.length - 2].value;
+        query = 'SHOW TAG VALUES FROM "' + measurement + '" WITH KEY = ' + $scope.segments[$scope.segments.length - 2].value;
       }
 
       console.log('getAltSegments: query' , query);
