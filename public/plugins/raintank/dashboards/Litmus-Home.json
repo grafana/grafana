@@ -15,7 +15,9 @@
       "height": "100px",
       "panels": [
         {
-          "content": "</br>\n<div class=\"rt-dashboard-h1\">LITMUS</div>\n<span style=\"display: inline; margin-left: 20px;\">by <img src=\"img/raintank_wordmark_white.svg\" width=\"100\" style=\"opacity: 0.85; vertical-align: sub;\"></span>",
+          "content": "</br>\n<div class=\"rt-dashboard-h1\" style=\"color:#999\">LITMUS</div>\n<span style=\"margin:0 5px;\">by</span><i class=\"icon-rt-raintank_wordmark\" style=\"font-size:300%; color:#999; position:relative; top:11px;\"></i>",
+
+
           "editable": true,
           "error": false,
           "id": 1,
