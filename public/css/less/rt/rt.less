@@ -3,9 +3,12 @@
 // ==========================================================================
 
 @import "layout/columns.less";
+@import "layout/page.less";
+
+@import "components/box.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
-
+@import "components/mini-form.less";
 
 
 
@@ -22,7 +25,9 @@ body {
   font-size: 1em;
 }
 
-
+a:focus {
+  text-decoration: none;
+}
 
 .modal-body {
   overflow-y: auto;
@@ -37,6 +42,7 @@ div.rt-modal-override {
 
   .summary-tab {
     padding-top: 10px;
+    padding-bottom: 35px;
   }
 
     .modalColumn {
@@ -78,6 +84,7 @@ div.rt-modal-override {
       .modalRight {padding-left:0px;}
       }
 
+<<<<<<< HEAD
 /***********************************
 raintank BOX
 ***********************************/
@@ -100,6 +107,11 @@ raintank BOX
 }
   .oneCol {display:none;}
   .twoCol {display:none;}
+=======
+
+.oneCol {display:none;}
+.twoCol {display:none;}
+>>>>>>> new_endpoint_page
 
 @media screen and (max-width: 780px) {
   .oneCol {display:block;}
@@ -110,25 +122,6 @@ raintank BOX
 }
 
 .clearBack {background-color:transparent;}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 120%;
-  color: @textColor;
-  &:hover {
-    color: @white;
-  }
-}
-
-.rt-box-body {
-  padding: 20px;
-  min-height: 150px;
-}
 
 .rt-modal-box-body {
   padding: 20px 0 20px 0;
@@ -144,6 +137,7 @@ ul.rt-modal-ul {
     padding: 0;
   }
 
+<<<<<<< HEAD
 .rt-box-footer {
   overflow: hidden;
 }
@@ -162,6 +156,8 @@ ul.rt-modal-ul {
 }
 
 
+=======
+>>>>>>> new_endpoint_page
 .rt-modal-header {
   padding: 30px 0px;
   font-size:16px;
@@ -171,37 +167,6 @@ ul.rt-modal-ul {
   }
   .nav {
     margin: 0;
-  }
-}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  margin-top: -15px;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 150%;
-  font-weight: 100;
-  color: @textColor;
-  &:hover {
-    color: @black;
-  }
-}
-
-.rt-box-title {
-  padding-right: 20px;
-  padding-left: 10px;
-  float: left;
-  color: @linkColor;
-  font-size: 18px;
-  font-weight: normal;
-  line-height: 38px;
-  margin: 0;
-  .fa {
-    padding: 0 8px 0 5px;
-    color: @textColor;
   }
 }
 
@@ -355,8 +320,13 @@ raintank TYPE
 
 .jumbo {font-weight:600;}
 
+<<<<<<< HEAD
 .frequency {color:@rt-dark-gray}
 .statusMsg, .freqMsg {font-size:14px; font-weight:300;}
+=======
+.frequency {color:@rt-light-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:400;}
+>>>>>>> new_endpoint_page
 
 .online {
   color: @online;
@@ -969,10 +939,28 @@ MATT STYLES
 
 // Form Additions
 
+.ng-hide-add         { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease; 
+}
+
+.ng-hide-remove      { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease;  
+}
+
+
 .rt-form-label-medium {
-  color: @grayDark;
+  // color: @grayDark;
   font-size: @rt-fontSizeMed-2;
 }
+
+.rt-sentence-form-label {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  margin-left: -15px;
+}
+
 
 
 // Shared size and type resets
@@ -1009,6 +997,7 @@ input[type="checkbox"].rt-modal {
   display: none;
 }
 
+<<<<<<< HEAD
 select.rt-select-dropdown {
   color: @linkColor;
   font-size: 16px;
@@ -1019,6 +1008,25 @@ select.rt-select-dropdown {
   width: auto;
   &.small {
     font-size: @baseFontSize;
+=======
+.rt-input-styles{
+  label {
+  color: @rt-light-gray;
+  }
+  select, 
+  textarea, 
+  input[type="text"] {
+  display: inline-block;
+  height: 20px;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 4;
+  font-size: @rt-fontSizeMed-1;
+  line-height: @baseLineHeight;
+  color: @white;
+  border: solid 1px @grayDark;
+  .border-radius(2px);
+  vertical-align: middle;
+>>>>>>> new_endpoint_page
   }
 }
 
@@ -1049,10 +1057,10 @@ select.rt-select-dropdown {
 
 label.rt-modal {
   display: inline-block;
-  height: 17px;
+  height: 19px;
   clear: none;
   text-indent: 2px;
-  margin: 0 0 1px 0;
+  margin: 0 0 0 0;
   padding: 0 0 0 20px;
   vertical-align:middle;
   background: url(@rt-checkboxImageUrl) left top no-repeat;
@@ -1060,7 +1068,7 @@ label.rt-modal {
 }
 
 input[type="checkbox"]:checked+label {
-  background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
 }
 
 .checkbox-check-enabled {
@@ -1211,6 +1219,21 @@ input[type="checkbox"]:checked+label {
   color: @rt-dark-gray;
 }
 
+.rt-label-copy {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
+}
+
+.rt-body-copy {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-2;
+
+  @media screen and (min-width: 950px) {
+  max-width: 660px;
+  }
+}
+
 .rt-modal-label-copy {
   color: @rt-dark-gray;
   font-size: @rt-fontSizeMed-1;
@@ -1231,7 +1254,6 @@ input[type="checkbox"]:checked+label {
   margin-right: 60px;
   vertical-align: sub;
 }
-
 
 a.rt-modal-body-link {
     color: @rt-primary;   
@@ -1288,7 +1310,7 @@ a.rt-modal-body-link {
 
 .rt-advanced-options{
   font-size: @rt-fontSizeMed-2;
-  margin: 10px 0 40px 0;
+  margin: 10px 0 0 0;
   display:block;
   cursor: pointer;
   color: @rt-primary;
@@ -1307,33 +1329,6 @@ a.rt-modal-body-link {
 
 .rt-advanced-options+ input:checked + *{
   display:block;
-}
-
-
-.rt-globe-check-speed {
-  background-image: url(/img/rt-globe-check-speed.svg);
-  opacity: 1;
-  width: 177px;
-  height: 177px;
-  margin: 0 auto;
-  position: absolute;
-
-  -moz-animation: spinPulse 1500ms infinite ease-in-out;
-  -webkit-animation: spinPulse 1500ms infinite linear;
-}
-
-.rt-globe {
-  background-image: url(/img/rt-globe.svg);  
-  background-position: 50%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  opacity: 1;
-  width: 177px;
-  height: 177px;
-  margin: 0 auto;
-  padding: 0px;
-  position: relative;
-
 }
 
 @-moz-keyframes spinPulse {
@@ -1395,17 +1390,18 @@ a.rt-modal-body-link {
 .rt-radio-body-label {
   .rt-modal-body-copy;
   font-style: normal;
+  color: @rt-light-gray;
 }
 
 .rt-radio-jumbo-label {
     position: relative;
-    color: @rt-dark-gray;
-    font-size: 60px;
+    color: @rt-light-gray;
+    font-size: 40px;
     font-weight: 600;
 }
 
 .rt-radio-jumbo-sub-label {
-  font-size: @rt-fontSizeMed-1;
+  font-size: @rt-fontSizeSmall;
   color: @rt-light-gray;
   font-weight: 400;
   display: block;
@@ -1414,15 +1410,16 @@ a.rt-modal-body-link {
 
 .rt-radio-custom + *:before {
     content: '';
-    background: #fff;
+    background: transparent;
     border: 2px solid @rt-dark-gray;
     display: inline-block;
     vertical-align: middle;
-    width: 15px;
-    height: 15px;
+    width: 10px;
+    height: 10px;
     padding: 2px;
     margin-right: 10px;
     text-align: center;
+    transition: all 50ms linear;
 }
 
 
@@ -1432,7 +1429,11 @@ a.rt-modal-body-link {
 
 .rt-radio-custom:checked + *:before {
     background: @rt-primary;
+<<<<<<< HEAD
     box-shadow: inset 0px 0px 0px 4px @white;
+=======
+    box-shadow: inset 0px 0px 0px 3px @bodyBackground;
+>>>>>>> new_endpoint_page
 }
 
 // Hiding class for screen readers
