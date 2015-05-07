@@ -11,14 +11,21 @@ function (angular) {
     var defaults = {
       name: '',
     };
+    var freqOpt = [10, 30, 60, 120];
+    $scope.frequencyOpts = [];
+    _.forEach(freqOpt, function(f) {
+      $scope.frequencyOpts.push({value: f, label: "Every "+f+"s"});
+    });
 
     $scope.init = function() {
       $scope.discovered = false;
+      $scope.discoveryInProgress = false;
       $scope.endpoints = [];
       $scope.monitors = {};
       $scope.monitor_types_by_name = {};
       $scope.allCollectors = [];
       $scope.collectorsOption = {selection: "all"};
+      $scope.collectorsByTag = {};
       $scope.$watch("collectorsOption.selection", function(newVal) {
         if (newVal === "all") {
           $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
@@ -63,9 +70,29 @@ function (angular) {
         $scope.collectors = collectors;
         _.forEach(collectors, function(c) {
           $scope.allCollectors.push(c.id);
+          _.forEach(c.tags, function(t) {
+            if (!(t in $scope.collectorsByTag)) {
+              $scope.collectorsByTag[t] = [];
+            }
+            $scope.collectorsByTag[t].push(c);
+          });
         });
         $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
       });
+    };
+
+    $scope.collectorCount = function(monitor) {
+      var ids = {};
+      var tags = monitor.collector_tags;
+      _.forEach(monitor.collector_ids, function(id) {
+        ids[id] = true;
+      });
+      _.forEach(monitor.collector_tags, function(t) {
+        _.forEach($scope.collectorsByTag[t], function(c) {
+          ids[c.id] = true;
+        });
+      });
+      return Object.keys(ids).length;
     };
 
     $scope.getMonitorTypes = function() {
@@ -124,7 +151,7 @@ function (angular) {
 
     $scope.cancel = function() {
       $scope.reset();
-      collector.back();
+      window.history.back();
     };
     $scope.getEndpoints = function() {
       var promise = backendSrv.get('/api/endpoints')
@@ -231,9 +258,12 @@ function (angular) {
     }
 
     $scope.discover = function(endpoint) {
+      $scope.discoveryInProgress = true;
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
         $scope.discovered = true;
         $scope.parseSuggestions(resp);
+      }).finally(function() {
+        $scope.discoveryInProgress = false;
       });
     }
 

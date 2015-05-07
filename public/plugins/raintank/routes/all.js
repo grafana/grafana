@@ -30,7 +30,7 @@ function (angular) {
         controller : 'EndpointsCtrl',
       })
       .when('/endpoints/new', {
-        templateUrl: 'plugins/raintank/features/partials/endpoints_edit.html',
+        templateUrl: 'plugins/raintank/features/partials/endpoint_new.html',
         controller : 'EndpointConfCtrl',
       })
       .when('/endpoints/summary/:id', {
