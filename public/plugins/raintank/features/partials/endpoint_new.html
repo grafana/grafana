@@ -51,7 +51,7 @@
 					<div class="rt-box rt-page-box">
 						<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
 							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-								<input class="rt-modal" id="ping-enabled" type="checkbox">
+								<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['ping'].enabled">
 								<label for="ping-enabled" class="rt-h2 rt-modal">Ping</label>
 							</div>
 							<div style="float: right; display: inline;">
@@ -74,7 +74,7 @@
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
-											<input class="rt-modal" id="ping-enabled" type="checkbox">
+											<input class="rt-modal" id="ping-enabled"type="checkbox" ng-model="monitors['ping'].enabled">
 											<label for="ping-enabled" class="rt-modal rt-body-copy"> Enabled</label>
 										</div>
 										<div class="editor-option rt-input-styles">
@@ -132,7 +132,7 @@
 					<div class="rt-box rt-page-box">
 						<div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
 							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-								<input class="rt-modal" id="dns-enabled" type="checkbox">
+								<input class="rt-modal" id="dns-enabled" type="checkbox" ng-model="monitors['dns'].enabled">
 								<label for="dns-enabled" class="rt-h2 rt-modal">DNS</label>
 							</div>
 							<div style="float: right; display: inline;">
@@ -155,7 +155,7 @@
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
-											<input class="rt-modal" id="dns-enabled" type="checkbox">
+											<input class="rt-modal" id="dns-enabled" type="checkbox" ng-model="monitors['dns'].enabled">
 											<label for="dns-enabled" class="rt-modal rt-body-copy"> Enabled</label>
 										</div>
 										<div class="editor-option rt-input-styles" style="display: inline-block;">
@@ -212,7 +212,7 @@
 					<div class="rt-box rt-page-box">
 						<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
 							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-								<input class="rt-modal" id="http-enabled" type="checkbox">
+								<input class="rt-modal" id="http-enabled" type="checkbox" ng-model="monitors['http'].enabled">
 								<label for="http-enabled" class="rt-h2 rt-modal">HTTP</label>
 							</div>
 							<div style="float: right; display: inline;">
@@ -235,7 +235,7 @@
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
-											<input class="rt-modal" id="http-enabled" type="checkbox">
+											<input class="rt-modal" id="http-enabled" type="checkbox" ng-model="monitors['http'].enabled">
 											<label for="http-enabled" class="rt-modal rt-body-copy"> Enabled</label>
 										</div>
 										<div class="editor-option rt-input-styles" style="display: inline-block;">
@@ -292,7 +292,7 @@
 					<div class="rt-box rt-page-box">
 						<div class="rt-box-header rt-page-box-header" ng-click="showHTTPS = !showHTTPS">
 							<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-								<input class="rt-modal" id="https-enabled" type="checkbox">
+								<input class="rt-modal" id="https-enabled" type="checkbox" ng-model="monitors['https'].enabled">
 								<label for="https-enabled" class="rt-h2 rt-modal">HTTPS</label>
 							</div>
 							<div style="float: right; display: inline;">
@@ -315,7 +315,7 @@
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
-											<input class="rt-modal" id="https-enabled" type="checkbox">
+											<input class="rt-modal" id="https-enabled" type="checkbox" ng-model="monitors['https'].enabled">
 											<label for="https-enabled" class="rt-modal rt-body-copy"> Enabled</label>
 										</div>
 										<div class="editor-option rt-input-styles" style="display: inline-block;">
