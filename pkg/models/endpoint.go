@@ -97,5 +97,5 @@ func (endpoint *Endpoint) UpdateEndpointSlug() {
 	name := strings.ToLower(endpoint.Name)
 	re := regexp.MustCompile("[^\\w ]+")
 	re2 := regexp.MustCompile("\\s")
-	endpoint.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
+	endpoint.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, "_"), "-")
 }
