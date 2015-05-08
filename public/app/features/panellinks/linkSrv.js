@@ -1,63 +1,55 @@
 define([
   'angular',
   'kbn',
+  'lodash',
 ],
-function (angular, kbn) {
+function (angular, kbn, _) {
   'use strict';
 
   angular
     .module('grafana.services')
     .service('linkSrv', function(templateSrv, timeSrv) {
 
-      // parseUri 1.2.2
-      // (c) Steven Levithan <stevenlevithan.com>
-      // MIT License
+      this.getLinkUrl = function(link) {
+        var url = templateSrv.replace(link.url || '');
+        var params = {};
 
-      function parseUri (str) {
-        var	o   = parseUri.options,
-          m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
-          uri = {},
-          i   = 14;
-
-        while (i--) {
-          uri[o.key[i]] = m[i] || "";
+        if (link.keepTime) {
+          var range = timeSrv.timeRangeForUrl();
+          params['from'] = range.from;
+          params['to'] = range.to;
         }
 
-        uri[o.q.name] = {};
-        uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-          if ($1) {
-            uri[o.q.name][$1] = $2;
+        if (link.includeVars) {
+          templateSrv.fillVariableValuesForUrl(params);
+        }
+
+        return this.addParamsToUrl(url, params);
+      };
+
+      this.addParamsToUrl = function(url, params) {
+        var paramsArray = [];
+        _.each(params, function(value, key) {
+          if (value === null) { return; }
+          if (value === true) {
+            paramsArray.push(key);
+          }
+          else if (_.isArray(value)) {
+            _.each(value, function(instance) {
+              paramsArray.push(key + '=' + encodeURIComponent(instance));
+            });
+          }
+          else {
+            paramsArray.push(key + '=' + encodeURIComponent(value));
           }
         });
 
-        return uri;
-      }
-
-      parseUri.options = {
-        strictMode: false,
-        key: ["source","protocol","authority","userInfo","user","password","host",
-              "port","relative","path","directory","file","query","anchor"],
-        q:   {
-          name:   "queryKey",
-          parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-        },
-        /* jshint ignore:start */
-        parser: {
-          strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-          loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+        if (paramsArray.length === 0) {
+          return url;
         }
-        /* jshint ignore:end */
-      };
 
-      this.getLinkUrl = function(link) {
-        var href = templateSrv.replace(link.url || '');
-        if (link.addTime) {
-          var range = timeSrv.timeRangeForUrl();
-          href += (href.indexOf('?') !== -1 ? '&' : '?');
-          href += 'from=' + range.from;
-          href += '&to=' + range.to;
-        }
-        return href;
+        url += (url.indexOf('?') !== -1 ? '&' : '?');
+        return url + paramsArray.join('&');
       };
 
       this.getAnchorInfo = function(link) {

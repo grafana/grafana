@@ -1,6 +1,7 @@
 define([
   'helpers',
-  'features/dashboard/shareModalCtrl'
+  'features/dashboard/shareModalCtrl',
+  'features/panellinks/linkSrv',
 ], function(helpers) {
   'use strict';
 
@@ -14,8 +15,10 @@ define([
     setTime({ from: 'now-1h', to: 'now' });
 
     beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.services'));
 
     beforeEach(ctx.providePhase());
+
     beforeEach(ctx.createControllerPhase('ShareModalCtrl'));
 
     describe('shareUrl with current time range and panel', function() {
@@ -63,8 +66,11 @@ define([
         ctx.$location.path('/test');
         ctx.scope.options.includeTemplateVars = true;
 
-        ctx.templateSrv.variables = [{ name: 'app', current: {text: 'mupp' }}, {name: 'server', current: {text: 'srv-01'}}];
         setTime({ from: 'now-1h', to: 'now' });
+        ctx.templateSrv.fillVariableValuesForUrl = function(params) {
+          params['var-app'] = 'mupp';
+          params['var-server'] = 'srv-01';
+        };
 
         ctx.scope.buildUrl();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=now-1h&to=now&var-app=mupp&var-server=srv-01');

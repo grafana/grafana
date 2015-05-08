@@ -19,9 +19,6 @@ function (angular, _) {
 
   module.directive('dashLinksEditor', function() {
     return {
-      scope: {
-        dashboard: "="
-      },
       restrict: 'E',
       controller: 'DashLinkEditorCtrl',
       templateUrl: 'app/features/dashlinks/editor.html',
@@ -76,6 +73,11 @@ function (angular, _) {
         icon.attr('class', 'fa fa-fw ' + scope.link.icon);
         anchor.attr('target', scope.link.target);
 
+        // fix for menus on the far right
+        if (link.asDropdown && scope.$last) {
+          elem.find('.dropdown-menu').addClass('pull-right');
+        }
+
         update();
         scope.$on('refresh', update);
       }
@@ -96,12 +98,14 @@ function (angular, _) {
           return $q.when([{
             title: linkDef.title,
             tag: linkDef.tag,
+            keepTime: linkDef.keepTime,
+            includeVars: linkDef.includeVars,
             icon: "fa fa-bars",
             asDropdown: true
           }]);
         }
 
-        return $scope.searchDashboards(linkDef.tag);
+        return $scope.searchDashboards(linkDef);
       }
 
       if (linkDef.type === 'link') {
@@ -111,6 +115,8 @@ function (angular, _) {
           icon: iconMap[linkDef.icon],
           tooltip: linkDef.tooltip,
           target: linkDef.targetBlank ? "_blank" : "",
+          keepTime: linkDef.keepTime,
+          includeVars: linkDef.includeVars,
         }]);
       }
 
@@ -125,12 +131,18 @@ function (angular, _) {
       });
     }
 
-    $scope.searchDashboards = function(tag) {
-      return backendSrv.search({tag: tag}).then(function(results) {
+    $scope.searchDashboards = function(link) {
+      return backendSrv.search({tag: link.tag}).then(function(results) {
         return _.reduce(results.dashboards, function(memo, dash) {
           // do not add current dashboard
           if (dash.id !== currentDashId) {
-            memo.push({ title: dash.title, url: 'dashboard/db/'+ dash.slug, icon: 'fa fa-th-large', addTime: true });
+            memo.push({
+              title: dash.title,
+              url: 'dashboard/db/'+ dash.slug,
+              icon: 'fa fa-th-large',
+              keepTime: link.keepTime,
+              includeVars: link.includeVars
+            });
           }
           return memo;
         }, []);
@@ -138,7 +150,7 @@ function (angular, _) {
     };
 
     $scope.fillDropdown = function(link) {
-      $scope.searchDashboards(link.tag).then(function(results) {
+      $scope.searchDashboards(link).then(function(results) {
         _.each(results, function(hit) {
           hit.url = linkSrv.getLinkUrl(hit);
         });
@@ -154,8 +166,11 @@ function (angular, _) {
 
     $scope.iconMap = iconMap;
     $scope.dashboard.links = $scope.dashboard.links || [];
+
     $scope.addLink = function() {
       $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
+      $scope.updateSubmenuVisibility();
+      $scope.updated();
     };
 
     $scope.moveLink = function(index, dir) {
@@ -167,8 +182,10 @@ function (angular, _) {
       $rootScope.appEvent('dash-links-updated');
     };
 
-    $scope.deleteLink = function(link) {
-      $scope.dashboard.links = _.without($scope.dashboard.links, link);
+    $scope.deleteLink = function(index) {
+      $scope.dashboard.links.splice(index, 1);
+      $scope.updateSubmenuVisibility();
+      $scope.updated();
     };
 
   });

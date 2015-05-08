@@ -9,7 +9,8 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: 0 };
 
@@ -47,14 +48,7 @@ function (angular, _, require, config) {
       params.to = range.to;
 
       if ($scope.options.includeTemplateVars) {
-        _.each(templateSrv.variables, function(variable) {
-          params['var-' + variable.name] = variable.current.text;
-        });
-      }
-      else {
-        _.each(templateSrv.variables, function(variable) {
-          delete params['var-' + variable.name];
-        });
+        templateSrv.fillVariableValuesForUrl(params);
       }
 
       if (!$scope.options.forCurrent) {
@@ -74,19 +68,7 @@ function (angular, _, require, config) {
         delete params.fullscreen;
       }
 
-      var paramsArray = [];
-      _.each(params, function(value, key) {
-        if (value === null) { return; }
-        if (value === true) {
-          paramsArray.push(key);
-        } else {
-          key += '=' + encodeURIComponent(value);
-          paramsArray.push(key);
-        }
-      });
-
-      var queryParams = "?" + paramsArray.join('&');
-      $scope.shareUrl = baseUrl + queryParams;
+      $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
       var soloUrl = $scope.shareUrl;
       soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
