@@ -67,30 +67,41 @@
   cursor: pointer;
 }
 
+
+
+// Interior 
+// ==========================================================================
+
 .rt-box-interior-header-icon {
-  display: inline;
-  margin-left: -30px;
-  vertical-align: top;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32px;
 }
 
 .rt-box-interior-section {
-  margin-left: 20px;
-  margin-top: 20px;
+  position: relative;
   margin-bottom: 30px;
+  padding: 0 35px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-.rt-box-interior {
+.rt-box-interior-section-body {
   margin-left: 10px;
 }
 
 .rt-box-interior-header {
-  display: inline-block;
+  display: block;
+  margin-bottom: 10px;
 }
 
-.rt-box-interior-content {
-  margin-top: 10px;
-  margin-left: 15px;
+.rt-box-interior-header.rt-h3 {
+  display: block;
 }
+
 
 // Footer 
 // ==========================================================================

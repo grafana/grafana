@@ -1,0 +1,190 @@
+// ==========================================================================
+// BUTTONS
+// ==========================================================================
+
+
+
+// Super CTA
+// ====================================
+
+.superCTA,
+.superCTA:visited { 
+  display: block;
+  padding: 1.0em 0;
+  color:#fff;
+  background-color: @rt-blue;
+  border: 1px solid @rt-blue;
+  border-radius: 2px;
+  text-align:center;
+  font-weight: 400;
+  font-size: 16px;
+  transition: 0.15s;
+
+  img { padding-left: 2px; }
+}
+
+.superCTA:hover,
+.superCTA:active{
+  cursor: pointer;
+  background: darken(@rt-blue, 10%);
+  border: 1px solid darken(@rt-blue, 10%);
+  text-decoration:none;
+}
+
+
+
+// Primary CTA
+// ====================================
+
+.primaryCTA ,
+.primaryCTA:visited{
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  color:#fff;
+  background-color: @rt-blue;
+  border: 1px solid @rt-blue;
+  border-radius: 2px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  transition: 0.15s;
+}
+
+.primaryCTA:hover, 
+.primaryCTA:active{
+  cursor: pointer;
+  background: darken(@rt-blue, 10%);
+  border: 1px solid darken(@rt-blue, 10%);
+  text-decoration:none;
+}
+
+
+
+// Secondary CTA
+// ====================================
+
+.secondaryCTA,
+.secondaryCTA:visited {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  border: 1px solid @rt-blue;
+  color: #13b2d4;
+  border-radius: 2px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  transition: 0.15s;
+  background-color: transparent;
+}
+
+// For dark backgrounds. 
+.secondaryCTA:hover, 
+.secondaryCTA:active{
+  cursor: pointer;
+  border: 1px solid #fff;
+  color: #fff;
+  text-decoration:none;
+}
+
+// For light backgrounds. 
+.modal-body .secondaryCTA:hover {
+  cursor: pointer;
+  border: 1px solid #161616;
+  color: #161616;
+}
+
+
+
+// Tertiary CTA
+// ====================================
+
+.tertiaryCTA,
+.tertiaryCTA:visited {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  border: 1px solid #999;
+  color: #999;
+  border-radius: 2px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  transition: 0.15s;
+}
+
+.tertiaryCTA:hover,
+.tertiaryCTA:active{
+  cursor: pointer;
+  border: 1px solid #fff;
+  color: #fff;
+  text-decoration:none;
+}
+
+.cancel-primary,
+.cancel-primary:visited {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.2em 1.4em;
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  transition: 0.15s;
+}
+
+.cancel-primary:hover,
+.cancel-primary:active{
+  cursor: pointer;
+  color: @rt-light-gray;
+  text-decoration:none;
+}
+
+
+
+// Mini CTA
+// ====================================
+
+.miniCTA, 
+.miniCTA:visited { 
+  color: @gray;
+}
+
+.miniCTA:hover,
+.miniCTA:active { 
+  color: @white; 
+  text-decoration: none;
+}
+
+
+
+// General
+// ====================================
+
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+  text-decoration:none;
+
+  &:hover, &:focus {
+    background: darken(@rt-blue, 10%);
+    text-decoration:none;
+  }
+ 
+  &:active {
+    background: lighten(@rt-blue, 5%);
+    text-decoration:none;
+  }
+}
+
+.modal-body .rt-btn {
+  margin: 30px 0 40px 0;
+}

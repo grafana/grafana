@@ -2,10 +2,14 @@
 // RAINTANK
 // ==========================================================================
 
+@import "base/icon-font.less";
+
 @import "layout/columns.less";
+@import "layout/forms.less";
 @import "layout/page.less";
 
 @import "components/box.less";
+@import "components/buttons.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
 @import "components/mini-form.less";
@@ -256,7 +260,12 @@ ul.rt-modal-ul {
 /***********************************
 raintank TYPE
 ***********************************/
-.refresh a:link, .refresh a:visited, .refresh a:hover, .refresh a:active { text-decoration:none;} // was underlineing on click.
+.refresh a:link, 
+.refresh a:visited, 
+.refresh a:hover, 
+.refresh a:active { 
+  text-decoration: none; // was underlineing on click.
+}
 
 .checkType, .eventType {
   font-size:16px;
@@ -307,133 +316,6 @@ raintank TYPE
   text-transform: uppercase;
 }
 
-/******************************************
-RAINTANK ICON FONTS
-******************************************/
-@font-face {
-  font-family: 'raintank-icons';
-  src:url('../fonts/raintank-icons.eot?-1mxvgn');
-  src:url('../fonts/raintank-icons.eot?#iefix-1mxvgn') format('embedded-opentype'),
-    url('../fonts/raintank-icons.woff?-1mxvgn') format('woff'),
-    url('../fonts/raintank-icons.ttf?-1mxvgn') format('truetype'),
-    url('../fonts/raintank-icons.svg?-1mxvgn#raintank-icons') format('svg');
-  font-weight: normal;
-  font-style: normal;
-}
-
-i {
-  font-family: 'raintank-icons';
-  speak: none;
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1;
-
-  /* Better Font Rendering =========== */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-.icon-rt-datasources:before {
-  content: "\e618";
-}
-
-.icon-rt-globe:before {
-  content: "\e600";
-}
-
-.icon-rt-refresh:before {
-  content: "\e601";
-}
-
-.icon-rt-save:before {
-  content: "\e602";
-}
-
-.icon-rt-search:before {
-  content: "\e603";
-}
-
-.icon-rt-settings:before {
-  content: "\e604";
-}
-
-.icon-rt-share:before {
-  content: "\e605";
-}
-
-.icon-rt-snapshot:before {
-  content: "\e606";
-}
-
-.icon-rt-star:before {
-  content: "\e607";
-}
-
-.icon-rt-status:before {
-  content: "\e608";
-}
-
-.icon-rt-video:before {
-  content: "\e609";
-}
-
-.icon-rt-bulk_action:before {
-  content: "\e60a";
-}
-
-.icon-rt-dashboard:before {
-  content: "\e60b";
-}
-
-.icon-rt-collector:before {
-  content: "\e60c";
-}
-
-.icon-rt-endpoint:before {
-  content: "\e60d";
-}
-
-.icon-rt-endpoint-tiny:before {
-  content: "\e60e";
-}
-
-.icon-rt-jump-to-dashboard:before {
-  content: "\e60f";
-}
-
-.icon-rt-filter:before {
-  content: "\e610";
-}
-
-.icon-rt-online:before {
-  content: "\e611";
-}
-
-.icon-rt-critical:before {
-  content: "\e612";
-}
-
-.icon-rt-nodata:before {
-  content: "\e613";
-}
-
-.icon-rt-warn:before {
-  content: "\e614";
-}
-
-.icon-rt-private-collector:before {
-  content: "\e615";
-}
-
-.icon-rt-raintank_icn:before {
-  content: "\e616";
-}
-
-.icon-rt-raintank_wordmark:before {
-  content: "\e617";
-}
-
 /***********************************
 raintank POSITIONING
 ***********************************/
@@ -445,133 +327,6 @@ raintank POSITIONING
   position: relative;
   top: 15px;
 }
-
-/***********************************
-raintank BUTTONS
-***********************************/
-
-.superCTA,
-.superCTA:visited { 
-    display: block;
-    padding: 1.0em 0;
-    color:#fff;
-    background-color: @rt-blue;
-    border: 1px solid @rt-blue;
-    border-radius: 2px;
-    text-align:center;
-    font-weight: 400;
-    font-size: 16px;
-    transition: 0.15s;
-
-    img {padding-left: 2px;}
-  }
-
-.superCTA:hover,
-.superCTA:active{
-    cursor: pointer;
-    background: darken(@rt-blue, 10%);
-    border: 1px solid darken(@rt-blue, 10%);
-    text-decoration:none;
-}
-
-.primaryCTA ,
-.primaryCTA:visited{
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 0.1em 1.2em;
-    color:#fff;
-    background-color: @rt-blue;
-    border: 1px solid @rt-blue;
-    border-radius: 2px;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 12px;
-    transition: 0.15s;
-}
-
-.primaryCTA:hover, 
-.primaryCTA:active{
-    cursor: pointer;
-    background: darken(@rt-blue, 10%);
-    border: 1px solid darken(@rt-blue, 10%);
-    text-decoration:none;
-}
-
-.secondaryCTA,
-.secondaryCTA:visited {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 0.1em 1.2em;
-    border: 1px solid @rt-blue;
-    color: #13b2d4;
-    border-radius: 2px;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 12px;
-    transition: 0.15s;
-    background-color: transparent;
-}
-
-// For dark backgrounds. 
-.secondaryCTA:hover, 
-.secondaryCTA:active{
-    cursor: pointer;
-    border: 1px solid #fff;
-    color: #fff;
-    text-decoration:none;
-}
-
-// For light backgrounds. 
-.modal-body .secondaryCTA:hover{
-    cursor: pointer;
-    border: 1px solid #161616;
-    color: #161616;
-}
-
-.tertiaryCTA,
-.tertiaryCTA:visited {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 0.1em 1.2em;
-    border: 1px solid #999;
-    color: #999;
-    border-radius: 2px;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 12px;
-    transition: 0.15s;
-}
-.tertiaryCTA:hover,
-.tertiaryCTA:active{
-    cursor: pointer;
-    border: 1px solid #fff;
-    color: #fff;
-    text-decoration:none;
-}
-
-.cancel-primary,
-.cancel-primary:visited {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 0.2em 1.4em;
-    color: @rt-dark-gray;
-    font-size: @rt-fontSizeMed-1;
-    transition: 0.15s;
-}
-
-.cancel-primary:hover,
-.cancel-primary:active{
-    cursor: pointer;
-    color: @rt-light-gray;
-    text-decoration:none;
-}
-
-.miniCTA, 
-.miniCTA:visited {color:@gray;}
-
-.miniCTA:hover,
-.miniCTA:active {color:@white; text-decoration:none;}
-
 
 .collector_icon {
   vertical-align: 0;
@@ -910,104 +665,7 @@ MATT STYLES
 
 
 // Shared size and type resets
-select,
-textarea,
-input[type="text"],
-input[type="password"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="date"],
-input[type="month"],
-input[type="time"],
-input[type="week"],
-input[type="number"],
-input[type="email"],
-input[type="url"],
-input[type="search"],
-input[type="tel"],
-input[type="color"] {
-  &.rt-form-input {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 2;
-  font-size: @rt-fontSizeLarge;
-  line-height: @baseLineHeight;
-  color: @white;
-  border: solid 1px @grayDark;
-  .border-radius(2px);
-  vertical-align: middle;
-}
-}
 
-input[type="checkbox"].rt-modal {
-  display: none;
-}
-
-.rt-input-styles{
-  label {
-  color: @rt-light-gray;
-  }
-  select, 
-  textarea, 
-  input[type="text"] {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 4;
-  font-size: @rt-fontSizeMed-1;
-  line-height: @baseLineHeight;
-  color: @white;
-  border: solid 1px @grayDark;
-  .border-radius(2px);
-  vertical-align: middle;
-  }
-}
-
-.rt-modal-input-styles{
-  label {
-  color: @grayDark;
-  }
-  select, 
-  textarea, 
-  input[type="text"] {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 4;
-  font-size: @rt-fontSizeMed-1;
-  line-height: @baseLineHeight;
-  color: @white;
-  border: solid 1px @grayDark;
-  .border-radius(2px);
-  vertical-align: middle;
-  }
-}
-
-.editor-option label.rt-modal {
-  display: inline-block;
-  margin: 5px 0 1px 0;
-}
-
-label.rt-modal {
-  display: inline-block;
-  height: 19px;
-  clear: none;
-  text-indent: 2px;
-  margin: 0 0 0 0;
-  padding: 0 0 0 20px;
-  vertical-align:middle;
-  background: url(@rt-checkboxImageUrl) left top no-repeat;
-  cursor:pointer;
-}
-
-input[type="checkbox"]:checked+label {
-  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
-}
-
-.checkbox-check-enabled {
-  margin-bottom: 10px;
-}
 
 // Collector List Status
 
@@ -1373,38 +1031,6 @@ a.rt-modal-body-link {
   top: -9999px !important;
   left: -9999px !important;
 }
-
-// Buttons
-// Needs to be consolidated. 
-.rt-btn {
-  background: @rt-blue;
-  color: @white;
-  font-weight: 500;
-  padding: 10px 12px;
-  border-radius: 2px;
-  text-align: center;
-  cursor: pointer;
-  outline: none;
-  border: none;
-  font-size: 16px;
-  transition: all 0.1s ease 0s;
-  text-decoration:none;
-
-  &:hover, &:focus {
-    background: darken(@rt-blue, 10%);
-    text-decoration:none;
-  }
- 
-  &:active {
-    background: lighten(@rt-blue, 5%);
-    text-decoration:none;
-  }
-}
-
-.modal-body .rt-btn{
-  margin: 30px 0 40px 0;
-}
-
 
 /******************************************
 RAINTANK DASHBOARD STYLES
