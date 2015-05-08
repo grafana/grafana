@@ -116,21 +116,13 @@ function (angular, _) {
       $location.path('/endpoints/summary/'+id);
     }
 
-    $scope.slug = function(name) {
-      var label = name.toLowerCase();
-      var re = new RegExp("[^\\w-]+", "g");
-      var re2 = new RegExp("\\s", "g");
-      var slug = label.replace(re, "_").replace(re2, "-");
-      return slug;
-    }
-
     $scope.gotoDashboard = function(endpoint, type) {
       if (!type) {
         type = 'summary';
       }
       var search = {
         "var-collector": "All",
-        "var-endpoint": $scope.slug($scope.endpoint.name)
+        "var-endpoint": $scope.endpoint.slug
       };
       switch(type) {
         case "summary":
