@@ -2,12 +2,16 @@ package migrator
 
 import (
 	"fmt"
+	"github.com/go-xorm/xorm"
 	"strings"
 )
+
+type OnSuccess func(*xorm.Session) error
 
 type MigrationBase struct {
 	id        string
 	Condition MigrationCondition
+	OnSuccess OnSuccess
 }
 
 func (m *MigrationBase) Id() string {
@@ -20,6 +24,13 @@ func (m *MigrationBase) SetId(id string) {
 
 func (m *MigrationBase) GetCondition() MigrationCondition {
 	return m.Condition
+}
+
+func (m *MigrationBase) ExecOnSuccess(sess *xorm.Session) error {
+	if m.OnSuccess != nil {
+		return m.OnSuccess(sess)
+	}
+	return nil
 }
 
 type RawSqlMigration struct {

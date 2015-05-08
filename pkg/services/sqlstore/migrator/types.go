@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"fmt"
+	"github.com/go-xorm/xorm"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ type Migration interface {
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+	ExecOnSuccess(*xorm.Session) error
 }
 
 type SQLType string
