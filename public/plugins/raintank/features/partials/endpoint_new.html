@@ -1,8 +1,8 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
-	<ul class="nav">
+	<!-- <ul class="nav">
 		<li class="top-nav-title ng-binding">
 			<div>
-				<form style="margin-bottom:0px;">
+				<form ng-if="endpoint.id" style="margin-bottom:0px;">
 					<li class="dropdown">
 						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
 							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
@@ -16,13 +16,13 @@
 				</form>
 			</div>
 		</li>
-	</ul>
+	</ul> -->
 </topnav>
 
 <div ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
 	<div class="rt-page">
 		<div class="rt-page-header">
-			<h1 class="rt-h1 rt-page-header-icon" style="background-image: url('img/rt-endpoint.svg');">New Endpoint</h1>
+			<i ng-class="icon" class="icon-rt-endpoint" style="font-size:24px;"></i> <h1 class="rt-h1">New Endpoint</h1>
 		</div>
 		<div class="rt-page-body">
 			<form name="endpointForm">
@@ -57,7 +57,7 @@
 							</div>
 							<div style="float: right; display: inline;">
 								<a href="#">
-									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+									<i class="icon icon-rt-monitoring-tiny" style="font-size:18px;"></i>
                                                                         <span class="freqMsg" ng-show="monitors['ping'].enabled" > Every {{monitors['ping'].frequency}}s from {{collectorCount(monitors['ping'])}} Collectors |</span>
                                                                         <span class="freqMsg" ng-show="!monitors['ping'].enabled && discovered" > Not Discovered |</span>
 									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -69,11 +69,11 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+										<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 									</div>
 									<div class="rt-box-interior rt-box-interior-header">
 										<div class="rt-h3">Monitoring</div>
-										<p class="rt-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p>
+										<p class="rt-body-copy" style="margin-top:20px;">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p>
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
@@ -98,7 +98,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+										<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Health</div>
  
@@ -119,7 +119,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+										<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Alerting</div>
 									<div class="rt-box-interior rt-box-interior-content">
@@ -140,7 +140,7 @@
 							</div>
 							<div style="float: right; display: inline;">
 								<a href="#">
-									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+									<i class="icon icon-rt-monitoring-tiny" style="font-size:18px;"></i>
                                                                         <span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
                                                                         <span class="freqMsg" ng-show="!monitors['dns'].enabled && discovered" > Not Discovered |</span>
 									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -152,11 +152,11 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+										<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 									</div>
 									<div class="rt-box-interior rt-box-interior-header">
 										<div class="rt-h3">Monitoring</div>
-										<p class="rt-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
+										<p class="rt-body-copy" style="margin-top:20px;">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
@@ -181,7 +181,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+										<i class="icon icon-rt-online" style="font-size: 30px; "></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Health</div>
  
@@ -202,7 +202,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+										<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Alerting</div>
 									<div class="rt-box-interior rt-box-interior-content">
@@ -222,7 +222,7 @@
 							</div>
 							<div style="float: right; display: inline;">
 								<a href="#">
-									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+									<i class="icon icon-rt-monitoring-tiny" style="font-size:18px;"></i>
                                                                         <span class="freqMsg" ng-show="monitors['http'].enabled" > Every {{monitors['http'].frequency}}s from {{collectorCount(monitors['http'])}} Collectors |</span>
                                                                         <span class="freqMsg" ng-show="!monitors['http'].enabled && discovered" > Not Discovered |</span>
 									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -234,11 +234,11 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+										<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 									</div>
 									<div class="rt-box-interior rt-box-interior-header">
 										<div class="rt-h3">Monitoring</div>
-										<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
+										<p class="rt-body-copy" style="margin-top:20px;">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
@@ -263,7 +263,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+										<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Health</div>
  
@@ -284,7 +284,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+										<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Alerting</div>
 									<div class="rt-box-interior rt-box-interior-content">
@@ -304,7 +304,7 @@
 							</div>
 							<div style="float: right; display: inline;">
 								<a href="#">
-									<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+									<i class="icon icon-rt-monitoring-tiny" style="font-size:18px;"></i>
                                                                         <span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} Collectors |</span>
                                                                         <span class="freqMsg" ng-show="!monitors['https'].enabled && discovered" > Not Discovered |</span>
 									<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -316,11 +316,11 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+										<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 									</div>
 									<div class="rt-box-interior rt-box-interior-header">
 										<div class="rt-h3">Monitoring</div>
-										<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
+										<p class="rt-body-copy" style="margin-top:20px;">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
 									</div>
 									<div class="rt-box-interior rt-box-interior-content">
 										<div class="checkbox-check-enabled">
@@ -345,7 +345,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+										<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Health</div>
  
@@ -366,7 +366,7 @@
 
 							<div class="rt-box-interior-section">
 									<div class="rt-box-interior-header-icon">
-										<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+										<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 									</div>
 									<div class="rt-box-interior rt-h3">Alerting</div>
 									<div class="rt-box-interior rt-box-interior-content">
