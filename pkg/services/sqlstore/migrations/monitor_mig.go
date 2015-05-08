@@ -32,6 +32,54 @@ func addMonitorMigration(mg *Migrator) {
 	// recreate indices
 	addTableIndicesMigrations(mg, "v3", monitorV3)
 
+	//-------  drop indexes ------------------
+	addDropAllIndicesMigrations(mg, "v3", monitorV3)
+
+	//------- rename table ------------------
+	addTableRenameMigration(mg, "monitor", "monitor_v3", "v3")
+
+	var monitorV4 = Table{
+		Name: "monitor",
+		Columns: []*Column{
+			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
+			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
+			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
+			&Column{Name: "state_change", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
+			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+		}, Indices: []*Index{
+			&Index{Cols: []string{"monitor_type_id"}},
+			&Index{Cols: []string{"org_id", "endpoint_id", "monitor_type_id"}, Type: UniqueIndex},
+		},
+	}
+
+	// recreate table
+	mg.AddMigration("create monitor v4", NewAddTableMigration(monitorV4))
+	// recreate indices
+	addTableIndicesMigrations(mg, "v4", monitorV4)
+	//------- copy data from v1 to v2 -------------------
+	mg.AddMigration("copy monitor v3 to v4", NewCopyTableDataMigration("monitor", "monitor_v3", map[string]string{
+		"id":              "id",
+		"endpoint_id":     "endpoint_id",
+		"org_id":          "org_id",
+		"monitor_type_id": "monitor_type_id",
+		"offset":          "offset",
+		"frequency":       "frequency",
+		"enabled":         "enabled",
+		"settings":        "settings",
+		"state":           "state",
+		"state_change":    "state_change",
+		"created":         "created",
+		"updated":         "updated",
+	}))
+	mg.AddMigration("Drop old table monitor_v3", NewDropTableMigration("monitor_v3"))
+
 	//monitorTypes
 	var monitorTypeV1 = Table{
 		Name: "monitor_type",

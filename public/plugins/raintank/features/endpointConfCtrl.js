@@ -255,16 +255,8 @@ function (angular) {
       });
     }
 
-    $scope.slug = function(name) {
-      var label = name.toLowerCase();
-      var re = new RegExp("[^\\w-]+", "g");
-      var re2 = new RegExp("\\s", "g");
-      var slug = label.replace(re, "_").replace(re2, "-");
-      return slug;
-    }
-
     $scope.gotoDashboard = function(endpoint) {
-      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.slug($scope.endpoint.name)});
+      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.endpoint.slug});
     }
 
     $scope.init();

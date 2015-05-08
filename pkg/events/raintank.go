@@ -12,7 +12,7 @@ type MonitorPayload struct {
 	Id            int64                  `json:"id"`
 	OrgId         int64                  `json:"org_id"`
 	EndpointId    int64                  `json:"endpoint_id"`
-	Namespace     string                 `json:"namespace"`
+	EndpointSlug  string                 `json:"endpoint_slug"`
 	MonitorTypeId int64                  `json:"monitor_type_id"`
 	CollectorIds  []int64                `json:"collector_ids"`
 	CollectorTags []string               `json:"collector_tags"`
@@ -49,6 +49,7 @@ type EndpointPayload struct {
 	Id    int64    `json:"id"`
 	OrgId int64    `json:"org_id"`
 	Name  string   `json:"name"`
+	Slug  string   `json:"slug"`
 	Tags  []string `json:"tags"`
 }
 
@@ -67,6 +68,7 @@ type EndpointRemoved struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
+	Slug      string    `json:"slug"`
 	OrgId     int64     `json:"org_id"`
 	Tags      []string  `json:"tags"`
 }

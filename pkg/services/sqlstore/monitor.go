@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"fmt"
 	"math/rand"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +28,7 @@ type MonitorWithCollectorDTO struct {
 	Id            int64
 	EndpointId    int64
 	OrgId         int64
-	Namespace     string
+	EndpointSlug  string
 	MonitorTypeId int64
 	CollectorIds  string
 	CollectorTags string
@@ -52,8 +51,10 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector.collector_id)) as collector_ids,
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
+    endpoint.slug as endpoint_slug,
     monitor.*
 FROM monitor
+    INNER JOIN endpoint on monitor.endpoint_id = endpoint.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN 
@@ -121,7 +122,7 @@ WHERE monitor.id=?
 		Id:            result.Id,
 		EndpointId:    result.EndpointId,
 		OrgId:         result.OrgId,
-		Namespace:     result.Namespace,
+		EndpointSlug:  result.EndpointSlug,
 		MonitorTypeId: result.MonitorTypeId,
 		CollectorIds:  monitorCollectorIds,
 		CollectorTags: monitorCollectorTags,
@@ -146,8 +147,10 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector.collector_id)) as collector_ids,
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
+    endpoint.slug as endpoint_slug,
     monitor.*
 FROM monitor
+    INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN 
@@ -257,7 +260,7 @@ FROM monitor
 			Id:            row.Id,
 			EndpointId:    row.EndpointId,
 			OrgId:         row.OrgId,
-			Namespace:     row.Namespace,
+			EndpointSlug:  row.EndpointSlug,
 			MonitorTypeId: row.MonitorTypeId,
 			CollectorIds:  monitorCollectorIds,
 			CollectorTags: monitorCollectorTags,
@@ -461,18 +464,9 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		}
 	}
 
-	if cmd.Namespace == "" {
-		label := strings.ToLower(endpointQuery.Result.Name)
-		re := regexp.MustCompile("[^\\w-]+")
-		re2 := regexp.MustCompile("\\s")
-		slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
-		cmd.Namespace = slug
-	}
-
 	mon := &m.Monitor{
 		EndpointId:    cmd.EndpointId,
 		OrgId:         cmd.OrgId,
-		Namespace:     cmd.Namespace,
 		MonitorTypeId: cmd.MonitorTypeId,
 		Offset:        rand.Int63n(cmd.Frequency - 1),
 		Settings:      cmd.Settings,
@@ -557,7 +551,7 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		Id:            mon.Id,
 		EndpointId:    mon.EndpointId,
 		OrgId:         mon.OrgId,
-		Namespace:     mon.Namespace,
+		EndpointSlug:  endpointQuery.Result.Slug,
 		MonitorTypeId: mon.MonitorTypeId,
 		CollectorIds:  cmd.CollectorIds,
 		CollectorTags: cmd.CollectorTags,
@@ -576,7 +570,7 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 			Id:            mon.Id,
 			EndpointId:    mon.EndpointId,
 			OrgId:         mon.OrgId,
-			Namespace:     mon.Namespace,
+			EndpointSlug:  endpointQuery.Result.Slug,
 			MonitorTypeId: mon.MonitorTypeId,
 			CollectorIds:  cmd.CollectorIds,
 			CollectorTags: cmd.CollectorTags,
@@ -682,19 +676,10 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			}
 		}
 
-		if cmd.Namespace == "" {
-			label := strings.ToLower(currentEndpoint.Name)
-			re := regexp.MustCompile("[^\\w-]+")
-			re2 := regexp.MustCompile("\\s")
-			slug := re2.ReplaceAllString(re.ReplaceAllString(label, "_"), "-")
-			cmd.Namespace = slug
-		}
-
 		mon := &m.Monitor{
 			Id:            cmd.Id,
 			EndpointId:    cmd.EndpointId,
 			OrgId:         cmd.OrgId,
-			Namespace:     cmd.Namespace,
 			MonitorTypeId: cmd.MonitorTypeId,
 			Settings:      cmd.Settings,
 			Updated:       time.Now(),
@@ -789,7 +774,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Id:            mon.Id,
 				EndpointId:    mon.EndpointId,
 				OrgId:         mon.OrgId,
-				Namespace:     mon.Namespace,
+				EndpointSlug:  currentEndpoint.Slug,
 				MonitorTypeId: mon.MonitorTypeId,
 				CollectorIds:  cmd.CollectorIds,
 				CollectorTags: cmd.CollectorTags,
@@ -805,7 +790,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 				Id:            lastState.Id,
 				EndpointId:    lastState.EndpointId,
 				OrgId:         lastState.OrgId,
-				Namespace:     lastState.Namespace,
+				EndpointSlug:  lastState.EndpointSlug,
 				MonitorTypeId: lastState.MonitorTypeId,
 				CollectorIds:  lastState.CollectorIds,
 				CollectorTags: lastState.CollectorTags,
@@ -997,7 +982,6 @@ func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) erro
 				Id:            monView.Id,
 				EndpointId:    monView.EndpointId,
 				OrgId:         monView.OrgId,
-				Namespace:     monView.Namespace,
 				MonitorTypeId: monView.MonitorTypeId,
 				Offset:        monView.Offset,
 				Settings:      monView.Settings,

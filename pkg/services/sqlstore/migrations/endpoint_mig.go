@@ -1,6 +1,10 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/go-xorm/xorm"
+	m "github.com/grafana/grafana/pkg/models"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addEndpointMigration(mg *Migrator) {
 
@@ -21,6 +25,24 @@ func addEndpointMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", endpointV1)
+
+	slugCol := &Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false}
+	migration := NewAddColumnMigration(endpointV1, slugCol)
+	migration.OnSuccess = func(sess *xorm.Session) error {
+		sess.Table("endpoint")
+		endpoints := make([]m.Endpoint, 0)
+		if err := sess.Find(&endpoints); err != nil {
+			return err
+		}
+		for _, e := range endpoints {
+			e.UpdateEndpointSlug()
+			if _, err := sess.Id(e.Id).Update(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	mg.AddMigration("add slug column to endpoint v1", migration)
 
 	// add endpoint_tags
 	var endpointTagV1 = Table{

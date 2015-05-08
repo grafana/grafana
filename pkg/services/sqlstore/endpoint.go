@@ -22,6 +22,7 @@ type EndpointWithTag struct {
 	Id      int64
 	OrgId   int64
 	Name    string
+	Slug    string
 	Tags    string
 	Created time.Time
 	Updated time.Time
@@ -62,6 +63,7 @@ func GetEndpointByIdTransaction(query *m.GetEndpointByIdQuery, sess *session) er
 		Id:    result.Id,
 		OrgId: result.OrgId,
 		Name:  result.Name,
+		Slug:  result.Slug,
 		Tags:  tags,
 	}
 	return nil
@@ -115,6 +117,7 @@ func GetEndpoints(query *m.GetEndpointsQuery) error {
 			Id:    row.Id,
 			OrgId: row.OrgId,
 			Name:  row.Name,
+			Slug:  row.Slug,
 			Tags:  tags,
 		})
 	}
@@ -132,6 +135,7 @@ func AddEndpoint(cmd *m.AddEndpointCommand) error {
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
+		endpoint.UpdateEndpointSlug()
 
 		if _, err := sess.Insert(endpoint); err != nil {
 			return err
@@ -155,6 +159,7 @@ func AddEndpoint(cmd *m.AddEndpointCommand) error {
 			Id:    endpoint.Id,
 			OrgId: endpoint.OrgId,
 			Name:  endpoint.Name,
+			Slug:  endpoint.Slug,
 			Tags:  cmd.Tags,
 		}
 		sess.publishAfterCommit(&events.EndpointCreated{
@@ -162,6 +167,7 @@ func AddEndpoint(cmd *m.AddEndpointCommand) error {
 				Id:    endpoint.Id,
 				OrgId: endpoint.OrgId,
 				Name:  endpoint.Name,
+				Slug:  endpoint.Slug,
 				Tags:  cmd.Tags,
 			},
 			Timestamp: endpoint.Updated,
@@ -201,6 +207,7 @@ func UpdateEndpoint(cmd *m.UpdateEndpointCommand) error {
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
+		endpoint.UpdateEndpointSlug()
 
 		_, err = sess.Id(cmd.Id).Update(endpoint)
 		if err != nil {
@@ -229,6 +236,7 @@ func UpdateEndpoint(cmd *m.UpdateEndpointCommand) error {
 			Id:    cmd.Id,
 			OrgId: endpoint.OrgId,
 			Name:  endpoint.Name,
+			Slug:  endpoint.Slug,
 			Tags:  cmd.Tags,
 		}
 		sess.publishAfterCommit(&events.EndpointUpdated{
@@ -236,6 +244,7 @@ func UpdateEndpoint(cmd *m.UpdateEndpointCommand) error {
 				Id:    cmd.Id,
 				OrgId: endpoint.OrgId,
 				Name:  endpoint.Name,
+				Slug:  endpoint.Slug,
 				Tags:  cmd.Tags,
 			},
 			Timestamp: endpoint.Updated,
@@ -243,6 +252,7 @@ func UpdateEndpoint(cmd *m.UpdateEndpointCommand) error {
 				Id:    lastState.Id,
 				OrgId: lastState.OrgId,
 				Name:  lastState.Name,
+				Slug:  lastState.Slug,
 				Tags:  lastState.Tags,
 			},
 		})
@@ -287,6 +297,7 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 			Id:        cmd.Id,
 			OrgId:     cmd.OrgId,
 			Name:      q.Result.Name,
+			Slug:      q.Result.Slug,
 		})
 		return err
 	})

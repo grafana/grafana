@@ -134,7 +134,8 @@ func (mg *Migrator) exec(m Migration) error {
 			log.Error(3, "Migrator: exec FAILED migration id: %v, err: %v", m.Id(), err)
 			return err
 		}
-		return nil
+		//run additiona migration code.
+		return m.ExecOnSuccess(sess)
 	})
 
 	if err != nil {
