@@ -1019,6 +1019,7 @@ input[type="color"] {
   font-size: @rt-fontSizeMed-1;
   line-height: @baseLineHeight;
   color: @textColor;
+    border: solid 1px @inputBorder;
   border-radius: @baseBorderRadius;
   .border-radius(2px);
   vertical-align: middle;
@@ -1043,7 +1044,7 @@ select.rt-select-dropdown {
 }
 .rt-input-styles{
   label {
-  color: @rt-light-gray;
+  color: lighten(@textColor, 10%);
   }
   select, 
   textarea, 
@@ -1063,7 +1064,7 @@ select.rt-select-dropdown {
 
 .rt-modal-input-styles{
   label {
-  color: @grayDark;
+  color: @textColor;
   }
   select, 
   textarea, 
@@ -1074,8 +1075,8 @@ select.rt-select-dropdown {
   margin-bottom: @baseLineHeight / 4;
   font-size: @rt-fontSizeMed-1;
   line-height: @baseLineHeight;
-  color: @white;
-  border: solid 1px @grayDark;
+  color: @textColor;
+  border: solid 1px @inputBorder;
   .border-radius(2px);
   vertical-align: middle;
   }
