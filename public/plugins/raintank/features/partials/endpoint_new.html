@@ -33,11 +33,48 @@
 							<input type="text" class="rt-form-input" ng-model="endpoint.name" required="">
 						</div>
 						<div class="rt-mini-form-col">
-							<div ng-hide="discovered || discoveryInProgress">
-								<!-- Button needs a spinner on submit -->
+						<div ng-hide="discovered || discoveryInProgress">
 								<button type="submit" class="secondaryCTA" ng-click="endpointForm.$valid && discover(endpoint)">Auto Discover</button>
+							</div>															
+							<div ng-show="discoveryInProgress">
+							    <svg width="25" height="25" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" stroke="#13B3D4" class="puff">
+							        <g fill="none" fill-rule="evenodd" stroke-width="3"> 
+							            <circle cx="22" cy="22" r="1">
+							                <animate attributeName="r"
+							                    begin="0s" dur="3s"
+							                    values="1; 20"
+							                    calcMode="spline"
+							                    keyTimes="0; 1"
+							                    keySplines="0.165, 0.84, 0.44, 1"
+							                    repeatCount="indefinite" />
+							                <animate attributeName="stroke-opacity"
+							                    begin="0s" dur="3s"
+							                    values="1; 0"
+							                    calcMode="spline"
+							                    keyTimes="0; 1"
+							                    keySplines="0.3, 0.61, 0.355, 1"
+							                    repeatCount="indefinite" />
+							            </circle>
+							            <circle cx="22" cy="22" r="1">
+							                <animate attributeName="r"
+							                    begin="-1.5s" dur="3s"
+							                    values="1; 20"
+							                    calcMode="spline"
+							                    keyTimes="0; 1"
+							                    keySplines="0.165, 0.84, 0.44, 1"
+							                    repeatCount="indefinite" />
+							                <animate attributeName="stroke-opacity"
+							                    begin="-1.5s" dur="3s"
+							                    values="1; 0"
+							                    calcMode="spline"
+							                    keyTimes="0; 1"
+							                    keySplines="0.3, 0.61, 0.355, 1"
+							                    repeatCount="indefinite" />
+							            </circle>
+							        </g>
+							    </svg>
+								<span class="rt-body-copy">Discovery in progress...</span>
 							</div>
-							<div ng-show="discoveryInProgress">Discovering.....</div>
 							<!-- Below replaces Auto-Discover button on success -->
 							<div ng-show="discovered">
 								<p class="rt-body-copy">
@@ -57,7 +94,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['ping'].enabled">
 								<span class="freqMsg" ng-show="monitors['ping'].enabled" > Every {{monitors['ping'].frequency}}s from {{collectorCount(monitors['ping'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['ping'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -92,7 +129,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="rt-box-interior-section">
+<!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
 							</div>
@@ -120,7 +157,7 @@
 								<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
 							</div>
 						</div>
-					</div>
+ -->					</div>
 				</div>
 				<!-- End Ping Tab -->
 
@@ -134,7 +171,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['dns'].enabled">
 								<span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['dns'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -169,7 +206,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="rt-box-interior-section">
+<!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
 							</div>
@@ -197,7 +234,7 @@
 								<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
 							</div>
 						</div>
-					</div>
+ -->					</div>
 				</div>
 				<!-- End DNS Tab -->
 
@@ -210,7 +247,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['http'].enabled">
 								<span class="freqMsg" ng-show="monitors['http'].enabled" > Every {{monitors['http'].frequency}}s from {{collectorCount(monitors['http'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['http'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -245,7 +282,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="rt-box-interior-section">
+<!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
 							</div>
@@ -273,7 +310,7 @@
 								<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
 							</div>
 						</div>
-					</div>
+ -->					</div>
 				</div>
 				<!-- End HTTP Tab -->
 
@@ -286,7 +323,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 18px; height: 18px; vertical-align: baseline;">
+								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['https'].enabled">
 								<span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['https'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -321,7 +358,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="rt-box-interior-section">
+<!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
 							</div>
@@ -349,7 +386,7 @@
 								<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
 							</div>
 						</div>
-					</div>
+ -->					</div>
 				</div>
 				<!-- End HTTPS Tab -->
 

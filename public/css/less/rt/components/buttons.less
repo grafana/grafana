@@ -70,7 +70,7 @@
   margin-bottom: 10px;
   padding: 0.1em 1.2em;
   border: 1px solid @rt-blue;
-  color: #13b2d4;
+  color: @rt-blue;
   border-radius: 2px;
   font-style: italic;
   font-weight: 400;
@@ -95,7 +95,20 @@
   color: #161616;
 }
 
-
+.secondaryCTA-disabled,
+.secondaryCTA-disabled:visited {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  border: 1px solid @rt-dark-gray;
+  color: @rt-dark-gray;
+  border-radius: 2px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  transition: 0.15s;
+  background-color: transparent;
+}
 
 // Tertiary CTA
 // ====================================
