@@ -37,11 +37,11 @@
 	<div ng-if="endpoints.length > 0" class="editor-row">
 		<div class="editor-option">
 			<span class="small">Filter by Endpoint Tag:</span>
-			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="endpoint_filter">
+			<select class="input-medium rt-select-dropdown" style="" ng-model="endpoint_filter">
 				<option value="" label="All Tags" style="color:black">All Endpoints</option>
 				<option ng-repeat="t in endpointTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
 			</select>
-			<select class="input-medium" style="font-size: 16px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="status_filter">
+			<select class="input-medium rt-select-dropdown" style="" ng-model="status_filter">
 				<option value="" label="All Statuses" style="color:black">All Statuses</option>
 				<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
 			</select>
@@ -55,7 +55,7 @@
 			</div>
 			<div class="editor-option" style="float: right;">
 				<span class="small">Sort By:</span>
-				<select class="input-medium" style="font-size: 14px; vertical-align: baseline; color: white; margin: 0; background: none; border: none; width: auto;" ng-model="sort_field" ng-options="field for field in ['name']">
+				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
 				</select>
 			</div>
 		</div>

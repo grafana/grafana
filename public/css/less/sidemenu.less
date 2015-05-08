@@ -71,7 +71,7 @@
     }
 
     .sidemenu-item {
-      // color: @textColor;
+      color: @linkColor;
       line-height: 20px;
       padding-left: 25px;
     }
@@ -87,33 +87,70 @@
   text-overflow: ellipsis;
 }
 
+// .sidemenu-top-btn {
+//   display: block;
+//   padding: 8px 0 4px 22px;
+//   background-color: @rt-navbarBackground;
+//   border-right: 3px solid @bodyBackground;
+//   img {
+//     border-radius: 50%;
+//     background: @iconContainerBackground;
+//     border: 1px solid @bodyBackground;
+//     width: 30px;
+//     padding: 4px;
+//   }
+//   img.expanded {
+//    border-radius: 0;
+//    border:none;
+//    background: none;
+//    width: 112px;
+//    padding: 6px 15px 10px 15px;
+//   }
+//   i {
+//     padding-right: 5px;
+//     padding-top: 5px;
+//     font-size: 170%;
+//     color: @linkColor;
+//   }
+
+
+
 .sidemenu-top-btn {
   display: block;
   padding: 8px 0 4px 22px;
   background-color: @rt-navbarBackground;
   border-right: 3px solid @bodyBackground;
-  img {
-    border-radius: 50%;
-    background: @iconContainerBackground;
-    border: 1px solid @bodyBackground;
-    width: 30px;
-    padding: 4px;
-  }
-  img.expanded {
-   border-radius: 0;
-   border:none;
-   background: @iconContainerBackground;
-   width: 112px;
-   padding: 6px 15px 10px 15px;
-  }
+  /* chevron */
   i {
     padding-right: 5px;
     padding-top: 5px;
     font-size: 170%;
     color: @linkColor;
   }
-}
+   /* general */
+  i.logo {
+    padding-left: 10px;
+    position: relative;
+    top: 7px;
+    font-size: 58px;
+    color:@logo;
+    line-height: 23px;
 
+    /* open state logo */
+    &.expanded {
+     border-radius: 0;
+     border:none;
+    }
+
+    /* closed state logo */
+    &.collapsed {
+      background: @iconContainerBackground;
+      border-radius: 50%;
+      border: 1px solid @bodyBackground;
+      font-size: 30px;
+    }
+  }
+}
 
 
 
@@ -130,6 +167,17 @@
     font-size: 150%;
   }
 }
+
+ /* closed state logo */
+    i.logo.collapsed {
+    color:@logo;
+    position: relative;
+    right: 7px;
+    font-size: 34px;
+    line-height: 30px;
+    }
+
+
 
 .sidemenu-item {
   color: @linkColor;
