@@ -1,0 +1,119 @@
+// ==========================================================================
+// FORMS
+// ==========================================================================
+
+
+
+// Inputs
+// ==========================================================================
+
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"] {
+  &.rt-form-input {
+    display: inline-block;
+    height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 2;
+    font-size: @rt-fontSizeLarge;
+    line-height: @baseLineHeight;
+    color: @white;
+    border: solid 1px @grayDark;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+.rt-input-styles {
+  label {
+    color: @rt-light-gray;
+  }
+
+  select, 
+  textarea, 
+  input[type="text"] {
+    display: inline-block;
+    height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 4;
+    font-size: @rt-fontSizeMed-1;
+    line-height: @baseLineHeight;
+    color: @white;
+    border: solid 1px @grayDark;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+.rt-modal-input-styles{
+  label {
+    color: @grayDark;
+  }
+
+  select, 
+  textarea, 
+  input[type="text"] {
+    display: inline-block;
+    height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 4;
+    font-size: @rt-fontSizeMed-1;
+    line-height: @baseLineHeight;
+    color: @white;
+    border: solid 1px @grayDark;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+
+
+// Labels
+// ==========================================================================
+
+.editor-option label.rt-modal {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.rt-modal {
+  display: inline-block;
+  height: 19px;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 0 0;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background: url(@rt-checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+
+
+// Checkboxes
+// ==========================================================================
+
+input[type="checkbox"].rt-modal {
+  display: none;
+}
+
+input[type="checkbox"]:checked+label {
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
+}
+
+.checkbox-check-enabled {
+  margin-bottom: 10px;
+}

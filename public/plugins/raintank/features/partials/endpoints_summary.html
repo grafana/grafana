@@ -61,7 +61,7 @@
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<div class="pull-right tertiaryCTA">All Events</div>
+						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
@@ -75,7 +75,7 @@
 
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('Ping').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('Ping').id].length}}<span class="freqMsg"> collectors:</span>
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('Ping').id]"></rt-check-health>
 						</div>
@@ -88,7 +88,7 @@
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<div class="pull-right tertiaryCTA">All Events</div>
+						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
@@ -102,7 +102,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('DNS').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('DNS').id].length}}<span class="freqMsg"> collectors:</span>
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('DNS').id]"></rt-check-health>
 						</div>
@@ -115,7 +115,7 @@
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<div class="pull-right tertiaryCTA">All Events</div>
+						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="40px" height="40px">
@@ -130,7 +130,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTP').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTP').id].length}}<span class="freqMsg"> collectors</span>:
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTP').id]"></rt-check-health>
 						</div>
@@ -143,7 +143,7 @@
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<div class="pull-right tertiaryCTA">All Events</div>
+						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="40px" height="40px">
@@ -158,7 +158,7 @@
 						
 						<div class="status">
 							<div class="frequency">
-								<span class="freqMsg">Last check</span> from {{monitor_health[getMonitorByTypeName('HTTPS').id].length}} collectors:
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTPS').id].length}}<span class="freqMsg"> collectors:</span> 
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
 						</div>

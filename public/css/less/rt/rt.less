@@ -2,10 +2,17 @@
 // RAINTANK
 // ==========================================================================
 
+@import "base/icon-font.less";
+
 @import "layout/columns.less";
+@import "layout/forms.less";
+@import "layout/page.less";
+
+@import "components/box.less";
+@import "components/buttons.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
-
+@import "components/mini-form.less";
 
 
 
@@ -22,7 +29,9 @@ body {
   font-size: 1em;
 }
 
-
+a:focus {
+  text-decoration: none;
+}
 
 .modal-body {
   overflow-y: auto;
@@ -33,50 +42,53 @@ div.rt-modal-override {
   position: absolute;
 }
 
-  .modalContainer {min-width:200px; max-width:1020px;}
+.modalContainer {min-width:200px; max-width:1020px;}
 
-  .summary-tab {
-    padding-top: 10px;
+.summary-tab {
+  padding-top: 10px;
+  padding-bottom: 35px;
+}
+
+.modalColumn {
+      width:  50%;
+      float:left;
+      position: relative;
+      transition: 0.15s;
+    }
+
+.modal-left-80-20 {
+  width: 80%;
+  padding-bottom: 75px;
+
+}
+
+.modal-right-80-20 {
+  width: 20%;
+}
+
+.modal-left-100 {
+  width: 100%;
+  padding-bottom: 75px;
+}
+
+.modal-left-equal {
+  width: 50%;
+  padding-bottom: 10px;
+}
+
+.modal-right-equal {
+  width: 50%;
+}
+
+@media screen and (max-width: 780px) {
+  .detailColumn {
+    width:  100%;
+    float:none;
+    transition: 0.15s;
   }
-
-    .modalColumn {
-          width:  50%;
-          float:left;
-          position: relative;
-          transition: 0.15s;
-        }
-
-    .modal-left-80-20 {
-      width: 80%;
-      padding-bottom: 75px;
-
-    }
-    .modal-right-80-20 {
-      width: 20%;
-    }
-
-    .modal-left-100 {
-      width: 100%;
-      padding-bottom: 75px;
-    }
-
-    .modal-left-equal {
-      width: 50%;
-      padding-bottom: 10px;
-    }
-    .modal-right-equal {
-      width: 50%;
-    }
-
-     @media screen and (max-width: 780px) {
-        .detailColumn {
-          width:  100%;
-          float:none;
-          transition: 0.15s;
-        }
-      .modalLeft {padding-right:0px; margin-left:0px;}
-      .modalRight {padding-left:0px;}
-      }
+.modalLeft {padding-right:0px; margin-left:0px;}
+.modalRight {padding-left:0px;}
+}
 
 /***********************************
 raintank BOX
@@ -98,8 +110,10 @@ raintank BOX
   background: @raintankPanelBackground;
   border: @raintankPanelBorder;
 }
-  .oneCol {display:none;}
-  .twoCol {display:none;}
+
+.oneCol {display:none;}
+.twoCol {display:none;}
+
 
 @media screen and (max-width: 780px) {
   .oneCol {display:block;}
@@ -110,25 +124,6 @@ raintank BOX
 }
 
 .clearBack {background-color:transparent;}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 120%;
-  color: @textColor;
-  &:hover {
-    color: @white;
-  }
-}
-
-.rt-box-body {
-  padding: 20px;
-  min-height: 150px;
-}
 
 .rt-modal-box-body {
   padding: 20px 0 20px 0;
@@ -161,7 +156,6 @@ ul.rt-modal-ul {
   }
 }
 
-
 .rt-modal-header {
   padding: 30px 0px;
   font-size:16px;
@@ -171,37 +165,6 @@ ul.rt-modal-ul {
   }
   .nav {
     margin: 0;
-  }
-}
-
-.rt-box-header-close-btn {
-  float: right;
-  padding: 0;
-  margin: 0;
-  margin-top: -15px;
-  background-color: transparent;
-  border: none;
-  padding: 8px;
-  font-size: 150%;
-  font-weight: 100;
-  color: @textColor;
-  &:hover {
-    color: @black;
-  }
-}
-
-.rt-box-title {
-  padding-right: 20px;
-  padding-left: 10px;
-  float: left;
-  color: @linkColor;
-  font-size: 18px;
-  font-weight: normal;
-  line-height: 38px;
-  margin: 0;
-  .fa {
-    padding: 0 8px 0 5px;
-    color: @textColor;
   }
 }
 
@@ -229,7 +192,6 @@ ul.rt-modal-ul {
   color:@rt-light-gray;
   margin-left:20px;
   }
-
 }
 
 .currentStatus:last-child,
@@ -317,14 +279,16 @@ ul.rt-modal-ul {
 .refresh {padding-top:15px;}
 
 .mainLink i, .mainLink i:visited{
-  -moz-color: -moz-linear-gradient(top left, @white 0%, @rt-blue 100%);  
-  -webkit-color: -webkit-linear-gradient(top left, @white 0%, @rt-blue 100%);  
-  color: linear-gradient(to bottom right, @white 0%, @rt-blue 100%); 
+  color: @linkColor;  
+  text-decoration:none;
+  // -moz-color: -moz-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
+  // -webkit-color: -webkit-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
+  // color: linear-gradient(to bottom right, @linkColorHover 0%, @rt-blue 100%); 
   transition: 0.15s; 
 }
 
 .mainLink i:hover, .mainLink i:active {
-  color: @white;  
+  color: @linkColorHover;  
   text-decoration:none;
 }
 
@@ -337,7 +301,12 @@ ul.rt-modal-ul {
 /***********************************
 raintank TYPE
 ***********************************/
-.refresh a:link, .refresh a:visited, .refresh a:hover, .refresh a:active { text-decoration:none;} // was underlineing on click.
+.refresh a:link, 
+.refresh a:visited, 
+.refresh a:hover, 
+.refresh a:active { 
+  text-decoration: none; // was underlineing on click.
+}
 
 .checkType, .eventType {
   font-size:16px;
@@ -355,8 +324,9 @@ raintank TYPE
 
 .jumbo {font-weight:600;}
 
-.frequency {color:@rt-dark-gray}
-.statusMsg, .freqMsg {font-size:14px; font-weight:300;}
+.frequency {color:@rt-light-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:400;}
+
 
 .online {
   color: @online;
@@ -388,6 +358,7 @@ raintank TYPE
   text-transform: uppercase;
 }
 
+
 /******************************************
 RAINTANK ICON FONTS
 ******************************************/
@@ -415,75 +386,75 @@ i {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-.icon-rt-datasources:before {
-  content: "\e618";
-}
-
-.icon-rt-globe:before {
+.icon-rt-raintank_wordmark:before {
   content: "\e600";
 }
 
-.icon-rt-refresh:before {
+.icon-rt-raintank_icn:before {
   content: "\e601";
 }
 
-.icon-rt-save:before {
+.icon-rt-raintank_r-icn:before {
   content: "\e602";
 }
 
-.icon-rt-search:before {
+.icon-rt-check-alt:before {
   content: "\e603";
 }
 
-.icon-rt-settings:before {
+.icon-rt-check:before {
   content: "\e604";
 }
 
-.icon-rt-share:before {
+.icon-rt-collector:before {
   content: "\e605";
 }
 
-.icon-rt-snapshot:before {
+.icon-rt-dashboard:before {
   content: "\e606";
 }
 
-.icon-rt-star:before {
+.icon-rt-datasources:before {
   content: "\e607";
 }
 
-.icon-rt-status:before {
+.icon-rt-endpoint-tiny:before {
   content: "\e608";
 }
 
-.icon-rt-video:before {
+.icon-rt-endpoint:before {
   content: "\e609";
 }
 
-.icon-rt-bulk_action:before {
+.icon-rt-filter:before {
   content: "\e60a";
 }
 
-.icon-rt-dashboard:before {
+.icon-rt-status:before {
   content: "\e60b";
 }
 
-.icon-rt-collector:before {
+.icon-rt-monitoring:before {
   content: "\e60c";
 }
 
-.icon-rt-endpoint:before {
-  content: "\e60d";
-}
-
-.icon-rt-endpoint-tiny:before {
-  content: "\e60e";
+.icon-rt-monitoring-tiny:before {
+  content: "\e620";
 }
 
 .icon-rt-jump-to-dashboard:before {
+  content: "\e60d";
+}
+
+.icon-rt-warn:before {
+  content: "\e60e";
+}
+
+.icon-rt-nodata:before {
   content: "\e60f";
 }
 
-.icon-rt-filter:before {
+.icon-rt-critical:before {
   content: "\e610";
 }
 
@@ -491,28 +462,60 @@ i {
   content: "\e611";
 }
 
-.icon-rt-critical:before {
+.icon-rt-private-collector:before {
   content: "\e612";
 }
 
-.icon-rt-nodata:before {
+.icon-rt-alert:before {
+  content: "\e61f";
+}
+
+.icon-rt-refresh:before {
   content: "\e613";
 }
 
-.icon-rt-warn:before {
+.icon-rt-save:before {
   content: "\e614";
 }
 
-.icon-rt-private-collector:before {
+.icon-rt-settings:before {
   content: "\e615";
 }
 
-.icon-rt-raintank_icn:before {
+.icon-rt-share:before {
   content: "\e616";
 }
 
-.icon-rt-raintank_wordmark:before {
+.icon-rt-star:before {
   content: "\e617";
+}
+
+.icon-rt-search:before {
+  content: "\e618";
+}
+
+.icon-rt-tag-add:before {
+  content: "\e619";
+}
+
+.icon-rt-tag-remove:before {
+  content: "\e61a";
+}
+
+.icon-rt-video:before {
+  content: "\e61b";
+}
+
+.icon-rt-bulk_action:before {
+  content: "\e61c";
+}
+
+.icon-rt-globe:before {
+  content: "\e61d";
+}
+
+.icon-rt-snapshot:before {
+  content: "\e61e";
 }
 
 /***********************************
@@ -526,6 +529,7 @@ raintank POSITIONING
   position: relative;
   top: 15px;
 }
+
 
 /***********************************
 raintank BUTTONS
@@ -594,20 +598,12 @@ raintank BUTTONS
     background-color: transparent;
 }
 
-// For dark backgrounds. 
 .secondaryCTA:hover, 
 .secondaryCTA:active{
     cursor: pointer;
     border: 1px solid @secondaryCTAHighlight;
     color: @secondaryCTAHighlight;
     text-decoration:none;
-}
-
-// For light backgrounds. 
-.modal-body .secondaryCTA:hover{
-    cursor: pointer;
-    border: 1px solid @grayDarkest;
-    color: @grayDarkest;
 }
 
 .tertiaryCTA,
@@ -623,6 +619,7 @@ raintank BUTTONS
     font-size: 12px;
     transition: 0.15s;
 }
+
 .tertiaryCTA:hover,
 .tertiaryCTA:active{
     cursor: pointer;
@@ -653,6 +650,7 @@ raintank BUTTONS
 
 .miniCTA:hover,
 .miniCTA:active {color:lighten(@gray, 10%); text-decoration:none;}
+
 
 
 .collector_icon {
@@ -779,14 +777,16 @@ MATT STYLES
   color: @rt-yellow;
   background-color: fade(@rt-yellow, 30%);
   border-color: fade(@rt-yellow, 50%);
-  box-shadow: 0 0 1px fade(@rt-yellow, 90%);}
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);
+}
 
 .rt-event-error {
   .rt-event;
   color: @rt-red;
   background-color: fade(@rt-red, 30%);
   border-color: fade(@rt-red, 50%);
-  box-shadow: 0 0 1px fade(@rt-red, 90%);}
+  box-shadow: 0 0 1px fade(@rt-red, 90%);
+}
 
 
 .dashboard-icon {
@@ -905,6 +905,7 @@ MATT STYLES
     color:@linkColor;
     margin:0 5px;
   }
+
   .active a:link,
   .active a:visited  {
     color:@linkColorHover;
@@ -969,10 +970,28 @@ MATT STYLES
 
 // Form Additions
 
+.ng-hide-add         { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease; 
+}
+
+.ng-hide-remove      { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease;  
+}
+
+
 .rt-form-label-medium {
-  color: @grayDark;
+  // color: @grayDark;
   font-size: @rt-fontSizeMed-2;
 }
+
+.rt-sentence-form-label {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  margin-left: -15px;
+}
+
 
 
 // Shared size and type resets
@@ -1000,6 +1019,8 @@ input[type="color"] {
   font-size: @rt-fontSizeMed-1;
   line-height: @baseLineHeight;
   color: @textColor;
+    border: solid 1px @inputBorder;
+  border-radius: @baseBorderRadius;
   .border-radius(2px);
   vertical-align: middle;
 }
@@ -1019,12 +1040,11 @@ select.rt-select-dropdown {
   width: auto;
   &.small {
     font-size: @baseFontSize;
-  }
 }
-
-.rt-modal-input-styles{
+}
+.rt-input-styles{
   label {
-  color: @grayDark;
+  color: lighten(@textColor, 10%);
   }
   select, 
   textarea, 
@@ -1035,8 +1055,28 @@ select.rt-select-dropdown {
   margin-bottom: @baseLineHeight / 4;
   font-size: @rt-fontSizeMed-1;
   line-height: @baseLineHeight;
-  color: @white;
-  border: solid 1px @grayDark;
+  color: @textColor;
+  border: solid 1px @inputBorder;
+  .border-radius(2px);
+  vertical-align: middle;
+  }
+}
+
+.rt-modal-input-styles{
+  label {
+  color: @textColor;
+  }
+  select, 
+  textarea, 
+  input[type="text"] {
+  display: inline-block;
+  height: 20px;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 4;
+  font-size: @rt-fontSizeMed-1;
+  line-height: @baseLineHeight;
+  color: @textColor;
+  border: solid 1px @inputBorder;
   .border-radius(2px);
   vertical-align: middle;
   }
@@ -1049,10 +1089,10 @@ select.rt-select-dropdown {
 
 label.rt-modal {
   display: inline-block;
-  height: 17px;
+  height: 19px;
   clear: none;
   text-indent: 2px;
-  margin: 0 0 1px 0;
+  margin: 0 0 0 0;
   padding: 0 0 0 20px;
   vertical-align:middle;
   background: url(@rt-checkboxImageUrl) left top no-repeat;
@@ -1060,7 +1100,7 @@ label.rt-modal {
 }
 
 input[type="checkbox"]:checked+label {
-  background: url(@rt-checkboxImageUrl) 0px -19px no-repeat;
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
 }
 
 .checkbox-check-enabled {
@@ -1211,6 +1251,21 @@ input[type="checkbox"]:checked+label {
   color: @rt-dark-gray;
 }
 
+.rt-label-copy {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
+}
+
+.rt-body-copy {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-2;
+
+  @media screen and (min-width: 950px) {
+  max-width: 660px;
+  }
+}
+
 .rt-modal-label-copy {
   color: @rt-dark-gray;
   font-size: @rt-fontSizeMed-1;
@@ -1231,7 +1286,6 @@ input[type="checkbox"]:checked+label {
   margin-right: 60px;
   vertical-align: sub;
 }
-
 
 a.rt-modal-body-link {
     color: @rt-primary;   
@@ -1288,7 +1342,7 @@ a.rt-modal-body-link {
 
 .rt-advanced-options{
   font-size: @rt-fontSizeMed-2;
-  margin: 10px 0 40px 0;
+  margin: 10px 0 0 0;
   display:block;
   cursor: pointer;
   color: @rt-primary;
@@ -1307,33 +1361,6 @@ a.rt-modal-body-link {
 
 .rt-advanced-options+ input:checked + *{
   display:block;
-}
-
-
-.rt-globe-check-speed {
-  background-image: url(/img/rt-globe-check-speed.svg);
-  opacity: 1;
-  width: 177px;
-  height: 177px;
-  margin: 0 auto;
-  position: absolute;
-
-  -moz-animation: spinPulse 1500ms infinite ease-in-out;
-  -webkit-animation: spinPulse 1500ms infinite linear;
-}
-
-.rt-globe {
-  background-image: url(/img/rt-globe.svg);  
-  background-position: 50%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  opacity: 1;
-  width: 177px;
-  height: 177px;
-  margin: 0 auto;
-  padding: 0px;
-  position: relative;
-
 }
 
 @-moz-keyframes spinPulse {
@@ -1395,17 +1422,18 @@ a.rt-modal-body-link {
 .rt-radio-body-label {
   .rt-modal-body-copy;
   font-style: normal;
+  color: @rt-light-gray;
 }
 
 .rt-radio-jumbo-label {
     position: relative;
-    color: @rt-dark-gray;
-    font-size: 60px;
+    color: @rt-light-gray;
+    font-size: 40px;
     font-weight: 600;
 }
 
 .rt-radio-jumbo-sub-label {
-  font-size: @rt-fontSizeMed-1;
+  font-size: @rt-fontSizeSmall;
   color: @rt-light-gray;
   font-weight: 400;
   display: block;
@@ -1414,15 +1442,16 @@ a.rt-modal-body-link {
 
 .rt-radio-custom + *:before {
     content: '';
-    background: #fff;
+    background: transparent;
     border: 2px solid @rt-dark-gray;
     display: inline-block;
     vertical-align: middle;
-    width: 15px;
-    height: 15px;
+    width: 10px;
+    height: 10px;
     padding: 2px;
     margin-right: 10px;
     text-align: center;
+    transition: all 50ms linear;
 }
 
 
@@ -1432,7 +1461,7 @@ a.rt-modal-body-link {
 
 .rt-radio-custom:checked + *:before {
     background: @rt-primary;
-    box-shadow: inset 0px 0px 0px 4px @white;
+    box-shadow: inset 0px 0px 0px 3px @bodyBackground;
 }
 
 // Hiding class for screen readers
@@ -1442,6 +1471,7 @@ a.rt-modal-body-link {
   top: -9999px !important;
   left: -9999px !important;
 }
+
 
 // Buttons
 // Needs to be consolidated. 
@@ -1475,7 +1505,6 @@ a.rt-modal-body-link {
 .modal-body .rt-btn{
   margin: 30px 0 40px 0;
 }
-
 
 /******************************************
 RAINTANK DASHBOARD STYLES
